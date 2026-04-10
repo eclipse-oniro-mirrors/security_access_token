@@ -79,10 +79,42 @@ ohos_executable("EdmDisableTest") {
   part_name = "access_token"
 }
 
+ohos_executable("RemotePrivacyTest") {
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+
+  sources = [ "remote_privacy_test.cpp" ]
+
+  include_dirs = [
+    "${access_token_path}/interfaces/innerkits/accesstoken/include",
+    "${access_token_path}/interfaces/innerkits/token_setproc/include",
+  ]
+
+  cflags = []
+
+  deps = [
+    "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
+    "${access_token_path}/interfaces/innerkits/nativetoken:libnativetoken",
+    "${access_token_path}/interfaces/innerkits/token_setproc:libtoken_setproc",
+    "${access_token_path}/interfaces/innerkits/privacy:libprivacy_sdk",
+  ]
+  external_deps = [
+    "c_utils:utils",
+    "ipc:ipc_single",
+  ]
+
+  subsystem_name = "security"
+  part_name = "access_token"
+}
+
 group("tools") {
   testonly = true
   deps = [
     ":AddPermissionUsedRecord",
     ":EdmDisableTest",
+    ":RemotePrivacyTest",
   ]
 }

@@ -1548,6 +1548,46 @@ HWTEST_F(InitHapTokenTest, InitHapTokenWithManualTest001, TestSize.Level0)
 
     EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
 }
+
+/**
+ * @tc.name: InitHapTokenWithFeatureTest001
+ * @tc.desc: InitHapToken with feature
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(InitHapTokenTest, InitHapTokenWithFeatureTest001, TestSize.Level0)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "InitHapTokenWithFeatureTest001");
+    MockNativeToken mock("foundation");
+
+    AccessTokenIDEx tokenIdEx = {0};
+    PermissionStateFull infoManagerTestState1 = {
+        .permissionName = "ohos.permission.CAMERA",
+        .isGeneral = true,
+        .resDeviceID = {"local3"},
+        .grantStatus = {PermissionState::PERMISSION_GRANTED},
+        .grantFlags = {PermissionFlag::PERMISSION_USER_SET},
+        .feature = "test_feature"
+    };
+    HapPolicyParams infoManagerTestPolicyPrams = {
+        .apl = APL_NORMAL,
+        .domain = "test.domain",
+        .permList = {},
+        .permStateList = {infoManagerTestState1}
+    };
+    HapInfoParams infoManagerTestInfoParms1 = {
+        .userID = 1,
+        .bundleName = "InitHapTokenWithFeatureTest001",
+        .instIndex = 0,
+        .dlpType = DLP_COMMON,
+        .appIDDesc = "test3",
+        .apiVersion = TestCommon::DEFAULT_API_VERSION
+    };
+
+    int32_t ret = AccessTokenKit::InitHapToken(infoManagerTestInfoParms1, infoManagerTestPolicyPrams, tokenIdEx);
+    EXPECT_EQ(ret, RET_SUCCESS);
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenIdEx.tokenIdExStruct.tokenID));
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

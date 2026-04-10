@@ -44,6 +44,10 @@ namespace AccessToken {
 namespace {
 static constexpr int32_t USER_ID = 100;
 static constexpr int32_t INST_INDEX = 0;
+static constexpr int32_t INDEX_ONE = 1;
+static constexpr int32_t INDEX_TWO = 2;
+static constexpr int32_t INDEX_THREE = 3;
+static constexpr int32_t MAX_PERMISSION_SIZE = 1024;
 static constexpr int32_t API_VERSION_9 = 9;
 static constexpr int32_t RANDOM_TOKENID = 123;
 static const unsigned int DEBUG_APP_FLAG = 0x0008;
@@ -111,6 +115,27 @@ static PermissionStatus g_state6 = { // system core
     .grantFlag = static_cast<uint32_t>(PermissionFlag::PERMISSION_DEFAULT_FLAG)
 };
 
+static PermissionStatus g_state7 = { // permission without feature
+    .permissionName = "ohos.permission.CAMERA",
+    .grantStatus = PermissionState::PERMISSION_DENIED,
+    .grantFlag = PermissionFlag::PERMISSION_DEFAULT_FLAG,
+    .feature = ""
+};
+
+static PermissionStatus g_state8 = { // permission with feature
+    .permissionName = "ohos.permission.MICROPHONE",
+    .grantStatus = PermissionState::PERMISSION_DENIED,
+    .grantFlag = PermissionFlag::PERMISSION_DEFAULT_FLAG,
+    .feature = "service_test_feature"
+};
+
+static PermissionStatus g_state9 = { // permission with feature2
+    .permissionName = "ohos.permission.POWER_MANAGER",
+    .grantStatus = PermissionState::PERMISSION_GRANTED,
+    .grantFlag = PermissionFlag::PERMISSION_SYSTEM_FIXED,
+    .feature = "service_test_feature2"
+};
+
 static HapInfoParams g_info = {
     .userID = USER_ID,
     .bundleName = "accesstoken_manager_service_test",
@@ -147,6 +172,7 @@ void AccessTokenManagerServiceTest::SetUp()
 
 void AccessTokenManagerServiceTest::TearDown()
 {
+    DelayedSingleton<AccessTokenManagerService>::DestroyInstance();
     atManagerService_ = nullptr;
 }
 
@@ -1736,7 +1762,7 @@ HWTEST_F(AccessTokenManagerServiceTest, QueryStatusByPermissionServiceTest003, T
     // Create a HAP token
     std::map<int32_t, TokenIdInfo> tokenIdAplMap;
     AccessTokenID tokenID;
-    CreateHapToken(infoParcel, policyParcel, tokenID, tokenIdAplMap);
+    CreateHapToken(infoParcel, policyParcel, tokenID, tokenIdAplMap, true);
     EXPECT_NE(INVALID_TOKENID, tokenID);
 
     // Act: Query with valid permissionList
@@ -1820,6 +1846,375 @@ HWTEST_F(AccessTokenManagerServiceTest, QueryStatusByTokenIDOverSizeTest001, Tes
     // Cleanup
     AccessTokenInfoManager::GetInstance().SetMaxQueryResultSize(originalMaxSize);
     EXPECT_EQ(RET_SUCCESS, atManagerService_->DeleteToken(tokenID, false));
+}
+
+/**
+ * @tc.name: FilterPermFeatureTest001
+ * @tc.desc: Test FilterPermFeature with features_ empty and normal app
+ * @tc.require:
+ * @tc.type: FUNC
+ */
+HWTEST_F(AccessTokenManagerServiceTest, FilterPermFeatureTest001, TestSize.Level1)
+{
+    atManagerService_->Initialize();
+    atManagerService_->featureFuture_.wait();
+    HapPolicy policy1;
+    policy1.permStateList.push_back(g_state7);
+    policy1.permStateList.push_back(g_state8);
+    policy1.permStateList.push_back(g_state9);
+
+    atManagerService_->features_.clear();
+
+    atManagerService_->FilterPermFeature(false, policy1);
+    EXPECT_EQ(INDEX_THREE, policy1.permStateList.size());
+}
+
+/**
+ * @tc.name: FilterPermFeatureTest002
+ * @tc.desc: Test FilterPermFeature with features_ empty and system app
+ * @tc.require:
+ * @tc.type: FUNC
+ */
+HWTEST_F(AccessTokenManagerServiceTest, FilterPermFeatureTest002, TestSize.Level1)
+{
+    atManagerService_->Initialize();
+    atManagerService_->featureFuture_.wait();
+    HapPolicy policy1;
+    policy1.permStateList.push_back(g_state7);
+    policy1.permStateList.push_back(g_state8);
+    policy1.permStateList.push_back(g_state9);
+
+    atManagerService_->features_.clear();
+
+    atManagerService_->FilterPermFeature(true, policy1);
+    EXPECT_EQ(INDEX_ONE, policy1.permStateList.size());
+}
+
+/**
+ * @tc.name: FilterPermFeatureTest003
+ * @tc.desc: Test FilterPermFeature with features_ not empty and system app
+ * @tc.require:
+ * @tc.type: FUNC
+ */
+HWTEST_F(AccessTokenManagerServiceTest, FilterPermFeatureTest003, TestSize.Level1)
+{
+    atManagerService_->Initialize();
+    atManagerService_->featureFuture_.wait();
+    HapPolicy policy1;
+    policy1.permStateList.push_back(g_state7);
+    policy1.permStateList.push_back(g_state8);
+    policy1.permStateList.push_back(g_state9);
+
+    atManagerService_->features_.clear();
+    atManagerService_->features_.insert("service_test_feature");
+
+    atManagerService_->FilterPermFeature(true, policy1);
+    EXPECT_EQ(INDEX_TWO, policy1.permStateList.size());
+    atManagerService_->features_.clear();
+}
+
+/**
+ * @tc.name: FilterPermFeatureTest004
+ * @tc.desc: Test FilterPermFeature with features_ not empty2 and system app
+ * @tc.require:
+ * @tc.type: FUNC
+ */
+HWTEST_F(AccessTokenManagerServiceTest, FilterPermFeatureTest004, TestSize.Level2)
+{
+    atManagerService_->Initialize();
+    atManagerService_->featureFuture_.wait();
+    HapPolicy policy1;
+    policy1.permStateList.push_back(g_state7);
+    policy1.permStateList.push_back(g_state8);
+    policy1.permStateList.push_back(g_state9);
+
+    atManagerService_->features_.clear();
+    atManagerService_->features_.insert("service_test_feature");
+    atManagerService_->features_.insert("service_test_feature2");
+
+    atManagerService_->FilterPermFeature(true, policy1);
+    EXPECT_EQ(INDEX_THREE, policy1.permStateList.size());
+    atManagerService_->features_.clear();
+}
+
+/**
+ * @tc.name: FilterPermFeatureTest005
+ * @tc.desc: Test FilterPermFeature with features_ not empty3 and system app
+ * @tc.require:
+ * @tc.type: FUNC
+ */
+HWTEST_F(AccessTokenManagerServiceTest, FilterPermFeatureTest005, TestSize.Level2)
+{
+    atManagerService_->Initialize();
+    atManagerService_->featureFuture_.wait();
+    HapPolicy policy1;
+    policy1.permStateList.push_back(g_state7);
+    policy1.permStateList.push_back(g_state8);
+    policy1.permStateList.push_back(g_state9);
+
+    atManagerService_->features_.clear();
+    atManagerService_->features_.insert("service_test_feature");
+    atManagerService_->features_.insert("service_test_feature666");
+
+    atManagerService_->FilterPermFeature(true, policy1);
+    EXPECT_EQ(INDEX_TWO, policy1.permStateList.size());
+    atManagerService_->features_.clear();
+}
+
+/**
+ * @tc.name: FilterPermFeatureTest006
+ * @tc.desc: Test InitHapToken with features_ not empty
+ * @tc.require:
+ * @tc.type: FUNC
+ */
+HWTEST_F(AccessTokenManagerServiceTest, FilterPermFeatureTest006, TestSize.Level1)
+{
+    atManagerService_->Initialize();
+    atManagerService_->featureFuture_.wait();
+    HapInfoParams info = {
+        .userID = USER_ID,
+        .bundleName = "FilterPermFeatureTest006",
+        .instIndex = INST_INDEX,
+        .dlpType = static_cast<int>(HapDlpType::DLP_COMMON),
+        .apiVersion = API_VERSION_9,
+        .isSystemApp = true,
+        .appIDDesc = "FilterPermFeatureTest006"
+    };
+
+    HapPolicy policy = {
+        .apl = APL_SYSTEM_CORE,
+        .domain = "domain",
+        .permStateList = {g_state7, g_state8, g_state9}
+    };
+
+    atManagerService_->features_.clear();
+    atManagerService_->features_.insert("service_test_feature");
+
+    HapInfoParcel infoParCel;
+    infoParCel.hapInfoParameter = info;
+    HapPolicyParcel policyParcel;
+    policyParcel.hapPolicy = policy;
+
+    AccessTokenIDEx tokenIdEx;
+    HapInfoCheckResultIdl result;
+    uint64_t fullTokenId;
+    int32_t ret = atManagerService_->InitHapToken(infoParCel, policyParcel, fullTokenId, result);
+    tokenIdEx.tokenIDEx = fullTokenId;
+    ASSERT_EQ(RET_SUCCESS, ret);
+
+    std::vector<PermissionStatusParcel> reqPermList;
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->GetReqPermissions(tokenIdEx.tokenIdExStruct.tokenID, reqPermList, true));
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->GetReqPermissions(tokenIdEx.tokenIdExStruct.tokenID, reqPermList, false));
+
+    EXPECT_EQ(INDEX_TWO, reqPermList.size());
+
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->DeleteToken(tokenIdEx.tokenIdExStruct.tokenID, false));
+    atManagerService_->features_.clear();
+}
+
+/**
+ * @tc.name: FilterPermFeatureTest007
+ * @tc.desc: Test AllocHapToken with features_ not empty
+ * @tc.require:
+ * @tc.type: FUNC
+ */
+HWTEST_F(AccessTokenManagerServiceTest, FilterPermFeatureTest007, TestSize.Level2)
+{
+    atManagerService_->Initialize();
+    atManagerService_->featureFuture_.wait();
+    HapInfoParams info = {
+        .userID = USER_ID,
+        .bundleName = "FilterPermFeatureTest007",
+        .instIndex = INST_INDEX,
+        .dlpType = static_cast<int>(HapDlpType::DLP_COMMON),
+        .apiVersion = API_VERSION_9,
+        .isSystemApp = true,
+        .appIDDesc = "FilterPermFeatureTest007"
+    };
+
+    HapPolicy policy = {
+        .apl = APL_SYSTEM_CORE,
+        .domain = "domain",
+        .permStateList = {g_state7, g_state8, g_state9}
+    };
+
+    atManagerService_->features_.clear();
+
+    HapInfoParcel infoParCel;
+    infoParCel.hapInfoParameter = info;
+    HapPolicyParcel policyParcel;
+    policyParcel.hapPolicy = policy;
+
+    AccessTokenIDEx tokenIdEx;
+    uint64_t fullTokenId;
+    atManagerService_->AllocHapToken(infoParCel, policyParcel, fullTokenId);
+    tokenIdEx.tokenIDEx = fullTokenId;
+    ASSERT_NE(0, tokenIdEx.tokenIDEx);
+
+    std::vector<PermissionStatusParcel> reqPermList;
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->GetReqPermissions(tokenIdEx.tokenIdExStruct.tokenID, reqPermList, true));
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->GetReqPermissions(tokenIdEx.tokenIdExStruct.tokenID, reqPermList, false));
+
+    EXPECT_EQ(INDEX_ONE, reqPermList.size());
+
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->DeleteToken(tokenIdEx.tokenIdExStruct.tokenID, false));
+    atManagerService_->features_.clear();
+}
+
+/**
+ * @tc.name: FilterPermFeatureTest008
+ * @tc.desc: Test UpdateHapToken with features_ not empty
+ * @tc.require:
+ * @tc.type: FUNC
+ */
+HWTEST_F(AccessTokenManagerServiceTest, FilterPermFeatureTest008, TestSize.Level1)
+{
+    atManagerService_->Initialize();
+    atManagerService_->featureFuture_.wait();
+    HapInfoParams info = {
+        .userID = USER_ID,
+        .bundleName = "FilterPermFeatureTest008",
+        .instIndex = INST_INDEX,
+        .dlpType = static_cast<int>(HapDlpType::DLP_COMMON),
+        .apiVersion = API_VERSION_9,
+        .isSystemApp = true,
+        .appIDDesc = "FilterPermFeatureTest008"
+    };
+
+    HapPolicy policy = {
+        .apl = APL_SYSTEM_CORE,
+        .domain = "domain",
+        .permStateList = {g_state7, g_state8, g_state9}
+    };
+
+    atManagerService_->features_.clear();
+    atManagerService_->features_.insert("service_test_feature");
+
+    HapInfoParcel infoParCel;
+    infoParCel.hapInfoParameter = info;
+    HapPolicyParcel policyParcel;
+    policyParcel.hapPolicy = policy;
+
+    AccessTokenIDEx tokenIdEx;
+    HapInfoCheckResultIdl result;
+    uint64_t fullTokenId;
+    int32_t ret = atManagerService_->InitHapToken(infoParCel, policyParcel, fullTokenId, result);
+    tokenIdEx.tokenIDEx = fullTokenId;
+    ASSERT_EQ(RET_SUCCESS, ret);
+
+    atManagerService_->features_.clear();
+    atManagerService_->features_.insert("service_test_feature");
+    atManagerService_->features_.insert("service_test_feature2");
+    UpdateHapInfoParamsIdl updateInfoParams = {
+        .appIDDesc = "FilterPermFeatureTest008",
+        .apiVersion = API_VERSION_9,
+        .isSystemApp = true,
+        .appDistributionType = "",
+    };
+    uint64_t fullTokenId2 = tokenIdEx.tokenIDEx;
+    EXPECT_EQ(RET_SUCCESS,
+        atManagerService_->UpdateHapToken(fullTokenId2, updateInfoParams, policyParcel, result));
+    tokenIdEx.tokenIDEx = fullTokenId2;
+
+    std::vector<PermissionStatusParcel> reqPermList;
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->GetReqPermissions(tokenIdEx.tokenIdExStruct.tokenID, reqPermList, true));
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->GetReqPermissions(tokenIdEx.tokenIdExStruct.tokenID, reqPermList, false));
+
+    EXPECT_EQ(INDEX_THREE, reqPermList.size());
+
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->DeleteToken(tokenIdEx.tokenIdExStruct.tokenID, false));
+    atManagerService_->features_.clear();
+}
+
+/**
+ * @tc.name: FilterPermFeatureTest009
+ * @tc.desc: Test UpdateHapToken with features_ not empty2
+ * @tc.require:
+ * @tc.type: FUNC
+ */
+HWTEST_F(AccessTokenManagerServiceTest, FilterPermFeatureTest009, TestSize.Level2)
+{
+    atManagerService_->Initialize();
+    atManagerService_->featureFuture_.wait();
+    HapInfoParams info = {
+        .userID = USER_ID,
+        .bundleName = "FilterPermFeatureTest009",
+        .instIndex = INST_INDEX,
+        .dlpType = static_cast<int>(HapDlpType::DLP_COMMON),
+        .apiVersion = API_VERSION_9,
+        .isSystemApp = true,
+        .appIDDesc = "FilterPermFeatureTest009"
+    };
+
+    HapPolicy policy = {
+        .apl = APL_SYSTEM_CORE,
+        .domain = "domain",
+        .permStateList = {g_state7, g_state8, g_state9}
+    };
+
+    atManagerService_->features_.clear();
+    atManagerService_->features_.insert("service_test_feature");
+
+    HapInfoParcel infoParCel;
+    infoParCel.hapInfoParameter = info;
+    HapPolicyParcel policyParcel;
+    policyParcel.hapPolicy = policy;
+
+    AccessTokenIDEx tokenIdEx;
+    HapInfoCheckResultIdl result;
+    uint64_t fullTokenId;
+    int32_t ret = atManagerService_->InitHapToken(infoParCel, policyParcel, fullTokenId, result);
+    tokenIdEx.tokenIDEx = fullTokenId;
+    ASSERT_EQ(RET_SUCCESS, ret);
+
+    atManagerService_->features_.clear();
+    atManagerService_->features_.insert("service_test_feature9999999");
+    atManagerService_->features_.insert("service_test_feature2");
+    UpdateHapInfoParamsIdl updateInfoParams = {
+        .appIDDesc = "FilterPermFeatureTest009",
+        .apiVersion = API_VERSION_9,
+        .isSystemApp = true,
+        .appDistributionType = "",
+    };
+    uint64_t fullTokenId2 = tokenIdEx.tokenIDEx;
+    EXPECT_EQ(RET_SUCCESS,
+        atManagerService_->UpdateHapToken(fullTokenId2, updateInfoParams, policyParcel, result));
+    tokenIdEx.tokenIDEx = fullTokenId2;
+
+    std::vector<PermissionStatusParcel> reqPermList;
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->GetReqPermissions(tokenIdEx.tokenIdExStruct.tokenID, reqPermList, true));
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->GetReqPermissions(tokenIdEx.tokenIdExStruct.tokenID, reqPermList, false));
+
+    EXPECT_EQ(INDEX_TWO, reqPermList.size());
+
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->DeleteToken(tokenIdEx.tokenIdExStruct.tokenID, false));
+    atManagerService_->features_.clear();
+}
+
+/**
+ * @tc.name: AccessTokenServiceCoverageTest001
+ * @tc.desc: AccessTokenServiceCoverageTest
+ * @tc.require:
+ * @tc.type: FUNC
+ */
+HWTEST_F(AccessTokenManagerServiceTest, AccessTokenServiceCoverageTest001, TestSize.Level4)
+{
+    atManagerService_->OnRemoveSystemAbility(RANDOM_TOKENID, "device_id");
+
+    PermissionDefParcel permissionDefResult;
+    int32_t ret = atManagerService_->GetDefPermission("", permissionDefResult);
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
+
+    ret = atManagerService_->GetDefPermission("PERMISSION_NOT_EXIST", permissionDefResult);
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_NOT_EXIST, ret);
+
+    ret = atManagerService_->GetDefPermission("ohos.permission.GRANT_SENSITIVE_PERMISSIONS", permissionDefResult);
+    EXPECT_EQ(RET_SUCCESS, ret);
+
+    PermissionListStateParcel parcel;
+    std::vector<PermissionListStateParcel> reqPermList(MAX_PERMISSION_SIZE + 1, parcel);
+    ret = atManagerService_->GetPermissionsStatus(RANDOM_TOKENID, reqPermList);
+    EXPECT_NE(RET_SUCCESS, ret);
 }
 } // namespace AccessToken
 } // namespace Security

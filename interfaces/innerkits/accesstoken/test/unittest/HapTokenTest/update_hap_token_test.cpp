@@ -2303,6 +2303,66 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenWithProvisionTypeTest008, TestSize.Le
 
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
 }
+
+/**
+ * @tc.name: UpdateHapTokenWithFeatureTest001
+ * @tc.desc: UpdateHapToken with Feature
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(UpdateHapTokenTest, UpdateHapTokenWithFeatureTest001, TestSize.Level0)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "UpdateHapTokenWithFeatureTest001");
+
+    AccessTokenIDEx tokenIdEx = {0};
+    PermissionStateFull infoManagerTestState1 = {
+        .permissionName = "ohos.permission.CAMERA",
+        .isGeneral = true,
+        .resDeviceID = {"local3"},
+        .grantStatus = {PermissionState::PERMISSION_GRANTED},
+        .grantFlags = {PermissionFlag::PERMISSION_USER_SET},
+    };
+    HapPolicyParams infoManagerTestPolicyPrams = {
+        .apl = APL_NORMAL,
+        .domain = "test.domain",
+        .permList = {},
+        .permStateList = {infoManagerTestState1}
+    };
+    HapInfoParams infoManagerTestInfoParms1 = {
+        .userID = 1,
+        .bundleName = "UpdateHapTokenWithFeatureTest001",
+        .instIndex = 0,
+        .dlpType = DLP_COMMON,
+        .appIDDesc = "test3",
+        .apiVersion = TestCommon::DEFAULT_API_VERSION
+    };
+
+    int32_t ret = AccessTokenKit::InitHapToken(infoManagerTestInfoParms1, infoManagerTestPolicyPrams, tokenIdEx);
+    ASSERT_EQ(ret, RET_SUCCESS);
+
+    UpdateHapInfoParams updateInfoParams = {
+        .appIDDesc = "test3",
+        .apiVersion = TestCommon::DEFAULT_API_VERSION,
+        .isSystemApp = false,
+        .appDistributionType = ""
+    };
+    PermissionStateFull infoManagerTestState2 = {
+        .permissionName = "ohos.permission.CAMERA",
+        .isGeneral = true,
+        .resDeviceID = {"local3"},
+        .grantStatus = {PermissionState::PERMISSION_GRANTED},
+        .grantFlags = {PermissionFlag::PERMISSION_USER_SET},
+        .feature = "test_feature"
+    };
+    HapPolicyParams infoManagerTestPolicyPrams2 = {
+        .apl = APL_NORMAL,
+        .domain = "test.domain",
+        .permList = {},
+        .permStateList = {infoManagerTestState2}
+    };
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::UpdateHapToken(tokenIdEx, updateInfoParams, infoManagerTestPolicyPrams2));
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenIdEx.tokenIdExStruct.tokenID));
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

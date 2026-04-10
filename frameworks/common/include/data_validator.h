@@ -67,6 +67,7 @@ public:
     static bool IsAclExtendedMapContentValid(const std::string& permissionName, const std::string& value);
     static bool IsAppProvisionTypeValid(const std::string& appProvisionType);
     static bool IsListSizeValid(uint32_t size);
+    static bool IsPermFeatureValid(const std::string& feature);
 
 private:
     const static int MAX_LENGTH = 256;
@@ -76,6 +77,7 @@ private:
     const static int32_t MAX_EXTENDED_MAP_SIZE = 512;
     const static int32_t MAX_VALUE_LENGTH = 1024;
     const static int32_t MAX_PERMISSION_LIST_SIZE = 1024;
+    const static int32_t MAX_FEATURE_SIZE = 128;
 };
 } // namespace AccessToken
 } // namespace Security

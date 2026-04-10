@@ -34,6 +34,7 @@ namespace Security {
 namespace AccessToken {
 namespace {
 const static uint32_t MAX_PERM_SIZE = 2048;
+const static int32_t INVALID_FEATURE_LENGTH = 130;
 }
 class CommonTest : public testing::Test  {
 public:
@@ -310,6 +311,19 @@ HWTEST_F(CommonTest, IsAppProvisionTypeValid002, TestSize.Level1)
     EXPECT_FALSE(DataValidator::IsAppProvisionTypeValid("release "));
     EXPECT_FALSE(DataValidator::IsAppProvisionTypeValid(" debug"));
     EXPECT_FALSE(DataValidator::IsAppProvisionTypeValid(" release"));
+}
+
+/*
+ * @tc.name: IsPermFeatureValid001
+ * @tc.desc: Test IsPermFeatureValid
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(CommonTest, IsPermFeatureValid001, TestSize.Level1)
+{
+    EXPECT_TRUE(DataValidator::IsPermFeatureValid(""));
+    EXPECT_TRUE(DataValidator::IsPermFeatureValid("aaaaa"));
+    EXPECT_FALSE(DataValidator::IsPermFeatureValid(std::string(INVALID_FEATURE_LENGTH, 'a')));
 }
 } // namespace AccessToken
 } // namespace Security

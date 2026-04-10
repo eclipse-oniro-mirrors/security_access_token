@@ -265,6 +265,15 @@ bool DataValidator::IsListSizeValid(uint32_t size)
     }
     return true;
 }
+
+bool DataValidator::IsPermFeatureValid(const std::string& feature)
+{
+    if (feature.size() > MAX_FEATURE_SIZE) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Feature size is invalid(%{public}d).", static_cast<int32_t>(feature.size()));
+        return false;
+    }
+    return true;
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

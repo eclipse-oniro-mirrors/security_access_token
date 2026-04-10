@@ -16,6 +16,7 @@
 #ifndef ACCESSTOKEN_MANAGER_SERVICE_H
 #define ACCESSTOKEN_MANAGER_SERVICE_H
 
+#include <future>
 #include <set>
 #include <string>
 #include <vector>
@@ -166,6 +167,13 @@ private:
         std::vector<AddInfo>& addInfoVec);
     void UpdateDatabaseAsync(const std::vector<DelInfo>& delInfoVec, const std::vector<AddInfo>& addInfoVec);
     void HandlePermDefUpdate(const std::map<int32_t, TokenIdInfo>& tokenIdAplMap);
+
+    void FilterPermFeature(bool isSystemApp, HapPolicy& policy);
+    void GetFeaturesConfig();
+    std::promise<void> featurePromise_;
+    std::future<void> featureFuture_ = featurePromise_.get_future();
+    std::unordered_set<std::string> features_;
+    bool isInitialize_ = false;
 
     std::mutex stateMutex_;
     ServiceRunningState state_;
