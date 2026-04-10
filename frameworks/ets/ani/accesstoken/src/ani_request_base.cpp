@@ -109,8 +109,8 @@ void RequestAsyncContextBase::FinishCallback()
         return;
     }
     bool isSameThread = IsCurrentThread(threadId_);
-    ani_option interopEnabled {"--interop=disable", nullptr};
-    ani_options aniArgs {1, &interopEnabled};
+    ani_option interopOption {"--interop=disable", nullptr};
+    ani_options aniArgs {1, &interopOption};
     ani_env* env = isSameThread ? env_ : GetCurrentEnv(vm_, aniArgs);
     if (env == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "GetCurrentEnv failed.");
@@ -154,8 +154,8 @@ void RequestAsyncContextBase::Clear()
         return;
     }
     bool isSameThread = IsCurrentThread(threadId_);
-    ani_option interopEnabled {"--interop=disable", nullptr};
-    ani_options aniArgs {1, &interopEnabled};
+    ani_option interopOption {"--interop=disable", nullptr};
+    ani_options aniArgs {1, &interopOption};
     ani_env* curEnv = isSameThread ? env_ : GetCurrentEnv(vm_, aniArgs);
     if (curEnv == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "GetCurrentEnv failed.");
