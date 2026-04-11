@@ -60,7 +60,7 @@ static constexpr const char* SEND_REQUEST_REPEAT_TIMES_KEY = "send_request_repea
 static constexpr const char* PERMISSION_FEATURES_CONFIG_FILE = "/etc/access_token/accesstoken_permission_features.json";
 static constexpr const char* FEATURES_KEY = "features";
 static constexpr const char* FEATURE_NAME_KEY = "name";
-constexpr int32_t MAX_FEATURE_SIZE = 128;
+constexpr int32_t MAX_FEATURE_SIZE = 64;
 #endif // CUSTOMIZATION_CONFIG_POLICY_ENABLE
 
 // native_token.json

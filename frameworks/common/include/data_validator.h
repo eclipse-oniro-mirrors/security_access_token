@@ -77,7 +77,7 @@ private:
     const static int32_t MAX_EXTENDED_MAP_SIZE = 512;
     const static int32_t MAX_VALUE_LENGTH = 1024;
     const static int32_t MAX_PERMISSION_LIST_SIZE = 1024;
-    const static int32_t MAX_FEATURE_SIZE = 128;
+    const static int32_t MAX_FEATURE_SIZE = 64;
 };
 } // namespace AccessToken
 } // namespace Security
