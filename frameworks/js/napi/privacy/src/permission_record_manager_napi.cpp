@@ -34,8 +34,10 @@ static constexpr int32_t ADD_PERMISSION_RECORD_MAX_PARAMS = 5;
 static constexpr int32_t ADD_PERMISSION_RECORD_MIN_PARAMS = 4;
 static constexpr int32_t GET_PERMISSION_RECORD_MAX_PARAMS = 2;
 static constexpr int32_t ON_OFF_MAX_PARAMS = 3;
-static constexpr int32_t START_STOP_MAX_PARAMS = 4;
+static constexpr int32_t START_STOP_MAX_PARAMS = 5;
 static constexpr int32_t START_STOP_MIN_PARAMS = 2;
+static constexpr int32_t START_STOP_THREE_PARAMS = 3;
+static constexpr int32_t START_STOP_FOUR_PARAMS = 4;
 static constexpr int32_t GET_PERMISSION_USED_TYPE_MAX_PARAMS = 2;
 static constexpr int32_t GET_PERMISSION_USED_TYPE_ONE_PARAMS = 1;
 static constexpr int32_t CHECK_PERMISSION_IN_USE_MAX_PARAMS = 1;
@@ -46,7 +48,6 @@ static constexpr int32_t MAX_PERMISSION_NAME_LENGTH = 256;
 static constexpr int32_t FOURTH_PARAM = 3;
 static constexpr int32_t FIFTH_PARAM = 4;
 static constexpr int32_t SET_PERMISSION_USED_TOGGLE_STATUS_PARAMS = 1;
-
 
 static int32_t GetJsErrorCode(int32_t errCode)
 {
@@ -155,6 +156,11 @@ static bool ParseAddPermissionFifthParam(const napi_env env, const napi_value& v
             }
 
             asyncContext.type = static_cast<PermissionUsedType>(type);
+        }
+        if (IsNeedParseProperty(env, value, "enhancedIdentity", property) &&
+            !ParseString(env, property, asyncContext.enhancedIdentity)) {
+            ParamResolveErrorThrow(env, "AddPermissionUsedRecordOptions:enhancedIdentity", "string");
+            return false;
         }
     } else if (typeValue == napi_function) {
         // callback
@@ -273,6 +279,52 @@ static bool ParseStartAndStopThirdParam(const napi_env env, const napi_value& va
     return true;
 }
 
+static bool ParseStartAndStopFourthParam(const napi_env env, const napi_value& value,
+    RecordManagerAsyncContext& asyncContext)
+{
+    napi_valuetype typeValue = napi_undefined;
+    NAPI_CALL_BASE(env, napi_typeof(env, value, &typeValue), false);
+    if (typeValue == napi_number) {
+        uint32_t usedType = 0;
+        if (!ParseUint32(env, value, usedType)) {
+            ParamResolveErrorThrow(env, "usedType", "number");
+            return false;
+        }
+
+        asyncContext.type = static_cast<PermissionUsedType>(usedType);
+        return true;
+    }
+    if (typeValue == napi_object) {
+        napi_value property = nullptr;
+        if (IsNeedParseProperty(env, value, "enhancedIdentity", property) &&
+            !ParseString(env, property, asyncContext.enhancedIdentity)) {
+            ParamResolveErrorThrow(env, "PermissionUsingOptions:enhancedIdentity", "string");
+            return false;
+        }
+        return true;
+    }
+    ParamResolveErrorThrow(env, "fourth param", "usedType or PermissionUsingOptions");
+    return false;
+}
+
+static bool ParseStartAndStopFifthParam(const napi_env env, const napi_value& value,
+    RecordManagerAsyncContext& asyncContext)
+{
+    napi_valuetype typeValue = napi_undefined;
+    NAPI_CALL_BASE(env, napi_typeof(env, value, &typeValue), false);
+    if (typeValue == napi_object) {
+        napi_value property = nullptr;
+        if (IsNeedParseProperty(env, value, "enhancedIdentity", property) &&
+            !ParseString(env, property, asyncContext.enhancedIdentity)) {
+            ParamResolveErrorThrow(env, "PermissionUsingOptions:enhancedIdentity", "string");
+            return false;
+        }
+        return true;
+    }
+    ParamResolveErrorThrow(env, "fifth param", "PermissionUsingOptions");
+    return false;
+}
+
 static bool ParseStartAndStopUsingPermission(
     const napi_env env, const napi_callback_info info, RecordManagerAsyncContext& asyncContext)
 {
@@ -301,11 +353,19 @@ static bool ParseStartAndStopUsingPermission(
         return false;
     }
 
-    if (argc == START_STOP_MAX_PARAMS - 1) {
+    if (argc == START_STOP_THREE_PARAMS) {
         // 2: the third paramter of argv, may be callback or pid
         if (!ParseStartAndStopThirdParam(env, argv[THIRD_PARAM], asyncContext)) {
             return false;
         }
+    } else if (argc == START_STOP_FOUR_PARAMS) {
+        // 2: the third paramter of argv is pid
+        if (!ParseInt32(env, argv[THIRD_PARAM], asyncContext.pid)) {
+            ParamResolveErrorThrow(env, "pid", "number");
+            return false;
+        }
+        // 3: the fourth parameter of argv, may be usedType, PermissionUsingOptions
+        return ParseStartAndStopFourthParam(env, argv[FOURTH_PARAM], asyncContext);
     } else if (argc == START_STOP_MAX_PARAMS) {
         // 2: the third paramter of argv is pid
         if (!ParseInt32(env, argv[THIRD_PARAM], asyncContext.pid)) {
@@ -313,7 +373,7 @@ static bool ParseStartAndStopUsingPermission(
             return false;
         }
 
-        // 3: the fourth paramter of argv is usedType
+        // 3: the fourth parameter of argv is usedType
         uint32_t usedType = 0;
         if (!ParseUint32(env, argv[FOURTH_PARAM], usedType)) {
             ParamResolveErrorThrow(env, "usedType", "number");
@@ -321,6 +381,8 @@ static bool ParseStartAndStopUsingPermission(
         }
 
         asyncContext.type = static_cast<PermissionUsedType>(usedType);
+        // 4: the fifth parameter of argv is PermissionUsingOptions
+        return ParseStartAndStopFifthParam(env, argv[FIFTH_PARAM], asyncContext);
     }
     return true;
 }
@@ -378,6 +440,11 @@ static void ConvertPermissionUsedRecord(napi_env env, napi_value value, const Pe
     napi_value nLastAccessDuration;
     NAPI_CALL_RETURN_VOID(env, napi_create_int64(env, permissionRecord.lastAccessDuration, &nLastAccessDuration));
     NAPI_CALL_RETURN_VOID(env, napi_set_named_property(env, value, "lastAccessDuration", nLastAccessDuration));
+
+    napi_value nEnhancedIdentity;
+    NAPI_CALL_RETURN_VOID(env, napi_create_string_utf8(env,
+        permissionRecord.enhancedIdentity.c_str(), NAPI_AUTO_LENGTH, &nEnhancedIdentity));
+    NAPI_CALL_RETURN_VOID(env, napi_set_named_property(env, value, "enhancedIdentity", nEnhancedIdentity));
 
     size_t index = 0;
     napi_value objAccessRecords;
@@ -565,6 +632,7 @@ static void AddPermissionUsedRecordExecute(napi_env env, void* data)
     info.successCount = asyncContext->successCount;
     info.failCount = asyncContext->failCount;
     info.type = asyncContext->type;
+    info.enhancedIdentity = asyncContext->enhancedIdentity;
     asyncContext->retCode = PrivacyKit::AddPermissionUsedRecord(info);
 }
 
@@ -762,7 +830,7 @@ static void StartUsingPermissionExecute(napi_env env, void* data)
     }
 
     asyncContext->retCode = PrivacyKit::StartUsingPermission(asyncContext->tokenId,
-        asyncContext->permissionName, asyncContext->pid, asyncContext->type);
+        asyncContext->permissionName, asyncContext->pid, asyncContext->type, asyncContext->enhancedIdentity);
 }
 
 static void StartUsingPermissionComplete(napi_env env, napi_status status, void* data)
@@ -828,7 +896,7 @@ static void StopUsingPermissionExecute(napi_env env, void* data)
     }
 
     asyncContext->retCode = PrivacyKit::StopUsingPermission(asyncContext->tokenId,
-        asyncContext->permissionName, asyncContext->pid);
+        asyncContext->permissionName, asyncContext->pid, asyncContext->enhancedIdentity);
 }
 
 static void StopUsingPermissionComplete(napi_env env, napi_status status, void* data)

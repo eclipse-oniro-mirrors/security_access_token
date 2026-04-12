@@ -210,6 +210,15 @@ bool DataValidator::IsPermissionUsedTypeValid(uint32_t type)
     return true;
 }
 
+bool DataValidator::IsEnhancedIdentityValid(const std::string& enhancedIdentity)
+{
+    if (enhancedIdentity.size() > MAX_ENHANCED_IDENTITY_LENGTH) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Invalid enhancedIdentity length(%{public}zu).", enhancedIdentity.size());
+        return false;
+    }
+    return true;
+}
+
 bool DataValidator::IsRemotePermissionUsedFlagValid(uint32_t flag)
 {
     return ((flag == FLAG_PERMISSION_USAGE_SUMMARY) || (flag == FLAG_PERMISSION_USAGE_DETAIL));

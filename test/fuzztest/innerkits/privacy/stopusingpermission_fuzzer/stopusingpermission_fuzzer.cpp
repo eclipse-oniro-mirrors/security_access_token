@@ -35,8 +35,10 @@ namespace OHOS {
         }
 
         FuzzedDataProvider provider(data, size);
+        std::string enhancedIdentity = provider.ConsumeRandomLengthString(
+            provider.ConsumeIntegralInRange<size_t>(0, MAX_ENHANCED_IDENTITY_LENGTH + 1));
         return PrivacyKit::StopUsingPermission(provider.ConsumeIntegral<AccessTokenID>(),
-            provider.ConsumeRandomLengthString(), provider.ConsumeIntegral<uint32_t>()) == 0;
+            provider.ConsumeRandomLengthString(), provider.ConsumeIntegral<int32_t>(), enhancedIdentity) == 0;
     }
 }
 

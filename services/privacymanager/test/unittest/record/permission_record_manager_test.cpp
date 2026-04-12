@@ -14,6 +14,7 @@
  */
 
 #include <cstdint>
+#include <set>
 #include <string>
 
 #include <gtest/gtest.h>
@@ -255,11 +256,8 @@ void PermissionRecordManagerTest::TearDown()
 
 class PermissionRecordManagerTestCb1 : public StateCustomizedCbk {
 public:
-    PermissionRecordManagerTestCb1()
-    {}
-
-    ~PermissionRecordManagerTestCb1()
-    {}
+    PermissionRecordManagerTestCb1() = default;
+    ~PermissionRecordManagerTestCb1() = default;
 
     void StateChangeNotify(AccessTokenID tokenId, bool isShow)
     {
@@ -267,24 +265,69 @@ public:
         isShow_ = isShow;
     }
 
-    void Stop()
-    {}
+    void Stop() {}
 
     bool isShow_ = true;
 };
 
 static PermissionUsedTypeInfo MakeInfo(AccessTokenID tokenId, int32_t pid, const std::string &permission,
-    PermissionUsedType type = PermissionUsedType::NORMAL_TYPE)
+    PermissionUsedType type = PermissionUsedType::NORMAL_TYPE, const std::string& enhancedIdentity = "")
 {
-    PermissionUsedTypeInfo info = {
-        .tokenId = tokenId,
-        .pid = pid,
-        .permissionName = permission,
-        .type = type
-    };
+    PermissionUsedTypeInfo info = {.tokenId = tokenId, .pid = pid, .permissionName = permission, .type = type};
+    info.enhancedIdentity = enhancedIdentity;
     return info;
 }
 
+static AccessTokenID GetBundleATokenId()
+{
+    return PrivacyTestCommon::GetHapTokenIdFromBundle(
+        g_InfoParms1.userID, g_InfoParms1.bundleName, g_InfoParms1.instIndex).tokenIdExStruct.tokenID;
+}
+
+static AddPermParamInfo MakeAddInfo(
+    AccessTokenID tokenId, const std::string& permissionName, const std::string& enhancedIdentity)
+{
+    AddPermParamInfo info = {.tokenId = tokenId, .permissionName = permissionName, .successCount = 1};
+    info.enhancedIdentity = enhancedIdentity;
+    return info;
+}
+
+static PermissionUsedResult QueryUsedRecords(AccessTokenID tokenId)
+{
+    PermissionUsedRequest request = {.tokenId = tokenId, .flag = FLAG_PERMISSION_USAGE_DETAIL};
+    PermissionUsedResult result;
+    EXPECT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().GetPermissionUsedRecords(request, result));
+    return result;
+}
+
+static std::vector<CurrUsingPermInfo> QueryCurrUsingPermInfos()
+{
+    std::vector<CurrUsingPermInfo> infoList;
+    PermissionRecordManager::GetInstance().GetCurrUsingPermInfo(infoList);
+    return infoList;
+}
+
+static int32_t CountCurrUsingRecords(
+    const std::vector<CurrUsingPermInfo>& infoList, AccessTokenID tokenId, const std::string& permissionName)
+{
+    int32_t matchedCount = 0;
+    for (const auto& info : infoList) {
+        matchedCount += (info.tokenID == tokenId && info.permissionName == permissionName);
+    }
+    return matchedCount;
+}
+
+static bool HasCurrUsingRecord(const std::vector<CurrUsingPermInfo>& infoList, AccessTokenID tokenId,
+    const std::string& permissionName, const std::string& enhancedIdentity, int32_t pid = -1)
+{
+    for (const auto& info : infoList) {
+        if (info.tokenID == tokenId && info.permissionName == permissionName &&
+            info.enhancedIdentity == enhancedIdentity && (pid == -1 || info.pid == pid)) {
+            return true;
+        }
+    }
+    return false;
+}
 /**
  * @tc.name: RegisterPermActiveStatusCallback001
  * @tc.desc: RegisterPermActiveStatusCallback with invalid parameter.
@@ -298,16 +341,12 @@ HWTEST_F(PermissionRecordManagerTest, RegisterPermActiveStatusCallback001, TestS
         GetSelfTokenID(), permList, nullptr, static_cast<int32_t>(CallbackRegisterType::TOKEN_ONLY)));
 }
 
-
 class PermActiveStatusChangeCallback : public PermActiveStatusChangeCallbackStub {
 public:
     PermActiveStatusChangeCallback() = default;
     virtual ~PermActiveStatusChangeCallback() = default;
 
-    bool AddDeathRecipient(const sptr<IRemoteObject::DeathRecipient>& deathRecipient) override
-    {
-        return true;
-    }
+    bool AddDeathRecipient(const sptr<IRemoteObject::DeathRecipient>& deathRecipient) override { return true; }
 
     void ActiveStatusChangeCallback(ActiveChangeResponse& result) override
     {
@@ -315,6 +354,7 @@ public:
         tokenId_ = result.tokenID;
         usedType_ = result.usedType;
         extra_ = result.extra;
+        enhancedIdentity_ = result.enhancedIdentity;
         GTEST_LOG_(INFO) << "ActiveStatusChange tokenid " << result.tokenID <<
             ", permission " << result.permissionName << ", type " << result.type;
     }
@@ -323,7 +363,18 @@ public:
     AccessTokenID tokenId_ = 0;
     PermissionUsedType usedType_ = NORMAL_TYPE;
     std::string extra_;
+    std::string enhancedIdentity_;
 };
+
+static sptr<PermActiveStatusChangeCallback> RegisterCameraActiveStatusCallback()
+{
+    std::vector<std::string> permList = {"ohos.permission.CAMERA"};
+    sptr<PermActiveStatusChangeCallback> callback = new (std::nothrow) PermActiveStatusChangeCallback();
+    EXPECT_NE(nullptr, callback);
+    EXPECT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().RegisterPermActiveStatusCallback(
+        GetSelfTokenID(), permList, callback->AsObject(), static_cast<int32_t>(CallbackRegisterType::TOKEN_ONLY)));
+    return callback;
+}
 
 /**
  * @tc.name: RegisterPermActiveStatusCallback002
@@ -2169,6 +2220,584 @@ HWTEST_F(PermissionRecordManagerTest, AddPermissionUsedRecordTest006, TestSize.L
 
     ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, PermissionRecordManager::GetInstance().AddPermissionUsedRecord(info));
     ASSERT_EQ(RET_SUCCESS, PrivacyKit::RemovePermissionUsedRecords(info.tokenId));
+}
+
+/**
+ * @tc.name: EnhancedIdentityHistoryRecord001
+ * @tc.desc: Verify records are queried separately by enhanced identity.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, EnhancedIdentityHistoryRecord001, TestSize.Level0)
+{
+    AccessTokenID tokenId = GetBundleATokenId();
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+
+    AddPermParamInfo agentInfo = MakeAddInfo(tokenId, "ohos.permission.READ_CONTACTS", "agentA");
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().AddPermissionUsedRecord(agentInfo));
+
+    AddPermParamInfo hostInfo = MakeAddInfo(tokenId, "ohos.permission.READ_CONTACTS", "");
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().AddPermissionUsedRecord(hostInfo));
+
+    PermissionUsedResult result = QueryUsedRecords(tokenId);
+    ASSERT_EQ(2, static_cast<int32_t>(result.bundleRecords.size()));
+
+    std::set<std::string> identities;
+    for (const auto& bundleRecord : result.bundleRecords) {
+        ASSERT_EQ(1, static_cast<int32_t>(bundleRecord.permissionRecords.size()));
+        identities.insert(bundleRecord.permissionRecords[0].enhancedIdentity);
+    }
+    EXPECT_TRUE(identities.count("") > 0);
+    EXPECT_TRUE(identities.count("agentA") > 0);
+}
+
+/**
+ * @tc.name: EnhancedIdentityStartStop001
+ * @tc.desc: Verify host and agent can use the same permission concurrently and stop independently.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, EnhancedIdentityStartStop001, TestSize.Level0)
+{
+    AccessTokenID tokenId = GetBundleATokenId();
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
+        MakeInfo(tokenId, PID, "ohos.permission.CAMERA", PermissionUsedType::NORMAL_TYPE, ""), CALLER_PID));
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
+        MakeInfo(tokenId, PID, "ohos.permission.CAMERA", PermissionUsedType::NORMAL_TYPE, "agentA"), CALLER_PID));
+
+    std::vector<CurrUsingPermInfo> infoList = QueryCurrUsingPermInfos();
+    EXPECT_EQ(2, CountCurrUsingRecords(infoList, tokenId, "ohos.permission.CAMERA"));
+    EXPECT_TRUE(HasCurrUsingRecord(infoList, tokenId, "ohos.permission.CAMERA", ""));
+    EXPECT_TRUE(HasCurrUsingRecord(infoList, tokenId, "ohos.permission.CAMERA", "agentA"));
+
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StopUsingPermission(
+        tokenId, PID, "ohos.permission.CAMERA", CALLER_PID, ""));
+
+    infoList = QueryCurrUsingPermInfos();
+    EXPECT_EQ(1, CountCurrUsingRecords(infoList, tokenId, "ohos.permission.CAMERA"));
+    EXPECT_FALSE(HasCurrUsingRecord(infoList, tokenId, "ohos.permission.CAMERA", ""));
+    EXPECT_TRUE(HasCurrUsingRecord(infoList, tokenId, "ohos.permission.CAMERA", "agentA"));
+
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StopUsingPermission(
+        tokenId, PID, "ohos.permission.CAMERA", CALLER_PID, "agentA"));
+}
+
+/**
+ * @tc.name: EnhancedIdentityValidation001
+ * @tc.desc: Verify enhanced identity length validation in add/start interfaces.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, EnhancedIdentityValidation001, TestSize.Level0)
+{
+    AccessTokenID tokenId = GetBundleATokenId();
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+
+    std::string maxIdentity(48, 'a'), invalidIdentity(49, 'b');
+
+    AddPermParamInfo addInfo;
+    addInfo.tokenId = tokenId;
+    addInfo.permissionName = "ohos.permission.READ_CONTACTS";
+    addInfo.successCount = 1;
+    addInfo.enhancedIdentity = maxIdentity;
+    EXPECT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().AddPermissionUsedRecord(addInfo));
+
+    addInfo.enhancedIdentity = invalidIdentity;
+    EXPECT_EQ(PrivacyError::ERR_PARAM_INVALID, PermissionRecordManager::GetInstance().AddPermissionUsedRecord(addInfo));
+
+    EXPECT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
+        MakeInfo(tokenId, PID, "ohos.permission.CAMERA", PermissionUsedType::NORMAL_TYPE, maxIdentity), CALLER_PID));
+    EXPECT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StopUsingPermission(
+        tokenId, PID, "ohos.permission.CAMERA", CALLER_PID, maxIdentity));
+    EXPECT_EQ(PrivacyError::ERR_PARAM_INVALID, PermissionRecordManager::GetInstance().StartUsingPermission(
+        MakeInfo(tokenId, PID, "ohos.permission.CAMERA", PermissionUsedType::NORMAL_TYPE, invalidIdentity),
+        CALLER_PID));
+    EXPECT_EQ(PrivacyError::ERR_PARAM_INVALID, PermissionRecordManager::GetInstance().StopUsingPermission(
+        tokenId, PID, "ohos.permission.CAMERA", CALLER_PID, invalidIdentity));
+
+    PermissionRecordManager::GetInstance().RemovePermissionUsedRecords(tokenId);
+}
+
+/**
+ * @tc.name: EnhancedIdentityStartStop002
+ * @tc.desc: Verify agent stop does not affect host while both are using the same permission.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, EnhancedIdentityStartStop002, TestSize.Level0)
+{
+    AccessTokenID tokenId = GetBundleATokenId();
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
+        MakeInfo(tokenId, PID, "ohos.permission.CAMERA", PermissionUsedType::NORMAL_TYPE, ""), CALLER_PID));
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
+        MakeInfo(tokenId, PID, "ohos.permission.CAMERA", PermissionUsedType::NORMAL_TYPE, "agentA"), CALLER_PID));
+
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StopUsingPermission(
+        tokenId, PID, "ohos.permission.CAMERA", CALLER_PID, "agentA"));
+
+    std::vector<CurrUsingPermInfo> infoList = QueryCurrUsingPermInfos();
+    EXPECT_EQ(1, CountCurrUsingRecords(infoList, tokenId, "ohos.permission.CAMERA"));
+    EXPECT_TRUE(HasCurrUsingRecord(infoList, tokenId, "ohos.permission.CAMERA", ""));
+    EXPECT_FALSE(HasCurrUsingRecord(infoList, tokenId, "ohos.permission.CAMERA", "agentA"));
+
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StopUsingPermission(
+        tokenId, PID, "ohos.permission.CAMERA", CALLER_PID, ""));
+}
+
+/**
+ * @tc.name: EnhancedIdentityCallback001
+ * @tc.desc: Verify active status callback carries the correct enhanced identity.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, EnhancedIdentityCallback001, TestSize.Level0)
+{
+    sptr<PermActiveStatusChangeCallback> callback = RegisterCameraActiveStatusCallback();
+    AccessTokenID tokenId = GetBundleATokenId();
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
+        MakeInfo(tokenId, PID, "ohos.permission.CAMERA", PermissionUsedType::NORMAL_TYPE, "agentA"), CALLER_PID));
+    usleep(500000); // 500000us = 0.5s
+    EXPECT_EQ(PERM_ACTIVE_IN_BACKGROUND, callback->type_);
+    EXPECT_EQ(tokenId, callback->tokenId_);
+    EXPECT_EQ("agentA", callback->enhancedIdentity_);
+
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StopUsingPermission(
+        tokenId, PID, "ohos.permission.CAMERA", CALLER_PID, "agentA"));
+    usleep(500000); // 500000us = 0.5s
+    EXPECT_EQ(PERM_INACTIVE, callback->type_);
+    EXPECT_EQ("agentA", callback->enhancedIdentity_);
+
+    EXPECT_EQ(RET_SUCCESS,
+        PermissionRecordManager::GetInstance().UnRegisterPermActiveStatusCallback(callback->AsObject()));
+}
+
+/**
+ * @tc.name: EnhancedIdentityCallback002
+ * @tc.desc: Verify active status callback returns empty enhanced identity for host.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, EnhancedIdentityCallback002, TestSize.Level0)
+{
+    sptr<PermActiveStatusChangeCallback> callback = RegisterCameraActiveStatusCallback();
+    AccessTokenID tokenId = GetBundleATokenId();
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
+        MakeInfo(tokenId, PID, "ohos.permission.CAMERA", PermissionUsedType::NORMAL_TYPE, ""), CALLER_PID));
+    usleep(500000); // 500000us = 0.5s
+    EXPECT_EQ(PERM_ACTIVE_IN_BACKGROUND, callback->type_);
+    EXPECT_TRUE(callback->enhancedIdentity_.empty());
+
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StopUsingPermission(
+        tokenId, PID, "ohos.permission.CAMERA", CALLER_PID, ""));
+    usleep(500000); // 500000us = 0.5s
+    EXPECT_EQ(PERM_INACTIVE, callback->type_);
+    EXPECT_TRUE(callback->enhancedIdentity_.empty());
+
+    EXPECT_EQ(RET_SUCCESS,
+        PermissionRecordManager::GetInstance().UnRegisterPermActiveStatusCallback(callback->AsObject()));
+}
+
+/**
+ * @tc.name: StartRecordCleanupCallback001
+ * @tc.desc: Verify token-based cleanup keeps legacy inactive callback behavior without enhanced identity.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, StartRecordCleanupCallback001, TestSize.Level0)
+{
+    sptr<PermActiveStatusChangeCallback> callback = RegisterCameraActiveStatusCallback();
+    AccessTokenID tokenId = GetBundleATokenId();
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
+        MakeInfo(tokenId, PID, "ohos.permission.CAMERA", PermissionUsedType::NORMAL_TYPE, ""), CALLER_PID));
+    usleep(500000); // 500000us = 0.5s
+    ASSERT_EQ(PERM_ACTIVE_IN_BACKGROUND, callback->type_);
+
+    PermissionRecordManager::GetInstance().RemoveRecordFromStartListByToken(tokenId);
+    usleep(500000); // 500000us = 0.5s
+    EXPECT_EQ(PERM_INACTIVE, callback->type_);
+    EXPECT_TRUE(callback->enhancedIdentity_.empty());
+
+    std::vector<CurrUsingPermInfo> infoList = QueryCurrUsingPermInfos();
+    EXPECT_FALSE(HasCurrUsingRecord(infoList, tokenId, "ohos.permission.CAMERA", ""));
+
+    EXPECT_EQ(RET_SUCCESS,
+        PermissionRecordManager::GetInstance().UnRegisterPermActiveStatusCallback(callback->AsObject()));
+}
+
+/**
+ * @tc.name: EnhancedIdentityStartStop003
+ * @tc.desc: Verify duplicated start with the same enhanced identity is rejected.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, EnhancedIdentityStartStop003, TestSize.Level0)
+{
+    AccessTokenID tokenId = GetBundleATokenId();
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
+        MakeInfo(tokenId, PID, "ohos.permission.CAMERA", PermissionUsedType::NORMAL_TYPE, "agentA"), CALLER_PID));
+    ASSERT_EQ(PrivacyError::ERR_PERMISSION_ALREADY_START_USING,
+        PermissionRecordManager::GetInstance().StartUsingPermission(
+            MakeInfo(tokenId, PID, "ohos.permission.CAMERA", PermissionUsedType::NORMAL_TYPE, "agentA"),
+            CALLER_PID));
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
+        MakeInfo(tokenId, PID, "ohos.permission.CAMERA", PermissionUsedType::NORMAL_TYPE, "agentB"), CALLER_PID));
+
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StopUsingPermission(
+        tokenId, PID, "ohos.permission.CAMERA", CALLER_PID, "agentA"));
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StopUsingPermission(
+        tokenId, PID, "ohos.permission.CAMERA", CALLER_PID, "agentB"));
+}
+
+/**
+ * @tc.name: EnhancedIdentityStartStop004
+ * @tc.desc: Verify stopping a non-existent enhanced identity returns not start using.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, EnhancedIdentityStartStop004, TestSize.Level0)
+{
+    AccessTokenID tokenId = GetBundleATokenId();
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
+        MakeInfo(tokenId, PID, "ohos.permission.CAMERA", PermissionUsedType::NORMAL_TYPE, "agentA"), CALLER_PID));
+    ASSERT_EQ(PrivacyError::ERR_PERMISSION_NOT_START_USING,
+        PermissionRecordManager::GetInstance().StopUsingPermission(
+            tokenId, PID, "ohos.permission.CAMERA", CALLER_PID, ""));
+    ASSERT_EQ(PrivacyError::ERR_PERMISSION_NOT_START_USING,
+        PermissionRecordManager::GetInstance().StopUsingPermission(
+            tokenId, PID, "ohos.permission.CAMERA", CALLER_PID, "agentB"));
+
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StopUsingPermission(
+        tokenId, PID, "ohos.permission.CAMERA", CALLER_PID, "agentA"));
+}
+
+/**
+ * @tc.name: EnhancedIdentityHistoryRecord005
+ * @tc.desc: Verify records in the same minute are not merged across different enhanced identities.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, EnhancedIdentityHistoryRecord005, TestSize.Level0)
+{
+    AccessTokenID tokenId = GetBundleATokenId();
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+
+    AddPermParamInfo info = MakeAddInfo(tokenId, "ohos.permission.READ_CONTACTS", "agentA");
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().AddPermissionUsedRecord(info));
+    info.enhancedIdentity = "agentB";
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().AddPermissionUsedRecord(info));
+
+    PermissionUsedResult result = QueryUsedRecords(tokenId);
+    ASSERT_EQ(2, static_cast<int32_t>(result.bundleRecords.size()));
+
+    std::set<std::string> identities;
+    for (const auto& bundleRecord : result.bundleRecords) {
+        ASSERT_EQ(1, static_cast<int32_t>(bundleRecord.permissionRecords.size()));
+        identities.insert(bundleRecord.permissionRecords[0].enhancedIdentity);
+        EXPECT_EQ(1, bundleRecord.permissionRecords[0].accessCount);
+    }
+    EXPECT_TRUE(identities.count("agentA") > 0);
+    EXPECT_TRUE(identities.count("agentB") > 0);
+}
+
+/**
+ * @tc.name: EnhancedIdentityHistoryRecord007
+ * @tc.desc: Verify BuildLocalRecordResults skips records when bundle creation fails.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, EnhancedIdentityHistoryRecord007, TestSize.Level0)
+{
+    GenericValues value;
+    value.Put(PrivacyFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(INVALID_TOKENID));
+    value.Put(PrivacyFiledConst::FIELD_OP_CODE, Constant::OP_MICROPHONE);
+    value.Put(PrivacyFiledConst::FIELD_STATUS, PERM_ACTIVE_IN_FOREGROUND);
+    value.Put(PrivacyFiledConst::FIELD_TIMESTAMP, 1000);
+    value.Put(PrivacyFiledConst::FIELD_ACCESS_DURATION, 1);
+    value.Put(PrivacyFiledConst::FIELD_ACCESS_COUNT, 1);
+    value.Put(PrivacyFiledConst::FIELD_REJECT_COUNT, 0);
+    value.Put(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS, PERM_ACTIVE_IN_UNLOCKED);
+    value.Put(PrivacyFiledConst::FIELD_USED_TYPE, static_cast<int32_t>(PermissionUsedType::NORMAL_TYPE));
+    value.Put(PrivacyFiledConst::FIELD_ENHANCED_IDENTITY, "agentA");
+    BundleUsedRecord bundleRecord;
+    EXPECT_FALSE(PermissionRecordManager::GetInstance().CreateBundleUsedRecord(INVALID_TOKENID, bundleRecord));
+}
+
+/**
+ * @tc.name: EnhancedIdentityHistoryRecord008
+ * @tc.desc: Verify BuildLocalRecordResults keeps bundle but skips invalid permission record details.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, EnhancedIdentityHistoryRecord008, TestSize.Level0)
+{
+    AccessTokenID tokenId = GetBundleATokenId();
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+
+    GenericValues value;
+    value.Put(PrivacyFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
+    value.Put(PrivacyFiledConst::FIELD_OP_CODE, -1);
+    value.Put(PrivacyFiledConst::FIELD_STATUS, PERM_ACTIVE_IN_FOREGROUND);
+    value.Put(PrivacyFiledConst::FIELD_TIMESTAMP, 1001);
+    value.Put(PrivacyFiledConst::FIELD_ACCESS_DURATION, 1);
+    value.Put(PrivacyFiledConst::FIELD_ACCESS_COUNT, 1);
+    value.Put(PrivacyFiledConst::FIELD_REJECT_COUNT, 0);
+    value.Put(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS, PERM_ACTIVE_IN_UNLOCKED);
+    value.Put(PrivacyFiledConst::FIELD_USED_TYPE, static_cast<int32_t>(PermissionUsedType::NORMAL_TYPE));
+    value.Put(PrivacyFiledConst::FIELD_ENHANCED_IDENTITY, "agentA");
+    PermissionUsedRequest request = {.flag = FLAG_PERMISSION_USAGE_DETAIL};
+    PermissionUsedResult result;
+    std::map<std::string, BundleUsedRecord> tokenIdToBundleMap;
+    std::map<std::string, int32_t> tokenIdToCountMap;
+    const std::string bundleKey = std::to_string(tokenId) + "_agentA";
+
+    BundleUsedRecord bundleRecord;
+    ASSERT_TRUE(PermissionRecordManager::GetInstance().CreateBundleUsedRecord(tokenId, bundleRecord));
+    tokenIdToBundleMap[bundleKey] = bundleRecord;
+    tokenIdToCountMap[bundleKey] = 0;
+
+    EXPECT_FALSE(PermissionRecordManager::GetInstance().FillBundleUsedRecord(
+        value, request.flag, tokenIdToBundleMap, tokenIdToCountMap, result));
+    ASSERT_EQ(1, static_cast<int32_t>(tokenIdToBundleMap.size()));
+    EXPECT_TRUE(tokenIdToBundleMap[bundleKey].permissionRecords.empty());
+}
+
+/**
+ * @tc.name: EnhancedIdentityHistoryRecord009
+ * @tc.desc: Verify BuildLocalRecordResults reuses bundle for repeated bundleKey records.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, EnhancedIdentityHistoryRecord009, TestSize.Level0)
+{
+    AccessTokenID tokenId = GetBundleATokenId();
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+
+    GenericValues value1;
+    value1.Put(PrivacyFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
+    value1.Put(PrivacyFiledConst::FIELD_OP_CODE, Constant::OP_CAMERA);
+    value1.Put(PrivacyFiledConst::FIELD_STATUS, PERM_ACTIVE_IN_FOREGROUND);
+    value1.Put(PrivacyFiledConst::FIELD_TIMESTAMP, 1002);
+    value1.Put(PrivacyFiledConst::FIELD_ACCESS_DURATION, 1);
+    value1.Put(PrivacyFiledConst::FIELD_ACCESS_COUNT, 1);
+    value1.Put(PrivacyFiledConst::FIELD_REJECT_COUNT, 0);
+    value1.Put(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS, PERM_ACTIVE_IN_UNLOCKED);
+    value1.Put(PrivacyFiledConst::FIELD_USED_TYPE, static_cast<int32_t>(PermissionUsedType::NORMAL_TYPE));
+    value1.Put(PrivacyFiledConst::FIELD_ENHANCED_IDENTITY, "agentA");
+
+    GenericValues value2 = value1;
+    value2.Put(PrivacyFiledConst::FIELD_OP_CODE, Constant::OP_MICROPHONE);
+    value2.Put(PrivacyFiledConst::FIELD_TIMESTAMP, 1003);
+
+    PermissionUsedRequest request = {.flag = FLAG_PERMISSION_USAGE_DETAIL};
+    PermissionUsedResult result;
+    std::map<std::string, BundleUsedRecord> tokenIdToBundleMap;
+    std::map<std::string, int32_t> tokenIdToCountMap;
+    const std::string bundleKey = std::to_string(tokenId) + "_agentA";
+
+    BundleUsedRecord bundleRecord;
+    ASSERT_TRUE(PermissionRecordManager::GetInstance().CreateBundleUsedRecord(tokenId, bundleRecord));
+    tokenIdToBundleMap[bundleKey] = bundleRecord;
+    tokenIdToCountMap[bundleKey] = 0;
+
+    ASSERT_TRUE(PermissionRecordManager::GetInstance().FillBundleUsedRecord(
+        value1, request.flag, tokenIdToBundleMap, tokenIdToCountMap, result));
+    ASSERT_TRUE(PermissionRecordManager::GetInstance().FillBundleUsedRecord(
+        value2, request.flag, tokenIdToBundleMap, tokenIdToCountMap, result));
+
+    ASSERT_EQ(1, static_cast<int32_t>(tokenIdToBundleMap.size()));
+    EXPECT_EQ(2, tokenIdToCountMap[bundleKey]);
+    EXPECT_FALSE(tokenIdToBundleMap[bundleKey].permissionRecords.empty());
+}
+
+/**
+ * @tc.name: EnhancedIdentityStartStop005
+ * @tc.desc: Verify the same enhanced identity can be tracked independently across different pids.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, EnhancedIdentityStartStop005, TestSize.Level0)
+{
+    AccessTokenID tokenId = GetBundleATokenId();
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
+        MakeInfo(tokenId, TEST_PID_1, "ohos.permission.CAMERA", PermissionUsedType::NORMAL_TYPE, "agentA"),
+        CALLER_PID));
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
+        MakeInfo(tokenId, TEST_PID_2, "ohos.permission.CAMERA", PermissionUsedType::NORMAL_TYPE, "agentA"),
+        CALLER_PID));
+
+    std::vector<CurrUsingPermInfo> infoList = QueryCurrUsingPermInfos();
+    EXPECT_EQ(2, CountCurrUsingRecords(infoList, tokenId, "ohos.permission.CAMERA"));
+    EXPECT_TRUE(HasCurrUsingRecord(infoList, tokenId, "ohos.permission.CAMERA", "agentA", TEST_PID_1));
+    EXPECT_TRUE(HasCurrUsingRecord(infoList, tokenId, "ohos.permission.CAMERA", "agentA", TEST_PID_2));
+
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StopUsingPermission(
+        tokenId, TEST_PID_1, "ohos.permission.CAMERA", CALLER_PID, "agentA"));
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StopUsingPermission(
+        tokenId, TEST_PID_2, "ohos.permission.CAMERA", CALLER_PID, "agentA"));
+}
+
+/**
+ * @tc.name: EnhancedIdentityStartStop006
+ * @tc.desc: Verify host identity can be appended after an agent record already exists.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, EnhancedIdentityStartStop006, TestSize.Level0)
+{
+    AccessTokenID tokenId = GetBundleATokenId();
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
+        MakeInfo(tokenId, PID, "ohos.permission.CAMERA", PermissionUsedType::NORMAL_TYPE, "agentA"), CALLER_PID));
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
+        MakeInfo(tokenId, PID, "ohos.permission.CAMERA", PermissionUsedType::NORMAL_TYPE, ""), CALLER_PID));
+
+    std::vector<CurrUsingPermInfo> infoList = QueryCurrUsingPermInfos();
+    EXPECT_EQ(2, CountCurrUsingRecords(infoList, tokenId, "ohos.permission.CAMERA"));
+    EXPECT_TRUE(HasCurrUsingRecord(infoList, tokenId, "ohos.permission.CAMERA", "agentA"));
+    EXPECT_TRUE(HasCurrUsingRecord(infoList, tokenId, "ohos.permission.CAMERA", ""));
+
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StopUsingPermission(
+        tokenId, PID, "ohos.permission.CAMERA", CALLER_PID, ""));
+
+    infoList = QueryCurrUsingPermInfos();
+    EXPECT_EQ(1, CountCurrUsingRecords(infoList, tokenId, "ohos.permission.CAMERA"));
+    EXPECT_TRUE(HasCurrUsingRecord(infoList, tokenId, "ohos.permission.CAMERA", "agentA"));
+    EXPECT_FALSE(HasCurrUsingRecord(infoList, tokenId, "ohos.permission.CAMERA", ""));
+
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StopUsingPermission(
+        tokenId, PID, "ohos.permission.CAMERA", CALLER_PID, "agentA"));
+}
+
+/**
+ * @tc.name: EnhancedIdentityStartStop007
+ * @tc.desc: Verify duplicated host identity in the same identity group is rejected.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, EnhancedIdentityStartStop007, TestSize.Level0)
+{
+    AccessTokenID tokenId = GetBundleATokenId();
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
+        MakeInfo(tokenId, PID, "ohos.permission.CAMERA", PermissionUsedType::NORMAL_TYPE, "agentA"), CALLER_PID));
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
+        MakeInfo(tokenId, PID, "ohos.permission.CAMERA", PermissionUsedType::NORMAL_TYPE, ""), CALLER_PID));
+    ASSERT_EQ(PrivacyError::ERR_PERMISSION_ALREADY_START_USING,
+        PermissionRecordManager::GetInstance().StartUsingPermission(
+            MakeInfo(tokenId, PID, "ohos.permission.CAMERA", PermissionUsedType::NORMAL_TYPE, ""), CALLER_PID));
+
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StopUsingPermission(
+        tokenId, PID, "ohos.permission.CAMERA", CALLER_PID, ""));
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StopUsingPermission(
+        tokenId, PID, "ohos.permission.CAMERA", CALLER_PID, "agentA"));
+}
+
+/**
+ * @tc.name: EnhancedIdentityCleanup001
+ * @tc.desc: Verify token-based cleanup removes host and agent identities together.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, EnhancedIdentityCleanup001, TestSize.Level0)
+{
+    AccessTokenID tokenId = GetBundleATokenId();
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
+        MakeInfo(tokenId, PID, "ohos.permission.CAMERA", PermissionUsedType::NORMAL_TYPE, ""), CALLER_PID));
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
+        MakeInfo(tokenId, PID, "ohos.permission.CAMERA", PermissionUsedType::NORMAL_TYPE, "agentA"), CALLER_PID));
+
+    PermissionRecordManager::GetInstance().RemoveRecordFromStartListByToken(tokenId);
+
+    std::vector<CurrUsingPermInfo> infoList = QueryCurrUsingPermInfos();
+    EXPECT_EQ(0, CountCurrUsingRecords(infoList, tokenId, "ohos.permission.CAMERA"));
+    EXPECT_FALSE(HasCurrUsingRecord(infoList, tokenId, "ohos.permission.CAMERA", ""));
+    EXPECT_FALSE(HasCurrUsingRecord(infoList, tokenId, "ohos.permission.CAMERA", "agentA"));
+}
+
+/**
+ * @tc.name: EnhancedIdentityCleanup002
+ * @tc.desc: Verify pid-based cleanup only removes identities started by the target pid.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, EnhancedIdentityCleanup002, TestSize.Level0)
+{
+    AccessTokenID tokenId = GetBundleATokenId();
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
+        MakeInfo(tokenId, TEST_PID_1, "ohos.permission.CAMERA", PermissionUsedType::NORMAL_TYPE, ""),
+        CALLER_PID));
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
+        MakeInfo(tokenId, TEST_PID_1, "ohos.permission.CAMERA", PermissionUsedType::NORMAL_TYPE, "agentA"),
+        CALLER_PID));
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
+        MakeInfo(tokenId, TEST_PID_2, "ohos.permission.CAMERA", PermissionUsedType::NORMAL_TYPE, "agentB"),
+        CALLER_PID));
+
+    PermissionRecordManager::GetInstance().RemoveRecordFromStartListByPid(tokenId, TEST_PID_1);
+
+    std::vector<CurrUsingPermInfo> infoList = QueryCurrUsingPermInfos();
+    EXPECT_EQ(1, CountCurrUsingRecords(infoList, tokenId, "ohos.permission.CAMERA"));
+    EXPECT_FALSE(HasCurrUsingRecord(infoList, tokenId, "ohos.permission.CAMERA", "", TEST_PID_1));
+    EXPECT_FALSE(HasCurrUsingRecord(infoList, tokenId, "ohos.permission.CAMERA", "agentA", TEST_PID_1));
+    EXPECT_TRUE(HasCurrUsingRecord(infoList, tokenId, "ohos.permission.CAMERA", "agentB", TEST_PID_2));
+
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StopUsingPermission(
+        tokenId, TEST_PID_2, "ohos.permission.CAMERA", CALLER_PID, "agentB"));
+}
+
+/**
+ * @tc.name: EnhancedIdentityCleanup003
+ * @tc.desc: Verify callerPid cleanup removes all enhanced identities started by the same caller only.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, EnhancedIdentityCleanup003, TestSize.Level0)
+{
+    AccessTokenID tokenId = GetBundleATokenId();
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
+        MakeInfo(tokenId, TEST_PID_1, "ohos.permission.CAMERA", PermissionUsedType::NORMAL_TYPE, ""),
+        CALLER_PID));
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
+        MakeInfo(tokenId, TEST_PID_1, "ohos.permission.CAMERA", PermissionUsedType::NORMAL_TYPE, "agentA"),
+        CALLER_PID));
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
+        MakeInfo(tokenId, TEST_PID_2, "ohos.permission.CAMERA", PermissionUsedType::NORMAL_TYPE, "agentB"),
+        CALLER_PID2));
+
+    PermissionRecordManager::GetInstance().RemoveRecordFromStartListByCallerPid(CALLER_PID);
+
+    std::vector<CurrUsingPermInfo> infoList = QueryCurrUsingPermInfos();
+    EXPECT_EQ(1, CountCurrUsingRecords(infoList, tokenId, "ohos.permission.CAMERA"));
+    EXPECT_FALSE(HasCurrUsingRecord(infoList, tokenId, "ohos.permission.CAMERA", "", TEST_PID_1));
+    EXPECT_FALSE(HasCurrUsingRecord(infoList, tokenId, "ohos.permission.CAMERA", "agentA", TEST_PID_1));
+    EXPECT_TRUE(HasCurrUsingRecord(infoList, tokenId, "ohos.permission.CAMERA", "agentB", TEST_PID_2));
+
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StopUsingPermission(
+        tokenId, TEST_PID_2, "ohos.permission.CAMERA", CALLER_PID2, "agentB"));
 }
 
 /**

@@ -85,6 +85,7 @@ int32_t DataTranslator::TranslationGenericValuesIntoPermissionUsedRecord(const P
         return Constant::FAILURE;
     }
     permissionRecord.permissionName = permission;
+    permissionRecord.enhancedIdentity = inGenericValues.GetString(PrivacyFiledConst::FIELD_ENHANCED_IDENTITY);
 
     int64_t timestamp = inGenericValues.GetInt64(PrivacyFiledConst::FIELD_TIMESTAMP);
     int32_t type = inGenericValues.GetInt(PrivacyFiledConst::FIELD_USED_TYPE);

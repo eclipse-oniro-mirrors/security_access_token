@@ -19,6 +19,7 @@
 #include <thread>
 #include <vector>
 
+#include "add_perm_param_info.h"
 #include "accesstoken_fuzzdata.h"
 #include "accesstoken_kit.h"
 #include "fuzzer/FuzzedDataProvider.h"
@@ -69,6 +70,8 @@ void AddPermissionUsedRecordStubFuzzTest(FuzzedDataProvider &provider)
     infoParcel.info.failCount = provider.ConsumeIntegral<int32_t>();
     infoParcel.info.type = static_cast<PermissionUsedType>(provider.ConsumeIntegralInRange<uint32_t>(
         0, static_cast<uint32_t>(PermissionUsedType::PERM_USED_TYPE_BUTT)));
+    infoParcel.info.enhancedIdentity = provider.ConsumeRandomLengthString(
+        provider.ConsumeIntegralInRange<size_t>(0, MAX_ENHANCED_IDENTITY_LENGTH + 1));
     if (!datas.WriteParcelable(&infoParcel)) {
         return;
     }
@@ -324,10 +327,15 @@ void StopUsingPermissionStubFuzzTest(FuzzedDataProvider &provider)
     if (!datas.WriteUint32(tokenID)) {
         return;
     }
+    if (!datas.WriteInt32(provider.ConsumeIntegral<int32_t>())) {
+        return;
+    }
     if (!datas.WriteString(permissionName)) {
         return;
     }
-    if (!datas.WriteInt32(provider.ConsumeIntegral<int32_t>())) {
+    std::string enhancedIdentity = provider.ConsumeRandomLengthString(
+        provider.ConsumeIntegralInRange<size_t>(0, MAX_ENHANCED_IDENTITY_LENGTH + 1));
+    if (!datas.WriteString(enhancedIdentity)) {
         return;
     }
 

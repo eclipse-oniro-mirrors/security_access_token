@@ -97,7 +97,7 @@ public:
      * @return error code, see privacy_error.h
      */
     static int32_t StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName, int32_t pid = -1,
-        PermissionUsedType type = PermissionUsedType::NORMAL_TYPE);
+        PermissionUsedType type = PermissionUsedType::NORMAL_TYPE, const std::string& enhancedIdentity = "");
     /**
      * @brief Input tokenID start using input permission and return by callback,
      *        only those services which has float window such as camera or
@@ -116,7 +116,8 @@ public:
      * @param permissionName permission nanme
      * @return error code, see privacy_error.h
      */
-    static int32_t StopUsingPermission(AccessTokenID tokenID, const std::string& permissionName, int32_t pid = -1);
+    static int32_t StopUsingPermission(AccessTokenID tokenID, const std::string& permissionName, int32_t pid = -1,
+        const std::string& enhancedIdentity = "");
     /**
      * @brief Input bundleName start using input permission.
      * @param bundleName bundle name

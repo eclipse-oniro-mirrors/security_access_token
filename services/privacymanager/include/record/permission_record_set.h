@@ -31,7 +31,7 @@ using
 class PermissionRecordSet {
 public:
     static void GetInActiveUniqueRecord(const std::set<ContinuousPermissionRecord>& recordList,
-    const std::vector<ContinuousPermissionRecord>& removedList, std::vector<ContinuousPermissionRecord>& retList);
+        std::set<ContinuousPermissionRecord>& removedList);
     static void GetUnusedCameraRecords(const std::set<ContinuousPermissionRecord>& recordList,
         const std::vector<ContinuousPermissionRecord>& removedList, std::vector<ContinuousPermissionRecord>& retList);
     static void RemoveByKey(std::set<ContinuousPermissionRecord>& recordList,

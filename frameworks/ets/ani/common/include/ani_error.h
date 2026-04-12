@@ -64,6 +64,8 @@ public:
     static int32_t GetStsErrorCode(int32_t errCode);
     static bool ValidateTokenIDWithThrowError(ani_env* env, AccessTokenID tokenID);
     static bool ValidatePermissionWithThrowError(ani_env* env, const std::string& permission);
+    static bool ValidateEnhancedIdentityWithThrowError(
+        ani_env* env, const std::string& enhancedIdentity, const std::string& extendMsg);
     static bool ValidatePermissionFlagWithThrowError(ani_env* env, uint32_t flag);
 
 private:

@@ -17,6 +17,8 @@
 #include "permission_record.h"
 #include "privacy_field_const.h"
 
+#include <algorithm>
+
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
@@ -31,6 +33,7 @@ void PermissionRecord::TranslationIntoGenericValues(const PermissionRecord& reco
     values.Put(PrivacyFiledConst::FIELD_ACCESS_COUNT, record.accessCount);
     values.Put(PrivacyFiledConst::FIELD_REJECT_COUNT, record.rejectCount);
     values.Put(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS, record.lockScreenStatus);
+    values.Put(PrivacyFiledConst::FIELD_ENHANCED_IDENTITY, record.enhancedIdentity);
 }
 
 void PermissionRecord::TranslationIntoPermissionRecord(const GenericValues& values, PermissionRecord& record)
@@ -47,6 +50,7 @@ void PermissionRecord::TranslationIntoPermissionRecord(const GenericValues& valu
     int32_t lockScreenStatus = values.GetInt(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS);
     record.lockScreenStatus = lockScreenStatus == VariantValue::DEFAULT_VALUE ?
         LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED : lockScreenStatus;
+    record.enhancedIdentity = values.GetString(PrivacyFiledConst::FIELD_ENHANCED_IDENTITY);
 }
 
 bool ContinuousPermissionRecord::IsPidValid(int32_t pid)
@@ -58,6 +62,8 @@ bool ContinuousPermissionRecord::operator < (const ContinuousPermissionRecord& o
 {
     if (tokenId != other.tokenId) {
         return tokenId < other.tokenId;
+    } else if (enhancedIdentity != other.enhancedIdentity) {
+        return enhancedIdentity < other.enhancedIdentity;
     } else if (opCode != other.opCode) {
         return opCode < other.opCode;
     } else if (pid != other.pid) {
@@ -78,9 +84,14 @@ uint64_t ContinuousPermissionRecord::GetTokenIdAndPid() const
     return ((uint64_t)tmpPid << 32) | ((uint64_t)tokenId & 0xFFFFFFFF); // 32: bit
 }
 
-bool ContinuousPermissionRecord::IsEqualRecord(const ContinuousPermissionRecord& record) const
+bool ContinuousPermissionRecord::IsEqualBasicRecord(const ContinuousPermissionRecord& record) const
 {
     return IsEqualTokenIdAndPid(record) && IsEqualPermCode(record) && IsEqualCallerPid(record);
+}
+
+bool ContinuousPermissionRecord::IsEqualRecord(const ContinuousPermissionRecord& record) const
+{
+    return IsEqualBasicRecord(record) && enhancedIdentity == record.enhancedIdentity;
 }
 
 bool ContinuousPermissionRecord::IsEqualTokenId(const ContinuousPermissionRecord& record) const

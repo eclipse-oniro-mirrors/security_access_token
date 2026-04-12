@@ -32,6 +32,7 @@ namespace AccessToken {
 namespace {
 constexpr const char* FIELD_COUNT_NUMBER = "count";
 constexpr const char* INTEGER_STR = " integer not null,";
+constexpr const char* TEXT_STR = " text not null,";
 constexpr const char* CREATE_TABLE_STR = "create table if not exists ";
 constexpr const char* WHERE_1_STR = " where 1 = 1";
 constexpr const size_t TOKEN_ID_LENGTH = 11;
@@ -86,6 +87,10 @@ void PermissionUsedRecordDb::OnUpdate(int32_t version)
         case DataBaseVersion::VERISION_5: // 5->6
             CreatePermissionDisablePolicyTable();
             [[fallthrough]];
+        case DataBaseVersion::VERISION_6: // 6->7
+            InsertEnhancedIdentityColumn();
+            UpdatePermissionRecordTablePrimaryKey();
+            [[fallthrough]];
         default:
             return;
     }
@@ -103,7 +108,8 @@ void PermissionUsedRecordDb::InitPermRecordTableInfo(SqliteTable& permissionReco
         PrivacyFiledConst::FIELD_ACCESS_COUNT,
         PrivacyFiledConst::FIELD_REJECT_COUNT,
         PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS,
-        PrivacyFiledConst::FIELD_USED_TYPE
+        PrivacyFiledConst::FIELD_USED_TYPE,
+        PrivacyFiledConst::FIELD_ENHANCED_IDENTITY
     };
 }
 
@@ -684,6 +690,8 @@ int32_t PermissionUsedRecordDb::CreatePermissionRecordTable() const
         .append(INTEGER_STR)
         .append(PrivacyFiledConst::FIELD_USED_TYPE)
         .append(INTEGER_STR)
+        .append(PrivacyFiledConst::FIELD_ENHANCED_IDENTITY)
+        .append(TEXT_STR)
         .append("primary key(")
         .append(PrivacyFiledConst::FIELD_TOKEN_ID)
         .append(",")
@@ -694,6 +702,8 @@ int32_t PermissionUsedRecordDb::CreatePermissionRecordTable() const
         .append(PrivacyFiledConst::FIELD_TIMESTAMP)
         .append(",")
         .append(PrivacyFiledConst::FIELD_USED_TYPE)
+        .append(",")
+        .append(PrivacyFiledConst::FIELD_ENHANCED_IDENTITY)
         .append("))");
     return ExecuteSql(sql);
 }
@@ -811,6 +821,30 @@ int32_t PermissionUsedRecordDb::InsertPermissionUsedTypeColumn() const
     return insertResult;
 }
 
+int32_t PermissionUsedRecordDb::InsertEnhancedIdentityColumn() const
+{
+    auto it = dataTypeToSqlTable_.find(DataType::PERMISSION_RECORD);
+    if (it == dataTypeToSqlTable_.end()) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Table type not found.");
+        return PrivacyError::ERR_DATABASE_OPERATE_FAILED;
+    }
+    std::string checkSql = "SELECT 1 FROM " + it->second.tableName_ + " WHERE " +
+        PrivacyFiledConst::FIELD_ENHANCED_IDENTITY + "=''";
+    int32_t checkResult = ExecuteSql(checkSql);
+    LOGI(PRI_DOMAIN, PRI_TAG, "Check result:%{public}d", checkResult);
+    if (checkResult != -1) {
+        return SUCCESS;
+    }
+
+    std::string sql = "alter table ";
+    sql.append(it->second.tableName_ + " add column ")
+        .append(PrivacyFiledConst::FIELD_ENHANCED_IDENTITY)
+        .append(" text default ''");
+    int32_t insertResult = ExecuteSql(sql);
+    LOGI(PRI_DOMAIN, PRI_TAG, "Insert column result:%{public}d", insertResult);
+    return insertResult;
+}
+
 static void CreateNewPermissionRecordTable(std::string& newTableName, std::string& createNewSql)
 {
     createNewSql = CREATE_TABLE_STR;
@@ -833,6 +867,8 @@ static void CreateNewPermissionRecordTable(std::string& newTableName, std::strin
         .append(INTEGER_STR)
         .append(PrivacyFiledConst::FIELD_USED_TYPE)
         .append(INTEGER_STR)
+        .append(PrivacyFiledConst::FIELD_ENHANCED_IDENTITY)
+        .append(TEXT_STR)
         .append("primary key(")
         .append(PrivacyFiledConst::FIELD_TOKEN_ID)
         .append(",")
@@ -843,6 +879,8 @@ static void CreateNewPermissionRecordTable(std::string& newTableName, std::strin
         .append(PrivacyFiledConst::FIELD_TIMESTAMP)
         .append(",")
         .append(PrivacyFiledConst::FIELD_USED_TYPE)
+        .append(",")
+        .append(PrivacyFiledConst::FIELD_ENHANCED_IDENTITY)
         .append("))");
 }
 

@@ -250,7 +250,7 @@ int32_t PrivacyManagerService::StartUsingPermissionCallback(const PermissionUsed
 }
 
 int32_t PrivacyManagerService::StopUsingPermission(
-    AccessTokenID tokenId, int32_t pid, const std::string& permissionName)
+    AccessTokenID tokenId, int32_t pid, const std::string& permissionName, const std::string& enhancedIdentity)
 {
     uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
     if ((AccessTokenKit::GetTokenTypeFlag(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
@@ -260,10 +260,11 @@ int32_t PrivacyManagerService::StopUsingPermission(
         return PrivacyError::ERR_PERMISSION_DENIED;
     }
 
-    LOGI(PRI_DOMAIN, PRI_TAG, "Id: %{public}u, pid: %{public}d, perm: %{public}s",
-        tokenId, pid, permissionName.c_str());
+    LOGI(PRI_DOMAIN, PRI_TAG, "Id: %{public}u, pid: %{public}d, perm: %{public}s, enhancedIdentity: %{public}s",
+        tokenId, pid, permissionName.c_str(), enhancedIdentity.c_str());
     int32_t callerPid = IPCSkeleton::GetCallingPid();
-    int32_t ret = PermissionRecordManager::GetInstance().StopUsingPermission(tokenId, pid, permissionName, callerPid);
+    int32_t ret = PermissionRecordManager::GetInstance().StopUsingPermission(
+        tokenId, pid, permissionName, callerPid, enhancedIdentity);
     if (ret != Constant::SUCCESS) {
         return ret;
     }

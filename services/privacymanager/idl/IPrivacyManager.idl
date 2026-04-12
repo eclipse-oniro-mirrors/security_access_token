@@ -29,7 +29,8 @@ interface OHOS.Security.AccessToken.IPrivacyManager {
     [ipccode 2, oneway] void AddPermissionUsedRecordAsync([in] AddPermParamInfoParcel infoParcel);
     [ipccode 3] void StartUsingPermission([in] PermissionUsedTypeInfoParcel infoParcel, [in] IRemoteObject anonyStub);
     [ipccode 4] void StartUsingPermissionCallback([in] PermissionUsedTypeInfoParcel infoParcel, [in] IRemoteObject cb, [in] IRemoteObject anonyStub);
-    [ipccode 5] void StopUsingPermission([in] unsigned int tokenID, [in] int pid, [in] String permissionName);
+    [ipccode 5] void StopUsingPermission(
+        [in] unsigned int tokenID, [in] int pid, [in] String permissionName, [in] String enhancedIdentity);
     [ipccode 6] void RemovePermissionUsedRecords([in] unsigned int tokenID);
     [ipccode 7] void GetPermissionUsedRecords([in] PermissionUsedRequestParcel request, [out] PermissionUsedResultParcel resultParcel);
     [ipccode 8] void GetPermissionUsedRecordsAsync([in] PermissionUsedRequestParcel request, [in] OnPermissionUsedRecordCallback cb);

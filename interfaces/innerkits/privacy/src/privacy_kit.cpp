@@ -29,6 +29,7 @@ namespace Security {
 namespace AccessToken {
 namespace {
 constexpr const int64_t MERGE_TIMESTAMP = 200; // 200ms
+
 bool IsValidCallbackRegisterType(CallbackRegisterType type)
 {
     return (type == CallbackRegisterType::ALL) || (type == CallbackRegisterType::TOKEN_ONLY);
@@ -47,7 +48,8 @@ std::map<std::string, RecordCache> g_remoteRecordMap;
 }
 static std::string GetRecordUniqueStr(const AddPermParamInfo& record)
 {
-    return std::to_string(record.tokenId) + "_" + record.permissionName + "_" + std::to_string(record.type);
+    return std::to_string(record.tokenId) + "_" + record.permissionName + "_" + std::to_string(record.type) + "_" +
+        record.enhancedIdentity;
 }
 
 bool FindAndInsertRecord(const AddPermParamInfo& record)
@@ -93,7 +95,8 @@ int32_t PrivacyKit::AddPermissionUsedRecord(const AddPermParamInfo& info, bool a
         (!DataValidator::IsPermissionNameValid(info.permissionName)) ||
         (info.successCount < 0 || info.failCount < 0) ||
         (!DataValidator::IsPermissionUsedTypeValid(info.type)) ||
-        (info.extra.length() > MAX_PERMISSION_USED_RECORD_EXTRA_LENGTH)) {
+        (info.extra.length() > MAX_PERMISSION_USED_RECORD_EXTRA_LENGTH) ||
+        (!DataValidator::IsEnhancedIdentityValid(info.enhancedIdentity))) {
         return PrivacyError::ERR_PARAM_INVALID;
     }
     if (!DataValidator::IsHapCaller(info.tokenId) && !DataValidator::IsNativeCaller(info.tokenId)) {
@@ -130,17 +133,19 @@ int32_t PrivacyKit::GetPermissionUsedRecordToggleStatus(int32_t userID, bool& st
 }
 
 int32_t PrivacyKit::StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName, int32_t pid,
-    PermissionUsedType type)
+    PermissionUsedType type, const std::string& enhancedIdentity)
 {
     if ((!DataValidator::IsTokenIDValid(tokenID)) ||
         (!DataValidator::IsPermissionNameValid(permissionName)) ||
-        (!DataValidator::IsPermissionUsedTypeValid(type))) {
+        (!DataValidator::IsPermissionUsedTypeValid(type)) ||
+        (!DataValidator::IsEnhancedIdentityValid(enhancedIdentity))) {
         return PrivacyError::ERR_PARAM_INVALID;
     }
     if (!DataValidator::IsHapCaller(tokenID) && !DataValidator::IsNativeCaller(tokenID)) {
         return PrivacyError::ERR_PARAM_INVALID;
     }
-    return PrivacyManagerClient::GetInstance().StartUsingPermission(tokenID, pid, permissionName, type);
+    return PrivacyManagerClient::GetInstance().StartUsingPermission(tokenID, pid, permissionName, type,
+        enhancedIdentity);
 }
 
 int32_t PrivacyKit::StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName,
@@ -157,15 +162,17 @@ int32_t PrivacyKit::StartUsingPermission(AccessTokenID tokenID, const std::strin
     return PrivacyManagerClient::GetInstance().StartUsingPermission(tokenID, pid, permissionName, callback, type);
 }
 
-int32_t PrivacyKit::StopUsingPermission(AccessTokenID tokenID, const std::string& permissionName, int32_t pid)
+int32_t PrivacyKit::StopUsingPermission(AccessTokenID tokenID, const std::string& permissionName, int32_t pid,
+    const std::string& enhancedIdentity)
 {
-    if (!DataValidator::IsTokenIDValid(tokenID) || !DataValidator::IsPermissionNameValid(permissionName)) {
+    if (!DataValidator::IsTokenIDValid(tokenID) || !DataValidator::IsPermissionNameValid(permissionName) ||
+        !DataValidator::IsEnhancedIdentityValid(enhancedIdentity)) {
         return PrivacyError::ERR_PARAM_INVALID;
     }
     if (!DataValidator::IsHapCaller(tokenID) && !DataValidator::IsNativeCaller(tokenID)) {
         return PrivacyError::ERR_PARAM_INVALID;
     }
-    return PrivacyManagerClient::GetInstance().StopUsingPermission(tokenID, pid, permissionName);
+    return PrivacyManagerClient::GetInstance().StopUsingPermission(tokenID, pid, permissionName, enhancedIdentity);
 }
 
 int32_t PrivacyKit::StartUsingPermission(const std::string& bundleName, const std::string& permissionName)

@@ -30,8 +30,10 @@ export default namespace privacyManager {
         options: AddPermissionUsedRecordOptions): void;
 
     native function startUsingPermissionExecute(
-        tokenID: int, permissionName: Permissions, pid: int, usedType: int): void;
-    native function stopUsingPermissionExecute(tokenID: int, permissionName: Permissions, pid: int): void;
+        tokenID: int, permissionName: Permissions, pid: int, usedType: int,
+        enhancedIdentity: string): void;
+    native function stopUsingPermissionExecute(tokenID: int, permissionName: Permissions, pid: int,
+        enhancedIdentity: string): void;
     native function getPermissionUsedRecordExecute(request: PermissionUsedRequest): PermissionUsedResponse;
     native function getPermissionUsedTypeInfosExecute(
         tokenId: int, permissionName: Permissions | ""): Array<PermissionUsedTypeInfo>;
@@ -52,7 +54,10 @@ export default namespace privacyManager {
             throw err;
         }
         let usedTypeTemp : PermissionUsedType|undefined = options ? options.usedType : PermissionUsedType.NORMAL_TYPE;
-        let optionsLocal: AddPermissionUsedRecordOptions = { usedType: usedTypeTemp };
+        let optionsLocal: AddPermissionUsedRecordOptions = {
+            usedType: usedTypeTemp,
+            enhancedIdentity: options?.enhancedIdentity
+        };
         let p = new Promise<void>((resolve: (v: undefined) => void, reject: (error: BusinessError) => void): void => {
             let p1 = taskpool.execute((): void => {
                 addPermissionUsedRecordExecute(
@@ -75,7 +80,10 @@ export default namespace privacyManager {
             err.message = PARAM_ERROR_MSG("permissionName", "Permissions");
             throw err;
         }
-        let options: AddPermissionUsedRecordOptions = { usedType: PermissionUsedType.NORMAL_TYPE };
+        let options: AddPermissionUsedRecordOptions = {
+            usedType: PermissionUsedType.NORMAL_TYPE,
+            enhancedIdentity: ""
+        };
         let p = taskpool.execute((): void => {
             addPermissionUsedRecordExecute(tokenID, permissionName,
                 successCount, failCount, options);
@@ -96,7 +104,7 @@ export default namespace privacyManager {
             throw err;
         }
         let p = taskpool.execute((): void => {
-            return stopUsingPermissionExecute(tokenID, permissionName, -1) });
+            return stopUsingPermissionExecute(tokenID, permissionName, -1, "") });
         p.then(() => {
             callback(null, undefined);
         },(err: Error): void=> {
@@ -104,7 +112,8 @@ export default namespace privacyManager {
         });
     }
 
-    export function stopUsingPermission(tokenID: int, permissionName: Permissions, pid?: int): Promise<void> {
+    export function stopUsingPermission(
+        tokenID: int, permissionName: Permissions, pid?: int, options?: PermissionUsingOptions): Promise<void> {
         if (typeof permissionName !== "string") {
             let err = new BusinessError<string>();
             err.code = STSErrorCode.STS_ERROR_PARAM_ILLEGAL;
@@ -112,9 +121,10 @@ export default namespace privacyManager {
             throw err;
         }
         let optionalPid: int = pid ?? -1;
+        let enhancedIdentity: string = options?.enhancedIdentity ?? "";
         let p = new Promise<void>((resolve: (v: undefined) => void, reject: (error: BusinessError) => void): void => {
             let p1 = taskpool.execute((): void => {
-                return stopUsingPermissionExecute(tokenID, permissionName, optionalPid) });
+                return stopUsingPermissionExecute(tokenID, permissionName, optionalPid, enhancedIdentity) });
             p1.then(() => {
                 resolve(undefined);
             }).catch((err: Error): void => {
@@ -143,8 +153,8 @@ export default namespace privacyManager {
             throw err;
         }
         let p = taskpool.execute((): void => {
-            return startUsingPermissionExecute(tokenID, permissionName,
-                -1, PermissionUsedType.NORMAL_TYPE) });
+            return startUsingPermissionExecute(tokenID, permissionName, -1,
+                PermissionUsedType.NORMAL_TYPE, "") });
         p.then(() => {
             callback(null, undefined);
         },(err: Error): void => {
@@ -153,7 +163,7 @@ export default namespace privacyManager {
     }
 
     export function startUsingPermission(tokenID: int, permissionName: Permissions, pid?: int,
-        usedType?: PermissionUsedType): Promise<void> {
+        usedType?: PermissionUsedType, options?: PermissionUsingOptions): Promise<void> {
         if (typeof permissionName !== "string") {
             let err = new BusinessError<string>();
             err.code = STSErrorCode.STS_ERROR_PARAM_ILLEGAL;
@@ -162,10 +172,11 @@ export default namespace privacyManager {
         }
         let optionalPid: int = pid ?? -1;
         let optionalUsedType = usedType ?? PermissionUsedType.NORMAL_TYPE;
+        let enhancedIdentity: string = options?.enhancedIdentity ?? "";
         let p = new Promise<void>((resolve: (v: undefined) => void, reject: (error: BusinessError) => void): void => {
             let p1 = taskpool.execute((): void => {
-                return startUsingPermissionExecute(tokenID, permissionName,
-                    optionalPid, optionalUsedType) });
+                return startUsingPermissionExecute(tokenID, permissionName, optionalPid,
+                    optionalUsedType, enhancedIdentity) });
             p1.then(() => {
                 resolve(undefined);
             }).catch((err: Error): void => {
@@ -190,7 +201,8 @@ export default namespace privacyManager {
         });
     }
 
-    export function getPermissionUsedRecord(request: PermissionUsedRequest, callback: AsyncCallback<PermissionUsedResponse, void>): void {
+    export function getPermissionUsedRecord(
+        request: PermissionUsedRequest, callback: AsyncCallback<PermissionUsedResponse, void>): void {
         let p1 = taskpool.execute((): PermissionUsedResponse => {
             return getPermissionUsedRecordExecute(request);
         });
@@ -284,6 +296,11 @@ export default namespace privacyManager {
 
     export interface AddPermissionUsedRecordOptions {
         usedType?: PermissionUsedType;
+        enhancedIdentity?: string;
+    }
+
+    export interface PermissionUsingOptions {
+        enhancedIdentity?: string;
     }
 
     export interface PermissionUsedTypeInfo {
@@ -305,6 +322,7 @@ export default namespace privacyManager {
         deviceId: string;
         activeStatus: PermissionActiveStatus;
         usedType?: PermissionUsedType;
+        enhancedIdentity?: string;
     }
 
     class ActiveChangeResponseInner implements ActiveChangeResponse {
@@ -314,6 +332,7 @@ export default namespace privacyManager {
         deviceId: string;
         activeStatus: PermissionActiveStatus;
         usedType?: PermissionUsedType;
+        enhancedIdentity?: string;
     }
 
     export interface PermissionUsedRequest {
@@ -352,6 +371,7 @@ export default namespace privacyManager {
         lastAccessTime: long;
         lastRejectTime: long;
         lastAccessDuration: long;
+        enhancedIdentity?: string;
         accessRecords: Array<UsedRecordDetail>;
         rejectRecords: Array<UsedRecordDetail>;
     }
@@ -363,6 +383,7 @@ export default namespace privacyManager {
         lastAccessTime: long;
         lastRejectTime: long;
         lastAccessDuration: long;
+        enhancedIdentity?: string;
         accessRecords: Array<UsedRecordDetail>;
         rejectRecords: Array<UsedRecordDetail>;
     }

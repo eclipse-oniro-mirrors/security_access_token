@@ -15,6 +15,7 @@
 
 #include "startusingpermissioncallbackstub_fuzzer.h"
 
+#include "add_perm_param_info.h"
 #include "accesstoken_fuzzdata.h"
 #include "constant.h"
 #include "fuzzer/FuzzedDataProvider.h"
@@ -47,7 +48,8 @@ public:
 };
 
 namespace OHOS {
-void StartUsingPermissionCallbackStub(AccessTokenID tokenID, int32_t pid, const std::string& permissionName)
+void StartUsingPermissionCallbackStub(AccessTokenID tokenID, int32_t pid, const std::string& permissionName,
+    const std::string& enhancedIdentity)
 {
     MessageParcel data;
     if (!data.WriteInterfaceToken(IPrivacyManager::GetDescriptor())) {
@@ -59,6 +61,7 @@ void StartUsingPermissionCallbackStub(AccessTokenID tokenID, int32_t pid, const 
     infoParcel.info.pid = pid;
     infoParcel.info.permissionName = permissionName;
     infoParcel.info.type = NORMAL_TYPE;
+    infoParcel.info.enhancedIdentity = enhancedIdentity;
 
     auto anonyStub = sptr<ProxyDeathCallBackStub>::MakeSptr();
     if (!data.WriteParcelable(&infoParcel)) {
@@ -85,7 +88,8 @@ void StartUsingPermissionCallbackStub(AccessTokenID tokenID, int32_t pid, const 
         static_cast<uint32_t>(IPrivacyManagerIpcCode::COMMAND_START_USING_PERMISSION_CALLBACK), data, reply, option);
 }
 
-void StopUsingPermissionStub(AccessTokenID tokenID, int32_t pid, const std::string& permissionName)
+void StopUsingPermissionStub(AccessTokenID tokenID, int32_t pid, const std::string& permissionName,
+    const std::string& enhancedIdentity)
 {
     MessageParcel datas;
     if (!datas.WriteInterfaceToken(IPrivacyManager::GetDescriptor())) {
@@ -98,6 +102,9 @@ void StopUsingPermissionStub(AccessTokenID tokenID, int32_t pid, const std::stri
         return;
     }
     if (!datas.WriteString(permissionName)) {
+        return;
+    }
+    if (!datas.WriteString(enhancedIdentity)) {
         return;
     }
 
@@ -119,9 +126,11 @@ bool StartUsingPermissionCallbackStubFuzzTest(const uint8_t* data, size_t size)
     std::string permissionName;
     int32_t opCode = provider.ConsumeIntegral<int32_t>() % g_permSize;
     (void)Constant::TransferOpcodeToPermission(opCode, permissionName);
+    std::string enhancedIdentity = provider.ConsumeRandomLengthString(
+        provider.ConsumeIntegralInRange<size_t>(0, MAX_ENHANCED_IDENTITY_LENGTH + 1));
 
-    StartUsingPermissionCallbackStub(tokenID, pid, permissionName);
-    StopUsingPermissionStub(tokenID, pid, permissionName);
+    StartUsingPermissionCallbackStub(tokenID, pid, permissionName, enhancedIdentity);
+    StopUsingPermissionStub(tokenID, pid, permissionName, enhancedIdentity);
 
     return true;
 }

@@ -58,6 +58,7 @@ public:
     static bool IsDlpTypeValid(int dlpType);
     static bool IsPermissionUsedFlagValid(uint32_t flag);
     static bool IsPermissionUsedTypeValid(uint32_t type);
+    static bool IsEnhancedIdentityValid(const std::string& enhancedIdentity);
     static bool IsRemotePermissionUsedFlagValid(uint32_t flag);
     static bool IsPolicyTypeValid(uint32_t type);
     static bool IsCallerTypeValid(uint32_t type);
@@ -74,6 +75,7 @@ private:
     const static int MAX_DEVICE_NAME_LENGTH = 100;
     const static int MAX_APPIDDESC_LENGTH = 10240;
     const static int MAX_DCAP_LENGTH = 1024;
+    const static int MAX_ENHANCED_IDENTITY_LENGTH = 48;
     const static int32_t MAX_EXTENDED_MAP_SIZE = 512;
     const static int32_t MAX_VALUE_LENGTH = 1024;
     const static int32_t MAX_PERMISSION_LIST_SIZE = 1024;

@@ -37,8 +37,10 @@ namespace OHOS {
         FuzzedDataProvider provider(data, size);
         PermissionUsedType type = static_cast<PermissionUsedType>(provider.ConsumeIntegralInRange<uint32_t>(
             0, static_cast<uint32_t>(PermissionUsedType::PERM_USED_TYPE_BUTT)));
+        std::string enhancedIdentity = provider.ConsumeRandomLengthString(
+            provider.ConsumeIntegralInRange<size_t>(0, MAX_ENHANCED_IDENTITY_LENGTH + 1));
         return PrivacyKit::StartUsingPermission(provider.ConsumeIntegral<AccessTokenID>(),
-            provider.ConsumeRandomLengthString(), provider.ConsumeIntegral<int32_t>(), type) == 0;
+            provider.ConsumeRandomLengthString(), provider.ConsumeIntegral<int32_t>(), type, enhancedIdentity) == 0;
     }
 }
 

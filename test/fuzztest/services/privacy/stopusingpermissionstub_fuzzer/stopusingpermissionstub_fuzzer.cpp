@@ -21,6 +21,7 @@
 
 #undef private
 #include "accesstoken_fuzzdata.h"
+#include "add_perm_param_info.h"
 #include "fuzzer/FuzzedDataProvider.h"
 #include "iprivacy_manager.h"
 #include "privacy_manager_service.h"
@@ -40,14 +41,19 @@ namespace OHOS {
         MessageParcel datas;
         AccessTokenID tokenID = ConsumeTokenId(provider);
         std::string permissionName = ConsumePermissionName(provider);
+        std::string enhancedIdentity = provider.ConsumeRandomLengthString(
+            provider.ConsumeIntegralInRange<size_t>(0, MAX_ENHANCED_IDENTITY_LENGTH + 1));
         datas.WriteInterfaceToken(IPrivacyManager::GetDescriptor());
         if (!datas.WriteUint32(tokenID)) {
+            return false;
+        }
+        if (!datas.WriteInt32(provider.ConsumeIntegral<int32_t>())) {
             return false;
         }
         if (!datas.WriteString(permissionName)) {
             return false;
         }
-        if (!datas.WriteInt32(provider.ConsumeIntegral<int32_t>())) {
+        if (!datas.WriteString(enhancedIdentity)) {
             return false;
         }
 

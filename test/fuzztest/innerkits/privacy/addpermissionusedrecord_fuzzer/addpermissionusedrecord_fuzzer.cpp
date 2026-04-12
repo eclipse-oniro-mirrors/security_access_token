@@ -35,6 +35,8 @@ bool AddPermissionUsedRecordFuzzTest(const uint8_t* data, size_t size)
     info.failCount = provider.ConsumeIntegral<int32_t>();
     info.extra = provider.ConsumeRandomLengthString(
         provider.ConsumeIntegralInRange<size_t>(0, MAX_PERMISSION_USED_RECORD_EXTRA_LENGTH + 1));
+    info.enhancedIdentity = provider.ConsumeRandomLengthString(
+        provider.ConsumeIntegralInRange<size_t>(0, MAX_ENHANCED_IDENTITY_LENGTH + 1));
     return PrivacyKit::AddPermissionUsedRecord(info, provider.ConsumeBool()) == 0;
 }
 }

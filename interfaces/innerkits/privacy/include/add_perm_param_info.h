@@ -44,6 +44,7 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 constexpr uint32_t MAX_PERMISSION_USED_RECORD_EXTRA_LENGTH = 48 * 1024;
+constexpr uint32_t MAX_ENHANCED_IDENTITY_LENGTH = 48;
 /**
  * @brief add permission param info
  */
@@ -58,6 +59,8 @@ struct AddPermParamInfo {
      * MAX_PERMISSION_USED_RECORD_EXTRA_LENGTH bytes
      */
     std::string extra = "";
+    /** enhanced identity for host-subject differentiation, max length is MAX_ENHANCED_IDENTITY_LENGTH bytes */
+    std::string enhancedIdentity = "";
 };
 } // namespace AccessToken
 } // namespace Security
