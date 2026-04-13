@@ -22,6 +22,8 @@
 #include <vector>
 
 #include "accesstoken_kit.h"
+#include "test_common.h"
+#include "token_setproc.h"
 
 using namespace OHOS::Security::AccessToken;
 
@@ -35,7 +37,7 @@ constexpr int32_t MILLISECONDS_PER_SECOND = 1000;
 constexpr int32_t TM_YEAR_BASE = 1900;
 constexpr uint64_t INVALID_TIMESTAMP = 0;
 constexpr int32_t SUCCESS_EXIT_CODE = 0;
-constexpr bool QUERY_ONLY_HAP = true;
+constexpr bool QUERY_ONLY_HAP = false;
 constexpr const char* OPTION_PREFIX = "--";
 
 void PrintHelp()
@@ -116,6 +118,9 @@ int32_t main(int argc, char* argv[])
         PrintHelp();
         return SUCCESS_EXIT_CODE;
     }
+
+    AccessTokenID nativeTokenId = AccessTokenKit::GetNativeTokenId("privacy_service");
+    SetSelfTokenID(nativeTokenId);
 
     std::vector<PermissionStatus> permissionInfoList;
     int32_t ret = RET_SUCCESS;

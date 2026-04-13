@@ -18,6 +18,7 @@
 #include <gtest/hwext/gtest-multithread.h>
 
 #include "accesstoken_callbacks.h"
+#include "accesstoken_kit.h"
 #include "access_token_db_operator.h"
 #include "access_token_db.h"
 #include "access_token_error.h"
@@ -2216,6 +2217,61 @@ HWTEST_F(AccessTokenManagerServiceTest, AccessTokenServiceCoverageTest001, TestS
     ret = atManagerService_->GetPermissionsStatus(RANDOM_TOKENID, reqPermList);
     EXPECT_NE(RET_SUCCESS, ret);
 }
+
+#ifdef SUPPORT_MANAGE_USER_POLICY
+/**
+ * @tc.name: PolicyWhiteListServiceTest001
+ * @tc.desc: Test UpdatePolicyWhiteList service param validation.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, PolicyWhiteListServiceTest001, TestSize.Level1)
+{
+    HapInfoParcel infoParcel;
+    infoParcel.hapInfoParameter = g_info;
+    HapPolicyParcel policyParcel;
+    policyParcel.hapPolicy.apl = APL_SYSTEM_BASIC;
+    policyParcel.hapPolicy.domain = "test.domain";
+    PermissionStatus internetState = {
+        .permissionName = "ohos.permission.INTERNET",
+        .grantStatus = static_cast<int32_t>(PermissionState::PERMISSION_GRANTED),
+        .grantFlag = static_cast<uint32_t>(PermissionFlag::PERMISSION_DEFAULT_FLAG)
+    };
+    policyParcel.hapPolicy.permStateList = {internetState};
+
+    AccessTokenID tokenId;
+    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
+    CreateHapToken(infoParcel, policyParcel, tokenId, tokenIdAplMap);
+
+    uint32_t permCode = 0;
+    ASSERT_TRUE(TransferPermissionToOpcode("ohos.permission.INTERNET", permCode));
+
+    EXPECT_EQ(ERR_PARAM_INVALID,
+        atManagerService_->UpdatePolicyWhiteList(INVALID_TOKENID, permCode, static_cast<int32_t>(ADD)));
+    EXPECT_EQ(ERR_PARAM_INVALID,
+        atManagerService_->UpdatePolicyWhiteList(tokenId, permCode, 2)); // 2: invalid enum value
+    EXPECT_EQ(ERR_PARAM_INVALID,
+        atManagerService_->UpdatePolicyWhiteList(tokenId, UINT32_MAX, static_cast<int32_t>(ADD)));
+
+    AccessTokenID nativeTokenId = AccessTokenKit::GetNativeTokenId("foundation");
+    EXPECT_EQ(ERR_PARAM_INVALID,
+        atManagerService_->UpdatePolicyWhiteList(nativeTokenId, permCode, static_cast<int32_t>(ADD)));
+
+    DelTestDataAndRestoreOri(tokenId, {});
+}
+
+/**
+ * @tc.name: PolicyWhiteListServiceTest002
+ * @tc.desc: Test GetPolicyWhiteList service param validation.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, PolicyWhiteListServiceTest002, TestSize.Level1)
+{
+    std::vector<AccessTokenID> tokenIdList = {RANDOM_TOKENID};
+    EXPECT_EQ(ERR_PARAM_INVALID, atManagerService_->GetPolicyWhiteList(UINT32_MAX, tokenIdList));
+}
+#endif
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

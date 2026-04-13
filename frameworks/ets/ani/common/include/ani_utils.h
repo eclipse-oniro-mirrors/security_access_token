@@ -54,6 +54,7 @@ bool SetEnumProperty(
     ani_env* env, ani_object& aniObject, const std::string& enumDescription,
     const std::string& property, uint32_t value);
 bool SetOptionalIntProperty(ani_env* env, ani_object& aniObject, const std::string& property, int32_t in);
+bool SetOptionalLongProperty(ani_env* env, ani_object& aniObject, const std::string& property, int64_t in);
 
 bool IsCurrentThread(std::thread::id threadId);
 bool AniIsCallbackRefEqual(ani_env* env, const ani_ref& compareRef, const ani_ref& targetRref, std::thread::id threadId,
@@ -67,6 +68,7 @@ std::vector<std::string> ParseAniStringVector(ani_env* env, const ani_array& ani
 // native to ani
 ani_string CreateAniString(ani_env *env, const std::string& str);
 ani_object CreateIntObject(ani_env *env, int32_t value);
+ani_object CreateLongObject(ani_env *env, int64_t value);
 ani_object CreateBooleanObject(ani_env *env, bool value);
 ani_object CreateClassObject(ani_env* env, const std::string& classDescriptor);
 ani_object CreateArrayObject(ani_env* env, uint32_t length);

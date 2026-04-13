@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -96,6 +96,8 @@ public:
 #ifdef SUPPORT_MANAGE_USER_POLICY
     int32_t SetUserPolicy(const std::vector<UserPermissionPolicy>& userPermissionList);
     int32_t ClearUserPolicy(const std::vector<std::string>& permissionList);
+    int32_t UpdatePolicyWhiteList(AccessTokenID tokenId, uint32_t permCode, UpdateWhiteListType type);
+    int32_t GetPolicyWhiteList(uint32_t permCode, std::vector<AccessTokenID>& tokenIdList);
 #endif
     bool GetPermDialogCap(AccessTokenID tokenID);
     void ClearUserGrantedPermissionState(AccessTokenID tokenID);
@@ -181,8 +183,10 @@ private:
     void DumpAllNativeTokenName(std::string& dumpInfo);
 #ifdef SUPPORT_MANAGE_USER_POLICY
     void UpdatePermissionStateToKernel(uint32_t permCode, const std::map<int32_t, bool>& changedUserList);
+    void UpdatePermissionStateToKernel(AccessTokenID tokenId, uint32_t permCode, bool isActive);
     void GetHapTokenInfoListByUserId(
         const std::map<int32_t, bool>& changedUserList, std::map<AccessTokenID, bool>& tokenIdList);
+    bool IsInPolicyWhiteList(AccessTokenID tokenId, uint32_t permCode) const;
 #endif
     int32_t AddPermRequestToggleStatusToDb(int32_t userID, const std::string& permissionName, int32_t status);
     int32_t FindPermRequestToggleStatusFromDb(int32_t userID, const std::string& permissionName);
@@ -217,8 +221,9 @@ private:
 
 #ifdef SUPPORT_MANAGE_USER_POLICY
     std::shared_mutex userPolicyLock_;
-    std::map<uint32_t, std::vector<int32_t>> userPermPolicyList_; // key-permCode
+    std::map<uint32_t, std::vector<int32_t>> userPermPolicyList_; // key-permCode, value-userid
     std::map<uint32_t, uint32_t> policyController_; // key-permCode, value-callerToken
+    std::map<uint32_t, std::unordered_set<AccessTokenID>> policyWhiteList_; // key-permCode, value-tokenId
 #endif
 
     std::shared_ptr<VerifyAccessTokenMonitor> tokenMonitor_;

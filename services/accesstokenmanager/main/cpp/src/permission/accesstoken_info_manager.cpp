@@ -1593,8 +1593,13 @@ bool AccessTokenInfoManager::IsPermissionRestrictedByUserPolicy(AccessTokenID id
     }
     std::shared_lock<std::shared_mutex> infoGuard(this->userPolicyLock_);
     auto iter = userPermPolicyList_.find(permCode);
-    if (iter != userPermPolicyList_.end() &&
-        std::find(iter->second.begin(), iter->second.end(), infoPtr->GetUserID()) != iter->second.end()) {
+    if (iter == userPermPolicyList_.end()) {
+        return false;
+    }
+    if (IsInPolicyWhiteList(id, permCode)) {
+        return false;
+    }
+    if (std::find(iter->second.begin(), iter->second.end(), infoPtr->GetUserID()) != iter->second.end()) {
         std::string permissionName = TransferOpcodeToPermission(permCode);
         LOGW(ATM_DOMAIN, ATM_TAG, "Perm %{public}s of %{public}u is restricted.", permissionName.c_str(), id);
         return true;
@@ -1725,15 +1730,36 @@ void AccessTokenInfoManager::UpdatePermissionStateToKernel(
     return;
 }
 
+void AccessTokenInfoManager::UpdatePermissionStateToKernel(AccessTokenID tokenId, uint32_t permCode, bool isActive)
+{
+    std::map<std::string, bool> refreshedPermList;
+    HapTokenInfoInner::RefreshPermStateToKernel(tokenId, permCode, isActive, refreshedPermList);
+    if (!refreshedPermList.empty()) {
+        PermissionManager::GetInstance().ParamUpdate(std::string(), 0, true);
+    }
+    for (const auto& perm : refreshedPermList) {
+        LOGI(ATM_DOMAIN, ATM_TAG, "Perm %{public}s refreshed by whitelist, isActive %{public}d.",
+            perm.first.c_str(), perm.second);
+        PermStateChangeType change = perm.second ?
+            PermStateChangeType::STATE_CHANGE_GRANTED : PermStateChangeType::STATE_CHANGE_REVOKED;
+        CallbackManager::GetInstance().ExecuteCallbackAsync(tokenId, perm.first, change);
+    }
+}
+
+bool AccessTokenInfoManager::IsInPolicyWhiteList(AccessTokenID tokenId, uint32_t permCode) const
+{
+    auto iter = policyWhiteList_.find(permCode);
+    return (iter != policyWhiteList_.end()) && (iter->second.find(tokenId) != iter->second.end());
+}
+
 int32_t AccessTokenInfoManager::SetUserPolicy(const std::vector<UserPermissionPolicy>& userPermissionList)
 {
     AccessTokenID callerToken = IPCSkeleton::GetCallingTokenID();
     std::vector<UserPolicyInner> userPolist;
     std::unique_lock<std::shared_mutex> infoGuard(this->userPolicyLock_);
     for (const auto& policy : userPermissionList) {
-        PermissionBriefDef briefDef;
         uint32_t code;
-        if (!GetPermissionBriefDef(policy.permissionName, briefDef, code) || (briefDef.grantMode != SYSTEM_GRANT)) {
+        if (!TransferPermissionToOpcode(policy.permissionName, code)) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Permission(%{public}s) is invalid.", policy.permissionName.c_str());
             return AccessTokenError::ERR_PARAM_INVALID;
         }
@@ -1806,8 +1832,80 @@ int32_t AccessTokenInfoManager::ClearUserPolicy(const std::vector<std::string>& 
             changedUserList[userId] = false;
         }
         UpdatePermissionStateToKernel(code, changedUserList);
+        policyWhiteList_.erase(code);
         userPermPolicyList_.erase(code);
         policyController_.erase(code);
+    }
+    return RET_SUCCESS;
+}
+
+int32_t AccessTokenInfoManager::UpdatePolicyWhiteList(
+    AccessTokenID tokenId, uint32_t permCode, UpdateWhiteListType type)
+{
+    std::shared_ptr<HapTokenInfoInner> infoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId);
+    if (infoPtr == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Token %{public}u is invalid.", tokenId);
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+
+    std::string permission = TransferOpcodeToPermission(permCode);
+    AccessTokenID callerToken = IPCSkeleton::GetCallingTokenID();
+    bool isActive = true;
+    {
+        std::unique_lock<std::shared_mutex> infoGuard(this->userPolicyLock_);
+        if (userPermPolicyList_.find(permCode) == userPermPolicyList_.end()) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Permission(%{public}s) policy is not set.", permission.c_str());
+            return AccessTokenError::ERR_PERM_POLICY_NOT_SET;
+        }
+        if (policyController_.find(permCode) != policyController_.end() && policyController_[permCode] != callerToken) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Permission(%{public}s) is already set by %{public}u, currCaller(%{public}u).",
+                permission.c_str(), policyController_[permCode], callerToken);
+            return AccessTokenError::ERR_PERM_POLICY_ALREADY_SET_BY_OTHER;
+        }
+        bool isRestricted = std::find(userPermPolicyList_[permCode].begin(), userPermPolicyList_[permCode].end(),
+            infoPtr->GetUserID()) != userPermPolicyList_[permCode].end();
+        if (!isRestricted) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Token %{public}u userId %{public}d is not controlled by perm %{public}s.",
+                tokenId, infoPtr->GetUserID(), permission.c_str());
+            return AccessTokenError::ERR_TOKENID_NOT_IN_POLICY_USERLIST;
+        }
+
+        auto& whiteList = policyWhiteList_[permCode];
+        if (type == ADD) {
+            if (whiteList.find(tokenId) != whiteList.end()) {
+                LOGE(ATM_DOMAIN, ATM_TAG, "Token %{public}u is already in whitelist.", tokenId);
+                return AccessTokenError::ERR_TOKENID_ALREADY_IN_POLICY_WHITELIST;
+            }
+            whiteList.insert(tokenId);
+        } else {
+            if (whiteList.find(tokenId) == whiteList.end()) {
+                LOGE(ATM_DOMAIN, ATM_TAG, "Token %{public}u is not in whitelist.", tokenId);
+                return AccessTokenError::ERR_TOKENID_NOT_IN_POLICY_WHITELIST;
+            }
+            whiteList.erase(tokenId);
+            if (whiteList.empty()) {
+                policyWhiteList_.erase(permCode);
+            }
+        }
+        isActive = !isRestricted || IsInPolicyWhiteList(tokenId, permCode);
+    }
+    UpdatePermissionStateToKernel(tokenId, permCode, isActive);
+    return RET_SUCCESS;
+}
+
+int32_t AccessTokenInfoManager::GetPolicyWhiteList(uint32_t permCode, std::vector<AccessTokenID>& tokenIdList)
+{
+    tokenIdList.clear();
+    std::string permission = TransferOpcodeToPermission(permCode);
+    if (permission.empty()) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "PermCode %{public}u does not exist.", permCode);
+        return AccessTokenError::ERR_PERMISSION_NOT_EXIST;
+    }
+
+    std::shared_lock<std::shared_mutex> infoGuard(this->userPolicyLock_);
+    auto iter = policyWhiteList_.find(permCode);
+    if (iter != policyWhiteList_.end()) {
+        tokenIdList.assign(iter->second.begin(), iter->second.end());
     }
     return RET_SUCCESS;
 }

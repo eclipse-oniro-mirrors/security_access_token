@@ -115,6 +115,8 @@ public:
 #ifdef SUPPORT_MANAGE_USER_POLICY
     int32_t SetUserPolicy(const std::vector<UserPermissionPolicy>& userPermissionList);
     int32_t ClearUserPolicy(const std::vector<std::string>& permissionList);
+    int32_t UpdatePolicyWhiteList(AccessTokenID tokenId, uint32_t permCode, UpdateWhiteListType type);
+    int32_t GetPolicyWhiteList(uint32_t permCode, std::vector<AccessTokenID>& tokenIdList);
 #endif
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
     int32_t RegisterSecCompEnhance(const SecCompEnhanceData& enhance);

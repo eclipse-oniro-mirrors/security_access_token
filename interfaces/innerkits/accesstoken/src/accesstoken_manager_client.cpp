@@ -1182,6 +1182,37 @@ int32_t AccessTokenManagerClient::ClearUserPolicy(const std::vector<std::string>
     }
     return errCode;
 }
+
+int32_t AccessTokenManagerClient::UpdatePolicyWhiteList(
+    AccessTokenID tokenId, uint32_t permCode, UpdateWhiteListType type)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+    int32_t errCode = proxy->UpdatePolicyWhiteList(tokenId, permCode, static_cast<int32_t>(type));
+    if (errCode != RET_SUCCESS) {
+        errCode = ConvertResult(errCode);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Request fail, result: %{public}d.", errCode);
+    }
+    return errCode;
+}
+
+int32_t AccessTokenManagerClient::GetPolicyWhiteList(uint32_t permCode, std::vector<AccessTokenID>& tokenIdList)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+    int32_t errCode = proxy->GetPolicyWhiteList(permCode, tokenIdList);
+    if (errCode != RET_SUCCESS) {
+        errCode = ConvertResult(errCode);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Request fail, result: %{public}d.", errCode);
+    }
+    return errCode;
+}
 #endif
 
 void AccessTokenManagerClient::ReleaseProxy()
