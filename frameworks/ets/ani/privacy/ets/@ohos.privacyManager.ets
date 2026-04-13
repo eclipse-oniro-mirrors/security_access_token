@@ -113,6 +113,28 @@ export default namespace privacyManager {
     }
 
     export function stopUsingPermission(
+        tokenID: int, permissionName: Permissions, pid?: int): Promise<void> {
+        if (typeof permissionName !== "string") {
+            let err = new BusinessError<string>();
+            err.code = STSErrorCode.STS_ERROR_PARAM_ILLEGAL;
+            err.message = PARAM_ERROR_MSG("permissionName", "Permissions");
+            throw err;
+        }
+        let optionalPid: int = pid ?? -1;
+        let enhancedIdentity: string = "";
+        let p = new Promise<void>((resolve: (v: undefined) => void, reject: (error: BusinessError) => void): void => {
+            let p1 = taskpool.execute((): void => {
+                return stopUsingPermissionExecute(tokenID, permissionName, optionalPid, enhancedIdentity) });
+            p1.then(() => {
+                resolve(undefined);
+            }).catch((err: Error): void => {
+                reject(err as BusinessError);
+            });
+        });
+        return p;
+    }
+
+    export function stopUsingPermission(
         tokenID: int, permissionName: Permissions, pid?: int, options?: PermissionUsingOptions): Promise<void> {
         if (typeof permissionName !== "string") {
             let err = new BusinessError<string>();
@@ -160,6 +182,30 @@ export default namespace privacyManager {
         },(err: Error): void => {
             callback(err as BusinessError, undefined);
         })
+    }
+
+    export function startUsingPermission(tokenID: int, permissionName: Permissions, pid?: int,
+        usedType?: PermissionUsedType): Promise<void> {
+        if (typeof permissionName !== "string") {
+            let err = new BusinessError<string>();
+            err.code = STSErrorCode.STS_ERROR_PARAM_ILLEGAL;
+            err.message = PARAM_ERROR_MSG("permissionName", "Permissions");
+            throw err;
+        }
+        let optionalPid: int = pid ?? -1;
+        let optionalUsedType = usedType ?? PermissionUsedType.NORMAL_TYPE;
+        let enhancedIdentity: string = "";
+        let p = new Promise<void>((resolve: (v: undefined) => void, reject: (error: BusinessError) => void): void => {
+            let p1 = taskpool.execute((): void => {
+                return startUsingPermissionExecute(tokenID, permissionName, optionalPid,
+                    optionalUsedType, enhancedIdentity) });
+            p1.then(() => {
+                resolve(undefined);
+            }).catch((err: Error): void => {
+                reject(err as BusinessError);
+            });
+        });
+        return p;
     }
 
     export function startUsingPermission(tokenID: int, permissionName: Permissions, pid?: int,
