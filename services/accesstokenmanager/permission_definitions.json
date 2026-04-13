@@ -8626,7 +8626,7 @@
             "deviceTypes": ["2in1"]
         },
         {
-            "name": "ohos.permission.GET_CALL_TRANSFER_INFO_STATE",
+            "name": "ohos.permission.GET_CALL_TRANSFER_INFO",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "NORMAL",
