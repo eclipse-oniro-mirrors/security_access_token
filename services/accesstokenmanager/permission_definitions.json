@@ -6861,6 +6861,17 @@
             "deviceTypes": ["general"]
         },
         {
+            "name": "ohos.permission.MINORS_PROTECTION_UI",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["general"]
+        },
+        {
             "name": "ohos.permission.ACCESS_CALENDARDATA_FOR_BROKER",
             "grantMode": "system_grant",
             "availableLevel": "system_core",
