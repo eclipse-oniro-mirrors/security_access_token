@@ -63,7 +63,8 @@ public:
     int32_t GetRemotePermissionUsedRecords(
         const PermissionUsedRequestParcel& request, PermissionUsedResultParcel& resultParcel) override;
 #endif
-    int32_t RemovePermissionUsedRecords(AccessTokenID tokenId) override;
+    int32_t RemovePermissionUsedRecords(
+        AccessTokenID tokenId, const std::string& enhancedIdentity = "") override;
     int32_t GetPermissionUsedRecords(
         const PermissionUsedRequestParcel& request, PermissionUsedResultParcel& resultParcel) override;
     int32_t GetPermissionUsedRecordsAsync(

@@ -83,7 +83,8 @@ static void RemoveRecord(std::set<ContinuousPermissionRecord>& recordList,
 static void RemoveTokenId(std::set<ContinuousPermissionRecord>& recordList,
     const ContinuousPermissionRecord& record, std::vector<ContinuousPermissionRecord>& retList)
 {
-    return PermissionRecordSet::RemoveByKey(recordList, record, &ContinuousPermissionRecord::IsEqualTokenId, retList);
+    return PermissionRecordSet::RemoveByKey(
+        recordList, record, &ContinuousPermissionRecord::IsEqualTokenIdAndIdentity, retList);
 }
 
 static void RemoveTokenIdAndPid(std::set<ContinuousPermissionRecord>& recordList,

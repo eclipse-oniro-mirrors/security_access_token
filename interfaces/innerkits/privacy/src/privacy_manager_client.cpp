@@ -586,16 +586,18 @@ int32_t PrivacyManagerClient::StopUsingPermission(const std::string& bundleName,
 }
 #endif
 
-int32_t PrivacyManagerClient::RemovePermissionUsedRecords(AccessTokenID tokenID)
+int32_t PrivacyManagerClient::RemovePermissionUsedRecords(
+    AccessTokenID tokenID, const std::string& enhancedIdentity)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Proxy is null.");
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
-    int32_t ret = proxy->RemovePermissionUsedRecords(tokenID);
+    int32_t ret = proxy->RemovePermissionUsedRecords(tokenID, enhancedIdentity);
     ret = ConvertResult(ret);
-    LOGI(PRI_DOMAIN, PRI_TAG, "Result is %{public}d.", ret);
+    LOGI(PRI_DOMAIN, PRI_TAG, "Result is %{public}d, enhancedIdentity=%{public}s.",
+        ret, enhancedIdentity.c_str());
     return ret;
 }
 

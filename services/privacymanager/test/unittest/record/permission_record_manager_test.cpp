@@ -2252,6 +2252,41 @@ HWTEST_F(PermissionRecordManagerTest, EnhancedIdentityHistoryRecord001, TestSize
 }
 
 /**
+ * @tc.name: EnhancedIdentityHistoryRecord002
+ * @tc.desc: Verify RemovePermissionUsedRecords removes only the specified enhanced identity.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, EnhancedIdentityHistoryRecord002, TestSize.Level0)
+{
+    AccessTokenID tokenId = GetBundleATokenId();
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().AddPermissionUsedRecord(
+        MakeAddInfo(tokenId, "ohos.permission.READ_CONTACTS", "")));
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().AddPermissionUsedRecord(
+        MakeAddInfo(tokenId, "ohos.permission.READ_CONTACTS", "agentA")));
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
+        MakeInfo(tokenId, PID, "ohos.permission.CAMERA", PermissionUsedType::NORMAL_TYPE, ""), CALLER_PID));
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
+        MakeInfo(tokenId, PID, "ohos.permission.CAMERA", PermissionUsedType::NORMAL_TYPE, "agentA"), CALLER_PID));
+
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().RemovePermissionUsedRecords(tokenId, "agentA"));
+
+    PermissionUsedResult result = QueryUsedRecords(tokenId);
+    ASSERT_EQ(1, static_cast<int32_t>(result.bundleRecords.size()));
+    ASSERT_EQ(1, static_cast<int32_t>(result.bundleRecords[0].permissionRecords.size()));
+    EXPECT_TRUE(result.bundleRecords[0].permissionRecords[0].enhancedIdentity.empty());
+
+    std::vector<CurrUsingPermInfo> infoList = QueryCurrUsingPermInfos();
+    EXPECT_EQ(1, CountCurrUsingRecords(infoList, tokenId, "ohos.permission.CAMERA"));
+    EXPECT_TRUE(HasCurrUsingRecord(infoList, tokenId, "ohos.permission.CAMERA", ""));
+    EXPECT_FALSE(HasCurrUsingRecord(infoList, tokenId, "ohos.permission.CAMERA", "agentA"));
+
+    PermissionRecordManager::GetInstance().RemovePermissionUsedRecords(tokenId);
+}
+
+/**
  * @tc.name: EnhancedIdentityStartStop001
  * @tc.desc: Verify host and agent can use the same permission concurrently and stop independently.
  * @tc.type: FUNC
@@ -2422,7 +2457,7 @@ HWTEST_F(PermissionRecordManagerTest, StartRecordCleanupCallback001, TestSize.Le
     usleep(500000); // 500000us = 0.5s
     ASSERT_EQ(PERM_ACTIVE_IN_BACKGROUND, callback->type_);
 
-    PermissionRecordManager::GetInstance().RemoveRecordFromStartListByToken(tokenId);
+    PermissionRecordManager::GetInstance().RemoveRecordFromStartListByTokenAndIdentity(tokenId);
     usleep(500000); // 500000us = 0.5s
     EXPECT_EQ(PERM_INACTIVE, callback->type_);
     EXPECT_TRUE(callback->enhancedIdentity_.empty());
@@ -2726,7 +2761,7 @@ HWTEST_F(PermissionRecordManagerTest, EnhancedIdentityCleanup001, TestSize.Level
     ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
         MakeInfo(tokenId, PID, "ohos.permission.CAMERA", PermissionUsedType::NORMAL_TYPE, "agentA"), CALLER_PID));
 
-    PermissionRecordManager::GetInstance().RemoveRecordFromStartListByToken(tokenId);
+    PermissionRecordManager::GetInstance().RemoveRecordFromStartListByTokenAndIdentity(tokenId);
 
     std::vector<CurrUsingPermInfo> infoList = QueryCurrUsingPermInfos();
     EXPECT_EQ(0, CountCurrUsingRecords(infoList, tokenId, "ohos.permission.CAMERA"));

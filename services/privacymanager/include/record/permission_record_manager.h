@@ -77,7 +77,7 @@ public:
 
     void Init();
     int32_t AddPermissionUsedRecord(const AddPermParamInfo& info);
-    void RemovePermissionUsedRecords(AccessTokenID tokenId);
+    int32_t RemovePermissionUsedRecords(AccessTokenID tokenId, const std::string& enhancedIdentity = "");
     bool IsUserIdValid(int32_t userID) const;
     int32_t SetPermissionUsedRecordToggleStatus(int32_t userID, bool status);
     int32_t GetPermissionUsedRecordToggleStatus(int32_t userID, bool& status);
@@ -135,7 +135,8 @@ public:
     void OnAudioMgrRemoteDiedHandle();
     void OnCameraMgrRemoteDiedHandle();
     void RemoveRecordFromStartListByPid(const AccessTokenID tokenId, int32_t pid);
-    void RemoveRecordFromStartListByToken(const AccessTokenID tokenId);
+    void RemoveRecordFromStartListByTokenAndIdentity(const AccessTokenID tokenId,
+        const std::string& enhancedIdentity = "");
     void RemoveRecordFromStartListByCallerPid(int32_t callerPid);
     void ExecuteAllCameraExecuteCallback();
     void UpdatePermRecImmediately();

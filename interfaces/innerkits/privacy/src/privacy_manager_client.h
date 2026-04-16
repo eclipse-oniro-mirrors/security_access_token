@@ -82,7 +82,7 @@ public:
     int32_t StopUsingPermission(const std::string& bundleName, const std::string& permissionName);
     void ReStartUsingBundle();
 #endif
-    int32_t RemovePermissionUsedRecords(AccessTokenID tokenID);
+    int32_t RemovePermissionUsedRecords(AccessTokenID tokenID, const std::string& enhancedIdentity = "");
     int32_t GetPermissionUsedRecords(const PermissionUsedRequest& request, PermissionUsedResult& result);
     int32_t GetPermissionUsedRecords(
         const PermissionUsedRequest& request, const sptr<OnPermissionUsedRecordCallback>& callback);

@@ -1495,7 +1495,7 @@ HWTEST_F(PermissionRecordManagerTest, RemoveRecordFromStartListTest001, TestSize
         MakeInfo(tokenId, PID, "ohos.permission.CAMERA"), status, CALLER_PID);
     PermissionRecordManager::GetInstance().AddRecordToStartList(
         MakeInfo(0, PID, "ohos.permission.MICROPHONE"), status, CALLER_PID);
-    PermissionRecordManager::GetInstance().RemoveRecordFromStartListByToken(tokenId);
+    PermissionRecordManager::GetInstance().RemoveRecordFromStartListByTokenAndIdentity(tokenId);
     ASSERT_EQ(1, PermissionRecordManager::GetInstance().startRecordList_.size());
     PermissionRecordManager::GetInstance().startRecordList_ = startRecordList;
 }

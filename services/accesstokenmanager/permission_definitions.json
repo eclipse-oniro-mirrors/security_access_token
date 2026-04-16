@@ -8296,6 +8296,17 @@
             "deviceTypes": ["2in1", "tablet"]
         },
         {
+            "name": "ohos.permission.REMOVE_PERMISSION_USED_RECORD",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "availableType": "SERVICE",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["general"]
+        },
+        {
             "name": "ohos.permission.MANAGE_STANDBY",
             "grantMode": "system_grant",
             "availableLevel": "system_core",
