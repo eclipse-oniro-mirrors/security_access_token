@@ -8690,6 +8690,17 @@
             "provisionEnable": true,
             "distributedSceneEnable": false,
             "deviceTypes": ["phone", "tablet"]
+        },
+        {
+            "name": "ohos.permission.SUBSCRIBE_OUTDOOR_EXPLORATION_SERVICE",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone"]
         }
     ]
 }
