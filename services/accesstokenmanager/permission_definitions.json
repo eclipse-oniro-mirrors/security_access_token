@@ -6861,6 +6861,17 @@
             "deviceTypes": ["general"]
         },
         {
+            "name": "ohos.permission.MINORS_PROTECTION_UI",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["general"]
+        },
+        {
             "name": "ohos.permission.ACCESS_CALENDARDATA_FOR_BROKER",
             "grantMode": "system_grant",
             "availableLevel": "system_core",
@@ -8311,7 +8322,7 @@
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
-            "since": 24,
+            "since": "26.0.0",
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
@@ -8411,6 +8422,39 @@
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
             "since": 24,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["general"]
+        },
+        {
+            "name": "ohos.permission.REVOKE_FILE_ACCESS_PERSIST",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["general"]
+        },
+        {
+            "name": "ohos.permission.ACCESS_SHARED_FILE",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["general"]
+        },
+        {
+            "name": "ohos.permission.GET_FILE_ACCESS_PERSIST",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
@@ -8624,6 +8668,17 @@
             "provisionEnable": true,
             "distributedSceneEnable": false,
             "deviceTypes": ["2in1"]
+        },
+        {
+            "name": "ohos.permission.GET_CALL_TRANSFER_INFO",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "NORMAL",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "2in1", "tablet"]
         },
         {
             "name": "ohos.permission.ACCESS_DIGITAL_IDENTITY_ABILITY",
