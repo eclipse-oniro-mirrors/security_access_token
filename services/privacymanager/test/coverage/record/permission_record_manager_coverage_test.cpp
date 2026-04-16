@@ -670,6 +670,7 @@ HWTEST_F(PermissionRecordManagerTest, TranslationIntoPermissionRecord001, TestSi
 
 void AddRecord(int32_t num, std::vector<GenericValues>& values)
 {
+    const std::string enhancedIdentity = "";
     for (int32_t i = 0; i < num; i++) {
         GenericValues value;
         value.Put(PrivacyFiledConst::FIELD_TOKEN_ID, i);
@@ -681,6 +682,7 @@ void AddRecord(int32_t num, std::vector<GenericValues>& values)
         value.Put(PrivacyFiledConst::FIELD_REJECT_COUNT, 0);
         value.Put(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS, LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED);
         value.Put(PrivacyFiledConst::FIELD_USED_TYPE, static_cast<int>(PermissionUsedType::NORMAL_TYPE));
+        value.Put(PrivacyFiledConst::FIELD_ENHANCED_IDENTITY, enhancedIdentity);
         values.emplace_back(value);
     }
 
@@ -722,6 +724,7 @@ HWTEST_F(PermissionRecordManagerTest, GetRecords002, TestSize.Level4)
 static void GeneratePermissionRecord(AccessTokenID tokenID)
 {
     int64_t timestamp = AccessToken::TimeUtil::GetCurrentTimestamp();
+    const std::string enhancedIdentity = "";
 
     std::vector<GenericValues> values;
     GenericValues value;
@@ -734,6 +737,7 @@ static void GeneratePermissionRecord(AccessTokenID tokenID)
     value.Put(PrivacyFiledConst::FIELD_REJECT_COUNT, 0);
     value.Put(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS, LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED);
     value.Put(PrivacyFiledConst::FIELD_USED_TYPE, static_cast<int>(PermissionUsedType::NORMAL_TYPE));
+    value.Put(PrivacyFiledConst::FIELD_ENHANCED_IDENTITY, enhancedIdentity);
     values.emplace_back(value); // background + unlock + normal
 
     value.Remove(PrivacyFiledConst::FIELD_TIMESTAMP);
@@ -784,35 +788,35 @@ HWTEST_F(PermissionRecordManagerTest, GetRecords003, TestSize.Level4)
     request.flag = PermissionUsageFlag::FLAG_PERMISSION_USAGE_SUMMARY_IN_SCREEN_LOCKED;
 
     PermissionUsedResult result1;
-    EXPECT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().GetPermissionUsedRecords(request, result1));
-    EXPECT_EQ(static_cast<size_t>(1), result1.bundleRecords.size());
-    EXPECT_EQ(static_cast<uint32_t>(tokenID), result1.bundleRecords[0].tokenId);
-    EXPECT_EQ(static_cast<size_t>(1), result1.bundleRecords[0].permissionRecords.size());
-    EXPECT_EQ(2, result1.bundleRecords[0].permissionRecords[0].accessCount);
+    ASSERT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().GetPermissionUsedRecords(request, result1));
+    ASSERT_EQ(static_cast<size_t>(1), result1.bundleRecords.size());
+    ASSERT_EQ(static_cast<uint32_t>(tokenID), result1.bundleRecords[0].tokenId);
+    ASSERT_EQ(static_cast<size_t>(1), result1.bundleRecords[0].permissionRecords.size());
+    ASSERT_EQ(2, result1.bundleRecords[0].permissionRecords[0].accessCount);
 
     PermissionUsedResult result2;
     request.flag = PermissionUsageFlag::FLAG_PERMISSION_USAGE_SUMMARY_IN_SCREEN_UNLOCKED;
-    EXPECT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().GetPermissionUsedRecords(request, result2));
-    EXPECT_EQ(static_cast<size_t>(1), result2.bundleRecords.size());
-    EXPECT_EQ(static_cast<uint32_t>(tokenID), result2.bundleRecords[0].tokenId);
-    EXPECT_EQ(static_cast<size_t>(1), result2.bundleRecords[0].permissionRecords.size());
-    EXPECT_EQ(2, result2.bundleRecords[0].permissionRecords[0].accessCount);
+    ASSERT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().GetPermissionUsedRecords(request, result2));
+    ASSERT_EQ(static_cast<size_t>(1), result2.bundleRecords.size());
+    ASSERT_EQ(static_cast<uint32_t>(tokenID), result2.bundleRecords[0].tokenId);
+    ASSERT_EQ(static_cast<size_t>(1), result2.bundleRecords[0].permissionRecords.size());
+    ASSERT_EQ(2, result2.bundleRecords[0].permissionRecords[0].accessCount);
 
     PermissionUsedResult result3;
     request.flag = PermissionUsageFlag::FLAG_PERMISSION_USAGE_SUMMARY_IN_APP_FOREGROUND;
-    EXPECT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().GetPermissionUsedRecords(request, result3));
-    EXPECT_EQ(static_cast<size_t>(1), result3.bundleRecords.size());
-    EXPECT_EQ(static_cast<uint32_t>(tokenID), result3.bundleRecords[0].tokenId);
-    EXPECT_EQ(static_cast<size_t>(1), result3.bundleRecords[0].permissionRecords.size());
-    EXPECT_EQ(2, result3.bundleRecords[0].permissionRecords[0].accessCount);
+    ASSERT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().GetPermissionUsedRecords(request, result3));
+    ASSERT_EQ(static_cast<size_t>(1), result3.bundleRecords.size());
+    ASSERT_EQ(static_cast<uint32_t>(tokenID), result3.bundleRecords[0].tokenId);
+    ASSERT_EQ(static_cast<size_t>(1), result3.bundleRecords[0].permissionRecords.size());
+    ASSERT_EQ(2, result3.bundleRecords[0].permissionRecords[0].accessCount);
 
     PermissionUsedResult result4;
     request.flag = PermissionUsageFlag::FLAG_PERMISSION_USAGE_SUMMARY_IN_APP_BACKGROUND;
-    EXPECT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().GetPermissionUsedRecords(request, result4));
-    EXPECT_EQ(static_cast<size_t>(1), result4.bundleRecords.size());
-    EXPECT_EQ(static_cast<uint32_t>(tokenID), result4.bundleRecords[0].tokenId);
-    EXPECT_EQ(static_cast<size_t>(1), result4.bundleRecords[0].permissionRecords.size());
-    EXPECT_EQ(2, result4.bundleRecords[0].permissionRecords[0].accessCount);
+    ASSERT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().GetPermissionUsedRecords(request, result4));
+    ASSERT_EQ(static_cast<size_t>(1), result4.bundleRecords.size());
+    ASSERT_EQ(static_cast<uint32_t>(tokenID), result4.bundleRecords[0].tokenId);
+    ASSERT_EQ(static_cast<size_t>(1), result4.bundleRecords[0].permissionRecords.size());
+    ASSERT_EQ(2, result4.bundleRecords[0].permissionRecords[0].accessCount);
 }
 
 /**

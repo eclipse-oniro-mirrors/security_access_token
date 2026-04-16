@@ -6861,6 +6861,17 @@
             "deviceTypes": ["general"]
         },
         {
+            "name": "ohos.permission.MINORS_PROTECTION_UI",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["general"]
+        },
+        {
             "name": "ohos.permission.ACCESS_CALENDARDATA_FOR_BROKER",
             "grantMode": "system_grant",
             "availableLevel": "system_core",
@@ -8311,7 +8322,7 @@
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
-            "since": 24,
+            "since": "26.0.0",
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
@@ -8658,7 +8669,29 @@
             "distributedSceneEnable": false,
             "deviceTypes": ["2in1"]
         },
-	    {
+        {
+            "name": "ohos.permission.GET_CALL_TRANSFER_INFO",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "NORMAL",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "2in1", "tablet"]
+        },
+        {
+            "name": "ohos.permission.ACCESS_DIGITAL_IDENTITY_ABILITY",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "tablet"]
+        },
+        {
             "name": "ohos.permission.SUBSCRIBE_OUTDOOR_EXPLORATION_SERVICE",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
@@ -8667,7 +8700,7 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
-            "deviceTypes":["phone"]
-    	}
+            "deviceTypes": ["phone"]
+        }
     ]
 }
