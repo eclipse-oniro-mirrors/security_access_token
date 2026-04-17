@@ -59,6 +59,7 @@ public:
     static bool IsPermissionUsedFlagValid(uint32_t flag);
     static bool IsPermissionUsedTypeValid(uint32_t type);
     static bool IsEnhancedIdentityValid(const std::string& enhancedIdentity);
+    static bool IsUpdateWhiteListTypeValid(UpdateWhiteListType type);
     static bool IsRemotePermissionUsedFlagValid(uint32_t flag);
     static bool IsPolicyTypeValid(uint32_t type);
     static bool IsCallerTypeValid(uint32_t type);

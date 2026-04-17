@@ -14,6 +14,7 @@
  */
 
 #include "edm_policy_set_test.h"
+#include <algorithm>
 #include <thread>
 
 #include "accesstoken_kit.h"
@@ -312,6 +313,9 @@ static void InitUserPolicyTestEnviroment()
     g_mockUserPolicy1 = MocNativeTokenID("MockUserPolicy1");
     g_mockUserPolicy2 = MocNativeTokenID("MockUserPolicy2");
 
+    GTEST_LOG_(INFO) << "Before stop service, pidof accesstoken_service:";
+    std::system("pidof accesstoken_service");
+
     std::system("service_control stop accesstoken_service");
     usleep(TIME_500_MS);
     GTEST_LOG_(INFO) << "stop service, pidof accesstoken_service:";
@@ -380,7 +384,7 @@ HWTEST_F(EdmPolicySetTest, SetUserPolicy002, TestSize.Level1)
 
 /**
  * @tc.name: SetUserPolicy003
- * @tc.desc: SetUserPolicy failed: 1. invalid userId of userList; 2. invalid permission.
+ * @tc.desc: SetUserPolicy failed with invalid permission or invalid userId.
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
@@ -403,10 +407,6 @@ HWTEST_F(EdmPolicySetTest, SetUserPolicy003, TestSize.Level1)
 
     // permission is noexist
     policy.permissionName = "test";
-    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, AccessTokenKit::SetUserPolicy({ policy }));
-
-    // permission is user_grant
-    policy.permissionName = "ohos.permission.CAMERA";
     EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, AccessTokenKit::SetUserPolicy({ policy }));
 
     // invalid userId
@@ -1038,6 +1038,516 @@ HWTEST_F(EdmPolicySetTest, ClearUserPolicy004, TestSize.Level1)
 }
 
 /**
+ * @tc.name: PolicyWhiteListTest001
+ * @tc.desc: UpdatePolicyWhiteList/GetPolicyWhiteList basic function test.
+ * @tc.type: FUNC
+ * @tc.require:Issue Number
+ */
+HWTEST_F(EdmPolicySetTest, PolicyWhiteListTest001, TestSize.Level1)
+{
+    MockNativeToken userPolicyMock("MockUserPolicy1");
+    UserPermissionPolicy policy = {
+        .permissionName = INTERNET,
+        .userPolicyList = {{ .userId = MOCK_USER_ID_10001, .isRestricted = true }}
+    };
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::SetUserPolicy({ policy }));
+
+    HapInfoParams testHapInfo = g_testHapInfoParams;
+    testHapInfo.userID = MOCK_USER_ID_10001;
+    AccessTokenIDEx fullIdUser1;
+    EXPECT_EQ(RET_SUCCESS, TestCommon::AllocTestHapToken(testHapInfo, g_testPolicyParams, fullIdUser1));
+    AccessTokenID tokenId = fullIdUser1.tokenIdExStruct.tokenID;
+
+    EXPECT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenId, INTERNET));
+
+    std::vector<AccessTokenID> tokenIdList;
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetPolicyWhiteList(INTERNET, tokenIdList));
+    EXPECT_TRUE(tokenIdList.empty());
+
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::UpdatePolicyWhiteList(tokenId, INTERNET, ADD));
+    EXPECT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(tokenId, INTERNET));
+
+    tokenIdList.clear();
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetPolicyWhiteList(INTERNET, tokenIdList));
+    ASSERT_EQ(1u, tokenIdList.size());
+    EXPECT_EQ(tokenId, tokenIdList[0]);
+
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::UpdatePolicyWhiteList(tokenId, INTERNET, DELETE));
+    EXPECT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenId, INTERNET));
+
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::ClearUserPolicy({ INTERNET }));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenId));
+}
+
+/**
+ * @tc.name: PolicyWhiteListTest002
+ * @tc.desc: UpdatePolicyWhiteList failed when caller is not controller.
+ * @tc.type: FUNC
+ * @tc.require:Issue Number
+ */
+HWTEST_F(EdmPolicySetTest, PolicyWhiteListTest002, TestSize.Level1)
+{
+    MockNativeToken userPolicyMock("MockUserPolicy1");
+    UserPermissionPolicy policy = {
+        .permissionName = INTERNET,
+        .userPolicyList = {{ .userId = MOCK_USER_ID_10001, .isRestricted = true }}
+    };
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::SetUserPolicy({ policy }));
+
+    HapInfoParams testHapInfo = g_testHapInfoParams;
+    testHapInfo.userID = MOCK_USER_ID_10001;
+    AccessTokenIDEx fullIdUser1;
+    EXPECT_EQ(RET_SUCCESS, TestCommon::AllocTestHapToken(testHapInfo, g_testPolicyParams, fullIdUser1));
+    AccessTokenID tokenId = fullIdUser1.tokenIdExStruct.tokenID;
+
+    {
+        MockNativeToken otherPolicyMock("MockUserPolicy2");
+        EXPECT_EQ(ERR_PERM_POLICY_ALREADY_SET_BY_OTHER,
+            AccessTokenKit::UpdatePolicyWhiteList(tokenId, INTERNET, ADD));
+    }
+
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::ClearUserPolicy({ INTERNET }));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenId));
+}
+
+/**
+ * @tc.name: PolicyWhiteListTest003
+ * @tc.desc: UpdatePolicyWhiteList returns error when adding duplicated token or deleting absent token.
+ * @tc.type: FUNC
+ * @tc.require:Issue Number
+ */
+HWTEST_F(EdmPolicySetTest, PolicyWhiteListTest003, TestSize.Level1)
+{
+    MockNativeToken userPolicyMock("MockUserPolicy1");
+    UserPermissionPolicy policy = {
+        .permissionName = INTERNET,
+        .userPolicyList = {{ .userId = MOCK_USER_ID_10001, .isRestricted = true }}
+    };
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::SetUserPolicy({ policy }));
+
+    HapInfoParams testHapInfo = g_testHapInfoParams;
+    testHapInfo.userID = MOCK_USER_ID_10001;
+    AccessTokenIDEx fullIdUser1;
+    EXPECT_EQ(RET_SUCCESS, TestCommon::AllocTestHapToken(testHapInfo, g_testPolicyParams, fullIdUser1));
+    AccessTokenID tokenId = fullIdUser1.tokenIdExStruct.tokenID;
+
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::UpdatePolicyWhiteList(tokenId, INTERNET, ADD));
+    EXPECT_EQ(ERR_TOKENID_ALREADY_IN_POLICY_WHITELIST,
+        AccessTokenKit::UpdatePolicyWhiteList(tokenId, INTERNET, ADD));
+
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::UpdatePolicyWhiteList(tokenId, INTERNET, DELETE));
+    EXPECT_EQ(ERR_TOKENID_NOT_IN_POLICY_WHITELIST,
+        AccessTokenKit::UpdatePolicyWhiteList(tokenId, INTERNET, DELETE));
+
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::ClearUserPolicy({ INTERNET }));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenId));
+}
+
+/**
+ * @tc.name: PolicyWhiteListTest004
+ * @tc.desc: UpdatePolicyWhiteList returns error when user policy is not set.
+ * @tc.type: FUNC
+ * @tc.require:Issue Number
+ */
+HWTEST_F(EdmPolicySetTest, PolicyWhiteListTest004, TestSize.Level1)
+{
+    MockNativeToken userPolicyMock("MockUserPolicy1");
+
+    HapInfoParams testHapInfo = g_testHapInfoParams;
+    testHapInfo.userID = MOCK_USER_ID_10001;
+    AccessTokenIDEx fullIdUser1;
+    EXPECT_EQ(RET_SUCCESS, TestCommon::AllocTestHapToken(testHapInfo, g_testPolicyParams, fullIdUser1));
+    AccessTokenID tokenId = fullIdUser1.tokenIdExStruct.tokenID;
+
+    EXPECT_EQ(ERR_PERM_POLICY_NOT_SET, AccessTokenKit::UpdatePolicyWhiteList(tokenId, INTERNET, ADD));
+
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenId));
+}
+
+/**
+ * @tc.name: PolicyWhiteListTest005
+ * @tc.desc: UpdatePolicyWhiteList/GetPolicyWhiteList invalid parameter test.
+ * @tc.type: FUNC
+ * @tc.require:Issue Number
+ */
+HWTEST_F(EdmPolicySetTest, PolicyWhiteListTest005, TestSize.Level1)
+{
+    MockNativeToken userPolicyMock("MockUserPolicy1");
+    UserPermissionPolicy policy = {
+        .permissionName = INTERNET,
+        .userPolicyList = {{ .userId = MOCK_USER_ID_10001, .isRestricted = true }}
+    };
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::SetUserPolicy({ policy }));
+
+    HapInfoParams testHapInfo = g_testHapInfoParams;
+    testHapInfo.userID = MOCK_USER_ID_10001;
+    AccessTokenIDEx fullIdUser1;
+    EXPECT_EQ(RET_SUCCESS, TestCommon::AllocTestHapToken(testHapInfo, g_testPolicyParams, fullIdUser1));
+    AccessTokenID tokenId = fullIdUser1.tokenIdExStruct.tokenID;
+
+    EXPECT_EQ(ERR_PARAM_INVALID, AccessTokenKit::UpdatePolicyWhiteList(INVALID_TOKENID, INTERNET, ADD));
+    EXPECT_EQ(ERR_PARAM_INVALID, AccessTokenKit::UpdatePolicyWhiteList(tokenId, "", ADD));
+
+    std::string invalidPermName(MAX_LENGTH + 1, 'A');
+    EXPECT_EQ(ERR_PARAM_INVALID, AccessTokenKit::UpdatePolicyWhiteList(tokenId, invalidPermName, ADD));
+    EXPECT_EQ(ERR_PARAM_INVALID,
+        AccessTokenKit::UpdatePolicyWhiteList(tokenId, INTERNET, static_cast<UpdateWhiteListType>(2)));
+
+    std::vector<AccessTokenID> tokenIdList = {tokenId};
+    EXPECT_EQ(ERR_PARAM_INVALID, AccessTokenKit::GetPolicyWhiteList("", tokenIdList));
+    EXPECT_EQ(ERR_PARAM_INVALID, AccessTokenKit::GetPolicyWhiteList(invalidPermName, tokenIdList));
+
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::ClearUserPolicy({ INTERNET }));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenId));
+}
+
+/**
+ * @tc.name: PolicyWhiteListTest006
+ * @tc.desc: UpdatePolicyWhiteList/GetPolicyWhiteList with multiple tokens.
+ * @tc.type: FUNC
+ * @tc.require:Issue Number
+ */
+HWTEST_F(EdmPolicySetTest, PolicyWhiteListTest006, TestSize.Level1)
+{
+    MockNativeToken userPolicyMock("MockUserPolicy1");
+    UserPermissionPolicy policy = {
+        .permissionName = INTERNET,
+        .userPolicyList = {{ .userId = MOCK_USER_ID_10001, .isRestricted = true }}
+    };
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::SetUserPolicy({ policy }));
+
+    HapInfoParams testHapInfo = g_testHapInfoParams;
+    testHapInfo.userID = MOCK_USER_ID_10001;
+    AccessTokenIDEx fullIdUser1;
+    AccessTokenIDEx fullIdUser2;
+    EXPECT_EQ(RET_SUCCESS, TestCommon::AllocTestHapToken(testHapInfo, g_testPolicyParams, fullIdUser1));
+    testHapInfo.instIndex = 1;
+    EXPECT_EQ(RET_SUCCESS, TestCommon::AllocTestHapToken(testHapInfo, g_testPolicyParams, fullIdUser2));
+    AccessTokenID tokenId1 = fullIdUser1.tokenIdExStruct.tokenID;
+    AccessTokenID tokenId2 = fullIdUser2.tokenIdExStruct.tokenID;
+
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::UpdatePolicyWhiteList(tokenId1, INTERNET, ADD));
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::UpdatePolicyWhiteList(tokenId2, INTERNET, ADD));
+
+    std::vector<AccessTokenID> tokenIdList;
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetPolicyWhiteList(INTERNET, tokenIdList));
+    EXPECT_EQ(2u, tokenIdList.size());
+    EXPECT_NE(tokenIdList.end(), std::find(tokenIdList.begin(), tokenIdList.end(), tokenId1));
+    EXPECT_NE(tokenIdList.end(), std::find(tokenIdList.begin(), tokenIdList.end(), tokenId2));
+
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::UpdatePolicyWhiteList(tokenId1, INTERNET, DELETE));
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetPolicyWhiteList(INTERNET, tokenIdList));
+    ASSERT_EQ(1u, tokenIdList.size());
+    EXPECT_EQ(tokenId2, tokenIdList[0]);
+
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::ClearUserPolicy({ INTERNET }));
+    testHapInfo.instIndex = 0;
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenId1));
+    testHapInfo.instIndex = 1;
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenId2));
+}
+
+/**
+ * @tc.name: PolicyWhiteListTest007
+ * @tc.desc: White list only works for target token and is cleared with user policy.
+ * @tc.type: FUNC
+ * @tc.require:Issue Number
+ */
+HWTEST_F(EdmPolicySetTest, PolicyWhiteListTest007, TestSize.Level1)
+{
+    MockNativeToken userPolicyMock("MockUserPolicy1");
+    UserPermissionPolicy policy = {
+        .permissionName = INTERNET,
+        .userPolicyList = {{ .userId = MOCK_USER_ID_10001, .isRestricted = true }}
+    };
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::SetUserPolicy({ policy }));
+
+    HapInfoParams testHapInfo = g_testHapInfoParams;
+    testHapInfo.userID = MOCK_USER_ID_10001;
+    AccessTokenIDEx fullIdUser1;
+    AccessTokenIDEx fullIdUser2;
+    EXPECT_EQ(RET_SUCCESS, TestCommon::AllocTestHapToken(testHapInfo, g_testPolicyParams, fullIdUser1));
+    testHapInfo.instIndex = 1;
+    EXPECT_EQ(RET_SUCCESS, TestCommon::AllocTestHapToken(testHapInfo, g_testPolicyParams, fullIdUser2));
+    AccessTokenID tokenId1 = fullIdUser1.tokenIdExStruct.tokenID;
+    AccessTokenID tokenId2 = fullIdUser2.tokenIdExStruct.tokenID;
+
+    EXPECT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenId1, INTERNET));
+    EXPECT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenId2, INTERNET));
+
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::UpdatePolicyWhiteList(tokenId1, INTERNET, ADD));
+    EXPECT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(tokenId1, INTERNET));
+    EXPECT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenId2, INTERNET));
+
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::ClearUserPolicy({ INTERNET }));
+
+    std::vector<AccessTokenID> tokenIdList = {tokenId1, tokenId2};
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetPolicyWhiteList(INTERNET, tokenIdList));
+    EXPECT_TRUE(tokenIdList.empty());
+    EXPECT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(tokenId1, INTERNET));
+    EXPECT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(tokenId2, INTERNET));
+
+    testHapInfo.instIndex = 0;
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenId1));
+    testHapInfo.instIndex = 1;
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenId2));
+}
+
+/**
+ * @tc.name: PolicyWhiteListTest008
+ * @tc.desc: UpdatePolicyWhiteList returns error when token user is outside controlled userIds.
+ * @tc.type: FUNC
+ * @tc.require:Issue Number
+ */
+HWTEST_F(EdmPolicySetTest, PolicyWhiteListTest008, TestSize.Level1)
+{
+    MockNativeToken userPolicyMock("MockUserPolicy1");
+    UserPermissionPolicy policy = {
+        .permissionName = INTERNET,
+        .userPolicyList = {{ .userId = MOCK_USER_ID_10001, .isRestricted = true }}
+    };
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::SetUserPolicy({ policy }));
+
+    HapInfoParams testHapInfo = g_testHapInfoParams;
+    testHapInfo.userID = MOCK_USER_ID_10002;
+    AccessTokenIDEx fullIdUser2;
+    EXPECT_EQ(RET_SUCCESS, TestCommon::AllocTestHapToken(testHapInfo, g_testPolicyParams, fullIdUser2));
+    AccessTokenID tokenId = fullIdUser2.tokenIdExStruct.tokenID;
+
+    EXPECT_EQ(ERR_TOKENID_NOT_IN_POLICY_USERLIST, AccessTokenKit::UpdatePolicyWhiteList(tokenId, INTERNET, ADD));
+    EXPECT_EQ(ERR_TOKENID_NOT_IN_POLICY_USERLIST, AccessTokenKit::UpdatePolicyWhiteList(tokenId, INTERNET, DELETE));
+
+    std::vector<AccessTokenID> tokenIdList;
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetPolicyWhiteList(INTERNET, tokenIdList));
+    EXPECT_TRUE(tokenIdList.empty());
+
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::ClearUserPolicy({ INTERNET }));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenId));
+}
+
+/**
+ * @tc.name: PolicyWhiteListTest009
+ * @tc.desc: GetPolicyWhiteList clears output list when parameter is invalid.
+ * @tc.type: FUNC
+ * @tc.require:Issue Number
+ */
+HWTEST_F(EdmPolicySetTest, PolicyWhiteListTest009, TestSize.Level1)
+{
+    MockNativeToken userPolicyMock("MockUserPolicy1");
+    std::vector<AccessTokenID> tokenIdList = {INVALID_TOKENID};
+
+    EXPECT_EQ(ERR_PARAM_INVALID, AccessTokenKit::GetPolicyWhiteList("", tokenIdList));
+    EXPECT_TRUE(tokenIdList.empty());
+
+    tokenIdList = {INVALID_TOKENID};
+    std::string invalidPermName(MAX_LENGTH + 1, 'A');
+    EXPECT_EQ(ERR_PARAM_INVALID, AccessTokenKit::GetPolicyWhiteList(invalidPermName, tokenIdList));
+    EXPECT_TRUE(tokenIdList.empty());
+}
+
+/**
+ * @tc.name: PolicyWhiteListTest010
+ * @tc.desc: GetPolicyWhiteList returns empty list when whitelist does not exist.
+ * @tc.type: FUNC
+ * @tc.require:Issue Number
+ */
+HWTEST_F(EdmPolicySetTest, PolicyWhiteListTest010, TestSize.Level1)
+{
+    MockNativeToken userPolicyMock("MockUserPolicy1");
+    std::vector<AccessTokenID> tokenIdList;
+
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetPolicyWhiteList(INTERNET, tokenIdList));
+    EXPECT_TRUE(tokenIdList.empty());
+}
+
+/**
+ * @tc.name: PolicyWhiteListTest011
+ * @tc.desc: UpdatePolicyWhiteList returns error when tokenId is not hap.
+ * @tc.type: FUNC
+ * @tc.require:Issue Number
+ */
+HWTEST_F(EdmPolicySetTest, PolicyWhiteListTest011, TestSize.Level1)
+{
+    MockNativeToken userPolicyMock("MockUserPolicy1");
+    UserPermissionPolicy policy = {
+        .permissionName = INTERNET,
+        .userPolicyList = {{ .userId = MOCK_USER_ID_10001, .isRestricted = true }}
+    };
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::SetUserPolicy({ policy }));
+
+    AccessTokenID nativeTokenId = AccessTokenKit::GetNativeTokenId("foundation");
+    EXPECT_EQ(ERR_PARAM_INVALID, AccessTokenKit::UpdatePolicyWhiteList(nativeTokenId, INTERNET, ADD));
+
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::ClearUserPolicy({ INTERNET }));
+}
+
+/**
+ * @tc.name: PolicyWhiteListTest012
+ * @tc.desc: GetPolicyWhiteList clears prefilled output list before valid query.
+ * @tc.type: FUNC
+ * @tc.require:Issue Number
+ */
+HWTEST_F(EdmPolicySetTest, PolicyWhiteListTest012, TestSize.Level1)
+{
+    MockNativeToken userPolicyMock("MockUserPolicy1");
+    std::vector<AccessTokenID> tokenIdList = {INVALID_TOKENID};
+
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetPolicyWhiteList(INTERNET, tokenIdList));
+    EXPECT_TRUE(tokenIdList.empty());
+}
+
+/**
+ * @tc.name: PolicyWhiteListTest013
+ * @tc.desc: UpdatePolicyWhiteList returns invalid when permission does not exist.
+ * @tc.type: FUNC
+ * @tc.require:Issue Number
+ */
+HWTEST_F(EdmPolicySetTest, PolicyWhiteListTest013, TestSize.Level1)
+{
+    MockNativeToken userPolicyMock("MockUserPolicy1");
+    HapInfoParams testHapInfo = g_testHapInfoParams;
+    testHapInfo.userID = MOCK_USER_ID_10001;
+    AccessTokenIDEx fullIdUser1;
+    EXPECT_EQ(RET_SUCCESS, TestCommon::AllocTestHapToken(testHapInfo, g_testPolicyParams, fullIdUser1));
+    AccessTokenID tokenId = fullIdUser1.tokenIdExStruct.tokenID;
+
+    EXPECT_EQ(ERR_PARAM_INVALID,
+        AccessTokenKit::UpdatePolicyWhiteList(tokenId, "ohos.permission.TEST_123", ADD));
+
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenId));
+}
+
+/**
+ * @tc.name: PolicyWhiteListTest014
+ * @tc.desc: QueryStatusByPermission and QueryStatusByTokenID reflect whitelist final state.
+ * @tc.type: FUNC
+ * @tc.require:Issue Number
+ */
+HWTEST_F(EdmPolicySetTest, PolicyWhiteListTest014, TestSize.Level1)
+{
+    MockNativeToken userPolicyMock("MockUserPolicy1");
+    UserPermissionPolicy policy = {
+        .permissionName = INTERNET, .userPolicyList = {{ .userId = MOCK_USER_ID_10001, .isRestricted = true }}
+    };
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::SetUserPolicy({ policy }));
+
+    HapInfoParams testHapInfo = g_testHapInfoParams;
+    testHapInfo.userID = MOCK_USER_ID_10001;
+    AccessTokenIDEx fullIdUser1;
+    EXPECT_EQ(RET_SUCCESS, TestCommon::AllocTestHapToken(testHapInfo, g_testPolicyParams, fullIdUser1));
+    AccessTokenID tokenId = fullIdUser1.tokenIdExStruct.tokenID;
+
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::UpdatePolicyWhiteList(tokenId, INTERNET, ADD));
+    {
+        MockNativeToken mockNative("privacy_service");
+        std::vector<PermissionStatus> permissionInfoList1;
+        EXPECT_EQ(RET_SUCCESS, AccessTokenKit::QueryStatusByPermission({INTERNET}, permissionInfoList1));
+        for (const auto& info : permissionInfoList1) {
+            if (info.tokenID == tokenId) {
+                EXPECT_EQ(PERMISSION_GRANTED, info.grantStatus);
+            }
+        }
+
+        std::vector<PermissionStatus> permissionInfoList2;
+        EXPECT_EQ(RET_SUCCESS, AccessTokenKit::QueryStatusByTokenID({tokenId}, permissionInfoList2));
+        for (const auto& info : permissionInfoList2) {
+            if (info.permissionName == INTERNET) {
+                EXPECT_EQ(PERMISSION_GRANTED, info.grantStatus);
+            }
+        }
+    }
+
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::UpdatePolicyWhiteList(tokenId, INTERNET, DELETE));
+    {
+        MockNativeToken mockNative("privacy_service");
+        std::vector<PermissionStatus> permissionInfoList1;
+        EXPECT_EQ(RET_SUCCESS, AccessTokenKit::QueryStatusByPermission({INTERNET}, permissionInfoList1));
+        for (const auto& info : permissionInfoList1) {
+            if (info.tokenID == tokenId) {
+                EXPECT_EQ(PERMISSION_DENIED, info.grantStatus);
+            }
+        }
+
+        std::vector<PermissionStatus> permissionInfoList2;
+        EXPECT_EQ(RET_SUCCESS, AccessTokenKit::QueryStatusByTokenID({tokenId}, permissionInfoList2));
+        for (const auto& info : permissionInfoList2) {
+            if (info.permissionName == INTERNET) {
+                EXPECT_EQ(PERMISSION_DENIED, info.grantStatus);
+            }
+        }
+    }
+
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::ClearUserPolicy({ INTERNET }));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenId));
+}
+
+class CbCustomizeTestForEdm : public PermStateChangeCallbackCustomize {
+public:
+    explicit CbCustomizeTestForEdm(const PermStateChangeScope &scopeInfo)
+        : PermStateChangeCallbackCustomize(scopeInfo)
+    {
+    }
+
+    ~CbCustomizeTestForEdm()
+    {}
+
+    virtual void PermStateChangeCallback(PermStateChangeInfo& result)
+    {
+        GTEST_LOG_(INFO) << "PermStateChangeCallback permissionName: " << result.permissionName;
+        GTEST_LOG_(INFO) << "PermStateChangeCallback permStateChangeType: " << result.permStateChangeType;
+        ready_ = true;
+        changeCnt_++;
+    }
+
+    bool ready_ = false;
+    uint32_t changeCnt_ = 0;
+};
+
+/**
+ * @tc.name: PolicyWhiteListTest015
+ * @tc.desc: UpdatePolicyWhiteList triggers permission state change callback on add and delete.
+ * @tc.type: FUNC
+ * @tc.require:Issue Number
+ */
+HWTEST_F(EdmPolicySetTest, PolicyWhiteListTest015, TestSize.Level1)
+{
+    MockNativeToken userPolicyMock("MockUserPolicy1");
+    UserPermissionPolicy policy = {
+        .permissionName = INTERNET,
+        .userPolicyList = {{ .userId = MOCK_USER_ID_10001, .isRestricted = true }}
+    };
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::SetUserPolicy({ policy }));
+
+    HapInfoParams testHapInfo = g_testHapInfoParams;
+    testHapInfo.userID = MOCK_USER_ID_10001;
+    AccessTokenIDEx fullIdUser1;
+    EXPECT_EQ(RET_SUCCESS, TestCommon::AllocTestHapToken(testHapInfo, g_testPolicyParams, fullIdUser1));
+    AccessTokenID tokenId = fullIdUser1.tokenIdExStruct.tokenID;
+    EXPECT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenId, INTERNET));
+
+    PermStateChangeScope scopeInfo;
+    scopeInfo.permList = { INTERNET };
+    scopeInfo.tokenIDs = { tokenId };
+    auto callbackPtr = std::make_shared<CbCustomizeTestForEdm>(scopeInfo);
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr));
+
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::UpdatePolicyWhiteList(tokenId, INTERNET, ADD));
+    usleep(500000); // 500000us = 0.5s
+    EXPECT_TRUE(callbackPtr->ready_);
+    EXPECT_EQ(1u, callbackPtr->changeCnt_);
+
+    callbackPtr->ready_ = false;
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::UpdatePolicyWhiteList(tokenId, INTERNET, DELETE));
+    usleep(500000); // 500000us = 0.5s
+    EXPECT_TRUE(callbackPtr->ready_);
+    EXPECT_EQ(2u, callbackPtr->changeCnt_);
+
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr));
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::ClearUserPolicy({ INTERNET }));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenId));
+}
+
+/**
  * @tc.name: UserPolicyTestForInitHap
  * @tc.desc: Set the authorization status based on the user policy during new hap installation
  * @tc.type: FUNC
@@ -1134,28 +1644,6 @@ HWTEST_F(EdmPolicySetTest, UserPolicyTestForUpdateHap, TestSize.Level1)
 
     EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenId));
 }
-
-class CbCustomizeTestForEdm : public PermStateChangeCallbackCustomize {
-public:
-    explicit CbCustomizeTestForEdm(const PermStateChangeScope &scopeInfo)
-        : PermStateChangeCallbackCustomize(scopeInfo)
-    {
-    }
-
-    ~CbCustomizeTestForEdm()
-    {}
-
-    virtual void PermStateChangeCallback(PermStateChangeInfo& result)
-    {
-        GTEST_LOG_(INFO) << "PermStateChangeCallback permissionName: " << result.permissionName;
-        GTEST_LOG_(INFO) << "PermStateChangeCallback permStateChangeType: " << result.permStateChangeType;
-        ready_ = true;
-        changeCnt_++;
-    }
-
-    bool ready_ = false;
-    uint32_t changeCnt_ = 0;
-};
 
 /**
  * @tc.name: UserPolicyTestForRemove
@@ -1265,6 +1753,21 @@ HWTEST_F(EdmPolicySetTest, SetUserPolicy001, TestSize.Level0)
     std::vector<UserPermissionPolicy> permPolicyListEmpty;
     EXPECT_EQ(AccessTokenError::ERR_CAPABILITY_NOT_SUPPORT, AccessTokenKit::SetUserPolicy(permPolicyListEmpty));
     EXPECT_EQ(AccessTokenError::ERR_CAPABILITY_NOT_SUPPORT, AccessTokenKit::ClearUserPolicy({ INTERNET }));
+}
+
+/**
+ * @tc.name: PolicyWhiteListNotSupport001
+ * @tc.desc: Not support to UpdatePolicyWhiteList/GetPolicyWhiteList.
+ * @tc.type: FUNC
+ * @tc.require:Issue Number
+ */
+HWTEST_F(EdmPolicySetTest, PolicyWhiteListNotSupport001, TestSize.Level0)
+{
+    std::vector<AccessTokenID> tokenIdList;
+    EXPECT_EQ(AccessTokenError::ERR_CAPABILITY_NOT_SUPPORT,
+        AccessTokenKit::UpdatePolicyWhiteList(INVALID_TOKENID, INTERNET, ADD));
+    EXPECT_EQ(AccessTokenError::ERR_CAPABILITY_NOT_SUPPORT,
+        AccessTokenKit::GetPolicyWhiteList(INTERNET, tokenIdList));
 }
 #endif
 

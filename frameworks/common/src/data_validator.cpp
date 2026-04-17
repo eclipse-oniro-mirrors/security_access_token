@@ -219,6 +219,15 @@ bool DataValidator::IsEnhancedIdentityValid(const std::string& enhancedIdentity)
     return true;
 }
 
+bool DataValidator::IsUpdateWhiteListTypeValid(UpdateWhiteListType type)
+{
+    if ((type != ADD) && (type != DELETE)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Invalid type(%{public}d).", static_cast<int32_t>(type));
+        return false;
+    }
+    return true;
+}
+
 bool DataValidator::IsRemotePermissionUsedFlagValid(uint32_t flag)
 {
     return ((flag == FLAG_PERMISSION_USAGE_SUMMARY) || (flag == FLAG_PERMISSION_USAGE_DETAIL));

@@ -121,6 +121,70 @@ static PermissionStatus g_permState = {
     .grantFlag = PermissionFlag::PERMISSION_DEFAULT_FLAG
 };
 
+#ifdef SUPPORT_MANAGE_USER_POLICY
+class PolicyWhiteListStateGuard {
+public:
+    PolicyWhiteListStateGuard(AccessTokenInfoManager& manager, uint32_t permCode)
+        : manager_(manager), permCode_(permCode)
+    {
+        std::unique_lock<std::shared_mutex> lock(manager_.userPolicyLock_);
+        auto userIter = manager_.userPermPolicyList_.find(permCode_);
+        if (userIter != manager_.userPermPolicyList_.end()) {
+            hasUserList_ = true;
+            oldUserList_ = userIter->second;
+        }
+        auto whiteIter = manager_.policyWhiteList_.find(permCode_);
+        if (whiteIter != manager_.policyWhiteList_.end()) {
+            hasWhiteList_ = true;
+            oldWhiteList_ = whiteIter->second;
+        }
+        auto controllerIter = manager_.policyController_.find(permCode_);
+        if (controllerIter != manager_.policyController_.end()) {
+            hasController_ = true;
+            oldController_ = controllerIter->second;
+        }
+    }
+
+    ~PolicyWhiteListStateGuard()
+    {
+        std::unique_lock<std::shared_mutex> lock(manager_.userPolicyLock_);
+        if (hasUserList_) {
+            manager_.userPermPolicyList_[permCode_] = oldUserList_;
+        } else {
+            manager_.userPermPolicyList_.erase(permCode_);
+        }
+        if (hasWhiteList_) {
+            manager_.policyWhiteList_[permCode_] = oldWhiteList_;
+        } else {
+            manager_.policyWhiteList_.erase(permCode_);
+        }
+        if (hasController_) {
+            manager_.policyController_[permCode_] = oldController_;
+        } else {
+            manager_.policyController_.erase(permCode_);
+        }
+    }
+
+    void SetControlledUser(int32_t userId, AccessTokenID controller)
+    {
+        std::unique_lock<std::shared_mutex> lock(manager_.userPolicyLock_);
+        manager_.userPermPolicyList_[permCode_] = { userId };
+        manager_.policyController_[permCode_] = controller;
+        manager_.policyWhiteList_.erase(permCode_);
+    }
+
+private:
+    AccessTokenInfoManager& manager_;
+    uint32_t permCode_;
+    std::vector<int32_t> oldUserList_;
+    std::unordered_set<AccessTokenID> oldWhiteList_;
+    AccessTokenID oldController_ = INVALID_TOKENID;
+    bool hasUserList_ = false;
+    bool hasWhiteList_ = false;
+    bool hasController_ = false;
+};
+#endif
+
 #ifdef TOKEN_SYNC_ENABLE
 static uint32_t tokenSyncId_ = 0;
 static const int32_t FAKE_SYNC_RET = 0xabcdef;
@@ -2476,6 +2540,71 @@ HWTEST_F(TokenInfoManagerTest, IsPermissionRestrictedByUserPolicy001, TestSize.L
     EXPECT_FALSE(AccessTokenInfoManager::GetInstance().IsPermissionRestrictedByUserPolicy(tokenID, permCode));
 #endif
 }
+
+#ifdef SUPPORT_MANAGE_USER_POLICY
+/**
+ * @tc.name: UpdatePolicyWhiteList001
+ * @tc.desc: UpdatePolicyWhiteList returns error when token user is outside controlled user list.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenInfoManagerTest, UpdatePolicyWhiteList001, TestSize.Level0)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+    std::vector<GenericValues> undefValues;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(
+        g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams1, tokenIdEx, undefValues));
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+
+    uint32_t permCode;
+    ASSERT_TRUE(TransferPermissionToOpcode("ohos.permission.CAMERA", permCode));
+
+    auto& manager = AccessTokenInfoManager::GetInstance();
+    PolicyWhiteListStateGuard stateGuard(manager, permCode);
+    stateGuard.SetControlledUser(USER_ID, GetSelfTokenID());
+
+    EXPECT_EQ(ERR_TOKENID_NOT_IN_POLICY_USERLIST,
+        manager.UpdatePolicyWhiteList(tokenId, permCode, UpdateWhiteListType::ADD));
+    EXPECT_EQ(ERR_TOKENID_NOT_IN_POLICY_USERLIST,
+        manager.UpdatePolicyWhiteList(tokenId, permCode, UpdateWhiteListType::DELETE));
+
+    std::vector<AccessTokenID> tokenIdList;
+    EXPECT_EQ(RET_SUCCESS, manager.GetPolicyWhiteList(permCode, tokenIdList));
+    EXPECT_TRUE(tokenIdList.empty());
+
+    EXPECT_EQ(RET_SUCCESS, manager.RemoveHapTokenInfo(tokenId));
+}
+
+/**
+ * @tc.name: UpdatePolicyWhiteList002
+ * @tc.desc: UpdatePolicyWhiteList returns error for invalid tokenId.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenInfoManagerTest, UpdatePolicyWhiteList002, TestSize.Level0)
+{
+    uint32_t permCode;
+    ASSERT_TRUE(TransferPermissionToOpcode("ohos.permission.CAMERA", permCode));
+
+    auto& manager = AccessTokenInfoManager::GetInstance();
+    EXPECT_EQ(ERR_PARAM_INVALID, manager.UpdatePolicyWhiteList(INVALID_TOKENID, permCode, UpdateWhiteListType::ADD));
+}
+
+/**
+ * @tc.name: GetPolicyWhiteList001
+ * @tc.desc: GetPolicyWhiteList clears output list and returns error for invalid permCode.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenInfoManagerTest, GetPolicyWhiteList001, TestSize.Level0)
+{
+    auto& manager = AccessTokenInfoManager::GetInstance();
+    std::vector<AccessTokenID> tokenIdList = {RANDOM_TOKENID};
+
+    EXPECT_EQ(ERR_PERMISSION_NOT_EXIST, manager.GetPolicyWhiteList(UINT32_MAX, tokenIdList));
+    EXPECT_TRUE(tokenIdList.empty());
+}
+#endif
 
 /**
  * @tc.name: ReservedHapInfo001

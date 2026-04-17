@@ -16,6 +16,7 @@
 #include <chrono>
 #include <cstdio>
 #include <cstdlib>
+#include <unordered_set>
 #include <sstream>
 #include <string>
 #include <iostream>
@@ -24,6 +25,17 @@
 #include "token_setproc.h"
 
 using namespace OHOS::Security::AccessToken;
+static void AppendUniquePermission(const std::string& permission, std::vector<std::string>& permissions,
+    std::unordered_set<std::string>& uniquePermissions)
+{
+    if (permission.empty()) {
+        return;
+    }
+    if (uniquePermissions.insert(permission).second) {
+        permissions.emplace_back(permission);
+    }
+}
+
 void PrintCurrentTime()
 {
     std::chrono::milliseconds ms = std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -62,7 +74,49 @@ AccessTokenID GetNativeTokenId(const std::string& process)
     return tokenID;
 }
 
-FullTokenID GetHapTokenId(const std::string& bundle, const std::vector<std::string>& reqPerm)
+void BuildHapPolicyParams(const std::vector<std::string>& reqPerm, const std::vector<std::string>& preAuthPerm,
+    HapPolicyParams& policyParams)
+{
+    policyParams = {
+        .apl = APL_NORMAL,
+        .domain = "accesstoken_test_tool",
+    };
+
+    std::vector<std::string> permissions;
+    std::unordered_set<std::string> uniquePermissions;
+    for (const auto& permission : reqPerm) {
+        AppendUniquePermission(permission, permissions, uniquePermissions);
+    }
+    std::unordered_set<std::string> uniquePreAuthPerm(preAuthPerm.begin(), preAuthPerm.end());
+
+    for (const auto& permission : permissions) {
+        PermissionDef permDefResult;
+        if (AccessTokenKit::GetDefPermission(permission, permDefResult) != RET_SUCCESS) {
+            continue;
+        }
+        PermissionStateFull permState = {
+            .permissionName = permission,
+            .isGeneral = true,
+            .resDeviceID = {"local3"},
+            .grantStatus = {PermissionState::PERMISSION_DENIED},
+            .grantFlags = {PermissionFlag::PERMISSION_DEFAULT_FLAG}
+        };
+        policyParams.permStateList.emplace_back(permState);
+        if (uniquePreAuthPerm.count(permission) != 0) {
+            PreAuthorizationInfo preAuthInfo = {
+                .permissionName = permission,
+                .userCancelable = false,
+            };
+            policyParams.preAuthorizationInfo.emplace_back(preAuthInfo);
+        }
+        if (permDefResult.availableLevel > policyParams.apl) {
+            policyParams.aclRequestedList.emplace_back(permission);
+        }
+    }
+}
+
+FullTokenID GetHapTokenId(const std::string& bundle, const std::vector<std::string>& reqPerm,
+    const std::vector<std::string>& preAuthPerm, bool isSystemApp)
 {
     uint64_t selfTokenId = GetSelfTokenID();
     HapInfoParams infoParams = {
@@ -71,31 +125,12 @@ FullTokenID GetHapTokenId(const std::string& bundle, const std::vector<std::stri
         .instIndex = 0,
         .appIDDesc = bundle,
         .apiVersion = 8, // 8: API VERSION
-        .isSystemApp = true,
+        .isSystemApp = isSystemApp,
         .appDistributionType = "",
     };
 
-    HapPolicyParams policyParams = {
-        .apl = APL_NORMAL,
-        .domain = "accesstoken_test_tool",
-    };
-    for (size_t i = 0; i < reqPerm.size(); ++i) {
-        PermissionDef permDefResult;
-        if (AccessTokenKit::GetDefPermission(reqPerm[i], permDefResult) != RET_SUCCESS) {
-            continue;
-        }
-        PermissionStateFull permState = {
-            .permissionName = reqPerm[i],
-            .isGeneral = true,
-            .resDeviceID = {"local3"},
-            .grantStatus = {PermissionState::PERMISSION_DENIED},
-            .grantFlags = {PermissionFlag::PERMISSION_DEFAULT_FLAG}
-        };
-        policyParams.permStateList.emplace_back(permState);
-        if (permDefResult.availableLevel > policyParams.apl) {
-            policyParams.aclRequestedList.emplace_back(reqPerm[i]);
-        }
-    }
+    HapPolicyParams policyParams;
+    BuildHapPolicyParams(reqPerm, preAuthPerm, policyParams);
 
     AccessTokenIDEx tokenIdEx = {0};
     AccessTokenID mockToken = GetNativeTokenId("foundation");
@@ -104,7 +139,9 @@ FullTokenID GetHapTokenId(const std::string& bundle, const std::vector<std::stri
         SetSelfTokenID(mockToken);
     }
 
-    AccessTokenKit::InitHapToken(infoParams, policyParams, tokenIdEx);
+    if (AccessTokenKit::InitHapToken(infoParams, policyParams, tokenIdEx) != RET_SUCCESS) {
+        tokenIdEx.tokenIDEx = INVALID_TOKENID;
+    }
 
     // restore
     SetSelfTokenID(selfTokenId);
