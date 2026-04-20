@@ -94,9 +94,10 @@ bool ContinuousPermissionRecord::IsEqualRecord(const ContinuousPermissionRecord&
     return IsEqualBasicRecord(record) && enhancedIdentity == record.enhancedIdentity;
 }
 
-bool ContinuousPermissionRecord::IsEqualTokenId(const ContinuousPermissionRecord& record) const
+bool ContinuousPermissionRecord::IsEqualTokenIdAndIdentity(const ContinuousPermissionRecord& record) const
 {
-    return tokenId == record.tokenId;
+    return tokenId == record.tokenId &&
+        (record.enhancedIdentity.empty() || enhancedIdentity == record.enhancedIdentity);
 }
 
 bool ContinuousPermissionRecord::IsEqualPermCode(const ContinuousPermissionRecord& record) const

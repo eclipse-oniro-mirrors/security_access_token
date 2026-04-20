@@ -149,9 +149,10 @@ public:
     /**
      * @brief Remove input tokenID sensitive permission used records.
      * @param tokenID token id
+     * @param enhancedIdentity enhanced identity. Empty means removing all records for the token.
      * @return error code, see privacy_error.h
      */
-    static int32_t RemovePermissionUsedRecords(AccessTokenID tokenID);
+    static int32_t RemovePermissionUsedRecords(AccessTokenID tokenID, const std::string& enhancedIdentity = "");
     /**
      * @brief Get sensitive permission used records.
      * @param request PermissionUsedRequest quote

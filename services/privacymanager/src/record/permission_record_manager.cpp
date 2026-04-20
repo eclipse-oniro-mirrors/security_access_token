@@ -153,7 +153,7 @@ void PrivacyAppStateObserver::OnAppStopped(const AppStateData &appStateData)
         appStateData.accessTokenId, appStateData.state);
 
     if (appStateData.state == static_cast<int32_t>(ApplicationState::APP_STATE_TERMINATED)) {
-        PermissionRecordManager::GetInstance().RemoveRecordFromStartListByToken(appStateData.accessTokenId);
+        PermissionRecordManager::GetInstance().RemoveRecordFromStartListByTokenAndIdentity(appStateData.accessTokenId);
     }
 }
 
@@ -1250,19 +1250,28 @@ void PermissionRecordManager::RemoveHistoryPermissionUsedRecords(std::unordered_
     }
 }
 
-void PermissionRecordManager::RemovePermissionUsedRecords(AccessTokenID tokenId)
+int32_t PermissionRecordManager::RemovePermissionUsedRecords(
+    AccessTokenID tokenId, const std::string& enhancedIdentity)
 {
+    if (!DataValidator::IsEnhancedIdentityValid(enhancedIdentity)) {
+        return PrivacyError::ERR_PARAM_INVALID;
+    }
+
     {
         // remove from record cache
         std::lock_guard<std::mutex> lock(permUsedRecMutex_);
         permUsedRecList_.erase(std::remove_if(permUsedRecList_.begin(), permUsedRecList_.end(),
-            [tokenId](const PermissionRecordCache& recordCache) {
-                return recordCache.record.tokenId == tokenId;
+            [tokenId, &enhancedIdentity](const PermissionRecordCache& recordCache) {
+                return recordCache.record.tokenId == tokenId &&
+                    (enhancedIdentity.empty() || recordCache.record.enhancedIdentity == enhancedIdentity);
             }), permUsedRecList_.end());
     }
 
     GenericValues conditions;
     conditions.Put(PrivacyFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
+    if (!enhancedIdentity.empty()) {
+        conditions.Put(PrivacyFiledConst::FIELD_ENHANCED_IDENTITY, enhancedIdentity);
+    }
     {
         // remove from database
         std::unique_lock<std::shared_mutex> lk(this->rwLock_);
@@ -1272,7 +1281,8 @@ void PermissionRecordManager::RemovePermissionUsedRecords(AccessTokenID tokenId)
     }
 
     // remove from start list
-    RemoveRecordFromStartListByToken(tokenId);
+    RemoveRecordFromStartListByTokenAndIdentity(tokenId, enhancedIdentity);
+    return Constant::SUCCESS;
 }
 
 int32_t PermissionRecordManager::GetPermissionUsedRecords(
@@ -1843,12 +1853,14 @@ void PermissionRecordManager::RemoveRecordFromStartListByPid(const AccessTokenID
 /*
 * remove all record of token, and execute active callback
 */
-void PermissionRecordManager::RemoveRecordFromStartListByToken(const AccessTokenID tokenId)
+void PermissionRecordManager::RemoveRecordFromStartListByTokenAndIdentity(
+    const AccessTokenID tokenId, const std::string& enhancedIdentity)
 {
-    LOGI(PRI_DOMAIN, PRI_TAG, "TokenId %{public}u", tokenId);
+    LOGI(PRI_DOMAIN, PRI_TAG, "TokenId %{public}u, enhancedIdentity=%{public}s", tokenId, enhancedIdentity.c_str());
     ContinuousPermissionRecord record = {0};
     record.tokenId = tokenId;
-    (void) ToRemoveRecord(record, &ContinuousPermissionRecord::IsEqualTokenId);
+    record.enhancedIdentity = enhancedIdentity;
+    (void) ToRemoveRecord(record, &ContinuousPermissionRecord::IsEqualTokenIdAndIdentity);
 }
 
 void PermissionRecordManager::RemoveRecordFromStartListByCallerPid(int32_t callerPid)

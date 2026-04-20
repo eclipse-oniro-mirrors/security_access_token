@@ -1271,6 +1271,23 @@ HWTEST_F(PrivacyManagerServiceTest, RemovePermissionUsedRecordsInner004, TestSiz
 }
 
 /**
+ * @tc.name: RemovePermissionUsedRecordsInner005
+ * @tc.desc: RemovePermissionUsedRecords with invalid enhanced identity.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyManagerServiceTest, RemovePermissionUsedRecordsInner005, TestSize.Level0)
+{
+    AccessTokenID tokenID = 123; // 123 is invalid tokenID
+    std::string invalidIdentity(49, 'a');
+
+    std::vector<std::string> reqPerm = {"ohos.permission.PERMISSION_USED_STATS"};
+    MockHapToken mock("RemovePermissionUsedRecordsInner005", reqPerm, true); // set self tokenID to system app
+    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID,
+        privacyManagerService_->RemovePermissionUsedRecords(tokenID, invalidIdentity));
+}
+
+/**
  * @tc.name: GetPermissionUsedRecordsInner001
  * @tc.desc: GetPermissionUsedRecordsInner test.
  * @tc.type: FUNC

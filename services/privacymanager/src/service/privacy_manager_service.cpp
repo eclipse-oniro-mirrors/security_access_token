@@ -49,6 +49,7 @@ namespace Security {
 namespace AccessToken {
 namespace {
 constexpr const char* PERMISSION_USED_STATS = "ohos.permission.PERMISSION_USED_STATS";
+constexpr const char* REMOVE_PERMISSION_USED_RECORD = "ohos.permission.REMOVE_PERMISSION_USED_RECORD";
 constexpr const char* PERMISSION_RECORD_TOGGLE = "ohos.permission.PERMISSION_RECORD_TOGGLE";
 constexpr const char* SET_FOREGROUND_HAP_REMINDER = "ohos.permission.SET_FOREGROUND_HAP_REMINDER";
 constexpr const char* SET_MUTE_POLICY = "ohos.permission.SET_MUTE_POLICY";
@@ -410,19 +411,20 @@ int32_t PrivacyManagerService::StopUsingPermission(
 }
 #endif
 
-int32_t PrivacyManagerService::RemovePermissionUsedRecords(AccessTokenID tokenId)
+int32_t PrivacyManagerService::RemovePermissionUsedRecords(
+    AccessTokenID tokenId, const std::string& enhancedIdentity)
 {
     uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
     if ((AccessTokenKit::GetTokenTypeFlag(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
         return PrivacyError::ERR_NOT_SYSTEM_APP;
     }
-    if (!IsAccessTokenCalling() && !VerifyPermission(PERMISSION_USED_STATS)) {
+    if (!VerifyPermission(PERMISSION_USED_STATS) &&
+        !VerifyPermission(REMOVE_PERMISSION_USED_RECORD)) {
         return PrivacyError::ERR_PERMISSION_DENIED;
     }
 
-    LOGI(PRI_DOMAIN, PRI_TAG, "Id: %{public}u", tokenId);
-    PermissionRecordManager::GetInstance().RemovePermissionUsedRecords(tokenId);
-    return Constant::SUCCESS;
+    LOGI(PRI_DOMAIN, PRI_TAG, "Id: %{public}u, enhancedIdentity: %{public}s", tokenId, enhancedIdentity.c_str());
+    return PermissionRecordManager::GetInstance().RemovePermissionUsedRecords(tokenId, enhancedIdentity);
 }
 
 int32_t PrivacyManagerService::GetPermissionUsedRecords(

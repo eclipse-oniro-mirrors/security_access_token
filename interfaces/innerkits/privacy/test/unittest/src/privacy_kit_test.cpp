@@ -1311,6 +1311,53 @@ HWTEST_F(PrivacyKitTest, RemovePermissionUsedRecords004, TestSize.Level0)
 }
 
 /**
+ * @tc.name: RemovePermissionUsedRecords005
+ * @tc.desc: RemovePermissionUsedRecords rejects oversize enhancedIdentity.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, RemovePermissionUsedRecords005, TestSize.Level0)
+{
+    std::string invalidIdentity(MAX_ENHANCED_IDENTITY_LENGTH + 1, 'a');
+    EXPECT_EQ(PrivacyError::ERR_PARAM_INVALID, PrivacyKit::RemovePermissionUsedRecords(g_tokenIdA, invalidIdentity));
+}
+
+/**
+ * @tc.name: RemovePermissionUsedRecords006
+ * @tc.desc: RemovePermissionUsedRecords removes only the specified enhancedIdentity records.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, RemovePermissionUsedRecords006, TestSize.Level0)
+{
+    AddPermParamInfo info;
+    info.tokenId = g_tokenIdA;
+    info.permissionName = "ohos.permission.READ_CONTACTS";
+    info.successCount = 1;
+    info.failCount = 0;
+
+    info.enhancedIdentity = "";
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info));
+
+    info.enhancedIdentity = "agent_remove";
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info));
+
+    PermissionUsedRequest request;
+    PermissionUsedResult result;
+    std::vector<std::string> permissionList;
+    BuildQueryRequest(g_tokenIdA, g_infoParmsA.bundleName, permissionList, request);
+    request.flag = FLAG_PERMISSION_USAGE_DETAIL;
+
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::RemovePermissionUsedRecords(g_tokenIdA, "agent_remove"));
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
+    ASSERT_EQ(1, static_cast<int32_t>(result.bundleRecords.size()));
+    ASSERT_EQ(1, static_cast<int32_t>(result.bundleRecords[FIRST_INDEX].permissionRecords.size()));
+    EXPECT_TRUE(result.bundleRecords[FIRST_INDEX].permissionRecords[FIRST_INDEX].enhancedIdentity.empty());
+
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::RemovePermissionUsedRecords(g_tokenIdA));
+}
+
+/**
  * @tc.name: GetPermissionUsedRecords001
  * @tc.desc: cannot GetPermissionUsedRecords with invalid query time and flag.
  * @tc.type: FUNC

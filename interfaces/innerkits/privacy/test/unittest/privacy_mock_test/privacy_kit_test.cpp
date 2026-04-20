@@ -232,6 +232,19 @@ HWTEST_F(PrivacyKitTest, RemovePermissionUsedRecords001, TestSize.Level0)
 }
 
 /**
+ * @tc.name: RemovePermissionUsedRecords002
+ * @tc.desc: RemovePermissionUsedRecords with enhancedIdentity when proxy is null.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, RemovePermissionUsedRecords002, TestSize.Level0)
+{
+    AccessTokenID tokenId = 0xff;
+    int32_t ret = PrivacyKit::RemovePermissionUsedRecords(tokenId, "agent_mock");
+    ASSERT_EQ(PrivacyError::ERR_SERVICE_ABNORMAL, ret);
+}
+
+/**
  * @tc.name: GetPermissionUsedRecords001
  * @tc.desc: GetPermissionUsedRecords proxy is null.
  * @tc.type: FUNC

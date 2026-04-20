@@ -58,7 +58,7 @@ struct ContinuousPermissionRecord {
     uint64_t GetTokenIdAndPid() const;
     bool IsEqualBasicRecord(const ContinuousPermissionRecord& record) const;
     bool IsEqualRecord(const ContinuousPermissionRecord& record) const;
-    bool IsEqualTokenId(const ContinuousPermissionRecord& record) const;
+    bool IsEqualTokenIdAndIdentity(const ContinuousPermissionRecord& record) const;
     bool IsEqualPermCode(const ContinuousPermissionRecord& record) const;
     bool IsEqualCallerPid(const ContinuousPermissionRecord& record) const;
     bool IsEqualPid(const ContinuousPermissionRecord& record) const;
