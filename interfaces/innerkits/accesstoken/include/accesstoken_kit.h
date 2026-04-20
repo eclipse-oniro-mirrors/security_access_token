@@ -499,6 +499,25 @@ public:
     static int32_t ClearUserPolicy(const std::vector<std::string>& permissionList);
 
     /**
+     * @brief Update user policy whitelist.
+     * @param tokenId target token id.
+     * @param permission permission name.
+     * @param type whitelist update type.
+     * @return error code, see access_token_error.h
+     */
+    static int32_t UpdatePolicyWhiteList(
+        AccessTokenID tokenId, const std::string& permission, UpdateWhiteListType type);
+
+    /**
+     * @brief Get user policy whitelist.
+     * @param permission permission name.
+     * @param tokenIdList whitelist token id list.
+     * @return error code, see access_token_error.h
+     */
+    static int32_t GetPolicyWhiteList(
+        const std::string& permission, std::vector<AccessTokenID>& tokenIdList);
+
+    /**
      * @brief Whether it is a system application
      * @param tokenId token id.
      * @return bool

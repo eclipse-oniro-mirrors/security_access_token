@@ -133,6 +133,8 @@ public:
 #ifdef SUPPORT_MANAGE_USER_POLICY
     int32_t SetUserPolicy(const std::vector<UserPermissionPolicyIdl>& userPermissionList) override;
     int32_t ClearUserPolicy(const std::vector<std::string>& permissionList) override;
+    int32_t UpdatePolicyWhiteList(AccessTokenID tokenId, uint32_t permCode, int32_t type) override;
+    int32_t GetPolicyWhiteList(uint32_t permCode, std::vector<AccessTokenID>& tokenIdList) override;
 #endif
     int32_t DumpTokenInfo(const AtmToolsParamInfoParcel& infoParcel, std::string& dumpInfo) override;
     int32_t GetVersion(uint32_t& version) override;

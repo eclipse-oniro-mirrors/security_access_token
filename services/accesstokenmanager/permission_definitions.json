@@ -3749,6 +3749,17 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.STYLUS_FRAME_BOOST",
+            "grantMode": "system_grant",
+            "availableLevel": "normal",
+            "availableType": "NORMAL",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": false,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "2in1", "tablet"]
+        },
+        {
             "name": "ohos.permission.ACCESS_SERVICE_NAVIGATION_INFO",
             "grantMode": "system_grant",
             "availableLevel": "normal",
@@ -8723,6 +8734,17 @@
             "provisionEnable": false,
             "distributedSceneEnable": false,
             "deviceTypes": ["2in1"]
+        },
+        {
+            "name": "ohos.permission.SUBSCRIBE_OUTDOOR_EXPLORATION_SERVICE",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone"]
         }
     ]
 }

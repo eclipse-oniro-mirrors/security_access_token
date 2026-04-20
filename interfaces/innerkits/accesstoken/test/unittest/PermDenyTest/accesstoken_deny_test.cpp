@@ -115,6 +115,47 @@ HWTEST_F(AccessTokenDenyTest, SetUserPolicy001, TestSize.Level0)
     int32_t ret = AccessTokenKit::SetUserPolicy(permPolicyList);
     EXPECT_EQ(ret, AccessTokenError::ERR_PERMISSION_DENIED);
 }
+
+/**
+ * @tc.name: UpdatePolicyWhiteList001
+ * @tc.desc: UpdatePolicyWhiteList without authorized.
+ * @tc.type: FUNC
+ * @tc.require:Issue Number
+ */
+HWTEST_F(AccessTokenDenyTest, UpdatePolicyWhiteList001, TestSize.Level0)
+{
+    setuid(g_selfUid);
+    HapPolicyParams policyPrams = {
+        .apl = APL_NORMAL,
+        .domain = "test.domain",
+    };
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS, TestCommon::AllocTestHapToken(g_InfoParms, policyPrams, tokenIdEx));
+    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIdExStruct.tokenID);
+    EXPECT_EQ(RET_SUCCESS, SetSelfTokenID(g_testTokenIDEx.tokenIDEx));
+    setuid(1234); // 1234: UID
+
+    int32_t ret = AccessTokenKit::UpdatePolicyWhiteList(
+        tokenIdEx.tokenIdExStruct.tokenID, "ohos.permission.INTERNET", ADD);
+    EXPECT_EQ(ret, AccessTokenError::ERR_PERMISSION_DENIED);
+
+    setuid(g_selfUid);
+    EXPECT_EQ(RET_SUCCESS, SetSelfTokenID(g_selfTokenId));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenIdEx.tokenIdExStruct.tokenID));
+}
+
+/**
+ * @tc.name: GetPolicyWhiteList001
+ * @tc.desc: GetPolicyWhiteList without authorized.
+ * @tc.type: FUNC
+ * @tc.require:Issue Number
+ */
+HWTEST_F(AccessTokenDenyTest, GetPolicyWhiteList001, TestSize.Level0)
+{
+    std::vector<AccessTokenID> tokenIdList;
+    int32_t ret = AccessTokenKit::GetPolicyWhiteList("ohos.permission.INTERNET", tokenIdList);
+    EXPECT_EQ(ret, AccessTokenError::ERR_PERMISSION_DENIED);
+}
 #endif
 
 /**
@@ -548,4 +589,3 @@ HWTEST_F(AccessTokenDenyTest, GetKernelPermissions001, TestSize.Level0)
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
-

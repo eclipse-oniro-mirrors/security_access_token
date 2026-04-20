@@ -311,6 +311,14 @@ typedef struct {
 } UserPermissionPolicy;
 
 /**
+ * @brief User policy whitelist update type.
+ */
+typedef enum UpdateWhiteListType {
+    ADD = 0,
+    DELETE,
+} UpdateWhiteListType;
+
+/**
  * @brief PermssionRule
  */
 typedef enum TypePermissionRulesEnum {

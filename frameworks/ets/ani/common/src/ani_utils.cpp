@@ -483,6 +483,32 @@ ani_object CreateIntObject(ani_env* env, int32_t value)
     return aniObject;
 }
 
+ani_object CreateLongObject(ani_env* env, int64_t value)
+{
+    if (env == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Env is null.");
+        return nullptr;
+    }
+
+    ani_class longCls;
+    ani_status status = ANI_ERROR;
+    if ((status = env->FindClass("std.core.Long", &longCls)) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindClass, status : %{public}u.", status);
+        return nullptr;
+    }
+    ani_method aniMethod;
+    if ((status = env->Class_FindMethod(longCls, "<ctor>", "l:", &aniMethod)) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to FindMethod, status : %{public}u.", status);
+        return nullptr;
+    }
+    ani_object aniObject;
+    if ((status = env->Object_New(longCls, aniMethod, &aniObject, value)) != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Object_New, status : %{public}u.", status);
+        return nullptr;
+    }
+    return aniObject;
+}
+
 ani_object CreateClassObject(ani_env* env, const std::string& classDescriptor)
 {
     if (env == nullptr) {
@@ -761,6 +787,24 @@ bool SetOptionalIntProperty(ani_env* env, ani_object& aniObject, const std::stri
     }
 
     if (!SetRefProperty(env, aniObject, property.c_str(), intObject)) {
+        return false;
+    }
+
+    return true;
+}
+
+bool SetOptionalLongProperty(ani_env* env, ani_object& aniObject, const std::string& property, int64_t in)
+{
+    if ((env == nullptr) || (aniObject == nullptr)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Input param is nullptr, property(%{public}s).", property.c_str());
+        return false;
+    }
+    ani_object longObject = CreateLongObject(env, in);
+    if (longObject == nullptr) {
+        return false;
+    }
+
+    if (!SetRefProperty(env, aniObject, property.c_str(), longObject)) {
         return false;
     }
 

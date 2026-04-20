@@ -24,7 +24,6 @@
 #include "accesstoken_common_log.h"
 #include "accesstoken_dfx_define.h"
 #include "accesstoken_id_manager.h"
-#include "accesstoken_service_ipc_interface_code.h"
 #include "constant_common.h"
 #include "data_usage_dfx.h"
 #include "data_validator.h"
@@ -1285,16 +1284,16 @@ int32_t AccessTokenManagerService::GetPermissionManagerInfo(PermissionGrantInfoP
 int32_t AccessTokenManagerService::SetUserPolicy(const std::vector<UserPermissionPolicyIdl>& userPermissionList)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "CallerPid %{public}d.", IPCSkeleton::GetCallingPid());
-    uint32_t callingToken = IPCSkeleton::GetCallingTokenID();
-    if (VerifyAccessToken(callingToken, MANAGE_USER_POLICY) == PERMISSION_DENIED) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", callingToken);
-        return AccessTokenError::ERR_PERMISSION_DENIED;
-    }
-
     size_t policySize = userPermissionList.size();
     if ((policySize == 0) || (policySize > MAX_USER_POLICY_SIZE)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "PolicySize %{public}zu is invalid.", policySize);
         return AccessTokenError::ERR_PARAM_INVALID;
+    }
+
+    uint32_t callingToken = IPCSkeleton::GetCallingTokenID();
+    if (VerifyAccessToken(callingToken, MANAGE_USER_POLICY) == PERMISSION_DENIED) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", callingToken);
+        return AccessTokenError::ERR_PERMISSION_DENIED;
     }
 
     std::vector<UserPermissionPolicy> policyList;
@@ -1315,18 +1314,59 @@ int32_t AccessTokenManagerService::SetUserPolicy(const std::vector<UserPermissio
 int32_t AccessTokenManagerService::ClearUserPolicy(const std::vector<std::string>& permissionList)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "CallerPid %{public}d.", IPCSkeleton::GetCallingPid());
-    uint32_t callingToken = IPCSkeleton::GetCallingTokenID();
-    if (VerifyAccessToken(callingToken, MANAGE_USER_POLICY) == PERMISSION_DENIED) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", callingToken);
-        return AccessTokenError::ERR_PERMISSION_DENIED;
-    }
     size_t permSize = permissionList.size();
     if ((permSize == 0) || (permSize > MAX_USER_POLICY_SIZE)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "PermSize %{public}zu is invalid.", permSize);
         return AccessTokenError::ERR_PARAM_INVALID;
     }
 
+    uint32_t callingToken = IPCSkeleton::GetCallingTokenID();
+    if (VerifyAccessToken(callingToken, MANAGE_USER_POLICY) == PERMISSION_DENIED) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", callingToken);
+        return AccessTokenError::ERR_PERMISSION_DENIED;
+    }
+
     return AccessTokenInfoManager::GetInstance().ClearUserPolicy(permissionList);
+}
+
+int32_t AccessTokenManagerService::UpdatePolicyWhiteList(AccessTokenID tokenId, uint32_t permCode, int32_t type)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "CallerPid %{public}d.", IPCSkeleton::GetCallingPid());
+    auto updateType = static_cast<UpdateWhiteListType>(type);
+    if (!DataValidator::IsTokenIDValid(tokenId) || !DataValidator::IsUpdateWhiteListTypeValid(updateType)) {
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    if (this->GetTokenType(tokenId) != TOKEN_HAP) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Id=%{public}u is not hap.", tokenId);
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    std::string permission = TransferOpcodeToPermission(permCode);
+    if (permission.empty()) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Invalid permCode: %{public}u.", permCode);
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    uint32_t callingToken = IPCSkeleton::GetCallingTokenID();
+    if (VerifyAccessToken(callingToken, MANAGE_USER_POLICY) == PERMISSION_DENIED) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", callingToken);
+        return AccessTokenError::ERR_PERMISSION_DENIED;
+    }
+    return AccessTokenInfoManager::GetInstance().UpdatePolicyWhiteList(tokenId, permCode, updateType);
+}
+
+int32_t AccessTokenManagerService::GetPolicyWhiteList(uint32_t permCode, std::vector<AccessTokenID>& tokenIdList)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "CallerPid %{public}d.", IPCSkeleton::GetCallingPid());
+    std::string permission = TransferOpcodeToPermission(permCode);
+    if (permission.empty()) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Invalid permCode: %{public}u.", permCode);
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    uint32_t callingToken = IPCSkeleton::GetCallingTokenID();
+    if (VerifyAccessToken(callingToken, MANAGE_USER_POLICY) == PERMISSION_DENIED) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", callingToken);
+        return AccessTokenError::ERR_PERMISSION_DENIED;
+    }
+    return AccessTokenInfoManager::GetInstance().GetPolicyWhiteList(permCode, tokenIdList);
 }
 #endif
 

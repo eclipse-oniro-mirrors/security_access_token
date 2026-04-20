@@ -734,6 +734,31 @@ HWTEST_F(AccessTokenMockTest, ClearUserPolicy001, TestSize.Level4)
     permissionList.emplace_back("ohos.permission.INTERNET");
     ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::ClearUserPolicy(permissionList));
 }
+
+/**
+ * @tc.name: UpdatePolicyWhiteList001
+ * @tc.desc: UpdatePolicyWhiteList with proxy is null
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, UpdatePolicyWhiteList001, TestSize.Level4)
+{
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL,
+        AccessTokenKit::UpdatePolicyWhiteList(g_testTokenId, "ohos.permission.INTERNET", ADD));
+}
+
+/**
+ * @tc.name: GetPolicyWhiteList001
+ * @tc.desc: GetPolicyWhiteList with proxy is null
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, GetPolicyWhiteList001, TestSize.Level4)
+{
+    std::vector<AccessTokenID> tokenIdList;
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL,
+        AccessTokenKit::GetPolicyWhiteList("ohos.permission.INTERNET", tokenIdList));
+}
 #endif
 
 /**

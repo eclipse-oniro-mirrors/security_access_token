@@ -74,7 +74,7 @@ export default namespace abilityAccessCtrl {
         permissionName: Permissions;
         grantStatus: GrantStatus;
         grantFlags: int;
-        grantTimestamp: long;
+        grantTimestamp?: long;
     }
 
     export enum PermissionStateChangeType {
@@ -106,7 +106,7 @@ export default namespace abilityAccessCtrl {
         permissionName: Permissions;
         grantStatus: GrantStatus;
         grantFlags: int;
-        grantTimestamp: long;
+        grantTimestamp?: long;
     }
     function validateRequestParams(context: Context, permissionList: Array<Permissions>): void {
         if ((typeof context === "undefined") || (context == null)) {

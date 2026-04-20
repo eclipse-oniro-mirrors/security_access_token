@@ -768,7 +768,7 @@ int32_t AccessTokenKit::SetUserPolicy(const std::vector<UserPermissionPolicy>& u
     LOGI(ATM_DOMAIN, ATM_TAG, "Enter.");
     return AccessTokenManagerClient::GetInstance().SetUserPolicy(userPermissionList);
 #else
-    LOGE(ATM_DOMAIN, ATM_TAG, "Not support.");
+    LOGW(ATM_DOMAIN, ATM_TAG, "Not support.");
     return ERR_CAPABILITY_NOT_SUPPORT;
 #endif
 }
@@ -778,6 +778,47 @@ int32_t AccessTokenKit::ClearUserPolicy(const std::vector<std::string>& permissi
 #ifdef SUPPORT_MANAGE_USER_POLICY
     LOGI(ATM_DOMAIN, ATM_TAG, "Enter.");
     return AccessTokenManagerClient::GetInstance().ClearUserPolicy(permissionList);
+#else
+    LOGW(ATM_DOMAIN, ATM_TAG, "Not support.");
+    return ERR_CAPABILITY_NOT_SUPPORT;
+#endif
+}
+
+int32_t AccessTokenKit::UpdatePolicyWhiteList(
+    AccessTokenID tokenId, const std::string& permission, UpdateWhiteListType type)
+{
+#ifdef SUPPORT_MANAGE_USER_POLICY
+    LOGI(ATM_DOMAIN, ATM_TAG, "TokenID=%{public}u, permissionName=%{public}s, type=%{public}d.",
+        tokenId, permission.c_str(), static_cast<int32_t>(type));
+    if (!DataValidator::IsTokenIDValid(tokenId) || !DataValidator::IsUpdateWhiteListTypeValid(type)) {
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    if (GetTokenTypeFlag(tokenId) != TOKEN_HAP) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Id=%{public}u is not hap.", tokenId);
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    uint32_t permCode = 0;
+    if (!TransferPermissionToOpcode(permission, permCode)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "PermissionName=%{public}s is invalid.", permission.c_str());
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    return AccessTokenManagerClient::GetInstance().UpdatePolicyWhiteList(tokenId, permCode, type);
+#else
+    LOGW(ATM_DOMAIN, ATM_TAG, "Not support.");
+    return ERR_CAPABILITY_NOT_SUPPORT;
+#endif
+}
+
+int32_t AccessTokenKit::GetPolicyWhiteList(const std::string& permission, std::vector<AccessTokenID>& tokenIdList)
+{
+#ifdef SUPPORT_MANAGE_USER_POLICY
+    tokenIdList.clear();
+    uint32_t permCode = 0;
+    if (!TransferPermissionToOpcode(permission, permCode)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "PermissionName=%{public}s is invalid.", permission.c_str());
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    return AccessTokenManagerClient::GetInstance().GetPolicyWhiteList(permCode, tokenIdList);
 #else
     LOGE(ATM_DOMAIN, ATM_TAG, "Not support.");
     return ERR_CAPABILITY_NOT_SUPPORT;

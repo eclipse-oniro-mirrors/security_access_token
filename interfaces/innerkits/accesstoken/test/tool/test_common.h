@@ -18,11 +18,15 @@
 #include <string>
 #include <vector>
 #include "access_token.h"
+#include "hap_token_info.h"
 
 void PrintCurrentTime();
 OHOS::Security::AccessToken::AccessTokenID GetNativeTokenId(const std::string& process);
+void BuildHapPolicyParams(const std::vector<std::string>& reqPerm,
+    const std::vector<std::string>& preAuthPerm, OHOS::Security::AccessToken::HapPolicyParams& policyParams);
 OHOS::Security::AccessToken::FullTokenID GetHapTokenId(
-    const std::string& bundle, const std::vector<std::string>& reqPerm);
+    const std::string& bundle, const std::vector<std::string>& reqPerm,
+    const std::vector<std::string>& preAuthPerm = {}, bool isSystemApp = true);
 int32_t DeleteHapTokenID(const std::string& bundleName, bool isReservedTokenId);
 
 #endif  // TEST_TOOL_COMMON_H
