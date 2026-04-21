@@ -173,6 +173,9 @@ private:
         PermissionUsedRecord& outRecord);
     void FillPermissionUsedRecords(const PermissionUsedRecord& record, const PermissionUsageFlag& flag,
         std::vector<PermissionUsedRecord>& permissionRecords);
+    bool CreateBundleUsedRecordIfNeeded(const AccessTokenID tokenId, const std::string& bundleKey,
+        std::set<std::string>& bundleKeySet, std::map<std::string, BundleUsedRecord>& bundleKeyToBundleMap,
+        std::map<std::string, int32_t>& bundleKeyToCountMap);
     bool FillBundleUsedRecord(const GenericValues& value, const PermissionUsageFlag& flag,
         std::map<std::string, BundleUsedRecord>& bundleKeyToBundleMap,
         std::map<std::string, int32_t>& bundleKeyToCountMap,

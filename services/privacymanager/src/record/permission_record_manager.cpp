@@ -1441,6 +1441,25 @@ static void AddDebugLog(const AccessTokenID tokenId, const BundleUsedRecord& bun
     totalFailCount += tokenTotalFailCount;
 }
 
+bool PermissionRecordManager::CreateBundleUsedRecordIfNeeded(const AccessTokenID tokenId, const std::string& bundleKey,
+    std::set<std::string>& bundleKeySet, std::map<std::string, BundleUsedRecord>& bundleKeyToBundleMap,
+    std::map<std::string, int32_t>& bundleKeyToCountMap)
+{
+    if (bundleKeySet.count(bundleKey) != 0) {
+        return true;
+    }
+
+    bundleKeySet.insert(bundleKey);
+    BundleUsedRecord bundleRecord; // get bundle info
+    if (!CreateBundleUsedRecord(tokenId, bundleRecord)) {
+        return false;
+    }
+
+    bundleKeyToBundleMap[bundleKey] = bundleRecord;
+    bundleKeyToCountMap[bundleKey] = 0;
+    return true;
+}
+
 int32_t PermissionRecordManager::GetRecordsFromLocalDB(const PermissionUsedRequest& request,
     PermissionUsedResult& result)
 {
@@ -1478,16 +1497,9 @@ int32_t PermissionRecordManager::GetRecordsFromLocalDB(const PermissionUsedReque
         int32_t tokenId = recordValue.GetInt(PrivacyFiledConst::FIELD_TOKEN_ID);
         std::string enhancedIdentity = recordValue.GetString(PrivacyFiledConst::FIELD_ENHANCED_IDENTITY);
         std::string bundleKey = BuildBundleMapKey(tokenId, enhancedIdentity);
-        if (bundleKeySet.count(bundleKey) == 0) {
-            bundleKeySet.insert(bundleKey);
-
-            BundleUsedRecord bundleRecord; // get bundle info
-            if (!CreateBundleUsedRecord(tokenId, bundleRecord)) {
-                continue;
-            }
-
-            bundleKeyToBundleMap[bundleKey] = bundleRecord;
-            bundleKeyToCountMap[bundleKey] = 0;
+        if (!CreateBundleUsedRecordIfNeeded(tokenId, bundleKey, bundleKeySet, bundleKeyToBundleMap,
+            bundleKeyToCountMap)) {
+            continue;
         }
 
         if (!FillBundleUsedRecord(recordValue, request.flag, bundleKeyToBundleMap, bundleKeyToCountMap, result)) {
