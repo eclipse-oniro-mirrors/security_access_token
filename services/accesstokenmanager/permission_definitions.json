@@ -7929,7 +7929,7 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
-            "deviceTypes": ["2in1"]
+            "deviceTypes": ["2in1", "tv"]
         },
         {
             "name": "ohos.permission.ACCESS_USER_FULL_DISK",
