@@ -820,6 +820,12 @@ int32_t AccessTokenManagerService::InitHapToken(const HapInfoParcel& info, const
     }
     policyCopy.permStateList = initializedList;
 
+    if (hapInfoParm.isSkillHap) {
+        LOGI(ATM_DOMAIN, ATM_TAG, "Skip hap token creation for skill %{public}s.", hapInfoParm.bundleName.c_str());
+        fullTokenId = static_cast<uint64_t>(INVALID_TOKENID);
+        return RET_SUCCESS;
+    }
+
     AccessTokenIDEx tokenIdEx;
     int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(
         hapInfoParm, policyCopy, tokenIdEx, undefValues);
@@ -921,6 +927,7 @@ void TransferUpdateHapInfo(const UpdateHapInfoParamsIdl& infoIdl, UpdateHapInfoP
     info.isAtomicService = infoIdl.isAtomicService;
     info.dataRefresh = infoIdl.dataRefresh;
     info.appProvisionType = infoIdl.appProvisionType;
+    info.isSkillHap = infoIdl.isSkillHap;
 }
 
 int32_t AccessTokenManagerService::UpdateHapToken(uint64_t& fullTokenId, const UpdateHapInfoParamsIdl& infoIdl,
@@ -937,20 +944,10 @@ int32_t AccessTokenManagerService::UpdateHapToken(uint64_t& fullTokenId, const U
         return AccessTokenError::ERR_PERMISSION_DENIED;
     }
     int64_t beginTime = TimeUtil::GetCurrentTimestamp();
-    HapTokenInfo hapInfo = { 0 };
-    int32_t error = AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenID, hapInfo);
-    if (error != ERR_OK) {
-        LOGC(ATM_DOMAIN, ATM_TAG, "Failed to get hap info of %{public}u) err %{public}d.", tokenID, error);
-        ReportUpdateHap(tokenIdEx, hapInfo, policyParcel.hapPolicy, beginTime, error);
-        return error;
-    }
-
     UpdateHapInfoParams info;
     TransferUpdateHapInfo(infoIdl, info);
-
     HapPolicy policy = policyParcel.hapPolicy;
     FilterPermFeature(info.isSystemApp, policy);
-
     resultInfoIdl.realResult = ERR_OK;
     HapInfoCheckResult permCheckResult;
     std::vector<GenericValues> undefValues;
@@ -959,8 +956,9 @@ int32_t AccessTokenManagerService::UpdateHapToken(uint64_t& fullTokenId, const U
     initInfo.updateInfo = info;
     initInfo.policy = policy;
     initInfo.isUpdate = true;
-    initInfo.bundleName = hapInfo.bundleName;
     initInfo.tokenID = tokenID;
+    HapTokenInfo hapInfo = { 0 };
+
     if (!PermissionManager::GetInstance().InitPermissionList(initInfo, initializedList, permCheckResult, undefValues)) {
         resultInfoIdl.realResult = ERROR;
         resultInfoIdl.permissionName = permCheckResult.permCheckResult.permissionName;
@@ -968,6 +966,19 @@ int32_t AccessTokenManagerService::UpdateHapToken(uint64_t& fullTokenId, const U
         ReportUpdateHap(tokenIdEx, hapInfo, policyParcel.hapPolicy, beginTime, ERR_PERM_REQUEST_CFG_FAILED);
         return ERR_OK;
     }
+    if (info.isSkillHap) {
+        LOGI(ATM_DOMAIN, ATM_TAG, "Skip hap token update for skill.");
+        fullTokenId = static_cast<uint64_t>(INVALID_TOKENID);
+        return RET_SUCCESS;
+    }
+
+    int32_t error = AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenID, hapInfo);
+    if (error != ERR_OK) {
+        LOGC(ATM_DOMAIN, ATM_TAG, "Failed to get hap info of %{public}u) err %{public}d.", tokenID, error);
+        ReportUpdateHap(tokenIdEx, hapInfo, policyParcel.hapPolicy, beginTime, error);
+        return error;
+    }
+    initInfo.bundleName = hapInfo.bundleName;
     error = AccessTokenInfoManager::GetInstance().UpdateHapToken(tokenIdEx, info, initializedList, policy, undefValues);
     fullTokenId = tokenIdEx.tokenIDEx;
     ReportUpdateHap(tokenIdEx, hapInfo, policyParcel.hapPolicy, beginTime, error);

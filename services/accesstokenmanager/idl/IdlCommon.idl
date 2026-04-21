@@ -44,6 +44,8 @@ struct UpdateHapInfoParamsIdl {
     boolean dataRefresh;
     /* Whether app is debug or release hap */
     String appProvisionType;
+    /** Whether hap is a skill */
+    boolean isSkillHap;
 };
 
 enum PermissionRulesEnumIdl {

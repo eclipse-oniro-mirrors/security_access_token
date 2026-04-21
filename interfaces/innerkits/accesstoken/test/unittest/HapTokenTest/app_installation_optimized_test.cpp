@@ -466,6 +466,117 @@ HWTEST_F(AppInstallationOptimizedTest, InitHapToken012, TestSize.Level0)
 }
 
 /**
+ * @tc.name: InitHapToken013
+ * @tc.desc: Init skill should still verify pre-authorization and return success without allocating token.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AppInstallationOptimizedTest, InitHapToken013, TestSize.Level0)
+{
+    HapInfoParams testHapInfoParams = g_testHapInfoParams;
+    testHapInfoParams.bundleName = "AppInstallationOptimizedSkillTest013";
+    testHapInfoParams.appIDDesc = "AppInstallationOptimizedSkillTest013";
+    testHapInfoParams.appDistributionType = "";
+    testHapInfoParams.isSkillHap = true;
+    PreAuthorizationInfo info = {
+        .permissionName = CALENDAR_PERMISSION,
+        .userCancelable = true
+    };
+    HapPolicyParams testPolicyParam = {
+        .apl = APL_NORMAL,
+        .domain = "test.domain2",
+        .permStateList = {g_infoManagerMicrophoneState},
+        .preAuthorizationInfo = {info},
+    };
+
+    AccessTokenIDEx fullTokenId;
+    int32_t res = AccessTokenKit::InitHapToken(testHapInfoParams, testPolicyParam, fullTokenId);
+    EXPECT_EQ(RET_SUCCESS, res);
+    EXPECT_EQ(INVALID_TOKENID, fullTokenId.tokenIdExStruct.tokenID);
+}
+
+/**
+ * @tc.name: InitHapToken014
+ * @tc.desc: Init skill should return permission config error when ACL check fails.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AppInstallationOptimizedTest, InitHapToken014, TestSize.Level0)
+{
+    HapInfoParams testHapInfoParams = g_testHapInfoParams;
+    testHapInfoParams.bundleName = "AppInstallationOptimizedSkillTest014";
+    testHapInfoParams.appIDDesc = "AppInstallationOptimizedSkillTest014";
+    testHapInfoParams.appDistributionType = "";
+    testHapInfoParams.isSkillHap = true;
+    HapPolicyParams testPolicyParam = {
+        .apl = APL_NORMAL,
+        .domain = "test.domain2",
+        .permStateList = {g_infoManagerTestState4},
+    };
+
+    AccessTokenIDEx fullTokenId;
+    int32_t res = AccessTokenKit::InitHapToken(testHapInfoParams, testPolicyParam, fullTokenId);
+    EXPECT_EQ(ERR_PERM_REQUEST_CFG_FAILED, res);
+    EXPECT_EQ(INVALID_TOKENID, fullTokenId.tokenIdExStruct.tokenID);
+}
+
+/**
+ * @tc.name: UpdateHapTokenSkill001
+ * @tc.desc: Update skill should return success without requiring token info.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AppInstallationOptimizedTest, UpdateHapTokenSkill001, TestSize.Level0)
+{
+    AccessTokenIDEx fullTokenId;
+    fullTokenId.tokenIDEx = INVALID_TOKENID;
+    UpdateHapInfoParams info = {
+        .appIDDesc = "AppInstallationOptimizedSkillUpdateTest013",
+        .apiVersion = DEFAULT_API_VERSION,
+        .isSystemApp = false,
+        .appDistributionType = "",
+        .isSkillHap = true,
+    };
+    HapPolicyParams testPolicyParam = {
+        .apl = APL_NORMAL,
+        .domain = "test.domain2",
+        .permStateList = {g_infoManagerMicrophoneState},
+    };
+
+    int32_t res = AccessTokenKit::UpdateHapToken(fullTokenId, info, testPolicyParam);
+    EXPECT_EQ(RET_SUCCESS, res);
+    EXPECT_EQ(INVALID_TOKENID, fullTokenId.tokenIdExStruct.tokenID);
+}
+
+/**
+ * @tc.name: UpdateHapTokenSkill002
+ * @tc.desc: Update skill should return permission config error when ACL check fails.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AppInstallationOptimizedTest, UpdateHapTokenSkill002, TestSize.Level0)
+{
+    AccessTokenIDEx fullTokenId;
+    fullTokenId.tokenIDEx = INVALID_TOKENID;
+    UpdateHapInfoParams info = {
+        .appIDDesc = "AppInstallationOptimizedSkillUpdateTest014",
+        .apiVersion = DEFAULT_API_VERSION,
+        .isSystemApp = false,
+        .appDistributionType = "",
+        .isSkillHap = true,
+    };
+    HapPolicyParams testPolicyParam = {
+        .apl = APL_NORMAL,
+        .domain = "test.domain2",
+        .permStateList = {g_infoManagerTestState4},
+    };
+
+    int32_t res = AccessTokenKit::UpdateHapToken(fullTokenId, info, testPolicyParam);
+    EXPECT_EQ(ERR_PERM_REQUEST_CFG_FAILED, res);
+    EXPECT_EQ(INVALID_TOKENID, fullTokenId.tokenIdExStruct.tokenID);
+}
+
+/**
  * @tc.name: UpdateHapToken001
  * @tc.desc:
  * @tc.type: FUNC

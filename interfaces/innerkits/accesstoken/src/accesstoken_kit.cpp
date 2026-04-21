@@ -137,10 +137,11 @@ int32_t AccessTokenKit::InitHapToken(const HapInfoParams& info, HapPolicyParams&
         "stateList: %{public}zu, aclExtendedMap: %{public}zu, checkIgnore: %{public}d, isAtomicService: %{public}d",
         info.userID, info.bundleName.c_str(), policy.permList.size(), policy.permStateList.size(),
         policy.aclExtendedMap.size(), policy.checkIgnore, info.isAtomicService);
-    if ((!DataValidator::IsUserIdValid(info.userID)) || !DataValidator::IsAppIDDescValid(info.appIDDesc) ||
-        !DataValidator::IsBundleNameValid(info.bundleName) || !DataValidator::IsAplNumValid(policy.apl) ||
-        !DataValidator::IsDomainValid(policy.domain) || !DataValidator::IsDlpTypeValid(info.dlpType) ||
-        !DataValidator::IsAclExtendedMapSizeValid(policy.aclExtendedMap)) {
+    if (!info.isSkillHap && ((!DataValidator::IsUserIdValid(info.userID)) ||
+        !DataValidator::IsAppIDDescValid(info.appIDDesc) || !DataValidator::IsBundleNameValid(info.bundleName) ||
+        !DataValidator::IsAplNumValid(policy.apl) || !DataValidator::IsDomainValid(policy.domain) ||
+        !DataValidator::IsDlpTypeValid(info.dlpType) ||
+        !DataValidator::IsAclExtendedMapSizeValid(policy.aclExtendedMap))) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Input param failed");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
@@ -178,9 +179,9 @@ permList: %{public}zu, stateList: %{public}zu, aclExtendedMap: %{public}zu, chec
 isAtomicService: %{public}d",
         tokenIdEx.tokenIdExStruct.tokenID, info.isSystemApp, policy.permList.size(), policy.permStateList.size(),
         policy.aclExtendedMap.size(), policy.checkIgnore, info.isAtomicService);
-    if ((tokenIdEx.tokenIdExStruct.tokenID == INVALID_TOKENID) || (!DataValidator::IsAppIDDescValid(info.appIDDesc)) ||
-        (!DataValidator::IsAplNumValid(policy.apl)) ||
-        !DataValidator::IsAclExtendedMapSizeValid(policy.aclExtendedMap)) {
+    if (!info.isSkillHap && ((tokenIdEx.tokenIdExStruct.tokenID == INVALID_TOKENID) ||
+        (!DataValidator::IsAppIDDescValid(info.appIDDesc)) || (!DataValidator::IsAplNumValid(policy.apl)) ||
+        !DataValidator::IsAclExtendedMapSizeValid(policy.aclExtendedMap))) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Input param failed");
         return AccessTokenError::ERR_PARAM_INVALID;
     }

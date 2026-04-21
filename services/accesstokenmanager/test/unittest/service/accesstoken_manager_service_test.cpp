@@ -387,6 +387,38 @@ HWTEST_F(AccessTokenManagerServiceTest, InitHapTokenTest002, TestSize.Level0)
 }
 
 /**
+ * @tc.name: InitHapTokenTest003
+ * @tc.desc: test InitHapToken returns success and skips token creation when hap is skill
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, InitHapTokenTest003, TestSize.Level0)
+{
+    atManagerService_->Initialize();
+
+    HapInfoParams info = g_info;
+    info.bundleName = "InitHapTokenTest003";
+    info.appIDDesc = "InitHapTokenTest003";
+    info.isSkillHap = true;
+    HapInfoParcel infoParCel;
+    infoParCel.hapInfoParameter = info;
+    HapPolicyParcel policyParcel;
+    policyParcel.hapPolicy = g_policy;
+
+    uint64_t fullTokenId = RANDOM_TOKENID;
+    HapInfoCheckResultIdl result;
+    ASSERT_EQ(RET_SUCCESS, atManagerService_->InitHapToken(infoParCel, policyParcel, fullTokenId, result));
+    ASSERT_EQ(static_cast<uint64_t>(INVALID_TOKENID), fullTokenId);
+
+    uint64_t queryFullTokenId = RANDOM_TOKENID;
+    ASSERT_EQ(RET_SUCCESS, atManagerService_->GetHapTokenID(info.userID, info.bundleName, info.instIndex,
+        queryFullTokenId));
+    AccessTokenIDEx tokenIdEx;
+    tokenIdEx.tokenIDEx = queryFullTokenId;
+    ASSERT_EQ(INVALID_TOKENID, tokenIdEx.tokenIdExStruct.tokenID);
+}
+
+/**
  * @tc.name: UpdateHapTokenTest001
  * @tc.desc: test update undefine permission change
  * @tc.type: FUNC
@@ -524,6 +556,61 @@ HWTEST_F(AccessTokenManagerServiceTest, UpdateHapTokenTest003, TestSize.Level0)
     ASSERT_EQ(g_state1.permissionName, results2[0].GetString(TokenFiledConst::FIELD_PERMISSION_NAME));
 
     ASSERT_EQ(0, atManagerService_->DeleteToken(tokenId, false));
+}
+
+/**
+ * @tc.name: UpdateHapTokenTest004
+ * @tc.desc: test UpdateHapToken returns success and skips token update when hap is skill
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, UpdateHapTokenTest004, TestSize.Level0)
+{
+    uint64_t fullTokenId = RANDOM_TOKENID;
+    UpdateHapInfoParamsIdl infoIdl;
+    infoIdl.appIDDesc = g_info.appIDDesc;
+    infoIdl.apiVersion = g_info.apiVersion;
+    infoIdl.isSystemApp = g_info.isSystemApp;
+    infoIdl.appDistributionType = g_info.appDistributionType;
+    infoIdl.isAtomicService = g_info.isAtomicService;
+    infoIdl.isSkillHap = true;
+    HapPolicyParcel policyParcel;
+    policyParcel.hapPolicy = g_policy;
+    HapInfoCheckResultIdl resultInfoIdl;
+
+    ASSERT_EQ(RET_SUCCESS, atManagerService_->UpdateHapToken(fullTokenId, infoIdl, policyParcel, resultInfoIdl));
+    ASSERT_EQ(static_cast<uint64_t>(INVALID_TOKENID), fullTokenId);
+    ASSERT_EQ(ERR_OK, resultInfoIdl.realResult);
+}
+
+/**
+ * @tc.name: UpdateHapTokenTest005
+ * @tc.desc: test UpdateHapToken returns permission check failure when skill hap permission config is invalid
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, UpdateHapTokenTest005, TestSize.Level0)
+{
+    uint64_t fullTokenId = RANDOM_TOKENID;
+    UpdateHapInfoParamsIdl infoIdl;
+    infoIdl.appIDDesc = g_info.appIDDesc;
+    infoIdl.apiVersion = g_info.apiVersion;
+    infoIdl.isSystemApp = false;
+    infoIdl.appDistributionType = g_info.appDistributionType;
+    infoIdl.isAtomicService = g_info.isAtomicService;
+    infoIdl.isSkillHap = true;
+    HapPolicyParcel policyParcel;
+    policyParcel.hapPolicy = g_policy;
+    policyParcel.hapPolicy.apl = APL_NORMAL;
+    policyParcel.hapPolicy.permStateList = {g_state6};
+    policyParcel.hapPolicy.aclRequestedList = {};
+    policyParcel.hapPolicy.aclExtendedMap = {};
+    HapInfoCheckResultIdl resultInfoIdl;
+
+    ASSERT_EQ(RET_SUCCESS, atManagerService_->UpdateHapToken(fullTokenId, infoIdl, policyParcel, resultInfoIdl));
+    ASSERT_NE(ERR_OK, resultInfoIdl.realResult);
+    ASSERT_EQ(PermissionRulesEnumIdl::PERMISSION_ACL_RULE, resultInfoIdl.rule);
+    ASSERT_EQ(g_state6.permissionName, resultInfoIdl.permissionName);
 }
 
 void AccessTokenManagerServiceTest::InstallHapWithProvisionType(
