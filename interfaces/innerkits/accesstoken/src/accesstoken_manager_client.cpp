@@ -615,7 +615,7 @@ int32_t AccessTokenManagerClient::InitHapToken(const HapInfoParams& info, HapPol
     HapInfoCheckResultIdl resultInfoIdl;
     uint64_t fullToken = 0;
     int32_t res = proxy->InitHapToken(hapInfoParcel, hapPolicyParcel, fullToken, resultInfoIdl);
-    if (fullToken == 0 && res == RET_SUCCESS) {
+    if ((fullToken == 0) && (res == RET_SUCCESS) && (resultInfoIdl.realResult != RET_SUCCESS)) {
         res = AccessTokenError::ERR_PERM_REQUEST_CFG_FAILED;
         PermissionInfoCheckResult permCheckResult;
         permCheckResult.permissionName = resultInfoIdl.permissionName;
@@ -720,6 +720,7 @@ int32_t AccessTokenManagerClient::UpdateHapToken(AccessTokenIDEx& tokenIdEx, con
     infoIdl.isAtomicService = info.isAtomicService;
     infoIdl.dataRefresh = info.dataRefresh;
     infoIdl.appProvisionType = info.appProvisionType;
+    infoIdl.isSkillHap = info.isSkillHap;
     HapInfoCheckResultIdl resultInfoIdl;
     uint64_t fullTokenId = tokenIdEx.tokenIDEx;
     int32_t res = proxy->UpdateHapToken(fullTokenId, infoIdl, hapPolicyParcel, resultInfoIdl);

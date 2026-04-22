@@ -78,6 +78,8 @@ public:
     bool isAtomicService = false;
     /* Whether app is debug or release hap */
     std::string appProvisionType = "release";
+    /** Whether hap is a skill */
+    bool isSkillHap = false;
 };
 
 /**
@@ -98,6 +100,8 @@ public:
     bool dataRefresh = false;
     /* Whether app is debug or release hap */
     std::string appProvisionType = "release";
+    /** Whether hap is a skill */
+    bool isSkillHap = false;
 };
 
 /**
