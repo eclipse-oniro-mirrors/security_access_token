@@ -20,12 +20,13 @@ namespace Security {
 namespace AccessToken {
 bool AppStateData::Marshalling(Parcel &parcel) const
 {
-    return (parcel.WriteString(bundleName) && parcel.WriteInt32(uid) && parcel.WriteInt32(state)
-        && parcel.WriteInt32(pid) && parcel.WriteUint32(accessTokenId) && parcel.WriteBool(isFocused)
-        && parcel.WriteInt32(extensionType) && parcel.WriteInt32Vector(renderPids)
-        && parcel.WriteString(callerBundleName) && parcel.WriteBool(isSplitScreenMode) && parcel.WriteInt32(callerUid)
-        && parcel.WriteBool(isFloatingWindowMode) && parcel.WriteInt32(appIndex) && parcel.WriteBool(isPreloadModule)
-        && parcel.WriteBool(isFromWindowFocusChanged) && parcel.WriteInt32(preloadMode));
+    return parcel.WriteString(bundleName) && parcel.WriteInt32(uid) && parcel.WriteInt32(state) &&
+        parcel.WriteInt32(pid) && parcel.WriteUint32(accessTokenId) && parcel.WriteBool(isFocused) &&
+        parcel.WriteInt32(extensionType) && parcel.WriteInt32Vector(renderPids) &&
+        parcel.WriteString(callerBundleName) && parcel.WriteBool(isSplitScreenMode) && parcel.WriteInt32(callerUid) &&
+        parcel.WriteBool(isFloatingWindowMode) && parcel.WriteInt32(appIndex) && parcel.WriteBool(isPreloadModule) &&
+        parcel.WriteBool(isFromWindowFocusChanged) && parcel.WriteInt32(preloadMode) &&
+        parcel.WriteInt32(byCallStatus);
 }
 
 AppStateData *AppStateData::Unmarshalling(Parcel &parcel)
@@ -50,6 +51,7 @@ AppStateData *AppStateData::Unmarshalling(Parcel &parcel)
     appStateData->isPreloadModule = parcel.ReadBool();
     appStateData->isFromWindowFocusChanged = parcel.ReadBool();
     appStateData->preloadMode = parcel.ReadInt32();
+    appStateData->byCallStatus = parcel.ReadInt32();
     return appStateData;
 }
 }  // namespace AccessToken
