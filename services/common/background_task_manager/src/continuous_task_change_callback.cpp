@@ -45,6 +45,10 @@ int32_t BackgroundTaskSubscriberStub::OnRemoteRequest(
             HandleOnContinuousTaskStart(data, reply);
             return NO_ERROR;
         }
+        case IBackgroundTaskSubscriber::Message::ON_CONTINUOUS_TASK_UPDATE: {
+            HandleOnContinuousTaskUpdate(data, reply);
+            return NO_ERROR;
+        }
         case IBackgroundTaskSubscriber::Message::ON_CONTINUOUS_TASK_STOP: {
             HandleOnContinuousTaskStop(data, reply);
             return NO_ERROR;
@@ -77,6 +81,17 @@ void BackgroundTaskSubscriberStub::HandleOnContinuousTaskStop(MessageParcel &dat
         return;
     }
     OnContinuousTaskStop(continuousTaskCallbackInfo);
+}
+
+void BackgroundTaskSubscriberStub::HandleOnContinuousTaskUpdate(MessageParcel &data, MessageParcel &reply)
+{
+    std::shared_ptr<ContinuousTaskCallbackInfo> continuousTaskCallbackInfo(
+        data.ReadParcelable<ContinuousTaskCallbackInfo>());
+    if (continuousTaskCallbackInfo == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "ReadParcelable failed.");
+        return;
+    }
+    OnContinuousTaskUpdate(continuousTaskCallbackInfo);
 }
 } // namespace AccessToken
 } // namespace Security

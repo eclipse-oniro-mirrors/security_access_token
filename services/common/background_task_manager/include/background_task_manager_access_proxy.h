@@ -29,12 +29,15 @@ public:
 
     virtual void OnContinuousTaskStart(
         const std::shared_ptr<ContinuousTaskCallbackInfo> &continuousTaskCallbackInfo) = 0;
+    virtual void OnContinuousTaskUpdate(
+        const std::shared_ptr<ContinuousTaskCallbackInfo> &continuousTaskCallbackInfo) = 0;
 
     virtual void OnContinuousTaskStop(
         const std::shared_ptr<ContinuousTaskCallbackInfo> &continuousTaskCallbackInfo) = 0;
 
     enum class Message {
         ON_CONTINUOUS_TASK_START = 7,
+        ON_CONTINUOUS_TASK_UPDATE = 8,
         ON_CONTINUOUS_TASK_STOP = 9,
     };
 };

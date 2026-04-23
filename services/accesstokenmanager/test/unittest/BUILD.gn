@@ -86,6 +86,7 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
     "database/database_test.cpp",
     "permission/permission_grant_event_test.cpp",
     "permission/permission_manager_test.cpp",
+    "permission/permission_manager_temp_permission_test.cpp",
     "permission/short_grant_manager_test.cpp",
     "permission/token_info_manager_test.cpp",
     "service/accesstoken_manager_service_test.cpp",
