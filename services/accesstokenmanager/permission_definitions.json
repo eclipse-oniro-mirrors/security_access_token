@@ -8791,6 +8791,17 @@
             "deviceTypes": ["2in1"]
         },
         {
+            "name": "ohos.permission.SUPPORT_CROSS_APP_EMBED_FOR_OA",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "ENTERPRISE_NORMAL",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1"]
+        },
+        {
             "name": "ohos.permission.QUERY_VOLUME_ENCRYPTION_STATUS",
             "grantMode": "system_grant",
             "availableLevel": "normal",
