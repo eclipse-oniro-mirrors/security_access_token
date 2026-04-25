@@ -774,6 +774,147 @@ HWTEST_F(AccessTokenMockTest, GetReqPermissionByName001, TestSize.Level4)
         AccessTokenKit::GetReqPermissionByName(g_testTokenId, "ohos.permission.CAMERA", value));
 }
 
+/**
+ * @tc.name: InitCliToken001
+ * @tc.desc: InitCliToken with proxy is null
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, InitCliToken001, TestSize.Level4)
+{
+    CliInitInfo info = {
+        .hostTokenId = g_testTokenId,
+        .challenge = "mock_cli_challenge",
+        .cliInfo = {
+            .cliName = "camera",
+            .subCliName = "capture"
+        }
+    };
+    AccessTokenIDEx tokenIdEx = {0};
+    std::vector<PermissionWithValue> kernelPermList;
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL,
+        AccessTokenKit::InitCliToken(info, tokenIdEx, kernelPermList));
+    ASSERT_EQ(0, tokenIdEx.tokenIDEx);
+    ASSERT_TRUE(kernelPermList.empty());
+}
+
+/**
+ * @tc.name: InitSkillToken001
+ * @tc.desc: InitSkillToken with proxy is null
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, InitSkillToken001, TestSize.Level4)
+{
+    SkillInitInfo info = {
+        .hostTokenId = g_testTokenId,
+        .challenge = "mock_skill_challenge",
+        .skillInfo = {
+            .skillName = "cameraSkill",
+            .bundleName = "com.ohos.claw.demo",
+            .moduleName = "entry"
+        }
+    };
+    AccessTokenIDEx tokenIdEx = {0};
+    std::vector<PermissionWithValue> kernelPermList;
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL,
+        AccessTokenKit::InitSkillToken(info, tokenIdEx, kernelPermList));
+    ASSERT_EQ(0, tokenIdEx.tokenIDEx);
+    ASSERT_TRUE(kernelPermList.empty());
+}
+
+/**
+ * @tc.name: DeleteClawToken001
+ * @tc.desc: DeleteClawToken with invalid pid
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, DeleteClawToken001, TestSize.Level4)
+{
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, AccessTokenKit::DeleteClawToken(-1));
+}
+
+/**
+ * @tc.name: DeleteClawToken002
+ * @tc.desc: DeleteClawToken with proxy is null
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, DeleteClawToken002, TestSize.Level4)
+{
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::DeleteClawToken(123));
+}
+
+/**
+ * @tc.name: GetCliTokenInfo001
+ * @tc.desc: GetCliTokenInfo with invalid token id
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, GetCliTokenInfo001, TestSize.Level4)
+{
+    CliTokenInfo info = {
+        .hostTokenId = g_testTokenId,
+        .userId = 1,
+        .cliName = "originCli",
+        .subCliName = "originSubCli"
+    };
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, AccessTokenKit::GetCliTokenInfo(INVALID_TOKENID, info));
+}
+
+/**
+ * @tc.name: GetCliTokenInfo002
+ * @tc.desc: GetCliTokenInfo with proxy is null
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, GetCliTokenInfo002, TestSize.Level4)
+{
+    CliTokenInfo info = {
+        .hostTokenId = g_testTokenId,
+        .userId = 1,
+        .cliName = "originCli",
+        .subCliName = "originSubCli"
+    };
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::GetCliTokenInfo(g_testTokenId, info));
+}
+
+/**
+ * @tc.name: GetSkillTokenInfo001
+ * @tc.desc: GetSkillTokenInfo with invalid token id
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, GetSkillTokenInfo001, TestSize.Level4)
+{
+    SkillTokenInfo info = {
+        .hostTokenId = g_testTokenId,
+        .userId = 1,
+        .skillName = "originSkill",
+        .bundleName = "com.ohos.origin",
+        .moduleName = "originModule"
+    };
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, AccessTokenKit::GetSkillTokenInfo(INVALID_TOKENID, info));
+}
+
+/**
+ * @tc.name: GetSkillTokenInfo002
+ * @tc.desc: GetSkillTokenInfo with proxy is null
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, GetSkillTokenInfo002, TestSize.Level4)
+{
+    SkillTokenInfo info = {
+        .hostTokenId = g_testTokenId,
+        .userId = 1,
+        .skillName = "originSkill",
+        .bundleName = "com.ohos.origin",
+        .moduleName = "originModule"
+    };
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::GetSkillTokenInfo(g_testTokenId, info));
+}
+
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
 /**
  * @tc.name: RegisterSecCompEnhance001

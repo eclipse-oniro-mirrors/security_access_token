@@ -355,7 +355,7 @@ int32_t ClawTicketManager::GenerateSkillTicket(AccessTokenID callerTokenId,
     return RET_SUCCESS;
 }
 
-int32_t ClawTicketManager::VerifyCliClawTicket(AccessTokenID ownerTokenId,
+int32_t ClawTicketManager::VerifyCliClawTicket(AccessTokenID hostTokenId,
     const std::string& challenge, const CliInfo& cliInfo, std::vector<PermissionStatus>& permList)
 {
     std::shared_lock<std::shared_mutex> lock(multiLock_);
@@ -385,14 +385,14 @@ int32_t ClawTicketManager::VerifyCliClawTicket(AccessTokenID ownerTokenId,
         return AccessTokenError::ERR_PARAM_INVALID;
     }
 
-    int32_t userId = GetUserIdByTokenId(ownerTokenId);
+    int32_t userId = GetUserIdByTokenId(hostTokenId);
     if (userId < 0) {
         return AccessTokenError::ERR_TOKENID_NOT_EXIST;
     }
 
     std::vector<VerifyTicketInfo> verifyInfos = {{it->second.message, challenge, it->second.ticket}};
     std::vector<int32_t> verifyRes;
-    int32_t ret = BatchVerifyTicket(userId, ownerTokenId, verifyInfos, verifyRes);
+    int32_t ret = BatchVerifyTicket(userId, hostTokenId, verifyInfos, verifyRes);
     if (ret != RET_SUCCESS) {
         return ret;
     }
@@ -409,7 +409,7 @@ int32_t ClawTicketManager::VerifyCliClawTicket(AccessTokenID ownerTokenId,
     return RET_SUCCESS;
 }
 
-int32_t ClawTicketManager::VerifySkillClawTicket(AccessTokenID ownerTokenId,
+int32_t ClawTicketManager::VerifySkillClawTicket(AccessTokenID hostTokenId,
     const std::string& challenge, const SkillInfo& skillInfo, std::vector<PermissionStatus>& permList)
 {
     std::shared_lock<std::shared_mutex> lock(multiLock_);
@@ -437,14 +437,14 @@ int32_t ClawTicketManager::VerifySkillClawTicket(AccessTokenID ownerTokenId,
         return AccessTokenError::ERR_PARAM_INVALID;
     }
 
-    int32_t userId = GetUserIdByTokenId(ownerTokenId);
+    int32_t userId = GetUserIdByTokenId(hostTokenId);
     if (userId < 0) {
         return AccessTokenError::ERR_TOKENID_NOT_EXIST;
     }
 
     std::vector<VerifyTicketInfo> verifyInfos = {{it->second.message, challenge, it->second.ticket}};
     std::vector<int32_t> verifyRes;
-    int32_t ret = BatchVerifyTicket(userId, ownerTokenId, verifyInfos, verifyRes);
+    int32_t ret = BatchVerifyTicket(userId, hostTokenId, verifyInfos, verifyRes);
     if (ret != RET_SUCCESS) {
         return ret;
     }

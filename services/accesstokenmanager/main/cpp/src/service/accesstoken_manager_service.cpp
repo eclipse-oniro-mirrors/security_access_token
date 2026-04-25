@@ -25,6 +25,7 @@
 #include "accesstoken_dfx_define.h"
 #include "accesstoken_id_manager.h"
 #include "constant_common.h"
+#include "claw_token_info_manager.h"
 #include "data_usage_dfx.h"
 #include "data_validator.h"
 #include "hap_token_info.h"
@@ -85,6 +86,7 @@ const std::string GET_SENSITIVE_PERMISSIONS = "ohos.permission.GET_SENSITIVE_PER
 const std::string DISABLE_PERMISSION_DIALOG = "ohos.permission.DISABLE_PERMISSION_DIALOG";
 const std::string GRANT_SHORT_TERM_WRITE_MEDIAVIDEO = "ohos.permission.GRANT_SHORT_TERM_WRITE_MEDIAVIDEO";
 const std::string MANAGE_EDM_POLICY = "ohos.permission.MANAGE_EDM_POLICY";
+const std::string MANAGE_CLAW_TOKEN = "ohos.permission.MANAGE_CLAW_TOKEN";
 
 static constexpr int32_t SA_ID_ACCESSTOKEN_MANAGER_SERVICE = 3503;
 
@@ -198,7 +200,12 @@ int AccessTokenManagerService::VerifyAccessToken(AccessTokenID tokenID, const st
 #ifdef HITRACE_NATIVE_ENABLE
     StartTraceEx(HiTraceOutputLevel::HITRACE_LEVEL_DEBUG, HITRACE_TAG_ACCESS_CONTROL, "AccessTokenVerifyPermission");
 #endif
-    int32_t res = AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, permissionName);
+    int32_t res = PERMISSION_DENIED;
+    if (ClawTokenInfoManager::GetInstance().IsClawToken(tokenID)) {
+        res = ClawTokenInfoManager::GetInstance().VerifyClawAccessToken(tokenID, permissionName);
+    } else {
+        res = AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, permissionName);
+    }
     LOGD(ATM_DOMAIN, ATM_TAG, "Id %{public}d, perm %{public}s, res %{public}d.",
         tokenID, permissionName.c_str(), res);
     if ((res == PERMISSION_GRANTED) &&
@@ -213,6 +220,77 @@ int AccessTokenManagerService::VerifyAccessToken(AccessTokenID tokenID, const st
     FinishTrace(HITRACE_TAG_ACCESS_CONTROL);
 #endif
     return res;
+}
+
+int32_t AccessTokenManagerService::InitCliToken(const CliInitInfoParcel& initInfoParcel, uint64_t& fullTokenId,
+    std::vector<PermissionWithValueIdl>& kernelPermIdlList)
+{
+    kernelPermIdlList.clear();
+    if (IPCSkeleton::GetCallingUid() != ROOT_UID) {
+        return AccessTokenError::ERR_PERMISSION_DENIED;
+    }
+    AccessTokenIDEx tokenIdEx = {0};
+    std::vector<std::string> kernelPermList;
+    int32_t ret = ClawTokenInfoManager::GetInstance().InitCliToken(
+        initInfoParcel.cliInitInfo, IPCSkeleton::GetCallingPid(), tokenIdEx, kernelPermList);
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
+    fullTokenId = tokenIdEx.tokenIDEx;
+    for (const auto& permissionName : kernelPermList) {
+        PermissionWithValueIdl item;
+        item.permissionName = permissionName;
+        kernelPermIdlList.emplace_back(item);
+    }
+    return RET_SUCCESS;
+}
+
+int32_t AccessTokenManagerService::InitSkillToken(const SkillInitInfoParcel& initInfoParcel, uint64_t& fullTokenId,
+    std::vector<PermissionWithValueIdl>& kernelPermIdlList)
+{
+    kernelPermIdlList.clear();
+    if (IPCSkeleton::GetCallingUid() != ROOT_UID) {
+        return AccessTokenError::ERR_PERMISSION_DENIED;
+    }
+    AccessTokenIDEx tokenIdEx = {0};
+    std::vector<std::string> kernelPermList;
+    int32_t ret = ClawTokenInfoManager::GetInstance().InitSkillToken(
+        initInfoParcel.skillInitInfo, IPCSkeleton::GetCallingPid(), tokenIdEx, kernelPermList);
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
+    fullTokenId = tokenIdEx.tokenIDEx;
+    for (const auto& permissionName : kernelPermList) {
+        PermissionWithValueIdl item;
+        item.permissionName = permissionName;
+        kernelPermIdlList.emplace_back(item);
+    }
+    return RET_SUCCESS;
+}
+
+int32_t AccessTokenManagerService::DeleteClawToken(int32_t pid)
+{
+    AccessTokenID callingTokenID = IPCSkeleton::GetCallingTokenID();
+    if (!IsNativeProcessCalling() || VerifyAccessToken(callingTokenID, MANAGE_CLAW_TOKEN) == PERMISSION_DENIED) {
+        return AccessTokenError::ERR_PERMISSION_DENIED;
+    }
+    return ClawTokenInfoManager::GetInstance().DeleteClawToken(pid);
+}
+
+int32_t AccessTokenManagerService::GetCliTokenInfo(AccessTokenID tokenId, CliInfoResultParcel& infoParcel)
+{
+    if (!IsNativeProcessCalling() && !IsPrivilegedCalling()) {
+        return AccessTokenError::ERR_PERMISSION_DENIED;
+    }
+    return ClawTokenInfoManager::GetInstance().GetCliTokenInfo(tokenId, infoParcel.cliTokenInfo);
+}
+
+int32_t AccessTokenManagerService::GetSkillTokenInfo(AccessTokenID tokenId, SkillInfoResultParcel& infoParcel)
+{
+    if (!IsNativeProcessCalling() && !IsPrivilegedCalling()) {
+        return AccessTokenError::ERR_PERMISSION_DENIED;
+    }
+    return ClawTokenInfoManager::GetInstance().GetSkillTokenInfo(tokenId, infoParcel.skillTokenInfo);
 }
 
 int AccessTokenManagerService::VerifyAccessToken(AccessTokenID tokenID,

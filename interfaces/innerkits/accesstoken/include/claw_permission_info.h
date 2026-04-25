@@ -20,6 +20,8 @@
 #include <string>
 #include <vector>
 
+#include "access_token.h"
+
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
@@ -36,7 +38,34 @@ struct CliInfo final {
     std::string subCliName;
 };
 
+struct CliInitInfo final {
+    AccessTokenID hostTokenId = INVALID_TOKENID;
+    std::string challenge;
+    CliInfo cliInfo;
+};
+
+struct CliTokenInfo final {
+    AccessTokenID hostTokenId = INVALID_TOKENID;
+    int32_t userId = 0;
+    std::string cliName;
+    std::string subCliName;
+};
+
 struct SkillInfo final {
+    std::string skillName;
+    std::string bundleName;
+    std::string moduleName;
+};
+
+struct SkillInitInfo final {
+    AccessTokenID hostTokenId = INVALID_TOKENID;
+    std::string challenge;
+    SkillInfo skillInfo;
+};
+
+struct SkillTokenInfo final {
+    AccessTokenID hostTokenId = INVALID_TOKENID;
+    int32_t userId = 0;
     std::string skillName;
     std::string bundleName;
     std::string moduleName;

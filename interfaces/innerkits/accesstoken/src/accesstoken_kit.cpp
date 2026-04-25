@@ -204,6 +204,15 @@ int AccessTokenKit::DeleteToken(AccessTokenID tokenID, bool isTokenReserved)
     return AccessTokenManagerClient::GetInstance().DeleteToken(tokenID, isTokenReserved);
 }
 
+int32_t AccessTokenKit::DeleteClawToken(int32_t pid)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "Claw pid=%{public}d.", pid);
+    if (pid < 0) {
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    return AccessTokenManagerClient::GetInstance().DeleteClawToken(pid);
+}
+
 ATokenTypeEnum AccessTokenKit::GetTokenType(AccessTokenID tokenID) __attribute__((no_sanitize("cfi")))
 {
     LOGD(ATM_DOMAIN, ATM_TAG, "TokenID=%{public}d.", tokenID);
@@ -769,7 +778,7 @@ int32_t AccessTokenKit::SetUserPolicy(const std::vector<UserPermissionPolicy>& u
     LOGI(ATM_DOMAIN, ATM_TAG, "Enter.");
     return AccessTokenManagerClient::GetInstance().SetUserPolicy(userPermissionList);
 #else
-    LOGW(ATM_DOMAIN, ATM_TAG, "Not support.");
+    LOGE(ATM_DOMAIN, ATM_TAG, "Not support.");
     return ERR_CAPABILITY_NOT_SUPPORT;
 #endif
 }
@@ -780,7 +789,7 @@ int32_t AccessTokenKit::ClearUserPolicy(const std::vector<std::string>& permissi
     LOGI(ATM_DOMAIN, ATM_TAG, "Enter.");
     return AccessTokenManagerClient::GetInstance().ClearUserPolicy(permissionList);
 #else
-    LOGW(ATM_DOMAIN, ATM_TAG, "Not support.");
+    LOGE(ATM_DOMAIN, ATM_TAG, "Not support.");
     return ERR_CAPABILITY_NOT_SUPPORT;
 #endif
 }
@@ -850,6 +859,34 @@ int32_t AccessTokenKit::GetKernelPermissions(
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "TokenID=%{public}d.", tokenID);
     return AccessTokenManagerClient::GetInstance().GetKernelPermissions(tokenID, kernelPermList);
+}
+
+int32_t AccessTokenKit::InitCliToken(const CliInitInfo& info,
+    AccessTokenIDEx& tokenIdEx, std::vector<PermissionWithValue>& kernelPermList)
+{
+    return AccessTokenManagerClient::GetInstance().InitCliToken(info, tokenIdEx, kernelPermList);
+}
+
+int32_t AccessTokenKit::InitSkillToken(const SkillInitInfo& info, AccessTokenIDEx& tokenIdEx,
+    std::vector<PermissionWithValue>& kernelPermList)
+{
+    return AccessTokenManagerClient::GetInstance().InitSkillToken(info, tokenIdEx, kernelPermList);
+}
+
+int32_t AccessTokenKit::GetCliTokenInfo(AccessTokenID tokenID, CliTokenInfo& info)
+{
+    if (tokenID == INVALID_TOKENID) {
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    return AccessTokenManagerClient::GetInstance().GetCliTokenInfo(tokenID, info);
+}
+
+int32_t AccessTokenKit::GetSkillTokenInfo(AccessTokenID tokenID, SkillTokenInfo& info)
+{
+    if (tokenID == INVALID_TOKENID) {
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    return AccessTokenManagerClient::GetInstance().GetSkillTokenInfo(tokenID, info);
 }
 
 int32_t AccessTokenKit::GetReqPermissionByName(
