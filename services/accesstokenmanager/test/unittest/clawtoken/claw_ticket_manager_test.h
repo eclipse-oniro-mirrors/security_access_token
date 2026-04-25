@@ -24,9 +24,9 @@
 #define private public
 #include "accesstoken_manager_service.h"
 #include "accesstoken_info_manager.h"
+#include "claw_ticket_manager.h"
 #undef private
 
-#include "claw_ticket_manager.h"
 #include "claw_external_mock.h"
 
 namespace OHOS {
@@ -45,8 +45,6 @@ public:
 
     AccessTokenID CreateTestHapToken();
     void DeleteTestHapToken(AccessTokenID tokenId);
-    std::string GenerateTestCliTicket(AccessTokenID tokenId);
-    std::string GenerateTestSkillTicket(AccessTokenID tokenId);
 
     AccessTokenID testTokenId_ = INVALID_TOKENID;
     std::vector<std::string> testChallenges_;
