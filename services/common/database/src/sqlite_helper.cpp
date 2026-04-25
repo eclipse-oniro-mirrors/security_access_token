@@ -49,7 +49,7 @@ void SqliteHelper::Open() __attribute__((no_sanitize("cfi")))
     const uint32_t flags = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX;
     int32_t res = sqlite3_open_v2(fileName.c_str(), &db_, flags, NULL);
     if (res != SQLITE_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to open db: %{public}s", sqlite3_errmsg(db_));
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to open db res=%{public}d, msg: %{public}s", res, sqlite3_errmsg(db_));
         return;
     }
     SetWal();
@@ -95,7 +95,7 @@ int32_t SqliteHelper::BeginTransaction() const
     int32_t result = 0;
     int32_t ret = sqlite3_exec(db_, "BEGIN;", nullptr, nullptr, &errorMessage);
     if (ret != SQLITE_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed, errorMsg: %{public}s", errorMessage);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed, ret=%{public}d errorMsg: %{public}s", ret, errorMessage);
         result = GENERAL_ERROR;
     }
     sqlite3_free(errorMessage);
@@ -112,7 +112,7 @@ int32_t SqliteHelper::CommitTransaction() const
     int32_t result = 0;
     int32_t ret = sqlite3_exec(db_, "COMMIT;", nullptr, nullptr, &errorMessage);
     if (ret != SQLITE_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed, errorMsg: %{public}s", errorMessage);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed, ret=%{public}d errorMsg: %{public}s", ret, errorMessage);
         result = GENERAL_ERROR;
     }
     sqlite3_free(errorMessage);
@@ -130,7 +130,7 @@ int32_t SqliteHelper::RollbackTransaction() const
     char* errorMessage = nullptr;
     int32_t ret = sqlite3_exec(db_, "ROLLBACK;", nullptr, nullptr, &errorMessage);
     if (ret != SQLITE_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed, errorMsg: %{public}s", errorMessage);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed, ret=%{public}d errorMsg: %{public}s", ret, errorMessage);
         result = GENERAL_ERROR;
     }
     sqlite3_free(errorMessage);
@@ -152,7 +152,7 @@ int32_t SqliteHelper::ExecuteSql(const std::string& sql) const
     int32_t result = 0;
     int32_t res = sqlite3_exec(db_, sql.c_str(), nullptr, nullptr, &errorMessage);
     if (res != SQLITE_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed, errorMsg: %{public}s", errorMessage);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed, res=%{public}d errorMsg: %{public}s", res, errorMessage);
         result = GENERAL_ERROR;
     }
     sqlite3_free(errorMessage);

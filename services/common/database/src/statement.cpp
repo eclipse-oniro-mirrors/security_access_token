@@ -23,8 +23,9 @@ namespace AccessToken {
 
 Statement::Statement(sqlite3* db, const std::string& sql) : db_(db), sql_(sql)
 {
-    if (sqlite3_prepare_v2(db, sql.c_str(), sql.size(), &statement_, nullptr) != SQLITE_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Cannot prepare, errorMsg: %{public}s", sqlite3_errmsg(db_));
+    int32_t ret = sqlite3_prepare_v2(db, sql.c_str(), sql.size(), &statement_, nullptr);
+    if (ret != SQLITE_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Cannot prepare, ret=%{public}d errorMsg: %{public}s", ret, sqlite3_errmsg(db_));
     }
 }
 
@@ -36,22 +37,25 @@ Statement::~Statement()
 
 void Statement::Bind(const int32_t index, const std::string& text)
 {
-    if (sqlite3_bind_text(statement_, index, text.c_str(), text.size(), SQLITE_TRANSIENT) != SQLITE_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Cannot bind string, errorMsg: %{public}s", sqlite3_errmsg(db_));
+    int32_t ret = sqlite3_bind_text(statement_, index, text.c_str(), text.size(), SQLITE_TRANSIENT);
+    if (ret != SQLITE_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Cannot bind string, ret=%{public}d errorMsg: %{public}s", ret, sqlite3_errmsg(db_));
     }
 }
 
 void Statement::Bind(const int32_t index, int32_t value)
 {
-    if (sqlite3_bind_int(statement_, index, value) != SQLITE_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Cannot bind int32_t, errorMsg: %{public}s", sqlite3_errmsg(db_));
+    int32_t ret = sqlite3_bind_int(statement_, index, value);
+    if (ret != SQLITE_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Cannot bind int32_t, ret=%{public}d errorMsg: %{public}s", ret, sqlite3_errmsg(db_));
     }
 }
 
 void Statement::Bind(const int32_t index, int64_t value)
 {
-    if (sqlite3_bind_int64(statement_, index, value) != SQLITE_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Cannot bind int64_t, errorMsg: %{public}s", sqlite3_errmsg(db_));
+    int32_t ret = sqlite3_bind_int64(statement_, index, value);
+    if (ret != SQLITE_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Cannot bind int64_t, ret=%{public}d errorMsg: %{public}s", ret, sqlite3_errmsg(db_));
     }
 }
 
