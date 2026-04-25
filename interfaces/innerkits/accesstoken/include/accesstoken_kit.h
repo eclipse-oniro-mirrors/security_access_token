@@ -46,6 +46,7 @@
 
 #include "access_token.h"
 #include "atm_tools_param_info.h"
+#include "claw_permission_info.h"
 #include "hap_token_info.h"
 #include "native_token_info.h"
 #include "permission_def.h"
@@ -153,6 +154,12 @@ public:
      * @return error code, see access_token_error.h
      */
     static int DeleteToken(AccessTokenID tokenID, bool isTokenReserved);
+    /**
+     * @brief Delete claw token info.
+     * @param pid caller pid
+     * @return error code, see access_token_error.h
+     */
+    static int32_t DeleteClawToken(int32_t pid);
     /**
      * @brief Get token type by ATM service.
      * @param tokenID token id
@@ -538,6 +545,41 @@ public:
      * @return error code, see access_token_error.h
      */
     static int32_t GetKernelPermissions(AccessTokenID tokenID, std::vector<PermissionWithValue>& kernelPermList);
+    /**
+     * @brief Init cli token info.
+     * @param info cli init input
+     * @param tokenIdEx output token id
+     * @param kernelPermList requested kernel permissions
+     * @return error code, see access_token_error.h
+     */
+    static int32_t InitCliToken(const CliInitInfo& info,
+        AccessTokenIDEx& tokenIdEx, std::vector<PermissionWithValue>& kernelPermList);
+
+    /**
+     * @brief Init skill token info.
+     * @param info skill init input
+     * @param tokenIdEx output token id
+     * @param kernelPermList requested kernel permissions
+     * @return error code, see access_token_error.h
+     */
+    static int32_t InitSkillToken(const SkillInitInfo& info,
+        AccessTokenIDEx& tokenIdEx, std::vector<PermissionWithValue>& kernelPermList);
+
+    /**
+     * @brief Get cli token info.
+     * @param tokenID token id
+     * @param info query result
+     * @return error code, see access_token_error.h
+     */
+    static int32_t GetCliTokenInfo(AccessTokenID tokenID, CliTokenInfo& info);
+
+    /**
+     * @brief Get skill token info.
+     * @param tokenID token id
+     * @param info query result
+     * @return error code, see access_token_error.h
+     */
+    static int32_t GetSkillTokenInfo(AccessTokenID tokenID, SkillTokenInfo& info);
 
     /**
      * @brief Get extended value of permission by token id and permission name.

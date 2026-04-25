@@ -48,6 +48,9 @@ ohos_shared_library("accesstoken_communication_adapter_cxx") {
   ]
 
   sources = [
+    "src/cli_init_info_parcel.cpp",
+    "src/cli_info_parcel.cpp",
+    "src/cli_info_result_parcel.cpp",
     "src/atm_tools_param_info_parcel.cpp",
     "src/hap_base_info_parcel.cpp",
     "src/hap_info_parcel.cpp",
@@ -61,6 +64,9 @@ ohos_shared_library("accesstoken_communication_adapter_cxx") {
     "src/permission_list_state_parcel.cpp",
     "src/permission_state_change_info_parcel.cpp",
     "src/permission_status_parcel.cpp",
+    "src/skill_init_info_parcel.cpp",
+    "src/skill_info_parcel.cpp",
+    "src/skill_info_result_parcel.cpp",
   ]
 
   external_deps = [

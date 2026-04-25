@@ -25,6 +25,7 @@
 #include "access_token.h"
 #include "atm_tools_param_info.h"
 #include "accesstoken_death_recipient.h"
+#include "claw_permission_info.h"
 #include "hap_token_info.h"
 #include "iaccess_token_manager.h"
 #include "nocopyable.h"
@@ -75,6 +76,7 @@ public:
     int32_t InitHapToken(const HapInfoParams& info, HapPolicy& policy,
         AccessTokenIDEx& fullTokenId, HapInfoCheckResult& result);
     int DeleteToken(AccessTokenID tokenID, bool isTokenReserved);
+    int32_t DeleteClawToken(int32_t pid);
     ATokenTypeEnum GetTokenType(AccessTokenID tokenID);
     AccessTokenIDEx GetHapTokenID(int32_t userID, const std::string& bundleName, int32_t instIndex);
     FullTokenID AllocLocalTokenID(const std::string& remoteDeviceID, AccessTokenID remoteTokenID);
@@ -107,6 +109,12 @@ public:
         AccessTokenID tokenId, std::vector<PermissionWithValue>& kernelPermList);
     int32_t GetReqPermissionByName(
         AccessTokenID tokenId, const std::string& permissionName, std::string& value);
+    int32_t InitCliToken(const CliInitInfo& info,
+        AccessTokenIDEx& tokenIdEx, std::vector<PermissionWithValue>& kernelPermList);
+    int32_t InitSkillToken(const SkillInitInfo& info,
+        AccessTokenIDEx& tokenIdEx, std::vector<PermissionWithValue>& kernelPermList);
+    int32_t GetCliTokenInfo(AccessTokenID tokenId, CliTokenInfo& info);
+    int32_t GetSkillTokenInfo(AccessTokenID tokenId, SkillTokenInfo& info);
     void DumpTokenInfo(const AtmToolsParamInfo& info, std::string& dumpInfo);
     int32_t GetVersion(uint32_t& version);
     void OnRemoteDiedHandle();

@@ -22,6 +22,9 @@
 #include "accesstoken_callbacks.h"
 #include "accesstoken_common_log.h"
 #include "atm_tools_param_info_parcel.h"
+#include "cli_init_info_parcel.h"
+#include "cli_info_parcel.h"
+#include "cli_info_result_parcel.h"
 #include "hap_token_info.h"
 #include "permission_status_parcel.h"
 #include "hap_token_info_for_sync_parcel.h"
@@ -31,6 +34,9 @@
 #include "perm_state_change_scope_parcel.h"
 #include "permission_grant_info_parcel.h"
 #include "permission_map.h"
+#include "skill_info_parcel.h"
+#include "skill_init_info_parcel.h"
+#include "skill_info_result_parcel.h"
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
 #include "sec_comp_enhance_data_parcel.h"
 #endif
@@ -646,6 +652,21 @@ int AccessTokenManagerClient::DeleteToken(AccessTokenID tokenID, bool isTokenRes
     return result;
 }
 
+int32_t AccessTokenManagerClient::DeleteClawToken(int32_t pid)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+    int32_t result = proxy->DeleteClawToken(pid);
+    if (result != RET_SUCCESS) {
+        result = ConvertResult(result);
+    }
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result is %{public}d, claw pid is %{public}d.", result, pid);
+    return result;
+}
+
 ATokenTypeEnum AccessTokenManagerClient::GetTokenType(AccessTokenID tokenID)
 {
     auto proxy = GetProxy();
@@ -1256,6 +1277,92 @@ int32_t AccessTokenManagerClient::GetKernelPermissions(
     }
 
     return errCode;
+}
+
+int32_t AccessTokenManagerClient::InitCliToken(const CliInitInfo& info, AccessTokenIDEx& tokenIdEx,
+    std::vector<PermissionWithValue>& kernelPermList)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+    CliInitInfoParcel infoParcel;
+    infoParcel.cliInitInfo = info;
+    std::vector<PermissionWithValueIdl> kernelPermIdlList;
+    uint64_t fullToken = 0;
+    int32_t errCode = proxy->InitCliToken(infoParcel, fullToken, kernelPermIdlList);
+    if (errCode != RET_SUCCESS) {
+        return ConvertResult(errCode);
+    }
+    kernelPermList.clear();
+    for (const auto& item : kernelPermIdlList) {
+        PermissionWithValue tmp;
+        tmp.permissionName = item.permissionName;
+        tmp.value = item.value;
+        kernelPermList.emplace_back(tmp);
+    }
+    tokenIdEx.tokenIDEx = fullToken;
+    return RET_SUCCESS;
+}
+
+int32_t AccessTokenManagerClient::InitSkillToken(const SkillInitInfo& info, AccessTokenIDEx& tokenIdEx,
+    std::vector<PermissionWithValue>& kernelPermList)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+    SkillInitInfoParcel infoParcel;
+    infoParcel.skillInitInfo = info;
+    uint64_t fullToken = 0;
+    std::vector<PermissionWithValueIdl> kernelPermIdlList;
+    int32_t errCode = proxy->InitSkillToken(infoParcel, fullToken, kernelPermIdlList);
+    if (errCode != RET_SUCCESS) {
+        return ConvertResult(errCode);
+    }
+    kernelPermList.clear();
+    for (const auto& item : kernelPermIdlList) {
+        PermissionWithValue tmp;
+        tmp.permissionName = item.permissionName;
+        tmp.value = item.value;
+        kernelPermList.emplace_back(tmp);
+    }
+    tokenIdEx.tokenIDEx = fullToken;
+    return RET_SUCCESS;
+}
+
+int32_t AccessTokenManagerClient::GetCliTokenInfo(AccessTokenID tokenId, CliTokenInfo& info)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+    CliInfoResultParcel infoParcel;
+    int32_t errCode = proxy->GetCliTokenInfo(tokenId, infoParcel);
+    if (errCode != RET_SUCCESS) {
+        return ConvertResult(errCode);
+    }
+    info = infoParcel.cliTokenInfo;
+    return RET_SUCCESS;
+}
+
+int32_t AccessTokenManagerClient::GetSkillTokenInfo(AccessTokenID tokenId, SkillTokenInfo& info)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+    SkillInfoResultParcel infoParcel;
+    int32_t errCode = proxy->GetSkillTokenInfo(tokenId, infoParcel);
+    if (errCode != RET_SUCCESS) {
+        return ConvertResult(errCode);
+    }
+    info = infoParcel.skillTokenInfo;
+    return RET_SUCCESS;
 }
 
 int32_t AccessTokenManagerClient::GetReqPermissionByName(

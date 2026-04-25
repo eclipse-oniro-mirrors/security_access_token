@@ -70,10 +70,10 @@ public:
     int32_t GenerateSkillTicket(AccessTokenID callerTokenId, const std::vector<SkillAuthInfo>& skillAuthInfos,
         std::vector<std::string>& challenges);
 
-    int32_t VerifyCliClawTicket(AccessTokenID ownerTokenId, const std::string& challenge,
+    int32_t VerifyCliClawTicket(AccessTokenID hostTokenId, const std::string& challenge,
         const CliInfo& cliInfo, std::vector<PermissionStatus>& permList);
 
-    int32_t VerifySkillClawTicket(AccessTokenID ownerTokenId, const std::string& challenge,
+    int32_t VerifySkillClawTicket(AccessTokenID hostTokenId, const std::string& challenge,
         const SkillInfo& skillInfo, std::vector<PermissionStatus>& permList);
 
     int32_t DeleteClawTicket(const std::string& challenge);
