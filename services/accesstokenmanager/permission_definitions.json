@@ -8712,7 +8712,7 @@
             "provisionEnable": true,
             "distributedSceneEnable": false,
             "deviceTypes": ["general"]
-},
+        },
         {
             "name": "ohos.permission.EXECUTE_DISTRIBUTED_INTENT",
             "grantMode": "system_grant",
