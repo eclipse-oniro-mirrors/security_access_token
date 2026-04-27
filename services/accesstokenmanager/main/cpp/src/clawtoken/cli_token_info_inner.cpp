@@ -29,9 +29,9 @@ int32_t CliTokenInfoInner::Init(const ClawTokenBaseInfo& baseInfo, const CliInfo
     return InitPermissionData(permStateList);
 }
 
-ClawTokenType CliTokenInfoInner::GetType() const
+ToolTokenType CliTokenInfoInner::GetType() const
 {
-    return ClawTokenType::CLI;
+    return ToolTokenType::CLI;
 }
 
 void CliTokenInfoInner::GetTokenInfo(CliTokenInfo& info) const

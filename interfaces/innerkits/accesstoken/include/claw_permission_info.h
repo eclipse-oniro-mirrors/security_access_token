@@ -25,6 +25,8 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+constexpr int32_t INVALID_TOOL_TOKEN_USER_ID = -1;
+
 enum class PermissionDecisionStatus : int32_t {
     NEED_PERMISSION_DIALOG = 0,
     NO_DIALOG_DENIED = 1,
@@ -46,7 +48,7 @@ struct CliInitInfo final {
 
 struct CliTokenInfo final {
     AccessTokenID hostTokenId = INVALID_TOKENID;
-    int32_t userId = 0;
+    int32_t userId = INVALID_TOOL_TOKEN_USER_ID;
     std::string cliName;
     std::string subCliName;
 };
@@ -65,7 +67,7 @@ struct SkillInitInfo final {
 
 struct SkillTokenInfo final {
     AccessTokenID hostTokenId = INVALID_TOKENID;
-    int32_t userId = 0;
+    int32_t userId = INVALID_TOOL_TOKEN_USER_ID;
     std::string skillName;
     std::string bundleName;
     std::string moduleName;

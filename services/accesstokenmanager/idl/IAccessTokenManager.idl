@@ -100,9 +100,10 @@ interface OHOS.Security.AccessToken.IAccessTokenManager{
     [ipccode 68] void GetReqPermissionByName([in] unsigned int tokenId, [in] String permissionName, [out] String value);
     [ipccode 69] void InitCliToken([in] CliInitInfoParcel initInfoParcel, [out] unsigned long fullTokenId, [out] List<PermissionWithValueIdl> kernelPermIdlList);
     [ipccode 70] void InitSkillToken([in] SkillInitInfoParcel initInfoParcel, [out] unsigned long fullTokenId, [out] List<PermissionWithValueIdl> kernelPermIdlList);
-    [ipccode 71] void DeleteClawToken([in] int pid);
+    [ipccode 71] void DeleteToolTokenByPid([in] int pid);
     [ipccode 72] void GetCliTokenInfo([in] unsigned int tokenId, [out] CliInfoResultParcel infoParcel);
     [ipccode 73] void GetSkillTokenInfo([in] unsigned int tokenId, [out] SkillInfoResultParcel infoParcel);
+    [ipccode 74] void GetHostTokenId([in] unsigned int toolTokenId, [out] unsigned int hostTokenId);
     [ipccode 80] void VerifyAccessToken([in] unsigned int tokenID, [in] List<String> permissionList, [out] List<int> permStateList);  
     [ipccode 81] void GetSelfPermissionStatus([in] String permissionName, [out] int status);
     [ipccode 101, macrodef SECURITY_COMPONENT_ENHANCE_ENABLE, oneway] void RegisterSecCompEnhance([in] SecCompEnhanceDataParcel enhanceParcel);

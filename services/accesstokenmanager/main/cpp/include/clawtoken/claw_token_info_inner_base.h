@@ -28,7 +28,7 @@ class ClawTokenInfoInnerBase {
 public:
     virtual ~ClawTokenInfoInnerBase();
 
-    virtual ClawTokenType GetType() const = 0;
+    virtual ToolTokenType GetType() const = 0;
     virtual int32_t VerifyAccessToken(const std::string& permissionName) const;
 
     AccessTokenID GetTokenId() const;

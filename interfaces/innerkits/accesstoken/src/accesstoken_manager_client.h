@@ -76,7 +76,7 @@ public:
     int32_t InitHapToken(const HapInfoParams& info, HapPolicy& policy,
         AccessTokenIDEx& fullTokenId, HapInfoCheckResult& result);
     int DeleteToken(AccessTokenID tokenID, bool isTokenReserved);
-    int32_t DeleteClawToken(int32_t pid);
+    int32_t DeleteToolTokenByPid(int32_t pid);
     ATokenTypeEnum GetTokenType(AccessTokenID tokenID);
     AccessTokenIDEx GetHapTokenID(int32_t userID, const std::string& bundleName, int32_t instIndex);
     FullTokenID AllocLocalTokenID(const std::string& remoteDeviceID, AccessTokenID remoteTokenID);
@@ -115,6 +115,7 @@ public:
         AccessTokenIDEx& tokenIdEx, std::vector<PermissionWithValue>& kernelPermList);
     int32_t GetCliTokenInfo(AccessTokenID tokenId, CliTokenInfo& info);
     int32_t GetSkillTokenInfo(AccessTokenID tokenId, SkillTokenInfo& info);
+    int32_t GetHostTokenId(AccessTokenID toolTokenId, AccessTokenID& hostTokenId);
     void DumpTokenInfo(const AtmToolsParamInfo& info, std::string& dumpInfo);
     int32_t GetVersion(uint32_t& version);
     void OnRemoteDiedHandle();

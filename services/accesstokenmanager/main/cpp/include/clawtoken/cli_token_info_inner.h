@@ -26,7 +26,7 @@ public:
     int32_t Init(const ClawTokenBaseInfo& baseInfo, const CliInfo& info,
         const std::vector<PermissionStatus>& permStateList);
 
-    ClawTokenType GetType() const override;
+    ToolTokenType GetType() const override;
     void GetTokenInfo(CliTokenInfo& info) const;
 
 private:

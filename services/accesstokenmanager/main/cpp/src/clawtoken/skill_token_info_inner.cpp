@@ -29,9 +29,9 @@ int32_t SkillTokenInfoInner::Init(const ClawTokenBaseInfo& baseInfo, const Skill
     return InitPermissionData(permStateList);
 }
 
-ClawTokenType SkillTokenInfoInner::GetType() const
+ToolTokenType SkillTokenInfoInner::GetType() const
 {
-    return ClawTokenType::SKILL;
+    return ToolTokenType::SKILL;
 }
 
 void SkillTokenInfoInner::GetTokenInfo(SkillTokenInfo& info) const

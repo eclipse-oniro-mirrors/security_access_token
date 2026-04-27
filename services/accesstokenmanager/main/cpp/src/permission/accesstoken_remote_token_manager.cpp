@@ -63,6 +63,7 @@ AccessTokenID AccessTokenRemoteTokenManager::MapRemoteDeviceTokenToLocal(const s
     }
     int32_t dlpFlag = TokenIDAttributes::GetTokenIdDlpFlag(remoteID);
     int32_t cloneFlag = TokenIDAttributes::GetTokenIdCloneFlag(remoteID);
+    int32_t toolFlag = TokenIDAttributes::IsToolTokenId(remoteID) ? 1 : 0;
 
     AccessTokenID mapID = 0;
     std::unique_lock<std::shared_mutex> infoGuard(this->remoteDeviceLock_);
@@ -84,7 +85,7 @@ AccessTokenID AccessTokenRemoteTokenManager::MapRemoteDeviceTokenToLocal(const s
         mapPtr = &remoteDeviceMap_[deviceID].MappingTokenIDPairMap_;
     }
 
-    mapID = AccessTokenIDManager::GetInstance().CreateAndRegisterTokenId(tokeType, dlpFlag, cloneFlag);
+    mapID = AccessTokenIDManager::GetInstance().CreateAndRegisterTokenId(tokeType, dlpFlag, cloneFlag, toolFlag);
     if (mapID == 0) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Device %{public}s token %{public}x map local Token failed.",
             ConstantCommon::EncryptDevId(deviceID).c_str(), remoteID);

@@ -86,7 +86,7 @@ const std::string GET_SENSITIVE_PERMISSIONS = "ohos.permission.GET_SENSITIVE_PER
 const std::string DISABLE_PERMISSION_DIALOG = "ohos.permission.DISABLE_PERMISSION_DIALOG";
 const std::string GRANT_SHORT_TERM_WRITE_MEDIAVIDEO = "ohos.permission.GRANT_SHORT_TERM_WRITE_MEDIAVIDEO";
 const std::string MANAGE_EDM_POLICY = "ohos.permission.MANAGE_EDM_POLICY";
-const std::string MANAGE_CLAW_TOKEN = "ohos.permission.MANAGE_CLAW_TOKEN";
+const std::string MANAGE_TOOL_TOKEN = "ohos.permission.MANAGE_TOOL_TOKEN";
 
 static constexpr int32_t SA_ID_ACCESSTOKEN_MANAGER_SERVICE = 3503;
 
@@ -201,8 +201,8 @@ int AccessTokenManagerService::VerifyAccessToken(AccessTokenID tokenID, const st
     StartTraceEx(HiTraceOutputLevel::HITRACE_LEVEL_DEBUG, HITRACE_TAG_ACCESS_CONTROL, "AccessTokenVerifyPermission");
 #endif
     int32_t res = PERMISSION_DENIED;
-    if (ClawTokenInfoManager::GetInstance().IsClawToken(tokenID)) {
-        res = ClawTokenInfoManager::GetInstance().VerifyClawAccessToken(tokenID, permissionName);
+    if (ToolTokenInfoManager::GetInstance().IsToolToken(tokenID)) {
+        res = ToolTokenInfoManager::GetInstance().VerifyToolAccessToken(tokenID, permissionName);
     } else {
         res = AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, permissionName);
     }
@@ -231,7 +231,7 @@ int32_t AccessTokenManagerService::InitCliToken(const CliInitInfoParcel& initInf
     }
     AccessTokenIDEx tokenIdEx = {0};
     std::vector<std::string> kernelPermList;
-    int32_t ret = ClawTokenInfoManager::GetInstance().InitCliToken(
+    int32_t ret = ToolTokenInfoManager::GetInstance().InitCliToken(
         initInfoParcel.cliInitInfo, IPCSkeleton::GetCallingPid(), tokenIdEx, kernelPermList);
     if (ret != RET_SUCCESS) {
         return ret;
@@ -254,7 +254,7 @@ int32_t AccessTokenManagerService::InitSkillToken(const SkillInitInfoParcel& ini
     }
     AccessTokenIDEx tokenIdEx = {0};
     std::vector<std::string> kernelPermList;
-    int32_t ret = ClawTokenInfoManager::GetInstance().InitSkillToken(
+    int32_t ret = ToolTokenInfoManager::GetInstance().InitSkillToken(
         initInfoParcel.skillInitInfo, IPCSkeleton::GetCallingPid(), tokenIdEx, kernelPermList);
     if (ret != RET_SUCCESS) {
         return ret;
@@ -268,13 +268,14 @@ int32_t AccessTokenManagerService::InitSkillToken(const SkillInitInfoParcel& ini
     return RET_SUCCESS;
 }
 
-int32_t AccessTokenManagerService::DeleteClawToken(int32_t pid)
+int32_t AccessTokenManagerService::DeleteToolTokenByPid(int32_t pid)
 {
     AccessTokenID callingTokenID = IPCSkeleton::GetCallingTokenID();
-    if (!IsNativeProcessCalling() || VerifyAccessToken(callingTokenID, MANAGE_CLAW_TOKEN) == PERMISSION_DENIED) {
+    if (!IsShellProcessCalling() &&
+        (!IsNativeProcessCalling() || VerifyAccessToken(callingTokenID, MANAGE_TOOL_TOKEN) == PERMISSION_DENIED)) {
         return AccessTokenError::ERR_PERMISSION_DENIED;
     }
-    return ClawTokenInfoManager::GetInstance().DeleteClawToken(pid);
+    return ToolTokenInfoManager::GetInstance().DeleteToolTokenByPid(pid);
 }
 
 int32_t AccessTokenManagerService::GetCliTokenInfo(AccessTokenID tokenId, CliInfoResultParcel& infoParcel)
@@ -282,7 +283,7 @@ int32_t AccessTokenManagerService::GetCliTokenInfo(AccessTokenID tokenId, CliInf
     if (!IsNativeProcessCalling() && !IsPrivilegedCalling()) {
         return AccessTokenError::ERR_PERMISSION_DENIED;
     }
-    return ClawTokenInfoManager::GetInstance().GetCliTokenInfo(tokenId, infoParcel.cliTokenInfo);
+    return ToolTokenInfoManager::GetInstance().GetCliTokenInfo(tokenId, infoParcel.cliTokenInfo);
 }
 
 int32_t AccessTokenManagerService::GetSkillTokenInfo(AccessTokenID tokenId, SkillInfoResultParcel& infoParcel)
@@ -290,7 +291,18 @@ int32_t AccessTokenManagerService::GetSkillTokenInfo(AccessTokenID tokenId, Skil
     if (!IsNativeProcessCalling() && !IsPrivilegedCalling()) {
         return AccessTokenError::ERR_PERMISSION_DENIED;
     }
-    return ClawTokenInfoManager::GetInstance().GetSkillTokenInfo(tokenId, infoParcel.skillTokenInfo);
+    return ToolTokenInfoManager::GetInstance().GetSkillTokenInfo(tokenId, infoParcel.skillTokenInfo);
+}
+
+int32_t AccessTokenManagerService::GetHostTokenId(AccessTokenID toolTokenId, AccessTokenID& hostTokenId)
+{
+    if (!IsNativeProcessCalling() && !IsPrivilegedCalling()) {
+        LOGE(ATM_DOMAIN, ATM_TAG,
+            "Permission denied when get host token, callingTokenId=%{public}u, toolTokenId=%{public}u.",
+            IPCSkeleton::GetCallingTokenID(), toolTokenId);
+        return AccessTokenError::ERR_PERMISSION_DENIED;
+    }
+    return ToolTokenInfoManager::GetInstance().GetHostTokenId(toolTokenId, hostTokenId);
 }
 
 int AccessTokenManagerService::VerifyAccessToken(AccessTokenID tokenID,

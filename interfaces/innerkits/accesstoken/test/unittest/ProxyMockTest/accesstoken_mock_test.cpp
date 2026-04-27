@@ -825,24 +825,24 @@ HWTEST_F(AccessTokenMockTest, InitSkillToken001, TestSize.Level4)
 
 /**
  * @tc.name: DeleteClawToken001
- * @tc.desc: DeleteClawToken with invalid pid
+ * @tc.desc: DeleteToolTokenByPid with invalid pid
  * @tc.type: FUNC
  * @tc.require:
  */
 HWTEST_F(AccessTokenMockTest, DeleteClawToken001, TestSize.Level4)
 {
-    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, AccessTokenKit::DeleteClawToken(-1));
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, AccessTokenKit::DeleteToolTokenByPid(-1));
 }
 
 /**
  * @tc.name: DeleteClawToken002
- * @tc.desc: DeleteClawToken with proxy is null
+ * @tc.desc: DeleteToolTokenByPid with proxy is null
  * @tc.type: FUNC
  * @tc.require:
  */
 HWTEST_F(AccessTokenMockTest, DeleteClawToken002, TestSize.Level4)
 {
-    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::DeleteClawToken(123));
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::DeleteToolTokenByPid(123));
 }
 
 /**

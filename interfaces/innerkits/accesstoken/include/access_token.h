@@ -80,8 +80,9 @@ enum AccessTokenKitRet {
  */
 typedef struct {
     unsigned int tokenUniqueID : 20;
-    /** reserved, default 00000 */
-    unsigned int res : 4;
+    /** reserved, default 000 */
+    unsigned int res : 3;
+    unsigned int toolFlag : 1;
     unsigned int cloneFlag : 1;
     /** renderflag, default 0 */
     unsigned int renderFlag : 1;

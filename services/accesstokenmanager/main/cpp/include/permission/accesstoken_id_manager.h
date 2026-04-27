@@ -35,7 +35,8 @@ public:
     virtual ~AccessTokenIDManager() = default;
 
     int AddTokenId(AccessTokenID id, ATokenTypeEnum type);
-    AccessTokenID CreateAndRegisterTokenId(ATokenTypeEnum type, int32_t dlpFlag, int32_t cloneFlag);
+    AccessTokenID CreateAndRegisterTokenId(ATokenTypeEnum type, int32_t dlpFlag, int32_t cloneFlag,
+        int32_t toolFlag);
     int RegisterTokenId(AccessTokenID id, ATokenTypeEnum type);
     void ReleaseTokenId(AccessTokenID id);
     void AddReservedTokenId(AccessTokenID id);
@@ -45,7 +46,7 @@ public:
 private:
     AccessTokenIDManager() = default;
     DISALLOW_COPY_AND_MOVE(AccessTokenIDManager);
-    AccessTokenID CreateTokenId(ATokenTypeEnum type, int32_t dlpFlag, int32_t cloneFlag) const;
+    AccessTokenID CreateTokenId(ATokenTypeEnum type, int32_t dlpFlag, int32_t cloneFlag, int32_t toolFlag) const;
 
     std::shared_mutex tokenIdLock_;
     std::set<AccessTokenID> tokenIdSet_;

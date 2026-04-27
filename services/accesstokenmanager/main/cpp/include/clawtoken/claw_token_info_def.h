@@ -26,13 +26,13 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-enum class ClawTokenType : uint8_t {
+enum class ToolTokenType : uint8_t {
     CLI = 0,
     SKILL,
 };
 
 struct ClawTokenBaseInfo {
-    ClawTokenType clawType;
+    ToolTokenType toolType;
     AccessTokenID hostTokenId = INVALID_TOKENID;
     int32_t userId = 0;
     int32_t callerPid = -1;
