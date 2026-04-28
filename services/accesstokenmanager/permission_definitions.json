@@ -8318,6 +8318,39 @@
             "deviceTypes": ["general"]
         },
         {
+            "name": "ohos.permission.QUERY_TOOL_PERMISSIONS",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["general"]
+        },
+        {
+            "name": "ohos.permission.MANAGE_TOOL_RUNTIME_PERMISSIONS",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["general"]
+        },
+        {
+            "name": "ohos.permission.MANAGE_TOOL_TOKENID",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "availableType": "SERVICE",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["general"]
+        },
+        {
             "name": "ohos.permission.MANAGE_STANDBY",
             "grantMode": "system_grant",
             "availableLevel": "system_core",
