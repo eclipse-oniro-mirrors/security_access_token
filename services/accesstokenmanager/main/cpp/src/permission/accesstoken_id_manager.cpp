@@ -61,7 +61,8 @@ int AccessTokenIDManager::RegisterTokenId(AccessTokenID id, ATokenTypeEnum type)
     return RET_SUCCESS;
 }
 
-AccessTokenID AccessTokenIDManager::CreateTokenId(ATokenTypeEnum type, int32_t dlpFlag, int32_t cloneFlag) const
+AccessTokenID AccessTokenIDManager::CreateTokenId(ATokenTypeEnum type, int32_t dlpFlag, int32_t cloneFlag,
+    int32_t toolFlag) const
 {
     uint32_t rand = GetRandomUint32FromUrandom();
     if (rand == 0) {
@@ -73,6 +74,7 @@ AccessTokenID AccessTokenIDManager::CreateTokenId(ATokenTypeEnum type, int32_t d
     innerId.version = DEFAULT_TOKEN_VERSION;
     innerId.type = type;
     innerId.res = 0;
+    innerId.toolFlag = static_cast<uint32_t>(toolFlag);
     innerId.cloneFlag = static_cast<uint32_t>(cloneFlag);
     innerId.renderFlag = 0;
     innerId.dlpFlag = static_cast<uint32_t>(dlpFlag);
@@ -81,12 +83,13 @@ AccessTokenID AccessTokenIDManager::CreateTokenId(ATokenTypeEnum type, int32_t d
     return tokenId;
 }
 
-AccessTokenID AccessTokenIDManager::CreateAndRegisterTokenId(ATokenTypeEnum type, int32_t dlpFlag, int32_t cloneFlag)
+AccessTokenID AccessTokenIDManager::CreateAndRegisterTokenId(ATokenTypeEnum type, int32_t dlpFlag, int32_t cloneFlag,
+    int32_t toolFlag)
 {
     AccessTokenID tokenId = 0;
     // random maybe repeat, retry twice.
     for (int i = 0; i < MAX_CREATE_TOKEN_ID_RETRY; i++) {
-        tokenId = CreateTokenId(type, dlpFlag, cloneFlag);
+        tokenId = CreateTokenId(type, dlpFlag, cloneFlag, toolFlag);
         if (tokenId == INVALID_TOKENID) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Create tokenId failed");
             return INVALID_TOKENID;

@@ -88,6 +88,13 @@ ATM提供了统一的应用权限访问控制功能，支持应用程序或者SA
 -  在应用运行过程中，需要进行鉴权等操作时，可调用VerifyAccessToken、GetReqPermissions等函数查询校验应用权限、APL等信息。
 -  在应用卸载时，需要调用DeleteToken函数删除系统中管理的对应Accesstoken信息。
 
+## 代码开发说明
+
+- 修改后的函数长度超过 50 行时，必须进行函数提取与重构。
+- 每个新增或修改后的函数目标长度不超过 50 行。
+- 优先提取准备逻辑、公共断言逻辑、清理逻辑，避免单个函数承担过多职责。
+- 该规范同时适用于正式代码与测试代码。
+
 ## 相关仓<a name="section1371113476307"></a>
 
 [startup\_init\_lite](https://gitcode.com/openharmony/startup_init)

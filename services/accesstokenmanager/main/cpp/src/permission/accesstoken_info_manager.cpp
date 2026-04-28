@@ -725,7 +725,7 @@ int32_t AccessTokenInfoManager::RegisterTokenId(const HapInfoParams& info, Acces
     } else {
         int32_t dlpFlag = (info.dlpType > DLP_COMMON) ? 1 : 0;
         int32_t cloneFlag = ((dlpFlag == 0) && (info.instIndex) > 0) ? 1 : 0;
-        tokenId = AccessTokenIDManager::GetInstance().CreateAndRegisterTokenId(TOKEN_HAP, dlpFlag, cloneFlag);
+        tokenId = AccessTokenIDManager::GetInstance().CreateAndRegisterTokenId(TOKEN_HAP, dlpFlag, cloneFlag, 0);
         if (tokenId == 0) {
             LOGC(ATM_DOMAIN, ATM_TAG, "Token Id create failed");
             return ERR_TOKENID_CREATE_FAILED;

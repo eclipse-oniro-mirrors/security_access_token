@@ -172,7 +172,7 @@ int32_t CreateCliClawToken(AccessTokenIDEx& tokenIdEx)
 void DeleteClawTokenByCurrentPid()
 {
     SwitchToManageClawCaller();
-    (void)AccessTokenKit::DeleteClawToken(getpid());
+    (void)AccessTokenKit::DeleteToolTokenByPid(getpid());
 }
 }
 
@@ -240,7 +240,7 @@ HWTEST_F(AccessTokenClawTokenTest, InitCliToken001, TestSize.Level4)
         EXPECT_EQ(cliInfo.subCliName, tokenInfo.subCliName);
 
         SwitchToManageClawCaller();
-        ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteClawToken(getpid()));
+        ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToolTokenByPid(getpid()));
         SwitchToManageClawCaller();
         EXPECT_EQ(AccessTokenError::ERR_TOKENID_NOT_EXIST,
             AccessTokenKit::GetCliTokenInfo(tokenIdEx.tokenIdExStruct.tokenID, tokenInfo));
@@ -670,19 +670,19 @@ HWTEST_F(AccessTokenClawTokenTest, InitSkillToken006, TestSize.Level4)
 
 /**
  * @tc.name: DeleteClawToken_001
- * @tc.desc: DeleteClawToken returns invalid-param when pid is -1.
+ * @tc.desc: DeleteToolTokenByPid returns invalid-param when pid is -1.
  * @tc.type: FUNC
  * @tc.require:
  */
 HWTEST_F(AccessTokenClawTokenTest, DeleteClawToken001, TestSize.Level4)
 {
     SwitchToManageClawCaller();
-    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, AccessTokenKit::DeleteClawToken(-1));
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, AccessTokenKit::DeleteToolTokenByPid(-1));
 }
 
 /**
  * @tc.name: DeleteClawToken_002
- * @tc.desc: DeleteClawToken deletes current pid claw token successfully.
+ * @tc.desc: DeleteToolTokenByPid deletes current pid claw token successfully.
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -691,7 +691,7 @@ HWTEST_F(AccessTokenClawTokenTest, DeleteClawToken002, TestSize.Level4)
     AccessTokenIDEx tokenIdEx = {0};
     ASSERT_EQ(RET_SUCCESS, CreateCliClawToken(tokenIdEx));
     SwitchToManageClawCaller();
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteClawToken(getpid()));
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToolTokenByPid(getpid()));
 
     CliTokenInfo tokenInfo;
     SwitchToManageClawCaller();
@@ -701,7 +701,7 @@ HWTEST_F(AccessTokenClawTokenTest, DeleteClawToken002, TestSize.Level4)
 
 /**
  * @tc.name: DeleteClawToken_003
- * @tc.desc: DeleteClawToken returns token-not-exist when deleting same pid repeatedly.
+ * @tc.desc: DeleteToolTokenByPid returns token-not-exist when deleting same pid repeatedly.
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -710,14 +710,14 @@ HWTEST_F(AccessTokenClawTokenTest, DeleteClawToken003, TestSize.Level4)
     AccessTokenIDEx tokenIdEx = {0};
     ASSERT_EQ(RET_SUCCESS, CreateCliClawToken(tokenIdEx));
     SwitchToManageClawCaller();
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteClawToken(getpid()));
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToolTokenByPid(getpid()));
     SwitchToManageClawCaller();
-    EXPECT_EQ(AccessTokenError::ERR_TOKENID_NOT_EXIST, AccessTokenKit::DeleteClawToken(getpid()));
+    EXPECT_EQ(AccessTokenError::ERR_TOKENID_NOT_EXIST, AccessTokenKit::DeleteToolTokenByPid(getpid()));
 }
 
 /**
  * @tc.name: DeleteClawToken_004
- * @tc.desc: DeleteClawToken returns permission-denied and keeps token when caller has no claw-token permission.
+ * @tc.desc: DeleteToolTokenByPid returns permission-denied and keeps token when caller has no claw-token permission.
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -727,19 +727,19 @@ HWTEST_F(AccessTokenClawTokenTest, DeleteClawToken004, TestSize.Level4)
     ASSERT_EQ(RET_SUCCESS, CreateCliClawToken(tokenIdEx));
     {
         MockHapToken noPermissionCaller("DeleteClawTokenKitTest004Caller", {}, false);
-        EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::DeleteClawToken(getpid()));
+        EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::DeleteToolTokenByPid(getpid()));
     }
 
     SwitchToManageClawCaller();
     CliTokenInfo tokenInfo;
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetCliTokenInfo(tokenIdEx.tokenIdExStruct.tokenID, tokenInfo));
     SwitchToManageClawCaller();
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteClawToken(getpid()));
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToolTokenByPid(getpid()));
 }
 
 /**
  * @tc.name: DeleteClawToken_005
- * @tc.desc: DeleteClawToken allows privileged caller to delete token by arbitrary pid.
+ * @tc.desc: DeleteToolTokenByPid allows privileged caller to delete token by arbitrary pid.
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -749,7 +749,7 @@ HWTEST_F(AccessTokenClawTokenTest, DeleteClawToken005, TestSize.Level4)
     ASSERT_EQ(RET_SUCCESS, CreateCliClawToken(tokenIdEx));
 
     SwitchToManageClawCaller();
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteClawToken(getpid()));
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToolTokenByPid(getpid()));
 
     CliTokenInfo tokenInfo;
     SwitchToManageClawCaller();
@@ -780,7 +780,7 @@ HWTEST_F(AccessTokenClawTokenTest, ClawToken001, TestSize.Level4)
         hostTokenId, challengeResult.challenges[0], BuildCliInfo(), tokenIdEx, kernelPermList));
     ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIdExStruct.tokenID);
     SwitchToManageClawCaller();
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteClawToken(getpid()));
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToolTokenByPid(getpid()));
 }
 
 /**

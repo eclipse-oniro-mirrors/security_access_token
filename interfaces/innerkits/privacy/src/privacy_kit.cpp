@@ -23,6 +23,7 @@
 #include "privacy_error.h"
 #include "privacy_manager_client.h"
 #include "time_util.h"
+#include "tokenid_attributes.h"
 
 namespace OHOS {
 namespace Security {
@@ -33,6 +34,12 @@ constexpr const int64_t MERGE_TIMESTAMP = 200; // 200ms
 bool IsValidCallbackRegisterType(CallbackRegisterType type)
 {
     return (type == CallbackRegisterType::ALL) || (type == CallbackRegisterType::TOKEN_ONLY);
+}
+
+bool IsValidPrivacyCallerToken(AccessTokenID tokenId)
+{
+    return DataValidator::IsHapCaller(tokenId) || DataValidator::IsNativeCaller(tokenId) ||
+        TokenIDAttributes::IsToolTokenId(tokenId);
 }
 
 std::mutex g_lockCache;
@@ -99,7 +106,7 @@ int32_t PrivacyKit::AddPermissionUsedRecord(const AddPermParamInfo& info, bool a
         (!DataValidator::IsEnhancedIdentityValid(info.enhancedIdentity))) {
         return PrivacyError::ERR_PARAM_INVALID;
     }
-    if (!DataValidator::IsHapCaller(info.tokenId) && !DataValidator::IsNativeCaller(info.tokenId)) {
+    if (!IsValidPrivacyCallerToken(info.tokenId)) {
         return PrivacyError::ERR_PARAM_INVALID;
     }
 
@@ -141,7 +148,7 @@ int32_t PrivacyKit::StartUsingPermission(AccessTokenID tokenID, const std::strin
         (!DataValidator::IsEnhancedIdentityValid(enhancedIdentity))) {
         return PrivacyError::ERR_PARAM_INVALID;
     }
-    if (!DataValidator::IsHapCaller(tokenID) && !DataValidator::IsNativeCaller(tokenID)) {
+    if (!IsValidPrivacyCallerToken(tokenID)) {
         return PrivacyError::ERR_PARAM_INVALID;
     }
     return PrivacyManagerClient::GetInstance().StartUsingPermission(tokenID, pid, permissionName, type,
@@ -156,7 +163,7 @@ int32_t PrivacyKit::StartUsingPermission(AccessTokenID tokenID, const std::strin
         (!DataValidator::IsPermissionUsedTypeValid(type))) {
         return PrivacyError::ERR_PARAM_INVALID;
     }
-    if (!DataValidator::IsHapCaller(tokenID) && !DataValidator::IsNativeCaller(tokenID)) {
+    if (!IsValidPrivacyCallerToken(tokenID)) {
         return PrivacyError::ERR_PARAM_INVALID;
     }
     return PrivacyManagerClient::GetInstance().StartUsingPermission(tokenID, pid, permissionName, callback, type);
@@ -169,7 +176,7 @@ int32_t PrivacyKit::StopUsingPermission(AccessTokenID tokenID, const std::string
         !DataValidator::IsEnhancedIdentityValid(enhancedIdentity)) {
         return PrivacyError::ERR_PARAM_INVALID;
     }
-    if (!DataValidator::IsHapCaller(tokenID) && !DataValidator::IsNativeCaller(tokenID)) {
+    if (!IsValidPrivacyCallerToken(tokenID)) {
         return PrivacyError::ERR_PARAM_INVALID;
     }
     return PrivacyManagerClient::GetInstance().StopUsingPermission(tokenID, pid, permissionName, enhancedIdentity);

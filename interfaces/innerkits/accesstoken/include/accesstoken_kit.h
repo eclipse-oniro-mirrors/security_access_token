@@ -159,7 +159,7 @@ public:
      * @param pid caller pid
      * @return error code, see access_token_error.h
      */
-    static int32_t DeleteClawToken(int32_t pid);
+    static int32_t DeleteToolTokenByPid(int32_t pid);
     /**
      * @brief Get token type by ATM service.
      * @param tokenID token id
@@ -580,6 +580,14 @@ public:
      * @return error code, see access_token_error.h
      */
     static int32_t GetSkillTokenInfo(AccessTokenID tokenID, SkillTokenInfo& info);
+
+    /**
+     * @brief Get host token id by tool token id.
+     * @param toolTokenId tool token id
+     * @param hostTokenId query result
+     * @return error code, see access_token_error.h
+     */
+    static int32_t GetHostTokenId(AccessTokenID toolTokenId, AccessTokenID& hostTokenId);
 
     /**
      * @brief Get extended value of permission by token id and permission name.

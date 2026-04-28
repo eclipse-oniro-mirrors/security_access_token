@@ -652,14 +652,14 @@ int AccessTokenManagerClient::DeleteToken(AccessTokenID tokenID, bool isTokenRes
     return result;
 }
 
-int32_t AccessTokenManagerClient::DeleteClawToken(int32_t pid)
+int32_t AccessTokenManagerClient::DeleteToolTokenByPid(int32_t pid)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
-    int32_t result = proxy->DeleteClawToken(pid);
+    int32_t result = proxy->DeleteToolTokenByPid(pid);
     if (result != RET_SUCCESS) {
         result = ConvertResult(result);
     }
@@ -1362,6 +1362,22 @@ int32_t AccessTokenManagerClient::GetSkillTokenInfo(AccessTokenID tokenId, Skill
         return ConvertResult(errCode);
     }
     info = infoParcel.skillTokenInfo;
+    return RET_SUCCESS;
+}
+
+int32_t AccessTokenManagerClient::GetHostTokenId(AccessTokenID toolTokenId, AccessTokenID& hostTokenId)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null when get host token, toolTokenId=%{public}u.", toolTokenId);
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+    int32_t errCode = proxy->GetHostTokenId(toolTokenId, hostTokenId);
+    if (errCode != RET_SUCCESS) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy GetHostTokenId failed, toolTokenId=%{public}u, errCode=%{public}d.",
+            toolTokenId, errCode);
+        return ConvertResult(errCode);
+    }
     return RET_SUCCESS;
 }
 

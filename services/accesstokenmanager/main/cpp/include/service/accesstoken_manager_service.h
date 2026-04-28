@@ -139,9 +139,10 @@ public:
         uint64_t& fullTokenId, std::vector<PermissionWithValueIdl>& kernelPermIdlList) override;
     int32_t InitSkillToken(const SkillInitInfoParcel& initInfoParcel, uint64_t& fullTokenId,
         std::vector<PermissionWithValueIdl>& kernelPermIdlList) override;
-    int32_t DeleteClawToken(int32_t pid) override;
+    int32_t DeleteToolTokenByPid(int32_t pid) override;
     int32_t GetCliTokenInfo(AccessTokenID tokenId, CliInfoResultParcel& infoParcel) override;
     int32_t GetSkillTokenInfo(AccessTokenID tokenId, SkillInfoResultParcel& infoParcel) override;
+    int32_t GetHostTokenId(AccessTokenID toolTokenId, AccessTokenID& hostTokenId) override;
     int SetPermDialogCap(const HapBaseInfoParcel& hapBaseInfoParcel, bool enable) override;
     int32_t GetPermissionManagerInfo(PermissionGrantInfoParcel& infoParcel) override;
 #ifdef SUPPORT_MANAGE_USER_POLICY
@@ -209,9 +210,7 @@ private:
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
     bool IsSecCompServiceCalling();
 #endif
-#ifndef ATM_BUILD_VARIANT_USER_ENABLE
     static const int32_t ROOT_UID = 0;
-#endif
     static const int32_t ACCESSTOKEN_UID = 3020;
 
     std::mutex tokenSyncIdMutex_;

@@ -151,6 +151,7 @@ private:
 
     bool CheckPermissionUsedRecordToggleStatus(int32_t userID);
     bool VerifyNativeRecordPermission(const std::string& permissionName, const AccessTokenID& tokenId);
+    int32_t NormalizeRecordTokenId(AccessTokenID inputTokenId, AccessTokenID& outputTokenId);
     bool UpdatePermUsedRecToggleStatusMap(int32_t userID, bool status);
     void UpdatePermUsedRecToggleStatusMapFromDb();
     int32_t AddPermissionUsedRecordInner(

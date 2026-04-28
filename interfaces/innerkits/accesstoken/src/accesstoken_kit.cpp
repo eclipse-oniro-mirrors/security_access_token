@@ -204,13 +204,13 @@ int AccessTokenKit::DeleteToken(AccessTokenID tokenID, bool isTokenReserved)
     return AccessTokenManagerClient::GetInstance().DeleteToken(tokenID, isTokenReserved);
 }
 
-int32_t AccessTokenKit::DeleteClawToken(int32_t pid)
+int32_t AccessTokenKit::DeleteToolTokenByPid(int32_t pid)
 {
-    LOGI(ATM_DOMAIN, ATM_TAG, "Claw pid=%{public}d.", pid);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Pid=%{public}d.", pid);
     if (pid < 0) {
         return AccessTokenError::ERR_PARAM_INVALID;
     }
-    return AccessTokenManagerClient::GetInstance().DeleteClawToken(pid);
+    return AccessTokenManagerClient::GetInstance().DeleteToolTokenByPid(pid);
 }
 
 ATokenTypeEnum AccessTokenKit::GetTokenType(AccessTokenID tokenID) __attribute__((no_sanitize("cfi")))
@@ -887,6 +887,15 @@ int32_t AccessTokenKit::GetSkillTokenInfo(AccessTokenID tokenID, SkillTokenInfo&
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     return AccessTokenManagerClient::GetInstance().GetSkillTokenInfo(tokenID, info);
+}
+
+int32_t AccessTokenKit::GetHostTokenId(AccessTokenID toolTokenId, AccessTokenID& hostTokenId)
+{
+    if (toolTokenId == INVALID_TOKENID) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "GetHostTokenId input invalid, toolTokenId=%{public}u.", toolTokenId);
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    return AccessTokenManagerClient::GetInstance().GetHostTokenId(toolTokenId, hostTokenId);
 }
 
 int32_t AccessTokenKit::GetReqPermissionByName(
