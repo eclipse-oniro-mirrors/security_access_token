@@ -8538,6 +8538,17 @@
             "deviceTypes": ["general"]
         },
         {
+            "name": "ohos.permission.GET_TICKET_INFO",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["general"]
+        },
+        {
             "name": "ohos.permission.READ_SPAM_SHIELD_SETTING",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
