@@ -64,11 +64,11 @@ class ClawTicketManager {
 public:
     static ClawTicketManager& GetInstance();
 
-    int32_t GenerateCliTicket(AccessTokenID callerTokenId, const std::vector<CliAuthInfo>& cliAuthInfos,
-        std::vector<std::string>& challenges);
+    int32_t GenerateCliTicket(AccessTokenID callerTokenId,
+        const std::vector<CliAuthInfo>& cliAuthInfos, std::vector<std::string>& authResults);
 
-    int32_t GenerateSkillTicket(AccessTokenID callerTokenId, const std::vector<SkillAuthInfo>& skillAuthInfos,
-        std::vector<std::string>& challenges);
+    int32_t GenerateSkillTicket(AccessTokenID callerTokenId,
+        const std::vector<SkillAuthInfo>& skillAuthInfos, std::vector<std::string>& authResults);
 
     int32_t VerifyCliClawTicket(AccessTokenID hostTokenId, const std::string& challenge,
         const CliInfo& cliInfo, std::vector<PermissionStatus>& permList);

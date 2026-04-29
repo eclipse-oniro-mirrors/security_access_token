@@ -26,6 +26,7 @@
 #include "cjson_utils.h"
 #include "hap_token_info.h"
 #include "permission_manager.h"
+#include "saf_agent_fence.h"
 #include "token_setproc.h"
 
 namespace OHOS {
@@ -35,7 +36,6 @@ namespace AccessToken {
 using namespace testing::ext;
 
 namespace {
-
 static constexpr int32_t TEST_USER_ID = 100;
 static constexpr int32_t TEST_INST_INDEX = 0;
 static constexpr size_t LONG_STRING_SIZE = 4096;
@@ -115,7 +115,7 @@ void InsertTestTicket(AccessTokenID callerTokenId, const std::string& challenge,
     CJsonUnique permStatusArr = CreateJsonArray();
     if (permStatusArr != nullptr) {
         for (bool status : cliAuth.authorizationResults) {
-            (void)AddBoolToJson(permStatusArr, "", status);
+            (void)AddStringToArray(permStatusArr, status ? "true" : "false");
         }
         (void)AddObjToJson(cliObj, "authorizationResults", permStatusArr);
     }
@@ -129,41 +129,62 @@ void InsertTestTicket(AccessTokenID callerTokenId, const std::string& challenge,
 
 void InsertTestTicket(AccessTokenID callerTokenId, const std::string& challenge, const SkillAuthInfo& skillAuth)
 {
-    CJsonUnique cliObj = CreateJson();
-    if (cliObj == nullptr) {
+    CJsonUnique skillObj = CreateJson();
+    if (skillObj == nullptr) {
         return;
     }
-    CJsonUnique cliInfoObj = CreateJson();
-    if (cliInfoObj == nullptr) {
+    CJsonUnique skillInfoObj = CreateJson();
+    if (skillInfoObj == nullptr) {
         return;
     }
-    (void)AddStringToJson(cliInfoObj, "cliName", skillAuth.skillInfo.bundleName);
-    (void)AddStringToJson(cliInfoObj, "subCliName", skillAuth.skillInfo.moduleName);
-    (void)AddObjToJson(cliObj, "cliInfo", cliInfoObj);
+    (void)AddStringToJson(skillInfoObj, "bundleName", skillAuth.skillInfo.bundleName);
+    (void)AddStringToJson(skillInfoObj, "moduleName", skillAuth.skillInfo.moduleName);
+    (void)AddStringToJson(skillInfoObj, "skillName", skillAuth.skillInfo.skillName);
+    (void)AddObjToJson(skillObj, "skillInfo", skillInfoObj);
 
     CJsonUnique permNamesArr = CreateJsonArray();
     if (permNamesArr != nullptr) {
         for (const auto& permName : skillAuth.permissionNames) {
             (void)AddStringToArray(permNamesArr, permName);
         }
-        (void)AddObjToJson(cliObj, "permissionNames", permNamesArr);
+        (void)AddObjToJson(skillObj, "permissionNames", permNamesArr);
     }
 
     CJsonUnique permStatusArr = CreateJsonArray();
     if (permStatusArr != nullptr) {
         for (bool status : skillAuth.authorizationResults) {
-            (void)AddBoolToJson(permStatusArr, "", status);
+            (void)AddStringToArray(permStatusArr, status ? "true" : "false");
         }
-        (void)AddObjToJson(cliObj, "authorizationResults", permStatusArr);
+        (void)AddObjToJson(skillObj, "authorizationResults", permStatusArr);
     }
 
     ClawTicket ticket;
     ticket.callerTokenId = callerTokenId;
-    ticket.message = PackJsonToString(cliObj);
+    ticket.message = PackJsonToString(skillObj);
     ticket.ticket = "test_ticket";
     ClawTicketManager::GetInstance().ticketMap_[challenge] = ticket;
 }
 
+std::string ExtractChallenge(const std::string& authResult)
+{
+    CJsonUnique json = CreateJsonFromString(authResult);
+    if (json == nullptr) {
+        return "";
+    }
+    std::string challenge;
+    GetStringFromJson(json.get(), "challenge", challenge);
+    return challenge;
+}
+
+PermissionStatus GetPermissionStatus(const std::vector<PermissionStatus>& permList, const std::string& permName)
+{
+    for (const auto& status : permList) {
+        if (status.permissionName == permName) {
+            return status;
+        }
+    }
+    return {0, "", "", PERMISSION_DENIED, 0};
+}
 } // anonymous namespace
 
 void ClawTicketManagerTest::SetUpTestCase() {}
@@ -172,9 +193,9 @@ void ClawTicketManagerTest::TearDownTestCase() {}
 
 void ClawTicketManagerTest::SetUp()
 {
+    ResetMockCounter();
     auto atManagerService = DelayedSingleton<AccessTokenManagerService>::GetInstance();
     ASSERT_NE(nullptr, atManagerService);
-    atManagerService->Initialize();
     testTokenId_ = CreateTestHapToken();
 }
 
@@ -223,10 +244,12 @@ HWTEST_F(ClawTicketManagerTest, GenerateCliTicketTest001, TestSize.Level0)
         {"ohos.permission.CAMERA", "ohos.permission.MICROPHONE"},
         {true, false}));
 
-    std::vector<std::string> challenges;
-    int32_t ret = ClawTicketManager::GetInstance().GenerateCliTicket(tokenId, cliAuthInfos, challenges);
+    std::vector<std::string> authResults;
+    int32_t ret = ClawTicketManager::GetInstance().GenerateCliTicket(tokenId, cliAuthInfos, authResults);
 
     EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_EQ(1, authResults.size());
+    EXPECT_EQ("mock_challenge_1", ExtractChallenge(authResults[0]));
 
     DeleteTestHapToken(tokenId);
 }
@@ -250,10 +273,14 @@ HWTEST_F(ClawTicketManagerTest, GenerateCliTicketTest002, TestSize.Level0)
     cliAuthInfos.push_back(CreateTestCliAuth("test_cli3",
         {"ohos.permission.READ_CONTACTS"}, {true}));
 
-    std::vector<std::string> challenges;
-    int32_t ret = ClawTicketManager::GetInstance().GenerateCliTicket(tokenId, cliAuthInfos, challenges);
+    std::vector<std::string> authResults;
+    int32_t ret = ClawTicketManager::GetInstance().GenerateCliTicket(tokenId, cliAuthInfos, authResults);
 
     EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_EQ(3, authResults.size());
+    EXPECT_EQ("mock_challenge_1", ExtractChallenge(authResults[0]));
+    EXPECT_EQ("mock_challenge_2", ExtractChallenge(authResults[1]));
+    EXPECT_EQ("mock_challenge_3", ExtractChallenge(authResults[2]));
 
     DeleteTestHapToken(tokenId);
 }
@@ -270,11 +297,11 @@ HWTEST_F(ClawTicketManagerTest, GenerateCliTicketTest003, TestSize.Level0)
     cliAuthInfos.push_back(CreateTestCliAuth("test_cli",
         {"ohos.permission.CAMERA"}, {true}));
 
-    std::vector<std::string> challenges;
-    int32_t ret = ClawTicketManager::GetInstance().GenerateCliTicket(INVALID_TOKENID, cliAuthInfos, challenges);
+    std::vector<std::string> authResults;
+    int32_t ret = ClawTicketManager::GetInstance().GenerateCliTicket(INVALID_TOKENID, cliAuthInfos, authResults);
 
     EXPECT_EQ(AccessTokenError::ERR_TOKENID_NOT_EXIST, ret);
-    EXPECT_TRUE(challenges.empty());
+    EXPECT_FALSE(authResults.empty());
 }
 
 /**
@@ -293,10 +320,12 @@ HWTEST_F(ClawTicketManagerTest, GenerateCliTicketTest004, TestSize.Level0)
     cliAuthInfos.push_back(CreateTestCliAuth(longCliName,
         {"ohos.permission.CAMERA"}, {true}));
 
-    std::vector<std::string> challenges;
-    int32_t ret = ClawTicketManager::GetInstance().GenerateCliTicket(tokenId, cliAuthInfos, challenges);
+    std::vector<std::string> authResults;
+    int32_t ret = ClawTicketManager::GetInstance().GenerateCliTicket(tokenId, cliAuthInfos, authResults);
 
     EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_EQ(1, authResults.size());
+    EXPECT_EQ("mock_challenge_1", ExtractChallenge(authResults[0]));
 
     DeleteTestHapToken(tokenId);
 }
@@ -315,12 +344,11 @@ HWTEST_F(ClawTicketManagerTest, GenerateCliTicketTest005, TestSize.Level0)
     std::vector<CliAuthInfo> cliAuthInfos;
     cliAuthInfos.push_back(CreateTestCliAuth("test_cli", {}, {}));
 
-    std::vector<std::string> challenges;
-    int32_t ret = ClawTicketManager::GetInstance().GenerateCliTicket(tokenId, cliAuthInfos, challenges);
+    std::vector<std::string> authResults;
+    int32_t ret = ClawTicketManager::GetInstance().GenerateCliTicket(tokenId, cliAuthInfos, authResults);
 
     EXPECT_EQ(RET_SUCCESS, ret);
-    ASSERT_EQ(1, static_cast<int32_t>(challenges.size()));
-    EXPECT_FALSE(challenges[0].empty());
+    EXPECT_FALSE(authResults.empty());
 
     DeleteTestHapToken(tokenId);
 }
@@ -340,12 +368,11 @@ HWTEST_F(ClawTicketManagerTest, GenerateCliTicketTest006, TestSize.Level0)
     cliAuthInfos.push_back(CreateTestCliAuth("test_cli",
         {"ohos.permission.CAMERA", "ohos.permission.MICROPHONE"}, {}));
 
-    std::vector<std::string> challenges;
-    int32_t ret = ClawTicketManager::GetInstance().GenerateCliTicket(tokenId, cliAuthInfos, challenges);
+    std::vector<std::string> authResults;
+    int32_t ret = ClawTicketManager::GetInstance().GenerateCliTicket(tokenId, cliAuthInfos, authResults);
 
     EXPECT_EQ(RET_SUCCESS, ret);
-    ASSERT_EQ(1, static_cast<int32_t>(challenges.size()));
-    EXPECT_FALSE(challenges[0].empty());
+    EXPECT_FALSE(authResults.empty());
 
     DeleteTestHapToken(tokenId);
 }
@@ -368,12 +395,11 @@ HWTEST_F(ClawTicketManagerTest, GenerateCliTicketTest007, TestSize.Level0)
     constexpr int32_t threadCount = 10;
     std::vector<std::thread> threads;
     std::vector<int32_t> results(threadCount, -1);
-    std::vector<std::vector<std::string>> allChallenges(threadCount);
+    std::vector<std::vector<std::string>> allAuthResults(threadCount);
 
     for (int32_t i = 0; i < threadCount; ++i) {
-        threads.emplace_back([tokenId, &cliAuthInfos, &results, &allChallenges, i]() {
-            results[i] = ClawTicketManager::GetInstance().GenerateCliTicket(
-                tokenId, cliAuthInfos, allChallenges[i]);
+        threads.emplace_back([tokenId, &cliAuthInfos, &results, &allAuthResults, i]() {
+            results[i] = ClawTicketManager::GetInstance().GenerateCliTicket(tokenId, cliAuthInfos, allAuthResults[i]);
         });
     }
 
@@ -383,6 +409,7 @@ HWTEST_F(ClawTicketManagerTest, GenerateCliTicketTest007, TestSize.Level0)
 
     for (int32_t i = 0; i < threadCount; ++i) {
         EXPECT_EQ(RET_SUCCESS, results[i]);
+        EXPECT_EQ(1, allAuthResults[i].size());
     }
 
     DeleteTestHapToken(tokenId);
@@ -406,10 +433,12 @@ HWTEST_F(ClawTicketManagerTest, GenerateSkillTicketTest001, TestSize.Level0)
         {"ohos.permission.CAMERA", "ohos.permission.MICROPHONE"},
         {true, false}));
 
-    std::vector<std::string> challenges;
-    int32_t ret = ClawTicketManager::GetInstance().GenerateSkillTicket(tokenId, skillAuthInfos, challenges);
+    std::vector<std::string> authResults;
+    int32_t ret = ClawTicketManager::GetInstance().GenerateSkillTicket(tokenId, skillAuthInfos, authResults);
 
     EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_EQ(1, authResults.size());
+    EXPECT_EQ("mock_challenge_1", ExtractChallenge(authResults[0]));
 
     DeleteTestHapToken(tokenId);
 }
@@ -433,10 +462,14 @@ HWTEST_F(ClawTicketManagerTest, GenerateSkillTicketTest002, TestSize.Level0)
     skillAuthInfos.push_back(CreateTestSkillAuth("com.test.bundle3",
         {"ohos.permission.READ_CONTACTS"}, {true}));
 
-    std::vector<std::string> challenges;
-    int32_t ret = ClawTicketManager::GetInstance().GenerateSkillTicket(tokenId, skillAuthInfos, challenges);
+    std::vector<std::string> authResults;
+    int32_t ret = ClawTicketManager::GetInstance().GenerateSkillTicket(tokenId, skillAuthInfos, authResults);
 
     EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_EQ(3, authResults.size());
+    EXPECT_EQ("mock_challenge_1", ExtractChallenge(authResults[0]));
+    EXPECT_EQ("mock_challenge_2", ExtractChallenge(authResults[1]));
+    EXPECT_EQ("mock_challenge_3", ExtractChallenge(authResults[2]));
 
     DeleteTestHapToken(tokenId);
 }
@@ -453,11 +486,11 @@ HWTEST_F(ClawTicketManagerTest, GenerateSkillTicketTest003, TestSize.Level0)
     skillAuthInfos.push_back(CreateTestSkillAuth("com.test.bundle",
         {"ohos.permission.CAMERA"}, {true}));
 
-    std::vector<std::string> challenges;
-    int32_t ret = ClawTicketManager::GetInstance().GenerateSkillTicket(INVALID_TOKENID, skillAuthInfos, challenges);
+    std::vector<std::string> authResults;
+    int32_t ret = ClawTicketManager::GetInstance().GenerateSkillTicket(INVALID_TOKENID, skillAuthInfos, authResults);
 
     EXPECT_EQ(AccessTokenError::ERR_TOKENID_NOT_EXIST, ret);
-    EXPECT_TRUE(challenges.empty());
+    EXPECT_FALSE(authResults.empty());
 }
 
 /**
@@ -476,10 +509,12 @@ HWTEST_F(ClawTicketManagerTest, GenerateSkillTicketTest004, TestSize.Level0)
     skillAuthInfos.push_back(CreateTestSkillAuth(longBundleName,
         {"ohos.permission.CAMERA"}, {true}));
 
-    std::vector<std::string> challenges;
-    int32_t ret = ClawTicketManager::GetInstance().GenerateSkillTicket(tokenId, skillAuthInfos, challenges);
+    std::vector<std::string> authResults;
+    int32_t ret = ClawTicketManager::GetInstance().GenerateSkillTicket(tokenId, skillAuthInfos, authResults);
 
     EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_EQ(1, authResults.size());
+    EXPECT_EQ("mock_challenge_1", ExtractChallenge(authResults[0]));
 
     DeleteTestHapToken(tokenId);
 }
@@ -498,12 +533,11 @@ HWTEST_F(ClawTicketManagerTest, GenerateSkillTicketTest005, TestSize.Level0)
     std::vector<SkillAuthInfo> skillAuthInfos;
     skillAuthInfos.push_back(CreateTestSkillAuth("com.test.bundle", {}, {}));
 
-    std::vector<std::string> challenges;
-    int32_t ret = ClawTicketManager::GetInstance().GenerateSkillTicket(tokenId, skillAuthInfos, challenges);
+    std::vector<std::string> authResults;
+    int32_t ret = ClawTicketManager::GetInstance().GenerateSkillTicket(tokenId, skillAuthInfos, authResults);
 
     EXPECT_EQ(RET_SUCCESS, ret);
-    ASSERT_EQ(1, static_cast<int32_t>(challenges.size()));
-    EXPECT_FALSE(challenges[0].empty());
+    EXPECT_FALSE(authResults.empty());
 
     DeleteTestHapToken(tokenId);
 }
@@ -523,12 +557,11 @@ HWTEST_F(ClawTicketManagerTest, GenerateSkillTicketTest006, TestSize.Level0)
     skillAuthInfos.push_back(CreateTestSkillAuth("com.test.bundle",
         {"ohos.permission.CAMERA", "ohos.permission.MICROPHONE"}, {}));
 
-    std::vector<std::string> challenges;
-    int32_t ret = ClawTicketManager::GetInstance().GenerateSkillTicket(tokenId, skillAuthInfos, challenges);
+    std::vector<std::string> authResults;
+    int32_t ret = ClawTicketManager::GetInstance().GenerateSkillTicket(tokenId, skillAuthInfos, authResults);
 
     EXPECT_EQ(RET_SUCCESS, ret);
-    ASSERT_EQ(1, static_cast<int32_t>(challenges.size()));
-    EXPECT_FALSE(challenges[0].empty());
+    EXPECT_FALSE(authResults.empty());
 
     DeleteTestHapToken(tokenId);
 }
@@ -602,6 +635,9 @@ HWTEST_F(ClawTicketManagerTest, VerifyCliClawTicketTest003, TestSize.Level0)
     int32_t ret = ClawTicketManager::GetInstance().VerifyCliClawTicket(tokenId, challenge, cliInfo, permList);
 
     EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_EQ(2, permList.size());
+    EXPECT_EQ(PERMISSION_GRANTED, GetPermissionStatus(permList, "ohos.permission.CAMERA").grantStatus);
+    EXPECT_EQ(PERMISSION_GRANTED, GetPermissionStatus(permList, "ohos.permission.MICROPHONE").grantStatus);
 
     DeleteTestHapToken(tokenId);
 }
@@ -627,6 +663,9 @@ HWTEST_F(ClawTicketManagerTest, VerifyCliClawTicketTest004, TestSize.Level0)
     int32_t ret = ClawTicketManager::GetInstance().VerifyCliClawTicket(tokenId, challenge, cliInfo, permList);
 
     EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_EQ(2, permList.size());
+    EXPECT_EQ(PERMISSION_DENIED, GetPermissionStatus(permList, "ohos.permission.CAMERA").grantStatus);
+    EXPECT_EQ(PERMISSION_DENIED, GetPermissionStatus(permList, "ohos.permission.MICROPHONE").grantStatus);
 
     DeleteTestHapToken(tokenId);
 }
@@ -652,6 +691,10 @@ HWTEST_F(ClawTicketManagerTest, VerifyCliClawTicketTest005, TestSize.Level0)
     int32_t ret = ClawTicketManager::GetInstance().VerifyCliClawTicket(tokenId, challenge, cliInfo, permList);
 
     EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_EQ(3, permList.size());
+    EXPECT_EQ(PERMISSION_GRANTED, GetPermissionStatus(permList, "ohos.permission.CAMERA").grantStatus);
+    EXPECT_EQ(PERMISSION_DENIED, GetPermissionStatus(permList, "ohos.permission.MICROPHONE").grantStatus);
+    EXPECT_EQ(PERMISSION_GRANTED, GetPermissionStatus(permList, "ohos.permission.LOCATION").grantStatus);
 
     DeleteTestHapToken(tokenId);
 }
@@ -698,6 +741,66 @@ HWTEST_F(ClawTicketManagerTest, VerifyCliClawTicketTest007, TestSize.Level0)
     int32_t ret = ClawTicketManager::GetInstance().VerifyCliClawTicket(tokenId, challenge, cliInfo, permList);
 
     EXPECT_EQ(RET_SUCCESS, ret);
+
+    DeleteTestHapToken(tokenId);
+}
+
+/**
+ * @tc.name: VerifyCliClawTicketTest008
+ * @tc.desc: Test VerifyCliClawTicket when SAF returns ticket invalid
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(ClawTicketManagerTest, VerifyCliClawTicketTest008, TestSize.Level0)
+{
+    AccessTokenID tokenId = CreateTestHapToken();
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+
+    std::string challenge = "test_challenge_008";
+    InsertTestTicket(tokenId, challenge,
+        CreateTestCliAuth("test_cli",
+            {"ohos.permission.CAMERA", "ohos.permission.MICROPHONE"}, {true, true}));
+    testChallenges_.push_back(challenge);
+
+    SetMockVerifyTicketResult({1}, RET_SUCCESS);
+
+    CliInfo cliInfo = {{"test_cli", "test_sub"}};
+    std::vector<PermissionStatus> permList;
+    int32_t ret = ClawTicketManager::GetInstance().VerifyCliClawTicket(tokenId, challenge, cliInfo, permList);
+
+    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_EQ(2, permList.size());
+    EXPECT_EQ(PERMISSION_DENIED, GetPermissionStatus(permList, "ohos.permission.CAMERA").grantStatus);
+    EXPECT_EQ(PERMISSION_DENIED, GetPermissionStatus(permList, "ohos.permission.MICROPHONE").grantStatus);
+
+    DeleteTestHapToken(tokenId);
+}
+
+/**
+ * @tc.name: VerifyCliClawTicketTest009
+ * @tc.desc: Test VerifyCliClawTicket when BatchVerifyTicket returns error
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(ClawTicketManagerTest, VerifyCliClawTicketTest009, TestSize.Level0)
+{
+    AccessTokenID tokenId = CreateTestHapToken();
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+
+    std::string challenge = "test_challenge_009_batch_fail";
+    InsertTestTicket(tokenId, challenge,
+        CreateTestCliAuth("test_cli",
+            {"ohos.permission.CAMERA", "ohos.permission.MICROPHONE"}, {true, false}));
+    testChallenges_.push_back(challenge);
+
+    SetMockVerifyTicketResult({}, ERR_INVALID_OPERATION);
+
+    CliInfo cliInfo = {{"test_cli", "test_sub"}};
+    std::vector<PermissionStatus> permList;
+    int32_t ret = ClawTicketManager::GetInstance().VerifyCliClawTicket(tokenId, challenge, cliInfo, permList);
+
+    EXPECT_EQ(ERR_INVALID_OPERATION, ret);
+    EXPECT_TRUE(permList.empty());
 
     DeleteTestHapToken(tokenId);
 }
@@ -753,7 +856,7 @@ HWTEST_F(ClawTicketManagerTest, VerifySkillClawTicketTest002, TestSize.Level0)
 
 /**
  * @tc.name: VerifySkillClawTicketTest003
- * @tc.desc: Test VerifySkillClawTicket with mixed permission states
+ * @tc.desc: Test VerifySkillClawTicket with all permissions granted
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -762,7 +865,63 @@ HWTEST_F(ClawTicketManagerTest, VerifySkillClawTicketTest003, TestSize.Level0)
     AccessTokenID tokenId = CreateTestHapToken();
     ASSERT_NE(INVALID_TOKENID, tokenId);
 
-    std::string challenge = "test_challenge_005";
+    std::string challenge = "test_challenge_skill_003";
+    InsertTestTicket(tokenId, challenge, CreateTestSkillAuth("com.test.bundle",
+        {"ohos.permission.CAMERA", "ohos.permission.MICROPHONE"}, {true, true}));
+    testChallenges_.push_back(challenge);
+
+    SkillInfo skillInfo = {"com.test.bundle", "test_module", "test_skill"};
+    std::vector<PermissionStatus> permList;
+    int32_t ret = ClawTicketManager::GetInstance().VerifySkillClawTicket(tokenId, challenge, skillInfo, permList);
+
+    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_EQ(2, permList.size());
+    EXPECT_EQ(PERMISSION_GRANTED, GetPermissionStatus(permList, "ohos.permission.CAMERA").grantStatus);
+    EXPECT_EQ(PERMISSION_GRANTED, GetPermissionStatus(permList, "ohos.permission.MICROPHONE").grantStatus);
+
+    DeleteTestHapToken(tokenId);
+}
+
+/**
+ * @tc.name: VerifySkillClawTicketTest004
+ * @tc.desc: Test VerifySkillClawTicket with all permissions denied
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(ClawTicketManagerTest, VerifySkillClawTicketTest004, TestSize.Level0)
+{
+    AccessTokenID tokenId = CreateTestHapToken();
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+
+    std::string challenge = "test_challenge_skill_004";
+    InsertTestTicket(tokenId, challenge, CreateTestSkillAuth("com.test.bundle",
+        {"ohos.permission.CAMERA", "ohos.permission.MICROPHONE"}, {false, false}));
+    testChallenges_.push_back(challenge);
+
+    SkillInfo skillInfo = {"com.test.bundle", "test_module", "test_skill"};
+    std::vector<PermissionStatus> permList;
+    int32_t ret = ClawTicketManager::GetInstance().VerifySkillClawTicket(tokenId, challenge, skillInfo, permList);
+
+    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_EQ(2, permList.size());
+    EXPECT_EQ(PERMISSION_DENIED, GetPermissionStatus(permList, "ohos.permission.CAMERA").grantStatus);
+    EXPECT_EQ(PERMISSION_DENIED, GetPermissionStatus(permList, "ohos.permission.MICROPHONE").grantStatus);
+
+    DeleteTestHapToken(tokenId);
+}
+
+/**
+ * @tc.name: VerifySkillClawTicketTest005
+ * @tc.desc: Test VerifySkillClawTicket with mixed permission states
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(ClawTicketManagerTest, VerifySkillClawTicketTest005, TestSize.Level0)
+{
+    AccessTokenID tokenId = CreateTestHapToken();
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+
+    std::string challenge = "test_challenge_skill_005";
     InsertTestTicket(tokenId, challenge, CreateTestSkillAuth("com.test.bundle",
         {"ohos.permission.CAMERA", "ohos.permission.MICROPHONE", "ohos.permission.LOCATION"}, {true, false, true}));
     testChallenges_.push_back(challenge);
@@ -772,17 +931,21 @@ HWTEST_F(ClawTicketManagerTest, VerifySkillClawTicketTest003, TestSize.Level0)
     int32_t ret = ClawTicketManager::GetInstance().VerifySkillClawTicket(tokenId, challenge, skillInfo, permList);
 
     EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_EQ(3, permList.size());
+    EXPECT_EQ(PERMISSION_GRANTED, GetPermissionStatus(permList, "ohos.permission.CAMERA").grantStatus);
+    EXPECT_EQ(PERMISSION_DENIED, GetPermissionStatus(permList, "ohos.permission.MICROPHONE").grantStatus);
+    EXPECT_EQ(PERMISSION_GRANTED, GetPermissionStatus(permList, "ohos.permission.LOCATION").grantStatus);
 
     DeleteTestHapToken(tokenId);
 }
 
 /**
- * @tc.name: VerifySkillClawTicketTest004
+ * @tc.name: VerifySkillClawTicketTest006
  * @tc.desc: Test VerifySkillClawTicket with empty challenge
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(ClawTicketManagerTest, VerifySkillClawTicketTest004, TestSize.Level0)
+HWTEST_F(ClawTicketManagerTest, VerifySkillClawTicketTest006, TestSize.Level0)
 {
     AccessTokenID tokenId = CreateTestHapToken();
     ASSERT_NE(INVALID_TOKENID, tokenId);
@@ -798,12 +961,12 @@ HWTEST_F(ClawTicketManagerTest, VerifySkillClawTicketTest004, TestSize.Level0)
 }
 
 /**
- * @tc.name: VerifySkillClawTicketTest005
+ * @tc.name: VerifySkillClawTicketTest007
  * @tc.desc: Test VerifySkillClawTicket with normal JSON deserialization
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(ClawTicketManagerTest, VerifySkillClawTicketTest005, TestSize.Level0)
+HWTEST_F(ClawTicketManagerTest, VerifySkillClawTicketTest007, TestSize.Level0)
 {
     AccessTokenID tokenId = CreateTestHapToken();
     ASSERT_NE(INVALID_TOKENID, tokenId);
@@ -818,6 +981,64 @@ HWTEST_F(ClawTicketManagerTest, VerifySkillClawTicketTest005, TestSize.Level0)
     int32_t ret = ClawTicketManager::GetInstance().VerifySkillClawTicket(tokenId, challenge, skillInfo, permList);
 
     EXPECT_EQ(RET_SUCCESS, ret);
+
+    DeleteTestHapToken(tokenId);
+}
+
+/**
+ * @tc.name: VerifySkillClawTicketTest008
+ * @tc.desc: Test VerifySkillClawTicket when SAF returns ticket invalid
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(ClawTicketManagerTest, VerifySkillClawTicketTest008, TestSize.Level0)
+{
+    AccessTokenID tokenId = CreateTestHapToken();
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+
+    std::string challenge = "test_challenge_skill_008";
+    InsertTestTicket(tokenId, challenge, CreateTestSkillAuth("com.test.bundle",
+        {"ohos.permission.CAMERA", "ohos.permission.MICROPHONE"}, {true, true}));
+    testChallenges_.push_back(challenge);
+
+    SetMockVerifyTicketResult({1}, RET_SUCCESS);
+
+    SkillInfo skillInfo = {"com.test.bundle", "test_module", "test_skill"};
+    std::vector<PermissionStatus> permList;
+    int32_t ret = ClawTicketManager::GetInstance().VerifySkillClawTicket(tokenId, challenge, skillInfo, permList);
+
+    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_EQ(2, permList.size());
+    EXPECT_EQ(PERMISSION_DENIED, GetPermissionStatus(permList, "ohos.permission.CAMERA").grantStatus);
+    EXPECT_EQ(PERMISSION_DENIED, GetPermissionStatus(permList, "ohos.permission.MICROPHONE").grantStatus);
+
+    DeleteTestHapToken(tokenId);
+}
+
+/**
+ * @tc.name: VerifySkillClawTicketTest009
+ * @tc.desc: Test VerifySkillClawTicket when BatchVerifyTicket returns error
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(ClawTicketManagerTest, VerifySkillClawTicketTest009, TestSize.Level0)
+{
+    AccessTokenID tokenId = CreateTestHapToken();
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+
+    std::string challenge = "test_challenge_skill_009_batch_fail";
+    InsertTestTicket(tokenId, challenge, CreateTestSkillAuth("com.test.bundle",
+        {"ohos.permission.CAMERA", "ohos.permission.MICROPHONE"}, {true, false}));
+    testChallenges_.push_back(challenge);
+
+    SetMockVerifyTicketResult({}, ERR_INVALID_OPERATION);
+
+    SkillInfo skillInfo = {"com.test.bundle", "test_module", "test_skill"};
+    std::vector<PermissionStatus> permList;
+    int32_t ret = ClawTicketManager::GetInstance().VerifySkillClawTicket(tokenId, challenge, skillInfo, permList);
+
+    EXPECT_EQ(ERR_INVALID_OPERATION, ret);
+    EXPECT_TRUE(permList.empty());
 
     DeleteTestHapToken(tokenId);
 }

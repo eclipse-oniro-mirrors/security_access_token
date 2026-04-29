@@ -22,11 +22,11 @@
 #include "accesstoken_id_manager.h"
 #include "accesstoken_info_manager.h"
 #include "cjson_utils.h"
-#include "claw_external_mock.h"
 #include "generic_values.h"
 #include "hap_token_info.h"
 #include "native_token_info_base.h"
 #include "permission_map.h"
+#include "saf_agent_fence.h"
 
 namespace OHOS {
 namespace Security {
@@ -38,7 +38,7 @@ int32_t GetUserIdByTokenId(AccessTokenID callerTokenId)
 {
     auto hapInfo = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(callerTokenId);
     if (hapInfo == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "GetUserIdByTokenId: hapInfo is nullptr, tokenId: %{public}u", callerTokenId);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Get userId by tokenId failed, hapInfo is nullptr, tokenId: %u", callerTokenId);
         return -1;
     }
     return hapInfo->GetUserID();
@@ -70,7 +70,7 @@ std::string SerializeCliAuthInfo(const CliAuthInfo& cliAuth)
     CJsonUnique permStatusArr = CreateJsonArray();
     if (permStatusArr != nullptr) {
         for (bool status : cliAuth.authorizationResults) {
-            (void)AddBoolToJson(permStatusArr, "", status);
+            (void)AddStringToArray(permStatusArr, status ? "true" : "false");
         }
         (void)AddObjToJson(cliObj, "authorizationResults", permStatusArr);
     }
@@ -105,12 +105,24 @@ std::string SerializeSkillAuthInfo(const SkillAuthInfo& skillAuth)
     CJsonUnique permStatusArr = CreateJsonArray();
     if (permStatusArr != nullptr) {
         for (bool status : skillAuth.authorizationResults) {
-            (void)AddBoolToJson(permStatusArr, "", status);
+            (void)AddStringToArray(permStatusArr, status ? "true" : "false");
         }
         (void)AddObjToJson(skillObj, "authorizationResults", permStatusArr);
     }
 
     return PackJsonToString(skillObj);
+}
+
+std::string SerializeVerifyTicketInfo(const SAF::VerifyTicketInfo& ticketInfo)
+{
+    CJsonUnique root = CreateJson();
+    if (root == nullptr) {
+        return "";
+    }
+    (void)AddStringToJson(root, "challenge", ticketInfo.challenge);
+    (void)AddStringToJson(root, "ticket", ticketInfo.ticket);
+    (void)AddStringToJson(root, "message", ticketInfo.message);
+    return PackJsonToString(root);
 }
 
 CliAuthInfo DeserializeCliAuthInfo(const std::string& json)
@@ -131,7 +143,7 @@ CliAuthInfo DeserializeCliAuthInfo(const std::string& json)
         GetStringFromJson(cliInfoObj, "subCliName", cliAuth.cliInfo.subCliName);
     }
 
-    cJSON* permNamesArr = GetObjFromJson(root, "permissionNames");
+    cJSON* permNamesArr = GetArrayFromJson(root, "permissionNames");
     if (permNamesArr != nullptr) {
         int size = cJSON_GetArraySize(permNamesArr);
         for (int i = 0; i < size; ++i) {
@@ -142,13 +154,13 @@ CliAuthInfo DeserializeCliAuthInfo(const std::string& json)
         }
     }
 
-    cJSON* permStatusArr = GetObjFromJson(root, "authorizationResults");
+    cJSON* permStatusArr = GetArrayFromJson(root, "authorizationResults");
     if (permStatusArr != nullptr) {
         int size = cJSON_GetArraySize(permStatusArr);
         for (int i = 0; i < size; ++i) {
             cJSON* item = cJSON_GetArrayItem(permStatusArr, i);
-            if (item != nullptr) {
-                cliAuth.authorizationResults.emplace_back(item->type == cJSON_True);
+            if (item != nullptr && item->type == cJSON_String) {
+                cliAuth.authorizationResults.emplace_back(std::string(item->valuestring) == "true");
             }
         }
     }
@@ -175,7 +187,7 @@ SkillAuthInfo DeserializeSkillAuthInfo(const std::string& json)
         GetStringFromJson(skillInfoObj, "skillName", skillAuth.skillInfo.skillName);
     }
 
-    cJSON* permNamesArr = GetObjFromJson(root, "permissionNames");
+    cJSON* permNamesArr = GetArrayFromJson(root, "permissionNames");
     if (permNamesArr != nullptr) {
         int size = cJSON_GetArraySize(permNamesArr);
         for (int i = 0; i < size; ++i) {
@@ -186,13 +198,13 @@ SkillAuthInfo DeserializeSkillAuthInfo(const std::string& json)
         }
     }
 
-    cJSON* permStatusArr = GetObjFromJson(root, "authorizationResults");
+    cJSON* permStatusArr = GetArrayFromJson(root, "authorizationResults");
     if (permStatusArr != nullptr) {
         int size = cJSON_GetArraySize(permStatusArr);
         for (int i = 0; i < size; ++i) {
             cJSON* item = cJSON_GetArrayItem(permStatusArr, i);
-            if (item != nullptr) {
-                skillAuth.authorizationResults.emplace_back(item->type == cJSON_True);
+            if (item != nullptr && item->type == cJSON_String) {
+                skillAuth.authorizationResults.emplace_back(std::string(item->valuestring) == "true");
             }
         }
     }
@@ -268,7 +280,7 @@ void ClawTicketAppStateObserver::OnAppStopped(const AppStateData &appStateData)
 {
     if (appStateData.state == static_cast<int32_t>(ApplicationState::APP_STATE_TERMINATED)) {
         AccessTokenID tokenId = appStateData.accessTokenId;
-        LOGI(ATM_DOMAIN, ATM_TAG, "ClawTicket TokenID:%{public}u died.", tokenId);
+        LOGI(ATM_DOMAIN, ATM_TAG, "ClawTicket TokenID:%u died.", tokenId);
         ClawTicketManager::GetInstance().DeleteClawTicketByCallerTokenId(tokenId);
     }
 }
@@ -280,7 +292,7 @@ void ClawTicketAppManagerDeathCallback::NotifyAppManagerDeath()
 }
 
 int32_t ClawTicketManager::GenerateCliTicket(AccessTokenID callerTokenId,
-    const std::vector<CliAuthInfo>& cliAuthInfos, std::vector<std::string>& challenges)
+    const std::vector<CliAuthInfo>& cliAuthInfos, std::vector<std::string>& authResults)
 {
     if (callerTokenId == INVALID_TOKENID) {
         return AccessTokenError::ERR_TOKENID_NOT_EXIST;
@@ -296,21 +308,22 @@ int32_t ClawTicketManager::GenerateCliTicket(AccessTokenID callerTokenId,
         messages.emplace_back(SerializeCliAuthInfo(cliAuth));
     }
 
-    std::vector<VerifyTicketInfo> tickets;
-    int32_t ret = BatchGenerateTicket(userId, callerTokenId, messages, tickets);
+    SAF::SafAgentFence safAgentFence;
+    std::vector<SAF::VerifyTicketInfo> tickets;
+    int32_t ret = safAgentFence.BatchGenerateTicket(userId, std::to_string(callerTokenId), messages, tickets);
     if (ret != RET_SUCCESS) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Generate cli ticket failed, ret=%{public}d", ret);
         return ret;
     }
 
     std::unique_lock<std::shared_mutex> lock(multiLock_);
 
-    challenges.clear();
     for (size_t i = 0; i < tickets.size(); ++i) {
         ClawTicket ticket;
         ticket.callerTokenId = callerTokenId;
         ticket.message = tickets[i].message;
         ticket.ticket = tickets[i].ticket;
-        challenges.emplace_back(tickets[i].challenge);
+        authResults.emplace_back(SerializeVerifyTicketInfo(tickets[i]));
         ticketMap_[tickets[i].challenge] = ticket;
     }
 
@@ -318,7 +331,7 @@ int32_t ClawTicketManager::GenerateCliTicket(AccessTokenID callerTokenId,
 }
 
 int32_t ClawTicketManager::GenerateSkillTicket(AccessTokenID callerTokenId,
-    const std::vector<SkillAuthInfo>& skillAuthInfos, std::vector<std::string>& challenges)
+    const std::vector<SkillAuthInfo>& skillAuthInfos, std::vector<std::string>& authResults)
 {
     if (callerTokenId == INVALID_TOKENID) {
         return AccessTokenError::ERR_TOKENID_NOT_EXIST;
@@ -334,29 +347,30 @@ int32_t ClawTicketManager::GenerateSkillTicket(AccessTokenID callerTokenId,
         messages.emplace_back(SerializeSkillAuthInfo(skillAuth));
     }
 
-    std::vector<VerifyTicketInfo> tickets;
-    int32_t ret = BatchGenerateTicket(userId, callerTokenId, messages, tickets);
+    SAF::SafAgentFence safAgentFence;
+    std::vector<SAF::VerifyTicketInfo> tickets;
+    int32_t ret = safAgentFence.BatchGenerateTicket(userId, std::to_string(callerTokenId), messages, tickets);
     if (ret != RET_SUCCESS) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Generate skill ticket failed, ret=%{public}d", ret);
         return ret;
     }
 
     std::unique_lock<std::shared_mutex> lock(multiLock_);
 
-    challenges.clear();
     for (size_t i = 0; i < tickets.size(); ++i) {
         ClawTicket ticket;
         ticket.callerTokenId = callerTokenId;
         ticket.message = tickets[i].message;
         ticket.ticket = tickets[i].ticket;
-        challenges.emplace_back(tickets[i].challenge);
+        authResults.emplace_back(SerializeVerifyTicketInfo(tickets[i]));
         ticketMap_[tickets[i].challenge] = ticket;
     }
 
     return RET_SUCCESS;
 }
 
-int32_t ClawTicketManager::VerifyCliClawTicket(AccessTokenID hostTokenId,
-    const std::string& challenge, const CliInfo& cliInfo, std::vector<PermissionStatus>& permList)
+int32_t ClawTicketManager::VerifyCliClawTicket(AccessTokenID hostTokenId, const std::string& challenge,
+    const CliInfo& cliInfo, std::vector<PermissionStatus>& permList)
 {
     std::shared_lock<std::shared_mutex> lock(multiLock_);
 
@@ -366,8 +380,9 @@ int32_t ClawTicketManager::VerifyCliClawTicket(AccessTokenID hostTokenId,
         cmd.cmdName = cliInfo.cliName;
         cmd.subCmd = cliInfo.subCliName;
 
-        std::vector<CommonPermissionInfo> permissionInfos;
-        int32_t ret = QueryCommonPermissionBatch({cmd}, permissionInfos);
+        SAF::SafAgentFence safAgentFence;
+        std::vector<SAF::CommonPermissionInfo> permissionInfos;
+        int32_t ret = safAgentFence.BatchQueryCommandPermission({cmd}, permissionInfos);
         std::vector<std::string> queriedPermissions = permissionInfos[0].permissions;
 
         for (const auto& perm : queriedPermissions) {
@@ -382,6 +397,7 @@ int32_t ClawTicketManager::VerifyCliClawTicket(AccessTokenID hostTokenId,
 
     auto it = ticketMap_.find(challenge);
     if (it == ticketMap_.end()) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Verify cli ticket failed, challenge not found");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
 
@@ -390,27 +406,32 @@ int32_t ClawTicketManager::VerifyCliClawTicket(AccessTokenID hostTokenId,
         return AccessTokenError::ERR_TOKENID_NOT_EXIST;
     }
 
-    std::vector<VerifyTicketInfo> verifyInfos = {{it->second.message, challenge, it->second.ticket}};
+    SAF::SafAgentFence safAgentFence;
+    std::vector<SAF::VerifyTicketInfo> verifyInfos = {{it->second.message, challenge, it->second.ticket}};
     std::vector<int32_t> verifyRes;
-    int32_t ret = BatchVerifyTicket(userId, hostTokenId, verifyInfos, verifyRes);
+    int32_t ret = safAgentFence.BatchVerifyTicket(userId, std::to_string(hostTokenId), verifyInfos, verifyRes);
     if (ret != RET_SUCCESS) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Verify cli ticket failed, ret=%{public}d", ret);
         return ret;
     }
 
-    CliAuthInfo cliAuth = DeserializeCliAuthInfo(it->second.message);
-
-    for (size_t i = 0; i < cliAuth.permissionNames.size(); ++i) {
-        PermissionStatus status;
-        status.permissionName = cliAuth.permissionNames[i];
-        status.grantStatus = verifyRes[i];
-        permList.emplace_back(status);
+    for (size_t ticketIdx = 0; ticketIdx < verifyInfos.size(); ++ticketIdx) {
+        bool ticketValid = (verifyRes[ticketIdx] == 0);
+        CliAuthInfo cliAuth = DeserializeCliAuthInfo(verifyInfos[ticketIdx].message);
+        for (size_t permIdx = 0; permIdx < cliAuth.permissionNames.size(); ++permIdx) {
+            PermissionStatus status;
+            status.permissionName = cliAuth.permissionNames[permIdx];
+            status.grantStatus = ticketValid ?
+                (cliAuth.authorizationResults[permIdx] ? PERMISSION_GRANTED : PERMISSION_DENIED) : PERMISSION_DENIED;
+            permList.emplace_back(status);
+        }
     }
 
     return RET_SUCCESS;
 }
 
-int32_t ClawTicketManager::VerifySkillClawTicket(AccessTokenID hostTokenId,
-    const std::string& challenge, const SkillInfo& skillInfo, std::vector<PermissionStatus>& permList)
+int32_t ClawTicketManager::VerifySkillClawTicket(AccessTokenID hostTokenId, const std::string& challenge,
+    const SkillInfo& skillInfo, std::vector<PermissionStatus>& permList)
 {
     std::shared_lock<std::shared_mutex> lock(multiLock_);
 
@@ -434,6 +455,7 @@ int32_t ClawTicketManager::VerifySkillClawTicket(AccessTokenID hostTokenId,
 
     auto it = ticketMap_.find(challenge);
     if (it == ticketMap_.end()) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Verify skill ticket failed, challenge not found");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
 
@@ -442,20 +464,25 @@ int32_t ClawTicketManager::VerifySkillClawTicket(AccessTokenID hostTokenId,
         return AccessTokenError::ERR_TOKENID_NOT_EXIST;
     }
 
-    std::vector<VerifyTicketInfo> verifyInfos = {{it->second.message, challenge, it->second.ticket}};
+    SAF::SafAgentFence safAgentFence;
+    std::vector<SAF::VerifyTicketInfo> verifyInfos = {{it->second.message, challenge, it->second.ticket}};
     std::vector<int32_t> verifyRes;
-    int32_t ret = BatchVerifyTicket(userId, hostTokenId, verifyInfos, verifyRes);
+    int32_t ret = safAgentFence.BatchVerifyTicket(userId, std::to_string(hostTokenId), verifyInfos, verifyRes);
     if (ret != RET_SUCCESS) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Verify skill ticket failed, ret=%{public}d", ret);
         return ret;
     }
 
-    SkillAuthInfo skillAuth = DeserializeSkillAuthInfo(it->second.message);
-
-    for (size_t i = 0; i < skillAuth.permissionNames.size(); ++i) {
-        PermissionStatus status;
-        status.permissionName = skillAuth.permissionNames[i];
-        status.grantStatus = verifyRes[i];
-        permList.emplace_back(status);
+    for (size_t ticketIdx = 0; ticketIdx < verifyInfos.size(); ++ticketIdx) {
+        bool ticketValid = (verifyRes[ticketIdx] == 0);
+        SkillAuthInfo skillAuth = DeserializeSkillAuthInfo(verifyInfos[ticketIdx].message);
+        for (size_t permIdx = 0; permIdx < skillAuth.permissionNames.size(); ++permIdx) {
+            PermissionStatus status;
+            status.permissionName = skillAuth.permissionNames[permIdx];
+            status.grantStatus = ticketValid ?
+                (skillAuth.authorizationResults[permIdx] ? PERMISSION_GRANTED : PERMISSION_DENIED) : PERMISSION_DENIED;
+            permList.emplace_back(status);
+        }
     }
 
     return RET_SUCCESS;
@@ -476,6 +503,7 @@ int32_t ClawTicketManager::DeleteClawTicket(const std::string& challenge)
 
     ticketMap_.erase(it);
 
+    LOGI(ATM_DOMAIN, ATM_TAG, "Tickets deleted, challenge=%s", challenge.c_str());
     return RET_SUCCESS;
 }
 
@@ -493,6 +521,9 @@ void ClawTicketManager::DeleteClawTicketByCallerTokenId(AccessTokenID callerToke
     for (const auto& challenge : challengesToDelete) {
         ticketMap_.erase(challenge);
     }
+
+    LOGI(ATM_DOMAIN, ATM_TAG, "Deleted %{public}zu tickets for callerTokenId=%u", challengesToDelete.size(),
+        callerTokenId);
 }
 } // namespace AccessToken
 } // namespace Security

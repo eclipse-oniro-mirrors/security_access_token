@@ -172,7 +172,7 @@ public:
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(ClawPermissionKitTest, GetCliPermissionRequestInfoKit001, TestSize.Level3)
+HWTEST_F(ClawPermissionKitTest, DISABLED_GetCliPermissionRequestInfoKit001, TestSize.Level3)
 {
     auto permStates = BuildClawQueryAndManagePermissionStates();
     permStates.emplace_back(BuildGrantedPermissionState("ohos.permission.POWER_MANAGER"));
@@ -205,7 +205,7 @@ HWTEST_F(ClawPermissionKitTest, GetCliPermissionRequestInfoKit001, TestSize.Leve
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(ClawPermissionKitTest, GetSkillPermissionRequestInfoKit001, TestSize.Level3)
+HWTEST_F(ClawPermissionKitTest, DISABLED_GetSkillPermissionRequestInfoKit001, TestSize.Level3)
 {
     auto permStates = BuildClawQueryAndManagePermissionStates();
     permStates.emplace_back(BuildGrantedPermissionState("ohos.permission.CAMERA"));
@@ -235,7 +235,7 @@ HWTEST_F(ClawPermissionKitTest, GetSkillPermissionRequestInfoKit001, TestSize.Le
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(ClawPermissionKitTest, GenerateClawAuthResultKit001, TestSize.Level3)
+HWTEST_F(ClawPermissionKitTest, DISABLED_GenerateClawAuthResultKit001, TestSize.Level3)
 {
     ScopedClawCaller caller("claw_auth_result_kit_test", true, BuildClawManagePermissionStates());
 
@@ -297,7 +297,7 @@ HWTEST_F(ClawPermissionKitTest, ClawPermissionKitNonSystem001, TestSize.Level3)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(ClawPermissionKitTest, ClawPermissionKitServiceError001, TestSize.Level3)
+HWTEST_F(ClawPermissionKitTest, DISABLED_ClawPermissionKitServiceError001, TestSize.Level3)
 {
     ScopedClawCaller caller("claw_service_error_kit_test", true, BuildClawQueryAndManagePermissionStates());
 

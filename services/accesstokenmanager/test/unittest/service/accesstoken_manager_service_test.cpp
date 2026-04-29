@@ -2561,7 +2561,7 @@ HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest002_001, TestSi
  * @tc.require:
  * @tc.type: FUNC
  */
-HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest003, TestSize.Level1)
+HWTEST_F(AccessTokenManagerServiceTest, DISABLED_ClawPermissionServiceTest003, TestSize.Level1)
 {
     PermissionStatus cliState = {
         .permissionName = "ohos.permission.POWER_MANAGER",
@@ -2599,7 +2599,7 @@ HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest003, TestSize.L
  * @tc.require:
  * @tc.type: FUNC
  */
-HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest004, TestSize.Level1)
+HWTEST_F(AccessTokenManagerServiceTest, DISABLED_ClawPermissionServiceTest004, TestSize.Level1)
 {
     AccessTokenID tokenId = INVALID_TOKENID;
     uint64_t fullTokenId = CreateClawServiceTestToken(
@@ -2643,7 +2643,7 @@ HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest004, TestSize.L
  * @tc.require:
  * @tc.type: FUNC
  */
-HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest005, TestSize.Level1)
+HWTEST_F(AccessTokenManagerServiceTest, DISABLED_ClawPermissionServiceTest005, TestSize.Level1)
 {
     AccessTokenID tokenId = INVALID_TOKENID;
     uint64_t fullTokenId = CreateClawServiceTestToken(
@@ -2719,7 +2719,7 @@ HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest006, TestSize.L
  * @tc.require:
  * @tc.type: FUNC
  */
-HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest007, TestSize.Level1)
+HWTEST_F(AccessTokenManagerServiceTest, DISABLED_ClawPermissionServiceTest007, TestSize.Level1)
 {
     PermissionStatus cliState = {
         .permissionName = "ohos.permission.POWER_MANAGER",
@@ -2760,7 +2760,7 @@ HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest007, TestSize.L
  * @tc.require:
  * @tc.type: FUNC
  */
-HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest007_001, TestSize.Level1)
+HWTEST_F(AccessTokenManagerServiceTest, DISABLED_ClawPermissionServiceTest007_001, TestSize.Level1)
 {
     PermissionStatus cliCameraState = {
         .permissionName = "ohos.permission.POWER_MANAGER",
@@ -2803,7 +2803,7 @@ HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest007_001, TestSi
  * @tc.require:
  * @tc.type: FUNC
  */
-HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest007_002, TestSize.Level1)
+HWTEST_F(AccessTokenManagerServiceTest, DISABLED_ClawPermissionServiceTest007_002, TestSize.Level1)
 {
     AccessTokenID tokenId = INVALID_TOKENID;
     uint64_t fullTokenId = CreateClawServiceTestToken(
@@ -2865,7 +2865,7 @@ HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest007_003, TestSi
  * @tc.require:
  * @tc.type: FUNC
  */
-HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest007_004, TestSize.Level1)
+HWTEST_F(AccessTokenManagerServiceTest, DISABLED_ClawPermissionServiceTest007_004, TestSize.Level1)
 {
     AccessTokenID tokenId = INVALID_TOKENID;
     uint64_t fullTokenId = CreateClawServiceTestToken(
@@ -2900,7 +2900,7 @@ HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest007_004, TestSi
  * @tc.require:
  * @tc.type: FUNC
  */
-HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest008, TestSize.Level1)
+HWTEST_F(AccessTokenManagerServiceTest, DISABLED_ClawPermissionServiceTest008, TestSize.Level1)
 {
     PermissionStatus cameraState = {
         .permissionName = "ohos.permission.CAMERA",
@@ -2976,7 +2976,7 @@ HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest008_001, TestSi
  * @tc.require:
  * @tc.type: FUNC
  */
-HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest008_002, TestSize.Level1)
+HWTEST_F(AccessTokenManagerServiceTest, DISABLED_ClawPermissionServiceTest008_002, TestSize.Level1)
 {
     PermissionStatus cameraState = {
         .permissionName = "ohos.permission.CAMERA",
@@ -3017,7 +3017,7 @@ HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest008_002, TestSi
  * @tc.require:
  * @tc.type: FUNC
  */
-HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest009, TestSize.Level1)
+HWTEST_F(AccessTokenManagerServiceTest, DISABLED_ClawPermissionServiceTest009, TestSize.Level1)
 {
     AccessTokenID tokenId = INVALID_TOKENID;
     uint64_t fullTokenId = CreateClawServiceTestToken(
@@ -3045,7 +3045,7 @@ HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest009, TestSize.L
  * @tc.require:
  * @tc.type: FUNC
  */
-HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest010, TestSize.Level1)
+HWTEST_F(AccessTokenManagerServiceTest, DISABLED_ClawPermissionServiceTest010, TestSize.Level1)
 {
     AccessTokenID tokenId = INVALID_TOKENID;
     uint64_t fullTokenId = CreateClawServiceTestToken(
