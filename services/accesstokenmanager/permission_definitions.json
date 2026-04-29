@@ -8385,6 +8385,17 @@
             "deviceTypes": ["car"]
         },
         {
+            "name": "ohos.permission.vehicle.AUTO_UPDATER",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["car"]
+        },
+        {
             "name": "ohos.permission.ACQUIRE_LOCAL_ACCOUNT_AUTHORIZATION",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
