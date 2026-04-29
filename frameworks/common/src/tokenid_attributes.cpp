@@ -27,6 +27,12 @@ ATokenTypeEnum TokenIDAttributes::GetTokenIdTypeEnum(AccessTokenID id)
     return static_cast<ATokenTypeEnum>(idInner->type);
 }
 
+bool TokenIDAttributes::IsToolTokenId(AccessTokenID id)
+{
+    AccessTokenIDInner* idInner = reinterpret_cast<AccessTokenIDInner*>(&id);
+    return idInner->toolFlag == 1;
+}
+
 int TokenIDAttributes::GetTokenIdDlpFlag(AccessTokenID id)
 {
     AccessTokenIDInner* idInner = reinterpret_cast<AccessTokenIDInner*>(&id);

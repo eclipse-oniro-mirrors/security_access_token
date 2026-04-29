@@ -181,6 +181,7 @@ private:
     static void RequestAppPermOnSettingExecute(napi_env env, void *data);
     static void RequestAppPermOnSettingComplete(napi_env env, napi_status status, void *data);
     static void SetNamedProperty(napi_env env, napi_value dstObj, const int32_t objValue, const char *propName);
+    static napi_value CreatePermissionDecisionStatus(napi_env env);
     static void CreateObjects(napi_env env, napi_value exports);
     static bool GetPermStateChangeType(const napi_env env, const size_t argc, const napi_value* argv,
         std::string& type);

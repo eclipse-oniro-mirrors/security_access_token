@@ -151,6 +151,7 @@ private:
 
     bool CheckPermissionUsedRecordToggleStatus(int32_t userID);
     bool VerifyNativeRecordPermission(const std::string& permissionName, const AccessTokenID& tokenId);
+    int32_t NormalizeRecordTokenId(AccessTokenID inputTokenId, AccessTokenID& outputTokenId);
     bool UpdatePermUsedRecToggleStatusMap(int32_t userID, bool status);
     void UpdatePermUsedRecToggleStatusMapFromDb();
     int32_t AddPermissionUsedRecordInner(
@@ -173,6 +174,9 @@ private:
         PermissionUsedRecord& outRecord);
     void FillPermissionUsedRecords(const PermissionUsedRecord& record, const PermissionUsageFlag& flag,
         std::vector<PermissionUsedRecord>& permissionRecords);
+    bool CreateBundleUsedRecordIfNeeded(const AccessTokenID tokenId, const std::string& bundleKey,
+        std::set<std::string>& bundleKeySet, std::map<std::string, BundleUsedRecord>& bundleKeyToBundleMap,
+        std::map<std::string, int32_t>& bundleKeyToCountMap);
     bool FillBundleUsedRecord(const GenericValues& value, const PermissionUsageFlag& flag,
         std::map<std::string, BundleUsedRecord>& bundleKeyToBundleMap,
         std::map<std::string, int32_t>& bundleKeyToCountMap,

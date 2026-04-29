@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023 Huawei Device Co., Ltd.
+# Copyright (c) 2021-2026 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -49,6 +49,12 @@ ohos_shared_library("accesstoken_communication_adapter_cxx") {
 
   sources = [
     "src/atm_tools_param_info_parcel.cpp",
+    "src/claw_auth_info_parcel.cpp",
+    "src/claw_token_challenge_parcel.cpp",
+    "src/cli_info_parcel.cpp",
+    "src/cli_info_result_parcel.cpp",
+    "src/cli_init_info_parcel.cpp",
+    "src/cli_permissions_result_parcel.cpp",
     "src/hap_base_info_parcel.cpp",
     "src/hap_info_parcel.cpp",
     "src/hap_policy_parcel.cpp",
@@ -57,10 +63,15 @@ ohos_shared_library("accesstoken_communication_adapter_cxx") {
     "src/native_token_info_parcel.cpp",
     "src/perm_state_change_scope_parcel.cpp",
     "src/permission_def_parcel.cpp",
+    "src/permission_dialog_result_parcel.cpp",
     "src/permission_grant_info_parcel.cpp",
     "src/permission_list_state_parcel.cpp",
     "src/permission_state_change_info_parcel.cpp",
     "src/permission_status_parcel.cpp",
+    "src/skill_info_parcel.cpp",
+    "src/skill_info_result_parcel.cpp",
+    "src/skill_init_info_parcel.cpp",
+    "src/skill_permissions_result_parcel.cpp",
   ]
 
   external_deps = [

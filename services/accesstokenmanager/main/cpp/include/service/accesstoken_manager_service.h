@@ -29,12 +29,19 @@
 #endif
 #include "access_token_db.h"
 #include "access_token.h"
+#include "claw_permission_info.h"
+#include "cli_init_info_parcel.h"
+#include "cli_info_parcel.h"
+#include "cli_info_result_parcel.h"
 #include "generic_values.h"
 #include "hap_token_info.h"
 #include "iremote_object.h"
 #include "json_parse_loader.h"
 #include "nocopyable.h"
 #include "permission_map.h"
+#include "skill_init_info_parcel.h"
+#include "skill_info_parcel.h"
+#include "skill_info_result_parcel.h"
 #include "singleton.h"
 #include "system_ability.h"
 #include "thread_pool.h"
@@ -128,6 +135,14 @@ public:
         AccessTokenID tokenId, std::vector<PermissionWithValueIdl>& kernelPermIdlList) override;
     int32_t GetReqPermissionByName(
         AccessTokenID tokenId, const std::string& permissionName, std::string& value) override;
+    int32_t InitCliToken(const CliInitInfoParcel& initInfoParcel,
+        uint64_t& fullTokenId, std::vector<PermissionWithValueIdl>& kernelPermIdlList) override;
+    int32_t InitSkillToken(const SkillInitInfoParcel& initInfoParcel, uint64_t& fullTokenId,
+        std::vector<PermissionWithValueIdl>& kernelPermIdlList) override;
+    int32_t DeleteToolTokenByPid(int32_t pid) override;
+    int32_t GetCliTokenInfo(AccessTokenID tokenId, CliInfoResultParcel& infoParcel) override;
+    int32_t GetSkillTokenInfo(AccessTokenID tokenId, SkillInfoResultParcel& infoParcel) override;
+    int32_t GetHostTokenId(AccessTokenID toolTokenId, AccessTokenID& hostTokenId) override;
     int SetPermDialogCap(const HapBaseInfoParcel& hapBaseInfoParcel, bool enable) override;
     int32_t GetPermissionManagerInfo(PermissionGrantInfoParcel& infoParcel) override;
 #ifdef SUPPORT_MANAGE_USER_POLICY
@@ -142,6 +157,20 @@ public:
         std::vector<PermissionStatusIdl>& permissionInfoList, bool onlyHap) override;
     ErrCode QueryStatusByTokenID(const std::vector<uint32_t>& tokenIDList,
         std::vector<PermissionStatusIdl>& permissionInfoList) override;
+    int32_t GetCliPermissionRequestInfo(
+        const std::string& agentID, const std::vector<CliInfoParcel>& cliInfoList,
+        PermissionDialogResultParcel& resultParcel) override;
+    int32_t GetSkillPermissionRequestInfo(
+        const std::string& agentID, const std::vector<SkillInfoParcel>& skillInfoList,
+        PermissionDialogResultParcel& resultParcel) override;
+    int32_t GetCliPermissions(AccessTokenID hostTokenID, const std::string& agentID,
+        const std::vector<CliInfoParcel>& cliInfoList, CliPermissionsResultParcel& resultParcel) override;
+    int32_t GetSkillPermissions(AccessTokenID hostTokenID, const std::string& agentID,
+        const std::vector<SkillInfoParcel>& skillInfoList, SkillPermissionsResultParcel& resultParcel) override;
+    int32_t GenerateCliAuthResult(AccessTokenID hostTokenID, const std::string& agentID,
+        const std::vector<CliAuthInfoParcel>& authInfoList, ToolAuthResultParcel& resultParcel) override;
+    int32_t GenerateSkillAuthResult(AccessTokenID hostTokenID, const std::string& agentID,
+        const std::vector<SkillAuthInfoParcel>& authInfoList, ToolAuthResultParcel& resultParcel) override;
 
     int32_t CallbackEnter(uint32_t code) override;
     int32_t CallbackExit(uint32_t code, int32_t result) override;
@@ -191,13 +220,16 @@ private:
     bool IsAccessTokenCalling();
     bool IsNativeProcessCalling();
     bool IsSystemAppCalling() const;
+    int32_t ValidateGetCliPermissionRequestInfoCaller(
+        AccessTokenID callingTokenId, const std::string& agentID, const std::vector<CliInfoParcel>& cliInfoList);
+    int32_t ValidateGetCliPermissionsCaller(
+        AccessTokenID callingTokenId, AccessTokenID hostTokenID,
+        const std::string& agentID, const std::vector<CliInfoParcel>& cliInfoList);
     bool IsShellProcessCalling();
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
     bool IsSecCompServiceCalling();
 #endif
-#ifndef ATM_BUILD_VARIANT_USER_ENABLE
     static const int32_t ROOT_UID = 0;
-#endif
     static const int32_t ACCESSTOKEN_UID = 3020;
 
     std::mutex tokenSyncIdMutex_;

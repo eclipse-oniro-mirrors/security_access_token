@@ -77,16 +77,19 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
     "${access_token_path}/services/accesstokenmanager/test/unittest/permission",
     "${access_token_path}/services/accesstokenmanager/test/unittest/database",
     "${access_token_path}/services/accesstokenmanager/test/unittest/common",
+    "${access_token_path}/services/accesstokenmanager/test/unittest/clawtoken",
   ]
 
   sources = [
+    "clawtoken/claw_ticket_manager_test.cpp",
     "common/parameter.cpp",
     "common/parameters.cpp",
     "database/database_consistency_test.cpp",
     "database/database_test.cpp",
+    "permission/claw_permission_decision_engine_test.cpp",
     "permission/permission_grant_event_test.cpp",
-    "permission/permission_manager_test.cpp",
     "permission/permission_manager_temp_permission_test.cpp",
+    "permission/permission_manager_test.cpp",
     "permission/short_grant_manager_test.cpp",
     "permission/token_info_manager_test.cpp",
     "service/accesstoken_manager_service_test.cpp",
@@ -102,9 +105,7 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
 
   if (security_component_enhance_enable == true) {
     cflags_cc += [ "-DESCURITY_COMPONENT_ENHANCE_ENABLE" ]
-    sources += [
-      "seccomp/sec_comp_enhance_agent_test.cpp",
-    ]
+    sources += [ "seccomp/sec_comp_enhance_agent_test.cpp" ]
   }
 
   deps = [

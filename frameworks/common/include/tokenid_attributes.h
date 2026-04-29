@@ -26,6 +26,7 @@ public:
     static int GetTokenIdDlpFlag(AccessTokenID id);
     static int GetTokenIdCloneFlag(AccessTokenID id);
     static ATokenTypeEnum GetTokenIdTypeEnum(AccessTokenID id);
+    static bool IsToolTokenId(AccessTokenID id);
     static bool IsSystemApp(uint64_t id);
 };
 } // namespace AccessToken

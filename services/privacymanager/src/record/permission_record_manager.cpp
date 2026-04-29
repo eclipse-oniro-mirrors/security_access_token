@@ -53,6 +53,7 @@
 #include "state_change_callback_proxy.h"
 #include "system_ability_definition.h"
 #include "time_util.h"
+#include "tokenid_attributes.h"
 #ifdef REMOTE_PRIVACY_ENABLE
 #include "os_account_manager_lite.h"
 #include "remote_permission_used_record_db.h"
@@ -485,19 +486,27 @@ int32_t PermissionRecordManager::AddPermissionUsedRecord(const AddPermParamInfo&
         return PrivacyError::ERR_PARAM_INVALID;
     }
 
+    AddPermParamInfo normalizedInfo = info;
+    int32_t ret = NormalizeRecordTokenId(info.tokenId, normalizedInfo.tokenId);
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
+
     AccessTokenID callingTokenID = IPCSkeleton::GetCallingTokenID();
     int32_t callingPid = IPCSkeleton::GetCallingPid();
-    if (AccessTokenKit::GetTokenTypeFlag(info.tokenId) == TOKEN_NATIVE) {
-        return VerifyNativeRecordPermission(
-            info.permissionName, info.tokenId) ? Constant::SUCCESS : PrivacyError::ERR_PARAM_INVALID;
+    if (AccessTokenKit::GetTokenTypeFlag(normalizedInfo.tokenId) == TOKEN_NATIVE) {
+        return VerifyNativeRecordPermission(normalizedInfo.permissionName, normalizedInfo.tokenId) ?
+            Constant::SUCCESS : PrivacyError::ERR_PARAM_INVALID;
     }
 
     uint32_t flag = TypePermissionFlag::PERMISSION_DEFAULT_FLAG;
-    if (AccessTokenKit::GetPermissionFlag(info.tokenId, info.permissionName, flag) == Constant::SUCCESS) {
-        if (flag == TypePermissionFlag::PERMISSION_SYSTEM_FIXED && info.permissionName == CAMERA_PERMISSION_NAME) {
+    if (AccessTokenKit::GetPermissionFlag(normalizedInfo.tokenId, normalizedInfo.permissionName, flag) ==
+        Constant::SUCCESS) {
+        if (flag == TypePermissionFlag::PERMISSION_SYSTEM_FIXED &&
+            normalizedInfo.permissionName == CAMERA_PERMISSION_NAME) {
             LOGI(PRI_DOMAIN, PRI_TAG, "CAMERA with system_fixed flag, add used record asynchronously.");
-            auto addRecord = [this, info, callingTokenID, callingPid]() {
-                (void)AddPermissionUsedRecordInner(info, callingTokenID, callingPid);
+            auto addRecord = [this, normalizedInfo, callingTokenID, callingPid]() {
+                (void)AddPermissionUsedRecordInner(normalizedInfo, callingTokenID, callingPid);
             };
             std::thread addRecordTask(addRecord);
             addRecordTask.detach();
@@ -507,7 +516,28 @@ int32_t PermissionRecordManager::AddPermissionUsedRecord(const AddPermParamInfo&
             return Constant::SUCCESS;
         }
     }
-    return AddPermissionUsedRecordInner(info, callingTokenID, callingPid);
+    return AddPermissionUsedRecordInner(normalizedInfo, callingTokenID, callingPid);
+}
+
+int32_t PermissionRecordManager::NormalizeRecordTokenId(AccessTokenID inputTokenId, AccessTokenID& outputTokenId)
+{
+    outputTokenId = inputTokenId;
+    if (!TokenIDAttributes::IsToolTokenId(inputTokenId)) {
+        LOGI(ATM_DOMAIN, PRI_TAG,
+            "Token is not a tool token, inputTokenId=%{public}u, tokenType=%{public}u.",
+            inputTokenId, static_cast<uint32_t>(TokenIDAttributes::GetTokenIdTypeEnum(inputTokenId)));
+        return RET_SUCCESS;
+    }
+
+    int32_t ret = AccessTokenKit::GetHostTokenId(inputTokenId, outputTokenId);
+    if (ret != RET_SUCCESS) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "GetHostTokenId failed, toolTokenId=%{public}u, ret=%{public}d.",
+            inputTokenId, ret);
+        return ret;
+    }
+    LOGI(PRI_DOMAIN, PRI_TAG, "toolTokenId=%{public}u, hostTokenId=%{public}u.",
+        inputTokenId, outputTokenId);
+    return RET_SUCCESS;
 }
 
 int32_t PermissionRecordManager::AddPermissionUsedRecordInner(
@@ -1441,6 +1471,25 @@ static void AddDebugLog(const AccessTokenID tokenId, const BundleUsedRecord& bun
     totalFailCount += tokenTotalFailCount;
 }
 
+bool PermissionRecordManager::CreateBundleUsedRecordIfNeeded(const AccessTokenID tokenId, const std::string& bundleKey,
+    std::set<std::string>& bundleKeySet, std::map<std::string, BundleUsedRecord>& bundleKeyToBundleMap,
+    std::map<std::string, int32_t>& bundleKeyToCountMap)
+{
+    if (bundleKeySet.count(bundleKey) != 0) {
+        return true;
+    }
+
+    bundleKeySet.insert(bundleKey);
+    BundleUsedRecord bundleRecord; // get bundle info
+    if (!CreateBundleUsedRecord(tokenId, bundleRecord)) {
+        return false;
+    }
+
+    bundleKeyToBundleMap[bundleKey] = bundleRecord;
+    bundleKeyToCountMap[bundleKey] = 0;
+    return true;
+}
+
 int32_t PermissionRecordManager::GetRecordsFromLocalDB(const PermissionUsedRequest& request,
     PermissionUsedResult& result)
 {
@@ -1478,16 +1527,9 @@ int32_t PermissionRecordManager::GetRecordsFromLocalDB(const PermissionUsedReque
         int32_t tokenId = recordValue.GetInt(PrivacyFiledConst::FIELD_TOKEN_ID);
         std::string enhancedIdentity = recordValue.GetString(PrivacyFiledConst::FIELD_ENHANCED_IDENTITY);
         std::string bundleKey = BuildBundleMapKey(tokenId, enhancedIdentity);
-        if (bundleKeySet.count(bundleKey) == 0) {
-            bundleKeySet.insert(bundleKey);
-
-            BundleUsedRecord bundleRecord; // get bundle info
-            if (!CreateBundleUsedRecord(tokenId, bundleRecord)) {
-                continue;
-            }
-
-            bundleKeyToBundleMap[bundleKey] = bundleRecord;
-            bundleKeyToCountMap[bundleKey] = 0;
+        if (!CreateBundleUsedRecordIfNeeded(tokenId, bundleKey, bundleKeySet, bundleKeyToBundleMap,
+            bundleKeyToCountMap)) {
+            continue;
         }
 
         if (!FillBundleUsedRecord(recordValue, request.flag, bundleKeyToBundleMap, bundleKeyToCountMap, result)) {
@@ -2141,12 +2183,17 @@ void PermissionRecordManager::ExecuteCameraCallbackAsync(AccessTokenID callbackT
 
 int32_t PermissionRecordManager::StartUsingPermission(const PermissionUsedTypeInfo &info, int32_t callerPid)
 {
-    AccessTokenID tokenId = info.tokenId;
+    PermissionUsedTypeInfo normalizedInfo = info;
+    int32_t ret = NormalizeRecordTokenId(info.tokenId, normalizedInfo.tokenId);
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
+    AccessTokenID tokenId = normalizedInfo.tokenId;
     const std::string &permissionName = info.permissionName;
     LOGI(PRI_DOMAIN, PRI_TAG,
         "Id: %{public}u, pid: %{public}d, perm: %{public}s, type: %{public}d, callerPid: %{public}d.",
         tokenId, info.pid, permissionName.c_str(), info.type, callerPid);
-    if (!DataValidator::IsEnhancedIdentityValid(info.enhancedIdentity)) {
+    if (!DataValidator::IsEnhancedIdentityValid(normalizedInfo.enhancedIdentity)) {
         return PrivacyError::ERR_PARAM_INVALID;
     }
 
@@ -2178,13 +2225,18 @@ int32_t PermissionRecordManager::StartUsingPermission(const PermissionUsedTypeIn
         status = PERM_INACTIVE;
     }
 #endif
-    return AddRecordToStartList(info, status, callerPid);
+    return AddRecordToStartList(normalizedInfo, status, callerPid);
 }
 
 int32_t PermissionRecordManager::StartUsingPermission(const PermissionUsedTypeInfo &info,
     const sptr<IRemoteObject>& callback, int32_t callerPid)
 {
-    AccessTokenID tokenId = info.tokenId;
+    PermissionUsedTypeInfo normalizedInfo = info;
+    int32_t ret = NormalizeRecordTokenId(info.tokenId, normalizedInfo.tokenId);
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
+    AccessTokenID tokenId = normalizedInfo.tokenId;
     const std::string &permissionName = info.permissionName;
     LOGI(PRI_DOMAIN, PRI_TAG,
         "Id: %{public}u, pid: %{public}d, perm: %{public}s, type: %{public}d, callerPid: %{public}d.",
@@ -2218,9 +2270,9 @@ int32_t PermissionRecordManager::StartUsingPermission(const PermissionUsedTypeIn
         status = PERM_INACTIVE;
     }
 #endif
-    uint64_t id = GetUniqueId(tokenId, info.pid);
+    uint64_t id = GetUniqueId(tokenId, normalizedInfo.pid);
     cameraCallbackMap_.EnsureInsert(id, callback);
-    int32_t ret = AddRecordToStartList(info, status, callerPid);
+    ret = AddRecordToStartList(normalizedInfo, status, callerPid);
     if (ret != RET_SUCCESS) {
         cameraCallbackMap_.Erase(id);
     }
@@ -2233,6 +2285,10 @@ int32_t PermissionRecordManager::StopUsingPermission(
 {
     if (!DataValidator::IsEnhancedIdentityValid(enhancedIdentity)) {
         return PrivacyError::ERR_PARAM_INVALID;
+    }
+    int32_t ret = NormalizeRecordTokenId(tokenId, tokenId);
+    if (ret != RET_SUCCESS) {
+        return ret;
     }
     if (AccessTokenKit::GetTokenTypeFlag(tokenId) == TOKEN_NATIVE) {
         return VerifyNativeRecordPermission(

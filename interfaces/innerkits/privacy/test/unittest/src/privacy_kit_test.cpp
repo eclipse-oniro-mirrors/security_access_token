@@ -41,6 +41,7 @@
 #include "state_change_callback_stub.h"
 #include "string_ex.h"
 #include "token_setproc.h"
+#include "claw_permission_info.h"
 
 using namespace testing::ext;
 using namespace OHOS::Security::AccessToken;
@@ -48,6 +49,7 @@ using namespace OHOS::Security::AccessToken;
 const static int32_t RET_NO_ERROR = 0;
 static AccessTokenID g_nativeToken = 0;
 static AccessTokenID g_shellToken = 0;
+static AccessTokenID g_manageToolToken = 0;
 static MockHapToken* g_mock = nullptr;
 #ifdef AUDIO_FRAMEWORK_ENABLE
 static bool g_isMicMute = false;
@@ -233,6 +235,66 @@ static AccessTokenID g_tokenIdG = 0;
 #ifdef REMOTE_PRIVACY_ENABLE
 static AccessTokenID g_tokenIdH = 0;
 #endif
+constexpr const char* TOOL_TOKEN_PRIVACY_PERMISSION = "ohos.permission.LOCATION";
+
+CliInfo BuildToolCliInfo()
+{
+    return {
+        .cliName = "privacy_tool",
+        .subCliName = "record"
+    };
+}
+
+int32_t InitCliToolTokenWithEmptyChallengeForPrivacy(AccessTokenID hostTokenId,
+    AccessTokenIDEx& tokenIdEx, std::vector<PermissionWithValue>& kernelPermList)
+{
+    uint64_t callerTokenId = GetSelfTokenID();
+    uint32_t callerUid = getuid();
+    EXPECT_EQ(0, SetSelfTokenID(g_shellToken));
+    EXPECT_EQ(0, setuid(0));
+    CliInitInfo initInfo = {
+        .hostTokenId = hostTokenId,
+        .challenge = "",
+        .cliInfo = BuildToolCliInfo(),
+    };
+    int32_t ret = AccessTokenKit::InitCliToken(initInfo, tokenIdEx, kernelPermList);
+    EXPECT_EQ(0, setuid(callerUid));
+    EXPECT_EQ(0, SetSelfTokenID(callerTokenId));
+    return ret;
+}
+
+int32_t DeleteToolTokenByCurrentPidForPrivacy()
+{
+    uint64_t callerTokenId = GetSelfTokenID();
+    EXPECT_EQ(0, SetSelfTokenID(g_shellToken));
+    int32_t ret = AccessTokenKit::DeleteToolTokenByPid(getpid());
+    EXPECT_EQ(0, SetSelfTokenID(callerTokenId));
+    return ret;
+}
+
+class ToolTokenGuard final {
+public:
+    ToolTokenGuard() = default;
+    ~ToolTokenGuard()
+    {
+        if (armed_) {
+            (void)DeleteToolTokenByCurrentPidForPrivacy();
+        }
+    }
+
+    void Arm()
+    {
+        armed_ = true;
+    }
+
+    void Disarm()
+    {
+        armed_ = false;
+    }
+
+private:
+    bool armed_ = false;
+};
 
 static void DeleteTestToken()
 {
@@ -285,6 +347,7 @@ void PrivacyKitTest::SetUpTestCase()
 
     g_nativeToken = PrivacyTestCommon::GetNativeTokenIdFromProcess("privacy_service");
     g_shellToken = PrivacyTestCommon::GetNativeTokenIdFromProcess("hdcd");
+    g_manageToolToken = PrivacyTestCommon::GetNativeTokenIdFromProcess("foundation");
 
     DeleteTestToken();
 #ifdef AUDIO_FRAMEWORK_ENABLE
@@ -407,6 +470,167 @@ static void SleepUtilMinuteEnd()
     GTEST_LOG_(INFO) << "current time is " << timestampMs << ", " << t.tm_hour << ":" << t.tm_min << ":" << t.tm_sec;
     GTEST_LOG_(INFO) << "need to sleep " << sleepSeconds << " seconds";
     sleep(sleepSeconds);
+}
+
+
+class CbCustomizeTest7 : public PermActiveStatusCustomizedCbk {
+public:
+    explicit CbCustomizeTest7(const std::vector<std::string> &permList)
+        : PermActiveStatusCustomizedCbk(permList)
+    {}
+    ~CbCustomizeTest7()
+    {}
+
+    void ActiveStatusChangeCallback(ActiveChangeResponse& result) override
+    {
+        type_ = result.type;
+        tokenId_ = result.tokenID;
+        permissionName_ = result.permissionName;
+        usedType_ = result.usedType;
+        extra_ = result.extra;
+    }
+
+    ActiveChangeType type_ = PERM_INACTIVE;
+    AccessTokenID tokenId_ = INVALID_TOKENID;
+    std::string permissionName_;
+    PermissionUsedType usedType_ = INVALID_USED_TYPE;
+    std::string extra_;
+};
+
+/**
+ * @tc.name: PrivacyToolToken001
+ * @tc.desc: AddPermissionUsedRecord records permission usage for host token when input token is tool token.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, PrivacyToolToken001, TestSize.Level1)
+{
+    ToolTokenGuard guard;
+    uint64_t callerTokenId = GetSelfTokenID();
+    AccessTokenID hostTokenId = INVALID_TOKENID;
+    AccessTokenIDEx toolTokenIdEx = {0};
+    std::vector<PermissionWithValue> kernelPermList;
+    const std::string hostBundle = "ohos.privacy.tool.host.add";
+    {
+        MockHapToken hostToken(hostBundle, {}, true);
+        hostTokenId = GetSelfTokenID();
+        ASSERT_NE(INVALID_TOKENID, hostTokenId);
+        ASSERT_EQ(RET_SUCCESS, InitCliToolTokenWithEmptyChallengeForPrivacy(
+            hostTokenId, toolTokenIdEx, kernelPermList));
+        ASSERT_NE(INVALID_TOKENID, toolTokenIdEx.tokenIdExStruct.tokenID);
+        guard.Arm();
+        ASSERT_EQ(0, SetSelfTokenID(callerTokenId));
+
+        AddPermParamInfo info;
+        info.tokenId = toolTokenIdEx.tokenIdExStruct.tokenID;
+        info.permissionName = TOOL_TOKEN_PRIVACY_PERMISSION;
+        info.successCount = 1;
+        info.failCount = 0;
+        ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info));
+
+        PermissionUsedRequest request;
+        PermissionUsedResult result;
+        std::vector<std::string> permissionList = {TOOL_TOKEN_PRIVACY_PERMISSION};
+        BuildQueryRequest(hostTokenId, hostBundle, permissionList, request);
+        ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
+        ASSERT_EQ(static_cast<size_t>(1), result.bundleRecords.size());
+        CheckPermissionUsedResult(request, result, 1, 1, 0);
+        EXPECT_EQ(hostTokenId, result.bundleRecords[0].tokenId);
+
+        EXPECT_EQ(RET_NO_ERROR, PrivacyKit::RemovePermissionUsedRecords(hostTokenId));
+    }
+}
+
+/**
+ * @tc.name: PrivacyToolToken002
+ * @tc.desc: StartUsingPermission callback reports host token when input token is tool token.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, PrivacyToolToken002, TestSize.Level1)
+{
+    ToolTokenGuard guard;
+    uint64_t callerTokenId = GetSelfTokenID();
+    AccessTokenID hostTokenId = INVALID_TOKENID;
+    AccessTokenIDEx toolTokenIdEx = {0};
+    std::vector<PermissionWithValue> kernelPermList;
+    const std::string hostBundle = "ohos.privacy.tool.host.start";
+    {
+        MockHapToken hostToken(hostBundle, {}, true);
+        hostTokenId = GetSelfTokenID();
+        ASSERT_NE(INVALID_TOKENID, hostTokenId);
+        ASSERT_EQ(RET_SUCCESS, InitCliToolTokenWithEmptyChallengeForPrivacy(
+            hostTokenId, toolTokenIdEx, kernelPermList));
+        ASSERT_NE(INVALID_TOKENID, toolTokenIdEx.tokenIdExStruct.tokenID);
+        guard.Arm();
+        ASSERT_EQ(0, SetSelfTokenID(callerTokenId));
+
+        std::vector<std::string> permList = {TOOL_TOKEN_PRIVACY_PERMISSION};
+        auto callbackPtr = std::make_shared<CbCustomizeTest7>(permList);
+        callbackPtr->type_ = PERM_INACTIVE;
+        ASSERT_EQ(RET_NO_ERROR, PrivacyKit::RegisterPermActiveStatusCallback(callbackPtr));
+
+        ASSERT_EQ(RET_NO_ERROR,
+            PrivacyKit::StartUsingPermission(toolTokenIdEx.tokenIdExStruct.tokenID, TOOL_TOKEN_PRIVACY_PERMISSION));
+        usleep(1000000); // 1000000us = 1s
+        EXPECT_EQ(PERM_ACTIVE_IN_BACKGROUND, callbackPtr->type_);
+        EXPECT_EQ(hostTokenId, callbackPtr->tokenId_);
+        EXPECT_EQ(TOOL_TOKEN_PRIVACY_PERMISSION, callbackPtr->permissionName_);
+
+        ASSERT_EQ(RET_NO_ERROR,
+            PrivacyKit::StopUsingPermission(toolTokenIdEx.tokenIdExStruct.tokenID, TOOL_TOKEN_PRIVACY_PERMISSION));
+        usleep(1000000); // 1000000us = 1s
+        EXPECT_EQ(PERM_INACTIVE, callbackPtr->type_);
+        EXPECT_EQ(hostTokenId, callbackPtr->tokenId_);
+
+        EXPECT_EQ(RET_NO_ERROR, PrivacyKit::UnRegisterPermActiveStatusCallback(callbackPtr));
+    }
+}
+
+/**
+ * @tc.name: PrivacyToolToken003
+ * @tc.desc: StopUsingPermission callback reports host token when input token is tool token.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, PrivacyToolToken003, TestSize.Level1)
+{
+    ToolTokenGuard guard;
+    uint64_t callerTokenId = GetSelfTokenID();
+    AccessTokenID hostTokenId = INVALID_TOKENID;
+    AccessTokenIDEx toolTokenIdEx = {0};
+    std::vector<PermissionWithValue> kernelPermList;
+    const std::string hostBundle = "ohos.privacy.tool.host.stop";
+    {
+        MockHapToken hostToken(hostBundle, {}, true);
+        hostTokenId = GetSelfTokenID();
+        ASSERT_NE(INVALID_TOKENID, hostTokenId);
+        ASSERT_EQ(RET_SUCCESS, InitCliToolTokenWithEmptyChallengeForPrivacy(
+            hostTokenId, toolTokenIdEx, kernelPermList));
+        ASSERT_NE(INVALID_TOKENID, toolTokenIdEx.tokenIdExStruct.tokenID);
+        guard.Arm();
+        ASSERT_EQ(0, SetSelfTokenID(callerTokenId));
+
+        std::vector<std::string> permList = {TOOL_TOKEN_PRIVACY_PERMISSION};
+        auto callbackPtr = std::make_shared<CbCustomizeTest7>(permList);
+        callbackPtr->type_ = PERM_TEMPORARY_CALL;
+        ASSERT_EQ(RET_NO_ERROR, PrivacyKit::RegisterPermActiveStatusCallback(callbackPtr));
+
+        ASSERT_EQ(RET_NO_ERROR,
+            PrivacyKit::StartUsingPermission(toolTokenIdEx.tokenIdExStruct.tokenID, TOOL_TOKEN_PRIVACY_PERMISSION));
+        usleep(1000000); // 1000000us = 1s
+        EXPECT_EQ(hostTokenId, callbackPtr->tokenId_);
+        EXPECT_EQ(TOOL_TOKEN_PRIVACY_PERMISSION, callbackPtr->permissionName_);
+
+        ASSERT_EQ(RET_NO_ERROR,
+            PrivacyKit::StopUsingPermission(toolTokenIdEx.tokenIdExStruct.tokenID, TOOL_TOKEN_PRIVACY_PERMISSION));
+        usleep(1000000); // 1000000us = 1s
+        EXPECT_EQ(PERM_INACTIVE, callbackPtr->type_);
+        EXPECT_EQ(hostTokenId, callbackPtr->tokenId_);
+        EXPECT_EQ(TOOL_TOKEN_PRIVACY_PERMISSION, callbackPtr->permissionName_);
+
+        EXPECT_EQ(RET_NO_ERROR, PrivacyKit::UnRegisterPermActiveStatusCallback(callbackPtr));
+    }
 }
 
 /**
@@ -2028,30 +2252,6 @@ public:
     AccessTokenID callingTokenID_ = INVALID_TOKENID;
     PermissionUsedType usedType_ = INVALID_USED_TYPE;
     int32_t pid_ = NOT_EXSIT_PID;
-};
-
-class CbCustomizeTest7 : public PermActiveStatusCustomizedCbk {
-public:
-    explicit CbCustomizeTest7(const std::vector<std::string> &permList)
-        : PermActiveStatusCustomizedCbk(permList)
-    {}
-    ~CbCustomizeTest7()
-    {}
-
-    void ActiveStatusChangeCallback(ActiveChangeResponse& result) override
-    {
-        type_ = result.type;
-        tokenId_ = result.tokenID;
-        permissionName_ = result.permissionName;
-        usedType_ = result.usedType;
-        extra_ = result.extra;
-    }
-
-    ActiveChangeType type_ = PERM_INACTIVE;
-    AccessTokenID tokenId_ = INVALID_TOKENID;
-    std::string permissionName_;
-    PermissionUsedType usedType_ = INVALID_USED_TYPE;
-    std::string extra_;
 };
 
 /**

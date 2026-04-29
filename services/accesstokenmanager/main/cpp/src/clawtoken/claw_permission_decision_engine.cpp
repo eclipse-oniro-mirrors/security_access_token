@@ -1,0 +1,382 @@
+/*
+ * Copyright (c) 2026 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include "claw_permission_decision_engine.h"
+
+#include "access_token_error.h"
+#include "accesstoken_common_log.h"
+#include "claw_permission_metadata_provider.h"
+#include "constant_common.h"
+#include "permission_manager.h"
+
+namespace OHOS {
+namespace Security {
+namespace AccessToken {
+namespace {
+void AppendDialogDetailStatus(
+    PermissionDialogDetail& detail, const std::string& permissionName, PermissionDecisionStatus status)
+{
+    for (const auto& item : detail.permissionNameList) {
+        if (item == permissionName) {
+            return;
+        }
+    }
+    detail.permissionNameList.emplace_back(permissionName);
+    detail.statusList.emplace_back(status);
+}
+
+bool IsUserDeniedFlag(uint32_t flag)
+{
+    return (flag & PERMISSION_USER_FIXED) != 0;
+}
+
+bool IsRestrictedFlag(uint32_t flag)
+{
+    static constexpr uint32_t RESTRICTED_FLAGS = PERMISSION_SYSTEM_FIXED |
+        PERMISSION_FIXED_FOR_SECURITY_POLICY | PERMISSION_FIXED_BY_ADMIN_POLICY;
+    return (flag & RESTRICTED_FLAGS) != 0;
+}
+
+bool IsAllowThisTimeFlag(uint32_t flag)
+{
+    return (flag & PERMISSION_ALLOW_THIS_TIME) != 0;
+}
+
+bool IsGrantedWithoutDialog(const PermissionStatus& status)
+{
+    return (status.grantStatus == PERMISSION_GRANTED) && !IsAllowThisTimeFlag(status.grantFlag) &&
+        (status.grantFlag != PERMISSION_DEFAULT_FLAG);
+}
+
+bool ShouldReturnDialogDetailStatus(PermissionDecisionStatus status)
+{
+    return (status == PermissionDecisionStatus::NO_DIALOG_DENIED) ||
+        (status == PermissionDecisionStatus::NO_DIALOG_RESTRICTED) ||
+        (status == PermissionDecisionStatus::NO_DIALOG_NOT_DECLARED);
+}
+
+} // namespace
+
+int32_t ClawPermissionDecisionEngine::BuildCliDialogDetailByRequiredPermission(
+    const ClawPermissionDecisionEngine::DecisionContext& context, const std::string& requiredCliPermission,
+    PermissionDialogDetail& detail)
+{
+    std::vector<std::string> usedPermissions;
+    int32_t ret = ClawPermissionMetadataProvider::GetInstance().GetUsedPermissionsByCliPermission(
+        requiredCliPermission, usedPermissions);
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
+
+    bool isSystemPermission = (usedPermissions.size() == 1) && (usedPermissions[0] == requiredCliPermission);
+    PermissionDecisionStatus notDeclaredStatus = isSystemPermission ?
+        PermissionDecisionStatus::NEED_PERMISSION_DIALOG :
+        PermissionDecisionStatus::NO_DIALOG_NOT_DECLARED;
+    PermissionDecisionStatus cliPermissionStatus = context.GetPermissionDecisionStatus(
+        requiredCliPermission, notDeclaredStatus);
+    if (cliPermissionStatus == PermissionDecisionStatus::NEED_PERMISSION_DIALOG) {
+        detail.needPermissionDialog = true;
+    }
+    if (ShouldReturnDialogDetailStatus(cliPermissionStatus)) {
+        AppendDialogDetailStatus(detail, requiredCliPermission, cliPermissionStatus);
+    }
+    if (cliPermissionStatus == PermissionDecisionStatus::NO_DIALOG_NOT_DECLARED) {
+        return RET_SUCCESS;
+    }
+
+    for (const auto& usedPermission : usedPermissions) {
+        PermissionDecisionStatus usedPermissionStatus = context.GetPermissionDecisionStatus(
+            usedPermission, PermissionDecisionStatus::NEED_PERMISSION_DIALOG);
+        if (usedPermissionStatus == PermissionDecisionStatus::NEED_PERMISSION_DIALOG) {
+            detail.needPermissionDialog = true;
+            continue;
+        }
+        if (ShouldReturnDialogDetailStatus(usedPermissionStatus)) {
+            AppendDialogDetailStatus(detail, usedPermission, usedPermissionStatus);
+        }
+    }
+    return RET_SUCCESS;
+}
+
+int32_t ClawPermissionDecisionEngine::BuildCliPermissionDialogDetail(
+    const ClawPermissionDecisionEngine::DecisionContext& context, const CliInfo& cliInfo,
+    PermissionDialogDetail& detail)
+{
+    std::vector<std::string> requiredCliPermissions;
+    int32_t ret = ClawPermissionMetadataProvider::GetInstance().GetRequiredCliPermissions(
+        cliInfo, requiredCliPermissions);
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
+
+    detail.permissionNameList.reserve(requiredCliPermissions.size());
+    detail.statusList.reserve(requiredCliPermissions.size());
+    for (const auto& requiredCliPermission : requiredCliPermissions) {
+        ret = BuildCliDialogDetailByRequiredPermission(context, requiredCliPermission, detail);
+        if (ret != RET_SUCCESS) {
+            return ret;
+        }
+    }
+    return RET_SUCCESS;
+}
+
+PermissionDecisionStatus ClawPermissionDecisionEngine::GetCliPermissionResolvedStatus(
+    const ClawPermissionDecisionEngine::DecisionContext& context, const std::vector<std::string>& usedPermissions)
+{
+    for (const auto& usedPermission : usedPermissions) {
+        if (context.GetPermissionDecisionStatus(
+            usedPermission, PermissionDecisionStatus::NEED_PERMISSION_DIALOG) ==
+            PermissionDecisionStatus::NEED_PERMISSION_DIALOG) {
+            return PermissionDecisionStatus::NEED_PERMISSION_DIALOG;
+        }
+    }
+    return PermissionDecisionStatus::NO_DIALOG_CLI_PERMISSION_RESOLVED;
+}
+
+int32_t ClawPermissionDecisionEngine::BuildCliPermissionDetailByRequiredPermission(
+    const ClawPermissionDecisionEngine::DecisionContext& context, const std::string& requiredCliPermission,
+    CliPermissionDetail& detail)
+{
+    detail.requiredCliPermission = requiredCliPermission;
+    int32_t ret = ClawPermissionMetadataProvider::GetInstance().GetUsedPermissionsByCliPermission(
+        requiredCliPermission, detail.usedPermissions);
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
+
+    bool isSystemPermission = (detail.usedPermissions.size() == 1) &&
+        (detail.usedPermissions[0] == requiredCliPermission);
+    PermissionDecisionStatus notDeclaredStatus = isSystemPermission ?
+        PermissionDecisionStatus::NEED_PERMISSION_DIALOG :
+        PermissionDecisionStatus::NO_DIALOG_NOT_DECLARED;
+    detail.cliPermissionStatus = context.GetPermissionDecisionStatus(requiredCliPermission, notDeclaredStatus);
+    if (detail.cliPermissionStatus == PermissionDecisionStatus::NEED_PERMISSION_DIALOG) {
+        detail.cliPermissionStatus = GetCliPermissionResolvedStatus(context, detail.usedPermissions);
+    }
+    return RET_SUCCESS;
+}
+
+ClawPermissionDecisionEngine::DecisionContext::DecisionContext(AccessTokenID clawTokenId)
+    : clawTokenId_(clawTokenId)
+{
+}
+
+int32_t ClawPermissionDecisionEngine::DecisionContext::Init()
+{
+    std::vector<PermissionStatus> userGrantPermissions;
+    int32_t ret = PermissionManager::GetInstance().GetReqPermissions(clawTokenId_, userGrantPermissions, false);
+    if (ret != RET_SUCCESS) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Claw decision context init failed, tokenId=%{public}u, user ret=%{public}d.",
+            clawTokenId_, ret);
+        return ret;
+    }
+
+    std::vector<PermissionStatus> systemGrantPermissions;
+    ret = PermissionManager::GetInstance().GetReqPermissions(clawTokenId_, systemGrantPermissions, true);
+    if (ret != RET_SUCCESS) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Claw decision context init failed, tokenId=%{public}u, system ret=%{public}d.",
+            clawTokenId_, ret);
+        return ret;
+    }
+
+    permissionStatusMap_.clear();
+    permissionStatusMap_.reserve(userGrantPermissions.size() + systemGrantPermissions.size());
+    for (const auto& permission : userGrantPermissions) {
+        permissionStatusMap_[permission.permissionName] = permission;
+    }
+    for (const auto& permission : systemGrantPermissions) {
+        permissionStatusMap_[permission.permissionName] = permission;
+    }
+    return RET_SUCCESS;
+}
+
+PermissionDecisionStatus ClawPermissionDecisionEngine::DecisionContext::GetPermissionDecisionStatus(
+    const std::string& permissionName, PermissionDecisionStatus notDeclaredStatus) const
+{
+    auto iter = permissionStatusMap_.find(permissionName);
+    if (iter == permissionStatusMap_.end()) {
+        return notDeclaredStatus;
+    }
+
+    const PermissionStatus& status = iter->second;
+    PermissionDecisionStatus decision = PermissionDecisionStatus::NEED_PERMISSION_DIALOG;
+    if (IsGrantedWithoutDialog(status)) {
+        decision = PermissionDecisionStatus::NO_DIALOG_GRANTED;
+    } else if ((status.grantStatus == PERMISSION_GRANTED) && IsAllowThisTimeFlag(status.grantFlag)) {
+        decision = PermissionDecisionStatus::NEED_PERMISSION_DIALOG;
+    } else if (IsRestrictedFlag(status.grantFlag)) {
+        decision = PermissionDecisionStatus::NO_DIALOG_RESTRICTED;
+    } else if (IsUserDeniedFlag(status.grantFlag)) {
+        decision = PermissionDecisionStatus::NO_DIALOG_DENIED;
+    }
+    return decision;
+}
+
+bool ClawPermissionDecisionEngine::DecisionContext::HasDialogPermission(
+    const std::vector<std::string>& permissions, PermissionDecisionStatus notDeclaredStatus) const
+{
+    for (const auto& permission : permissions) {
+        if (GetPermissionDecisionStatus(permission, notDeclaredStatus) ==
+            PermissionDecisionStatus::NEED_PERMISSION_DIALOG) {
+            return true;
+        }
+    }
+    return false;
+}
+
+ClawPermissionDecisionEngine& ClawPermissionDecisionEngine::GetInstance()
+{
+    static ClawPermissionDecisionEngine instance;
+    return instance;
+}
+
+int32_t ClawPermissionDecisionEngine::ValidateClawCliAccess(
+    AccessTokenID clawTokenId, const std::vector<CliInfo>& cliInfoList)
+{
+    int32_t ret = ClawPermissionMetadataProvider::GetInstance().CheckClawCliControlPermission(clawTokenId);
+    if (ret != RET_SUCCESS) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Claw cli control permission check failed, tokenId=%{public}u, ret=%{public}d.",
+            clawTokenId, ret);
+        return AccessTokenError::ERR_PERMISSION_DENIED;
+    }
+
+    std::vector<std::vector<std::string>> cliPermissions;
+    ret = ClawPermissionMetadataProvider::GetInstance().GetCliCallablePermissions(cliInfoList, cliPermissions);
+    return ret;
+}
+
+int32_t ClawPermissionDecisionEngine::BuildCliPermissionDialogInfo(
+    AccessTokenID clawTokenId, const std::vector<CliInfo>& cliInfoList, PermissionDialogResult& result)
+{
+    result.detailList.clear();
+    result.detailList.reserve(cliInfoList.size());
+    DecisionContext context(clawTokenId);
+    int32_t ret = context.Init();
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
+
+    for (const auto& cliInfo : cliInfoList) {
+        PermissionDialogDetail detail;
+        ret = BuildCliPermissionDialogDetail(context, cliInfo, detail);
+        if (ret != RET_SUCCESS) {
+            return ret;
+        }
+        result.detailList.emplace_back(detail);
+    }
+    return RET_SUCCESS;
+}
+
+int32_t ClawPermissionDecisionEngine::BuildSkillPermissionDialogInfo(
+    AccessTokenID clawTokenId, const std::vector<SkillInfo>& skillInfoList, PermissionDialogResult& result)
+{
+    result.detailList.clear();
+    result.detailList.reserve(skillInfoList.size());
+    DecisionContext context(clawTokenId);
+    int32_t ret = context.Init();
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
+
+    for (const auto& skillInfo : skillInfoList) {
+        std::vector<std::string> usedPermissions;
+        ret = ClawPermissionMetadataProvider::GetInstance().GetSkillUsedPermissions(skillInfo, usedPermissions);
+        if (ret != RET_SUCCESS) {
+            return ret;
+        }
+
+        PermissionDialogDetail detail;
+        detail.statusList.reserve(usedPermissions.size());
+        for (const auto& permission : usedPermissions) {
+            PermissionDecisionStatus status = context.GetPermissionDecisionStatus(
+                permission, PermissionDecisionStatus::NO_DIALOG_NOT_DECLARED);
+            if (status == PermissionDecisionStatus::NEED_PERMISSION_DIALOG) {
+                detail.needPermissionDialog = true;
+            }
+            if (ShouldReturnDialogDetailStatus(status)) {
+                detail.permissionNameList.emplace_back(permission);
+                detail.statusList.emplace_back(status);
+            }
+        }
+        result.detailList.emplace_back(detail);
+    }
+    return RET_SUCCESS;
+}
+
+int32_t ClawPermissionDecisionEngine::BuildCliPermissions(
+    AccessTokenID clawTokenId, const std::vector<CliInfo>& cliInfoList, CliPermissionsResult& result)
+{
+    result.permList.clear();
+    result.permList.reserve(cliInfoList.size());
+    DecisionContext context(clawTokenId);
+    int32_t ret = context.Init();
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
+
+    for (const auto& cliInfo : cliInfoList) {
+        std::vector<std::string> requiredCliPermissions;
+        ret = ClawPermissionMetadataProvider::GetInstance().GetRequiredCliPermissions(
+            cliInfo, requiredCliPermissions);
+        if (ret != RET_SUCCESS) {
+            return ret;
+        }
+
+        CliCommandPermissionResult commandResult;
+        commandResult.requiredCliPermissions.reserve(requiredCliPermissions.size());
+        for (const auto& requiredCliPermission : requiredCliPermissions) {
+            CliPermissionDetail detail;
+            ret = BuildCliPermissionDetailByRequiredPermission(context, requiredCliPermission, detail);
+            if (ret != RET_SUCCESS) {
+                return ret;
+            }
+            commandResult.requiredCliPermissions.emplace_back(detail);
+        }
+        result.permList.emplace_back(commandResult);
+    }
+    return RET_SUCCESS;
+}
+
+int32_t ClawPermissionDecisionEngine::BuildSkillPermissions(
+    AccessTokenID clawTokenId, const std::vector<SkillInfo>& skillInfoList, SkillPermissionsResult& result)
+{
+    result.permList.clear();
+    result.permList.reserve(skillInfoList.size());
+    DecisionContext context(clawTokenId);
+    int32_t ret = context.Init();
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
+
+    for (const auto& skillInfo : skillInfoList) {
+        SkillCommandPermissionResult commandResult;
+        ret = ClawPermissionMetadataProvider::GetInstance().GetSkillUsedPermissions(
+            skillInfo, commandResult.usedPermissions);
+        if (ret != RET_SUCCESS) {
+            return ret;
+        }
+
+        commandResult.statusList.reserve(commandResult.usedPermissions.size());
+        for (const auto& permission : commandResult.usedPermissions) {
+            commandResult.statusList.emplace_back(context.GetPermissionDecisionStatus(
+                permission, PermissionDecisionStatus::NO_DIALOG_NOT_DECLARED));
+        }
+        result.permList.emplace_back(commandResult);
+    }
+    return RET_SUCCESS;
+}
+} // namespace AccessToken
+} // namespace Security
+} // namespace OHOS

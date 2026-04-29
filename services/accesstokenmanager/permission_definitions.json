@@ -1589,11 +1589,12 @@
             "name": "ohos.permission.GET_NETWORK_STATS",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
-            "availableType": "SYSTEM",
+            "availableType": "NORMAL",
             "since": 10,
             "deprecated": "",
             "provisionEnable": true,
-            "distributedSceneEnable": false
+            "distributedSceneEnable": false,
+            "deviceTypes": ["general"]
         },
         {
             "name": "ohos.permission.MANAGE_VPN",
@@ -7929,7 +7930,7 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
-            "deviceTypes": ["2in1"]
+            "deviceTypes": ["2in1", "tv"]
         },
         {
             "name": "ohos.permission.ACCESS_USER_FULL_DISK",
@@ -8308,6 +8309,39 @@
         },
         {
             "name": "ohos.permission.REMOVE_PERMISSION_USED_RECORD",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "availableType": "SERVICE",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["general"]
+        },
+        {
+            "name": "ohos.permission.QUERY_TOOL_PERMISSIONS",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["general"]
+        },
+        {
+            "name": "ohos.permission.MANAGE_TOOL_RUNTIME_PERMISSIONS",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["general"]
+        },
+        {
+            "name": "ohos.permission.MANAGE_TOOL_TOKENID",
             "grantMode": "system_grant",
             "availableLevel": "system_core",
             "availableType": "SERVICE",
@@ -8714,6 +8748,17 @@
             "deviceTypes": ["general"]
         },
         {
+            "name": "ohos.permission.EXECUTE_DISTRIBUTED_INTENT",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": true,
+            "deviceTypes": ["car", "phone", "tv", "wearable", "2in1", "tablet"]
+        },
+        {
             "name": "ohos.permission.ENTERPRISE_GET_INSTALLED_BUNDLE_LIST",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
@@ -8802,6 +8847,18 @@
             "deviceTypes": ["2in1"]
         },
         {
+            "name": "ohos.permission.kernel.LOAD_INDEPENDENT_CERTSIGN_LIBRARY_FOR_WEB",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "ENTERPRISE_NORMAL",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1"],
+            "isKernelEffect": true
+        },
+        {
             "name": "ohos.permission.SUBSCRIBE_OUTDOOR_EXPLORATION_SERVICE",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
@@ -8811,6 +8868,28 @@
             "provisionEnable": true,
             "distributedSceneEnable": false,
             "deviceTypes": ["phone"]
+        },
+        {
+            "name": "ohos.permission.MANAGE_SKILL_PRIVILEGE",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["general"]
+        },
+        {
+            "name": "ohos.permission.MANAGE_SKILL",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "NORMAL",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1"]
         },
         {
             "name": "ohos.permission.kernel.AS_LDK_DRIVER",
@@ -8834,6 +8913,17 @@
           "provisionEnable": true,
           "distributedSceneEnable": false,
           "deviceTypes": ["phone", "2in1", "tablet"]
+        },
+        {
+            "name": "ohos.permission.SUPPORT_NP_PLUGIN_FOR_WEB",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "ENTERPRISE_NORMAL",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1"]
         }
     ]
 }
