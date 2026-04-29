@@ -334,8 +334,8 @@ HWTEST_F(ClawPermissionKitTest, ClawPermissionKitServiceError002, TestSize.Level
             DEFAULT_AGENT_ID, BuildMissingMappingCliInfos(), dialogResult));
     ASSERT_EQ(1, static_cast<int32_t>(dialogResult.detailList.size()));
     EXPECT_TRUE(dialogResult.detailList[0].needPermissionDialog);
-    ASSERT_EQ(1, static_cast<int32_t>(dialogResult.detailList[0].permissionNameList.size()));
-    EXPECT_EQ("ohos.permission.cli.no_mapping", dialogResult.detailList[0].permissionNameList[0]);
+    EXPECT_TRUE(dialogResult.detailList[0].permissionNameList.empty());
+    EXPECT_TRUE(dialogResult.detailList[0].statusList.empty());
 }
 
 } // namespace AccessToken
