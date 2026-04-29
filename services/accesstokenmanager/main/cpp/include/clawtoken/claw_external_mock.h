@@ -18,7 +18,6 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <mutex>
 #include <string>
 #include <vector>
 
@@ -27,7 +26,7 @@
 
 namespace OHOS {
 namespace Security {
-namespace AccessToken {
+namespace SAF {
 struct CommandInfo {
     std::string cmdName;
     std::string subCmd;
@@ -39,10 +38,15 @@ struct CommandPermissionInfo {
     int32_t queryRet = 0;
 };
 
-int32_t BatchQueryCommandPermission(
-    const std::vector<CommandInfo>& cmds, std::vector<CommandPermissionInfo>& permissionInfos);
+class SafAgentFence {
+public:
+    int32_t BatchQueryCommandPermission(
+        const std::vector<CommandInfo>& cmds, std::vector<CommandPermissionInfo>& permissionInfos);
+};
+} // namespace SAF
 
-    struct VerifyTicketInfo {
+namespace AccessToken {
+struct VerifyTicketInfo {
     std::string message;
     std::string challenge;
     std::string ticket;

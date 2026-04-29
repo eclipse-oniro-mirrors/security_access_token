@@ -1,0 +1,24 @@
+{
+    "description": "Permission mapping config",
+    "mappings": [
+        {
+            "cliPermission": "ohos.permission.POWER_MANAGER",
+            "usedPermissions": [
+                "ohos.permission.POWER_MANAGER"
+            ]
+        },
+        {
+            "cliPermission": "ohos.permission.APPROXIMATELY_LOCATION",
+            "usedPermissions": [
+                "ohos.permission.LOCATION",
+                "ohos.permission.APPROXIMATELY_LOCATION"
+            ]
+        },
+        {
+            "cliPermission": "ohos.permission.cli.resolved",
+            "usedPermissions": [
+                "ohos.permission.CAMERA"
+            ]
+        }
+    ]
+}

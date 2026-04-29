@@ -1,4 +1,4 @@
-# Copyright (c) 2022-2024 Huawei Device Co., Ltd.
+# Copyright (c) 2022-2026 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -24,6 +24,10 @@ group("fuzztest") {
     "clearusergrantedpermissionstate_fuzzer:ClearUserGrantedPermissionStateFuzzTest",
     "deletetoken_fuzzer:DeleteTokenFuzzTest",
     "dumptokeninfo_fuzzer:DumpTokenInfoFuzzTest",
+    "generatecliauthresult_fuzzer:GenerateCliAuthResultFuzzTest",
+    "generateskillauthresult_fuzzer:GenerateSkillAuthResultFuzzTest",
+    "getclipermissionrequestinfo_fuzzer:GetCliPermissionRequestInfoFuzzTest",
+    "getclipermissions_fuzzer:GetCliPermissionsFuzzTest",
     "getdefpermission_fuzzer:GetDefPermissionFuzzTest",
     "gethapdlpflag_fuzzer:GetHapDlpFlagFuzzTest",
     "gethaptokenid_fuzzer:GetHapTokenIDFuzzTest",
@@ -38,6 +42,8 @@ group("fuzztest") {
     "getreqpermissions_fuzzer:GetReqPermissionsFuzzTest",
     "getselfpermissionsstate_fuzzer:GetSelfPermissionsStateFuzzTest",
     "getselfpermissionstatus_fuzzer:GetSelfPermissionStatusFuzzTest",
+    "getskillpermissionrequestinfo_fuzzer:GetSkillPermissionRequestInfoFuzzTest",
+    "getskillpermissions_fuzzer:GetSkillPermissionsFuzzTest",
     "gettokenidbyuserid_fuzzer:GetTokenIDByUserIDFuzzTest",
     "gettokentype_fuzzer:GetTokenTypeFuzzTest",
     "gettokentypeflag_fuzzer:GetTokenTypeFlagFuzzTest",

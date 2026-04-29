@@ -66,6 +66,20 @@ action("permission_definition_filter") {
   outputs = [ "$target_out_dir" + "/PermissionDefinitions.json" ]
 }
 
+action("cli_permission_map_parse") {
+  script = "cli_permission_map_parser.py"
+  inputs = [ rebase_path("${access_token_path}") +
+             "/services/accesstokenmanager/cli_permission_map.json" ]
+  args = [
+    "--input-json",
+    rebase_path("${access_token_path}") +
+        "/services/accesstokenmanager/cli_permission_map.json",
+    "--output-path",
+    rebase_path(target_out_dir) + "/cli_permisison_map.h",
+  ]
+  outputs = [ "$target_out_dir" + "/cli_permisison_map.h" ]
+}
+
 ohos_prebuilt_etc("permission_definitions_in_sdk") {
   output_values = get_target_outputs(":permission_definition_filter")
   source = output_values[0]
@@ -171,6 +185,7 @@ ohos_shared_library("accesstoken_common_cxx") {
 
   deps = [
     ":accesstoken_static_log",
+    ":cli_permission_map_parse",
     ":permission_definition_parse",
   ]
 

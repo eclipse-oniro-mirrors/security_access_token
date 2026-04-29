@@ -26,6 +26,7 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 constexpr int32_t INVALID_TOOL_TOKEN_USER_ID = -1;
+constexpr size_t MAX_CLAW_AGENT_ID_LEN = 48;
 
 enum class PermissionDecisionStatus : int32_t {
     NEED_PERMISSION_DIALOG = 0,
@@ -33,6 +34,7 @@ enum class PermissionDecisionStatus : int32_t {
     NO_DIALOG_RESTRICTED = 2,
     NO_DIALOG_GRANTED = 3,
     NO_DIALOG_NOT_DECLARED = 4,
+    NO_DIALOG_CLI_PERMISSION_RESOLVED = 5,
 };
 
 struct CliInfo final {
@@ -77,7 +79,7 @@ struct PermissionDialogDetail final {
     bool needPermissionDialog = false;
     std::vector<std::string> permissionNameList;
     std::vector<PermissionDecisionStatus> statusList;
-    std::string challenge;
+    std::string authResult;
 };
 
 struct PermissionDialogResult final {
@@ -119,8 +121,8 @@ struct SkillAuthInfo final {
     std::vector<bool> authorizationResults;
 };
 
-struct ClawTokenChallenge final {
-    std::vector<std::string> challenges;
+struct ToolAuthResult final {
+    std::vector<std::string> authResults;
 };
 } // namespace AccessToken
 } // namespace Security

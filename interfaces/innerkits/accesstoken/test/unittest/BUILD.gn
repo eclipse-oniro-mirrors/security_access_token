@@ -36,6 +36,8 @@ ohos_unittest("libaccesstoken_sdk_test") {
   ]
 
   sources = [
+    #"ClawTokenTest/accesstoken_claw_token_test.cpp",
+    "ClawPermissionTest/claw_permission_kit_test.cpp",
     "Coverage/accesstoken_kit_coverage_test.cpp",
     "DistributedTest/alloc_local_token_id_test.cpp",
     "DistributedTest/delete_remote_device_tokens_test.cpp",

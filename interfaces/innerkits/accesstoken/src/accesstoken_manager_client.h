@@ -136,6 +136,18 @@ public:
         std::vector<PermissionStatus>& permissionInfoList, bool onlyHap);
     int32_t QueryStatusByTokenID(const std::vector<AccessTokenID>& tokenIDList,
         std::vector<PermissionStatus>& permissionInfoList);
+    int32_t GetCliPermissionRequestInfo(
+        const std::string& agentID, const std::vector<CliInfo>& cliInfoList, PermissionDialogResult& result);
+    int32_t GetSkillPermissionRequestInfo(
+        const std::string& agentID, const std::vector<SkillInfo>& skillInfoList, PermissionDialogResult& result);
+    int32_t GetCliPermissions(AccessTokenID hostTokenID, const std::string& agentID,
+        const std::vector<CliInfo>& cliInfoList, CliPermissionsResult& result);
+    int32_t GetSkillPermissions(AccessTokenID hostTokenID, const std::string& agentID,
+        const std::vector<SkillInfo>& skillInfoList, SkillPermissionsResult& result);
+    int32_t GenerateCliAuthResult(AccessTokenID hostTokenID, const std::string& agentID,
+        const std::vector<CliAuthInfo>& authInfoList, ToolAuthResult& result);
+    int32_t GenerateSkillAuthResult(AccessTokenID hostTokenID, const std::string& agentID,
+        const std::vector<SkillAuthInfo>& authInfoList, ToolAuthResult& result);
 
 private:
     AccessTokenManagerClient();

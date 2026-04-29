@@ -77,6 +77,76 @@ export default namespace abilityAccessCtrl {
         grantTimestamp?: long;
     }
 
+    export enum PermissionDecisionStatus {
+        NEED_PERMISSION_DIALOG = 0,
+        NO_DIALOG_DENIED = 1,
+        NO_DIALOG_RESTRICTED = 2,
+        NO_DIALOG_GRANTED = 3,
+        NO_DIALOG_NOT_DECLARED = 4,
+        NO_DIALOG_CLI_PERMISSION_RESOLVED = 5,
+    }
+
+    export interface CliInfo {
+        cliName: string;
+        subCliName: string;
+    }
+
+    export interface SkillInfo {
+        skillName: string;
+        bundleName: string;
+        moduleName: string;
+    }
+
+    export interface PermissionDialogDetail {
+        needPermissionDialog: boolean;
+        permissionNameList: Array<Permissions>;
+        statusList: Array<PermissionDecisionStatus>;
+        authResult: string;
+    }
+
+    export interface PermissionDialogResult {
+        detailList: Array<PermissionDialogDetail>;
+    }
+
+    export interface CliPermissionDetail {
+        requiredCliPermission: Permissions;
+        cliPermissionStatus: PermissionDecisionStatus;
+        usedPermissions: Array<Permissions>;
+    }
+
+    export interface CliCommandPermissionResult {
+        requiredCliPermissions: Array<CliPermissionDetail>;
+    }
+
+    export interface CliPermissionsResult {
+        permList: Array<CliCommandPermissionResult>;
+    }
+
+    export interface SkillCommandPermissionResult {
+        usedPermissions: Array<Permissions>;
+        statusList: Array<PermissionDecisionStatus>;
+    }
+
+    export interface SkillPermissionsResult {
+        permList: Array<SkillCommandPermissionResult>;
+    }
+
+    export interface CliAuthInfo {
+        cliInfo: CliInfo;
+        permissionNames: Array<Permissions>;
+        authorizationResults: Array<boolean>;
+    }
+
+    export interface SkillAuthInfo {
+        skillInfo: SkillInfo;
+        permissionNames: Array<Permissions>;
+        authorizationResults: Array<boolean>;
+    }
+
+    export interface ToolAuthResult {
+        authResults: Array<string>;
+    }
+
     export enum PermissionStateChangeType {
         PERMISSION_REVOKED_OPER = 0,
         PERMISSION_GRANTED_OPER = 1
@@ -107,6 +177,36 @@ export default namespace abilityAccessCtrl {
         grantStatus: GrantStatus;
         grantFlags: int;
         grantTimestamp?: long;
+    }
+    class PermissionDialogDetailInner implements PermissionDialogDetail {
+        needPermissionDialog: boolean;
+        permissionNameList: Array<Permissions>;
+        statusList: Array<PermissionDecisionStatus>;
+        authResult: string;
+    }
+    class PermissionDialogResultInner implements PermissionDialogResult {
+        detailList: Array<PermissionDialogDetail>;
+    }
+    class CliPermissionDetailInner implements CliPermissionDetail {
+        requiredCliPermission: Permissions;
+        cliPermissionStatus: PermissionDecisionStatus;
+        usedPermissions: Array<Permissions>;
+    }
+    class CliCommandPermissionResultInner implements CliCommandPermissionResult {
+        requiredCliPermissions: Array<CliPermissionDetail>;
+    }
+    class CliPermissionsResultInner implements CliPermissionsResult {
+        permList: Array<CliCommandPermissionResult>;
+    }
+    class SkillCommandPermissionResultInner implements SkillCommandPermissionResult {
+        usedPermissions: Array<Permissions>;
+        statusList: Array<PermissionDecisionStatus>;
+    }
+    class SkillPermissionsResultInner implements SkillPermissionsResult {
+        permList: Array<SkillCommandPermissionResult>;
+    }
+    class ToolAuthResultInner implements ToolAuthResult {
+        authResults: Array<string>;
     }
     function validateRequestParams(context: Context, permissionList: Array<Permissions>): void {
         if ((typeof context === "undefined") || (context == null)) {
@@ -228,6 +328,16 @@ export default namespace abilityAccessCtrl {
         getSelfPermissionStatus(permissionName: Permissions): PermissionStatus;
         queryStatusByPermission(permissionList: Array<Permissions>): Promise<Array<PermissionStatusInfo>>;
         queryStatusByTokenID(tokenIDList: Array<int>): Promise<Array<PermissionStatusInfo>>;
+        getCliPermissionRequestInfo(agentID: string, cliList: Array<CliInfo>): Promise<PermissionDialogResult>;
+        getSkillPermissionRequestInfo(agentID: string, skillList: Array<SkillInfo>): Promise<PermissionDialogResult>;
+        getCliPermissions(hostTokenID: int, agentID: string, cliInfoList: Array<CliInfo>):
+            Promise<CliPermissionsResult>;
+        getSkillPermissions(hostTokenID: int, agentID: string, skillInfoList: Array<SkillInfo>):
+            Promise<SkillPermissionsResult>;
+        generateCliAuthResult(hostTokenID: int, agentID: string, authInfoList: Array<CliAuthInfo>):
+            Promise<ToolAuthResult>;
+        generateSkillAuthResult(hostTokenID: int, agentID: string, authInfoList: Array<SkillAuthInfo>):
+            Promise<ToolAuthResult>;
     }
 
     class AtManagerInner implements AtManager {
@@ -243,7 +353,8 @@ export default namespace abilityAccessCtrl {
             permission: Permissions, callback: AsyncCallbackWrapper<int>): void;
         native requestGlobalSwitchExecute(
             context: Context, type: int, callback: AsyncCallbackWrapper<boolean>): void;
-        native grantUserGrantedPermissionExecute(tokenID: int, permissionName: Permissions, permissionFlags: int): void;
+        native grantUserGrantedPermissionExecute(tokenID: int, permissionName: Permissions,
+            permissionFlags: int): void;
         native revokeUserGrantedPermissionExecute(
             tokenID: int, permissionName: Permissions, permissionFlags: int): void;
         native grantPermissionExecute(tokenID: int, permissionName: Permissions, permissionFlags: int): void;
@@ -263,6 +374,17 @@ export default namespace abilityAccessCtrl {
         native getSelfPermissionStatusExecute(permissionName: Permissions): int;
         native queryStatusByPermissionExecute(permissionList: Array<Permissions>): Array<PermissionStatusInfo>;
         native queryStatusByTokenIDExecute(tokenIDList: Array<int>): Array<PermissionStatusInfo>;
+        native getCliPermissionRequestInfoExecute(agentID: string, cliList: Array<CliInfo>): PermissionDialogResult;
+        native getSkillPermissionRequestInfoExecute(agentID: string, skillList: Array<SkillInfo>):
+            PermissionDialogResult;
+        native getCliPermissionsExecute(hostTokenID: int, agentID: string, cliInfoList: Array<CliInfo>):
+            CliPermissionsResult;
+        native getSkillPermissionsExecute(hostTokenID: int, agentID: string, skillInfoList: Array<SkillInfo>):
+            SkillPermissionsResult;
+        native generateCliAuthResultExecute(hostTokenID: int, agentID: string, authInfoList: Array<CliAuthInfo>):
+            ToolAuthResult;
+        native generateSkillAuthResultExecute(hostTokenID: int, agentID: string, authInfoList: Array<SkillAuthInfo>):
+            ToolAuthResult;
 
         verifyAccessTokenSync(tokenID: int, permissionName: Permissions): GrantStatus {
             let result = this.checkAccessTokenExecute(tokenID, permissionName);
@@ -278,7 +400,8 @@ export default namespace abilityAccessCtrl {
             let p = new Promise<GrantStatus>((
                 resolve: (v: GrantStatus) => void, reject: (error: BusinessError) => void) => {
                 let p1 = taskpool.execute((): GrantStatus => {
-                    return GrantStatus.fromValue(new AtManagerInner().checkAccessTokenExecute(tokenID, permissionName));
+                    return GrantStatus.fromValue(
+                        new AtManagerInner().checkAccessTokenExecute(tokenID, permissionName));
                 });
                 p1.then((e: Any) => {
                     resolve(e as GrantStatus);
@@ -293,7 +416,8 @@ export default namespace abilityAccessCtrl {
             let p = new Promise<GrantStatus>((
                 resolve: (v: GrantStatus) => void, reject: (error: BusinessError) => void) => {
                 let p1 = taskpool.execute((): GrantStatus => {
-                    return GrantStatus.fromValue(new AtManagerInner().checkAccessTokenExecute(tokenID, permissionName));
+                    return GrantStatus.fromValue(
+                        new AtManagerInner().checkAccessTokenExecute(tokenID, permissionName));
                 });
                 p1.then((e: Any) => {
                     resolve(e as GrantStatus);
@@ -559,7 +683,8 @@ export default namespace abilityAccessCtrl {
             return p;
         }
 
-        setPermissionRequestToggleStatus(permissionName: Permissions, status: PermissionRequestToggleStatus): Promise<void> {
+        setPermissionRequestToggleStatus(permissionName: Permissions,
+            status: PermissionRequestToggleStatus): Promise<void> {
             let p = new Promise<void>(
                 (resolve: (v: undefined) => void, reject: (error: BusinessError) => void): void => {
                 let p = taskpool.execute((): void => {
@@ -579,7 +704,8 @@ export default namespace abilityAccessCtrl {
                 (resolve: (v: PermissionRequestToggleStatus) => void,
                     reject: (err: Error) => void): void => {
                     let p1 = taskpool.execute((): PermissionRequestToggleStatus => {
-                        return PermissionRequestToggleStatus.fromValue(new AtManagerInner().getPermissionRequestToggleStatusExecute(permissionName));
+                        return PermissionRequestToggleStatus.fromValue(
+                            new AtManagerInner().getPermissionRequestToggleStatusExecute(permissionName));
                     });
                     p1.then((e: Any): void => {
                         resolve(e as PermissionRequestToggleStatus);
@@ -659,6 +785,110 @@ export default namespace abilityAccessCtrl {
                     });
                     p1.then((e: Any): void => {
                         resolve(e as Array<PermissionStatusInfo>);
+                    }).catch((err: Error): void => {
+                        reject(err as BusinessError);
+                    });
+                });
+            return p;
+        }
+
+        getCliPermissionRequestInfo(agentID: string, cliList: Array<CliInfo>): Promise<PermissionDialogResult> {
+            let p = new Promise<PermissionDialogResult>(
+                (resolve: (v: PermissionDialogResult) => void,
+                    reject: (err: Error) => void): void => {
+                    let p1 = taskpool.execute((): PermissionDialogResult => {
+                        return new AtManagerInner().getCliPermissionRequestInfoExecute(agentID, cliList);
+                    });
+                    p1.then((e: Any): void => {
+                        resolve(e as PermissionDialogResult);
+                    }).catch((err: Error): void => {
+                        reject(err as BusinessError);
+                    });
+                });
+            return p;
+        }
+
+        getSkillPermissionRequestInfo(agentID: string, skillList: Array<SkillInfo>): Promise<PermissionDialogResult> {
+            let p = new Promise<PermissionDialogResult>(
+                (resolve: (v: PermissionDialogResult) => void,
+                    reject: (err: Error) => void): void => {
+                    let p1 = taskpool.execute((): PermissionDialogResult => {
+                        return new AtManagerInner().getSkillPermissionRequestInfoExecute(agentID, skillList);
+                    });
+                    p1.then((e: Any): void => {
+                        resolve(e as PermissionDialogResult);
+                    }).catch((err: Error): void => {
+                        reject(err as BusinessError);
+                    });
+                });
+            return p;
+        }
+
+        getCliPermissions(hostTokenID: int, agentID: string, cliInfoList: Array<CliInfo>):
+            Promise<CliPermissionsResult> {
+            let p = new Promise<CliPermissionsResult>(
+                (resolve: (v: CliPermissionsResult) => void,
+                    reject: (err: Error) => void): void => {
+                    let p1 = taskpool.execute((): CliPermissionsResult => {
+                        return new AtManagerInner().getCliPermissionsExecute(
+                            hostTokenID, agentID, cliInfoList);
+                    });
+                    p1.then((e: Any): void => {
+                        resolve(e as CliPermissionsResult);
+                    }).catch((err: Error): void => {
+                        reject(err as BusinessError);
+                    });
+                });
+            return p;
+        }
+
+        getSkillPermissions(hostTokenID: int, agentID: string, skillInfoList: Array<SkillInfo>):
+            Promise<SkillPermissionsResult> {
+            let p = new Promise<SkillPermissionsResult>(
+                (resolve: (v: SkillPermissionsResult) => void,
+                    reject: (err: Error) => void): void => {
+                    let p1 = taskpool.execute((): SkillPermissionsResult => {
+                        return new AtManagerInner().getSkillPermissionsExecute(
+                            hostTokenID, agentID, skillInfoList);
+                    });
+                    p1.then((e: Any): void => {
+                        resolve(e as SkillPermissionsResult);
+                    }).catch((err: Error): void => {
+                        reject(err as BusinessError);
+                    });
+                });
+            return p;
+        }
+
+        generateCliAuthResult(hostTokenID: int, agentID: string, authInfoList: Array<CliAuthInfo>):
+            Promise<ToolAuthResult> {
+            let p = new Promise<ToolAuthResult>(
+                (resolve: (v: ToolAuthResult) => void,
+                    reject: (err: Error) => void): void => {
+                    let p1 = taskpool.execute((): ToolAuthResult => {
+                        return new AtManagerInner().generateCliAuthResultExecute(
+                            hostTokenID, agentID, authInfoList);
+                    });
+                    p1.then((e: Any): void => {
+                        resolve(e as ToolAuthResult);
+                    }).catch((err: Error): void => {
+                        reject(err as BusinessError);
+                    });
+                });
+            return p;
+        }
+
+        generateSkillAuthResult(hostTokenID: int, agentID: string, authInfoList: Array<SkillAuthInfo>):
+            Promise<ToolAuthResult> {
+            let p = new Promise<ToolAuthResult>(
+                (resolve: (v: ToolAuthResult) => void,
+                    reject: (err: Error) => void): void => {
+                    let p1 = taskpool.execute((): ToolAuthResult => {
+                        return new AtManagerInner().generateSkillAuthResultExecute(
+                            hostTokenID, agentID, authInfoList);
+                    });
+                    p1.then((e: Any): void => {
+                        resolve(e as ToolAuthResult);
                     }).catch((err: Error): void => {
                         reject(err as BusinessError);
                     });

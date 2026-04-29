@@ -22,6 +22,12 @@ sequenceable OHOS.Security.AccessToken.CliInitInfoParcel;
 sequenceable OHOS.Security.AccessToken.CliInfoParcel;
 sequenceable OHOS.Security.AccessToken.SkillInfoParcel;
 sequenceable OHOS.Security.AccessToken.SkillInitInfoParcel;
+sequenceable OHOS.Security.AccessToken.PermissionDialogResultParcel;
+sequenceable OHOS.Security.AccessToken.CliPermissionsResultParcel;
+sequenceable OHOS.Security.AccessToken.SkillPermissionsResultParcel;
+sequenceable OHOS.Security.AccessToken.CliAuthInfoParcel;
+sequenceable OHOS.Security.AccessToken.SkillAuthInfoParcel;
+sequenceable OHOS.Security.AccessToken.ToolAuthResultParcel;
 sequenceable OHOS.Security.AccessToken.HapInfoParcel;
 sequenceable OHOS.Security.AccessToken.HapPolicyParcel;
 sequenceable OHOS.Security.AccessToken.NativeTokenInfoParcel;
@@ -31,10 +37,8 @@ sequenceable OHOS.IRemoteObject;
 sequenceable OHOS.Security.AccessToken.HapTokenInfoForSyncParcel;
 sequenceable OHOS.Security.AccessToken.HapBaseInfoParcel;
 sequenceable OHOS.Security.AccessToken.AtmToolsParamInfoParcel;
-sequenceable OHOS.Security.AccessToken.CliInfoParcel;
 sequenceable OHOS.Security.AccessToken.CliInfoResultParcel;
 sequenceable OHOS.Security.AccessToken.SecCompEnhanceDataParcel;
-sequenceable OHOS.Security.AccessToken.SkillInfoParcel;
 sequenceable OHOS.Security.AccessToken.SkillInfoResultParcel;
 
 import IdlCommon;
@@ -115,4 +119,10 @@ interface OHOS.Security.AccessToken.IAccessTokenManager{
     [ipccode 201] void GetPermissionCode([in] String permission, [out] unsigned int permCode);
     [ipccode 202, ipcoutcapacity 122880] void QueryStatusByPermission([in] List<unsigned int> permCodeList, [out] List<PermissionStatusIdl> permissionInfoList, [in] boolean onlyHap);
     [ipccode 203, ipcoutcapacity 122880] void QueryStatusByTokenID([in] List<unsigned int> tokenIDList, [out] List<PermissionStatusIdl> permissionInfoList);
+    [ipccode 204] void GetCliPermissionRequestInfo([in] String agentID, [in] List<CliInfoParcel> cliInfoList, [out] PermissionDialogResultParcel resultParcel);
+    [ipccode 205] void GetSkillPermissionRequestInfo([in] String agentID, [in] List<SkillInfoParcel> skillInfoList, [out] PermissionDialogResultParcel resultParcel);
+    [ipccode 206] void GetCliPermissions([in] unsigned int hostTokenID, [in] String agentID, [in] List<CliInfoParcel> cliInfoList, [out] CliPermissionsResultParcel resultParcel);
+    [ipccode 207] void GetSkillPermissions([in] unsigned int hostTokenID, [in] String agentID, [in] List<SkillInfoParcel> skillInfoList, [out] SkillPermissionsResultParcel resultParcel);
+    [ipccode 208] void GenerateCliAuthResult([in] unsigned int hostTokenID, [in] String agentID, [in] List<CliAuthInfoParcel> authInfoList, [out] ToolAuthResultParcel resultParcel);
+    [ipccode 209] void GenerateSkillAuthResult([in] unsigned int hostTokenID, [in] String agentID, [in] List<SkillAuthInfoParcel> authInfoList, [out] ToolAuthResultParcel resultParcel);
 }
