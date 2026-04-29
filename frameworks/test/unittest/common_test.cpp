@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -137,6 +137,35 @@ HWTEST_F(CommonTest, PermissionDefineMapTest, TestSize.Level1)
     PermissionBriefDef permDef;
     EXPECT_TRUE(GetPermissionBriefDef("ohos.permission.ANSWER_CALL", permDef));
     EXPECT_TRUE(strcmp("ohos.permission.ANSWER_CALL", permDef.permissionName) == 0);
+}
+
+/*
+ * @tc.name: QueryRequredPermissions001
+ * @tc.desc: Query required permissions for an existing cli permission.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(CommonTest, QueryRequredPermissions001, TestSize.Level1)
+{
+    std::vector<std::string> requiredPermission = {"ohos.permission.OLD"};
+    EXPECT_TRUE(QueryRequredPermissions("ohos.permission.cli.test", requiredPermission));
+
+    ASSERT_EQ(2, requiredPermission.size());
+    EXPECT_EQ("ohos.permission.test1", requiredPermission[0]);
+    EXPECT_EQ("ohos.permission.test2", requiredPermission[1]);
+}
+
+/*
+ * @tc.name: QueryRequredPermissions002
+ * @tc.desc: Query required permissions for a non-existing cli permission.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(CommonTest, QueryRequredPermissions002, TestSize.Level1)
+{
+    std::vector<std::string> requiredPermission = {"ohos.permission.OLD"};
+    EXPECT_FALSE(QueryRequredPermissions("ohos.permission.cli.not.exist", requiredPermission));
+    EXPECT_TRUE(requiredPermission.empty());
 }
 
 /*

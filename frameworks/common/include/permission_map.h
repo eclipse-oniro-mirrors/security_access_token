@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -18,6 +18,7 @@
 
 #include <map>
 #include <string>
+#include <vector>
 #include "access_token.h"
 
 #include "access_token.h"
@@ -39,6 +40,8 @@ struct PermissionBriefDef {
 
 bool TransferPermissionToOpcode(const std::string& permissionName, uint32_t& opCode);
 std::string TransferOpcodeToPermission(uint32_t opCode);
+__attribute__((visibility("default"))) bool QueryRequredPermissions(
+    const std::string& cliPermission, std::vector<std::string>& requiredPermission);
 bool IsUserGrantPermission(const std::string& permission);
 bool IsOperablePermission(const std::string& permission);
 bool IsDefinedPermission(const std::string& permission);

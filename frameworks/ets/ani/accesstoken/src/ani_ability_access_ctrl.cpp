@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2025-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -27,6 +27,7 @@
 #include "ani_request_global_switch_on_setting.h"
 #include "ani_request_permission.h"
 #include "ani_request_permission_on_setting.h"
+#include "claw_permission_info.h"
 #include "hisysevent.h"
 #include "parameter.h"
 #include "permission_list_state.h"
@@ -1077,12 +1078,454 @@ static ani_ref QueryStatusByTokenIDExecute([[maybe_unused]] ani_env* env,
     return CreatePermissionStatusInfoArray(env, permissionInfoList);
 }
 
-static ani_status AtManagerBindNativeFunction(ani_env* env, ani_class& cls)
+template<typename T, typename Parser>
+static bool ParseObjectArray(ani_env* env, ani_array array, std::vector<T>& result, Parser parser)
 {
-    std::array clsMethods = {
+    if ((env == nullptr) || (array == nullptr)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Env or array is null.");
+        return false;
+    }
+    ani_size size = 0;
+    ani_status status = env->Array_GetLength(array, &size);
+    if (status != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Array_GetLength: %{public}u.", status);
+        return false;
+    }
+    for (ani_size i = 0; i < size; ++i) {
+        ani_ref item = nullptr;
+        status = env->Array_Get(array, i, &item);
+        if (status != ANI_OK) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Array_Get: %{public}u.", status);
+            return false;
+        }
+        T value;
+        if (!parser(env, static_cast<ani_object>(item), value)) {
+            return false;
+        }
+        result.emplace_back(value);
+    }
+    return true;
+}
+
+template<typename T, typename Converter>
+static ani_ref CreateAniObjectArray(ani_env* env, const std::vector<T>& values, Converter converter)
+{
+    ani_ref resultArray = CreateArrayObject(env, values.size());
+    if (resultArray == nullptr) {
+        return nullptr;
+    }
+    for (size_t i = 0; i < values.size(); ++i) {
+        ani_object item = converter(env, values[i]);
+        if (item == nullptr) {
+            return nullptr;
+        }
+        ani_status status = env->Any_SetByIndex(resultArray, static_cast<ani_size>(i), item);
+        if (status != ANI_OK) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to set array item at index %{public}zu.", i);
+            return nullptr;
+        }
+    }
+    return resultArray;
+}
+
+static bool ParseCliInfo(ani_env* env, ani_object object, CliInfo& info)
+{
+    return GetStringProperty(env, object, "cliName", info.cliName) &&
+        GetStringProperty(env, object, "subCliName", info.subCliName);
+}
+
+static bool ParseSkillInfo(ani_env* env, ani_object object, SkillInfo& info)
+{
+    return GetStringProperty(env, object, "skillName", info.skillName) &&
+        GetStringProperty(env, object, "bundleName", info.bundleName) &&
+        GetStringProperty(env, object, "moduleName", info.moduleName);
+}
+
+static bool GetObjectProperty(ani_env* env, ani_object object, const std::string& property, ani_object& value)
+{
+    ani_ref ref = nullptr;
+    ani_status status = env->Object_GetPropertyByName_Ref(object, property.c_str(), &ref);
+    if ((status != ANI_OK) || AniIsRefUndefined(env, ref)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get object property %{public}s.", property.c_str());
+        return false;
+    }
+    value = static_cast<ani_object>(ref);
+    return true;
+}
+
+static bool GetBoolVecProperty(ani_env* env, ani_object object, const std::string& property,
+    std::vector<bool>& value)
+{
+    ani_ref ref = nullptr;
+    ani_status status = env->Object_GetPropertyByName_Ref(object, property.c_str(), &ref);
+    if ((status != ANI_OK) || AniIsRefUndefined(env, ref)) {
+        return false;
+    }
+    ani_array array = static_cast<ani_array>(ref);
+    ani_size size = 0;
+    if (env->Array_GetLength(array, &size) != ANI_OK) {
+        return false;
+    }
+    for (ani_size i = 0; i < size; ++i) {
+        ani_ref item = nullptr;
+        ani_boolean boolValue = false;
+        if (env->Array_Get(array, i, &item) != ANI_OK) {
+            return false;
+        }
+        if (env->Object_CallMethodByName_Boolean(
+            static_cast<ani_object>(item), "toBoolean", nullptr, &boolValue) != ANI_OK) {
+            return false;
+        }
+        value.emplace_back(static_cast<bool>(boolValue));
+    }
+    return true;
+}
+
+static bool ParseCliAuthInfo(ani_env* env, ani_object object, CliAuthInfo& info)
+{
+    ani_object cliObject = nullptr;
+    return GetObjectProperty(env, object, "cliInfo", cliObject) &&
+        ParseCliInfo(env, cliObject, info.cliInfo) &&
+        GetStringVecProperty(env, object, "permissionNames", info.permissionNames) &&
+        GetBoolVecProperty(env, object, "authorizationResults", info.authorizationResults);
+}
+
+static bool ParseSkillAuthInfo(ani_env* env, ani_object object, SkillAuthInfo& info)
+{
+    ani_object skillObject = nullptr;
+    return GetObjectProperty(env, object, "skillInfo", skillObject) &&
+        ParseSkillInfo(env, skillObject, info.skillInfo) &&
+        GetStringVecProperty(env, object, "permissionNames", info.permissionNames) &&
+        GetBoolVecProperty(env, object, "authorizationResults", info.authorizationResults);
+}
+
+static std::vector<int32_t> ConvertStatusList(const std::vector<PermissionDecisionStatus>& statusList)
+{
+    std::vector<int32_t> result;
+    result.reserve(statusList.size());
+    for (const auto& status : statusList) {
+        result.emplace_back(static_cast<int32_t>(status));
+    }
+    return result;
+}
+
+static ani_object CreatePermissionDialogDetailObject(ani_env* env, const PermissionDialogDetail& detail)
+{
+    ani_object aniObject = CreateClassObject(env,
+        "@ohos.abilityAccessCtrl.abilityAccessCtrl.PermissionDialogDetailInner");
+    if (aniObject == nullptr) {
+        return nullptr;
+    }
+    SetBoolProperty(env, aniObject, "needPermissionDialog", detail.needPermissionDialog);
+    SetRefProperty(env, aniObject, "permissionNameList", CreateAniArrayString(env, detail.permissionNameList));
+    SetRefProperty(env, aniObject, "statusList", CreateAniArrayInt(env, ConvertStatusList(detail.statusList)));
+    SetStringProperty(env, aniObject, "authResult", detail.authResult);
+    return aniObject;
+}
+
+static ani_ref CreatePermissionDialogDetailArray(ani_env* env,
+    const std::vector<PermissionDialogDetail>& detailList)
+{
+    return CreateAniObjectArray(env, detailList, CreatePermissionDialogDetailObject);
+}
+
+static ani_ref CreatePermissionDialogResultObject(ani_env* env, const PermissionDialogResult& result)
+{
+    ani_object aniObject = CreateClassObject(env,
+        "@ohos.abilityAccessCtrl.abilityAccessCtrl.PermissionDialogResultInner");
+    if (aniObject == nullptr) {
+        return nullptr;
+    }
+    SetRefProperty(env, aniObject, "detailList", CreatePermissionDialogDetailArray(env, result.detailList));
+    return aniObject;
+}
+
+static ani_object CreateCliPermissionDetailObject(ani_env* env, const CliPermissionDetail& detail)
+{
+    ani_object aniObject = CreateClassObject(env,
+        "@ohos.abilityAccessCtrl.abilityAccessCtrl.CliPermissionDetailInner");
+    if (aniObject == nullptr) {
+        return nullptr;
+    }
+    SetStringProperty(env, aniObject, "requiredCliPermission", detail.requiredCliPermission);
+    SetEnumProperty(env, aniObject, "@ohos.abilityAccessCtrl.abilityAccessCtrl.PermissionDecisionStatus",
+        "cliPermissionStatus", static_cast<uint32_t>(detail.cliPermissionStatus));
+    SetRefProperty(env, aniObject, "usedPermissions", CreateAniArrayString(env, detail.usedPermissions));
+    return aniObject;
+}
+
+static ani_ref CreateCliPermissionDetailArray(ani_env* env, const std::vector<CliPermissionDetail>& detailList)
+{
+    return CreateAniObjectArray(env, detailList, CreateCliPermissionDetailObject);
+}
+
+static ani_object CreateCliCommandPermissionResultObject(ani_env* env, const CliCommandPermissionResult& result)
+{
+    ani_object aniObject = CreateClassObject(env,
+        "@ohos.abilityAccessCtrl.abilityAccessCtrl.CliCommandPermissionResultInner");
+    if (aniObject == nullptr) {
+        return nullptr;
+    }
+    SetRefProperty(env, aniObject, "requiredCliPermissions",
+        CreateCliPermissionDetailArray(env, result.requiredCliPermissions));
+    return aniObject;
+}
+
+static ani_ref CreateCliCommandPermissionResultArray(ani_env* env,
+    const std::vector<CliCommandPermissionResult>& permList)
+{
+    return CreateAniObjectArray(env, permList, CreateCliCommandPermissionResultObject);
+}
+
+static ani_ref CreateCliPermissionsResultObject(ani_env* env, const CliPermissionsResult& result)
+{
+    ani_object aniObject = CreateClassObject(env,
+        "@ohos.abilityAccessCtrl.abilityAccessCtrl.CliPermissionsResultInner");
+    if (aniObject == nullptr) {
+        return nullptr;
+    }
+    SetRefProperty(env, aniObject, "permList", CreateCliCommandPermissionResultArray(env, result.permList));
+    return aniObject;
+}
+
+static ani_object CreateSkillCommandPermissionResultObject(ani_env* env,
+    const SkillCommandPermissionResult& result)
+{
+    ani_object aniObject = CreateClassObject(env,
+        "@ohos.abilityAccessCtrl.abilityAccessCtrl.SkillCommandPermissionResultInner");
+    if (aniObject == nullptr) {
+        return nullptr;
+    }
+    SetRefProperty(env, aniObject, "usedPermissions", CreateAniArrayString(env, result.usedPermissions));
+    SetRefProperty(env, aniObject, "statusList", CreateAniArrayInt(env, ConvertStatusList(result.statusList)));
+    return aniObject;
+}
+
+static ani_ref CreateSkillCommandPermissionResultArray(ani_env* env,
+    const std::vector<SkillCommandPermissionResult>& permList)
+{
+    return CreateAniObjectArray(env, permList, CreateSkillCommandPermissionResultObject);
+}
+
+static ani_ref CreateSkillPermissionsResultObject(ani_env* env, const SkillPermissionsResult& result)
+{
+    ani_object aniObject = CreateClassObject(env,
+        "@ohos.abilityAccessCtrl.abilityAccessCtrl.SkillPermissionsResultInner");
+    if (aniObject == nullptr) {
+        return nullptr;
+    }
+    SetRefProperty(env, aniObject, "permList", CreateSkillCommandPermissionResultArray(env, result.permList));
+    return aniObject;
+}
+
+static ani_ref CreateToolAuthResultObject(ani_env* env, const ToolAuthResult& result)
+{
+    ani_object aniObject = CreateClassObject(env,
+        "@ohos.abilityAccessCtrl.abilityAccessCtrl.ToolAuthResultInner");
+    if (aniObject == nullptr) {
+        return nullptr;
+    }
+    SetRefProperty(env, aniObject, "authResults", CreateAniArrayString(env, result.authResults));
+    return aniObject;
+}
+
+static bool CheckKitResultAndThrow(ani_env* env, int32_t result)
+{
+    if (result == RET_SUCCESS) {
+        return true;
+    }
+    int32_t stsCode = BusinessErrorAni::GetStsErrorCode(result);
+    BusinessErrorAni::ThrowError(env, stsCode, GetErrorMessage(stsCode));
+    return false;
+}
+
+static bool ParseHostTokenID(ani_env* env, ani_int aniHostTokenID, AccessTokenID& hostTokenID)
+{
+    hostTokenID = static_cast<AccessTokenID>(aniHostTokenID);
+    return BusinessErrorAni::ValidateTokenIDWithThrowError(env, hostTokenID);
+}
+
+static bool ParseAgentID(ani_env* env, ani_string aniAgentID, std::string& agentID)
+{
+    return ParseAniString(env, aniAgentID, agentID) && agentID.length() <= MAX_CLAW_AGENT_ID_LEN;
+}
+
+static ani_ref GetCliPermissionRequestInfoExecute([[maybe_unused]] ani_env* env,
+    [[maybe_unused]] ani_object object, ani_string aniAgentID, ani_array aniCliInfoList)
+{
+    std::string agentID;
+    if (!ParseAgentID(env, aniAgentID, agentID)) {
+        BusinessErrorAni::ThrowError(env, STS_ERROR_PARAM_ILLEGAL, GetParamErrorMsg("agentID", "string"));
+        return nullptr;
+    }
+    std::vector<CliInfo> cliInfoList;
+    if (!ParseObjectArray(env, aniCliInfoList, cliInfoList, ParseCliInfo)) {
+        BusinessErrorAni::ThrowError(env, STS_ERROR_PARAM_ILLEGAL, GetParamErrorMsg("cliList", "Array<CliInfo>"));
+        return nullptr;
+    }
+    PermissionDialogResult result;
+    int32_t ret = AccessTokenKit::GetCliPermissionRequestInfo(agentID, cliInfoList, result);
+    if (!CheckKitResultAndThrow(env, ret)) {
+        return nullptr;
+    }
+    return CreatePermissionDialogResultObject(env, result);
+}
+
+static ani_ref GetSkillPermissionRequestInfoExecute([[maybe_unused]] ani_env* env,
+    [[maybe_unused]] ani_object object, ani_string aniAgentID, ani_array aniSkillInfoList)
+{
+    std::string agentID;
+    if (!ParseAgentID(env, aniAgentID, agentID)) {
+        BusinessErrorAni::ThrowError(env, STS_ERROR_PARAM_ILLEGAL, GetParamErrorMsg("agentID", "string"));
+        return nullptr;
+    }
+    std::vector<SkillInfo> skillInfoList;
+    if (!ParseObjectArray(env, aniSkillInfoList, skillInfoList, ParseSkillInfo)) {
+        BusinessErrorAni::ThrowError(env, STS_ERROR_PARAM_ILLEGAL,
+            GetParamErrorMsg("skillList", "Array<SkillInfo>"));
+        return nullptr;
+    }
+    PermissionDialogResult result;
+    int32_t ret = AccessTokenKit::GetSkillPermissionRequestInfo(agentID, skillInfoList, result);
+    if (!CheckKitResultAndThrow(env, ret)) {
+        return nullptr;
+    }
+    return CreatePermissionDialogResultObject(env, result);
+}
+
+static ani_ref GetCliPermissionsExecute([[maybe_unused]] ani_env* env,
+    [[maybe_unused]] ani_object object, ani_int aniHostTokenID, ani_string aniAgentID, ani_array aniCliInfoList)
+{
+    AccessTokenID hostTokenID = INVALID_TOKENID;
+    if (!ParseHostTokenID(env, aniHostTokenID, hostTokenID)) {
+        return nullptr;
+    }
+    std::string agentID;
+    if (!ParseAgentID(env, aniAgentID, agentID)) {
+        BusinessErrorAni::ThrowError(env, STS_ERROR_PARAM_ILLEGAL, GetParamErrorMsg("agentID", "string"));
+        return nullptr;
+    }
+    std::vector<CliInfo> cliInfoList;
+    if (!ParseObjectArray(env, aniCliInfoList, cliInfoList, ParseCliInfo)) {
+        BusinessErrorAni::ThrowError(env, STS_ERROR_PARAM_ILLEGAL,
+            GetParamErrorMsg("cliInfoList", "Array<CliInfo>"));
+        return nullptr;
+    }
+    CliPermissionsResult result;
+    int32_t ret = AccessTokenKit::GetCliPermissions(hostTokenID, agentID, cliInfoList, result);
+    if (!CheckKitResultAndThrow(env, ret)) {
+        return nullptr;
+    }
+    return CreateCliPermissionsResultObject(env, result);
+}
+
+static ani_ref GetSkillPermissionsExecute([[maybe_unused]] ani_env* env,
+    [[maybe_unused]] ani_object object, ani_int aniHostTokenID, ani_string aniAgentID, ani_array aniSkillInfoList)
+{
+    AccessTokenID hostTokenID = INVALID_TOKENID;
+    if (!ParseHostTokenID(env, aniHostTokenID, hostTokenID)) {
+        return nullptr;
+    }
+    std::string agentID;
+    if (!ParseAgentID(env, aniAgentID, agentID)) {
+        BusinessErrorAni::ThrowError(env, STS_ERROR_PARAM_ILLEGAL, GetParamErrorMsg("agentID", "string"));
+        return nullptr;
+    }
+    std::vector<SkillInfo> skillInfoList;
+    if (!ParseObjectArray(env, aniSkillInfoList, skillInfoList, ParseSkillInfo)) {
+        BusinessErrorAni::ThrowError(env, STS_ERROR_PARAM_ILLEGAL,
+            GetParamErrorMsg("skillInfoList", "Array<SkillInfo>"));
+        return nullptr;
+    }
+    SkillPermissionsResult result;
+    int32_t ret = AccessTokenKit::GetSkillPermissions(hostTokenID, agentID, skillInfoList, result);
+    if (!CheckKitResultAndThrow(env, ret)) {
+        return nullptr;
+    }
+    return CreateSkillPermissionsResultObject(env, result);
+}
+
+static ani_ref GenerateCliAuthResultExecute([[maybe_unused]] ani_env* env,
+    [[maybe_unused]] ani_object object, ani_int aniHostTokenID, ani_string aniAgentID, ani_array aniAuthInfoList)
+{
+    AccessTokenID hostTokenID = INVALID_TOKENID;
+    if (!ParseHostTokenID(env, aniHostTokenID, hostTokenID)) {
+        return nullptr;
+    }
+    std::string agentID;
+    if (!ParseAgentID(env, aniAgentID, agentID)) {
+        BusinessErrorAni::ThrowError(env, STS_ERROR_PARAM_ILLEGAL, GetParamErrorMsg("agentID", "string"));
+        return nullptr;
+    }
+    std::vector<CliAuthInfo> authInfoList;
+    if (!ParseObjectArray(env, aniAuthInfoList, authInfoList, ParseCliAuthInfo)) {
+        BusinessErrorAni::ThrowError(env, STS_ERROR_PARAM_ILLEGAL,
+            GetParamErrorMsg("authInfoList", "Array<CliAuthInfo>"));
+        return nullptr;
+    }
+    ToolAuthResult result;
+    int32_t ret = AccessTokenKit::GenerateCliAuthResult(hostTokenID, agentID, authInfoList, result);
+    if (!CheckKitResultAndThrow(env, ret)) {
+        return nullptr;
+    }
+    return CreateToolAuthResultObject(env, result);
+}
+
+static ani_ref GenerateSkillAuthResultExecute([[maybe_unused]] ani_env* env,
+    [[maybe_unused]] ani_object object, ani_int aniHostTokenID, ani_string aniAgentID, ani_array aniAuthInfoList)
+{
+    AccessTokenID hostTokenID = INVALID_TOKENID;
+    if (!ParseHostTokenID(env, aniHostTokenID, hostTokenID)) {
+        return nullptr;
+    }
+    std::string agentID;
+    if (!ParseAgentID(env, aniAgentID, agentID)) {
+        BusinessErrorAni::ThrowError(env, STS_ERROR_PARAM_ILLEGAL, GetParamErrorMsg("agentID", "string"));
+        return nullptr;
+    }
+    std::vector<SkillAuthInfo> authInfoList;
+    if (!ParseObjectArray(env, aniAuthInfoList, authInfoList, ParseSkillAuthInfo)) {
+        BusinessErrorAni::ThrowError(env, STS_ERROR_PARAM_ILLEGAL,
+            GetParamErrorMsg("authInfoList", "Array<SkillAuthInfo>"));
+        return nullptr;
+    }
+    ToolAuthResult result;
+    int32_t ret = AccessTokenKit::GenerateSkillAuthResult(hostTokenID, agentID, authInfoList, result);
+    if (!CheckKitResultAndThrow(env, ret)) {
+        return nullptr;
+    }
+    return CreateToolAuthResultObject(env, result);
+}
+
+static void AppendTokenNativeFunctions(std::vector<ani_native_function>& methods)
+{
+    methods.insert(methods.end(), {
         ani_native_function { "checkAccessTokenExecute", nullptr, reinterpret_cast<void*>(CheckAccessTokenExecute) },
         ani_native_function { "checkContextExecute",
             nullptr, reinterpret_cast<void*>(CheckContextExecute) },
+        ani_native_function { "grantUserGrantedPermissionExecute", nullptr,
+            reinterpret_cast<void*>(GrantUserGrantedPermissionExecute) },
+        ani_native_function { "revokeUserGrantedPermissionExecute",
+            nullptr, reinterpret_cast<void*>(RevokeUserGrantedPermissionExecute) },
+        ani_native_function { "grantPermissionExecute", nullptr,
+            reinterpret_cast<void*>(GrantPermissionExecute) },
+        ani_native_function { "revokePermissionExecute",
+            nullptr, reinterpret_cast<void*>(RevokePermissionExecute) },
+        ani_native_function { "getVersionExecute", nullptr, reinterpret_cast<void*>(GetVersionExecute) },
+        ani_native_function{ "getPermissionFlagsExecute",
+            nullptr, reinterpret_cast<void*>(GetPermissionFlagsExecute) },
+        ani_native_function{ "setPermissionRequestToggleStatusExecute",
+            nullptr, reinterpret_cast<void*>(SetPermissionRequestToggleStatusExecute) },
+        ani_native_function{ "getPermissionRequestToggleStatusExecute",
+            nullptr, reinterpret_cast<void*>(GetPermissionRequestToggleStatusExecute) },
+        ani_native_function{ "requestAppPermOnSettingExecute",
+            nullptr, reinterpret_cast<void*>(RequestAppPermOnSettingExecute) },
+    });
+}
+
+static void AppendRequestNativeFunctions(std::vector<ani_native_function>& methods)
+{
+    methods.insert(methods.end(), {
         ani_native_function { "requestPermissionsFromUserExecute",
             nullptr, reinterpret_cast<void*>(RequestPermissionsFromUserExecute) },
         ani_native_function { "requestPermissionsFromUserWithWindowIdExecute",
@@ -1093,25 +1536,14 @@ static ani_status AtManagerBindNativeFunction(ani_env* env, ani_class& cls)
             nullptr, reinterpret_cast<void*>(OpenPermissionOnSettingExecute) },
         ani_native_function {"requestGlobalSwitchExecute",
             nullptr, reinterpret_cast<void*>(RequestGlobalSwitchExecute) },
-        ani_native_function { "grantUserGrantedPermissionExecute", nullptr,
-            reinterpret_cast<void*>(GrantUserGrantedPermissionExecute) },
-        ani_native_function { "revokeUserGrantedPermissionExecute",
-            nullptr, reinterpret_cast<void*>(RevokeUserGrantedPermissionExecute) },
-        ani_native_function { "grantPermissionExecute", nullptr,
-            reinterpret_cast<void*>(GrantPermissionExecute) },
-        ani_native_function { "revokePermissionExecute",
-            nullptr, reinterpret_cast<void*>(RevokePermissionExecute) },
-        ani_native_function { "getVersionExecute", nullptr, reinterpret_cast<void*>(GetVersionExecute) },
+    });
+}
+
+static void AppendQueryNativeFunctions(std::vector<ani_native_function>& methods)
+{
+    methods.insert(methods.end(), {
         ani_native_function { "getPermissionsStatusExecute",
             nullptr, reinterpret_cast<void*>(GetPermissionsStatusExecute) },
-        ani_native_function{ "getPermissionFlagsExecute",
-            nullptr, reinterpret_cast<void*>(GetPermissionFlagsExecute) },
-        ani_native_function{ "setPermissionRequestToggleStatusExecute",
-            nullptr, reinterpret_cast<void*>(SetPermissionRequestToggleStatusExecute) },
-        ani_native_function{ "getPermissionRequestToggleStatusExecute",
-            nullptr, reinterpret_cast<void*>(GetPermissionRequestToggleStatusExecute) },
-        ani_native_function{ "requestAppPermOnSettingExecute",
-            nullptr, reinterpret_cast<void*>(RequestAppPermOnSettingExecute) },
         ani_native_function { "onPermissionStateChangeExecute", nullptr,
             reinterpret_cast<void*>(RegisterPermStateChangeCallback) },
         ani_native_function { "offPermissionStateChangeExecute", nullptr,
@@ -1122,7 +1554,34 @@ static ani_status AtManagerBindNativeFunction(ani_env* env, ani_class& cls)
             nullptr, reinterpret_cast<void*>(QueryStatusByPermissionExecute) },
         ani_native_function { "queryStatusByTokenIDExecute",
             nullptr, reinterpret_cast<void*>(QueryStatusByTokenIDExecute) },
-    };
+    });
+}
+
+static void AppendClawNativeFunctions(std::vector<ani_native_function>& methods)
+{
+    methods.insert(methods.end(), {
+        ani_native_function { "getCliPermissionRequestInfoExecute",
+            nullptr, reinterpret_cast<void*>(GetCliPermissionRequestInfoExecute) },
+        ani_native_function { "getSkillPermissionRequestInfoExecute",
+            nullptr, reinterpret_cast<void*>(GetSkillPermissionRequestInfoExecute) },
+        ani_native_function { "getCliPermissionsExecute",
+            nullptr, reinterpret_cast<void*>(GetCliPermissionsExecute) },
+        ani_native_function { "getSkillPermissionsExecute",
+            nullptr, reinterpret_cast<void*>(GetSkillPermissionsExecute) },
+        ani_native_function { "generateCliAuthResultExecute",
+            nullptr, reinterpret_cast<void*>(GenerateCliAuthResultExecute) },
+        ani_native_function { "generateSkillAuthResultExecute",
+            nullptr, reinterpret_cast<void*>(GenerateSkillAuthResultExecute) },
+    });
+}
+
+static ani_status AtManagerBindNativeFunction(ani_env* env, ani_class& cls)
+{
+    std::vector<ani_native_function> clsMethods;
+    AppendTokenNativeFunctions(clsMethods);
+    AppendRequestNativeFunctions(clsMethods);
+    AppendQueryNativeFunctions(clsMethods);
+    AppendClawNativeFunctions(clsMethods);
     return env->Class_BindNativeMethods(cls, clsMethods.data(), clsMethods.size());
 }
 

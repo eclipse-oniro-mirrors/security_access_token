@@ -18,17 +18,25 @@
 #include <gtest/hwext/gtest-multithread.h>
 
 #include "accesstoken_callbacks.h"
+#include "accesstoken_info_manager.h"
 #include "accesstoken_kit.h"
 #include "access_token_db_operator.h"
 #include "access_token_db.h"
 #include "access_token_error.h"
 #include "atm_tools_param_info_parcel.h"
+#include "claw_auth_info_parcel.h"
+#include "claw_token_challenge_parcel.h"
+#include "cli_info_parcel.h"
+#include "cli_permissions_result_parcel.h"
 #include "hap_info_parcel.h"
 #include "hap_policy_parcel.h"
+#include "permission_dialog_result_parcel.h"
 #include "parameters.h"
 #include "permission_map.h"
 #include "permission_manager.h"
 #include "perm_state_change_callback_customize.h"
+#include "skill_info_parcel.h"
+#include "skill_permissions_result_parcel.h"
 #include "token_field_const.h"
 #include "token_setproc.h"
 
@@ -51,6 +59,7 @@ static constexpr int32_t INDEX_THREE = 3;
 static constexpr int32_t MAX_PERMISSION_SIZE = 1024;
 static constexpr int32_t API_VERSION_9 = 9;
 static constexpr int32_t RANDOM_TOKENID = 123;
+static const std::string DEFAULT_AGENT_ID = "1001";
 static const unsigned int DEBUG_APP_FLAG = 0x0008;
 static uint64_t g_selfShellTokenId = 0;
 
@@ -154,6 +163,147 @@ static HapPolicy g_policy = {
     .aclRequestedList = { "ohos.permission.INVALIDA" }, // kernel permission with value no need acl
     .aclExtendedMap = { std::make_pair("ohos.permission.KERNEL_ATM_SELF_USE", "test") },
 };
+
+uint64_t CreateClawServiceTestToken(
+    const std::string& bundleName, bool isSystemApp, const std::vector<PermissionStatus>& permStateList,
+    AccessTokenID& tokenId)
+{
+    HapInfoParams hapInfo = {
+        .userID = USER_ID,
+        .bundleName = bundleName,
+        .instIndex = INST_INDEX,
+        .dlpType = static_cast<int>(HapDlpType::DLP_COMMON),
+        .apiVersion = API_VERSION_9,
+        .isSystemApp = isSystemApp,
+        .appIDDesc = bundleName,
+    };
+    HapPolicy hapPolicy = {
+        .apl = APL_SYSTEM_BASIC,
+        .domain = "test.domain",
+        .permStateList = permStateList,
+    };
+
+    AccessTokenIDEx tokenIdEx = {0};
+    std::vector<GenericValues> undefValues;
+    int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(
+        hapInfo, hapPolicy, tokenIdEx, undefValues);
+    if (ret != RET_SUCCESS) {
+        tokenId = INVALID_TOKENID;
+        return 0;
+    }
+    tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    return tokenIdEx.tokenIDEx;
+}
+
+PermissionStatus BuildGrantedPermissionStatus(const std::string& permissionName)
+{
+    return {
+        .permissionName = permissionName,
+        .grantStatus = PermissionState::PERMISSION_GRANTED,
+        .grantFlag = PermissionFlag::PERMISSION_SYSTEM_FIXED
+    };
+}
+
+std::vector<PermissionStatus> BuildClawQueryPermissionStates()
+{
+    return {BuildGrantedPermissionStatus("ohos.permission.QUERY_TOOL_PERMISSIONS")};
+}
+
+std::vector<PermissionStatus> BuildClawManagePermissionStates()
+{
+    return {BuildGrantedPermissionStatus("ohos.permission.MANAGE_TOOL_RUNTIME_PERMISSIONS")};
+}
+
+std::vector<PermissionStatus> BuildClawQueryAndManagePermissionStates()
+{
+    return {
+        BuildGrantedPermissionStatus("ohos.permission.QUERY_TOOL_PERMISSIONS"),
+        BuildGrantedPermissionStatus("ohos.permission.MANAGE_TOOL_RUNTIME_PERMISSIONS")
+    };
+}
+
+std::vector<CliInfoParcel> BuildCliInfoParcels()
+{
+    CliInfoParcel cliInfoParcel;
+    cliInfoParcel.cliInfo = {
+        .cliName = "camera",
+        .subCliName = "capture"
+    };
+    return {cliInfoParcel};
+}
+
+std::vector<CliInfoParcel> BuildMixedDialogCliInfoParcels()
+{
+    CliInfoParcel locationInfoParcel;
+    locationInfoParcel.cliInfo = {
+        .cliName = "location",
+        .subCliName = "query"
+    };
+    CliInfoParcel cameraInfoParcel;
+    cameraInfoParcel.cliInfo = {
+        .cliName = "camera",
+        .subCliName = "capture"
+    };
+    return {locationInfoParcel, cameraInfoParcel};
+}
+
+std::vector<CliInfoParcel> BuildUnknownCliInfoParcels()
+{
+    CliInfoParcel cliInfoParcel;
+    cliInfoParcel.cliInfo = {
+        .cliName = "unknown",
+        .subCliName = "cmd"
+    };
+    return {cliInfoParcel};
+}
+
+std::vector<CliInfoParcel> BuildMissingMappingCliInfoParcels()
+{
+    CliInfoParcel cliInfoParcel;
+    cliInfoParcel.cliInfo = {
+        .cliName = "missingmap",
+        .subCliName = "run"
+    };
+    return {cliInfoParcel};
+}
+
+std::vector<CliInfoParcel> BuildEmptyPermissionCliInfoParcels()
+{
+    CliInfoParcel cliInfoParcel;
+    cliInfoParcel.cliInfo = {
+        .cliName = "empty",
+        .subCliName = "run"
+    };
+    return {cliInfoParcel};
+}
+
+std::vector<SkillInfoParcel> BuildSkillInfoParcels()
+{
+    SkillInfoParcel skillInfoParcel;
+    skillInfoParcel.skillInfo = {
+        .skillName = "cameraSkill",
+        .bundleName = "com.ohos.claw.demo",
+        .moduleName = "entry"
+    };
+    return {skillInfoParcel};
+}
+
+std::vector<SkillInfoParcel> BuildMixedDialogSkillInfoParcels()
+{
+    SkillInfoParcel cameraSkillInfoParcel;
+    cameraSkillInfoParcel.skillInfo = {
+        .skillName = "cameraSkill",
+        .bundleName = "com.ohos.claw.demo",
+        .moduleName = "entry"
+    };
+    SkillInfoParcel locationSkillInfoParcel;
+    locationSkillInfoParcel.skillInfo = {
+        .skillName = "locationSkill",
+        .bundleName = "com.ohos.claw.demo",
+        .moduleName = "entry"
+    };
+    return {cameraSkillInfoParcel, locationSkillInfoParcel};
+}
 }
 
 void AccessTokenManagerServiceTest::SetUpTestCase()
@@ -2303,6 +2453,630 @@ HWTEST_F(AccessTokenManagerServiceTest, AccessTokenServiceCoverageTest001, TestS
     std::vector<PermissionListStateParcel> reqPermList(MAX_PERMISSION_SIZE + 1, parcel);
     ret = atManagerService_->GetPermissionsStatus(RANDOM_TOKENID, reqPermList);
     EXPECT_NE(RET_SUCCESS, ret);
+}
+
+/**
+ * @tc.name: ClawPermissionServiceTest001
+ * @tc.desc: Test CLAW permission service APIs with empty list params.
+ * @tc.require:
+ * @tc.type: FUNC
+ */
+HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest001, TestSize.Level1)
+{
+    PermissionDialogResultParcel dialogResult;
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
+        atManagerService_->GetCliPermissionRequestInfo(DEFAULT_AGENT_ID, {}, dialogResult));
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
+        atManagerService_->GetSkillPermissionRequestInfo(DEFAULT_AGENT_ID, {}, dialogResult));
+
+    CliPermissionsResultParcel cliPermissionsResult;
+    SkillPermissionsResultParcel skillPermissionsResult;
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
+        atManagerService_->GetCliPermissions(
+            INVALID_TOKENID, DEFAULT_AGENT_ID, BuildCliInfoParcels(), cliPermissionsResult));
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
+        atManagerService_->GetSkillPermissions(
+            INVALID_TOKENID, DEFAULT_AGENT_ID, BuildSkillInfoParcels(), skillPermissionsResult));
+}
+
+/**
+ * @tc.name: ClawPermissionServiceTest002
+ * @tc.desc: Test CLAW permission service APIs reject non-system callers.
+ * @tc.require:
+ * @tc.type: FUNC
+ */
+HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest002, TestSize.Level1)
+{
+    AccessTokenID tokenId = INVALID_TOKENID;
+    uint64_t fullTokenId = CreateClawServiceTestToken("claw_permission_non_system_test", false, {}, tokenId);
+    ASSERT_NE(0, fullTokenId);
+    SetSelfTokenID(fullTokenId);
+
+    PermissionDialogResultParcel dialogResult;
+    EXPECT_EQ(AccessTokenError::ERR_NOT_SYSTEM_APP,
+        atManagerService_->GetCliPermissionRequestInfo(DEFAULT_AGENT_ID, BuildCliInfoParcels(), dialogResult));
+    EXPECT_EQ(AccessTokenError::ERR_NOT_SYSTEM_APP,
+        atManagerService_->GetSkillPermissionRequestInfo(DEFAULT_AGENT_ID, BuildSkillInfoParcels(), dialogResult));
+
+    CliPermissionsResultParcel cliPermissionsResult;
+    EXPECT_EQ(AccessTokenError::ERR_NOT_SYSTEM_APP,
+        atManagerService_->GetCliPermissions(
+            tokenId, DEFAULT_AGENT_ID, BuildCliInfoParcels(), cliPermissionsResult));
+
+    SetSelfTokenID(g_selfShellTokenId);
+    (void)AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId);
+}
+
+/**
+ * @tc.name: ClawPermissionServiceTest002_001
+ * @tc.desc: Test CLAW permission service APIs reject system callers without required interface permission.
+ * @tc.require:
+ * @tc.type: FUNC
+ */
+HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest002_001, TestSize.Level1)
+{
+    AccessTokenID tokenId = INVALID_TOKENID;
+    uint64_t fullTokenId = CreateClawServiceTestToken("claw_permission_no_api_permission_test", true, {}, tokenId);
+    ASSERT_NE(0, fullTokenId);
+    SetSelfTokenID(fullTokenId);
+
+    PermissionDialogResultParcel dialogResult;
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
+        atManagerService_->GetCliPermissionRequestInfo(DEFAULT_AGENT_ID, BuildCliInfoParcels(), dialogResult));
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
+        atManagerService_->GetSkillPermissionRequestInfo(DEFAULT_AGENT_ID, BuildSkillInfoParcels(), dialogResult));
+
+    CliPermissionsResultParcel cliPermissionsResult;
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
+        atManagerService_->GetCliPermissions(
+            tokenId, DEFAULT_AGENT_ID, BuildCliInfoParcels(), cliPermissionsResult));
+
+    SkillPermissionsResultParcel skillPermissionsResult;
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
+        atManagerService_->GetSkillPermissions(
+            tokenId, DEFAULT_AGENT_ID, BuildSkillInfoParcels(), skillPermissionsResult));
+
+    CliAuthInfoParcel cliAuthInfoParcel;
+    cliAuthInfoParcel.info.cliInfo = BuildCliInfoParcels()[0].cliInfo;
+    cliAuthInfoParcel.info.permissionNames = {"ohos.permission.POWER_MANAGER"};
+    cliAuthInfoParcel.info.authorizationResults = {false};
+    ToolAuthResultParcel authResult;
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
+        atManagerService_->GenerateCliAuthResult(tokenId, DEFAULT_AGENT_ID, {cliAuthInfoParcel}, authResult));
+
+    SkillAuthInfoParcel skillAuthInfoParcel;
+    skillAuthInfoParcel.info.skillInfo = BuildSkillInfoParcels()[0].skillInfo;
+    skillAuthInfoParcel.info.permissionNames = {"ohos.permission.CAMERA"};
+    skillAuthInfoParcel.info.authorizationResults = {false};
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
+        atManagerService_->GenerateSkillAuthResult(tokenId, DEFAULT_AGENT_ID, {skillAuthInfoParcel}, authResult));
+
+    SetSelfTokenID(g_selfShellTokenId);
+    (void)AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId);
+}
+
+/**
+ * @tc.name: ClawPermissionServiceTest003
+ * @tc.desc: Test CLAW permission service APIs return basic success result for system caller.
+ * @tc.require:
+ * @tc.type: FUNC
+ */
+HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest003, TestSize.Level1)
+{
+    PermissionStatus cliState = {
+        .permissionName = "ohos.permission.POWER_MANAGER",
+        .grantStatus = PermissionState::PERMISSION_GRANTED,
+        .grantFlag = PermissionFlag::PERMISSION_USER_SET
+    };
+    auto permStates = BuildClawQueryAndManagePermissionStates();
+    permStates.emplace_back(cliState);
+    AccessTokenID tokenId = INVALID_TOKENID;
+    uint64_t fullTokenId = CreateClawServiceTestToken(
+        "claw_permission_system_service_test", true, permStates, tokenId);
+    ASSERT_NE(0, fullTokenId);
+    SetSelfTokenID(fullTokenId);
+
+    PermissionDialogResultParcel dialogResult;
+    ASSERT_EQ(RET_SUCCESS,
+        atManagerService_->GetCliPermissionRequestInfo(DEFAULT_AGENT_ID, BuildCliInfoParcels(), dialogResult));
+    ASSERT_EQ(1, static_cast<int32_t>(dialogResult.result.detailList.size()));
+    EXPECT_FALSE(dialogResult.result.detailList[0].needPermissionDialog);
+    EXPECT_FALSE(dialogResult.result.detailList[0].authResult.empty());
+
+    CliPermissionsResultParcel cliPermissionsResult;
+    ASSERT_EQ(RET_SUCCESS,
+        atManagerService_->GetCliPermissions(
+            tokenId, DEFAULT_AGENT_ID, BuildCliInfoParcels(), cliPermissionsResult));
+    ASSERT_EQ(1, static_cast<int32_t>(cliPermissionsResult.result.permList.size()));
+
+    SetSelfTokenID(g_selfShellTokenId);
+    (void)AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId);
+}
+
+/**
+ * @tc.name: ClawPermissionServiceTest004
+ * @tc.desc: Test skill dialog query and token challenge generation basic success path.
+ * @tc.require:
+ * @tc.type: FUNC
+ */
+HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest004, TestSize.Level1)
+{
+    AccessTokenID tokenId = INVALID_TOKENID;
+    uint64_t fullTokenId = CreateClawServiceTestToken(
+        "claw_permission_skill_service_test", true, BuildClawQueryAndManagePermissionStates(), tokenId);
+    ASSERT_NE(0, fullTokenId);
+    SetSelfTokenID(fullTokenId);
+
+    PermissionDialogResultParcel dialogResult;
+    ASSERT_EQ(RET_SUCCESS,
+        atManagerService_->GetSkillPermissionRequestInfo(DEFAULT_AGENT_ID, BuildSkillInfoParcels(), dialogResult));
+    ASSERT_EQ(1, static_cast<int32_t>(dialogResult.result.detailList.size()));
+    EXPECT_FALSE(dialogResult.result.detailList[0].needPermissionDialog);
+    EXPECT_FALSE(dialogResult.result.detailList[0].authResult.empty());
+
+    SkillPermissionsResultParcel skillPermissionsResult;
+    ASSERT_EQ(RET_SUCCESS,
+        atManagerService_->GetSkillPermissions(
+            tokenId, DEFAULT_AGENT_ID, BuildSkillInfoParcels(), skillPermissionsResult));
+    ASSERT_EQ(1, static_cast<int32_t>(skillPermissionsResult.result.permList.size()));
+    ASSERT_EQ(1, static_cast<int32_t>(skillPermissionsResult.result.permList[0].usedPermissions.size()));
+    EXPECT_EQ(PermissionDecisionStatus::NO_DIALOG_NOT_DECLARED,
+        skillPermissionsResult.result.permList[0].statusList[0]);
+
+    SkillAuthInfoParcel authInfoParcel;
+    authInfoParcel.info.skillInfo = BuildSkillInfoParcels()[0].skillInfo;
+    authInfoParcel.info.permissionNames = {"ohos.permission.CAMERA"};
+    authInfoParcel.info.authorizationResults = {false};
+    ToolAuthResultParcel authResult;
+    ASSERT_EQ(RET_SUCCESS,
+        atManagerService_->GenerateSkillAuthResult(tokenId, DEFAULT_AGENT_ID, {authInfoParcel}, authResult));
+    ASSERT_EQ(1, static_cast<int32_t>(authResult.result.authResults.size()));
+    EXPECT_FALSE(authResult.result.authResults[0].empty());
+
+    SetSelfTokenID(g_selfShellTokenId);
+    (void)AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId);
+}
+
+/**
+ * @tc.name: ClawPermissionServiceTest005
+ * @tc.desc: Test CLI token challenge generation validates auth info shape and creates challenge.
+ * @tc.require:
+ * @tc.type: FUNC
+ */
+HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest005, TestSize.Level1)
+{
+    AccessTokenID tokenId = INVALID_TOKENID;
+    uint64_t fullTokenId = CreateClawServiceTestToken(
+        "claw_permission_cli_challenge_test", true, BuildClawManagePermissionStates(), tokenId);
+    ASSERT_NE(0, fullTokenId);
+    SetSelfTokenID(fullTokenId);
+
+    CliAuthInfoParcel invalidAuthInfoParcel;
+    invalidAuthInfoParcel.info.cliInfo = BuildCliInfoParcels()[0].cliInfo;
+    invalidAuthInfoParcel.info.permissionNames = {"ohos.permission.POWER_MANAGER"};
+    ToolAuthResultParcel authResult;
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
+        atManagerService_->GenerateCliAuthResult(tokenId, DEFAULT_AGENT_ID, {invalidAuthInfoParcel}, authResult));
+
+    CliAuthInfoParcel authInfoParcel;
+    authInfoParcel.info.cliInfo = BuildCliInfoParcels()[0].cliInfo;
+    authInfoParcel.info.permissionNames = {"ohos.permission.POWER_MANAGER"};
+    authInfoParcel.info.authorizationResults = {false};
+    ASSERT_EQ(RET_SUCCESS,
+        atManagerService_->GenerateCliAuthResult(tokenId, DEFAULT_AGENT_ID, {authInfoParcel}, authResult));
+    ASSERT_EQ(1, static_cast<int32_t>(authResult.result.authResults.size()));
+    EXPECT_FALSE(authResult.result.authResults[0].empty());
+
+    CliAuthInfoParcel emptyAuthInfoParcel;
+    emptyAuthInfoParcel.info.cliInfo = BuildEmptyPermissionCliInfoParcels()[0].cliInfo;
+    ASSERT_EQ(RET_SUCCESS,
+        atManagerService_->GenerateCliAuthResult(tokenId, DEFAULT_AGENT_ID, {emptyAuthInfoParcel}, authResult));
+    ASSERT_EQ(1, static_cast<int32_t>(authResult.result.authResults.size()));
+    EXPECT_FALSE(authResult.result.authResults[0].empty());
+
+    SetSelfTokenID(g_selfShellTokenId);
+    (void)AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId);
+}
+
+/**
+ * @tc.name: ClawPermissionServiceTest006
+ * @tc.desc: Test undeclared required CLI permission is returned as status instead of permission denied.
+ * @tc.require:
+ * @tc.type: FUNC
+ */
+HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest006, TestSize.Level1)
+{
+    AccessTokenID tokenId = INVALID_TOKENID;
+    uint64_t fullTokenId = CreateClawServiceTestToken(
+        "claw_permission_cli_undeclared_test", true, BuildClawQueryAndManagePermissionStates(), tokenId);
+    ASSERT_NE(0, fullTokenId);
+    SetSelfTokenID(fullTokenId);
+
+    PermissionDialogResultParcel dialogResult;
+    ASSERT_EQ(RET_SUCCESS,
+        atManagerService_->GetCliPermissionRequestInfo(DEFAULT_AGENT_ID, BuildCliInfoParcels(), dialogResult));
+    ASSERT_EQ(1, static_cast<int32_t>(dialogResult.result.detailList.size()));
+    EXPECT_TRUE(dialogResult.result.detailList[0].needPermissionDialog);
+    ASSERT_EQ(1, static_cast<int32_t>(dialogResult.result.detailList[0].permissionNameList.size()));
+    EXPECT_EQ("ohos.permission.POWER_MANAGER", dialogResult.result.detailList[0].permissionNameList[0]);
+    EXPECT_EQ(PermissionDecisionStatus::NO_DIALOG_NOT_DECLARED,
+        dialogResult.result.detailList[0].statusList[0]);
+
+    CliPermissionsResultParcel cliPermissionsResult;
+    ASSERT_EQ(RET_SUCCESS,
+        atManagerService_->GetCliPermissions(
+            tokenId, DEFAULT_AGENT_ID, BuildCliInfoParcels(), cliPermissionsResult));
+    ASSERT_EQ(1, static_cast<int32_t>(cliPermissionsResult.result.permList.size()));
+    const auto& detail = cliPermissionsResult.result.permList[0].requiredCliPermissions[0];
+    EXPECT_EQ(PermissionDecisionStatus::NO_DIALOG_NOT_DECLARED, detail.cliPermissionStatus);
+    ASSERT_EQ(1, static_cast<int32_t>(detail.usedPermissions.size()));
+
+    SetSelfTokenID(g_selfShellTokenId);
+    (void)AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId);
+}
+
+/**
+ * @tc.name: ClawPermissionServiceTest007
+ * @tc.desc: Test denied required CLI permission is returned as status instead of permission denied.
+ * @tc.require:
+ * @tc.type: FUNC
+ */
+HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest007, TestSize.Level1)
+{
+    PermissionStatus cliState = {
+        .permissionName = "ohos.permission.POWER_MANAGER",
+        .grantStatus = PermissionState::PERMISSION_DENIED,
+        .grantFlag = PermissionFlag::PERMISSION_USER_FIXED
+    };
+    auto permStates = BuildClawQueryAndManagePermissionStates();
+    permStates.emplace_back(cliState);
+    AccessTokenID tokenId = INVALID_TOKENID;
+    uint64_t fullTokenId = CreateClawServiceTestToken(
+        "claw_permission_cli_denied_status_test", true, permStates, tokenId);
+    ASSERT_NE(0, fullTokenId);
+    SetSelfTokenID(fullTokenId);
+
+    PermissionDialogResultParcel dialogResult;
+    ASSERT_EQ(RET_SUCCESS,
+        atManagerService_->GetCliPermissionRequestInfo(DEFAULT_AGENT_ID, BuildCliInfoParcels(), dialogResult));
+    ASSERT_EQ(1, static_cast<int32_t>(dialogResult.result.detailList.size()));
+    ASSERT_EQ(1, static_cast<int32_t>(dialogResult.result.detailList[0].statusList.size()));
+    EXPECT_EQ(PermissionDecisionStatus::NO_DIALOG_DENIED, dialogResult.result.detailList[0].statusList[0]);
+
+    CliPermissionsResultParcel cliPermissionsResult;
+    ASSERT_EQ(RET_SUCCESS,
+        atManagerService_->GetCliPermissions(
+            tokenId, DEFAULT_AGENT_ID, BuildCliInfoParcels(), cliPermissionsResult));
+    ASSERT_EQ(1, static_cast<int32_t>(cliPermissionsResult.result.permList.size()));
+    const auto& detail = cliPermissionsResult.result.permList[0].requiredCliPermissions[0];
+    EXPECT_EQ(PermissionDecisionStatus::NO_DIALOG_DENIED, detail.cliPermissionStatus);
+    ASSERT_EQ(1, static_cast<int32_t>(detail.usedPermissions.size()));
+
+    SetSelfTokenID(g_selfShellTokenId);
+    (void)AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId);
+}
+
+/**
+ * @tc.name: ClawPermissionServiceTest007_001
+ * @tc.desc: Test CLI dialog challenge is generated only for details without permission dialog.
+ * @tc.require:
+ * @tc.type: FUNC
+ */
+HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest007_001, TestSize.Level1)
+{
+    PermissionStatus cliCameraState = {
+        .permissionName = "ohos.permission.POWER_MANAGER",
+        .grantStatus = PermissionState::PERMISSION_GRANTED,
+        .grantFlag = PermissionFlag::PERMISSION_USER_SET
+    };
+    auto permStates = BuildClawQueryPermissionStates();
+    permStates.emplace_back(cliCameraState);
+    AccessTokenID tokenId = INVALID_TOKENID;
+    uint64_t fullTokenId = CreateClawServiceTestToken(
+        "claw_permission_cli_mixed_dialog_test", true, permStates, tokenId);
+    ASSERT_NE(0, fullTokenId);
+    SetSelfTokenID(fullTokenId);
+
+    PermissionDialogResultParcel dialogResult;
+    ASSERT_EQ(RET_SUCCESS,
+        atManagerService_->GetCliPermissionRequestInfo(
+            DEFAULT_AGENT_ID, BuildMixedDialogCliInfoParcels(), dialogResult));
+    ASSERT_EQ(2, static_cast<int32_t>(dialogResult.result.detailList.size()));
+
+    const auto& locationDetail = dialogResult.result.detailList[0];
+    EXPECT_TRUE(locationDetail.needPermissionDialog);
+    EXPECT_TRUE(locationDetail.authResult.empty());
+
+    const auto& cameraDetail = dialogResult.result.detailList[1];
+    EXPECT_FALSE(cameraDetail.needPermissionDialog);
+    EXPECT_FALSE(cameraDetail.authResult.empty());
+    EXPECT_EQ("authResult_" + std::to_string(tokenId) + "_0",
+        cameraDetail.authResult);
+
+    SetSelfTokenID(g_selfShellTokenId);
+    (void)AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId);
+}
+
+/**
+ * @tc.name: ClawPermissionServiceTest007_002
+ * @tc.desc: Test CLI dialog query skips command when metadata queryRet is not success.
+ * @tc.require:
+ * @tc.type: FUNC
+ */
+HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest007_002, TestSize.Level1)
+{
+    AccessTokenID tokenId = INVALID_TOKENID;
+    uint64_t fullTokenId = CreateClawServiceTestToken(
+        "claw_permission_cli_validate_error_test", true, BuildClawQueryAndManagePermissionStates(), tokenId);
+    ASSERT_NE(0, fullTokenId);
+    SetSelfTokenID(fullTokenId);
+
+    PermissionDialogResultParcel dialogResult;
+    ASSERT_EQ(RET_SUCCESS,
+        atManagerService_->GetCliPermissionRequestInfo(
+            DEFAULT_AGENT_ID, BuildUnknownCliInfoParcels(), dialogResult));
+    ASSERT_EQ(1, static_cast<int32_t>(dialogResult.result.detailList.size()));
+    EXPECT_FALSE(dialogResult.result.detailList[0].needPermissionDialog);
+    EXPECT_TRUE(dialogResult.result.detailList[0].permissionNameList.empty());
+    EXPECT_TRUE(dialogResult.result.detailList[0].statusList.empty());
+    EXPECT_FALSE(dialogResult.result.detailList[0].authResult.empty());
+
+    CliPermissionsResultParcel cliPermissionsResult;
+    ASSERT_EQ(RET_SUCCESS,
+        atManagerService_->GetCliPermissions(
+            tokenId, DEFAULT_AGENT_ID, BuildUnknownCliInfoParcels(), cliPermissionsResult));
+    ASSERT_EQ(1, static_cast<int32_t>(cliPermissionsResult.result.permList.size()));
+    EXPECT_TRUE(cliPermissionsResult.result.permList[0].requiredCliPermissions.empty());
+
+    SetSelfTokenID(g_selfShellTokenId);
+    (void)AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId);
+}
+
+/**
+ * @tc.name: ClawPermissionServiceTest007_003
+ * @tc.desc: Test CLI dialog query treats missing CLI mapping as self-mapped permission.
+ * @tc.require:
+ * @tc.type: FUNC
+ */
+HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest007_003, TestSize.Level1)
+{
+    AccessTokenID tokenId = INVALID_TOKENID;
+    uint64_t fullTokenId = CreateClawServiceTestToken(
+        "claw_permission_cli_build_error_test", true, BuildClawQueryPermissionStates(), tokenId);
+    ASSERT_NE(0, fullTokenId);
+    SetSelfTokenID(fullTokenId);
+
+    PermissionDialogResultParcel dialogResult;
+    ASSERT_EQ(RET_SUCCESS,
+        atManagerService_->GetCliPermissionRequestInfo(
+            DEFAULT_AGENT_ID, BuildMissingMappingCliInfoParcels(), dialogResult));
+    ASSERT_EQ(1, static_cast<int32_t>(dialogResult.result.detailList.size()));
+    EXPECT_TRUE(dialogResult.result.detailList[0].needPermissionDialog);
+    ASSERT_EQ(1, static_cast<int32_t>(dialogResult.result.detailList[0].permissionNameList.size()));
+    EXPECT_EQ("ohos.permission.cli.no_mapping", dialogResult.result.detailList[0].permissionNameList[0]);
+
+    SetSelfTokenID(g_selfShellTokenId);
+    (void)AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId);
+}
+
+/**
+ * @tc.name: ClawPermissionServiceTest007_004
+ * @tc.desc: Test CLI without required permissions does not require dialog or permission mapping.
+ * @tc.require:
+ * @tc.type: FUNC
+ */
+HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest007_004, TestSize.Level1)
+{
+    AccessTokenID tokenId = INVALID_TOKENID;
+    uint64_t fullTokenId = CreateClawServiceTestToken(
+        "claw_permission_cli_empty_permission_test", true, BuildClawQueryAndManagePermissionStates(), tokenId);
+    ASSERT_NE(0, fullTokenId);
+    SetSelfTokenID(fullTokenId);
+
+    PermissionDialogResultParcel dialogResult;
+    ASSERT_EQ(RET_SUCCESS,
+        atManagerService_->GetCliPermissionRequestInfo(
+            DEFAULT_AGENT_ID, BuildEmptyPermissionCliInfoParcels(), dialogResult));
+    ASSERT_EQ(1, static_cast<int32_t>(dialogResult.result.detailList.size()));
+    EXPECT_FALSE(dialogResult.result.detailList[0].needPermissionDialog);
+    EXPECT_TRUE(dialogResult.result.detailList[0].permissionNameList.empty());
+    EXPECT_TRUE(dialogResult.result.detailList[0].statusList.empty());
+    EXPECT_FALSE(dialogResult.result.detailList[0].authResult.empty());
+
+    CliPermissionsResultParcel cliPermissionsResult;
+    ASSERT_EQ(RET_SUCCESS,
+        atManagerService_->GetCliPermissions(
+            tokenId, DEFAULT_AGENT_ID, BuildEmptyPermissionCliInfoParcels(), cliPermissionsResult));
+    ASSERT_EQ(1, static_cast<int32_t>(cliPermissionsResult.result.permList.size()));
+    EXPECT_TRUE(cliPermissionsResult.result.permList[0].requiredCliPermissions.empty());
+
+    SetSelfTokenID(g_selfShellTokenId);
+    (void)AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId);
+}
+
+/**
+ * @tc.name: ClawPermissionServiceTest008
+ * @tc.desc: Test skill token challenge does not grant permission and only generates challenge.
+ * @tc.require:
+ * @tc.type: FUNC
+ */
+HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest008, TestSize.Level1)
+{
+    PermissionStatus cameraState = {
+        .permissionName = "ohos.permission.CAMERA",
+        .grantStatus = PermissionState::PERMISSION_DENIED,
+        .grantFlag = PermissionFlag::PERMISSION_DEFAULT_FLAG
+    };
+    auto permStates = BuildClawManagePermissionStates();
+    permStates.emplace_back(cameraState);
+    AccessTokenID tokenId = INVALID_TOKENID;
+    uint64_t fullTokenId = CreateClawServiceTestToken(
+        "claw_permission_skill_no_grant_test", true, permStates, tokenId);
+    ASSERT_NE(0, fullTokenId);
+    SetSelfTokenID(fullTokenId);
+
+    SkillAuthInfoParcel authInfoParcel;
+    authInfoParcel.info.skillInfo = BuildSkillInfoParcels()[0].skillInfo;
+    authInfoParcel.info.permissionNames = {"ohos.permission.CAMERA"};
+    authInfoParcel.info.authorizationResults = {true};
+    ToolAuthResultParcel authResult;
+    ASSERT_EQ(RET_SUCCESS,
+        atManagerService_->GenerateSkillAuthResult(tokenId, DEFAULT_AGENT_ID, {authInfoParcel}, authResult));
+    ASSERT_EQ(1, static_cast<int32_t>(authResult.result.authResults.size()));
+    EXPECT_FALSE(authResult.result.authResults[0].empty());
+
+    SkillPermissionsResultParcel skillPermissionsResult;
+    ASSERT_EQ(RET_SUCCESS,
+        atManagerService_->GetSkillPermissions(
+            tokenId, DEFAULT_AGENT_ID, BuildSkillInfoParcels(), skillPermissionsResult));
+    ASSERT_EQ(1, static_cast<int32_t>(skillPermissionsResult.result.permList.size()));
+    ASSERT_EQ(1, static_cast<int32_t>(skillPermissionsResult.result.permList[0].statusList.size()));
+    EXPECT_EQ(PermissionDecisionStatus::NEED_PERMISSION_DIALOG,
+        skillPermissionsResult.result.permList[0].statusList[0]);
+
+    SetSelfTokenID(g_selfShellTokenId);
+    (void)AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId);
+}
+
+/**
+ * @tc.name: ClawPermissionServiceTest008_001
+ * @tc.desc: Test skill dialog query returns directly when all details require permission dialog.
+ * @tc.require:
+ * @tc.type: FUNC
+ */
+HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest008_001, TestSize.Level1)
+{
+    PermissionStatus cameraState = {
+        .permissionName = "ohos.permission.CAMERA",
+        .grantStatus = PermissionState::PERMISSION_DENIED,
+        .grantFlag = PermissionFlag::PERMISSION_DEFAULT_FLAG
+    };
+    auto permStates = BuildClawQueryPermissionStates();
+    permStates.emplace_back(cameraState);
+    AccessTokenID tokenId = INVALID_TOKENID;
+    uint64_t fullTokenId = CreateClawServiceTestToken(
+        "claw_permission_skill_all_dialog_test", true, permStates, tokenId);
+    ASSERT_NE(0, fullTokenId);
+    SetSelfTokenID(fullTokenId);
+
+    PermissionDialogResultParcel dialogResult;
+    ASSERT_EQ(RET_SUCCESS,
+        atManagerService_->GetSkillPermissionRequestInfo(DEFAULT_AGENT_ID, BuildSkillInfoParcels(), dialogResult));
+    ASSERT_EQ(1, static_cast<int32_t>(dialogResult.result.detailList.size()));
+    EXPECT_TRUE(dialogResult.result.detailList[0].needPermissionDialog);
+    EXPECT_TRUE(dialogResult.result.detailList[0].authResult.empty());
+
+    SetSelfTokenID(g_selfShellTokenId);
+    (void)AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId);
+}
+
+/**
+ * @tc.name: ClawPermissionServiceTest008_002
+ * @tc.desc: Test skill dialog challenge is generated only for details without permission dialog.
+ * @tc.require:
+ * @tc.type: FUNC
+ */
+HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest008_002, TestSize.Level1)
+{
+    PermissionStatus cameraState = {
+        .permissionName = "ohos.permission.CAMERA",
+        .grantStatus = PermissionState::PERMISSION_DENIED,
+        .grantFlag = PermissionFlag::PERMISSION_DEFAULT_FLAG
+    };
+    auto permStates = BuildClawQueryPermissionStates();
+    permStates.emplace_back(cameraState);
+    AccessTokenID tokenId = INVALID_TOKENID;
+    uint64_t fullTokenId = CreateClawServiceTestToken(
+        "claw_permission_skill_mixed_dialog_test", true, permStates, tokenId);
+    ASSERT_NE(0, fullTokenId);
+    SetSelfTokenID(fullTokenId);
+
+    PermissionDialogResultParcel dialogResult;
+    ASSERT_EQ(RET_SUCCESS,
+        atManagerService_->GetSkillPermissionRequestInfo(
+            DEFAULT_AGENT_ID, BuildMixedDialogSkillInfoParcels(), dialogResult));
+    ASSERT_EQ(2, static_cast<int32_t>(dialogResult.result.detailList.size()));
+
+    const auto& cameraDetail = dialogResult.result.detailList[0];
+    EXPECT_TRUE(cameraDetail.needPermissionDialog);
+    EXPECT_TRUE(cameraDetail.authResult.empty());
+
+    const auto& locationDetail = dialogResult.result.detailList[1];
+    EXPECT_FALSE(locationDetail.needPermissionDialog);
+    EXPECT_FALSE(locationDetail.authResult.empty());
+    EXPECT_EQ("authResult_" + std::to_string(tokenId) + "_0",
+        locationDetail.authResult);
+
+    SetSelfTokenID(g_selfShellTokenId);
+    (void)AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId);
+}
+
+/**
+ * @tc.name: ClawPermissionServiceTest009
+ * @tc.desc: Test token challenge generates challenge even if authorized permission does not exist.
+ * @tc.require:
+ * @tc.type: FUNC
+ */
+HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest009, TestSize.Level1)
+{
+    AccessTokenID tokenId = INVALID_TOKENID;
+    uint64_t fullTokenId = CreateClawServiceTestToken(
+        "claw_permission_cli_no_grant_test", true, BuildClawManagePermissionStates(), tokenId);
+    ASSERT_NE(0, fullTokenId);
+    SetSelfTokenID(fullTokenId);
+
+    CliAuthInfoParcel authInfoParcel;
+    authInfoParcel.info.cliInfo = BuildCliInfoParcels()[0].cliInfo;
+    authInfoParcel.info.permissionNames = {"ohos.permission.POWER_MANAGER"};
+    authInfoParcel.info.authorizationResults = {true};
+    ToolAuthResultParcel authResult;
+    ASSERT_EQ(RET_SUCCESS,
+        atManagerService_->GenerateCliAuthResult(tokenId, DEFAULT_AGENT_ID, {authInfoParcel}, authResult));
+    ASSERT_EQ(1, static_cast<int32_t>(authResult.result.authResults.size()));
+    EXPECT_FALSE(authResult.result.authResults[0].empty());
+
+    SetSelfTokenID(g_selfShellTokenId);
+    (void)AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId);
+}
+
+/**
+ * @tc.name: ClawPermissionServiceTest010
+ * @tc.desc: Test multiple CLI auth info generates auth results in auth info order.
+ * @tc.require:
+ * @tc.type: FUNC
+ */
+HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest010, TestSize.Level1)
+{
+    AccessTokenID tokenId = INVALID_TOKENID;
+    uint64_t fullTokenId = CreateClawServiceTestToken(
+        "claw_permission_cli_challenge_order_test", true, BuildClawManagePermissionStates(), tokenId);
+    ASSERT_NE(0, fullTokenId);
+    SetSelfTokenID(fullTokenId);
+
+    CliAuthInfoParcel cameraAuthInfoParcel;
+    cameraAuthInfoParcel.info.cliInfo = BuildCliInfoParcels()[0].cliInfo;
+    cameraAuthInfoParcel.info.permissionNames = {"ohos.permission.POWER_MANAGER"};
+    cameraAuthInfoParcel.info.authorizationResults = {false};
+
+    CliAuthInfoParcel locationAuthInfoParcel;
+    locationAuthInfoParcel.info.cliInfo = {
+        .cliName = "location",
+        .subCliName = "query"
+    };
+    locationAuthInfoParcel.info.permissionNames = {"ohos.permission.APPROXIMATELY_LOCATION"};
+    locationAuthInfoParcel.info.authorizationResults = {false};
+
+    ToolAuthResultParcel authResult;
+    ASSERT_EQ(RET_SUCCESS, atManagerService_->GenerateCliAuthResult(
+        tokenId, DEFAULT_AGENT_ID, {cameraAuthInfoParcel, locationAuthInfoParcel}, authResult));
+    ASSERT_EQ(2, static_cast<int32_t>(authResult.result.authResults.size()));
+    EXPECT_EQ("authResult_" + std::to_string(tokenId) + "_0",
+        authResult.result.authResults[0]);
+    EXPECT_EQ("authResult_" + std::to_string(tokenId) + "_1",
+        authResult.result.authResults[1]);
+
+    SetSelfTokenID(g_selfShellTokenId);
+    (void)AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId);
 }
 
 #ifdef SUPPORT_MANAGE_USER_POLICY

@@ -17,6 +17,7 @@
 #include "access_token.h"
 #include "data_validator.h"
 #include "hisysevent.h"
+#include "napi_claw_permission.h"
 #include "napi_hisysevent_adapter.h"
 #include "napi_open_permission_on_setting.h"
 #include "napi_query_permission_status.h"
@@ -220,6 +221,26 @@ void NapiAtManager::SetNamedProperty(napi_env env, napi_value dstObj, const int3
     napi_set_named_property(env, dstObj, propName, prop);
 }
 
+napi_value NapiAtManager::CreatePermissionDecisionStatus(napi_env env)
+{
+    napi_value permissionDecisionStatus = nullptr;
+    napi_create_object(env, &permissionDecisionStatus);
+    SetNamedProperty(env, permissionDecisionStatus,
+        static_cast<int32_t>(PermissionDecisionStatus::NEED_PERMISSION_DIALOG), "NEED_PERMISSION_DIALOG");
+    SetNamedProperty(env, permissionDecisionStatus,
+        static_cast<int32_t>(PermissionDecisionStatus::NO_DIALOG_DENIED), "NO_DIALOG_DENIED");
+    SetNamedProperty(env, permissionDecisionStatus,
+        static_cast<int32_t>(PermissionDecisionStatus::NO_DIALOG_RESTRICTED), "NO_DIALOG_RESTRICTED");
+    SetNamedProperty(env, permissionDecisionStatus,
+        static_cast<int32_t>(PermissionDecisionStatus::NO_DIALOG_GRANTED), "NO_DIALOG_GRANTED");
+    SetNamedProperty(env, permissionDecisionStatus,
+        static_cast<int32_t>(PermissionDecisionStatus::NO_DIALOG_NOT_DECLARED), "NO_DIALOG_NOT_DECLARED");
+    SetNamedProperty(env, permissionDecisionStatus,
+        static_cast<int32_t>(PermissionDecisionStatus::NO_DIALOG_CLI_PERMISSION_RESOLVED),
+        "NO_DIALOG_CLI_PERMISSION_RESOLVED");
+    return permissionDecisionStatus;
+}
+
 napi_value NapiAtManager::Init(napi_env env, napi_value exports)
 {
     LOGD(ATM_DOMAIN, ATM_TAG, "Enter init.");
@@ -257,6 +278,12 @@ napi_value NapiAtManager::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("openPermissionOnSetting", NapiOpenPermissionOnSetting::OpenPermissionOnSetting),
         DECLARE_NAPI_FUNCTION("queryStatusByPermission", NapiQueryPermissionStatus::QueryStatusByPermission),
         DECLARE_NAPI_FUNCTION("queryStatusByTokenID", NapiQueryPermissionStatus::QueryStatusByTokenID),
+        DECLARE_NAPI_FUNCTION("getCliPermissionRequestInfo", NapiClawPermission::GetCliPermissionRequestInfo),
+        DECLARE_NAPI_FUNCTION("getSkillPermissionRequestInfo", NapiClawPermission::GetSkillPermissionRequestInfo),
+        DECLARE_NAPI_FUNCTION("getCliPermissions", NapiClawPermission::GetCliPermissions),
+        DECLARE_NAPI_FUNCTION("getSkillPermissions", NapiClawPermission::GetSkillPermissions),
+        DECLARE_NAPI_FUNCTION("generateCliAuthResult", NapiClawPermission::GenerateCliAuthResult),
+        DECLARE_NAPI_FUNCTION("generateSkillAuthResult", NapiClawPermission::GenerateSkillAuthResult),
     };
 
     napi_value cons = nullptr;
@@ -315,6 +342,7 @@ void NapiAtManager::CreateObjects(napi_env env, napi_value exports)
         DECLARE_NAPI_PROPERTY("PermissionRequestToggleStatus", permissionRequestToggleStatus),
         DECLARE_NAPI_PROPERTY("SwitchType", globalSwitchType),
         DECLARE_NAPI_PROPERTY("SelectedResult", selectedResult),
+        DECLARE_NAPI_PROPERTY("PermissionDecisionStatus", CreatePermissionDecisionStatus(env)),
     };
     napi_define_properties(env, exports, sizeof(exportFuncs) / sizeof(*exportFuncs), exportFuncs);
 }

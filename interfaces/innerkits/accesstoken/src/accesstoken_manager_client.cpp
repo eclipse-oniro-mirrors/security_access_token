@@ -22,21 +22,26 @@
 #include "accesstoken_callbacks.h"
 #include "accesstoken_common_log.h"
 #include "atm_tools_param_info_parcel.h"
-#include "cli_init_info_parcel.h"
+#include "claw_auth_info_parcel.h"
+#include "claw_token_challenge_parcel.h"
 #include "cli_info_parcel.h"
 #include "cli_info_result_parcel.h"
+#include "cli_init_info_parcel.h"
+#include "cli_permissions_result_parcel.h"
 #include "hap_token_info.h"
-#include "permission_status_parcel.h"
 #include "hap_token_info_for_sync_parcel.h"
 #include "idl_common.h"
 #include "iservice_registry.h"
 #include "parameter.h"
 #include "perm_state_change_scope_parcel.h"
+#include "permission_dialog_result_parcel.h"
 #include "permission_grant_info_parcel.h"
 #include "permission_map.h"
+#include "permission_status_parcel.h"
 #include "skill_info_parcel.h"
-#include "skill_init_info_parcel.h"
 #include "skill_info_result_parcel.h"
+#include "skill_init_info_parcel.h"
+#include "skill_permissions_result_parcel.h"
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
 #include "sec_comp_enhance_data_parcel.h"
 #endif
@@ -1496,6 +1501,160 @@ int32_t AccessTokenManagerClient::QueryStatusByTokenID(const std::vector<AccessT
         permissionInfoList.emplace_back(status);
     }
 
+    return RET_SUCCESS;
+}
+
+int32_t AccessTokenManagerClient::GetCliPermissionRequestInfo(
+    const std::string& agentID, const std::vector<CliInfo>& cliInfoList, PermissionDialogResult& result)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+
+    std::vector<CliInfoParcel> parcelList;
+    parcelList.reserve(cliInfoList.size());
+    for (const auto& item : cliInfoList) {
+        CliInfoParcel parcel;
+        parcel.cliInfo = item;
+        parcelList.emplace_back(parcel);
+    }
+
+    PermissionDialogResultParcel resultParcel;
+    int32_t errCode = proxy->GetCliPermissionRequestInfo(agentID, parcelList, resultParcel);
+    if (errCode != RET_SUCCESS) {
+        return ConvertResult(errCode);
+    }
+    result = resultParcel.result;
+    return RET_SUCCESS;
+}
+
+int32_t AccessTokenManagerClient::GetSkillPermissionRequestInfo(
+    const std::string& agentID, const std::vector<SkillInfo>& skillInfoList, PermissionDialogResult& result)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+
+    std::vector<SkillInfoParcel> parcelList;
+    parcelList.reserve(skillInfoList.size());
+    for (const auto& item : skillInfoList) {
+        SkillInfoParcel parcel;
+        parcel.skillInfo = item;
+        parcelList.emplace_back(parcel);
+    }
+
+    PermissionDialogResultParcel resultParcel;
+    int32_t errCode = proxy->GetSkillPermissionRequestInfo(agentID, parcelList, resultParcel);
+    if (errCode != RET_SUCCESS) {
+        return ConvertResult(errCode);
+    }
+    result = resultParcel.result;
+    return RET_SUCCESS;
+}
+
+int32_t AccessTokenManagerClient::GetCliPermissions(AccessTokenID hostTokenID, const std::string& agentID,
+    const std::vector<CliInfo>& cliInfoList, CliPermissionsResult& result)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+
+    std::vector<CliInfoParcel> parcelList;
+    parcelList.reserve(cliInfoList.size());
+    for (const auto& item : cliInfoList) {
+        CliInfoParcel parcel;
+        parcel.cliInfo = item;
+        parcelList.emplace_back(parcel);
+    }
+
+    CliPermissionsResultParcel resultParcel;
+    int32_t errCode = proxy->GetCliPermissions(hostTokenID, agentID, parcelList, resultParcel);
+    if (errCode != RET_SUCCESS) {
+        return ConvertResult(errCode);
+    }
+    result = resultParcel.result;
+    return RET_SUCCESS;
+}
+
+int32_t AccessTokenManagerClient::GetSkillPermissions(AccessTokenID hostTokenID, const std::string& agentID,
+    const std::vector<SkillInfo>& skillInfoList, SkillPermissionsResult& result)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+
+    std::vector<SkillInfoParcel> parcelList;
+    parcelList.reserve(skillInfoList.size());
+    for (const auto& item : skillInfoList) {
+        SkillInfoParcel parcel;
+        parcel.skillInfo = item;
+        parcelList.emplace_back(parcel);
+    }
+
+    SkillPermissionsResultParcel resultParcel;
+    int32_t errCode = proxy->GetSkillPermissions(hostTokenID, agentID, parcelList, resultParcel);
+    if (errCode != RET_SUCCESS) {
+        return ConvertResult(errCode);
+    }
+    result = resultParcel.result;
+    return RET_SUCCESS;
+}
+
+int32_t AccessTokenManagerClient::GenerateCliAuthResult(
+    AccessTokenID hostTokenID, const std::string& agentID,
+    const std::vector<CliAuthInfo>& authInfoList, ToolAuthResult& result)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+    std::vector<CliAuthInfoParcel> parcelList;
+    parcelList.reserve(authInfoList.size());
+    for (const auto& item : authInfoList) {
+        CliAuthInfoParcel parcel;
+        parcel.info = item;
+        parcelList.emplace_back(parcel);
+    }
+    ToolAuthResultParcel resultParcel;
+    int32_t errCode = proxy->GenerateCliAuthResult(hostTokenID, agentID, parcelList, resultParcel);
+    if (errCode != RET_SUCCESS) {
+        return ConvertResult(errCode);
+    }
+    result = resultParcel.result;
+    return RET_SUCCESS;
+}
+
+int32_t AccessTokenManagerClient::GenerateSkillAuthResult(
+    AccessTokenID hostTokenID, const std::string& agentID,
+    const std::vector<SkillAuthInfo>& authInfoList, ToolAuthResult& result)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+    std::vector<SkillAuthInfoParcel> parcelList;
+    parcelList.reserve(authInfoList.size());
+    for (const auto& item : authInfoList) {
+        SkillAuthInfoParcel parcel;
+        parcel.info = item;
+        parcelList.emplace_back(parcel);
+    }
+    ToolAuthResultParcel resultParcel;
+    int32_t errCode = proxy->GenerateSkillAuthResult(hostTokenID, agentID, parcelList, resultParcel);
+    if (errCode != RET_SUCCESS) {
+        return ConvertResult(errCode);
+    }
+    result = resultParcel.result;
     return RET_SUCCESS;
 }
 } // namespace AccessToken

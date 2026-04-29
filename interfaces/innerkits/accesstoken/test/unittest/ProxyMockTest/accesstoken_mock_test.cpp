@@ -16,6 +16,7 @@
 #include "accesstoken_mock_test.h"
 #include <thread>
 #include "access_token_error.h"
+#include "accesstoken_manager_client.h"
 #include "permission_grant_info.h"
 #include "token_setproc.h"
 
@@ -27,6 +28,8 @@ namespace AccessToken {
 namespace {
 static AccessTokenID g_testTokenId = 123;  // 123: tokenId
 static constexpr int32_t DEFAULT_API_VERSION = 8;
+static const std::string DEFAULT_AGENT_ID = "1001";
+static constexpr size_t INVALID_LIST_SIZE = 1025;
 HapInfoParams g_infoManagerTestInfoParms = {
     .userID = 1,
     .bundleName = "accesstoken_test",
@@ -38,6 +41,61 @@ HapPolicyParams g_infoManagerTestPolicyPrams = {
     .apl = APL_NORMAL,
     .domain = "test.domain",
 };
+
+std::vector<CliInfo> BuildClawCliInfos(size_t size = 1)
+{
+    std::vector<CliInfo> cliInfoList;
+    cliInfoList.reserve(size);
+    for (size_t index = 0; index < size; ++index) {
+        CliInfo cliInfo;
+        cliInfo.cliName = "location";
+        cliInfo.subCliName = "query";
+        cliInfoList.emplace_back(cliInfo);
+    }
+    return cliInfoList;
+}
+
+std::vector<SkillInfo> BuildClawSkillInfos(size_t size = 1)
+{
+    std::vector<SkillInfo> skillInfoList;
+    skillInfoList.reserve(size);
+    for (size_t index = 0; index < size; ++index) {
+        SkillInfo skillInfo;
+        skillInfo.bundleName = "com.ohos.claw.demo";
+        skillInfo.moduleName = "entry";
+        skillInfo.skillName = "locationSkill";
+        skillInfoList.emplace_back(skillInfo);
+    }
+    return skillInfoList;
+}
+
+std::vector<CliAuthInfo> BuildClawCliAuthInfos(size_t size = 1)
+{
+    std::vector<CliAuthInfo> authInfoList;
+    authInfoList.reserve(size);
+    for (size_t index = 0; index < size; ++index) {
+        CliAuthInfo authInfo;
+        authInfo.cliInfo = BuildClawCliInfos()[0];
+        authInfo.permissionNames = {"ohos.permission.LOCATION"};
+        authInfo.authorizationResults = {true};
+        authInfoList.emplace_back(authInfo);
+    }
+    return authInfoList;
+}
+
+std::vector<SkillAuthInfo> BuildClawSkillAuthInfos(size_t size = 1)
+{
+    std::vector<SkillAuthInfo> authInfoList;
+    authInfoList.reserve(size);
+    for (size_t index = 0; index < size; ++index) {
+        SkillAuthInfo authInfo;
+        authInfo.skillInfo = BuildClawSkillInfos()[0];
+        authInfo.permissionNames = {"ohos.permission.LOCATION"};
+        authInfo.authorizationResults = {true};
+        authInfoList.emplace_back(authInfo);
+    }
+    return authInfoList;
+}
 #ifdef TOKEN_SYNC_ENABLE
 static const int32_t FAKE_SYNC_RET = 0xabcdef;
 class TokenSyncCallbackImpl : public TokenSyncKitInterface {
@@ -1001,6 +1059,200 @@ HWTEST_F(AccessTokenMockTest, QueryPermissionInfosByToken001, TestSize.Level4)
     int32_t ret = AccessTokenKit::QueryStatusByTokenID(tokenIDList, permissionInfoList);
     ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, ret);
     ASSERT_TRUE(permissionInfoList.empty());
+}
+
+/**
+ * @tc.name: ClawPermissionKitParam001
+ * @tc.desc: CLAW permission kit APIs reject empty list params.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, ClawPermissionKitParam001, TestSize.Level4)
+{
+    PermissionDialogResult dialogResult;
+    ASSERT_EQ(ERR_PARAM_INVALID, AccessTokenKit::GetCliPermissionRequestInfo(DEFAULT_AGENT_ID, {}, dialogResult));
+    ASSERT_EQ(ERR_PARAM_INVALID, AccessTokenKit::GetSkillPermissionRequestInfo(DEFAULT_AGENT_ID, {}, dialogResult));
+
+    CliPermissionsResult cliPermissionsResult;
+    SkillPermissionsResult skillPermissionsResult;
+    ASSERT_EQ(ERR_PARAM_INVALID,
+        AccessTokenKit::GetCliPermissions(g_testTokenId, DEFAULT_AGENT_ID, {}, cliPermissionsResult));
+    ASSERT_EQ(ERR_PARAM_INVALID,
+        AccessTokenKit::GetSkillPermissions(g_testTokenId, DEFAULT_AGENT_ID, {}, skillPermissionsResult));
+
+    ToolAuthResult authResult;
+    ASSERT_EQ(ERR_PARAM_INVALID,
+        AccessTokenKit::GenerateCliAuthResult(g_testTokenId, DEFAULT_AGENT_ID, {}, authResult));
+    ASSERT_EQ(ERR_PARAM_INVALID,
+        AccessTokenKit::GenerateSkillAuthResult(g_testTokenId, DEFAULT_AGENT_ID, {}, authResult));
+}
+
+/**
+ * @tc.name: ClawPermissionKitParam002
+ * @tc.desc: CLAW permission kit APIs reject invalid token params.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, ClawPermissionKitParam002, TestSize.Level4)
+{
+    CliPermissionsResult cliPermissionsResult;
+    SkillPermissionsResult skillPermissionsResult;
+    ASSERT_EQ(ERR_PARAM_INVALID,
+        AccessTokenKit::GetCliPermissions(
+            INVALID_TOKENID, DEFAULT_AGENT_ID, BuildClawCliInfos(), cliPermissionsResult));
+    ASSERT_EQ(ERR_PARAM_INVALID,
+        AccessTokenKit::GetSkillPermissions(
+            INVALID_TOKENID, DEFAULT_AGENT_ID, BuildClawSkillInfos(), skillPermissionsResult));
+
+    ToolAuthResult authResult;
+    ASSERT_EQ(ERR_PARAM_INVALID,
+        AccessTokenKit::GenerateCliAuthResult(
+            INVALID_TOKENID, DEFAULT_AGENT_ID, BuildClawCliAuthInfos(), authResult));
+    ASSERT_EQ(ERR_PARAM_INVALID,
+        AccessTokenKit::GenerateSkillAuthResult(
+            INVALID_TOKENID, DEFAULT_AGENT_ID, BuildClawSkillAuthInfos(), authResult));
+}
+
+/**
+ * @tc.name: ClawPermissionKitParam003
+ * @tc.desc: CLAW permission kit APIs reject oversized list params.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, ClawPermissionKitParam003, TestSize.Level4)
+{
+    PermissionDialogResult dialogResult;
+    ASSERT_EQ(ERR_PARAM_INVALID,
+        AccessTokenKit::GetCliPermissionRequestInfo(
+            DEFAULT_AGENT_ID, BuildClawCliInfos(INVALID_LIST_SIZE), dialogResult));
+    ASSERT_EQ(ERR_PARAM_INVALID,
+        AccessTokenKit::GetSkillPermissionRequestInfo(
+            DEFAULT_AGENT_ID, BuildClawSkillInfos(INVALID_LIST_SIZE), dialogResult));
+
+    CliPermissionsResult cliPermissionsResult;
+    SkillPermissionsResult skillPermissionsResult;
+    ASSERT_EQ(ERR_PARAM_INVALID, AccessTokenKit::GetCliPermissions(
+        g_testTokenId, DEFAULT_AGENT_ID, BuildClawCliInfos(INVALID_LIST_SIZE), cliPermissionsResult));
+    ASSERT_EQ(ERR_PARAM_INVALID, AccessTokenKit::GetSkillPermissions(
+        g_testTokenId, DEFAULT_AGENT_ID, BuildClawSkillInfos(INVALID_LIST_SIZE), skillPermissionsResult));
+
+    ToolAuthResult authResult;
+    ASSERT_EQ(ERR_PARAM_INVALID, AccessTokenKit::GenerateCliAuthResult(
+        g_testTokenId, DEFAULT_AGENT_ID, BuildClawCliAuthInfos(INVALID_LIST_SIZE), authResult));
+    ASSERT_EQ(ERR_PARAM_INVALID, AccessTokenKit::GenerateSkillAuthResult(
+        g_testTokenId, DEFAULT_AGENT_ID, BuildClawSkillAuthInfos(INVALID_LIST_SIZE), authResult));
+}
+
+/**
+ * @tc.name: ClawPermissionKitProxyNull001
+ * @tc.desc: CLAW permission kit APIs return service abnormal when proxy is null.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, ClawPermissionKitProxyNull001, TestSize.Level4)
+{
+    PermissionDialogResult dialogResult;
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL,
+        AccessTokenKit::GetCliPermissionRequestInfo(DEFAULT_AGENT_ID, BuildClawCliInfos(), dialogResult));
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL,
+        AccessTokenKit::GetSkillPermissionRequestInfo(DEFAULT_AGENT_ID, BuildClawSkillInfos(), dialogResult));
+
+    CliPermissionsResult cliPermissionsResult;
+    SkillPermissionsResult skillPermissionsResult;
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL,
+        AccessTokenKit::GetCliPermissions(
+            g_testTokenId, DEFAULT_AGENT_ID, BuildClawCliInfos(), cliPermissionsResult));
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL,
+        AccessTokenKit::GetSkillPermissions(
+            g_testTokenId, DEFAULT_AGENT_ID, BuildClawSkillInfos(), skillPermissionsResult));
+
+    ToolAuthResult authResult;
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL,
+        AccessTokenKit::GenerateCliAuthResult(
+            g_testTokenId, DEFAULT_AGENT_ID, BuildClawCliAuthInfos(), authResult));
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL,
+        AccessTokenKit::GenerateSkillAuthResult(
+            g_testTokenId, DEFAULT_AGENT_ID, BuildClawSkillAuthInfos(), authResult));
+}
+
+/**
+ * @tc.name: GetCliPermissionRequestInfoClient001
+ * @tc.desc: GetCliPermissionRequestInfo client API returns service abnormal when proxy is null.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, GetCliPermissionRequestInfoClient001, TestSize.Level4)
+{
+    PermissionDialogResult dialogResult;
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL,
+        AccessTokenManagerClient::GetInstance().GetCliPermissionRequestInfo(
+            DEFAULT_AGENT_ID, BuildClawCliInfos(), dialogResult));
+}
+
+/**
+ * @tc.name: GetSkillPermissionRequestInfoClient001
+ * @tc.desc: GetSkillPermissionRequestInfo client API returns service abnormal when proxy is null.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, GetSkillPermissionRequestInfoClient001, TestSize.Level4)
+{
+    PermissionDialogResult dialogResult;
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL,
+        AccessTokenManagerClient::GetInstance().GetSkillPermissionRequestInfo(
+            DEFAULT_AGENT_ID, BuildClawSkillInfos(), dialogResult));
+}
+
+/**
+ * @tc.name: GetCliPermissionsClient001
+ * @tc.desc: GetCliPermissions client API returns service abnormal when proxy is null.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, GetCliPermissionsClient001, TestSize.Level4)
+{
+    CliPermissionsResult cliPermissionsResult;
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenManagerClient::GetInstance().GetCliPermissions(
+        g_testTokenId, DEFAULT_AGENT_ID, BuildClawCliInfos(), cliPermissionsResult));
+}
+
+/**
+ * @tc.name: GetSkillPermissionsClient001
+ * @tc.desc: GetSkillPermissions client API returns service abnormal when proxy is null.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, GetSkillPermissionsClient001, TestSize.Level4)
+{
+    SkillPermissionsResult skillPermissionsResult;
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenManagerClient::GetInstance().GetSkillPermissions(
+        g_testTokenId, DEFAULT_AGENT_ID, BuildClawSkillInfos(), skillPermissionsResult));
+}
+
+/**
+ * @tc.name: GenerateCliAuthResultClient001
+ * @tc.desc: GenerateCliAuthResult client API returns service abnormal when proxy is null.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, GenerateCliAuthResultClient001, TestSize.Level4)
+{
+    ToolAuthResult authResult;
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenManagerClient::GetInstance()
+        .GenerateCliAuthResult(g_testTokenId, DEFAULT_AGENT_ID, BuildClawCliAuthInfos(), authResult));
+}
+
+/**
+ * @tc.name: GenerateSkillAuthResultClient001
+ * @tc.desc: GenerateSkillAuthResult client API returns service abnormal when proxy is null.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, GenerateSkillAuthResultClient001, TestSize.Level4)
+{
+    ToolAuthResult authResult;
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenManagerClient::GetInstance()
+        .GenerateSkillAuthResult(g_testTokenId, DEFAULT_AGENT_ID, BuildClawSkillAuthInfos(), authResult));
 }
 }  // namespace AccessToken
 }  // namespace Security

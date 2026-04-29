@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -19,6 +19,9 @@
 
 #include "access_token.h"
 #include "atm_tools_param_info_parcel.h"
+#include "claw_auth_info_parcel.h"
+#include "claw_token_challenge_parcel.h"
+#include "cli_permissions_result_parcel.h"
 #include "hap_info_parcel.h"
 #include "hap_policy_parcel.h"
 #include "hap_token_info_parcel.h"
@@ -26,10 +29,12 @@
 #include "native_token_info_parcel.h"
 #include "parcel.h"
 #include "parcel_utils.h"
+#include "permission_dialog_result_parcel.h"
 #include "permission_grant_info_parcel.h"
 #include "perm_state_change_scope_parcel.h"
 #include "permission_state_change_info_parcel.h"
 #include "permission_status_parcel.h"
+#include "skill_permissions_result_parcel.h"
 
 using namespace testing::ext;
 
@@ -380,6 +385,154 @@ HWTEST_F(AccessTokenParcelTest, AtmToolsParamInfoParcel001, TestSize.Level1)
     EXPECT_EQ(true, atmToolsParamInfoParcel.Marshalling(parcel));
     std::shared_ptr<AtmToolsParamInfoParcel> readedData(AtmToolsParamInfoParcel::Unmarshalling(parcel));
     EXPECT_NE(nullptr, readedData);
+}
+
+/**
+ * @tc.name: PermissionDialogResultParcel001
+ * @tc.desc: Test PermissionDialogResultParcel Marshalling/Unmarshalling.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenParcelTest, PermissionDialogResultParcel001, TestSize.Level1)
+{
+    PermissionDialogResultParcel resultParcel;
+    PermissionDialogDetail detail;
+    detail.needPermissionDialog = false;
+    detail.permissionNameList = {"ohos.permission.CAMERA", "ohos.permission.LOCATION"};
+    detail.statusList = {
+        PermissionDecisionStatus::NO_DIALOG_DENIED,
+        PermissionDecisionStatus::NO_DIALOG_RESTRICTED
+    };
+    detail.authResult = "authResult";
+    resultParcel.result.detailList = {detail};
+
+    Parcel parcel;
+    EXPECT_TRUE(resultParcel.Marshalling(parcel));
+    std::shared_ptr<PermissionDialogResultParcel> readedData(
+        PermissionDialogResultParcel::Unmarshalling(parcel));
+    ASSERT_NE(nullptr, readedData);
+    ASSERT_EQ(1, static_cast<int32_t>(readedData->result.detailList.size()));
+    EXPECT_FALSE(readedData->result.detailList[0].needPermissionDialog);
+    EXPECT_EQ(detail.permissionNameList, readedData->result.detailList[0].permissionNameList);
+    EXPECT_EQ(detail.statusList, readedData->result.detailList[0].statusList);
+    EXPECT_EQ(detail.authResult, readedData->result.detailList[0].authResult);
+}
+
+/**
+ * @tc.name: CliPermissionsResultParcel001
+ * @tc.desc: Test CliPermissionsResultParcel Marshalling/Unmarshalling.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenParcelTest, CliPermissionsResultParcel001, TestSize.Level1)
+{
+    CliPermissionsResultParcel resultParcel;
+    CliPermissionDetail detail;
+    detail.requiredCliPermission = "ohos.permission.POWER_MANAGER";
+    detail.cliPermissionStatus = PermissionDecisionStatus::NO_DIALOG_GRANTED;
+    detail.usedPermissions = {"ohos.permission.POWER_MANAGER"};
+    CliCommandPermissionResult commandResult;
+    commandResult.requiredCliPermissions = {detail};
+    resultParcel.result.permList = {commandResult};
+
+    Parcel parcel;
+    EXPECT_TRUE(resultParcel.Marshalling(parcel));
+    std::shared_ptr<CliPermissionsResultParcel> readedData(CliPermissionsResultParcel::Unmarshalling(parcel));
+    ASSERT_NE(nullptr, readedData);
+    ASSERT_EQ(1, static_cast<int32_t>(readedData->result.permList.size()));
+    ASSERT_EQ(1, static_cast<int32_t>(readedData->result.permList[0].requiredCliPermissions.size()));
+    const auto& readDetail = readedData->result.permList[0].requiredCliPermissions[0];
+    EXPECT_EQ(detail.requiredCliPermission, readDetail.requiredCliPermission);
+    EXPECT_EQ(detail.cliPermissionStatus, readDetail.cliPermissionStatus);
+    EXPECT_EQ(detail.usedPermissions, readDetail.usedPermissions);
+}
+
+/**
+ * @tc.name: SkillPermissionsResultParcel001
+ * @tc.desc: Test SkillPermissionsResultParcel Marshalling/Unmarshalling.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenParcelTest, SkillPermissionsResultParcel001, TestSize.Level1)
+{
+    SkillPermissionsResultParcel resultParcel;
+    SkillCommandPermissionResult commandResult;
+    commandResult.usedPermissions = {"ohos.permission.CAMERA", "ohos.permission.LOCATION"};
+    commandResult.statusList = {
+        PermissionDecisionStatus::NEED_PERMISSION_DIALOG,
+        PermissionDecisionStatus::NO_DIALOG_NOT_DECLARED
+    };
+    resultParcel.result.permList = {commandResult};
+
+    Parcel parcel;
+    EXPECT_TRUE(resultParcel.Marshalling(parcel));
+    std::shared_ptr<SkillPermissionsResultParcel> readedData(
+        SkillPermissionsResultParcel::Unmarshalling(parcel));
+    ASSERT_NE(nullptr, readedData);
+    ASSERT_EQ(1, static_cast<int32_t>(readedData->result.permList.size()));
+    EXPECT_EQ(commandResult.usedPermissions, readedData->result.permList[0].usedPermissions);
+    EXPECT_EQ(commandResult.statusList, readedData->result.permList[0].statusList);
+}
+
+/**
+ * @tc.name: ClawAuthInfoParcel001
+ * @tc.desc: Test CliAuthInfoParcel and SkillAuthInfoParcel Marshalling/Unmarshalling.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenParcelTest, ClawAuthInfoParcel001, TestSize.Level1)
+{
+    CliAuthInfoParcel cliAuthInfoParcel;
+    cliAuthInfoParcel.info.cliInfo = {
+        .cliName = "camera",
+        .subCliName = "capture"
+    };
+    cliAuthInfoParcel.info.permissionNames = {"ohos.permission.POWER_MANAGER"};
+    cliAuthInfoParcel.info.authorizationResults = {true};
+    Parcel cliParcel;
+    EXPECT_TRUE(cliAuthInfoParcel.Marshalling(cliParcel));
+    std::shared_ptr<CliAuthInfoParcel> readCliData(CliAuthInfoParcel::Unmarshalling(cliParcel));
+    ASSERT_NE(nullptr, readCliData);
+    EXPECT_EQ(cliAuthInfoParcel.info.cliInfo.cliName, readCliData->info.cliInfo.cliName);
+    EXPECT_EQ(cliAuthInfoParcel.info.cliInfo.subCliName, readCliData->info.cliInfo.subCliName);
+    EXPECT_EQ(cliAuthInfoParcel.info.permissionNames, readCliData->info.permissionNames);
+    EXPECT_EQ(cliAuthInfoParcel.info.authorizationResults, readCliData->info.authorizationResults);
+
+    SkillAuthInfoParcel skillAuthInfoParcel;
+    skillAuthInfoParcel.info.skillInfo = {
+        .skillName = "cameraSkill",
+        .bundleName = "com.ohos.claw.demo",
+        .moduleName = "entry"
+    };
+    skillAuthInfoParcel.info.permissionNames = {"ohos.permission.CAMERA"};
+    skillAuthInfoParcel.info.authorizationResults = {false};
+    Parcel skillParcel;
+    EXPECT_TRUE(skillAuthInfoParcel.Marshalling(skillParcel));
+    std::shared_ptr<SkillAuthInfoParcel> readSkillData(SkillAuthInfoParcel::Unmarshalling(skillParcel));
+    ASSERT_NE(nullptr, readSkillData);
+    EXPECT_EQ(skillAuthInfoParcel.info.skillInfo.skillName, readSkillData->info.skillInfo.skillName);
+    EXPECT_EQ(skillAuthInfoParcel.info.skillInfo.bundleName, readSkillData->info.skillInfo.bundleName);
+    EXPECT_EQ(skillAuthInfoParcel.info.skillInfo.moduleName, readSkillData->info.skillInfo.moduleName);
+    EXPECT_EQ(skillAuthInfoParcel.info.permissionNames, readSkillData->info.permissionNames);
+    EXPECT_EQ(skillAuthInfoParcel.info.authorizationResults, readSkillData->info.authorizationResults);
+}
+
+/**
+ * @tc.name: ToolAuthResultParcel001
+ * @tc.desc: Test ToolAuthResultParcel Marshalling/Unmarshalling.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenParcelTest, ToolAuthResultParcel001, TestSize.Level1)
+{
+    ToolAuthResultParcel resultParcel;
+    resultParcel.result.authResults = {"authResult0", "authResult1"};
+
+    Parcel parcel;
+    EXPECT_TRUE(resultParcel.Marshalling(parcel));
+    std::shared_ptr<ToolAuthResultParcel> readedData(ToolAuthResultParcel::Unmarshalling(parcel));
+    ASSERT_NE(nullptr, readedData);
+    EXPECT_EQ(resultParcel.result.authResults, readedData->result.authResults);
 }
 } // namespace AccessToken
 } // namespace Security

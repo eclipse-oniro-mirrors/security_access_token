@@ -157,6 +157,20 @@ public:
         std::vector<PermissionStatusIdl>& permissionInfoList, bool onlyHap) override;
     ErrCode QueryStatusByTokenID(const std::vector<uint32_t>& tokenIDList,
         std::vector<PermissionStatusIdl>& permissionInfoList) override;
+    int32_t GetCliPermissionRequestInfo(
+        const std::string& agentID, const std::vector<CliInfoParcel>& cliInfoList,
+        PermissionDialogResultParcel& resultParcel) override;
+    int32_t GetSkillPermissionRequestInfo(
+        const std::string& agentID, const std::vector<SkillInfoParcel>& skillInfoList,
+        PermissionDialogResultParcel& resultParcel) override;
+    int32_t GetCliPermissions(AccessTokenID hostTokenID, const std::string& agentID,
+        const std::vector<CliInfoParcel>& cliInfoList, CliPermissionsResultParcel& resultParcel) override;
+    int32_t GetSkillPermissions(AccessTokenID hostTokenID, const std::string& agentID,
+        const std::vector<SkillInfoParcel>& skillInfoList, SkillPermissionsResultParcel& resultParcel) override;
+    int32_t GenerateCliAuthResult(AccessTokenID hostTokenID, const std::string& agentID,
+        const std::vector<CliAuthInfoParcel>& authInfoList, ToolAuthResultParcel& resultParcel) override;
+    int32_t GenerateSkillAuthResult(AccessTokenID hostTokenID, const std::string& agentID,
+        const std::vector<SkillAuthInfoParcel>& authInfoList, ToolAuthResultParcel& resultParcel) override;
 
     int32_t CallbackEnter(uint32_t code) override;
     int32_t CallbackExit(uint32_t code, int32_t result) override;
@@ -206,6 +220,11 @@ private:
     bool IsAccessTokenCalling();
     bool IsNativeProcessCalling();
     bool IsSystemAppCalling() const;
+    int32_t ValidateGetCliPermissionRequestInfoCaller(
+        AccessTokenID callingTokenId, const std::string& agentID, const std::vector<CliInfoParcel>& cliInfoList);
+    int32_t ValidateGetCliPermissionsCaller(
+        AccessTokenID callingTokenId, AccessTokenID hostTokenID,
+        const std::string& agentID, const std::vector<CliInfoParcel>& cliInfoList);
     bool IsShellProcessCalling();
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
     bool IsSecCompServiceCalling();

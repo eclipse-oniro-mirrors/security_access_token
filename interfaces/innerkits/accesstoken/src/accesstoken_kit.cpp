@@ -38,6 +38,11 @@ static const uint64_t SYSTEM_APP_MASK = (static_cast<uint64_t>(1) << 32);
 static const uint64_t ATOMIC_SERVICE_MASK = (static_cast<uint64_t>(1) << 33);
 static const uint64_t TOKEN_ID_LOWMASK = 0xffffffff;
 static const int INVALID_DLP_TOKEN_FLAG = -1;
+
+bool IsAgentIdValid(const std::string& agentID)
+{
+    return agentID.length() <= MAX_CLAW_AGENT_ID_LEN;
+}
 static const int FIRSTCALLER_TOKENID_DEFAULT = 0;
 static const int MAX_LENGTH = 256;
 } // namespace
@@ -1020,6 +1025,68 @@ int32_t AccessTokenKit::QueryStatusByTokenID(const std::vector<AccessTokenID>& t
         return ERR_PARAM_INVALID;
     }
     return AccessTokenManagerClient::GetInstance().QueryStatusByTokenID(tokenIDList, permissionInfoList);
+}
+
+int32_t AccessTokenKit::GetCliPermissionRequestInfo(
+    const std::string& agentID, const std::vector<CliInfo>& cliInfoList, PermissionDialogResult& result)
+{
+    if (!IsAgentIdValid(agentID) || !DataValidator::IsListSizeValid(cliInfoList.size())) {
+        return ERR_PARAM_INVALID;
+    }
+    return AccessTokenManagerClient::GetInstance().GetCliPermissionRequestInfo(agentID, cliInfoList, result);
+}
+
+int32_t AccessTokenKit::GetSkillPermissionRequestInfo(
+    const std::string& agentID, const std::vector<SkillInfo>& skillInfoList, PermissionDialogResult& result)
+{
+    if (!IsAgentIdValid(agentID) || !DataValidator::IsListSizeValid(skillInfoList.size())) {
+        return ERR_PARAM_INVALID;
+    }
+    return AccessTokenManagerClient::GetInstance().GetSkillPermissionRequestInfo(agentID, skillInfoList, result);
+}
+
+int32_t AccessTokenKit::GetCliPermissions(AccessTokenID hostTokenID, const std::string& agentID,
+    const std::vector<CliInfo>& cliInfoList, CliPermissionsResult& result)
+{
+    if ((hostTokenID == INVALID_TOKENID) || !IsAgentIdValid(agentID) ||
+        !DataValidator::IsListSizeValid(cliInfoList.size())) {
+        return ERR_PARAM_INVALID;
+    }
+    return AccessTokenManagerClient::GetInstance().GetCliPermissions(
+        hostTokenID, agentID, cliInfoList, result);
+}
+
+int32_t AccessTokenKit::GetSkillPermissions(AccessTokenID hostTokenID, const std::string& agentID,
+    const std::vector<SkillInfo>& skillInfoList, SkillPermissionsResult& result)
+{
+    if ((hostTokenID == INVALID_TOKENID) || !IsAgentIdValid(agentID) ||
+        !DataValidator::IsListSizeValid(skillInfoList.size())) {
+        return ERR_PARAM_INVALID;
+    }
+    return AccessTokenManagerClient::GetInstance().GetSkillPermissions(
+        hostTokenID, agentID, skillInfoList, result);
+}
+
+int32_t AccessTokenKit::GenerateCliAuthResult(AccessTokenID hostTokenID, const std::string& agentID,
+    const std::vector<CliAuthInfo>& authInfoList, ToolAuthResult& result)
+{
+    if ((hostTokenID == INVALID_TOKENID) || !IsAgentIdValid(agentID) ||
+        !DataValidator::IsListSizeValid(authInfoList.size())) {
+        return ERR_PARAM_INVALID;
+    }
+    return AccessTokenManagerClient::GetInstance().GenerateCliAuthResult(
+        hostTokenID, agentID, authInfoList, result);
+}
+
+int32_t AccessTokenKit::GenerateSkillAuthResult(AccessTokenID hostTokenID, const std::string& agentID,
+    const std::vector<SkillAuthInfo>& authInfoList, ToolAuthResult& result)
+{
+    if ((hostTokenID == INVALID_TOKENID) || !IsAgentIdValid(agentID) ||
+        !DataValidator::IsListSizeValid(authInfoList.size())) {
+        return ERR_PARAM_INVALID;
+    }
+    return AccessTokenManagerClient::GetInstance().GenerateSkillAuthResult(
+        hostTokenID, agentID, authInfoList, result);
 }
 } // namespace AccessToken
 } // namespace Security

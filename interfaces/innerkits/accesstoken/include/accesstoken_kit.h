@@ -683,6 +683,72 @@ public:
      */
     static int32_t QueryStatusByTokenID(const std::vector<AccessTokenID>& tokenIDList,
         std::vector<PermissionStatus>& permissionInfoList);
+
+    /**
+     * @brief Query whether the current caller needs a permission dialog for CLI commands.
+     * @note Returns ERR_PERMISSION_DENIED if the caller fails CLI control permission check.
+     * @note CLI permissions returned by the agent fence are converted to PermissionDecisionStatus.
+     * @note If no permission dialog is required, uses tokenId and command information to return mock challenge.
+     * @param cliInfoList CLI command list.
+     * @param result Output parameter, returns dialog decision result for each command.
+     * @return Returns RET_SUCCESS(0) on success, returns corresponding error code on failure.
+     */
+    static int32_t GetCliPermissionRequestInfo(
+        const std::string& agentID, const std::vector<CliInfo>& cliInfoList, PermissionDialogResult& result);
+
+    /**
+     * @brief Query whether the current caller needs a permission dialog for skill commands.
+     * @note If no permission dialog is required, uses tokenId and command information to return mock challenge.
+     * @param skillInfoList Skill command list.
+     * @param result Output parameter, returns dialog decision result for each command.
+     * @return Returns RET_SUCCESS(0) on success, returns corresponding error code on failure.
+     */
+    static int32_t GetSkillPermissionRequestInfo(
+        const std::string& agentID, const std::vector<SkillInfo>& skillInfoList, PermissionDialogResult& result);
+
+    /**
+     * @brief Query CLI permission details for the target claw application.
+     * @note Returns ERR_PERMISSION_DENIED if target claw fails CLI control permission check.
+     * @note requiredCliPermission returns its own status directly when already granted, denied, restricted,
+     *       or undeclared; otherwise mapped usedPermissions decide whether the final status is
+     *       NEED_PERMISSION_DIALOG or NO_DIALOG_CLI_PERMISSION_RESOLVED.
+     * @param hostTokenID Access token ID of the target host application.
+     * @param cliInfoList CLI command list.
+     * @param result Output parameter, returns CLI permission query result.
+     * @return Returns RET_SUCCESS(0) on success, returns corresponding error code on failure.
+     */
+    static int32_t GetCliPermissions(AccessTokenID hostTokenID, const std::string& agentID,
+        const std::vector<CliInfo>& cliInfoList, CliPermissionsResult& result);
+
+    /**
+     * @brief Query skill permission details for the target claw application.
+     * @param hostTokenID Access token ID of the target host application.
+     * @param skillInfoList Skill command list.
+     * @param result Output parameter, returns skill permission query result.
+     * @return Returns RET_SUCCESS(0) on success, returns corresponding error code on failure.
+     */
+    static int32_t GetSkillPermissions(AccessTokenID hostTokenID, const std::string& agentID,
+        const std::vector<SkillInfo>& skillInfoList, SkillPermissionsResult& result);
+
+    /**
+     * @brief Generate auth info for CLI authorization result.
+     * @param hostTokenID Access token ID of the target host application.
+     * @param authInfoList CLI authorization result list.
+     * @param result Output parameter, returns generated auth result.
+     * @return Returns RET_SUCCESS(0) on success, returns corresponding error code on failure.
+     */
+    static int32_t GenerateCliAuthResult(AccessTokenID hostTokenID, const std::string& agentID,
+        const std::vector<CliAuthInfo>& authInfoList, ToolAuthResult& result);
+
+    /**
+     * @brief Generate auth info for skill authorization result.
+     * @param hostTokenID Access token ID of the target host application.
+     * @param authInfoList Skill authorization result list.
+     * @param result Output parameter, returns generated auth result.
+     * @return Returns RET_SUCCESS(0) on success, returns corresponding error code on failure.
+     */
+    static int32_t GenerateSkillAuthResult(AccessTokenID hostTokenID, const std::string& agentID,
+        const std::vector<SkillAuthInfo>& authInfoList, ToolAuthResult& result);
 };
 } // namespace AccessToken
 } // namespace Security
