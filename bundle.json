@@ -31,6 +31,7 @@
       "components": [
         "ability_base",
         "ability_runtime",
+        "asset",
         "audio_framework",
         "ace_engine",
         "bounds_checking_function",

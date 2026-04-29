@@ -27,8 +27,6 @@
 #include "claw_ticket_manager.h"
 #undef private
 
-#include "claw_external_mock.h"
-
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
