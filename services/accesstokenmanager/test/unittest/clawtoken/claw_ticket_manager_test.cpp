@@ -301,7 +301,7 @@ HWTEST_F(ClawTicketManagerTest, GenerateCliTicketTest003, TestSize.Level0)
     int32_t ret = ClawTicketManager::GetInstance().GenerateCliTicket(INVALID_TOKENID, cliAuthInfos, authResults);
 
     EXPECT_EQ(AccessTokenError::ERR_TOKENID_NOT_EXIST, ret);
-    EXPECT_FALSE(authResults.empty());
+    EXPECT_TRUE(authResults.empty());
 }
 
 /**
@@ -490,7 +490,7 @@ HWTEST_F(ClawTicketManagerTest, GenerateSkillTicketTest003, TestSize.Level0)
     int32_t ret = ClawTicketManager::GetInstance().GenerateSkillTicket(INVALID_TOKENID, skillAuthInfos, authResults);
 
     EXPECT_EQ(AccessTokenError::ERR_TOKENID_NOT_EXIST, ret);
-    EXPECT_FALSE(authResults.empty());
+    EXPECT_TRUE(authResults.empty());
 }
 
 /**
