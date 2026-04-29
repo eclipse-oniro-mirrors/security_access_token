@@ -148,11 +148,11 @@ HWTEST_F(CommonTest, PermissionDefineMapTest, TestSize.Level1)
 HWTEST_F(CommonTest, QueryRequredPermissions001, TestSize.Level1)
 {
     std::vector<std::string> requiredPermission = {"ohos.permission.OLD"};
-    EXPECT_TRUE(QueryRequredPermissions("ohos.permission.cli.test", requiredPermission));
+    EXPECT_TRUE(QueryRequredPermissions("ohos.permission.APPROXIMATELY_LOCATION", requiredPermission));
 
     ASSERT_EQ(2, requiredPermission.size());
-    EXPECT_EQ("ohos.permission.test1", requiredPermission[0]);
-    EXPECT_EQ("ohos.permission.test2", requiredPermission[1]);
+    EXPECT_EQ("ohos.permission.LOCATION", requiredPermission[0]);
+    EXPECT_EQ("ohos.permission.APPROXIMATELY_LOCATION", requiredPermission[1]);
 }
 
 /*

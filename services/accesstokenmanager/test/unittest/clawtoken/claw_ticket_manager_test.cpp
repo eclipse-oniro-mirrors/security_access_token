@@ -319,7 +319,8 @@ HWTEST_F(ClawTicketManagerTest, GenerateCliTicketTest005, TestSize.Level0)
     int32_t ret = ClawTicketManager::GetInstance().GenerateCliTicket(tokenId, cliAuthInfos, challenges);
 
     EXPECT_EQ(RET_SUCCESS, ret);
-    EXPECT_TRUE(challenges.empty());
+    ASSERT_EQ(1, static_cast<int32_t>(challenges.size()));
+    EXPECT_FALSE(challenges[0].empty());
 
     DeleteTestHapToken(tokenId);
 }
@@ -343,7 +344,8 @@ HWTEST_F(ClawTicketManagerTest, GenerateCliTicketTest006, TestSize.Level0)
     int32_t ret = ClawTicketManager::GetInstance().GenerateCliTicket(tokenId, cliAuthInfos, challenges);
 
     EXPECT_EQ(RET_SUCCESS, ret);
-    EXPECT_TRUE(challenges.empty());
+    ASSERT_EQ(1, static_cast<int32_t>(challenges.size()));
+    EXPECT_FALSE(challenges[0].empty());
 
     DeleteTestHapToken(tokenId);
 }
@@ -500,7 +502,8 @@ HWTEST_F(ClawTicketManagerTest, GenerateSkillTicketTest005, TestSize.Level0)
     int32_t ret = ClawTicketManager::GetInstance().GenerateSkillTicket(tokenId, skillAuthInfos, challenges);
 
     EXPECT_EQ(RET_SUCCESS, ret);
-    EXPECT_TRUE(challenges.empty());
+    ASSERT_EQ(1, static_cast<int32_t>(challenges.size()));
+    EXPECT_FALSE(challenges[0].empty());
 
     DeleteTestHapToken(tokenId);
 }
@@ -524,7 +527,8 @@ HWTEST_F(ClawTicketManagerTest, GenerateSkillTicketTest006, TestSize.Level0)
     int32_t ret = ClawTicketManager::GetInstance().GenerateSkillTicket(tokenId, skillAuthInfos, challenges);
 
     EXPECT_EQ(RET_SUCCESS, ret);
-    EXPECT_TRUE(challenges.empty());
+    ASSERT_EQ(1, static_cast<int32_t>(challenges.size()));
+    EXPECT_FALSE(challenges[0].empty());
 
     DeleteTestHapToken(tokenId);
 }
