@@ -8847,6 +8847,18 @@
             "deviceTypes": ["2in1"]
         },
         {
+            "name": "ohos.permission.kernel.LOAD_INDEPENDENT_CERTSIGN_LIBRARY_FOR_WEB",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "ENTERPRISE_NORMAL",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1"],
+            "isKernelEffect": true
+        },
+        {
             "name": "ohos.permission.SUBSCRIBE_OUTDOOR_EXPLORATION_SERVICE",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
