@@ -1014,7 +1014,7 @@ static ani_ref CreatePermissionStatusInfoArray(ani_env* env,
 
         // Set array element
         ani_size index = static_cast<ani_size>(i);
-        ani_status status = env->Any_SetByIndex(resultArray, index, aniObject);
+        ani_status status = env->Array_Set(reinterpret_cast<ani_array>(resultArray), index, aniObject);
         if (status != ANI_OK) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Failed to set array element at index %{public}zu.", i);
         }
@@ -1121,7 +1121,7 @@ static ani_ref CreateAniObjectArray(ani_env* env, const std::vector<T>& values, 
         if (item == nullptr) {
             return nullptr;
         }
-        ani_status status = env->Any_SetByIndex(resultArray, static_cast<ani_size>(i), item);
+        ani_status status = env->Array_Set(reinterpret_cast<ani_array>(resultArray), static_cast<ani_size>(i), item);
         if (status != ANI_OK) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Failed to set array item at index %{public}zu.", i);
             return nullptr;
