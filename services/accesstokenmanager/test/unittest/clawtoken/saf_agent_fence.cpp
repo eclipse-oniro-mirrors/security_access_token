@@ -15,29 +15,82 @@
 
 #include "saf_agent_fence.h"
 
+#include <map>
+
+#include "access_token_error.h"
+#include "accesstoken_common_log.h"
+#include "constant_common.h"
+
+namespace OHOS {
+namespace Security {
 namespace {
 int g_generateCounter = 0;
 int g_verifyCounter = 0;
 
-std::vector<SAF::VerifyTicketInfo> g_generateTickets;
-int32_t g_generateRet = 0;
-bool g_generateConfigured = false;
-
 std::vector<int32_t> g_verifyRes;
 int32_t g_verifyRet = 0;
 bool g_verifyConfigured = false;
-} // anonymous namespace
+
+constexpr int32_t MOCK_ABNORMAL_QUERY_RET = -20260426;
+
+const std::map<std::string, std::vector<std::string>> MOCK_CLI_REQUIRED_PERMISSIONS = {
+    {"abnormal:run", {"ohos.permission.CAMERA"}},
+    {"camera:capture", {"ohos.permission.POWER_MANAGER"}},
+    {"duplicate:run", {"ohos.permission.APPROXIMATELY_LOCATION", "ohos.permission.APPROXIMATELY_LOCATION"}},
+    {"empty:run", {}},
+    {"missingmap:run", {"ohos.permission.cli.no_mapping"}},
+    {"mixed:run", {"ohos.permission.APPROXIMATELY_LOCATION", "ohos.permission.CAMERA"}},
+    {"multi:run", {"ohos.permission.APPROXIMATELY_LOCATION", "ohos.permission.POWER_MANAGER"}},
+    {"location:query", {"ohos.permission.APPROXIMATELY_LOCATION"}},
+    {"resolved:run", {"ohos.permission.cli.resolved"}},
+};
+} // namespace
 
 namespace SAF {
+int32_t SafAgentFence::BatchQueryCommandPermission(
+    const std::vector<CommandInfo>& cmds, std::vector<CommandPermissionInfo>& permissionInfos)
+{
+    permissionInfos.clear();
+    permissionInfos.reserve(cmds.size());
+    for (size_t index = 0; index < cmds.size(); ++index) {
+        const auto& cmd = cmds[index];
+        CommandPermissionInfo permissionInfo;
+        permissionInfo.cmd = cmd;
+        if (cmd.cmdName.empty() || cmd.subCmd.empty()) {
+            permissionInfo.queryRet = AccessToken::AccessTokenError::ERR_PARAM_INVALID;
+            LOGE(ATM_DOMAIN, ATM_TAG, "Mock query command permission invalid cmd, index=%{public}zu.", index);
+            permissionInfos.emplace_back(permissionInfo);
+            continue;
+        }
+
+        const std::string key = cmd.cmdName + ":" + cmd.subCmd;
+        if (key == "abnormal:run") {
+            permissionInfo.queryRet = MOCK_ABNORMAL_QUERY_RET;
+            LOGW(ATM_DOMAIN, ATM_TAG,
+                "Mock query command permission abnormal, index=%{public}zu, cmd=%{public}s/%{public}s, "
+                "ret=%{public}d.", index, cmd.cmdName.c_str(), cmd.subCmd.c_str(), permissionInfo.queryRet);
+            permissionInfos.emplace_back(permissionInfo);
+            continue;
+        }
+        auto iter = MOCK_CLI_REQUIRED_PERMISSIONS.find(key);
+        if (iter == MOCK_CLI_REQUIRED_PERMISSIONS.end()) {
+            permissionInfo.queryRet = AccessToken::AccessTokenError::ERR_PERMISSION_NOT_EXIST;
+            LOGE(ATM_DOMAIN, ATM_TAG,
+                "Mock query command permission missing, index=%{public}zu, cmd=%{public}s/%{public}s.",
+                index, cmd.cmdName.c_str(), cmd.subCmd.c_str());
+            permissionInfos.emplace_back(permissionInfo);
+            continue;
+        }
+        permissionInfo.permissions = iter->second;
+        permissionInfo.queryRet = AccessToken::RET_SUCCESS;
+        permissionInfos.emplace_back(permissionInfo);
+    }
+    return AccessToken::RET_SUCCESS;
+}
+
 int32_t SafAgentFence::BatchGenerateTicket(int32_t userId, const std::string& callerId,
     const std::vector<std::string>& messages, std::vector<VerifyTicketInfo>& tickets)
 {
-    if (g_generateConfigured) {
-        tickets = g_generateTickets;
-        g_generateConfigured = false;
-        return g_generateRet;
-    }
-
     for (size_t i = 0; i < messages.size(); ++i) {
         ++g_generateCounter;
         VerifyTicketInfo info;
@@ -68,16 +121,7 @@ int32_t SafAgentFence::BatchVerifyTicket(int32_t userId, const std::string& call
 }
 } // namespace SAF
 
-namespace OHOS {
-namespace Security {
 namespace AccessToken {
-void SetMockGenerateTicketResult(std::vector<SAF::VerifyTicketInfo> tickets, int32_t ret)
-{
-    g_generateTickets = tickets;
-    g_generateRet = ret;
-    g_generateConfigured = true;
-}
-
 void SetMockVerifyTicketResult(std::vector<int32_t> verifyRes, int32_t ret)
 {
     g_verifyRes = verifyRes;

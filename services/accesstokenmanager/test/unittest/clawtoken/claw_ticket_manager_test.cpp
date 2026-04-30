@@ -169,11 +169,11 @@ std::string ExtractChallenge(const std::string& authResult)
 {
     CJsonUnique json = CreateJsonFromString(authResult);
     if (json == nullptr) {
-        return "";
+        return authResult;
     }
     std::string challenge;
     GetStringFromJson(json.get(), "challenge", challenge);
-    return challenge;
+    return challenge.empty() ? authResult : challenge;
 }
 
 PermissionStatus GetPermissionStatus(const std::vector<PermissionStatus>& permList, const std::string& permName)
@@ -205,6 +205,10 @@ void ClawTicketManagerTest::TearDown()
         ClawTicketManager::GetInstance().DeleteClawTicket(challenge);
     }
     testChallenges_.clear();
+    {
+        std::unique_lock<std::shared_mutex> lock(ClawTicketManager::GetInstance().multiLock_);
+        ClawTicketManager::GetInstance().ticketMap_.clear();
+    }
 
     if (testTokenId_ != INVALID_TOKENID) {
         AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(testTokenId_);
@@ -584,7 +588,7 @@ HWTEST_F(ClawTicketManagerTest, VerifyCliClawTicketTest001, TestSize.Level0)
         CreateTestCliAuth("test_cli", {"ohos.permission.CAMERA", "ohos.permission.MICROPHONE"}, {true, false}));
     testChallenges_.push_back(challenge);
 
-    CliInfo cliInfo = {{"test_cli", "test_sub"}};
+    CliInfo cliInfo = {"test_cli", "test_sub"};
     std::vector<PermissionStatus> permList;
     int32_t ret = ClawTicketManager::GetInstance().VerifyCliClawTicket(tokenId, challenge, cliInfo, permList);
 
@@ -605,7 +609,7 @@ HWTEST_F(ClawTicketManagerTest, VerifyCliClawTicketTest002, TestSize.Level0)
     ASSERT_NE(INVALID_TOKENID, tokenId);
 
     std::string challenge = "non_existent_challenge";
-    CliInfo cliInfo = {{"test_cli", "test_sub"}};
+    CliInfo cliInfo = {"test_cli", "test_sub"};
     std::vector<PermissionStatus> permList;
     int32_t ret = ClawTicketManager::GetInstance().VerifyCliClawTicket(tokenId, challenge, cliInfo, permList);
 
@@ -630,7 +634,7 @@ HWTEST_F(ClawTicketManagerTest, VerifyCliClawTicketTest003, TestSize.Level0)
         CreateTestCliAuth("test_cli", {"ohos.permission.CAMERA", "ohos.permission.MICROPHONE"}, {true, true}));
     testChallenges_.push_back(challenge);
 
-    CliInfo cliInfo = {{"test_cli", "test_sub"}};
+    CliInfo cliInfo = {"test_cli", "test_sub"};
     std::vector<PermissionStatus> permList;
     int32_t ret = ClawTicketManager::GetInstance().VerifyCliClawTicket(tokenId, challenge, cliInfo, permList);
 
@@ -658,7 +662,7 @@ HWTEST_F(ClawTicketManagerTest, VerifyCliClawTicketTest004, TestSize.Level0)
         CreateTestCliAuth("test_cli", {"ohos.permission.CAMERA", "ohos.permission.MICROPHONE"}, {false, false}));
     testChallenges_.push_back(challenge);
 
-    CliInfo cliInfo = {{"test_cli", "test_sub"}};
+    CliInfo cliInfo = {"test_cli", "test_sub"};
     std::vector<PermissionStatus> permList;
     int32_t ret = ClawTicketManager::GetInstance().VerifyCliClawTicket(tokenId, challenge, cliInfo, permList);
 
@@ -686,7 +690,7 @@ HWTEST_F(ClawTicketManagerTest, VerifyCliClawTicketTest005, TestSize.Level0)
         {"ohos.permission.CAMERA", "ohos.permission.MICROPHONE", "ohos.permission.LOCATION"}, {true, false, true}));
     testChallenges_.push_back(challenge);
 
-    CliInfo cliInfo = {{"test_cli", "test_sub"}};
+    CliInfo cliInfo = {"test_cli", "test_sub"};
     std::vector<PermissionStatus> permList;
     int32_t ret = ClawTicketManager::GetInstance().VerifyCliClawTicket(tokenId, challenge, cliInfo, permList);
 
@@ -711,7 +715,7 @@ HWTEST_F(ClawTicketManagerTest, VerifyCliClawTicketTest006, TestSize.Level0)
     ASSERT_NE(INVALID_TOKENID, tokenId);
 
     std::string challenge = "";
-    CliInfo cliInfo = {{"test_cli", "test_sub"}};
+    CliInfo cliInfo = {"test_cli", "test_sub"};
     std::vector<PermissionStatus> permList;
     int32_t ret = ClawTicketManager::GetInstance().VerifyCliClawTicket(tokenId, challenge, cliInfo, permList);
 
@@ -736,7 +740,7 @@ HWTEST_F(ClawTicketManagerTest, VerifyCliClawTicketTest007, TestSize.Level0)
         CreateTestCliAuth("test_cli", {"ohos.permission.CAMERA", "ohos.permission.MICROPHONE"}, {true, false}));
     testChallenges_.push_back(challenge);
 
-    CliInfo cliInfo = {{"test_cli", "test_sub"}};
+    CliInfo cliInfo = {"test_cli", "test_sub"};
     std::vector<PermissionStatus> permList;
     int32_t ret = ClawTicketManager::GetInstance().VerifyCliClawTicket(tokenId, challenge, cliInfo, permList);
 
@@ -764,7 +768,7 @@ HWTEST_F(ClawTicketManagerTest, VerifyCliClawTicketTest008, TestSize.Level0)
 
     SetMockVerifyTicketResult({1}, RET_SUCCESS);
 
-    CliInfo cliInfo = {{"test_cli", "test_sub"}};
+    CliInfo cliInfo = {"test_cli", "test_sub"};
     std::vector<PermissionStatus> permList;
     int32_t ret = ClawTicketManager::GetInstance().VerifyCliClawTicket(tokenId, challenge, cliInfo, permList);
 
@@ -795,7 +799,7 @@ HWTEST_F(ClawTicketManagerTest, VerifyCliClawTicketTest009, TestSize.Level0)
 
     SetMockVerifyTicketResult({}, ERR_INVALID_OPERATION);
 
-    CliInfo cliInfo = {{"test_cli", "test_sub"}};
+    CliInfo cliInfo = {"test_cli", "test_sub"};
     std::vector<PermissionStatus> permList;
     int32_t ret = ClawTicketManager::GetInstance().VerifyCliClawTicket(tokenId, challenge, cliInfo, permList);
 
@@ -1066,7 +1070,7 @@ HWTEST_F(ClawTicketManagerTest, DeleteClawTicketTest001, TestSize.Level0)
     EXPECT_EQ(RET_SUCCESS, ret);
 
     std::vector<PermissionStatus> permList;
-    CliInfo cliInfo = {{"test_cli", "test_sub"}};
+    CliInfo cliInfo = {"test_cli", "test_sub"};
     ret = ClawTicketManager::GetInstance().VerifyCliClawTicket(tokenId, challenge, cliInfo, permList);
     EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
 
@@ -1130,7 +1134,7 @@ HWTEST_F(ClawTicketManagerTest, DeleteClawTicketByTokenIdTest001, TestSize.Level
     testChallenges_.clear();
 
     std::vector<PermissionStatus> permList;
-    CliInfo cliInfo = {{"test_cli", "test_sub"}};
+    CliInfo cliInfo = {"test_cli", "test_sub"};
     int32_t ret = ClawTicketManager::GetInstance().VerifyCliClawTicket(tokenId, challenge, cliInfo, permList);
     EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
 
@@ -1163,7 +1167,7 @@ HWTEST_F(ClawTicketManagerTest, OnAppStoppedTest001, TestSize.Level0)
     observer.OnAppStopped(appStateData);
 
     std::vector<PermissionStatus> permList;
-    CliInfo cliInfo = {{"test_cli", "test_sub"}};
+    CliInfo cliInfo = {"test_cli", "test_sub"};
     int32_t ret = ClawTicketManager::GetInstance().VerifyCliClawTicket(tokenId, challenge, cliInfo, permList);
     EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
 
@@ -1199,7 +1203,7 @@ HWTEST_F(ClawTicketManagerTest, OnAppStoppedTest002, TestSize.Level0)
     observer.OnAppStopped(appStateData);
 
     std::vector<PermissionStatus> permList;
-    CliInfo cliInfo = {{"test_cli", "test_sub"}};
+    CliInfo cliInfo = {"test_cli", "test_sub"};
 
     int32_t ret = ClawTicketManager::GetInstance().VerifyCliClawTicket(tokenId1, challenge1, cliInfo, permList);
     EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
@@ -1236,7 +1240,7 @@ HWTEST_F(ClawTicketManagerTest, OnAppStoppedTest003, TestSize.Level0)
     observer.OnAppStopped(appStateData);
 
     std::vector<PermissionStatus> permList;
-    CliInfo cliInfo = {{"test_cli", "test_sub"}};
+    CliInfo cliInfo = {"test_cli", "test_sub"};
     int32_t ret = ClawTicketManager::GetInstance().VerifyCliClawTicket(tokenId, challenge, cliInfo, permList);
     EXPECT_EQ(RET_SUCCESS, ret);
 
@@ -1268,7 +1272,7 @@ HWTEST_F(ClawTicketManagerTest, OnAppStoppedTest004, TestSize.Level0)
     observer.OnAppStopped(appStateData);
 
     std::vector<PermissionStatus> permList;
-    CliInfo cliInfo = {{"test_cli", "test_sub"}};
+    CliInfo cliInfo = {"test_cli", "test_sub"};
     int32_t ret = ClawTicketManager::GetInstance().VerifyCliClawTicket(tokenId, challenge, cliInfo, permList);
     EXPECT_EQ(RET_SUCCESS, ret);
 

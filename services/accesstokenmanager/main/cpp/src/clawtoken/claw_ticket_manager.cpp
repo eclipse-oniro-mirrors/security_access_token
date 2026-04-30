@@ -38,7 +38,8 @@ int32_t GetUserIdByTokenId(AccessTokenID callerTokenId)
 {
     auto hapInfo = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(callerTokenId);
     if (hapInfo == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Get userId by tokenId failed, hapInfo is nullptr, tokenId: %u", callerTokenId);
+        LOGE(ATM_DOMAIN, ATM_TAG,
+            "Get userId by tokenId failed, hapInfo is nullptr, tokenId: %{public}u", callerTokenId);
         return -1;
     }
     return hapInfo->GetUserID();
@@ -111,18 +112,6 @@ std::string SerializeSkillAuthInfo(const SkillAuthInfo& skillAuth)
     }
 
     return PackJsonToString(skillObj);
-}
-
-std::string SerializeVerifyTicketInfo(const SAF::VerifyTicketInfo& ticketInfo)
-{
-    CJsonUnique root = CreateJson();
-    if (root == nullptr) {
-        return "";
-    }
-    (void)AddStringToJson(root, "challenge", ticketInfo.challenge);
-    (void)AddStringToJson(root, "ticket", ticketInfo.ticket);
-    (void)AddStringToJson(root, "message", ticketInfo.message);
-    return PackJsonToString(root);
 }
 
 CliAuthInfo DeserializeCliAuthInfo(const std::string& json)
@@ -280,7 +269,7 @@ void ClawTicketAppStateObserver::OnAppStopped(const AppStateData &appStateData)
 {
     if (appStateData.state == static_cast<int32_t>(ApplicationState::APP_STATE_TERMINATED)) {
         AccessTokenID tokenId = appStateData.accessTokenId;
-        LOGI(ATM_DOMAIN, ATM_TAG, "ClawTicket TokenID:%u died.", tokenId);
+        LOGI(ATM_DOMAIN, ATM_TAG, "ClawTicket TokenID:%{public}u died.", tokenId);
         ClawTicketManager::GetInstance().DeleteClawTicketByCallerTokenId(tokenId);
     }
 }
@@ -323,7 +312,7 @@ int32_t ClawTicketManager::GenerateCliTicket(AccessTokenID callerTokenId,
         ticket.callerTokenId = callerTokenId;
         ticket.message = tickets[i].message;
         ticket.ticket = tickets[i].ticket;
-        authResults.emplace_back(SerializeVerifyTicketInfo(tickets[i]));
+        authResults.emplace_back(tickets[i].challenge);
         ticketMap_[tickets[i].challenge] = ticket;
     }
 
@@ -333,6 +322,7 @@ int32_t ClawTicketManager::GenerateCliTicket(AccessTokenID callerTokenId,
 int32_t ClawTicketManager::GenerateSkillTicket(AccessTokenID callerTokenId,
     const std::vector<SkillAuthInfo>& skillAuthInfos, std::vector<std::string>& authResults)
 {
+    LOGI(ATM_DOMAIN, ATM_TAG, "callerTokenId=%{public}u", callerTokenId);
     if (callerTokenId == INVALID_TOKENID) {
         return AccessTokenError::ERR_TOKENID_NOT_EXIST;
     }
@@ -362,8 +352,9 @@ int32_t ClawTicketManager::GenerateSkillTicket(AccessTokenID callerTokenId,
         ticket.callerTokenId = callerTokenId;
         ticket.message = tickets[i].message;
         ticket.ticket = tickets[i].ticket;
-        authResults.emplace_back(SerializeVerifyTicketInfo(tickets[i]));
+        authResults.emplace_back(tickets[i].challenge);
         ticketMap_[tickets[i].challenge] = ticket;
+        LOGI(ATM_DOMAIN, ATM_TAG, "challenge=%{private}s", tickets[i].challenge.c_str());
     }
 
     return RET_SUCCESS;
@@ -437,18 +428,7 @@ int32_t ClawTicketManager::VerifySkillClawTicket(AccessTokenID hostTokenId, cons
 
 #ifdef DENABLE_TICKET
     if (challenge.empty()) {
-        AppExecFwk::SkillManager skillManager;
-        AppExecFwk::SkillInfo appSkillInfo;
-        int32_t ret = skillManager.GetSkillInfo(
-            skillInfo.bundleName, skillInfo.moduleName, skillInfo.skillName, 0, 0, appSkillInfo);
-        std::vector<std::string> queriedPermissions = appSkillInfo.requestPermissions;
-
-        for (const auto& perm : queriedPermissions) {
-            PermissionStatus status;
-            status.permissionName = perm;
-            status.grantStatus = PERMISSION_GRANTED;
-            permList.emplace_back(status);
-        }
+        (void)skillInfo;
         return RET_SUCCESS;
     }
 #endif
@@ -514,7 +494,7 @@ void ClawTicketManager::DeleteClawTicketByCallerTokenId(AccessTokenID callerToke
     std::vector<std::string> challengesToDelete;
     for (const auto& entry : ticketMap_) {
         if (entry.second.callerTokenId == callerTokenId) {
-            challengesToDelete.push_back(entry.first);
+            challengesToDelete.emplace_back(entry.first);
         }
     }
 
@@ -522,7 +502,7 @@ void ClawTicketManager::DeleteClawTicketByCallerTokenId(AccessTokenID callerToke
         ticketMap_.erase(challenge);
     }
 
-    LOGI(ATM_DOMAIN, ATM_TAG, "Deleted %{public}zu tickets for callerTokenId=%u", challengesToDelete.size(),
+    LOGI(ATM_DOMAIN, ATM_TAG, "Deleted %{public}zu tickets for callerTokenId=%{public}u", challengesToDelete.size(),
         callerTokenId);
 }
 } // namespace AccessToken

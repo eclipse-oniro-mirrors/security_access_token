@@ -34,6 +34,7 @@ uint64_t g_selfTokenId = 0;
 uint64_t g_rootCallerTokenId = 0;
 uint64_t g_manageToolCallerTokenId = 0;
 uint64_t g_shellToken = 0;
+static const int32_t AIMGR_UID = 3092;
 
 CliInfo BuildCliInfo()
 {
@@ -68,7 +69,7 @@ int32_t InitCliToolTokenWithEmptyChallenge(AccessTokenID hostTokenId, const CliI
     AccessTokenID callerTokenId = GetSelfTokenID();
     uint32_t callerUid = getuid();
     SwitchToRootCaller();
-    EXPECT_EQ(0, setuid(0));
+    EXPECT_EQ(0, setuid(AIMGR_UID));
     CliInitInfo initInfo = {
         .hostTokenId = hostTokenId,
         .challenge = "",
@@ -86,7 +87,7 @@ int32_t InitSkillToolTokenWithEmptyChallenge(AccessTokenID hostTokenId, const Sk
     AccessTokenID callerTokenId = GetSelfTokenID();
     uint32_t callerUid = getuid();
     SwitchToRootCaller();
-    EXPECT_EQ(0, setuid(0));
+    EXPECT_EQ(0, setuid(AIMGR_UID));
     SkillInitInfo initInfo = {
         .hostTokenId = hostTokenId,
         .challenge = "",
