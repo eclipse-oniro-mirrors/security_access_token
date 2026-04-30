@@ -523,7 +523,7 @@ int32_t PermissionRecordManager::NormalizeRecordTokenId(AccessTokenID inputToken
 {
     outputTokenId = inputTokenId;
     if (!TokenIDAttributes::IsToolTokenId(inputTokenId)) {
-        LOGI(ATM_DOMAIN, PRI_TAG,
+        LOGD(ATM_DOMAIN, PRI_TAG,
             "Token is not a tool token, inputTokenId=%{public}u, tokenType=%{public}u.",
             inputTokenId, static_cast<uint32_t>(TokenIDAttributes::GetTokenIdTypeEnum(inputTokenId)));
         return RET_SUCCESS;

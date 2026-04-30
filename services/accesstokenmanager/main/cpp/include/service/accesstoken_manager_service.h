@@ -231,6 +231,7 @@ private:
 #endif
     static const int32_t ROOT_UID = 0;
     static const int32_t ACCESSTOKEN_UID = 3020;
+    static const int32_t AIMGR_UID = 3092;
 
     std::mutex tokenSyncIdMutex_;
     AccessTokenID tokenSyncId_ = 0;

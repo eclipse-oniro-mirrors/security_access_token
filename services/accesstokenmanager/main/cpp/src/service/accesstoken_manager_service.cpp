@@ -27,6 +27,8 @@
 #include "accesstoken_dfx_define.h"
 #include "claw_permission_info.h"
 #include "claw_permission_decision_engine.h"
+#include "claw_permission_metadata_provider.h"
+#include "claw_permission_status_helper.h"
 #include "claw_ticket_manager.h"
 #include "accesstoken_id_manager.h"
 #include "constant_common.h"
@@ -255,6 +257,56 @@ bool IsSkillAuthInfoValid(const SkillAuthInfo& info)
 {
     return info.permissionNames.size() == info.authorizationResults.size();
 }
+
+void AppendResolvedPermission(CliAuthInfo& authInfo, const std::string& permissionName, bool authorizationResult)
+{
+    for (size_t index = 0; index < authInfo.permissionNames.size(); ++index) {
+        if (authInfo.permissionNames[index] != permissionName) {
+            continue;
+        }
+        authInfo.authorizationResults[index] = authInfo.authorizationResults[index] || authorizationResult;
+        return;
+    }
+    authInfo.permissionNames.emplace_back(permissionName);
+    authInfo.authorizationResults.emplace_back(authorizationResult);
+}
+
+int32_t BuildCliTicketAuthInfos(AccessTokenID hostTokenID, const std::vector<CliAuthInfoParcel>& authInfoList,
+    std::vector<CliAuthInfo>& authInfos)
+{
+    PermissionStatusMap permissionStatusMap;
+    int32_t ret = BuildPermissionStatusMap(hostTokenID, permissionStatusMap);
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
+
+    authInfos.clear();
+    authInfos.reserve(authInfoList.size());
+    for (const auto& authInfoParcel : authInfoList) {
+        CliAuthInfo resolvedAuthInfo;
+        resolvedAuthInfo.cliInfo = authInfoParcel.info.cliInfo;
+        for (size_t index = 0; index < authInfoParcel.info.permissionNames.size(); ++index) {
+            std::vector<std::string> usedPermissions;
+            ret = ClawPermissionMetadataProvider::GetInstance().GetUsedPermissionsByCliPermission(
+                authInfoParcel.info.permissionNames[index], usedPermissions);
+            if (ret != RET_SUCCESS) {
+                LOGE(ATM_DOMAIN, ATM_TAG,
+                    "Build cli ticket auth info failed, cli=%{public}s/%{public}s, permission=%{public}s, "
+                    "ret=%{public}d.",
+                    authInfoParcel.info.cliInfo.cliName.c_str(), authInfoParcel.info.cliInfo.subCliName.c_str(),
+                    authInfoParcel.info.permissionNames[index].c_str(), ret);
+                return ret;
+            }
+            for (const auto& usedPermission : usedPermissions) {
+                AppendResolvedPermission(resolvedAuthInfo, usedPermission,
+                    ResolveCliGrantedPermission(permissionStatusMap, usedPermission,
+                        authInfoParcel.info.authorizationResults[index]));
+            }
+        }
+        authInfos.emplace_back(std::move(resolvedAuthInfo));
+    }
+    return RET_SUCCESS;
+}
 }
 
 const bool REGISTER_RESULT =
@@ -379,7 +431,7 @@ int32_t AccessTokenManagerService::InitCliToken(const CliInitInfoParcel& initInf
     std::vector<PermissionWithValueIdl>& kernelPermIdlList)
 {
     kernelPermIdlList.clear();
-    if (IPCSkeleton::GetCallingUid() != ROOT_UID) {
+    if (IPCSkeleton::GetCallingUid() != AIMGR_UID) {
         return AccessTokenError::ERR_PERMISSION_DENIED;
     }
     AccessTokenIDEx tokenIdEx = {0};
@@ -402,7 +454,7 @@ int32_t AccessTokenManagerService::InitSkillToken(const SkillInitInfoParcel& ini
     std::vector<PermissionWithValueIdl>& kernelPermIdlList)
 {
     kernelPermIdlList.clear();
-    if (IPCSkeleton::GetCallingUid() != ROOT_UID) {
+    if (IPCSkeleton::GetCallingUid() != AIMGR_UID) {
         return AccessTokenError::ERR_PERMISSION_DENIED;
     }
     AccessTokenIDEx tokenIdEx = {0};
@@ -2484,9 +2536,9 @@ int32_t AccessTokenManagerService::GenerateCliAuthResult(
     }
     resultParcel.result.authResults.clear();
     std::vector<CliAuthInfo> authInfos;
-    authInfos.reserve(authInfoList.size());
-    for (size_t i = 0; i < authInfoList.size(); ++i) {
-        authInfos.emplace_back(authInfoList[i].info);
+    ret = BuildCliTicketAuthInfos(hostTokenID, authInfoList, authInfos);
+    if (ret != RET_SUCCESS) {
+        return ret;
     }
     ret = ClawTicketManager::GetInstance().GenerateCliTicket(hostTokenID, authInfos, resultParcel.result.authResults);
     LOGI(ATM_DOMAIN, ATM_TAG,

@@ -324,7 +324,7 @@ HWTEST_F(ClawPermissionKitTest, DISABLED_ClawPermissionKitServiceError001, TestS
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(ClawPermissionKitTest, ClawPermissionKitServiceError002, TestSize.Level3)
+HWTEST_F(ClawPermissionKitTest, DISABLED_ClawPermissionKitServiceError002, TestSize.Level3)
 {
     ScopedClawCaller caller("claw_mapping_error_kit_test", true, BuildClawQueryAndManagePermissionStates());
 

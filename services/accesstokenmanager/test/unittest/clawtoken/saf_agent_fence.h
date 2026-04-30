@@ -20,7 +20,20 @@
 #include <string>
 #include <vector>
 
+namespace OHOS {
+namespace Security {
 namespace SAF {
+struct CommandInfo {
+    std::string cmdName;
+    std::string subCmd;
+};
+
+struct CommandPermissionInfo {
+    CommandInfo cmd;
+    std::vector<std::string> permissions;
+    int32_t queryRet = 0;
+};
+
 struct VerifyTicketInfo {
     std::string message;
     std::string challenge;
@@ -32,6 +45,9 @@ public:
     SafAgentFence() = default;
     ~SafAgentFence() = default;
 
+    int32_t BatchQueryCommandPermission(
+        const std::vector<CommandInfo>& cmds, std::vector<CommandPermissionInfo>& permissionInfos);
+
     int32_t BatchGenerateTicket(int32_t userId, const std::string& callerId,
         const std::vector<std::string>& messages, std::vector<VerifyTicketInfo>& tickets);
 
@@ -40,15 +56,11 @@ public:
 };
 } // namespace SAF
 
-namespace OHOS {
-namespace Security {
 namespace AccessToken {
-
-void SetMockGenerateTicketResult(std::vector<SAF::VerifyTicketInfo> tickets, int32_t ret);
 void SetMockVerifyTicketResult(std::vector<int32_t> verifyRes, int32_t ret);
 void ResetMockCounter();
-
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
+
 #endif // MOCK_SAF_AGENT_FENCE_H

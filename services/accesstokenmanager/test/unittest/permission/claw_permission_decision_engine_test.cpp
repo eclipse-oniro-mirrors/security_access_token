@@ -358,7 +358,7 @@ HWTEST_F(ClawPermissionDecisionEngineTest, BuildCliPermissionDialogInfo008, Test
 
 /**
  * @tc.name: BuildSkillPermissionDialogInfo001
- * @tc.desc: Skill permissions not declared by claw should not trigger permission dialog.
+ * @tc.desc: Skill dialog query should return empty result when no skill metadata is provided.
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -377,10 +377,8 @@ HWTEST_F(ClawPermissionDecisionEngineTest, BuildSkillPermissionDialogInfo001, Te
         tokenId_, skillInfoList, result));
     ASSERT_EQ(1, static_cast<int32_t>(result.detailList.size()));
     EXPECT_FALSE(result.detailList[0].needPermissionDialog);
-    ASSERT_EQ(1, static_cast<int32_t>(result.detailList[0].permissionNameList.size()));
-    EXPECT_EQ("ohos.permission.CAMERA", result.detailList[0].permissionNameList[0]);
-    ASSERT_EQ(1, static_cast<int32_t>(result.detailList[0].statusList.size()));
-    EXPECT_EQ(PermissionDecisionStatus::NO_DIALOG_NOT_DECLARED, result.detailList[0].statusList[0]);
+    EXPECT_TRUE(result.detailList[0].permissionNameList.empty());
+    EXPECT_TRUE(result.detailList[0].statusList.empty());
 }
 
 /**
@@ -445,7 +443,7 @@ HWTEST_F(ClawPermissionDecisionEngineTest, BuildSkillPermissionDialogInfo002_001
 
 /**
  * @tc.name: BuildSkillPermissionDialogInfo003
- * @tc.desc: Skill permission denied by user should not trigger permission dialog.
+ * @tc.desc: Skill dialog query should ignore local grant state when skill metadata is empty.
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -469,13 +467,13 @@ HWTEST_F(ClawPermissionDecisionEngineTest, BuildSkillPermissionDialogInfo003, Te
         tokenId_, skillInfoList, result));
     ASSERT_EQ(1, static_cast<int32_t>(result.detailList.size()));
     EXPECT_FALSE(result.detailList[0].needPermissionDialog);
-    ASSERT_EQ(1, static_cast<int32_t>(result.detailList[0].statusList.size()));
-    EXPECT_EQ(PermissionDecisionStatus::NO_DIALOG_DENIED, result.detailList[0].statusList[0]);
+    EXPECT_TRUE(result.detailList[0].permissionNameList.empty());
+    EXPECT_TRUE(result.detailList[0].statusList.empty());
 }
 
 /**
  * @tc.name: BuildSkillPermissionDialogInfo004
- * @tc.desc: Skill permission restricted by system policy should not trigger permission dialog.
+ * @tc.desc: Skill dialog query should ignore restricted local permissions when skill metadata is empty.
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -499,13 +497,13 @@ HWTEST_F(ClawPermissionDecisionEngineTest, BuildSkillPermissionDialogInfo004, Te
         tokenId_, skillInfoList, result));
     ASSERT_EQ(1, static_cast<int32_t>(result.detailList.size()));
     EXPECT_FALSE(result.detailList[0].needPermissionDialog);
-    ASSERT_EQ(1, static_cast<int32_t>(result.detailList[0].statusList.size()));
-    EXPECT_EQ(PermissionDecisionStatus::NO_DIALOG_RESTRICTED, result.detailList[0].statusList[0]);
+    EXPECT_TRUE(result.detailList[0].permissionNameList.empty());
+    EXPECT_TRUE(result.detailList[0].statusList.empty());
 }
 
 /**
  * @tc.name: BuildSkillPermissionDialogInfo005
- * @tc.desc: Skill permission declared but not granted and not fixed should trigger permission dialog.
+ * @tc.desc: Skill dialog query should not trigger dialog when skill metadata is empty.
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -528,14 +526,14 @@ HWTEST_F(ClawPermissionDecisionEngineTest, BuildSkillPermissionDialogInfo005, Te
     ASSERT_EQ(RET_SUCCESS, ClawPermissionDecisionEngine::GetInstance().BuildSkillPermissionDialogInfo(
         tokenId_, skillInfoList, result));
     ASSERT_EQ(1, static_cast<int32_t>(result.detailList.size()));
-    EXPECT_TRUE(result.detailList[0].needPermissionDialog);
+    EXPECT_FALSE(result.detailList[0].needPermissionDialog);
     EXPECT_TRUE(result.detailList[0].permissionNameList.empty());
     EXPECT_TRUE(result.detailList[0].statusList.empty());
 }
 
 /**
  * @tc.name: BuildSkillPermissionDialogInfo006
- * @tc.desc: Skill permission granted this time should trigger permission dialog again.
+ * @tc.desc: Skill dialog query should ignore one-time grant state when skill metadata is empty.
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -558,14 +556,14 @@ HWTEST_F(ClawPermissionDecisionEngineTest, BuildSkillPermissionDialogInfo006, Te
     ASSERT_EQ(RET_SUCCESS, ClawPermissionDecisionEngine::GetInstance().BuildSkillPermissionDialogInfo(
         tokenId_, skillInfoList, result));
     ASSERT_EQ(1, static_cast<int32_t>(result.detailList.size()));
-    EXPECT_TRUE(result.detailList[0].needPermissionDialog);
+    EXPECT_FALSE(result.detailList[0].needPermissionDialog);
     EXPECT_TRUE(result.detailList[0].permissionNameList.empty());
     EXPECT_TRUE(result.detailList[0].statusList.empty());
 }
 
 /**
  * @tc.name: BuildSkillPermissionDialogInfo007
- * @tc.desc: Granted permission without USER_SET should not be treated as persistent grant.
+ * @tc.desc: Skill dialog query should ignore default grant state when skill metadata is empty.
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -588,14 +586,14 @@ HWTEST_F(ClawPermissionDecisionEngineTest, BuildSkillPermissionDialogInfo007, Te
     ASSERT_EQ(RET_SUCCESS, ClawPermissionDecisionEngine::GetInstance().BuildSkillPermissionDialogInfo(
         tokenId_, skillInfoList, result));
     ASSERT_EQ(1, static_cast<int32_t>(result.detailList.size()));
-    EXPECT_TRUE(result.detailList[0].needPermissionDialog);
+    EXPECT_FALSE(result.detailList[0].needPermissionDialog);
     EXPECT_TRUE(result.detailList[0].permissionNameList.empty());
     EXPECT_TRUE(result.detailList[0].statusList.empty());
 }
 
 /**
  * @tc.name: BuildSkillPermissions001
- * @tc.desc: System API skill result should return usedPermissions and one-to-one statusList.
+ * @tc.desc: System API skill result should be empty when skill metadata is not provided.
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -618,15 +616,13 @@ HWTEST_F(ClawPermissionDecisionEngineTest, BuildSkillPermissions001, TestSize.Le
     ASSERT_EQ(RET_SUCCESS, ClawPermissionDecisionEngine::GetInstance().BuildSkillPermissions(
         tokenId_, skillInfoList, result));
     ASSERT_EQ(1, static_cast<int32_t>(result.permList.size()));
-    ASSERT_EQ(1, static_cast<int32_t>(result.permList[0].usedPermissions.size()));
-    ASSERT_EQ(1, static_cast<int32_t>(result.permList[0].statusList.size()));
-    EXPECT_EQ("ohos.permission.CAMERA", result.permList[0].usedPermissions[0]);
-    EXPECT_EQ(PermissionDecisionStatus::NO_DIALOG_GRANTED, result.permList[0].statusList[0]);
+    EXPECT_TRUE(result.permList[0].usedPermissions.empty());
+    EXPECT_TRUE(result.permList[0].statusList.empty());
 }
 
 /**
  * @tc.name: BuildSkillPermissions002
- * @tc.desc: System API skill result should treat permission granted this time as needing dialog.
+ * @tc.desc: System API skill result should ignore one-time grant state when skill metadata is empty.
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -649,13 +645,13 @@ HWTEST_F(ClawPermissionDecisionEngineTest, BuildSkillPermissions002, TestSize.Le
     ASSERT_EQ(RET_SUCCESS, ClawPermissionDecisionEngine::GetInstance().BuildSkillPermissions(
         tokenId_, skillInfoList, result));
     ASSERT_EQ(1, static_cast<int32_t>(result.permList.size()));
-    ASSERT_EQ(1, static_cast<int32_t>(result.permList[0].statusList.size()));
-    EXPECT_EQ(PermissionDecisionStatus::NEED_PERMISSION_DIALOG, result.permList[0].statusList[0]);
+    EXPECT_TRUE(result.permList[0].usedPermissions.empty());
+    EXPECT_TRUE(result.permList[0].statusList.empty());
 }
 
 /**
  * @tc.name: BuildSkillPermissions003
- * @tc.desc: System API skill result should require USER_SET for persistent grant.
+ * @tc.desc: System API skill result should ignore default grant state when skill metadata is empty.
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -678,13 +674,13 @@ HWTEST_F(ClawPermissionDecisionEngineTest, BuildSkillPermissions003, TestSize.Le
     ASSERT_EQ(RET_SUCCESS, ClawPermissionDecisionEngine::GetInstance().BuildSkillPermissions(
         tokenId_, skillInfoList, result));
     ASSERT_EQ(1, static_cast<int32_t>(result.permList.size()));
-    ASSERT_EQ(1, static_cast<int32_t>(result.permList[0].statusList.size()));
-    EXPECT_EQ(PermissionDecisionStatus::NEED_PERMISSION_DIALOG, result.permList[0].statusList[0]);
+    EXPECT_TRUE(result.permList[0].usedPermissions.empty());
+    EXPECT_TRUE(result.permList[0].statusList.empty());
 }
 
 /**
  * @tc.name: BuildSkillPermissions004
- * @tc.desc: System API skill result should keep multiple skill permissions in metadata order.
+ * @tc.desc: System API skill result should stay empty even when local permissions are present.
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -712,12 +708,8 @@ HWTEST_F(ClawPermissionDecisionEngineTest, BuildSkillPermissions004, TestSize.Le
     ASSERT_EQ(RET_SUCCESS, ClawPermissionDecisionEngine::GetInstance().BuildSkillPermissions(
         tokenId_, skillInfoList, result));
     ASSERT_EQ(1, static_cast<int32_t>(result.permList.size()));
-    ASSERT_EQ(2, static_cast<int32_t>(result.permList[0].usedPermissions.size()));
-    ASSERT_EQ(2, static_cast<int32_t>(result.permList[0].statusList.size()));
-    EXPECT_EQ("ohos.permission.LOCATION", result.permList[0].usedPermissions[0]);
-    EXPECT_EQ(PermissionDecisionStatus::NO_DIALOG_GRANTED, result.permList[0].statusList[0]);
-    EXPECT_EQ("ohos.permission.CAMERA", result.permList[0].usedPermissions[1]);
-    EXPECT_EQ(PermissionDecisionStatus::NEED_PERMISSION_DIALOG, result.permList[0].statusList[1]);
+    EXPECT_TRUE(result.permList[0].usedPermissions.empty());
+    EXPECT_TRUE(result.permList[0].statusList.empty());
 }
 
 /**
@@ -1055,9 +1047,10 @@ HWTEST_F(ClawPermissionDecisionEngineTest, ClawPermissionMetadataProvider002, Te
     ASSERT_EQ(1, static_cast<int32_t>(cliResult.permList[0].requiredCliPermissions.size()));
     EXPECT_EQ("ohos.permission.cli.no_mapping",
         cliResult.permList[0].requiredCliPermissions[0].usedPermissions[0]);
-    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_NOT_EXIST,
+    EXPECT_EQ(RET_SUCCESS,
         ClawPermissionMetadataProvider::GetInstance().GetSkillUsedPermissions(
             {"unknownSkill", "com.ohos.claw.demo", "entry"}, permissions));
+    EXPECT_TRUE(permissions.empty());
 }
 
 /**

@@ -18,6 +18,7 @@
 #include "access_token_error.h"
 #include "accesstoken_common_log.h"
 #include "claw_permission_metadata_provider.h"
+#include "claw_permission_status_helper.h"
 #include "constant_common.h"
 #include "permission_manager.h"
 
@@ -35,29 +36,6 @@ void AppendDialogDetailStatus(
     }
     detail.permissionNameList.emplace_back(permissionName);
     detail.statusList.emplace_back(status);
-}
-
-bool IsUserDeniedFlag(uint32_t flag)
-{
-    return (flag & PERMISSION_USER_FIXED) != 0;
-}
-
-bool IsRestrictedFlag(uint32_t flag)
-{
-    static constexpr uint32_t RESTRICTED_FLAGS = PERMISSION_SYSTEM_FIXED |
-        PERMISSION_FIXED_FOR_SECURITY_POLICY | PERMISSION_FIXED_BY_ADMIN_POLICY;
-    return (flag & RESTRICTED_FLAGS) != 0;
-}
-
-bool IsAllowThisTimeFlag(uint32_t flag)
-{
-    return (flag & PERMISSION_ALLOW_THIS_TIME) != 0;
-}
-
-bool IsGrantedWithoutDialog(const PermissionStatus& status)
-{
-    return (status.grantStatus == PERMISSION_GRANTED) && !IsAllowThisTimeFlag(status.grantFlag) &&
-        (status.grantFlag != PERMISSION_DEFAULT_FLAG);
 }
 
 bool ShouldReturnDialogDetailStatus(PermissionDecisionStatus status)
@@ -175,31 +153,7 @@ ClawPermissionDecisionEngine::DecisionContext::DecisionContext(AccessTokenID cla
 
 int32_t ClawPermissionDecisionEngine::DecisionContext::Init()
 {
-    std::vector<PermissionStatus> userGrantPermissions;
-    int32_t ret = PermissionManager::GetInstance().GetReqPermissions(clawTokenId_, userGrantPermissions, false);
-    if (ret != RET_SUCCESS) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Claw decision context init failed, tokenId=%{public}u, user ret=%{public}d.",
-            clawTokenId_, ret);
-        return ret;
-    }
-
-    std::vector<PermissionStatus> systemGrantPermissions;
-    ret = PermissionManager::GetInstance().GetReqPermissions(clawTokenId_, systemGrantPermissions, true);
-    if (ret != RET_SUCCESS) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Claw decision context init failed, tokenId=%{public}u, system ret=%{public}d.",
-            clawTokenId_, ret);
-        return ret;
-    }
-
-    permissionStatusMap_.clear();
-    permissionStatusMap_.reserve(userGrantPermissions.size() + systemGrantPermissions.size());
-    for (const auto& permission : userGrantPermissions) {
-        permissionStatusMap_[permission.permissionName] = permission;
-    }
-    for (const auto& permission : systemGrantPermissions) {
-        permissionStatusMap_[permission.permissionName] = permission;
-    }
-    return RET_SUCCESS;
+    return BuildPermissionStatusMap(clawTokenId_, permissionStatusMap_);
 }
 
 PermissionDecisionStatus ClawPermissionDecisionEngine::DecisionContext::GetPermissionDecisionStatus(

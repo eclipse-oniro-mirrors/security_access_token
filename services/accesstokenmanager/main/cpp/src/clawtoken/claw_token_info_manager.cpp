@@ -33,7 +33,7 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-
+const static int MAX_CHALLENGE_LENGTH = 40960;
 ATokenTypeEnum GetTokenTypeByToolType(ToolTokenType toolType)
 {
     return (toolType == ToolTokenType::CLI) ? TOKEN_SHELL : TOKEN_HAP;
@@ -89,9 +89,10 @@ bool ToolTokenInfoManager::CheckCliInfo(const CliInfo& info) const
         LOGE(ATM_DOMAIN, ATM_TAG, "Invalid cliName, cliName=%{public}s.", info.cliName.c_str());
         return false;
     }
-    if (!info.subCliName.empty() && !DataValidator::IsProcessNameValid(info.subCliName)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Invalid subCliName, cliName=%{public}s, subCliName=%{public}s.",
-            info.cliName.c_str(), info.subCliName.c_str());
+    if (!info.subCliName.empty() && info.subCliName.length() > MAX_CHALLENGE_LENGTH) {
+        LOGE(ATM_DOMAIN, ATM_TAG,
+            "Invalid subCliName, cliName=%{public}s, subCliName=%{public}s, info.subCliName.length()=%{public}d.",
+            info.cliName.c_str(), info.subCliName.c_str(), info.subCliName.length());
         return false;
     }
     return true;
@@ -371,8 +372,13 @@ int32_t ToolTokenInfoManager::FinalizeToolTokenInit(const std::shared_ptr<ClawTo
     BuildGrantedKernelPermList(baseInfo.toolType, permStateList, kernelPermList);
     BuildPermStatusList(baseInfo.toolType, permStateList, opCodeList, statusList);
     PermissionManager::GetInstance().AddNativePermToKernel(baseInfo.tokenId, opCodeList, statusList);
-    LOGI(ATM_DOMAIN, ATM_TAG, "AddToolTokenInfoLocked tokenId=%{public}u, hostTokenId=%{public}u.",
+    LOGI(ATM_DOMAIN, ATM_TAG, "TokenId=%{public}u, hostTokenId=%{public}u.",
         baseInfo.tokenId, baseInfo.hostTokenId);
+    for (size_t i = 0; i < permStateList.size(); ++i) {
+        LOGI(ATM_DOMAIN, ATM_TAG,
+            "AddToolTokenInfoLocked permStateList[%{public}zu]: permissionName=%{public}s, grantStatus=%{public}d.",
+            i, permStateList[i].permissionName.c_str(), permStateList[i].grantStatus);
+    }
     return RET_SUCCESS;
 }
 

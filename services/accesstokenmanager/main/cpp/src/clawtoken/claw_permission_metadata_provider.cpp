@@ -20,9 +20,9 @@
 
 #include "access_token_error.h"
 #include "accesstoken_common_log.h"
-#include "claw_external_mock.h"
 #include "constant_common.h"
 #include "permission_map.h"
+#include "saf_agent_fence.h"
 
 namespace OHOS {
 namespace Security {
@@ -170,19 +170,6 @@ int32_t ClawPermissionMetadataProvider::GetSkillUsedPermissions(
         return AccessTokenError::ERR_PARAM_INVALID;
     }
 
-    AppExecFwk::SkillManager skillManager;
-    AppExecFwk::SkillInfo appSkillInfo;
-    int32_t ret = skillManager.GetSkillInfo(
-        skillInfo.bundleName, skillInfo.moduleName, skillInfo.skillName, 0, 0, appSkillInfo);
-    if (ret != AppExecFwk::ERR_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG,
-            "Get skill info failed, skill=%{public}s/%{public}s/%{public}s, ret=%{public}d.",
-            skillInfo.bundleName.c_str(), skillInfo.moduleName.c_str(), skillInfo.skillName.c_str(), ret);
-        return ret;
-    }
-
-    usedPermissions = appSkillInfo.requestPermissions;
-    StableUnique(usedPermissions);
     return RET_SUCCESS;
 }
 } // namespace AccessToken
