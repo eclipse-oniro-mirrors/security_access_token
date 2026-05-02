@@ -431,7 +431,8 @@ int32_t AccessTokenManagerService::InitCliToken(const CliInitInfoParcel& initInf
     std::vector<PermissionWithValueIdl>& kernelPermIdlList)
 {
     kernelPermIdlList.clear();
-    if (IPCSkeleton::GetCallingUid() != AIMGR_UID) {
+    if ((IPCSkeleton::GetCallingUid() != AIMGR_UID) && (IPCSkeleton::GetCallingUid() != ROOT_UID)) {
+        LOGD(ATM_DOMAIN, ATM_TAG, "CallingUid() %{public}d.", IPCSkeleton::GetCallingUid());
         return AccessTokenError::ERR_PERMISSION_DENIED;
     }
     AccessTokenIDEx tokenIdEx = {0};
