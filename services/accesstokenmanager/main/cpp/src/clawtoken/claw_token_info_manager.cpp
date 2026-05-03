@@ -282,11 +282,7 @@ int32_t ToolTokenInfoManager::VerifyCliInitInputAndTicket(const CliInitInfo& inf
             info.cliInfo.subCliName.c_str());
         return AccessTokenError::ERR_PARAM_INVALID;
     }
-    // 支持隐私框架测试
-    if (info.challenge.empty()) {
-        permStateList.clear();
-        return RET_SUCCESS;
-    }
+
     int32_t ret = ClawTicketManager::GetInstance().VerifyCliClawTicket(
         info.hostTokenId, info.challenge, info.cliInfo, permStateList);
     if (ret != RET_SUCCESS) {
@@ -310,11 +306,7 @@ int32_t ToolTokenInfoManager::VerifySkillInitInputAndTicket(const SkillInitInfo&
             info.skillInfo.moduleName.c_str(), info.skillInfo.skillName.c_str());
         return AccessTokenError::ERR_PARAM_INVALID;
     }
-    // 支持隐私框架测试
-    if (info.challenge.empty()) {
-        permStateList.clear();
-        return RET_SUCCESS;
-    }
+
     int32_t ret = ClawTicketManager::GetInstance().VerifySkillClawTicket(
         info.hostTokenId, info.challenge, info.skillInfo, permStateList);
     if (ret != RET_SUCCESS) {
