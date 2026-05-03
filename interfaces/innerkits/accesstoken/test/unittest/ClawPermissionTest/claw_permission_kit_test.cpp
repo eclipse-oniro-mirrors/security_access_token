@@ -320,7 +320,7 @@ HWTEST_F(ClawPermissionKitTest, DISABLED_ClawPermissionKitServiceError001, TestS
 
 /**
  * @tc.name: ClawPermissionKitServiceError002
- * @tc.desc: CLAW kit APIs treat missing CLI mapping as self-mapped permission.
+ * @tc.desc: CLAW kit APIs return error when CLI permission has no mapping and no definition.
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -329,13 +329,9 @@ HWTEST_F(ClawPermissionKitTest, DISABLED_ClawPermissionKitServiceError002, TestS
     ScopedClawCaller caller("claw_mapping_error_kit_test", true, BuildClawQueryAndManagePermissionStates());
 
     PermissionDialogResult dialogResult;
-    ASSERT_EQ(RET_SUCCESS,
+    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_NOT_EXIST,
         AccessTokenKit::GetCliPermissionRequestInfo(
             DEFAULT_AGENT_ID, BuildMissingMappingCliInfos(), dialogResult));
-    ASSERT_EQ(1, static_cast<int32_t>(dialogResult.detailList.size()));
-    EXPECT_TRUE(dialogResult.detailList[0].needPermissionDialog);
-    EXPECT_TRUE(dialogResult.detailList[0].permissionNameList.empty());
-    EXPECT_TRUE(dialogResult.detailList[0].statusList.empty());
 }
 
 } // namespace AccessToken

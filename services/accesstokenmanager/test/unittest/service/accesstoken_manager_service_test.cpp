@@ -2680,7 +2680,7 @@ HWTEST_F(AccessTokenManagerServiceTest, DISABLED_ClawPermissionServiceTest005, T
 
 /**
  * @tc.name: ClawPermissionServiceTest006
- * @tc.desc: Test undeclared self-mapped CLI permission still requires dialog and no blocking status is returned.
+ * @tc.desc: Test undeclared required CLI permission returns NO_DIALOG_NOT_DECLARED and no dialog.
  * @tc.require:
  * @tc.type: FUNC
  */
@@ -2696,9 +2696,13 @@ HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest006, TestSize.L
     ASSERT_EQ(RET_SUCCESS,
         atManagerService_->GetCliPermissionRequestInfo(DEFAULT_AGENT_ID, BuildCliInfoParcels(), dialogResult));
     ASSERT_EQ(1, static_cast<int32_t>(dialogResult.result.detailList.size()));
-    EXPECT_TRUE(dialogResult.result.detailList[0].needPermissionDialog);
-    EXPECT_TRUE(dialogResult.result.detailList[0].permissionNameList.empty());
-    EXPECT_TRUE(dialogResult.result.detailList[0].statusList.empty());
+    EXPECT_FALSE(dialogResult.result.detailList[0].needPermissionDialog);
+    ASSERT_EQ(1, static_cast<int32_t>(dialogResult.result.detailList[0].permissionNameList.size()));
+    EXPECT_EQ("ohos.permission.POWER_MANAGER", dialogResult.result.detailList[0].permissionNameList[0]);
+    ASSERT_EQ(1, static_cast<int32_t>(dialogResult.result.detailList[0].statusList.size()));
+    EXPECT_EQ(PermissionDecisionStatus::NO_DIALOG_NOT_DECLARED,
+        dialogResult.result.detailList[0].statusList[0]);
+    EXPECT_TRUE(dialogResult.result.detailList[0].authResult.empty());
 
     CliPermissionsResultParcel cliPermissionsResult;
     ASSERT_EQ(RET_SUCCESS,
@@ -2706,8 +2710,8 @@ HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest006, TestSize.L
             tokenId, DEFAULT_AGENT_ID, BuildCliInfoParcels(), cliPermissionsResult));
     ASSERT_EQ(1, static_cast<int32_t>(cliPermissionsResult.result.permList.size()));
     const auto& detail = cliPermissionsResult.result.permList[0].requiredCliPermissions[0];
-    EXPECT_EQ(PermissionDecisionStatus::NEED_PERMISSION_DIALOG, detail.cliPermissionStatus);
-    ASSERT_EQ(1, static_cast<int32_t>(detail.usedPermissions.size()));
+    EXPECT_EQ(PermissionDecisionStatus::NO_DIALOG_NOT_DECLARED, detail.cliPermissionStatus);
+    EXPECT_TRUE(detail.usedPermissions.empty());
 
     SetSelfTokenID(g_selfShellTokenId);
     (void)AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId);
@@ -2834,7 +2838,7 @@ HWTEST_F(AccessTokenManagerServiceTest, DISABLED_ClawPermissionServiceTest007_00
 
 /**
  * @tc.name: ClawPermissionServiceTest007_003
- * @tc.desc: Test CLI dialog query treats missing CLI mapping as self-mapped permission.
+ * @tc.desc: Test CLI dialog query returns error when CLI permission has no mapping and no definition.
  * @tc.require:
  * @tc.type: FUNC
  */
@@ -2851,9 +2855,13 @@ HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest007_003, TestSi
         atManagerService_->GetCliPermissionRequestInfo(
             DEFAULT_AGENT_ID, BuildMissingMappingCliInfoParcels(), dialogResult));
     ASSERT_EQ(1, static_cast<int32_t>(dialogResult.result.detailList.size()));
-    EXPECT_TRUE(dialogResult.result.detailList[0].needPermissionDialog);
-    EXPECT_TRUE(dialogResult.result.detailList[0].permissionNameList.empty());
-    EXPECT_TRUE(dialogResult.result.detailList[0].statusList.empty());
+    EXPECT_FALSE(dialogResult.result.detailList[0].needPermissionDialog);
+    ASSERT_EQ(1, static_cast<int32_t>(dialogResult.result.detailList[0].permissionNameList.size()));
+    EXPECT_EQ("ohos.permission.cli.no_mapping", dialogResult.result.detailList[0].permissionNameList[0]);
+    ASSERT_EQ(1, static_cast<int32_t>(dialogResult.result.detailList[0].statusList.size()));
+    EXPECT_EQ(PermissionDecisionStatus::NO_DIALOG_NOT_DECLARED,
+        dialogResult.result.detailList[0].statusList[0]);
+    EXPECT_TRUE(dialogResult.result.detailList[0].authResult.empty());
 
     SetSelfTokenID(g_selfShellTokenId);
     (void)AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId);

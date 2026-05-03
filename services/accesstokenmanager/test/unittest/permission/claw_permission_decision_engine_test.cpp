@@ -82,7 +82,7 @@ public:
 
 /**
  * @tc.name: BuildCliPermissionDialogInfo001
- * @tc.desc: Self-mapped system permission not declared by claw should trigger permission dialog.
+ * @tc.desc: Undeclared CLI permission should return NO_DIALOG_NOT_DECLARED and no dialog.
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -99,9 +99,11 @@ HWTEST_F(ClawPermissionDecisionEngineTest, BuildCliPermissionDialogInfo001, Test
     ASSERT_EQ(RET_SUCCESS, ClawPermissionDecisionEngine::GetInstance().BuildCliPermissionDialogInfo(
         tokenId_, cliInfoList, result));
     ASSERT_EQ(1, static_cast<int32_t>(result.detailList.size()));
-    EXPECT_TRUE(result.detailList[0].needPermissionDialog);
-    EXPECT_TRUE(result.detailList[0].permissionNameList.empty());
-    EXPECT_TRUE(result.detailList[0].statusList.empty());
+    EXPECT_FALSE(result.detailList[0].needPermissionDialog);
+    ASSERT_EQ(1, static_cast<int32_t>(result.detailList[0].permissionNameList.size()));
+    EXPECT_EQ("ohos.permission.POWER_MANAGER", result.detailList[0].permissionNameList[0]);
+    ASSERT_EQ(1, static_cast<int32_t>(result.detailList[0].statusList.size()));
+    EXPECT_EQ(PermissionDecisionStatus::NO_DIALOG_NOT_DECLARED, result.detailList[0].statusList[0]);
 }
 
 /**
@@ -349,11 +351,13 @@ HWTEST_F(ClawPermissionDecisionEngineTest, BuildCliPermissionDialogInfo008, Test
     ASSERT_EQ(RET_SUCCESS, ClawPermissionDecisionEngine::GetInstance().BuildCliPermissionDialogInfo(
         tokenId_, cliInfoList, result));
     ASSERT_EQ(1, static_cast<int32_t>(result.detailList.size()));
-    EXPECT_TRUE(result.detailList[0].needPermissionDialog);
-    ASSERT_EQ(1, static_cast<int32_t>(result.detailList[0].permissionNameList.size()));
+    EXPECT_FALSE(result.detailList[0].needPermissionDialog);
+    ASSERT_EQ(2, static_cast<int32_t>(result.detailList[0].permissionNameList.size()));
     EXPECT_EQ("ohos.permission.APPROXIMATELY_LOCATION", result.detailList[0].permissionNameList[0]);
-    ASSERT_EQ(1, static_cast<int32_t>(result.detailList[0].statusList.size()));
+    EXPECT_EQ("ohos.permission.CAMERA", result.detailList[0].permissionNameList[1]);
+    ASSERT_EQ(2, static_cast<int32_t>(result.detailList[0].statusList.size()));
     EXPECT_EQ(PermissionDecisionStatus::NO_DIALOG_NOT_DECLARED, result.detailList[0].statusList[0]);
+    EXPECT_EQ(PermissionDecisionStatus::NO_DIALOG_NOT_DECLARED, result.detailList[0].statusList[1]);
 }
 
 /**
@@ -770,7 +774,7 @@ HWTEST_F(ClawPermissionDecisionEngineTest, BuildCliPermissions001, TestSize.Leve
 
 /**
  * @tc.name: BuildCliPermissions002
- * @tc.desc: System API CLI result should mark undeclared self-mapped permission as needing dialog.
+ * @tc.desc: System API CLI result should mark undeclared required permission as NO_DIALOG_NOT_DECLARED.
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -790,8 +794,8 @@ HWTEST_F(ClawPermissionDecisionEngineTest, BuildCliPermissions002, TestSize.Leve
     ASSERT_EQ(1, static_cast<int32_t>(result.permList[0].requiredCliPermissions.size()));
     const auto& detail = result.permList[0].requiredCliPermissions[0];
     EXPECT_EQ("ohos.permission.POWER_MANAGER", detail.requiredCliPermission);
-    EXPECT_EQ(PermissionDecisionStatus::NEED_PERMISSION_DIALOG, detail.cliPermissionStatus);
-    ASSERT_EQ(1, static_cast<int32_t>(detail.usedPermissions.size()));
+    EXPECT_EQ(PermissionDecisionStatus::NO_DIALOG_NOT_DECLARED, detail.cliPermissionStatus);
+    EXPECT_TRUE(detail.usedPermissions.empty());
 }
 
 /**
@@ -880,15 +884,12 @@ HWTEST_F(ClawPermissionDecisionEngineTest, BuildCliPermissions005, TestSize.Leve
     const auto& cliDetail = result.permList[0].requiredCliPermissions[0];
     EXPECT_EQ("ohos.permission.APPROXIMATELY_LOCATION", cliDetail.requiredCliPermission);
     EXPECT_EQ(PermissionDecisionStatus::NO_DIALOG_NOT_DECLARED, cliDetail.cliPermissionStatus);
-    ASSERT_EQ(2, static_cast<int32_t>(cliDetail.usedPermissions.size()));
-    EXPECT_EQ("ohos.permission.LOCATION", cliDetail.usedPermissions[0]);
-    EXPECT_EQ("ohos.permission.APPROXIMATELY_LOCATION", cliDetail.usedPermissions[1]);
+    EXPECT_TRUE(cliDetail.usedPermissions.empty());
 
     const auto& systemDetail = result.permList[0].requiredCliPermissions[1];
     EXPECT_EQ("ohos.permission.CAMERA", systemDetail.requiredCliPermission);
-    EXPECT_EQ(PermissionDecisionStatus::NEED_PERMISSION_DIALOG, systemDetail.cliPermissionStatus);
-    ASSERT_EQ(1, static_cast<int32_t>(systemDetail.usedPermissions.size()));
-    EXPECT_EQ("ohos.permission.CAMERA", systemDetail.usedPermissions[0]);
+    EXPECT_EQ(PermissionDecisionStatus::NO_DIALOG_NOT_DECLARED, systemDetail.cliPermissionStatus);
+    EXPECT_TRUE(systemDetail.usedPermissions.empty());
 }
 
 /**
@@ -915,8 +916,8 @@ HWTEST_F(ClawPermissionDecisionEngineTest, BuildCliPermissions006, TestSize.Leve
         result.permList[0].requiredCliPermissions[0].requiredCliPermission);
     EXPECT_EQ("ohos.permission.POWER_MANAGER",
         result.permList[0].requiredCliPermissions[1].requiredCliPermission);
-    ASSERT_EQ(2, static_cast<int32_t>(result.permList[0].requiredCliPermissions[0].usedPermissions.size()));
-    ASSERT_EQ(1, static_cast<int32_t>(result.permList[0].requiredCliPermissions[1].usedPermissions.size()));
+    ASSERT_EQ(0, static_cast<int32_t>(result.permList[0].requiredCliPermissions[0].usedPermissions.size()));
+    ASSERT_EQ(0, static_cast<int32_t>(result.permList[0].requiredCliPermissions[1].usedPermissions.size()));
 }
 
 /**
@@ -952,8 +953,7 @@ HWTEST_F(ClawPermissionDecisionEngineTest, BuildCliPermissions008, TestSize.Leve
     const auto& detail = result.permList[0].requiredCliPermissions[0];
     EXPECT_EQ("ohos.permission.cli.resolved", detail.requiredCliPermission);
     EXPECT_EQ(PermissionDecisionStatus::NO_DIALOG_NOT_DECLARED, detail.cliPermissionStatus);
-    ASSERT_EQ(1, static_cast<int32_t>(detail.usedPermissions.size()));
-    EXPECT_EQ("ohos.permission.CAMERA", detail.usedPermissions[0]);
+    EXPECT_TRUE(detail.usedPermissions.empty());
 }
 
 /**
@@ -1007,7 +1007,7 @@ HWTEST_F(ClawPermissionDecisionEngineTest, ClawPermissionMetadataProvider001, Te
 
 /**
  * @tc.name: ClawPermissionMetadataProvider002
- * @tc.desc: Metadata provider should skip invalid or missing CLI metadata and keep self-mapping behavior.
+ * @tc.desc: Metadata provider should skip invalid CLI metadata and reject undefined permissions without mapping.
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -1022,11 +1022,10 @@ HWTEST_F(ClawPermissionDecisionEngineTest, ClawPermissionMetadataProvider002, Te
     EXPECT_TRUE(permissions.empty());
     EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
         ClawPermissionMetadataProvider::GetInstance().GetUsedPermissionsByCliPermission("", permissions));
-    EXPECT_EQ(RET_SUCCESS,
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_NOT_EXIST,
         ClawPermissionMetadataProvider::GetInstance().GetUsedPermissionsByCliPermission(
             "ohos.permission.cli.unknown", permissions));
-    ASSERT_EQ(1, static_cast<int32_t>(permissions.size()));
-    EXPECT_EQ("ohos.permission.cli.unknown", permissions[0]);
+    EXPECT_TRUE(permissions.empty());
     EXPECT_EQ(RET_SUCCESS,
         ClawPermissionMetadataProvider::GetInstance().GetUsedPermissionsByCliPermission(
             "ohos.permission.CAMERA", permissions));
@@ -1041,12 +1040,9 @@ HWTEST_F(ClawPermissionDecisionEngineTest, ClawPermissionMetadataProvider002, Te
     tokenId_ = CreateEmptyHapToken("claw_permission_cli_missing_mapping_test");
     ASSERT_NE(INVALID_TOKENID, tokenId_);
     CliPermissionsResult cliResult;
-    EXPECT_EQ(RET_SUCCESS, ClawPermissionDecisionEngine::GetInstance().BuildCliPermissions(
+    EXPECT_EQ(RET_SUCCESS,
+        ClawPermissionDecisionEngine::GetInstance().BuildCliPermissions(
         tokenId_, std::vector<CliInfo>{{"missingmap", "run"}}, cliResult));
-    ASSERT_EQ(1, static_cast<int32_t>(cliResult.permList.size()));
-    ASSERT_EQ(1, static_cast<int32_t>(cliResult.permList[0].requiredCliPermissions.size()));
-    EXPECT_EQ("ohos.permission.cli.no_mapping",
-        cliResult.permList[0].requiredCliPermissions[0].usedPermissions[0]);
     EXPECT_EQ(RET_SUCCESS,
         ClawPermissionMetadataProvider::GetInstance().GetSkillUsedPermissions(
             {"unknownSkill", "com.ohos.claw.demo", "entry"}, permissions));
