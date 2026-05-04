@@ -29,6 +29,7 @@ module_output_path_unittest_atm_tools = "access_token/tools"
 declare_args() {
   access_token_camera_float_window_enable = true
   access_token_with_distributed_capability = true
+  access_token_enhance_capability = true
 }
 
 # External dependencies for each feature flag
@@ -49,6 +50,10 @@ if (defined(product_name) &&
 
 if (use_libfuzzer) {
   access_token_cflags_cc += [ "-DFUZZ_ENABLE" ]
+}
+
+if (access_token_enhance_capability == true) {
+  access_token_cflags_cc += [ "-DENHANCE_CAPABILITY" ]
 }
 
 if (access_token_camera_float_window_enable == true) {

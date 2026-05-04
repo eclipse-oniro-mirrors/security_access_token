@@ -365,25 +365,8 @@ int32_t ClawTicketManager::VerifyCliClawTicket(AccessTokenID hostTokenId, const 
 {
     std::shared_lock<std::shared_mutex> lock(multiLock_);
 
-#ifdef DENABLE_TICKET
-    if (challenge.empty()) {
-        CommonInfo cmd;
-        cmd.cmdName = cliInfo.cliName;
-        cmd.subCmd = cliInfo.subCliName;
-
-        SAF::SafAgentFence safAgentFence;
-        std::vector<SAF::CommonPermissionInfo> permissionInfos;
-        int32_t ret = safAgentFence.BatchQueryCommandPermission({cmd}, permissionInfos);
-        std::vector<std::string> queriedPermissions = permissionInfos[0].permissions;
-
-        for (const auto& perm : queriedPermissions) {
-            PermissionStatus status;
-            status.permissionName = perm;
-            status.grantStatus = PERMISSION_GRANTED;
-            permList.emplace_back(status);
-        }
-        return RET_SUCCESS;
-    }
+#ifndef ENHANCE_CAPABILITY
+    return RET_SUCCESS;
 #endif
 
     auto it = ticketMap_.find(challenge);
@@ -426,11 +409,8 @@ int32_t ClawTicketManager::VerifySkillClawTicket(AccessTokenID hostTokenId, cons
 {
     std::shared_lock<std::shared_mutex> lock(multiLock_);
 
-#ifdef DENABLE_TICKET
-    if (challenge.empty()) {
-        (void)skillInfo;
-        return RET_SUCCESS;
-    }
+#ifndef ENHANCE_CAPABILITY
+    return RET_SUCCESS;
 #endif
 
     auto it = ticketMap_.find(challenge);

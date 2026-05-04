@@ -235,7 +235,9 @@ static AccessTokenID g_tokenIdG = 0;
 #ifdef REMOTE_PRIVACY_ENABLE
 static AccessTokenID g_tokenIdH = 0;
 #endif
+#ifndef ENHANCE_CAPABILITY
 constexpr const char* TOOL_TOKEN_PRIVACY_PERMISSION = "ohos.permission.LOCATION";
+#endif
 
 CliInfo BuildToolCliInfo()
 {
@@ -472,7 +474,6 @@ static void SleepUtilMinuteEnd()
     sleep(sleepSeconds);
 }
 
-
 class CbCustomizeTest7 : public PermActiveStatusCustomizedCbk {
 public:
     explicit CbCustomizeTest7(const std::vector<std::string> &permList)
@@ -496,7 +497,7 @@ public:
     PermissionUsedType usedType_ = INVALID_USED_TYPE;
     std::string extra_;
 };
-
+#ifndef ENHANCE_CAPABILITY
 /**
  * @tc.name: PrivacyToolToken001
  * @tc.desc: AddPermissionUsedRecord records permission usage for host token when input token is tool token.
@@ -632,7 +633,7 @@ HWTEST_F(PrivacyKitTest, PrivacyToolToken003, TestSize.Level1)
         EXPECT_EQ(RET_NO_ERROR, PrivacyKit::UnRegisterPermActiveStatusCallback(callbackPtr));
     }
 }
-
+#endif
 /**
  * @tc.name: AddPermissionUsedRecord001
  * @tc.desc: cannot AddPermissionUsedRecord with illegal tokenId and permission.
