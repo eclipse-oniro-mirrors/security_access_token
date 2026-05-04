@@ -45,6 +45,16 @@ bool ShouldReturnDialogDetailStatus(PermissionDecisionStatus status)
         (status == PermissionDecisionStatus::NO_DIALOG_NOT_DECLARED);
 }
 
+bool HasNotDeclaredStatus(const PermissionDialogDetail& detail)
+{
+    for (const auto& status : detail.statusList) {
+        if (status == PermissionDecisionStatus::NO_DIALOG_NOT_DECLARED) {
+            return true;
+        }
+    }
+    return false;
+}
+
 } // namespace
 
 int32_t ClawPermissionDecisionEngine::BuildCliDialogDetailByRequiredPermission(
@@ -58,10 +68,7 @@ int32_t ClawPermissionDecisionEngine::BuildCliDialogDetailByRequiredPermission(
         return ret;
     }
 
-    bool isSystemPermission = (usedPermissions.size() == 1) && (usedPermissions[0] == requiredCliPermission);
-    PermissionDecisionStatus notDeclaredStatus = isSystemPermission ?
-        PermissionDecisionStatus::NEED_PERMISSION_DIALOG :
-        PermissionDecisionStatus::NO_DIALOG_NOT_DECLARED;
+    PermissionDecisionStatus notDeclaredStatus = PermissionDecisionStatus::NO_DIALOG_NOT_DECLARED;
     PermissionDecisionStatus cliPermissionStatus = context.GetPermissionDecisionStatus(
         requiredCliPermission, notDeclaredStatus);
     if (cliPermissionStatus == PermissionDecisionStatus::NEED_PERMISSION_DIALOG) {
@@ -101,11 +108,26 @@ int32_t ClawPermissionDecisionEngine::BuildCliPermissionDialogDetail(
 
     detail.permissionNameList.reserve(requiredCliPermissions.size());
     detail.statusList.reserve(requiredCliPermissions.size());
+    bool hasNotDeclaredRequiredPermission = false;
     for (const auto& requiredCliPermission : requiredCliPermissions) {
+        PermissionDecisionStatus cliPermissionStatus = context.GetPermissionDecisionStatus(
+            requiredCliPermission, PermissionDecisionStatus::NO_DIALOG_NOT_DECLARED);
+        if (cliPermissionStatus == PermissionDecisionStatus::NO_DIALOG_NOT_DECLARED) {
+            hasNotDeclaredRequiredPermission = true;
+            detail.needPermissionDialog = false;
+            AppendDialogDetailStatus(detail, requiredCliPermission, cliPermissionStatus);
+            continue;
+        }
+        if (hasNotDeclaredRequiredPermission) {
+            continue;
+        }
         ret = BuildCliDialogDetailByRequiredPermission(context, requiredCliPermission, detail);
         if (ret != RET_SUCCESS) {
             return ret;
         }
+    }
+    if (hasNotDeclaredRequiredPermission && HasNotDeclaredStatus(detail)) {
+        detail.needPermissionDialog = false;
     }
     return RET_SUCCESS;
 }
@@ -128,18 +150,16 @@ int32_t ClawPermissionDecisionEngine::BuildCliPermissionDetailByRequiredPermissi
     CliPermissionDetail& detail)
 {
     detail.requiredCliPermission = requiredCliPermission;
+    PermissionDecisionStatus notDeclaredStatus = PermissionDecisionStatus::NO_DIALOG_NOT_DECLARED;
+    detail.cliPermissionStatus = context.GetPermissionDecisionStatus(requiredCliPermission, notDeclaredStatus);
+    if (detail.cliPermissionStatus == PermissionDecisionStatus::NO_DIALOG_NOT_DECLARED) {
+        return RET_SUCCESS;
+    }
     int32_t ret = ClawPermissionMetadataProvider::GetInstance().GetUsedPermissionsByCliPermission(
         requiredCliPermission, detail.usedPermissions);
     if (ret != RET_SUCCESS) {
         return ret;
     }
-
-    bool isSystemPermission = (detail.usedPermissions.size() == 1) &&
-        (detail.usedPermissions[0] == requiredCliPermission);
-    PermissionDecisionStatus notDeclaredStatus = isSystemPermission ?
-        PermissionDecisionStatus::NEED_PERMISSION_DIALOG :
-        PermissionDecisionStatus::NO_DIALOG_NOT_DECLARED;
-    detail.cliPermissionStatus = context.GetPermissionDecisionStatus(requiredCliPermission, notDeclaredStatus);
     if (detail.cliPermissionStatus == PermissionDecisionStatus::NEED_PERMISSION_DIALOG) {
         detail.cliPermissionStatus = GetCliPermissionResolvedStatus(context, detail.usedPermissions);
     }

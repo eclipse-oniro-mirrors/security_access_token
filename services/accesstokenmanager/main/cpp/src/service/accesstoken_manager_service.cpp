@@ -135,6 +135,16 @@ size_t CountDialogDetails(const std::vector<PermissionDialogDetail>& detailList)
     return count;
 }
 
+bool HasNotDeclaredStatus(const PermissionDialogDetail& detail)
+{
+    for (const auto& status : detail.statusList) {
+        if (status == PermissionDecisionStatus::NO_DIALOG_NOT_DECLARED) {
+            return true;
+        }
+    }
+    return false;
+}
+
 std::vector<bool> BuildAuthorizationResults(size_t size)
 {
     return std::vector<bool>(size, false);
@@ -145,6 +155,56 @@ bool IsAgentIdValid(const std::string& agentID)
     return agentID.length() <= MAX_CLAW_AGENT_ID_LEN;
 }
 
+void AppendResolvedPermission(CliAuthInfo& authInfo, const std::string& permissionName, bool authorizationResult)
+{
+    for (size_t index = 0; index < authInfo.permissionNames.size(); ++index) {
+        if (authInfo.permissionNames[index] != permissionName) {
+            continue;
+        }
+        authInfo.authorizationResults[index] = authInfo.authorizationResults[index] || authorizationResult;
+        return;
+    }
+    authInfo.permissionNames.emplace_back(permissionName);
+    authInfo.authorizationResults.emplace_back(authorizationResult);
+}
+
+int32_t BuildCliTicketAuthInfos(AccessTokenID hostTokenID, const std::vector<CliAuthInfo>& rawAuthInfoList,
+    std::vector<CliAuthInfo>& authInfos)
+{
+    PermissionStatusMap permissionStatusMap;
+    int32_t ret = BuildPermissionStatusMap(hostTokenID, permissionStatusMap);
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
+
+    authInfos.clear();
+    authInfos.reserve(rawAuthInfoList.size());
+    for (const auto& rawAuthInfo : rawAuthInfoList) {
+        CliAuthInfo resolvedAuthInfo;
+        resolvedAuthInfo.cliInfo = rawAuthInfo.cliInfo;
+        for (size_t index = 0; index < rawAuthInfo.permissionNames.size(); ++index) {
+            std::vector<std::string> usedPermissions;
+            ret = ClawPermissionMetadataProvider::GetInstance().GetUsedPermissionsByCliPermission(
+                rawAuthInfo.permissionNames[index], usedPermissions);
+            if (ret != RET_SUCCESS) {
+                LOGE(ATM_DOMAIN, ATM_TAG,
+                    "Build cli ticket auth info failed, cli=%{public}s/%{public}s, permission=%{public}s, "
+                    "ret=%{public}d.",
+                    rawAuthInfo.cliInfo.cliName.c_str(), rawAuthInfo.cliInfo.subCliName.c_str(),
+                    rawAuthInfo.permissionNames[index].c_str(), ret);
+                return ret;
+            }
+            for (const auto& usedPermission : usedPermissions) {
+                AppendResolvedPermission(resolvedAuthInfo, usedPermission,
+                    ResolveCliGrantedPermission(permissionStatusMap, usedPermission,
+                        rawAuthInfo.authorizationResults[index]));
+            }
+        }
+        authInfos.emplace_back(std::move(resolvedAuthInfo));
+    }
+    return RET_SUCCESS;
+}
+
 int32_t FillCliDialogAuthResultsIfNoDialog(AccessTokenID hostTokenID, const std::string& agentID,
     const std::vector<CliInfo>& cliInfos, PermissionDialogResult& result)
 {
@@ -153,20 +213,38 @@ int32_t FillCliDialogAuthResultsIfNoDialog(AccessTokenID hostTokenID, const std:
         return RET_SUCCESS;
     }
     std::vector<size_t> detailIndexes;
-    std::vector<CliAuthInfo> authInfoList;
+    std::vector<CliAuthInfo> rawAuthInfoList;
     for (size_t i = 0; i < result.detailList.size() && i < cliInfos.size(); ++i) {
         if (result.detailList[i].needPermissionDialog) {
             continue;
         }
+        if (HasNotDeclaredStatus(result.detailList[i])) {
+            continue;
+        }
         CliAuthInfo authInfo;
         authInfo.cliInfo = cliInfos[i];
-        authInfo.permissionNames = result.detailList[i].permissionNameList;
+        int32_t ret = ClawPermissionMetadataProvider::GetInstance().GetRequiredCliPermissions(
+            cliInfos[i], authInfo.permissionNames);
+        if (ret != RET_SUCCESS) {
+            LOGE(ATM_DOMAIN, ATM_TAG,
+                "Build cli dialog auth info failed, cli=%{public}s/%{public}s, ret=%{public}d.",
+                cliInfos[i].cliName.c_str(), cliInfos[i].subCliName.c_str(), ret);
+            return ret;
+        }
         authInfo.authorizationResults = BuildAuthorizationResults(authInfo.permissionNames.size());
         detailIndexes.emplace_back(i);
-        authInfoList.emplace_back(authInfo);
+        rawAuthInfoList.emplace_back(std::move(authInfo));
+    }
+    if (detailIndexes.empty()) {
+        return RET_SUCCESS;
+    }
+    std::vector<CliAuthInfo> authInfoList;
+    int32_t ret = BuildCliTicketAuthInfos(hostTokenID, rawAuthInfoList, authInfoList);
+    if (ret != RET_SUCCESS) {
+        return ret;
     }
     std::vector<std::string> authResults;
-    int32_t ret = ClawTicketManager::GetInstance().GenerateCliTicket(hostTokenID, authInfoList, authResults);
+    ret = ClawTicketManager::GetInstance().GenerateCliTicket(hostTokenID, authInfoList, authResults);
     if (ret != RET_SUCCESS) {
         LOGE(ATM_DOMAIN, ATM_TAG,
             "Generate cli dialog auth result failed, tokenId=%{public}u, ret=%{public}d.", hostTokenID, ret);
@@ -258,54 +336,15 @@ bool IsSkillAuthInfoValid(const SkillAuthInfo& info)
     return info.permissionNames.size() == info.authorizationResults.size();
 }
 
-void AppendResolvedPermission(CliAuthInfo& authInfo, const std::string& permissionName, bool authorizationResult)
-{
-    for (size_t index = 0; index < authInfo.permissionNames.size(); ++index) {
-        if (authInfo.permissionNames[index] != permissionName) {
-            continue;
-        }
-        authInfo.authorizationResults[index] = authInfo.authorizationResults[index] || authorizationResult;
-        return;
-    }
-    authInfo.permissionNames.emplace_back(permissionName);
-    authInfo.authorizationResults.emplace_back(authorizationResult);
-}
-
 int32_t BuildCliTicketAuthInfos(AccessTokenID hostTokenID, const std::vector<CliAuthInfoParcel>& authInfoList,
     std::vector<CliAuthInfo>& authInfos)
 {
-    PermissionStatusMap permissionStatusMap;
-    int32_t ret = BuildPermissionStatusMap(hostTokenID, permissionStatusMap);
-    if (ret != RET_SUCCESS) {
-        return ret;
-    }
-
-    authInfos.clear();
-    authInfos.reserve(authInfoList.size());
+    std::vector<CliAuthInfo> rawAuthInfoList;
+    rawAuthInfoList.reserve(authInfoList.size());
     for (const auto& authInfoParcel : authInfoList) {
-        CliAuthInfo resolvedAuthInfo;
-        resolvedAuthInfo.cliInfo = authInfoParcel.info.cliInfo;
-        for (size_t index = 0; index < authInfoParcel.info.permissionNames.size(); ++index) {
-            std::vector<std::string> usedPermissions;
-            ret = ClawPermissionMetadataProvider::GetInstance().GetUsedPermissionsByCliPermission(
-                authInfoParcel.info.permissionNames[index], usedPermissions);
-            if (ret != RET_SUCCESS) {
-                LOGE(ATM_DOMAIN, ATM_TAG,
-                    "Build cli ticket auth info failed, cli=%{public}s/%{public}s, permission=%{public}s, "
-                    "ret=%{public}d.",
-                    authInfoParcel.info.cliInfo.cliName.c_str(), authInfoParcel.info.cliInfo.subCliName.c_str(),
-                    authInfoParcel.info.permissionNames[index].c_str(), ret);
-                return ret;
-            }
-            for (const auto& usedPermission : usedPermissions) {
-                AppendResolvedPermission(resolvedAuthInfo, usedPermission,
-                    ResolveCliGrantedPermission(permissionStatusMap, usedPermission,
-                        authInfoParcel.info.authorizationResults[index]));
-            }
-        }
-        authInfos.emplace_back(std::move(resolvedAuthInfo));
+        rawAuthInfoList.emplace_back(authInfoParcel.info);
     }
-    return RET_SUCCESS;
+    return BuildCliTicketAuthInfos(hostTokenID, rawAuthInfoList, authInfos);
 }
 }
 
@@ -2126,7 +2165,7 @@ bool AccessTokenManagerService::IsSystemAppCalling() const
 int32_t AccessTokenManagerService::ValidateGetCliPermissionRequestInfoCaller(
     AccessTokenID callingTokenId, const std::string& agentID, const std::vector<CliInfoParcel>& cliInfoList)
 {
-    if (!IsAgentIdValid(agentID) || cliInfoList.empty()) {
+    if (!IsAgentIdValid(agentID) || !DataValidator::IsListSizeValid(cliInfoList.size())) {
         LOGE(ATM_DOMAIN, ATM_TAG,
             "GetCliPermissionRequestInfo invalid param, callerToken=%{public}u, agentID=%{public}s, "
             "cliSize=%{public}zu.", callingTokenId, agentID.c_str(), cliInfoList.size());
@@ -2150,7 +2189,7 @@ int32_t AccessTokenManagerService::ValidateGetCliPermissionsCaller(AccessTokenID
     AccessTokenID hostTokenID, const std::string& agentID, const std::vector<CliInfoParcel>& cliInfoList)
 {
     int32_t ret = ValidateHostTokenId(hostTokenID);
-    if ((ret != RET_SUCCESS) || !IsAgentIdValid(agentID) || cliInfoList.empty()) {
+    if ((ret != RET_SUCCESS) || !IsAgentIdValid(agentID) || !DataValidator::IsListSizeValid(cliInfoList.size())) {
         LOGE(ATM_DOMAIN, ATM_TAG,
             "GetCliPermissions invalid param, callerToken=%{public}u, targetToken=%{public}u, "
             "agentID=%{public}s, cliSize=%{public}zu, ret=%{public}d.",
@@ -2366,7 +2405,7 @@ int32_t AccessTokenManagerService::GetSkillPermissionRequestInfo(
     PermissionDialogResultParcel& resultParcel)
 {
     AccessTokenID callingTokenId = IPCSkeleton::GetCallingTokenID();
-    if (!IsAgentIdValid(agentID) || skillInfoList.empty()) {
+    if (!IsAgentIdValid(agentID) || !DataValidator::IsListSizeValid(skillInfoList.size())) {
         LOGE(ATM_DOMAIN, ATM_TAG,
             "GetSkillPermissionRequestInfo invalid param, callerToken=%{public}u, agentID=%{public}s, "
             "skillSize=%{public}zu.", callingTokenId, agentID.c_str(), skillInfoList.size());
@@ -2456,7 +2495,7 @@ int32_t AccessTokenManagerService::GetSkillPermissions(AccessTokenID hostTokenID
 {
     AccessTokenID callingTokenId = IPCSkeleton::GetCallingTokenID();
     int32_t ret = ValidateHostTokenId(hostTokenID);
-    if ((ret != RET_SUCCESS) || !IsAgentIdValid(agentID) || skillInfoList.empty()) {
+    if ((ret != RET_SUCCESS) || !IsAgentIdValid(agentID) || !DataValidator::IsListSizeValid(skillInfoList.size())) {
         LOGE(ATM_DOMAIN, ATM_TAG,
             "GetSkillPermissions invalid param, callerToken=%{public}u, targetToken=%{public}u, "
             "agentID=%{public}s, skillSize=%{public}zu, ret=%{public}d.",
@@ -2508,7 +2547,7 @@ int32_t AccessTokenManagerService::GenerateCliAuthResult(
 {
     AccessTokenID callingTokenId = IPCSkeleton::GetCallingTokenID();
     int32_t ret = ValidateHostTokenId(hostTokenID);
-    if ((ret != RET_SUCCESS) || !IsAgentIdValid(agentID) || authInfoList.empty()) {
+    if ((ret != RET_SUCCESS) || !IsAgentIdValid(agentID) || !DataValidator::IsListSizeValid(authInfoList.size())) {
         LOGE(ATM_DOMAIN, ATM_TAG,
             "GenerateCliAuthResult invalid param, callerToken=%{public}u, targetToken=%{public}u, "
             "agentID=%{public}s, authSize=%{public}zu, ret=%{public}d.",
@@ -2556,7 +2595,7 @@ int32_t AccessTokenManagerService::GenerateSkillAuthResult(
 {
     AccessTokenID callingTokenId = IPCSkeleton::GetCallingTokenID();
     int32_t ret = ValidateHostTokenId(hostTokenID);
-    if ((ret != RET_SUCCESS) || !IsAgentIdValid(agentID) || authInfoList.empty()) {
+    if ((ret != RET_SUCCESS) || !IsAgentIdValid(agentID) || !DataValidator::IsListSizeValid(authInfoList.size())) {
         LOGE(ATM_DOMAIN, ATM_TAG,
             "GenerateSkillAuthResult invalid param, callerToken=%{public}u, targetToken=%{public}u, "
             "agentID=%{public}s, authSize=%{public}zu, ret=%{public}d.",

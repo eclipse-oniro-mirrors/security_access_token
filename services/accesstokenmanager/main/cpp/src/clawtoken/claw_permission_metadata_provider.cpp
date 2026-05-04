@@ -151,6 +151,12 @@ int32_t ClawPermissionMetadataProvider::GetUsedPermissionsByCliPermission(
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     if (!QueryRequredPermissions(requiredCliPermission, usedPermissions)) {
+        if (!IsDefinedPermission(requiredCliPermission)) {
+            LOGE(ATM_DOMAIN, ATM_TAG,
+                "Get used permissions failed, permission=%{public}s has no mapping and no definition.",
+                requiredCliPermission.c_str());
+            return AccessTokenError::ERR_PERMISSION_NOT_EXIST;
+        }
         usedPermissions.emplace_back(requiredCliPermission);
         return RET_SUCCESS;
     }
