@@ -133,7 +133,7 @@ private:
 };
 }
 
-class ToolTokenAccessTest : public testing::Test {
+class ToolTokenWithEmptyChallengeTest : public testing::Test {
 public:
     static void SetUpTestCase()
     {
@@ -167,7 +167,7 @@ public:
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(ToolTokenAccessTest, GetHostTokenId001, TestSize.Level4)
+HWTEST_F(ToolTokenWithEmptyChallengeTest, GetHostTokenId001, TestSize.Level4)
 {
     ToolTokenGuard guard;
     AccessTokenIDEx tokenIdEx = {0};
@@ -201,7 +201,7 @@ HWTEST_F(ToolTokenAccessTest, GetHostTokenId001, TestSize.Level4)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(ToolTokenAccessTest, GetHostTokenId002, TestSize.Level4)
+HWTEST_F(ToolTokenWithEmptyChallengeTest, GetHostTokenId002, TestSize.Level4)
 {
     ToolTokenGuard guard;
     AccessTokenIDEx tokenIdEx = {0};
@@ -236,7 +236,7 @@ HWTEST_F(ToolTokenAccessTest, GetHostTokenId002, TestSize.Level4)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(ToolTokenAccessTest, GetHostTokenId003, TestSize.Level4)
+HWTEST_F(ToolTokenWithEmptyChallengeTest, GetHostTokenId003, TestSize.Level4)
 {
     AccessTokenID queriedHostTokenId = INVALID_TOKENID;
     MockHapToken hostToken("GetHostTokenId003", {}, true);
@@ -254,7 +254,7 @@ HWTEST_F(ToolTokenAccessTest, GetHostTokenId003, TestSize.Level4)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(ToolTokenAccessTest, GetHostTokenId004, TestSize.Level4)
+HWTEST_F(ToolTokenWithEmptyChallengeTest, GetHostTokenId004, TestSize.Level4)
 {
     ToolTokenGuard guard;
     AccessTokenIDEx tokenIdEx = {0};
@@ -285,7 +285,7 @@ HWTEST_F(ToolTokenAccessTest, GetHostTokenId004, TestSize.Level4)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(ToolTokenAccessTest, GetHostTokenId005, TestSize.Level4)
+HWTEST_F(ToolTokenWithEmptyChallengeTest, GetHostTokenId005, TestSize.Level4)
 {
     AccessTokenID queriedHostTokenId = INVALID_TOKENID;
     EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, AccessTokenKit::GetHostTokenId(INVALID_TOKENID, queriedHostTokenId));
