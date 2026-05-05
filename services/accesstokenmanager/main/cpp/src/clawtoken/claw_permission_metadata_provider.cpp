@@ -91,13 +91,12 @@ int32_t ClawPermissionMetadataProvider::GetCliCallablePermissions(
     for (size_t index = 0; index < permissionInfos.size(); ++index) {
         const auto& permissionInfo = permissionInfos[index];
         if (permissionInfo.queryRet != RET_SUCCESS) {
-            LOGW(ATM_DOMAIN, ATM_TAG,
-                "Query cli callable permission queryRet is not success, skip cli, index=%{public}zu, "
+            LOGE(ATM_DOMAIN, ATM_TAG,
+                "Query cli callable permission queryRet is not success, index=%{public}zu, "
                 "cli=%{public}s/%{public}s, ret=%{public}d.",
                 index, cliInfoList[index].cliName.c_str(), cliInfoList[index].subCliName.c_str(),
                 permissionInfo.queryRet);
-            cliPermissions.emplace_back();
-            continue;
+            return AccessTokenError::ERR_PARAM_INVALID;
         }
         std::vector<std::string> permissions = permissionInfo.permissions;
         StableUnique(permissions);
@@ -131,11 +130,11 @@ int32_t ClawPermissionMetadataProvider::GetRequiredCliPermissions(
         return AccessTokenError::ERR_PERMISSION_NOT_EXIST;
     }
     if (permissionInfos[0].queryRet != RET_SUCCESS) {
-        LOGW(ATM_DOMAIN, ATM_TAG,
-            "Get required cli permissions queryRet is not success, skip cli, cli=%{public}s/%{public}s, "
+        LOGE(ATM_DOMAIN, ATM_TAG,
+            "Get required cli permissions queryRet is not success, cli=%{public}s/%{public}s, "
             "ret=%{public}d.",
             cliInfo.cliName.c_str(), cliInfo.subCliName.c_str(), permissionInfos[0].queryRet);
-        return RET_SUCCESS;
+        return AccessTokenError::ERR_PARAM_INVALID;
     }
     requiredCliPermissions = permissionInfos[0].permissions;
     StableUnique(requiredCliPermissions);

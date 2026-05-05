@@ -2803,7 +2803,7 @@ HWTEST_F(AccessTokenManagerServiceTest, DISABLED_ClawPermissionServiceTest007_00
 
 /**
  * @tc.name: ClawPermissionServiceTest007_002
- * @tc.desc: Test CLI dialog query skips command when metadata queryRet is not success.
+ * @tc.desc: Test CLI dialog query returns ERR_PARAM_INVALID when metadata queryRet is not success.
  * @tc.require:
  * @tc.type: FUNC
  */
@@ -2816,21 +2816,14 @@ HWTEST_F(AccessTokenManagerServiceTest, DISABLED_ClawPermissionServiceTest007_00
     SetSelfTokenID(fullTokenId);
 
     PermissionDialogResultParcel dialogResult;
-    ASSERT_EQ(RET_SUCCESS,
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID,
         atManagerService_->GetCliPermissionRequestInfo(
             DEFAULT_AGENT_ID, BuildUnknownCliInfoParcels(), dialogResult));
-    ASSERT_EQ(1, static_cast<int32_t>(dialogResult.result.detailList.size()));
-    EXPECT_FALSE(dialogResult.result.detailList[0].needPermissionDialog);
-    EXPECT_TRUE(dialogResult.result.detailList[0].permissionNameList.empty());
-    EXPECT_TRUE(dialogResult.result.detailList[0].statusList.empty());
-    EXPECT_FALSE(dialogResult.result.detailList[0].authResult.empty());
 
     CliPermissionsResultParcel cliPermissionsResult;
-    ASSERT_EQ(RET_SUCCESS,
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID,
         atManagerService_->GetCliPermissions(
             tokenId, DEFAULT_AGENT_ID, BuildUnknownCliInfoParcels(), cliPermissionsResult));
-    ASSERT_EQ(1, static_cast<int32_t>(cliPermissionsResult.result.permList.size()));
-    EXPECT_TRUE(cliPermissionsResult.result.permList[0].requiredCliPermissions.empty());
 
     SetSelfTokenID(g_selfShellTokenId);
     (void)AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId);

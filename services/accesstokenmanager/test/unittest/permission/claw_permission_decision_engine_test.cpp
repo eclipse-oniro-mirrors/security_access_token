@@ -1007,17 +1007,17 @@ HWTEST_F(ClawPermissionDecisionEngineTest, ClawPermissionMetadataProvider001, Te
 
 /**
  * @tc.name: ClawPermissionMetadataProvider002
- * @tc.desc: Metadata provider should skip invalid CLI metadata and reject undefined permissions without mapping.
+ * @tc.desc: Metadata provider should return ERR_PARAM_INVALID when CLI metadata queryRet is not success.
  * @tc.type: FUNC
  * @tc.require:
  */
 HWTEST_F(ClawPermissionDecisionEngineTest, ClawPermissionMetadataProvider002, TestSize.Level0)
 {
     std::vector<std::string> permissions;
-    EXPECT_EQ(RET_SUCCESS,
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
         ClawPermissionMetadataProvider::GetInstance().GetRequiredCliPermissions({"", "capture"}, permissions));
     EXPECT_TRUE(permissions.empty());
-    EXPECT_EQ(RET_SUCCESS,
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
         ClawPermissionMetadataProvider::GetInstance().GetRequiredCliPermissions({"unknown", "cmd"}, permissions));
     EXPECT_TRUE(permissions.empty());
     EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
@@ -1034,7 +1034,7 @@ HWTEST_F(ClawPermissionDecisionEngineTest, ClawPermissionMetadataProvider002, Te
     EXPECT_EQ(RET_SUCCESS,
         ClawPermissionMetadataProvider::GetInstance().GetRequiredCliPermissions({"empty", "run"}, permissions));
     EXPECT_TRUE(permissions.empty());
-    EXPECT_EQ(RET_SUCCESS,
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
         ClawPermissionMetadataProvider::GetInstance().GetRequiredCliPermissions({"abnormal", "run"}, permissions));
     EXPECT_TRUE(permissions.empty());
     tokenId_ = CreateEmptyHapToken("claw_permission_cli_missing_mapping_test");
@@ -1051,7 +1051,7 @@ HWTEST_F(ClawPermissionDecisionEngineTest, ClawPermissionMetadataProvider002, Te
 
 /**
  * @tc.name: ClawPermissionMetadataProvider003
- * @tc.desc: Non-success queryRet should be skipped and other CLI permissions should still be processed.
+ * @tc.desc: Non-success queryRet should return ERR_PARAM_INVALID.
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -1063,13 +1063,10 @@ HWTEST_F(ClawPermissionDecisionEngineTest, ClawPermissionMetadataProvider003, Te
         {.cliName = "camera", .subCliName = "capture"},
     };
     std::vector<std::vector<std::string>> cliPermissions;
-    ASSERT_EQ(RET_SUCCESS, ClawPermissionMetadataProvider::GetInstance().GetCliCallablePermissions(
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID,
+        ClawPermissionMetadataProvider::GetInstance().GetCliCallablePermissions(
         cliInfoList, cliPermissions));
-    ASSERT_EQ(3, static_cast<int32_t>(cliPermissions.size()));
-    EXPECT_TRUE(cliPermissions[0].empty());
-    EXPECT_TRUE(cliPermissions[1].empty());
-    ASSERT_EQ(1, static_cast<int32_t>(cliPermissions[2].size()));
-    EXPECT_EQ("ohos.permission.POWER_MANAGER", cliPermissions[2][0]);
+    EXPECT_TRUE(cliPermissions.empty());
 }
 
 /**

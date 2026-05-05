@@ -25,8 +25,11 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-constexpr int32_t INVALID_TOOL_TOKEN_USER_ID = -1;
 constexpr size_t MAX_CLAW_AGENT_ID_LEN = 48;
+constexpr int32_t INVALID_TOOL_TOKEN_USER_ID = -1;
+constexpr size_t MAX_CLAW_CLI_INFO_LIST_SIZE = 99;
+constexpr size_t MAX_CLAW_CLI_NAME_LEN = 256;
+constexpr size_t MAX_CLAW_SUB_CLI_NAME_LEN = 256;
 
 enum class PermissionDecisionStatus : int32_t {
     NEED_PERMISSION_DIALOG = 0,
