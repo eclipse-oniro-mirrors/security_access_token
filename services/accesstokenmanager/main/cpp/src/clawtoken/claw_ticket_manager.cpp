@@ -42,7 +42,14 @@ int32_t GetUserIdByTokenId(AccessTokenID callerTokenId)
             "Get userId by tokenId failed, hapInfo is nullptr, tokenId: %{public}u", callerTokenId);
         return -1;
     }
+
     return hapInfo->GetUserID();
+}
+
+bool IsCliInfoMatched(const CliInfo& expectedCliInfo, const CliInfo& actualCliInfo)
+{
+    return (expectedCliInfo.cliName == actualCliInfo.cliName) &&
+        (expectedCliInfo.subCliName == actualCliInfo.subCliName);
 }
 
 std::string SerializeCliAuthInfo(const CliAuthInfo& cliAuth)
@@ -392,6 +399,14 @@ int32_t ClawTicketManager::VerifyCliClawTicket(AccessTokenID hostTokenId, const 
     for (size_t ticketIdx = 0; ticketIdx < verifyInfos.size(); ++ticketIdx) {
         bool ticketValid = (verifyRes[ticketIdx] == 0);
         CliAuthInfo cliAuth = DeserializeCliAuthInfo(verifyInfos[ticketIdx].message);
+        if (!IsCliInfoMatched(cliInfo, cliAuth.cliInfo)) {
+            LOGE(ATM_DOMAIN, ATM_TAG,
+                "Verify cli ticket failed, cliInfo mismatch, inputCliName=%{public}s, inputSubCliName=%{public}s, "
+                "ticketCliName=%{public}s, ticketSubCliName=%{public}s.",
+                cliInfo.cliName.c_str(), cliInfo.subCliName.c_str(),
+                cliAuth.cliInfo.cliName.c_str(), cliAuth.cliInfo.subCliName.c_str());
+            return AccessTokenError::ERR_PARAM_INVALID;
+        }
         for (size_t permIdx = 0; permIdx < cliAuth.permissionNames.size(); ++permIdx) {
             PermissionStatus status;
             status.permissionName = cliAuth.permissionNames[permIdx];

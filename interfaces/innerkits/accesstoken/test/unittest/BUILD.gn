@@ -114,9 +114,9 @@ ohos_unittest("libaccesstoken_sdk_test") {
   }
 
   if (access_token_enhance_capability == false) {
-    sources += [
-      "ToolTokenTest/tool_token_access_test.cpp",
-    ]
+    sources += [ "ToolTokenTest/tool_token_with_empty_challenge_test.cpp" ]
+  } else {
+    #sources += [ "ToolTokenTest/tool_token_test.cpp" ]
   }
 }
 

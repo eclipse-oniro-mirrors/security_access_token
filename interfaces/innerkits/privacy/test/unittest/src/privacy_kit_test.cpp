@@ -238,6 +238,7 @@ static AccessTokenID g_tokenIdH = 0;
 #ifndef ENHANCE_CAPABILITY
 constexpr const char* TOOL_TOKEN_PRIVACY_PERMISSION = "ohos.permission.LOCATION";
 #endif
+constexpr const char* TOOL_TOKEN_AGENT_ID = "1001";
 
 CliInfo BuildToolCliInfo()
 {
@@ -265,10 +266,47 @@ int32_t InitCliToolTokenWithEmptyChallengeForPrivacy(AccessTokenID hostTokenId,
     return ret;
 }
 
+int32_t GenerateEmptyPermissionCliAuthResultForPrivacy(AccessTokenID hostTokenId, ToolAuthResult& authResult)
+{
+    std::vector<std::string> reqPerm = {"ohos.permission.MANAGE_TOOL_RUNTIME_PERMISSIONS"};
+    MockHapToken authCaller("ohos.privacy.tool.auth", reqPerm, true);
+    std::vector<CliAuthInfo> authInfoList = {
+        CliAuthInfo {
+            .cliInfo = BuildToolCliInfo(),
+            .permissionNames = {},
+            .authorizationResults = {},
+        }
+    };
+    return AccessTokenKit::GenerateCliAuthResult(hostTokenId, TOOL_TOKEN_AGENT_ID, authInfoList, authResult);
+}
+
+int32_t InitCliToolTokenWithAuthResultForPrivacy(AccessTokenID hostTokenId, AccessTokenIDEx& tokenIdEx,
+    std::vector<PermissionWithValue>& kernelPermList)
+{
+    ToolAuthResult authResult;
+    int32_t ret = GenerateEmptyPermissionCliAuthResultForPrivacy(hostTokenId, authResult);
+    if ((ret != RET_SUCCESS) || authResult.authResults.empty() || authResult.authResults[0].empty()) {
+        return (ret == RET_SUCCESS) ? RET_FAILED : ret;
+    }
+    uint64_t callerTokenId = GetSelfTokenID();
+    uint32_t callerUid = getuid();
+    EXPECT_EQ(0, SetSelfTokenID(g_shellToken));
+    EXPECT_EQ(0, setuid(0));
+    CliInitInfo initInfo = {
+        .hostTokenId = hostTokenId,
+        .challenge = authResult.authResults[0],
+        .cliInfo = BuildToolCliInfo(),
+    };
+    ret = AccessTokenKit::InitCliToken(initInfo, tokenIdEx, kernelPermList);
+    EXPECT_EQ(0, setuid(callerUid));
+    EXPECT_EQ(0, SetSelfTokenID(callerTokenId));
+    return ret;
+}
+
 int32_t DeleteToolTokenByCurrentPidForPrivacy()
 {
     uint64_t callerTokenId = GetSelfTokenID();
-    EXPECT_EQ(0, SetSelfTokenID(g_shellToken));
+    EXPECT_EQ(0, SetSelfTokenID(g_manageToolToken));
     int32_t ret = AccessTokenKit::DeleteToolTokenByPid(getpid());
     EXPECT_EQ(0, SetSelfTokenID(callerTokenId));
     return ret;
@@ -349,7 +387,7 @@ void PrivacyKitTest::SetUpTestCase()
 
     g_nativeToken = PrivacyTestCommon::GetNativeTokenIdFromProcess("privacy_service");
     g_shellToken = PrivacyTestCommon::GetNativeTokenIdFromProcess("hdcd");
-    g_manageToolToken = PrivacyTestCommon::GetNativeTokenIdFromProcess("foundation");
+    g_manageToolToken = PrivacyTestCommon::GetNativeTokenIdFromProcess("aimgr");
 
     DeleteTestToken();
 #ifdef AUDIO_FRAMEWORK_ENABLE

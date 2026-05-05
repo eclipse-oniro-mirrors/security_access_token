@@ -17,6 +17,7 @@
 #define MOCK_SAF_AGENT_FENCE_H
 
 #include <cstdint>
+#include <map>
 #include <string>
 #include <vector>
 
@@ -57,7 +58,13 @@ public:
 } // namespace SAF
 
 namespace AccessToken {
+void SetMockCommandPermissionsForTest(
+    const std::map<std::string, std::vector<std::string>>& commandPermissions);
+void ClearMockCommandPermissionsForTest();
+void SetMockGenerateTicketResult(const std::vector<SAF::VerifyTicketInfo>& tickets, int32_t ret);
+void ClearMockGenerateTicketResult();
 void SetMockVerifyTicketResult(std::vector<int32_t> verifyRes, int32_t ret);
+void ClearMockVerifyTicketResult();
 void ResetMockCounter();
 } // namespace AccessToken
 } // namespace Security

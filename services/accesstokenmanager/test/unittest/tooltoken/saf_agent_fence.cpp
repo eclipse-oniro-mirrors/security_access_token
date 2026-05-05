@@ -27,6 +27,13 @@ namespace {
 int g_generateCounter = 0;
 int g_verifyCounter = 0;
 
+std::map<std::string, std::vector<std::string>> g_commandPermissions;
+bool g_commandPermissionsConfigured = false;
+
+std::vector<SAF::VerifyTicketInfo> g_generateTickets;
+int32_t g_generateRet = 0;
+bool g_generateConfigured = false;
+
 std::vector<int32_t> g_verifyRes;
 int32_t g_verifyRet = 0;
 bool g_verifyConfigured = false;
@@ -50,6 +57,8 @@ namespace SAF {
 int32_t SafAgentFence::BatchQueryCommandPermission(
     const std::vector<CommandInfo>& cmds, std::vector<CommandPermissionInfo>& permissionInfos)
 {
+    const auto& permissionMap =
+        g_commandPermissionsConfigured ? g_commandPermissions : MOCK_CLI_REQUIRED_PERMISSIONS;
     permissionInfos.clear();
     permissionInfos.reserve(cmds.size());
     for (size_t index = 0; index < cmds.size(); ++index) {
@@ -72,8 +81,8 @@ int32_t SafAgentFence::BatchQueryCommandPermission(
             permissionInfos.emplace_back(permissionInfo);
             continue;
         }
-        auto iter = MOCK_CLI_REQUIRED_PERMISSIONS.find(key);
-        if (iter == MOCK_CLI_REQUIRED_PERMISSIONS.end()) {
+        auto iter = permissionMap.find(key);
+        if (iter == permissionMap.end()) {
             permissionInfo.queryRet = AccessToken::AccessTokenError::ERR_PERMISSION_NOT_EXIST;
             LOGE(ATM_DOMAIN, ATM_TAG,
                 "Mock query command permission missing, index=%{public}zu, cmd=%{public}s/%{public}s.",
@@ -91,6 +100,12 @@ int32_t SafAgentFence::BatchQueryCommandPermission(
 int32_t SafAgentFence::BatchGenerateTicket(int32_t userId, const std::string& callerId,
     const std::vector<std::string>& messages, std::vector<VerifyTicketInfo>& tickets)
 {
+    tickets.clear();
+    if (g_generateConfigured) {
+        tickets = g_generateTickets;
+        return g_generateRet;
+    }
+
     for (size_t i = 0; i < messages.size(); ++i) {
         ++g_generateCounter;
         VerifyTicketInfo info;
@@ -129,10 +144,47 @@ void SetMockVerifyTicketResult(std::vector<int32_t> verifyRes, int32_t ret)
     g_verifyConfigured = true;
 }
 
+void SetMockCommandPermissionsForTest(
+    const std::map<std::string, std::vector<std::string>>& commandPermissions)
+{
+    g_commandPermissions = commandPermissions;
+    g_commandPermissionsConfigured = true;
+}
+
+void ClearMockCommandPermissionsForTest()
+{
+    g_commandPermissions.clear();
+    g_commandPermissionsConfigured = false;
+}
+
+void SetMockGenerateTicketResult(const std::vector<SAF::VerifyTicketInfo>& tickets, int32_t ret)
+{
+    g_generateTickets = tickets;
+    g_generateRet = ret;
+    g_generateConfigured = true;
+}
+
+void ClearMockGenerateTicketResult()
+{
+    g_generateTickets.clear();
+    g_generateRet = 0;
+    g_generateConfigured = false;
+}
+
+void ClearMockVerifyTicketResult()
+{
+    g_verifyRes.clear();
+    g_verifyRet = 0;
+    g_verifyConfigured = false;
+}
+
 void ResetMockCounter()
 {
     g_generateCounter = 0;
     g_verifyCounter = 0;
+    ClearMockCommandPermissionsForTest();
+    ClearMockGenerateTicketResult();
+    ClearMockVerifyTicketResult();
 }
 } // namespace AccessToken
 } // namespace Security
