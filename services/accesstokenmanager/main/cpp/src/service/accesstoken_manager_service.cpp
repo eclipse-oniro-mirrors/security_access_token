@@ -23,6 +23,7 @@
 #include "access_token.h"
 #include "access_token_db_operator.h"
 #include "access_token_error.h"
+#include "claw_permission_info.h"
 #include "accesstoken_common_log.h"
 #include "accesstoken_dfx_define.h"
 #include "claw_permission_info.h"
@@ -153,6 +154,44 @@ std::vector<bool> BuildAuthorizationResults(size_t size)
 bool IsAgentIdValid(const std::string& agentID)
 {
     return agentID.length() <= MAX_CLAW_AGENT_ID_LEN;
+}
+
+bool IsCliInfoValid(const CliInfo& info)
+{
+    return DataValidator::IsProcessNameValid(info.cliName) &&
+        (info.cliName.length() <= MAX_CLAW_CLI_NAME_LEN) &&
+        (info.subCliName.empty() || info.subCliName.length() <= MAX_CLAW_SUB_CLI_NAME_LEN);
+}
+
+bool AreCliInfosValid(const std::vector<CliInfoParcel>& cliInfoList)
+{
+    for (const auto& info : cliInfoList) {
+        if (!IsCliInfoValid(info.cliInfo)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool IsCliInfoListSizeValid(size_t size)
+{
+    return (size > 0) && (size <= MAX_CLAW_CLI_INFO_LIST_SIZE);
+}
+
+bool AreCliAuthInfosValid(const std::vector<CliAuthInfoParcel>& authInfoList)
+{
+    for (const auto& info : authInfoList) {
+        if (!IsCliInfoValid(info.info.cliInfo) ||
+            (info.info.permissionNames.size() != info.info.authorizationResults.size())) {
+            return false;
+        }
+        for (const auto& permissionName : info.info.permissionNames) {
+            if (permissionName.empty() || permissionName.length() > MAX_CLAW_CLI_NAME_LEN) {
+                return false;
+            }
+        }
+    }
+    return true;
 }
 
 void AppendResolvedPermission(CliAuthInfo& authInfo, const std::string& permissionName, bool authorizationResult)
@@ -2165,7 +2204,8 @@ bool AccessTokenManagerService::IsSystemAppCalling() const
 int32_t AccessTokenManagerService::ValidateGetCliPermissionRequestInfoCaller(
     AccessTokenID callingTokenId, const std::string& agentID, const std::vector<CliInfoParcel>& cliInfoList)
 {
-    if (!IsAgentIdValid(agentID) || !DataValidator::IsListSizeValid(cliInfoList.size())) {
+    if (!IsAgentIdValid(agentID) || !IsCliInfoListSizeValid(cliInfoList.size()) ||
+        !AreCliInfosValid(cliInfoList)) {
         LOGE(ATM_DOMAIN, ATM_TAG,
             "GetCliPermissionRequestInfo invalid param, callerToken=%{public}u, agentID=%{public}s, "
             "cliSize=%{public}zu.", callingTokenId, agentID.c_str(), cliInfoList.size());
@@ -2189,7 +2229,8 @@ int32_t AccessTokenManagerService::ValidateGetCliPermissionsCaller(AccessTokenID
     AccessTokenID hostTokenID, const std::string& agentID, const std::vector<CliInfoParcel>& cliInfoList)
 {
     int32_t ret = ValidateHostTokenId(hostTokenID);
-    if ((ret != RET_SUCCESS) || !IsAgentIdValid(agentID) || !DataValidator::IsListSizeValid(cliInfoList.size())) {
+    if ((ret != RET_SUCCESS) || !IsAgentIdValid(agentID) || !IsCliInfoListSizeValid(cliInfoList.size()) ||
+        !AreCliInfosValid(cliInfoList)) {
         LOGE(ATM_DOMAIN, ATM_TAG,
             "GetCliPermissions invalid param, callerToken=%{public}u, targetToken=%{public}u, "
             "agentID=%{public}s, cliSize=%{public}zu, ret=%{public}d.",
@@ -2547,7 +2588,8 @@ int32_t AccessTokenManagerService::GenerateCliAuthResult(
 {
     AccessTokenID callingTokenId = IPCSkeleton::GetCallingTokenID();
     int32_t ret = ValidateHostTokenId(hostTokenID);
-    if ((ret != RET_SUCCESS) || !IsAgentIdValid(agentID) || !DataValidator::IsListSizeValid(authInfoList.size())) {
+    if ((ret != RET_SUCCESS) || !IsAgentIdValid(agentID) || !IsCliInfoListSizeValid(authInfoList.size()) ||
+        !AreCliAuthInfosValid(authInfoList)) {
         LOGE(ATM_DOMAIN, ATM_TAG,
             "GenerateCliAuthResult invalid param, callerToken=%{public}u, targetToken=%{public}u, "
             "agentID=%{public}s, authSize=%{public}zu, ret=%{public}d.",

@@ -28,6 +28,7 @@
 #include "ani_request_permission.h"
 #include "ani_request_permission_on_setting.h"
 #include "claw_permission_info.h"
+#include "data_validator.h"
 #include "hisysevent.h"
 #include "parameter.h"
 #include "permission_list_state.h"
@@ -624,13 +625,13 @@ static bool ParseInputToRegister(const RegisterInputInfoAni& aniInputInfo,
 {
     std::string type;
     if (!ParseAniString(context->env, aniInputInfo.aniType, type) || type.empty()) {
-        BusinessErrorAni::ThrowError(context->env, STS_ERROR_PARAM_INVALID, GetParamErrorMsg(
-            "type", "permissionStateChange or selfPermissionStateChange"));
+        BusinessErrorAni::ThrowError(context->env, STS_ERROR_PARAM_ILLEGAL,
+            GetParamErrorMsg("type", "permissionStateChange or selfPermissionStateChange"));
         return false;
     }
     if ((type != REGISTER_SELF_PERMISSION_STATE_CHANGE_TYPE) && (type != REGISTER_PERMISSION_STATE_CHANGE_TYPE)) {
         BusinessErrorAni::ThrowError(
-            context->env, STS_ERROR_PARAM_INVALID, GetParamErrorMsg("type", "type is invalid"));
+            context->env, STS_ERROR_PARAM_INVALID, GetErrorMessage(STS_ERROR_PARAM_INVALID, "type is invalid."));
         return false;
     }
 
@@ -642,7 +643,7 @@ static bool ParseInputToRegister(const RegisterInputInfoAni& aniInputInfo,
     if (type == REGISTER_PERMISSION_STATE_CHANGE_TYPE) {
         if (!AniParseAccessTokenIDArray(context->env, aniInputInfo.aniTokenIds, scopeInfo.tokenIDs)) {
             BusinessErrorAni::ThrowError(
-                context->env, STS_ERROR_PARAM_INVALID, GetParamErrorMsg("tokenIDList", "Array<int>"));
+                context->env, STS_ERROR_PARAM_ILLEGAL, GetParamErrorMsg("tokenIDList", "Array<int>"));
             return false;
         }
     } else if (type == REGISTER_SELF_PERMISSION_STATE_CHANGE_TYPE) {
@@ -1132,8 +1133,23 @@ static ani_ref CreateAniObjectArray(ani_env* env, const std::vector<T>& values, 
 
 static bool ParseCliInfo(ani_env* env, ani_object object, CliInfo& info)
 {
-    return GetStringProperty(env, object, "cliName", info.cliName) &&
-        GetStringProperty(env, object, "subCliName", info.subCliName);
+    if (!GetStringProperty(env, object, "cliName", info.cliName) ||
+        !GetStringProperty(env, object, "subCliName", info.subCliName)) {
+        return false;
+    }
+    return true;
+}
+
+static bool IsCliInfoValueValid(const CliInfo& info)
+{
+    return DataValidator::IsProcessNameValid(info.cliName) &&
+        (info.cliName.length() <= MAX_CLAW_CLI_NAME_LEN) &&
+        (info.subCliName.empty() || info.subCliName.length() <= MAX_CLAW_SUB_CLI_NAME_LEN);
+}
+
+static bool ParseCliInfoArray(ani_env* env, ani_array arrayObject, std::vector<CliInfo>& result)
+{
+    return ParseObjectArray(env, arrayObject, result, ParseCliInfo);
 }
 
 static bool ParseSkillInfo(ani_env* env, ani_object object, SkillInfo& info)
@@ -1190,6 +1206,43 @@ static bool ParseCliAuthInfo(ani_env* env, ani_object object, CliAuthInfo& info)
         ParseCliInfo(env, cliObject, info.cliInfo) &&
         GetStringVecProperty(env, object, "permissionNames", info.permissionNames) &&
         GetBoolVecProperty(env, object, "authorizationResults", info.authorizationResults);
+}
+
+static bool IsCliInfoListValueValid(const std::vector<CliInfo>& infos)
+{
+    if (infos.empty() || infos.size() > MAX_CLAW_CLI_INFO_LIST_SIZE) {
+        return false;
+    }
+    for (const auto& info : infos) {
+        if (!IsCliInfoValueValid(info)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+static bool IsPermissionNameValid(const std::string& permissionName)
+{
+    return !permissionName.empty() && permissionName.length() <= MAX_CLAW_CLI_NAME_LEN;
+}
+
+static bool IsCliAuthInfoListValueValid(const std::vector<CliAuthInfo>& authInfos)
+{
+    if (authInfos.empty() || authInfos.size() > MAX_CLAW_CLI_INFO_LIST_SIZE) {
+        return false;
+    }
+    for (const auto& authInfo : authInfos) {
+        if (!IsCliInfoValueValid(authInfo.cliInfo) ||
+            authInfo.permissionNames.size() != authInfo.authorizationResults.size()) {
+            return false;
+        }
+        for (const auto& permissionName : authInfo.permissionNames) {
+            if (!IsPermissionNameValid(permissionName)) {
+                return false;
+            }
+        }
+    }
+    return true;
 }
 
 static bool ParseSkillAuthInfo(ani_env* env, ani_object object, SkillAuthInfo& info)
@@ -1341,15 +1394,24 @@ static bool CheckKitResultAndThrow(ani_env* env, int32_t result)
     return false;
 }
 
-static bool ParseHostTokenID(ani_env* env, ani_int aniHostTokenID, AccessTokenID& hostTokenID)
+static void ThrowParamInvalidError(ani_env* env, const std::string& errorMsg)
 {
-    hostTokenID = static_cast<AccessTokenID>(aniHostTokenID);
-    return BusinessErrorAni::ValidateTokenIDWithThrowError(env, hostTokenID);
+    BusinessErrorAni::ThrowError(env, STS_ERROR_PARAM_INVALID, GetErrorMessage(STS_ERROR_PARAM_INVALID, errorMsg));
+}
+
+static bool IsTokenIDValid(AccessTokenID hostTokenID)
+{
+    return DataValidator::IsTokenIDValid(hostTokenID);
 }
 
 static bool ParseAgentID(ani_env* env, ani_string aniAgentID, std::string& agentID)
 {
-    return ParseAniString(env, aniAgentID, agentID) && agentID.length() <= MAX_CLAW_AGENT_ID_LEN;
+    return ParseAniString(env, aniAgentID, agentID);
+}
+
+static bool IsAgentIDValid(const std::string& agentID)
+{
+    return agentID.length() <= MAX_CLAW_AGENT_ID_LEN;
 }
 
 static ani_ref GetCliPermissionRequestInfoExecute([[maybe_unused]] ani_env* env,
@@ -1360,9 +1422,17 @@ static ani_ref GetCliPermissionRequestInfoExecute([[maybe_unused]] ani_env* env,
         BusinessErrorAni::ThrowError(env, STS_ERROR_PARAM_ILLEGAL, GetParamErrorMsg("agentID", "string"));
         return nullptr;
     }
+    if (!IsAgentIDValid(agentID)) {
+        ThrowParamInvalidError(env, "The agentID exceeds 48 characters.");
+        return nullptr;
+    }
     std::vector<CliInfo> cliInfoList;
-    if (!ParseObjectArray(env, aniCliInfoList, cliInfoList, ParseCliInfo)) {
+    if (!ParseCliInfoArray(env, aniCliInfoList, cliInfoList)) {
         BusinessErrorAni::ThrowError(env, STS_ERROR_PARAM_ILLEGAL, GetParamErrorMsg("cliList", "Array<CliInfo>"));
+        return nullptr;
+    }
+    if (!IsCliInfoListValueValid(cliInfoList)) {
+        ThrowParamInvalidError(env, "The cliList is invalid.");
         return nullptr;
     }
     PermissionDialogResult result;
@@ -1379,6 +1449,10 @@ static ani_ref GetSkillPermissionRequestInfoExecute([[maybe_unused]] ani_env* en
     std::string agentID;
     if (!ParseAgentID(env, aniAgentID, agentID)) {
         BusinessErrorAni::ThrowError(env, STS_ERROR_PARAM_ILLEGAL, GetParamErrorMsg("agentID", "string"));
+        return nullptr;
+    }
+    if (!IsAgentIDValid(agentID)) {
+        ThrowParamInvalidError(env, "The agentID exceeds 48 characters.");
         return nullptr;
     }
     std::vector<SkillInfo> skillInfoList;
@@ -1398,8 +1472,9 @@ static ani_ref GetSkillPermissionRequestInfoExecute([[maybe_unused]] ani_env* en
 static ani_ref GetCliPermissionsExecute([[maybe_unused]] ani_env* env,
     [[maybe_unused]] ani_object object, ani_int aniHostTokenID, ani_string aniAgentID, ani_array aniCliInfoList)
 {
-    AccessTokenID hostTokenID = INVALID_TOKENID;
-    if (!ParseHostTokenID(env, aniHostTokenID, hostTokenID)) {
+    AccessTokenID hostTokenID = static_cast<AccessTokenID>(aniHostTokenID);
+    if (!IsTokenIDValid(hostTokenID)) {
+        ThrowParamInvalidError(env, "The hostTokenID is 0.");
         return nullptr;
     }
     std::string agentID;
@@ -1407,10 +1482,18 @@ static ani_ref GetCliPermissionsExecute([[maybe_unused]] ani_env* env,
         BusinessErrorAni::ThrowError(env, STS_ERROR_PARAM_ILLEGAL, GetParamErrorMsg("agentID", "string"));
         return nullptr;
     }
+    if (!IsAgentIDValid(agentID)) {
+        ThrowParamInvalidError(env, "The agentID exceeds 48 characters.");
+        return nullptr;
+    }
     std::vector<CliInfo> cliInfoList;
-    if (!ParseObjectArray(env, aniCliInfoList, cliInfoList, ParseCliInfo)) {
+    if (!ParseCliInfoArray(env, aniCliInfoList, cliInfoList)) {
         BusinessErrorAni::ThrowError(env, STS_ERROR_PARAM_ILLEGAL,
             GetParamErrorMsg("cliInfoList", "Array<CliInfo>"));
+        return nullptr;
+    }
+    if (!IsCliInfoListValueValid(cliInfoList)) {
+        ThrowParamInvalidError(env, "The cliInfoList is invalid.");
         return nullptr;
     }
     CliPermissionsResult result;
@@ -1424,13 +1507,18 @@ static ani_ref GetCliPermissionsExecute([[maybe_unused]] ani_env* env,
 static ani_ref GetSkillPermissionsExecute([[maybe_unused]] ani_env* env,
     [[maybe_unused]] ani_object object, ani_int aniHostTokenID, ani_string aniAgentID, ani_array aniSkillInfoList)
 {
-    AccessTokenID hostTokenID = INVALID_TOKENID;
-    if (!ParseHostTokenID(env, aniHostTokenID, hostTokenID)) {
+    AccessTokenID hostTokenID = static_cast<AccessTokenID>(aniHostTokenID);
+    if (!IsTokenIDValid(hostTokenID)) {
+        ThrowParamInvalidError(env, "The hostTokenID is 0.");
         return nullptr;
     }
     std::string agentID;
     if (!ParseAgentID(env, aniAgentID, agentID)) {
         BusinessErrorAni::ThrowError(env, STS_ERROR_PARAM_ILLEGAL, GetParamErrorMsg("agentID", "string"));
+        return nullptr;
+    }
+    if (!IsAgentIDValid(agentID)) {
+        ThrowParamInvalidError(env, "The agentID exceeds 48 characters.");
         return nullptr;
     }
     std::vector<SkillInfo> skillInfoList;
@@ -1450,8 +1538,9 @@ static ani_ref GetSkillPermissionsExecute([[maybe_unused]] ani_env* env,
 static ani_ref GenerateCliAuthResultExecute([[maybe_unused]] ani_env* env,
     [[maybe_unused]] ani_object object, ani_int aniHostTokenID, ani_string aniAgentID, ani_array aniAuthInfoList)
 {
-    AccessTokenID hostTokenID = INVALID_TOKENID;
-    if (!ParseHostTokenID(env, aniHostTokenID, hostTokenID)) {
+    AccessTokenID hostTokenID = static_cast<AccessTokenID>(aniHostTokenID);
+    if (!IsTokenIDValid(hostTokenID)) {
+        ThrowParamInvalidError(env, "The hostTokenID is 0.");
         return nullptr;
     }
     std::string agentID;
@@ -1459,10 +1548,18 @@ static ani_ref GenerateCliAuthResultExecute([[maybe_unused]] ani_env* env,
         BusinessErrorAni::ThrowError(env, STS_ERROR_PARAM_ILLEGAL, GetParamErrorMsg("agentID", "string"));
         return nullptr;
     }
+    if (!IsAgentIDValid(agentID)) {
+        ThrowParamInvalidError(env, "The agentID exceeds 48 characters.");
+        return nullptr;
+    }
     std::vector<CliAuthInfo> authInfoList;
     if (!ParseObjectArray(env, aniAuthInfoList, authInfoList, ParseCliAuthInfo)) {
         BusinessErrorAni::ThrowError(env, STS_ERROR_PARAM_ILLEGAL,
             GetParamErrorMsg("authInfoList", "Array<CliAuthInfo>"));
+        return nullptr;
+    }
+    if (!IsCliAuthInfoListValueValid(authInfoList)) {
+        ThrowParamInvalidError(env, "The authInfoList is invalid.");
         return nullptr;
     }
     ToolAuthResult result;
@@ -1476,13 +1573,18 @@ static ani_ref GenerateCliAuthResultExecute([[maybe_unused]] ani_env* env,
 static ani_ref GenerateSkillAuthResultExecute([[maybe_unused]] ani_env* env,
     [[maybe_unused]] ani_object object, ani_int aniHostTokenID, ani_string aniAgentID, ani_array aniAuthInfoList)
 {
-    AccessTokenID hostTokenID = INVALID_TOKENID;
-    if (!ParseHostTokenID(env, aniHostTokenID, hostTokenID)) {
+    AccessTokenID hostTokenID = static_cast<AccessTokenID>(aniHostTokenID);
+    if (!IsTokenIDValid(hostTokenID)) {
+        ThrowParamInvalidError(env, "The hostTokenID is 0.");
         return nullptr;
     }
     std::string agentID;
     if (!ParseAgentID(env, aniAgentID, agentID)) {
         BusinessErrorAni::ThrowError(env, STS_ERROR_PARAM_ILLEGAL, GetParamErrorMsg("agentID", "string"));
+        return nullptr;
+    }
+    if (!IsAgentIDValid(agentID)) {
+        ThrowParamInvalidError(env, "The agentID exceeds 48 characters.");
         return nullptr;
     }
     std::vector<SkillAuthInfo> authInfoList;

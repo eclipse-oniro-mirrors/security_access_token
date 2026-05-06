@@ -20,6 +20,8 @@
 #include "access_token_error.h"
 #include "accesstoken_common_log.h"
 #include "accesstoken_kit.h"
+#include "claw_permission_info.h"
+#include "data_validator.h"
 #include "napi_common.h"
 #include "napi_error.h"
 
@@ -34,7 +36,7 @@ constexpr size_t CHALLENGE_PARAM_COUNT = 3;
 constexpr size_t THIRD_PARAM_INDEX = 2;
 constexpr size_t MAX_AGENT_ID_LENGTH = MAX_CLAW_AGENT_ID_LEN;
 
-void ThrowParamError(napi_env env, const std::string& param, const std::string& type)
+void ThrowParamTypeError(napi_env env, const std::string& param, const std::string& type)
 {
     napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, GetParamErrorMsg(param, type)));
 }
@@ -50,7 +52,24 @@ bool GetNamedString(napi_env env, napi_value obj, const char* name, std::string&
 
 bool ParseAgentID(napi_env env, napi_value value, std::string& agentID)
 {
-    return ParseString(env, value, agentID) && agentID.length() <= MAX_AGENT_ID_LENGTH;
+    return ParseString(env, value, agentID);
+}
+
+bool IsAgentIDValid(const std::string& agentID)
+{
+    return agentID.length() <= MAX_AGENT_ID_LENGTH;
+}
+
+bool IsHostTokenIDValid(AccessTokenID tokenID)
+{
+    return DataValidator::IsTokenIDValid(tokenID);
+}
+
+bool IsCliInfoValueValid(const CliInfo& info)
+{
+    return DataValidator::IsProcessNameValid(info.cliName) &&
+        (info.cliName.length() <= MAX_CLAW_CLI_NAME_LEN) &&
+        (info.subCliName.empty() || info.subCliName.length() <= MAX_CLAW_SUB_CLI_NAME_LEN);
 }
 
 bool ParseCliInfo(napi_env env, napi_value value, CliInfo& info)
@@ -58,8 +77,11 @@ bool ParseCliInfo(napi_env env, napi_value value, CliInfo& info)
     if (!CheckType(env, value, napi_object)) {
         return false;
     }
-    return GetNamedString(env, value, "cliName", info.cliName) &&
-        GetNamedString(env, value, "subCliName", info.subCliName);
+    if (!GetNamedString(env, value, "cliName", info.cliName) ||
+        !GetNamedString(env, value, "subCliName", info.subCliName)) {
+        return false;
+    }
+    return true;
 }
 
 bool ParseSkillInfo(napi_env env, napi_value value, SkillInfo& info)
@@ -112,6 +134,94 @@ bool ParseCliAuthInfo(napi_env env, napi_value value, CliAuthInfo& info)
         GetNamedBoolArray(env, value, "authorizationResults", info.authorizationResults);
 }
 
+bool IsCliInfoListValueValid(const std::vector<CliInfo>& infos)
+{
+    if (infos.empty() || infos.size() > MAX_CLAW_CLI_INFO_LIST_SIZE) {
+        return false;
+    }
+    for (const auto& info : infos) {
+        if (!IsCliInfoValueValid(info)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool IsPermissionNameValid(const std::string& permissionName)
+{
+    return !permissionName.empty() && permissionName.length() <= MAX_CLAW_CLI_NAME_LEN;
+}
+
+bool IsCliAuthInfoListValueValid(const std::vector<CliAuthInfo>& authInfos)
+{
+    if (authInfos.empty() || authInfos.size() > MAX_CLAW_CLI_INFO_LIST_SIZE) {
+        return false;
+    }
+    for (const auto& authInfo : authInfos) {
+        if (!IsCliInfoValueValid(authInfo.cliInfo) ||
+            authInfo.permissionNames.size() != authInfo.authorizationResults.size()) {
+            return false;
+        }
+        for (const auto& permissionName : authInfo.permissionNames) {
+            if (!IsPermissionNameValid(permissionName)) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+bool SetParamError(ClawPermissionAsyncContext& context, const std::string& errorMsg)
+{
+    context.errorCode = ERR_PARAM_INVALID;
+    context.errorMsg = errorMsg;
+    return false;
+}
+
+bool ValidateAgentID(ClawPermissionAsyncContext& context)
+{
+    if (!IsAgentIDValid(context.agentID)) {
+        return SetParamError(context, "The agentID exceeds 48 characters.");
+    }
+    return true;
+}
+
+bool ValidateHostTokenID(ClawPermissionAsyncContext& context)
+{
+    if (!IsHostTokenIDValid(context.hostTokenID)) {
+        return SetParamError(context, "The hostTokenID is 0.");
+    }
+    return true;
+}
+
+bool ValidateClawPermissionInput(ClawPermissionAsyncContext& context)
+{
+    if (!ValidateAgentID(context)) {
+        return false;
+    }
+    switch (context.apiType) {
+        case ClawPermissionApiType::GET_CLI_PERMISSION_DIALOG_INFO:
+            return IsCliInfoListValueValid(context.cliInfoList) ||
+                SetParamError(context, "The cliList is invalid.");
+        case ClawPermissionApiType::GET_SKILL_PERMISSION_DIALOG_INFO:
+            return true;
+        case ClawPermissionApiType::GET_CLI_PERMISSIONS:
+            return ValidateHostTokenID(context) &&
+                (IsCliInfoListValueValid(context.cliInfoList) ||
+                    SetParamError(context, "The cliInfoList is invalid."));
+        case ClawPermissionApiType::GET_SKILL_PERMISSIONS:
+            return ValidateHostTokenID(context);
+        case ClawPermissionApiType::GENERATE_CLI_AUTH_RESULT:
+            return ValidateHostTokenID(context) &&
+                (IsCliAuthInfoListValueValid(context.cliAuthInfoList) ||
+                    SetParamError(context, "The authInfoList is invalid."));
+        case ClawPermissionApiType::GENERATE_SKILL_AUTH_RESULT:
+            return ValidateHostTokenID(context);
+        default:
+            return true;
+    }
+}
+
 bool ParseSkillAuthInfo(napi_env env, napi_value value, SkillAuthInfo& info)
 {
     napi_value skillValue = nullptr;
@@ -141,6 +251,11 @@ bool ParseObjectArray(napi_env env, napi_value value, std::vector<T>& result, Pa
         result.emplace_back(info);
     }
     return true;
+}
+
+bool ParseCliInfoArray(napi_env env, napi_value value, std::vector<CliInfo>& result)
+{
+    return ParseObjectArray(env, value, result, ParseCliInfo);
 }
 
 napi_value CreateStringArray(napi_env env, const std::vector<std::string>& values)
@@ -321,11 +436,11 @@ napi_value NapiClawPermission::GetCliPermissionRequestInfo(napi_env env, napi_ca
         return nullptr;
     }
     if (!ParseAgentID(env, argv[0], asyncContext->agentID)) {
-        ThrowParamError(env, "agentID", "string(<=48 chars)");
+        ThrowParamTypeError(env, "agentID", "string");
         return nullptr;
     }
-    if (!ParseObjectArray(env, argv[1], asyncContext->cliInfoList, ParseCliInfo)) {
-        ThrowParamError(env, "cliList", "Array<CliInfo>");
+    if (!ParseCliInfoArray(env, argv[1], asyncContext->cliInfoList)) {
+        ThrowParamTypeError(env, "cliList", "Array<CliInfo>");
         return nullptr;
     }
     asyncContext->apiType = ClawPermissionApiType::GET_CLI_PERMISSION_DIALOG_INFO;
@@ -350,11 +465,11 @@ napi_value NapiClawPermission::GetSkillPermissionRequestInfo(napi_env env, napi_
         return nullptr;
     }
     if (!ParseAgentID(env, argv[0], asyncContext->agentID)) {
-        ThrowParamError(env, "agentID", "string(<=48 chars)");
+        ThrowParamTypeError(env, "agentID", "string");
         return nullptr;
     }
     if (!ParseObjectArray(env, argv[1], asyncContext->skillInfoList, ParseSkillInfo)) {
-        ThrowParamError(env, "skillList", "Array<SkillInfo>");
+        ThrowParamTypeError(env, "skillList", "Array<SkillInfo>");
         return nullptr;
     }
     asyncContext->apiType = ClawPermissionApiType::GET_SKILL_PERMISSION_DIALOG_INFO;
@@ -379,15 +494,15 @@ napi_value NapiClawPermission::GetCliPermissions(napi_env env, napi_callback_inf
         return nullptr;
     }
     if (!ParseUint32(env, argv[0], asyncContext->hostTokenID)) {
-        ThrowParamError(env, "hostTokenID", "number");
+        ThrowParamTypeError(env, "hostTokenID", "number");
         return nullptr;
     }
     if (!ParseAgentID(env, argv[1], asyncContext->agentID)) {
-        ThrowParamError(env, "agentID", "string(<=48 chars)");
+        ThrowParamTypeError(env, "agentID", "string");
         return nullptr;
     }
-    if (!ParseObjectArray(env, argv[THIRD_PARAM_INDEX], asyncContext->cliInfoList, ParseCliInfo)) {
-        ThrowParamError(env, "cliInfoList", "Array<CliInfo>");
+    if (!ParseCliInfoArray(env, argv[THIRD_PARAM_INDEX], asyncContext->cliInfoList)) {
+        ThrowParamTypeError(env, "cliInfoList", "Array<CliInfo>");
         return nullptr;
     }
     asyncContext->apiType = ClawPermissionApiType::GET_CLI_PERMISSIONS;
@@ -412,15 +527,15 @@ napi_value NapiClawPermission::GetSkillPermissions(napi_env env, napi_callback_i
         return nullptr;
     }
     if (!ParseUint32(env, argv[0], asyncContext->hostTokenID)) {
-        ThrowParamError(env, "hostTokenID", "number");
+        ThrowParamTypeError(env, "hostTokenID", "number");
         return nullptr;
     }
     if (!ParseAgentID(env, argv[1], asyncContext->agentID)) {
-        ThrowParamError(env, "agentID", "string(<=48 chars)");
+        ThrowParamTypeError(env, "agentID", "string");
         return nullptr;
     }
     if (!ParseObjectArray(env, argv[THIRD_PARAM_INDEX], asyncContext->skillInfoList, ParseSkillInfo)) {
-        ThrowParamError(env, "skillInfoList", "Array<SkillInfo>");
+        ThrowParamTypeError(env, "skillInfoList", "Array<SkillInfo>");
         return nullptr;
     }
     asyncContext->apiType = ClawPermissionApiType::GET_SKILL_PERMISSIONS;
@@ -444,15 +559,15 @@ napi_value NapiClawPermission::GenerateCliAuthResult(napi_env env, napi_callback
         return nullptr;
     }
     if (!ParseUint32(env, argv[0], asyncContext->hostTokenID)) {
-        ThrowParamError(env, "hostTokenID", "number");
+        ThrowParamTypeError(env, "hostTokenID", "number");
         return nullptr;
     }
     if (!ParseAgentID(env, argv[1], asyncContext->agentID)) {
-        ThrowParamError(env, "agentID", "string(<=48 chars)");
+        ThrowParamTypeError(env, "agentID", "string");
         return nullptr;
     }
     if (!ParseObjectArray(env, argv[THIRD_PARAM_INDEX], asyncContext->cliAuthInfoList, ParseCliAuthInfo)) {
-        ThrowParamError(env, "authInfoList", "Array<CliAuthInfo>");
+        ThrowParamTypeError(env, "authInfoList", "Array<CliAuthInfo>");
         return nullptr;
     }
     asyncContext->apiType = ClawPermissionApiType::GENERATE_CLI_AUTH_RESULT;
@@ -476,15 +591,15 @@ napi_value NapiClawPermission::GenerateSkillAuthResult(napi_env env, napi_callba
         return nullptr;
     }
     if (!ParseUint32(env, argv[0], asyncContext->hostTokenID)) {
-        ThrowParamError(env, "hostTokenID", "number");
+        ThrowParamTypeError(env, "hostTokenID", "number");
         return nullptr;
     }
     if (!ParseAgentID(env, argv[1], asyncContext->agentID)) {
-        ThrowParamError(env, "agentID", "string(<=48 chars)");
+        ThrowParamTypeError(env, "agentID", "string");
         return nullptr;
     }
     if (!ParseObjectArray(env, argv[THIRD_PARAM_INDEX], asyncContext->skillAuthInfoList, ParseSkillAuthInfo)) {
-        ThrowParamError(env, "authInfoList", "Array<SkillAuthInfo>");
+        ThrowParamTypeError(env, "authInfoList", "Array<SkillAuthInfo>");
         return nullptr;
     }
     asyncContext->apiType = ClawPermissionApiType::GENERATE_SKILL_AUTH_RESULT;
@@ -498,6 +613,9 @@ void NapiClawPermission::Execute(napi_env env, void* data)
     ClawPermissionAsyncContext* asyncContext = reinterpret_cast<ClawPermissionAsyncContext*>(data);
     if (asyncContext == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "AsyncContext is null.");
+        return;
+    }
+    if (!ValidateClawPermissionInput(*asyncContext)) {
         return;
     }
 

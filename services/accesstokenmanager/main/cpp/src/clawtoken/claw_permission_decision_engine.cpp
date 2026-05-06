@@ -110,6 +110,12 @@ int32_t ClawPermissionDecisionEngine::BuildCliPermissionDialogDetail(
     detail.statusList.reserve(requiredCliPermissions.size());
     bool hasNotDeclaredRequiredPermission = false;
     for (const auto& requiredCliPermission : requiredCliPermissions) {
+        std::vector<std::string> usedPermissions;
+        ret = ClawPermissionMetadataProvider::GetInstance().GetUsedPermissionsByCliPermission(
+            requiredCliPermission, usedPermissions);
+        if (ret != RET_SUCCESS) {
+            return ret;
+        }
         PermissionDecisionStatus cliPermissionStatus = context.GetPermissionDecisionStatus(
             requiredCliPermission, PermissionDecisionStatus::NO_DIALOG_NOT_DECLARED);
         if (cliPermissionStatus == PermissionDecisionStatus::NO_DIALOG_NOT_DECLARED) {
@@ -150,15 +156,16 @@ int32_t ClawPermissionDecisionEngine::BuildCliPermissionDetailByRequiredPermissi
     CliPermissionDetail& detail)
 {
     detail.requiredCliPermission = requiredCliPermission;
-    PermissionDecisionStatus notDeclaredStatus = PermissionDecisionStatus::NO_DIALOG_NOT_DECLARED;
-    detail.cliPermissionStatus = context.GetPermissionDecisionStatus(requiredCliPermission, notDeclaredStatus);
-    if (detail.cliPermissionStatus == PermissionDecisionStatus::NO_DIALOG_NOT_DECLARED) {
-        return RET_SUCCESS;
-    }
     int32_t ret = ClawPermissionMetadataProvider::GetInstance().GetUsedPermissionsByCliPermission(
         requiredCliPermission, detail.usedPermissions);
     if (ret != RET_SUCCESS) {
         return ret;
+    }
+    PermissionDecisionStatus notDeclaredStatus = PermissionDecisionStatus::NO_DIALOG_NOT_DECLARED;
+    detail.cliPermissionStatus = context.GetPermissionDecisionStatus(requiredCliPermission, notDeclaredStatus);
+    if (detail.cliPermissionStatus == PermissionDecisionStatus::NO_DIALOG_NOT_DECLARED) {
+        detail.usedPermissions.clear();
+        return RET_SUCCESS;
     }
     if (detail.cliPermissionStatus == PermissionDecisionStatus::NEED_PERMISSION_DIALOG) {
         detail.cliPermissionStatus = GetCliPermissionResolvedStatus(context, detail.usedPermissions);
