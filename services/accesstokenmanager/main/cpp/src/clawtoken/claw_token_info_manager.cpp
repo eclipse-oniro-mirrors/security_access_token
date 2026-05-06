@@ -91,7 +91,7 @@ bool ToolTokenInfoManager::CheckCliInfo(const CliInfo& info) const
     }
     if (!info.subCliName.empty() && info.subCliName.length() > MAX_CHALLENGE_LENGTH) {
         LOGE(ATM_DOMAIN, ATM_TAG,
-            "Invalid subCliName, cliName=%{public}s, subCliName=%{public}s, info.subCliName.length()=%{public}d.",
+            "Invalid subCliName, cliName=%{public}s, subCliName=%{public}s, info.subCliName.length()=%{public}lu.",
             info.cliName.c_str(), info.subCliName.c_str(), info.subCliName.length());
         return false;
     }
