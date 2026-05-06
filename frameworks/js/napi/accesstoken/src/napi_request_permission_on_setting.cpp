@@ -501,7 +501,7 @@ void RequestOnSettingAsyncInstanceControl::AddCallbackByInstanceId(
     (void)StartUIExtension(asyncContext);
 }
 
-bool static CheckPermList(std::vector<std::string> permList, std::vector<std::string> tmpPermList)
+static bool CheckPermList(std::vector<std::string> permList, std::vector<std::string> tmpPermList)
 {
     if (permList.size() != tmpPermList.size()) {
         LOGI(ATM_DOMAIN, ATM_TAG, "Perm list size not equal, CurrentPermList size: %{public}zu.", tmpPermList.size());

@@ -360,7 +360,7 @@ static void GetSingleNativeTokenFromJson(const CJson* j,  std::vector<NativeToke
     info.apl = static_cast<ATokenAplEnum>(aplNum);
     int32_t ver;
     GetIntFromJson(j, JSON_VERSION, ver);
-    info.ver = (uint8_t)ver;
+    info.ver = static_cast<uint8_t>(ver);
     GetUnsignedIntFromJson(j, JSON_TOKEN_ID, info.tokenID);
     if ((info.ver != DEFAULT_TOKEN_VERSION) || (info.tokenID == 0)) {
         return;
