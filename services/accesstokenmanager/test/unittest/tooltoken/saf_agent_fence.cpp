@@ -42,6 +42,7 @@ constexpr int32_t MOCK_ABNORMAL_QUERY_RET = -20260426;
 
 const std::map<std::string, std::vector<std::string>> MOCK_CLI_REQUIRED_PERMISSIONS = {
     {"abnormal:run", {"ohos.permission.CAMERA"}},
+    {"cameraBundle:run", {"ohos.permission.cli.camera_bundle"}},
     {"camera:capture", {"ohos.permission.POWER_MANAGER"}},
     {"duplicate:run", {"ohos.permission.APPROXIMATELY_LOCATION", "ohos.permission.APPROXIMATELY_LOCATION"}},
     {"empty:run", {}},
