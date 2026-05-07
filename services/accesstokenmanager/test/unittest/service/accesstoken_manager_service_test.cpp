@@ -2844,17 +2844,9 @@ HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest007_003, TestSi
     SetSelfTokenID(fullTokenId);
 
     PermissionDialogResultParcel dialogResult;
-    ASSERT_EQ(RET_SUCCESS,
+    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_NOT_EXIST,
         atManagerService_->GetCliPermissionRequestInfo(
             DEFAULT_AGENT_ID, BuildMissingMappingCliInfoParcels(), dialogResult));
-    ASSERT_EQ(1, static_cast<int32_t>(dialogResult.result.detailList.size()));
-    EXPECT_FALSE(dialogResult.result.detailList[0].needPermissionDialog);
-    ASSERT_EQ(1, static_cast<int32_t>(dialogResult.result.detailList[0].permissionNameList.size()));
-    EXPECT_EQ("ohos.permission.cli.no_mapping", dialogResult.result.detailList[0].permissionNameList[0]);
-    ASSERT_EQ(1, static_cast<int32_t>(dialogResult.result.detailList[0].statusList.size()));
-    EXPECT_EQ(PermissionDecisionStatus::NO_DIALOG_NOT_DECLARED,
-        dialogResult.result.detailList[0].statusList[0]);
-    EXPECT_TRUE(dialogResult.result.detailList[0].authResult.empty());
 
     SetSelfTokenID(g_selfShellTokenId);
     (void)AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId);

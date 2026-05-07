@@ -1040,7 +1040,7 @@ HWTEST_F(ClawPermissionDecisionEngineTest, ClawPermissionMetadataProvider002, Te
     tokenId_ = CreateEmptyHapToken("claw_permission_cli_missing_mapping_test");
     ASSERT_NE(INVALID_TOKENID, tokenId_);
     CliPermissionsResult cliResult;
-    EXPECT_EQ(RET_SUCCESS,
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_NOT_EXIST,
         ClawPermissionDecisionEngine::GetInstance().BuildCliPermissions(
         tokenId_, std::vector<CliInfo>{{"missingmap", "run"}}, cliResult));
     EXPECT_EQ(RET_SUCCESS,
