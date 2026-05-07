@@ -21,6 +21,8 @@
 #include "atm_tools_param_info_parcel.h"
 #include "claw_auth_info_parcel.h"
 #include "claw_token_challenge_parcel.h"
+#include "cli_info_result_parcel.h"
+#include "cli_init_info_parcel.h"
 #include "cli_permissions_result_parcel.h"
 #include "hap_info_parcel.h"
 #include "hap_policy_parcel.h"
@@ -419,6 +421,23 @@ HWTEST_F(AccessTokenParcelTest, PermissionDialogResultParcel001, TestSize.Level1
 }
 
 /**
+ * @tc.name: PermissionDialogResultParcel002
+ * @tc.desc: Test PermissionDialogResultParcel Unmarshalling with malformed parcel.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenParcelTest, PermissionDialogResultParcel002, TestSize.Level1)
+{
+    Parcel parcel;
+    EXPECT_TRUE(parcel.WriteUint32(1));
+    EXPECT_TRUE(parcel.WriteBool(false));
+
+    std::shared_ptr<PermissionDialogResultParcel> readedData(
+        PermissionDialogResultParcel::Unmarshalling(parcel));
+    EXPECT_EQ(nullptr, readedData);
+}
+
+/**
  * @tc.name: CliPermissionsResultParcel001
  * @tc.desc: Test CliPermissionsResultParcel Marshalling/Unmarshalling.
  * @tc.type: FUNC
@@ -445,6 +464,24 @@ HWTEST_F(AccessTokenParcelTest, CliPermissionsResultParcel001, TestSize.Level1)
     EXPECT_EQ(detail.requiredCliPermission, readDetail.requiredCliPermission);
     EXPECT_EQ(detail.cliPermissionStatus, readDetail.cliPermissionStatus);
     EXPECT_EQ(detail.usedPermissions, readDetail.usedPermissions);
+}
+
+/**
+ * @tc.name: CliPermissionsResultParcel002
+ * @tc.desc: Test CliPermissionsResultParcel Unmarshalling with malformed parcel.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenParcelTest, CliPermissionsResultParcel002, TestSize.Level1)
+{
+    Parcel parcel;
+    EXPECT_TRUE(parcel.WriteUint32(1));
+    EXPECT_TRUE(parcel.WriteUint32(1));
+    EXPECT_TRUE(parcel.WriteString("ohos.permission.POWER_MANAGER"));
+
+    std::shared_ptr<CliPermissionsResultParcel> readedData(
+        CliPermissionsResultParcel::Unmarshalling(parcel));
+    EXPECT_EQ(nullptr, readedData);
 }
 
 /**
@@ -518,6 +555,105 @@ HWTEST_F(AccessTokenParcelTest, ClawAuthInfoParcel001, TestSize.Level1)
 }
 
 /**
+ * @tc.name: ClawAuthInfoParcel002
+ * @tc.desc: Test CliAuthInfoParcel Unmarshalling with malformed parcel.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenParcelTest, ClawAuthInfoParcel002, TestSize.Level1)
+{
+    Parcel parcel;
+    EXPECT_TRUE(parcel.WriteString("camera"));
+
+    std::shared_ptr<CliAuthInfoParcel> readedData(CliAuthInfoParcel::Unmarshalling(parcel));
+    EXPECT_EQ(nullptr, readedData);
+}
+
+/**
+ * @tc.name: CliInitInfoParcel001
+ * @tc.desc: Test CliInitInfoParcel Marshalling/Unmarshalling.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenParcelTest, CliInitInfoParcel001, TestSize.Level1)
+{
+    CliInitInfoParcel initInfoParcel;
+    initInfoParcel.cliInitInfo.hostTokenId = TEST_TOKEN_ID;
+    initInfoParcel.cliInitInfo.challenge = "challenge";
+    initInfoParcel.cliInitInfo.cliInfo = {
+        .cliName = "camera",
+        .subCliName = "capture"
+    };
+
+    Parcel parcel;
+    EXPECT_TRUE(initInfoParcel.Marshalling(parcel));
+    std::shared_ptr<CliInitInfoParcel> readedData(CliInitInfoParcel::Unmarshalling(parcel));
+    ASSERT_NE(nullptr, readedData);
+    EXPECT_EQ(initInfoParcel.cliInitInfo.hostTokenId, readedData->cliInitInfo.hostTokenId);
+    EXPECT_EQ(initInfoParcel.cliInitInfo.challenge, readedData->cliInitInfo.challenge);
+    EXPECT_EQ(initInfoParcel.cliInitInfo.cliInfo.cliName, readedData->cliInitInfo.cliInfo.cliName);
+    EXPECT_EQ(initInfoParcel.cliInitInfo.cliInfo.subCliName, readedData->cliInitInfo.cliInfo.subCliName);
+}
+
+/**
+ * @tc.name: CliInitInfoParcel002
+ * @tc.desc: Test CliInitInfoParcel Unmarshalling with malformed parcel.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenParcelTest, CliInitInfoParcel002, TestSize.Level1)
+{
+    Parcel parcel;
+    EXPECT_TRUE(parcel.WriteUint32(TEST_TOKEN_ID));
+    EXPECT_TRUE(parcel.WriteString("challenge"));
+    EXPECT_TRUE(parcel.WriteString("camera"));
+
+    std::shared_ptr<CliInitInfoParcel> readedData(CliInitInfoParcel::Unmarshalling(parcel));
+    EXPECT_EQ(nullptr, readedData);
+}
+
+/**
+ * @tc.name: CliInfoResultParcel001
+ * @tc.desc: Test CliInfoResultParcel Marshalling/Unmarshalling.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenParcelTest, CliInfoResultParcel001, TestSize.Level1)
+{
+    CliInfoResultParcel infoParcel;
+    infoParcel.cliTokenInfo.hostTokenId = TEST_TOKEN_ID;
+    infoParcel.cliTokenInfo.userId = 100;
+    infoParcel.cliTokenInfo.cliName = "camera";
+    infoParcel.cliTokenInfo.subCliName = "capture";
+
+    Parcel parcel;
+    EXPECT_TRUE(infoParcel.Marshalling(parcel));
+    std::shared_ptr<CliInfoResultParcel> readedData(CliInfoResultParcel::Unmarshalling(parcel));
+    ASSERT_NE(nullptr, readedData);
+    EXPECT_EQ(infoParcel.cliTokenInfo.hostTokenId, readedData->cliTokenInfo.hostTokenId);
+    EXPECT_EQ(infoParcel.cliTokenInfo.userId, readedData->cliTokenInfo.userId);
+    EXPECT_EQ(infoParcel.cliTokenInfo.cliName, readedData->cliTokenInfo.cliName);
+    EXPECT_EQ(infoParcel.cliTokenInfo.subCliName, readedData->cliTokenInfo.subCliName);
+}
+
+/**
+ * @tc.name: CliInfoResultParcel002
+ * @tc.desc: Test CliInfoResultParcel Unmarshalling with malformed parcel.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenParcelTest, CliInfoResultParcel002, TestSize.Level1)
+{
+    Parcel parcel;
+    EXPECT_TRUE(parcel.WriteUint32(TEST_TOKEN_ID));
+    EXPECT_TRUE(parcel.WriteInt32(100));
+    EXPECT_TRUE(parcel.WriteString("camera"));
+
+    std::shared_ptr<CliInfoResultParcel> readedData(CliInfoResultParcel::Unmarshalling(parcel));
+    EXPECT_EQ(nullptr, readedData);
+}
+
+/**
  * @tc.name: ToolAuthResultParcel001
  * @tc.desc: Test ToolAuthResultParcel Marshalling/Unmarshalling.
  * @tc.type: FUNC
@@ -533,6 +669,21 @@ HWTEST_F(AccessTokenParcelTest, ToolAuthResultParcel001, TestSize.Level1)
     std::shared_ptr<ToolAuthResultParcel> readedData(ToolAuthResultParcel::Unmarshalling(parcel));
     ASSERT_NE(nullptr, readedData);
     EXPECT_EQ(resultParcel.result.authResults, readedData->result.authResults);
+}
+
+/**
+ * @tc.name: ToolAuthResultParcel002
+ * @tc.desc: Test ToolAuthResultParcel Unmarshalling with malformed parcel.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenParcelTest, ToolAuthResultParcel002, TestSize.Level1)
+{
+    Parcel parcel;
+    EXPECT_TRUE(parcel.WriteUint32(1));
+
+    std::shared_ptr<ToolAuthResultParcel> readedData(ToolAuthResultParcel::Unmarshalling(parcel));
+    EXPECT_EQ(nullptr, readedData);
 }
 } // namespace AccessToken
 } // namespace Security
