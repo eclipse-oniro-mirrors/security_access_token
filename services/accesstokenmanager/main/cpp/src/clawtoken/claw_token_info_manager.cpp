@@ -23,6 +23,7 @@
 #include "claw_ticket_manager.h"
 #include "data_validator.h"
 #include "hap_token_info.h"
+#include "permission_kernel_utils.h"
 #include "permission_map.h"
 #include "permission_manager.h"
 #include "permission_validator.h"
@@ -363,7 +364,7 @@ int32_t ToolTokenInfoManager::FinalizeToolTokenInit(const std::shared_ptr<ClawTo
     std::vector<bool> statusList;
     BuildGrantedKernelPermList(baseInfo.toolType, permStateList, kernelPermList);
     BuildPermStatusList(baseInfo.toolType, permStateList, opCodeList, statusList);
-    PermissionManager::GetInstance().AddNativePermToKernel(baseInfo.tokenId, opCodeList, statusList);
+    PermissionKernelUtils::AddNativePermToKernel(baseInfo.tokenId, opCodeList, statusList);
     LOGI(ATM_DOMAIN, ATM_TAG, "TokenId=%{public}u, hostTokenId=%{public}u.",
         baseInfo.tokenId, baseInfo.hostTokenId);
     for (size_t i = 0; i < permStateList.size(); ++i) {
@@ -387,7 +388,7 @@ int32_t ToolTokenInfoManager::DeleteToolTokenByPid(int32_t pid)
         }
         tokenId = inner->GetTokenId();
     }
-    PermissionManager::GetInstance().RemovePermFromKernel(tokenId);
+    PermissionKernelUtils::RemovePermFromKernel(tokenId);
     AccessTokenIDManager::GetInstance().ReleaseTokenId(tokenId);
     return RET_SUCCESS;
 }

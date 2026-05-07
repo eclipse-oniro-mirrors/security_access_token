@@ -36,6 +36,7 @@ public:
     void ProcessDlpPermInfos(const std::vector<PermissionDlpMode>& info);
     int32_t GetPermDlpMode(const std::string& permissionName);
     bool IsPermissionAvailableToDlpHap(int32_t hapDlpType, const std::string& permissionName);
+    bool IsPermissionAvailableToDlpHap(int32_t hapDlpType, uint32_t permCode);
 
 private:
     DlpPermissionSetManager();

@@ -32,6 +32,7 @@
 #include "claw_permission_status_helper.h"
 #include "claw_ticket_manager.h"
 #include "accesstoken_id_manager.h"
+#include "accesstoken_info_dumper.h"
 #include "constant_common.h"
 #include "claw_token_info_manager.h"
 #include "data_usage_dfx.h"
@@ -42,6 +43,7 @@
 #ifdef HITRACE_NATIVE_ENABLE
 #include "hitrace_meter.h"
 #endif
+#include "interfaces/hap_verify.h"
 #include "ipc_skeleton.h"
 #include "libraryloader.h"
 #include "memory_guard.h"
@@ -49,9 +51,14 @@
 #include "parameters.h"
 #include "permission_list_state.h"
 #include "permission_manager.h"
+#include "permission_constraint_check.h"
+#include "permission_feature_manager.h"
+#include "permission_kernel_utils.h"
 #include "permission_map.h"
+#include "permission_request_toggle_manager.h"
 #include "permission_status_parcel.h"
 #include "permission_validator.h"
+#include "provision/provision_info.h"
 #include "random.h"
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
 #include "sec_comp_enhance_agent.h"
@@ -385,10 +392,11 @@ int32_t BuildCliTicketAuthInfos(AccessTokenID hostTokenID, const std::vector<Cli
     }
     return BuildCliTicketAuthInfos(hostTokenID, rawAuthInfoList, authInfos);
 }
-}
 
 const bool REGISTER_RESULT =
     SystemAbility::MakeAndRegisterAbility(DelayedSingleton<AccessTokenManagerService>::GetInstance().get());
+
+} // namespace
 
 AccessTokenManagerService::AccessTokenManagerService()
     : SystemAbility(SA_ID_ACCESSTOKEN_MANAGER_SERVICE, true), state_(ServiceRunningState::STATE_NOT_START)
@@ -399,9 +407,6 @@ AccessTokenManagerService::AccessTokenManagerService()
 AccessTokenManagerService::~AccessTokenManagerService()
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "~AccessTokenManagerService()");
-    if (isInitialize_) {
-        featureFuture_.wait();
-    }
 }
 
 void AccessTokenManagerService::OnStart()
@@ -759,7 +764,7 @@ PermissionOper AccessTokenManagerService::GetPermissionsState(AccessTokenID toke
     std::vector<PermissionListStateParcel>& reqPermList)
 {
     int32_t apiVersion = 0;
-    if (!PermissionManager::GetInstance().GetApiVersionByTokenId(tokenID, apiVersion)) {
+    if (!AccessTokenInfoManager::GetInstance().GetApiVersionByTokenId(tokenID, apiVersion)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Get api version error.");
         return INVALID_OPER;
     }
@@ -845,7 +850,8 @@ int32_t AccessTokenManagerService::SetPermissionRequestToggleStatus(
         LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", callingTokenID);
         return AccessTokenError::ERR_PERMISSION_DENIED;
     }
-    return AccessTokenInfoManager::GetInstance().SetPermissionRequestToggleStatus(permissionName, status, userID);
+    return PermissionRequestToggleManager::GetInstance().SetPermissionRequestToggleStatus(permissionName, status,
+        userID);
 }
 
 int32_t AccessTokenManagerService::GetPermissionRequestToggleStatus(
@@ -862,7 +868,8 @@ int32_t AccessTokenManagerService::GetPermissionRequestToggleStatus(
         LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", callingTokenID);
         return AccessTokenError::ERR_PERMISSION_DENIED;
     }
-    return AccessTokenInfoManager::GetInstance().GetPermissionRequestToggleStatus(permissionName, status, userID);
+    return PermissionRequestToggleManager::GetInstance().GetPermissionRequestToggleStatus(permissionName, status,
+        userID);
 }
 
 int32_t AccessTokenManagerService::RequestAppPermOnSetting(AccessTokenID tokenID)
@@ -1174,11 +1181,17 @@ int32_t AccessTokenManagerService::InitHapToken(const HapInfoParcel& info, const
     std::vector<GenericValues> undefValues;
     if (hapInfoParm.dlpType == DLP_COMMON) {
         HapInfoCheckResult permCheckResult;
-        HapInitInfo initInfo;
-        initInfo.installInfo = hapInfoParm;
-        initInfo.policy = policyCopy;
-        initInfo.bundleName = hapInfoParm.bundleName;
-        if (!PermissionManager::GetInstance().InitPermissionList(initInfo, initializedList, permCheckResult,
+        BundleParam bundleParam;
+        bundleParam.bundleName = hapInfoParm.bundleName;
+        bundleParam.appId = hapInfoParm.appIDDesc;
+        bundleParam.apiVersion = hapInfoParm.apiVersion;
+        bundleParam.distributionType = Verify::ParseAppDistType(hapInfoParm.appDistributionType);
+        bundleParam.isSystem = hapInfoParm.isSystemApp;
+        bundleParam.isAtomicService = hapInfoParm.isAtomicService;
+        bundleParam.isDebug = (hapInfoParm.appProvisionType == "debug" ||
+            hapInfoParm.appDistributionType == "none");
+        if (!PermissionManager::GetInstance().InitPermissionList(bundleParam, policyCopy, initializedList,
+            permCheckResult,
             undefValues)) {
             resultInfoIdl.realResult = ERROR;
             resultInfoIdl.permissionName = permCheckResult.permCheckResult.permissionName;
@@ -1326,14 +1339,27 @@ int32_t AccessTokenManagerService::UpdateHapToken(uint64_t& fullTokenId, const U
     HapInfoCheckResult permCheckResult;
     std::vector<GenericValues> undefValues;
     std::vector<PermissionStatus> initializedList;
-    HapInitInfo initInfo;
-    initInfo.updateInfo = info;
-    initInfo.policy = policy;
-    initInfo.isUpdate = true;
-    initInfo.tokenID = tokenID;
     HapTokenInfo hapInfo = { 0 };
+    BundleParam bundleParam;
+    int32_t error = ERR_OK;
+    if (!info.isSkillHap) {
+        error = AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenID, hapInfo);
+        if (error != ERR_OK) {
+            LOGC(ATM_DOMAIN, ATM_TAG, "Failed to get hap info of %{public}u) err %{public}d.", tokenID, error);
+            ReportUpdateHap(tokenIdEx, hapInfo, policyParcel.hapPolicy, beginTime, error);
+            return error;
+        }
+        bundleParam.bundleName = hapInfo.bundleName;
+    }
+    bundleParam.appId = info.appIDDesc;
+    bundleParam.apiVersion = info.apiVersion;
+    bundleParam.distributionType = Verify::ParseAppDistType(info.appDistributionType);
+    bundleParam.isSystem = info.isSystemApp;
+    bundleParam.isAtomicService = info.isAtomicService;
+    bundleParam.isDebug = (info.appProvisionType == "debug" || info.appDistributionType == "none");
 
-    if (!PermissionManager::GetInstance().InitPermissionList(initInfo, initializedList, permCheckResult, undefValues)) {
+    if (!PermissionManager::GetInstance().InitPermissionList(bundleParam, policy, initializedList,
+        permCheckResult, undefValues, info.dataRefresh)) {
         resultInfoIdl.realResult = ERROR;
         resultInfoIdl.permissionName = permCheckResult.permCheckResult.permissionName;
         resultInfoIdl.rule = static_cast<PermissionRulesEnumIdl>(permCheckResult.permCheckResult.rule);
@@ -1345,14 +1371,6 @@ int32_t AccessTokenManagerService::UpdateHapToken(uint64_t& fullTokenId, const U
         fullTokenId = static_cast<uint64_t>(INVALID_TOKENID);
         return RET_SUCCESS;
     }
-
-    int32_t error = AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenID, hapInfo);
-    if (error != ERR_OK) {
-        LOGC(ATM_DOMAIN, ATM_TAG, "Failed to get hap info of %{public}u) err %{public}d.", tokenID, error);
-        ReportUpdateHap(tokenIdEx, hapInfo, policyParcel.hapPolicy, beginTime, error);
-        return error;
-    }
-    initInfo.bundleName = hapInfo.bundleName;
     error = AccessTokenInfoManager::GetInstance().UpdateHapToken(tokenIdEx, info, initializedList, policy, undefValues);
     fullTokenId = tokenIdEx.tokenIDEx;
     ReportUpdateHap(tokenIdEx, hapInfo, policyParcel.hapPolicy, beginTime, error);
@@ -1613,7 +1631,7 @@ int32_t AccessTokenManagerService::DumpTokenInfo(const AtmToolsParamInfoParcel& 
         return ERR_OK;
     }
 
-    AccessTokenInfoManager::GetInstance().DumpTokenInfo(infoParcel.info, dumpInfo);
+    AccessTokenInfoDumper::DumpTokenInfo(infoParcel.info, dumpInfo);
     return ERR_OK;
 }
 
@@ -1839,33 +1857,13 @@ void AccessTokenManagerService::GetConfigValue(uint32_t& parseConfigFlag)
         openSettingAbilityName_.c_str());
 }
 
-void AccessTokenManagerService::GetFeaturesConfig()
-{
-    LibraryLoader loader(CONFIG_PARSE_LIBPATH);
-    ConfigPolicyLoaderInterface* policy = loader.GetObject<ConfigPolicyLoaderInterface>();
-    if (policy == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Dlopen libaccesstoken_json_parse failed.");
-        return;
-    }
-    AccessTokenConfigValue value;
-    if (policy->GetConfigValue(ConfigType::PERMISSION_FEATURES, value)) {
-        features_ = value.permissionFeatures;
-    }
-}
-
 void AccessTokenManagerService::FilterPermFeature(bool isSystemApp, HapPolicy& policy)
 {
     if (!isSystemApp) {
         return;
     }
     for (auto it = policy.permStateList.begin(); it != policy.permStateList.end();) {
-        if (it->feature.empty()) {
-            ++it;
-            continue;
-        }
-
-        featureFuture_.wait();
-        if (features_.find(it->feature) != features_.end()) {
+        if (PermissionFeatureManager::GetInstance().IsSupportFeature(*it)) {
             ++it;
             continue;
         }
@@ -1930,10 +1928,11 @@ void AccessTokenManagerService::FilterInvalidData(const std::vector<GenericValue
 
         PermissionRulesEnum rule = PERMISSION_ACL_RULE;
         appDistributionType = result.GetString(TokenFiledConst::FIELD_APP_DISTRIBUTION_TYPE);
-        HapInitInfo initInfo;
-        initInfo.tokenID = static_cast<AccessTokenID>(tokenId);
-        if (!PermissionManager::GetInstance().IsPermAvailableRangeSatisfied(
-            data, appDistributionType, iter->second.isSystemApp, rule, initInfo)) {
+        BundleParam bundleParam;
+        bundleParam.distributionType = Verify::ParseAppDistType(appDistributionType);
+        bundleParam.isSystem = iter->second.isSystemApp;
+        bundleParam.isDebug = (appDistributionType == "none"); // only debug hap can use none type
+        if (!PermissionConstraintCheck::IsPermAvailableRangeSatisfied(bundleParam, data, rule)) {
             continue;
         }
 
@@ -1981,7 +1980,7 @@ void AccessTokenManagerService::UpdateUndefinedInfoCache(const std::vector<Gener
             continue;
         }
 
-        PermissionManager::GetInstance().SetPermToKernel(tokenId, permissionName,
+        PermissionKernelUtils::SetPermToKernel(tokenId, permissionName,
             (grantStatus == PermissionState::PERMISSION_GRANTED));
 
         GenericValues stateValue;
@@ -2147,11 +2146,6 @@ bool AccessTokenManagerService::Initialize()
     GetConfigValue(dfxInfo.parseConfigFlag);
 
     isInitialize_ = true;
-    std::thread getFeature([this]() {
-        this->GetFeaturesConfig();
-        this->featurePromise_.set_value();
-    });
-    getFeature.detach();
 
     ReportSysEventServiceStart(dfxInfo);
     std::thread reportUserData(ReportAccessTokenUserData);

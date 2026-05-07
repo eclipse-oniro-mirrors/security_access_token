@@ -228,3 +228,7 @@ if ("${target_platform}" == "phone" || "${target_platform}" == "tablet" || "${ta
 } else {
   privacy_bundle_start_stop_enable = false
 }
+
+if (is_emulator) {
+  access_token_cflags_cc += [ "-DX86_EMULATOR_MODE" ]
+}
