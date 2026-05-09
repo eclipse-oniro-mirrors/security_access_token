@@ -4346,11 +4346,11 @@
             "grantMode": "user_grant",
             "availableLevel": "system_core",
             "availableType": "SYSTEM",
-            "since": "26.1.0",
+            "since": "26.0.0",
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
-            "deviceTypes": ["general"]
+            "deviceTypes": ["phone", "wearable", "tv", "2in1", "tablet", "car", "liteWearable"]
         },
         {
             "name": "ohos.permission.ACCESS_SCAN_SERVICE",
