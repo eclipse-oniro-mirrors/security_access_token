@@ -8985,7 +8985,7 @@
             "name": "ohos.permission.cli.BUNDLE_ACTIVE_INFO",
             "grantMode": "user_grant",
             "availableLevel": "system_basic",
-            "availableType": "NORMAL",
+            "availableType": "SYSTEM",
             "since": "26.0.0",
             "deprecated": "",
             "provisionEnable": true,
