@@ -4342,6 +4342,17 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.cli.CONTROL_LOCATION_SWITCH",
+            "grantMode": "user_grant",
+            "availableLevel": "system_core",
+            "availableType": "SYSTEM",
+            "since": "26.1.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["general"]
+        },
+        {
             "name": "ohos.permission.ACCESS_SCAN_SERVICE",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
