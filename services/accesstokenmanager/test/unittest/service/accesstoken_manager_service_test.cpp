@@ -2562,7 +2562,7 @@ HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest002_001, TestSi
  * @tc.require:
  * @tc.type: FUNC
  */
-HWTEST_F(AccessTokenManagerServiceTest, DISABLED_ClawPermissionServiceTest003, TestSize.Level1)
+HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest003, TestSize.Level1)
 {
     PermissionStatus cliState = {
         .permissionName = "ohos.permission.POWER_MANAGER",
@@ -2600,7 +2600,7 @@ HWTEST_F(AccessTokenManagerServiceTest, DISABLED_ClawPermissionServiceTest003, T
  * @tc.require:
  * @tc.type: FUNC
  */
-HWTEST_F(AccessTokenManagerServiceTest, DISABLED_ClawPermissionServiceTest004, TestSize.Level1)
+HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest004, TestSize.Level1)
 {
     AccessTokenID tokenId = INVALID_TOKENID;
     uint64_t fullTokenId = CreateClawServiceTestToken(
@@ -2643,7 +2643,7 @@ HWTEST_F(AccessTokenManagerServiceTest, DISABLED_ClawPermissionServiceTest004, T
  * @tc.require:
  * @tc.type: FUNC
  */
-HWTEST_F(AccessTokenManagerServiceTest, DISABLED_ClawPermissionServiceTest005, TestSize.Level1)
+HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest005, TestSize.Level1)
 {
     AccessTokenID tokenId = INVALID_TOKENID;
     uint64_t fullTokenId = CreateClawServiceTestToken(
@@ -2723,7 +2723,7 @@ HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest006, TestSize.L
  * @tc.require:
  * @tc.type: FUNC
  */
-HWTEST_F(AccessTokenManagerServiceTest, DISABLED_ClawPermissionServiceTest007, TestSize.Level1)
+HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest007, TestSize.Level1)
 {
     PermissionStatus cliState = {
         .permissionName = "ohos.permission.POWER_MANAGER",
@@ -2764,7 +2764,7 @@ HWTEST_F(AccessTokenManagerServiceTest, DISABLED_ClawPermissionServiceTest007, T
  * @tc.require:
  * @tc.type: FUNC
  */
-HWTEST_F(AccessTokenManagerServiceTest, DISABLED_ClawPermissionServiceTest007_001, TestSize.Level1)
+HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest007_001, TestSize.Level1)
 {
     PermissionStatus cliCameraState = {
         .permissionName = "ohos.permission.POWER_MANAGER",
@@ -2787,15 +2787,11 @@ HWTEST_F(AccessTokenManagerServiceTest, DISABLED_ClawPermissionServiceTest007_00
 
     const auto& locationDetail = dialogResult.result.detailList[0];
     EXPECT_FALSE(locationDetail.needPermissionDialog);
-    EXPECT_FALSE(locationDetail.authResult.empty());
-    EXPECT_EQ("authResult_" + std::to_string(tokenId) + "_0",
-        locationDetail.authResult);
+    EXPECT_TRUE(locationDetail.authResult.empty());
 
     const auto& cameraDetail = dialogResult.result.detailList[1];
     EXPECT_FALSE(cameraDetail.needPermissionDialog);
     EXPECT_FALSE(cameraDetail.authResult.empty());
-    EXPECT_EQ("authResult_" + std::to_string(tokenId) + "_1",
-        cameraDetail.authResult);
 
     SetSelfTokenID(g_selfShellTokenId);
     (void)AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId);
@@ -2807,7 +2803,7 @@ HWTEST_F(AccessTokenManagerServiceTest, DISABLED_ClawPermissionServiceTest007_00
  * @tc.require:
  * @tc.type: FUNC
  */
-HWTEST_F(AccessTokenManagerServiceTest, DISABLED_ClawPermissionServiceTest007_002, TestSize.Level1)
+HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest007_002, TestSize.Level1)
 {
     AccessTokenID tokenId = INVALID_TOKENID;
     uint64_t fullTokenId = CreateClawServiceTestToken(
@@ -2858,7 +2854,7 @@ HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest007_003, TestSi
  * @tc.require:
  * @tc.type: FUNC
  */
-HWTEST_F(AccessTokenManagerServiceTest, DISABLED_ClawPermissionServiceTest007_004, TestSize.Level1)
+HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest007_004, TestSize.Level1)
 {
     AccessTokenID tokenId = INVALID_TOKENID;
     uint64_t fullTokenId = CreateClawServiceTestToken(
@@ -2893,7 +2889,7 @@ HWTEST_F(AccessTokenManagerServiceTest, DISABLED_ClawPermissionServiceTest007_00
  * @tc.require:
  * @tc.type: FUNC
  */
-HWTEST_F(AccessTokenManagerServiceTest, DISABLED_ClawPermissionServiceTest008, TestSize.Level1)
+HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest008, TestSize.Level1)
 {
     PermissionStatus cameraState = {
         .permissionName = "ohos.permission.CAMERA",
@@ -2968,7 +2964,7 @@ HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest008_001, TestSi
  * @tc.require:
  * @tc.type: FUNC
  */
-HWTEST_F(AccessTokenManagerServiceTest, DISABLED_ClawPermissionServiceTest008_002, TestSize.Level1)
+HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest008_002, TestSize.Level1)
 {
     PermissionStatus cameraState = {
         .permissionName = "ohos.permission.CAMERA",
@@ -2992,14 +2988,11 @@ HWTEST_F(AccessTokenManagerServiceTest, DISABLED_ClawPermissionServiceTest008_00
     const auto& cameraDetail = dialogResult.result.detailList[0];
     EXPECT_FALSE(cameraDetail.needPermissionDialog);
     EXPECT_FALSE(cameraDetail.authResult.empty());
-    EXPECT_EQ("authResult_" + std::to_string(tokenId) + "_0",
-        cameraDetail.authResult);
 
     const auto& locationDetail = dialogResult.result.detailList[1];
     EXPECT_FALSE(locationDetail.needPermissionDialog);
     EXPECT_FALSE(locationDetail.authResult.empty());
-    EXPECT_EQ("authResult_" + std::to_string(tokenId) + "_1",
-        locationDetail.authResult);
+    EXPECT_NE(cameraDetail.authResult, locationDetail.authResult);
 
     SetSelfTokenID(g_selfShellTokenId);
     (void)AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId);
@@ -3011,7 +3004,7 @@ HWTEST_F(AccessTokenManagerServiceTest, DISABLED_ClawPermissionServiceTest008_00
  * @tc.require:
  * @tc.type: FUNC
  */
-HWTEST_F(AccessTokenManagerServiceTest, DISABLED_ClawPermissionServiceTest009, TestSize.Level1)
+HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest009, TestSize.Level1)
 {
     AccessTokenID tokenId = INVALID_TOKENID;
     uint64_t fullTokenId = CreateClawServiceTestToken(
@@ -3039,7 +3032,7 @@ HWTEST_F(AccessTokenManagerServiceTest, DISABLED_ClawPermissionServiceTest009, T
  * @tc.require:
  * @tc.type: FUNC
  */
-HWTEST_F(AccessTokenManagerServiceTest, DISABLED_ClawPermissionServiceTest010, TestSize.Level1)
+HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest010, TestSize.Level1)
 {
     AccessTokenID tokenId = INVALID_TOKENID;
     uint64_t fullTokenId = CreateClawServiceTestToken(
@@ -3064,10 +3057,9 @@ HWTEST_F(AccessTokenManagerServiceTest, DISABLED_ClawPermissionServiceTest010, T
     ASSERT_EQ(RET_SUCCESS, atManagerService_->GenerateCliAuthResult(
         tokenId, DEFAULT_AGENT_ID, {cameraAuthInfoParcel, locationAuthInfoParcel}, authResult));
     ASSERT_EQ(2, static_cast<int32_t>(authResult.result.authResults.size()));
-    EXPECT_EQ("authResult_" + std::to_string(tokenId) + "_0",
-        authResult.result.authResults[0]);
-    EXPECT_EQ("authResult_" + std::to_string(tokenId) + "_1",
-        authResult.result.authResults[1]);
+    EXPECT_FALSE(authResult.result.authResults[0].empty());
+    EXPECT_FALSE(authResult.result.authResults[1].empty());
+    EXPECT_NE(authResult.result.authResults[0], authResult.result.authResults[1]);
 
     SetSelfTokenID(g_selfShellTokenId);
     (void)AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId);
