@@ -19,6 +19,12 @@
             "usedPermissions": [
                 "ohos.permission.CAMERA"
             ]
+        },
+        {
+            "cliPermission": "ohos.permission.cli.BUNDLE_ACTIVE_INFO",
+            "usedPermissions": [
+                "ohos.permission.BUNDLE_ACTIVE_INFO"
+            ]
         }
     ]
 }
