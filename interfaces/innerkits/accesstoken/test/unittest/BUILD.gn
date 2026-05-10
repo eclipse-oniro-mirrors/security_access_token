@@ -36,7 +36,6 @@ ohos_unittest("libaccesstoken_sdk_test") {
   ]
 
   sources = [
-    #"ClawTokenTest/accesstoken_claw_token_test.cpp",
     "ClawPermissionTest/claw_permission_kit_test.cpp",
     "Coverage/accesstoken_kit_coverage_test.cpp",
     "DistributedTest/alloc_local_token_id_test.cpp",
@@ -115,8 +114,10 @@ ohos_unittest("libaccesstoken_sdk_test") {
 
   if (access_token_enhance_capability == false) {
     sources += [ "ToolTokenTest/tool_token_with_empty_challenge_test.cpp" ]
-  } else {
-    #sources += [ "ToolTokenTest/tool_token_test.cpp" ]
+  }
+
+  if (access_token_enable_manual_test == true) {
+    sources += [ "ToolTokenTest/tool_token_test.cpp" ]
   }
 }
 

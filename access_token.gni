@@ -30,6 +30,7 @@ declare_args() {
   access_token_camera_float_window_enable = true
   access_token_with_distributed_capability = true
   access_token_enhance_capability = true
+  access_token_enable_manual_test = false
 }
 
 # External dependencies for each feature flag
@@ -54,6 +55,10 @@ if (use_libfuzzer) {
 
 if (access_token_enhance_capability == true) {
   access_token_cflags_cc += [ "-DENHANCE_CAPABILITY" ]
+}
+
+if (access_token_enable_manual_test == true) {
+  access_token_cflags_cc += [ "-DENHANCE_MANUAL_TEST" ]
 }
 
 if (access_token_camera_float_window_enable == true) {

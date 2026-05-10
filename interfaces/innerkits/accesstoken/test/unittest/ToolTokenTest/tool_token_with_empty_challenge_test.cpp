@@ -29,12 +29,12 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static constexpr const char* MANAGE_TOOL_CALLER_PROCESS = "foundation";
+static constexpr const char* MANAGE_TOOL_CALLER_PROCESS = "aimgr";
 uint64_t g_selfTokenId = 0;
 uint64_t g_rootCallerTokenId = 0;
 uint64_t g_manageToolCallerTokenId = 0;
-uint64_t g_shellToken = 0;
 static const int32_t AIMGR_UID = 3092;
+static const int32_t ROOT_UID = 0;
 
 CliInfo BuildCliInfo()
 {
@@ -69,7 +69,7 @@ int32_t InitCliToolTokenWithEmptyChallenge(AccessTokenID hostTokenId, const CliI
     AccessTokenID callerTokenId = GetSelfTokenID();
     uint32_t callerUid = getuid();
     SwitchToRootCaller();
-    EXPECT_EQ(0, setuid(AIMGR_UID));
+    EXPECT_EQ(0, setuid(ROOT_UID));
     CliInitInfo initInfo = {
         .hostTokenId = hostTokenId,
         .challenge = "",
@@ -102,8 +102,11 @@ int32_t InitSkillToolTokenWithEmptyChallenge(AccessTokenID hostTokenId, const Sk
 int32_t DeleteToolTokenByCurrentPid()
 {
     uint64_t callerTokenId = GetSelfTokenID();
-    EXPECT_EQ(0, SetSelfTokenID(g_shellToken));
+    uint32_t callerUid = getuid();
+    EXPECT_EQ(0, SetSelfTokenID(g_manageToolCallerTokenId));
+    EXPECT_EQ(0, setuid(AIMGR_UID));
     int32_t ret = AccessTokenKit::DeleteToolTokenByPid(getpid());
+    EXPECT_EQ(0, setuid(callerUid));
     EXPECT_EQ(0, SetSelfTokenID(callerTokenId));
     return ret;
 }
@@ -140,7 +143,6 @@ public:
         g_selfTokenId = GetSelfTokenID();
         TestCommon::SetTestEvironment(g_selfTokenId);
         g_rootCallerTokenId = TestCommon::GetShellTokenId();
-        g_shellToken = g_selfTokenId;
         g_manageToolCallerTokenId = TestCommon::GetNativeTokenIdFromProcess(MANAGE_TOOL_CALLER_PROCESS);
     }
 

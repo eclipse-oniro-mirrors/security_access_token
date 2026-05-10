@@ -57,12 +57,14 @@ CliPermissionsResultParcel* CliPermissionsResultParcel::Unmarshalling(Parcel& in
     }
     uint32_t commandSize = 0;
     RELEASE_IF_FALSE(in.ReadUint32(commandSize), parcel);
+    RELEASE_IF_FALSE(commandSize <= MAX_COMMAND_LIST_SIZE, parcel);
     parcel->result.permList.clear();
     parcel->result.permList.reserve(commandSize);
     for (uint32_t i = 0; i < commandSize; ++i) {
         CliCommandPermissionResult commandResult;
         uint32_t detailSize = 0;
         RELEASE_IF_FALSE(in.ReadUint32(detailSize), parcel);
+        RELEASE_IF_FALSE(detailSize <= MAX_PERMLIST_SIZE, parcel);
         commandResult.requiredCliPermissions.reserve(detailSize);
         for (uint32_t j = 0; j < detailSize; ++j) {
             CliPermissionDetail detail;

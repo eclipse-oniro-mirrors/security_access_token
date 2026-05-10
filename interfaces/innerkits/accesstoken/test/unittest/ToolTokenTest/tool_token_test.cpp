@@ -30,6 +30,7 @@ namespace Security {
 namespace AccessToken {
 namespace {
 static constexpr int32_t AIMGR_UID = 3092;
+static constexpr int32_t ROOT_UID = 0;
 static const std::string DEFAULT_AGENT_ID = "1001";
 static const std::string LOCATION_PERMISSION = "ohos.permission.LOCATION";
 static constexpr const char* MANAGE_TOOL_CALLER_PROCESS = "aimgr";
@@ -108,7 +109,7 @@ int32_t InitCliToolTokenWithChallenge(AccessTokenID hostTokenId, const std::stri
     uint64_t callerTokenId = GetSelfTokenID();
     uint32_t callerUid = getuid();
     EXPECT_EQ(0, SetSelfTokenID(g_shellTokenId));
-    EXPECT_EQ(0, setuid(AIMGR_UID));
+    EXPECT_EQ(0, setuid(ROOT_UID));
     CliInitInfo initInfo = {
         .hostTokenId = hostTokenId,
         .challenge = challenge,
@@ -325,7 +326,7 @@ HWTEST_F(ToolTokenTest, InitCliToken004, TestSize.Level4)
 
 /**
  * @tc.name: InitCliToken005
- * @tc.desc: InitCliToken keeps challenge after invalid uid failure and succeeds on AIMGR_UID retry.
+ * @tc.desc: InitCliToken keeps challenge after invalid uid failure and succeeds on root retry.
  * @tc.type: FUNC
  * @tc.require:
  */

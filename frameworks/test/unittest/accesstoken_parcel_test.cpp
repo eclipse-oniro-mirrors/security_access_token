@@ -437,6 +437,64 @@ HWTEST_F(AccessTokenParcelTest, PermissionDialogResultParcel002, TestSize.Level1
     EXPECT_EQ(nullptr, readedData);
 }
 
+HWTEST_F(AccessTokenParcelTest, PermissionDialogResultParcel003, TestSize.Level1)
+{
+    Parcel parcel;
+    EXPECT_TRUE(parcel.WriteUint32(MAX_COMMAND_LIST_SIZE + 1));
+
+    std::shared_ptr<PermissionDialogResultParcel> readedData(
+        PermissionDialogResultParcel::Unmarshalling(parcel));
+    EXPECT_EQ(nullptr, readedData);
+}
+
+HWTEST_F(AccessTokenParcelTest, PermissionDialogResultParcel004, TestSize.Level1)
+{
+    Parcel parcel;
+    EXPECT_TRUE(parcel.WriteUint32(1));
+    EXPECT_TRUE(parcel.WriteBool(false));
+    std::vector<std::string> permissionNames;
+    EXPECT_TRUE(parcel.WriteStringVector(permissionNames));
+    EXPECT_TRUE(parcel.WriteUint32(MAX_PERMLIST_SIZE + 1));
+
+    std::shared_ptr<PermissionDialogResultParcel> readedData(
+        PermissionDialogResultParcel::Unmarshalling(parcel));
+    EXPECT_EQ(nullptr, readedData);
+}
+
+HWTEST_F(AccessTokenParcelTest, PermissionDialogResultParcel005, TestSize.Level1)
+{
+    PermissionDialogResultParcel resultParcel;
+    PermissionDialogDetail detail;
+    detail.needPermissionDialog = false;
+    detail.authResult = "authResult";
+    resultParcel.result.detailList.assign(MAX_COMMAND_LIST_SIZE, detail);
+
+    Parcel parcel;
+    EXPECT_TRUE(resultParcel.Marshalling(parcel));
+    std::shared_ptr<PermissionDialogResultParcel> readedData(
+        PermissionDialogResultParcel::Unmarshalling(parcel));
+    ASSERT_NE(nullptr, readedData);
+    EXPECT_EQ(MAX_COMMAND_LIST_SIZE, static_cast<int32_t>(readedData->result.detailList.size()));
+}
+
+HWTEST_F(AccessTokenParcelTest, PermissionDialogResultParcel006, TestSize.Level1)
+{
+    PermissionDialogResultParcel resultParcel;
+    PermissionDialogDetail detail;
+    detail.needPermissionDialog = false;
+    detail.permissionNameList.assign(MAX_PERMLIST_SIZE, "ohos.permission.CAMERA");
+    detail.statusList.assign(MAX_PERMLIST_SIZE, PermissionDecisionStatus::NO_DIALOG_GRANTED);
+    detail.authResult = "authResult";
+    resultParcel.result.detailList = {detail};
+
+    Parcel parcel;
+    EXPECT_TRUE(resultParcel.Marshalling(parcel));
+    std::shared_ptr<PermissionDialogResultParcel> readedData(
+        PermissionDialogResultParcel::Unmarshalling(parcel));
+    ASSERT_NE(nullptr, readedData);
+    EXPECT_EQ(MAX_PERMLIST_SIZE, static_cast<int32_t>(readedData->result.detailList[0].statusList.size()));
+}
+
 /**
  * @tc.name: CliPermissionsResultParcel001
  * @tc.desc: Test CliPermissionsResultParcel Marshalling/Unmarshalling.
@@ -484,6 +542,60 @@ HWTEST_F(AccessTokenParcelTest, CliPermissionsResultParcel002, TestSize.Level1)
     EXPECT_EQ(nullptr, readedData);
 }
 
+HWTEST_F(AccessTokenParcelTest, CliPermissionsResultParcel003, TestSize.Level1)
+{
+    Parcel parcel;
+    EXPECT_TRUE(parcel.WriteUint32(MAX_COMMAND_LIST_SIZE + 1));
+
+    std::shared_ptr<CliPermissionsResultParcel> readedData(
+        CliPermissionsResultParcel::Unmarshalling(parcel));
+    EXPECT_EQ(nullptr, readedData);
+}
+
+HWTEST_F(AccessTokenParcelTest, CliPermissionsResultParcel004, TestSize.Level1)
+{
+    Parcel parcel;
+    EXPECT_TRUE(parcel.WriteUint32(1));
+    EXPECT_TRUE(parcel.WriteUint32(MAX_PERMLIST_SIZE + 1));
+
+    std::shared_ptr<CliPermissionsResultParcel> readedData(
+        CliPermissionsResultParcel::Unmarshalling(parcel));
+    EXPECT_EQ(nullptr, readedData);
+}
+
+HWTEST_F(AccessTokenParcelTest, CliPermissionsResultParcel005, TestSize.Level1)
+{
+    CliPermissionsResultParcel resultParcel;
+    CliCommandPermissionResult commandResult;
+    resultParcel.result.permList.assign(MAX_COMMAND_LIST_SIZE, commandResult);
+
+    Parcel parcel;
+    EXPECT_TRUE(resultParcel.Marshalling(parcel));
+    std::shared_ptr<CliPermissionsResultParcel> readedData(
+        CliPermissionsResultParcel::Unmarshalling(parcel));
+    ASSERT_NE(nullptr, readedData);
+    EXPECT_EQ(MAX_COMMAND_LIST_SIZE, static_cast<int32_t>(readedData->result.permList.size()));
+}
+
+HWTEST_F(AccessTokenParcelTest, CliPermissionsResultParcel006, TestSize.Level1)
+{
+    CliPermissionsResultParcel resultParcel;
+    CliPermissionDetail detail;
+    detail.requiredCliPermission = "ohos.permission.POWER_MANAGER";
+    detail.cliPermissionStatus = PermissionDecisionStatus::NO_DIALOG_GRANTED;
+    CliCommandPermissionResult commandResult;
+    commandResult.requiredCliPermissions.assign(MAX_PERMLIST_SIZE, detail);
+    resultParcel.result.permList = {commandResult};
+
+    Parcel parcel;
+    EXPECT_TRUE(resultParcel.Marshalling(parcel));
+    std::shared_ptr<CliPermissionsResultParcel> readedData(
+        CliPermissionsResultParcel::Unmarshalling(parcel));
+    ASSERT_NE(nullptr, readedData);
+    EXPECT_EQ(MAX_PERMLIST_SIZE,
+        static_cast<int32_t>(readedData->result.permList[0].requiredCliPermissions.size()));
+}
+
 /**
  * @tc.name: SkillPermissionsResultParcel001
  * @tc.desc: Test SkillPermissionsResultParcel Marshalling/Unmarshalling.
@@ -509,6 +621,70 @@ HWTEST_F(AccessTokenParcelTest, SkillPermissionsResultParcel001, TestSize.Level1
     ASSERT_EQ(1, static_cast<int32_t>(readedData->result.permList.size()));
     EXPECT_EQ(commandResult.usedPermissions, readedData->result.permList[0].usedPermissions);
     EXPECT_EQ(commandResult.statusList, readedData->result.permList[0].statusList);
+}
+
+HWTEST_F(AccessTokenParcelTest, SkillPermissionsResultParcel002, TestSize.Level1)
+{
+    Parcel parcel;
+    EXPECT_TRUE(parcel.WriteUint32(1));
+    std::vector<std::string> usedPermissions = {"ohos.permission.CAMERA"};
+    EXPECT_TRUE(parcel.WriteStringVector(usedPermissions));
+
+    std::shared_ptr<SkillPermissionsResultParcel> readedData(
+        SkillPermissionsResultParcel::Unmarshalling(parcel));
+    EXPECT_EQ(nullptr, readedData);
+}
+
+HWTEST_F(AccessTokenParcelTest, SkillPermissionsResultParcel003, TestSize.Level1)
+{
+    Parcel parcel;
+    EXPECT_TRUE(parcel.WriteUint32(MAX_COMMAND_LIST_SIZE + 1));
+
+    std::shared_ptr<SkillPermissionsResultParcel> readedData(
+        SkillPermissionsResultParcel::Unmarshalling(parcel));
+    EXPECT_EQ(nullptr, readedData);
+}
+
+HWTEST_F(AccessTokenParcelTest, SkillPermissionsResultParcel004, TestSize.Level1)
+{
+    Parcel parcel;
+    EXPECT_TRUE(parcel.WriteUint32(1));
+    std::vector<std::string> usedPermissions;
+    EXPECT_TRUE(parcel.WriteStringVector(usedPermissions));
+    EXPECT_TRUE(parcel.WriteUint32(MAX_PERMLIST_SIZE + 1));
+
+    std::shared_ptr<SkillPermissionsResultParcel> readedData(
+        SkillPermissionsResultParcel::Unmarshalling(parcel));
+    EXPECT_EQ(nullptr, readedData);
+}
+
+HWTEST_F(AccessTokenParcelTest, SkillPermissionsResultParcel005, TestSize.Level1)
+{
+    SkillPermissionsResultParcel resultParcel;
+    SkillCommandPermissionResult commandResult;
+    resultParcel.result.permList.assign(MAX_COMMAND_LIST_SIZE, commandResult);
+
+    Parcel parcel;
+    EXPECT_TRUE(resultParcel.Marshalling(parcel));
+    std::shared_ptr<SkillPermissionsResultParcel> readedData(
+        SkillPermissionsResultParcel::Unmarshalling(parcel));
+    ASSERT_NE(nullptr, readedData);
+    EXPECT_EQ(MAX_COMMAND_LIST_SIZE, static_cast<int32_t>(readedData->result.permList.size()));
+}
+
+HWTEST_F(AccessTokenParcelTest, SkillPermissionsResultParcel006, TestSize.Level1)
+{
+    SkillPermissionsResultParcel resultParcel;
+    SkillCommandPermissionResult commandResult;
+    commandResult.statusList.assign(MAX_PERMLIST_SIZE, PermissionDecisionStatus::NO_DIALOG_GRANTED);
+    resultParcel.result.permList = {commandResult};
+
+    Parcel parcel;
+    EXPECT_TRUE(resultParcel.Marshalling(parcel));
+    std::shared_ptr<SkillPermissionsResultParcel> readedData(
+        SkillPermissionsResultParcel::Unmarshalling(parcel));
+    ASSERT_NE(nullptr, readedData);
+    EXPECT_EQ(MAX_PERMLIST_SIZE, static_cast<int32_t>(readedData->result.permList[0].statusList.size()));
 }
 
 /**

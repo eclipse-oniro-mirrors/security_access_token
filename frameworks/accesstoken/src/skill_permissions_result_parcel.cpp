@@ -34,6 +34,7 @@ bool ReadDecisionStatusList(Parcel& in, std::vector<PermissionDecisionStatus>& s
 {
     uint32_t size = 0;
     RETURN_IF_FALSE(in.ReadUint32(size));
+    RETURN_IF_FALSE(size <= MAX_PERMLIST_SIZE);
     statusList.clear();
     statusList.reserve(size);
     for (uint32_t i = 0; i < size; ++i) {
@@ -63,6 +64,7 @@ SkillPermissionsResultParcel* SkillPermissionsResultParcel::Unmarshalling(Parcel
     }
     uint32_t commandSize = 0;
     RELEASE_IF_FALSE(in.ReadUint32(commandSize), parcel);
+    RELEASE_IF_FALSE(commandSize <= MAX_COMMAND_LIST_SIZE, parcel);
     parcel->result.permList.clear();
     parcel->result.permList.reserve(commandSize);
     for (uint32_t i = 0; i < commandSize; ++i) {

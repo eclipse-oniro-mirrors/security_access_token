@@ -42,7 +42,7 @@ namespace {
 constexpr int32_t USER_ID = 100;
 constexpr int32_t INST_INDEX = 0;
 constexpr int32_t API_VERSION_9 = 9;
-constexpr int32_t AIMGR_UID = 3092;
+constexpr int32_t ROOT_UID = 0;
 constexpr const char* MANAGE_TOOL_CALLER_PROCESS = "aimgr";
 const std::string DEFAULT_AGENT_ID = "1001";
 const std::string CUSTOM_SCREEN_CAPTURE = "ohos.permission.CUSTOM_SCREEN_CAPTURE";
@@ -1438,7 +1438,7 @@ HWTEST_F(ToolTokenMockTest, GenerateCliAuthResult_007, TestSize.Level1)
     InitCliTokenResult initResult;
     InitCliTokenRequest request = {
         .callerTokenId = GetSelfTokenID(),
-        .callerUid = AIMGR_UID,
+        .callerUid = ROOT_UID,
         .hostTokenId = hostTokenId,
         .challenge = result.result.authResults[0],
         .cliInfo = BuildCliInfo("location", "query"),
@@ -1583,7 +1583,7 @@ HWTEST_F(ToolTokenMockTest, GenerateCliAuthResult_012, TestSize.Level1)
  */
 HWTEST_F(ToolTokenMockTest, InitCliToken_009, TestSize.Level1)
 {
-    uint64_t shellTokenId = GetSelfTokenID();
+    uint64_t serviceCallerTokenId = GetSelfTokenID();
     AccessTokenID hostTokenId = INVALID_TOKENID;
     TokenCleaner cleaner;
     uint64_t hostFullTokenId = CreateServiceTestToken("tooltoken_init_009_host", true,
@@ -1593,8 +1593,8 @@ HWTEST_F(ToolTokenMockTest, InitCliToken_009, TestSize.Level1)
 
     InitCliTokenResult initResult;
     InitCliTokenRequest request = {
-        .callerTokenId = shellTokenId,
-        .callerUid = AIMGR_UID,
+        .callerTokenId = serviceCallerTokenId,
+        .callerUid = ROOT_UID,
         .hostTokenId = hostTokenId,
         .challenge = "not_exist_challenge",
         .cliInfo = BuildCliInfo("settings", "set"),
@@ -1610,7 +1610,7 @@ HWTEST_F(ToolTokenMockTest, InitCliToken_009, TestSize.Level1)
  */
 HWTEST_F(ToolTokenMockTest, InitCliToken_010, TestSize.Level1)
 {
-    uint64_t shellTokenId = GetSelfTokenID();
+    uint64_t serviceCallerTokenId = GetSelfTokenID();
     AccessTokenID callerTokenId = INVALID_TOKENID;
     AccessTokenID hostTokenId = INVALID_TOKENID;
     TokenCleaner cleaner;
@@ -1631,8 +1631,8 @@ HWTEST_F(ToolTokenMockTest, InitCliToken_010, TestSize.Level1)
         GenerateSingleCliAuthChallenge(*atManagerService_, callerFullTokenId, hostTokenId, authInfo);
     InitCliTokenResult initResult;
     InitCliTokenRequest request = {
-        .callerTokenId = shellTokenId,
-        .callerUid = AIMGR_UID,
+        .callerTokenId = serviceCallerTokenId,
+        .callerUid = ROOT_UID,
         .hostTokenId = hostTokenId,
         .challenge = challenge,
         .cliInfo = BuildCliInfo("settings", "set"),
@@ -1653,7 +1653,7 @@ HWTEST_F(ToolTokenMockTest, InitCliToken_010, TestSize.Level1)
  */
 HWTEST_F(ToolTokenMockTest, InitCliToken_011, TestSize.Level1)
 {
-    uint64_t shellTokenId = GetSelfTokenID();
+    uint64_t serviceCallerTokenId = GetSelfTokenID();
     AccessTokenID callerTokenId = INVALID_TOKENID;
     AccessTokenID hostTokenId = INVALID_TOKENID;
     TokenCleaner cleaner;
@@ -1673,8 +1673,8 @@ HWTEST_F(ToolTokenMockTest, InitCliToken_011, TestSize.Level1)
     std::string challenge =
         GenerateSingleCliAuthChallenge(*atManagerService_, callerFullTokenId, hostTokenId, authInfo);
     InitCliTokenRequest failedRequest = {
-        .callerTokenId = shellTokenId,
-        .callerUid = AIMGR_UID,
+        .callerTokenId = serviceCallerTokenId,
+        .callerUid = ROOT_UID,
         .hostTokenId = hostTokenId,
         .challenge = challenge,
         .cliInfo = BuildCliInfo("settings", "wrong"),
@@ -1684,8 +1684,8 @@ HWTEST_F(ToolTokenMockTest, InitCliToken_011, TestSize.Level1)
         InitCliToolTokenRet(*atManagerService_, failedRequest, failedInitResult));
 
     InitCliTokenRequest request = {
-        .callerTokenId = shellTokenId,
-        .callerUid = AIMGR_UID,
+        .callerTokenId = serviceCallerTokenId,
+        .callerUid = ROOT_UID,
         .hostTokenId = hostTokenId,
         .challenge = challenge,
         .cliInfo = BuildCliInfo("settings", "set"),
@@ -1703,7 +1703,7 @@ HWTEST_F(ToolTokenMockTest, InitCliToken_011, TestSize.Level1)
  */
 HWTEST_F(ToolTokenMockTest, InitCliToken_012, TestSize.Level1)
 {
-    uint64_t shellTokenId = GetSelfTokenID();
+    uint64_t serviceCallerTokenId = GetSelfTokenID();
     AccessTokenID callerTokenId = INVALID_TOKENID;
     AccessTokenID hostTokenId = INVALID_TOKENID;
     TokenCleaner cleaner;
@@ -1723,8 +1723,8 @@ HWTEST_F(ToolTokenMockTest, InitCliToken_012, TestSize.Level1)
     std::string firstChallenge =
         GenerateSingleCliAuthChallenge(*atManagerService_, callerFullTokenId, hostTokenId, authInfo);
     InitCliTokenRequest firstRequest = {
-        .callerTokenId = shellTokenId,
-        .callerUid = AIMGR_UID,
+        .callerTokenId = serviceCallerTokenId,
+        .callerUid = ROOT_UID,
         .hostTokenId = hostTokenId,
         .challenge = firstChallenge,
         .cliInfo = BuildCliInfo("settings", "set"),
@@ -1737,8 +1737,8 @@ HWTEST_F(ToolTokenMockTest, InitCliToken_012, TestSize.Level1)
     std::string secondChallenge =
         GenerateSingleCliAuthChallenge(*atManagerService_, callerFullTokenId, hostTokenId, authInfo);
     InitCliTokenRequest secondRequest = {
-        .callerTokenId = shellTokenId,
-        .callerUid = AIMGR_UID,
+        .callerTokenId = serviceCallerTokenId,
+        .callerUid = ROOT_UID,
         .hostTokenId = hostTokenId,
         .challenge = secondChallenge,
         .cliInfo = BuildCliInfo("settings", "set"),
@@ -1756,7 +1756,7 @@ HWTEST_F(ToolTokenMockTest, InitCliToken_012, TestSize.Level1)
  */
 HWTEST_F(ToolTokenMockTest, InitCliToken_013, TestSize.Level1)
 {
-    uint64_t shellTokenId = GetSelfTokenID();
+    uint64_t serviceCallerTokenId = GetSelfTokenID();
     AccessTokenID callerTokenId = INVALID_TOKENID;
     AccessTokenID hostTokenId = INVALID_TOKENID;
     TokenCleaner cleaner;
@@ -1776,8 +1776,8 @@ HWTEST_F(ToolTokenMockTest, InitCliToken_013, TestSize.Level1)
     std::string firstChallenge =
         GenerateSingleCliAuthChallenge(*atManagerService_, callerFullTokenId, hostTokenId, authInfo);
     InitCliTokenRequest firstRequest = {
-        .callerTokenId = shellTokenId,
-        .callerUid = AIMGR_UID,
+        .callerTokenId = serviceCallerTokenId,
+        .callerUid = ROOT_UID,
         .hostTokenId = hostTokenId,
         .challenge = firstChallenge,
         .cliInfo = BuildCliInfo("settings", "set"),
@@ -1791,8 +1791,8 @@ HWTEST_F(ToolTokenMockTest, InitCliToken_013, TestSize.Level1)
     std::string secondChallenge =
         GenerateSingleCliAuthChallenge(*atManagerService_, callerFullTokenId, hostTokenId, authInfo);
     InitCliTokenRequest secondRequest = {
-        .callerTokenId = shellTokenId,
-        .callerUid = AIMGR_UID,
+        .callerTokenId = serviceCallerTokenId,
+        .callerUid = ROOT_UID,
         .hostTokenId = hostTokenId,
         .challenge = secondChallenge,
         .cliInfo = BuildCliInfo("settings", "set"),
@@ -1810,7 +1810,7 @@ HWTEST_F(ToolTokenMockTest, InitCliToken_013, TestSize.Level1)
  */
 HWTEST_F(ToolTokenMockTest, InitCliToken_014, TestSize.Level1)
 {
-    uint64_t shellTokenId = GetSelfTokenID();
+    uint64_t serviceCallerTokenId = GetSelfTokenID();
     AccessTokenID callerTokenId = INVALID_TOKENID;
     AccessTokenID hostTokenId = INVALID_TOKENID;
     TokenCleaner cleaner;
@@ -1831,8 +1831,8 @@ HWTEST_F(ToolTokenMockTest, InitCliToken_014, TestSize.Level1)
     ASSERT_FALSE(authResult.result.authResults[0].empty());
 
     InitCliTokenRequest request = {
-        .callerTokenId = shellTokenId,
-        .callerUid = AIMGR_UID,
+        .callerTokenId = serviceCallerTokenId,
+        .callerUid = ROOT_UID,
         .hostTokenId = hostTokenId,
         .challenge = authResult.result.authResults[0],
         .cliInfo = BuildCliInfo("camera", "capture"),
@@ -1846,12 +1846,12 @@ HWTEST_F(ToolTokenMockTest, InitCliToken_014, TestSize.Level1)
 
 /**
  * @tc.name: InitCliToken_015
- * @tc.desc: Test non-root and non-aimgr uid is denied and challenge remains retryable.
+ * @tc.desc: Test non-root uid is denied and challenge remains retryable.
  * @tc.type: FUNC
  */
 HWTEST_F(ToolTokenMockTest, InitCliToken_015, TestSize.Level1)
 {
-    uint64_t shellTokenId = GetSelfTokenID();
+    uint64_t serviceCallerTokenId = GetSelfTokenID();
     AccessTokenID callerTokenId = INVALID_TOKENID;
     AccessTokenID hostTokenId = INVALID_TOKENID;
     TokenCleaner cleaner;
@@ -1871,7 +1871,7 @@ HWTEST_F(ToolTokenMockTest, InitCliToken_015, TestSize.Level1)
     std::string challenge =
         GenerateSingleCliAuthChallenge(*atManagerService_, callerFullTokenId, hostTokenId, authInfo);
     InitCliTokenRequest failedRequest = {
-        .callerTokenId = shellTokenId,
+        .callerTokenId = serviceCallerTokenId,
         .callerUid = 1234,
         .hostTokenId = hostTokenId,
         .challenge = challenge,
@@ -1882,8 +1882,8 @@ HWTEST_F(ToolTokenMockTest, InitCliToken_015, TestSize.Level1)
         InitCliToolTokenRet(*atManagerService_, failedRequest, failedInitResult));
 
     InitCliTokenRequest request = {
-        .callerTokenId = shellTokenId,
-        .callerUid = AIMGR_UID,
+        .callerTokenId = serviceCallerTokenId,
+        .callerUid = ROOT_UID,
         .hostTokenId = hostTokenId,
         .challenge = challenge,
         .cliInfo = BuildCliInfo("settings", "set"),
@@ -1920,7 +1920,7 @@ HWTEST_F(ToolTokenMockTest, DeleteToolTokenByPid_003, TestSize.Level1)
         GenerateCliAuthResult(*atManagerService_, callerFullTokenId, hostTokenId, { authInfo });
     InitCliTokenRequest request = {
         .callerTokenId = shellTokenId,
-        .callerUid = AIMGR_UID,
+        .callerUid = ROOT_UID,
         .hostTokenId = hostTokenId,
         .challenge = authResult.result.authResults[0],
         .cliInfo = BuildCliInfo("camera", "capture"),
@@ -1959,7 +1959,7 @@ HWTEST_F(ToolTokenMockTest, GetCliTokenInfo_004, TestSize.Level1)
         GenerateCliAuthResult(*atManagerService_, callerFullTokenId, hostTokenId, { authInfo });
     InitCliTokenRequest request = {
         .callerTokenId = shellTokenId,
-        .callerUid = AIMGR_UID,
+        .callerUid = ROOT_UID,
         .hostTokenId = hostTokenId,
         .challenge = authResult.result.authResults[0],
         .cliInfo = BuildCliInfo("camera", "capture"),
@@ -2002,7 +2002,7 @@ HWTEST_F(ToolTokenMockTest, GetHostTokenId_004, TestSize.Level1)
         GenerateCliAuthResult(*atManagerService_, callerFullTokenId, hostTokenId, { authInfo });
     InitCliTokenRequest request = {
         .callerTokenId = shellTokenId,
-        .callerUid = AIMGR_UID,
+        .callerUid = ROOT_UID,
         .hostTokenId = hostTokenId,
         .challenge = authResult.result.authResults[0],
         .cliInfo = BuildCliInfo("camera", "capture"),
@@ -2067,7 +2067,7 @@ HWTEST_F(ToolTokenMockTest, GetHostTokenId_006, TestSize.Level1)
         GenerateCliAuthResult(*atManagerService_, callerFullTokenId, hostTokenId, { authInfo });
     InitCliTokenRequest request = {
         .callerTokenId = shellTokenId,
-        .callerUid = AIMGR_UID,
+        .callerUid = ROOT_UID,
         .hostTokenId = hostTokenId,
         .challenge = authResult.result.authResults[0],
         .cliInfo = BuildCliInfo("camera", "capture"),

@@ -34,6 +34,7 @@ bool ReadStatusList(Parcel& in, std::vector<PermissionDecisionStatus>& statusLis
 {
     uint32_t size = 0;
     RETURN_IF_FALSE(in.ReadUint32(size));
+    RETURN_IF_FALSE(size <= MAX_PERMLIST_SIZE);
     statusList.clear();
     statusList.reserve(size);
     for (uint32_t i = 0; i < size; ++i) {
@@ -65,6 +66,7 @@ PermissionDialogResultParcel* PermissionDialogResultParcel::Unmarshalling(Parcel
     }
     uint32_t size = 0;
     RELEASE_IF_FALSE(in.ReadUint32(size), parcel);
+    RELEASE_IF_FALSE(size <= MAX_COMMAND_LIST_SIZE, parcel);
     parcel->result.detailList.clear();
     parcel->result.detailList.reserve(size);
     for (uint32_t i = 0; i < size; ++i) {
