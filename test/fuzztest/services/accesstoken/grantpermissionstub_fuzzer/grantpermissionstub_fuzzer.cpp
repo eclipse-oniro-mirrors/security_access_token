@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -29,28 +29,12 @@
 #define private public
 #include "accesstoken_manager_service.h"
 #undef private
+#include "mock_permission.h"
 #include "fuzzer/FuzzedDataProvider.h"
 #include "iaccess_token_manager.h"
-#include "token_setproc.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
-static HapInfoParams g_InfoParms = {
-    .userID = 1,
-    .bundleName = "GrantPermissionStubFuzzTest",
-    .instIndex = 0,
-    .appIDDesc = "test.bundle",
-    .isSystemApp = false
-};
-static HapPolicyParams g_PolicyPrams = {
-    .apl = APL_NORMAL,
-    .domain = "test.domain",
-    .permList = {},
-    .permStateList = {}
-};
-const int CONSTANTS_NUMBER_TWO = 2;
-const int CONSTANTS_NUMBER_THREE = 3;
-static const int32_t ROOT_UID = 0;
 static const vector<PermissionFlag> FLAG_LIST = {
     PERMISSION_DEFAULT_FLAG,
     PERMISSION_USER_SET,
@@ -89,30 +73,8 @@ namespace OHOS {
 
         MessageParcel reply;
         MessageOption option;
-        AccessTokenID tokenIdHap;
-        bool enable2 = ((provider.ConsumeIntegral<int32_t>() % CONSTANTS_NUMBER_THREE) == 0);
-        if (enable2) {
-            AccessTokenIDEx tokenIdEx = AccessTokenKit::AllocHapToken(g_InfoParms, g_PolicyPrams);
-            tokenIdHap = tokenIdEx.tokenIDEx;
-            SetSelfTokenID(tokenIdHap);
-            uint32_t hapSize = 0;
-            uint32_t nativeSize = 0;
-            uint32_t pefDefSize = 0;
-            uint32_t dlpSize = 0;
-            std::map<int32_t, TokenIdInfo> tokenIdAplMap;
-            AccessTokenInfoManager::GetInstance().Init(hapSize, nativeSize, pefDefSize, dlpSize, tokenIdAplMap);
-        }
-        bool enable = ((provider.ConsumeIntegral<int32_t>() % CONSTANTS_NUMBER_TWO) == 0);
-        if (enable) {
-            setuid(CONSTANTS_NUMBER_TWO);
-        }
+        MockToken mock({ "ohos.permission.GRANT_SENSITIVE_PERMISSIONS" }, true, true);
         DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
-        setuid(ROOT_UID);
-        if (enable2) {
-            AccessTokenKit::DeleteToken(tokenIdHap);
-            AccessTokenID hdcd = AccessTokenKit::GetNativeTokenId("hdcd");
-            SetSelfTokenID(hdcd);
-        }
 
         return true;
     }

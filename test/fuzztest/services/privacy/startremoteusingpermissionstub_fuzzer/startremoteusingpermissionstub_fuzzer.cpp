@@ -19,6 +19,7 @@
 #include "constant.h"
 #include "fuzzer/FuzzedDataProvider.h"
 #include "iprivacy_manager.h"
+#include "mock_permission.h"
 #include "permission_used_type.h"
 #include "privacy_manager_service.h"
 #include "proxy_death_callback_stub.h"
@@ -95,6 +96,7 @@ bool StartRemoteUsingPermissionStubFuzzTest(const uint8_t* data, size_t size)
     std::string remoteDeviceId = provider.ConsumeRandomLengthString();
     std::string remoteDeviceName = provider.ConsumeRandomLengthString();
 
+    MockToken mock({ "ohos.permission.PERMISSION_USED_STATS" }, true, true);
     StartRemoteUsingPermissionStub(remoteDeviceId, remoteDeviceName, permissionName);
     StopRemoteUsingPermissionStub(remoteDeviceId, remoteDeviceName, permissionName);
     return true;

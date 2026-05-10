@@ -38,6 +38,7 @@ struct IoctlSetGetPermData {
     bool isGranted;
 };
 
+extern "C" {
 #define    ACCESS_TOKENID_ADD_PERMISSIONS \
     _IOW(ACCESS_TOKEN_ID_IOCTL_BASE, ADD_PERMISSIONS, struct IoctlAddPermData)
 #define    ACCESS_TOKENID_REMOVE_PERMISSIONS \
@@ -140,6 +141,7 @@ int32_t GetPermissionFromKernel(uint32_t tokenID, int32_t opCode, bool& isGrante
     }
     isGranted = (ret == 1);
     return ACCESS_TOKEN_OK;
+}
 }
 } // namespace AccessToken
 } // namespace Security

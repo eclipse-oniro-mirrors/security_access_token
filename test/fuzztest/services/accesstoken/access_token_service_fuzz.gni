@@ -36,6 +36,7 @@ access_token_stub_fuzz_deps = [
   "${access_token_path}/frameworks/common:accesstoken_common_cxx",
   "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
   "${access_token_path}/interfaces/innerkits/nativetoken:libnativetoken_shared",
+  "${access_token_path}/interfaces/innerkits/token_setproc:libperm_setproc",
   "${access_token_path}/interfaces/innerkits/token_setproc:libtoken_setproc",
 ]
 access_token_stub_fuzz_deps += accesstoken_manager_base_config.deps

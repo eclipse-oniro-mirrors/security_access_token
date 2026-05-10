@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -15,10 +15,13 @@
 
 #include "inithaptoken_fuzzer.h"
 
+#include <climits>
 #include <string>
 
+#include "accesstoken_fuzzdata.h"
 #include "accesstoken_kit.h"
 #include "fuzzer/FuzzedDataProvider.h"
+#include "mock_permission.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
@@ -26,7 +29,7 @@ using namespace OHOS::Security::AccessToken;
 namespace OHOS {
     void InitHapInfoParams(const std::string& bundleName, FuzzedDataProvider& provider, HapInfoParams &param)
     {
-        param.userID = provider.ConsumeIntegral<int32_t>();
+        param.userID = provider.ConsumeIntegralInRange<int32_t>(-1, INT_MAX);
         param.bundleName = bundleName;
         param.instIndex = provider.ConsumeIntegral<int32_t>();
         param.dlpType = static_cast<int32_t>(
@@ -36,7 +39,7 @@ namespace OHOS {
         param.isSystemApp = provider.ConsumeBool();
         param.appDistributionType = provider.ConsumeRandomLengthString();
         param.isRestore = provider.ConsumeBool();
-        param.tokenID = provider.ConsumeIntegral<AccessTokenID>();
+        param.tokenID = ConsumeTokenId(provider);
         param.isAtomicService = provider.ConsumeBool();
     }
 
@@ -96,8 +99,9 @@ namespace OHOS {
             return false;
         }
 
+        MockToken mock({ "ohos.permission.MANAGE_HAP_TOKENID" });
         FuzzedDataProvider provider(data, size);
-        std::string permissionName = provider.ConsumeRandomLengthString();
+        std::string permissionName = ConsumePermissionName(provider);
         std::string bundleName = provider.ConsumeRandomLengthString();
 
         HapInfoParams param;

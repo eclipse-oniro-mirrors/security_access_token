@@ -19,7 +19,9 @@
 #include <string>
 #include <vector>
 
+#include "accesstoken_fuzzdata.h"
 #include "fuzzer/FuzzedDataProvider.h"
+#include "mock_permission.h"
 #undef private
 #include "privacy_kit.h"
 
@@ -33,11 +35,11 @@ namespace OHOS {
             return false;
         }
 
+        MockToken mock({ "ohos.permission.PERMISSION_USED_STATS" }, true, true);
         FuzzedDataProvider provider(data, size);
 
         // Generate permission name with realistic constraints
-        size_t permNameLen = provider.ConsumeIntegralInRange<size_t>(0, 300);
-        std::string permissionName = provider.ConsumeRandomLengthString(permNameLen);
+        std::string permissionName = ConsumePermissionName(provider);
 
         // Call the API - it should handle all edge cases gracefully
         bool isUsing = false;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-22025 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -20,11 +20,33 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <vector>
 
 #include "fuzzer/FuzzedDataProvider.h"
 #include "accesstoken_kit.h"
-#include "permission_map.h"
 #include "securec.h"
+
+extern "C" {
+uint64_t GetSelfTokenID(void);
+int SetSelfTokenID(uint64_t tokenID);
+}
+
+static constexpr uint32_t MAX_PERMISSION_OPCODE_FUZZ_SIZE = 1024;
+static const uint64_t FUZZ_INITIAL_TOKEN_ID = GetSelfTokenID();
+
+static void DumpTokenInfoForFuzz(std::string& dumpInfo)
+{
+    uint64_t currentTokenId = GetSelfTokenID();
+    bool needRestore = (FUZZ_INITIAL_TOKEN_ID != 0) && (currentTokenId != FUZZ_INITIAL_TOKEN_ID) &&
+        (SetSelfTokenID(FUZZ_INITIAL_TOKEN_ID) == 0);
+
+    OHOS::Security::AccessToken::AtmToolsParamInfo info;
+    OHOS::Security::AccessToken::AccessTokenKit::DumpTokenInfo(info, dumpInfo);
+
+    if (needRestore) {
+        (void)SetSelfTokenID(currentTokenId);
+    }
+}
 
 static OHOS::Security::AccessToken::AccessTokenID TransfterStrToAccesstokenID(const std::string& numStr)
 {
@@ -46,8 +68,7 @@ static OHOS::Security::AccessToken::AccessTokenID TransfterStrToAccesstokenID(co
 static void GetTokenIdList(std::vector<OHOS::Security::AccessToken::AccessTokenID> &tokenIdList)
 {
     std::string dumpInfo;
-    OHOS::Security::AccessToken::AtmToolsParamInfo info;
-    OHOS::Security::AccessToken::AccessTokenKit::DumpTokenInfo(info, dumpInfo);
+    DumpTokenInfoForFuzz(dumpInfo);
     std::istringstream iss(dumpInfo);
     std::string line;
     while (std::getline(iss, line)) {
@@ -60,13 +81,14 @@ static void GetTokenIdList(std::vector<OHOS::Security::AccessToken::AccessTokenI
             }
         }
     }
+    tokenIdList.push_back(0);
+    tokenIdList.push_back(123); // 123: invalid tokenid
 }
 
 static void GetProcessList(std::vector<std::string> &processList)
 {
     std::string dumpInfo;
-    OHOS::Security::AccessToken::AtmToolsParamInfo info;
-    OHOS::Security::AccessToken::AccessTokenKit::DumpTokenInfo(info, dumpInfo);
+    DumpTokenInfoForFuzz(dumpInfo);
     std::istringstream stream(dumpInfo);
     std::string line;
     while (std::getline(stream, line)) {
@@ -77,6 +99,8 @@ static void GetProcessList(std::vector<std::string> &processList)
             processList.emplace_back(process);
         }
     }
+    processList.emplace_back("");
+    processList.emplace_back("noexist_process");
 }
 
 OHOS::Security::AccessToken::AccessTokenID ConsumeTokenId(FuzzedDataProvider &provider)
@@ -87,27 +111,18 @@ OHOS::Security::AccessToken::AccessTokenID ConsumeTokenId(FuzzedDataProvider &pr
         GetTokenIdList(tokenIdList);
         isIntialize = true;
     }
-    OHOS::Security::AccessToken::AccessTokenID tokenId = 0;
-    if (provider.ConsumeBool() || tokenIdList.empty()) {
-        tokenId = provider.ConsumeIntegral<OHOS::Security::AccessToken::AccessTokenID>();
-    } else {
-        tokenId = tokenIdList[
-            provider.ConsumeIntegralInRange<uint32_t>(0, static_cast<uint32_t>(tokenIdList.size() - 1))];
+    if (tokenIdList.empty()) {
+        return OHOS::Security::AccessToken::INVALID_TOKENID;
     }
-
-    return tokenId;
+    return tokenIdList[
+        provider.ConsumeIntegralInRange<uint32_t>(0, static_cast<uint32_t>(tokenIdList.size() - 1))];
 }
 
 std::string ConsumePermissionName(FuzzedDataProvider &provider)
 {
     std::string permissionName;
-    if (provider.ConsumeBool()) {
-        permissionName = provider.ConsumeRandomLengthString();
-    } else {
-        permissionName = OHOS::Security::AccessToken::TransferOpcodeToPermission(
-            provider.ConsumeIntegralInRange<uint32_t>(
-            0, static_cast<uint32_t>(OHOS::Security::AccessToken::GetDefPermissionsSize()) - 1));
-    }
+    (void)OHOS::Security::AccessToken::AccessTokenKit::TransferOpcodeToPermission(
+        provider.ConsumeIntegralInRange<uint32_t>(0, MAX_PERMISSION_OPCODE_FUZZ_SIZE), permissionName);
     return permissionName;
 }
 
@@ -119,15 +134,11 @@ std::string ConsumeProcessName(FuzzedDataProvider &provider)
         GetProcessList(processList);
         isIntialize = true;
     }
-    std::string process;
-    if (provider.ConsumeBool() || processList.empty()) {
-        process = provider.ConsumeRandomLengthString();
-    } else {
-        process = processList[
-            provider.ConsumeIntegralInRange<uint32_t>(0, static_cast<uint32_t>(processList.size() - 1))];
+    if (processList.empty()) {
+        return "";
     }
-
-    return process;
+    return processList[
+        provider.ConsumeIntegralInRange<uint32_t>(0, static_cast<uint32_t>(processList.size() - 1))];
 }
 
 namespace OHOS {

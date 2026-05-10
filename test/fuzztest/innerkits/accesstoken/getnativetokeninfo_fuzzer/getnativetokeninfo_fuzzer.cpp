@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -24,6 +24,7 @@
 #include "accesstoken_fuzzdata.h"
 #include "accesstoken_kit.h"
 #include "fuzzer/FuzzedDataProvider.h"
+#include "mock_permission.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
@@ -35,6 +36,7 @@ namespace OHOS {
             return false;
         }
 
+        MockToken mock({}, false);
         FuzzedDataProvider provider(data, size);
         NativeTokenInfo info;
         AccessTokenID tokenId = ConsumeTokenId(provider);
@@ -49,4 +51,3 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     OHOS::GetNativeTokenInfoFuzzTest(data, size);
     return 0;
 }
-

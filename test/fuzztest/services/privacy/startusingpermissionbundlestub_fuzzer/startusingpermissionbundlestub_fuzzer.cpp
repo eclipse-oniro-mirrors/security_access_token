@@ -20,6 +20,7 @@
 #include "accesstoken_fuzzdata.h"
 #include "fuzzer/FuzzedDataProvider.h"
 #include "iprivacy_manager.h"
+#include "mock_permission.h"
 #include "privacy_manager_service.h"
 #include "proxy_death_callback_stub.h"
 
@@ -57,6 +58,7 @@ bool StartUsingPermissionBundleStubFuzzTest(const uint8_t* data, size_t size)
     }
 
     FuzzedDataProvider provider(data, size);
+    MockToken mock({ "ohos.permission.PERMISSION_USED_STATS" }, true, true);
     StartUsingPermissionBundleStub(provider.ConsumeRandomLengthString(), ConsumePermissionName(provider));
     return true;
 }

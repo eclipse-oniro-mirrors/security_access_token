@@ -19,6 +19,7 @@
 #include "accesstoken_kit.h"
 #include "claw_permission_fuzzdata.h"
 #include "fuzzer/FuzzedDataProvider.h"
+#include "mock_permission.h"
 
 using namespace OHOS::Security::AccessToken;
 
@@ -29,6 +30,7 @@ bool GetSkillPermissionsFuzzTest(const uint8_t* data, size_t size)
         return false;
     }
 
+    MockToken mock({ "ohos.permission.MANAGE_TOOL_RUNTIME_PERMISSIONS" }, true, true);
     FuzzedDataProvider provider(data, size);
     AccessTokenID hostTokenID = ConsumeTokenId(provider);
     std::string agentID = ConsumeAgentID(provider);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -15,44 +15,42 @@
 
 #include "setremotehaptokeninfostub_fuzzer.h"
 
+#include <climits>
 #include <string>
 #include <vector>
 
 #include "access_token.h"
+#include "accesstoken_fuzzdata.h"
 #include "accesstoken_info_manager.h"
 #include "accesstoken_kit.h"
 #define private public
 #include "accesstoken_manager_service.h"
 #undef private
+#include "mock_permission.h"
 #include "fuzzer/FuzzedDataProvider.h"
 #include "iaccess_token_manager.h"
 #include "permission_state_full.h"
-#include "token_setproc.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
-#ifdef TOKEN_SYNC_ENABLE
-const int CONSTANTS_NUMBER_TWO = 2;
-#endif
-
 namespace OHOS {
     #ifdef TOKEN_SYNC_ENABLE
     void InitRemoteTokenInfo(FuzzedDataProvider& provider, HapTokenInfoForSync& remoteTokenInfo)
     {
         HapTokenInfo baseInfo = {
             .ver = '1',
-            .userID = provider.ConsumeIntegral<AccessTokenID>(),
+            .userID = provider.ConsumeIntegralInRange<int32_t>(-1, INT_MAX),
             .bundleName = provider.ConsumeRandomLengthString(),
             .apiVersion = provider.ConsumeIntegral<int32_t>(),
             .instIndex = provider.ConsumeIntegral<int32_t>(),
             .dlpType = static_cast<int32_t>(
                 provider.ConsumeIntegralInRange<uint32_t>(0, static_cast<uint32_t>(HapDlpType::BUTT_DLP_TYPE))),
-            .tokenID = provider.ConsumeIntegral<AccessTokenID>(),
+            .tokenID = ConsumeTokenId(provider),
             .tokenAttr = provider.ConsumeIntegral<uint32_t>(),
         };
 
         PermissionStatus state = {
-            .permissionName = provider.ConsumeRandomLengthString(),
+            .permissionName = ConsumePermissionName(provider),
             .grantStatus = static_cast<int32_t>(provider.ConsumeIntegralInRange<uint32_t>(
                 0, static_cast<uint32_t>(PermissionState::PERMISSION_GRANTED))),
             .grantFlag = provider.ConsumeIntegralInRange<uint32_t>(
@@ -72,6 +70,7 @@ namespace OHOS {
         }
 
 #ifdef TOKEN_SYNC_ENABLE
+        MockToken mock({}, false);
         FuzzedDataProvider provider(data, size);
         std::string deviceID = provider.ConsumeRandomLengthString();
 
@@ -92,20 +91,7 @@ namespace OHOS {
 
         MessageParcel reply;
         MessageOption option;
-        bool enable = ((provider.ConsumeIntegral<int32_t>() % CONSTANTS_NUMBER_TWO) == 0);
-        if (enable) {
-            AccessTokenID accesstoken = AccessTokenKit::GetNativeTokenId("token_sync_service");
-            SetSelfTokenID(accesstoken);
-            uint32_t hapSize = 0;
-            uint32_t nativeSize = 0;
-            uint32_t pefDefSize = 0;
-            uint32_t dlpSize = 0;
-            std::map<int32_t, TokenIdInfo> tokenIdAplMap;
-            AccessTokenInfoManager::GetInstance().Init(hapSize, nativeSize, pefDefSize, dlpSize, tokenIdAplMap);
-        }
         DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
-        AccessTokenID hdcd = AccessTokenKit::GetNativeTokenId("hdcd");
-        SetSelfTokenID(hdcd);
 
         return true;
     #else

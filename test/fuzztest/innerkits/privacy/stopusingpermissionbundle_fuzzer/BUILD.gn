@@ -26,9 +26,8 @@ ohos_fuzztest("StopUsingPermissionBundleFuzzTest") {
 
   deps = [
     "${access_token_path}/frameworks/common:accesstoken_common_cxx",
-    "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
-    "${access_token_path}/interfaces/innerkits/privacy:libprivacy_sdk",
   ]
+  deps += privacy_fuzzer_deps
 
   configs = privacy_fuzzer_configs
 
