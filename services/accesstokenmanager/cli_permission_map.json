@@ -19,6 +19,13 @@
             "usedPermissions": [
                 "ohos.permission.CAMERA"
             ]
+        },
+        {
+            "cliPermission": "ohos.permission.cli.CONTROL_LOCATION_SWITCH",
+            "usedPermissions": [
+                "ohos.permission.MANAGE_SETTINGS",
+                "ohos.permission.CONTROL_LOCATION_SWITCH"
+            ]
         }
     ]
 }
