@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2025-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -18,9 +18,11 @@
 #include <vector>
 
 #include "access_token.h"
+#include "accesstoken_fuzzdata.h"
 #define private public
 #include "accesstoken_manager_service.h"
 #undef private
+#include "mock_permission.h"
 #include "fuzzer/FuzzedDataProvider.h"
 #include "iaccess_token_manager.h"
 
@@ -28,9 +30,7 @@ using namespace std;
 using namespace OHOS::Security::AccessToken;
 
 const int CONSTANTS_NUMBER_ONE = 1;
-const int CONSTANTS_NUMBER_TEN = 10;
 const uint32_t MAX_PERMISSION_LIST_SIZE = 1024;
-static const int32_t ROOT_UID = 0;
 
 namespace OHOS {
 bool SetPermissionStatusWithPolicyStubFuzzTest(const uint8_t* data, size_t size)
@@ -40,7 +40,7 @@ bool SetPermissionStatusWithPolicyStubFuzzTest(const uint8_t* data, size_t size)
     }
 
     FuzzedDataProvider provider(data, size);
-    AccessTokenID tokenId = provider.ConsumeIntegral<AccessTokenID>();
+    AccessTokenID tokenId = ConsumeTokenId(provider);
     uint32_t permListSize =
         provider.ConsumeIntegralInRange<uint32_t>(CONSTANTS_NUMBER_ONE, MAX_PERMISSION_LIST_SIZE);
     std::vector<std::string> permissionList;
@@ -65,11 +65,8 @@ bool SetPermissionStatusWithPolicyStubFuzzTest(const uint8_t* data, size_t size)
 
     MessageParcel reply;
     MessageOption option;
-    if (((provider.ConsumeIntegral<int32_t>() % CONSTANTS_NUMBER_TEN) == 0)) {
-        setuid(CONSTANTS_NUMBER_TEN);
-    }
+    MockToken mock({ "ohos.permission.MANAGE_EDM_POLICY" }, true, true);
     DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
-    setuid(ROOT_UID);
     return true;
 }
 

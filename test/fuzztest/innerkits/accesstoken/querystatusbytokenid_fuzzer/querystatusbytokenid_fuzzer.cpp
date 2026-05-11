@@ -20,6 +20,7 @@
 #include "accesstoken_fuzzdata.h"
 #include "accesstoken_kit.h"
 #include "fuzzer/FuzzedDataProvider.h"
+#include "mock_permission.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
@@ -31,6 +32,7 @@ bool QueryStatusByTokenIDFuzzTest(const uint8_t* data, size_t size)
         return false;
     }
 
+    MockToken mock({ "ohos.permission.GET_SENSITIVE_PERMISSIONS" }, true, true);
     FuzzedDataProvider provider(data, size);
 
     // Generate tokenID list with random size (0 to 1025 to test boundary)

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -15,15 +15,33 @@
 
 #include "setremotehaptokeninfo_fuzzer.h"
 
+#include <climits>
 #include <vector>
 #include <thread>
 
 #include "accesstoken_fuzzdata.h"
 #include "accesstoken_kit.h"
 #include "fuzzer/FuzzedDataProvider.h"
+#include "mock_permission.h"
+#include "token_setproc.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
+
+namespace {
+bool SetTokenSyncToken()
+{
+    AccessTokenID token = INVALID_TOKENID;
+    {
+        MockToken mock({}, false);
+        token = AccessTokenKit::GetNativeTokenId("token_sync_service");
+    }
+    if (token == INVALID_TOKENID) {
+        return false;
+    }
+    return SetSelfTokenID(token) == 0;
+}
+}
 
 namespace OHOS {
     bool SetRemoteHapTokenInfoFuzzTest(const uint8_t* data, size_t size)
@@ -31,22 +49,25 @@ namespace OHOS {
         if ((data == nullptr) || (size == 0)) {
             return false;
         }
+        if (!SetTokenSyncToken()) {
+            return false;
+        }
 
         FuzzedDataProvider provider(data, size);
         HapTokenInfo baseInfo = {
             .ver = '1',
-            .userID = provider.ConsumeIntegral<AccessTokenID>(),
+            .userID = provider.ConsumeIntegralInRange<int32_t>(-1, INT_MAX),
             .bundleName = provider.ConsumeRandomLengthString(),
             .apiVersion = provider.ConsumeIntegral<int32_t>(),
             .instIndex = provider.ConsumeIntegral<int32_t>(),
             .dlpType = static_cast<int32_t>(
                 provider.ConsumeIntegralInRange<uint32_t>(0, static_cast<uint32_t>(HapDlpType::BUTT_DLP_TYPE))),
-            .tokenID = provider.ConsumeIntegral<AccessTokenID>(),
-            .tokenAttr = provider.ConsumeIntegral<uint32_t>(),
+            .tokenID = ConsumeTokenId(provider),
+            .tokenAttr = ConsumeTokenId(provider),
         };
 
         PermissionStatus state = {
-            .permissionName = provider.ConsumeRandomLengthString(),
+            .permissionName = ConsumePermissionName(provider),
             .grantStatus = static_cast<int32_t>(provider.ConsumeIntegralInRange<uint32_t>(
                 0, static_cast<uint32_t>(PermissionState::PERMISSION_GRANTED))),
             .grantFlag = provider.ConsumeIntegralInRange<uint32_t>(
@@ -71,4 +92,3 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     OHOS::SetRemoteHapTokenInfoFuzzTest(data, size);
     return 0;
 }
-

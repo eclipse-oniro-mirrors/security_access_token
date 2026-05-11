@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -23,6 +23,7 @@
 #include "accesstoken_fuzzdata.h"
 #include "accesstoken_kit.h"
 #include "fuzzer/FuzzedDataProvider.h"
+#include "mock_permission.h"
 const static int32_t STATUS_SIZE = 3;
 
 using namespace std;
@@ -35,6 +36,7 @@ namespace OHOS {
             return false;
         }
 
+        MockToken mock({ "ohos.permission.DISABLE_PERMISSION_DIALOG" }, true, true);
         FuzzedDataProvider provider(data, size);
         std::string permission = ConsumePermissionName(provider);
         return AccessTokenKit::SetPermissionRequestToggleStatus(permission,

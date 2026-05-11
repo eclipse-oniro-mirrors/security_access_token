@@ -22,19 +22,15 @@
 #include "add_perm_param_info.h"
 #include "accesstoken_fuzzdata.h"
 #include "accesstoken_kit.h"
+#include "mock_permission.h"
 #include "fuzzer/FuzzedDataProvider.h"
 #include "iprivacy_manager.h"
-#include "nativetoken_kit.h"
 #include "perm_active_status_change_callback.h"
 #include "perm_active_status_customized_cbk.h"
 #include "privacy_manager_service.h"
-#include "token_setproc.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
-static AccessTokenID g_audioTokenID = 0;
-const int CONSTANTS_NUMBER_TWO = 2;
-static const int32_t ROOT_UID = 0;
 static const uint32_t ACTIVE_CHANGE_CHANGE_TYPE_MAX = 4;
 static const uint32_t CALLER_TYPE_MAX = 2;
 
@@ -57,7 +53,6 @@ public:
 };
 
 namespace OHOS {
-
 void AddPermissionUsedRecordStubFuzzTest(FuzzedDataProvider &provider)
 {
     MessageParcel datas;
@@ -80,6 +75,7 @@ void AddPermissionUsedRecordStubFuzzTest(FuzzedDataProvider &provider)
 
     MessageParcel reply;
     MessageOption option;
+    MockToken mock({ "ohos.permission.PERMISSION_USED_STATS" }, true, true);
     (void)DelayedSingleton<PrivacyManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
 }
 
@@ -109,6 +105,7 @@ void GetPermissionUsedRecordsStubFuzzTest(FuzzedDataProvider &provider)
 
     MessageParcel reply;
     MessageOption option;
+    MockToken mock({ "ohos.permission.PERMISSION_USED_STATS" }, true, true);
     (void)DelayedSingleton<PrivacyManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
 }
 
@@ -126,12 +123,8 @@ void GetPermissionUsedRecordToggleStatusStubFuzzTest(FuzzedDataProvider &provide
 
     MessageParcel reply;
     MessageOption option;
-    bool enable = ((provider.ConsumeIntegral<int32_t>() % CONSTANTS_NUMBER_TWO) == 0);
-    if (enable) {
-        setuid(CONSTANTS_NUMBER_TWO);
-    }
+    MockToken mock({ "ohos.permission.PERMISSION_USED_STATS" }, true, true);
     (void)DelayedSingleton<PrivacyManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
-    setuid(ROOT_UID);
 }
 
 void GetPermissionUsedTypeInfosStubFuzzTest(FuzzedDataProvider &provider)
@@ -152,6 +145,7 @@ void GetPermissionUsedTypeInfosStubFuzzTest(FuzzedDataProvider &provider)
 
     MessageParcel reply;
     MessageOption option;
+    MockToken mock({ "ohos.permission.PERMISSION_USED_STATS" }, true, true);
     (void)DelayedSingleton<PrivacyManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
 }
 
@@ -177,6 +171,7 @@ void IsAllowedUsingPermissionStubFuzzTest(FuzzedDataProvider &provider)
 
     MessageParcel reply;
     MessageOption option;
+    MockToken mock({ "ohos.permission.PERMISSION_USED_STATS" }, true, true);
     (void)DelayedSingleton<PrivacyManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
 }
 
@@ -204,6 +199,7 @@ void RegisterPermActiveStatusCallbackStubFuzzTest(FuzzedDataProvider &provider)
 
     MessageParcel reply;
     MessageOption option;
+    MockToken mock({ "ohos.permission.PERMISSION_USED_STATS" }, true, true);
     (void)DelayedSingleton<PrivacyManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
 }
 
@@ -226,12 +222,13 @@ void RemovePermissionUsedRecordsStubFuzzTest(FuzzedDataProvider &provider)
 
     MessageParcel reply;
     MessageOption option;
+    MockToken mock({ "ohos.permission.REMOVE_PERMISSION_USED_RECORD" }, true, true);
     (void)DelayedSingleton<PrivacyManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
 }
 
 void SetHapWithFGReminderStubFuzzTest(FuzzedDataProvider &provider)
 {
-    (void)SetSelfTokenID(g_audioTokenID);
+    MockToken mock({ "ohos.permission.SET_FOREGROUND_HAP_REMINDER" });
 
     AccessTokenID tokenId = ConsumeTokenId(provider);
     bool isAllowed = provider.ConsumeBool();
@@ -250,17 +247,12 @@ void SetHapWithFGReminderStubFuzzTest(FuzzedDataProvider &provider)
 
     MessageParcel reply;
     MessageOption option;
-    bool enable = ((provider.ConsumeIntegral<int32_t>() % CONSTANTS_NUMBER_TWO) == 0);
-    if (enable) {
-        setuid(CONSTANTS_NUMBER_TWO);
-    }
     (void)DelayedSingleton<PrivacyManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
-    setuid(ROOT_UID);
 }
 
 void SetMutePolicyStubFuzzTest(FuzzedDataProvider &provider)
 {
-    (void)SetSelfTokenID(g_audioTokenID);
+    MockToken mock({ "ohos.permission.SET_MUTE_POLICY" }, false);
 
     uint32_t policyType = provider.ConsumeIntegralInRange<uint32_t>(0, ACTIVE_CHANGE_CHANGE_TYPE_MAX);
     uint32_t callerType = provider.ConsumeIntegralInRange<uint32_t>(0, CALLER_TYPE_MAX);
@@ -287,12 +279,7 @@ void SetMutePolicyStubFuzzTest(FuzzedDataProvider &provider)
 
     MessageParcel reply;
     MessageOption option;
-    bool enable = ((provider.ConsumeIntegral<int32_t>() % CONSTANTS_NUMBER_TWO) == 0);
-    if (enable) {
-        setuid(CONSTANTS_NUMBER_TWO);
-    }
     (void)DelayedSingleton<PrivacyManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
-    setuid(ROOT_UID);
 }
 
 void SetPermissionUsedRecordToggleStatusStubFuzzTest(FuzzedDataProvider &provider)
@@ -310,12 +297,8 @@ void SetPermissionUsedRecordToggleStatusStubFuzzTest(FuzzedDataProvider &provide
 
     MessageParcel reply;
     MessageOption option;
-    bool enable = ((provider.ConsumeIntegral<int32_t>() % CONSTANTS_NUMBER_TWO) == 0);
-    if (enable) {
-        setuid(CONSTANTS_NUMBER_TWO);
-    }
+    MockToken mock({ "ohos.permission.PERMISSION_RECORD_TOGGLE" }, true, true);
     (void)DelayedSingleton<PrivacyManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
-    setuid(ROOT_UID);
 }
 
 void StopUsingPermissionStubFuzzTest(FuzzedDataProvider &provider)
@@ -343,6 +326,7 @@ void StopUsingPermissionStubFuzzTest(FuzzedDataProvider &provider)
 
     MessageParcel reply;
     MessageOption option;
+    MockToken mock({ "ohos.permission.PERMISSION_USED_STATS" }, true, true);
     (void)DelayedSingleton<PrivacyManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
 }
 
@@ -364,7 +348,7 @@ bool PrivacyStubFuzzTest(FuzzedDataProvider &provider)
 
 void Initialize()
 {
-    g_audioTokenID = AccessTokenKit::GetNativeTokenId("audio_server");
+    MockToken mock({}, false);
 }
 } // namespace OHOS
 

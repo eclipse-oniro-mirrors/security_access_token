@@ -16,6 +16,7 @@
 #include "addremotepermissionusedrecord_fuzzer.h"
 
 #include "fuzzer/FuzzedDataProvider.h"
+#include "mock_permission.h"
 #include "privacy_kit.h"
 
 using namespace OHOS::Security::AccessToken;
@@ -27,6 +28,7 @@ bool AddRemotePermissionUsedRecordFuzzTest(const uint8_t* data, size_t size)
         return false;
     }
 
+    MockToken mock({ "ohos.permission.PERMISSION_USED_STATS" }, true, true);
     FuzzedDataProvider provider(data, size);
 
     RemoteCallerInfo info;

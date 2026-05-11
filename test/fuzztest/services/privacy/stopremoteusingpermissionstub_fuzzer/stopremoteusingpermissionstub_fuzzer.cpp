@@ -23,6 +23,7 @@
 #include "accesstoken_fuzzdata.h"
 #include "fuzzer/FuzzedDataProvider.h"
 #include "iprivacy_manager.h"
+#include "mock_permission.h"
 #include "privacy_manager_service.h"
 
 using namespace std;
@@ -57,6 +58,7 @@ namespace OHOS {
 
         MessageParcel reply;
         MessageOption option;
+        MockToken mock({ "ohos.permission.PERMISSION_USED_STATS" }, true, true);
         DelayedSingleton<PrivacyManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
 
         return true;

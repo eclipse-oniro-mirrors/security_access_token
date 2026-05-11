@@ -15,6 +15,7 @@
 
 #include "accesstokenstub_fuzzer.h"
 
+#include <climits>
 #include <fuzzer/FuzzedDataProvider.h>
 #include <string>
 #include "accesstoken_callback_stubs.h"
@@ -24,33 +25,18 @@
 #include "accesstoken_manager_service.h"
 #undef private
 #include "iaccess_token_manager.h"
+#include "mock_permission.h"
 #include "token_setproc.h"
 #include "token_sync_kit_interface.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
-static const uint64_t SYSTEM_APP_MASK = (static_cast<uint64_t>(1) << 32);
+static const uint64_t FUZZ_SYSTEM_APP_MASK = (static_cast<uint64_t>(1) << 32);
 static AccessTokenID g_selfTokenId = 0;
 static uint64_t g_syncTokenId = 0;
 static AccessTokenID g_hdcdTokenID = 0;
-static AccessTokenID g_foundationTokenId = 0;
-const int CONSTANTS_NUMBER_TWO = 2;
-static const int32_t ROOT_UID = 0;
 const static int32_t FLAG_SIZE = 16;
-static HapInfoParams g_InfoParms = {
-    .userID = 1,
-    .bundleName = "accessToken.grantPermission.stubFuzzTest",
-    .instIndex = 0,
-    .appIDDesc = "test.bundle",
-    .isSystemApp = false
-};
-static HapPolicyParams g_PolicyPrams = {
-    .apl = APL_NORMAL,
-    .domain = "test.domain",
-    .permList = {},
-    .permStateList = {}
-};
-const int CONSTANTS_NUMBER_THREE = 3;
+const int CONSTANTS_NUMBER_TWO = 2;
 static const vector<PermissionFlag> FLAG_LIST = {
     PERMISSION_DEFAULT_FLAG,
     PERMISSION_USER_SET,
@@ -152,7 +138,7 @@ void GetPermissionManagerInfo()
 
 void InitHapInfoParams(const std::string& bundleName, FuzzedDataProvider& provider, HapInfoParams& param)
 {
-    param.userID = provider.ConsumeIntegral<int32_t>();
+    param.userID = provider.ConsumeIntegralInRange<int32_t>(-1, INT_MAX);
     param.bundleName = bundleName;
     param.instIndex = provider.ConsumeIntegral<int32_t>();
     param.dlpType = static_cast<int32_t>(
@@ -290,12 +276,8 @@ bool UpdateHapTokenStubFuzzTest(FuzzedDataProvider &provider)
     uint32_t code = static_cast<uint32_t>(IAccessTokenManagerIpcCode::COMMAND_UPDATE_HAP_TOKEN);
     MessageParcel reply;
     MessageOption option;
-    bool enable = ((provider.ConsumeIntegral<int32_t>() % CONSTANTS_NUMBER_TWO) == 0);
-    if (enable) {
-        setuid(CONSTANTS_NUMBER_TWO);
-    }
+    MockToken mock({ "ohos.permission.MANAGE_HAP_TOKENID" });
     (void)DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
-    setuid(ROOT_UID);
     return true;
 }
 
@@ -324,12 +306,8 @@ bool InitHapTokenStubFuzzTest(FuzzedDataProvider &provider)
 
     MessageParcel reply;
     MessageOption option;
-    bool enable = ((provider.ConsumeIntegral<int32_t>() % CONSTANTS_NUMBER_TWO) == 0);
-    if (enable) {
-        setuid(CONSTANTS_NUMBER_TWO);
-    }
+    MockToken mock({ "ohos.permission.MANAGE_HAP_TOKENID" });
     (void)DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
-    setuid(ROOT_UID);
 
     return true;
 }
@@ -353,12 +331,8 @@ bool DeleteTokenStubFuzzTest(FuzzedDataProvider &provider)
 
     MessageParcel reply;
     MessageOption option;
-    bool enable = ((provider.ConsumeIntegral<int32_t>() % CONSTANTS_NUMBER_TWO) == 0);
-    if (enable) {
-        setuid(CONSTANTS_NUMBER_TWO);
-    }
+    MockToken mock({ "ohos.permission.MANAGE_HAP_TOKENID" });
     (void)DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
-    setuid(ROOT_UID);
 
     return true;
 }
@@ -379,12 +353,8 @@ bool AllocLocalTokenIDStubFuzzTest(FuzzedDataProvider &provider)
 
     MessageParcel reply;
     MessageOption option;
-    bool enable = ((provider.ConsumeIntegral<int32_t>() % CONSTANTS_NUMBER_TWO) == 0);
-    if (enable) {
-        setuid(CONSTANTS_NUMBER_TWO);
-    }
+    MockToken mock({}, false);
     (void)DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, inData, reply, option);
-    setuid(ROOT_UID);
 
     return true;
 }
@@ -403,12 +373,8 @@ bool ClearUserGrantedPermissionStateStubFuzzTest(FuzzedDataProvider &provider)
 
     MessageParcel reply;
     MessageOption option;
-    bool enable = ((provider.ConsumeIntegral<int32_t>() % CONSTANTS_NUMBER_TWO) == 0);
-    if (enable) {
-        setuid(CONSTANTS_NUMBER_TWO);
-    }
+    MockToken mock({ "ohos.permission.REVOKE_SENSITIVE_PERMISSIONS" });
     (void)DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, sendData, reply, option);
-    setuid(ROOT_UID);
 
     return true;
 }
@@ -484,12 +450,8 @@ bool GetNativeTokenInfoStubFuzzTest(FuzzedDataProvider &provider)
 
     MessageParcel reply;
     MessageOption option;
-    bool enable = ((provider.ConsumeIntegral<int32_t>() % CONSTANTS_NUMBER_TWO) == 0);
-    if (enable) {
-        setuid(CONSTANTS_NUMBER_TWO);
-    }
+    MockToken mock({}, false);
     (void)DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, inData, reply, option);
-    setuid(ROOT_UID);
 
     return true;
 }
@@ -514,29 +476,8 @@ bool GrantPermissionStubFuzzTest(FuzzedDataProvider &provider)
 
     MessageParcel reply;
     MessageOption option;
-    AccessTokenID tokenIdHap;
-    bool enable2 = ((provider.ConsumeIntegral<int32_t>() % CONSTANTS_NUMBER_THREE) == 0);
-    if (enable2) {
-        AccessTokenIDEx tokenIdEx = AccessTokenKit::AllocHapToken(g_InfoParms, g_PolicyPrams);
-        tokenIdHap = tokenIdEx.tokenIDEx;
-        (void)SetSelfTokenID(tokenIdHap);
-        uint32_t hapSize = 0;
-        uint32_t nativeSize = 0;
-        uint32_t pefDefSize = 0;
-        uint32_t dlpSize = 0;
-        std::map<int32_t, TokenIdInfo> tokenIdAplMap;
-        (void)AccessTokenInfoManager::GetInstance().Init(hapSize, nativeSize, pefDefSize, dlpSize, tokenIdAplMap);
-    }
-    bool enable = ((provider.ConsumeIntegral<int32_t>() % CONSTANTS_NUMBER_TWO) == 0);
-    if (enable) {
-        setuid(CONSTANTS_NUMBER_TWO);
-    }
+    MockToken mock({ "ohos.permission.GRANT_SENSITIVE_PERMISSIONS" }, true, true);
     (void)DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
-    setuid(ROOT_UID);
-    if (enable2) {
-        (void)AccessTokenKit::DeleteToken(tokenIdHap);
-        (void)SetSelfTokenID(g_hdcdTokenID);
-    }
 
     return true;
 }
@@ -560,12 +501,8 @@ bool RevokePermissionStubFuzzTest(FuzzedDataProvider &provider)
 
     MessageParcel reply;
     MessageOption option;
-    bool enable = ((provider.ConsumeIntegral<int32_t>() % CONSTANTS_NUMBER_TWO) == 0);
-    if (enable) {
-        setuid(CONSTANTS_NUMBER_TWO);
-    }
+    MockToken mock({ "ohos.permission.REVOKE_SENSITIVE_PERMISSIONS" }, true, true);
     (void)DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
-    setuid(ROOT_UID);
 
     return true;
 }
@@ -597,7 +534,7 @@ bool SetUserPolicyStubFuzzTest(FuzzedDataProvider &provider)
     UserPermissionPolicyIdl dataBlock;
     dataBlock.permissionName = permission;
     UserPolicyIdl userPolicyIdl;
-    userPolicyIdl.userId = provider.ConsumeIntegral<int32_t>();
+    userPolicyIdl.userId = provider.ConsumeIntegralInRange<int32_t>(-1, INT_MAX),
     userPolicyIdl.isRestricted = provider.ConsumeBool();
     dataBlock.userPolicyList.emplace_back(userPolicyIdl);
 
@@ -617,12 +554,7 @@ bool SetUserPolicyStubFuzzTest(FuzzedDataProvider &provider)
 
     MessageParcel reply;
     MessageOption option;
-    bool enable = ((provider.ConsumeIntegral<int32_t>() % CONSTANTS_NUMBER_TWO) == 0);
-    if (enable) {
-        (void)SetSelfTokenID(g_foundationTokenId);
-    } else {
-        (void)SetSelfTokenID(g_selfTokenId);
-    }
+    MockToken mock({ "ohos.permission.MANAGE_USER_POLICY" });
     (void)DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
     ClearUserPolicy(permission);
 
@@ -647,7 +579,7 @@ bool VerifyAccessTokenStubFuzzTest(FuzzedDataProvider &provider)
     MessageParcel reply;
     MessageOption option;
     uint64_t fulltokenId =
-        static_cast<uint64_t>(ConsumeTokenId(provider)) | (provider.ConsumeBool() ? SYSTEM_APP_MASK : 0);
+        static_cast<uint64_t>(ConsumeTokenId(provider)) | (provider.ConsumeBool() ? FUZZ_SYSTEM_APP_MASK : 0);
     (void)SetSelfTokenID(fulltokenId);
     (void)DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
     (void)SetSelfTokenID(g_hdcdTokenID);
@@ -697,7 +629,6 @@ void Initialize()
     g_selfTokenId = GetSelfTokenID();
     g_hdcdTokenID = AccessTokenKit::GetNativeTokenId("hdcd");
     g_syncTokenId = AccessTokenKit::GetNativeTokenId("token_sync_service");
-    g_foundationTokenId = AccessTokenKit::GetNativeTokenId("foundation");
 }
 } // namespace OHOS
 

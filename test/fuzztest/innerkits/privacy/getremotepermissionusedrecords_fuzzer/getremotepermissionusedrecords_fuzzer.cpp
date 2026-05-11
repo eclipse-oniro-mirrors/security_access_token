@@ -20,7 +20,9 @@
 #include <string>
 #include <vector>
 
+#include "accesstoken_fuzzdata.h"
 #include "fuzzer/FuzzedDataProvider.h"
+#include "mock_permission.h"
 #include "privacy_kit.h"
 
 using namespace std;
@@ -33,13 +35,14 @@ bool GetRemotePermissionUsedRecordsFuzzTest(const uint8_t* data, size_t size)
         return false;
     }
 
+    MockToken mock({ "ohos.permission.PERMISSION_USED_STATS" }, true, true);
     FuzzedDataProvider provider(data, size);
     PermissionUsedRequest request = {
-        .tokenId = provider.ConsumeIntegral<AccessTokenID>(),
+        .tokenId = ConsumeTokenId(provider),
         .isRemote = provider.ConsumeBool(),
         .deviceId = provider.ConsumeRandomLengthString(),
         .bundleName = provider.ConsumeRandomLengthString(),
-        .permissionList = {provider.ConsumeRandomLengthString()},
+        .permissionList = {ConsumePermissionName(provider)},
         .beginTimeMillis = provider.ConsumeIntegral<int64_t>(),
         .endTimeMillis = provider.ConsumeIntegral<int64_t>(),
         .flag = static_cast<PermissionUsageFlag>(provider.ConsumeIntegralInRange<uint32_t>(

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -19,8 +19,10 @@
 #include <vector>
 #include <thread>
 
+#include "accesstoken_fuzzdata.h"
 #include "accesstoken_kit.h"
 #include "fuzzer/FuzzedDataProvider.h"
+#include "mock_permission.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
@@ -50,10 +52,11 @@ namespace OHOS {
             return false;
         }
 
+        MockToken mock({ "ohos.permission.GET_SENSITIVE_PERMISSIONS" }, true, true);
         FuzzedDataProvider provider(data, size);
         PermStateChangeScope scopeInfos;
-        scopeInfos.tokenIDs = {provider.ConsumeIntegral<AccessTokenID>()};
-        scopeInfos.permList = {provider.ConsumeRandomLengthString()};
+        scopeInfos.tokenIDs = {ConsumeTokenId(provider), ConsumeTokenId(provider)};
+        scopeInfos.permList = {provider.ConsumeRandomLengthString(), provider.ConsumeRandomLengthString()};
         auto callbackPtr = std::make_shared<CbCustomizeTest1>(scopeInfos);
         return AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr) == RET_SUCCESS;
     }

@@ -19,56 +19,18 @@
 #include <thread>
 #include <vector>
 
-#undef private
-#include "access_token.h"
-#include "accesstoken_kit.h"
+#include "accesstoken_fuzzdata.h"
 #define private public
 #include "accesstoken_manager_service.h"
 #undef private
 #include "fuzzer/FuzzedDataProvider.h"
 #include "iaccess_token_manager.h"
-#include "nativetoken_kit.h"
-#include "token_setproc.h"
+#include "mock_permission.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
-static AccessTokenID g_selfTokenId = 0;
-static uint64_t g_mockTokenId = 0;
-static bool g_reload = true;
 
 namespace OHOS {
-void ReloadNativeTokenInfo()
-{
-    if (!g_reload) {
-        return;
-    }
-#ifndef ATM_BUILD_VARIANT_USER_ENABLE
-    MessageParcel reply;
-    MessageOption option;
-    MessageParcel datas;
-    if (!datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
-        return;
-    }
-    DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(
-        static_cast<uint32_t>(IAccessTokenManagerIpcCode::COMMAND_RELOAD_NATIVE_TOKEN_INFO), datas, reply, option);
-#endif
-    g_reload = false;
-}
-void GetNativeToken()
-{
-    ReloadNativeTokenInfo();
-    if (g_mockTokenId != 0) {
-        (void)SetSelfTokenID(g_mockTokenId);
-        return;
-    }
-    g_selfTokenId = GetSelfTokenID();
-    g_mockTokenId = AccessTokenKit::GetNativeTokenId("foundation");
-    if (g_mockTokenId == 0) {
-        return;
-    }
-    (void)SetSelfTokenID(g_mockTokenId);
-}
-
 void ClearUserPolicy(const string& permission)
 {
     MessageParcel reply;
@@ -94,13 +56,13 @@ bool SetUserPolicyStubFuzzTest(const uint8_t* data, size_t size)
     }
 
     FuzzedDataProvider provider(data, size);
-    std::string permission = provider.ConsumeRandomLengthString();
+    std::string permission = ConsumePermissionName(provider);
     std::vector<std::string> permList = { permission };
 
     UserPermissionPolicyIdl dataBlock;
     dataBlock.permissionName = permission;
     UserPolicyIdl userPolicyIdl;
-    userPolicyIdl.userId = provider.ConsumeIntegral<int32_t>();
+    userPolicyIdl.userId = provider.ConsumeIntegralInRange<int32_t>(-1, INT_MAX),
     userPolicyIdl.isRestricted = provider.ConsumeBool();
     dataBlock.userPolicyList.emplace_back(userPolicyIdl);
 
@@ -120,12 +82,7 @@ bool SetUserPolicyStubFuzzTest(const uint8_t* data, size_t size)
 
     MessageParcel reply;
     MessageOption option;
-    bool enable = ((provider.ConsumeIntegral<int32_t>() % 2) == 0); // 2: seperate true/false
-    if (enable) {
-        GetNativeToken();
-    } else {
-        (void)SetSelfTokenID(g_selfTokenId);
-    }
+    MockToken mock({ "ohos.permission.MANAGE_USER_POLICY" });
     DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
     ClearUserPolicy(permission);
     return true;

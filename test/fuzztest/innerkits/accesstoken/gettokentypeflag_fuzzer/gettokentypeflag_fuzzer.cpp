@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -18,6 +18,7 @@
 #include <cstddef>
 #include <cstdint>
 
+#include "accesstoken_fuzzdata.h"
 #include "accesstoken_kit.h"
 #include "fuzzer/FuzzedDataProvider.h"
 
@@ -31,8 +32,7 @@ namespace OHOS {
         }
 
         FuzzedDataProvider provider(data, size);
-        return AccessTokenKit::GetTokenTypeFlag(
-            provider.ConsumeIntegral<AccessTokenID>()) != ATokenTypeEnum::TOKEN_TYPE_BUTT;
+        return AccessTokenKit::GetTokenTypeFlag(ConsumeTokenId(provider)) != ATokenTypeEnum::TOKEN_TYPE_BUTT;
     }
 }
 

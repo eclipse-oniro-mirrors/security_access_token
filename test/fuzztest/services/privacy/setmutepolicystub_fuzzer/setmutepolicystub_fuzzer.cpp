@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -21,48 +21,24 @@
 
 #undef private
 #include "accesstoken_kit.h"
+#include "mock_permission.h"
 #include "fuzzer/FuzzedDataProvider.h"
 #include "iprivacy_manager.h"
 #include "privacy_manager_service.h"
-#include "nativetoken_kit.h"
-#include "token_setproc.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
-const int CONSTANTS_NUMBER_TWO = 2;
-static const int32_t ROOT_UID = 0;
 static const uint32_t ACTIVE_CHANGE_CHANGE_TYPE_MAX = 4;
 static const uint32_t CALLER_TYPE_MAX = 2;
 
 namespace OHOS {
-const uint8_t* g_baseFuzzData = nullptr;
-size_t g_baseFuzzSize = 0;
-size_t g_baseFuzzPos = 0;
+namespace {
+std::unique_ptr<MockToken> g_mockToken;
+}
+
     void GetNativeToken()
     {
-        uint64_t tokenId;
-        const char** perms = new (std::nothrow) const char *[1];
-        if (perms == nullptr) {
-            return;
-        }
-
-        perms[0] = "ohos.permission.GET_SENSITIVE_PERMISSIONS"; // 3 means the third permission
-
-        NativeTokenInfoParams infoInstance = {
-            .dcapsNum = 0,
-            .permsNum = 1,
-            .aclsNum = 0,
-            .dcaps = nullptr,
-            .perms = perms,
-            .acls = nullptr,
-            .processName = "getpermissionsstatusstub_fuzzer_test",
-            .aplStr = "system_core",
-        };
-
-        tokenId = GetAccessTokenId(&infoInstance);
-        SetSelfTokenID(tokenId);
-        AccessTokenKit::ReloadNativeTokenInfo();
-        delete[] perms;
+        g_mockToken.reset(new MockToken({ "ohos.permission.SET_MUTE_POLICY" }, false));
     }
 
     bool SetMutePolicyStubFuzzTest(const uint8_t* data, size_t size)
@@ -100,12 +76,7 @@ size_t g_baseFuzzPos = 0;
 
             MessageParcel reply;
             MessageOption option;
-            bool enable = ((provider.ConsumeIntegral<int32_t>() % CONSTANTS_NUMBER_TWO) == 0);
-            if (enable) {
-                setuid(CONSTANTS_NUMBER_TWO);
-            }
             DelayedSingleton<PrivacyManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
-            setuid(ROOT_UID);
         }
         return true;
     }

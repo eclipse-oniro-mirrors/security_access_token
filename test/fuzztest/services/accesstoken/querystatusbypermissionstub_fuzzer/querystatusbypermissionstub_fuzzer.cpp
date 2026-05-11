@@ -27,19 +27,19 @@
 #define private public
 #include "accesstoken_manager_service.h"
 #undef private
+#include "mock_permission.h"
 #include "fuzzer/FuzzedDataProvider.h"
 #include "iaccess_token_manager.h"
-#include "nativetoken_kit.h"
 #include "securec.h"
-#include "token_setproc.h"
 
 using namespace std;
 using namespace OHOS;
 using namespace OHOS::Security::AccessToken;
-static constexpr int32_t CONSTANTS_NUMBER_TWO = 2;
-static constexpr int32_t ROOT_UID = 0;
-
 namespace OHOS {
+namespace {
+std::unique_ptr<MockToken> g_mockToken;
+}
+
 bool QueryStatusByPermissionStubFuzzTest(const uint8_t* data, size_t size)
 {
     if ((data == nullptr) || (size == 0)) {
@@ -78,16 +78,9 @@ bool QueryStatusByPermissionStubFuzzTest(const uint8_t* data, size_t size)
     MessageParcel reply;
     MessageOption option;
 
-    // Optionally change UID to test different permission scenarios
-    bool enable = ((provider.ConsumeIntegral<int32_t>() % CONSTANTS_NUMBER_TWO) == 0);
-    if (enable) {
-        setuid(CONSTANTS_NUMBER_TWO);
-    }
-
     DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(
         code, datas, reply, option);
 
-    setuid(ROOT_UID);
     return true;
 }
 
@@ -99,30 +92,7 @@ void Initialize()
 
 extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv)
 {
-    uint64_t tokenId;
-    const char** perms = new (std::nothrow) const char *[1];
-    if (perms == nullptr) {
-        return -1;
-    }
-
-    perms[0] = "ohos.permission.GET_SENSITIVE_PERMISSIONS";
-
-    NativeTokenInfoParams infoInstance = {
-        .dcapsNum = 0,
-        .permsNum = 1,
-        .aclsNum = 0,
-        .dcaps = nullptr,
-        .perms = perms,
-        .acls = nullptr,
-        .processName = "querystatusbypermissionstub_fuzzer_test",
-        .aplStr = "system_core",
-    };
-
-    tokenId = GetAccessTokenId(&infoInstance);
-    SetSelfTokenID(tokenId);
-    AccessTokenKit::ReloadNativeTokenInfo();
-    delete[] perms;
-
+    g_mockToken.reset(new MockToken({ "ohos.permission.GET_SENSITIVE_PERMISSIONS" }, true, true));
     OHOS::Initialize();
     return 0;
 }

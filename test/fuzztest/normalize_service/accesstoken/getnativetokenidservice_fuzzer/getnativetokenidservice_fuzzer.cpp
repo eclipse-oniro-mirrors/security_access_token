@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2025-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -21,17 +21,17 @@
 #include <thread>
 #include <vector>
 
+#include "accesstoken_fuzzdata.h"
 #undef private
 #include "accesstoken_manager_service.h"
 #include "fuzzer/FuzzedDataProvider.h"
 #include "iaccess_token_manager.h"
+#include "mock_permission.h"
 #include "permission_def_parcel.h"
 
 using namespace std;
 using namespace OHOS;
 using namespace OHOS::Security::AccessToken;
-const int CONSTANTS_NUMBER_TEN = 10;
-static const int32_t ROOT_UID = 0;
 static bool g_realDataFlag = true;
 
 namespace OHOS {
@@ -41,8 +41,9 @@ namespace OHOS {
             return false;
         }
 
+        MockToken mock({}, false);
         FuzzedDataProvider provider(data, size);
-        std::string permissionName = provider.ConsumeRandomLengthString();
+        std::string permissionName = ConsumePermissionName(provider);
         if (g_realDataFlag) {
             permissionName = "accesstoken_service";
         }
@@ -58,16 +59,8 @@ namespace OHOS {
 
         MessageParcel reply;
         MessageOption option;
-        bool enable = ((provider.ConsumeIntegral<int32_t>() % CONSTANTS_NUMBER_TEN) == 0);
-        if (enable) {
-            setuid(CONSTANTS_NUMBER_TEN);
-        }
-        if (g_realDataFlag) {
-            setuid(ROOT_UID);
-            g_realDataFlag = false;
-        }
+        g_realDataFlag = false;
         DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
-        setuid(ROOT_UID);
 
         return true;
     }
