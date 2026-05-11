@@ -44,6 +44,10 @@ const std::map<std::string, int32_t> Constant::PERMISSION_OPCODE_MAP = {
         "ohos.permission.APPROXIMATELY_LOCATION", Constant::OP_APPROXIMATELY_LOCATION),
     std::map<std::string, int32_t>::value_type(
         "ohos.permission.cli.CONTROL_LOCATION_SWITCH", Constant::OP_CLI_CONTROL_LOCATION_SWITCH),
+    std::map<std::string, int32_t>::value_type(
+        "ohos.permission.cli.SET_HOTSPOT", Constant::OP_CLI_SET_HOTSPOT),
+    std::map<std::string, int32_t>::value_type(
+        "ohos.permission.cli.GET_HOTSPOT", Constant::OP_CLI_GET_HOTSPOT),
     std::map<std::string, int32_t>::value_type("ohos.permission.MEDIA_LOCATION", Constant::OP_MEDIA_LOCATION),
     std::map<std::string, int32_t>::value_type("ohos.permission.CAMERA", Constant::OP_CAMERA),
     std::map<std::string, int32_t>::value_type("ohos.permission.READ_MEDIA", Constant::OP_READ_MEDIA),

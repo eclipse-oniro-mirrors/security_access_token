@@ -26,6 +26,20 @@
                 "ohos.permission.MANAGE_SETTINGS",
                 "ohos.permission.CONTROL_LOCATION_SWITCH"
             ]
+        },
+        {
+            "cliPermission": "ohos.permission.cli.SET_HOTSPOT",
+            "usedPermissions": [
+                "ohos.permission.CONNECTIVITY_INTERNAL",
+                "ohos.permission.MANAGE_SECURE_SETTINGS"
+            ]
+        },
+        {
+            "cliPermission": "ohos.permission.cli.GET_HOTSPOT",
+            "usedPermissions": [
+                "ohos.permission.CONNECTIVITY_INTERNAL",
+                "ohos.permission.MANAGE_SECURE_SETTINGS"
+            ]
         }
     ]
 }
