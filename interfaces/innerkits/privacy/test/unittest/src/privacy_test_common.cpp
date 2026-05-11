@@ -150,9 +150,8 @@ MockNativeToken::~MockNativeToken()
 
 MockHapToken::MockHapToken(
     const std::string& bundle, const std::vector<std::string>& reqPerm, bool isSystemApp)
-{
-    MockHapToken(bundle, reqPerm, isSystemApp, 0);
-}
+    : MockHapToken(bundle, reqPerm, isSystemApp, 0)
+{}
 
 MockHapToken::MockHapToken(
     const std::string& bundle, const std::vector<std::string>& reqPerm, bool isSystemApp, int32_t userId)

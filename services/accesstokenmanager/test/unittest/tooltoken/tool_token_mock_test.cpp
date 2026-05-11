@@ -1697,6 +1697,62 @@ HWTEST_F(ToolTokenMockTest, InitCliToken_011, TestSize.Level1)
 }
 
 /**
+ * @tc.name: InitCliToken_016
+ * @tc.desc: Test mismatched hostTokenId fails and original challenge can retry with correct hostTokenId.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ToolTokenMockTest, InitCliToken_016, TestSize.Level1)
+{
+    uint64_t serviceCallerTokenId = GetSelfTokenID();
+    AccessTokenID callerTokenId = INVALID_TOKENID;
+    AccessTokenID hostTokenId = INVALID_TOKENID;
+    AccessTokenID otherHostTokenId = INVALID_TOKENID;
+    TokenCleaner cleaner;
+    uint64_t callerFullTokenId = CreateServiceTestToken(
+        "tooltoken_init_016_caller", true, BuildManagePermissionStates(), callerTokenId);
+    uint64_t hostFullTokenId = CreateServiceTestToken(
+        "tooltoken_init_016_host", true, { BuildGrantedStatus(ACCESS_SYSTEM_SETTINGS) }, hostTokenId);
+    uint64_t otherHostFullTokenId = CreateServiceTestToken(
+        "tooltoken_init_016_other_host", true, { BuildGrantedStatus(ACCESS_SYSTEM_SETTINGS) }, otherHostTokenId);
+    ASSERT_NE(0, callerFullTokenId);
+    ASSERT_NE(0, hostFullTokenId);
+    ASSERT_NE(0, otherHostFullTokenId);
+    cleaner.Add(callerTokenId);
+    cleaner.Add(hostTokenId);
+    cleaner.Add(otherHostTokenId);
+
+    PrepareMockEnvironment();
+    auto authInfo =
+        BuildCliAuthInfoParcel(BuildCliInfo("settings", "set"), { ACCESS_SYSTEM_SETTINGS }, { true });
+    MockSingleCliAuthChallenge(authInfo, "init_016_challenge", "init_016_ticket");
+    std::string challenge =
+        GenerateSingleCliAuthChallenge(*atManagerService_, callerFullTokenId, hostTokenId, authInfo);
+
+    InitCliTokenRequest failedRequest = {
+        .callerTokenId = serviceCallerTokenId,
+        .callerUid = ROOT_UID,
+        .hostTokenId = otherHostTokenId,
+        .challenge = challenge,
+        .cliInfo = BuildCliInfo("settings", "set"),
+    };
+    InitCliTokenResult failedInitResult;
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
+        InitCliToolTokenRet(*atManagerService_, failedRequest, failedInitResult));
+
+    InitCliTokenRequest request = {
+        .callerTokenId = serviceCallerTokenId,
+        .callerUid = ROOT_UID,
+        .hostTokenId = hostTokenId,
+        .challenge = challenge,
+        .cliInfo = BuildCliInfo("settings", "set"),
+    };
+    InitCliTokenResult initResult;
+    AccessTokenID tokenId = InitCliToolTokenByService(*atManagerService_, request, initResult);
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+    EXPECT_EQ(RET_SUCCESS, ToolTokenInfoManager::GetInstance().DeleteToolTokenByPid(getpid()));
+}
+
+/**
  * @tc.name: InitCliToken_012
  * @tc.desc: Test repeated creation in the same pid returns already-exist.
  * @tc.type: FUNC
