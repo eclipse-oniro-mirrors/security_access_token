@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -20,7 +20,9 @@
 #include <string>
 #include <vector>
 
+#include "accesstoken_fuzzdata.h"
 #include "fuzzer/FuzzedDataProvider.h"
+#include "mock_permission.h"
 #undef private
 #include "privacy_kit.h"
 
@@ -34,8 +36,9 @@ namespace OHOS {
             return false;
         }
 
+        MockToken mock({ "ohos.permission.REMOVE_PERMISSION_USED_RECORD" }, true, true);
         FuzzedDataProvider provider(data, size);
-        return PrivacyKit::RemovePermissionUsedRecords(provider.ConsumeIntegral<AccessTokenID>()) == 0;
+        return PrivacyKit::RemovePermissionUsedRecords(ConsumeTokenId(provider)) == 0;
     }
 }
 

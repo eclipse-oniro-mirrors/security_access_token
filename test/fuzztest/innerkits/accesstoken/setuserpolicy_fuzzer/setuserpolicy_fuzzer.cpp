@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2025-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -21,6 +21,7 @@
 #include "accesstoken_fuzzdata.h"
 #include "accesstoken_kit.h"
 #include "fuzzer/FuzzedDataProvider.h"
+#include "mock_permission.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
@@ -32,6 +33,7 @@ bool SetUserPolicyFuzzTest(const uint8_t* data, size_t size)
         return false;
     }
 
+    MockToken mock({ "ohos.permission.MANAGE_USER_POLICY" });
     FuzzedDataProvider provider(data, size);
     std::string permission = ConsumePermissionName(provider);
 
@@ -39,11 +41,18 @@ bool SetUserPolicyFuzzTest(const uint8_t* data, size_t size)
     UserPermissionPolicy policy;
     policy.permissionName = permission;
     UserPolicy userPolicy;
-    userPolicy.userId = provider.ConsumeIntegral<int32_t>();
+    userPolicy.userId = provider.ConsumeIntegralInRange<int32_t>(-1, INT_MAX),
     userPolicy.isRestricted = provider.ConsumeBool();
     policy.userPolicyList.emplace_back(userPolicy);
     std::vector<UserPermissionPolicy> permPolicyList = { policy };
+
     AccessTokenKit::SetUserPolicy(permPolicyList);
+
+    AccessTokenID tokenId = ConsumeTokenId(provider);
+    std::vector<AccessTokenID> tokenIdList;
+    AccessTokenKit::UpdatePolicyWhiteList(tokenId, permission, provider.ConsumeBool() ? ADD : DELETE);
+    AccessTokenKit::GetPolicyWhiteList(permission, tokenIdList);
+
     AccessTokenKit::ClearUserPolicy(permList);
 
     return true;

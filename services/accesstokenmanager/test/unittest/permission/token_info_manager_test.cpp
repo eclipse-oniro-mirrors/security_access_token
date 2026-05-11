@@ -2367,6 +2367,39 @@ HWTEST_F(TokenInfoManagerTest, VerifyAccessToken001, TestSize.Level0)
 }
 
 /**
+ * @tc.name: VerifyAccessToken002
+ * @tc.desc: TokenInfoManagerTest::VerifyAccessToken falls back to manager cache when kernel query fails.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenInfoManagerTest, VerifyAccessToken002, TestSize.Level0)
+{
+    HapInfoParams info = g_infoManagerTestInfoParms;
+    info.bundleName = "verify_access_token_manager_fallback";
+    info.appProvisionType = "debug";
+    PermissionStatus permState = g_permState;
+    permState.grantStatus = PERMISSION_GRANTED;
+    HapPolicy policy = {
+        .apl = APL_SYSTEM_BASIC,
+        .domain = "verify.access.token.manager",
+        .permStateList = {permState},
+        .isDebugGrant = true
+    };
+
+    AccessTokenIDEx tokenIdEx = {0};
+    std::vector<GenericValues> undefValues;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(
+        info, policy, tokenIdEx, undefValues));
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+
+    ASSERT_EQ(PERMISSION_GRANTED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenId, "ohos.permission.CAMERA"));
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId));
+}
+
+/**
  * @tc.name: GetAppId001
  * @tc.desc: TokenInfoManagerTest::VerifyAccessToken function test
  * @tc.type: FUNC

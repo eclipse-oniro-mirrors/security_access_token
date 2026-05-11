@@ -21,6 +21,7 @@
 #include <vector>
 
 #include "fuzzer/FuzzedDataProvider.h"
+#include "mock_permission.h"
 #undef private
 #include "privacy_kit.h"
 
@@ -34,6 +35,7 @@ namespace OHOS {
             return false;
         }
 
+        MockToken mock({ "ohos.permission.PERMISSION_USED_STATS" }, true, true);
         FuzzedDataProvider provider(data, size);
 
         RemoteCallerInfo info;

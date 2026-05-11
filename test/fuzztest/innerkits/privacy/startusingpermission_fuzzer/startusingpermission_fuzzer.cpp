@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -20,7 +20,9 @@
 #include <string>
 #include <vector>
 
+#include "accesstoken_fuzzdata.h"
 #include "fuzzer/FuzzedDataProvider.h"
+#include "mock_permission.h"
 #undef private
 #include "privacy_kit.h"
 
@@ -34,12 +36,13 @@ namespace OHOS {
             return false;
         }
 
+        MockToken mock({ "ohos.permission.PERMISSION_USED_STATS" }, true, true);
         FuzzedDataProvider provider(data, size);
         PermissionUsedType type = static_cast<PermissionUsedType>(provider.ConsumeIntegralInRange<uint32_t>(
             0, static_cast<uint32_t>(PermissionUsedType::PERM_USED_TYPE_BUTT)));
         std::string enhancedIdentity = provider.ConsumeRandomLengthString(
             provider.ConsumeIntegralInRange<size_t>(0, MAX_ENHANCED_IDENTITY_LENGTH + 1));
-        return PrivacyKit::StartUsingPermission(provider.ConsumeIntegral<AccessTokenID>(),
+        return PrivacyKit::StartUsingPermission(ConsumeTokenId(provider),
             provider.ConsumeRandomLengthString(), provider.ConsumeIntegral<int32_t>(), type, enhancedIdentity) == 0;
     }
 }

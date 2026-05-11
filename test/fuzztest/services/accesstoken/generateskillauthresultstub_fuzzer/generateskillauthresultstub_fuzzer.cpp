@@ -25,37 +25,21 @@
 #include "accesstoken_kit.h"
 #include "claw_auth_info_parcel.h"
 #include "claw_permission_fuzzdata.h"
+#include "mock_permission.h"
 #include "fuzzer/FuzzedDataProvider.h"
 #include "iaccess_token_manager.h"
 #include "message_parcel.h"
-#include "nativetoken_kit.h"
 #include "skill_info_parcel.h"
-#include "token_setproc.h"
 
 using namespace OHOS::Security::AccessToken;
 
 namespace OHOS {
 namespace {
-constexpr int32_t CLAW_FUZZ_PERMISSION_NUM = 1;
+std::unique_ptr<MockToken> g_mockToken;
 
 void InitializeClawPermissionStubFuzz()
 {
-    const char* perms[CLAW_FUZZ_PERMISSION_NUM] = {
-        "ohos.permission.GET_SENSITIVE_PERMISSIONS"
-    };
-    NativeTokenInfoParams infoInstance = {
-        .dcapsNum = 0,
-        .permsNum = CLAW_FUZZ_PERMISSION_NUM,
-        .aclsNum = 0,
-        .dcaps = nullptr,
-        .perms = perms,
-        .acls = nullptr,
-        .processName = "claw_skill_challenge_stub_fuzzer_test",
-        .aplStr = "system_core",
-    };
-    AccessTokenID tokenId = GetAccessTokenId(&infoInstance);
-    SetSelfTokenID(tokenId);
-    AccessTokenKit::ReloadNativeTokenInfo();
+    g_mockToken.reset(new MockToken({ "ohos.permission.MANAGE_TOOL_RUNTIME_PERMISSIONS" }, true, true));
     DelayedSingleton<AccessTokenManagerService>::GetInstance()->Initialize();
 }
 

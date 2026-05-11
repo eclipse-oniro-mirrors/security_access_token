@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -17,8 +17,10 @@
 
 #include <string>
 
+#include "accesstoken_fuzzdata.h"
 #include "accesstoken_kit.h"
 #include "fuzzer/FuzzedDataProvider.h"
+#include "mock_permission.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
@@ -26,7 +28,7 @@ using namespace OHOS::Security::AccessToken;
 namespace OHOS {
     void InitHapPolicy(FuzzedDataProvider& provider, HapPolicyParams& policy)
     {
-        std::string permissionName = provider.ConsumeRandomLengthString();
+        std::string permissionName = ConsumePermissionName(provider);
         PermissionDef def = {
             .permissionName = permissionName,
             .bundleName = provider.ConsumeRandomLengthString(),
@@ -80,10 +82,11 @@ namespace OHOS {
             return false;
         }
 
+        MockToken mock({ "ohos.permission.MANAGE_HAP_TOKENID" });
         FuzzedDataProvider provider(data, size);
         AccessTokenIDEx tokenIDex = {
-            .tokenIdExStruct.tokenID = provider.ConsumeIntegral<AccessTokenID>(),
-            .tokenIdExStruct.tokenAttr = provider.ConsumeIntegral<uint32_t>(),
+            .tokenIdExStruct.tokenID = ConsumeTokenId(provider),
+            .tokenIdExStruct.tokenAttr = ConsumeTokenId(provider),
         };
 
         UpdateHapInfoParams info = {

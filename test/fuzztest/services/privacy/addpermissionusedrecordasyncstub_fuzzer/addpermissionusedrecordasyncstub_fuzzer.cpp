@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2025-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -25,6 +25,7 @@
 #include "accesstoken_fuzzdata.h"
 #include "fuzzer/FuzzedDataProvider.h"
 #include "iprivacy_manager.h"
+#include "mock_permission.h"
 #include "privacy_manager_service.h"
 
 using namespace std;
@@ -62,6 +63,7 @@ namespace OHOS {
 
         MessageParcel reply;
         MessageOption option;
+        MockToken mock({ "ohos.permission.PERMISSION_USED_STATS" }, true, true);
         DelayedSingleton<PrivacyManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
 
         return true;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -15,7 +15,9 @@
 
 #include "addpermissionusedrecord_fuzzer.h"
 
+#include "accesstoken_fuzzdata.h"
 #include "fuzzer/FuzzedDataProvider.h"
+#include "mock_permission.h"
 #include "privacy_kit.h"
 
 using namespace OHOS::Security::AccessToken;
@@ -27,10 +29,11 @@ bool AddPermissionUsedRecordFuzzTest(const uint8_t* data, size_t size)
         return false;
     }
 
+    MockToken mock({ "ohos.permission.PERMISSION_USED_STATS" }, true, true);
     FuzzedDataProvider provider(data, size);
     AddPermParamInfo info;
-    info.tokenId = provider.ConsumeIntegral<AccessTokenID>();
-    info.permissionName = provider.ConsumeRandomLengthString();
+    info.tokenId = ConsumeTokenId(provider);
+    info.permissionName = ConsumePermissionName(provider);
     info.successCount = provider.ConsumeIntegral<int32_t>();
     info.failCount = provider.ConsumeIntegral<int32_t>();
     info.extra = provider.ConsumeRandomLengthString(

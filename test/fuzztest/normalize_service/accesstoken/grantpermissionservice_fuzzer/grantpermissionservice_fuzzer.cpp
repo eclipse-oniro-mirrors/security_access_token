@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2025-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -15,41 +15,20 @@
 
 #include "grantpermissionservice_fuzzer.h"
 
-#include <sys/types.h>
-#include <unistd.h>
 #include <string>
 #include <thread>
 #include <vector>
 
 #undef private
-#include "access_token.h"
 #include "accesstoken_fuzzdata.h"
-#include "accesstoken_info_manager.h"
-#include "accesstoken_kit.h"
 #include "accesstoken_manager_service.h"
 #include "fuzzer/FuzzedDataProvider.h"
 #include "iaccess_token_manager.h"
-#include "token_setproc.h"
+#include "mock_permission.h"
 
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
-static HapInfoParams g_InfoParms = {
-    .userID = 1,
-    .bundleName = "GrantPermissionServiceFuzzTest",
-    .instIndex = 0,
-    .appIDDesc = "test.bundle",
-    .isSystemApp = false
-};
-static HapPolicyParams g_PolicyPrams = {
-    .apl = APL_NORMAL,
-    .domain = "test.domain",
-    .permList = {},
-    .permStateList = {}
-};
-const int CONSTANTS_NUMBER_FIVE = 5;
-const int CONSTANTS_NUMBER_TEN = 10;
-static const int32_t ROOT_UID = 0;
 static const vector<PermissionFlag> FLAG_LIST = {
     PERMISSION_DEFAULT_FLAG,
     PERMISSION_USER_SET,
@@ -69,6 +48,7 @@ bool GrantPermissionServiceFuzzTest(const uint8_t* data, size_t size)
         return false;
     }
 
+    MockToken mock({ "ohos.permission.GRANT_SENSITIVE_PERMISSIONS" }, true, true);
     FuzzedDataProvider provider(data, size);
     AccessTokenID tokenId = ConsumeTokenId(provider);
     std::string permissionName = ConsumePermissionName(provider);
@@ -87,30 +67,7 @@ bool GrantPermissionServiceFuzzTest(const uint8_t* data, size_t size)
 
     MessageParcel reply;
     MessageOption option;
-    AccessTokenID tokenIdHap;
-    bool enable2 = ((provider.ConsumeIntegral<int32_t>() % CONSTANTS_NUMBER_TEN) > 0);
-    if (enable2) {
-        AccessTokenIDEx tokenIdEx = AccessTokenKit::AllocHapToken(g_InfoParms, g_PolicyPrams);
-        tokenIdHap = tokenIdEx.tokenIDEx;
-        SetSelfTokenID(tokenIdHap);
-        uint32_t hapSize = 0;
-        uint32_t nativeSize = 0;
-        uint32_t pefDefSize = 0;
-        uint32_t dlpSize = 0;
-        std::map<int32_t, TokenIdInfo> tokenIdAplMap;
-        AccessTokenInfoManager::GetInstance().Init(hapSize, nativeSize, pefDefSize, dlpSize, tokenIdAplMap);
-    }
-    bool enable = ((provider.ConsumeIntegral<int32_t>() % CONSTANTS_NUMBER_FIVE) == 0);
-    if (enable) {
-        setuid(CONSTANTS_NUMBER_FIVE);
-    }
     DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
-    setuid(ROOT_UID);
-    if (enable2) {
-        AccessTokenKit::DeleteToken(tokenIdHap);
-        AccessTokenID hdcd = AccessTokenKit::GetNativeTokenId("hdcd");
-        SetSelfTokenID(hdcd);
-    }
 
     return true;
 }

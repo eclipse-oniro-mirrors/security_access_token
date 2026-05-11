@@ -4342,6 +4342,17 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.cli.CONTROL_LOCATION_SWITCH",
+            "grantMode": "user_grant",
+            "availableLevel": "system_core",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "wearable", "tv", "2in1", "tablet", "car", "liteWearable"]
+        },
+        {
             "name": "ohos.permission.ACCESS_SCAN_SERVICE",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
@@ -8419,6 +8430,17 @@
             "deviceTypes": ["general"]
         },
         {
+            "name": "ohos.permission.DLP_POLICY_MANAGER",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "ENTERPRISE_NORMAL",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1"]
+        },
+        {
             "name": "ohos.permission.SCAN_REMEDIATE_VIRUS",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
@@ -8946,6 +8968,17 @@
             "provisionEnable": true,
             "distributedSceneEnable": false,
             "deviceTypes": ["phone", "2in1", "tablet", "tv"]
+        },
+        {
+            "name": "ohos.permission.KNOCK_COLLABORATION",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "NORMAL",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone"]
         },
         {
             "name": "ohos.permission.kernel.AS_LDK_DRIVER",

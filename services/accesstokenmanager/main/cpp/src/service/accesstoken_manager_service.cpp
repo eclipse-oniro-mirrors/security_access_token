@@ -95,7 +95,7 @@ const std::string GET_SENSITIVE_PERMISSIONS = "ohos.permission.GET_SENSITIVE_PER
 const std::string DISABLE_PERMISSION_DIALOG = "ohos.permission.DISABLE_PERMISSION_DIALOG";
 const std::string GRANT_SHORT_TERM_WRITE_MEDIAVIDEO = "ohos.permission.GRANT_SHORT_TERM_WRITE_MEDIAVIDEO";
 const std::string MANAGE_EDM_POLICY = "ohos.permission.MANAGE_EDM_POLICY";
-const std::string MANAGE_TOOL_TOKEN = "ohos.permission.MANAGE_TOOL_TOKENID";
+const std::string MANAGE_TOOL_TOKENID = "ohos.permission.MANAGE_TOOL_TOKENID";
 const std::string MANAGE_CLAW_TOKEN = "ohos.permission.MANAGE_CLAW_TOKEN";
 const std::string QUERY_TOOL_PERMISSIONS = "ohos.permission.QUERY_TOOL_PERMISSIONS";
 const std::string MANAGE_TOOL_RUNTIME_PERMISSIONS = "ohos.permission.MANAGE_TOOL_RUNTIME_PERMISSIONS";
@@ -509,7 +509,7 @@ int32_t AccessTokenManagerService::InitCliToken(const CliInitInfoParcel& initInf
     std::vector<PermissionWithValueIdl>& kernelPermIdlList)
 {
     kernelPermIdlList.clear();
-    if ((IPCSkeleton::GetCallingUid() != AIMGR_UID) && (IPCSkeleton::GetCallingUid() != ROOT_UID)) {
+    if (IPCSkeleton::GetCallingUid() != ROOT_UID) {
         LOGD(ATM_DOMAIN, ATM_TAG, "CallingUid() %{public}d.", IPCSkeleton::GetCallingUid());
         return AccessTokenError::ERR_PERMISSION_DENIED;
     }
@@ -555,8 +555,7 @@ int32_t AccessTokenManagerService::InitSkillToken(const SkillInitInfoParcel& ini
 int32_t AccessTokenManagerService::DeleteToolTokenByPid(int32_t pid)
 {
     AccessTokenID callingTokenID = IPCSkeleton::GetCallingTokenID();
-    if (!IsShellProcessCalling() &&
-        (!IsNativeProcessCalling() || VerifyAccessToken(callingTokenID, MANAGE_TOOL_TOKEN) == PERMISSION_DENIED)) {
+    if (!IsNativeProcessCalling() || VerifyAccessToken(callingTokenID, MANAGE_TOOL_TOKENID) == PERMISSION_DENIED) {
         return AccessTokenError::ERR_PERMISSION_DENIED;
     }
     return ToolTokenInfoManager::GetInstance().DeleteToolTokenByPid(pid);

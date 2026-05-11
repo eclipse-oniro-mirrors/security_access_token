@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -20,7 +20,9 @@
 #include <string>
 #include <vector>
 
+#include "accesstoken_fuzzdata.h"
 #include "fuzzer/FuzzedDataProvider.h"
+#include "mock_permission.h"
 #undef private
 #include "privacy_kit.h"
 
@@ -36,10 +38,11 @@ namespace OHOS {
             return false;
         }
 
+        MockToken mock({ "ohos.permission.SET_MUTE_POLICY" }, false);
         FuzzedDataProvider provider(data, size);
         return PrivacyKit::SetMutePolicy(provider.ConsumeIntegralInRange<uint32_t>(0, ACTIVE_CHANGE_CHANGE_TYPE_MAX),
             provider.ConsumeIntegralInRange<uint32_t>(0, CALLER_TYPE_MAX),
-            provider.ConsumeBool(), provider.ConsumeIntegral<AccessTokenID>()) == 0;
+            provider.ConsumeBool(), ConsumeTokenId(provider)) == 0;
     }
 }
 

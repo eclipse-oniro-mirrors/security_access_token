@@ -151,9 +151,15 @@ MockNativeToken::~MockNativeToken()
 MockHapToken::MockHapToken(
     const std::string& bundle, const std::vector<std::string>& reqPerm, bool isSystemApp)
 {
+    MockHapToken(bundle, reqPerm, isSystemApp, 0);
+}
+
+MockHapToken::MockHapToken(
+    const std::string& bundle, const std::vector<std::string>& reqPerm, bool isSystemApp, int32_t userId)
+{
     selfToken_ = GetSelfTokenID();
     HapInfoParams infoParams = {
-        .userID = 0,
+        .userID = userId,
         .bundleName = bundle,
         .instIndex = 0,
         .appIDDesc = "AccessTokenTestAppID",

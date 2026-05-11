@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2025-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -15,7 +15,9 @@
 
 #include "sethapwithfgreminder_fuzzer.h"
 
+#include "accesstoken_fuzzdata.h"
 #include "fuzzer/FuzzedDataProvider.h"
+#include "mock_permission.h"
 #include "privacy_kit.h"
 
 using namespace OHOS::Security::AccessToken;
@@ -27,8 +29,9 @@ bool SetHapWithFGReminderFuzzTest(const uint8_t* data, size_t size)
         return false;
     }
 
+    MockToken mock({ "ohos.permission.SET_FOREGROUND_HAP_REMINDER" });
     FuzzedDataProvider provider(data, size);
-    return PrivacyKit::SetHapWithFGReminder(provider.ConsumeIntegral<AccessTokenID>(), provider.ConsumeBool()) == 0;
+    return PrivacyKit::SetHapWithFGReminder(ConsumeTokenId(provider), provider.ConsumeBool()) == 0;
 }
 }
 

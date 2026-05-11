@@ -1954,6 +1954,24 @@ static bool IsCallerNormalApp(uint64_t fulltokenID)
     return !TokenIDAttributes::IsSystemApp(fulltokenID);
 }
 
+static bool GetPermissionFromKernelCache(AccessTokenID tokenID, const std::string& permissionName, int32_t& res)
+{
+    uint32_t code = 0;
+    if (!IsDefinedPermission(permissionName)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Permission=%{public}s is not defined.", permissionName.c_str());
+        res = PERMISSION_DENIED;
+        return true;
+    }
+    (void)TransferPermissionToOpcode(permissionName, code);
+
+    bool isGranted = false;
+    if (GetPermissionFromKernel(tokenID, static_cast<int32_t>(code), isGranted) != RET_SUCCESS) {
+        return false;
+    }
+    res = isGranted ? PERMISSION_GRANTED : PERMISSION_DENIED;
+    return true;
+}
+
 int AccessTokenInfoManager::VerifyNativeAccessToken(AccessTokenID tokenID, const std::string& permissionName)
 {
     if (!IsDefinedPermission(permissionName)) {
@@ -2016,6 +2034,10 @@ int32_t AccessTokenInfoManager::VerifyAccessToken(AccessTokenID tokenID, const s
             LOGE(ATM_DOMAIN, ATM_TAG, "TokenID(%{public}u) is in punishing time!", callertokenID);
             return PERMISSION_DENIED;
         }
+    }
+    int32_t res = PERMISSION_DENIED;
+    if (GetPermissionFromKernelCache(tokenID, permissionName, res)) {
+        return res;
     }
     if ((tokenType == TOKEN_NATIVE) || (tokenType == TOKEN_SHELL)) {
         return VerifyNativeAccessToken(tokenID, permissionName);

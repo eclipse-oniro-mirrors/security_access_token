@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2025-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -26,11 +26,10 @@
 #include "accesstoken_manager_service.h"
 #include "fuzzer/FuzzedDataProvider.h"
 #include "iaccess_token_manager.h"
+#include "mock_permission.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
-const int CONSTANTS_NUMBER_TEN = 10;
-static const int32_t ROOT_UID = 0;
 static const vector<PermissionFlag> FLAG_LIST = {
     PERMISSION_DEFAULT_FLAG,
     PERMISSION_USER_SET,
@@ -50,6 +49,7 @@ namespace OHOS {
             return false;
         }
 
+        MockToken mock({ "ohos.permission.REVOKE_SENSITIVE_PERMISSIONS" }, true, true);
         FuzzedDataProvider provider(data, size);
         AccessTokenID tokenId = ConsumeTokenId(provider);
         std::string permissionName =  ConsumePermissionName(provider);
@@ -67,12 +67,7 @@ namespace OHOS {
 
         MessageParcel reply;
         MessageOption option;
-        bool enable = ((provider.ConsumeIntegral<int32_t>() % CONSTANTS_NUMBER_TEN) == 0);
-        if (enable) {
-            setuid(CONSTANTS_NUMBER_TEN);
-        }
         DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
-        setuid(ROOT_UID);
 
         return true;
     }

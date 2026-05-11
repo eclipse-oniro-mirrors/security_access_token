@@ -19,6 +19,7 @@
 
 #include "accesstoken_fuzzdata.h"
 #include "fuzzer/FuzzedDataProvider.h"
+#include "mock_permission.h"
 #undef private
 #include "privacy_kit.h"
 
@@ -31,6 +32,7 @@ bool StopUsingPermissionBundleFuzzTest(const uint8_t* data, size_t size)
         return false;
     }
 
+    MockToken mock({ "ohos.permission.PERMISSION_USED_STATS" }, true, true);
     FuzzedDataProvider provider(data, size);
     return PrivacyKit::StopUsingPermission(
         provider.ConsumeRandomLengthString(), ConsumePermissionName(provider)) == 0;

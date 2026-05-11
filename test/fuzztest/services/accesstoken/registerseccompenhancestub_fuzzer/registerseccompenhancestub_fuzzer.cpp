@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -20,6 +20,7 @@
 #include <vector>
 
 #include "accesstoken_callbacks.h"
+#include "accesstoken_fuzzdata.h"
 #define private public
 #include "accesstoken_manager_service.h"
 #undef private
@@ -68,7 +69,7 @@ public:
         SecCompEnhanceData secData;
         secData.callback = callback->AsObject();
         secData.pid = provider.ConsumeIntegral<int32_t>();
-        secData.token = provider.ConsumeIntegral<AccessTokenID>();
+        secData.token = ConsumeTokenId(provider);
         secData.challenge = provider.ConsumeIntegral<uint64_t>();
         secData.sessionId = provider.ConsumeIntegral<uint32_t>();
         secData.seqNum = provider.ConsumeIntegral<uint32_t>();

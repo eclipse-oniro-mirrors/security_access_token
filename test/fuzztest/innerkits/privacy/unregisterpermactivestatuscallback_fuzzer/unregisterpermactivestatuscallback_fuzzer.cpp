@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -21,6 +21,7 @@
 #include <vector>
 
 #include "fuzzer/FuzzedDataProvider.h"
+#include "mock_permission.h"
 #undef private
 #include "privacy_kit.h"
 
@@ -52,6 +53,7 @@ namespace OHOS {
             return false;
         }
 
+        MockToken mock({ "ohos.permission.PERMISSION_USED_STATS" }, true, true);
         FuzzedDataProvider provider(data, size);
         std::vector<std::string> permList = {provider.ConsumeRandomLengthString()};
         auto callback = std::make_shared<UnRegisterActiveFuzzTest>(permList);

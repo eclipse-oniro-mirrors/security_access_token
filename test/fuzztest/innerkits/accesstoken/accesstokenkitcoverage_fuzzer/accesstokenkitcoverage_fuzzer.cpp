@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2025-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -22,6 +22,7 @@
 #undef private
 #include "accesstoken_fuzzdata.h"
 #include "accesstoken_kit.h"
+#include "mock_permission.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
@@ -34,6 +35,7 @@ bool AccessTokenKitCoverageFuzzTest(const uint8_t* data, size_t size)
     }
 
     FuzzedDataProvider provider(data, size);
+    MockToken mock({}, false);
 
     std::string permissionName = ConsumePermissionName(provider);
     AccessTokenID tokenID = ConsumeTokenId(provider);

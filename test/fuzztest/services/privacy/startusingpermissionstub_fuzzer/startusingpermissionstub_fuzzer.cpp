@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -20,6 +20,7 @@
 #include "constant.h"
 #include "fuzzer/FuzzedDataProvider.h"
 #include "iprivacy_manager.h"
+#include "mock_permission.h"
 #include "permission_used_type.h"
 #include "privacy_manager_service.h"
 #include "proxy_death_callback_stub.h"
@@ -99,6 +100,7 @@ bool StartUsingPermissionStubFuzzTest(const uint8_t* data, size_t size)
     std::string enhancedIdentity = provider.ConsumeRandomLengthString(
         provider.ConsumeIntegralInRange<size_t>(0, MAX_ENHANCED_IDENTITY_LENGTH + 1));
 
+    MockToken mock({ "ohos.permission.PERMISSION_USED_STATS" }, true, true);
     StartUsingPermissionStub(tokenID, pid, permissionName, enhancedIdentity);
     StopUsingPermissionStub(tokenID, pid, permissionName, enhancedIdentity);
     return true;

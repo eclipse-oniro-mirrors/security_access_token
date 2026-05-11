@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2025-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -16,6 +16,7 @@
 #include "getpermissionusedrecordtogglestatus_fuzzer.h"
 
 #include "fuzzer/FuzzedDataProvider.h"
+#include "mock_permission.h"
 #undef private
 #include "privacy_kit.h"
 
@@ -29,6 +30,7 @@ namespace OHOS {
             return false;
         }
 
+        MockToken mock({ "ohos.permission.PERMISSION_USED_STATS" }, true, true);
         FuzzedDataProvider provider(data, size);
         bool status = false;
         return PrivacyKit::GetPermissionUsedRecordToggleStatus(provider.ConsumeIntegral<int32_t>(), status) == 0;

@@ -19,6 +19,7 @@
 #include "accesstoken_kit.h"
 #include "claw_permission_fuzzdata.h"
 #include "fuzzer/FuzzedDataProvider.h"
+#include "mock_permission.h"
 
 using namespace OHOS::Security::AccessToken;
 
@@ -29,6 +30,7 @@ bool GetCliPermissionRequestInfoFuzzTest(const uint8_t* data, size_t size)
         return false;
     }
 
+    MockToken mock({ "ohos.permission.QUERY_TOOL_PERMISSIONS" }, true, true);
     FuzzedDataProvider provider(data, size);
     std::string agentID = ConsumeAgentID(provider);
     std::vector<CliInfo> cliInfoList = ConsumeCliInfoList(provider);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -20,19 +20,40 @@
 #include <vector>
 
 #define private public
+#include "accesstoken_kit.h"
 #include "accesstoken_manager_service.h"
 #undef private
 #include "errors.h"
 #include "fuzzer/FuzzedDataProvider.h"
 #include "iaccess_token_manager.h"
+#include "mock_permission.h"
+#include "token_setproc.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
+
+namespace {
+bool SetSecCompToken()
+{
+    AccessTokenID token = INVALID_TOKENID;
+    {
+        MockToken mock({}, false);
+        token = AccessTokenKit::GetNativeTokenId("security_component_service");
+    }
+    if (token == INVALID_TOKENID) {
+        return false;
+    }
+    return SetSelfTokenID(token) == 0;
+}
+}
 
 namespace OHOS {
     bool GetSecCompEnhanceStubFuzzTest(const uint8_t* data, size_t size)
     {
         if ((data == nullptr) || (size == 0)) {
+            return false;
+        }
+        if (!SetSecCompToken()) {
             return false;
         }
 

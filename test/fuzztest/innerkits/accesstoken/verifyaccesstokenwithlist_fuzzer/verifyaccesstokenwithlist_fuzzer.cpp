@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -28,6 +28,10 @@ using namespace std;
 using namespace OHOS::Security::AccessToken;
 
 namespace OHOS {
+    namespace {
+        constexpr int32_t MAX_PERMISSION_LIST_SIZE = 1024;
+    }
+
     bool VerifyAccessTokenWithListFuzzTest(const uint8_t* data, size_t size)
     {
         if ((data == nullptr) || (size == 0)) {
@@ -36,8 +40,7 @@ namespace OHOS {
 
         FuzzedDataProvider provider(data, size);
         AccessTokenID tokenId = ConsumeTokenId(provider);
-        int32_t permSize = provider.ConsumeIntegral<int32_t>() %
-            (static_cast<uint32_t>(OHOS::Security::AccessToken::GetDefPermissionsSize()) - 1);
+        int32_t permSize = provider.ConsumeIntegralInRange<int32_t>(0, MAX_PERMISSION_LIST_SIZE);
         std::vector<std::string> permissionList;
         for (int32_t i = 0; i < permSize; ++i) {
             permissionList.emplace_back(ConsumePermissionName(provider));

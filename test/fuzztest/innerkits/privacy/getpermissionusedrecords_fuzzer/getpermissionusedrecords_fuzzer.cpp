@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -20,7 +20,9 @@
 #include <string>
 #include <vector>
 
+#include "accesstoken_fuzzdata.h"
 #include "fuzzer/FuzzedDataProvider.h"
+#include "mock_permission.h"
 #include "on_permission_used_record_callback_stub.h"
 #include "privacy_kit.h"
 
@@ -43,13 +45,14 @@ bool GetPermissionUsedRecordsFuzzTest(const uint8_t* data, size_t size)
         return false;
     }
 
+    MockToken mock({ "ohos.permission.PERMISSION_USED_STATS" }, true, true);
     FuzzedDataProvider provider(data, size);
     PermissionUsedRequest request = {
-        .tokenId = provider.ConsumeIntegral<AccessTokenID>(),
+        .tokenId = ConsumeTokenId(provider),
         .isRemote = provider.ConsumeBool(),
         .deviceId = provider.ConsumeRandomLengthString(),
         .bundleName = provider.ConsumeRandomLengthString(),
-        .permissionList = {provider.ConsumeRandomLengthString()},
+        .permissionList = {ConsumePermissionName(provider)},
         .beginTimeMillis = provider.ConsumeIntegral<int64_t>(),
         .endTimeMillis = provider.ConsumeIntegral<int64_t>(),
         .flag = static_cast<PermissionUsageFlag>(provider.ConsumeIntegralInRange<uint32_t>(

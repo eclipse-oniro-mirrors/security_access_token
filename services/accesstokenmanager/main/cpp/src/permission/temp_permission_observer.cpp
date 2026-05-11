@@ -23,6 +23,8 @@
 #include "app_manager_access_client.h"
 #ifdef BGTASKMGR_CONTINUOUS_TASK_ENABLE
 #include "background_task_manager_access_client.h"
+#else
+#include "continuous_task_callback_info.h"
 #endif
 #include "form_manager_access_client.h"
 #include "hisysevent.h"

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2025-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -15,6 +15,7 @@
 
 #include "inithaptokenservice_fuzzer.h"
 
+#include <climits>
 #include <string>
 
 #include "accesstoken_fuzzdata.h"
@@ -22,16 +23,14 @@
 #include "fuzzer/FuzzedDataProvider.h"
 #include "hap_info_parcel.h"
 #include "iaccess_token_manager.h"
+#include "mock_permission.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
-const int CONSTANTS_NUMBER_TEN = 10;
-static const int32_t ROOT_UID = 0;
-
 namespace OHOS {
 void InitHapInfoParams(const std::string& bundleName, FuzzedDataProvider& provider, HapInfoParams& param)
 {
-    param.userID = provider.ConsumeIntegral<int32_t>();
+    param.userID = provider.ConsumeIntegralInRange<int32_t>(-1, INT_MAX);
     param.bundleName = bundleName;
     param.instIndex = provider.ConsumeIntegral<int32_t>();
     param.dlpType = static_cast<int32_t>(
@@ -99,6 +98,7 @@ bool InitHapTokenServiceFuzzTest(const uint8_t* data, size_t size)
         return false;
     }
 
+    MockToken mock({ "ohos.permission.MANAGE_HAP_TOKENID" });
     FuzzedDataProvider provider(data, size);
     std::string permissionName = ConsumePermissionName(provider);
     std::string bundleName = provider.ConsumeRandomLengthString();
@@ -123,12 +123,7 @@ bool InitHapTokenServiceFuzzTest(const uint8_t* data, size_t size)
 
     MessageParcel reply;
     MessageOption option;
-    bool enable = ((provider.ConsumeIntegral<int32_t>() % CONSTANTS_NUMBER_TEN) == 0);
-    if (enable) {
-        setuid(CONSTANTS_NUMBER_TEN);
-    }
     DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
-    setuid(ROOT_UID);
 
     return true;
 }
