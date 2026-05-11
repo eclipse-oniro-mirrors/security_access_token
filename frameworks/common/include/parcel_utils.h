@@ -23,6 +23,7 @@
 #define MAX_RECORD_SIZE 1024
 #define MAX_ACCESS_RECORD_SIZE 500
 #define MAX_ACL_MAP_SIZE 512
+#define MAX_COMMAND_LIST_SIZE 99
 
 namespace OHOS {
 namespace Security {

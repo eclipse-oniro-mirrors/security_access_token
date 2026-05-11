@@ -186,6 +186,13 @@ public:
      */
     static ATokenTypeEnum GetTokenTypeFlag(FullTokenID tokenID);
     /**
+    * @brief Get tool token type from flag in tokenId, which doesn't depend
+    *        on ATM service, with uint_64 parameters.
+    * @param tokenID token id
+    * @return token type enum, see access_token.h
+    */
+    static bool IsCliToolToken(FullTokenID tokenId);
+    /**
      * @brief Get token id by user id.
      * @param userID user id
      * @param tokenIdList token id list

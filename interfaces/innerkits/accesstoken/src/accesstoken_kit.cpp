@@ -262,6 +262,20 @@ ATokenTypeEnum AccessTokenKit::GetTokenTypeFlag(FullTokenID tokenID)
     return static_cast<ATokenTypeEnum>(idInner->type);
 }
 
+bool AccessTokenKit::IsCliToolToken(uint64_t tokenId)
+{
+    AccessTokenID id = tokenId & TOKEN_ID_LOWMASK;
+    LOGD(ATM_DOMAIN, ATM_TAG, "TokenID=%{public}d.", id);
+    if (id == INVALID_TOKENID) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "TokenID is invalid.");
+        return false;
+    }
+    AccessTokenIDInner* idInner = reinterpret_cast<AccessTokenIDInner*>(&id);
+
+    return (idInner->toolFlag == 1) &&
+        (static_cast<ATokenTypeEnum>(idInner->type) == TOKEN_SHELL);
+}
+
 AccessTokenID AccessTokenKit::GetHapTokenID(
     int32_t userID, const std::string& bundleName, int32_t instIndex) __attribute__((no_sanitize("cfi")))
 {

@@ -36,6 +36,8 @@ class MockHapToken {
 public:
     explicit MockHapToken(
         const std::string& bundle, const std::vector<std::string>& reqPerm, bool isSystemApp = true);
+    explicit MockHapToken(
+        const std::string& bundle, const std::vector<std::string>& reqPerm, bool isSystemApp, int32_t userId);
     ~MockHapToken();
 private:
     uint64_t selfToken_;

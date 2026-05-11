@@ -1254,6 +1254,30 @@ HWTEST_F(AccessTokenMockTest, GenerateSkillAuthResultClient001, TestSize.Level4)
     ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenManagerClient::GetInstance()
         .GenerateSkillAuthResult(g_testTokenId, DEFAULT_AGENT_ID, BuildClawSkillAuthInfos(), authResult));
 }
+
+AccessTokenID BuildFakeCliToolTokenId()
+{
+    AccessTokenIDInner innerId = {0};
+    innerId.version = DEFAULT_TOKEN_VERSION;
+    innerId.type = TOKEN_SHELL;
+    innerId.toolFlag = 1;
+    innerId.tokenUniqueID = 1;
+    return *reinterpret_cast<AccessTokenID*>(&innerId);
+}
+
+/**
+ * @tc.name: GetHostTokenIdClient001
+ * @tc.desc: GetHostTokenId with proxy is null
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, GetHostTokenIdClient001, TestSize.Level4)
+{
+    AccessTokenID hostTokenId = INVALID_TOKENID;
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL,
+        AccessTokenKit::GetHostTokenId(BuildFakeCliToolTokenId(), hostTokenId));
+}
+
 }  // namespace AccessToken
 }  // namespace Security
 }

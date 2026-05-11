@@ -37,6 +37,17 @@ static uint64_t g_selfTokenId = 0;
 static const std::string TEST_BUNDLE_NAME = "ohos";
 static const int TEST_USER_ID = 0;
 static constexpr int32_t DEFAULT_API_VERSION = 8;
+
+uint64_t BuildFullTokenId(uint32_t highBits, ATokenTypeEnum type, uint32_t toolFlag)
+{
+    AccessTokenIDInner innerId = {0};
+    innerId.version = DEFAULT_TOKEN_VERSION;
+    innerId.type = static_cast<uint32_t>(type);
+    innerId.toolFlag = toolFlag;
+    innerId.tokenUniqueID = 1;
+    AccessTokenID tokenId = *reinterpret_cast<AccessTokenID*>(&innerId);
+    return (static_cast<uint64_t>(highBits) << 32) | tokenId; // 32 is the lower bits
+}
 }
 
 void GetTokenTypeTest::SetUpTestCase()
@@ -166,6 +177,64 @@ HWTEST_F(GetTokenTypeTest, GetTokenTypeFlagFuncTest001, TestSize.Level0)
     AccessTokenID tokenID = tokenId01 & 0xffffffff;
     ATokenTypeEnum ret = AccessTokenKit::GetTokenTypeFlag(tokenID);
     EXPECT_EQ(ret, TOKEN_NATIVE);
+}
+
+/**
+ * @tc.name: IsCliToolTokenFuncTest001
+ * @tc.desc: Identify cli tool token by tool flag and shell token type.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(GetTokenTypeTest, IsCliToolTokenFuncTest001, TestSize.Level0)
+{
+    EXPECT_TRUE(AccessTokenKit::IsCliToolToken(BuildFullTokenId(0, TOKEN_SHELL, 1)));
+}
+
+/**
+ * @tc.name: IsCliToolTokenFuncTest002
+ * @tc.desc: Shell token without tool flag is not a cli tool token.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(GetTokenTypeTest, IsCliToolTokenFuncTest002, TestSize.Level0)
+{
+    EXPECT_FALSE(AccessTokenKit::IsCliToolToken(BuildFullTokenId(0, TOKEN_SHELL, 0)));
+}
+
+/**
+ * @tc.name: IsCliToolTokenFuncTest003
+ * @tc.desc: Non-shell tool token is not a cli tool token.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(GetTokenTypeTest, IsCliToolTokenFuncTest003, TestSize.Level0)
+{
+    EXPECT_FALSE(AccessTokenKit::IsCliToolToken(BuildFullTokenId(0, TOKEN_HAP, 1)));
+    EXPECT_FALSE(AccessTokenKit::IsCliToolToken(BuildFullTokenId(0, TOKEN_NATIVE, 1)));
+}
+
+/**
+ * @tc.name: IsCliToolTokenAbnormalTest001
+ * @tc.desc: Invalid token id returns false after low-bit masking.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(GetTokenTypeTest, IsCliToolTokenAbnormalTest001, TestSize.Level0)
+{
+    EXPECT_FALSE(AccessTokenKit::IsCliToolToken(INVALID_TOKENID));
+    EXPECT_FALSE(AccessTokenKit::IsCliToolToken(static_cast<uint64_t>(1) << 32)); // 32 is low-bit size
+}
+
+/**
+ * @tc.name: IsCliToolTokenFuncTest004
+ * @tc.desc: High 32 bits do not affect cli tool token judgment.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(GetTokenTypeTest, IsCliToolTokenFuncTest004, TestSize.Level0)
+{
+    // 0x12345678 is ramdom tokenid
+    EXPECT_TRUE(AccessTokenKit::IsCliToolToken(BuildFullTokenId(0x12345678, TOKEN_SHELL, 1)));
 }
 } // namespace AccessToken
 } // namespace Security
