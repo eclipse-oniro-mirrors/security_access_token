@@ -30,10 +30,8 @@ accesstoken_manager_base_config = {
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/callback/callback_death_recipients.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/callback/callback_manager.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/clawtoken/claw_permission_decision_engine.cpp",
-    "${access_token_path}/services/accesstokenmanager/main/cpp/src/clawtoken/claw_permission_metadata_provider.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/clawtoken/claw_permission_status_helper.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/clawtoken/claw_ticket_manager.cpp",
-    "${access_token_path}/services/accesstokenmanager/main/cpp/src/clawtoken/claw_token_info_inner_base.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/clawtoken/claw_token_info_manager.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/clawtoken/cli_token_info_inner.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/clawtoken/skill_token_info_inner.cpp",
@@ -57,6 +55,21 @@ accesstoken_manager_base_config = {
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/verify_accesstoken_monitor.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/service/accesstoken_manager_service.cpp",
   ]
+
+  # Conditional sources: use mock implementations for minimal system without saf_agent_fence
+  if (support_jsapi) {
+    # Full system with saf_agent_fence support
+    sources += [
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/clawtoken/claw_permission_metadata_provider.cpp",
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/clawtoken/claw_ticket_manager.cpp",
+    ]
+  } else {
+    # Minimal system without saf_agent_fence - use mock implementations
+    sources += [
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/clawtoken/claw_permission_metadata_provider_mock.cpp",
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/clawtoken/claw_ticket_manager_mock.cpp",
+    ]
+  }
 
   # Conditional sources based on feature flags
   if (dlp_permission_enable == true) {
@@ -103,6 +116,7 @@ accesstoken_manager_base_config = {
     "${access_token_path}/services/common/libraryloader/include",
     "${access_token_path}/services/common/random/include",
     "${access_token_path}/services/common/utils/include",
+    "${access_token_path}/services/common/background_task_manager/include",
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/callback",
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/clawtoken",
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/database",
@@ -141,7 +155,6 @@ accesstoken_manager_base_config = {
   # ========== External Deps ==========
   # Base external deps (always included)
   external_deps = [
-    "asset:saf_agent_fence",
     "cJSON:cjson",
     "c_utils:utils",
     "hilog:libhilog",
@@ -155,6 +168,12 @@ accesstoken_manager_base_config = {
 
   # Add global external_deps from access_token.gni
   external_deps += access_token_external_deps
+
+  # Add saf_agent_fence dependency only when support_jsapi is true
+  if (support_jsapi) {
+    external_deps += [ "asset:saf_agent_fence" ]
+    defines = [ "SURPPORT_JSAPI" ]
+  }
 
   if (ohos_indep_compiler_enable) {
     external_deps += [ "bounds_checking_function:libsec_shared" ]
