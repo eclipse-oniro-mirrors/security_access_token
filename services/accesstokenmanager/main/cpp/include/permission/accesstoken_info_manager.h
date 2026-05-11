@@ -24,17 +24,19 @@
 #include <unordered_set>
 #include <vector>
 
-#include "access_token_db.h"
 #include "access_token.h"
-#include "atm_tools_param_info.h"
 #include "iaccess_token_manager.h"
-#ifdef TOKEN_SYNC_ENABLE
-#include "device_manager.h"
-#endif
 #include "hap_token_info.h"
+#include "json_parse_loader.h"
+
+#include "access_token_db.h"
+#include "atm_tools_param_info.h"
 #include "hap_token_info_inner.h"
 #include "native_token_info_base.h"
 #include "verify_accesstoken_monitor.h"
+#ifdef TOKEN_SYNC_ENABLE
+#include "device_manager.h"
+#endif
 
 namespace OHOS {
 namespace Security {
@@ -205,6 +207,7 @@ private:
         int32_t instIndex, AccessTokenID tokenID);
     AccessTokenID GetReservedHapTokenId(int32_t userID, const std::string& bundleName, int32_t instIndex);
     void UpdateTokenAttr(const UpdateHapInfoParams& info, AccessTokenIDEx& tokenIdEx);
+    void LoadPermissionDefinitionExt(ConfigPolicyLoaderInterface& policy);
 
     bool hasInited_;
 

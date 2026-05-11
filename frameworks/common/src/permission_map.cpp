@@ -16,10 +16,10 @@
 #include "cli_permisison_map.h"
 #include "permission_map_constant.h"
 
+#include <cstring>
 #include <map>
 #include <mutex>
 #include <string>
-#include <vector>
 
 namespace OHOS {
 namespace Security {
@@ -41,6 +41,11 @@ public:
     }
 };
 std::map<const char*, uint32_t, CharArrayCompare> g_permMap;
+
+static void CopyPermissionBriefDef(uint32_t opCode, PermissionBriefDef& permissionBriefDef)
+{
+    permissionBriefDef = g_permList[opCode];
+}
 
 static void InitMap()
 {
@@ -92,7 +97,7 @@ bool IsUserGrantPermission(const std::string& permission)
     if (!TransferPermissionToOpcode(permission, opCode)) {
         return false; // default is false
     }
-    return g_permList[opCode].grantMode == USER_GRANT;
+    return g_permList[opCode].isEnable && g_permList[opCode].grantMode == USER_GRANT;
 }
 
 bool IsOperablePermission(const std::string& permission)
@@ -101,10 +106,11 @@ bool IsOperablePermission(const std::string& permission)
     if (!TransferPermissionToOpcode(permission, opCode)) {
         return false; // default is false
     }
-    return g_permList[opCode].grantMode == USER_GRANT || g_permList[opCode].grantMode == MANUAL_SETTINGS;
+    return g_permList[opCode].isEnable &&
+        (g_permList[opCode].grantMode == USER_GRANT || g_permList[opCode].grantMode == MANUAL_SETTINGS);
 }
 
-bool IsDefinedPermission(const std::string& permission)
+bool IsDefinedPermissionInner(const std::string& permission)
 {
     if (!g_initedPermMap) {
         InitMap();
@@ -113,7 +119,7 @@ bool IsDefinedPermission(const std::string& permission)
     if (it == g_permMap.end()) {
         return false;
     }
-    return true;
+    return g_permList[it->second].isEnable;
 }
 
 bool GetPermissionBriefDef(const std::string& permission, PermissionBriefDef& permissionBriefDef)
@@ -122,7 +128,7 @@ bool GetPermissionBriefDef(const std::string& permission, PermissionBriefDef& pe
     if (!TransferPermissionToOpcode(permission, opCode)) {
         return false; // default is false
     }
-    permissionBriefDef = g_permList[opCode];
+    CopyPermissionBriefDef(opCode, permissionBriefDef);
     return true;
 }
 
@@ -131,13 +137,16 @@ bool GetPermissionBriefDef(const std::string& permission, PermissionBriefDef& pe
     if (!TransferPermissionToOpcode(permission, opCode)) {
         return false; // default is false
     }
-    permissionBriefDef = g_permList[opCode];
+    CopyPermissionBriefDef(opCode, permissionBriefDef);
     return true;
 }
 
 void GetPermissionBriefDef(uint32_t opCode, PermissionBriefDef& permissionBriefDef)
 {
-    permissionBriefDef = g_permList[opCode];
+    if (!g_initedPermMap) {
+        InitMap();
+    }
+    CopyPermissionBriefDef(opCode, permissionBriefDef);
 }
 
 void ConvertPermissionBriefToDef(const PermissionBriefDef& briefDef, PermissionDef& def)
@@ -159,7 +168,7 @@ bool IsPermissionValidForHap(const std::string& permissionName)
         return false;
     }
 
-    return g_permList[opCode].availableType != ATokenAvailableTypeEnum::SERVICE;
+    return g_permList[opCode].isEnable && g_permList[opCode].availableType != ATokenAvailableTypeEnum::SERVICE;
 }
 
 size_t GetDefPermissionsSize()
@@ -170,6 +179,19 @@ size_t GetDefPermissionsSize()
 const char* GetPermDefVersion()
 {
     return PERMISSION_DEFINITION_VERSION;
+}
+
+bool SetPermissionBriefEnabled(const std::string& permissionName, bool isEnable)
+{
+    if (!g_initedPermMap) {
+        InitMap();
+    }
+    auto it = g_permMap.find(permissionName.c_str());
+    if (it == g_permMap.end()) {
+        return false;
+    }
+    g_permList[it->second].isEnable = isEnable;
+    return true;
 }
 } // namespace AccessToken
 } // namespace Security

@@ -576,6 +576,26 @@ HWTEST_F(JsonParseLoaderTest, GetConfigValueTest001, TestSize.Level4)
     EXPECT_TRUE(loader.GetConfigValueFromFile(PERMISSION_FEATURES, testJson8, config8));
 }
 #endif // CUSTOMIZATION_CONFIG_POLICY_ENABLE
+
+/*
+ * @tc.name: GetPermissionDefinitionExt001
+ * @tc.desc: GetPermissionDefinitionExt should read extension file correctly
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(JsonParseLoaderTest, GetPermissionDefinitionExt001, TestSize.Level4)
+{
+#ifdef CUSTOMIZATION_CONFIG_POLICY_ENABLE
+    ConfigPolicLoader loader;
+    std::vector<std::string> permissions;
+    
+    // Test with non-existent file
+    int32_t res = loader.GetPermissionDefinitionExt(permissions);
+    EXPECT_EQ(RET_SUCCESS, res);
+    EXPECT_TRUE(permissions.empty());
+#endif
+}
+
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

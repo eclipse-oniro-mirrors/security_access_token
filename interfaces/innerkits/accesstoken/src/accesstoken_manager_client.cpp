@@ -1073,6 +1073,25 @@ int32_t AccessTokenManagerClient::GetVersion(uint32_t& version)
     return errCode;
 }
 
+bool AccessTokenManagerClient::IsSupportPermission(const std::string& permissionName)
+    {
+        auto proxy = GetProxy();
+        if (proxy == nullptr) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
+            return false;
+        }
+ 	 
+        bool isSupported = false;
+        int32_t errCode = proxy->IsSupportPermission(permissionName, isSupported);
+        if (errCode != RET_SUCCESS) {
+            errCode = ConvertResult(errCode);
+            LOGE(ATM_DOMAIN, ATM_TAG, "Request fail, result: %{public}d", errCode);
+            return false;
+        }
+        return isSupported;
+    }
+ 	 
+
 void AccessTokenManagerClient::InitProxy()
 {
     if (proxy_ == nullptr || proxy_->AsObject() == nullptr || proxy_->AsObject()->IsObjectDead()) {

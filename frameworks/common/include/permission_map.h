@@ -28,7 +28,7 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 struct PermissionBriefDef {
-    char* permissionName;
+    const char* permissionName;
     GrantMode grantMode;
     ATokenAplEnum availableLevel;
     ATokenAvailableTypeEnum availableType;
@@ -36,6 +36,7 @@ struct PermissionBriefDef {
     bool distributedSceneEnable;
     bool isKernelEffect;
     bool hasValue;
+    bool isEnable;
 };
 
 bool TransferPermissionToOpcode(const std::string& permissionName, uint32_t& opCode);
@@ -44,7 +45,8 @@ __attribute__((visibility("default"))) bool QueryRequredPermissions(
     const std::string& cliPermission, std::vector<std::string>& requiredPermission);
 bool IsUserGrantPermission(const std::string& permission);
 bool IsOperablePermission(const std::string& permission);
-bool IsDefinedPermission(const std::string& permission);
+// Only allowed on the server side. Do not use in client-side code.
+bool IsDefinedPermissionInner(const std::string& permission);
 bool GetPermissionBriefDef(const std::string& permission, PermissionBriefDef& permissionBriefDef);
 bool GetPermissionBriefDef(const std::string& permission, PermissionBriefDef& permissionBriefDef, uint32_t& opCode);
 void GetPermissionBriefDef(uint32_t code, PermissionBriefDef& permissionBriefDef);
@@ -52,6 +54,7 @@ void ConvertPermissionBriefToDef(const PermissionBriefDef& briefDef, PermissionD
 bool IsPermissionValidForHap(const std::string& permissionName);
 size_t GetDefPermissionsSize();
 const char* GetPermDefVersion();
+bool SetPermissionBriefEnabled(const std::string& permissionName, bool isEnable);
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

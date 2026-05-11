@@ -61,9 +61,9 @@ const uint32_t MAX_PERM_SIZE = sizeof(g_permList) / sizeof(PermissionBriefDef);
 #endif // PERMISSION_DEFINITION_PARSER_H
 '''
 
-PERMISSION_NAME_STRING = "char PERMISSION_NAME_%i[] = \"%s\";\n"
+PERMISSION_NAME_STRING = "const char PERMISSION_NAME_%i[] = \"%s\";\n"
 
-PERMISSION_LIST_DECLEARE = "const static PermissionBriefDef g_permList[] = {"
+PERMISSION_LIST_DECLARE = "static PermissionBriefDef g_permList[] = {"
 
 VERSION_STRING = "\nconst char* PERMISSION_DEFINITION_VERSION = \"%s\";"
 
@@ -76,7 +76,8 @@ PERMISSION_BRIEF_DEFINE_PATTERN = '''
     .provisionEnable = %s,
     .distributedSceneEnable = %s,
     .isKernelEffect = %s,
-    .hasValue = %s
+    .hasValue = %s,
+    .isEnable = %s
 },'''
 
 JSON_VALUE_CONVERT_TO_CPP_DICT = {
@@ -140,6 +141,7 @@ class PermissionDef(object):
                 raise Exception("Must be filled with available device type list, name = {}".format(self.name))
         else:
             self.device_types = ["general"]
+        self.is_enable = "true"
 
         self.code = code
 
@@ -165,7 +167,7 @@ class PermissionDef(object):
         entry = PERMISSION_BRIEF_DEFINE_PATTERN % (
             self.code, self.grant_mode, self.available_level,
             self.available_type, self.provision_enable, self.distributed_scene_enable,
-            self.is_kernel_effect, self.has_value
+            self.is_kernel_effect, self.has_value, self.is_enable
         )
         return entry
 
@@ -210,8 +212,7 @@ def parse_json(path, platform):
         index = 0
         for perm in data["definePermissions"]:
             perm_def = PermissionDef(perm, index)
-            if not perm_def.check_device_type(platform):
-                continue
+            perm_def.is_enable = "true" if perm_def.check_device_type(platform) else "false"
             def_list.append(perm_def)
             index += 1
         def_list.append(PermissionDef(extend_perm, index))
@@ -227,7 +228,7 @@ def convert_to_cpp(path, permission_list, hash_str):
         f.write(PERMISSION_DEFINITION_PREFIX)
         for perm in permission_list:
             f.write(perm.dump_permission_name())
-        f.write(PERMISSION_LIST_DECLEARE)
+        f.write(PERMISSION_LIST_DECLARE)
         for perm in permission_list:
             f.write(perm.dump_struct())
         f.write(PERMISSION_DEFINITION_SUFFIX_1)

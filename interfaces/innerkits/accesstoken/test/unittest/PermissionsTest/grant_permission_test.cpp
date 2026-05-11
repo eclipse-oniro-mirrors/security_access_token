@@ -22,6 +22,7 @@
 #include "accesstoken_common_log.h"
 #include "iaccess_token_manager.h"
 #include "permission_grant_info.h"
+#include "permission_map.h"
 #include "permission_state_change_info_parcel.h"
 #include "string_ex.h"
 #include "test_common.h"
@@ -359,6 +360,30 @@ HWTEST_F(GrantPermissionTest, GrantPermissionWithManualTest001, TestSize.Level0)
     EXPECT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.MANUAL_ATM_SELF_USE"));
 
     EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
+}
+
+/*
+ * @tc.name: GrantPermissionDisabled001
+ * @tc.desc: GrantPermission should return error for disabled permission
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(GrantPermissionTest, GrantPermissionDisabled001, TestSize.Level0)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "GrantPermissionDisabled001");
+
+    AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+
+    constexpr const char* permissionName = "ohos.permission.MICROPHONE";
+    
+    ASSERT_TRUE(SetPermissionBriefEnabled(permissionName, false));
+    int ret = AccessTokenKit::GrantPermission(tokenID, permissionName, PERMISSION_USER_FIXED);
+    EXPECT_EQ(ERR_PERMISSION_NOT_EXIST, ret);
+    ASSERT_TRUE(SetPermissionBriefEnabled(permissionName, true));
+
+    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 } // namespace AccessToken
 } // namespace Security

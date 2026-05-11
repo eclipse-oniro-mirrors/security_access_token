@@ -212,6 +212,7 @@ void AccessTokenInfoManager::Init(uint32_t& hapSize, uint32_t& nativeSize, uint3
     }
 #endif
 
+    LoadPermissionDefinitionExt(*policy);
     InitHapTokenInfos(hapSize, tokenIdAplMap);
     nativeSize = tokenInfos.size();
     InitNativeTokenInfos(tokenInfos);
@@ -226,6 +227,24 @@ void AccessTokenInfoManager::Init(uint32_t& hapSize, uint32_t& nativeSize, uint3
         std::unique_lock<std::shared_mutex> monitorLock(this->monitorLock_);
         if (this->tokenMonitor_ == nullptr) {
             this->tokenMonitor_ = std::make_shared<VerifyAccessTokenMonitor>();
+        }
+    }
+}
+
+void AccessTokenInfoManager::LoadPermissionDefinitionExt(ConfigPolicyLoaderInterface& policy)
+{
+    std::vector<std::string> permissions;
+    if (policy.GetPermissionDefinitionExt(permissions) != RET_SUCCESS) {
+        LOGE(ATM_DOMAIN, ATM_TAG,
+            "Failed to get permission definition extension, return code is %{public}d.",
+            policy.GetPermissionDefinitionExt(permissions));
+        return;
+    }
+    for (const auto& permissionName : permissions) {
+        if (!SetPermissionBriefEnabled(permissionName, true)) {
+            LOGW(ATM_DOMAIN, ATM_TAG,
+                "Permission in ext file is invalid %{public}s.",
+                permissionName.c_str());
         }
     }
 }
@@ -684,7 +703,7 @@ int32_t AccessTokenInfoManager::CheckHapInfoParam(const HapInfoParams& info, con
     }
 
     for (const auto& extendValue : policy.aclExtendedMap) {
-        if (!IsDefinedPermission(extendValue.first)) {
+        if (!IsDefinedPermissionInner(extendValue.first)) {
             continue;
         }
         if (!DataValidator::IsAclExtendedMapContentValid(extendValue.first, extendValue.second)) {
@@ -1974,7 +1993,7 @@ static bool GetPermissionFromKernelCache(AccessTokenID tokenID, const std::strin
 
 int AccessTokenInfoManager::VerifyNativeAccessToken(AccessTokenID tokenID, const std::string& permissionName)
 {
-    if (!IsDefinedPermission(permissionName)) {
+    if (!IsDefinedPermissionInner(permissionName)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "No definition for permission: %{public}s!", permissionName.c_str());
         return PERMISSION_DENIED;
     }
@@ -2090,7 +2109,7 @@ int32_t AccessTokenInfoManager::SetPermissionRequestToggleStatus(const std::stri
             userID, permissionName.c_str(), status);
         return AccessTokenError::ERR_PARAM_INVALID;
     }
-    if (!IsDefinedPermission(permissionName)) {
+    if (!IsDefinedPermissionInner(permissionName)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Permission=%{public}s is not defined.", permissionName.c_str());
         return AccessTokenError::ERR_PERMISSION_NOT_EXIST;
     }
@@ -2140,7 +2159,7 @@ int32_t AccessTokenInfoManager::GetPermissionRequestToggleStatus(const std::stri
             userID, permissionName.c_str());
         return AccessTokenError::ERR_PARAM_INVALID;
     }
-    if (!IsDefinedPermission(permissionName)) {
+    if (!IsDefinedPermissionInner(permissionName)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Permission=%{public}s is not defined.", permissionName.c_str());
         return AccessTokenError::ERR_PERMISSION_NOT_EXIST;
     }

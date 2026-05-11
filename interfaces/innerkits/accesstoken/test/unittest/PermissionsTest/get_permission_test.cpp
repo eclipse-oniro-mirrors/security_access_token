@@ -22,6 +22,7 @@
 #include "accesstoken_common_log.h"
 #include "iaccess_token_manager.h"
 #include "permission_grant_info.h"
+#include "permission_map.h"
 #include "permission_state_change_info_parcel.h"
 #include "string_ex.h"
 #include "test_common.h"
@@ -548,6 +549,124 @@ HWTEST_F(GetPermissionTest, TransferOpcodeToPermission002, TestSize.Level0)
     EXPECT_FALSE(AccessTokenKit::TransferOpcodeToPermission(MAX_PERM_SIZE, permissionName));
     EXPECT_FALSE(AccessTokenKit::TransferOpcodeToPermission(MAX_PERM_SIZE - 1, permissionName));
 }
+
+/*
+* @tc.name: TransferPermissionToOpcode001
+* @tc.desc: TransferPermissionToOpcode should fallback to service-side support check when local isEnable is false
+* @tc.type: FUNC
+* @tc.require:
+ */
+HWTEST_F(GetPermissionTest, TransferPermissionToOpcode001, TestSize.Level0)
+{
+    constexpr const char* permissionName = "ohos.permission.ANSWER_CALL";
+    uint32_t opCode = 0;
+        
+    ASSERT_TRUE(SetPermissionBriefEnabled(permissionName, false));
+    EXPECT_TRUE(AccessTokenKit::IsSupportPermission(permissionName));
+    EXPECT_TRUE(AccessTokenKit::TransferPermissionToOpcode(permissionName, opCode));
+    EXPECT_TRUE(SetPermissionBriefEnabled(permissionName, true));
+}
+ 	 
+/*
+ * @tc.name: IsSupportPermission001
+ * @tc.desc: IsSupportPermission should return false for unsupported permission
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(GetPermissionTest, IsSupportPermission001, TestSize.Level0)
+{
+    EXPECT_FALSE(AccessTokenKit::IsSupportPermission("ohos.permission.TTTTT"));
+}
+
+/*
+ * @tc.name: IsSupportPermission002
+ * @tc.desc: IsSupportPermission should return true for enabled permission
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(GetPermissionTest, IsSupportPermission002, TestSize.Level0)
+{
+    constexpr const char* permissionName = "ohos.permission.CAMERA";
+    EXPECT_TRUE(AccessTokenKit::IsSupportPermission(permissionName));
+}
+
+/*
+ * @tc.name: IsSupportPermission003
+ * @tc.desc: IsSupportPermission should return false for empty permission name
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(GetPermissionTest, IsSupportPermission003, TestSize.Level0)
+{
+    EXPECT_FALSE(AccessTokenKit::IsSupportPermission(""));
+}
+
+/*
+ * @tc.name: TransferPermissionToOpcode003
+ * @tc.desc: TransferPermissionToOpcode should return false for disabled permission
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(GetPermissionTest, TransferPermissionToOpcode003, TestSize.Level0)
+{
+    constexpr const char* permissionName = "ohos.permission.CAMERA";
+    uint32_t opCode = 0;
+    
+    ASSERT_TRUE(SetPermissionBriefEnabled(permissionName, false));
+    EXPECT_FALSE(AccessTokenKit::TransferPermissionToOpcode(permissionName, opCode));
+    EXPECT_TRUE(SetPermissionBriefEnabled(permissionName, true));
+}
+
+/*
+ * @tc.name: TransferPermissionToOpcode004
+ * @tc.desc: TransferPermissionToOpcode should return true for enabled permission
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(GetPermissionTest, TransferPermissionToOpcode004, TestSize.Level0)
+{
+    constexpr const char* permissionName = "ohos.permission.CAMERA";
+    uint32_t opCode = 0;
+    
+    EXPECT_TRUE(AccessTokenKit::TransferPermissionToOpcode(permissionName, opCode));
+    EXPECT_NE(opCode, 0);
+}
+
+/*
+ * @tc.name: TransferOpcodeToPermission003
+ * @tc.desc: TransferOpcodeToPermission should return empty for disabled permission
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(GetPermissionTest, TransferOpcodeToPermission003, TestSize.Level0)
+{
+    constexpr const char* permissionName = "ohos.permission.CAMERA";
+    uint32_t opCode = 0;
+    ASSERT_TRUE(AccessTokenKit::TransferPermissionToOpcode(permissionName, opCode));
+    
+    ASSERT_TRUE(SetPermissionBriefEnabled(permissionName, false));
+    std::string resultName;
+    EXPECT_FALSE(AccessTokenKit::TransferOpcodeToPermission(opCode, resultName));
+    EXPECT_TRUE(resultName.empty());
+    ASSERT_TRUE(SetPermissionBriefEnabled(permissionName, true));
+}
+
+/*
+ * @tc.name: GetDefPermission002
+ * @tc.desc: GetDefPermission should return success for SYSTEM_GRANT permission locally
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(GetPermissionTest, GetDefPermission002, TestSize.Level0)
+{
+    constexpr const char* permissionName = "ohos.permission.INTERNET";
+    PermissionDef permissionDef;
+    
+    // SYSTEM_GRANT permission should return success locally
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetDefPermission(permissionName, permissionDef));
+    EXPECT_EQ(permissionName, permissionDef.permissionName);
+}
+
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

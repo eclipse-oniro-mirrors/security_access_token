@@ -610,6 +610,9 @@ int AccessTokenManagerService::GetDefPermission(
         LOGE(ATM_DOMAIN, ATM_TAG, "Perm is invalid.");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
+    if (!IsDefinedPermissionInner(permissionName)) {
+        return AccessTokenError::ERR_PERMISSION_NOT_EXIST;
+    }
 
     PermissionBriefDef briefDef;
     if (!GetPermissionBriefDef(permissionName, briefDef)) {
@@ -1404,12 +1407,23 @@ int32_t AccessTokenManagerService::GetHapTokenInfo(AccessTokenID tokenID, HapTok
 
 int32_t AccessTokenManagerService::GetPermissionCode(const std::string& permission, uint32_t& opCode)
 {
+    if (!IsDefinedPermissionInner(permission)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Perm(%{public}s) is not exist.", permission.c_str());
+        return ERR_PERMISSION_NOT_EXIST;
+    }
     if (!TransferPermissionToOpcode(permission, opCode)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Perm(%{public}s) is not exist.", permission.c_str());
         return ERR_PERMISSION_NOT_EXIST;
     }
     return RET_SUCCESS;
 }
+
+int32_t AccessTokenManagerService::IsSupportPermission(const std::string& permission, bool& isSupported)
+{
+    isSupported = IsDefinedPermissionInner(permission);
+    return RET_SUCCESS;
+}
+ 	 
 
 int AccessTokenManagerService::GetHapTokenInfoExtension(AccessTokenID tokenID,
     HapTokenInfoParcel& hapTokenInfoRes, std::string& appID)
@@ -1926,6 +1940,9 @@ void AccessTokenManagerService::FilterInvalidData(const std::vector<GenericValue
             LOGW(ATM_DOMAIN, ATM_TAG, "permission %{public}s is still invalid!", permissionName.c_str());
             continue;
         }
+        if (!data.isEnable) {
+            continue;
+        }
 
         PermissionRulesEnum rule = PERMISSION_ACL_RULE;
         appDistributionType = result.GetString(TokenFiledConst::FIELD_APP_DISTRIBUTION_TYPE);
@@ -1960,6 +1977,9 @@ void AccessTokenManagerService::UpdateUndefinedInfoCache(const std::vector<Gener
         permissionName = validValue.GetString(TokenFiledConst::FIELD_PERMISSION_NAME);
         PermissionBriefDef data;
         if (!GetPermissionBriefDef(permissionName, data)) {
+            continue;
+        }
+        if (!data.isEnable) {
             continue;
         }
 
