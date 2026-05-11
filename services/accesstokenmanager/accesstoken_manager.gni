@@ -172,7 +172,6 @@ accesstoken_manager_base_config = {
   # Add saf_agent_fence dependency only when support_jsapi is true
   if (support_jsapi) {
     external_deps += [ "asset:saf_agent_fence" ]
-    defines = [ "SURPPORT_JSAPI" ]
   }
 
   if (ohos_indep_compiler_enable) {
