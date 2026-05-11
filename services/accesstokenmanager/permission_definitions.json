@@ -8914,7 +8914,7 @@
             "deviceTypes": ["2in1"]
         },
         {
-            "name": "ohos.permission.kernel.LOAD_INDEPENDENT_CERTSIGN_LIBRARY_FOR_WEB",
+            "name": "ohos.permission.kernel.LOAD_CERTSIGN_LIBRARY_FOR_WEB",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "ENTERPRISE_NORMAL",
