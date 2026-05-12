@@ -376,6 +376,11 @@ void AccessTokenInfoManager::Init(uint32_t& hapSize, uint32_t& nativeSize, uint3
     }
 #endif
 
+    AccessTokenConfigValue featureValue;
+    if (policy->GetConfigValue(ConfigType::PERMISSION_FEATURES, featureValue)) {
+        PermissionFeatureManager::GetInstance().SetFeatures(featureValue.permissionFeatures);
+    }
+
     LoadPermissionDefinitionExt(*policy);
     InitHapTokenInfos(hapSize, tokenIdAplMap);
     nativeSize = tokenInfos.size();
@@ -399,28 +404,14 @@ void AccessTokenInfoManager::LoadPermissionDefinitionExt(ConfigPolicyLoaderInter
 {
     std::vector<std::string> permissions;
     if (policy.GetPermissionDefinitionExt(permissions) != RET_SUCCESS) {
-        LOGE(ATM_DOMAIN, ATM_TAG,
-            "Failed to get permission definition extension, return code is %{public}d.",
-            policy.GetPermissionDefinitionExt(permissions));
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get permission definition extension, return code is %{public}d.", policy.GetPermissionDefinitionExt(permissions));
         return;
     }
     for (const auto& permissionName : permissions) {
         if (!SetPermissionBriefEnabled(permissionName, true)) {
-            LOGW(ATM_DOMAIN, ATM_TAG,
-                "Permission in ext file is invalid %{public}s.",
-                permissionName.c_str());
+            LOGW(ATM_DOMAIN, ATM_TAG, "Permission in ext file is invalid %{public}s.", permissionName.c_str());
         }
     }
-}
-
-static bool IsSystemResource(const std::string& bundleName)
-{
-    return std::string(SYSTEM_RESOURCE_BUNDLE_NAME) == bundleName;
-}
-
-static inline bool CheckSpecifiedFlag(uint32_t tokenAttr, uint32_t Flag)
-{
-    return (tokenAttr & Flag) != 0;
 }
 
 #ifdef TOKEN_SYNC_ENABLE
@@ -2153,77 +2144,8 @@ bool AccessTokenInfoManager::GetApiVersionByTokenId(AccessTokenID tokenID, int32
         return false;
     }
 
-    LOGI(ATM_DOMAIN, ATM_TAG, "UserID=%{public}u, permission=%{public}s, status=%{public}d", userID,
-        permissionName.c_str(), status);
-    if (!PermissionValidator::IsUserIdValid(userID) ||
-        !PermissionValidator::IsPermissionNameValid(permissionName) ||
-        !PermissionValidator::IsToggleStatusValid(status)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Invalid parameter(userId=%{public}d, perm=%{public}s, status=%{public}d).",
-            userID, permissionName.c_str(), status);
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-    if (!IsDefinedPermissionInner(permissionName)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Permission=%{public}s is not defined.", permissionName.c_str());
-        return AccessTokenError::ERR_PERMISSION_NOT_EXIST;
-    }
-    if (!IsUserGrantPermission(permissionName)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Only support permissions of user_grant to set.");
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-
-    int32_t ret = AddPermRequestToggleStatusToDb(userID, permissionName, status);
-    if (ret != RET_SUCCESS) {
-        return ret;
-    }
-
-    ReportPermDialogStatusEvent(userID, permissionName, status);
-
-    return RET_SUCCESS;
-}
-
-int32_t AccessTokenInfoManager::FindPermRequestToggleStatusFromDb(int32_t userID, const std::string& permissionName)
-{
-    std::vector<GenericValues> result;
-    GenericValues conditionValue;
-    conditionValue.Put(TokenFiledConst::FIELD_USER_ID, userID);
-    conditionValue.Put(TokenFiledConst::FIELD_PERMISSION_NAME, permissionName);
-
-    (void)AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_PERMISSION_REQUEST_TOGGLE_STATUS, conditionValue,
-        result);
-    if (result.empty()) {
-        // never set, return default status: CLOSED if APP_TRACKING_CONSENT
-        return (permissionName == "ohos.permission.APP_TRACKING_CONSENT") ?
-            PermissionRequestToggleStatus::CLOSED : PermissionRequestToggleStatus::OPEN;
-    }
-    return result[0].GetInt(TokenFiledConst::FIELD_REQUEST_TOGGLE_STATUS);
-}
-
-int32_t AccessTokenInfoManager::GetPermissionRequestToggleStatus(const std::string& permissionName, uint32_t& status,
-    int32_t userID)
-{
-    if (userID == 0) {
-        userID = IPCSkeleton::GetCallingUid() / BASE_USER_RANGE;
-    }
-
-    LOGI(ATM_DOMAIN, ATM_TAG, "UserID=%{public}u, permissionName=%{public}s", userID, permissionName.c_str());
-    if (!PermissionValidator::IsUserIdValid(userID) ||
-        !PermissionValidator::IsPermissionNameValid(permissionName)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Invalid parameter(userId=%{public}d, perm=%{public}s.",
-            userID, permissionName.c_str());
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-    if (!IsDefinedPermissionInner(permissionName)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Permission=%{public}s is not defined.", permissionName.c_str());
-        return AccessTokenError::ERR_PERMISSION_NOT_EXIST;
-    }
-    if (!IsUserGrantPermission(permissionName)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Only support permissions of user_grant to get.");
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-
-    status = static_cast<uint32_t>(FindPermRequestToggleStatusFromDb(userID, permissionName));
-
-    return 0;
+    apiVersion = hapInfo.apiVersion;
+    return true;
 }
 
 
