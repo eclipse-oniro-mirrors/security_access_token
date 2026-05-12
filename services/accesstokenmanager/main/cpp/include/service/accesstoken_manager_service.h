@@ -16,11 +16,10 @@
 #ifndef ACCESSTOKEN_MANAGER_SERVICE_H
 #define ACCESSTOKEN_MANAGER_SERVICE_H
 
-#include <future>
 #include <set>
 #include <string>
-#include <vector>
 #include <unordered_set>
+#include <vector>
 
 #include "accesstoken_info_manager.h"
 #include "access_token_manager_stub.h"
@@ -201,10 +200,6 @@ private:
     void HandlePermDefUpdate(const std::map<int32_t, TokenIdInfo>& tokenIdAplMap);
 
     void FilterPermFeature(bool isSystemApp, HapPolicy& policy);
-    void GetFeaturesConfig();
-    std::promise<void> featurePromise_;
-    std::future<void> featureFuture_ = featurePromise_.get_future();
-    std::unordered_set<std::string> features_;
     bool isInitialize_ = false;
 
     std::mutex stateMutex_;

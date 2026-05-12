@@ -33,6 +33,7 @@
 #include "hap_policy_parcel.h"
 #include "permission_dialog_result_parcel.h"
 #include "parameters.h"
+#include "permission_feature_manager.h"
 #include "permission_map.h"
 #include "permission_manager.h"
 #include "perm_state_change_callback_customize.h"
@@ -2096,13 +2097,12 @@ HWTEST_F(AccessTokenManagerServiceTest, QueryStatusByTokenIDOverSizeTest001, Tes
 HWTEST_F(AccessTokenManagerServiceTest, FilterPermFeatureTest001, TestSize.Level1)
 {
     atManagerService_->Initialize();
-    atManagerService_->featureFuture_.wait();
     HapPolicy policy1;
     policy1.permStateList.push_back(g_state7);
     policy1.permStateList.push_back(g_state8);
     policy1.permStateList.push_back(g_state9);
 
-    atManagerService_->features_.clear();
+    PermissionFeatureManager::GetInstance().SetFeatures({});
 
     atManagerService_->FilterPermFeature(false, policy1);
     EXPECT_EQ(INDEX_THREE, policy1.permStateList.size());
@@ -2117,13 +2117,12 @@ HWTEST_F(AccessTokenManagerServiceTest, FilterPermFeatureTest001, TestSize.Level
 HWTEST_F(AccessTokenManagerServiceTest, FilterPermFeatureTest002, TestSize.Level1)
 {
     atManagerService_->Initialize();
-    atManagerService_->featureFuture_.wait();
     HapPolicy policy1;
     policy1.permStateList.push_back(g_state7);
     policy1.permStateList.push_back(g_state8);
     policy1.permStateList.push_back(g_state9);
 
-    atManagerService_->features_.clear();
+    PermissionFeatureManager::GetInstance().SetFeatures({});
 
     atManagerService_->FilterPermFeature(true, policy1);
     EXPECT_EQ(INDEX_ONE, policy1.permStateList.size());
@@ -2138,18 +2137,16 @@ HWTEST_F(AccessTokenManagerServiceTest, FilterPermFeatureTest002, TestSize.Level
 HWTEST_F(AccessTokenManagerServiceTest, FilterPermFeatureTest003, TestSize.Level1)
 {
     atManagerService_->Initialize();
-    atManagerService_->featureFuture_.wait();
     HapPolicy policy1;
     policy1.permStateList.push_back(g_state7);
     policy1.permStateList.push_back(g_state8);
     policy1.permStateList.push_back(g_state9);
 
-    atManagerService_->features_.clear();
-    atManagerService_->features_.insert("service_test_feature");
+    PermissionFeatureManager::GetInstance().SetFeatures({"service_test_feature"});
 
     atManagerService_->FilterPermFeature(true, policy1);
     EXPECT_EQ(INDEX_TWO, policy1.permStateList.size());
-    atManagerService_->features_.clear();
+    PermissionFeatureManager::GetInstance().SetFeatures({});
 }
 
 /**
@@ -2161,19 +2158,16 @@ HWTEST_F(AccessTokenManagerServiceTest, FilterPermFeatureTest003, TestSize.Level
 HWTEST_F(AccessTokenManagerServiceTest, FilterPermFeatureTest004, TestSize.Level2)
 {
     atManagerService_->Initialize();
-    atManagerService_->featureFuture_.wait();
     HapPolicy policy1;
     policy1.permStateList.push_back(g_state7);
     policy1.permStateList.push_back(g_state8);
     policy1.permStateList.push_back(g_state9);
 
-    atManagerService_->features_.clear();
-    atManagerService_->features_.insert("service_test_feature");
-    atManagerService_->features_.insert("service_test_feature2");
+    PermissionFeatureManager::GetInstance().SetFeatures({"service_test_feature", "service_test_feature2"});
 
     atManagerService_->FilterPermFeature(true, policy1);
     EXPECT_EQ(INDEX_THREE, policy1.permStateList.size());
-    atManagerService_->features_.clear();
+    PermissionFeatureManager::GetInstance().SetFeatures({});
 }
 
 /**
@@ -2185,19 +2179,16 @@ HWTEST_F(AccessTokenManagerServiceTest, FilterPermFeatureTest004, TestSize.Level
 HWTEST_F(AccessTokenManagerServiceTest, FilterPermFeatureTest005, TestSize.Level2)
 {
     atManagerService_->Initialize();
-    atManagerService_->featureFuture_.wait();
     HapPolicy policy1;
     policy1.permStateList.push_back(g_state7);
     policy1.permStateList.push_back(g_state8);
     policy1.permStateList.push_back(g_state9);
 
-    atManagerService_->features_.clear();
-    atManagerService_->features_.insert("service_test_feature");
-    atManagerService_->features_.insert("service_test_feature666");
+    PermissionFeatureManager::GetInstance().SetFeatures({"service_test_feature", "service_test_feature666"});
 
     atManagerService_->FilterPermFeature(true, policy1);
     EXPECT_EQ(INDEX_TWO, policy1.permStateList.size());
-    atManagerService_->features_.clear();
+    PermissionFeatureManager::GetInstance().SetFeatures({});
 }
 
 /**
@@ -2209,7 +2200,6 @@ HWTEST_F(AccessTokenManagerServiceTest, FilterPermFeatureTest005, TestSize.Level
 HWTEST_F(AccessTokenManagerServiceTest, FilterPermFeatureTest006, TestSize.Level1)
 {
     atManagerService_->Initialize();
-    atManagerService_->featureFuture_.wait();
     HapInfoParams info = {
         .userID = USER_ID,
         .bundleName = "FilterPermFeatureTest006",
@@ -2226,8 +2216,7 @@ HWTEST_F(AccessTokenManagerServiceTest, FilterPermFeatureTest006, TestSize.Level
         .permStateList = {g_state7, g_state8, g_state9}
     };
 
-    atManagerService_->features_.clear();
-    atManagerService_->features_.insert("service_test_feature");
+    PermissionFeatureManager::GetInstance().SetFeatures({"service_test_feature"});
 
     HapInfoParcel infoParCel;
     infoParCel.hapInfoParameter = info;
@@ -2248,7 +2237,7 @@ HWTEST_F(AccessTokenManagerServiceTest, FilterPermFeatureTest006, TestSize.Level
     EXPECT_EQ(INDEX_TWO, reqPermList.size());
 
     EXPECT_EQ(RET_SUCCESS, atManagerService_->DeleteToken(tokenIdEx.tokenIdExStruct.tokenID, false));
-    atManagerService_->features_.clear();
+    PermissionFeatureManager::GetInstance().SetFeatures({});
 }
 
 /**
@@ -2260,7 +2249,6 @@ HWTEST_F(AccessTokenManagerServiceTest, FilterPermFeatureTest006, TestSize.Level
 HWTEST_F(AccessTokenManagerServiceTest, FilterPermFeatureTest007, TestSize.Level2)
 {
     atManagerService_->Initialize();
-    atManagerService_->featureFuture_.wait();
     HapInfoParams info = {
         .userID = USER_ID,
         .bundleName = "FilterPermFeatureTest007",
@@ -2277,7 +2265,7 @@ HWTEST_F(AccessTokenManagerServiceTest, FilterPermFeatureTest007, TestSize.Level
         .permStateList = {g_state7, g_state8, g_state9}
     };
 
-    atManagerService_->features_.clear();
+    PermissionFeatureManager::GetInstance().SetFeatures({});
 
     HapInfoParcel infoParCel;
     infoParCel.hapInfoParameter = info;
@@ -2297,7 +2285,7 @@ HWTEST_F(AccessTokenManagerServiceTest, FilterPermFeatureTest007, TestSize.Level
     EXPECT_EQ(INDEX_ONE, reqPermList.size());
 
     EXPECT_EQ(RET_SUCCESS, atManagerService_->DeleteToken(tokenIdEx.tokenIdExStruct.tokenID, false));
-    atManagerService_->features_.clear();
+    PermissionFeatureManager::GetInstance().SetFeatures({});
 }
 
 /**
@@ -2309,7 +2297,6 @@ HWTEST_F(AccessTokenManagerServiceTest, FilterPermFeatureTest007, TestSize.Level
 HWTEST_F(AccessTokenManagerServiceTest, FilterPermFeatureTest008, TestSize.Level1)
 {
     atManagerService_->Initialize();
-    atManagerService_->featureFuture_.wait();
     HapInfoParams info = {
         .userID = USER_ID,
         .bundleName = "FilterPermFeatureTest008",
@@ -2326,8 +2313,7 @@ HWTEST_F(AccessTokenManagerServiceTest, FilterPermFeatureTest008, TestSize.Level
         .permStateList = {g_state7, g_state8, g_state9}
     };
 
-    atManagerService_->features_.clear();
-    atManagerService_->features_.insert("service_test_feature");
+    PermissionFeatureManager::GetInstance().SetFeatures({"service_test_feature"});
 
     HapInfoParcel infoParCel;
     infoParCel.hapInfoParameter = info;
@@ -2341,9 +2327,7 @@ HWTEST_F(AccessTokenManagerServiceTest, FilterPermFeatureTest008, TestSize.Level
     tokenIdEx.tokenIDEx = fullTokenId;
     ASSERT_EQ(RET_SUCCESS, ret);
 
-    atManagerService_->features_.clear();
-    atManagerService_->features_.insert("service_test_feature");
-    atManagerService_->features_.insert("service_test_feature2");
+    PermissionFeatureManager::GetInstance().SetFeatures({"service_test_feature", "service_test_feature2"});
     UpdateHapInfoParamsIdl updateInfoParams = {
         .appIDDesc = "FilterPermFeatureTest008",
         .apiVersion = API_VERSION_9,
@@ -2362,7 +2346,7 @@ HWTEST_F(AccessTokenManagerServiceTest, FilterPermFeatureTest008, TestSize.Level
     EXPECT_EQ(INDEX_THREE, reqPermList.size());
 
     EXPECT_EQ(RET_SUCCESS, atManagerService_->DeleteToken(tokenIdEx.tokenIdExStruct.tokenID, false));
-    atManagerService_->features_.clear();
+    PermissionFeatureManager::GetInstance().SetFeatures({});
 }
 
 /**
@@ -2374,7 +2358,6 @@ HWTEST_F(AccessTokenManagerServiceTest, FilterPermFeatureTest008, TestSize.Level
 HWTEST_F(AccessTokenManagerServiceTest, FilterPermFeatureTest009, TestSize.Level2)
 {
     atManagerService_->Initialize();
-    atManagerService_->featureFuture_.wait();
     HapInfoParams info = {
         .userID = USER_ID,
         .bundleName = "FilterPermFeatureTest009",
@@ -2391,8 +2374,7 @@ HWTEST_F(AccessTokenManagerServiceTest, FilterPermFeatureTest009, TestSize.Level
         .permStateList = {g_state7, g_state8, g_state9}
     };
 
-    atManagerService_->features_.clear();
-    atManagerService_->features_.insert("service_test_feature");
+    PermissionFeatureManager::GetInstance().SetFeatures({"service_test_feature"});
 
     HapInfoParcel infoParCel;
     infoParCel.hapInfoParameter = info;
@@ -2406,9 +2388,7 @@ HWTEST_F(AccessTokenManagerServiceTest, FilterPermFeatureTest009, TestSize.Level
     tokenIdEx.tokenIDEx = fullTokenId;
     ASSERT_EQ(RET_SUCCESS, ret);
 
-    atManagerService_->features_.clear();
-    atManagerService_->features_.insert("service_test_feature9999999");
-    atManagerService_->features_.insert("service_test_feature2");
+    PermissionFeatureManager::GetInstance().SetFeatures({"service_test_feature9999999", "service_test_feature2"});
     UpdateHapInfoParamsIdl updateInfoParams = {
         .appIDDesc = "FilterPermFeatureTest009",
         .apiVersion = API_VERSION_9,
@@ -2427,7 +2407,7 @@ HWTEST_F(AccessTokenManagerServiceTest, FilterPermFeatureTest009, TestSize.Level
     EXPECT_EQ(INDEX_TWO, reqPermList.size());
 
     EXPECT_EQ(RET_SUCCESS, atManagerService_->DeleteToken(tokenIdEx.tokenIdExStruct.tokenID, false));
-    atManagerService_->features_.clear();
+    PermissionFeatureManager::GetInstance().SetFeatures({});
 }
 
 /**

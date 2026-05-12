@@ -77,6 +77,7 @@ public:
         OP_CONTROL_DEVICE = 48,
         OP_FLOAT_VIEW = 49,
         OP_CLI_CONTROL_LOCATION_SWITCH = 50,
+        OP_CLI_BUNDLE_ACTIVE_INFO = 51,
         // 以下声明仅用于文件夹权限的访问记录使用,需要和普通权限做区分
         OP_READ_WRITE_DOWNLOAD_DIRECTORY_MEDIA_READ = 100,
         OP_READ_WRITE_DOWNLOAD_DIRECTORY_MEDIA_WRITE = 101,

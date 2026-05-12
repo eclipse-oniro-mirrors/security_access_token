@@ -33,6 +33,7 @@
 #include "atm_tools_param_info.h"
 #include "hap_token_info_inner.h"
 #include "native_token_info_base.h"
+#include "permission_data_brief.h"
 #include "verify_accesstoken_monitor.h"
 #ifdef TOKEN_SYNC_ENABLE
 #include "device_manager.h"
@@ -75,6 +76,7 @@ public:
     void GetAllNativeTokenPerms(const std::vector<uint32_t>& permCodeList,
         std::vector<PermissionStatusIdl>& permissionInfoList);
     void GetAllHapTokenId(std::unordered_set<AccessTokenID>& tokenIdList);
+    void GetAllNativeTokenId(std::unordered_set<AccessTokenID>& tokenIdList);
     std::shared_ptr<HapTokenInfoInner> GetHapTokenInfoInner(AccessTokenID id);
     int GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo& infoParcel);
     int GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfoBase& info);
@@ -89,7 +91,6 @@ public:
     int32_t UpdateHapToken(AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info,
         const std::vector<PermissionStatus>& permStateList, const HapPolicy& hapPolicy,
         std::vector<GenericValues>& undefValues);
-    void DumpTokenInfo(const AtmToolsParamInfo& info, std::string& dumpInfo);
     bool IsTokenIdExist(AccessTokenID id);
     AccessTokenID GetNativeTokenId(const std::string& processName);
     void GetRelatedSandBoxHapList(AccessTokenID tokenId, std::vector<AccessTokenID>& tokenIdList);
@@ -108,6 +109,7 @@ public:
     std::vector<uint32_t> GetRestrictedPermListByUserId(int32_t userId);
     int32_t VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName);
     int32_t VerifyNativeAccessToken(AccessTokenID tokenID, const std::string& permissionName);
+    bool GetApiVersionByTokenId(AccessTokenID tokenID, int32_t& apiVersion);
 
 #ifdef TOKEN_SYNC_ENABLE
     /* tokensync needed */
@@ -124,10 +126,17 @@ public:
 #endif
 
     bool UpdateCapStateToDatabase(AccessTokenID tokenID, bool enable);
-    int32_t SetPermissionRequestToggleStatus(const std::string& permissionName, uint32_t status, int32_t userID);
-    int32_t GetPermissionRequestToggleStatus(const std::string& permissionName, uint32_t& status, int32_t userID);
     int32_t GetKernelPermissions(AccessTokenID tokenId, std::vector<PermissionWithValue>& kernelPermList);
     int32_t GetReqPermissionByName(AccessTokenID tokenId, const std::string& permissionName, std::string& value);
+    std::shared_ptr<BundleInfoInner> GetBundleInfoInner(const std::string& bundleName);
+    void UpsertBundleInfoInnerCache(const std::string& bundleName, const std::shared_ptr<BundleInfoInner>& bundleInfo);
+    void CommitCreateHapCache(const HapTokenInfo& hapInfo,
+        const std::vector<BriefPermData>& briefPermData,
+        const std::shared_ptr<BundleInfoInner>& bundleInfo);
+    void CommitUpdateHapCache(const HapTokenInfo& hapInfo,
+        const std::vector<BriefPermData>& briefPermData,
+        const std::shared_ptr<BundleInfoInner>& bundleInfo);
+    void CommitDeleteHapCache(AccessTokenID tokenID, const std::string& bundleName);
 
     int32_t QueryStatusByPermission(const std::vector<uint32_t>& permCodeList,
         std::vector<PermissionStatusIdl>& permissionInfoList, bool onlyHap);
@@ -163,8 +172,6 @@ private:
     void InitHapTokenInfos(uint32_t& hapSize, std::map<int32_t, TokenIdInfo>& tokenIdAplMap);
     void ReportAddHapIdChange(const std::shared_ptr<HapTokenInfoInner>& hapInfo, AccessTokenID oriTokenId);
     int AddHapTokenInfo(const std::shared_ptr<HapTokenInfoInner>& info, AccessTokenID& oriTokenId);
-    std::string GetHapUniqueStr(const std::shared_ptr<HapTokenInfoInner>& info) const;
-    std::string GetHapUniqueStr(const int& userID, const std::string& bundleName, const int& instIndex) const;
     int32_t RegisterTokenId(const HapInfoParams& info, AccessTokenID& tokenId);
     void GenerateAddInfoToVec(AtmDataType type, const std::vector<GenericValues>& addValues,
         std::vector<AddInfo>& addInfoVec);
@@ -178,11 +185,6 @@ private:
         const std::shared_ptr<HapTokenInfoInner>& info, bool isTokenReserved, AccessTokenID reservedTokenId);
     int CreateRemoteHapTokenInfo(AccessTokenID mapID, HapTokenInfoForSync& hapSync);
     int UpdateRemoteHapTokenInfo(AccessTokenID mapID, HapTokenInfoForSync& hapSync);
-    void DumpHapTokenInfoByTokenId(const AccessTokenID tokenId, std::string& dumpInfo);
-    void DumpHapTokenInfoByBundleName(const std::string& bundleName, std::string& dumpInfo);
-    void DumpAllHapTokenname(std::string& dumpInfo);
-    void DumpNativeTokenInfoByProcessName(const std::string& processName, std::string& dumpInfo);
-    void DumpAllNativeTokenName(std::string& dumpInfo);
 #ifdef SUPPORT_MANAGE_USER_POLICY
     void UpdatePermissionStateToKernel(uint32_t permCode, const std::map<int32_t, bool>& changedUserList);
     void UpdatePermissionStateToKernel(AccessTokenID tokenId, uint32_t permCode, bool isActive);
@@ -190,8 +192,6 @@ private:
         const std::map<int32_t, bool>& changedUserList, std::map<AccessTokenID, bool>& tokenIdList);
     bool IsInPolicyWhiteList(AccessTokenID tokenId, uint32_t permCode) const;
 #endif
-    int32_t AddPermRequestToggleStatusToDb(int32_t userID, const std::string& permissionName, int32_t status);
-    int32_t FindPermRequestToggleStatusFromDb(int32_t userID, const std::string& permissionName);
     void GetNativePermissionList(const NativeTokenInfoBase& native,
         std::vector<uint32_t>& opCodeList, std::vector<bool>& statusList);
     std::string NativeTokenToString(AccessTokenID tokenID);
@@ -219,6 +219,7 @@ private:
 
     std::map<int, std::shared_ptr<HapTokenInfoInner>> hapTokenInfoMap_;
     std::map<std::string, AccessTokenID> hapTokenIdMap_;
+    std::map<std::string, std::shared_ptr<BundleInfoInner>> bundleInfoMap_;
     std::map<std::string, AccessTokenID> reservedHapTokenIdMap_;
     std::map<uint32_t, NativeTokenInfoCache> nativeTokenInfoMap_;
 

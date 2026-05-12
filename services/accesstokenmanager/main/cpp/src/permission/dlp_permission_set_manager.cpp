@@ -21,6 +21,7 @@
 #include "accesstoken_common_log.h"
 #include "access_token_error.h"
 #include "data_validator.h"
+#include "permission_map.h"
 #include "securec.h"
 
 namespace OHOS {
@@ -95,6 +96,16 @@ bool DlpPermissionSetManager::IsPermissionAvailableToDlpHap(int32_t hapDlpType,
 {
     int32_t permissionDlpMode = GetPermDlpMode(permissionName);
     return IsPermDlpModeAvailableToDlpHap(hapDlpType, permissionDlpMode);
+}
+
+bool DlpPermissionSetManager::IsPermissionAvailableToDlpHap(int32_t hapDlpType, uint32_t permCode)
+{
+    std::string permissionName = TransferOpcodeToPermission(permCode);
+    if (permissionName.empty()) {
+        LOGD(ATM_DOMAIN, ATM_TAG, "Invalid permCode: %{public}u", permCode);
+        return false;
+    }
+    return IsPermissionAvailableToDlpHap(hapDlpType, permissionName);
 }
 
 bool DlpPermissionSetManager::IsPermDlpModeAvailableToDlpHap(int32_t hapDlpType, int32_t permDlpMode)

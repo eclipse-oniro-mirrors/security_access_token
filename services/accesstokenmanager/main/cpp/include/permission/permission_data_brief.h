@@ -69,6 +69,7 @@ public:
     int32_t AddBriefPermData(AccessTokenID tokenID, const std::string& permissionName, PermissionState grantStatus,
         PermissionFlag grantFlag, const std::string& value);
     int32_t GetBriefPermDataByTokenId(AccessTokenID tokenID, std::vector<BriefPermData>& data);
+    void ReplaceBriefPermDataByTokenId(AccessTokenID tokenID, const std::vector<BriefPermData>& data);
     void ToString(std::string& info);
     PermUsedTypeEnum GetPermissionUsedType(AccessTokenID tokenID, int32_t opCode);
     bool IsPermissionGrantedWithSecComp(AccessTokenID tokenID, const std::string& permissionName);

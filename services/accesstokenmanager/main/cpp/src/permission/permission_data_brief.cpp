@@ -641,6 +641,7 @@ int32_t PermissionDataBrief::DeleteBriefPermDataByTokenId(AccessTokenID tokenID)
     LOGI(ATM_DOMAIN, ATM_TAG, "TokenID %{public}u is deleted.", tokenID);
     return RET_SUCCESS;
 }
+
 int32_t PermissionDataBrief::GetBriefPermDataByTokenIdInner(AccessTokenID tokenID, std::vector<BriefPermData>& list)
 {
     auto iter = requestedPermData_.find(tokenID);
@@ -658,6 +659,12 @@ int32_t PermissionDataBrief::GetBriefPermDataByTokenId(AccessTokenID tokenID, st
 {
     std::shared_lock<std::shared_mutex> infoGuard(this->permissionStateDataLock_);
     return GetBriefPermDataByTokenIdInner(tokenID, list);
+}
+
+void PermissionDataBrief::ReplaceBriefPermDataByTokenId(AccessTokenID tokenID, const std::vector<BriefPermData>& data)
+{
+    std::unique_lock<std::shared_mutex> infoGuard(this->permissionStateDataLock_);
+    AddBriefPermDataByTokenId(tokenID, data);
 }
 
 void PermissionDataBrief::GetGrantedPermByTokenId(AccessTokenID tokenID,
