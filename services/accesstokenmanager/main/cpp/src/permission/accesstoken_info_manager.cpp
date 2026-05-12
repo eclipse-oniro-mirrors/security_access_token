@@ -1976,7 +1976,7 @@ static bool IsCallerNormalApp(uint64_t fulltokenID)
 static bool GetPermissionFromKernelCache(AccessTokenID tokenID, const std::string& permissionName, int32_t& res)
 {
     uint32_t code = 0;
-    if (!IsDefinedPermission(permissionName)) {
+    if (!IsDefinedPermissionInner(permissionName)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Permission=%{public}s is not defined.", permissionName.c_str());
         res = PERMISSION_DENIED;
         return true;
