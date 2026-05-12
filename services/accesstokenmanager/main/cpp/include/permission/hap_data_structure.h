@@ -36,6 +36,8 @@ struct BundleParam final {
     int32_t apiVersion = 0;
 #ifdef SUPPORT_JSAPI
     Verify::AppDistType distributionType = Verify::AppDistType::NONE_TYPE;
+#else
+    int32_t distributionType = 0;
 #endif
     bool isSystem = false;
     bool isAtomicService = false;
@@ -47,6 +49,8 @@ public:
     ATokenAplEnum apl = APL_INVALID;
 #ifdef SUPPORT_JSAPI
     Verify::AppDistType distributionType = Verify::AppDistType::NONE_TYPE;
+#else
+    int32_t distributionType = 0;
 #endif
     uint32_t idType = 0;
     uint64_t ownerid = 0;

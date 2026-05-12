@@ -21,6 +21,7 @@
 #undef private
 #include "permission_constraint_check.h"
 #include "permission_map.h"
+#include "provision/provision_info.h"
 
 using namespace testing::ext;
 
@@ -97,7 +98,7 @@ HWTEST_F(PermissionConstraintCheckTest, IsPermAvailableRangeSatisfied001, TestSi
     BundleParam param = {};
     param.bundleName = "com.example.test";
     param.apiVersion = 12;
-    param.distributionType = Verify::AppDistType::ENTERPRISE_NORMAL;
+    param.distributionType = static_cast<int32_t>(Verify::AppDistType::ENTERPRISE_NORMAL);
 
     PermissionBriefDef briefDef = {};
     briefDef.permissionName = const_cast<char *>("ohos.permission.MDM_TEST");
@@ -161,7 +162,7 @@ HWTEST_F(PermissionConstraintCheckTest, AclAndEdmCheck001, TestSize.Level0)
     BundleParam param = {};
     param.bundleName = "com.example.test";
     param.apiVersion = 12;
-    param.distributionType = Verify::AppDistType::ENTERPRISE_NORMAL;
+    param.distributionType = static_cast<int32_t>(Verify::AppDistType::ENTERPRISE_NORMAL);
 
     PermissionBriefDef briefDef = {};
     briefDef.permissionName = const_cast<char *>("ohos.permission.TEST_ACL_RANGE");
