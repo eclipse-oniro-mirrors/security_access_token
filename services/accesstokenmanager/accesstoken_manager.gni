@@ -183,7 +183,7 @@ accesstoken_manager_base_config = {
       "asset:saf_agent_fence",
       "appverify:libhapverify"
     ]
-    defines = [ "SUPPORT_JSAPI" ]
+    define = [ "IS_SUPPORT_HAP_RUNNING" ]
   }
 
   if (ohos_indep_compiler_enable) {
