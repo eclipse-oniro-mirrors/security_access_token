@@ -23,6 +23,7 @@
 
 #include "access_token.h"
 #include "generic_values.h"
+#include "hap_data_structure.h"
 #include "hap_token_info.h"
 #include "permission_data_brief.h"
 #include "permission_def.h"
@@ -66,6 +67,8 @@ public:
     uint32_t GetReqPermissionSize();
     HapTokenInfo GetHapInfoBasic() const;
     int GetUserID() const;
+    uint32_t GetUid() const;
+    void SetUid(uint32_t uid);
     int GetDlpType() const;
     AccessTokenAttr GetAttr() const;
     std::string GetBundleName() const;
@@ -77,6 +80,8 @@ public:
     void SetRemote(bool isRemote);
     bool IsPermDialogForbidden() const;
     void SetPermDialogForbidden(bool isForbidden);
+    bool IsMigrated() const;
+    void SetMigrated(bool isMigrated);
 
     int32_t UpdatePermissionStatus(
         const std::string& permissionName, bool isGranted, uint32_t flag, bool& statusChanged);
@@ -111,9 +116,11 @@ private:
     HapTokenInfo tokenInfoBasic_;
 
     // true means sync from remote.
-    bool isRemote_;
+    bool isRemote_ = false;
     /** permission dialog is forbidden */
     bool isPermDialogForbidden_ = false;
+    /** migrated flag */
+    bool isMigrated_ = false;
 
     mutable std::shared_mutex policySetLock_;
 };

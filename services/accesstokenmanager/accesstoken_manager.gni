@@ -45,11 +45,18 @@ accesstoken_manager_base_config = {
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/form_manager/form_manager_death_recipient.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/form_manager/form_status_change_callback.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/accesstoken_id_manager.cpp",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/accesstoken_info_dumper.cpp",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/accesstoken_info_utils.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/accesstoken_info_manager.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/hap_token_info_inner.cpp",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_change_notifier.cpp",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_constraint_check.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_data_brief.cpp",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_feature_manager.cpp",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/src/kernel/permission_kernel_utils.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_grant_event.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_manager.cpp",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_request_toggle_manager.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/short_grant_manager.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/temp_permission_observer.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/verify_accesstoken_monitor.cpp",
@@ -122,6 +129,7 @@ accesstoken_manager_base_config = {
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/database",
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/dfx",
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/form_manager",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/include/kernel",
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/permission",
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/seccomp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/service",
@@ -163,7 +171,7 @@ accesstoken_manager_base_config = {
     "ipc:ipc_single",
     "relational_store:native_rdb",
     "safwk:system_ability_fwk",
-    "samgr:samgr_proxy",
+    "samgr:samgr_proxy"
   ]
 
   # Add global external_deps from access_token.gni
@@ -171,7 +179,11 @@ accesstoken_manager_base_config = {
 
   # Add saf_agent_fence dependency only when support_jsapi is true
   if (support_jsapi) {
-    external_deps += [ "asset:saf_agent_fence" ]
+    external_deps += [
+      "asset:saf_agent_fence",
+      "appverify:libhapverify"
+    ]
+    define = [ "IS_SUPPORT_HAP_RUNNING" ]
   }
 
   if (ohos_indep_compiler_enable) {

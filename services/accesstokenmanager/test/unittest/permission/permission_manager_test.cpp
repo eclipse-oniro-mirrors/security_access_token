@@ -31,6 +31,7 @@
 #undef private
 #include "accesstoken_callback_stubs.h"
 #include "callback_death_recipients.h"
+#include "permission_change_notifier.h"
 #ifdef BGTASKMGR_CONTINUOUS_TASK_ENABLE
 #include "background_task_manager_access_client.h"
 #include "continuous_task_callback_info.h"
@@ -600,29 +601,6 @@ HWTEST_F(PermissionManagerTest, GetSelfPermissionState002, TestSize.Level0)
 }
 
 /**
- * @tc.name: GetSelfPermissionState003
- * @tc.desc: PermissionManager::GetSelfPermissionState function test
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(PermissionManagerTest, GetSelfPermissionState003, TestSize.Level0)
-{
-    std::vector<PermissionStatus> permsList1;
-    permsList1.emplace_back(g_permState2);
-    std::string permissionName = "ohos.permission.CAMERA";
-    uint32_t oriStatus;
-    AccessTokenInfoManager::GetInstance().GetPermissionRequestToggleStatus(permissionName, oriStatus, 0);
-
-    AccessTokenInfoManager::GetInstance().SetPermissionRequestToggleStatus(permissionName,
-        PermissionRequestToggleStatus::CLOSED, 0);
-    uint32_t status;
-    AccessTokenInfoManager::GetInstance().GetPermissionRequestToggleStatus(permissionName, status, 0);
-    ASSERT_EQ(PermissionRequestToggleStatus::CLOSED, status);
-
-    AccessTokenInfoManager::GetInstance().SetPermissionRequestToggleStatus(permissionName, oriStatus, 0);
-}
-
-/**
  * @tc.name: GetSelfPermissionState004
  * @tc.desc: PermissionManager::GetSelfPermissionState function test
  * @tc.type: FUNC
@@ -904,7 +882,7 @@ HWTEST_F(PermissionManagerTest, GetPermissionState001, TestSize.Level0)
 
 /**
  * @tc.name: GetApiVersionByTokenId001
- * @tc.desc: PermissionManager::GetApiVersionByTokenId function test
+ * @tc.desc: AccessTokenInfoManager::GetApiVersionByTokenId function test
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -914,11 +892,11 @@ HWTEST_F(PermissionManagerTest, GetApiVersionByTokenId001, TestSize.Level0)
     int32_t apiVersion = 0;
 
     // type TOKEN_TYPE_BUTT
-    ASSERT_EQ(false, PermissionManager::GetInstance().GetApiVersionByTokenId(tokenId, apiVersion));
+    ASSERT_EQ(false, AccessTokenInfoManager::GetInstance().GetApiVersionByTokenId(tokenId, apiVersion));
 
     tokenId = 537919487; // 537919487 is max hap tokenId: 001 00 0 000000 11111111111111111111
     // get token info err
-    ASSERT_EQ(false, PermissionManager::GetInstance().GetApiVersionByTokenId(tokenId, apiVersion));
+    ASSERT_EQ(false, AccessTokenInfoManager::GetInstance().GetApiVersionByTokenId(tokenId, apiVersion));
 }
 
 /**
@@ -1171,7 +1149,7 @@ HWTEST_F(PermissionManagerTest, UpdatePermissionWithInvalidPermTest001, TestSize
     EXPECT_NE(RET_SUCCESS, PermissionManager::GetInstance().RevokePermission(
         tokenID, "ohos.permission.TEST123", PERMISSION_USER_FIXED, OPERABLE_PERM));
 
-    PermissionManager::GetInstance().ParamUpdate("ohos.permission.TEST123", 0, false);
+    PermissionChangeNotifier::GetInstance().ParamUpdate("ohos.permission.TEST123", 0, false);
 
     EXPECT_EQ(false, IsOperablePermission("ohos.permission.TEST123"));
 }

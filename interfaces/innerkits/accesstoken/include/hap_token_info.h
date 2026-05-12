@@ -124,6 +124,8 @@ public:
     AccessTokenID tokenID;
     /** token attribute */
     AccessTokenAttr tokenAttr;
+    /** uid of hap**/
+    int32_t uid;
 };
 
 /**
@@ -154,6 +156,14 @@ public:
     std::string bundleName = "";
     /** instance index */
     int32_t instIndex = 0;
+};
+
+/**
+ * @brief Identity information for a token and its corresponding uid.
+ */
+struct Identity final {
+    FullTokenID tokenId = 0;
+    int32_t uid = 0;
 };
 
 /**
@@ -221,6 +231,15 @@ public:
     HapPolicyCheckIgnore checkIgnore = HapPolicyCheckIgnore::NONE;
     std::map<std::string, std::string> aclExtendedMap;
     bool isDebugGrant = false;
+};
+
+/**
+ * @brief Bundle policy data used when installing or updating a hap.
+ */
+struct BundlePolicy {
+    std::vector<PreAuthorizationInfo> preAuthorizationInfo;
+    DlpType dlpType;
+    bool isDebugGrant;
 };
 
 /**

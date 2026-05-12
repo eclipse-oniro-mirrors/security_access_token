@@ -66,7 +66,8 @@
         "sqlite",
         "window_manager",
         "zlib",
-        "runtime_core"
+        "runtime_core",
+        "appverify"
       ],
       "third_party": []
     },

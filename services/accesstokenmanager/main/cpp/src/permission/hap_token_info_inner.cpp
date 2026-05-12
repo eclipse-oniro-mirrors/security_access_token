@@ -24,6 +24,7 @@
 #include "data_validator.h"
 #include "hisysevent_adapter.h"
 #include "json_parse_loader.h"
+#include "libraryloader.h"
 #include "short_grant_manager.h"
 #include "token_field_const.h"
 #include "permission_map.h"
@@ -40,7 +41,12 @@ namespace {
 static const std::string DEFAULT_DEVICEID = "0";
 static const unsigned int SYSTEM_APP_FLAG = 0x0001;
 static const unsigned int ATOMIC_SERVICE_FLAG = 0x0002;
+#ifdef SPM_DATA_ENABLE
+static const unsigned int TOKEN_RESERVED_FLAG = 0x0004;
+#endif
 static const unsigned int DEBUG_APP_FLAG = 0x0008;
+static constexpr int32_t INVALID_UID = -1;
+
 }
 
 HapTokenInfoInner::HapTokenInfoInner() : permUpdateTimestamp_(0), isRemote_(false)
@@ -53,6 +59,7 @@ HapTokenInfoInner::HapTokenInfoInner() : permUpdateTimestamp_(0), isRemote_(fals
     tokenInfoBasic_.apiVersion = 0;
     tokenInfoBasic_.instIndex = 0;
     tokenInfoBasic_.dlpType = 0;
+    tokenInfoBasic_.uid = INVALID_UID;
 }
 
 HapTokenInfoInner::HapTokenInfoInner(AccessTokenID id,
@@ -79,6 +86,7 @@ HapTokenInfoInner::HapTokenInfoInner(AccessTokenID id,
         tokenInfoBasic_.apiVersion = GetApiVersion(info.apiVersion);
         tokenInfoBasic_.instIndex = info.instIndex;
         tokenInfoBasic_.dlpType = info.dlpType;
+        tokenInfoBasic_.uid = INVALID_UID;
     }
     PermissionDataBrief::GetInstance().AddPermToBriefPermission(id, policy.permStateList, policy.aclExtendedMap, true);
 }
@@ -127,9 +135,9 @@ void HapTokenInfoInner::Update(const UpdateHapInfoParams& info, const std::vecto
     } else {
         tokenInfoBasic_.tokenAttr &= ~ATOMIC_SERVICE_FLAG;
     }
-    AppProvisionType provisionTypeAfter = (info.appProvisionType == "debug") ? DEBUG : RELEASE;
-    bool needUpdatePermByProvision = ((provisionTypeAfter == DEBUG) && hapPolicy.isDebugGrant) ||
-        ((provisionTypeAfter == RELEASE) && (tokenInfoBasic_.tokenAttr & DEBUG_APP_FLAG));
+    bool isDebugProvision = (info.appProvisionType == "debug");
+    bool needUpdatePermByProvision = (isDebugProvision && hapPolicy.isDebugGrant) ||
+        (!isDebugProvision && (tokenInfoBasic_.tokenAttr & DEBUG_APP_FLAG));
     PermissionDataBrief::GetInstance().Update(tokenInfoBasic_.tokenID, permStateList, hapPolicy.aclExtendedMap,
         needUpdatePermByProvision);
     if (info.appProvisionType == "release") {
@@ -156,6 +164,12 @@ void HapTokenInfoInner::TranslationIntoGenericValues(GenericValues& outGenericVa
     outGenericValues.Put(TokenFiledConst::FIELD_TOKEN_VERSION, tokenInfoBasic_.ver);
     outGenericValues.Put(TokenFiledConst::FIELD_TOKEN_ATTR, static_cast<int32_t>(tokenInfoBasic_.tokenAttr));
     outGenericValues.Put(TokenFiledConst::FIELD_FORBID_PERM_DIALOG, isPermDialogForbidden_);
+#ifdef SPM_DATA_ENABLE
+    outGenericValues.Put(TokenFiledConst::FIELD_UID, tokenInfoBasic_.uid);
+    outGenericValues.Put(TokenFiledConst::FIELD_RESERVED,
+        static_cast<int32_t>((tokenInfoBasic_.tokenAttr & TOKEN_RESERVED_FLAG) != 0));
+    outGenericValues.Put(TokenFiledConst::FIELD_MIGRATED, isMigrated_ ? 1 : 0);
+#endif
 }
 
 int HapTokenInfoInner::RestoreHapTokenBasicInfo(const GenericValues& inGenericValues)
@@ -181,6 +195,10 @@ int HapTokenInfoInner::RestoreHapTokenBasicInfo(const GenericValues& inGenericVa
     }
     tokenInfoBasic_.tokenAttr = (uint32_t)inGenericValues.GetInt(TokenFiledConst::FIELD_TOKEN_ATTR);
     isPermDialogForbidden_ = inGenericValues.GetInt(TokenFiledConst::FIELD_FORBID_PERM_DIALOG);
+#ifdef SPM_DATA_ENBALE
+    tokenInfoBasic_.uid = inGenericValues.GetInt(TokenFiledConst::FIELD_UID);
+    isMigrated_ = inGenericValues.GetInt(TokenFiledConst::FIELD_MIGRATED) != 0;
+#endif
     return RET_SUCCESS;
 }
 
@@ -246,6 +264,18 @@ int HapTokenInfoInner::GetUserID() const
 {
     std::shared_lock<std::shared_mutex> infoGuard(this->policySetLock_);
     return tokenInfoBasic_.userID;
+}
+
+uint32_t HapTokenInfoInner::GetUid() const
+{
+    std::shared_lock<std::shared_mutex> infoGuard(this->policySetLock_);
+    return tokenInfoBasic_.uid;
+}
+
+void HapTokenInfoInner::SetUid(uint32_t uid)
+{
+    std::unique_lock<std::shared_mutex> infoGuard(this->policySetLock_);
+    tokenInfoBasic_.uid = uid;
 }
 
 int HapTokenInfoInner::GetDlpType() const
@@ -315,6 +345,17 @@ void HapTokenInfoInner::SetPermDialogForbidden(bool isForbidden)
     isPermDialogForbidden_ = isForbidden;
 }
 
+bool HapTokenInfoInner::IsMigrated() const
+{
+    std::shared_lock<std::shared_mutex> infoGuard(this->policySetLock_);
+    return isMigrated_;
+}
+
+void HapTokenInfoInner::SetMigrated(bool isMigrated)
+{
+    std::unique_lock<std::shared_mutex> infoGuard(this->policySetLock_);
+    isMigrated_ = isMigrated;
+}
 int32_t HapTokenInfoInner::GetApiVersion(int32_t apiVersion)
 {
     uint32_t apiSize = 3; // 3: api version length
