@@ -33,11 +33,13 @@
 #endif
 #include "iaccess_token_manager.h"
 #include "ipc_skeleton.h"
+#ifdef IS_SUPPORT_HAP_RUNNING
 #include "interfaces/hap_verify.h"
+#include "provision/provision_info.h"
+#endif
 #include "hisysevent_adapter.h"
 #include "permission_change_notifier.h"
 #include "permission_kernel_utils.h"
-#include "provision/provision_info.h"
 #include "parameters.h"
 #include "short_grant_manager.h"
 #include "permission_map.h"
@@ -1083,16 +1085,20 @@ bool PermissionManager::InitPermissionList(const BundleParam& param, const HapPo
         if (!GetPermissionBriefDef(state.permissionName, briefDef)) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Get definition of %{public}s failed.",
                 state.permissionName.c_str());
+#ifdef IS_SUPPORT_HAP_RUNNING
             FillUndefinedPermVector(state.permissionName, Verify::AppDistTypeToString(param.distributionType),
                 policy, undefValues);
+#endif
             continue;
         }
 
         result.permCheckResult.permissionName = state.permissionName;
         if (!PermissionConstraintCheck::AclAndEdmCheck(param, briefDef, policy, result)) {
             if (dataRefresh) {
+#ifdef IS_SUPPORT_HAP_RUNNING
                 FillUndefinedPermVector(state.permissionName, Verify::AppDistTypeToString(param.distributionType),
                     policy, undefValues);
+#endif
                 continue;
             }
             return false;
