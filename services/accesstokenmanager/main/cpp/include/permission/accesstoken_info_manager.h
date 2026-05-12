@@ -24,20 +24,18 @@
 #include <unordered_set>
 #include <vector>
 
-#include "access_token.h"
-#include "iaccess_token_manager.h"
-#include "hap_token_info.h"
-#include "json_parse_loader.h"
-
 #include "access_token_db.h"
+#include "access_token.h"
 #include "atm_tools_param_info.h"
-#include "hap_token_info_inner.h"
-#include "native_token_info_base.h"
-#include "permission_data_brief.h"
-#include "verify_accesstoken_monitor.h"
+#include "iaccess_token_manager.h"
 #ifdef TOKEN_SYNC_ENABLE
 #include "device_manager.h"
 #endif
+#include "hap_token_info.h"
+#include "hap_token_info_inner.h"
+#include "native_token_info_base.h"
+#include "json_parse_loader.h"
+#include "verify_accesstoken_monitor.h"
 
 namespace OHOS {
 namespace Security {
@@ -212,7 +210,6 @@ private:
         const std::shared_ptr<BundleInfoInner>& bundleInfo);
     void AddTokenIdToBundleInfoInner(const std::shared_ptr<BundleInfoInner>& bundleInfo, AccessTokenID tokenId);
     void RemoveTokenIdFromBundleInfoInner(const std::shared_ptr<BundleInfoInner>& bundleInfo, AccessTokenID tokenId);
-    
     bool hasInited_;
 
     std::shared_mutex hapTokenInfoLock_;

@@ -405,13 +405,13 @@ void AccessTokenInfoManager::LoadPermissionDefinitionExt(ConfigPolicyLoaderInter
     std::vector<std::string> permissions;
     if (policy.GetPermissionDefinitionExt(permissions) != RET_SUCCESS) {
         LOGE(ATM_DOMAIN, ATM_TAG,
-            "Failed to get permission definition extension, return code is %{public}d.",
-            policy.GetPermissionDefinitionExt(permissions));
+            "Failed to get permission definition extension");
         return;
     }
     for (const auto& permissionName : permissions) {
         if (!SetPermissionBriefEnabled(permissionName, true)) {
-            LOGW(ATM_DOMAIN, ATM_TAG, "Permission in ext file is invalid %{public}s.", permissionName.c_str());
+            LOGW(ATM_DOMAIN, ATM_TAG,
+                "Permission in ext file is invalid %{public}s.", permissionName.c_str());
         }
     }
 }

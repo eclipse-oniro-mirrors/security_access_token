@@ -615,12 +615,9 @@ int AccessTokenManagerService::GetDefPermission(
         LOGE(ATM_DOMAIN, ATM_TAG, "Perm is invalid.");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
-    if (!IsDefinedPermissionInner(permissionName)) {
-        return AccessTokenError::ERR_PERMISSION_NOT_EXIST;
-    }
 
     PermissionBriefDef briefDef;
-    if (!GetPermissionBriefDef(permissionName, briefDef)) {
+    if (!GetPermissionBriefDef(permissionName, briefDef) && !briefDef.isEnable) {
         return AccessTokenError::ERR_PERMISSION_NOT_EXIST;
     }
 
@@ -1441,7 +1438,6 @@ int32_t AccessTokenManagerService::IsSupportPermission(const std::string& permis
     isSupported = IsDefinedPermissionInner(permission);
     return RET_SUCCESS;
 }
- 	 
 
 int AccessTokenManagerService::GetHapTokenInfoExtension(AccessTokenID tokenID,
     HapTokenInfoParcel& hapTokenInfoRes, std::string& appID)

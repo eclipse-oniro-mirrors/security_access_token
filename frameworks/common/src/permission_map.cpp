@@ -42,11 +42,6 @@ public:
 };
 std::map<const char*, uint32_t, CharArrayCompare> g_permMap;
 
-static void CopyPermissionBriefDef(uint32_t opCode, PermissionBriefDef& permissionBriefDef)
-{
-    permissionBriefDef = g_permList[opCode];
-}
-
 static void InitMap()
 {
     std::lock_guard<std::mutex> lock(g_lockPermMap);
@@ -128,7 +123,7 @@ bool GetPermissionBriefDef(const std::string& permission, PermissionBriefDef& pe
     if (!TransferPermissionToOpcode(permission, opCode)) {
         return false; // default is false
     }
-    CopyPermissionBriefDef(opCode, permissionBriefDef);
+    permissionBriefDef = g_permList[opCode];
     return true;
 }
 
@@ -137,7 +132,7 @@ bool GetPermissionBriefDef(const std::string& permission, PermissionBriefDef& pe
     if (!TransferPermissionToOpcode(permission, opCode)) {
         return false; // default is false
     }
-    CopyPermissionBriefDef(opCode, permissionBriefDef);
+    permissionBriefDef = g_permList[opCode];
     return true;
 }
 
@@ -146,7 +141,7 @@ void GetPermissionBriefDef(uint32_t opCode, PermissionBriefDef& permissionBriefD
     if (!g_initedPermMap) {
         InitMap();
     }
-    CopyPermissionBriefDef(opCode, permissionBriefDef);
+    permissionBriefDef = g_permList[opCode];
 }
 
 void ConvertPermissionBriefToDef(const PermissionBriefDef& briefDef, PermissionDef& def)

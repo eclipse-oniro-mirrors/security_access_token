@@ -82,7 +82,7 @@ static const int32_t MAX_REQ_PERM_NUM = 10 * 1024;
 // dlp json
 static const char* CLONE_PERMISSION_CONFIG_FILE = "/system/etc/dlp_permission/clone_app_permission.json";
 
-void TrimString(std::string& value)
+static void TrimString(std::string& value)
 {
     auto begin = value.find_first_not_of(" \t\r\n");
     if (begin == std::string::npos) {
@@ -344,11 +344,12 @@ int32_t ConfigPolicLoader::GetPermissionDefinitionExt(std::vector<std::string>& 
     GetConfigFilePathList(pathList);
     for (const auto& path : pathList) {
         std::string fileContent;
-        int32_t res = ReadCfgFile(path + PERMISSION_DEFINITION_EXT_FILE, fileContent);
+        std::string filePath = path + PERMISSION_DEFINITION_EXT_FIL;
+        int32_t res = ReadCfgFile(filePath, fileContent);
         if (res != RET_SUCCESS) {
-            LOGE(ATM_DOMAIN, ATM_TAG,
+            LOGI(ATM_DOMAIN, ATM_TAG,
                 "Failed to read configuration file: %{public}s, return code: %{public}d.",
-                (path + PERMISSION_DEFINITION_EXT_FILE).c_str(), res);
+                (filePath).c_str(), res);
             continue;
         }
 

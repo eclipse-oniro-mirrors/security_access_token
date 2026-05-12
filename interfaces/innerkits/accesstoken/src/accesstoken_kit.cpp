@@ -989,8 +989,8 @@ bool AccessTokenKit::IsSupportPermission(const std::string& permissionName)
     if (permissionBriefDef.isEnable) {
         return true;
     }
-        return AccessTokenManagerClient::GetInstance().IsSupportPermission(permissionName);
-    }
+    return AccessTokenManagerClient::GetInstance().IsSupportPermission(permissionName);
+}
  	 
 
 bool AccessTokenKit::TransferPermissionToOpcode(const std::string& permissionName, uint32_t& permCode)
@@ -998,7 +998,7 @@ bool AccessTokenKit::TransferPermissionToOpcode(const std::string& permissionNam
     if (!AccessToken::TransferPermissionToOpcode(permissionName, permCode)) {
         return false;
     }
-        return IsSupportPermission(permissionName);
+    return IsSupportPermission(permissionName);
 }
 
 bool AccessTokenKit::TransferOpcodeToPermission(uint32_t permCode, std::string& permissionName)
