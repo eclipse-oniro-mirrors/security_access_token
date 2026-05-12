@@ -404,7 +404,9 @@ void AccessTokenInfoManager::LoadPermissionDefinitionExt(ConfigPolicyLoaderInter
 {
     std::vector<std::string> permissions;
     if (policy.GetPermissionDefinitionExt(permissions) != RET_SUCCESS) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get permission definition extension, return code is %{public}d.", policy.GetPermissionDefinitionExt(permissions));
+        LOGE(ATM_DOMAIN, ATM_TAG,
+            "Failed to get permission definition extension, return code is %{public}d.",
+            policy.GetPermissionDefinitionExt(permissions));
         return;
     }
     for (const auto& permissionName : permissions) {
