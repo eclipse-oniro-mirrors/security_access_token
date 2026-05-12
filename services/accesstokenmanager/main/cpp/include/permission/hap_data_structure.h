@@ -21,7 +21,7 @@
 #include <vector>
 
 #include "access_token.h"
-#ifdef SUPPORT_JSAPI
+#ifdef IS_SUPPORT_HAP_RUNNING
 #include "provision/provision_info.h"
 #endif
 
@@ -34,9 +34,7 @@ struct BundleParam final {
     std::string appId;
     uint64_t appIdentifier = 0;
     int32_t apiVersion = 0;
-#ifdef SUPPORT_JSAPI
-    Verify::AppDistType distributionType = Verify::AppDistType::NONE_TYPE;
-#else
+#ifdef IS_SUPPORT_HAP_RUNNING
     int32_t distributionType = 0;
 #endif
     bool isSystem = false;
@@ -47,9 +45,7 @@ struct BundleParam final {
 class BundleNoCachedInfo final {
 public:
     ATokenAplEnum apl = APL_INVALID;
-#ifdef SUPPORT_JSAPI
-    Verify::AppDistType distributionType = Verify::AppDistType::NONE_TYPE;
-#else
+#ifdef IS_SUPPORT_HAP_RUNNING
     int32_t distributionType = 0;
 #endif
     uint32_t idType = 0;

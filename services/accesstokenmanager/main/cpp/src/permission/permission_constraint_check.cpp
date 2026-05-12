@@ -78,7 +78,7 @@ bool PermissionConstraintCheck::IsPermAvailableRangeSatisfied(const BundleParam&
             LOGI(ATM_DOMAIN, ATM_TAG, "Debug app use permission: %{public}s.", briefDef.permissionName);
             return true;
         }
-#ifdef SUPPORT_JSAPI
+#ifdef IS_SUPPORT_HAP_RUNNING
         if (param.distributionType != Verify::AppDistType::ENTERPRISE_MDM) {
             LOGE(ATM_DOMAIN, ATM_TAG, "%{public}s is a mdm permission, the hap is not a mdm application.",
                 briefDef.permissionName);
@@ -88,7 +88,7 @@ bool PermissionConstraintCheck::IsPermAvailableRangeSatisfied(const BundleParam&
 #endif
     }
     if (briefDef.availableType == ATokenAvailableTypeEnum::ENTERPRISE_NORMAL) {
-#ifdef SUPPORT_JSAPI
+#ifdef IS_SUPPORT_HAP_RUNNING
         if (param.distributionType == Verify::AppDistType::ENTERPRISE_MDM ||
             param.distributionType == Verify::AppDistType::ENTERPRISE_NORMAL ||
             param.isSystem || param.isDebug) {

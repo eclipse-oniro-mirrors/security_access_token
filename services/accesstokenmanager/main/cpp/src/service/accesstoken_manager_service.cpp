@@ -43,7 +43,7 @@
 #ifdef HITRACE_NATIVE_ENABLE
 #include "hitrace_meter.h"
 #endif
-#ifdef SUPPORT_JSAPI
+#ifdef IS_SUPPORT_HAP_RUNNING
 #include "interfaces/hap_verify.h"
 #include "provision/provision_info.h"
 #endif
@@ -1186,7 +1186,7 @@ int32_t AccessTokenManagerService::InitHapToken(const HapInfoParcel& info, const
         bundleParam.bundleName = hapInfoParm.bundleName;
         bundleParam.appId = hapInfoParm.appIDDesc;
         bundleParam.apiVersion = hapInfoParm.apiVersion;
-#ifdef SUPPORT_JSAPI
+#ifdef IS_SUPPORT_HAP_RUNNING
         bundleParam.distributionType = Verify::ParseAppDistType(hapInfoParm.appDistributionType);
 #endif
         bundleParam.isSystem = hapInfoParm.isSystemApp;
@@ -1356,7 +1356,7 @@ int32_t AccessTokenManagerService::UpdateHapToken(uint64_t& fullTokenId, const U
     }
     bundleParam.appId = info.appIDDesc;
     bundleParam.apiVersion = info.apiVersion;
-#ifdef SUPPORT_JSAPI
+#ifdef IS_SUPPORT_HAP_RUNNING
     bundleParam.distributionType = Verify::ParseAppDistType(info.appDistributionType);
 #endif
     bundleParam.isSystem = info.isSystemApp;
@@ -1934,7 +1934,7 @@ void AccessTokenManagerService::FilterInvalidData(const std::vector<GenericValue
         PermissionRulesEnum rule = PERMISSION_ACL_RULE;
         appDistributionType = result.GetString(TokenFiledConst::FIELD_APP_DISTRIBUTION_TYPE);
         BundleParam bundleParam;
-#ifdef SUPPORT_JSAPI
+#ifdef IS_SUPPORT_HAP_RUNNING
         bundleParam.distributionType = Verify::ParseAppDistType(appDistributionType);
 #endif
         bundleParam.isSystem = iter->second.isSystemApp;
