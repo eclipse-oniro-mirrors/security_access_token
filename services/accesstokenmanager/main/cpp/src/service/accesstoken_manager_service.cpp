@@ -43,7 +43,10 @@
 #ifdef HITRACE_NATIVE_ENABLE
 #include "hitrace_meter.h"
 #endif
+#ifdef SUPPORT_JSAPI
 #include "interfaces/hap_verify.h"
+#include "provision/provision_info.h"
+#endif
 #include "ipc_skeleton.h"
 #include "libraryloader.h"
 #include "memory_guard.h"
@@ -58,7 +61,6 @@
 #include "permission_request_toggle_manager.h"
 #include "permission_status_parcel.h"
 #include "permission_validator.h"
-#include "provision/provision_info.h"
 #include "random.h"
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
 #include "sec_comp_enhance_agent.h"
@@ -1184,7 +1186,9 @@ int32_t AccessTokenManagerService::InitHapToken(const HapInfoParcel& info, const
         bundleParam.bundleName = hapInfoParm.bundleName;
         bundleParam.appId = hapInfoParm.appIDDesc;
         bundleParam.apiVersion = hapInfoParm.apiVersion;
+#ifdef SUPPORT_JSAPI
         bundleParam.distributionType = Verify::ParseAppDistType(hapInfoParm.appDistributionType);
+#endif
         bundleParam.isSystem = hapInfoParm.isSystemApp;
         bundleParam.isAtomicService = hapInfoParm.isAtomicService;
         bundleParam.isDebug = (hapInfoParm.appProvisionType == "debug" ||
@@ -1352,7 +1356,9 @@ int32_t AccessTokenManagerService::UpdateHapToken(uint64_t& fullTokenId, const U
     }
     bundleParam.appId = info.appIDDesc;
     bundleParam.apiVersion = info.apiVersion;
+#ifdef SUPPORT_JSAPI
     bundleParam.distributionType = Verify::ParseAppDistType(info.appDistributionType);
+#endif
     bundleParam.isSystem = info.isSystemApp;
     bundleParam.isAtomicService = info.isAtomicService;
     bundleParam.isDebug = (info.appProvisionType == "debug" || info.appDistributionType == "none");
@@ -1928,7 +1934,9 @@ void AccessTokenManagerService::FilterInvalidData(const std::vector<GenericValue
         PermissionRulesEnum rule = PERMISSION_ACL_RULE;
         appDistributionType = result.GetString(TokenFiledConst::FIELD_APP_DISTRIBUTION_TYPE);
         BundleParam bundleParam;
+#ifdef SUPPORT_JSAPI
         bundleParam.distributionType = Verify::ParseAppDistType(appDistributionType);
+#endif
         bundleParam.isSystem = iter->second.isSystemApp;
         bundleParam.isDebug = (appDistributionType == "none"); // only debug hap can use none type
         if (!PermissionConstraintCheck::IsPermAvailableRangeSatisfied(bundleParam, data, rule)) {

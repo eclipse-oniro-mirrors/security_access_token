@@ -21,7 +21,9 @@
 #include <vector>
 
 #include "access_token.h"
+#ifdef SUPPORT_JSAPI
 #include "provision/provision_info.h"
+#endif
 
 namespace OHOS {
 namespace Security {
@@ -32,7 +34,9 @@ struct BundleParam final {
     std::string appId;
     uint64_t appIdentifier = 0;
     int32_t apiVersion = 0;
+#ifdef SUPPORT_JSAPI
     Verify::AppDistType distributionType = Verify::AppDistType::NONE_TYPE;
+#endif
     bool isSystem = false;
     bool isAtomicService = false;
     bool isDebug = false;
@@ -41,7 +45,9 @@ struct BundleParam final {
 class BundleNoCachedInfo final {
 public:
     ATokenAplEnum apl = APL_INVALID;
+#ifdef SUPPORT_JSAPI
     Verify::AppDistType distributionType = Verify::AppDistType::NONE_TYPE;
+#endif
     uint32_t idType = 0;
     uint64_t ownerid = 0;
 };

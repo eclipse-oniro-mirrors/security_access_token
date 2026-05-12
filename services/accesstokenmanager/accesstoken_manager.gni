@@ -171,8 +171,7 @@ accesstoken_manager_base_config = {
     "ipc:ipc_single",
     "relational_store:native_rdb",
     "safwk:system_ability_fwk",
-    "samgr:samgr_proxy",
-    "appverify:libhapverify"
+    "samgr:samgr_proxy"
   ]
 
   # Add global external_deps from access_token.gni
@@ -180,7 +179,11 @@ accesstoken_manager_base_config = {
 
   # Add saf_agent_fence dependency only when support_jsapi is true
   if (support_jsapi) {
-    external_deps += [ "asset:saf_agent_fence" ]
+    external_deps += [
+      "asset:saf_agent_fence",
+      "appverify:libhapverify"
+    ]
+    defines = [ "SUPPORT_JSAPI" ]
   }
 
   if (ohos_indep_compiler_enable) {

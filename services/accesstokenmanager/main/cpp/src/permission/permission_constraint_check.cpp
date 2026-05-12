@@ -78,19 +78,23 @@ bool PermissionConstraintCheck::IsPermAvailableRangeSatisfied(const BundleParam&
             LOGI(ATM_DOMAIN, ATM_TAG, "Debug app use permission: %{public}s.", briefDef.permissionName);
             return true;
         }
+#ifdef SUPPORT_JSAPI
         if (param.distributionType != Verify::AppDistType::ENTERPRISE_MDM) {
             LOGE(ATM_DOMAIN, ATM_TAG, "%{public}s is a mdm permission, the hap is not a mdm application.",
                 briefDef.permissionName);
             rule = PERMISSION_EDM_RULE;
             return false;
         }
+#endif
     }
     if (briefDef.availableType == ATokenAvailableTypeEnum::ENTERPRISE_NORMAL) {
+#ifdef SUPPORT_JSAPI
         if (param.distributionType == Verify::AppDistType::ENTERPRISE_MDM ||
             param.distributionType == Verify::AppDistType::ENTERPRISE_NORMAL ||
             param.isSystem || param.isDebug) {
             return true;
         }
+#endif
         LOGE(ATM_DOMAIN, ATM_TAG,
             "EnterpriseRuleCheck permission = %{public}s bundleName = %{public}s, apiVersion = %{public}d.",
             briefDef.permissionName, param.bundleName.c_str(), param.apiVersion);

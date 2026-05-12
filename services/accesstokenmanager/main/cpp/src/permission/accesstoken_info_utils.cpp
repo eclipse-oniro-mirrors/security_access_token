@@ -118,7 +118,9 @@ void AccessTokenInfoUtils::BuildBundleFullInfo(const BundleParam& param, const H
     innerInfo->permCodeList.clear();
     innerInfo->tokenIds.clear();
     noCached.apl = policy.apl;
+#ifdef SUPPORT_JSAPI
     noCached.distributionType = param.distributionType;
+#endif
     noCached.idType = static_cast<uint32_t>(PermissionConstraintCheck::BuildIdType(param, policy));
     noCached.ownerid = param.appIdentifier;
 
