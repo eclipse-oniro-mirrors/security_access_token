@@ -344,7 +344,7 @@ int32_t ConfigPolicLoader::GetPermissionDefinitionExt(std::vector<std::string>& 
     GetConfigFilePathList(pathList);
     for (const auto& path : pathList) {
         std::string fileContent;
-        std::string filePath = path + PERMISSION_DEFINITION_EXT_FIL;
+        std::string filePath = path + PERMISSION_DEFINITION_EXT_FILE;
         int32_t res = ReadCfgFile(filePath, fileContent);
         if (res != RET_SUCCESS) {
             LOGI(ATM_DOMAIN, ATM_TAG,
