@@ -44,6 +44,7 @@ CliInfo BuildCliInfo()
     };
 }
 
+#ifdef ENHANCE_CAPABILITY
 SkillInfo BuildSkillInfo()
 {
     return {
@@ -52,6 +53,7 @@ SkillInfo BuildSkillInfo()
         .moduleName = "entry"
     };
 }
+#endif
 
 void SwitchToRootCaller()
 {
@@ -81,6 +83,7 @@ int32_t InitCliToolTokenWithEmptyChallenge(AccessTokenID hostTokenId, const CliI
     return ret;
 }
 
+#ifdef ENHANCE_CAPABILITY
 int32_t InitSkillToolTokenWithEmptyChallenge(AccessTokenID hostTokenId, const SkillInfo& skillInfo,
     AccessTokenIDEx& tokenIdEx, std::vector<PermissionWithValue>& kernelPermList)
 {
@@ -98,6 +101,7 @@ int32_t InitSkillToolTokenWithEmptyChallenge(AccessTokenID hostTokenId, const Sk
     EXPECT_EQ(0, SetSelfTokenID(callerTokenId));
     return ret;
 }
+#endif
 
 int32_t DeleteToolTokenByCurrentPid()
 {
@@ -197,6 +201,7 @@ HWTEST_F(ToolTokenWithEmptyChallengeTest, GetHostTokenId001, TestSize.Level4)
     }
 }
 
+#ifdef ENHANCE_CAPABILITY
 /**
  * @tc.name: GetHostTokenId002
  * @tc.desc: GetHostTokenId returns host token for skill tool token created with empty challenge.
@@ -231,6 +236,7 @@ HWTEST_F(ToolTokenWithEmptyChallengeTest, GetHostTokenId002, TestSize.Level4)
         EXPECT_EQ(skillInfo.moduleName, tokenInfo.moduleName);
     }
 }
+#endif
 
 /**
  * @tc.name: GetHostTokenId003
@@ -250,6 +256,7 @@ HWTEST_F(ToolTokenWithEmptyChallengeTest, GetHostTokenId003, TestSize.Level4)
     EXPECT_EQ(INVALID_TOKENID, queriedHostTokenId);
 }
 
+#ifdef ENHANCE_CAPABILITY
 /**
  * @tc.name: GetHostTokenId004
  * @tc.desc: GetHostTokenId returns token-not-exist after tool token is deleted.
@@ -280,6 +287,7 @@ HWTEST_F(ToolTokenWithEmptyChallengeTest, GetHostTokenId004, TestSize.Level4)
         AccessTokenKit::GetHostTokenId(tokenIdEx.tokenIdExStruct.tokenID, queriedHostTokenId));
     EXPECT_EQ(INVALID_TOKENID, queriedHostTokenId);
 }
+#endif
 
 /**
  * @tc.name: GetHostTokenId005
