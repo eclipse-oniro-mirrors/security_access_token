@@ -30,6 +30,7 @@ public:
 
     virtual ToolTokenType GetType() const = 0;
     virtual int32_t VerifyAccessToken(const std::string& permissionName) const;
+    int32_t UpdateRestrictedFlag(uint32_t permCode, bool isRestricted, bool& hasFlagChanged) const;
 
     AccessTokenID GetTokenId() const;
     AccessTokenID GetHostTokenId() const;

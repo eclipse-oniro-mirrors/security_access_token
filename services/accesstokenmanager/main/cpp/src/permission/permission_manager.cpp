@@ -1086,7 +1086,8 @@ bool PermissionManager::InitPermissionList(const BundleParam& param, const HapPo
             LOGE(ATM_DOMAIN, ATM_TAG, "Get definition of %{public}s failed.",
                 state.permissionName.c_str());
 #ifdef IS_SUPPORT_HAP_RUNNING
-            FillUndefinedPermVector(state.permissionName, Verify::AppDistTypeToString(param.distributionType),
+            FillUndefinedPermVector(state.permissionName,
+                Verify::AppDistTypeToString(static_cast<Verify::AppDistType>(param.distributionType)),
                 policy, undefValues);
 #endif
             continue;
@@ -1096,7 +1097,8 @@ bool PermissionManager::InitPermissionList(const BundleParam& param, const HapPo
         if (!PermissionConstraintCheck::AclAndEdmCheck(param, briefDef, policy, result)) {
             if (dataRefresh) {
 #ifdef IS_SUPPORT_HAP_RUNNING
-                FillUndefinedPermVector(state.permissionName, Verify::AppDistTypeToString(param.distributionType),
+                FillUndefinedPermVector(state.permissionName,
+                    Verify::AppDistTypeToString(static_cast<Verify::AppDistType>(param.distributionType)),
                     policy, undefValues);
 #endif
                 continue;

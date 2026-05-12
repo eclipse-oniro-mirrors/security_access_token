@@ -29,9 +29,11 @@
 #include "hap_info_parcel.h"
 #include "hap_policy_parcel.h"
 #include "permission_dialog_result_parcel.h"
+#include "permission_map.h"
 #include "permission_map_fence.h"
 #include "saf_agent_fence.h"
 #include "token_setproc.h"
+#include "user_policy_manager.h"
 
 using namespace testing::ext;
 
@@ -104,6 +106,7 @@ std::map<std::string, std::vector<std::string>> BuildCliRuntimeMockMap()
     return {
         { CUSTOM_SCREEN_CAPTURE, BuildMockTypeARuntimePermissions() },
         { ACCESS_SYSTEM_SETTINGS, { ACCESS_SYSTEM_SETTINGS } },
+        { CAMERA_PERMISSION, { CAMERA_PERMISSION } },
     };
 }
 
@@ -303,6 +306,22 @@ public:
 
 private:
     std::vector<AccessTokenID> tokenIds_;
+};
+
+class UserPolicyCleaner final {
+public:
+    explicit UserPolicyCleaner(const std::string& permission)
+        : permission_(permission), callerToken_(GetSelfTokenID())
+    {}
+    ~UserPolicyCleaner()
+    {
+        std::vector<UserPolicyChange> userPolicyList;
+        (void)UserPolicyManager::GetInstance().ClearUserPolicy({ permission_ }, callerToken_, userPolicyList);
+    }
+
+private:
+    std::string permission_;
+    AccessTokenID callerToken_;
 };
 
 struct InitCliTokenRequest {
@@ -1286,6 +1305,7 @@ HWTEST_F(ToolTokenMockTest, GenerateCliAuthResult_002, TestSize.Level1)
 
     auto authResult = GenerateCliAuthResult(*atManagerService_, callerFullTokenId, hostTokenId,
         { BuildCliAuthInfoParcel(BuildCliInfo("location", "query"), { CUSTOM_SCREEN_CAPTURE }, { false }) });
+    ASSERT_EQ(1, static_cast<int32_t>(authResult.result.authResults.size()));
     std::vector<std::string> kernelPermList;
     AccessTokenID toolTokenId = InitCliToolToken(
         hostTokenId, authResult.result.authResults[0], BuildCliInfo("location", "query"), kernelPermList);
@@ -1974,6 +1994,7 @@ HWTEST_F(ToolTokenMockTest, DeleteToolTokenByPid_003, TestSize.Level1)
     MockSingleCliAuthChallenge(authInfo, "delete_003_challenge", "delete_003_ticket");
     ToolAuthResultParcel authResult =
         GenerateCliAuthResult(*atManagerService_, callerFullTokenId, hostTokenId, { authInfo });
+    ASSERT_EQ(1, static_cast<int32_t>(authResult.result.authResults.size()));
     InitCliTokenRequest request = {
         .callerTokenId = shellTokenId,
         .callerUid = ROOT_UID,
@@ -2013,6 +2034,7 @@ HWTEST_F(ToolTokenMockTest, GetCliTokenInfo_004, TestSize.Level1)
     MockSingleCliAuthChallenge(authInfo, "getcli_004_challenge", "getcli_004_ticket");
     ToolAuthResultParcel authResult =
         GenerateCliAuthResult(*atManagerService_, callerFullTokenId, hostTokenId, { authInfo });
+    ASSERT_EQ(1, static_cast<int32_t>(authResult.result.authResults.size()));
     InitCliTokenRequest request = {
         .callerTokenId = shellTokenId,
         .callerUid = ROOT_UID,
@@ -2056,6 +2078,7 @@ HWTEST_F(ToolTokenMockTest, GetHostTokenId_004, TestSize.Level1)
     MockSingleCliAuthChallenge(authInfo, "gethost_004_challenge", "gethost_004_ticket");
     ToolAuthResultParcel authResult =
         GenerateCliAuthResult(*atManagerService_, callerFullTokenId, hostTokenId, { authInfo });
+    ASSERT_EQ(1, static_cast<int32_t>(authResult.result.authResults.size()));
     InitCliTokenRequest request = {
         .callerTokenId = shellTokenId,
         .callerUid = ROOT_UID,
@@ -2121,6 +2144,7 @@ HWTEST_F(ToolTokenMockTest, GetHostTokenId_006, TestSize.Level1)
     MockSingleCliAuthChallenge(authInfo, "gethost_006_challenge", "gethost_006_ticket");
     ToolAuthResultParcel authResult =
         GenerateCliAuthResult(*atManagerService_, callerFullTokenId, hostTokenId, { authInfo });
+    ASSERT_EQ(1, static_cast<int32_t>(authResult.result.authResults.size()));
     InitCliTokenRequest request = {
         .callerTokenId = shellTokenId,
         .callerUid = ROOT_UID,
@@ -2138,6 +2162,258 @@ HWTEST_F(ToolTokenMockTest, GetHostTokenId_006, TestSize.Level1)
         GetHostTokenIdRet(*atManagerService_, unauthorizedFullTokenId, tokenId, queriedHostTokenId));
     EXPECT_EQ(RET_SUCCESS, ToolTokenInfoManager::GetInstance().DeleteToolTokenByPid(getpid()));
 }
+
+/**
+ * @tc.name: UpdateRestrictedFlag_001
+ * @tc.desc: Test UpdateRestrictedFlag returns token-not-exist when tool token is absent.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ToolTokenMockTest, UpdateRestrictedFlag_001, TestSize.Level1)
+{
+    uint32_t permCode = 0;
+    ASSERT_TRUE(TransferPermissionToOpcode(CAMERA_PERMISSION, permCode));
+
+    bool hasFlagChanged = true;
+    EXPECT_EQ(AccessTokenError::ERR_TOKENID_NOT_EXIST,
+        ToolTokenInfoManager::GetInstance().UpdateRestrictedFlag(INVALID_TOKENID, permCode, true, hasFlagChanged));
+    EXPECT_FALSE(hasFlagChanged);
+}
+
+/**
+ * @tc.name: UpdateRestrictedFlag_002
+ * @tc.desc: Test UpdateRestrictedFlag updates an existing tool token and reports whether flag changed.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ToolTokenMockTest, UpdateRestrictedFlag_002, TestSize.Level1)
+{
+    AccessTokenID callerTokenId = INVALID_TOKENID;
+    AccessTokenID hostTokenId = INVALID_TOKENID;
+    TokenCleaner cleaner;
+    uint64_t callerFullTokenId = CreateServiceTestToken(
+        "tooltoken_restricted_flag_caller", true, BuildManagePermissionStates(), callerTokenId);
+    uint64_t hostFullTokenId = CreateServiceTestToken("tooltoken_restricted_flag_host", true,
+        { BuildGrantedStatus(CAMERA_PERMISSION, PERMISSION_SYSTEM_FIXED) }, hostTokenId);
+    ASSERT_NE(0, callerFullTokenId);
+    ASSERT_NE(0, hostFullTokenId);
+    cleaner.Add(callerTokenId);
+    cleaner.Add(hostTokenId);
+
+    PrepareMockEnvironment();
+    auto authInfo = BuildCliAuthInfoParcel(BuildCliInfo("camera", "capture"), { CAMERA_PERMISSION }, { true });
+    MockSingleCliAuthChallenge(authInfo, "restricted_flag_challenge", "restricted_flag_ticket");
+    ToolAuthResultParcel authResult =
+        GenerateCliAuthResult(*atManagerService_, callerFullTokenId, hostTokenId, { authInfo });
+    ASSERT_EQ(1, static_cast<int32_t>(authResult.result.authResults.size()));
+    InitCliTokenRequest request = {
+        .callerTokenId = GetSelfTokenID(),
+        .callerUid = ROOT_UID,
+        .hostTokenId = hostTokenId,
+        .challenge = authResult.result.authResults[0],
+        .cliInfo = BuildCliInfo("camera", "capture"),
+    };
+    InitCliTokenResult initResult;
+    AccessTokenID tokenId = InitCliToolTokenByService(*atManagerService_, request, initResult);
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+
+    uint32_t permCode = 0;
+    ASSERT_TRUE(TransferPermissionToOpcode(CAMERA_PERMISSION, permCode));
+    bool hasFlagChanged = false;
+    EXPECT_EQ(RET_SUCCESS,
+        ToolTokenInfoManager::GetInstance().UpdateRestrictedFlag(tokenId, permCode, true, hasFlagChanged));
+    EXPECT_TRUE(hasFlagChanged);
+    VerifyRuntimePermission(tokenId, CAMERA_PERMISSION, PERMISSION_DENIED);
+
+    hasFlagChanged = true;
+    EXPECT_EQ(RET_SUCCESS,
+        ToolTokenInfoManager::GetInstance().UpdateRestrictedFlag(tokenId, permCode, true, hasFlagChanged));
+    EXPECT_FALSE(hasFlagChanged);
+
+    hasFlagChanged = false;
+    EXPECT_EQ(RET_SUCCESS,
+        ToolTokenInfoManager::GetInstance().UpdateRestrictedFlag(tokenId, permCode, false, hasFlagChanged));
+    EXPECT_TRUE(hasFlagChanged);
+    VerifyRuntimePermission(tokenId, CAMERA_PERMISSION, PERMISSION_GRANTED);
+
+    EXPECT_EQ(RET_SUCCESS, ToolTokenInfoManager::GetInstance().DeleteToolTokenByPid(getpid()));
+}
+
+/**
+ * @tc.name: RefreshUserPolicyFlag_001
+ * @tc.desc: Test RefreshUserPolicyFlag handles empty change list.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ToolTokenMockTest, RefreshUserPolicyFlag_001, TestSize.Level1)
+{
+    EXPECT_EQ(RET_SUCCESS, ToolTokenInfoManager::GetInstance().RefreshUserPolicyFlag({}));
+}
+
+/**
+ * @tc.name: RefreshUserPolicyFlag_002
+ * @tc.desc: Test RefreshUserPolicyFlag restricts and restores an existing tool token.
+ * @tc.type: FUNC
+ */
+#ifdef SUPPORT_MANAGE_USER_POLICY
+HWTEST_F(ToolTokenMockTest, RefreshUserPolicyFlag_002, TestSize.Level1)
+{
+    AccessTokenID callerTokenId = INVALID_TOKENID;
+    AccessTokenID hostTokenId = INVALID_TOKENID;
+    TokenCleaner cleaner;
+    uint64_t callerFullTokenId = CreateServiceTestToken(
+        "tooltoken_user_policy_caller", true, BuildManagePermissionStates(), callerTokenId);
+    uint64_t hostFullTokenId = CreateServiceTestToken("tooltoken_user_policy_host", true,
+        { BuildGrantedStatus(ACCESS_SYSTEM_SETTINGS, PERMISSION_SYSTEM_FIXED) }, hostTokenId);
+    ASSERT_NE(0, callerFullTokenId);
+    ASSERT_NE(0, hostFullTokenId);
+    cleaner.Add(callerTokenId);
+    cleaner.Add(hostTokenId);
+
+    PrepareMockEnvironment();
+    auto authInfo =
+        BuildCliAuthInfoParcel(BuildCliInfo("settings", "set"), { ACCESS_SYSTEM_SETTINGS }, { true });
+    MockSingleCliAuthChallenge(authInfo, "user_policy_challenge", "user_policy_ticket");
+    ToolAuthResultParcel authResult =
+        GenerateCliAuthResult(*atManagerService_, callerFullTokenId, hostTokenId, { authInfo });
+    ASSERT_EQ(1, static_cast<int32_t>(authResult.result.authResults.size()));
+    InitCliTokenRequest request = {
+        .callerTokenId = GetSelfTokenID(),
+        .callerUid = ROOT_UID,
+        .hostTokenId = hostTokenId,
+        .challenge = authResult.result.authResults[0],
+        .cliInfo = BuildCliInfo("settings", "set"),
+    };
+    InitCliTokenResult initResult;
+    AccessTokenID tokenId = InitCliToolTokenByService(*atManagerService_, request, initResult);
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+    VerifyRuntimePermission(tokenId, ACCESS_SYSTEM_SETTINGS, PERMISSION_GRANTED);
+
+    std::vector<UserPolicyChange> userPolicyList;
+    UserPermissionPolicy policy = {
+        .permissionName = ACCESS_SYSTEM_SETTINGS,
+        .userPolicyList = {{ .userId = USER_ID, .isRestricted = true }},
+        .isPersist = false
+    };
+    EXPECT_EQ(RET_SUCCESS,
+        UserPolicyManager::GetInstance().SetUserPolicy({ policy }, GetSelfTokenID(), userPolicyList));
+    EXPECT_EQ(RET_SUCCESS, ToolTokenInfoManager::GetInstance().RefreshUserPolicyFlag(userPolicyList));
+    VerifyRuntimePermission(tokenId, ACCESS_SYSTEM_SETTINGS, PERMISSION_DENIED);
+
+    EXPECT_EQ(RET_SUCCESS,
+        UserPolicyManager::GetInstance().ClearUserPolicy({ ACCESS_SYSTEM_SETTINGS }, GetSelfTokenID(), userPolicyList));
+    EXPECT_EQ(RET_SUCCESS, ToolTokenInfoManager::GetInstance().RefreshUserPolicyFlag(userPolicyList));
+    VerifyRuntimePermission(tokenId, ACCESS_SYSTEM_SETTINGS, PERMISSION_GRANTED);
+
+    EXPECT_EQ(RET_SUCCESS, ToolTokenInfoManager::GetInstance().DeleteToolTokenByPid(getpid()));
+}
+
+/**
+ * @tc.name: InitCliTokenUserPolicy_001
+ * @tc.desc: Test InitCliToken applies existing user policy restricted flag during token initialization.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ToolTokenMockTest, InitCliTokenUserPolicy_001, TestSize.Level1)
+{
+    AccessTokenID callerTokenId = INVALID_TOKENID;
+    AccessTokenID hostTokenId = INVALID_TOKENID;
+    TokenCleaner cleaner;
+    uint64_t callerFullTokenId = CreateServiceTestToken(
+        "tooltoken_init_user_policy_caller", true, BuildManagePermissionStates(), callerTokenId);
+    uint64_t hostFullTokenId = CreateServiceTestToken("tooltoken_init_user_policy_host", true,
+        { BuildGrantedStatus(ACCESS_SYSTEM_SETTINGS, PERMISSION_SYSTEM_FIXED) }, hostTokenId);
+    ASSERT_NE(0, callerFullTokenId);
+    ASSERT_NE(0, hostFullTokenId);
+    cleaner.Add(callerTokenId);
+    cleaner.Add(hostTokenId);
+
+    std::vector<UserPolicyChange> userPolicyList;
+    UserPermissionPolicy policy = {
+        .permissionName = ACCESS_SYSTEM_SETTINGS,
+        .userPolicyList = {{ .userId = USER_ID, .isRestricted = true }},
+        .isPersist = false
+    };
+    ASSERT_EQ(RET_SUCCESS,
+        UserPolicyManager::GetInstance().SetUserPolicy({ policy }, GetSelfTokenID(), userPolicyList));
+    UserPolicyCleaner policyCleaner(ACCESS_SYSTEM_SETTINGS);
+
+    PrepareMockEnvironment();
+    auto authInfo =
+        BuildCliAuthInfoParcel(BuildCliInfo("settings", "set"), { ACCESS_SYSTEM_SETTINGS }, { true });
+    MockSingleCliAuthChallenge(authInfo, "init_user_policy_challenge", "init_user_policy_ticket");
+    ToolAuthResultParcel authResult =
+        GenerateCliAuthResult(*atManagerService_, callerFullTokenId, hostTokenId, { authInfo });
+    ASSERT_EQ(1, static_cast<int32_t>(authResult.result.authResults.size()));
+
+    InitCliTokenRequest request = {
+        .callerTokenId = GetSelfTokenID(),
+        .callerUid = ROOT_UID,
+        .hostTokenId = hostTokenId,
+        .challenge = authResult.result.authResults[0],
+        .cliInfo = BuildCliInfo("settings", "set"),
+    };
+    InitCliTokenResult initResult;
+    AccessTokenID tokenId = InitCliToolTokenByService(*atManagerService_, request, initResult);
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+    VerifyRuntimePermission(tokenId, ACCESS_SYSTEM_SETTINGS, PERMISSION_DENIED);
+
+    policy.userPolicyList[0].isRestricted = false;
+    ASSERT_EQ(RET_SUCCESS,
+        UserPolicyManager::GetInstance().SetUserPolicy({ policy }, GetSelfTokenID(), userPolicyList));
+    EXPECT_EQ(RET_SUCCESS, ToolTokenInfoManager::GetInstance().RefreshUserPolicyFlag(userPolicyList));
+    VerifyRuntimePermission(tokenId, ACCESS_SYSTEM_SETTINGS, PERMISSION_GRANTED);
+
+    EXPECT_EQ(RET_SUCCESS, ToolTokenInfoManager::GetInstance().DeleteToolTokenByPid(getpid()));
+}
+
+/**
+ * @tc.name: RefreshUserPolicyFlag_003
+ * @tc.desc: Test RefreshUserPolicyFlag skips permissions not requested by a tool token.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ToolTokenMockTest, RefreshUserPolicyFlag_003, TestSize.Level1)
+{
+    AccessTokenID callerTokenId = INVALID_TOKENID;
+    AccessTokenID hostTokenId = INVALID_TOKENID;
+    TokenCleaner cleaner;
+    uint64_t callerFullTokenId = CreateServiceTestToken(
+        "tooltoken_user_policy_missing_perm_caller", true, BuildManagePermissionStates(), callerTokenId);
+    uint64_t hostFullTokenId = CreateServiceTestToken("tooltoken_user_policy_missing_perm_host", true,
+        { BuildGrantedStatus(ACCESS_SYSTEM_SETTINGS, PERMISSION_SYSTEM_FIXED) }, hostTokenId);
+    ASSERT_NE(0, callerFullTokenId);
+    ASSERT_NE(0, hostFullTokenId);
+    cleaner.Add(callerTokenId);
+    cleaner.Add(hostTokenId);
+
+    PrepareMockEnvironment();
+    auto authInfo =
+        BuildCliAuthInfoParcel(BuildCliInfo("settings", "set"), { ACCESS_SYSTEM_SETTINGS }, { true });
+    MockSingleCliAuthChallenge(authInfo, "missing_perm_challenge", "missing_perm_ticket");
+    ToolAuthResultParcel authResult =
+        GenerateCliAuthResult(*atManagerService_, callerFullTokenId, hostTokenId, { authInfo });
+    ASSERT_EQ(1, static_cast<int32_t>(authResult.result.authResults.size()));
+    InitCliTokenRequest request = {
+        .callerTokenId = GetSelfTokenID(),
+        .callerUid = ROOT_UID,
+        .hostTokenId = hostTokenId,
+        .challenge = authResult.result.authResults[0],
+        .cliInfo = BuildCliInfo("settings", "set"),
+    };
+    InitCliTokenResult initResult;
+    AccessTokenID tokenId = InitCliToolTokenByService(*atManagerService_, request, initResult);
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+    VerifyRuntimePermission(tokenId, ACCESS_SYSTEM_SETTINGS, PERMISSION_GRANTED);
+
+    uint32_t missingPermCode = 0;
+    ASSERT_TRUE(TransferPermissionToOpcode(CAMERA_PERMISSION, missingPermCode));
+    UserPolicyChange missingPermChange {
+        .permCode = missingPermCode,
+        .isPersist = false,
+        .changedUserList = { USER_ID }
+    };
+    EXPECT_EQ(RET_SUCCESS, ToolTokenInfoManager::GetInstance().RefreshUserPolicyFlag({ missingPermChange }));
+    VerifyRuntimePermission(tokenId, ACCESS_SYSTEM_SETTINGS, PERMISSION_GRANTED);
+
+    EXPECT_EQ(RET_SUCCESS, ToolTokenInfoManager::GetInstance().DeleteToolTokenByPid(getpid()));
+}
+#endif
 }
 }
 }

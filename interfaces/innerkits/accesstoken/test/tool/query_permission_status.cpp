@@ -119,7 +119,7 @@ int32_t main(int argc, char* argv[])
         return SUCCESS_EXIT_CODE;
     }
 
-    AccessTokenID nativeTokenId = AccessTokenKit::GetNativeTokenId("privacy_service");
+    AccessTokenID nativeTokenId = GetNativeTokenId("privacy_service");
     SetSelfTokenID(nativeTokenId);
 
     std::vector<PermissionStatus> permissionInfoList;

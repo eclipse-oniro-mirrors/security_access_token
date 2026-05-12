@@ -56,7 +56,7 @@ std::recursive_mutex g_instanceMutex;
 static constexpr int32_t SA_ID_ACCESSTOKEN_MANAGER_SERVICE = 3503;
 static constexpr int MAX_PERMISSION_SIZE = 1024;
 #ifdef SUPPORT_MANAGE_USER_POLICY
-static constexpr int32_t MAX_USER_POLICY_SIZE = 1024;
+static constexpr int32_t MAX_USER_POLICY_SIZE = 200;
 #endif
 static constexpr int32_t MAX_EXTENDED_VALUE_LIST_SIZE = 512;
 static constexpr uint32_t MAX_CALLBACK_MAP_SIZE = 200;
@@ -1180,6 +1180,7 @@ int32_t AccessTokenManagerClient::SetUserPolicy(const std::vector<UserPermission
             policyIdl.isRestricted = userPolicy.isRestricted;
             permPolicyIdl.userPolicyList.emplace_back(policyIdl);
         }
+        permPolicyIdl.isPersist = permPolicy.isPersist;
         userPermissionListIdl.emplace_back(permPolicyIdl);
     }
     int32_t errCode = proxy->SetUserPolicy(userPermissionListIdl);

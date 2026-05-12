@@ -78,9 +78,11 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
     "${access_token_path}/services/accesstokenmanager/test/unittest/database",
     "${access_token_path}/services/accesstokenmanager/test/unittest/common",
     "${access_token_path}/services/accesstokenmanager/test/unittest/tooltoken",
+    "${access_token_path}/interfaces/innerkits/accesstoken/test/unittest/common",
   ]
 
   sources = [
+    "${access_token_path}/interfaces/innerkits/accesstoken/test/unittest/common/test_common.cpp",
     "common/parameter.cpp",
     "common/parameters.cpp",
     "database/database_consistency_test.cpp",

@@ -33,6 +33,7 @@
 #include "claw_ticket_manager.h"
 #include "accesstoken_id_manager.h"
 #include "accesstoken_info_dumper.h"
+#include "callback_manager.h"
 #include "constant_common.h"
 #include "claw_token_info_manager.h"
 #include "data_usage_dfx.h"
@@ -52,6 +53,7 @@
 #include "memory_guard.h"
 #include "parameter.h"
 #include "parameters.h"
+#include "permission_change_notifier.h"
 #include "permission_list_state.h"
 #include "permission_manager.h"
 #include "permission_constraint_check.h"
@@ -71,6 +73,7 @@
 #include "time_util.h"
 #include "tokenid_attributes.h"
 #include "token_field_const.h"
+#include "user_policy_manager.h"
 #ifdef TOKEN_SYNC_ENABLE
 #include "token_modify_notifier.h"
 #endif // TOKEN_SYNC_ENABLE
@@ -95,8 +98,7 @@ const char* DEVELOPER_MODE_STATE = "const.security.developermode.state";
 const std::string MANAGE_HAP_TOKENID_PERMISSION = "ohos.permission.MANAGE_HAP_TOKENID";
 static constexpr int MAX_PERMISSION_SIZE = 1024;
 #ifdef SUPPORT_MANAGE_USER_POLICY
-static constexpr int32_t MAX_USER_POLICY_SIZE = 1024;
-const std::string MANAGE_USER_POLICY = "ohos.permission.MANAGE_USER_POLICY";
+static constexpr int MAX_SET_USER_POLICY_SIZE = 200;
 #endif
 const std::string GRANT_SENSITIVE_PERMISSIONS = "ohos.permission.GRANT_SENSITIVE_PERMISSIONS";
 const std::string REVOKE_SENSITIVE_PERMISSIONS = "ohos.permission.REVOKE_SENSITIVE_PERMISSIONS";
@@ -110,6 +112,7 @@ const std::string QUERY_TOOL_PERMISSIONS = "ohos.permission.QUERY_TOOL_PERMISSIO
 const std::string MANAGE_TOOL_RUNTIME_PERMISSIONS = "ohos.permission.MANAGE_TOOL_RUNTIME_PERMISSIONS";
 
 static constexpr int32_t SA_ID_ACCESSTOKEN_MANAGER_SERVICE = 3503;
+std::mutex g_userPolicyUpdateMutex;
 
 #ifdef HICOLLIE_ENABLE
 constexpr uint32_t TIMEOUT = 40; // 40s
@@ -498,14 +501,6 @@ int AccessTokenManagerService::VerifyAccessToken(AccessTokenID tokenID, const st
     }
     LOGD(ATM_DOMAIN, ATM_TAG, "Id %{public}d, perm %{public}s, res %{public}d.",
         tokenID, permissionName.c_str(), res);
-    if ((res == PERMISSION_GRANTED) &&
-        (TokenIDAttributes::GetTokenIdTypeEnum(tokenID) == TOKEN_HAP)) {
-        uint32_t permCode;
-        if (TransferPermissionToOpcode(permissionName, permCode)) {
-            res = AccessTokenInfoManager::GetInstance().IsPermissionRestrictedByUserPolicy(tokenID, permCode) ?
-                PERMISSION_DENIED : PERMISSION_GRANTED;
-        }
-    }
 #ifdef HITRACE_NATIVE_ENABLE
     FinishTrace(HITRACE_TAG_ACCESS_CONTROL);
 #endif
@@ -515,6 +510,7 @@ int AccessTokenManagerService::VerifyAccessToken(AccessTokenID tokenID, const st
 int32_t AccessTokenManagerService::InitCliToken(const CliInitInfoParcel& initInfoParcel, uint64_t& fullTokenId,
     std::vector<PermissionWithValueIdl>& kernelPermIdlList)
 {
+    std::lock_guard<std::mutex> userPolicyUpdateGuard(g_userPolicyUpdateMutex);
     kernelPermIdlList.clear();
     if (IPCSkeleton::GetCallingUid() != ROOT_UID) {
         LOGD(ATM_DOMAIN, ATM_TAG, "CallingUid() %{public}d.", IPCSkeleton::GetCallingUid());
@@ -539,6 +535,7 @@ int32_t AccessTokenManagerService::InitCliToken(const CliInitInfoParcel& initInf
 int32_t AccessTokenManagerService::InitSkillToken(const SkillInitInfoParcel& initInfoParcel, uint64_t& fullTokenId,
     std::vector<PermissionWithValueIdl>& kernelPermIdlList)
 {
+    std::lock_guard<std::mutex> userPolicyUpdateGuard(g_userPolicyUpdateMutex);
     kernelPermIdlList.clear();
     if (IPCSkeleton::GetCallingUid() != AIMGR_UID) {
         return AccessTokenError::ERR_PERMISSION_DENIED;
@@ -1254,6 +1251,13 @@ int AccessTokenManagerService::DeleteToken(AccessTokenID tokenID, bool isTokenRe
 
     // only support hap token deletion
     errorCode = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID, isTokenReserved);
+    if (errorCode == RET_SUCCESS && !isTokenReserved) {
+        int32_t ret = UserPolicyManager::GetInstance().RemoveTokenFromPolicyWhiteList(tokenID);
+        if (ret != RET_SUCCESS) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Remove token %{public}u from policy whitelist failed, ret=%{public}d.",
+                tokenID, ret);
+        }
+    }
 
     dfxInfo.userID = hapInfo.userID;
     dfxInfo.bundleName = hapInfo.bundleName;
@@ -1689,17 +1693,81 @@ int32_t AccessTokenManagerService::GetPermissionManagerInfo(PermissionGrantInfoP
 }
 
 #ifdef SUPPORT_MANAGE_USER_POLICY
+int32_t GetHapUserIdByTokenId(AccessTokenID tokenId, int32_t& userId)
+{
+    HapTokenInfo hapInfo = { 0 };
+    int32_t ret = AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenId, hapInfo);
+    if (ret != RET_SUCCESS) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get hap info, token %{public}u.", tokenId);
+        return ret;
+    }
+    userId = hapInfo.userID;
+    return RET_SUCCESS;
+}
+
+void AccessTokenManagerService::RollbackPolicyWhiteList(const PolicyWhiteListUpdateInfo& context)
+{
+    PolicyWhiteListUpdateInfo rollbackContext = context;
+    rollbackContext.type = (context.type == ADD) ? DELETE : ADD;
+    int32_t ret = UserPolicyManager::GetInstance().UpdatePolicyWhiteList(rollbackContext);
+    if (ret != RET_SUCCESS) {
+        LOGE(ATM_DOMAIN, ATM_TAG,
+            "Rollback whitelist policy failed, tokenId=%{public}u, permCode=%{public}u, ret=%{public}d.",
+            context.tokenId, context.permCode, ret);
+    }
+}
+
+int32_t AccessTokenManagerService::HandlePolicyWhiteListUpdate(const PolicyWhiteListUpdateInfo& policyContext)
+{
+    bool isPersist = false;
+    int32_t ret = UserPolicyManager::GetInstance().UpdatePolicyWhiteList(policyContext, isPersist);
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
+
+    bool targetRestricted = policyContext.type == DELETE;
+    ret = AccessTokenInfoManager::GetInstance().UpdateRestrictedFlagAndRefreshKernel(
+        policyContext.tokenId, policyContext.permCode, targetRestricted, isPersist, "whitelist");
+    if (ret != RET_SUCCESS) {
+        RollbackPolicyWhiteList(policyContext);
+        return ret;
+    }
+    return RET_SUCCESS;
+}
+
+int32_t AccessTokenManagerService::RefreshUserPolicyPermState(const std::vector<UserPolicyChange>& changedPolicyList)
+{
+    if (changedPolicyList.empty()) {
+        LOGI(ATM_DOMAIN, ATM_TAG, "Empty changedPolicyList.");
+        return RET_SUCCESS;
+    }
+
+    int32_t ret = AccessTokenInfoManager::GetInstance().RefreshUserPolicyFlag(changedPolicyList);
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
+
+    ret = ToolTokenInfoManager::GetInstance().RefreshUserPolicyFlag(changedPolicyList);
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
+    return RET_SUCCESS;
+}
+
 int32_t AccessTokenManagerService::SetUserPolicy(const std::vector<UserPermissionPolicyIdl>& userPermissionList)
 {
+    std::lock_guard<std::mutex> userPolicyUpdateGuard(g_userPolicyUpdateMutex);
     LOGI(ATM_DOMAIN, ATM_TAG, "CallerPid %{public}d.", IPCSkeleton::GetCallingPid());
     size_t policySize = userPermissionList.size();
-    if ((policySize == 0) || (policySize > MAX_USER_POLICY_SIZE)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "PolicySize %{public}zu is invalid.", policySize);
+    if (policySize == 0) {
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    if (policySize > MAX_SET_USER_POLICY_SIZE) {
         return AccessTokenError::ERR_PARAM_INVALID;
     }
 
     uint32_t callingToken = IPCSkeleton::GetCallingTokenID();
-    if (VerifyAccessToken(callingToken, MANAGE_USER_POLICY) == PERMISSION_DENIED) {
+    if (VerifyAccessToken(callingToken, "ohos.permission.MANAGE_USER_POLICY") == PERMISSION_DENIED) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", callingToken);
         return AccessTokenError::ERR_PERMISSION_DENIED;
     }
@@ -1714,31 +1782,54 @@ int32_t AccessTokenManagerService::SetUserPolicy(const std::vector<UserPermissio
             policy.isRestricted = userPolicyIdl.isRestricted;
             permPolicy.userPolicyList.emplace_back(policy);
         }
+        permPolicy.isPersist = permPolicyIdl.isPersist;
         policyList.emplace_back(permPolicy);
     }
-    return AccessTokenInfoManager::GetInstance().SetUserPolicy(policyList);
+    std::vector<UserPolicyChange> changedPolicyList;
+    int32_t ret = UserPolicyManager::GetInstance().SetUserPolicy(policyList, callingToken, changedPolicyList);
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
+    ret = RefreshUserPolicyPermState(changedPolicyList);
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
+    return RET_SUCCESS;
 }
 
 int32_t AccessTokenManagerService::ClearUserPolicy(const std::vector<std::string>& permissionList)
 {
+    std::lock_guard<std::mutex> userPolicyUpdateGuard(g_userPolicyUpdateMutex);
     LOGI(ATM_DOMAIN, ATM_TAG, "CallerPid %{public}d.", IPCSkeleton::GetCallingPid());
     size_t permSize = permissionList.size();
-    if ((permSize == 0) || (permSize > MAX_USER_POLICY_SIZE)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "PermSize %{public}zu is invalid.", permSize);
+    if (permSize == 0) {
         return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    if (!DataValidator::IsListSizeValid(permSize)) {
+        return AccessTokenError::ERR_OVERSIZE;
     }
 
     uint32_t callingToken = IPCSkeleton::GetCallingTokenID();
-    if (VerifyAccessToken(callingToken, MANAGE_USER_POLICY) == PERMISSION_DENIED) {
+    if (VerifyAccessToken(callingToken, "ohos.permission.MANAGE_USER_POLICY") == PERMISSION_DENIED) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", callingToken);
         return AccessTokenError::ERR_PERMISSION_DENIED;
     }
 
-    return AccessTokenInfoManager::GetInstance().ClearUserPolicy(permissionList);
+    std::vector<UserPolicyChange> changedPolicyList;
+    int32_t ret = UserPolicyManager::GetInstance().ClearUserPolicy(permissionList, callingToken, changedPolicyList);
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
+    ret = RefreshUserPolicyPermState(changedPolicyList);
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
+    return RET_SUCCESS;
 }
 
 int32_t AccessTokenManagerService::UpdatePolicyWhiteList(AccessTokenID tokenId, uint32_t permCode, int32_t type)
 {
+    std::lock_guard<std::mutex> userPolicyUpdateGuard(g_userPolicyUpdateMutex);
     LOGI(ATM_DOMAIN, ATM_TAG, "CallerPid %{public}d.", IPCSkeleton::GetCallingPid());
     auto updateType = static_cast<UpdateWhiteListType>(type);
     if (!DataValidator::IsTokenIDValid(tokenId) || !DataValidator::IsUpdateWhiteListTypeValid(updateType)) {
@@ -1754,27 +1845,40 @@ int32_t AccessTokenManagerService::UpdatePolicyWhiteList(AccessTokenID tokenId, 
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     uint32_t callingToken = IPCSkeleton::GetCallingTokenID();
-    if (VerifyAccessToken(callingToken, MANAGE_USER_POLICY) == PERMISSION_DENIED) {
+    if (VerifyAccessToken(callingToken, "ohos.permission.MANAGE_USER_POLICY") == PERMISSION_DENIED) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", callingToken);
         return AccessTokenError::ERR_PERMISSION_DENIED;
     }
-    return AccessTokenInfoManager::GetInstance().UpdatePolicyWhiteList(tokenId, permCode, updateType);
+    int32_t userId = 0;
+    if (GetHapUserIdByTokenId(tokenId, userId) != RET_SUCCESS) {
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+
+    PolicyWhiteListUpdateInfo policyContext {
+        .tokenId = tokenId,
+        .userId = userId,
+        .permCode = permCode,
+        .type = updateType,
+        .callerToken = callingToken
+    };
+    return HandlePolicyWhiteListUpdate(policyContext);
 }
 
 int32_t AccessTokenManagerService::GetPolicyWhiteList(uint32_t permCode, std::vector<AccessTokenID>& tokenIdList)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "CallerPid %{public}d.", IPCSkeleton::GetCallingPid());
+    tokenIdList.clear();
     std::string permission = TransferOpcodeToPermission(permCode);
     if (permission.empty()) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Invalid permCode: %{public}u.", permCode);
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     uint32_t callingToken = IPCSkeleton::GetCallingTokenID();
-    if (VerifyAccessToken(callingToken, MANAGE_USER_POLICY) == PERMISSION_DENIED) {
+    if (VerifyAccessToken(callingToken, "ohos.permission.MANAGE_USER_POLICY") == PERMISSION_DENIED) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", callingToken);
         return AccessTokenError::ERR_PERMISSION_DENIED;
     }
-    return AccessTokenInfoManager::GetInstance().GetPolicyWhiteList(permCode, tokenIdList);
+    return UserPolicyManager::GetInstance().GetPolicyWhiteList(permCode, tokenIdList);
 }
 #endif
 
@@ -2138,6 +2242,12 @@ bool AccessTokenManagerService::Initialize()
     uint32_t dlpSize = 0;
     std::map<int32_t, TokenIdInfo> tokenIdAplMap;
     AccessTokenInfoManager::GetInstance().Init(hapSize, nativeSize, pefDefSize, dlpSize, tokenIdAplMap);
+#ifdef SUPPORT_MANAGE_USER_POLICY
+    int32_t ret = UserPolicyManager::GetInstance().LoadPersistedPolicies();
+    if (ret != RET_SUCCESS) {
+        ReportSysEventServiceStartError(INIT_USER_POLICY_ERROR, "Load user policy from db fail.", ret);
+    }
+#endif
     HandlePermDefUpdate(tokenIdAplMap);
 
 #ifdef EVENTHANDLER_ENABLE

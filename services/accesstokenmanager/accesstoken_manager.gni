@@ -59,6 +59,7 @@ accesstoken_manager_base_config = {
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_request_toggle_manager.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/short_grant_manager.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/temp_permission_observer.cpp",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/user_policy_manager.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/verify_accesstoken_monitor.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/service/accesstoken_manager_service.cpp",
   ]
@@ -183,7 +184,7 @@ accesstoken_manager_base_config = {
       "asset:saf_agent_fence",
       "appverify:libhapverify"
     ]
-    define = [ "IS_SUPPORT_HAP_RUNNING" ]
+    access_token_cflags_cc += [ "-DIS_SUPPORT_HAP_RUNNING" ]
   }
 
   if (ohos_indep_compiler_enable) {

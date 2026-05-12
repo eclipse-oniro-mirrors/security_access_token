@@ -61,13 +61,13 @@ bool DataValidator::IsPermissionNameValid(const std::string& permissionName)
     return true;
 }
 
-bool DataValidator::IsUserIdValid(const int userId)
+bool DataValidator::IsUserIdValid(int32_t userId)
 {
-    bool ret = (userId >= 0);
-    if (!ret) {
+    if (userId < 0) {
         LOGC(ATM_DOMAIN, ATM_TAG, "userId %{public}d is invalid.", userId);
+        return false;
     }
-    return ret;
+    return true;
 }
 
 bool DataValidator::IsAclExtendedMapSizeValid(const std::map<std::string, std::string>& aclExtendedMap)
@@ -113,12 +113,12 @@ bool DataValidator::IsDomainValid(const std::string& domain)
     return !domain.empty() && (domain.length() <= MAX_LENGTH);
 }
 
-bool DataValidator::IsAplNumValid(const int apl)
+bool DataValidator::IsAplNumValid(int32_t apl)
 {
     return (apl == APL_NORMAL || apl == APL_SYSTEM_BASIC || apl == APL_SYSTEM_CORE);
 }
 
-bool DataValidator::IsAvailableTypeValid(const int availableType)
+bool DataValidator::IsAvailableTypeValid(int32_t availableType)
 {
     return (availableType == NORMAL || availableType == MDM);
 }
@@ -148,22 +148,22 @@ bool DataValidator::IsDeviceNameValid(const std::string& deviceName)
 
 bool DataValidator::IsDcapValid(const std::string& dcap)
 {
-    return !dcap.empty() && (dcap.length() <= MAX_DCAP_LENGTH);
+    return !dcap.empty() && (dcap.length() <= MAX_VALUE_LENGTH);
 }
 
 bool DataValidator::IsPermissionFlagValid(uint32_t flag)
 {
-    uint32_t unmaskedFlag =
-        flag & (~PermissionFlag::PERMISSION_PRE_AUTHORIZED_CANCELABLE);
-    return unmaskedFlag == PermissionFlag::PERMISSION_DEFAULT_FLAG ||
-        unmaskedFlag == PermissionFlag::PERMISSION_USER_SET ||
-        unmaskedFlag == PermissionFlag::PERMISSION_USER_FIXED ||
-        unmaskedFlag == PermissionFlag::PERMISSION_SYSTEM_FIXED ||
-        unmaskedFlag == PermissionFlag::PERMISSION_COMPONENT_SET ||
-        unmaskedFlag == PermissionFlag::PERMISSION_FIXED_FOR_SECURITY_POLICY ||
-        unmaskedFlag == PermissionFlag::PERMISSION_ALLOW_THIS_TIME ||
-        unmaskedFlag == PermissionFlag::PERMISSION_FIXED_BY_ADMIN_POLICY ||
-        unmaskedFlag == PermissionFlag::PERMISSION_ADMIN_POLICIES_CANCEL;
+    constexpr uint32_t additiveMask = PermissionFlag::PERMISSION_PRE_AUTHORIZED_CANCELABLE |
+        PermissionFlag::PERMISSION_COMPONENT_SET | PermissionFlag::PERMISSION_RESTRICTED_BY_ADMIN;
+    uint32_t baseFlag = flag & (~additiveMask);
+    return baseFlag == PermissionFlag::PERMISSION_DEFAULT_FLAG ||
+        baseFlag == PermissionFlag::PERMISSION_USER_SET ||
+        baseFlag == PermissionFlag::PERMISSION_USER_FIXED ||
+        baseFlag == PermissionFlag::PERMISSION_SYSTEM_FIXED ||
+        baseFlag == PermissionFlag::PERMISSION_FIXED_FOR_SECURITY_POLICY ||
+        baseFlag == PermissionFlag::PERMISSION_ALLOW_THIS_TIME ||
+        baseFlag == PermissionFlag::PERMISSION_FIXED_BY_ADMIN_POLICY ||
+        baseFlag == PermissionFlag::PERMISSION_ADMIN_POLICIES_CANCEL;
 }
 
 bool DataValidator::IsPermissionFlagValidForAdmin(uint32_t flag)
@@ -277,7 +277,7 @@ bool DataValidator::IsHapCaller(AccessTokenID id)
 
 bool DataValidator::IsListSizeValid(uint32_t size)
 {
-    if (size <= 0 || size > MAX_PERMISSION_LIST_SIZE) {
+    if (size <= 0 || size > MAX_LIST_SIZE) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Size is invalid(%{public}u).", size);
         return false;
     }

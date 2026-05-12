@@ -330,6 +330,38 @@ int32_t AccessTokenOpenCallback::CreateVersionSixTable(NativeRdb::RdbStore& rdbS
     return 0;
 }
 
+int32_t AccessTokenOpenCallback::CreateUserPolicyTable(NativeRdb::RdbStore& rdbStore)
+{
+    std::string tableName;
+    AccessTokenDbUtil::GetTableNameByType(AtmDataType::ACCESSTOKEN_USER_POLICY, tableName);
+
+    std::string sql = "create table if not exists " + tableName;
+    sql.append(" (")
+        .append(TokenFiledConst::FIELD_PERMISSION_NAME)
+        .append(TEXT_STR)
+        .append(TokenFiledConst::FIELD_CONTROLLER_TOKENID)
+        .append(INTEGER_STR)
+        .append(TokenFiledConst::FIELD_RESTRICTED_USER)
+        .append(TEXT_STR)
+        .append(TokenFiledConst::FIELD_WHITLIST)
+        .append(TEXT_STR)
+        .append("primary key(")
+        .append(TokenFiledConst::FIELD_PERMISSION_NAME)
+        .append("))");
+
+    return rdbStore.ExecuteSql(sql);
+}
+
+int32_t AccessTokenOpenCallback::CreateVersionEightTable(NativeRdb::RdbStore& rdbStore)
+{
+    int32_t res = CreateUserPolicyTable(rdbStore);
+    if (res != NativeRdb::E_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to create table user_policy_table.");
+        return res;
+    }
+    return 0;
+}
+
 int32_t AccessTokenOpenCallback::OnCreate(NativeRdb::RdbStore& rdbStore)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "DB OnCreate.");
@@ -350,6 +382,11 @@ int32_t AccessTokenOpenCallback::OnCreate(NativeRdb::RdbStore& rdbStore)
     }
 
     res = CreateVersionSixTable(rdbStore);
+    if (res != NativeRdb::E_OK) {
+        return res;
+    }
+
+    res = CreateVersionEightTable(rdbStore);
     if (res != NativeRdb::E_OK) {
         return res;
     }
@@ -578,6 +615,11 @@ int32_t AccessTokenOpenCallback::UpgradeFromVersion6(NativeRdb::RdbStore& rdbSto
     return AddTimestampColumn(rdbStore);
 }
 
+int32_t AccessTokenOpenCallback::UpgradeFromVersion7(NativeRdb::RdbStore& rdbStore)
+{
+    return CreateVersionEightTable(rdbStore);
+}
+
 int32_t AccessTokenOpenCallback::OnUpgrade(NativeRdb::RdbStore& rdbStore, int32_t currentVersion, int32_t targetVersion)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "DB OnUpgrade from Ver %{public}d to Ver %{public}d.", currentVersion, targetVersion);
@@ -620,10 +662,15 @@ int32_t AccessTokenOpenCallback::OnUpgrade(NativeRdb::RdbStore& rdbStore, int32_
                 return res;
             }
             [[fallthrough]];
+        case DATABASE_VERSION_7: // 7->8
+            res = UpgradeFromVersion7(rdbStore);
+            if (res != NativeRdb::E_OK) {
+                return res;
+            }
+            [[fallthrough]];
         default:
             return NativeRdb::E_OK;
     }
-
     return NativeRdb::E_OK;
 }
 } // namespace AccessToken

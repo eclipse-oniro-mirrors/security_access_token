@@ -117,6 +117,18 @@ HWTEST_F(AccessTokenDenyTest, SetUserPolicy001, TestSize.Level0)
 }
 
 /**
+ * @tc.name: ClearUserPolicy001
+ * @tc.desc: ClearUserPolicy without authorized.
+ * @tc.type: FUNC
+ * @tc.require:Issue Number
+ */
+HWTEST_F(AccessTokenDenyTest, ClearUserPolicy001, TestSize.Level0)
+{
+    int32_t ret = AccessTokenKit::ClearUserPolicy({ "ohos.permission.INTERNET" });
+    EXPECT_EQ(ret, AccessTokenError::ERR_PERMISSION_DENIED);
+}
+
+/**
  * @tc.name: UpdatePolicyWhiteList001
  * @tc.desc: UpdatePolicyWhiteList without authorized.
  * @tc.type: FUNC
