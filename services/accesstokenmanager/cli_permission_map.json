@@ -21,6 +21,18 @@
             ]
         },
         {
+            "cliPermission": "ohos.permission.cli.POWER_MANAGER",
+            "usedPermissions": [
+                "ohos.permission.POWER_MANAGER"
+            ]
+        },
+        {
+            "cliPermission": "ohos.permission.cli.POWER_OPTIMIZATION",
+            "usedPermissions": [
+                "ohos.permission.POWER_OPTIMIZATION"
+            ]
+        },
+        {
             "cliPermission": "ohos.permission.cli.BUNDLE_ACTIVE_INFO",
             "usedPermissions": [
                 "ohos.permission.BUNDLE_ACTIVE_INFO"
