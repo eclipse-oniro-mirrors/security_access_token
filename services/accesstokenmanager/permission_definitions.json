@@ -1065,6 +1065,17 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.cli.GET_STORAGE_MANAGER",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "tv", "wearable", "2in1", "tablet", "car", "liteWearable"]
+        },
+        {
             "name": "ohos.permission.BACKUP",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",

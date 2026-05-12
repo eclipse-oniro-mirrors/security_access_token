@@ -15,6 +15,12 @@
             ]
         },
         {
+            "cliPermission": "ohos.permission.cli.GET_STORAGE_MANAGER",
+            "usedPermissions": [
+                "ohos.permission.STORAGE_MANAGER"
+            ]
+        },
+        {
             "cliPermission": "ohos.permission.cli.resolved",
             "usedPermissions": [
                 "ohos.permission.CAMERA"
