@@ -34,9 +34,7 @@ struct BundleParam final {
     std::string appId;
     uint64_t appIdentifier = 0;
     int32_t apiVersion = 0;
-#ifdef IS_SUPPORT_HAP_RUNNING
     int32_t distributionType = 0;
-#endif
     bool isSystem = false;
     bool isAtomicService = false;
     bool isDebug = false;
@@ -45,9 +43,7 @@ struct BundleParam final {
 class BundleNoCachedInfo final {
 public:
     ATokenAplEnum apl = APL_INVALID;
-#ifdef IS_SUPPORT_HAP_RUNNING
     int32_t distributionType = 0;
-#endif
     uint32_t idType = 0;
     uint64_t ownerid = 0;
 };
