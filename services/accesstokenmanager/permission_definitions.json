@@ -5600,6 +5600,28 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.cli.START_ABILITY",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "2in1", "tablet", "tv", "wearable", "car"]
+        },
+        {
+            "name": "ohos.permission.cli.KILL_APP_PROCESSES",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "2in1", "tablet", "tv", "wearable", "car"]
+        },
+        {
             "name": "ohos.permission.WRITE_RINGTONE",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
