@@ -391,9 +391,13 @@ HWTEST_F(InitHapTokenTest, InitHapTokenFuncTest007, TestSize.Level0)
     ASSERT_EQ(ERR_PERM_REQUEST_CFG_FAILED, AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId));
 
     policyParams.checkIgnore = HapPolicyCheckIgnore::ACL_IGNORE_CHECK;
+#ifdef X86_EMULATOR_MODE
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId));
     AccessTokenID tokenID = fullTokenId.tokenIdExStruct.tokenID;
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
+#else
+    ASSERT_EQ(ERR_PERM_REQUEST_CFG_FAILED, AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId));
+#endif
 }
 
 /**

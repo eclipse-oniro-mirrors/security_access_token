@@ -17,19 +17,23 @@
 
 #include <fcntl.h>
 #include <gmock/gmock.h>
+#include <limits>
 
 #include "accesstoken_id_manager.h"
 #include "access_token_error.h"
 #define private public
 #include "accesstoken_callback_stubs.h"
+#include "accesstoken_info_utils.h"
 #include "accesstoken_info_manager.h"
 #include "accesstoken_remote_token_manager.h"
+#include "dlp_permission_set_manager.h"
 #include "libraryloader.h"
 #include "token_field_const.h"
 #ifdef TOKEN_SYNC_ENABLE
 #include "token_sync_kit_loader.h"
 #endif
 #include "permission_manager.h"
+#include "permission_constraint_check.h"
 #include "token_modify_notifier.h"
 #undef private
 #include "access_token_db_operator.h"
@@ -258,6 +262,77 @@ HWTEST_F(TokenInfoManagerTest, HapTokenInfoInner001, TestSize.Level0)
     hap->SetRemote(false);
     int32_t version = hap->GetApiVersion(5608);
     ASSERT_EQ(static_cast<int32_t>(608), version);
+}
+
+/**
+ * @tc.name: IsPermissionAvailableToDlpHap001
+ * @tc.desc: DlpPermissionSetManager::IsPermissionAvailableToDlpHap supports permCode input
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenInfoManagerTest, IsPermissionAvailableToDlpHap001, TestSize.Level0)
+{
+    uint32_t cameraCode = 0;
+    ASSERT_TRUE(TransferPermissionToOpcode("ohos.permission.CAMERA", cameraCode));
+
+    auto& manager = DlpPermissionSetManager::GetInstance();
+    EXPECT_EQ(manager.IsPermissionAvailableToDlpHap(DLP_READ, "ohos.permission.CAMERA"),
+        manager.IsPermissionAvailableToDlpHap(DLP_READ, cameraCode));
+    EXPECT_FALSE(manager.IsPermissionAvailableToDlpHap(DLP_READ, std::numeric_limits<uint32_t>::max()));
+}
+
+/**
+ * @tc.name: GetBundleInfoInner001
+ * @tc.desc: AccessTokenInfoManager::GetBundleInfoInner returns existing bundle cache and does not create one.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenInfoManagerTest, GetBundleInfoInner001, TestSize.Level0)
+{
+    auto& manager = AccessTokenInfoManager::GetInstance();
+    const std::string bundleName = "com.ohos.bundle.info.inner";
+    manager.bundleInfoMap_.erase(bundleName);
+
+    auto queried = manager.GetBundleInfoInner(bundleName);
+    EXPECT_EQ(nullptr, queried);
+    EXPECT_EQ(manager.bundleInfoMap_.end(), manager.bundleInfoMap_.find(bundleName));
+
+    auto cached = std::make_shared<BundleInfoInner>();
+    cached->permCodeList = { 1, 2 };
+    manager.bundleInfoMap_[bundleName] = cached;
+    queried = manager.GetBundleInfoInner(bundleName);
+    EXPECT_EQ(cached, queried);
+    ASSERT_NE(nullptr, queried);
+    ASSERT_EQ(2u, queried->permCodeList.size());
+
+    manager.bundleInfoMap_.erase(bundleName);
+}
+
+/**
+ * @tc.name: UpsertBundleInfoInnerCache001
+ * @tc.desc: AccessTokenInfoManager::UpsertBundleInfoInnerCache inserts and updates bundle cache.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenInfoManagerTest, UpsertBundleInfoInnerCache001, TestSize.Level0)
+{
+    auto& manager = AccessTokenInfoManager::GetInstance();
+    const std::string bundleName = "com.ohos.bundle.info.upsert";
+    manager.bundleInfoMap_.erase(bundleName);
+
+    auto first = std::make_shared<BundleInfoInner>();
+    first->tokenIds = { 1 };
+    manager.UpsertBundleInfoInnerCache(bundleName, first);
+    ASSERT_NE(manager.bundleInfoMap_.end(), manager.bundleInfoMap_.find(bundleName));
+    EXPECT_EQ(first, manager.bundleInfoMap_[bundleName]);
+
+    auto second = std::make_shared<BundleInfoInner>();
+    second->tokenIds = { 2, 3 };
+    manager.UpsertBundleInfoInnerCache(bundleName, second);
+    EXPECT_EQ(second, manager.bundleInfoMap_[bundleName]);
+    ASSERT_EQ(2u, manager.bundleInfoMap_[bundleName]->tokenIds.size());
+
+    manager.bundleInfoMap_.erase(bundleName);
 }
 
 /**
@@ -533,6 +608,7 @@ HWTEST_F(TokenInfoManagerTest, InitHapToken003, TestSize.Level0)
         .appIDDesc = "testtesttesttest",
         .apiVersion = DEFAULT_API_VERSION,
         .isSystemApp = false,
+        .appDistributionType = "app_gallery",
     };
     HapPolicyParcel policy;
     PermissionStatus permissionStateA = {
@@ -555,8 +631,7 @@ HWTEST_F(TokenInfoManagerTest, InitHapToken003, TestSize.Level0)
     HapInfoCheckResultIdl resultInfoIdl;
     HapInfoCheckResult result;
 
-    ASSERT_EQ(0,
-        atManagerService_->InitHapToken(info, policy, fullTokenId, resultInfoIdl));
+    ASSERT_EQ(0, atManagerService_->InitHapToken(info, policy, fullTokenId, resultInfoIdl));
 
     PermissionInfoCheckResult permCheckResult;
     permCheckResult.permissionName = resultInfoIdl.permissionName;
@@ -568,8 +643,8 @@ HWTEST_F(TokenInfoManagerTest, InitHapToken003, TestSize.Level0)
     permissionStateA.permissionName = "ohos.permission.ENTERPRISE_MANAGE_SETTINGS";
     policy.hapPolicy.aclRequestedList = { "ohos.permission.ENTERPRISE_MANAGE_SETTINGS" };
     policy.hapPolicy.permStateList = { permissionStateA, permissionStateB };
-    ASSERT_EQ(0,
-        atManagerService_->InitHapToken(info, policy, fullTokenId, resultInfoIdl));
+    resultInfoIdl = {};
+    ASSERT_EQ(0, atManagerService_->InitHapToken(info, policy, fullTokenId, resultInfoIdl));
 
     ASSERT_EQ(resultInfoIdl.permissionName, "ohos.permission.ENTERPRISE_MANAGE_SETTINGS");
     rule = static_cast<int32_t>(resultInfoIdl.rule);
@@ -1541,129 +1616,6 @@ HWTEST_F(TokenInfoManagerTest, AllocLocalTokenID001, TestSize.Level0)
 #endif
 
 /**
- * @tc.name: DumpTokenInfo001
- * @tc.desc: Test DumpTokenInfo with invalid tokenId.
- * @tc.type: FUNC
- * @tc.require: issueI4V02P
- */
-HWTEST_F(TokenInfoManagerTest, DumpTokenInfo001, TestSize.Level0)
-{
-    std::string dumpInfo;
-    AtmToolsParamInfo info;
-    info.tokenId = static_cast<AccessTokenID>(0);
-    AccessTokenInfoManager::GetInstance().DumpTokenInfo(info, dumpInfo);
-    EXPECT_EQ(false, dumpInfo.empty());
-
-    dumpInfo.clear();
-    info.tokenId = static_cast<AccessTokenID>(RANDOM_TOKENID);
-    AccessTokenInfoManager::GetInstance().DumpTokenInfo(info, dumpInfo);
-    EXPECT_EQ("Error: TokenID does not exist.\n", dumpInfo);
-}
-
-/**
- * @tc.name: DumpTokenInfo002
- * @tc.desc: Test DumpTokenInfo with hap tokenId.
- * @tc.type: FUNC
- * @tc.require: issueI4V02P
- */
-HWTEST_F(TokenInfoManagerTest, DumpTokenInfo002, TestSize.Level0)
-{
-    AccessTokenIDEx tokenIdEx = {0};
-    std::vector<GenericValues> undefValues;
-    AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_infoManagerTestInfoParms,
-        g_infoManagerTestPolicyPrams1, tokenIdEx, undefValues);
-
-    tokenIdEx = AccessTokenInfoManager::GetInstance().GetHapTokenID(g_infoManagerTestInfoParms.userID,
-        g_infoManagerTestInfoParms.bundleName, g_infoManagerTestInfoParms.instIndex);
-    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
-    EXPECT_NE(0, static_cast<int>(tokenId));
-    std::string dumpInfo;
-    AtmToolsParamInfo info;
-    info.tokenId = tokenId;
-    AccessTokenInfoManager::GetInstance().DumpTokenInfo(info, dumpInfo);
-    EXPECT_EQ(false, dumpInfo.empty());
-
-    int32_t ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(
-        tokenIdEx.tokenIdExStruct.tokenID);
-    ASSERT_EQ(RET_SUCCESS, ret);
-    GTEST_LOG_(INFO) << "remove the token info";
-}
-
-/**
- * @tc.name: DumpTokenInfo003
- * @tc.desc: Test DumpTokenInfo with native tokenId.
- * @tc.type: FUNC
- * @tc.require: issueI4V02P
- */
-HWTEST_F(TokenInfoManagerTest, DumpTokenInfo003, TestSize.Level0)
-{
-    std::string dumpInfo;
-    AtmToolsParamInfo info;
-    info.tokenId = AccessTokenInfoManager::GetInstance().GetNativeTokenId("accesstoken_service");
-    AccessTokenInfoManager::GetInstance().DumpTokenInfo(info, dumpInfo);
-    EXPECT_EQ(false, dumpInfo.empty());
-}
-
-/**
- * @tc.name: DumpTokenInfo004
- * @tc.desc: Test DumpTokenInfo with shell tokenId.
- * @tc.type: FUNC
- * @tc.require: issueI4V02P
- */
-HWTEST_F(TokenInfoManagerTest, DumpTokenInfo004, TestSize.Level0)
-{
-    std::string dumpInfo;
-    AtmToolsParamInfo info;
-    info.tokenId = AccessTokenInfoManager::GetInstance().GetNativeTokenId("hdcd");
-    AccessTokenInfoManager::GetInstance().DumpTokenInfo(info, dumpInfo);
-    EXPECT_EQ(false, dumpInfo.empty());
-}
-
-/**
- * @tc.name: DumpTokenInfo005
- * @tc.desc: Test DumpTokenInfo with native processName.
- * @tc.type: FUNC
- * @tc.require: issueI4V02P
- */
-HWTEST_F(TokenInfoManagerTest, DumpTokenInfo005, TestSize.Level0)
-{
-    std::string dumpInfo;
-    AtmToolsParamInfo info;
-    info.processName = "hdcd";
-    AccessTokenInfoManager::GetInstance().DumpTokenInfo(info, dumpInfo);
-    EXPECT_EQ(false, dumpInfo.empty());
-}
-
-/**
- * @tc.name: DumpTokenInfo006
- * @tc.desc: Test DumpTokenInfo with hap bundleName.
- * @tc.type: FUNC
- * @tc.require: issueI4V02P
- */
-HWTEST_F(TokenInfoManagerTest, DumpTokenInfo006, TestSize.Level0)
-{
-    AccessTokenIDEx tokenIdEx = {0};
-    std::vector<GenericValues> undefValues;
-    AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_infoManagerTestInfoParms,
-        g_infoManagerTestPolicyPrams1, tokenIdEx, undefValues);
-
-    tokenIdEx = AccessTokenInfoManager::GetInstance().GetHapTokenID(g_infoManagerTestInfoParms.userID,
-        g_infoManagerTestInfoParms.bundleName, g_infoManagerTestInfoParms.instIndex);
-    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
-    EXPECT_NE(0, static_cast<int>(tokenId));
-    
-    std::string dumpInfo;
-    AtmToolsParamInfo info;
-    info.bundleName = g_infoManagerTestInfoParms.bundleName;
-    AccessTokenInfoManager::GetInstance().DumpTokenInfo(info, dumpInfo);
-    EXPECT_EQ(false, dumpInfo.empty());
-
-    int32_t ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(
-        tokenIdEx.tokenIdExStruct.tokenID);
-    ASSERT_EQ(RET_SUCCESS, ret);
-}
-
-/**
  * @tc.name: AccessTokenInfoManager001
  * @tc.desc: AccessTokenInfoManager::~AccessTokenInfoManager+Init function test hasInited_ is false
  * @tc.type: FUNC
@@ -1691,7 +1643,7 @@ HWTEST_F(TokenInfoManagerTest, AccessTokenInfoManager001, TestSize.Level0)
 HWTEST_F(TokenInfoManagerTest, GetHapUniqueStr001, TestSize.Level0)
 {
     std::shared_ptr<HapTokenInfoInner> info = nullptr;
-    ASSERT_EQ("", AccessTokenInfoManager::GetInstance().GetHapUniqueStr(info));
+    ASSERT_EQ("", AccessTokenInfoUtils::GetHapUniqueStr(info));
 }
 
 /**
@@ -2428,133 +2380,28 @@ HWTEST_F(TokenInfoManagerTest, GetAppId001, TestSize.Level0)
     ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenIdEx.tokenIdExStruct.tokenID));
 }
 
-
 /**
- * @tc.name: SetPermissionRequestToggleStatus001
- * @tc.desc: PermissionManager::SetPermissionRequestToggleStatus function test with invalid permissionName, invalid
- * status and invalid userID.
+ * @tc.name: GetApiVersionByTokenId002
+ * @tc.desc: AccessTokenInfoManager::GetApiVersionByTokenId function test with hap token.
  * @tc.type: FUNC
- * @tc.require:
  */
-HWTEST_F(TokenInfoManagerTest, SetPermissionRequestToggleStatus001, TestSize.Level0)
+HWTEST_F(TokenInfoManagerTest, GetApiVersionByTokenId002, TestSize.Level0)
 {
-    int32_t userID = -1;
-    uint32_t status = PermissionRequestToggleStatus::CLOSED;
-    std::string permissionName = "ohos.permission.CAMERA";
+    HapInfoParams info = g_infoManagerTestInfoParms;
+    info.apiVersion = 1205;
+    AccessTokenIDEx tokenIdEx = {0};
+    std::vector<GenericValues> undefValues;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(
+        info, g_infoManagerTestPolicyPrams1, tokenIdEx, undefValues));
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenId);
 
-    // UserId is invalid.
-    ASSERT_EQ(ERR_PARAM_INVALID, AccessTokenInfoManager::GetInstance().SetPermissionRequestToggleStatus(
-        permissionName, status, userID));
-
-    // Permission name is invalid.
-    userID = RANDOM_TOKENID;
-    ASSERT_EQ(ERR_PARAM_INVALID, AccessTokenInfoManager::GetInstance().SetPermissionRequestToggleStatus(
-        "", status, userID));
-
-    // PermissionName is not defined.
-    permissionName = "ohos.permission.invalid";
-    ASSERT_EQ(ERR_PERMISSION_NOT_EXIST, AccessTokenInfoManager::GetInstance().SetPermissionRequestToggleStatus(
-        permissionName, status, userID));
-
-    // Permission is system_grant.
-    permissionName = "ohos.permission.USE_BLUETOOTH";
-    ASSERT_EQ(ERR_PARAM_INVALID, AccessTokenInfoManager::GetInstance().SetPermissionRequestToggleStatus(
-        permissionName, status, userID));
-
-    // Status is invalid.
-    status = -1;
-    permissionName = "ohos.permission.CAMERA";
-    ASSERT_EQ(ERR_PARAM_INVALID, AccessTokenInfoManager::GetInstance().SetPermissionRequestToggleStatus(
-        permissionName, status, userID));
+    int32_t apiVersion = 0;
+    ASSERT_TRUE(AccessTokenInfoManager::GetInstance().GetApiVersionByTokenId(tokenId, apiVersion));
+    ASSERT_EQ(205, apiVersion);
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId));
 }
 
-/**
- * @tc.name: SetPermissionRequestToggleStatus002
- * @tc.desc: PermissionManager::SetPermissionRequestToggleStatus function test with normal process.
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(TokenInfoManagerTest, SetPermissionRequestToggleStatus002, TestSize.Level0)
-{
-    int32_t userID = RANDOM_TOKENID;
-    uint32_t status = PermissionRequestToggleStatus::CLOSED;
-    std::string permissionName = "ohos.permission.CAMERA";
-
-    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().SetPermissionRequestToggleStatus(
-        permissionName, status, userID));
-
-    status = PermissionRequestToggleStatus::OPEN;
-    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().SetPermissionRequestToggleStatus(
-        permissionName, status, userID));
-}
-
-/**
- * @tc.name: GetPermissionRequestToggleStatus001
- * @tc.desc: PermissionManager::GetPermissionRequestToggleStatus function test with invalid userID, invalid permission
- * name.
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(TokenInfoManagerTest, GetPermissionRequestToggleStatus001, TestSize.Level0)
-{
-    int32_t userID = -1;
-    uint32_t status;
-    std::string permissionName = "ohos.permission.CAMERA";
-
-    // UserId is invalid.
-    ASSERT_EQ(ERR_PARAM_INVALID, AccessTokenInfoManager::GetInstance().GetPermissionRequestToggleStatus(
-        permissionName, status, userID));
-
-    // PermissionName is invalid.
-    userID = 123; // 123: invalid userId
-    ASSERT_EQ(ERR_PARAM_INVALID, AccessTokenInfoManager::GetInstance().GetPermissionRequestToggleStatus(
-        "", status, userID));
-
-    // PermissionName is not defined.
-    permissionName = "ohos.permission.invalid";
-    ASSERT_EQ(ERR_PERMISSION_NOT_EXIST, AccessTokenInfoManager::GetInstance().GetPermissionRequestToggleStatus(
-        permissionName, status, userID));
-
-    // Permission is system_grant.
-    permissionName = "ohos.permission.USE_BLUETOOTH";
-    ASSERT_EQ(ERR_PARAM_INVALID, AccessTokenInfoManager::GetInstance().GetPermissionRequestToggleStatus(
-        permissionName, status, userID));
-}
-
-/**
- * @tc.name: GetPermissionRequestToggleStatus002
- * @tc.desc: PermissionManager::GetPermissionRequestToggleStatus function test with normal process.
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(TokenInfoManagerTest, GetPermissionRequestToggleStatus002, TestSize.Level0)
-{
-    int32_t userID = 123;
-    uint32_t setStatusClose = PermissionRequestToggleStatus::CLOSED;
-    uint32_t setStatusOpen = PermissionRequestToggleStatus::OPEN;
-    uint32_t getStatus;
-
-    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().GetPermissionRequestToggleStatus(
-        "ohos.permission.CAMERA", getStatus, userID));
-
-    ASSERT_EQ(setStatusOpen, getStatus);
-
-    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().SetPermissionRequestToggleStatus(
-        "ohos.permission.CAMERA", setStatusClose, userID));
-
-    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().GetPermissionRequestToggleStatus(
-        "ohos.permission.CAMERA", getStatus, userID));
-
-    ASSERT_EQ(setStatusClose, getStatus);
-
-    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().SetPermissionRequestToggleStatus(
-        "ohos.permission.CAMERA", setStatusOpen, userID));
-
-    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().GetPermissionRequestToggleStatus(
-        "ohos.permission.CAMERA", getStatus, userID));
-
-    ASSERT_EQ(setStatusOpen, getStatus);
-}
 
 /**
  * @tc.name: IsPermissionRestrictedByUserPolicy001
@@ -2658,7 +2505,7 @@ HWTEST_F(TokenInfoManagerTest, ReservedHapInfo001, TestSize.Level0)
     ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID, true);
     // check whether reserved successfully
     ASSERT_EQ(RET_SUCCESS, ret);
-    std::string HapUniqueKey = AccessTokenInfoManager::GetInstance().GetHapUniqueStr(g_infoManagerTestInfoParms.userID,
+    std::string HapUniqueKey = AccessTokenInfoUtils::GetHapUniqueStr(g_infoManagerTestInfoParms.userID,
         g_infoManagerTestInfoParms.bundleName, g_infoManagerTestInfoParms.instIndex);
     auto it = AccessTokenInfoManager::GetInstance().reservedHapTokenIdMap_.find(HapUniqueKey);
     ASSERT_NE(it, AccessTokenInfoManager::GetInstance().reservedHapTokenIdMap_.end());
@@ -2729,7 +2576,7 @@ HWTEST_F(TokenInfoManagerTest, ReservedHapInfo002, TestSize.Level0)
     uint32_t dlpSize = 0;
     std::map<int32_t, TokenIdInfo> tokenIdAplMap;
     AccessTokenInfoManager::GetInstance().Init(hapSize, nativeSize, pefDefSize, dlpSize, tokenIdAplMap);
-    std::string HapUniqueKey = AccessTokenInfoManager::GetInstance().GetHapUniqueStr(100, "test_bundle_name", 0);
+    std::string HapUniqueKey = AccessTokenInfoUtils::GetHapUniqueStr(100, "test_bundle_name", 0);
     auto it = AccessTokenInfoManager::GetInstance().reservedHapTokenIdMap_.find(HapUniqueKey);
     EXPECT_NE(it, AccessTokenInfoManager::GetInstance().reservedHapTokenIdMap_.end());
 
@@ -2761,7 +2608,7 @@ HWTEST_F(TokenInfoManagerTest, ReservedHapInfo003, TestSize.Level0)
     AccessTokenID tokenId = static_cast<AccessTokenID>(*(reinterpret_cast<uint32_t*>(&idInner)));
     AccessTokenInfoManager::GetInstance().AddReservedHapTokenId(100, "test_bundle_name", 0, tokenId);
     AccessTokenInfoManager::GetInstance().AddReservedHapTokenId(100, "test_bundle_name", 0, tokenId); // repeat add
-    std::string HapUniqueKey = AccessTokenInfoManager::GetInstance().GetHapUniqueStr(100, "test_bundle_name", 0);
+    std::string HapUniqueKey = AccessTokenInfoUtils::GetHapUniqueStr(100, "test_bundle_name", 0);
     EXPECT_EQ(AccessTokenInfoManager::GetInstance().reservedHapTokenIdMap_.count(HapUniqueKey), 1);
 
     EXPECT_EQ(ERR_TOKENID_HAS_EXISTED,
@@ -2788,7 +2635,7 @@ HWTEST_F(TokenInfoManagerTest, ReservedHapInfo004, TestSize.Level0)
     ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID, true);
     // check whether reserved successfully
     ASSERT_EQ(RET_SUCCESS, ret);
-    std::string HapUniqueKey = AccessTokenInfoManager::GetInstance().GetHapUniqueStr(g_infoManagerTestInfoParms.userID,
+    std::string HapUniqueKey = AccessTokenInfoUtils::GetHapUniqueStr(g_infoManagerTestInfoParms.userID,
         g_infoManagerTestInfoParms.bundleName, g_infoManagerTestInfoParms.instIndex);
     auto it = AccessTokenInfoManager::GetInstance().reservedHapTokenIdMap_.find(HapUniqueKey);
     ASSERT_NE(it, AccessTokenInfoManager::GetInstance().reservedHapTokenIdMap_.end());

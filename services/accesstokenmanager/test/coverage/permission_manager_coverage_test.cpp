@@ -308,17 +308,13 @@ HWTEST_F(PermissionManagerCoverageTest, InitPermissionList001, TestSize.Level4)
     policy.permStateList.emplace_back(status2);
     policy.preAuthorizationInfo.emplace_back(info);
 
-    HapInfoParams param;
-    param.appDistributionType = "os_integration";
-
-    HapInitInfo initInfo;
-    initInfo.policy = policy;
-    initInfo.installInfo = param;
+    BundleParam param;
+    param.distributionType = Verify::AppDistType::OS_INTEGRATION;
     std::vector<PermissionStatus> initializedList;
     HapInfoCheckResult result;
     std::vector<GenericValues> undefValues;
     ASSERT_EQ(true, PermissionManager::GetInstance().InitPermissionList(
-        initInfo, initializedList, result, undefValues));
+        param, policy, initializedList, result, undefValues));
     ASSERT_EQ(2, initializedList.size());
     for (const auto& status : initializedList) {
         if (status.permissionName == "ohos.permission.ACTIVITY_MOTION") {
@@ -586,16 +582,13 @@ HWTEST_F(PermissionManagerCoverageTest, IsPermAvailableRangeSatisfied001, TestSi
     briefDef.availableType = ATokenAvailableTypeEnum::ENTERPRISE_NORMAL;
     char permissionName[] = "ohos.permission.FILE_GUARD_MANAGER";
     briefDef.permissionName = permissionName;
-    std::string appDistributionType = "os_integration";
-    bool isSystemApp = false;
+    BundleParam param;
+    param.distributionType = Verify::AppDistType::OS_INTEGRATION;
     PermissionRulesEnum rule;
-    HapInitInfo initInfo;
     system::SetBoolParameter(ENTERPRISE_NORMAL_CHECK, true);
-    ASSERT_FALSE(PermissionManager::GetInstance().IsPermAvailableRangeSatisfied(
-        briefDef, appDistributionType, isSystemApp, rule, initInfo));
+    ASSERT_FALSE(PermissionConstraintCheck::IsPermAvailableRangeSatisfied(param, briefDef, rule));
     system::SetBoolParameter(ENTERPRISE_NORMAL_CHECK, false);
-    ASSERT_TRUE(PermissionManager::GetInstance().IsPermAvailableRangeSatisfied(
-        briefDef, appDistributionType, isSystemApp, rule, initInfo));
+    ASSERT_TRUE(PermissionConstraintCheck::IsPermAvailableRangeSatisfied(param, briefDef, rule));
 }
 
 /**

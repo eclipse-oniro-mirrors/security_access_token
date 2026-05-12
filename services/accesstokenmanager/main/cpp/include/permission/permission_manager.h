@@ -29,6 +29,7 @@
 #include "libraryloader.h"
 #include "nocopyable.h"
 #include "permission_def.h"
+#include "permission_constraint_check.h"
 #include "permission_grant_event.h"
 #include "permission_list_state.h"
 #include "permission_list_state_parcel.h"
@@ -91,29 +92,22 @@ public:
     int32_t AddPermStateChangeCallback(
         const PermStateChangeScope& scope, const sptr<IRemoteObject>& callback);
     int32_t RemovePermStateChangeCallback(const sptr<IRemoteObject>& callback);
-    bool GetApiVersionByTokenId(AccessTokenID tokenID, int32_t& apiVersion);
     bool LocationPermissionSpecialHandle(AccessTokenID tokenID, std::vector<PermissionListStateParcel>& reqPermList,
         std::vector<PermissionStatus>& permsList, int32_t apiVersion);
     void NotifyPermGrantStoreResult(bool result, uint64_t timestamp);
-    void ParamUpdate(const std::string& permissionName, uint32_t flag, bool filtered);
-    void ParamFlagUpdate();
-    void NotifyWhenPermissionStateUpdated(AccessTokenID tokenID, const std::string& permissionName,
-        bool isGranted, uint32_t flag, const std::shared_ptr<HapTokenInfoInner>& infoPtr);
-    void AddNativePermToKernel(
-        AccessTokenID tokenID, const std::vector<uint32_t>& opCodeList, const std::vector<bool>& statusList);
-    void AddHapPermToKernel(AccessTokenID tokenID, const std::vector<uint32_t>& constrainedPermList);
-    void RemovePermFromKernel(AccessTokenID tokenID);
-    void SetPermToKernel(AccessTokenID tokenID, const std::string& permissionName, bool isGranted);
-    void InitPermState(const HapInitInfo& initInfo,
-        const PermissionBriefDef& briefDef, bool needGrantForDebug, PermissionStatus& state);
-    bool InitPermissionList(const HapInitInfo& initInfo, std::vector<PermissionStatus>& initializedList,
-        HapInfoCheckResult& result, std::vector<GenericValues>& undefValues);
-    bool InitDlpPermissionList(const HapInfoParams& initInfo,
-        std::vector<PermissionStatus>& initializedList, std::vector<GenericValues>& undefValues);
     void NotifyUpdatedPermList(const std::vector<std::string>& grantedPermListBefore,
         const std::vector<std::string>& grantedPermListAfter, AccessTokenID tokenID);
-    bool IsPermAvailableRangeSatisfied(const PermissionBriefDef& briefDef, const std::string& appDistributionType,
-        bool isSystemApp, PermissionRulesEnum& rule, const HapInitInfo& initInfo);
+    void NotifyWhenPermissionStateUpdated(AccessTokenID tokenID, const std::string& permissionName,
+        bool isGranted, uint32_t flag, const std::shared_ptr<HapTokenInfoInner>& infoPtr);
+    void InitPermState(const HapPolicy& policy,
+        const PermissionBriefDef& briefDef, bool needGrantForDebug, PermissionStatus& state);
+    bool InitPermissionList(const BundleParam& param, const HapPolicy& policy,
+        std::vector<PermissionStatus>& initializedList, HapInfoCheckResult& result);
+    bool InitPermissionList(const BundleParam& param, const HapPolicy& policy,
+        std::vector<PermissionStatus>& initializedList, HapInfoCheckResult& result,
+        std::vector<GenericValues>& undefValues, bool dataRefresh = false);
+    bool InitDlpPermissionList(const HapInfoParams& initInfo,
+        std::vector<PermissionStatus>& initializedList, std::vector<GenericValues>& undefValues);
 
 protected:
     static void RegisterImpl(PermissionManager* implInstance);
@@ -137,8 +131,6 @@ private:
         std::vector<PermissionStatus>& permsList, int32_t apiVersion, const LocationIndex& locationIndex);
     void FillUndefinedPermVector(const std::string& permissionName, const std::string& appDistributionType,
         const HapPolicy& policy, std::vector<GenericValues>& undefValues);
-    bool AclAndEdmCheck(const PermissionBriefDef& briefDef, const HapInitInfo& initInfo,
-        const std::string& permissionName, const std::string& appDistributionType, HapInfoCheckResult& result);
     void GetMasterAppUndValues(AccessTokenID tokenId, std::vector<GenericValues>& undefValues);
     std::shared_ptr<LibraryLoader> GetAbilityManager();
     bool HandlePermissionDeniedCase(uint32_t goalGrantFlag, PermissionListState& permState);
@@ -146,12 +138,6 @@ private:
     PermissionGrantEvent grantEvent_;
     static std::recursive_mutex mutex_;
     static PermissionManager* implInstance_;
-
-    std::shared_mutex permParamSetLock_;
-    uint64_t paramValue_ = 0;
-
-    std::shared_mutex permFlagParamSetLock_;
-    uint64_t paramFlagValue_ = 0;
 
     DISALLOW_COPY_AND_MOVE(PermissionManager);
 
