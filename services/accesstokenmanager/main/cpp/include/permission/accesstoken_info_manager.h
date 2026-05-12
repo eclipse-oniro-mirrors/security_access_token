@@ -208,7 +208,11 @@ private:
     AccessTokenID GetReservedHapTokenId(int32_t userID, const std::string& bundleName, int32_t instIndex);
     void UpdateTokenAttr(const UpdateHapInfoParams& info, AccessTokenIDEx& tokenIdEx);
     void LoadPermissionDefinitionExt(ConfigPolicyLoaderInterface& policy);
-
+    void UpsertBundleInfoInnerCacheWithoutLock(const std::string& bundleName,
+        const std::shared_ptr<BundleInfoInner>& bundleInfo);
+    void AddTokenIdToBundleInfoInner(const std::shared_ptr<BundleInfoInner>& bundleInfo, AccessTokenID tokenId);
+    void RemoveTokenIdFromBundleInfoInner(const std::shared_ptr<BundleInfoInner>& bundleInfo, AccessTokenID tokenId);
+    
     bool hasInited_;
 
     std::shared_mutex hapTokenInfoLock_;
