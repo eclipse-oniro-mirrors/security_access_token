@@ -6270,7 +6270,8 @@
             "since": 13,
             "deprecated": "",
             "provisionEnable": true,
-            "distributedSceneEnable": false
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1"]
         },
         {
             "name": "ohos.permission.START_UIABILITY_TO_HIDDEN",
@@ -6280,7 +6281,8 @@
             "since": 13,
             "deprecated": "",
             "provisionEnable": true,
-            "distributedSceneEnable": false
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1"]
         },
         {
             "name": "ohos.permission.ACCESS_SUPER_HUB",
@@ -6340,7 +6342,8 @@
             "since": 14,
             "deprecated": "",
             "provisionEnable": true,
-            "distributedSceneEnable": false
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1"]
         },
         {
             "name": "ohos.permission.MANAGE_APP_KEEP_ALIVE_INTERNAL",
@@ -6350,7 +6353,8 @@
             "since": 14,
             "deprecated": "",
             "provisionEnable": true,
-            "distributedSceneEnable": false
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1"]
         },
         {
             "name": "ohos.permission.CALLED_UIEXTENSION_ON_LOCK_SCREEN",
@@ -6538,7 +6542,8 @@
             "since": 15,
             "deprecated": "",
             "provisionEnable": true,
-            "distributedSceneEnable": false
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1"]
         },
         {
             "name": "ohos.permission.kernel.ALLOW_USE_JITFORT_INTERFACE",
@@ -7186,6 +7191,7 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
+            "isKernelEffect": true,
             "deviceTypes": ["general"]
         },
         {
