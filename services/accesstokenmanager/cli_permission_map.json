@@ -76,6 +76,20 @@
             ]
         },
         {
+            "cliPermission": "ohos.permission.cli.SET_HOTSPOT",
+            "usedPermissions": [
+                "ohos.permission.CONNECTIVITY_INTERNAL",
+                "ohos.permission.MANAGE_SECURE_SETTINGS"
+            ]
+        },
+        {
+            "cliPermission": "ohos.permission.cli.GET_HOTSPOT",
+            "usedPermissions": [
+                "ohos.permission.CONNECTIVITY_INTERNAL",
+                "ohos.permission.MANAGE_SECURE_SETTINGS"
+            ]
+        },
+        {
             "cliPermission": "ohos.permission.cli.START_ABILITY",
             "usedPermissions": [
                 "ohos.permission.START_ABILITIES_FROM_BACKGROUND",
