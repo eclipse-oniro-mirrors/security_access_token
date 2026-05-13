@@ -27,6 +27,42 @@
             ]
         },
         {
+            "cliPermission": "ohos.permission.cli.WRITE_ACCESSIBILITY_CONFIG_VISION",
+            "usedPermissions": [
+                "ohos.permission.WRITE_ACCESSIBILITY_CONFIG"
+            ]
+        },
+        {
+            "cliPermission": "ohos.permission.cli.WRITE_ACCESSIBILITY_CONFIG_HEARING",
+            "usedPermissions": [
+                "ohos.permission.WRITE_ACCESSIBILITY_CONFIG"
+            ]
+        },
+        {
+            "cliPermission": "ohos.permission.cli.WRITE_ACCESSIBILITY_CONFIG_ACTION",
+            "usedPermissions": [
+                "ohos.permission.WRITE_ACCESSIBILITY_CONFIG"
+            ]
+        },
+        {
+            "cliPermission": "ohos.permission.cli.READ_ACCESSIBILITY_CONFIG_VISION",
+            "usedPermissions": [
+                "ohos.permission.READ_ACCESSIBILITY_CONFIG"
+            ]
+        },
+        {
+            "cliPermission": "ohos.permission.cli.READ_ACCESSIBILITY_CONFIG_HEARING",
+            "usedPermissions": [
+                "ohos.permission.READ_ACCESSIBILITY_CONFIG"
+            ]
+        },
+        {
+            "cliPermission": "ohos.permission.cli.READ_ACCESSIBILITY_CONFIG_ACTION",
+            "usedPermissions": [
+                "ohos.permission.READ_ACCESSIBILITY_CONFIG"
+            ]
+        },
+        {
             "cliPermission": "ohos.permission.cli.CONTROL_LOCATION_SWITCH",
             "usedPermissions": [
                 "ohos.permission.MANAGE_SETTINGS",
@@ -45,6 +81,19 @@
             "usedPermissions": [
                 "ohos.permission.CONNECTIVITY_INTERNAL",
                 "ohos.permission.MANAGE_SECURE_SETTINGS"
+            ]
+        },
+        {
+            "cliPermission": "ohos.permission.cli.START_ABILITY",
+            "usedPermissions": [
+                "ohos.permission.START_ABILITIES_FROM_BACKGROUND",
+                "ohos.permission.START_INVISIBLE_ABILITY"
+            ]
+        },
+        {
+            "cliPermission": "ohos.permission.cli.KILL_APP_PROCESSES",
+            "usedPermissions": [
+                "ohos.permission.KILL_APP_PROCESSES"
             ]
         },
         {

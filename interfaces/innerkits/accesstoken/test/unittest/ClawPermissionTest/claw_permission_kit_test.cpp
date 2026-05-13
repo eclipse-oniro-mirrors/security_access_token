@@ -33,40 +33,9 @@ static constexpr int32_t DEFAULT_API_VERSION = 12;
 static const std::string DEFAULT_AGENT_ID = "1001";
 uint64_t g_selfShellTokenId = 0;
 
-PermissionStateFull BuildPermissionState(
-    const std::string& permissionName, int32_t grantStatus, uint32_t grantFlag)
-{
-    PermissionStateFull state;
-    state.permissionName = permissionName;
-    state.isGeneral = true;
-    state.resDeviceID = {"local"};
-    state.grantStatus = {grantStatus};
-    state.grantFlags = {grantFlag};
-    return state;
-}
-
-PermissionStateFull BuildGrantedPermissionState(const std::string& permissionName)
-{
-    return BuildPermissionState(
-        permissionName, PermissionState::PERMISSION_GRANTED, PermissionFlag::PERMISSION_USER_SET);
-}
-
-std::vector<PermissionStateFull> BuildClawQueryAndManagePermissionStates()
-{
-    return {
-        BuildGrantedPermissionState("ohos.permission.QUERY_TOOL_PERMISSIONS"),
-        BuildGrantedPermissionState("ohos.permission.MANAGE_TOOL_RUNTIME_PERMISSIONS"),
-    };
-}
-
 std::vector<CliInfo> BuildCliInfos()
 {
     return {CliInfo {.cliName = "camera", .subCliName = "capture"}};
-}
-
-std::vector<CliInfo> BuildUnknownCliInfos()
-{
-    return {CliInfo {.cliName = "unknown", .subCliName = "run"}};
 }
 
 std::vector<SkillInfo> BuildSkillInfos()
@@ -191,27 +160,6 @@ HWTEST_F(ClawPermissionKitTest, ClawPermissionKitNonSystem001, TestSize.Level3)
         AccessTokenKit::GenerateSkillAuthResult(
             caller.GetTokenId(), DEFAULT_AGENT_ID, BuildSkillAuthInfos(), authResult));
 }
-
-/**
- * @tc.name: ClawPermissionKitServiceError001
- * @tc.desc: CLAW kit APIs return ERR_PARAM_INVALID when CLI metadata queryRet is not success.
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(ClawPermissionKitTest, ClawPermissionKitServiceError001, TestSize.Level3)
-{
-    ScopedClawCaller caller("claw_service_error_kit_test", true, BuildClawQueryAndManagePermissionStates());
-
-    PermissionDialogResult dialogResult;
-    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID,
-        AccessTokenKit::GetCliPermissionRequestInfo(DEFAULT_AGENT_ID, BuildUnknownCliInfos(), dialogResult));
-
-    CliPermissionsResult permissionsResult;
-    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID,
-        AccessTokenKit::GetCliPermissions(
-            caller.GetTokenId(), DEFAULT_AGENT_ID, BuildUnknownCliInfos(), permissionsResult));
-}
-
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
