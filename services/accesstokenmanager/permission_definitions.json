@@ -4474,28 +4474,6 @@
             "deviceTypes": ["phone", "wearable", "tv", "2in1", "tablet", "car", "liteWearable"]
         },
         {
-            "name": "ohos.permission.cli.SET_HOTSPOT",
-            "grantMode": "user_grant",
-            "availableLevel": "system_basic",
-            "availableType": "SYSTEM",
-            "since": "26.0.0",
-            "deprecated": "",
-            "provisionEnable": true,
-            "distributedSceneEnable": false,
-            "deviceTypes": ["general"]
-        },
-        {
-            "name": "ohos.permission.cli.GET_HOTSPOT",
-            "grantMode": "system_grant",
-            "availableLevel": "system_basic",
-            "availableType": "SYSTEM",
-            "since": "26.0.0",
-            "deprecated": "",
-            "provisionEnable": true,
-            "distributedSceneEnable": false,
-            "deviceTypes": ["general"]
-        },
-        {
             "name": "ohos.permission.ACCESS_SCAN_SERVICE",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
@@ -4594,6 +4572,28 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.cli.SET_HOTSPOT",
+            "grantMode": "user_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "wearable", "tv", "2in1", "tablet", "car", "liteWearable"]
+        },
+        {
+            "name": "ohos.permission.cli.GET_HOTSPOT",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "wearable", "tv", "2in1", "tablet", "car", "liteWearable"]
         },
         {
             "name": "ohos.permission.RESTORE_END_NOTIFICATION",
