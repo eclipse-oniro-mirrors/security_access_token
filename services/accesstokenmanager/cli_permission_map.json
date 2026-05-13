@@ -70,6 +70,19 @@
             ]
         },
         {
+            "cliPermission": "ohos.permission.cli.START_ABILITY",
+            "usedPermissions": [
+                "ohos.permission.START_ABILITIES_FROM_BACKGROUND",
+                "ohos.permission.START_INVISIBLE_ABILITY"
+            ]
+        },
+        {
+            "cliPermission": "ohos.permission.cli.KILL_APP_PROCESSES",
+            "usedPermissions": [
+                "ohos.permission.KILL_APP_PROCESSES"
+            ]
+        },
+        {
             "cliPermission": "ohos.permission.cli.INSTALL_BUNDLE",
             "usedPermissions": [
                 "ohos.permission.INSTALL_BUNDLE"
