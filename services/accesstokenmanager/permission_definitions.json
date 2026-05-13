@@ -4663,7 +4663,8 @@
             "since": 14,
             "deprecated": "",
             "provisionEnable": true,
-            "distributedSceneEnable": false
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1"]
         },
         {
             "name": "ohos.permission.ACCESS_APP_INSTALL_DIR",
