@@ -72,6 +72,18 @@ static const int32_t ASYNC_RETRY_DFX_COUNT = 60;
 static const int32_t PUBLISH_ERROR_CODE = -1;
 std::mutex g_accessTokenRunningMutex;
 bool g_isAccessTokenRunning = false;
+
+bool IsCliTokenHostRecordCalling(AccessTokenID callingTokenID, AccessTokenID infoTokenId)
+{
+    if (!AccessTokenKit::IsCliToolToken(callingTokenID)) {
+        return false;
+    }
+    AccessTokenID hostTokenId = INVALID_TOKENID;
+    if (AccessTokenKit::GetHostTokenId(callingTokenID, hostTokenId) != RET_SUCCESS) {
+        return false;
+    }
+    return hostTokenId == infoTokenId;
+}
 }
 
 const bool REGISTER_RESULT =
@@ -125,7 +137,8 @@ int32_t PrivacyManagerService::AddPermissionUsedRecord(const AddPermParamInfoPar
     if ((AccessTokenKit::GetTokenTypeFlag(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
         return PrivacyError::ERR_NOT_SYSTEM_APP;
     }
-    if (!VerifyPermission(PERMISSION_USED_STATS)) {
+    if (!VerifyPermission(PERMISSION_USED_STATS) &&
+        !IsCliTokenHostRecordCalling(callingTokenID, infoParcel.info.tokenId)) {
         return PrivacyError::ERR_PERMISSION_DENIED;
     }
 

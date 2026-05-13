@@ -40,8 +40,8 @@ public:
         const std::string& bundle, const std::vector<std::string>& reqPerm, bool isSystemApp, int32_t userId);
     ~MockHapToken();
 private:
-    uint64_t selfToken_;
-    uint32_t mockToken_;
+    uint64_t selfToken_ = 0;
+    uint32_t mockToken_ = INVALID_TOKENID;
 };
 class PrivacyTestCommon {
 public:

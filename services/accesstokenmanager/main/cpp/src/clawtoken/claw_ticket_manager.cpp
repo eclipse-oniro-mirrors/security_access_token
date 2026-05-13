@@ -160,10 +160,8 @@ CliAuthInfo DeserializeCliAuthInfo(const std::string& json)
             }
         }
     }
-
     return cliAuth;
 }
-
 SkillAuthInfo DeserializeSkillAuthInfo(const std::string& json)
 {
     SkillAuthInfo skillAuth;
@@ -403,7 +401,10 @@ int32_t ClawTicketManager::VerifyCliClawTicket(AccessTokenID hostTokenId, const 
         LOGE(ATM_DOMAIN, ATM_TAG, "Verify cli ticket failed, ret=%{public}d", ret);
         return ret;
     }
-
+    if (hostTokenId != it->second.callerTokenId) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Verify cli ticket failed, hostTokenId=%{public}d", hostTokenId);
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
     for (size_t ticketIdx = 0; ticketIdx < verifyInfos.size(); ++ticketIdx) {
         bool ticketValid = (verifyRes[ticketIdx] == 0);
         CliAuthInfo cliAuth = DeserializeCliAuthInfo(verifyInfos[ticketIdx].message);
