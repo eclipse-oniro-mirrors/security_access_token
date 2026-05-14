@@ -9214,6 +9214,17 @@
             "isKernelEffect": true
         },
         {
+            "name": "ohos.permission.CONNECT_GAME_ACCELERATION",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "tablet", "tv"]
+        },
+        {
           "name": "ohos.permission.ACCESS_INTIMATE_RELATION_INFO",
           "grantMode": "system_grant",
           "availableLevel": "system_basic",
