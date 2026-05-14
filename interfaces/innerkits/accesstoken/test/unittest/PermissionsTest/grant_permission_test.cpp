@@ -380,7 +380,7 @@ HWTEST_F(GrantPermissionTest, GrantPermissionDisabled001, TestSize.Level0)
     bool originalEnabled = IsDefinedPermissionInner(permissionName);
     
     EXPECT_TRUE(SetPermissionBriefEnabled(permissionName, false));
-    int32_t ret = AccessTokenKit::GrantPermission(tokenID, permissionName,PERMISSION_USER_FIXED);
+    int32_t ret = AccessTokenKit::GrantPermission(tokenID, permissionName, PERMISSION_USER_FIXED);
     EXPECT_EQ(ERR_PERMISSION_NOT_EXIST, ret);
     ASSERT_TRUE(SetPermissionBriefEnabled(permissionName, originalEnabled));
     ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));

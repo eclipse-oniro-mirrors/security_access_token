@@ -1090,7 +1090,6 @@ bool AccessTokenManagerClient::IsSupportPermission(const std::string& permission
     }
     return isSupported;
 }
- 	 
 
 void AccessTokenManagerClient::InitProxy()
 {
