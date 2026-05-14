@@ -6294,7 +6294,8 @@
             "since": 12,
             "deprecated": "",
             "provisionEnable": true,
-            "distributedSceneEnable": true
+            "distributedSceneEnable": true,
+            "deviceTypes": ["2in1", "tablet", "phone"]
         },
         {
             "name": "ohos.permission.MANAGE_ACCESSORY",
