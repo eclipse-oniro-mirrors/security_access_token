@@ -363,7 +363,7 @@ HWTEST_F(CommonTest, IsPermFeatureValid001, TestSize.Level1)
  */
 HWTEST_F(CommonTest, SetPermissionBriefEnabled001, TestSize.Level1)
 {
-    constexpr const char* permissionName = "ohos.permission.ANSWER_CALL";
+    std::string permissionName = "ohos.permission.ANSWER_CALL";
     
     ASSERT_TRUE(SetPermissionBriefEnabled(permissionName, false));
     EXPECT_FALSE(IsDefinedPermissionInner(permissionName));
@@ -390,7 +390,7 @@ HWTEST_F(CommonTest, SetPermissionBriefEnabled002, TestSize.Level1)
  */
 HWTEST_F(CommonTest, SetPermissionBriefEnabled003, TestSize.Level1)
 {
-    constexpr const char* permissionName = "ohos.permission.ANSWER_CALL";
+    std::string permissionName = "ohos.permission.ANSWER_CALL";
     
     ASSERT_TRUE(SetPermissionBriefEnabled(permissionName, false));
     ASSERT_TRUE(SetPermissionBriefEnabled(permissionName, true));
@@ -408,7 +408,7 @@ HWTEST_F(CommonTest, SetPermissionBriefEnabled003, TestSize.Level1)
  */
 HWTEST_F(CommonTest, IsUserGrantPermission002, TestSize.Level1)
 {
-    constexpr const char* permissionName = "ohos.permission.CAMERA";
+    std::string permissionName = "ohos.permission.CAMERA";
     
     ASSERT_TRUE(SetPermissionBriefEnabled(permissionName, false));
     EXPECT_FALSE(IsUserGrantPermission(permissionName));
@@ -423,7 +423,7 @@ HWTEST_F(CommonTest, IsUserGrantPermission002, TestSize.Level1)
  */
 HWTEST_F(CommonTest, IsOperablePermission001, TestSize.Level1)
 {
-    constexpr const char* permissionName = "ohos.permission.CAMERA";
+    std::string permissionName = "ohos.permission.CAMERA";
     
     ASSERT_TRUE(SetPermissionBriefEnabled(permissionName, false));
     EXPECT_FALSE(IsOperablePermission(permissionName));
@@ -438,7 +438,7 @@ HWTEST_F(CommonTest, IsOperablePermission001, TestSize.Level1)
  */
 HWTEST_F(CommonTest, IsPermissionValidForHap001, TestSize.Level1)
 {
-    constexpr const char* permissionName = "ohos.permission.CAMERA";
+    std::string permissionName = "ohos.permission.CAMERA";
     
     ASSERT_TRUE(SetPermissionBriefEnabled(permissionName, false));
     EXPECT_FALSE(IsPermissionValidForHap(permissionName));
@@ -453,7 +453,7 @@ HWTEST_F(CommonTest, IsPermissionValidForHap001, TestSize.Level1)
  */
 HWTEST_F(CommonTest, GetPermissionBriefDef001, TestSize.Level1)
 {
-    constexpr const char* permissionName = "ohos.permission.CAMERA";
+    std::string permissionName = "ohos.permission.CAMERA";
     
     // Test with enabled permission
     PermissionBriefDef permDef;

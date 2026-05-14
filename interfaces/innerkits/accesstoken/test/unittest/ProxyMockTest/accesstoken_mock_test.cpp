@@ -229,15 +229,14 @@ HWTEST_F(AccessTokenMockTest, GetTokenType001, TestSize.Level4)
  */
 HWTEST_F(AccessTokenMockTest, TransferPermissionToOpcode001, TestSize.Level4)
 {
-    constexpr const char* permissionName = "ohos.permission.ANSWER_CALL";
+    std::string permissionName = "ohos.permission.ANSWER_CALL";
     uint32_t opCode = 0;
  	 
     ASSERT_TRUE(SetPermissionBriefEnabled(permissionName, false));
     EXPECT_FALSE(AccessTokenKit::IsSupportPermission(permissionName));
     EXPECT_FALSE(AccessTokenKit::TransferPermissionToOpcode(permissionName, opCode));
     EXPECT_TRUE(SetPermissionBriefEnabled(permissionName, true));
-    }
- 	 
+}
 
 /**
  * @tc.name: GetHapTokenID001

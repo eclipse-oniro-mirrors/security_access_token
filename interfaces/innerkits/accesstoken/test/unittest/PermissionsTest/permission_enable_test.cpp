@@ -77,7 +77,7 @@ void PermissionEnableTest::TearDown()
  */
 HWTEST_F(PermissionEnableTest, GetDefPermission001, TestSize.Level0)
 {
-    constexpr const char* permissionName = "ohos.permission.CAMERA";
+    std::string permissionName = "ohos.permission.CAMERA";
     PermissionDef permissionDef;
     
     ASSERT_TRUE(SetPermissionBriefEnabled(permissionName, false));
@@ -97,7 +97,7 @@ HWTEST_F(PermissionEnableTest, GetPermissionFlag001, TestSize.Level0)
     AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     ASSERT_NE(INVALID_TOKENID, tokenID);
     
-    constexpr const char* permissionName = "ohos.permission.CAMERA";
+    std::string permissionName = "ohos.permission.CAMERA";
     
     ASSERT_TRUE(SetPermissionBriefEnabled(permissionName, false));
     EXPECT_EQ(AccessTokenError::ERR_PERMISSION_NOT_EXIST,
@@ -113,7 +113,7 @@ HWTEST_F(PermissionEnableTest, GetPermissionFlag001, TestSize.Level0)
  */
 HWTEST_F(PermissionEnableTest, QueryStatusByPermission001, TestSize.Level0)
 {
-    constexpr const char* permissionName = "ohos.permission.CAMERA";
+    std::string permissionName = "ohos.permission.CAMERA";
     std::vector<std::string> permissionList = {permissionName};
     std::vector<PermissionStatus> permissionInfoList;
     
@@ -134,7 +134,7 @@ HWTEST_F(PermissionEnableTest, QueryStatusByTokenID001, TestSize.Level0)
     AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     ASSERT_NE(INVALID_TOKENID, tokenID);
     
-    constexpr const char* permissionName = "ohos.permission.CAMERA";
+    std::string permissionName = "ohos.permission.CAMERA";
     std::vector<AccessTokenID> tokenIDList = {tokenID};
     std::vector<PermissionStatus> permissionInfoList;
     
@@ -155,7 +155,7 @@ HWTEST_F(PermissionEnableTest, GetPermissionsStatus001, TestSize.Level0)
     AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     ASSERT_NE(INVALID_TOKENID, tokenID);
     
-    constexpr const char* permissionName = "ohos.permission.CAMERA";
+    std::string permissionName = "ohos.permission.CAMERA";
     std::vector<PermissionListStateParcel> permList;
     
     ASSERT_TRUE(SetPermissionBriefEnabled(permissionName, false));
@@ -178,7 +178,7 @@ HWTEST_F(PermissionEnableTest, VerifyAccessToken001, TestSize.Level0)
     AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     ASSERT_NE(INVALID_TOKENID, tokenID);
     
-    constexpr const char* permissionName = "ohos.permission.CAMERA";
+    std::string permissionName = "ohos.permission.CAMERA";
     
     ASSERT_TRUE(SetPermissionBriefEnabled(permissionName, false));
     EXPECT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenID, permissionName, false));

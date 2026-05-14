@@ -1167,7 +1167,7 @@ HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackDis
     ASSERT_EQ(RET_SUCCESS, res);
     
     // Disable the permission
-    constexpr const char* permissionName = "ohos.permission.CAMERA";
+    std::string permissionName = "ohos.permission.CAMERA";
     ASSERT_TRUE(SetPermissionBriefEnabled(permissionName, false));
     
     // Grant permission while disabled - callback should not be triggered

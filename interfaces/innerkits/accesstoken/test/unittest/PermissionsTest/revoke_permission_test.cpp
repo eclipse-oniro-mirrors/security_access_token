@@ -379,10 +379,10 @@ HWTEST_F(RevokePermissionTest, RevokePermissionDisabled001, TestSize.Level0)
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
     ASSERT_NE(INVALID_TOKENID, tokenID);
 
-    constexpr const char* permissionName = "ohos.permission.MICROPHONE";
+    std::string permissionName = "ohos.permission.MICROPHONE";
     
     ASSERT_TRUE(SetPermissionBriefEnabled(permissionName, false));
-    int ret = AccessTokenKit::RevokePermission(tokenID, permissionName, PERMISSION_USER_FIXED);
+    int32_t ret = AccessTokenKit::RevokePermission(tokenID, permissionName, PERMISSION_USER_FIXED);
     EXPECT_EQ(ERR_PERMISSION_NOT_EXIST, ret);
     ASSERT_TRUE(SetPermissionBriefEnabled(permissionName, true));
 

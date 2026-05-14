@@ -376,13 +376,13 @@ HWTEST_F(GrantPermissionTest, GrantPermissionDisabled001, TestSize.Level0)
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
     ASSERT_NE(INVALID_TOKENID, tokenID);
 
-    constexpr const char* permissionName = "ohos.permission.MICROPHONE";
+    std::string permissionName = "ohos.permission.MICROPHONE";
+    bool originalEnabled = IsDefinedPermissionInner(permissionName);
     
-    ASSERT_TRUE(SetPermissionBriefEnabled(permissionName, false));
-    int ret = AccessTokenKit::GrantPermission(tokenID, permissionName, PERMISSION_USER_FIXED);
+    EXPECT_TRUE(SetPermissionBriefEnabled(permissionName, false));
+    int32_t ret = AccessTokenKit::GrantPermission(tokenID, permissionName,PERMISSION_USER_FIXED);
     EXPECT_EQ(ERR_PERMISSION_NOT_EXIST, ret);
-    ASSERT_TRUE(SetPermissionBriefEnabled(permissionName, true));
-
+    ASSERT_TRUE(SetPermissionBriefEnabled(permissionName, originalEnabled));
     ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
 } // namespace AccessToken

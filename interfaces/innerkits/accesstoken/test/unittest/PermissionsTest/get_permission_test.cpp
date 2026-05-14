@@ -558,7 +558,7 @@ HWTEST_F(GetPermissionTest, TransferOpcodeToPermission002, TestSize.Level0)
  */
 HWTEST_F(GetPermissionTest, TransferPermissionToOpcode001, TestSize.Level0)
 {
-    constexpr const char* permissionName = "ohos.permission.ANSWER_CALL";
+    std::string permissionName = "ohos.permission.ANSWER_CALL";
     uint32_t opCode = 0;
         
     ASSERT_TRUE(SetPermissionBriefEnabled(permissionName, false));
@@ -586,7 +586,7 @@ HWTEST_F(GetPermissionTest, IsSupportPermission001, TestSize.Level0)
  */
 HWTEST_F(GetPermissionTest, IsSupportPermission002, TestSize.Level0)
 {
-    constexpr const char* permissionName = "ohos.permission.CAMERA";
+    std::string permissionName = "ohos.permission.CAMERA";
     EXPECT_TRUE(AccessTokenKit::IsSupportPermission(permissionName));
 }
 
@@ -609,7 +609,7 @@ HWTEST_F(GetPermissionTest, IsSupportPermission003, TestSize.Level0)
  */
 HWTEST_F(GetPermissionTest, TransferPermissionToOpcode003, TestSize.Level0)
 {
-    constexpr const char* permissionName = "ohos.permission.CAMERA";
+    std::string permissionName = "ohos.permission.CAMERA";
     uint32_t opCode = 0;
     
     ASSERT_TRUE(SetPermissionBriefEnabled(permissionName, false));
@@ -625,7 +625,7 @@ HWTEST_F(GetPermissionTest, TransferPermissionToOpcode003, TestSize.Level0)
  */
 HWTEST_F(GetPermissionTest, TransferPermissionToOpcode004, TestSize.Level0)
 {
-    constexpr const char* permissionName = "ohos.permission.CAMERA";
+    std::string permissionName = "ohos.permission.CAMERA";
     uint32_t opCode = 0;
     
     EXPECT_TRUE(AccessTokenKit::TransferPermissionToOpcode(permissionName, opCode));
@@ -640,7 +640,7 @@ HWTEST_F(GetPermissionTest, TransferPermissionToOpcode004, TestSize.Level0)
  */
 HWTEST_F(GetPermissionTest, TransferOpcodeToPermission003, TestSize.Level0)
 {
-    constexpr const char* permissionName = "ohos.permission.CAMERA";
+    std::string permissionName = "ohos.permission.CAMERA";
     uint32_t opCode = 0;
     ASSERT_TRUE(AccessTokenKit::TransferPermissionToOpcode(permissionName, opCode));
     
@@ -659,7 +659,7 @@ HWTEST_F(GetPermissionTest, TransferOpcodeToPermission003, TestSize.Level0)
  */
 HWTEST_F(GetPermissionTest, GetDefPermission002, TestSize.Level0)
 {
-    constexpr const char* permissionName = "ohos.permission.INTERNET";
+    std::string permissionName = "ohos.permission.INTERNET";
     PermissionDef permissionDef;
     
     // SYSTEM_GRANT permission should return success locally

@@ -617,7 +617,7 @@ int AccessTokenManagerService::GetDefPermission(
     }
 
     PermissionBriefDef briefDef;
-    if (!GetPermissionBriefDef(permissionName, briefDef) && !briefDef.isEnable) {
+    if (!GetPermissionBriefDef(permissionName, briefDef) || !briefDef.isEnable) {
         return AccessTokenError::ERR_PERMISSION_NOT_EXIST;
     }
 
