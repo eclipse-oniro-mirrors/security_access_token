@@ -5712,7 +5712,8 @@
             "since": 13,
             "deprecated": "",
             "provisionEnable": true,
-            "distributedSceneEnable": false
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1", "tablet", "phone", "wearable"]
         },
         {
             "name": "ohos.permission.EXPORT_FINDNETWORK_KEY",
@@ -5721,7 +5722,7 @@
             "availableType": "SERVICE",
             "since": 23,
             "deprecated": "",
-            "provisionEnable": true,
+            "provisionEnable": false,
             "distributedSceneEnable": false,
             "deviceTypes": ["wearable"]
         },
@@ -5733,7 +5734,8 @@
             "since": 15,
             "deprecated": "",
             "provisionEnable": true,
-            "distributedSceneEnable": false
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1", "tablet", "phone", "wearable"]
         },
         {
             "name": "ohos.permission.MANAGE_SOFTBUS_NETWORK",
