@@ -157,7 +157,7 @@ HWTEST_F(PermissionEnableTest, GetPermissionsStatus001, TestSize.Level0)
     int32_t ret = AccessTokenKit::GetPermissionsStatus(tokenID, permList);
     EXPECT_EQ(RET_SUCCESS, ret);
     for (const auto& perm : permList) {
-        EXPECT_NE(permissionName, perm.permsState.permissionName);
+        EXPECT_NE(permissionName, perm.permissionName);
     }
     ASSERT_TRUE(SetPermissionBriefEnabled(permissionName, true));
 }
