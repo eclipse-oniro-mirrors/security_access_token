@@ -361,8 +361,31 @@ HWTEST_F(PrivacyManagerServiceTest, AddPermissionUsedRecordInner003, TestSize.Le
 }
 
 /**
+ * @tc.name: AddPermissionUsedRecordInner004
+ * @tc.desc: Fake cli tool token can report only itself without PERMISSION_USED_STATS.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyManagerServiceTest, AddPermissionUsedRecordInner004, TestSize.Level0)
+{
+    AccessTokenID fakeCliToolTokenId = BuildFakeCliToolTokenId();
+
+    AddPermParamInfoParcel infoParcel;
+    infoParcel.info.tokenId = fakeCliToolTokenId;
+    infoParcel.info.permissionName = LOCATION_PERMISSION_NAME;
+    infoParcel.info.successCount = 1;
+    infoParcel.info.failCount = 0;
+
+    ASSERT_EQ(0, SetSelfTokenID(fakeCliToolTokenId));
+    int32_t ret = privacyManagerService_->AddPermissionUsedRecord(infoParcel);
+    ASSERT_EQ(0, SetSelfTokenID(g_selfTokenId));
+
+    EXPECT_NE(0, ret);
+}
+
+/**
  * @tc.name: AddPermissionUsedRecordInner005
- * @tc.desc: Fake cli tool token cannot add used record for unrelated host token without PERMISSION_USED_STATS.
+ * @tc.desc: Fake cli tool token cannot add used record for unrelated token without PERMISSION_USED_STATS.
  * @tc.type: FUNC
  * @tc.require:
  */
