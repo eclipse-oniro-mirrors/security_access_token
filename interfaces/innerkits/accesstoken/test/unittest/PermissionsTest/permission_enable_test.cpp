@@ -18,6 +18,7 @@
 #include "access_token_error.h"
 #include "permission_map.h"
 #include "permission_enable_test.h"
+#include "permission_list_state.h"
 #include "test_common.h"
 #include "tokenid_kit.h"
 
@@ -135,6 +136,29 @@ HWTEST_F(PermissionEnableTest, QueryStatusByTokenID001, TestSize.Level0)
     ASSERT_TRUE(SetPermissionBriefEnabled(permissionName, false));
     EXPECT_EQ(AccessTokenError::ERR_PERMISSION_NOT_EXIST,
               AccessTokenKit::QueryStatusByTokenID(tokenIDList, permissionInfoList));
+    ASSERT_TRUE(SetPermissionBriefEnabled(permissionName, true));
+}
+
+/*
+ * @tc.name: GetPermissionsStatus001
+ * @tc.desc: GetPermissionsStatus should filter disabled permissions
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionEnableTest, GetPermissionsStatus001, TestSize.Level0)
+{
+    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+
+    std::string permissionName = "ohos.permission.CAMERA";
+    std::vector<PermissionListState> permList;
+
+    ASSERT_TRUE(SetPermissionBriefEnabled(permissionName, false));
+    int32_t ret = AccessTokenKit::GetPermissionsStatus(tokenID, permList);
+    EXPECT_EQ(RET_SUCCESS, ret);
+    for (const auto& perm : permList) {
+        EXPECT_NE(permissionName, perm.permsState.permissionName);
+    }
     ASSERT_TRUE(SetPermissionBriefEnabled(permissionName, true));
 }
 
