@@ -567,7 +567,7 @@ int32_t AccessTokenManagerService::DeleteToolTokenByPid(int32_t pid)
 
 int32_t AccessTokenManagerService::GetCliTokenInfo(AccessTokenID tokenId, CliInfoResultParcel& infoParcel)
 {
-    if (!IsNativeProcessCalling() && !IsPrivilegedCalling()) {
+    if (!IsNativeProcessCalling()) {
         return AccessTokenError::ERR_PERMISSION_DENIED;
     }
     return ToolTokenInfoManager::GetInstance().GetCliTokenInfo(tokenId, infoParcel.cliTokenInfo);
@@ -575,7 +575,7 @@ int32_t AccessTokenManagerService::GetCliTokenInfo(AccessTokenID tokenId, CliInf
 
 int32_t AccessTokenManagerService::GetSkillTokenInfo(AccessTokenID tokenId, SkillInfoResultParcel& infoParcel)
 {
-    if (!IsNativeProcessCalling() && !IsPrivilegedCalling()) {
+    if (!IsNativeProcessCalling()) {
         return AccessTokenError::ERR_PERMISSION_DENIED;
     }
     return ToolTokenInfoManager::GetInstance().GetSkillTokenInfo(tokenId, infoParcel.skillTokenInfo);
@@ -583,7 +583,7 @@ int32_t AccessTokenManagerService::GetSkillTokenInfo(AccessTokenID tokenId, Skil
 
 int32_t AccessTokenManagerService::GetHostTokenId(AccessTokenID toolTokenId, AccessTokenID& hostTokenId)
 {
-    if (!IsNativeProcessCalling() && !IsPrivilegedCalling()) {
+    if (!IsNativeProcessCalling()) {
         LOGE(ATM_DOMAIN, ATM_TAG,
             "Permission denied when get host token, callingTokenId=%{public}u, toolTokenId=%{public}u.",
             IPCSkeleton::GetCallingTokenID(), toolTokenId);

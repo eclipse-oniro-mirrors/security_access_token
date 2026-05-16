@@ -82,6 +82,7 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
   ]
 
   sources = [
+    "${access_token_path}/interfaces/innerkits/accesstoken/test/unittest/common/mock_permission.cpp",
     "${access_token_path}/interfaces/innerkits/accesstoken/test/unittest/common/test_common.cpp",
     "common/parameter.cpp",
     "common/parameters.cpp",
@@ -103,11 +104,8 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
     "tooltoken/claw_ticket_manager_test.cpp",
     "tooltoken/permission_map_fence.cpp",
     "tooltoken/saf_agent_fence.cpp",
+    "tooltoken/tool_token_mock_test.cpp"
   ]
-
-  if (access_token_enhance_capability == true) {
-    sources += [ "tooltoken/tool_token_mock_test.cpp" ]
-  }
 
   sources += accesstoken_manager_base_config.sources
 

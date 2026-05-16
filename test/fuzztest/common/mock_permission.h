@@ -44,9 +44,9 @@ constexpr uint64_t SYSTEM_APP_MASK = (static_cast<uint64_t>(1) << 32);
 
 inline uid_t MockAccessTokenUid()
 {
-    uid_t originalEuid = geteuid();
-    if (geteuid() != ACCESS_TOKEN_UID) {
-        (void)seteuid(ACCESS_TOKEN_UID);
+    uid_t originalEuid = getuid();
+    if (getuid() != ACCESS_TOKEN_UID) {
+        (void)setuid(ACCESS_TOKEN_UID);
     }
     return originalEuid;
 }
@@ -54,11 +54,11 @@ inline uid_t MockAccessTokenUid()
 inline void RestoreUid(uid_t originalEuid)
 {
     if (originalEuid != ACCESS_TOKEN_UID) {
-        (void)seteuid(originalEuid);
+        (void)setuid(originalEuid);
     }
 }
 
-AccessTokenID TransfterStrToAccesstokenID(const std::string& numStr)
+static AccessTokenID TransfterStrToAccesstokenID(const std::string& numStr)
 {
     size_t index = 0;
     while (index < numStr.length()) {
@@ -74,7 +74,7 @@ AccessTokenID TransfterStrToAccesstokenID(const std::string& numStr)
     return static_cast<AccessTokenID>(std::stoul(numStr));
 }
 
-AccessTokenID GetTokenByProcessName(const std::string& processName)
+static AccessTokenID GetTokenByProcessName(const std::string& processName)
 {
     std::string dumpInfo;
     AtmToolsParamInfo info;
