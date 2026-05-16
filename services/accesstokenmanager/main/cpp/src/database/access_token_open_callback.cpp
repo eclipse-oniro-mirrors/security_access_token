@@ -80,12 +80,14 @@ int32_t AccessTokenOpenCallback::CreateHapTokenInfoTable(NativeRdb::RdbStore& rd
         .append(INTEGER_STR)
         .append(TokenFiledConst::FIELD_FORBID_PERM_DIALOG)
         .append(INTEGER_STR)
+    #ifdef SPM_DATA_ENABLE
         .append(TokenFiledConst::FIELD_UID)
         .append(" integer not null default -1,")
         .append(TokenFiledConst::FIELD_MIGRATED)
         .append(" integer not null default 0,")
         .append(TokenFiledConst::FIELD_RESERVED)
         .append(" integer not null default 0,")
+    #endif
         .append("primary key(")
         .append(TokenFiledConst::FIELD_TOKEN_ID)
         .append("))");
@@ -453,12 +455,12 @@ int32_t AccessTokenOpenCallback::OnCreate(NativeRdb::RdbStore& rdbStore)
     if (res != NativeRdb::E_OK) {
         return res;
     }
-
+#ifdef SPM_DATA_ENABLE
     res = CreateVersionNineTable(rdbStore);
     if (res != NativeRdb::E_OK) {
         return res;
     }
-
+#endif
     std::string dbBackPath = std::string(DATABASE_PATH) + std::string(DATABASE_NAME_BACK);
     if (access(dbBackPath.c_str(), NativeRdb::E_OK) != 0) {
         return 0;
