@@ -38,6 +38,7 @@ ohos_unittest("libaccesstoken_manager_service_coverage_test") {
     "../unittest/common/parameter.cpp",
     "../unittest/common/parameters.cpp",
     "accesstoken_database_coverage_test.cpp",
+    "accesstoken_id_manager_coverage_test.cpp",
     "permission_manager_coverage_test.cpp",
   ]
   sources += accesstoken_manager_base_config.sources

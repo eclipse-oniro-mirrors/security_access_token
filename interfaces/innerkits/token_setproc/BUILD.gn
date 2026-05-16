@@ -31,7 +31,14 @@ if (is_standard_system) {
 
     include_dirs = [ "src" ]
 
-    sources = [ "src/token_setproc.c" ]
+    sources = [
+      "src/spm_setproc.c",
+      "src/token_setproc.c",
+    ]
+
+    external_deps = [
+      "bounds_checking_function:libsec_shared",
+    ]
   }
 
   ohos_shared_library("libtokensetproc_shared") {
@@ -51,7 +58,14 @@ if (is_standard_system) {
 
     include_dirs = [ "src" ]
 
-    sources = [ "src/token_setproc.c" ]
+    sources = [
+      "src/spm_setproc.c",
+      "src/token_setproc.c",
+    ]
+
+    external_deps = [
+      "bounds_checking_function:libsec_shared",
+    ]
   }
 
   ohos_static_library("libperm_setproc") {

@@ -42,6 +42,11 @@ void ValuesBucket::PutLong(std::string a, int64_t b)
     isEmpty_ = false;
 }
 
+void ValuesBucket::PutBlob(std::string a, std::vector<uint8_t> b)
+{
+    isEmpty_ = false;
+}
+
 int32_t ResultSet::GetRowCount(int32_t a)
 {
     return NativeRdb::E_OK;
@@ -52,21 +57,25 @@ void ResultSet::Close()
 
 int32_t ResultSet::GoToNextRow()
 {
-    if (hasNext_) {
-        hasNext_ = false;
+    if (currentRowIndex_ < rowData_.size()) {
+        currentRowIndex_++;
         return NativeRdb::E_OK;
     }
     return NativeRdb::E_SQLITE_CORRUPT;
 }
 
 void ResultSet::GetAllColumnNames(std::vector<std::string>& a)
-{}
+{
+    a = columnNames_;
+}
 
 void ResultSet::GetColumnIndex(std::string a, int32_t& b)
 {}
 
 void ResultSet::GetColumnType(int32_t a, NativeRdb::ColumnType& b)
-{}
+{
+    b = columnType_;
+}
 
 void ResultSet::GetInt(int32_t a, int32_t& b)
 {}
@@ -75,7 +84,17 @@ void ResultSet::GetLong(int32_t a, int64_t& b)
 {}
 
 void ResultSet::GetString(int32_t a, std::string& b)
-{}
+{
+    if (currentRowIndex_ > 0 && currentRowIndex_ <= rowData_.size() &&
+        a < static_cast<int32_t>(rowData_[currentRowIndex_ - 1].size())) {
+        b = rowData_[currentRowIndex_ - 1][a];
+    }
+}
+
+void ResultSet::GetBlob(int32_t a, std::vector<uint8_t>& b)
+{
+    b = blobData_;
+}
 
 RdbPredicates::RdbPredicates()
 {}
@@ -192,7 +211,8 @@ std::shared_ptr<ResultSet> RdbStore::Query(const NativeRdb::RdbPredicates& a, co
     if (queryFlag_ == RdbStore::RdbStoreOperationResult::RESULT_FAIL) {
         return nullptr;
     }
-    return std::make_shared<ResultSet>();
+    auto rs = std::make_shared<ResultSet>();
+    return rs;
 }
 
 std::pair<int32_t, std::shared_ptr<OHOS::NativeRdb::Transaction>> RdbStore::CreateTransaction(
@@ -216,6 +236,21 @@ int32_t RdbStore::ExecuteSql(const std::string& a)
         return executeSqlResults_[executeSqlIndex_++];
     }
     return NativeRdb::E_OK;
+}
+
+std::shared_ptr<ResultSet> RdbStore::QuerySql(const std::string& sql, const std::vector<std::string>& args)
+{
+    if (queryFlag_ == RdbStore::RdbStoreOperationResult::RESULT_FAIL) {
+        return nullptr;
+    }
+    auto rs = std::make_shared<ResultSet>();
+    rs->columnNames_ = queryColumnNames_;
+    rs->columnType_ = queryColumnType_;
+    rs->blobData_ = queryBlobData_;
+    if (querySqlIndex_ < querySqlResults_.size()) {
+        rs->rowData_ = querySqlResults_[querySqlIndex_++];
+    }
+    return rs;
 }
 
 int32_t RdbOpenCallback::OnCreate(NativeRdb::RdbStore& rdbStore)

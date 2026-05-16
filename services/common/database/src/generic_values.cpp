@@ -33,6 +33,11 @@ void GenericValues::Put(const std::string& key, const std::string& value)
     map_.insert(std::make_pair(key, VariantValue(value)));
 }
 
+void GenericValues::PutBlob(const std::string& key, const std::vector<uint8_t>& value)
+{
+    map_.insert(std::make_pair(key, VariantValue(value)));
+}
+
 void GenericValues::Put(const std::string& key, const VariantValue& value)
 {
     map_.insert(std::make_pair(key, value));
@@ -72,6 +77,15 @@ std::string GenericValues::GetString(const std::string& key) const
         return std::string();
     }
     return it->second.GetString();
+}
+
+std::vector<uint8_t> GenericValues::GetBlob(const std::string& key) const
+{
+    auto it = map_.find(key);
+    if (it == map_.end()) {
+        return {};
+    }
+    return it->second.GetBlob();
 }
 
 std::vector<std::string> GenericValues::GetAllKeys() const
