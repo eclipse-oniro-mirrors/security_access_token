@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,22 +13,22 @@
  * limitations under the License.
  */
 
-#ifndef EDM_POLICY_SET_TEST_H
-#define EDM_POLICY_SET_TEST_H
+#ifndef USER_POLICY_TYPES_H
+#define USER_POLICY_TYPES_H
 
-#include <gtest/gtest.h>
+#include <set>
+
+#include "access_token.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-class EdmPolicySetTest : public testing::Test {
-public:
-    static void SetUpTestCase();
-    static void TearDownTestCase();
-    void TearDown();
-    void SetUp();
+struct UserPolicyChange {
+    uint32_t permCode;
+    bool isPersist = false;
+    std::set<int32_t> changedUserList;
 };
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
-#endif // EDM_POLICY_SET_TEST_H
+#endif // USER_POLICY_TYPES_H

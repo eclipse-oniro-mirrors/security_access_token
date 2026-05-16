@@ -33,6 +33,7 @@ static constexpr const int32_t DATABASE_VERSION_4 = 4;
 static constexpr const int32_t DATABASE_VERSION_5 = 5;
 static constexpr const int32_t DATABASE_VERSION_6 = 6;
 static constexpr const int32_t DATABASE_VERSION_7 = 7;
+static constexpr const int32_t DATABASE_VERSION_8 = 8;
 
 class AccessTokenOpenCallback : public NativeRdb::RdbOpenCallback {
 public:
@@ -66,6 +67,8 @@ private:
     int32_t CreateHapUndefineInfoTable(NativeRdb::RdbStore& rdbStore);
     int32_t CreateSystemConfigTable(NativeRdb::RdbStore& rdbStore);
     int32_t CreateVersionSixTable(NativeRdb::RdbStore& rdbStore);
+    int32_t CreateUserPolicyTable(NativeRdb::RdbStore& rdbStore);
+    int32_t CreateVersionEightTable(NativeRdb::RdbStore& rdbStore);
 
     // OnUpgrade
     int32_t AddAvailableTypeColumn(NativeRdb::RdbStore& rdbStore);
@@ -79,6 +82,7 @@ private:
     int32_t UpgradeFromVersion4(NativeRdb::RdbStore& rdbStore);
     int32_t UpgradeFromVersion5(NativeRdb::RdbStore& rdbStore);
     int32_t UpgradeFromVersion6(NativeRdb::RdbStore& rdbStore);
+    int32_t UpgradeFromVersion7(NativeRdb::RdbStore& rdbStore);
 };
 } // namespace AccessToken
 } // namespace Security

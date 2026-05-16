@@ -797,7 +797,7 @@ int32_t AccessTokenKit::SetUserPolicy(const std::vector<UserPermissionPolicy>& u
     LOGI(ATM_DOMAIN, ATM_TAG, "Enter.");
     return AccessTokenManagerClient::GetInstance().SetUserPolicy(userPermissionList);
 #else
-    LOGE(ATM_DOMAIN, ATM_TAG, "Not support.");
+    LOGW(ATM_DOMAIN, ATM_TAG, "Not support.");
     return ERR_CAPABILITY_NOT_SUPPORT;
 #endif
 }
@@ -808,7 +808,7 @@ int32_t AccessTokenKit::ClearUserPolicy(const std::vector<std::string>& permissi
     LOGI(ATM_DOMAIN, ATM_TAG, "Enter.");
     return AccessTokenManagerClient::GetInstance().ClearUserPolicy(permissionList);
 #else
-    LOGE(ATM_DOMAIN, ATM_TAG, "Not support.");
+    LOGW(ATM_DOMAIN, ATM_TAG, "Not support.");
     return ERR_CAPABILITY_NOT_SUPPORT;
 #endif
 }

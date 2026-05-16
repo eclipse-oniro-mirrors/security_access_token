@@ -23,6 +23,7 @@ struct UserPolicyIdl {
 struct UserPermissionPolicyIdl {
     String permissionName;
     List<UserPolicyIdl> userPolicyList;
+    boolean isPersist;
 };
 
 struct PermissionWithValueIdl {

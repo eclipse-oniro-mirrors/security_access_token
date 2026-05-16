@@ -75,7 +75,7 @@ public:
     bool IsPermissionGrantedWithSecComp(AccessTokenID tokenID, const std::string& permissionName);
     int32_t VerifyPermissionStatus(AccessTokenID tokenID, const std::string& permission);
     int32_t QueryPermissionStatusAndFlag(AccessTokenID tokenID, uint32_t permCode, int32_t& status, uint32_t& flag);
-    void ClearAllSecCompGrantedPerm();
+    void ClearAllSecCompGrantedPerm(std::vector<BriefSecCompData>& clearedSecCompPermList);
     void GetGrantedPermByTokenId(AccessTokenID tokenID,
         const std::vector<uint32_t>& constrainedList, std::vector<std::string>& permissionList);
     void GetPermStatusListByTokenId(AccessTokenID tokenID,
@@ -96,6 +96,8 @@ public:
         std::vector<GenericValues>& permStateValueList);
     int32_t UpdatePermissionStatus(AccessTokenID tokenId,
         const std::string& permissionName, bool isGranted, uint32_t flag, PermissionStatusChangeType& changeType);
+    int32_t UpdatePermissionFlag(AccessTokenID tokenId, uint32_t permCode, uint32_t flagMask, bool addFlag,
+        PermissionStatusChangeType& changeType);
     int32_t ResetUserGrantPermissionStatus(AccessTokenID tokenID);
     int32_t GetKernelPermissions(AccessTokenID tokenId, std::vector<PermissionWithValue>& kernelPermList);
     int32_t GetReqPermissionByName(

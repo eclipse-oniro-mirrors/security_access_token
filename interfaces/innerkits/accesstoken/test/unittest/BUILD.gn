@@ -46,6 +46,7 @@ ohos_unittest("libaccesstoken_sdk_test") {
     "DistributedTest/register_token_sync_callback_test.cpp",
     "DistributedTest/set_remote_hap_token_info_test.cpp",
     "EdmPolicyTest/edm_policy_set_test.cpp",
+    "EdmPolicyTest/user_policy_test.cpp",
     "HapAttributeTest/get_hap_dlp_flag_test.cpp",
     "HapAttributeTest/get_permission_flag_test.cpp",
     "HapAttributeTest/get_permissions_status_test.cpp",

@@ -29,6 +29,7 @@
 #include "token_field_const.h"
 #include "permission_map.h"
 #include "permission_data_brief.h"
+#include "perm_setproc.h"
 #include "time_util.h"
 #ifdef SUPPORT_SANDBOX_APP
 #include "dlp_permission_set_manager.h"
@@ -549,7 +550,14 @@ void HapTokenInfoInner::GetGrantedPermByTokenId(AccessTokenID tokenID,
 
 void HapTokenInfoInner::ClearAllSecCompGrantedPerm()
 {
-    PermissionDataBrief::GetInstance().ClearAllSecCompGrantedPerm();
+    std::vector<BriefSecCompData> clearedSecCompPermList;
+    PermissionDataBrief::GetInstance().ClearAllSecCompGrantedPerm(clearedSecCompPermList);
+    for (const auto& secCompData : clearedSecCompPermList) {
+        int32_t ret = SetPermissionToKernel(secCompData.tokenId, secCompData.permCode, false);
+        LOGI(ATM_DOMAIN, ATM_TAG,
+            "Clear secComp perm from kernel, token=%{public}u, permCode=%{public}u, ret=%{public}d.",
+            secCompData.tokenId, secCompData.permCode, ret);
+    }
 }
 
 bool HapTokenInfoInner::IsPermissionGrantedWithSecComp(AccessTokenID tokenID, const std::string& permissionName)

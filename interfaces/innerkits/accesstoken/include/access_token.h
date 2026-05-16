@@ -242,6 +242,10 @@ typedef enum TypePermissionFlag {
      * it can be granted or revoked by user.
      */
     PERMISSION_ADMIN_POLICIES_CANCEL = 1 << 8,
+    /**
+     * permission is restricted by user policy.
+     */
+    PERMISSION_RESTRICTED_BY_ADMIN = 1 << 9,
 } PermissionFlag;
 
 /**
@@ -306,9 +310,10 @@ typedef struct {
 /**
  * @brief User permission policy.
  */
-typedef struct {
+typedef struct UserPermissionPolicy {
     std::string permissionName;
     std::vector<UserPolicy> userPolicyList;
+    bool isPersist = false;
 } UserPermissionPolicy;
 
 /**
