@@ -472,17 +472,6 @@ void ToolTokenInfoManager::GetToolTokenIDByUserID(int32_t userId, std::unordered
     }
 }
 
-void ToolTokenInfoManager::GetToolTokenIDByHostTokenId(AccessTokenID hostTokenId,
-    std::unordered_set<AccessTokenID>& tokenIdList) const
-{
-    std::shared_lock<std::shared_mutex> lock(lock_);
-    auto iter = hostToolTokenMap_.find(hostTokenId);
-    if (iter == hostToolTokenMap_.end()) {
-        return;
-    }
-    tokenIdList.insert(iter->second.begin(), iter->second.end());
-}
-
 int32_t ToolTokenInfoManager::VerifyToolAccessToken(AccessTokenID tokenId, const std::string& permissionName) const
 {
     std::shared_ptr<ClawTokenInfoInnerBase> inner;

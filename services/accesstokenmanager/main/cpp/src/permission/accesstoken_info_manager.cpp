@@ -1000,7 +1000,7 @@ int AccessTokenInfoManager::CreateHapTokenInfo(const HapInfoParams& info, const 
     UserPolicyManager::GetInstance().UpdatePermissionStatusListForUserPolicy(
         tokenId, info.userID, policyNew.permStateList);
     std::shared_ptr<HapTokenInfoInner> tokenInfo = std::make_shared<HapTokenInfoInner>(tokenId, info, policyNew);
-    HapTokenDbContext context(info.appIDDesc, policy, undefValues);
+    HapTokenDbContext context(info.appIDDesc, policyNew, undefValues);
     ret = AddHapTokenInfoToDb(tokenInfo, context);
     if (ret != RET_SUCCESS) {
         LOGC(ATM_DOMAIN, ATM_TAG, "AddHapTokenInfoToDb failed, errCode is %{public}d.", ret);

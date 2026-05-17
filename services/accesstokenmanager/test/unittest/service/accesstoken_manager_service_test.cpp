@@ -3338,19 +3338,22 @@ HWTEST_F(AccessTokenManagerServiceTest, PolicyWhiteListServiceTest004, TestSize.
     userPolicyIdl.isPersist = true;
     userPolicyIdl.userPolicyList = {{ .userId = USER_ID, .isRestricted = true }};
     ASSERT_EQ(RET_SUCCESS, atManagerService_->SetUserPolicy({ userPolicyIdl }));
-    EXPECT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenId, "ohos.permission.CAMERA"));
+    EXPECT_EQ(PERMISSION_DENIED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenId, "ohos.permission.CAMERA"));
 
     uint32_t permCode = 0;
     ASSERT_TRUE(TransferPermissionToOpcode("ohos.permission.CAMERA", permCode));
     EXPECT_EQ(RET_SUCCESS, atManagerService_->UpdatePolicyWhiteList(tokenId, permCode, static_cast<int32_t>(ADD)));
-    EXPECT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(tokenId, "ohos.permission.CAMERA"));
+    EXPECT_EQ(PERMISSION_GRANTED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenId, "ohos.permission.CAMERA"));
     std::vector<AccessTokenID> tokenIdList;
     EXPECT_EQ(RET_SUCCESS, atManagerService_->GetPolicyWhiteList(permCode, tokenIdList));
     ASSERT_EQ(1u, tokenIdList.size());
     EXPECT_EQ(tokenId, tokenIdList[0]);
 
     EXPECT_EQ(RET_SUCCESS, atManagerService_->UpdatePolicyWhiteList(tokenId, permCode, static_cast<int32_t>(DELETE)));
-    EXPECT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenId, "ohos.permission.CAMERA"));
+    EXPECT_EQ(PERMISSION_DENIED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenId, "ohos.permission.CAMERA"));
     tokenIdList = { tokenId };
     EXPECT_EQ(RET_SUCCESS, atManagerService_->GetPolicyWhiteList(permCode, tokenIdList));
     EXPECT_TRUE(tokenIdList.empty());
@@ -3426,12 +3429,16 @@ HWTEST_F(AccessTokenManagerServiceTest, UserPolicyServiceTest004, TestSize.Level
     userPolicyIdl2.userPolicyList = {{ .userId = USER_ID, .isRestricted = false }};
 
     EXPECT_EQ(RET_SUCCESS, atManagerService_->SetUserPolicy({ userPolicyIdl, userPolicyIdl2 }));
-    EXPECT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenId, "ohos.permission.INTERNET"));
-    EXPECT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(tokenId, "ohos.permission.GET_NETWORK_STATS"));
+    EXPECT_EQ(PERMISSION_DENIED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenId, "ohos.permission.INTERNET"));
+    EXPECT_EQ(PERMISSION_GRANTED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenId, "ohos.permission.GET_NETWORK_STATS"));
 
     EXPECT_EQ(RET_SUCCESS, atManagerService_->ClearUserPolicy({ "ohos.permission.INTERNET" }));
-    EXPECT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(tokenId, "ohos.permission.INTERNET"));
-    EXPECT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(tokenId, "ohos.permission.GET_NETWORK_STATS"));
+    EXPECT_EQ(PERMISSION_GRANTED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenId, "ohos.permission.INTERNET"));
+    EXPECT_EQ(PERMISSION_GRANTED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenId, "ohos.permission.GET_NETWORK_STATS"));
 
     (void)AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId);
 }

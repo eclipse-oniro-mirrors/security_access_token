@@ -44,7 +44,6 @@ public:
     int32_t GetHostTokenId(AccessTokenID toolTokenId, AccessTokenID& hostTokenId) const;
     int32_t GetUserId(AccessTokenID toolTokenId, int32_t& userId) const;
     void GetToolTokenIDByUserID(int32_t userId, std::unordered_set<AccessTokenID>& tokenIdList) const;
-    void GetToolTokenIDByHostTokenId(AccessTokenID hostTokenId, std::unordered_set<AccessTokenID>& tokenIdList) const;
     int32_t VerifyToolAccessToken(AccessTokenID tokenId, const std::string& permissionName) const;
     int32_t UpdateRestrictedFlag(
         AccessTokenID toolTokenId, uint32_t permCode, bool isRestricted, bool& hasFlagChanged) const;

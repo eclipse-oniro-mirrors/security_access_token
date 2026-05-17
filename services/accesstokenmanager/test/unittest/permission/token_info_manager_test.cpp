@@ -3744,25 +3744,43 @@ HWTEST_F(TokenInfoManagerTest, UserPolicyDbRecoverDirtyData001, TestSize.Level0)
 
 /**
  * @tc.name: LoadPersistedPolicies001
- * @tc.desc: LoadPersistedPolicies loads valid rows and ignores invalid permission rows.
+ * @tc.desc: LoadPersistedPolicies loads valid rows and ignores dirty persisted rows.
  * @tc.type: FUNC
  * @tc.require:
  */
 HWTEST_F(TokenInfoManagerTest, LoadPersistedPolicies001, TestSize.Level0)
 {
     const std::string permissionName = "ohos.permission.CAMERA";
+    const std::string invalidPermissionName = "ohos.permission.TEST_INVALID_USER_POLICY";
+    const std::string invalidUserListPermission = "ohos.permission.INTERNET";
+    const std::string invalidWhiteListPermission = "ohos.permission.GET_NETWORK_STATS";
+    const std::string emptyUserListPermission = "ohos.permission.LOCATION";
     uint32_t permCode;
+    uint32_t invalidUserListPermCode;
+    uint32_t invalidWhiteListPermCode;
+    uint32_t emptyUserListPermCode;
     ASSERT_TRUE(TransferPermissionToOpcode(permissionName, permCode));
+    ASSERT_TRUE(TransferPermissionToOpcode(invalidUserListPermission, invalidUserListPermCode));
+    ASSERT_TRUE(TransferPermissionToOpcode(invalidWhiteListPermission, invalidWhiteListPermCode));
+    ASSERT_TRUE(TransferPermissionToOpcode(emptyUserListPermission, emptyUserListPermCode));
     auto& manager = UserPolicyManager::GetInstance();
     UserPolicyRecordsGuard recordsGuard(manager);
     EXPECT_EQ(RET_SUCCESS, UpsertUserPolicyDbRecord(permissionName, GetSelfTokenID(),
         std::to_string(USER_ID), std::to_string(RANDOM_TOKENID)));
-    EXPECT_EQ(RET_SUCCESS, UpsertUserPolicyDbRecord("ohos.permission.TEST_INVALID_USER_POLICY", GetSelfTokenID(),
+    EXPECT_EQ(RET_SUCCESS, UpsertUserPolicyDbRecord(invalidPermissionName, GetSelfTokenID(),
         std::to_string(USER_ID + 1), ""));
+    EXPECT_EQ(RET_SUCCESS, UpsertUserPolicyDbRecord(invalidUserListPermission, GetSelfTokenID(),
+        "abc", ""));
+    EXPECT_EQ(RET_SUCCESS, UpsertUserPolicyDbRecord(invalidWhiteListPermission, GetSelfTokenID(),
+        std::to_string(USER_ID + 2), "abc"));
+    EXPECT_EQ(RET_SUCCESS, UpsertUserPolicyDbRecord(emptyUserListPermission, GetSelfTokenID(), "", ""));
 
     EXPECT_EQ(RET_SUCCESS, manager.LoadPersistedPolicies());
 
     EXPECT_TRUE(manager.IsPolicyPersisted(permCode));
+    EXPECT_FALSE(manager.IsPolicyPersisted(invalidUserListPermCode));
+    EXPECT_FALSE(manager.IsPolicyPersisted(invalidWhiteListPermCode));
+    EXPECT_FALSE(manager.IsPolicyPersisted(emptyUserListPermCode));
     EXPECT_TRUE(manager.IsPermissionRestricted(RANDOM_TOKENID + 1, USER_ID, permCode));
     EXPECT_FALSE(manager.IsPermissionRestricted(RANDOM_TOKENID, USER_ID, permCode));
     std::vector<AccessTokenID> tokenIdList;
@@ -3771,7 +3789,10 @@ HWTEST_F(TokenInfoManagerTest, LoadPersistedPolicies001, TestSize.Level0)
     EXPECT_EQ(RANDOM_TOKENID, tokenIdList[0]);
 
     EXPECT_EQ(RET_SUCCESS, DeleteUserPolicyDbRecord(permissionName));
-    EXPECT_EQ(RET_SUCCESS, DeleteUserPolicyDbRecord("ohos.permission.TEST_INVALID_USER_POLICY"));
+    EXPECT_EQ(RET_SUCCESS, DeleteUserPolicyDbRecord(invalidPermissionName));
+    EXPECT_EQ(RET_SUCCESS, DeleteUserPolicyDbRecord(invalidUserListPermission));
+    EXPECT_EQ(RET_SUCCESS, DeleteUserPolicyDbRecord(invalidWhiteListPermission));
+    EXPECT_EQ(RET_SUCCESS, DeleteUserPolicyDbRecord(emptyUserListPermission));
 }
 
 /**
