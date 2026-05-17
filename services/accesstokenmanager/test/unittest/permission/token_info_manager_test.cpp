@@ -390,6 +390,7 @@ HWTEST_F(TokenInfoManagerTest, HapTokenInfoInner001, TestSize.Level0)
     ASSERT_EQ(static_cast<int32_t>(608), version);
 }
 
+#ifdef SUPPORT_JSAPI
 /**
  * @tc.name: IsPermissionAvailableToDlpHap001
  * @tc.desc: DlpPermissionSetManager::IsPermissionAvailableToDlpHap supports permCode input
@@ -406,6 +407,7 @@ HWTEST_F(TokenInfoManagerTest, IsPermissionAvailableToDlpHap001, TestSize.Level0
         manager.IsPermissionAvailableToDlpHap(DLP_READ, cameraCode));
     EXPECT_FALSE(manager.IsPermissionAvailableToDlpHap(DLP_READ, std::numeric_limits<uint32_t>::max()));
 }
+#endif
 
 /**
  * @tc.name: GetBundleInfoInner001
