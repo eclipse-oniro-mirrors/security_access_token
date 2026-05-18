@@ -95,6 +95,11 @@ enum AccessTokenError {
     // claw error
     ERR_TOOL_TOKEN_ALREADY_EXIST = 12100200,
     ERR_CAPABILITY_NOT_SUPPORT = 12110000,
+
+    // kernel error
+    ERR_IOCTL_UNSUPPORT = 12100300,
+    ERR_DATA_CONFLICT_WITH_KERNEL = 12100301,
+    ERR_NO_DATA_FROM_KERNEL = 12100302,
 };
 } // namespace AccessToken
 } // namespace Security

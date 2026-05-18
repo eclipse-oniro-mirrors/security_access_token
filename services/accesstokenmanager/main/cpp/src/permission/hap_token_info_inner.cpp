@@ -196,7 +196,7 @@ int HapTokenInfoInner::RestoreHapTokenBasicInfo(const GenericValues& inGenericVa
     }
     tokenInfoBasic_.tokenAttr = (uint32_t)inGenericValues.GetInt(TokenFiledConst::FIELD_TOKEN_ATTR);
     isPermDialogForbidden_ = inGenericValues.GetInt(TokenFiledConst::FIELD_FORBID_PERM_DIALOG);
-#ifdef SPM_DATA_ENBALE
+#ifdef SPM_DATA_ENABLE
     tokenInfoBasic_.uid = inGenericValues.GetInt(TokenFiledConst::FIELD_UID);
     isMigrated_ = inGenericValues.GetInt(TokenFiledConst::FIELD_MIGRATED) != 0;
 #endif

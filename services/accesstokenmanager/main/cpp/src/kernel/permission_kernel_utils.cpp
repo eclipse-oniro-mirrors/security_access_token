@@ -19,11 +19,13 @@
 #include "hap_token_info_inner.h"
 #include "perm_setproc.h"
 #include "permission_map.h"
+#include "spm_data_kernel_common.h"
 #include "token_setproc.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+
 void PermissionKernelUtils::AddNativePermToKernel(AccessTokenID tokenID,
     const std::vector<uint32_t>& opCodeList, const std::vector<bool>& statusList)
 {
@@ -46,10 +48,52 @@ void PermissionKernelUtils::AddHapPermToKernel(AccessTokenID tokenID, const std:
     }
 }
 
+int32_t PermissionKernelUtils::AddHapPermToKernel(AccessTokenID tokenID,
+    const std::vector<BriefPermData>& permBriefDataList)
+{
+    std::vector<uint32_t> opCodeList;
+    std::vector<bool> statusList;
+    for (const auto& permData : permBriefDataList) {
+        opCodeList.emplace_back(permData.permCode);
+        statusList.emplace_back(permData.status == PERMISSION_GRANTED);
+    }
+    int32_t ret = AddPermissionToKernel(tokenID, opCodeList, statusList);
+    if (ret != ACCESS_TOKEN_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "AddPermissionToKernel with BriefPermData(token=%{public}d), "\
+            "size=%{public}zu, err=%{public}d",
+            tokenID, opCodeList.size(), ret);
+    }
+    return ret;
+}
+
+int32_t PermissionKernelUtils::GetBundleInfoFromKernel(AccessTokenID tokenId, BundleNoCachedInfo& noCachedInfo,
+    std::vector<PermissionWithValue>& permList)
+{
+    SpmDataPtr spmData = nullptr;
+    int32_t ret = KernelDetail::LoadSpmDataFromKernel(tokenId, spmData);
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
+
+    noCachedInfo.apl = static_cast<ATokenAplEnum>(spmData->apl);
+    noCachedInfo.distributionType = spmData->distributionType;
+    noCachedInfo.idType = spmData->idType;
+    noCachedInfo.ownerid = spmData->ownerid;
+    return KernelDetail::ParseExtendedPermissionBuffer(spmData->extendPerms, permList);
+}
+
 void PermissionKernelUtils::RemovePermFromKernel(AccessTokenID tokenID)
 {
     int32_t ret = RemovePermissionFromKernel(tokenID);
-    LOGI(ATM_DOMAIN, ATM_TAG,
+    if (ret == RET_SUCCESS) {
+        return;
+    }
+    // retry
+    ret = RemovePermissionFromKernel(tokenID);
+    if (ret == RET_SUCCESS) {
+        return;
+    }
+    LOGE(ATM_DOMAIN, ATM_TAG,
         "RemovePermissionFromKernel(token=%{public}d), err=%{public}d", tokenID, ret);
 }
 
@@ -79,6 +123,11 @@ bool PermissionKernelUtils::IsKernelSupportGetPermissions()
     LOGE(ATM_DOMAIN, ATM_TAG,
         "Getting permissions from kernel is %{public}s", isSupportGetPermissions ? "supported" : "not supported");
     return isSupportGetPermissions;
+}
+
+void PermissionKernelUtils::RemoveSpmEntryFromKernel(AccessTokenID tokenId)
+{
+    KernelDetail::RemoveSpmEntryFromKernel(tokenId);
 }
 } // namespace AccessToken
 } // namespace Security

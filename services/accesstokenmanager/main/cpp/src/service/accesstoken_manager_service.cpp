@@ -1205,7 +1205,7 @@ int32_t AccessTokenManagerService::InitHapToken(const HapInfoParcel& info, const
         bundleParam.appId = hapInfoParm.appIDDesc;
         bundleParam.apiVersion = hapInfoParm.apiVersion;
 #ifdef IS_SUPPORT_HAP_RUNNING
-        bundleParam.distributionType = Verify::ParseAppDistType(hapInfoParm.appDistributionType);
+        bundleParam.distributionType = static_cast<int32_t>(Verify::ParseAppDistType(hapInfoParm.appDistributionType));
 #endif
         bundleParam.isSystem = hapInfoParm.isSystemApp;
         bundleParam.isAtomicService = hapInfoParm.isAtomicService;
@@ -1382,7 +1382,7 @@ int32_t AccessTokenManagerService::UpdateHapToken(uint64_t& fullTokenId, const U
     bundleParam.appId = info.appIDDesc;
     bundleParam.apiVersion = info.apiVersion;
 #ifdef IS_SUPPORT_HAP_RUNNING
-    bundleParam.distributionType = Verify::ParseAppDistType(info.appDistributionType);
+    bundleParam.distributionType = static_cast<int32_t>(Verify::ParseAppDistType(info.appDistributionType));
 #endif
     bundleParam.isSystem = info.isSystemApp;
     bundleParam.isAtomicService = info.isAtomicService;
@@ -2073,7 +2073,7 @@ void AccessTokenManagerService::FilterInvalidData(const std::vector<GenericValue
         appDistributionType = result.GetString(TokenFiledConst::FIELD_APP_DISTRIBUTION_TYPE);
         BundleParam bundleParam;
 #ifdef IS_SUPPORT_HAP_RUNNING
-        bundleParam.distributionType = Verify::ParseAppDistType(appDistributionType);
+        bundleParam.distributionType = static_cast<int32_t>(Verify::ParseAppDistType(appDistributionType));
 #endif
         bundleParam.isSystem = iter->second.isSystemApp;
         bundleParam.isDebug = (appDistributionType == "none"); // only debug hap can use none type

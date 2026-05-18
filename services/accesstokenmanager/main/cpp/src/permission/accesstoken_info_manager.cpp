@@ -104,6 +104,15 @@ uint64_t GetPermissionTimestamp(const GenericValues& stateValue)
     return timestamp <= 0 ? 0 : static_cast<uint64_t>(timestamp);
 }
 
+PermissionStatus BuildPermissionStatusFromBrief(const BriefPermData& briefPermData)
+{
+    PermissionStatus permState;
+    permState.permissionName = TransferOpcodeToPermission(briefPermData.permCode);
+    permState.grantStatus = static_cast<int32_t>(briefPermData.status);
+    permState.grantFlag = briefPermData.flag;
+    return permState;
+}
+
 std::shared_ptr<BundleInfoInner> BuildBundleInfoWithoutToken(
     const std::shared_ptr<BundleInfoInner>& bundleInfo, AccessTokenID tokenId)
 {
@@ -1667,6 +1676,82 @@ int32_t AccessTokenInfoManager::GetHapAppIdByTokenId(AccessTokenID tokenID, std:
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     appId = result;
+    return RET_SUCCESS;
+}
+
+int32_t AccessTokenInfoManager::FillInstallPolicyWithoutHaps(
+    const std::string& bundleName, const BundlePolicy& bundlePolicy, BundleParam& param, HapPolicy& policy)
+{
+    if (!DataValidator::IsBundleNameValid(bundleName)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Bundle name is invalid.");
+        return ERR_PARAM_INVALID;
+    }
+
+    std::shared_ptr<BundleInfoInner> bundleInfo = nullptr;
+    std::shared_ptr<HapTokenInfoInner> baseHapInfo = nullptr;
+    AccessTokenID baseTokenId = INVALID_TOKENID;
+    {
+        std::shared_lock<std::shared_mutex> infoGuard(this->hapTokenInfoLock_);
+        auto bundleIter = bundleInfoMap_.find(bundleName);
+        if (bundleIter == bundleInfoMap_.end() || bundleIter->second == nullptr) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Bundle info of %{public}s does not exist.", bundleName.c_str());
+            return ERR_TOKENID_NOT_EXIST;
+        }
+        bundleInfo = bundleIter->second;
+
+        for (const auto tokenId : bundleInfo->tokenIds) {
+            auto hapIter = hapTokenInfoMap_.find(tokenId);
+            if (hapIter == hapTokenInfoMap_.end() || hapIter->second == nullptr || hapIter->second->IsRemote()) {
+                continue;
+            }
+            if (hapIter->second->GetInstIndex() != 0) {
+                continue;
+            }
+            baseTokenId = tokenId;
+            baseHapInfo = hapIter->second;
+            break;
+        }
+    }
+    if (bundleInfo == nullptr || baseHapInfo == nullptr || baseTokenId == INVALID_TOKENID) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "No baseline hap found for bundle %{public}s.", bundleName.c_str());
+        return ERR_TOKENID_NOT_EXIST;
+    }
+
+    BundleNoCachedInfo noCached;
+    std::vector<PermissionWithValue> extendedPermList;
+    int32_t ret = PermissionKernelUtils::GetBundleInfoFromKernel(baseTokenId, noCached, extendedPermList);
+    if (ret != RET_SUCCESS) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Get kernel bundle info failed, tokenId=%{public}u, ret=%{public}d.",
+            baseTokenId, ret);
+        return ret;
+    }
+    std::vector<BriefPermData> briefPermDataList;
+    bool isFixed = false;
+    policy = HapPolicy();
+    policy.apl = noCached.apl;
+    policy.preAuthorizationInfo = bundlePolicy.preAuthorizationInfo;
+    policy.isDebugGrant = bundlePolicy.isDebugGrant;
+    PermissionConstraintCheck::FixBriefPermData(*bundleInfo, bundlePolicy.dlpType, briefPermDataList, isFixed);
+
+    HapTokenInfo hapInfo;
+    baseHapInfo->TranslateToHapTokenInfo(hapInfo);
+
+    param = BundleParam();
+    param.bundleName = bundleName;
+    param.appIdentifier = noCached.ownerid;
+    param.apiVersion = hapInfo.apiVersion;
+    param.distributionType = noCached.distributionType;
+    param.isSystem = AccessTokenInfoUtils::CheckSpecifiedFlag(hapInfo.tokenAttr, SYSTEM_APP_FLAG);
+    param.isAtomicService = AccessTokenInfoUtils::CheckSpecifiedFlag(hapInfo.tokenAttr, ATOMIC_SERVICE_FLAG);
+    param.isDebug = AccessTokenInfoUtils::CheckSpecifiedFlag(hapInfo.tokenAttr, DEBUG_APP_FLAG);
+
+    policy.permStateList.reserve(briefPermDataList.size());
+    for (const auto& briefPermData : briefPermDataList) {
+        policy.permStateList.emplace_back(BuildPermissionStatusFromBrief(briefPermData));
+    }
+    for (const auto& extendedPerm : extendedPermList) {
+        policy.aclExtendedMap[extendedPerm.permissionName] = extendedPerm.value;
+    }
     return RET_SUCCESS;
 }
 

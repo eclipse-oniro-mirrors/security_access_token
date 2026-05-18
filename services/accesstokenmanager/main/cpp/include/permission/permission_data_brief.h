@@ -48,11 +48,6 @@ typedef struct {
     uint32_t tokenId;
 } BriefSecCompData;
 
-typedef enum AppProvisionType {
-    DEBUG = 0,
-    RELEASE = 1,
-} AppProvisionType;
-
 class PermissionDataBrief final {
 public:
     enum class PermissionStatusChangeType : uint32_t {
@@ -70,6 +65,8 @@ public:
         PermissionFlag grantFlag, const std::string& value);
     int32_t GetBriefPermDataByTokenId(AccessTokenID tokenID, std::vector<BriefPermData>& data);
     void ReplaceBriefPermDataByTokenId(AccessTokenID tokenID, const std::vector<BriefPermData>& data);
+    void EraseBriefPermDataByTokenId(AccessTokenID tokenID);
+    void ReplaceExtendedValueByTokenId(AccessTokenID tokenID, const std::map<uint64_t, std::string>& data);
     void ToString(std::string& info);
     PermUsedTypeEnum GetPermissionUsedType(AccessTokenID tokenID, int32_t opCode);
     bool IsPermissionGrantedWithSecComp(AccessTokenID tokenID, const std::string& permissionName);

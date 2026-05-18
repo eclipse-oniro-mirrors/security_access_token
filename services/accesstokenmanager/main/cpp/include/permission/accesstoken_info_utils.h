@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef ACCESS_TOKEN_INFO_HELPER_H
-#define ACCESS_TOKEN_INFO_HELPER_H
+#ifndef ACCESS_TOKEN_INFO_UTILS_H
+#define ACCESS_TOKEN_INFO_UTILS_H
 
 #include <memory>
 #include <string>

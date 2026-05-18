@@ -37,6 +37,8 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
+constexpr uint32_t TOKEN_ID_SHIFT_BITS = 32;
+
 uint64_t GetPermissionTimestampFromStateValue(const GenericValues& stateValue)
 {
     int64_t timestamp = stateValue.GetInt64(TokenFiledConst::FIELD_TIMESTAMP);
@@ -710,6 +712,24 @@ void PermissionDataBrief::ReplaceBriefPermDataByTokenId(AccessTokenID tokenID, c
 {
     std::unique_lock<std::shared_mutex> infoGuard(this->permissionStateDataLock_);
     AddBriefPermDataByTokenId(tokenID, data);
+}
+
+void PermissionDataBrief::EraseBriefPermDataByTokenId(AccessTokenID tokenID)
+{
+    (void)DeleteBriefPermDataByTokenId(tokenID);
+}
+
+void PermissionDataBrief::ReplaceExtendedValueByTokenId(
+    AccessTokenID tokenID, const std::map<uint64_t, std::string>& data)
+{
+    std::unique_lock<std::shared_mutex> infoGuard(this->permissionStateDataLock_);
+    DeleteExtendedValue(tokenID);
+    for (const auto& item : data) {
+        if (static_cast<AccessTokenID>(item.first >> TOKEN_ID_SHIFT_BITS) != tokenID) {
+            continue;
+        }
+        extendedValue_[item.first] = item.second;
+    }
 }
 
 void PermissionDataBrief::GetGrantedPermByTokenId(AccessTokenID tokenID,
