@@ -390,7 +390,7 @@ HWTEST_F(TokenInfoManagerTest, HapTokenInfoInner001, TestSize.Level0)
     ASSERT_EQ(static_cast<int32_t>(608), version);
 }
 
-#ifdef SUPPORT_JSAPI
+#ifdef SUPPORT_SANDBOX_APP
 /**
  * @tc.name: IsPermissionAvailableToDlpHap001
  * @tc.desc: DlpPermissionSetManager::IsPermissionAvailableToDlpHap supports permCode input
