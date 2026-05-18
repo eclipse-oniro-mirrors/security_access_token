@@ -189,7 +189,7 @@ HWTEST_F(AccessTokenDenyTest, ClearUserPolicy001, TestSize.Level0)
 HWTEST_F(AccessTokenDenyTest, UpdatePolicyWhiteList001, TestSize.Level0)
 {
     RestoreSelfCaller();
-    MockToken mock(g_selfTokenId, "accesstoken_service", false);
+    MockToken mock(g_selfTokenId, "com.ohos.permissionmanager", true);
     ASSERT_NE(INVALID_TOKENID, mock.GetTokenId()) << mock.GetMockErrorMsg();
     EXPECT_EQ(RET_SUCCESS, SetSelfTokenID(g_testTokenIDEx.tokenIDEx));
     EXPECT_EQ(0, setuid(INVALID_UID));

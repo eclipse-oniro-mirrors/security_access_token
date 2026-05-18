@@ -82,7 +82,6 @@ ohos_unittest("libaccesstoken_sdk_test") {
     "SecurityComponentTest/security_component_grant_test.cpp",
     "common/mock_permission.cpp",
     "common/test_common.cpp",
-    "ToolTokenTest/tool_token_with_empty_challenge_test.cpp"
   ]
 
   cflags_cc = access_token_cflags_cc
@@ -115,6 +114,9 @@ ohos_unittest("libaccesstoken_sdk_test") {
     ]
   }
 
+  if (access_token_enhance_capability == false) { 
+     sources += [ "ToolTokenTest/tool_token_with_empty_challenge_test.cpp" ] 
+   }
   if (access_token_enable_manual_test == true) {
     sources += [ "ToolTokenTest/tool_token_test.cpp" ]
   }
