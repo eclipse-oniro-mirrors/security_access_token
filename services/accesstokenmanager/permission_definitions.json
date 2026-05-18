@@ -3949,8 +3949,9 @@
             "availableType": "NORMAL",
             "since": 12,
             "deprecated": "",
-            "provisionEnable": true,
-            "distributedSceneEnable": false
+            "provisionEnable": false,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "tablet", "car"]
         },
         {
             "name": "ohos.permission.READ_ACCOUNT_LOGIN_STATE",
@@ -6259,8 +6260,9 @@
             "availableType": "NORMAL",
             "since": 12,
             "deprecated": "",
-            "provisionEnable": true,
-            "distributedSceneEnable": false
+            "provisionEnable": false,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "tablet", "car"]
         },
         {
             "name": "ohos.permission.ALLOW_CONNECT_CAR",
@@ -6270,7 +6272,8 @@
             "since": 12,
             "deprecated": "",
             "provisionEnable": true,
-            "distributedSceneEnable": false
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "tablet", "car"]
         },
         {
             "name": "ohos.permission.MANAGE_NET_FIREWALL",
