@@ -18,6 +18,7 @@
 
 #include <memory>
 
+#include "table_item.h"
 #include "hap_data_structure.h"
 #include "hap_token_info.h"
 #include "permission_data_brief.h"
@@ -34,6 +35,8 @@ public:
     static bool IsPermAvailableRangeSatisfied(const BundleParam& param, const PermissionBriefDef& briefDef,
         PermissionRulesEnum& rule);
     static int BuildIdType(const BundleParam& param, const HapPolicy& policy);
+    static void FixPersistentHapInfo(
+        const BundleParam& param, const HapPolicy& policy, HapTokenInfoItem& hapTokenInfoItem, bool& isFixed);
     static void FixBriefPermData(
         const BundleInfoInner& infoInner, int32_t dlpType, std::vector<BriefPermData>& data, bool& isFixed);
 

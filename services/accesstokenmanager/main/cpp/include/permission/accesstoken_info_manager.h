@@ -78,6 +78,8 @@ public:
     int RemoveHapTokenInfo(AccessTokenID id, bool isTokenReserved = false);
     int RemoveNativeTokenInfo(AccessTokenID id);
     int32_t GetHapAppIdByTokenId(AccessTokenID tokenID, std::string& appId);
+    int32_t FillInstallPolicyWithoutHaps(
+        const std::string& bundleName, const BundlePolicy& bundlePolicy, BundleParam& param, HapPolicy& policy);
     int CreateHapTokenInfo(const HapInfoParams& info, const HapPolicy& policy, AccessTokenIDEx& tokenIdEx,
         std::vector<GenericValues>& undefValues);
     AccessTokenIDEx GetHapTokenID(int32_t userID, const std::string& bundleName, int32_t instIndex);

@@ -15,11 +15,13 @@
 
 #include "permission_kernel_utils.h"
 
+#include <atomic>
 #include <mutex>
 #include "accesstoken_common_log.h"
-#include "perm_setproc.h"
 #include "permission_map.h"
+#include "perm_setproc.h"
 #include "spm_setproc.h"
+#include "spm_data_kernel_common.h"
 #include "token_setproc.h"
 
 namespace OHOS {
@@ -51,10 +53,47 @@ int32_t PermissionKernelUtils::AddHapPermToKernel(AccessTokenID tokenID, const s
     return ret;
 }
 
+int32_t PermissionKernelUtils::AddHapPermToKernel(AccessTokenID tokenID,
+    const std::vector<BriefPermData>& permBriefDataList)
+{
+    std::vector<uint32_t> opCodeList;
+    for (const auto& permData : permBriefDataList) {
+        if (permData.status == PERMISSION_GRANTED) {
+            opCodeList.emplace_back(permData.permCode);
+        }
+    }
+    AddHapPermToKernel(tokenID, opCodeList);
+    return RET_SUCCESS;
+}
+
+int32_t PermissionKernelUtils::GetBundleInfoFromKernel(AccessTokenID tokenId, BundleNoCachedInfo& noCachedInfo,
+    std::vector<PermissionWithValue>& permList)
+{
+    SpmDataPtr spmData = nullptr;
+    int32_t ret = KernelDetail::LoadSpmDataFromKernel(tokenId, spmData);
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
+
+    noCachedInfo.apl = static_cast<ATokenAplEnum>(spmData->apl);
+    noCachedInfo.distributionType = spmData->distributionType;
+    noCachedInfo.idType = spmData->idType;
+    noCachedInfo.ownerid = spmData->ownerid;
+    return KernelDetail::ParseExtendedPermissionBuffer(spmData->extendPerms, permList);
+}
+
 void PermissionKernelUtils::RemovePermFromKernel(AccessTokenID tokenID)
 {
     int32_t ret = RemovePermissionFromKernel(tokenID);
-    LOGI(ATM_DOMAIN, ATM_TAG,
+    if (ret == RET_SUCCESS) {
+        return;
+    }
+    // retry
+    ret = RemovePermissionFromKernel(tokenID);
+    if (ret == RET_SUCCESS) {
+        return;
+    }
+    LOGE(ATM_DOMAIN, ATM_TAG,
         "RemovePermissionFromKernel(token=%{public}d), err=%{public}d", tokenID, ret);
 }
 
@@ -72,20 +111,35 @@ void PermissionKernelUtils::SetPermToKernel(AccessTokenID tokenID, const std::st
 
 bool PermissionKernelUtils::IsKernelSupportSpm()
 {
-    static bool isSupportSpm = false;
-    static bool hasChecked = false;
+#ifndef ATM_TEST_ENABLE
+    static std::atomic<bool> isSupportSpm{false};
+    static std::atomic<bool> hasChecked{false};
     static std::mutex checkMutex;
-    std::lock_guard<std::mutex> lock(checkMutex);
-    if (hasChecked) {
-        return isSupportSpm;
+
+    if (hasChecked.load(std::memory_order_acquire)) {
+        return isSupportSpm.load(std::memory_order_acquire);
     }
+
+    std::lock_guard<std::mutex> lock(checkMutex);
+    if (hasChecked.load(std::memory_order_relaxed)) {
+        return isSupportSpm.load(std::memory_order_relaxed);
+    }
+#endif
+
     uint32_t version = 0;
     int ret = SpmGetVersion(&version);
-    isSupportSpm = (ret == ENOTSUP) ? false : true;
-    hasChecked = true;
-    LOGW(ATM_DOMAIN, ATM_TAG,
-        "Spm is %{public}s", isSupportSpm ? "supported" : "not supported");
-    return isSupportSpm;
+#ifndef ATM_TEST_ENABLE
+    isSupportSpm.store(ret != ENOTSUP, std::memory_order_release);
+    hasChecked.store(true, std::memory_order_release);
+#endif
+    LOGI(ATM_DOMAIN, ATM_TAG,
+        "Spm is %{public}s", ret != ENOTSUP ? "supported" : "not supported");
+    return ret != ENOTSUP;
+}
+
+void PermissionKernelUtils::RemoveSpmEntryFromKernel(AccessTokenID tokenId)
+{
+    KernelDetail::RemoveSpmEntryFromKernel(tokenId);
 }
 } // namespace AccessToken
 } // namespace Security

@@ -48,11 +48,6 @@ typedef struct {
     uint32_t tokenId;
 } BriefSecCompData;
 
-typedef enum AppProvisionType {
-    DEBUG = 0,
-    RELEASE = 1,
-} AppProvisionType;
-
 class PermissionDataBrief final {
 public:
     enum class PermissionStatusChangeType : uint32_t {

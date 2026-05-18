@@ -204,6 +204,11 @@ HWTEST_F(DatabaseTest, SqliteStorageModifyTest001, TestSize.Level0)
     genericValues.Put(TokenFiledConst::FIELD_TOKEN_VERSION, 0);
     genericValues.Put(TokenFiledConst::FIELD_TOKEN_ATTR, 0);
     genericValues.Put(TokenFiledConst::FIELD_FORBID_PERM_DIALOG, "test_perm_dialog_cap_state");
+#ifdef SPM_DATA_ENABLE
+    genericValues.Put(TokenFiledConst::FIELD_UID, 0);
+    genericValues.Put(TokenFiledConst::FIELD_MIGRATED, 0);
+    genericValues.Put(TokenFiledConst::FIELD_RESERVED, 1);
+#endif
     AddInfo addInfo;
     addInfo.addType = AtmDataType::ACCESSTOKEN_HAP_INFO;
     addInfo.addValues.emplace_back(genericValues);
