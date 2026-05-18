@@ -111,6 +111,9 @@ interface OHOS.Security.AccessToken.IAccessTokenManager{
     [ipccode 72] void GetCliTokenInfo([in] unsigned int tokenId, [out] CliInfoResultParcel infoParcel);
     [ipccode 73] void GetSkillTokenInfo([in] unsigned int tokenId, [out] SkillInfoResultParcel infoParcel);
     [ipccode 74] void GetHostTokenId([in] unsigned int toolTokenId, [out] unsigned int hostTokenId);
+    [ipccode 75] void PreMigrateUIDList([in] List<int> uidList);
+    [ipccode 76] void MigrateInstalledBundles([in] List<MigratedInfoIdl> migratedInfoList, [out] List<BundleMigrateResultIdl> results);
+    [ipccode 77] void FinishMigration();
     [ipccode 80] void VerifyAccessToken([in] unsigned int tokenID, [in] List<String> permissionList, [out] List<int> permStateList);  
     [ipccode 81] void GetSelfPermissionStatus([in] String permissionName, [out] int status);
     [ipccode 101, macrodef SECURITY_COMPONENT_ENHANCE_ENABLE, oneway] void RegisterSecCompEnhance([in] SecCompEnhanceDataParcel enhanceParcel);

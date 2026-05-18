@@ -245,6 +245,26 @@ public:
     bool isDebugGrant = false;
 };
 
+struct BundleHapList final {
+    std::vector<std::string> hapPaths;
+    bool isPreInstalled = false;
+    int32_t userId;
+};
+
+struct MigratedInfo final {
+    std::string bundleName;
+    BundleHapList pathList;
+    std::vector<HapBaseInfo> hapBaseInfoList;
+    std::vector<int32_t> uidList;
+    std::vector<ReservedType> reservedTypeList;
+};
+
+struct BundleMigrateResult final {
+    std::vector<AccessTokenIDEx> tokenIdList;
+    std::vector<ReservedType> reservedTypeList;
+    int32_t errcode = 0;
+};
+
 /**
  * @brief Bundle policy data used when installing or updating a hap.
  */

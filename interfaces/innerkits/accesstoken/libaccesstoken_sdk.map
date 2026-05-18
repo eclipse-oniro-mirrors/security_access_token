@@ -21,6 +21,9 @@
         "OHOS::Security::AccessToken::AccessTokenKit::AllocLocalTokenID(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, unsigned int)";
         "OHOS::Security::AccessToken::AccessTokenKit::UpdateHapToken(OHOS::Security::AccessToken::AccessTokenIDEx&, OHOS::Security::AccessToken::UpdateHapInfoParams const&, OHOS::Security::AccessToken::HapPolicyParams const&)";
         "OHOS::Security::AccessToken::AccessTokenKit::UpdateHapToken(OHOS::Security::AccessToken::AccessTokenIDEx&, OHOS::Security::AccessToken::UpdateHapInfoParams const&, OHOS::Security::AccessToken::HapPolicyParams const&, OHOS::Security::AccessToken::HapInfoCheckResult&)";
+        "OHOS::Security::AccessToken::AccessTokenKit::PreMigrateUIDList(std::__h::vector<int, std::__h::allocator<int>> const&)";
+        "OHOS::Security::AccessToken::AccessTokenKit::MigrateInstalledBundles(std::__h::vector<OHOS::Security::AccessToken::MigratedInfo, std::__h::allocator<OHOS::Security::AccessToken::MigratedInfo>> const&, std::__h::vector<OHOS::Security::AccessToken::BundleMigrateResult, std::__h::allocator<OHOS::Security::AccessToken::BundleMigrateResult>>&)";
+        "OHOS::Security::AccessToken::AccessTokenKit::FinishMigration()";
         "OHOS::Security::AccessToken::AccessTokenKit::DeleteToken(unsigned int)";
         "OHOS::Security::AccessToken::AccessTokenKit::DeleteToken(unsigned int, bool)";
         "OHOS::Security::AccessToken::AccessTokenKit::DeleteToolTokenByPid(int)";

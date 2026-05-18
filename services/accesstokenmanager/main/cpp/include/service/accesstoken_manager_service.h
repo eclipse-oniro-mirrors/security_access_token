@@ -148,6 +148,10 @@ public:
     int32_t GetCliTokenInfo(AccessTokenID tokenId, CliInfoResultParcel& infoParcel) override;
     int32_t GetSkillTokenInfo(AccessTokenID tokenId, SkillInfoResultParcel& infoParcel) override;
     int32_t GetHostTokenId(AccessTokenID toolTokenId, AccessTokenID& hostTokenId) override;
+    int32_t PreMigrateUIDList(const std::vector<int32_t>& uidList) override;
+    int32_t MigrateInstalledBundles(const std::vector<MigratedInfoIdl>& migratedInfoList,
+        std::vector<BundleMigrateResultIdl>& results) override;
+    int32_t FinishMigration() override;
     int SetPermDialogCap(const HapBaseInfoParcel& hapBaseInfoParcel, bool enable) override;
     int32_t GetPermissionManagerInfo(PermissionGrantInfoParcel& infoParcel) override;
 #ifdef SUPPORT_MANAGE_USER_POLICY
@@ -203,6 +207,7 @@ private:
     int32_t HandlePolicyWhiteListUpdate(const PolicyWhiteListUpdateInfo& policyContext);
     int32_t RefreshUserPolicyPermState(const std::vector<UserPolicyChange>& changedPolicyList);
 #endif
+    int32_t CheckMigrationPermission();
 
     void FilterPermFeature(bool isSystemApp, HapPolicy& policy);
     bool isInitialize_ = false;

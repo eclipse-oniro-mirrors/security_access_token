@@ -53,6 +53,9 @@ public:
     int32_t AllocUid(int32_t localId, int32_t& outUid);
     int32_t RemoveBundleId(int32_t uid);
     int32_t TranslateUid(int32_t srcUid, int32_t dstLocalId, int32_t& outUid);
+
+    // Migration control
+    void SetMigrationDone();
 private:
     AccessTokenIDManager() = default;
     DISALLOW_COPY_AND_MOVE(AccessTokenIDManager);
@@ -66,6 +69,8 @@ private:
     std::set<AccessTokenID> reservedTokenIdSet_;
     std::mutex bundleIdLock_;
     std::set<int32_t> bundleIdSet_;
+    std::mutex migrationLock_;
+    bool migrationDone_ = false;
 };
 } // namespace AccessToken
 } // namespace Security

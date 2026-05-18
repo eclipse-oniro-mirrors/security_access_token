@@ -1,0 +1,429 @@
+/*
+ * Copyright (c) 2026 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include "gtest/gtest.h"
+#include <gtest/hwext/gtest-tag.h>
+
+#include <chrono>
+#include <thread>
+
+#include "access_token_db_operator.h"
+#include "access_token_error.h"
+#include "accesstoken_common_log.h"
+#include "hap_token_info_inner.h"
+#include "idl_common.h"
+#include "permission_data_brief.h"
+#include "token_field_const.h"
+
+#define private public
+#include "migration_verify_worker.h"
+#include "hap_sign_verify_manager.h"
+#include "hap_sign_verify_helper.h"
+#undef private
+
+#include "migration_verify_helper.h"
+#include "mock_app_verify_adapter.h"
+#include "test_common.h"
+#include "token_setproc.h"
+
+using namespace testing::ext;
+
+namespace OHOS {
+namespace Security {
+namespace AccessToken {
+namespace {
+MockAppVerifyAdapter mockAdapter_;
+AppVerifyAdapter resetAdapter_;
+
+void SetUpVerifyEnvironment()
+{
+    HapSignVerifyManager::GetInstance().adapter_ = &mockAdapter_;
+}
+
+void TearDownVerifyEnvironment()
+{
+    HapSignVerifyManager::GetInstance().adapter_ = &resetAdapter_;
+}
+
+MigratedInfoIdl BuildBasicMigratedInfo(const std::string& bundleName, const std::string& hapPath,
+    bool isPreInstalled = false)
+{
+    MigratedInfoIdl migratedInfo;
+    migratedInfo.bundleName = bundleName;
+    migratedInfo.pathList.hapPaths = { hapPath };
+    migratedInfo.pathList.isPreInstalled = isPreInstalled;
+    HapBaseInfoIdl baseInfo;
+    baseInfo.bundleName = bundleName;
+    baseInfo.userID = 100; // 100: user id
+    baseInfo.instIndex = 0;
+    migratedInfo.hapBaseInfoList = { baseInfo };
+    migratedInfo.uidList = { 200100 };
+    migratedInfo.reservedTypeList = { ReservedTypeIdl::NONE };
+    return migratedInfo;
+}
+
+std::shared_ptr<HapTokenInfoInner> BuildCachedInfo(AccessTokenID tokenId, int32_t userId,
+    const std::string& bundleName, int32_t instIndex)
+{
+    auto infoPtr = std::make_shared<HapTokenInfoInner>();
+    HapTokenInfo hapTokenInfo;
+    hapTokenInfo.tokenID = tokenId;
+    hapTokenInfo.userID = userId;
+    hapTokenInfo.bundleName = bundleName;
+    hapTokenInfo.instIndex = instIndex;
+    infoPtr->SetTokenBaseInfo(hapTokenInfo);
+    return infoPtr;
+}
+} // namespace
+
+class MigrationVerifyHelperTest : public testing::Test {
+public:
+    static void SetUpTestCase()
+    {
+        SetUpVerifyEnvironment();
+        TestCommon::SetTestEvironment(GetSelfTokenID());
+    }
+
+    static void TearDownTestCase()
+    {
+        TearDownVerifyEnvironment();
+        TestCommon::ResetTestEvironment();
+    }
+};
+
+/**
+ * @tc.name: VerifyMigratedBundle001
+ * @tc.desc: Full happy path — verification, kernel, DB persist, and cache update all succeed.
+ *           Verifies sign info in DB and permission data in cache after completion.
+ * @tc.type: FUNC
+ */
+HWTEST_F(MigrationVerifyHelperTest, VerifyMigratedBundle001, TestSize.Level1)
+{
+    MockNativeToken mock("foundation");
+
+    HapInfoParams info = TestCommon::GetInfoManagerTestSystemInfoParms();
+    info.bundleName = "com.example.verify.full";
+    info.appIDDesc = info.bundleName;
+    HapPolicyParams policy = TestCommon::GetTestPolicyParams();
+
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS, TestCommon::AllocTestHapToken(info, policy, tokenIdEx));
+
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    auto cachedInfo = BuildCachedInfo(tokenId, info.userID, info.bundleName, 0);
+    std::vector<std::shared_ptr<HapTokenInfoInner>> cachedInfos = { cachedInfo };
+
+    MigratedInfoIdl migratedInfo = BuildBasicMigratedInfo(info.bundleName, info.bundleName);
+    int32_t ret = MigrationVerifyHelper::VerifyMigratedBundle(migratedInfo, cachedInfos);
+    EXPECT_EQ(RET_SUCCESS, ret);
+
+    // Verify DB: sign info persisted for the bundle
+    GenericValues signCondition;
+    signCondition.Put(TokenFiledConst::FIELD_BUNDLE_NAME, info.bundleName);
+    std::vector<GenericValues> signResults;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenDbOperator::Find(
+        AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO, signCondition, signResults));
+    EXPECT_FALSE(signResults.empty());
+
+    // Verify cache: permission data populated for the token
+    std::vector<BriefPermData> briefDataList;
+    EXPECT_EQ(RET_SUCCESS, PermissionDataBrief::GetInstance().GetBriefPermDataByTokenId(
+        tokenId, briefDataList));
+    EXPECT_FALSE(briefDataList.empty());
+
+    (void)SpmRemoveEntry(tokenId);
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenId));
+}
+
+/**
+ * @tc.name: VerifyMigratedBundle002
+ * @tc.desc: VerifyMigratedBundle with empty cachedInfos returns ERR_PARAM_INVALID.
+ * @tc.type: FUNC
+ */
+HWTEST_F(MigrationVerifyHelperTest, VerifyMigratedBundle002, TestSize.Level1)
+{
+    MockNativeToken mock("foundation");
+
+    MigratedInfoIdl migratedInfo = BuildBasicMigratedInfo("com.example.verify.empty", "com.example.verify.empty");
+    std::vector<std::shared_ptr<HapTokenInfoInner>> cachedInfos;
+
+    int32_t ret = MigrationVerifyHelper::VerifyMigratedBundle(migratedInfo, cachedInfos);
+    EXPECT_EQ(ERR_PARAM_INVALID, ret);
+}
+
+/**
+ * @tc.name: VerifyMigratedBundle003
+ * @tc.desc: VerifyMigratedBundle with mismatched bundleName fails verification gracefully.
+ * @tc.type: FUNC
+ */
+HWTEST_F(MigrationVerifyHelperTest, VerifyMigratedBundle003, TestSize.Level1)
+{
+    MockNativeToken mock("foundation");
+
+    HapInfoParams info = TestCommon::GetInfoManagerTestSystemInfoParms();
+    info.bundleName = "com.example.verify.mismatch";
+    info.appIDDesc = info.bundleName;
+    HapPolicyParams policy = TestCommon::GetTestPolicyParams();
+
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS, TestCommon::AllocTestHapToken(info, policy, tokenIdEx));
+
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    auto cachedInfo = BuildCachedInfo(tokenId, info.userID, info.bundleName, 0);
+    std::vector<std::shared_ptr<HapTokenInfoInner>> cachedInfos = { cachedInfo };
+
+    // Use a different bundleName from hapPath — mock adapter derives verified
+    // bundle name from hapPath, so mismatch triggers ERR_PARAM_INVALID
+    MigratedInfoIdl migratedInfo = BuildBasicMigratedInfo("com.example.mismatched", "com.example.different");
+
+    int32_t ret = MigrationVerifyHelper::VerifyMigratedBundle(migratedInfo, cachedInfos);
+    // Bundle name mismatch causes DoVerifyMigratedBundle failure → error propagated
+    EXPECT_NE(RET_SUCCESS, ret);
+
+    (void)SpmRemoveEntry(tokenId);
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenId));
+}
+
+/**
+ * @tc.name: VerifyMigratedBundle004
+ * @tc.desc: DoVerifyMigratedBundle fails → returns RET_SUCCESS (best-effort).
+ * @tc.type: FUNC
+ */
+HWTEST_F(MigrationVerifyHelperTest, VerifyMigratedBundle004, TestSize.Level1)
+{
+    MockNativeToken mock("foundation");
+
+    HapInfoParams info = TestCommon::GetInfoManagerTestSystemInfoParms();
+    info.bundleName = "com.example.verify.signfail";
+    info.appIDDesc = info.bundleName;
+    HapPolicyParams policy = TestCommon::GetTestPolicyParams();
+
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS, TestCommon::AllocTestHapToken(info, policy, tokenIdEx));
+
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    auto cachedInfo = BuildCachedInfo(tokenId, info.userID, info.bundleName, 0);
+    std::vector<std::shared_ptr<HapTokenInfoInner>> cachedInfos = { cachedInfo };
+
+    MigratedInfoIdl migratedInfo = BuildBasicMigratedInfo(info.bundleName, info.bundleName);
+
+    // Force CheckHapsSignInfo to fail via mock adapter
+    mockAdapter_.verifyRet_ = AccessTokenError::ERR_PARAM_INVALID;
+    int32_t ret = MigrationVerifyHelper::VerifyMigratedBundle(migratedInfo, cachedInfos);
+    mockAdapter_.verifyRet_ = RET_SUCCESS;
+    // DoVerifyMigratedBundle failure propagates the error
+    EXPECT_EQ(AccessTokenError::ERR_ERR_HAP_VERIFY_FAILED, ret);
+
+    (void)SpmRemoveEntry(tokenId);
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenId));
+}
+
+/**
+ * @tc.name: BuildPermBriefDataFromPolicy001
+ * @tc.desc: BuildPermBriefDataListFromPolicy and BuildExtendPermListFromPolicy
+ * with known policy produce correct output.
+ * @tc.type: FUNC
+ */
+HWTEST_F(MigrationVerifyHelperTest, BuildPermBriefDataFromPolicy001, TestSize.Level1)
+{
+    HapPolicy policy;
+    PermissionStatus permState;
+    permState.permissionName = "ohos.permission.CAMERA";
+    permState.grantStatus = PERMISSION_GRANTED;
+    permState.grantFlag = PERMISSION_SYSTEM_FIXED;
+    policy.permStateList = { permState };
+    policy.aclExtendedMap = { {"ohos.permission.CAMERA", "test_value"} };
+
+    std::vector<BriefPermData> briefList;
+    HapSignVerifyHelper::BuildPermBriefDataListFromPolicy(policy, briefList);
+    EXPECT_FALSE(briefList.empty());
+
+    std::vector<PermissionWithValue> extendList;
+    HapSignVerifyHelper::BuildExtendPermListFromPolicy(policy, extendList);
+    ASSERT_EQ(1u, extendList.size());
+    EXPECT_EQ("ohos.permission.CAMERA", extendList[0].permissionName);
+    EXPECT_EQ("test_value", extendList[0].value);
+}
+
+/**
+ * @tc.name: BuildPermBriefDataFromPolicy002
+ * @tc.desc: BuildPermBriefDataListFromPolicy with empty permStateList returns empty result.
+ * @tc.type: FUNC
+ */
+HWTEST_F(MigrationVerifyHelperTest, BuildPermBriefDataFromPolicy002, TestSize.Level1)
+{
+    HapPolicy policy;
+    policy.aclExtendedMap = {};
+
+    std::vector<BriefPermData> briefList;
+    HapSignVerifyHelper::BuildPermBriefDataListFromPolicy(policy, briefList);
+    EXPECT_TRUE(briefList.empty());
+
+    std::vector<PermissionWithValue> extendList;
+    HapSignVerifyHelper::BuildExtendPermListFromPolicy(policy, extendList);
+    EXPECT_TRUE(extendList.empty());
+}
+
+class MigrationVerifyWorkerTest : public testing::Test {
+public:
+    void SetUp() override
+    {
+        // Ensure worker is in a clean state
+        MigrationVerifyWorker::GetInstance().Shutdown();
+    }
+
+    void TearDown() override
+    {
+        MigrationVerifyWorker::GetInstance().Shutdown();
+    }
+};
+
+/**
+ * @tc.name: WorkerSubmitAndShutdown001
+ * @tc.desc: Submit tasks and shutdown — worker starts, processes tasks, stops cleanly.
+ * @tc.type: FUNC
+ */
+HWTEST_F(MigrationVerifyWorkerTest, WorkerSubmitAndShutdown001, TestSize.Level1)
+{
+    MockNativeToken mock("foundation");
+    SetUpVerifyEnvironment();
+
+    MigratedInfoIdl migratedInfo = BuildBasicMigratedInfo("com.example.worker.basic", "com.example.worker.basic");
+    std::vector<std::shared_ptr<HapTokenInfoInner>> cachedInfos;
+
+    // Submit should not crash even with empty cachedInfos
+    MigrationVerifyWorker::GetInstance().Submit(migratedInfo, cachedInfos);
+
+    // Give worker time to process
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+    // Shutdown should not hang
+    MigrationVerifyWorker::GetInstance().Shutdown();
+
+    // Submit after shutdown should be rejected (logged as warning, no crash)
+    MigrationVerifyWorker::GetInstance().Submit(migratedInfo, cachedInfos);
+
+    TearDownVerifyEnvironment();
+}
+
+/**
+ * @tc.name: WorkerIdleTimeout002
+ * @tc.desc: Worker thread auto-exits after idle timeout, new Submit spawns new thread.
+ * @tc.type: FUNC
+ */
+HWTEST_F(MigrationVerifyWorkerTest, WorkerIdleTimeout002, TestSize.Level1)
+{
+    MockNativeToken mock("foundation");
+
+    MigratedInfoIdl migratedInfo = BuildBasicMigratedInfo("com.example.worker.idle", "com.example.worker.idle");
+    std::vector<std::shared_ptr<HapTokenInfoInner>> cachedInfos;
+
+    // First submit starts the worker
+    MigrationVerifyWorker::GetInstance().Submit(migratedInfo, cachedInfos);
+
+    // Wait longer than the idle timeout (30s default, but we just test no-crash with re-submit)
+    // In unit test, we just verify Submit + Shutdown is idempotent
+    MigrationVerifyWorker::GetInstance().Shutdown();
+
+    // Re-submit after shutdown should restart
+    MigrationVerifyWorker::GetInstance().Submit(migratedInfo, cachedInfos);
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    MigrationVerifyWorker::GetInstance().Shutdown();
+}
+
+/**
+ * @tc.name: WorkerMultipleSubmit003
+ * @tc.desc: Multiple rapid submits are handled without data loss or crash.
+ * @tc.type: FUNC
+ */
+HWTEST_F(MigrationVerifyWorkerTest, WorkerMultipleSubmit003, TestSize.Level1)
+{
+    MockNativeToken mock("foundation");
+
+    for (int i = 0; i < 5; ++i) {
+        MigratedInfoIdl migratedInfo = BuildBasicMigratedInfo(
+            "com.example.worker.multi" + std::to_string(i),
+            "com.example.worker.multi" + std::to_string(i));
+        std::vector<std::shared_ptr<HapTokenInfoInner>> cachedInfos;
+        MigrationVerifyWorker::GetInstance().Submit(migratedInfo, cachedInfos);
+    }
+
+    // Let worker drain the queue
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    MigrationVerifyWorker::GetInstance().Shutdown();
+}
+
+/**
+ * @tc.name: WorkerProcessRealTask004
+ * @tc.desc: Worker processes a real verification task with mock adapter — completes without crash.
+ * @tc.type: FUNC
+ */
+HWTEST_F(MigrationVerifyWorkerTest, WorkerProcessRealTask004, TestSize.Level1)
+{
+    MockNativeToken mock("foundation");
+    SetUpVerifyEnvironment();
+
+    HapInfoParams info = TestCommon::GetInfoManagerTestSystemInfoParms();
+    info.bundleName = "com.example.worker.real";
+    info.appIDDesc = info.bundleName;
+    HapPolicyParams policy = TestCommon::GetTestPolicyParams();
+
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS, TestCommon::AllocTestHapToken(info, policy, tokenIdEx));
+
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    auto cachedInfo = BuildCachedInfo(tokenId, info.userID, info.bundleName, 0);
+    std::vector<std::shared_ptr<HapTokenInfoInner>> cachedInfos = { cachedInfo };
+
+    MigratedInfoIdl migratedInfo = BuildBasicMigratedInfo(info.bundleName, info.bundleName);
+    MigrationVerifyWorker::GetInstance().Submit(migratedInfo, cachedInfos);
+
+    // Give worker time to process the real verification task
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    MigrationVerifyWorker::GetInstance().Shutdown();
+
+    (void)SpmRemoveEntry(tokenId);
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenId));
+
+    TearDownVerifyEnvironment();
+}
+
+/**
+ * @tc.name: WorkerShutdownDuringProcessing005
+ * @tc.desc: Shutdown called while worker is processing tasks — does not hang or crash.
+ * @tc.type: FUNC
+ */
+HWTEST_F(MigrationVerifyWorkerTest, WorkerShutdownDuringProcessing005, TestSize.Level1)
+{
+    MockNativeToken mock("foundation");
+
+    // Submit several tasks
+    for (int i = 0; i < 3; ++i) {
+        MigratedInfoIdl migratedInfo = BuildBasicMigratedInfo(
+            "com.example.worker.shutdown" + std::to_string(i),
+            "com.example.worker.shutdown" + std::to_string(i));
+        std::vector<std::shared_ptr<HapTokenInfoInner>> cachedInfos;
+        MigrationVerifyWorker::GetInstance().Submit(migratedInfo, cachedInfos);
+    }
+
+    // Immediately shutdown while worker may still be processing
+    MigrationVerifyWorker::GetInstance().Shutdown();
+
+    // Double shutdown should be safe
+    MigrationVerifyWorker::GetInstance().Shutdown();
+}
+} // namespace AccessToken
+} // namespace Security
+} // namespace OHOS

@@ -53,6 +53,7 @@ public:
     bool ignoreVerificationFailure = false;
 #endif
 
+    friend class MigrationVerifyHelper;
     friend class HapSignVerifyHelper;
     friend class HapSignVerifyManager;
 

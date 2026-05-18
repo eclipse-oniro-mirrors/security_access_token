@@ -57,6 +57,7 @@ ohos_unittest("libaccesstoken_sdk_test") {
     "HapTokenTest/get_hap_token_test.cpp",
     "HapTokenTest/get_token_type_test.cpp",
     "HapTokenTest/init_hap_token_test.cpp",
+    "HapTokenTest/migrate_installed_bundles_test.cpp",
     "HapTokenTest/update_hap_token_test.cpp",
     "PermDenyTest/accesstoken_deny_test.cpp",
     "PermisionDialogTest/accesstoken_location_request_test.cpp",

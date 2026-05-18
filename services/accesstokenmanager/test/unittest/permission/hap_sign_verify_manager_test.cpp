@@ -130,7 +130,7 @@ HWTEST_F(HapSignVerifyManagerTest, CheckHapsSignInfo004, TestSize.Level1)
     TrustedBundleInfoInner info;
     bool isChanged = true;
 
-    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
+    EXPECT_EQ(AccessTokenError::ERR_ERR_HAP_VERIFY_FAILED,
         manager.CheckHapsSignInfo("/data/camera.hap", Security::Verify::VerifyType::Fast, -1, info, isChanged));
     EXPECT_FALSE(adapter.isParseCalled_);
 }
@@ -148,7 +148,7 @@ HWTEST_F(HapSignVerifyManagerTest, CheckHapsSignInfo005, TestSize.Level1)
     TrustedBundleInfoInner info;
     bool isChanged = true;
 
-    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
+    EXPECT_EQ(AccessTokenError::ERR_HAP_MODULE_INVALID,
         manager.CheckHapsSignInfo("/data/camera.hap", Security::Verify::VerifyType::Fast, -1, info, isChanged));
     EXPECT_TRUE(adapter.isParseCalled_);
 }

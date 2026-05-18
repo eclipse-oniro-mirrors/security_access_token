@@ -67,6 +67,7 @@ accesstoken_manager_base_config = {
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/user_policy_manager.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/verify_accesstoken_monitor.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/service/accesstoken_manager_service.cpp",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/src/service/accesstoken_migration_manager.cpp",
   ]
 
   if (access_token_manager_hapverify_enable) {
@@ -74,6 +75,8 @@ accesstoken_manager_base_config = {
       "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/app_verify_adapter.cpp",
       "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/hap_sign_verify_helper.cpp",
       "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/hap_sign_verify_manager.cpp",
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/migration_verify_helper.cpp",
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/migration_verify_worker.cpp",
     ]
   }
 

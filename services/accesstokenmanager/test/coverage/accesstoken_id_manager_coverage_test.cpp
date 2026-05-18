@@ -35,11 +35,21 @@ public:
     void SetUp()
     {
         AccessTokenIDManager::GetInstance().bundleIdSet_.clear();
+        // Reset migration done flag for test isolation
+        {
+            std::unique_lock<std::mutex> lock(AccessTokenIDManager::GetInstance().migrationLock_);
+            AccessTokenIDManager::GetInstance().migrationDone_ = false;
+        }
     }
 
     void TearDown()
     {
         AccessTokenIDManager::GetInstance().bundleIdSet_.clear();
+        // Reset migration done flag after test
+        {
+            std::unique_lock<std::mutex> lock(AccessTokenIDManager::GetInstance().migrationLock_);
+            AccessTokenIDManager::GetInstance().migrationDone_ = false;
+        }
     }
 };
 
@@ -190,6 +200,30 @@ HWTEST_F(AccessTokenIdManagerCoverageTest, AllocUid001, TestSize.Level4)
     }
     int32_t outUid = 0;
     ASSERT_EQ(ERR_OVERSIZE, AccessTokenIDManager::GetInstance().AllocUid(100, outUid));
+}
+
+/*
+ * @tc.name: SetMigrationDone001
+ * @tc.desc: SetMigrationDone sets the migration flag to true
+ * @tc.type: FUNC
+ * @tc.require: TDD
+ */
+HWTEST_F(AccessTokenIdManagerCoverageTest, SetMigrationDone001, TestSize.Level4)
+{
+    // Initially false
+    {
+        std::unique_lock<std::mutex> lock(AccessTokenIDManager::GetInstance().migrationLock_);
+        ASSERT_FALSE(AccessTokenIDManager::GetInstance().migrationDone_);
+    }
+
+    // Call SetMigrationDone
+    AccessTokenIDManager::GetInstance().SetMigrationDone();
+
+    // Now should be true
+    {
+        std::unique_lock<std::mutex> lock(AccessTokenIDManager::GetInstance().migrationLock_);
+        ASSERT_TRUE(AccessTokenIDManager::GetInstance().migrationDone_);
+    }
 }
 
 } // namespace AccessToken

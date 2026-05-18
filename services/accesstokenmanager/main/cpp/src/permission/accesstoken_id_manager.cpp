@@ -181,6 +181,13 @@ void AccessTokenIDManager::InitSingleBundleIdCache(int32_t uid)
 
 int32_t AccessTokenIDManager::AllocUid(int32_t localId, int32_t& outUid)
 {
+    {
+        std::unique_lock<std::mutex> lock(migrationLock_);
+        if (!migrationDone_) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "AllocUid failed, migration not completed.");
+            return AccessTokenError::ERR_PARAM_INVALID;
+        }
+    }
     std::unique_lock<std::mutex> lock(bundleIdLock_);
     int32_t startId = bundleIdSet_.empty() ? BUNDLE_ID_MIN : (*bundleIdSet_.rbegin() + 1);
     if (startId > BUNDLE_ID_MAX) {
@@ -256,6 +263,13 @@ int32_t AccessTokenIDManager::ImportInitialUids(const std::vector<int32_t>& uids
         }
     }
     return RET_SUCCESS;
+}
+
+void AccessTokenIDManager::SetMigrationDone()
+{
+    std::unique_lock<std::mutex> lock(migrationLock_);
+    migrationDone_ = true;
+    LOGI(ATM_DOMAIN, ATM_TAG, "Migration done flag set to true.");
 }
 } // namespace AccessToken
 } // namespace Security

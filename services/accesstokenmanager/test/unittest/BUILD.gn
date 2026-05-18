@@ -124,6 +124,60 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
     cflags_cc += [ "-DESCURITY_COMPONENT_ENHANCE_ENABLE" ]
     sources += [ "seccomp/sec_comp_enhance_agent_test.cpp" ]
   }
+  deps = [
+    "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
+    "${access_token_path}/interfaces/innerkits/nativetoken:libnativetoken_shared",
+    "${access_token_path}/interfaces/innerkits/token_setproc:libpermsetproc_shared",
+    "${access_token_path}/interfaces/innerkits/token_setproc:libtokensetproc_shared",
+  ]
+  deps += accesstoken_manager_base_config.deps
+
+  external_deps = [
+    "googletest:gmock",
+    "googletest:gtest_main",
+  ]
+  external_deps += accesstoken_manager_base_config.external_deps
+}
+
+ohos_unittest("libmigrate_installed_bundles_service_test") {
+  subsystem_name = "accesscontrol"
+  module_out_path = module_output_path_unittest_accesstoken
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+    blocklist = "${access_token_path}/cfi_blocklist.txt"
+  }
+  branch_protector_ret = "pac_ret"
+
+  include_dirs = accesstoken_manager_base_config.include_dirs
+  include_dirs += [
+    "${access_token_path}/interfaces/innerkits/accesstoken/test/unittest/common",
+    "${access_token_path}/services/accesstokenmanager/test/unittest/service",
+    "${access_token_path}/services/accesstokenmanager/test/unittest/permission",
+    "${access_token_path}/services/accesstokenmanager/test/unittest/database",
+    "${access_token_path}/services/accesstokenmanager/test/unittest/common",
+  ]
+
+  sources = [
+    "${access_token_path}/interfaces/innerkits/accesstoken/test/unittest/common/test_common.cpp",
+    "common/parameter.cpp",
+    "common/parameters.cpp",
+    "service/migrate_installed_bundles_service_test.cpp",
+  ]
+
+  if (access_token_manager_hapverify_enable) {
+    sources += [
+      "permission/migration_verify_helper_test.cpp",
+    ]
+  }
+
+  sources += accesstoken_manager_base_config.sources
+
+  cflags_cc = accesstoken_manager_base_config.cflags_cc
+  cflags_cc += [ "-DATM_TEST_ENABLE" ]
+
+  configs = accesstoken_manager_base_config.configs
 
   deps = [
     "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
@@ -333,9 +387,15 @@ if (access_token_manager_hapverify_enable) {
 
 group("functional_tests") {
   testonly = true
-  deps = [ ":libaccesstoken_manager_service_standard_test" ]
+  deps = [
+    ":libaccesstoken_manager_service_standard_test",
+    ":libmigrate_installed_bundles_service_test",
+  ]
   if (support_jsapi) {
     deps += [ ":libpermission_monitor_test" ]
+  }
+  if (access_token_enable_spm) {
+    deps += [ ":libmigrate_installed_bundles_service_test" ]
   }
   if (access_token_manager_hapverify_enable) {
     deps += [

@@ -178,7 +178,7 @@ int32_t HapSignVerifyManager::BuildTrustedBundleInfo(
     int32_t ret = adapter_->ParseHapModuleInfo(bootstrapInfo->moduleRaw, moduleInfo);
     if (ret != RET_SUCCESS) {
         LOGE(ATM_DOMAIN, ATM_TAG, "ParseHapModuleInfo failed, ret=%{public}d.", ret);
-        return AccessTokenError::ERR_PARAM_INVALID;
+        return AccessTokenError::ERR_HAP_MODULE_INVALID;
     }
     moduleInfo.apiTargetVersion %= API_VERSION_MASK;
     info.moduleData = moduleInfo;
@@ -318,14 +318,14 @@ int32_t HapSignVerifyManager::CheckHapsSignInfo(const std::string path,
         isChanged = false;
         return RET_SUCCESS;
 #else
-        return ret;
+        return ERR_ERR_HAP_VERIFY_FAILED;
 #endif
     }
     if (!isChanged) {
         ret = adapter_->ParseProvision(info.bootstrapInfo->profileJsonRaw, provisionInfo);
         if (ret != RET_SUCCESS) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Parse provision failed, ret=%{public}d.", ret);
-            return ret;
+            return ERR_HAP_PROVISION_INVALID;
         }
     }
     std::shared_ptr<Security::Verify::BootstrapInfo> bootstrapInfo = info.bootstrapInfo;
