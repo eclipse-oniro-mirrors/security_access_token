@@ -6115,7 +6115,8 @@
             "since": 12,
             "deprecated": "",
             "provisionEnable": true,
-            "distributedSceneEnable": false
+            "distributedSceneEnable": false,
+            "deviceTypes": ["wearable"]
         },
         {
             "name": "ohos.permission.FILTER_INPUT_EVENT",
