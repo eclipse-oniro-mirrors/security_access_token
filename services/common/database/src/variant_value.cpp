@@ -39,6 +39,11 @@ VariantValue::VariantValue(const std::string& value) : type_(ValueType::TYPE_STR
     value_ = value;
 }
 
+VariantValue::VariantValue(const std::vector<uint8_t>& value) : type_(ValueType::TYPE_BLOB)
+{
+    value_ = value;
+}
+
 ValueType VariantValue::GetType() const
 {
     return type_;
@@ -69,6 +74,15 @@ std::string VariantValue::GetString() const
     }
 
     return std::get<std::string>(value_);
+}
+
+std::vector<uint8_t> VariantValue::GetBlob() const
+{
+    if (type_ != ValueType::TYPE_BLOB) {
+        return {};
+    }
+
+    return std::get<std::vector<uint8_t>>(value_);
 }
 } // namespace AccessToken
 } // namespace Security

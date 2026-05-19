@@ -26,7 +26,7 @@ namespace {
 static const std::vector<std::string> g_StringTypeColumns = {
     "description", "permission_name", "device_id", "bundle_name", "app_id",
     "process_name", "dcap", "native_acls", "label", "value", "name", "app_distribution_type",
-    "restricted_user", "whitlist"
+    "restricted_user", "whitlist", "module_name", "path", "hap_path"
 };
 
 static const std::map<AtmDataType, std::string> g_DateTypeToTableName = {
@@ -39,6 +39,7 @@ static const std::map<AtmDataType, std::string> g_DateTypeToTableName = {
     {AtmDataType::ACCESSTOKEN_HAP_UNDEFINE_INFO, "hap_undefine_info_table"},
     {AtmDataType::ACCESSTOKEN_SYSTEM_CONFIG, "system_config_table"},
     {AtmDataType::ACCESSTOKEN_USER_POLICY, "user_policy_table"},
+    {AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO, "hap_info_table"},
 };
 
 void AddStringInPredicate(const std::string& column, const std::vector<VariantValue>& conditionValues,
@@ -94,13 +95,20 @@ void AccessTokenDbUtil::ToRdbValueBucket(const GenericValues& value, NativeRdb::
     for (uint32_t i = 0; i < size; ++i) {
         std::string column = columnNames[i];
 
-        if (IsColumnStringType(column)) {
-            bucket.PutString(column, value.GetString(column));
-        } else if (column == TokenFiledConst::FIELD_TIMESTAMP) {
-            bucket.PutLong(column, value.GetInt64(column));
-        } else {
-            bucket.PutInt(column, value.GetInt(column));
+        VariantValue data = value.Get(column);
+        if (data.GetType() == ValueType::TYPE_BLOB) {
+            bucket.PutBlob(column, data.GetBlob());
+            continue;
         }
+        if (data.GetType() == ValueType::TYPE_STRING || IsColumnStringType(column)) {
+            bucket.PutString(column, data.GetString());
+            continue;
+        }
+        if (data.GetType() == ValueType::TYPE_INT64 || column == TokenFiledConst::FIELD_TIMESTAMP) {
+            bucket.PutLong(column, data.GetInt64());
+            continue;
+        }
+        bucket.PutInt(column, data.GetInt());
     }
 }
 
@@ -179,6 +187,10 @@ void AccessTokenDbUtil::ResultToGenericValues(const std::shared_ptr<NativeRdb::R
                 resultSet->GetInt(columnIndex, data);
                 value.Put(columnName, data);
             }
+        } else if (type == NativeRdb::ColumnType::TYPE_BLOB) {
+            std::vector<uint8_t> data;
+            resultSet->GetBlob(columnIndex, data);
+            value.PutBlob(columnName, data);
         } else if (type == NativeRdb::ColumnType::TYPE_STRING) {
             std::string data;
             resultSet->GetString(columnIndex, data);
