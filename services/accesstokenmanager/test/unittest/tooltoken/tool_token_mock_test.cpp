@@ -13,14 +13,16 @@
  * limitations under the License.
  */
 
-#include "accesstoken_manager_service_test.h"
-
 #include <algorithm>
 #include <unistd.h>
+#include <gtest/gtest.h>
+
+#define private public
+#include "accesstoken_manager_service.h"
+#undef private
 
 #include "access_token_error.h"
 #include "accesstoken_info_manager.h"
-#include "claw_auth_info_parcel.h"
 #include "claw_ticket_manager.h"
 #include "claw_token_info_manager.h"
 #include "cli_info_parcel.h"
@@ -28,9 +30,12 @@
 #include "generic_values.h"
 #include "hap_info_parcel.h"
 #include "hap_policy_parcel.h"
+#include "mock_permission.h"
 #include "permission_dialog_result_parcel.h"
+#include "permission_map.h"
 #include "permission_map_fence.h"
 #include "saf_agent_fence.h"
+#include "test_common.h"
 #include "token_setproc.h"
 
 using namespace testing::ext;
@@ -43,7 +48,6 @@ constexpr int32_t USER_ID = 100;
 constexpr int32_t INST_INDEX = 0;
 constexpr int32_t API_VERSION_9 = 9;
 constexpr int32_t ROOT_UID = 0;
-constexpr const char* MANAGE_TOOL_CALLER_PROCESS = "aimgr";
 const std::string DEFAULT_AGENT_ID = "1001";
 const std::string CUSTOM_SCREEN_CAPTURE = "ohos.permission.CUSTOM_SCREEN_CAPTURE";
 const std::string ACCESS_SYSTEM_SETTINGS = "ohos.permission.ACCESS_SYSTEM_SETTINGS";
@@ -53,8 +57,11 @@ const std::string CAMERA_PERMISSION = "ohos.permission.CAMERA";
 const std::string MICROPHONE_PERMISSION = "ohos.permission.MICROPHONE";
 const std::string AUDIO_PERMISSION = "ohos.permission.MANAGE_AUDIO_CONFIG";
 const std::string PUSH_PERMISSION = "ohos.permission.ACCESS_PUSH_SERVICE";
+const std::string MANAGE_TOOL_RUNTIME_PERMISSIONS = "ohos.permission.MANAGE_TOOL_RUNTIME_PERMISSIONS";
+const std::string MANAGE_USER_POLICY = "ohos.permission.MANAGE_USER_POLICY";
 const std::string KERNEL_PLUGIN_PERMISSION = "ohos.permission.kernel.SUPPORT_PLUGIN";
 const std::string WRITE_CALENDAR_PERMISSION = "ohos.permission.WRITE_CALENDAR";
+uint64_t g_selfShellTokenId = 0;
 
 std::string BuildInvalidAgentId()
 {
@@ -104,6 +111,7 @@ std::map<std::string, std::vector<std::string>> BuildCliRuntimeMockMap()
     return {
         { CUSTOM_SCREEN_CAPTURE, BuildMockTypeARuntimePermissions() },
         { ACCESS_SYSTEM_SETTINGS, { ACCESS_SYSTEM_SETTINGS } },
+        { CAMERA_PERMISSION, { CAMERA_PERMISSION } },
     };
 }
 
@@ -172,8 +180,7 @@ void MockSingleCliAuthChallenge(
 }
 
 uint64_t CreateServiceTestToken(
-    const std::string& bundleName, bool isSystemApp, const std::vector<PermissionStatus>& permStates,
-    AccessTokenID& tokenId)
+    const std::string& bundleName, bool isSystemApp, const std::vector<PermissionStatus>& permStates)
 {
     HapInfoParams hapInfo = {
         .userID = USER_ID,
@@ -190,11 +197,16 @@ uint64_t CreateServiceTestToken(
     int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(
         hapInfo, hapPolicy, tokenIdEx, undefValues);
     if (ret != RET_SUCCESS) {
-        tokenId = INVALID_TOKENID;
         return 0;
     }
-    tokenId = tokenIdEx.tokenIdExStruct.tokenID;
     return tokenIdEx.tokenIDEx;
+}
+
+AccessTokenID GetTokenIdFromFullTokenId(uint64_t fullTokenId)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx.tokenIDEx = fullTokenId;
+    return tokenIdEx.tokenIdExStruct.tokenID;
 }
 
 std::vector<PermissionStatus> BuildQueryPermissionStates()
@@ -220,9 +232,11 @@ bool ContainsPermission(const std::vector<std::string>& permissions, const std::
     return std::find(permissions.begin(), permissions.end(), permission) != permissions.end();
 }
 
-AccessTokenID GetManageToolCallerTokenId()
+AccessTokenID GetNativeProcessTokenId()
 {
-    return AccessTokenInfoManager::GetInstance().GetNativeTokenId(MANAGE_TOOL_CALLER_PROCESS);
+    AccessTokenID tokenId = AccessTokenInfoManager::GetInstance().GetNativeTokenId("accesstoken_service");
+    GTEST_LOG_(INFO) << "tokenId" << tokenId;
+    return tokenId;
 }
 
 std::vector<PermissionStatus> BuildMockTypeANoDialogStates()
@@ -305,17 +319,14 @@ private:
     std::vector<AccessTokenID> tokenIds_;
 };
 
-struct InitCliTokenRequest {
-    uint64_t callerTokenId = 0;
-    uint32_t callerUid = 0;
-    AccessTokenID hostTokenId = INVALID_TOKENID;
-    std::string challenge;
-    CliInfo cliInfo;
+struct CliPermissionRequestInfoQueryResult {
+    PermissionDialogResultParcel info;
+    AccessTokenID callerTokenId = INVALID_TOKENID;
 };
 
-struct InitCliTokenResult {
-    uint64_t fullTokenId = 0;
-    std::vector<PermissionWithValueIdl> kernelPermIdlList;
+struct CliPermissionsQueryResult {
+    CliPermissionsResultParcel info;
+    AccessTokenID callerTokenId = INVALID_TOKENID;
 };
 
 void PrepareMockEnvironment(
@@ -324,44 +335,6 @@ void PrepareMockEnvironment(
     ResetMockCounter();
     SetMockCommandPermissionsForTest(commandMap);
     SetMockCliRuntimePermissionsForTest(BuildCliRuntimeMockMap());
-}
-
-PermissionDialogResultParcel QueryCliPermissionRequestInfo(
-    AccessTokenManagerService& service, uint64_t callerTokenId, const std::vector<CliInfoParcel>& cliInfos)
-{
-    SelfTokenGuard guard;
-    SetSelfTokenID(callerTokenId);
-    PermissionDialogResultParcel result;
-    EXPECT_EQ(RET_SUCCESS, service.GetCliPermissionRequestInfo(DEFAULT_AGENT_ID, cliInfos, result));
-    return result;
-}
-
-CliPermissionsResultParcel QueryCliPermissions(AccessTokenManagerService& service, uint64_t callerTokenId,
-    AccessTokenID hostTokenId, const std::vector<CliInfoParcel>& cliInfos)
-{
-    SelfTokenGuard guard;
-    SetSelfTokenID(callerTokenId);
-    CliPermissionsResultParcel result;
-    EXPECT_EQ(RET_SUCCESS, service.GetCliPermissions(hostTokenId, DEFAULT_AGENT_ID, cliInfos, result));
-    return result;
-}
-
-ToolAuthResultParcel GenerateCliAuthResult(AccessTokenManagerService& service, uint64_t callerTokenId,
-    AccessTokenID hostTokenId, const std::vector<CliAuthInfoParcel>& authInfos)
-{
-    SelfTokenGuard guard;
-    SetSelfTokenID(callerTokenId);
-    ToolAuthResultParcel result;
-    EXPECT_EQ(RET_SUCCESS, service.GenerateCliAuthResult(hostTokenId, DEFAULT_AGENT_ID, authInfos, result));
-    return result;
-}
-
-int32_t GenerateCliAuthResultRet(AccessTokenManagerService& service, uint64_t callerTokenId, AccessTokenID hostTokenId,
-    const std::vector<CliAuthInfoParcel>& authInfos, ToolAuthResultParcel& result)
-{
-    SelfTokenGuard guard;
-    SetSelfTokenID(callerTokenId);
-    return service.GenerateCliAuthResult(hostTokenId, DEFAULT_AGENT_ID, authInfos, result);
 }
 
 AccessTokenID InitCliToolToken(AccessTokenID hostTokenId, const std::string& challenge, const CliInfo& cliInfo,
@@ -374,59 +347,9 @@ AccessTokenID InitCliToolToken(AccessTokenID hostTokenId, const std::string& cha
     return tokenIdEx.tokenIdExStruct.tokenID;
 }
 
-int32_t InitCliToolTokenRet(
-    AccessTokenManagerService& service, const InitCliTokenRequest& request, InitCliTokenResult& result)
+int32_t VerifyRuntimePermission(AccessTokenID tokenId, const std::string& permissionName)
 {
-    SelfTokenGuard tokenGuard;
-    UidGuard uidGuard;
-    SetSelfTokenID(request.callerTokenId);
-    (void)setuid(request.callerUid);
-    CliInitInfoParcel initInfoParcel;
-    initInfoParcel.cliInitInfo = {
-        .hostTokenId = request.hostTokenId,
-        .challenge = request.challenge,
-        .cliInfo = request.cliInfo,
-    };
-    return service.InitCliToken(initInfoParcel, result.fullTokenId, result.kernelPermIdlList);
-}
-
-int32_t GetCliTokenInfoRet(AccessTokenManagerService& service, uint64_t callerTokenId, AccessTokenID tokenId,
-    CliInfoResultParcel& infoParcel)
-{
-    SelfTokenGuard guard;
-    SetSelfTokenID(callerTokenId);
-    return service.GetCliTokenInfo(tokenId, infoParcel);
-}
-
-int32_t GetHostTokenIdRet(
-    AccessTokenManagerService& service, uint64_t callerTokenId, AccessTokenID toolTokenId, AccessTokenID& hostTokenId)
-{
-    SelfTokenGuard guard;
-    SetSelfTokenID(callerTokenId);
-    return service.GetHostTokenId(toolTokenId, hostTokenId);
-}
-
-std::string GenerateSingleCliAuthChallenge(AccessTokenManagerService& service, uint64_t callerTokenId,
-    AccessTokenID hostTokenId, const CliAuthInfoParcel& authInfo)
-{
-    auto authResult = GenerateCliAuthResult(service, callerTokenId, hostTokenId, { authInfo });
-    EXPECT_EQ(1, static_cast<int32_t>(authResult.result.authResults.size()));
-    EXPECT_FALSE(authResult.result.authResults[0].empty());
-    return authResult.result.authResults[0];
-}
-
-AccessTokenID InitCliToolTokenByService(
-    AccessTokenManagerService& service, const InitCliTokenRequest& request, InitCliTokenResult& result)
-{
-    EXPECT_EQ(RET_SUCCESS, InitCliToolTokenRet(service, request, result));
-    AccessTokenIDEx tokenIdEx = {0};
-    tokenIdEx.tokenIDEx = result.fullTokenId;
-    return tokenIdEx.tokenIdExStruct.tokenID;
-}
-
-void VerifyRuntimePermission(AccessTokenID tokenId, const std::string& permissionName, int32_t expected)
-{
-    EXPECT_EQ(expected, ToolTokenInfoManager::GetInstance().VerifyToolAccessToken(tokenId, permissionName));
+    return ToolTokenInfoManager::GetInstance().VerifyToolAccessToken(tokenId, permissionName);
 }
 
 void VerifyCliTokenBasics(
@@ -443,50 +366,31 @@ void VerifyCliTokenBasics(
     EXPECT_EQ(hostTokenId, queriedHostTokenId);
 }
 
-void VerifyDirectMappingResult(AccessTokenManagerService& service, const std::vector<PermissionStatus>& hostPerms,
-    const std::string& cliPermission, bool cliGranted, int32_t expected)
-{
-    AccessTokenID callerTokenId32 = INVALID_TOKENID;
-    AccessTokenID hostTokenId = INVALID_TOKENID;
-    TokenCleaner cleaner;
-    uint64_t fullCallerTokenId = CreateServiceTestToken(
-        "tooltoken_three_dep_mock_caller", true, BuildManagePermissionStates(), callerTokenId32);
-    uint64_t fullHostTokenId = CreateServiceTestToken("tooltoken_three_dep_mock_host", true, hostPerms, hostTokenId);
-    ASSERT_NE(0, fullCallerTokenId);
-    ASSERT_NE(0, fullHostTokenId);
-    cleaner.Add(callerTokenId32);
-    cleaner.Add(hostTokenId);
-
-    auto authResult = GenerateCliAuthResult(service, fullCallerTokenId, hostTokenId,
-        { BuildCliAuthInfoParcel(BuildCliInfo("settings", "set"), { cliPermission }, { cliGranted }) });
-    ASSERT_EQ(1, static_cast<int32_t>(authResult.result.authResults.size()));
-    ASSERT_FALSE(authResult.result.authResults[0].empty());
-
-    std::vector<std::string> kernelPermList;
-    AccessTokenID toolTokenId = InitCliToolToken(
-        hostTokenId, authResult.result.authResults[0], BuildCliInfo("settings", "set"), kernelPermList);
-    VerifyRuntimePermission(toolTokenId, cliPermission, expected);
-    EXPECT_EQ(RET_SUCCESS, ToolTokenInfoManager::GetInstance().DeleteToolTokenByPid(getpid()));
-}
 } // namespace
 
-class ToolTokenMockTest : public AccessTokenManagerServiceTest {
+class ToolTokenMockTest : public testing::Test {
 public:
     static void SetUpTestCase()
     {
-        AccessTokenManagerServiceTest::SetUpTestCase();
+        g_selfShellTokenId = GetSelfTokenID();
+        TestCommon::SetTestEvironment(g_selfShellTokenId);
     }
 
     static void TearDownTestCase()
     {
-        AccessTokenManagerServiceTest::TearDownTestCase();
+        TestCommon::ResetTestEvironment();
+        SetSelfTokenID(g_selfShellTokenId);
     }
 
     void SetUp() override
     {
-        AccessTokenManagerServiceTest::SetUp();
+        atManagerService_ = DelayedSingleton<AccessTokenManagerService>::GetInstance();
+        EXPECT_NE(nullptr, atManagerService_);
+        atManagerService_->Initialize();
+
         ClearMockCliRuntimePermissionsForTest();
         ResetMockCounter();
+        manageToolCallerIndex_ = 0;
         (void)ToolTokenInfoManager::GetInstance().DeleteToolTokenByPid(getpid());
     }
 
@@ -495,27 +399,175 @@ public:
         ClearMockCliRuntimePermissionsForTest();
         ResetMockCounter();
         (void)ToolTokenInfoManager::GetInstance().DeleteToolTokenByPid(getpid());
-        AccessTokenManagerServiceTest::TearDown();
+        DelayedSingleton<AccessTokenManagerService>::DestroyInstance();
+        atManagerService_ = nullptr;
     }
+
+public:
+    std::shared_ptr<AccessTokenManagerService> atManagerService_;
+
+protected:
+    CliPermissionRequestInfoQueryResult QueryCliPermissionRequestInfo(
+        const std::vector<PermissionStatus>& permStates, const std::vector<CliInfoParcel>& cliInfos,
+        TokenCleaner& cleaner)
+    {
+        CliPermissionRequestInfoQueryResult result;
+        uint64_t callerFullTokenId = CreateServiceTestToken("tooltoken_prequery_caller", true, permStates);
+        EXPECT_NE(0, callerFullTokenId);
+        if (callerFullTokenId == 0) {
+            return result;
+        }
+        result.callerTokenId = GetTokenIdFromFullTokenId(callerFullTokenId);
+        cleaner.Add(result.callerTokenId);
+
+        SelfTokenGuard guard;
+        SetSelfTokenID(callerFullTokenId);
+        EXPECT_EQ(RET_SUCCESS, atManagerService_->GetCliPermissionRequestInfo(DEFAULT_AGENT_ID, cliInfos, result.info));
+        return result;
+    }
+
+    CliPermissionsQueryResult QueryCliPermissions(
+        AccessTokenID hostTokenId, const std::vector<CliInfoParcel>& cliInfos, TokenCleaner& cleaner)
+    {
+        CliPermissionsQueryResult result;
+        uint64_t callerFullTokenId =
+            CreateServiceTestToken("tooltoken_query_caller", true, BuildManagePermissionStates());
+        EXPECT_NE(0, callerFullTokenId);
+        if (callerFullTokenId == 0) {
+            return result;
+        }
+        result.callerTokenId = GetTokenIdFromFullTokenId(callerFullTokenId);
+        cleaner.Add(result.callerTokenId);
+
+        SelfTokenGuard guard;
+        SetSelfTokenID(callerFullTokenId);
+        EXPECT_EQ(RET_SUCCESS, atManagerService_->GetCliPermissions(hostTokenId, DEFAULT_AGENT_ID, cliInfos,
+            result.info));
+        return result;
+    }
+
+    ToolAuthResultParcel GenerateCliAuthResult(
+        AccessTokenID hostTokenId, const std::vector<CliAuthInfoParcel>& authInfos, TokenCleaner& cleaner)
+    {
+        uint64_t callerFullTokenId = CreateServiceTestToken(
+            "tooltoken_manage_caller_" + std::to_string(++manageToolCallerIndex_), true,
+            BuildManagePermissionStates());
+        EXPECT_NE(0, callerFullTokenId);
+        if (callerFullTokenId == 0) {
+            return {};
+        }
+        cleaner.Add(GetTokenIdFromFullTokenId(callerFullTokenId));
+
+        SelfTokenGuard guard;
+        SetSelfTokenID(callerFullTokenId);
+        ToolAuthResultParcel result;
+        EXPECT_EQ(RET_SUCCESS, atManagerService_->GenerateCliAuthResult(hostTokenId, DEFAULT_AGENT_ID, authInfos,
+            result));
+        return result;
+    }
+
+    ToolAuthResultParcel GenerateSkillAuthResult(
+        AccessTokenID hostTokenId, const std::vector<SkillAuthInfoParcel>& authInfos, TokenCleaner& cleaner)
+    {
+        uint64_t callerFullTokenId = CreateServiceTestToken(
+            "tooltoken_manage_caller_" + std::to_string(++manageToolCallerIndex_), true,
+            BuildManagePermissionStates());
+        EXPECT_NE(0, callerFullTokenId);
+        if (callerFullTokenId == 0) {
+            return {};
+        }
+        cleaner.Add(GetTokenIdFromFullTokenId(callerFullTokenId));
+
+        SelfTokenGuard guard;
+        SetSelfTokenID(callerFullTokenId);
+        ToolAuthResultParcel result;
+        EXPECT_EQ(RET_SUCCESS, atManagerService_->GenerateSkillAuthResult(hostTokenId, DEFAULT_AGENT_ID, authInfos,
+            result));
+        return result;
+    }
+
+    int32_t QueryCliPermissionsRet(AccessTokenID hostTokenId, const std::string& agentId,
+        const std::vector<CliInfoParcel>& cliInfos, CliPermissionsResultParcel result, TokenCleaner& cleaner)
+    {
+        uint64_t callerFullTokenId =
+            CreateServiceTestToken("tooltoken_query_caller", true, BuildManagePermissionStates());
+        EXPECT_NE(0, callerFullTokenId);
+        if (callerFullTokenId == 0) {
+            return AccessTokenError::ERR_TOKENID_CREATE_FAILED;
+        }
+        cleaner.Add(GetTokenIdFromFullTokenId(callerFullTokenId));
+
+        SelfTokenGuard guard;
+        SetSelfTokenID(callerFullTokenId);
+        return atManagerService_->GetCliPermissions(hostTokenId, agentId, cliInfos, result);
+    }
+
+    int32_t GenerateCliAuthResultRet(AccessTokenID hostTokenId, const std::vector<CliAuthInfoParcel>& authInfos,
+        ToolAuthResultParcel& result, TokenCleaner& cleaner)
+    {
+        uint64_t callerFullTokenId = CreateServiceTestToken(
+            "tooltoken_manage_caller_" + std::to_string(++manageToolCallerIndex_), true,
+            BuildManagePermissionStates());
+        EXPECT_NE(0, callerFullTokenId);
+        if (callerFullTokenId == 0) {
+            return AccessTokenError::ERR_TOKENID_CREATE_FAILED;
+        }
+        cleaner.Add(GetTokenIdFromFullTokenId(callerFullTokenId));
+
+        SelfTokenGuard guard;
+        SetSelfTokenID(callerFullTokenId);
+        return atManagerService_->GenerateCliAuthResult(hostTokenId, DEFAULT_AGENT_ID, authInfos, result);
+    }
+
+    int32_t InitCliToolTokenRet(const CliInitInfoParcel& initInfoParcel, uint64_t& fullTokenId,
+        std::vector<PermissionWithValueIdl>& kernelPermIdlList)
+    {
+        UidGuard uidGuard;
+        (void)setuid(ROOT_UID);
+        return atManagerService_->InitCliToken(initInfoParcel, fullTokenId, kernelPermIdlList);
+    }
+
+#ifdef SUPPORT_MANAGE_USER_POLICY
+    int32_t SetUserPolicyRet(const std::vector<UserPermissionPolicyIdl>& userPermissionList)
+    {
+        MockToken mock(g_selfShellTokenId, "accesstoken_service", false);
+        mock.Grant(MANAGE_USER_POLICY);
+        return atManagerService_->SetUserPolicy(userPermissionList);
+    }
+
+    int32_t ClearUserPolicyRet(const std::vector<std::string>& permissionList)
+    {
+        MockToken mock(g_selfShellTokenId, "accesstoken_service", false);
+        mock.Grant(MANAGE_USER_POLICY);
+        return atManagerService_->ClearUserPolicy(permissionList);
+    }
+#endif
+
+    std::string GenerateSingleCliAuthChallenge(
+        AccessTokenID hostTokenId, const CliAuthInfoParcel& authInfo, TokenCleaner& cleaner)
+    {
+        auto authResult = GenerateCliAuthResult(hostTokenId, { authInfo }, cleaner);
+        EXPECT_EQ(1, static_cast<int32_t>(authResult.result.authResults.size()));
+        EXPECT_FALSE(authResult.result.authResults[0].empty());
+        return authResult.result.authResults[0];
+    }
+
+    uint32_t manageToolCallerIndex_ = 0;
 };
 
 /**
- * @tc.name: GetCliPermissionRequestInfo_003
+ * @tc.name: GetCliPermissionRequestInfo_001
  * @tc.desc: Test undeclared CLI Permission returns no-dialog not-declared detail.
  * @tc.type: FUNC
  */
-HWTEST_F(ToolTokenMockTest, GetCliPermissionRequestInfo_003, TestSize.Level1)
+HWTEST_F(ToolTokenMockTest, GetCliPermissionRequestInfo_001, TestSize.Level1)
 {
-    AccessTokenID tokenId = INVALID_TOKENID;
     TokenCleaner cleaner;
     auto permStates = BuildQueryAndManagePermissionStates();
-    uint64_t fullTokenId = CreateServiceTestToken("tooltoken_prequery_003", true, permStates, tokenId);
-    ASSERT_NE(0, fullTokenId);
-    cleaner.Add(tokenId);
     PrepareMockEnvironment();
 
-    auto result = QueryCliPermissionRequestInfo(*atManagerService_, fullTokenId,
-        { BuildCliInfoParcel("location", "query") });
+    auto result = QueryCliPermissionRequestInfo(permStates,
+        { BuildCliInfoParcel("location", "query") }, cleaner).info;
     ASSERT_EQ(1, static_cast<int32_t>(result.result.detailList.size()));
     const auto& detail = result.result.detailList[0];
     EXPECT_FALSE(detail.needPermissionDialog);
@@ -527,17 +579,17 @@ HWTEST_F(ToolTokenMockTest, GetCliPermissionRequestInfo_003, TestSize.Level1)
 }
 
 /**
- * @tc.name: GetCliPermissionRequestInfo_001
+ * @tc.name: GetCliPermissionRequestInfo_002
  * @tc.desc: Test invalid agentID returns invalid-param.
  * @tc.type: FUNC
  */
-HWTEST_F(ToolTokenMockTest, GetCliPermissionRequestInfo_001, TestSize.Level1)
+HWTEST_F(ToolTokenMockTest, GetCliPermissionRequestInfo_002, TestSize.Level1)
 {
     AccessTokenID tokenId = INVALID_TOKENID;
     TokenCleaner cleaner;
-    uint64_t fullTokenId = CreateServiceTestToken(
-        "tooltoken_prequery_001", true, BuildQueryPermissionStates(), tokenId);
+    uint64_t fullTokenId = CreateServiceTestToken("tooltoken_prequery_002", true, BuildQueryPermissionStates());
     ASSERT_NE(0, fullTokenId);
+    tokenId = GetTokenIdFromFullTokenId(fullTokenId);
     cleaner.Add(tokenId);
 
     SelfTokenGuard guard;
@@ -550,17 +602,17 @@ HWTEST_F(ToolTokenMockTest, GetCliPermissionRequestInfo_001, TestSize.Level1)
 }
 
 /**
- * @tc.name: GetCliPermissionRequestInfo_002
+ * @tc.name: GetCliPermissionRequestInfo_003
  * @tc.desc: Test empty cliInfoList returns invalid-param.
  * @tc.type: FUNC
  */
-HWTEST_F(ToolTokenMockTest, GetCliPermissionRequestInfo_002, TestSize.Level1)
+HWTEST_F(ToolTokenMockTest, GetCliPermissionRequestInfo_003, TestSize.Level1)
 {
     AccessTokenID tokenId = INVALID_TOKENID;
     TokenCleaner cleaner;
-    uint64_t fullTokenId = CreateServiceTestToken(
-        "tooltoken_prequery_002", true, BuildQueryPermissionStates(), tokenId);
+    uint64_t fullTokenId = CreateServiceTestToken("tooltoken_prequery_003", true, BuildQueryPermissionStates());
     ASSERT_NE(0, fullTokenId);
+    tokenId = GetTokenIdFromFullTokenId(fullTokenId);
     cleaner.Add(tokenId);
 
     SelfTokenGuard guard;
@@ -572,70 +624,21 @@ HWTEST_F(ToolTokenMockTest, GetCliPermissionRequestInfo_002, TestSize.Level1)
 }
 
 /**
- * @tc.name: GetCliPermissionRequestInfo_005
- * @tc.desc: Test non-system caller returns not-system-app.
- * @tc.type: FUNC
- */
-HWTEST_F(ToolTokenMockTest, GetCliPermissionRequestInfo_005, TestSize.Level1)
-{
-    AccessTokenID tokenId = INVALID_TOKENID;
-    TokenCleaner cleaner;
-    uint64_t fullTokenId = CreateServiceTestToken(
-        "tooltoken_prequery_005", false, BuildQueryPermissionStates(), tokenId);
-    ASSERT_NE(0, fullTokenId);
-    cleaner.Add(tokenId);
-
-    SelfTokenGuard guard;
-    SetSelfTokenID(fullTokenId);
-    PermissionDialogResultParcel result;
-    EXPECT_EQ(AccessTokenError::ERR_NOT_SYSTEM_APP,
-        atManagerService_->GetCliPermissionRequestInfo(
-            DEFAULT_AGENT_ID, { BuildCliInfoParcel("location", "query") }, result));
-    EXPECT_TRUE(result.result.detailList.empty());
-}
-
-/**
- * @tc.name: GetCliPermissionRequestInfo_007
- * @tc.desc: Test caller without QUERY_TOOL_PERMISSIONS returns permission-denied.
- * @tc.type: FUNC
- */
-HWTEST_F(ToolTokenMockTest, GetCliPermissionRequestInfo_007, TestSize.Level1)
-{
-    AccessTokenID tokenId = INVALID_TOKENID;
-    TokenCleaner cleaner;
-    uint64_t fullTokenId = CreateServiceTestToken("tooltoken_prequery_007", true, {}, tokenId);
-    ASSERT_NE(0, fullTokenId);
-    cleaner.Add(tokenId);
-
-    SelfTokenGuard guard;
-    SetSelfTokenID(fullTokenId);
-    PermissionDialogResultParcel result;
-    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
-        atManagerService_->GetCliPermissionRequestInfo(
-            DEFAULT_AGENT_ID, { BuildCliInfoParcel("location", "query") }, result));
-    EXPECT_TRUE(result.result.detailList.empty());
-}
-
-/**
  * @tc.name: GetCliPermissionRequestInfo_004
  * @tc.desc: Test denied runtime permission is returned in dialog detail with challenge.
  * @tc.type: FUNC
  */
 HWTEST_F(ToolTokenMockTest, GetCliPermissionRequestInfo_004, TestSize.Level1)
 {
-    AccessTokenID tokenId = INVALID_TOKENID;
     TokenCleaner cleaner;
     auto permStates = BuildQueryAndManagePermissionStates();
     for (const auto& permission : BuildMockTypeADeniedOnlyStates()) {
         permStates.emplace_back(permission);
     }
-    uint64_t fullTokenId = CreateServiceTestToken("tooltoken_prequery_004", true, permStates, tokenId);
-    ASSERT_NE(0, fullTokenId);
-    cleaner.Add(tokenId);
     PrepareMockEnvironment();
 
-    auto result = QueryCliPermissionRequestInfo(*atManagerService_, fullTokenId,
-        { BuildCliInfoParcel("location", "query") });
+    auto result = QueryCliPermissionRequestInfo(permStates,
+        { BuildCliInfoParcel("location", "query") }, cleaner).info;
     ASSERT_EQ(1, static_cast<int32_t>(result.result.detailList.size()));
     const auto& detail = result.result.detailList[0];
     EXPECT_FALSE(detail.needPermissionDialog);
@@ -647,24 +650,20 @@ HWTEST_F(ToolTokenMockTest, GetCliPermissionRequestInfo_004, TestSize.Level1)
 }
 
 /**
- * @tc.name: GetCliPermissionRequestInfo_006
+ * @tc.name: GetCliPermissionRequestInfo_005
  * @tc.desc: Test undecided runtime permission triggers dialog and no auth result.
  * @tc.type: FUNC
  */
-HWTEST_F(ToolTokenMockTest, GetCliPermissionRequestInfo_006, TestSize.Level1)
+HWTEST_F(ToolTokenMockTest, GetCliPermissionRequestInfo_005, TestSize.Level1)
 {
-    AccessTokenID tokenId = INVALID_TOKENID;
     TokenCleaner cleaner;
     auto permStates = BuildQueryAndManagePermissionStates();
     permStates.emplace_back(BuildGrantedStatus(CUSTOM_SCREEN_CAPTURE));
     permStates.emplace_back(BuildInitialStatus(CAMERA_PERMISSION));
-    uint64_t fullTokenId = CreateServiceTestToken("tooltoken_prequery_006", true, permStates, tokenId);
-    ASSERT_NE(0, fullTokenId);
-    cleaner.Add(tokenId);
     PrepareMockEnvironment();
 
-    auto result = QueryCliPermissionRequestInfo(*atManagerService_, fullTokenId,
-        { BuildCliInfoParcel("location", "query") });
+    auto result = QueryCliPermissionRequestInfo(permStates,
+        { BuildCliInfoParcel("location", "query") }, cleaner).info;
     ASSERT_EQ(1, static_cast<int32_t>(result.result.detailList.size()));
     const auto& detail = result.result.detailList[0];
     EXPECT_TRUE(detail.needPermissionDialog);
@@ -673,25 +672,21 @@ HWTEST_F(ToolTokenMockTest, GetCliPermissionRequestInfo_006, TestSize.Level1)
 }
 
 /**
- * @tc.name: GetCliPermissionRequestInfo_009
+ * @tc.name: GetCliPermissionRequestInfo_006
  * @tc.desc: Test restricted runtime permission is returned in dialog detail.
  * @tc.type: FUNC
  */
-HWTEST_F(ToolTokenMockTest, GetCliPermissionRequestInfo_009, TestSize.Level1)
+HWTEST_F(ToolTokenMockTest, GetCliPermissionRequestInfo_006, TestSize.Level1)
 {
-    AccessTokenID tokenId = INVALID_TOKENID;
     TokenCleaner cleaner;
     auto permStates = BuildQueryAndManagePermissionStates();
     for (const auto& permission : BuildMockTypeARestrictedOnlyStates()) {
         permStates.emplace_back(permission);
     }
-    uint64_t fullTokenId = CreateServiceTestToken("tooltoken_prequery_009", true, permStates, tokenId);
-    ASSERT_NE(0, fullTokenId);
-    cleaner.Add(tokenId);
     PrepareMockEnvironment();
 
-    auto result = QueryCliPermissionRequestInfo(*atManagerService_, fullTokenId,
-        { BuildCliInfoParcel("location", "query") });
+    auto result = QueryCliPermissionRequestInfo(permStates,
+        { BuildCliInfoParcel("location", "query") }, cleaner).info;
     ASSERT_EQ(1, static_cast<int32_t>(result.result.detailList.size()));
     const auto& detail = result.result.detailList[0];
     EXPECT_FALSE(detail.needPermissionDialog);
@@ -703,26 +698,22 @@ HWTEST_F(ToolTokenMockTest, GetCliPermissionRequestInfo_009, TestSize.Level1)
 }
 
 /**
- * @tc.name: GetCliPermissionRequestInfo_011
+ * @tc.name: GetCliPermissionRequestInfo_007
  * @tc.desc: Test all resolved runtime permissions produce no dialog and non-empty auth result.
  * @tc.type: FUNC
  */
-HWTEST_F(ToolTokenMockTest, GetCliPermissionRequestInfo_011, TestSize.Level1)
+HWTEST_F(ToolTokenMockTest, GetCliPermissionRequestInfo_007, TestSize.Level1)
 {
-    AccessTokenID tokenId = INVALID_TOKENID;
     TokenCleaner cleaner;
     auto permStates = BuildQueryAndManagePermissionStates();
     permStates.emplace_back(BuildGrantedStatus(CUSTOM_SCREEN_CAPTURE));
     for (const auto& permission : BuildMockTypeARuntimePermissions()) {
         permStates.emplace_back(BuildGrantedStatus(permission, PERMISSION_SYSTEM_FIXED));
     }
-    uint64_t fullTokenId = CreateServiceTestToken("tooltoken_prequery_011", true, permStates, tokenId);
-    ASSERT_NE(0, fullTokenId);
-    cleaner.Add(tokenId);
     PrepareMockEnvironment();
 
-    auto result = QueryCliPermissionRequestInfo(*atManagerService_, fullTokenId,
-        { BuildCliInfoParcel("location", "query") });
+    auto result = QueryCliPermissionRequestInfo(permStates,
+        { BuildCliInfoParcel("location", "query") }, cleaner).info;
     ASSERT_EQ(1, static_cast<int32_t>(result.result.detailList.size()));
     const auto& detail = result.result.detailList[0];
     EXPECT_FALSE(detail.needPermissionDialog);
@@ -732,13 +723,12 @@ HWTEST_F(ToolTokenMockTest, GetCliPermissionRequestInfo_011, TestSize.Level1)
 }
 
 /**
- * @tc.name: GetCliPermissionRequestInfo_013
+ * @tc.name: GetCliPermissionRequestInfo_008
  * @tc.desc: Test batch CLI details preserve order and independent auth results.
  * @tc.type: FUNC
  */
-HWTEST_F(ToolTokenMockTest, GetCliPermissionRequestInfo_013, TestSize.Level1)
+HWTEST_F(ToolTokenMockTest, GetCliPermissionRequestInfo_008, TestSize.Level1)
 {
-    AccessTokenID tokenId = INVALID_TOKENID;
     TokenCleaner cleaner;
     auto permStates = BuildQueryAndManagePermissionStates();
     permStates.emplace_back(BuildGrantedStatus(ACCESS_SYSTEM_SETTINGS));
@@ -746,18 +736,15 @@ HWTEST_F(ToolTokenMockTest, GetCliPermissionRequestInfo_013, TestSize.Level1)
     for (const auto& permission : BuildMockTypeANoDialogStates()) {
         permStates.emplace_back(permission);
     }
-    uint64_t fullTokenId = CreateServiceTestToken("tooltoken_prequery_013", true, permStates, tokenId);
-    ASSERT_NE(0, fullTokenId);
-    cleaner.Add(tokenId);
     auto commandMap = BuildCliCommandMockMap();
     commandMap["camera:capture"] = {WRITE_CALENDAR_PERMISSION};
     PrepareMockEnvironment(commandMap);
 
-    auto result = QueryCliPermissionRequestInfo(*atManagerService_, fullTokenId, {
+    auto result = QueryCliPermissionRequestInfo(permStates, {
         BuildCliInfoParcel("settings", "set"),
         BuildCliInfoParcel("camera", "capture"),
         BuildCliInfoParcel("location", "query"),
-    });
+    }, cleaner).info;
     ASSERT_EQ(3, static_cast<int32_t>(result.result.detailList.size()));
     EXPECT_FALSE(result.result.detailList[0].needPermissionDialog);
     EXPECT_TRUE(result.result.detailList[1].needPermissionDialog);
@@ -769,25 +756,21 @@ HWTEST_F(ToolTokenMockTest, GetCliPermissionRequestInfo_013, TestSize.Level1)
 }
 
 /**
- * @tc.name: GetCliPermissionRequestInfo_014
+ * @tc.name: GetCliPermissionRequestInfo_009
  * @tc.desc: Test permissionNameList and statusList keep index alignment.
  * @tc.type: FUNC
  */
-HWTEST_F(ToolTokenMockTest, GetCliPermissionRequestInfo_014, TestSize.Level1)
+HWTEST_F(ToolTokenMockTest, GetCliPermissionRequestInfo_009, TestSize.Level1)
 {
-    AccessTokenID tokenId = INVALID_TOKENID;
     TokenCleaner cleaner;
     auto permStates = BuildQueryAndManagePermissionStates();
     permStates.emplace_back(BuildGrantedStatus(CUSTOM_SCREEN_CAPTURE));
     permStates.emplace_back(BuildDeniedStatus(LOCATION_PERMISSION));
     permStates.emplace_back(BuildDeniedStatus(PUSH_PERMISSION, PERMISSION_FIXED_FOR_SECURITY_POLICY));
-    uint64_t fullTokenId = CreateServiceTestToken("tooltoken_prequery_014", true, permStates, tokenId);
-    ASSERT_NE(0, fullTokenId);
-    cleaner.Add(tokenId);
     PrepareMockEnvironment();
 
-    auto result = QueryCliPermissionRequestInfo(*atManagerService_, fullTokenId,
-        { BuildCliInfoParcel("location", "query") });
+    auto result = QueryCliPermissionRequestInfo(permStates,
+        { BuildCliInfoParcel("location", "query") }, cleaner).info;
     const auto& detail = result.result.detailList[0];
     ASSERT_EQ(detail.permissionNameList.size(), detail.statusList.size());
     ASSERT_EQ(2, static_cast<int32_t>(detail.permissionNameList.size()));
@@ -798,23 +781,20 @@ HWTEST_F(ToolTokenMockTest, GetCliPermissionRequestInfo_014, TestSize.Level1)
 }
 
 /**
- * @tc.name: GetCliPermissionRequestInfo_015
+ * @tc.name: GetCliPermissionRequestInfo_010
  * @tc.desc: Test no-dialog authResult from prequery can be consumed by InitCliToken.
  * @tc.type: FUNC
  */
-HWTEST_F(ToolTokenMockTest, GetCliPermissionRequestInfo_015, TestSize.Level1)
+HWTEST_F(ToolTokenMockTest, GetCliPermissionRequestInfo_010, TestSize.Level1)
 {
-    AccessTokenID tokenId = INVALID_TOKENID;
     TokenCleaner cleaner;
     auto permStates = BuildQueryPermissionStates();
     permStates.emplace_back(BuildGrantedStatus(ACCESS_SYSTEM_SETTINGS, PERMISSION_SYSTEM_FIXED));
-    uint64_t fullTokenId = CreateServiceTestToken("tooltoken_prequery_015", true, permStates, tokenId);
-    ASSERT_NE(0, fullTokenId);
-    cleaner.Add(tokenId);
     PrepareMockEnvironment();
 
-    auto result = QueryCliPermissionRequestInfo(*atManagerService_, fullTokenId,
-        { BuildCliInfoParcel("settings", "set") });
+    auto queryResult = QueryCliPermissionRequestInfo(permStates,
+        { BuildCliInfoParcel("settings", "set") }, cleaner);
+    const auto& result = queryResult.info;
     ASSERT_EQ(1, static_cast<int32_t>(result.result.detailList.size()));
     const auto& detail = result.result.detailList[0];
     EXPECT_FALSE(detail.needPermissionDialog);
@@ -824,32 +804,29 @@ HWTEST_F(ToolTokenMockTest, GetCliPermissionRequestInfo_015, TestSize.Level1)
 
     std::vector<std::string> kernelPermList;
     AccessTokenID toolTokenId = InitCliToolToken(
-        tokenId, detail.authResult, BuildCliInfo("settings", "set"), kernelPermList);
-    VerifyRuntimePermission(toolTokenId, ACCESS_SYSTEM_SETTINGS, PERMISSION_GRANTED);
-    VerifyCliTokenBasics(toolTokenId, tokenId, "settings", "set");
+        queryResult.callerTokenId, detail.authResult, BuildCliInfo("settings", "set"), kernelPermList);
+    EXPECT_EQ(PERMISSION_GRANTED, VerifyRuntimePermission(toolTokenId, ACCESS_SYSTEM_SETTINGS));
+    VerifyCliTokenBasics(toolTokenId, queryResult.callerTokenId, "settings", "set");
     EXPECT_EQ(RET_SUCCESS, ToolTokenInfoManager::GetInstance().DeleteToolTokenByPid(getpid()));
 }
 
 /**
- * @tc.name: GetCliPermissionRequestInfo_016
+ * @tc.name: GetCliPermissionRequestInfo_011
  * @tc.desc: Test MockTypeA no-dialog authResult can be consumed by InitCliToken.
  * @tc.type: FUNC
  */
-HWTEST_F(ToolTokenMockTest, GetCliPermissionRequestInfo_016, TestSize.Level1)
+HWTEST_F(ToolTokenMockTest, GetCliPermissionRequestInfo_011, TestSize.Level1)
 {
-    AccessTokenID tokenId = INVALID_TOKENID;
     TokenCleaner cleaner;
     auto permStates = BuildQueryPermissionStates();
     for (const auto& permission : BuildMockTypeANoDialogStates()) {
         permStates.emplace_back(permission);
     }
-    uint64_t fullTokenId = CreateServiceTestToken("tooltoken_prequery_016", true, permStates, tokenId);
-    ASSERT_NE(0, fullTokenId);
-    cleaner.Add(tokenId);
     PrepareMockEnvironment();
 
-    auto result = QueryCliPermissionRequestInfo(*atManagerService_, fullTokenId,
-        { BuildCliInfoParcel("location", "query") });
+    auto queryResult = QueryCliPermissionRequestInfo(permStates,
+        { BuildCliInfoParcel("location", "query") }, cleaner);
+    const auto& result = queryResult.info;
     ASSERT_EQ(1, static_cast<int32_t>(result.result.detailList.size()));
     const auto& detail = result.result.detailList[0];
     EXPECT_FALSE(detail.needPermissionDialog);
@@ -862,42 +839,38 @@ HWTEST_F(ToolTokenMockTest, GetCliPermissionRequestInfo_016, TestSize.Level1)
 
     std::vector<std::string> kernelPermList;
     AccessTokenID toolTokenId = InitCliToolToken(
-        tokenId, detail.authResult, BuildCliInfo("location", "query"), kernelPermList);
-    VerifyRuntimePermission(toolTokenId, LOCATION_PERMISSION, PERMISSION_DENIED);
-    VerifyRuntimePermission(toolTokenId, WIFI_PERMISSION, PERMISSION_GRANTED);
-    VerifyRuntimePermission(toolTokenId, CAMERA_PERMISSION, PERMISSION_GRANTED);
-    VerifyRuntimePermission(toolTokenId, MICROPHONE_PERMISSION, PERMISSION_GRANTED);
-    VerifyRuntimePermission(toolTokenId, AUDIO_PERMISSION, PERMISSION_GRANTED);
-    VerifyRuntimePermission(toolTokenId, PUSH_PERMISSION, PERMISSION_DENIED);
+        queryResult.callerTokenId, detail.authResult, BuildCliInfo("location", "query"), kernelPermList);
+    EXPECT_EQ(PERMISSION_DENIED, VerifyRuntimePermission(toolTokenId, LOCATION_PERMISSION));
+    EXPECT_EQ(PERMISSION_GRANTED, VerifyRuntimePermission(toolTokenId, WIFI_PERMISSION));
+    EXPECT_EQ(PERMISSION_GRANTED, VerifyRuntimePermission(toolTokenId, CAMERA_PERMISSION));
+    EXPECT_EQ(PERMISSION_GRANTED, VerifyRuntimePermission(toolTokenId, MICROPHONE_PERMISSION));
+    EXPECT_EQ(PERMISSION_GRANTED, VerifyRuntimePermission(toolTokenId, AUDIO_PERMISSION));
+    EXPECT_EQ(PERMISSION_DENIED, VerifyRuntimePermission(toolTokenId, PUSH_PERMISSION));
     EXPECT_TRUE(ContainsPermission(kernelPermList, KERNEL_PLUGIN_PERMISSION));
-    VerifyCliTokenBasics(toolTokenId, tokenId, "location", "query");
+    VerifyCliTokenBasics(toolTokenId, queryResult.callerTokenId, "location", "query");
     EXPECT_EQ(RET_SUCCESS, ToolTokenInfoManager::GetInstance().DeleteToolTokenByPid(getpid()));
 }
 
 /**
- * @tc.name: GetCliPermissions_006
+ * @tc.name: GetCliPermissions_001
  * @tc.desc: Test undeclared CLI Permission and granted self-mapped system permission in one batch.
  * @tc.type: FUNC
  */
-HWTEST_F(ToolTokenMockTest, GetCliPermissions_006, TestSize.Level1)
+HWTEST_F(ToolTokenMockTest, GetCliPermissions_001, TestSize.Level1)
 {
-    AccessTokenID callerTokenId = INVALID_TOKENID;
     AccessTokenID hostTokenId = INVALID_TOKENID;
     TokenCleaner cleaner;
-    uint64_t callerFullTokenId = CreateServiceTestToken(
-        "tooltoken_query_006_caller", true, BuildManagePermissionStates(), callerTokenId);
     auto hostPerms = std::vector<PermissionStatus> { BuildGrantedStatus(ACCESS_SYSTEM_SETTINGS) };
-    uint64_t hostFullTokenId = CreateServiceTestToken("tooltoken_query_006_host", true, hostPerms, hostTokenId);
-    ASSERT_NE(0, callerFullTokenId);
+    uint64_t hostFullTokenId = CreateServiceTestToken("tooltoken_query_001_host", true, hostPerms);
     ASSERT_NE(0, hostFullTokenId);
-    cleaner.Add(callerTokenId);
+    hostTokenId = GetTokenIdFromFullTokenId(hostFullTokenId);
     cleaner.Add(hostTokenId);
     PrepareMockEnvironment();
 
-    auto result = QueryCliPermissions(*atManagerService_, callerFullTokenId, hostTokenId, {
+    auto result = QueryCliPermissions(hostTokenId, {
         BuildCliInfoParcel("location", "query"),
         BuildCliInfoParcel("settings", "set"),
-    });
+    }, cleaner).info;
     ASSERT_EQ(2, static_cast<int32_t>(result.result.permList.size()));
     const auto& detail0 = result.result.permList[0].requiredCliPermissions[0];
     EXPECT_EQ(CUSTOM_SCREEN_CAPTURE, detail0.requiredCliPermission);
@@ -909,44 +882,36 @@ HWTEST_F(ToolTokenMockTest, GetCliPermissions_006, TestSize.Level1)
 }
 
 /**
- * @tc.name: GetCliPermissions_008
+ * @tc.name: GetCliPermissions_002
  * @tc.desc: Test MockTypeA returns full usedPermissions list with granted CLI Permission.
  * @tc.type: FUNC
  */
-HWTEST_F(ToolTokenMockTest, GetCliPermissions_008, TestSize.Level1)
+HWTEST_F(ToolTokenMockTest, GetCliPermissions_002, TestSize.Level1)
 {
-    AccessTokenID callerTokenId = INVALID_TOKENID;
     AccessTokenID hostTokenId = INVALID_TOKENID;
     TokenCleaner cleaner;
-    uint64_t callerFullTokenId = CreateServiceTestToken(
-        "tooltoken_query_008_caller", true, BuildManagePermissionStates(), callerTokenId);
     auto hostPerms = std::vector<PermissionStatus> { BuildGrantedStatus(CUSTOM_SCREEN_CAPTURE) };
-    uint64_t hostFullTokenId = CreateServiceTestToken("tooltoken_query_008_host", true, hostPerms, hostTokenId);
-    ASSERT_NE(0, callerFullTokenId);
+    uint64_t hostFullTokenId = CreateServiceTestToken("tooltoken_query_002_host", true, hostPerms);
     ASSERT_NE(0, hostFullTokenId);
-    cleaner.Add(callerTokenId);
+    hostTokenId = GetTokenIdFromFullTokenId(hostFullTokenId);
     cleaner.Add(hostTokenId);
     PrepareMockEnvironment();
 
-    auto result = QueryCliPermissions(*atManagerService_, callerFullTokenId, hostTokenId,
-        { BuildCliInfoParcel("location", "query") });
+    auto result = QueryCliPermissions(hostTokenId, { BuildCliInfoParcel("location", "query") }, cleaner).info;
     const auto& detail = result.result.permList[0].requiredCliPermissions[0];
     EXPECT_EQ((PermissionDecisionStatus::NO_DIALOG_GRANTED), detail.cliPermissionStatus);
     EXPECT_EQ(BuildMockTypeARuntimePermissions(), detail.usedPermissions);
 }
 
 /**
- * @tc.name: GetCliPermissions_009
+ * @tc.name: GetCliPermissions_003
  * @tc.desc: Test MockTypeA returns NEED_PERMISSION_DIALOG when a runtime permission is undecided.
  * @tc.type: FUNC
  */
-HWTEST_F(ToolTokenMockTest, GetCliPermissions_009, TestSize.Level1)
+HWTEST_F(ToolTokenMockTest, GetCliPermissions_003, TestSize.Level1)
 {
-    AccessTokenID callerTokenId = INVALID_TOKENID;
     AccessTokenID hostTokenId = INVALID_TOKENID;
     TokenCleaner cleaner;
-    uint64_t callerFullTokenId = CreateServiceTestToken(
-        "tooltoken_query_009_caller", true, BuildManagePermissionStates(), callerTokenId);
     auto hostPerms = std::vector<PermissionStatus> {
         BuildAllowThisTimeStatus(CUSTOM_SCREEN_CAPTURE),
         BuildDeniedStatus(LOCATION_PERMISSION),
@@ -954,45 +919,38 @@ HWTEST_F(ToolTokenMockTest, GetCliPermissions_009, TestSize.Level1)
         BuildInitialStatus(CAMERA_PERMISSION),
         BuildDeniedStatus(PUSH_PERMISSION, PERMISSION_FIXED_FOR_SECURITY_POLICY),
     };
-    uint64_t hostFullTokenId = CreateServiceTestToken("tooltoken_query_009_host", true, hostPerms, hostTokenId);
-    ASSERT_NE(0, callerFullTokenId);
+    uint64_t hostFullTokenId = CreateServiceTestToken("tooltoken_query_003_host", true, hostPerms);
     ASSERT_NE(0, hostFullTokenId);
-    cleaner.Add(callerTokenId);
+    hostTokenId = GetTokenIdFromFullTokenId(hostFullTokenId);
     cleaner.Add(hostTokenId);
     PrepareMockEnvironment();
 
-    auto result = QueryCliPermissions(*atManagerService_, callerFullTokenId, hostTokenId,
-        { BuildCliInfoParcel("location", "query") });
+    auto result = QueryCliPermissions(hostTokenId, { BuildCliInfoParcel("location", "query") }, cleaner).info;
     const auto& detail = result.result.permList[0].requiredCliPermissions[0];
     EXPECT_EQ((PermissionDecisionStatus::NEED_PERMISSION_DIALOG), detail.cliPermissionStatus);
     EXPECT_EQ(BuildMockTypeARuntimePermissions(), detail.usedPermissions);
 }
 
 /**
- * @tc.name: GetCliPermissions_013
+ * @tc.name: GetCliPermissions_004
  * @tc.desc: Test allow-this-time CLI Permission resolves to NO_DIALOG_CLI_PERMISSION_RESOLVED.
  * @tc.type: FUNC
  */
-HWTEST_F(ToolTokenMockTest, GetCliPermissions_013, TestSize.Level1)
+HWTEST_F(ToolTokenMockTest, GetCliPermissions_004, TestSize.Level1)
 {
-    AccessTokenID callerTokenId = INVALID_TOKENID;
     AccessTokenID hostTokenId = INVALID_TOKENID;
     TokenCleaner cleaner;
-    uint64_t callerFullTokenId = CreateServiceTestToken(
-        "tooltoken_query_013_caller", true, BuildManagePermissionStates(), callerTokenId);
     auto hostPerms = std::vector<PermissionStatus> { BuildAllowThisTimeStatus(CUSTOM_SCREEN_CAPTURE) };
     for (const auto& permission : BuildMockTypeARuntimePermissions()) {
         hostPerms.emplace_back(BuildGrantedStatus(permission, PERMISSION_SYSTEM_FIXED));
     }
-    uint64_t hostFullTokenId = CreateServiceTestToken("tooltoken_query_013_host", true, hostPerms, hostTokenId);
-    ASSERT_NE(0, callerFullTokenId);
+    uint64_t hostFullTokenId = CreateServiceTestToken("tooltoken_query_004_host", true, hostPerms);
     ASSERT_NE(0, hostFullTokenId);
-    cleaner.Add(callerTokenId);
+    hostTokenId = GetTokenIdFromFullTokenId(hostFullTokenId);
     cleaner.Add(hostTokenId);
     PrepareMockEnvironment();
 
-    auto result = QueryCliPermissions(*atManagerService_, callerFullTokenId, hostTokenId,
-        { BuildCliInfoParcel("location", "query") });
+    auto result = QueryCliPermissions(hostTokenId, { BuildCliInfoParcel("location", "query") }, cleaner).info;
     const auto& detail = result.result.permList[0].requiredCliPermissions[0];
     EXPECT_EQ((PermissionDecisionStatus::NO_DIALOG_CLI_PERMISSION_RESOLVED),
         detail.cliPermissionStatus);
@@ -1000,35 +958,31 @@ HWTEST_F(ToolTokenMockTest, GetCliPermissions_013, TestSize.Level1)
 }
 
 /**
- * @tc.name: GetCliPermissions_016
+ * @tc.name: GetCliPermissions_005
  * @tc.desc: Test batch CLI permission results preserve order and content.
  * @tc.type: FUNC
  */
-HWTEST_F(ToolTokenMockTest, GetCliPermissions_016, TestSize.Level1)
+HWTEST_F(ToolTokenMockTest, GetCliPermissions_005, TestSize.Level1)
 {
-    AccessTokenID callerTokenId = INVALID_TOKENID;
     AccessTokenID hostTokenId = INVALID_TOKENID;
     TokenCleaner cleaner;
-    uint64_t callerFullTokenId = CreateServiceTestToken(
-        "tooltoken_query_016_caller", true, BuildManagePermissionStates(), callerTokenId);
     auto hostPerms = std::vector<PermissionStatus> {
         BuildGrantedStatus(ACCESS_SYSTEM_SETTINGS),
         BuildInitialStatus(CAMERA_PERMISSION),
         BuildGrantedStatus(CUSTOM_SCREEN_CAPTURE),
         BuildDeniedStatus(LOCATION_PERMISSION),
     };
-    uint64_t hostFullTokenId = CreateServiceTestToken("tooltoken_query_016_host", true, hostPerms, hostTokenId);
-    ASSERT_NE(0, callerFullTokenId);
+    uint64_t hostFullTokenId = CreateServiceTestToken("tooltoken_query_005_host", true, hostPerms);
     ASSERT_NE(0, hostFullTokenId);
-    cleaner.Add(callerTokenId);
+    hostTokenId = GetTokenIdFromFullTokenId(hostFullTokenId);
     cleaner.Add(hostTokenId);
     PrepareMockEnvironment();
 
-    auto result = QueryCliPermissions(*atManagerService_, callerFullTokenId, hostTokenId, {
+    auto result = QueryCliPermissions(hostTokenId, {
         BuildCliInfoParcel("settings", "set"),
         BuildCliInfoParcel("camera", "capture"),
         BuildCliInfoParcel("location", "query"),
-    });
+    }, cleaner).info;
     ASSERT_EQ(3, static_cast<int32_t>(result.result.permList.size()));
     EXPECT_EQ(ACCESS_SYSTEM_SETTINGS,
         result.result.permList[0].requiredCliPermissions[0].requiredCliPermission);
@@ -1037,181 +991,94 @@ HWTEST_F(ToolTokenMockTest, GetCliPermissions_016, TestSize.Level1)
 }
 
 /**
- * @tc.name: GetCliPermissions_001
+ * @tc.name: GetCliPermissions_006
  * @tc.desc: Test INVALID_TOKENID hostTokenId returns invalid-param.
  * @tc.type: FUNC
  */
-HWTEST_F(ToolTokenMockTest, GetCliPermissions_001, TestSize.Level1)
+HWTEST_F(ToolTokenMockTest, GetCliPermissions_006, TestSize.Level1)
 {
-    AccessTokenID callerTokenId = INVALID_TOKENID;
     TokenCleaner cleaner;
-    uint64_t callerFullTokenId = CreateServiceTestToken(
-        "tooltoken_query_001_caller", true, BuildManagePermissionStates(), callerTokenId);
-    ASSERT_NE(0, callerFullTokenId);
-    cleaner.Add(callerTokenId);
-
-    SelfTokenGuard guard;
-    SetSelfTokenID(callerFullTokenId);
     CliPermissionsResultParcel result;
     EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
-        atManagerService_->GetCliPermissions(
-            INVALID_TOKENID, DEFAULT_AGENT_ID, { BuildCliInfoParcel("location", "query") }, result));
-    EXPECT_TRUE(result.result.permList.empty());
-}
-
-/**
- * @tc.name: GetCliPermissions_002
- * @tc.desc: Test non-HAP hostTokenId returns token-not-exist.
- * @tc.type: FUNC
- */
-HWTEST_F(ToolTokenMockTest, GetCliPermissions_002, TestSize.Level1)
-{
-    AccessTokenID callerTokenId = INVALID_TOKENID;
-    TokenCleaner cleaner;
-    uint64_t callerFullTokenId = CreateServiceTestToken(
-        "tooltoken_query_002_caller", true, BuildManagePermissionStates(), callerTokenId);
-    ASSERT_NE(0, callerFullTokenId);
-    cleaner.Add(callerTokenId);
-
-    SelfTokenGuard guard;
-    SetSelfTokenID(callerFullTokenId);
-    CliPermissionsResultParcel result;
-    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
-        atManagerService_->GetCliPermissions(GetManageToolCallerTokenId(), DEFAULT_AGENT_ID,
-            { BuildCliInfoParcel("location", "query") }, result));
-    EXPECT_TRUE(result.result.permList.empty());
-}
-
-/**
- * @tc.name: GetCliPermissions_003
- * @tc.desc: Test invalid agentID returns invalid-param.
- * @tc.type: FUNC
- */
-HWTEST_F(ToolTokenMockTest, GetCliPermissions_003, TestSize.Level1)
-{
-    AccessTokenID callerTokenId = INVALID_TOKENID;
-    AccessTokenID hostTokenId = INVALID_TOKENID;
-    TokenCleaner cleaner;
-    uint64_t callerFullTokenId = CreateServiceTestToken(
-        "tooltoken_query_003_caller", true, BuildManagePermissionStates(), callerTokenId);
-    uint64_t hostFullTokenId = CreateServiceTestToken("tooltoken_query_003_host", true, {}, hostTokenId);
-    ASSERT_NE(0, callerFullTokenId);
-    ASSERT_NE(0, hostFullTokenId);
-    cleaner.Add(callerTokenId);
-    cleaner.Add(hostTokenId);
-
-    SelfTokenGuard guard;
-    SetSelfTokenID(callerFullTokenId);
-    CliPermissionsResultParcel result;
-    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
-        atManagerService_->GetCliPermissions(
-            hostTokenId, BuildInvalidAgentId(), { BuildCliInfoParcel("location", "query") }, result));
-    EXPECT_TRUE(result.result.permList.empty());
-}
-
-/**
- * @tc.name: GetCliPermissions_004
- * @tc.desc: Test empty cliInfoList returns invalid-param.
- * @tc.type: FUNC
- */
-HWTEST_F(ToolTokenMockTest, GetCliPermissions_004, TestSize.Level1)
-{
-    AccessTokenID callerTokenId = INVALID_TOKENID;
-    AccessTokenID hostTokenId = INVALID_TOKENID;
-    TokenCleaner cleaner;
-    uint64_t callerFullTokenId = CreateServiceTestToken(
-        "tooltoken_query_004_caller", true, BuildManagePermissionStates(), callerTokenId);
-    uint64_t hostFullTokenId = CreateServiceTestToken("tooltoken_query_004_host", true, {}, hostTokenId);
-    ASSERT_NE(0, callerFullTokenId);
-    ASSERT_NE(0, hostFullTokenId);
-    cleaner.Add(callerTokenId);
-    cleaner.Add(hostTokenId);
-
-    SelfTokenGuard guard;
-    SetSelfTokenID(callerFullTokenId);
-    CliPermissionsResultParcel result;
-    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
-        atManagerService_->GetCliPermissions(hostTokenId, DEFAULT_AGENT_ID, {}, result));
-    EXPECT_TRUE(result.result.permList.empty());
-}
-
-/**
- * @tc.name: GetCliPermissions_005
- * @tc.desc: Test non-system caller returns not-system-app.
- * @tc.type: FUNC
- */
-HWTEST_F(ToolTokenMockTest, GetCliPermissions_005, TestSize.Level1)
-{
-    AccessTokenID callerTokenId = INVALID_TOKENID;
-    AccessTokenID hostTokenId = INVALID_TOKENID;
-    TokenCleaner cleaner;
-    uint64_t callerFullTokenId = CreateServiceTestToken(
-        "tooltoken_query_005_caller", false, BuildManagePermissionStates(), callerTokenId);
-    uint64_t hostFullTokenId = CreateServiceTestToken("tooltoken_query_005_host", true, {}, hostTokenId);
-    ASSERT_NE(0, callerFullTokenId);
-    ASSERT_NE(0, hostFullTokenId);
-    cleaner.Add(callerTokenId);
-    cleaner.Add(hostTokenId);
-
-    SelfTokenGuard guard;
-    SetSelfTokenID(callerFullTokenId);
-    CliPermissionsResultParcel result;
-    EXPECT_EQ(AccessTokenError::ERR_NOT_SYSTEM_APP,
-        atManagerService_->GetCliPermissions(
-            hostTokenId, DEFAULT_AGENT_ID, { BuildCliInfoParcel("location", "query") }, result));
+        QueryCliPermissionsRet(
+            INVALID_TOKENID, DEFAULT_AGENT_ID, { BuildCliInfoParcel("location", "query") }, result, cleaner));
     EXPECT_TRUE(result.result.permList.empty());
 }
 
 /**
  * @tc.name: GetCliPermissions_007
- * @tc.desc: Test caller without MANAGE_TOOL_RUNTIME_PERMISSIONS returns permission-denied.
+ * @tc.desc: Test non-HAP hostTokenId returns token-not-exist.
  * @tc.type: FUNC
  */
 HWTEST_F(ToolTokenMockTest, GetCliPermissions_007, TestSize.Level1)
 {
-    AccessTokenID callerTokenId = INVALID_TOKENID;
-    AccessTokenID hostTokenId = INVALID_TOKENID;
     TokenCleaner cleaner;
-    uint64_t callerFullTokenId = CreateServiceTestToken("tooltoken_query_007_caller", true, {}, callerTokenId);
-    uint64_t hostFullTokenId = CreateServiceTestToken("tooltoken_query_007_host", true, {}, hostTokenId);
-    ASSERT_NE(0, callerFullTokenId);
-    ASSERT_NE(0, hostFullTokenId);
-    cleaner.Add(callerTokenId);
-    cleaner.Add(hostTokenId);
-
-    SelfTokenGuard guard;
-    SetSelfTokenID(callerFullTokenId);
     CliPermissionsResultParcel result;
-    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
-        atManagerService_->GetCliPermissions(
-            hostTokenId, DEFAULT_AGENT_ID, { BuildCliInfoParcel("location", "query") }, result));
+    EXPECT_EQ(AccessTokenError::ERR_TOKENID_NOT_EXIST, QueryCliPermissionsRet(
+        GetNativeProcessTokenId(), DEFAULT_AGENT_ID, { BuildCliInfoParcel("location", "query") }, result, cleaner));
     EXPECT_TRUE(result.result.permList.empty());
 }
 
 /**
- * @tc.name: GetCliPermissions_011
+ * @tc.name: GetCliPermissions_008
+ * @tc.desc: Test invalid agentID returns invalid-param.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ToolTokenMockTest, GetCliPermissions_008, TestSize.Level1)
+{
+    AccessTokenID hostTokenId = INVALID_TOKENID;
+    TokenCleaner cleaner;
+    uint64_t hostFullTokenId = CreateServiceTestToken("tooltoken_query_008_host", true, {});
+    ASSERT_NE(0, hostFullTokenId);
+    hostTokenId = GetTokenIdFromFullTokenId(hostFullTokenId);
+    cleaner.Add(hostTokenId);
+
+    CliPermissionsResultParcel result;
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
+        QueryCliPermissionsRet(
+            hostTokenId, BuildInvalidAgentId(), { BuildCliInfoParcel("location", "query") }, result, cleaner));
+    EXPECT_TRUE(result.result.permList.empty());
+}
+
+/**
+ * @tc.name: GetCliPermissions_009
+ * @tc.desc: Test empty cliInfoList returns invalid-param.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ToolTokenMockTest, GetCliPermissions_009, TestSize.Level1)
+{
+    AccessTokenID hostTokenId = INVALID_TOKENID;
+    TokenCleaner cleaner;
+    uint64_t hostFullTokenId = CreateServiceTestToken("tooltoken_query_009_host", true, {});
+    ASSERT_NE(0, hostFullTokenId);
+    hostTokenId = GetTokenIdFromFullTokenId(hostFullTokenId);
+    cleaner.Add(hostTokenId);
+
+    CliPermissionsResultParcel result;
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
+        QueryCliPermissionsRet(hostTokenId, DEFAULT_AGENT_ID, {}, result, cleaner));
+    EXPECT_TRUE(result.result.permList.empty());
+}
+
+/**
+ * @tc.name: GetCliPermissions_010
  * @tc.desc: Test permanently granted CLI Permission returns granted status and mapped permissions.
  * @tc.type: FUNC
  */
-HWTEST_F(ToolTokenMockTest, GetCliPermissions_011, TestSize.Level1)
+HWTEST_F(ToolTokenMockTest, GetCliPermissions_010, TestSize.Level1)
 {
-    AccessTokenID callerTokenId = INVALID_TOKENID;
     AccessTokenID hostTokenId = INVALID_TOKENID;
     TokenCleaner cleaner;
-    uint64_t callerFullTokenId = CreateServiceTestToken(
-        "tooltoken_query_011_caller", true, BuildManagePermissionStates(), callerTokenId);
-    uint64_t hostFullTokenId = CreateServiceTestToken("tooltoken_query_011_host", true,
-        { BuildGrantedStatus(CUSTOM_SCREEN_CAPTURE, PERMISSION_SYSTEM_FIXED) }, hostTokenId);
-    ASSERT_NE(0, callerFullTokenId);
+    uint64_t hostFullTokenId = CreateServiceTestToken("tooltoken_query_010_host", true,
+        { BuildGrantedStatus(CUSTOM_SCREEN_CAPTURE, PERMISSION_SYSTEM_FIXED) });
     ASSERT_NE(0, hostFullTokenId);
-    cleaner.Add(callerTokenId);
+    hostTokenId = GetTokenIdFromFullTokenId(hostFullTokenId);
     cleaner.Add(hostTokenId);
     PrepareMockEnvironment();
     SetMockCliRuntimePermissionsForTest(
         { { CUSTOM_SCREEN_CAPTURE, { LOCATION_PERMISSION, CAMERA_PERMISSION } } });
 
-    auto result = QueryCliPermissions(*atManagerService_, callerFullTokenId, hostTokenId,
-        { BuildCliInfoParcel("location", "query") });
+    auto result = QueryCliPermissions(hostTokenId, { BuildCliInfoParcel("location", "query") }, cleaner).info;
     const auto& detail = result.result.permList[0].requiredCliPermissions[0];
     EXPECT_EQ(CUSTOM_SCREEN_CAPTURE, detail.requiredCliPermission);
     EXPECT_EQ(PermissionDecisionStatus::NO_DIALOG_GRANTED, detail.cliPermissionStatus);
@@ -1225,36 +1092,32 @@ HWTEST_F(ToolTokenMockTest, GetCliPermissions_011, TestSize.Level1)
  */
 HWTEST_F(ToolTokenMockTest, GenerateCliAuthResult_001, TestSize.Level1)
 {
-    AccessTokenID callerTokenId = INVALID_TOKENID;
     AccessTokenID hostTokenId = INVALID_TOKENID;
     TokenCleaner cleaner;
-    uint64_t callerFullTokenId = CreateServiceTestToken(
-        "tooltoken_auth_001_caller", true, BuildManagePermissionStates(), callerTokenId);
     auto hostPerms = std::vector<PermissionStatus> {
         BuildDeniedStatus(LOCATION_PERMISSION),
         BuildGrantedStatus(WIFI_PERMISSION),
         BuildInitialStatus(CAMERA_PERMISSION),
         BuildDeniedStatus(PUSH_PERMISSION, PERMISSION_FIXED_FOR_SECURITY_POLICY),
     };
-    uint64_t hostFullTokenId = CreateServiceTestToken("tooltoken_auth_001_host", true, hostPerms, hostTokenId);
-    ASSERT_NE(0, callerFullTokenId);
+    uint64_t hostFullTokenId = CreateServiceTestToken("tooltoken_auth_001_host", true, hostPerms);
     ASSERT_NE(0, hostFullTokenId);
-    cleaner.Add(callerTokenId);
+    hostTokenId = GetTokenIdFromFullTokenId(hostFullTokenId);
     cleaner.Add(hostTokenId);
     PrepareMockEnvironment();
 
-    auto authResult = GenerateCliAuthResult(*atManagerService_, callerFullTokenId, hostTokenId,
-        { BuildCliAuthInfoParcel(BuildCliInfo("location", "query"), { CUSTOM_SCREEN_CAPTURE }, { true }) });
+    auto authResult = GenerateCliAuthResult(hostTokenId,
+        { BuildCliAuthInfoParcel(BuildCliInfo("location", "query"), { CUSTOM_SCREEN_CAPTURE }, { true }) }, cleaner);
     ASSERT_EQ(1, static_cast<int32_t>(authResult.result.authResults.size()));
     std::vector<std::string> kernelPermList;
     AccessTokenID toolTokenId = InitCliToolToken(
         hostTokenId, authResult.result.authResults[0], BuildCliInfo("location", "query"), kernelPermList);
-    VerifyRuntimePermission(toolTokenId, LOCATION_PERMISSION, PERMISSION_DENIED);
-    VerifyRuntimePermission(toolTokenId, WIFI_PERMISSION, PERMISSION_GRANTED);
-    VerifyRuntimePermission(toolTokenId, CAMERA_PERMISSION, PERMISSION_GRANTED);
-    VerifyRuntimePermission(toolTokenId, MICROPHONE_PERMISSION, PERMISSION_GRANTED);
-    VerifyRuntimePermission(toolTokenId, AUDIO_PERMISSION, PERMISSION_GRANTED);
-    VerifyRuntimePermission(toolTokenId, PUSH_PERMISSION, PERMISSION_DENIED);
+    EXPECT_EQ(PERMISSION_DENIED, VerifyRuntimePermission(toolTokenId, LOCATION_PERMISSION));
+    EXPECT_EQ(PERMISSION_GRANTED, VerifyRuntimePermission(toolTokenId, WIFI_PERMISSION));
+    EXPECT_EQ(PERMISSION_GRANTED, VerifyRuntimePermission(toolTokenId, CAMERA_PERMISSION));
+    EXPECT_EQ(PERMISSION_GRANTED, VerifyRuntimePermission(toolTokenId, MICROPHONE_PERMISSION));
+    EXPECT_EQ(PERMISSION_GRANTED, VerifyRuntimePermission(toolTokenId, AUDIO_PERMISSION));
+    EXPECT_EQ(PERMISSION_DENIED, VerifyRuntimePermission(toolTokenId, PUSH_PERMISSION));
     EXPECT_TRUE(ContainsPermission(kernelPermList, KERNEL_PLUGIN_PERMISSION));
     EXPECT_EQ(RET_SUCCESS, ToolTokenInfoManager::GetInstance().DeleteToolTokenByPid(getpid()));
 }
@@ -1266,35 +1129,32 @@ HWTEST_F(ToolTokenMockTest, GenerateCliAuthResult_001, TestSize.Level1)
  */
 HWTEST_F(ToolTokenMockTest, GenerateCliAuthResult_002, TestSize.Level1)
 {
-    AccessTokenID callerTokenId = INVALID_TOKENID;
     AccessTokenID hostTokenId = INVALID_TOKENID;
     TokenCleaner cleaner;
-    uint64_t callerFullTokenId = CreateServiceTestToken(
-        "tooltoken_auth_002_caller", true, BuildManagePermissionStates(), callerTokenId);
     auto hostPerms = std::vector<PermissionStatus> {
         BuildDeniedStatus(LOCATION_PERMISSION),
         BuildGrantedStatus(WIFI_PERMISSION),
         BuildInitialStatus(CAMERA_PERMISSION),
         BuildDeniedStatus(PUSH_PERMISSION, PERMISSION_FIXED_FOR_SECURITY_POLICY),
     };
-    uint64_t hostFullTokenId = CreateServiceTestToken("tooltoken_auth_002_host", true, hostPerms, hostTokenId);
-    ASSERT_NE(0, callerFullTokenId);
+    uint64_t hostFullTokenId = CreateServiceTestToken("tooltoken_auth_002_host", true, hostPerms);
     ASSERT_NE(0, hostFullTokenId);
-    cleaner.Add(callerTokenId);
+    hostTokenId = GetTokenIdFromFullTokenId(hostFullTokenId);
     cleaner.Add(hostTokenId);
     PrepareMockEnvironment();
 
-    auto authResult = GenerateCliAuthResult(*atManagerService_, callerFullTokenId, hostTokenId,
-        { BuildCliAuthInfoParcel(BuildCliInfo("location", "query"), { CUSTOM_SCREEN_CAPTURE }, { false }) });
+    auto authResult = GenerateCliAuthResult(hostTokenId,
+        { BuildCliAuthInfoParcel(BuildCliInfo("location", "query"), { CUSTOM_SCREEN_CAPTURE }, { false }) }, cleaner);
+    ASSERT_EQ(1, static_cast<int32_t>(authResult.result.authResults.size()));
     std::vector<std::string> kernelPermList;
     AccessTokenID toolTokenId = InitCliToolToken(
         hostTokenId, authResult.result.authResults[0], BuildCliInfo("location", "query"), kernelPermList);
-    VerifyRuntimePermission(toolTokenId, LOCATION_PERMISSION, PERMISSION_DENIED);
-    VerifyRuntimePermission(toolTokenId, WIFI_PERMISSION, PERMISSION_GRANTED);
-    VerifyRuntimePermission(toolTokenId, CAMERA_PERMISSION, PERMISSION_DENIED);
-    VerifyRuntimePermission(toolTokenId, MICROPHONE_PERMISSION, PERMISSION_DENIED);
-    VerifyRuntimePermission(toolTokenId, AUDIO_PERMISSION, PERMISSION_DENIED);
-    VerifyRuntimePermission(toolTokenId, PUSH_PERMISSION, PERMISSION_DENIED);
+    EXPECT_EQ(PERMISSION_DENIED, VerifyRuntimePermission(toolTokenId, LOCATION_PERMISSION));
+    EXPECT_EQ(PERMISSION_GRANTED, VerifyRuntimePermission(toolTokenId, WIFI_PERMISSION));
+    EXPECT_EQ(PERMISSION_DENIED, VerifyRuntimePermission(toolTokenId, CAMERA_PERMISSION));
+    EXPECT_EQ(PERMISSION_DENIED, VerifyRuntimePermission(toolTokenId, MICROPHONE_PERMISSION));
+    EXPECT_EQ(PERMISSION_DENIED, VerifyRuntimePermission(toolTokenId, AUDIO_PERMISSION));
+    EXPECT_EQ(PERMISSION_DENIED, VerifyRuntimePermission(toolTokenId, PUSH_PERMISSION));
     EXPECT_EQ(RET_SUCCESS, ToolTokenInfoManager::GetInstance().DeleteToolTokenByPid(getpid()));
 }
 
@@ -1305,8 +1165,24 @@ HWTEST_F(ToolTokenMockTest, GenerateCliAuthResult_002, TestSize.Level1)
  */
 HWTEST_F(ToolTokenMockTest, GenerateCliAuthResult_003, TestSize.Level1)
 {
-    VerifyDirectMappingResult(*atManagerService_,
-        { BuildGrantedStatus(ACCESS_SYSTEM_SETTINGS) }, ACCESS_SYSTEM_SETTINGS, true, PERMISSION_GRANTED);
+    AccessTokenID hostTokenId = INVALID_TOKENID;
+    TokenCleaner cleaner;
+    uint64_t fullHostTokenId = CreateServiceTestToken(
+        "tooltoken_auth_003_host", true, { BuildGrantedStatus(ACCESS_SYSTEM_SETTINGS) });
+    ASSERT_NE(0, fullHostTokenId);
+    hostTokenId = GetTokenIdFromFullTokenId(fullHostTokenId);
+    cleaner.Add(hostTokenId);
+
+    auto authResult = GenerateCliAuthResult(hostTokenId,
+        { BuildCliAuthInfoParcel(BuildCliInfo("settings", "set"), { ACCESS_SYSTEM_SETTINGS }, { true }) }, cleaner);
+    ASSERT_EQ(1, static_cast<int32_t>(authResult.result.authResults.size()));
+    ASSERT_FALSE(authResult.result.authResults[0].empty());
+
+    std::vector<std::string> kernelPermList;
+    AccessTokenID toolTokenId = InitCliToolToken(
+        hostTokenId, authResult.result.authResults[0], BuildCliInfo("settings", "set"), kernelPermList);
+    EXPECT_EQ(PERMISSION_GRANTED, VerifyRuntimePermission(toolTokenId, ACCESS_SYSTEM_SETTINGS));
+    EXPECT_EQ(RET_SUCCESS, ToolTokenInfoManager::GetInstance().DeleteToolTokenByPid(getpid()));
 }
 
 /**
@@ -1316,8 +1192,24 @@ HWTEST_F(ToolTokenMockTest, GenerateCliAuthResult_003, TestSize.Level1)
  */
 HWTEST_F(ToolTokenMockTest, GenerateCliAuthResult_004, TestSize.Level1)
 {
-    VerifyDirectMappingResult(*atManagerService_,
-        { BuildGrantedStatus(ACCESS_SYSTEM_SETTINGS) }, ACCESS_SYSTEM_SETTINGS, false, PERMISSION_GRANTED);
+    AccessTokenID hostTokenId = INVALID_TOKENID;
+    TokenCleaner cleaner;
+    uint64_t fullHostTokenId = CreateServiceTestToken(
+        "tooltoken_auth_004_host", true, { BuildGrantedStatus(ACCESS_SYSTEM_SETTINGS) });
+    ASSERT_NE(0, fullHostTokenId);
+    hostTokenId = GetTokenIdFromFullTokenId(fullHostTokenId);
+    cleaner.Add(hostTokenId);
+
+    auto authResult = GenerateCliAuthResult(hostTokenId,
+        { BuildCliAuthInfoParcel(BuildCliInfo("settings", "set"), { ACCESS_SYSTEM_SETTINGS }, { false }) }, cleaner);
+    ASSERT_EQ(1, static_cast<int32_t>(authResult.result.authResults.size()));
+    ASSERT_FALSE(authResult.result.authResults[0].empty());
+
+    std::vector<std::string> kernelPermList;
+    AccessTokenID toolTokenId = InitCliToolToken(
+        hostTokenId, authResult.result.authResults[0], BuildCliInfo("settings", "set"), kernelPermList);
+    EXPECT_EQ(PERMISSION_GRANTED, VerifyRuntimePermission(toolTokenId, ACCESS_SYSTEM_SETTINGS));
+    EXPECT_EQ(RET_SUCCESS, ToolTokenInfoManager::GetInstance().DeleteToolTokenByPid(getpid()));
 }
 
 /**
@@ -1327,8 +1219,24 @@ HWTEST_F(ToolTokenMockTest, GenerateCliAuthResult_004, TestSize.Level1)
  */
 HWTEST_F(ToolTokenMockTest, GenerateCliAuthResult_005, TestSize.Level1)
 {
-    VerifyDirectMappingResult(
-        *atManagerService_, { BuildInitialStatus(CAMERA_PERMISSION) }, CAMERA_PERMISSION, true, PERMISSION_GRANTED);
+    AccessTokenID hostTokenId = INVALID_TOKENID;
+    TokenCleaner cleaner;
+    uint64_t fullHostTokenId = CreateServiceTestToken(
+        "tooltoken_auth_005_host", true, { BuildInitialStatus(CAMERA_PERMISSION) });
+    ASSERT_NE(0, fullHostTokenId);
+    hostTokenId = GetTokenIdFromFullTokenId(fullHostTokenId);
+    cleaner.Add(hostTokenId);
+
+    auto authResult = GenerateCliAuthResult(hostTokenId,
+        { BuildCliAuthInfoParcel(BuildCliInfo("settings", "set"), { CAMERA_PERMISSION }, { true }) }, cleaner);
+    ASSERT_EQ(1, static_cast<int32_t>(authResult.result.authResults.size()));
+    ASSERT_FALSE(authResult.result.authResults[0].empty());
+
+    std::vector<std::string> kernelPermList;
+    AccessTokenID toolTokenId = InitCliToolToken(
+        hostTokenId, authResult.result.authResults[0], BuildCliInfo("settings", "set"), kernelPermList);
+    EXPECT_EQ(PERMISSION_GRANTED, VerifyRuntimePermission(toolTokenId, CAMERA_PERMISSION));
+    EXPECT_EQ(RET_SUCCESS, ToolTokenInfoManager::GetInstance().DeleteToolTokenByPid(getpid()));
 }
 
 /**
@@ -1338,231 +1246,174 @@ HWTEST_F(ToolTokenMockTest, GenerateCliAuthResult_005, TestSize.Level1)
  */
 HWTEST_F(ToolTokenMockTest, GenerateCliAuthResult_006, TestSize.Level1)
 {
-    VerifyDirectMappingResult(
-        *atManagerService_, { BuildInitialStatus(CAMERA_PERMISSION) }, CAMERA_PERMISSION, false, PERMISSION_DENIED);
-}
-
-/**
- * @tc.name: GenerateCliAuthResult_013
- * @tc.desc: Test invalid hostTokenId returns invalid-param or token-not-exist.
- * @tc.type: FUNC
- */
-HWTEST_F(ToolTokenMockTest, GenerateCliAuthResult_013, TestSize.Level1)
-{
-    AccessTokenID callerTokenId = INVALID_TOKENID;
-    TokenCleaner cleaner;
-    uint64_t callerFullTokenId = CreateServiceTestToken(
-        "tooltoken_auth_013_caller", true, BuildManagePermissionStates(), callerTokenId);
-    ASSERT_NE(0, callerFullTokenId);
-    cleaner.Add(callerTokenId);
-
-    ToolAuthResultParcel result;
-    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, GenerateCliAuthResultRet(
-        *atManagerService_, callerFullTokenId, INVALID_TOKENID,
-        { BuildCliAuthInfoParcel(BuildCliInfo("settings", "set"), { ACCESS_SYSTEM_SETTINGS }, { true }) }, result));
-}
-
-/**
- * @tc.name: GenerateCliAuthResult_014
- * @tc.desc: Test empty authInfoList returns invalid-param.
- * @tc.type: FUNC
- */
-HWTEST_F(ToolTokenMockTest, GenerateCliAuthResult_014, TestSize.Level1)
-{
-    AccessTokenID callerTokenId = INVALID_TOKENID;
     AccessTokenID hostTokenId = INVALID_TOKENID;
     TokenCleaner cleaner;
-    uint64_t callerFullTokenId = CreateServiceTestToken(
-        "tooltoken_auth_014_caller", true, BuildManagePermissionStates(), callerTokenId);
-    uint64_t hostFullTokenId = CreateServiceTestToken("tooltoken_auth_014_host", true,
-        { BuildGrantedStatus(ACCESS_SYSTEM_SETTINGS) }, hostTokenId);
-    ASSERT_NE(0, callerFullTokenId);
-    ASSERT_NE(0, hostFullTokenId);
-    cleaner.Add(callerTokenId);
+    uint64_t fullHostTokenId = CreateServiceTestToken(
+        "tooltoken_auth_006_host", true, { BuildInitialStatus(CAMERA_PERMISSION) });
+    ASSERT_NE(0, fullHostTokenId);
+    hostTokenId = GetTokenIdFromFullTokenId(fullHostTokenId);
     cleaner.Add(hostTokenId);
 
-    ToolAuthResultParcel result;
-    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
-        GenerateCliAuthResultRet(*atManagerService_, callerFullTokenId, hostTokenId, {}, result));
-}
+    auto authResult = GenerateCliAuthResult(hostTokenId,
+        { BuildCliAuthInfoParcel(BuildCliInfo("settings", "set"), { CAMERA_PERMISSION }, { false }) }, cleaner);
+    ASSERT_EQ(1, static_cast<int32_t>(authResult.result.authResults.size()));
+    ASSERT_FALSE(authResult.result.authResults[0].empty());
 
-/**
- * @tc.name: GenerateCliAuthResult_015
- * @tc.desc: Test mismatched permissionNames and authorizationResults returns invalid-param.
- * @tc.type: FUNC
- */
-HWTEST_F(ToolTokenMockTest, GenerateCliAuthResult_015, TestSize.Level1)
-{
-    AccessTokenID callerTokenId = INVALID_TOKENID;
-    AccessTokenID hostTokenId = INVALID_TOKENID;
-    TokenCleaner cleaner;
-    uint64_t callerFullTokenId = CreateServiceTestToken(
-        "tooltoken_auth_015_caller", true, BuildManagePermissionStates(), callerTokenId);
-    uint64_t hostFullTokenId = CreateServiceTestToken("tooltoken_auth_015_host", true,
-        { BuildGrantedStatus(ACCESS_SYSTEM_SETTINGS) }, hostTokenId);
-    ASSERT_NE(0, callerFullTokenId);
-    ASSERT_NE(0, hostFullTokenId);
-    cleaner.Add(callerTokenId);
-    cleaner.Add(hostTokenId);
-
-    ToolAuthResultParcel result;
-    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, GenerateCliAuthResultRet(*atManagerService_, callerFullTokenId,
-        hostTokenId, { BuildCliAuthInfoParcel(BuildCliInfo("settings", "set"), { ACCESS_SYSTEM_SETTINGS }, {}) },
-        result));
+    std::vector<std::string> kernelPermList;
+    AccessTokenID toolTokenId = InitCliToolToken(
+        hostTokenId, authResult.result.authResults[0], BuildCliInfo("settings", "set"), kernelPermList);
+    EXPECT_EQ(PERMISSION_DENIED, VerifyRuntimePermission(toolTokenId, CAMERA_PERMISSION));
+    EXPECT_EQ(RET_SUCCESS, ToolTokenInfoManager::GetInstance().DeleteToolTokenByPid(getpid()));
 }
 
 /**
  * @tc.name: GenerateCliAuthResult_007
- * @tc.desc: Test undeclared required CLI Permission returns filtered empty challenge result.
+ * @tc.desc: Test invalid hostTokenId returns invalid-param or token-not-exist.
  * @tc.type: FUNC
  */
 HWTEST_F(ToolTokenMockTest, GenerateCliAuthResult_007, TestSize.Level1)
 {
-    AccessTokenID callerTokenId = INVALID_TOKENID;
-    AccessTokenID hostTokenId = INVALID_TOKENID;
     TokenCleaner cleaner;
-    uint64_t callerFullTokenId = CreateServiceTestToken(
-        "tooltoken_auth_007_caller", true, BuildManagePermissionStates(), callerTokenId);
-    uint64_t hostFullTokenId = CreateServiceTestToken("tooltoken_auth_007_host", true, {}, hostTokenId);
-    ASSERT_NE(0, callerFullTokenId);
-    ASSERT_NE(0, hostFullTokenId);
-    cleaner.Add(callerTokenId);
-    cleaner.Add(hostTokenId);
-    PrepareMockEnvironment();
 
-    auto result = GenerateCliAuthResult(*atManagerService_, callerFullTokenId, hostTokenId,
-        { BuildCliAuthInfoParcel(BuildCliInfo("location", "query"), { CUSTOM_SCREEN_CAPTURE }, { true }) });
-    ASSERT_EQ(1, static_cast<int32_t>(result.result.authResults.size()));
-    EXPECT_FALSE(result.result.authResults[0].empty());
-
-    InitCliTokenResult initResult;
-    InitCliTokenRequest request = {
-        .callerTokenId = GetSelfTokenID(),
-        .callerUid = ROOT_UID,
-        .hostTokenId = hostTokenId,
-        .challenge = result.result.authResults[0],
-        .cliInfo = BuildCliInfo("location", "query"),
-    };
-    EXPECT_EQ(RET_SUCCESS, InitCliToolTokenRet(*atManagerService_, request, initResult));
+    ToolAuthResultParcel result;
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, GenerateCliAuthResultRet(
+        INVALID_TOKENID,
+        { BuildCliAuthInfoParcel(BuildCliInfo("settings", "set"), { ACCESS_SYSTEM_SETTINGS }, { true }) },
+        result, cleaner));
 }
 
 /**
  * @tc.name: GenerateCliAuthResult_008
- * @tc.desc: Test non-system caller returns not-system-app.
+ * @tc.desc: Test empty authInfoList returns invalid-param.
  * @tc.type: FUNC
  */
 HWTEST_F(ToolTokenMockTest, GenerateCliAuthResult_008, TestSize.Level1)
 {
-    AccessTokenID callerTokenId = INVALID_TOKENID;
     AccessTokenID hostTokenId = INVALID_TOKENID;
     TokenCleaner cleaner;
-    uint64_t callerFullTokenId = CreateServiceTestToken(
-        "tooltoken_auth_008_caller", false, BuildManagePermissionStates(), callerTokenId);
     uint64_t hostFullTokenId = CreateServiceTestToken("tooltoken_auth_008_host", true,
-        { BuildGrantedStatus(ACCESS_SYSTEM_SETTINGS) }, hostTokenId);
-    ASSERT_NE(0, callerFullTokenId);
+        { BuildGrantedStatus(ACCESS_SYSTEM_SETTINGS) });
     ASSERT_NE(0, hostFullTokenId);
-    cleaner.Add(callerTokenId);
+    hostTokenId = GetTokenIdFromFullTokenId(hostFullTokenId);
     cleaner.Add(hostTokenId);
 
     ToolAuthResultParcel result;
-    EXPECT_EQ(AccessTokenError::ERR_NOT_SYSTEM_APP, GenerateCliAuthResultRet(*atManagerService_,
-        callerFullTokenId, hostTokenId,
-        { BuildCliAuthInfoParcel(BuildCliInfo("settings", "set"), { ACCESS_SYSTEM_SETTINGS }, { true }) }, result));
-    EXPECT_TRUE(result.result.authResults.empty());
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
+        GenerateCliAuthResultRet(hostTokenId, {}, result, cleaner));
 }
 
 /**
  * @tc.name: GenerateCliAuthResult_009
- * @tc.desc: Test caller without MANAGE_TOOL_RUNTIME_PERMISSIONS returns permission-denied.
+ * @tc.desc: Test mismatched permissionNames and authorizationResults returns invalid-param.
  * @tc.type: FUNC
  */
 HWTEST_F(ToolTokenMockTest, GenerateCliAuthResult_009, TestSize.Level1)
 {
-    AccessTokenID callerTokenId = INVALID_TOKENID;
     AccessTokenID hostTokenId = INVALID_TOKENID;
     TokenCleaner cleaner;
-    uint64_t callerFullTokenId = CreateServiceTestToken("tooltoken_auth_009_caller", true, {}, callerTokenId);
     uint64_t hostFullTokenId = CreateServiceTestToken("tooltoken_auth_009_host", true,
-        { BuildGrantedStatus(ACCESS_SYSTEM_SETTINGS) }, hostTokenId);
-    ASSERT_NE(0, callerFullTokenId);
+        { BuildGrantedStatus(ACCESS_SYSTEM_SETTINGS) });
     ASSERT_NE(0, hostFullTokenId);
-    cleaner.Add(callerTokenId);
+    hostTokenId = GetTokenIdFromFullTokenId(hostFullTokenId);
     cleaner.Add(hostTokenId);
 
     ToolAuthResultParcel result;
-    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, GenerateCliAuthResultRet(*atManagerService_,
-        callerFullTokenId, hostTokenId,
-        { BuildCliAuthInfoParcel(BuildCliInfo("settings", "set"), { ACCESS_SYSTEM_SETTINGS }, { true }) }, result));
-    EXPECT_TRUE(result.result.authResults.empty());
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
+        GenerateCliAuthResultRet(hostTokenId,
+            { BuildCliAuthInfoParcel(BuildCliInfo("settings", "set"), { ACCESS_SYSTEM_SETTINGS }, {}) },
+            result, cleaner));
 }
 
 /**
  * @tc.name: GenerateCliAuthResult_010
- * @tc.desc: Test single valid CliAuthInfo returns one non-empty challenge result.
+ * @tc.desc: Test undeclared required CLI Permission returns filtered empty challenge result.
  * @tc.type: FUNC
  */
 HWTEST_F(ToolTokenMockTest, GenerateCliAuthResult_010, TestSize.Level1)
 {
-    AccessTokenID callerTokenId = INVALID_TOKENID;
     AccessTokenID hostTokenId = INVALID_TOKENID;
     TokenCleaner cleaner;
-    uint64_t callerFullTokenId = CreateServiceTestToken(
-        "tooltoken_auth_010_caller", true, BuildManagePermissionStates(), callerTokenId);
-    uint64_t hostFullTokenId = CreateServiceTestToken("tooltoken_auth_010_host", true,
-        { BuildGrantedStatus(ACCESS_SYSTEM_SETTINGS) }, hostTokenId);
-    ASSERT_NE(0, callerFullTokenId);
+    uint64_t hostFullTokenId = CreateServiceTestToken("tooltoken_auth_010_host", true, {});
     ASSERT_NE(0, hostFullTokenId);
-    cleaner.Add(callerTokenId);
+    hostTokenId = GetTokenIdFromFullTokenId(hostFullTokenId);
+    cleaner.Add(hostTokenId);
+    PrepareMockEnvironment();
+
+    auto result = GenerateCliAuthResult(hostTokenId,
+        { BuildCliAuthInfoParcel(BuildCliInfo("location", "query"), { CUSTOM_SCREEN_CAPTURE }, { true }) }, cleaner);
+    ASSERT_EQ(1, static_cast<int32_t>(result.result.authResults.size()));
+    EXPECT_FALSE(result.result.authResults[0].empty());
+
+    CliInitInfoParcel initInfoParcel;
+    initInfoParcel.cliInitInfo = {
+        .hostTokenId = hostTokenId,
+        .challenge = result.result.authResults[0],
+        .cliInfo = BuildCliInfo("location", "query"),
+    };
+    uint64_t fullTokenId = 0;
+    std::vector<PermissionWithValueIdl> kernelPermIdlList;
+    EXPECT_EQ(RET_SUCCESS, InitCliToolTokenRet(initInfoParcel, fullTokenId, kernelPermIdlList));
+}
+
+/**
+ * @tc.name: GenerateCliAuthResult_011
+ * @tc.desc: Test single valid CliAuthInfo returns one non-empty challenge result.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ToolTokenMockTest, GenerateCliAuthResult_011, TestSize.Level1)
+{
+    AccessTokenID hostTokenId = INVALID_TOKENID;
+    TokenCleaner cleaner;
+    uint64_t hostFullTokenId = CreateServiceTestToken("tooltoken_auth_012_host", true,
+        { BuildGrantedStatus(ACCESS_SYSTEM_SETTINGS) });
+    ASSERT_NE(0, hostFullTokenId);
+    hostTokenId = GetTokenIdFromFullTokenId(hostFullTokenId);
     cleaner.Add(hostTokenId);
     PrepareMockEnvironment();
     auto authInfo =
         BuildCliAuthInfoParcel(BuildCliInfo("settings", "set"), { ACCESS_SYSTEM_SETTINGS }, { true });
     MockSingleCliAuthChallenge(authInfo, "auth_010_challenge", "auth_010_ticket");
 
-    auto result =
-        GenerateCliAuthResult(*atManagerService_, callerFullTokenId, hostTokenId, { authInfo });
+    auto result = GenerateCliAuthResult(hostTokenId, { authInfo }, cleaner);
     ASSERT_EQ(1, static_cast<int32_t>(result.result.authResults.size()));
     EXPECT_EQ("auth_010_challenge", result.result.authResults[0]);
 }
 
 /**
- * @tc.name: GenerateCliAuthResult_011
- * @tc.desc: Test non-HAP hostTokenId returns token-not-exist.
- * @tc.type: FUNC
- */
-HWTEST_F(ToolTokenMockTest, GenerateCliAuthResult_011, TestSize.Level1)
-{
-    AccessTokenID callerTokenId = INVALID_TOKENID;
-    TokenCleaner cleaner;
-    uint64_t callerFullTokenId = CreateServiceTestToken(
-        "tooltoken_auth_011_caller", true, BuildManagePermissionStates(), callerTokenId);
-    ASSERT_NE(0, callerFullTokenId);
-    cleaner.Add(callerTokenId);
-
-    ToolAuthResultParcel result;
-    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, GenerateCliAuthResultRet(*atManagerService_,
-        callerFullTokenId, GetManageToolCallerTokenId(),
-        { BuildCliAuthInfoParcel(BuildCliInfo("settings", "set"), { ACCESS_SYSTEM_SETTINGS }, { true }) }, result));
-    EXPECT_TRUE(result.result.authResults.empty());
-}
-
-/**
  * @tc.name: GenerateCliAuthResult_012
- * @tc.desc: Test invalid agentID returns invalid-param.
+ * @tc.desc: Test non-HAP hostTokenId returns token-not-exist.
  * @tc.type: FUNC
  */
 HWTEST_F(ToolTokenMockTest, GenerateCliAuthResult_012, TestSize.Level1)
 {
+    TokenCleaner cleaner;
+
+    ToolAuthResultParcel result;
+    EXPECT_EQ(AccessTokenError::ERR_TOKENID_NOT_EXIST,
+        GenerateCliAuthResultRet(GetNativeProcessTokenId(),
+            { BuildCliAuthInfoParcel(BuildCliInfo("settings", "set"), { ACCESS_SYSTEM_SETTINGS }, { true }) },
+            result, cleaner));
+    EXPECT_TRUE(result.result.authResults.empty());
+}
+
+/**
+ * @tc.name: GenerateCliAuthResult_013
+ * @tc.desc: Test invalid agentID returns invalid-param.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ToolTokenMockTest, GenerateCliAuthResult_013, TestSize.Level1)
+{
     AccessTokenID callerTokenId = INVALID_TOKENID;
     AccessTokenID hostTokenId = INVALID_TOKENID;
     TokenCleaner cleaner;
-    uint64_t callerFullTokenId = CreateServiceTestToken(
-        "tooltoken_auth_012_caller", true, BuildManagePermissionStates(), callerTokenId);
-    uint64_t hostFullTokenId = CreateServiceTestToken("tooltoken_auth_012_host", true,
-        { BuildGrantedStatus(ACCESS_SYSTEM_SETTINGS) }, hostTokenId);
+    uint64_t callerFullTokenId =
+        CreateServiceTestToken("tooltoken_auth_012_caller", true, BuildManagePermissionStates());
+    uint64_t hostFullTokenId = CreateServiceTestToken("tooltoken_auth_013_host", true,
+        { BuildGrantedStatus(ACCESS_SYSTEM_SETTINGS) });
     ASSERT_NE(0, callerFullTokenId);
     ASSERT_NE(0, hostFullTokenId);
+    callerTokenId = GetTokenIdFromFullTokenId(callerFullTokenId);
+    hostTokenId = GetTokenIdFromFullTokenId(hostFullTokenId);
     cleaner.Add(callerTokenId);
     cleaner.Add(hostTokenId);
 
@@ -1577,356 +1428,329 @@ HWTEST_F(ToolTokenMockTest, GenerateCliAuthResult_012, TestSize.Level1)
 }
 
 /**
- * @tc.name: InitCliToken_009
+ * @tc.name: InitCliToken_001
  * @tc.desc: Test InitCliToken fails when challenge does not exist.
  * @tc.type: FUNC
  */
-HWTEST_F(ToolTokenMockTest, InitCliToken_009, TestSize.Level1)
+HWTEST_F(ToolTokenMockTest, InitCliToken_001, TestSize.Level1)
 {
-    uint64_t serviceCallerTokenId = GetSelfTokenID();
     AccessTokenID hostTokenId = INVALID_TOKENID;
     TokenCleaner cleaner;
-    uint64_t hostFullTokenId = CreateServiceTestToken("tooltoken_init_009_host", true,
-        { BuildGrantedStatus(ACCESS_SYSTEM_SETTINGS) }, hostTokenId);
+    uint64_t hostFullTokenId = CreateServiceTestToken("tooltoken_init_001_host", true,
+        { BuildGrantedStatus(ACCESS_SYSTEM_SETTINGS) });
     ASSERT_NE(0, hostFullTokenId);
+    hostTokenId = GetTokenIdFromFullTokenId(hostFullTokenId);
     cleaner.Add(hostTokenId);
 
-    InitCliTokenResult initResult;
-    InitCliTokenRequest request = {
-        .callerTokenId = serviceCallerTokenId,
-        .callerUid = ROOT_UID,
+    CliInitInfoParcel initInfoParcel;
+    initInfoParcel.cliInitInfo = {
         .hostTokenId = hostTokenId,
         .challenge = "not_exist_challenge",
         .cliInfo = BuildCliInfo("settings", "set"),
     };
+    uint64_t fullTokenId = 0;
+    std::vector<PermissionWithValueIdl> kernelPermIdlList;
     EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
-        InitCliToolTokenRet(*atManagerService_, request, initResult));
+        InitCliToolTokenRet(initInfoParcel, fullTokenId, kernelPermIdlList));
 }
 
 /**
- * @tc.name: InitCliToken_010
+ * @tc.name: InitCliToken_002
  * @tc.desc: Test consumed challenge cannot be reused after successful initialization.
  * @tc.type: FUNC
  */
-HWTEST_F(ToolTokenMockTest, InitCliToken_010, TestSize.Level1)
+HWTEST_F(ToolTokenMockTest, InitCliToken_002, TestSize.Level1)
 {
-    uint64_t serviceCallerTokenId = GetSelfTokenID();
-    AccessTokenID callerTokenId = INVALID_TOKENID;
     AccessTokenID hostTokenId = INVALID_TOKENID;
     TokenCleaner cleaner;
-    uint64_t callerFullTokenId = CreateServiceTestToken(
-        "tooltoken_init_010_caller", true, BuildManagePermissionStates(), callerTokenId);
     uint64_t hostFullTokenId = CreateServiceTestToken(
-        "tooltoken_init_010_host", true, { BuildGrantedStatus(ACCESS_SYSTEM_SETTINGS) }, hostTokenId);
-    ASSERT_NE(0, callerFullTokenId);
+        "tooltoken_init_002_host", true, { BuildGrantedStatus(ACCESS_SYSTEM_SETTINGS) });
     ASSERT_NE(0, hostFullTokenId);
-    cleaner.Add(callerTokenId);
+    hostTokenId = GetTokenIdFromFullTokenId(hostFullTokenId);
     cleaner.Add(hostTokenId);
 
     PrepareMockEnvironment();
     auto authInfo =
         BuildCliAuthInfoParcel(BuildCliInfo("settings", "set"), { ACCESS_SYSTEM_SETTINGS }, { true });
     MockSingleCliAuthChallenge(authInfo, "init_010_challenge", "init_010_ticket");
-    std::string challenge =
-        GenerateSingleCliAuthChallenge(*atManagerService_, callerFullTokenId, hostTokenId, authInfo);
-    InitCliTokenResult initResult;
-    InitCliTokenRequest request = {
-        .callerTokenId = serviceCallerTokenId,
-        .callerUid = ROOT_UID,
+    std::string challenge = GenerateSingleCliAuthChallenge(hostTokenId, authInfo, cleaner);
+    CliInitInfoParcel initInfoParcel;
+    initInfoParcel.cliInitInfo = {
         .hostTokenId = hostTokenId,
         .challenge = challenge,
         .cliInfo = BuildCliInfo("settings", "set"),
     };
-    AccessTokenID tokenId = InitCliToolTokenByService(*atManagerService_, request, initResult);
+    uint64_t fullTokenId = 0;
+    std::vector<PermissionWithValueIdl> kernelPermIdlList;
+    ASSERT_EQ(RET_SUCCESS, InitCliToolTokenRet(initInfoParcel, fullTokenId, kernelPermIdlList));
+    AccessTokenID tokenId = GetTokenIdFromFullTokenId(fullTokenId);
     ASSERT_NE(INVALID_TOKENID, tokenId);
 
-    InitCliTokenResult secondInitResult;
+    uint64_t secondFullTokenId = 0;
+    std::vector<PermissionWithValueIdl> secondKernelPermIdlList;
     EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
-        InitCliToolTokenRet(*atManagerService_, request, secondInitResult));
+        InitCliToolTokenRet(initInfoParcel, secondFullTokenId, secondKernelPermIdlList));
     EXPECT_EQ(RET_SUCCESS, ToolTokenInfoManager::GetInstance().DeleteToolTokenByPid(getpid()));
 }
 
 /**
- * @tc.name: InitCliToken_011
+ * @tc.name: InitCliToken_003
  * @tc.desc: Test mismatched cliInfo fails and original challenge can retry with correct cliInfo.
  * @tc.type: FUNC
  */
-HWTEST_F(ToolTokenMockTest, InitCliToken_011, TestSize.Level1)
+HWTEST_F(ToolTokenMockTest, InitCliToken_003, TestSize.Level1)
 {
-    uint64_t serviceCallerTokenId = GetSelfTokenID();
-    AccessTokenID callerTokenId = INVALID_TOKENID;
     AccessTokenID hostTokenId = INVALID_TOKENID;
     TokenCleaner cleaner;
-    uint64_t callerFullTokenId = CreateServiceTestToken(
-        "tooltoken_init_011_caller", true, BuildManagePermissionStates(), callerTokenId);
     uint64_t hostFullTokenId = CreateServiceTestToken(
-        "tooltoken_init_011_host", true, { BuildGrantedStatus(ACCESS_SYSTEM_SETTINGS) }, hostTokenId);
-    ASSERT_NE(0, callerFullTokenId);
+        "tooltoken_init_003_host", true, { BuildGrantedStatus(ACCESS_SYSTEM_SETTINGS) });
     ASSERT_NE(0, hostFullTokenId);
-    cleaner.Add(callerTokenId);
+    hostTokenId = GetTokenIdFromFullTokenId(hostFullTokenId);
     cleaner.Add(hostTokenId);
 
     PrepareMockEnvironment();
     auto authInfo =
         BuildCliAuthInfoParcel(BuildCliInfo("settings", "set"), { ACCESS_SYSTEM_SETTINGS }, { true });
     MockSingleCliAuthChallenge(authInfo, "init_011_challenge", "init_011_ticket");
-    std::string challenge =
-        GenerateSingleCliAuthChallenge(*atManagerService_, callerFullTokenId, hostTokenId, authInfo);
-    InitCliTokenRequest failedRequest = {
-        .callerTokenId = serviceCallerTokenId,
-        .callerUid = ROOT_UID,
+    std::string challenge = GenerateSingleCliAuthChallenge(hostTokenId, authInfo, cleaner);
+    CliInitInfoParcel failedInitInfoParcel;
+    failedInitInfoParcel.cliInitInfo = {
         .hostTokenId = hostTokenId,
         .challenge = challenge,
         .cliInfo = BuildCliInfo("settings", "wrong"),
     };
-    InitCliTokenResult failedInitResult;
+    uint64_t failedFullTokenId = 0;
+    std::vector<PermissionWithValueIdl> failedKernelPermIdlList;
     EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
-        InitCliToolTokenRet(*atManagerService_, failedRequest, failedInitResult));
+        InitCliToolTokenRet(failedInitInfoParcel, failedFullTokenId, failedKernelPermIdlList));
 
-    InitCliTokenRequest request = {
-        .callerTokenId = serviceCallerTokenId,
-        .callerUid = ROOT_UID,
+    CliInitInfoParcel initInfoParcel;
+    initInfoParcel.cliInitInfo = {
         .hostTokenId = hostTokenId,
         .challenge = challenge,
         .cliInfo = BuildCliInfo("settings", "set"),
     };
-    InitCliTokenResult initResult;
-    AccessTokenID tokenId = InitCliToolTokenByService(*atManagerService_, request, initResult);
+    uint64_t fullTokenId = 0;
+    std::vector<PermissionWithValueIdl> kernelPermIdlList;
+    ASSERT_EQ(RET_SUCCESS, InitCliToolTokenRet(initInfoParcel, fullTokenId, kernelPermIdlList));
+    AccessTokenID tokenId = GetTokenIdFromFullTokenId(fullTokenId);
     ASSERT_NE(INVALID_TOKENID, tokenId);
     EXPECT_EQ(RET_SUCCESS, ToolTokenInfoManager::GetInstance().DeleteToolTokenByPid(getpid()));
 }
 
 /**
- * @tc.name: InitCliToken_012
+ * @tc.name: InitCliToken_004
+ * @tc.desc: Test mismatched hostTokenId fails and original challenge can retry with correct hostTokenId.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ToolTokenMockTest, InitCliToken_004, TestSize.Level1)
+{
+    AccessTokenID hostTokenId = INVALID_TOKENID;
+    AccessTokenID otherHostTokenId = INVALID_TOKENID;
+    TokenCleaner cleaner;
+    uint64_t hostFullTokenId = CreateServiceTestToken(
+        "tooltoken_init_004_host", true, { BuildGrantedStatus(ACCESS_SYSTEM_SETTINGS) });
+    uint64_t otherHostFullTokenId = CreateServiceTestToken(
+        "tooltoken_init_004_other_host", true, { BuildGrantedStatus(ACCESS_SYSTEM_SETTINGS) });
+    ASSERT_NE(0, hostFullTokenId);
+    ASSERT_NE(0, otherHostFullTokenId);
+    hostTokenId = GetTokenIdFromFullTokenId(hostFullTokenId);
+    otherHostTokenId = GetTokenIdFromFullTokenId(otherHostFullTokenId);
+    cleaner.Add(hostTokenId);
+    cleaner.Add(otherHostTokenId);
+
+    PrepareMockEnvironment();
+    auto authInfo =
+        BuildCliAuthInfoParcel(BuildCliInfo("settings", "set"), { ACCESS_SYSTEM_SETTINGS }, { true });
+    MockSingleCliAuthChallenge(authInfo, "init_016_challenge", "init_016_ticket");
+    std::string challenge = GenerateSingleCliAuthChallenge(hostTokenId, authInfo, cleaner);
+
+    CliInitInfoParcel failedInitInfoParcel;
+    failedInitInfoParcel.cliInitInfo = {
+        .hostTokenId = otherHostTokenId,
+        .challenge = challenge,
+        .cliInfo = BuildCliInfo("settings", "set"),
+    };
+    uint64_t failedFullTokenId = 0;
+    std::vector<PermissionWithValueIdl> failedKernelPermIdlList;
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
+        InitCliToolTokenRet(failedInitInfoParcel, failedFullTokenId, failedKernelPermIdlList));
+
+    CliInitInfoParcel initInfoParcel;
+    initInfoParcel.cliInitInfo = {
+        .hostTokenId = hostTokenId,
+        .challenge = challenge,
+        .cliInfo = BuildCliInfo("settings", "set"),
+    };
+    uint64_t fullTokenId = 0;
+    std::vector<PermissionWithValueIdl> kernelPermIdlList;
+    ASSERT_EQ(RET_SUCCESS, InitCliToolTokenRet(initInfoParcel, fullTokenId, kernelPermIdlList));
+    AccessTokenID tokenId = GetTokenIdFromFullTokenId(fullTokenId);
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+    EXPECT_EQ(RET_SUCCESS, ToolTokenInfoManager::GetInstance().DeleteToolTokenByPid(getpid()));
+}
+
+/**
+ * @tc.name: InitCliToken_005
  * @tc.desc: Test repeated creation in the same pid returns already-exist.
  * @tc.type: FUNC
  */
-HWTEST_F(ToolTokenMockTest, InitCliToken_012, TestSize.Level1)
+HWTEST_F(ToolTokenMockTest, InitCliToken_005, TestSize.Level1)
 {
-    uint64_t serviceCallerTokenId = GetSelfTokenID();
-    AccessTokenID callerTokenId = INVALID_TOKENID;
     AccessTokenID hostTokenId = INVALID_TOKENID;
     TokenCleaner cleaner;
-    uint64_t callerFullTokenId = CreateServiceTestToken(
-        "tooltoken_init_012_caller", true, BuildManagePermissionStates(), callerTokenId);
     uint64_t hostFullTokenId = CreateServiceTestToken(
-        "tooltoken_init_012_host", true, { BuildGrantedStatus(ACCESS_SYSTEM_SETTINGS) }, hostTokenId);
-    ASSERT_NE(0, callerFullTokenId);
+        "tooltoken_init_005_host", true, { BuildGrantedStatus(ACCESS_SYSTEM_SETTINGS) });
     ASSERT_NE(0, hostFullTokenId);
-    cleaner.Add(callerTokenId);
+    hostTokenId = GetTokenIdFromFullTokenId(hostFullTokenId);
     cleaner.Add(hostTokenId);
 
     PrepareMockEnvironment();
     auto authInfo =
         BuildCliAuthInfoParcel(BuildCliInfo("settings", "set"), { ACCESS_SYSTEM_SETTINGS }, { true });
     MockSingleCliAuthChallenge(authInfo, "init_012_first_challenge", "init_012_first_ticket");
-    std::string firstChallenge =
-        GenerateSingleCliAuthChallenge(*atManagerService_, callerFullTokenId, hostTokenId, authInfo);
-    InitCliTokenRequest firstRequest = {
-        .callerTokenId = serviceCallerTokenId,
-        .callerUid = ROOT_UID,
+    std::string firstChallenge = GenerateSingleCliAuthChallenge(hostTokenId, authInfo, cleaner);
+    CliInitInfoParcel firstInitInfoParcel;
+    firstInitInfoParcel.cliInitInfo = {
         .hostTokenId = hostTokenId,
         .challenge = firstChallenge,
         .cliInfo = BuildCliInfo("settings", "set"),
     };
-    InitCliTokenResult firstInitResult;
-    AccessTokenID tokenId = InitCliToolTokenByService(*atManagerService_, firstRequest, firstInitResult);
+    uint64_t firstFullTokenId = 0;
+    std::vector<PermissionWithValueIdl> firstKernelPermIdlList;
+    ASSERT_EQ(RET_SUCCESS, InitCliToolTokenRet(firstInitInfoParcel, firstFullTokenId, firstKernelPermIdlList));
+    AccessTokenID tokenId = GetTokenIdFromFullTokenId(firstFullTokenId);
     ASSERT_NE(INVALID_TOKENID, tokenId);
 
     MockSingleCliAuthChallenge(authInfo, "init_012_second_challenge", "init_012_second_ticket");
-    std::string secondChallenge =
-        GenerateSingleCliAuthChallenge(*atManagerService_, callerFullTokenId, hostTokenId, authInfo);
-    InitCliTokenRequest secondRequest = {
-        .callerTokenId = serviceCallerTokenId,
-        .callerUid = ROOT_UID,
+    std::string secondChallenge = GenerateSingleCliAuthChallenge(hostTokenId, authInfo, cleaner);
+    CliInitInfoParcel secondInitInfoParcel;
+    secondInitInfoParcel.cliInitInfo = {
         .hostTokenId = hostTokenId,
         .challenge = secondChallenge,
         .cliInfo = BuildCliInfo("settings", "set"),
     };
-    InitCliTokenResult secondInitResult;
+    uint64_t secondFullTokenId = 0;
+    std::vector<PermissionWithValueIdl> secondKernelPermIdlList;
     EXPECT_EQ(AccessTokenError::ERR_TOOL_TOKEN_ALREADY_EXIST,
-        InitCliToolTokenRet(*atManagerService_, secondRequest, secondInitResult));
+        InitCliToolTokenRet(secondInitInfoParcel, secondFullTokenId, secondKernelPermIdlList));
     EXPECT_EQ(RET_SUCCESS, ToolTokenInfoManager::GetInstance().DeleteToolTokenByPid(getpid()));
 }
 
 /**
- * @tc.name: InitCliToken_013
+ * @tc.name: InitCliToken_006
  * @tc.desc: Test token can be rebuilt after deletion.
  * @tc.type: FUNC
  */
-HWTEST_F(ToolTokenMockTest, InitCliToken_013, TestSize.Level1)
+HWTEST_F(ToolTokenMockTest, InitCliToken_006, TestSize.Level1)
 {
-    uint64_t serviceCallerTokenId = GetSelfTokenID();
-    AccessTokenID callerTokenId = INVALID_TOKENID;
     AccessTokenID hostTokenId = INVALID_TOKENID;
     TokenCleaner cleaner;
-    uint64_t callerFullTokenId = CreateServiceTestToken(
-        "tooltoken_init_013_caller", true, BuildManagePermissionStates(), callerTokenId);
     uint64_t hostFullTokenId = CreateServiceTestToken(
-        "tooltoken_init_013_host", true, { BuildGrantedStatus(ACCESS_SYSTEM_SETTINGS) }, hostTokenId);
-    ASSERT_NE(0, callerFullTokenId);
+        "tooltoken_init_0063_host", true, { BuildGrantedStatus(ACCESS_SYSTEM_SETTINGS) });
     ASSERT_NE(0, hostFullTokenId);
-    cleaner.Add(callerTokenId);
+    hostTokenId = GetTokenIdFromFullTokenId(hostFullTokenId);
     cleaner.Add(hostTokenId);
 
     PrepareMockEnvironment();
     auto authInfo =
         BuildCliAuthInfoParcel(BuildCliInfo("settings", "set"), { ACCESS_SYSTEM_SETTINGS }, { true });
     MockSingleCliAuthChallenge(authInfo, "init_013_first_challenge", "init_013_first_ticket");
-    std::string firstChallenge =
-        GenerateSingleCliAuthChallenge(*atManagerService_, callerFullTokenId, hostTokenId, authInfo);
-    InitCliTokenRequest firstRequest = {
-        .callerTokenId = serviceCallerTokenId,
-        .callerUid = ROOT_UID,
+    std::string firstChallenge = GenerateSingleCliAuthChallenge(hostTokenId, authInfo, cleaner);
+    CliInitInfoParcel firstInitInfoParcel;
+    firstInitInfoParcel.cliInitInfo = {
         .hostTokenId = hostTokenId,
         .challenge = firstChallenge,
         .cliInfo = BuildCliInfo("settings", "set"),
     };
-    InitCliTokenResult firstInitResult;
-    AccessTokenID firstTokenId = InitCliToolTokenByService(*atManagerService_, firstRequest, firstInitResult);
+    uint64_t firstFullTokenId = 0;
+    std::vector<PermissionWithValueIdl> firstKernelPermIdlList;
+    ASSERT_EQ(RET_SUCCESS, InitCliToolTokenRet(firstInitInfoParcel, firstFullTokenId, firstKernelPermIdlList));
+    AccessTokenID firstTokenId = GetTokenIdFromFullTokenId(firstFullTokenId);
     ASSERT_NE(INVALID_TOKENID, firstTokenId);
     EXPECT_EQ(RET_SUCCESS, ToolTokenInfoManager::GetInstance().DeleteToolTokenByPid(getpid()));
 
     MockSingleCliAuthChallenge(authInfo, "init_013_second_challenge", "init_013_second_ticket");
-    std::string secondChallenge =
-        GenerateSingleCliAuthChallenge(*atManagerService_, callerFullTokenId, hostTokenId, authInfo);
-    InitCliTokenRequest secondRequest = {
-        .callerTokenId = serviceCallerTokenId,
-        .callerUid = ROOT_UID,
+    std::string secondChallenge = GenerateSingleCliAuthChallenge(hostTokenId, authInfo, cleaner);
+    CliInitInfoParcel secondInitInfoParcel;
+    secondInitInfoParcel.cliInitInfo = {
         .hostTokenId = hostTokenId,
         .challenge = secondChallenge,
         .cliInfo = BuildCliInfo("settings", "set"),
     };
-    InitCliTokenResult secondInitResult;
-    AccessTokenID secondTokenId = InitCliToolTokenByService(*atManagerService_, secondRequest, secondInitResult);
+    uint64_t secondFullTokenId = 0;
+    std::vector<PermissionWithValueIdl> secondKernelPermIdlList;
+    ASSERT_EQ(RET_SUCCESS, InitCliToolTokenRet(secondInitInfoParcel, secondFullTokenId, secondKernelPermIdlList));
+    AccessTokenID secondTokenId = GetTokenIdFromFullTokenId(secondFullTokenId);
     ASSERT_NE(INVALID_TOKENID, secondTokenId);
     EXPECT_EQ(RET_SUCCESS, ToolTokenInfoManager::GetInstance().DeleteToolTokenByPid(getpid()));
 }
 
 /**
- * @tc.name: InitCliToken_014
+ * @tc.name: InitCliToken_007
  * @tc.desc: Test empty permissionNames challenge creates a no-permission token.
  * @tc.type: FUNC
  */
-HWTEST_F(ToolTokenMockTest, InitCliToken_014, TestSize.Level1)
+HWTEST_F(ToolTokenMockTest, InitCliToken_007, TestSize.Level1)
 {
-    uint64_t serviceCallerTokenId = GetSelfTokenID();
-    AccessTokenID callerTokenId = INVALID_TOKENID;
     AccessTokenID hostTokenId = INVALID_TOKENID;
     TokenCleaner cleaner;
-    uint64_t callerFullTokenId = CreateServiceTestToken(
-        "tooltoken_init_014_caller", true, BuildManagePermissionStates(), callerTokenId);
-    uint64_t hostFullTokenId = CreateServiceTestToken("tooltoken_init_014_host", true, {}, hostTokenId);
-    ASSERT_NE(0, callerFullTokenId);
+    uint64_t hostFullTokenId = CreateServiceTestToken("tooltoken_init_007_host", true, {});
     ASSERT_NE(0, hostFullTokenId);
-    cleaner.Add(callerTokenId);
+    hostTokenId = GetTokenIdFromFullTokenId(hostFullTokenId);
     cleaner.Add(hostTokenId);
 
     PrepareMockEnvironment();
     auto authInfo = BuildCliAuthInfoParcel(BuildCliInfo("camera", "capture"), {}, {});
     MockSingleCliAuthChallenge(authInfo, "mock_empty_perm_challenge", "mock_empty_perm_ticket");
-    ToolAuthResultParcel authResult =
-        GenerateCliAuthResult(*atManagerService_, callerFullTokenId, hostTokenId, { authInfo });
+    ToolAuthResultParcel authResult = GenerateCliAuthResult(hostTokenId, { authInfo }, cleaner);
     ASSERT_EQ(1, static_cast<int32_t>(authResult.result.authResults.size()));
     ASSERT_FALSE(authResult.result.authResults[0].empty());
 
-    InitCliTokenRequest request = {
-        .callerTokenId = serviceCallerTokenId,
-        .callerUid = ROOT_UID,
+    CliInitInfoParcel initInfoParcel;
+    initInfoParcel.cliInitInfo = {
         .hostTokenId = hostTokenId,
         .challenge = authResult.result.authResults[0],
         .cliInfo = BuildCliInfo("camera", "capture"),
     };
-    InitCliTokenResult initResult;
-    AccessTokenID tokenId = InitCliToolTokenByService(*atManagerService_, request, initResult);
-    EXPECT_TRUE(initResult.kernelPermIdlList.empty());
-    VerifyRuntimePermission(tokenId, LOCATION_PERMISSION, PERMISSION_DENIED);
+    uint64_t fullTokenId = 0;
+    std::vector<PermissionWithValueIdl> kernelPermIdlList;
+    ASSERT_EQ(RET_SUCCESS, InitCliToolTokenRet(initInfoParcel, fullTokenId, kernelPermIdlList));
+    AccessTokenID tokenId = GetTokenIdFromFullTokenId(fullTokenId);
+    EXPECT_TRUE(kernelPermIdlList.empty());
+    EXPECT_EQ(PERMISSION_DENIED, VerifyRuntimePermission(tokenId, LOCATION_PERMISSION));
     EXPECT_EQ(RET_SUCCESS, ToolTokenInfoManager::GetInstance().DeleteToolTokenByPid(getpid()));
 }
 
 /**
- * @tc.name: InitCliToken_015
- * @tc.desc: Test non-root uid is denied and challenge remains retryable.
- * @tc.type: FUNC
- */
-HWTEST_F(ToolTokenMockTest, InitCliToken_015, TestSize.Level1)
-{
-    uint64_t serviceCallerTokenId = GetSelfTokenID();
-    AccessTokenID callerTokenId = INVALID_TOKENID;
-    AccessTokenID hostTokenId = INVALID_TOKENID;
-    TokenCleaner cleaner;
-    uint64_t callerFullTokenId = CreateServiceTestToken(
-        "tooltoken_init_015_caller", true, BuildManagePermissionStates(), callerTokenId);
-    uint64_t hostFullTokenId = CreateServiceTestToken(
-        "tooltoken_init_015_host", true, { BuildGrantedStatus(ACCESS_SYSTEM_SETTINGS) }, hostTokenId);
-    ASSERT_NE(0, callerFullTokenId);
-    ASSERT_NE(0, hostFullTokenId);
-    cleaner.Add(callerTokenId);
-    cleaner.Add(hostTokenId);
-
-    PrepareMockEnvironment();
-    auto authInfo =
-        BuildCliAuthInfoParcel(BuildCliInfo("settings", "set"), { ACCESS_SYSTEM_SETTINGS }, { true });
-    MockSingleCliAuthChallenge(authInfo, "init_015_challenge", "init_015_ticket");
-    std::string challenge =
-        GenerateSingleCliAuthChallenge(*atManagerService_, callerFullTokenId, hostTokenId, authInfo);
-    InitCliTokenRequest failedRequest = {
-        .callerTokenId = serviceCallerTokenId,
-        .callerUid = 1234,
-        .hostTokenId = hostTokenId,
-        .challenge = challenge,
-        .cliInfo = BuildCliInfo("settings", "set"),
-    };
-    InitCliTokenResult failedInitResult;
-    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
-        InitCliToolTokenRet(*atManagerService_, failedRequest, failedInitResult));
-
-    InitCliTokenRequest request = {
-        .callerTokenId = serviceCallerTokenId,
-        .callerUid = ROOT_UID,
-        .hostTokenId = hostTokenId,
-        .challenge = challenge,
-        .cliInfo = BuildCliInfo("settings", "set"),
-    };
-    InitCliTokenResult initResult;
-    AccessTokenID tokenId = InitCliToolTokenByService(*atManagerService_, request, initResult);
-    ASSERT_NE(INVALID_TOKENID, tokenId);
-    EXPECT_EQ(RET_SUCCESS, ToolTokenInfoManager::GetInstance().DeleteToolTokenByPid(getpid()));
-}
-
-/**
- * @tc.name: DeleteToolTokenByPid_003
+ * @tc.name: DeleteToolTokenByPid_001
  * @tc.desc: Test deleting the same pid twice returns token-not-exist on the second call.
  * @tc.type: FUNC
  */
-HWTEST_F(ToolTokenMockTest, DeleteToolTokenByPid_003, TestSize.Level1)
+HWTEST_F(ToolTokenMockTest, DeleteToolTokenByPid_001, TestSize.Level1)
 {
-    uint64_t shellTokenId = GetSelfTokenID();
-    AccessTokenID callerTokenId = INVALID_TOKENID;
     AccessTokenID hostTokenId = INVALID_TOKENID;
     TokenCleaner cleaner;
-    uint64_t callerFullTokenId = CreateServiceTestToken(
-        "tooltoken_delete_003_caller", true, BuildManagePermissionStates(), callerTokenId);
-    uint64_t hostFullTokenId = CreateServiceTestToken("tooltoken_delete_003_host", true, {}, hostTokenId);
-    ASSERT_NE(0, callerFullTokenId);
+    uint64_t hostFullTokenId = CreateServiceTestToken("tooltoken_delete_001_host", true, {});
     ASSERT_NE(0, hostFullTokenId);
-    cleaner.Add(callerTokenId);
+    hostTokenId = GetTokenIdFromFullTokenId(hostFullTokenId);
     cleaner.Add(hostTokenId);
 
     PrepareMockEnvironment();
     auto authInfo = BuildCliAuthInfoParcel(BuildCliInfo("camera", "capture"), {}, {});
     MockSingleCliAuthChallenge(authInfo, "delete_003_challenge", "delete_003_ticket");
-    ToolAuthResultParcel authResult =
-        GenerateCliAuthResult(*atManagerService_, callerFullTokenId, hostTokenId, { authInfo });
-    InitCliTokenRequest request = {
-        .callerTokenId = shellTokenId,
-        .callerUid = ROOT_UID,
+    ToolAuthResultParcel authResult = GenerateCliAuthResult(hostTokenId, { authInfo }, cleaner);
+    ASSERT_EQ(1, static_cast<int32_t>(authResult.result.authResults.size()));
+    CliInitInfoParcel initInfoParcel;
+    initInfoParcel.cliInitInfo = {
         .hostTokenId = hostTokenId,
         .challenge = authResult.result.authResults[0],
         .cliInfo = BuildCliInfo("camera", "capture"),
     };
-    InitCliTokenResult initResult;
-    AccessTokenID tokenId = InitCliToolTokenByService(*atManagerService_, request, initResult);
+    uint64_t fullTokenId = 0;
+    std::vector<PermissionWithValueIdl> kernelPermIdlList;
+    ASSERT_EQ(RET_SUCCESS, InitCliToolTokenRet(initInfoParcel, fullTokenId, kernelPermIdlList));
+    AccessTokenID tokenId = GetTokenIdFromFullTokenId(fullTokenId);
     ASSERT_NE(INVALID_TOKENID, tokenId);
     EXPECT_EQ(RET_SUCCESS, ToolTokenInfoManager::GetInstance().DeleteToolTokenByPid(getpid()));
     EXPECT_EQ(AccessTokenError::ERR_TOKENID_NOT_EXIST,
@@ -1934,154 +1758,306 @@ HWTEST_F(ToolTokenMockTest, DeleteToolTokenByPid_003, TestSize.Level1)
 }
 
 /**
- * @tc.name: GetCliTokenInfo_004
+ * @tc.name: GetCliTokenInfo_001
  * @tc.desc: Test deleted and non-existent token return token-not-exist.
  * @tc.type: FUNC
  */
-HWTEST_F(ToolTokenMockTest, GetCliTokenInfo_004, TestSize.Level1)
+HWTEST_F(ToolTokenMockTest, GetCliTokenInfo_001, TestSize.Level1)
 {
-    uint64_t shellTokenId = GetSelfTokenID();
-    AccessTokenID callerTokenId = INVALID_TOKENID;
     AccessTokenID hostTokenId = INVALID_TOKENID;
     TokenCleaner cleaner;
-    uint64_t callerFullTokenId = CreateServiceTestToken(
-        "tooltoken_getcli_004_caller", true, BuildManagePermissionStates(), callerTokenId);
-    uint64_t hostFullTokenId = CreateServiceTestToken("tooltoken_getcli_004_host", true, {}, hostTokenId);
-    ASSERT_NE(0, callerFullTokenId);
+    uint64_t hostFullTokenId = CreateServiceTestToken("tooltoken_getcli_001_host", true, {});
     ASSERT_NE(0, hostFullTokenId);
-    cleaner.Add(callerTokenId);
+    hostTokenId = GetTokenIdFromFullTokenId(hostFullTokenId);
     cleaner.Add(hostTokenId);
 
     PrepareMockEnvironment();
     auto authInfo = BuildCliAuthInfoParcel(BuildCliInfo("camera", "capture"), {}, {});
     MockSingleCliAuthChallenge(authInfo, "getcli_004_challenge", "getcli_004_ticket");
-    ToolAuthResultParcel authResult =
-        GenerateCliAuthResult(*atManagerService_, callerFullTokenId, hostTokenId, { authInfo });
-    InitCliTokenRequest request = {
-        .callerTokenId = shellTokenId,
-        .callerUid = ROOT_UID,
+    ToolAuthResultParcel authResult = GenerateCliAuthResult(hostTokenId, { authInfo }, cleaner);
+    ASSERT_EQ(1, static_cast<int32_t>(authResult.result.authResults.size()));
+    CliInitInfoParcel initInfoParcel;
+    initInfoParcel.cliInitInfo = {
         .hostTokenId = hostTokenId,
         .challenge = authResult.result.authResults[0],
         .cliInfo = BuildCliInfo("camera", "capture"),
     };
-    InitCliTokenResult initResult;
-    AccessTokenID tokenId = InitCliToolTokenByService(*atManagerService_, request, initResult);
+    uint64_t fullTokenId = 0;
+    std::vector<PermissionWithValueIdl> kernelPermIdlList;
+    ASSERT_EQ(RET_SUCCESS, InitCliToolTokenRet(initInfoParcel, fullTokenId, kernelPermIdlList));
+    AccessTokenID tokenId = GetTokenIdFromFullTokenId(fullTokenId);
     ASSERT_NE(INVALID_TOKENID, tokenId);
-    EXPECT_EQ(RET_SUCCESS, ToolTokenInfoManager::GetInstance().DeleteToolTokenByPid(getpid()));
+    int32_t deleteRet = ToolTokenInfoManager::GetInstance().DeleteToolTokenByPid(getpid());
+    EXPECT_EQ(RET_SUCCESS, deleteRet);
+    CliTokenInfo tokenInfo;
 
-    CliInfoResultParcel infoParcel;
+    CliTokenInfo infoParcel;
     EXPECT_EQ(AccessTokenError::ERR_TOKENID_NOT_EXIST,
-        GetCliTokenInfoRet(*atManagerService_, shellTokenId, tokenId, infoParcel));
+        ToolTokenInfoManager::GetInstance().GetCliTokenInfo(tokenId, infoParcel));
     EXPECT_EQ(AccessTokenError::ERR_TOKENID_NOT_EXIST,
-        GetCliTokenInfoRet(*atManagerService_, shellTokenId, INVALID_TOKENID, infoParcel));
+        ToolTokenInfoManager::GetInstance().GetCliTokenInfo(INVALID_TOKENID, infoParcel));
 }
 
 /**
- * @tc.name: GetHostTokenId_004
+ * @tc.name: GetHostTokenId_001
  * @tc.desc: Test deleted tool token returns token-not-exist when querying host token.
  * @tc.type: FUNC
  */
-HWTEST_F(ToolTokenMockTest, GetHostTokenId_004, TestSize.Level1)
+HWTEST_F(ToolTokenMockTest, GetHostTokenId_001, TestSize.Level1)
 {
-    uint64_t shellTokenId = GetSelfTokenID();
-    AccessTokenID callerTokenId = INVALID_TOKENID;
     AccessTokenID hostTokenId = INVALID_TOKENID;
     TokenCleaner cleaner;
-    uint64_t callerFullTokenId = CreateServiceTestToken(
-        "tooltoken_gethost_004_caller", true, BuildManagePermissionStates(), callerTokenId);
-    uint64_t hostFullTokenId = CreateServiceTestToken("tooltoken_gethost_004_host", true, {}, hostTokenId);
-    ASSERT_NE(0, callerFullTokenId);
+    uint64_t hostFullTokenId = CreateServiceTestToken("tooltoken_gethost_001_host", true, {});
     ASSERT_NE(0, hostFullTokenId);
-    cleaner.Add(callerTokenId);
+    hostTokenId = GetTokenIdFromFullTokenId(hostFullTokenId);
     cleaner.Add(hostTokenId);
 
     PrepareMockEnvironment();
     auto authInfo = BuildCliAuthInfoParcel(BuildCliInfo("camera", "capture"), {}, {});
     MockSingleCliAuthChallenge(authInfo, "gethost_004_challenge", "gethost_004_ticket");
-    ToolAuthResultParcel authResult =
-        GenerateCliAuthResult(*atManagerService_, callerFullTokenId, hostTokenId, { authInfo });
-    InitCliTokenRequest request = {
-        .callerTokenId = shellTokenId,
-        .callerUid = ROOT_UID,
+    ToolAuthResultParcel authResult = GenerateCliAuthResult(hostTokenId, { authInfo }, cleaner);
+    ASSERT_EQ(1, static_cast<int32_t>(authResult.result.authResults.size()));
+    CliInitInfoParcel initInfoParcel;
+    initInfoParcel.cliInitInfo = {
         .hostTokenId = hostTokenId,
         .challenge = authResult.result.authResults[0],
         .cliInfo = BuildCliInfo("camera", "capture"),
     };
-    InitCliTokenResult initResult;
-    AccessTokenID tokenId = InitCliToolTokenByService(*atManagerService_, request, initResult);
+    uint64_t fullTokenId = 0;
+    std::vector<PermissionWithValueIdl> kernelPermIdlList;
+    ASSERT_EQ(RET_SUCCESS, InitCliToolTokenRet(initInfoParcel, fullTokenId, kernelPermIdlList));
+    AccessTokenID tokenId = GetTokenIdFromFullTokenId(fullTokenId);
     ASSERT_NE(INVALID_TOKENID, tokenId);
     EXPECT_EQ(RET_SUCCESS, ToolTokenInfoManager::GetInstance().DeleteToolTokenByPid(getpid()));
 
     AccessTokenID queriedHostTokenId = INVALID_TOKENID;
     EXPECT_EQ(AccessTokenError::ERR_TOKENID_NOT_EXIST,
-        GetHostTokenIdRet(*atManagerService_, shellTokenId, tokenId, queriedHostTokenId));
+        ToolTokenInfoManager::GetInstance().GetHostTokenId(tokenId, queriedHostTokenId));
 }
 
 /**
- * @tc.name: GetHostTokenId_005
+ * @tc.name: GetHostTokenId_002
  * @tc.desc: Test existing non-tool token returns invalid-param when querying host token.
  * @tc.type: FUNC
  */
-HWTEST_F(ToolTokenMockTest, GetHostTokenId_005, TestSize.Level1)
+HWTEST_F(ToolTokenMockTest, GetHostTokenId_002, TestSize.Level1)
 {
-    uint64_t shellTokenId = GetSelfTokenID();
     AccessTokenID hostTokenId = INVALID_TOKENID;
     TokenCleaner cleaner;
-    uint64_t hostFullTokenId = CreateServiceTestToken("tooltoken_gethost_005_host", true, {}, hostTokenId);
+    uint64_t hostFullTokenId = CreateServiceTestToken("tooltoken_gethost_002_host", true, {});
     ASSERT_NE(0, hostFullTokenId);
+    hostTokenId = GetTokenIdFromFullTokenId(hostFullTokenId);
     cleaner.Add(hostTokenId);
 
     AccessTokenID queriedHostTokenId = INVALID_TOKENID;
     EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
-        GetHostTokenIdRet(*atManagerService_, shellTokenId, hostTokenId, queriedHostTokenId));
+        ToolTokenInfoManager::GetInstance().GetHostTokenId(hostTokenId, queriedHostTokenId));
 }
 
 /**
- * @tc.name: GetHostTokenId_006
- * @tc.desc: Test unauthorized caller querying host token returns permission-denied.
+ * @tc.name: GetUserId_001
+ * @tc.desc: Test querying user id validates token type and returns the user id of an existing tool token.
  * @tc.type: FUNC
  */
-HWTEST_F(ToolTokenMockTest, GetHostTokenId_006, TestSize.Level1)
+HWTEST_F(ToolTokenMockTest, GetUserId_001, TestSize.Level1)
 {
-    uint64_t shellTokenId = GetSelfTokenID();
-    AccessTokenID callerTokenId = INVALID_TOKENID;
-    AccessTokenID unauthorizedTokenId = INVALID_TOKENID;
     AccessTokenID hostTokenId = INVALID_TOKENID;
     TokenCleaner cleaner;
-    uint64_t callerFullTokenId = CreateServiceTestToken(
-        "tooltoken_gethost_006_caller", true, BuildManagePermissionStates(), callerTokenId);
-    uint64_t unauthorizedFullTokenId =
-        CreateServiceTestToken("tooltoken_gethost_006_unauth", false, {}, unauthorizedTokenId);
-    uint64_t hostFullTokenId = CreateServiceTestToken("tooltoken_gethost_006_host", true, {}, hostTokenId);
-    ASSERT_NE(0, callerFullTokenId);
-    ASSERT_NE(0, unauthorizedFullTokenId);
+    uint64_t hostFullTokenId = CreateServiceTestToken("tooltoken_getuser_001_host", true, {});
     ASSERT_NE(0, hostFullTokenId);
-    cleaner.Add(callerTokenId);
-    cleaner.Add(unauthorizedTokenId);
+    hostTokenId = GetTokenIdFromFullTokenId(hostFullTokenId);
     cleaner.Add(hostTokenId);
+
+    int32_t userId = -1;
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, ToolTokenInfoManager::GetInstance().GetUserId(hostTokenId, userId));
 
     PrepareMockEnvironment();
     auto authInfo = BuildCliAuthInfoParcel(BuildCliInfo("camera", "capture"), {}, {});
-    MockSingleCliAuthChallenge(authInfo, "gethost_006_challenge", "gethost_006_ticket");
-    ToolAuthResultParcel authResult =
-        GenerateCliAuthResult(*atManagerService_, callerFullTokenId, hostTokenId, { authInfo });
-    InitCliTokenRequest request = {
-        .callerTokenId = shellTokenId,
-        .callerUid = ROOT_UID,
+    MockSingleCliAuthChallenge(authInfo, "getuser_001_challenge", "getuser_001_ticket");
+    ToolAuthResultParcel authResult = GenerateCliAuthResult(hostTokenId, { authInfo }, cleaner);
+    ASSERT_EQ(1, static_cast<int32_t>(authResult.result.authResults.size()));
+    CliInitInfoParcel initInfoParcel;
+    initInfoParcel.cliInitInfo = {
         .hostTokenId = hostTokenId,
         .challenge = authResult.result.authResults[0],
         .cliInfo = BuildCliInfo("camera", "capture"),
     };
-    InitCliTokenResult initResult;
-    AccessTokenID tokenId = InitCliToolTokenByService(*atManagerService_, request, initResult);
+    uint64_t fullTokenId = 0;
+    std::vector<PermissionWithValueIdl> kernelPermIdlList;
+    ASSERT_EQ(RET_SUCCESS, InitCliToolTokenRet(initInfoParcel, fullTokenId, kernelPermIdlList));
+    AccessTokenID toolTokenId = GetTokenIdFromFullTokenId(fullTokenId);
+    ASSERT_NE(INVALID_TOKENID, toolTokenId);
+
+    EXPECT_EQ(RET_SUCCESS, ToolTokenInfoManager::GetInstance().GetUserId(toolTokenId, userId));
+    EXPECT_EQ(USER_ID, userId);
+
+    EXPECT_EQ(RET_SUCCESS, ToolTokenInfoManager::GetInstance().DeleteToolTokenByPid(getpid()));
+    EXPECT_EQ(AccessTokenError::ERR_TOKENID_NOT_EXIST,
+        ToolTokenInfoManager::GetInstance().GetUserId(toolTokenId, userId));
+}
+
+/**
+ * @tc.name: UpdateRestrictedFlag_001
+ * @tc.desc: Test UpdateRestrictedFlag returns token-not-exist when tool token is absent.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ToolTokenMockTest, UpdateRestrictedFlag_001, TestSize.Level1)
+{
+    uint32_t permCode = 0;
+    ASSERT_TRUE(TransferPermissionToOpcode(CAMERA_PERMISSION, permCode));
+
+    bool hasFlagChanged = true;
+    EXPECT_EQ(AccessTokenError::ERR_TOKENID_NOT_EXIST,
+        ToolTokenInfoManager::GetInstance().UpdateRestrictedFlag(INVALID_TOKENID, permCode, true, hasFlagChanged));
+    EXPECT_FALSE(hasFlagChanged);
+}
+
+/**
+ * @tc.name: UpdateRestrictedFlag_002
+ * @tc.desc: Test UpdateRestrictedFlag updates an existing tool token and reports whether flag changed.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ToolTokenMockTest, UpdateRestrictedFlag_002, TestSize.Level1)
+{
+    AccessTokenID hostTokenId = INVALID_TOKENID;
+    TokenCleaner cleaner;
+    uint64_t hostFullTokenId = CreateServiceTestToken("tooltoken_restricted_flag_host", true,
+        { BuildGrantedStatus(CAMERA_PERMISSION, PERMISSION_SYSTEM_FIXED) });
+    ASSERT_NE(0, hostFullTokenId);
+    hostTokenId = GetTokenIdFromFullTokenId(hostFullTokenId);
+    cleaner.Add(hostTokenId);
+
+    PrepareMockEnvironment();
+    auto authInfo = BuildCliAuthInfoParcel(BuildCliInfo("camera", "capture"), { CAMERA_PERMISSION }, { true });
+    MockSingleCliAuthChallenge(authInfo, "restricted_flag_challenge", "restricted_flag_ticket");
+    ToolAuthResultParcel authResult = GenerateCliAuthResult(hostTokenId, { authInfo }, cleaner);
+    ASSERT_EQ(1, static_cast<int32_t>(authResult.result.authResults.size()));
+    CliInitInfoParcel initInfoParcel;
+    initInfoParcel.cliInitInfo = {
+        .hostTokenId = hostTokenId,
+        .challenge = authResult.result.authResults[0],
+        .cliInfo = BuildCliInfo("camera", "capture"),
+    };
+    uint64_t fullTokenId = 0;
+    std::vector<PermissionWithValueIdl> kernelPermIdlList;
+    ASSERT_EQ(RET_SUCCESS, InitCliToolTokenRet(initInfoParcel, fullTokenId, kernelPermIdlList));
+    AccessTokenID tokenId = GetTokenIdFromFullTokenId(fullTokenId);
     ASSERT_NE(INVALID_TOKENID, tokenId);
 
-    AccessTokenID queriedHostTokenId = INVALID_TOKENID;
-    setuid(1234); // 1234 is invalid uid
-    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
-        GetHostTokenIdRet(*atManagerService_, unauthorizedFullTokenId, tokenId, queriedHostTokenId));
+    uint32_t permCode = 0;
+    ASSERT_TRUE(TransferPermissionToOpcode(CAMERA_PERMISSION, permCode));
+    bool hasFlagChanged = false;
+    EXPECT_EQ(RET_SUCCESS,
+        ToolTokenInfoManager::GetInstance().UpdateRestrictedFlag(tokenId, permCode, true, hasFlagChanged));
+    EXPECT_TRUE(hasFlagChanged);
+    EXPECT_EQ(PERMISSION_DENIED, VerifyRuntimePermission(tokenId, CAMERA_PERMISSION));
+
+    hasFlagChanged = true;
+    EXPECT_EQ(RET_SUCCESS,
+        ToolTokenInfoManager::GetInstance().UpdateRestrictedFlag(tokenId, permCode, true, hasFlagChanged));
+    EXPECT_FALSE(hasFlagChanged);
+
+    hasFlagChanged = false;
+    EXPECT_EQ(RET_SUCCESS,
+        ToolTokenInfoManager::GetInstance().UpdateRestrictedFlag(tokenId, permCode, false, hasFlagChanged));
+    EXPECT_TRUE(hasFlagChanged);
+    EXPECT_EQ(PERMISSION_GRANTED, VerifyRuntimePermission(tokenId, CAMERA_PERMISSION));
+
     EXPECT_EQ(RET_SUCCESS, ToolTokenInfoManager::GetInstance().DeleteToolTokenByPid(getpid()));
 }
+
+/**
+ * @tc.name: RefreshUserPolicyFlag_001
+ * @tc.desc: Test RefreshUserPolicyFlag handles empty change list.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ToolTokenMockTest, RefreshUserPolicyFlag_001, TestSize.Level1)
+{
+    EXPECT_EQ(RET_SUCCESS, ToolTokenInfoManager::GetInstance().RefreshUserPolicyFlag({}));
+}
+
+/**
+ * @tc.name: RefreshUserPolicyFlag_002
+ * @tc.desc: Test service user policy refresh covers tool token policy branches.
+ * @tc.type: FUNC
+ */
+#ifdef SUPPORT_MANAGE_USER_POLICY
+HWTEST_F(ToolTokenMockTest, RefreshUserPolicyFlag_002, TestSize.Level1)
+{
+    AccessTokenID hostTokenId = INVALID_TOKENID;
+    TokenCleaner cleaner;
+    uint64_t hostFullTokenId = CreateServiceTestToken("tooltoken_user_policy_host", true,
+        { BuildGrantedStatus(ACCESS_SYSTEM_SETTINGS, PERMISSION_SYSTEM_FIXED) });
+    ASSERT_NE(0, hostFullTokenId);
+    hostTokenId = GetTokenIdFromFullTokenId(hostFullTokenId);
+    cleaner.Add(hostTokenId);
+
+    PrepareMockEnvironment();
+    auto authInfo =
+        BuildCliAuthInfoParcel(BuildCliInfo("settings", "set"), { ACCESS_SYSTEM_SETTINGS }, { true });
+    MockSingleCliAuthChallenge(authInfo, "user_policy_challenge", "user_policy_ticket");
+    ToolAuthResultParcel authResult = GenerateCliAuthResult(hostTokenId, { authInfo }, cleaner);
+    ASSERT_EQ(1, static_cast<int32_t>(authResult.result.authResults.size()));
+    CliInitInfoParcel initInfoParcel;
+    initInfoParcel.cliInitInfo = {
+        .hostTokenId = hostTokenId,
+        .challenge = authResult.result.authResults[0],
+        .cliInfo = BuildCliInfo("settings", "set"),
+    };
+    uint64_t fullTokenId = 0;
+    std::vector<PermissionWithValueIdl> kernelPermIdlList;
+    ASSERT_EQ(RET_SUCCESS, InitCliToolTokenRet(initInfoParcel, fullTokenId, kernelPermIdlList));
+    AccessTokenID tokenId = GetTokenIdFromFullTokenId(fullTokenId);
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+    EXPECT_EQ(PERMISSION_GRANTED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(hostTokenId, ACCESS_SYSTEM_SETTINGS));
+    EXPECT_EQ(PERMISSION_GRANTED, VerifyRuntimePermission(tokenId, ACCESS_SYSTEM_SETTINGS));
+
+    UserPermissionPolicyIdl policy;
+    policy.permissionName = ACCESS_SYSTEM_SETTINGS;
+    policy.userPolicyList = {{ .userId = USER_ID, .isRestricted = true }};
+    policy.isPersist = false;
+    EXPECT_EQ(RET_SUCCESS, SetUserPolicyRet({ policy }));
+    EXPECT_EQ(PERMISSION_DENIED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(hostTokenId, ACCESS_SYSTEM_SETTINGS));
+    EXPECT_EQ(PERMISSION_DENIED, VerifyRuntimePermission(tokenId, ACCESS_SYSTEM_SETTINGS));
+
+    policy.userPolicyList = {{ .userId = USER_ID + 1, .isRestricted = true }};
+    EXPECT_EQ(RET_SUCCESS, SetUserPolicyRet({ policy }));
+    EXPECT_EQ(PERMISSION_DENIED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(hostTokenId, ACCESS_SYSTEM_SETTINGS));
+    EXPECT_EQ(PERMISSION_DENIED, VerifyRuntimePermission(tokenId, ACCESS_SYSTEM_SETTINGS));
+
+    policy.userPolicyList = {{ .userId = USER_ID, .isRestricted = false }};
+    EXPECT_EQ(RET_SUCCESS, SetUserPolicyRet({ policy }));
+    EXPECT_EQ(PERMISSION_GRANTED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(hostTokenId, ACCESS_SYSTEM_SETTINGS));
+    EXPECT_EQ(PERMISSION_GRANTED, VerifyRuntimePermission(tokenId, ACCESS_SYSTEM_SETTINGS));
+
+    policy.permissionName = CAMERA_PERMISSION;
+    policy.userPolicyList = {{ .userId = USER_ID, .isRestricted = true }};
+    EXPECT_EQ(RET_SUCCESS, SetUserPolicyRet({ policy }));
+    EXPECT_EQ(PERMISSION_GRANTED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(hostTokenId, ACCESS_SYSTEM_SETTINGS));
+    EXPECT_EQ(PERMISSION_GRANTED, VerifyRuntimePermission(tokenId, ACCESS_SYSTEM_SETTINGS));
+
+    policy.permissionName = ACCESS_SYSTEM_SETTINGS;
+    policy.userPolicyList = {{ .userId = USER_ID, .isRestricted = true }};
+    EXPECT_EQ(RET_SUCCESS, SetUserPolicyRet({ policy }));
+    EXPECT_EQ(PERMISSION_DENIED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(hostTokenId, ACCESS_SYSTEM_SETTINGS));
+    EXPECT_EQ(PERMISSION_DENIED, VerifyRuntimePermission(tokenId, ACCESS_SYSTEM_SETTINGS));
+
+    EXPECT_EQ(RET_SUCCESS, ToolTokenInfoManager::GetInstance().DeleteToolTokenByPid(getpid()));
+    policy.userPolicyList = {{ .userId = USER_ID, .isRestricted = false }};
+    EXPECT_EQ(RET_SUCCESS, SetUserPolicyRet({ policy }));
+    EXPECT_EQ(PERMISSION_GRANTED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(hostTokenId, ACCESS_SYSTEM_SETTINGS));
+
+    EXPECT_EQ(RET_SUCCESS, ClearUserPolicyRet({ ACCESS_SYSTEM_SETTINGS }));
+    EXPECT_EQ(RET_SUCCESS, ClearUserPolicyRet({ CAMERA_PERMISSION }));
+}
+#endif
 }
 }
 }

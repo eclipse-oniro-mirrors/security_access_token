@@ -14,8 +14,13 @@
  */
 
 #include "accesstoken_deny_test.h"
+
+#include <unistd.h>
+
 #include "accesstoken_kit.h"
 #include "access_token_error.h"
+#include "claw_permission_info.h"
+#include "mock_permission.h"
 #include "test_common.h"
 #include "token_setproc.h"
 #ifdef TOKEN_SYNC_ENABLE
@@ -28,6 +33,12 @@ namespace AccessToken {
 namespace {
 static constexpr int32_t RANDOM_TOKENID = 123;
 static constexpr int32_t RANDOM_USERID = 10001;
+static constexpr int32_t INVALID_UID = 1234;
+static constexpr const char* MANAGE_RUNTIME_CALLER_PROCESS = "com.ohos.permissionmanager";
+static const std::string DEFAULT_AGENT_ID = "1001";
+static const std::string QUERY_TOOL_PERMISSIONS = "ohos.permission.QUERY_TOOL_PERMISSIONS";
+static const std::string MANAGE_TOOL_TOKENID = "ohos.permission.MANAGE_TOOL_TOKENID";
+static const std::string MANAGE_TOOL_RUNTIME_PERMISSIONS = "ohos.permission.MANAGE_TOOL_RUNTIME_PERMISSIONS";
 static uint64_t g_selfTokenId = 0;
 static AccessTokenIDEx g_testTokenIDEx = {0};
 static int32_t g_selfUid;
@@ -44,6 +55,47 @@ static HapInfoParams g_InfoParms = {
     .appIDDesc = "test.bundle",
     .isSystemApp = true
 };
+
+CliInfo BuildCliInfo()
+{
+    return {
+        .cliName = "camera",
+        .subCliName = "capture",
+    };
+}
+
+SkillInfo BuildSkillInfo()
+{
+    return {
+        .skillName = "camera_skill",
+        .bundleName = "ohos.test.skill",
+        .moduleName = "entry",
+    };
+}
+
+CliAuthInfo BuildCliAuthInfo()
+{
+    return {
+        .cliInfo = BuildCliInfo(),
+        .permissionNames = {"ohos.permission.CAMERA"},
+        .authorizationResults = {true},
+    };
+}
+
+SkillAuthInfo BuildSkillAuthInfo()
+{
+    return {
+        .skillInfo = BuildSkillInfo(),
+        .permissionNames = {"ohos.permission.CAMERA"},
+        .authorizationResults = {true},
+    };
+}
+
+void RestoreSelfCaller()
+{
+    EXPECT_EQ(0, setuid(g_selfUid));
+    EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));
+}
 
 #ifdef TOKEN_SYNC_ENABLE
 static const int32_t FAKE_SYNC_RET = 0xabcdef;
@@ -117,6 +169,18 @@ HWTEST_F(AccessTokenDenyTest, SetUserPolicy001, TestSize.Level0)
 }
 
 /**
+ * @tc.name: ClearUserPolicy001
+ * @tc.desc: ClearUserPolicy without authorized.
+ * @tc.type: FUNC
+ * @tc.require:Issue Number
+ */
+HWTEST_F(AccessTokenDenyTest, ClearUserPolicy001, TestSize.Level0)
+{
+    int32_t ret = AccessTokenKit::ClearUserPolicy({ "ohos.permission.INTERNET" });
+    EXPECT_EQ(ret, AccessTokenError::ERR_PERMISSION_DENIED);
+}
+
+/**
  * @tc.name: UpdatePolicyWhiteList001
  * @tc.desc: UpdatePolicyWhiteList without authorized.
  * @tc.type: FUNC
@@ -124,24 +188,17 @@ HWTEST_F(AccessTokenDenyTest, SetUserPolicy001, TestSize.Level0)
  */
 HWTEST_F(AccessTokenDenyTest, UpdatePolicyWhiteList001, TestSize.Level0)
 {
-    setuid(g_selfUid);
-    HapPolicyParams policyPrams = {
-        .apl = APL_NORMAL,
-        .domain = "test.domain",
-    };
-    AccessTokenIDEx tokenIdEx = {0};
-    ASSERT_EQ(RET_SUCCESS, TestCommon::AllocTestHapToken(g_InfoParms, policyPrams, tokenIdEx));
-    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIdExStruct.tokenID);
+    RestoreSelfCaller();
+    MockToken mock(g_selfTokenId, "com.ohos.permissionmanager", true);
+    ASSERT_NE(INVALID_TOKENID, mock.GetTokenId()) << mock.GetMockErrorMsg();
     EXPECT_EQ(RET_SUCCESS, SetSelfTokenID(g_testTokenIDEx.tokenIDEx));
-    setuid(1234); // 1234: UID
+    EXPECT_EQ(0, setuid(INVALID_UID));
 
     int32_t ret = AccessTokenKit::UpdatePolicyWhiteList(
-        tokenIdEx.tokenIdExStruct.tokenID, "ohos.permission.INTERNET", ADD);
+        mock.GetTokenId(), "ohos.permission.INTERNET", ADD);
     EXPECT_EQ(ret, AccessTokenError::ERR_PERMISSION_DENIED);
 
-    setuid(g_selfUid);
-    EXPECT_EQ(RET_SUCCESS, SetSelfTokenID(g_selfTokenId));
-    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenIdEx.tokenIdExStruct.tokenID));
+    RestoreSelfCaller();
 }
 
 /**
@@ -585,6 +642,240 @@ HWTEST_F(AccessTokenDenyTest, GetKernelPermissions001, TestSize.Level0)
     AccessTokenID tokenId = RANDOM_TOKENID;
     std::vector<PermissionWithValue> kernelPermList;
     ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::GetKernelPermissions(tokenId, kernelPermList));
+}
+
+/**
+ * @tc.name: InitCliToken001
+ * @tc.desc: InitCliToken with no permission.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenDenyTest, InitCliToken001, TestSize.Level0)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+    std::vector<PermissionWithValue> kernelPermList;
+    EXPECT_EQ(0, setuid(INVALID_UID));
+    CliInitInfo initInfo = {
+        .hostTokenId = RANDOM_TOKENID,
+        .challenge = "challenge",
+        .cliInfo = BuildCliInfo(),
+    };
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
+        AccessTokenKit::InitCliToken(initInfo, tokenIdEx, kernelPermList));
+    EXPECT_EQ(0, setuid(g_selfUid));
+}
+
+/**
+ * @tc.name: InitSkillToken001
+ * @tc.desc: InitSkillToken with no permission.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenDenyTest, InitSkillToken001, TestSize.Level0)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+    std::vector<PermissionWithValue> kernelPermList;
+    EXPECT_EQ(0, setuid(INVALID_UID));
+    SkillInitInfo initInfo = {
+        .hostTokenId = RANDOM_TOKENID,
+        .challenge = "challenge",
+        .skillInfo = BuildSkillInfo(),
+    };
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
+        AccessTokenKit::InitSkillToken(initInfo, tokenIdEx, kernelPermList));
+    EXPECT_EQ(0, setuid(g_selfUid));
+}
+
+/**
+ * @tc.name: DeleteToolTokenByPid001
+ * @tc.desc: DeleteToolTokenByPid with no permission.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenDenyTest, DeleteToolTokenByPid001, TestSize.Level0)
+{
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::DeleteToolTokenByPid(getpid()));
+
+    RestoreSelfCaller();
+    MockToken mock(g_selfTokenId, "accesstoken_service", false);
+    mock.Revoke(MANAGE_TOOL_TOKENID);
+
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::DeleteToolTokenByPid(getpid()));
+}
+
+/**
+ * @tc.name: GetCliTokenInfo001
+ * @tc.desc: GetCliTokenInfo with no permission.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenDenyTest, GetCliTokenInfo001, TestSize.Level0)
+{
+    CliTokenInfo tokenInfo;
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::GetCliTokenInfo(RANDOM_TOKENID, tokenInfo));
+}
+
+/**
+ * @tc.name: GetSkillTokenInfo001
+ * @tc.desc: GetSkillTokenInfo with no permission.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenDenyTest, GetSkillTokenInfo001, TestSize.Level0)
+{
+    SkillTokenInfo tokenInfo;
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
+        AccessTokenKit::GetSkillTokenInfo(RANDOM_TOKENID, tokenInfo));
+}
+
+/**
+ * @tc.name: GetHostTokenId001
+ * @tc.desc: GetHostTokenId with no permission.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenDenyTest, GetHostTokenId001, TestSize.Level0)
+{
+    AccessTokenID hostTokenId = INVALID_TOKENID;
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
+        AccessTokenKit::GetHostTokenId(RANDOM_TOKENID, hostTokenId));
+}
+
+/**
+ * @tc.name: GetCliPermissionRequestInfo001
+ * @tc.desc: GetCliPermissionRequestInfo with no permission.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenDenyTest, GetCliPermissionRequestInfo001, TestSize.Level0)
+{
+    RestoreSelfCaller();
+    PermissionDialogResult result;
+    {
+        MockToken caller(g_selfTokenId, MANAGE_RUNTIME_CALLER_PROCESS, false);
+        EXPECT_EQ(AccessTokenError::ERR_NOT_SYSTEM_APP,
+            AccessTokenKit::GetCliPermissionRequestInfo(DEFAULT_AGENT_ID, { BuildCliInfo() }, result));
+    }
+
+    MockToken caller(g_selfTokenId, MANAGE_RUNTIME_CALLER_PROCESS, true);
+    caller.Revoke(QUERY_TOOL_PERMISSIONS);
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
+        AccessTokenKit::GetCliPermissionRequestInfo(DEFAULT_AGENT_ID, { BuildCliInfo() }, result));
+}
+
+/**
+ * @tc.name: GetSkillPermissionRequestInfo001
+ * @tc.desc: GetSkillPermissionRequestInfo with no permission.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenDenyTest, GetSkillPermissionRequestInfo001, TestSize.Level0)
+{
+    RestoreSelfCaller();
+    PermissionDialogResult result;
+    {
+        MockToken caller(g_selfTokenId, MANAGE_RUNTIME_CALLER_PROCESS, false);
+        EXPECT_EQ(AccessTokenError::ERR_NOT_SYSTEM_APP,
+            AccessTokenKit::GetSkillPermissionRequestInfo(DEFAULT_AGENT_ID, { BuildSkillInfo() }, result));
+    }
+
+    MockToken caller(g_selfTokenId, MANAGE_RUNTIME_CALLER_PROCESS, true);
+    caller.Revoke(QUERY_TOOL_PERMISSIONS);
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
+        AccessTokenKit::GetSkillPermissionRequestInfo(DEFAULT_AGENT_ID, { BuildSkillInfo() }, result));
+}
+
+/**
+ * @tc.name: GetCliPermissions001
+ * @tc.desc: GetCliPermissions with no permission.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenDenyTest, GetCliPermissions001, TestSize.Level0)
+{
+    RestoreSelfCaller();
+    MockToken host(g_selfTokenId, MANAGE_RUNTIME_CALLER_PROCESS, true);
+    CliPermissionsResult result;
+    {
+        MockToken caller(g_selfTokenId, MANAGE_RUNTIME_CALLER_PROCESS, false);
+        EXPECT_EQ(AccessTokenError::ERR_NOT_SYSTEM_APP,
+            AccessTokenKit::GetCliPermissions(host.GetTokenId(), DEFAULT_AGENT_ID, { BuildCliInfo() }, result));
+    }
+
+    MockToken caller(g_selfTokenId, MANAGE_RUNTIME_CALLER_PROCESS, true);
+    caller.Revoke(MANAGE_TOOL_RUNTIME_PERMISSIONS);
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
+        AccessTokenKit::GetCliPermissions(host.GetTokenId(), DEFAULT_AGENT_ID, { BuildCliInfo() }, result));
+}
+
+/**
+ * @tc.name: GetSkillPermissions001
+ * @tc.desc: GetSkillPermissions with no permission.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenDenyTest, GetSkillPermissions001, TestSize.Level0)
+{
+    RestoreSelfCaller();
+    MockToken host(g_selfTokenId, MANAGE_RUNTIME_CALLER_PROCESS, true);
+    SkillPermissionsResult result;
+    {
+        MockToken caller(g_selfTokenId, MANAGE_RUNTIME_CALLER_PROCESS, false);
+        EXPECT_EQ(AccessTokenError::ERR_NOT_SYSTEM_APP,
+            AccessTokenKit::GetSkillPermissions(host.GetTokenId(), DEFAULT_AGENT_ID, { BuildSkillInfo() }, result));
+    }
+
+    MockToken caller(g_selfTokenId, MANAGE_RUNTIME_CALLER_PROCESS, true);
+    caller.Revoke(MANAGE_TOOL_RUNTIME_PERMISSIONS);
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
+        AccessTokenKit::GetSkillPermissions(host.GetTokenId(), DEFAULT_AGENT_ID, { BuildSkillInfo() }, result));
+}
+
+/**
+ * @tc.name: GenerateCliAuthResult001
+ * @tc.desc: GenerateCliAuthResult with no permission.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenDenyTest, GenerateCliAuthResult001, TestSize.Level0)
+{
+    RestoreSelfCaller();
+    MockToken host(g_selfTokenId, MANAGE_RUNTIME_CALLER_PROCESS, true);
+    ToolAuthResult result;
+    {
+        MockToken caller(g_selfTokenId, MANAGE_RUNTIME_CALLER_PROCESS, false);
+        EXPECT_EQ(AccessTokenError::ERR_NOT_SYSTEM_APP,
+            AccessTokenKit::GenerateCliAuthResult(host.GetTokenId(), DEFAULT_AGENT_ID, { BuildCliAuthInfo() }, result));
+    }
+
+    MockToken caller(g_selfTokenId, MANAGE_RUNTIME_CALLER_PROCESS, true);
+    caller.Revoke(MANAGE_TOOL_RUNTIME_PERMISSIONS);
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
+        AccessTokenKit::GenerateCliAuthResult(host.GetTokenId(), DEFAULT_AGENT_ID, { BuildCliAuthInfo() }, result));
+}
+
+/**
+ * @tc.name: GenerateSkillAuthResult001
+ * @tc.desc: GenerateSkillAuthResult with no permission.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenDenyTest, GenerateSkillAuthResult001, TestSize.Level0)
+{
+    RestoreSelfCaller();
+    MockToken host(g_selfTokenId, MANAGE_RUNTIME_CALLER_PROCESS, true);
+    ToolAuthResult result;
+    {
+        MockToken caller(g_selfTokenId, MANAGE_RUNTIME_CALLER_PROCESS, false);
+        EXPECT_EQ(AccessTokenError::ERR_NOT_SYSTEM_APP,
+            AccessTokenKit::GenerateSkillAuthResult(host.GetTokenId(), DEFAULT_AGENT_ID,
+                { BuildSkillAuthInfo() }, result));
+    }
+
+    MockToken caller(g_selfTokenId, MANAGE_RUNTIME_CALLER_PROCESS, true);
+    caller.Revoke(MANAGE_TOOL_RUNTIME_PERMISSIONS);
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
+        AccessTokenKit::GenerateSkillAuthResult(host.GetTokenId(), DEFAULT_AGENT_ID, { BuildSkillAuthInfo() }, result));
 }
 } // namespace AccessToken
 } // namespace Security

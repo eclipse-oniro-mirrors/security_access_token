@@ -34,6 +34,10 @@ constexpr uint32_t PROCESS_OWNERID_APP = 2;
 constexpr uint32_t PROCESS_OWNERID_DEBUG = 3;
 constexpr uint32_t PROCESS_OWNERID_COMPAT = 5;
 constexpr uint32_t PROCESS_OWNERID_APP_TEMP_ALLOW = 10;
+#ifdef IS_SUPPORT_HAP_RUNNING
+constexpr int32_t APP_DIST_TYPE_ENTERPRISE_NORMAL = 5;
+constexpr int32_t APP_DIST_TYPE_ENTERPRISE_MDM = 6;
+#endif
 }
 
 bool PermissionConstraintCheck::IsAclSatisfied(const PermissionBriefDef& briefDef, const HapPolicy& policy)
@@ -78,19 +82,23 @@ bool PermissionConstraintCheck::IsPermAvailableRangeSatisfied(const BundleParam&
             LOGI(ATM_DOMAIN, ATM_TAG, "Debug app use permission: %{public}s.", briefDef.permissionName);
             return true;
         }
-        if (param.distributionType != Verify::AppDistType::ENTERPRISE_MDM) {
+#ifdef IS_SUPPORT_HAP_RUNNING
+        if (param.distributionType != APP_DIST_TYPE_ENTERPRISE_MDM) {
             LOGE(ATM_DOMAIN, ATM_TAG, "%{public}s is a mdm permission, the hap is not a mdm application.",
                 briefDef.permissionName);
             rule = PERMISSION_EDM_RULE;
             return false;
         }
+#endif
     }
     if (briefDef.availableType == ATokenAvailableTypeEnum::ENTERPRISE_NORMAL) {
-        if (param.distributionType == Verify::AppDistType::ENTERPRISE_MDM ||
-            param.distributionType == Verify::AppDistType::ENTERPRISE_NORMAL ||
+#ifdef IS_SUPPORT_HAP_RUNNING
+        if (param.distributionType == APP_DIST_TYPE_ENTERPRISE_MDM ||
+            param.distributionType == APP_DIST_TYPE_ENTERPRISE_NORMAL ||
             param.isSystem || param.isDebug) {
             return true;
         }
+#endif
         LOGE(ATM_DOMAIN, ATM_TAG,
             "EnterpriseRuleCheck permission = %{public}s bundleName = %{public}s, apiVersion = %{public}d.",
             briefDef.permissionName, param.bundleName.c_str(), param.apiVersion);

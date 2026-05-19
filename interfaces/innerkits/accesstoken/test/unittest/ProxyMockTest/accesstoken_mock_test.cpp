@@ -97,6 +97,7 @@ std::vector<SkillAuthInfo> BuildClawSkillAuthInfos(size_t size = 1)
     }
     return authInfoList;
 }
+
 #ifdef TOKEN_SYNC_ENABLE
 static const int32_t FAKE_SYNC_RET = 0xabcdef;
 class TokenSyncCallbackImpl : public TokenSyncKitInterface {
@@ -339,7 +340,7 @@ HWTEST_F(AccessTokenMockTest, VerifyAccessTokenWithList001, TestSize.Level4)
 
     permStateList.clear();
     ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL,
-        AccessTokenKit::VerifyAccessToken(tokenId, permissionList, permStateList, false));
+        AccessTokenKit::VerifyAccessToken(tokenId, permissionList, permStateList, true));
 }
 
 /**
@@ -835,6 +836,7 @@ HWTEST_F(AccessTokenMockTest, GetPolicyWhiteList001, TestSize.Level4)
     ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL,
         AccessTokenKit::GetPolicyWhiteList("ohos.permission.INTERNET", tokenIdList));
 }
+
 #endif
 
 /**

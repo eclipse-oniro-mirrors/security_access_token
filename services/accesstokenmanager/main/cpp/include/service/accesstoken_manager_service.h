@@ -16,6 +16,7 @@
 #ifndef ACCESSTOKEN_MANAGER_SERVICE_H
 #define ACCESSTOKEN_MANAGER_SERVICE_H
 
+#include <map>
 #include <set>
 #include <string>
 #include <unordered_set>
@@ -49,6 +50,7 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 enum class ServiceRunningState { STATE_NOT_START, STATE_RUNNING };
+struct PolicyWhiteListUpdateInfo;
 class AccessTokenManagerService final : public SystemAbility, public AccessTokenManagerStub {
     DECLARE_DELAYED_SINGLETON(AccessTokenManagerService);
     DECLEAR_SYSTEM_ABILITY(AccessTokenManagerService);
@@ -198,6 +200,11 @@ private:
         std::vector<AddInfo>& addInfoVec);
     void UpdateDatabaseAsync(const std::vector<DelInfo>& delInfoVec, const std::vector<AddInfo>& addInfoVec);
     void HandlePermDefUpdate(const std::map<int32_t, TokenIdInfo>& tokenIdAplMap);
+#ifdef SUPPORT_MANAGE_USER_POLICY
+    void RollbackPolicyWhiteList(const PolicyWhiteListUpdateInfo& context);
+    int32_t HandlePolicyWhiteListUpdate(const PolicyWhiteListUpdateInfo& policyContext);
+    int32_t RefreshUserPolicyPermState(const std::vector<UserPolicyChange>& changedPolicyList);
+#endif
 
     void FilterPermFeature(bool isSystemApp, HapPolicy& policy);
     bool isInitialize_ = false;

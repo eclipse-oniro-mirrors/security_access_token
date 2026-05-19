@@ -24,6 +24,7 @@
 
 #include "claw_token_info_inner_base.h"
 #include "nocopyable.h"
+#include "user_policy_types.h"
 
 namespace OHOS {
 namespace Security {
@@ -41,7 +42,14 @@ public:
 
     bool IsToolToken(AccessTokenID tokenId) const;
     int32_t GetHostTokenId(AccessTokenID toolTokenId, AccessTokenID& hostTokenId) const;
+    int32_t GetUserId(AccessTokenID toolTokenId, int32_t& userId) const;
+    void GetToolTokenIDByUserID(int32_t userId, std::unordered_set<AccessTokenID>& tokenIdList) const;
     int32_t VerifyToolAccessToken(AccessTokenID tokenId, const std::string& permissionName) const;
+    int32_t UpdateRestrictedFlag(
+        AccessTokenID toolTokenId, uint32_t permCode, bool isRestricted, bool& hasFlagChanged) const;
+    int32_t RefreshTokenPermStateToKernel(
+        AccessTokenID tokenId, uint32_t permCode, bool isAllowed, const char* source, bool hasFlagChanged) const;
+    int32_t RefreshUserPolicyFlag(const std::vector<UserPolicyChange>& changedPolicyList) const;
     int32_t GetCliTokenInfo(AccessTokenID tokenId, CliTokenInfo& info) const;
     int32_t GetSkillTokenInfo(AccessTokenID tokenId, SkillTokenInfo& info) const;
 
@@ -62,6 +70,7 @@ private:
     int32_t FinalizeToolTokenInit(const std::shared_ptr<ClawTokenInfoInnerBase>& inner,
         const ClawTokenBaseInfo& baseInfo, const std::vector<PermissionStatus>& permStateList,
         std::vector<std::string>& kernelPermList);
+    int32_t RefreshUserPolicyFlagForUser(int32_t userId, const UserPolicyChange& policy) const;
     int32_t AddToolTokenInfoLocked(const std::shared_ptr<ClawTokenInfoInnerBase>& inner);
     std::shared_ptr<ClawTokenInfoInnerBase> RemoveToolTokenInfoLocked(AccessTokenID tokenId);
     std::shared_ptr<ClawTokenInfoInnerBase> RemoveToolTokenInfoByPidLocked(int32_t pid);

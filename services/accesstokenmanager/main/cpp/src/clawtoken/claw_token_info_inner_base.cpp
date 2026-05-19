@@ -33,6 +33,21 @@ int32_t ClawTokenInfoInnerBase::VerifyAccessToken(const std::string& permissionN
     return PermissionDataBrief::GetInstance().VerifyPermissionStatus(baseInfo_.tokenId, permissionName);
 }
 
+int32_t ClawTokenInfoInnerBase::UpdateRestrictedFlag(
+    uint32_t permCode, bool isRestricted, bool& hasFlagChanged) const
+{
+    hasFlagChanged = false;
+    PermissionDataBrief::PermissionStatusChangeType changeType =
+        PermissionDataBrief::PermissionStatusChangeType::NO_CHANGE;
+    int32_t ret = PermissionDataBrief::GetInstance().UpdatePermissionFlag(
+        baseInfo_.tokenId, permCode, PERMISSION_RESTRICTED_BY_ADMIN, isRestricted, changeType);
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
+    hasFlagChanged = changeType != PermissionDataBrief::PermissionStatusChangeType::NO_CHANGE;
+    return RET_SUCCESS;
+}
+
 AccessTokenID ClawTokenInfoInnerBase::GetTokenId() const
 {
     return baseInfo_.tokenId;

@@ -46,6 +46,7 @@ ohos_unittest("libaccesstoken_sdk_test") {
     "DistributedTest/register_token_sync_callback_test.cpp",
     "DistributedTest/set_remote_hap_token_info_test.cpp",
     "EdmPolicyTest/edm_policy_set_test.cpp",
+    "EdmPolicyTest/user_policy_test.cpp",
     "HapAttributeTest/get_hap_dlp_flag_test.cpp",
     "HapAttributeTest/get_permission_flag_test.cpp",
     "HapAttributeTest/get_permissions_status_test.cpp",
@@ -79,6 +80,7 @@ ohos_unittest("libaccesstoken_sdk_test") {
     "SaTest/get_native_token_info_test.cpp",
     "SaTest/get_version_test.cpp",
     "SecurityComponentTest/security_component_grant_test.cpp",
+    "common/mock_permission.cpp",
     "common/test_common.cpp",
   ]
 
@@ -112,10 +114,9 @@ ohos_unittest("libaccesstoken_sdk_test") {
     ]
   }
 
-  if (access_token_enhance_capability == false) {
-    sources += [ "ToolTokenTest/tool_token_with_empty_challenge_test.cpp" ]
-  }
-
+  if (access_token_enhance_capability == false) { 
+     sources += [ "ToolTokenTest/tool_token_with_empty_challenge_test.cpp" ] 
+   }
   if (access_token_enable_manual_test == true) {
     sources += [ "ToolTokenTest/tool_token_test.cpp" ]
   }

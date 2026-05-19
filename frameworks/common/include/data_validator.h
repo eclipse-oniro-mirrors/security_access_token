@@ -29,7 +29,7 @@ public:
 
     static bool IsPermissionNameValid(const std::string& permissionName);
 
-    static bool IsUserIdValid(const int userId);
+    static bool IsUserIdValid(int32_t userId);
 
     static bool IsToggleStatusValid(const uint32_t status);
 
@@ -37,9 +37,9 @@ public:
 
     static bool IsDomainValid(const std::string& domain);
 
-    static bool IsAplNumValid(const int apl);
+    static bool IsAplNumValid(int32_t apl);
 
-    static bool IsAvailableTypeValid(const int availableType);
+    static bool IsAvailableTypeValid(int32_t availableType);
 
     static bool IsProcessNameValid(const std::string& processName);
 
@@ -75,11 +75,10 @@ private:
     const static int MAX_LENGTH = 256;
     const static int MAX_DEVICE_NAME_LENGTH = 100;
     const static int MAX_APPIDDESC_LENGTH = 10240;
-    const static int MAX_DCAP_LENGTH = 1024;
     const static int MAX_ENHANCED_IDENTITY_LENGTH = 48;
     const static int32_t MAX_EXTENDED_MAP_SIZE = 512;
     const static int32_t MAX_VALUE_LENGTH = 1024;
-    const static int32_t MAX_PERMISSION_LIST_SIZE = 1024;
+    const static int32_t MAX_LIST_SIZE = 1024;
     const static int32_t MAX_FEATURE_SIZE = 64;
 };
 } // namespace AccessToken

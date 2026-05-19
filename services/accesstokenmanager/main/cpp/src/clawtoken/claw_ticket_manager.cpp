@@ -19,13 +19,8 @@
 
 #include "access_token_error.h"
 #include "accesstoken_common_log.h"
-#include "accesstoken_id_manager.h"
 #include "accesstoken_info_manager.h"
 #include "cjson_utils.h"
-#include "generic_values.h"
-#include "hap_token_info.h"
-#include "native_token_info_base.h"
-#include "permission_map.h"
 #include "saf_agent_fence.h"
 
 namespace OHOS {
@@ -56,11 +51,13 @@ std::string SerializeCliAuthInfo(const CliAuthInfo& cliAuth)
 {
     CJsonUnique cliObj = CreateJson();
     if (cliObj == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Create cli auth info failed");
         return "";
     }
 
     CJsonUnique cliInfoObj = CreateJson();
     if (cliInfoObj == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Create cli info object failed");
         return "";
     }
     (void)AddStringToJson(cliInfoObj, "cliName", cliAuth.cliInfo.cliName);
@@ -90,11 +87,13 @@ std::string SerializeSkillAuthInfo(const SkillAuthInfo& skillAuth)
 {
     CJsonUnique skillObj = CreateJson();
     if (skillObj == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Create skill auth info failed");
         return "";
     }
 
     CJsonUnique skillInfoObj = CreateJson();
     if (skillInfoObj == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Create skill info object failed");
         return "";
     }
     (void)AddStringToJson(skillInfoObj, "bundleName", skillAuth.skillInfo.bundleName);
@@ -129,6 +128,7 @@ CliAuthInfo DeserializeCliAuthInfo(const std::string& json)
     }
     CJsonUnique jsonRoot = CreateJsonFromString(json);
     if (jsonRoot == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Deserialize cli auth info failed");
         return cliAuth;
     }
     cJSON* root = jsonRoot.get();
@@ -160,10 +160,8 @@ CliAuthInfo DeserializeCliAuthInfo(const std::string& json)
             }
         }
     }
-
     return cliAuth;
 }
-
 SkillAuthInfo DeserializeSkillAuthInfo(const std::string& json)
 {
     SkillAuthInfo skillAuth;
@@ -172,6 +170,7 @@ SkillAuthInfo DeserializeSkillAuthInfo(const std::string& json)
     }
     CJsonUnique jsonRoot = CreateJsonFromString(json);
     if (jsonRoot == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Deserialize skill auth info failed");
         return skillAuth;
     }
     cJSON* root = jsonRoot.get();
@@ -291,7 +290,7 @@ int32_t ClawTicketManager::GenerateCliTicket(AccessTokenID callerTokenId,
     const std::vector<CliAuthInfo>& cliAuthInfos, std::vector<std::string>& authResults)
 {
     if (callerTokenId == INVALID_TOKENID) {
-        return AccessTokenError::ERR_TOKENID_NOT_EXIST;
+        return AccessTokenError::ERR_TOKEN_INVALID;
     }
 
     int32_t userId = GetUserIdByTokenId(callerTokenId);
@@ -315,11 +314,14 @@ int32_t ClawTicketManager::GenerateCliTicket(AccessTokenID callerTokenId,
     std::unique_lock<std::shared_mutex> lock(multiLock_);
 
     for (size_t i = 0; i < tickets.size(); ++i) {
+        authResults.emplace_back(tickets[i].challenge);
+        if (tickets[i].challenge.empty()) {
+            continue;
+        }
         ClawTicket ticket;
         ticket.callerTokenId = callerTokenId;
         ticket.message = tickets[i].message;
         ticket.ticket = tickets[i].ticket;
-        authResults.emplace_back(tickets[i].challenge);
         ticketMap_[tickets[i].challenge] = ticket;
     }
 
@@ -331,7 +333,7 @@ int32_t ClawTicketManager::GenerateSkillTicket(AccessTokenID callerTokenId,
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "callerTokenId=%{public}u", callerTokenId);
     if (callerTokenId == INVALID_TOKENID) {
-        return AccessTokenError::ERR_TOKENID_NOT_EXIST;
+        return AccessTokenError::ERR_TOKEN_INVALID;
     }
 
     int32_t userId = GetUserIdByTokenId(callerTokenId);
@@ -355,13 +357,15 @@ int32_t ClawTicketManager::GenerateSkillTicket(AccessTokenID callerTokenId,
     std::unique_lock<std::shared_mutex> lock(multiLock_);
 
     for (size_t i = 0; i < tickets.size(); ++i) {
+        authResults.emplace_back(tickets[i].challenge);
+        if (tickets[i].challenge.empty()) {
+            continue;
+        }
         ClawTicket ticket;
         ticket.callerTokenId = callerTokenId;
         ticket.message = tickets[i].message;
         ticket.ticket = tickets[i].ticket;
-        authResults.emplace_back(tickets[i].challenge);
         ticketMap_[tickets[i].challenge] = ticket;
-        LOGI(ATM_DOMAIN, ATM_TAG, "challenge=%{private}s", tickets[i].challenge.c_str());
     }
 
     return RET_SUCCESS;
@@ -373,7 +377,9 @@ int32_t ClawTicketManager::VerifyCliClawTicket(AccessTokenID hostTokenId, const 
     std::shared_lock<std::shared_mutex> lock(multiLock_);
 
 #ifndef ENHANCE_CAPABILITY
-    return RET_SUCCESS;
+    if (challenge.empty()) {
+        return RET_SUCCESS;
+    }
 #endif
 
     auto it = ticketMap_.find(challenge);
@@ -395,7 +401,10 @@ int32_t ClawTicketManager::VerifyCliClawTicket(AccessTokenID hostTokenId, const 
         LOGE(ATM_DOMAIN, ATM_TAG, "Verify cli ticket failed, ret=%{public}d", ret);
         return ret;
     }
-
+    if (hostTokenId != it->second.callerTokenId) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Verify cli ticket failed, hostTokenId=%{public}d", hostTokenId);
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
     for (size_t ticketIdx = 0; ticketIdx < verifyInfos.size(); ++ticketIdx) {
         bool ticketValid = (verifyRes[ticketIdx] == 0);
         CliAuthInfo cliAuth = DeserializeCliAuthInfo(verifyInfos[ticketIdx].message);

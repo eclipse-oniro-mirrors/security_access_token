@@ -44,6 +44,10 @@ const std::map<std::string, int32_t> Constant::PERMISSION_OPCODE_MAP = {
         "ohos.permission.APPROXIMATELY_LOCATION", Constant::OP_APPROXIMATELY_LOCATION),
     std::map<std::string, int32_t>::value_type(
         "ohos.permission.cli.CONTROL_LOCATION_SWITCH", Constant::OP_CLI_CONTROL_LOCATION_SWITCH),
+    std::map<std::string, int32_t>::value_type(
+        "ohos.permission.cli.SET_HOTSPOT", Constant::OP_CLI_SET_HOTSPOT),
+    std::map<std::string, int32_t>::value_type(
+        "ohos.permission.cli.GET_HOTSPOT", Constant::OP_CLI_GET_HOTSPOT),
     std::map<std::string, int32_t>::value_type("ohos.permission.MEDIA_LOCATION", Constant::OP_MEDIA_LOCATION),
     std::map<std::string, int32_t>::value_type("ohos.permission.CAMERA", Constant::OP_CAMERA),
     std::map<std::string, int32_t>::value_type("ohos.permission.READ_MEDIA", Constant::OP_READ_MEDIA),
@@ -118,6 +122,12 @@ const std::map<std::string, int32_t> Constant::PERMISSION_OPCODE_MAP = {
         Constant::OP_ACCESS_USER_FULL_DISK_WRITE),
     std::map<std::string, int32_t>::value_type("ohos.permission.cli.BUNDLE_ACTIVE_INFO",
         Constant::OP_CLI_BUNDLE_ACTIVE_INFO),
+    std::map<std::string, int32_t>::value_type("ohos.permission.cli.WRITE_ACCESSIBILITY_CONFIG_VISION",
+        Constant::OP_CLI_WRITE_ACCESSIBILITY_CONFIG_VISION),
+    std::map<std::string, int32_t>::value_type("ohos.permission.cli.WRITE_ACCESSIBILITY_CONFIG_HEARING",
+        Constant::OP_CLI_WRITE_ACCESSIBILITY_CONFIG_HEARING),
+    std::map<std::string, int32_t>::value_type("ohos.permission.cli.WRITE_ACCESSIBILITY_CONFIG_ACTION",
+        Constant::OP_CLI_WRITE_ACCESSIBILITY_CONFIG_ACTION),
 };
 
 bool Constant::TransferPermissionToOpcode(const std::string& permissionName, int32_t& opCode)

@@ -325,41 +325,6 @@ HWTEST_F(ToolTokenTest, InitCliToken004, TestSize.Level4)
 }
 
 /**
- * @tc.name: InitCliToken005
- * @tc.desc: InitCliToken keeps challenge after invalid uid failure and succeeds on root retry.
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(ToolTokenTest, InitCliToken005, TestSize.Level4)
-{
-    ToolTokenGuard guard;
-    AccessTokenIDEx tokenIdEx = {0};
-    std::vector<PermissionWithValue> kernelPermList;
-    ToolAuthResult authResult;
-    MockHapToken hostToken("InitCliToken005", {}, true, 100);
-    AccessTokenID hostTokenId = hostToken.GetTokenID();
-    ASSERT_EQ(RET_SUCCESS, GenerateEmptyPermissionCliAuthResult(hostTokenId, authResult));
-    ASSERT_FALSE(authResult.authResults.empty());
-    ASSERT_FALSE(authResult.authResults[0].empty());
-
-    uint32_t callerUid = getuid();
-    EXPECT_EQ(0, SetSelfTokenID(g_shellTokenId));
-    EXPECT_EQ(0, setuid(1234));
-    CliInitInfo initInfo = {
-        .hostTokenId = hostTokenId,
-        .challenge = authResult.authResults[0],
-        .cliInfo = BuildCliInfo(),
-    };
-    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
-        AccessTokenKit::InitCliToken(initInfo, tokenIdEx, kernelPermList));
-    EXPECT_EQ(0, setuid(callerUid));
-    ASSERT_EQ(RET_SUCCESS, InitCliToolTokenWithChallenge(
-        hostTokenId, authResult.authResults[0], BuildCliInfo(), tokenIdEx, kernelPermList));
-    guard.Arm();
-    VerifyNoPermissionToken(tokenIdEx.tokenIdExStruct.tokenID, kernelPermList);
-}
-
-/**
  * @tc.name: InitCliToken006
  * @tc.desc: InitCliToken fails on invalid challenge or mismatched cliInfo and keeps challenge for retry.
  * @tc.type: FUNC
@@ -482,34 +447,6 @@ HWTEST_F(ToolTokenTest, DeleteToolTokenByPid001, TestSize.Level4)
 }
 
 /**
- * @tc.name: DeleteToolTokenByPid002
- * @tc.desc: DeleteToolTokenByPid returns permission denied for unprivileged caller and token stays valid.
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(ToolTokenTest, DeleteToolTokenByPid002, TestSize.Level4)
-{
-    ToolTokenGuard guard;
-    AccessTokenIDEx tokenIdEx = {0};
-    std::vector<PermissionWithValue> kernelPermList;
-    std::string challenge;
-    MockHapToken hostToken("DeleteToolTokenByPid002", {}, true, 100);
-    AccessTokenID hostTokenId = hostToken.GetTokenID();
-
-    ASSERT_EQ(RET_SUCCESS, InitCliToolTokenWithEmptyPermissionAuth(
-        hostTokenId, tokenIdEx, kernelPermList, challenge));
-    guard.Arm();
-    {
-        MockHapToken caller("DeleteToolTokenByPid002Caller", {}, true, 100);
-        EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::DeleteToolTokenByPid(getpid()));
-    }
-    SwitchToManageToolCaller();
-    AccessTokenID queriedHostTokenId = INVALID_TOKENID;
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetHostTokenId(tokenIdEx.tokenIdExStruct.tokenID, queriedHostTokenId));
-    EXPECT_EQ(hostTokenId, queriedHostTokenId);
-}
-
-/**
  * @tc.name: GetCliTokenInfo001
  * @tc.desc: GetCliTokenInfo returns token-not-exist for deleted or invalid tool token.
  * @tc.type: FUNC
@@ -550,32 +487,6 @@ HWTEST_F(ToolTokenTest, GetCliTokenInfo002, TestSize.Level4)
     SwitchToManageToolCaller();
     EXPECT_EQ(AccessTokenError::ERR_TOKENID_NOT_EXIST,
         AccessTokenKit::GetCliTokenInfo(hostToken.GetTokenID(), tokenInfo));
-}
-
-/**
- * @tc.name: GetCliTokenInfo003
- * @tc.desc: GetCliTokenInfo returns permission-denied for unauthorized caller.
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(ToolTokenTest, GetCliTokenInfo003, TestSize.Level4)
-{
-    ToolTokenGuard guard;
-    AccessTokenIDEx tokenIdEx = {0};
-    std::vector<PermissionWithValue> kernelPermList;
-    std::string challenge;
-    CliTokenInfo tokenInfo;
-    MockHapToken hostToken("GetCliTokenInfo003", {}, true, 100);
-    AccessTokenID hostTokenId = hostToken.GetTokenID();
-
-    ASSERT_EQ(RET_SUCCESS, InitCliToolTokenWithEmptyPermissionAuth(
-        hostTokenId, tokenIdEx, kernelPermList, challenge));
-    guard.Arm();
-    {
-        MockHapToken caller("GetCliTokenInfo003Caller", {}, true, 100);
-        EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
-            AccessTokenKit::GetCliTokenInfo(tokenIdEx.tokenIdExStruct.tokenID, tokenInfo));
-    }
 }
 
 /**

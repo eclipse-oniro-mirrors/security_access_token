@@ -63,6 +63,7 @@ group("fuzztest") {
     "setpermissionrequesttogglestatusstub_fuzzer:SetPermissionRequestToggleStatusStubFuzzTest",
     "setpermissionstatuswithpolicystub_fuzzer:SetPermissionStatusWithPolicyStubFuzzTest",
     "setremotehaptokeninfostub_fuzzer:SetRemoteHapTokenInfoStubFuzzTest",
+    "tooltokenstub_fuzzer:ToolTokenStubFuzzTest",
     "updatehaptokenstub_fuzzer:UpdateHapTokenStubFuzzTest",
     "verifyaccesstokenstub_fuzzer:VerifyAccessTokenStubFuzzTest",
     "verifyaccesstokenwithliststub_fuzzer:VerifyAccessTokenWithListStubFuzzTest",

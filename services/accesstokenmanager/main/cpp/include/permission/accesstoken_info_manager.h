@@ -35,6 +35,8 @@
 #include "hap_token_info_inner.h"
 #include "native_token_info_base.h"
 #include "json_parse_loader.h"
+#include "permission_data_brief.h"
+#include "user_policy_types.h"
 #include "verify_accesstoken_monitor.h"
 
 namespace OHOS {
@@ -46,12 +48,6 @@ class AccessTokenDmInitCallback final : public DistributedHardware::DmInitCallba
     {}
 };
 #endif
-
-struct UserPolicyInner {
-    uint32_t permCode;
-    std::vector<int32_t> userList;
-    std::map<int32_t, bool> changedUserList;
-};
 
 /**
  * @brief Apl and isSystemApp info about tokenId
@@ -94,17 +90,12 @@ public:
     void GetRelatedSandBoxHapList(AccessTokenID tokenId, std::vector<AccessTokenID>& tokenIdList);
     int32_t GetHapTokenDlpType(AccessTokenID id);
     int32_t SetPermDialogCap(AccessTokenID tokenID, bool enable);
-#ifdef SUPPORT_MANAGE_USER_POLICY
-    int32_t SetUserPolicy(const std::vector<UserPermissionPolicy>& userPermissionList);
-    int32_t ClearUserPolicy(const std::vector<std::string>& permissionList);
-    int32_t UpdatePolicyWhiteList(AccessTokenID tokenId, uint32_t permCode, UpdateWhiteListType type);
-    int32_t GetPolicyWhiteList(uint32_t permCode, std::vector<AccessTokenID>& tokenIdList);
-#endif
     bool GetPermDialogCap(AccessTokenID tokenID);
     void ClearUserGrantedPermissionState(AccessTokenID tokenID);
     int32_t ClearUserGrantedPermission(AccessTokenID tokenID);
-    bool IsPermissionRestrictedByUserPolicy(AccessTokenID id, uint32_t permCode);
-    std::vector<uint32_t> GetRestrictedPermListByUserId(int32_t userId);
+    int32_t UpdateRestrictedFlagAndRefreshKernel(
+        AccessTokenID tokenId, uint32_t permCode, bool isRestricted, bool isPersist, const char* source);
+    int32_t RefreshUserPolicyFlag(const std::vector<UserPolicyChange>& changedPolicyList);
     int32_t VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName);
     int32_t VerifyNativeAccessToken(AccessTokenID tokenID, const std::string& permissionName);
     bool GetApiVersionByTokenId(AccessTokenID tokenID, int32_t& apiVersion);
@@ -183,13 +174,13 @@ private:
         const std::shared_ptr<HapTokenInfoInner>& info, bool isTokenReserved, AccessTokenID reservedTokenId);
     int CreateRemoteHapTokenInfo(AccessTokenID mapID, HapTokenInfoForSync& hapSync);
     int UpdateRemoteHapTokenInfo(AccessTokenID mapID, HapTokenInfoForSync& hapSync);
-#ifdef SUPPORT_MANAGE_USER_POLICY
-    void UpdatePermissionStateToKernel(uint32_t permCode, const std::map<int32_t, bool>& changedUserList);
-    void UpdatePermissionStateToKernel(AccessTokenID tokenId, uint32_t permCode, bool isActive);
-    void GetHapTokenInfoListByUserId(
-        const std::map<int32_t, bool>& changedUserList, std::map<AccessTokenID, bool>& tokenIdList);
-    bool IsInPolicyWhiteList(AccessTokenID tokenId, uint32_t permCode) const;
-#endif
+    void DumpHapTokenInfoByTokenId(const AccessTokenID tokenId, std::string& dumpInfo);
+    void DumpHapTokenInfoByBundleName(const std::string& bundleName, std::string& dumpInfo);
+    void DumpAllHapTokenname(std::string& dumpInfo);
+    void DumpNativeTokenInfoByProcessName(const std::string& processName, std::string& dumpInfo);
+    void DumpAllNativeTokenName(std::string& dumpInfo);
+    int32_t AddPermRequestToggleStatusToDb(int32_t userID, const std::string& permissionName, int32_t status);
+    int32_t FindPermRequestToggleStatusFromDb(int32_t userID, const std::string& permissionName);
     void GetNativePermissionList(const NativeTokenInfoBase& native,
         std::vector<uint32_t>& opCodeList, std::vector<bool>& statusList);
     std::string NativeTokenToString(AccessTokenID tokenID);
@@ -198,6 +189,11 @@ private:
         std::vector<GenericValues>& permStateResults);
     int32_t FindPermissionByTokenIdFromDb(const std::vector<AccessTokenID>& tokenIDList,
         std::vector<GenericValues>& permStateResults);
+    int32_t UpdateRestrictedFlag(
+        AccessTokenID tokenId, uint32_t permCode, bool isRestricted, bool isPersist, bool& hasFlagChanged);
+    int32_t RefreshTokenPermStateToKernel(
+        AccessTokenID tokenId, uint32_t permCode, bool isAllowed, const char* source, bool hasFlagChanged);
+    int32_t RefreshUserPolicyFlagForUser(int32_t userId, const UserPolicyChange& policy);
     int32_t CheckHapInfoParam(const HapInfoParams& info, const HapPolicy& policy);
     std::shared_ptr<HapTokenInfoInner> GetHapTokenInfoInnerFromDb(AccessTokenID id);
     void RemoveReservedHapTokenId(int32_t userID, const std::string& bundleName, int32_t instIndex);
@@ -223,13 +219,6 @@ private:
     std::map<std::string, std::shared_ptr<BundleInfoInner>> bundleInfoMap_;
     std::map<std::string, AccessTokenID> reservedHapTokenIdMap_;
     std::map<uint32_t, NativeTokenInfoCache> nativeTokenInfoMap_;
-
-#ifdef SUPPORT_MANAGE_USER_POLICY
-    std::shared_mutex userPolicyLock_;
-    std::map<uint32_t, std::vector<int32_t>> userPermPolicyList_; // key-permCode, value-userid
-    std::map<uint32_t, uint32_t> policyController_; // key-permCode, value-callerToken
-    std::map<uint32_t, std::unordered_set<AccessTokenID>> policyWhiteList_; // key-permCode, value-tokenId
-#endif
 
     std::shared_ptr<VerifyAccessTokenMonitor> tokenMonitor_;
     std::shared_mutex monitorLock_;

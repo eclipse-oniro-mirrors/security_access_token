@@ -30,6 +30,7 @@
 #include "callback_death_recipients.h"
 #include "parameters.h"
 #include "permission_data_brief.h"
+#include "provision/provision_info.h"
 #include "token_field_const.h"
 #include "token_setproc.h"
 
@@ -309,7 +310,7 @@ HWTEST_F(PermissionManagerCoverageTest, InitPermissionList001, TestSize.Level4)
     policy.preAuthorizationInfo.emplace_back(info);
 
     BundleParam param;
-    param.distributionType = Verify::AppDistType::OS_INTEGRATION;
+    param.distributionType = static_cast<int32_t>(Verify::AppDistType::OS_INTEGRATION);
     std::vector<PermissionStatus> initializedList;
     HapInfoCheckResult result;
     std::vector<GenericValues> undefValues;
@@ -583,7 +584,7 @@ HWTEST_F(PermissionManagerCoverageTest, IsPermAvailableRangeSatisfied001, TestSi
     char permissionName[] = "ohos.permission.FILE_GUARD_MANAGER";
     briefDef.permissionName = permissionName;
     BundleParam param;
-    param.distributionType = Verify::AppDistType::OS_INTEGRATION;
+    param.distributionType = static_cast<int32_t>(Verify::AppDistType::OS_INTEGRATION);
     PermissionRulesEnum rule;
     system::SetBoolParameter(ENTERPRISE_NORMAL_CHECK, true);
     ASSERT_FALSE(PermissionConstraintCheck::IsPermAvailableRangeSatisfied(param, briefDef, rule));

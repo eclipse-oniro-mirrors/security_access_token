@@ -255,6 +255,12 @@ int32_t InitCliToolTokenWithEmptyChallengeForPrivacy(AccessTokenID hostTokenId,
 {
     uint64_t callerTokenId = GetSelfTokenID();
     uint32_t callerUid = getuid();
+    HapTokenInfo hapTokenInfo;
+    int32_t hapInfoRet = AccessTokenKit::GetHapTokenInfo(hostTokenId, hapTokenInfo);
+    if (hapInfoRet != RET_SUCCESS) {
+        GTEST_LOG_(INFO) << "InitCliToolTokenWithEmptyChallengeForPrivacy host info, userId="
+                         << hapTokenInfo.userID << ", bundleName=" << hapTokenInfo.bundleName;
+    }
     EXPECT_EQ(0, SetSelfTokenID(g_shellToken));
     EXPECT_EQ(0, setuid(0));
     CliInitInfo initInfo = {
@@ -613,6 +619,89 @@ HWTEST_F(PrivacyKitTest, PrivacyToolToken001, TestSize.Level1)
 }
 
 /**
+ * @tc.name: PrivacyToolToken007
+ * @tc.desc: Legal cli token can add used record only for itself without PERMISSION_USED_STATS.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, PrivacyToolToken007, TestSize.Level1)
+{
+    ToolTokenGuard guard;
+    AccessTokenID hostTokenId = INVALID_TOKENID;
+    AccessTokenIDEx toolTokenIdEx = {0};
+    std::vector<PermissionWithValue> kernelPermList;
+    const std::string hostBundle = "ohos.privacy.tool.host.add.self";
+    {
+        MockHapToken hostToken(hostBundle, {}, true);
+        hostTokenId = GetSelfTokenID();
+        ASSERT_NE(INVALID_TOKENID, hostTokenId);
+        ASSERT_EQ(RET_SUCCESS, InitCliToolTokenWithEmptyChallengeForPrivacy(
+            hostTokenId, toolTokenIdEx, kernelPermList));
+        ASSERT_NE(INVALID_TOKENID, toolTokenIdEx.tokenIdExStruct.tokenID);
+        guard.Arm();
+
+        AddPermParamInfo info;
+        info.tokenId = toolTokenIdEx.tokenIdExStruct.tokenID;
+        info.permissionName = "ohos.permission.LOCATION";
+        info.successCount = 1;
+        info.failCount = 0;
+        ASSERT_EQ(0, SetSelfTokenID(toolTokenIdEx.tokenIDEx));
+        ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info));
+        ASSERT_EQ(0, SetSelfTokenID(g_selfTokenId));
+
+        PermissionUsedRequest request;
+        PermissionUsedResult result;
+        std::vector<std::string> permissionList = {"ohos.permission.LOCATION"};
+        BuildQueryRequest(hostTokenId, hostBundle, permissionList, request);
+        ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
+        ASSERT_EQ(static_cast<size_t>(1), result.bundleRecords.size());
+        CheckPermissionUsedResult(request, result, 1, 1, 0);
+        EXPECT_EQ(hostTokenId, result.bundleRecords[0].tokenId);
+
+        EXPECT_EQ(RET_NO_ERROR, PrivacyKit::RemovePermissionUsedRecords(hostTokenId));
+    }
+}
+
+/**
+ * @tc.name: PrivacyToolToken008
+ * @tc.desc: Legal cli token cannot add used record for unrelated token without PERMISSION_USED_STATS.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, PrivacyToolToken008, TestSize.Level1)
+{
+    ToolTokenGuard guard;
+    AccessTokenID hostTokenId = INVALID_TOKENID;
+    AccessTokenID otherHostTokenId = INVALID_TOKENID;
+    AccessTokenIDEx toolTokenIdEx = {0};
+    std::vector<PermissionWithValue> kernelPermList;
+    {
+        MockHapToken hostToken("ohos.privacy.tool.host.owner", {}, true);
+        hostTokenId = GetSelfTokenID();
+        ASSERT_NE(INVALID_TOKENID, hostTokenId);
+        ASSERT_EQ(RET_SUCCESS, InitCliToolTokenWithEmptyChallengeForPrivacy(
+            hostTokenId, toolTokenIdEx, kernelPermList));
+        ASSERT_NE(INVALID_TOKENID, toolTokenIdEx.tokenIdExStruct.tokenID);
+        guard.Arm();
+    }
+
+    {
+        MockHapToken otherHostToken("ohos.privacy.tool.host.other", {}, true);
+        otherHostTokenId = GetSelfTokenID();
+        ASSERT_NE(INVALID_TOKENID, otherHostTokenId);
+    }
+
+    AddPermParamInfo info;
+    info.tokenId = otherHostTokenId;
+    info.permissionName = "ohos.permission.LOCATION";
+    info.successCount = 1;
+    info.failCount = 0;
+    ASSERT_EQ(0, SetSelfTokenID(toolTokenIdEx.tokenIDEx));
+    EXPECT_EQ(PrivacyError::ERR_PERMISSION_DENIED, PrivacyKit::AddPermissionUsedRecord(info));
+    ASSERT_EQ(0, SetSelfTokenID(g_selfTokenId));
+}
+
+/**
  * @tc.name: PrivacyToolToken002
  * @tc.desc: StartUsingPermission callback reports host token when input token is tool token.
  * @tc.type: FUNC
@@ -837,6 +926,92 @@ HWTEST_F(PrivacyKitTest, PrivacyToolToken006, TestSize.Level1)
         EXPECT_EQ(hostTokenId, callbackPtr->tokenId_);
         EXPECT_EQ("ohos.permission.LOCATION", callbackPtr->permissionName_);
         EXPECT_EQ(RET_NO_ERROR, PrivacyKit::UnRegisterPermActiveStatusCallback(callbackPtr));
+    }
+}
+
+/**
+ * @tc.name: PrivacyToolToken009
+ * @tc.desc: Legal cli token with non-empty challenge can add used record for its related host token
+ *           without PERMISSION_USED_STATS.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, PrivacyToolToken009, TestSize.Level1)
+{
+    AccessTokenID hostTokenId = INVALID_TOKENID;
+    AccessTokenIDEx toolTokenIdEx = {0};
+    std::vector<PermissionWithValue> kernelPermList;
+    const std::string hostBundle = "ohos.privacy.tool.host.add.self.enhance";
+    {
+        MockHapToken hostToken(hostBundle, {}, true, USER_ID_ENABLE);
+        ToolTokenGuard guard;
+        hostTokenId = GetSelfTokenID();
+        ASSERT_NE(INVALID_TOKENID, hostTokenId);
+        ASSERT_EQ(RET_SUCCESS, InitCliToolTokenWithAuthResultForPrivacy(
+            hostTokenId, toolTokenIdEx, kernelPermList));
+        ASSERT_NE(INVALID_TOKENID, toolTokenIdEx.tokenIdExStruct.tokenID);
+        EXPECT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(
+            toolTokenIdEx.tokenIdExStruct.tokenID, "ohos.permission.LOCATION"));
+        guard.Arm();
+
+        AddPermParamInfo info;
+        info.tokenId = hostTokenId;
+        info.permissionName = "ohos.permission.LOCATION";
+        info.successCount = 1;
+        info.failCount = 0;
+        ASSERT_EQ(0, SetSelfTokenID(toolTokenIdEx.tokenIDEx));
+        ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info));
+        ASSERT_EQ(0, SetSelfTokenID(g_selfTokenId));
+
+        PermissionUsedRequest request;
+        PermissionUsedResult result;
+        std::vector<std::string> permissionList = {"ohos.permission.LOCATION"};
+        BuildQueryRequest(hostTokenId, hostBundle, permissionList, request);
+        ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
+        ASSERT_EQ(static_cast<size_t>(1), result.bundleRecords.size());
+        CheckPermissionUsedResult(request, result, 1, 1, 0);
+        EXPECT_EQ(hostTokenId, result.bundleRecords[0].tokenId);
+        EXPECT_EQ(RET_NO_ERROR, PrivacyKit::RemovePermissionUsedRecords(hostTokenId));
+    }
+}
+
+/**
+ * @tc.name: PrivacyToolToken010
+ * @tc.desc: Legal cli token with non-empty challenge cannot add used record for unrelated host token
+ *           without PERMISSION_USED_STATS.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, PrivacyToolToken010, TestSize.Level1)
+{
+    AccessTokenID hostTokenId = INVALID_TOKENID;
+    AccessTokenID otherHostTokenId = INVALID_TOKENID;
+    AccessTokenIDEx toolTokenIdEx = {0};
+    std::vector<PermissionWithValue> kernelPermList;
+    {
+        MockHapToken hostToken("ohos.privacy.tool.host.owner.enhance", {}, true, USER_ID_ENABLE);
+        hostTokenId = GetSelfTokenID();
+        ASSERT_NE(INVALID_TOKENID, hostTokenId);
+        ASSERT_EQ(RET_SUCCESS, InitCliToolTokenWithAuthResultForPrivacy(
+            hostTokenId, toolTokenIdEx, kernelPermList));
+        ASSERT_NE(INVALID_TOKENID, toolTokenIdEx.tokenIdExStruct.tokenID);
+        EXPECT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(
+            toolTokenIdEx.tokenIdExStruct.tokenID, "ohos.permission.LOCATION"));
+
+        MockHapToken otherHostToken("ohos.privacy.tool.host.other.enhance", {}, true, USER_ID_ENABLE);
+        ToolTokenGuard guard;
+        otherHostTokenId = GetSelfTokenID();
+        ASSERT_NE(INVALID_TOKENID, otherHostTokenId);
+        guard.Arm();
+
+        AddPermParamInfo info;
+        info.tokenId = otherHostTokenId;
+        info.permissionName = "ohos.permission.LOCATION";
+        info.successCount = 1;
+        info.failCount = 0;
+        ASSERT_EQ(0, SetSelfTokenID(toolTokenIdEx.tokenIDEx));
+        EXPECT_EQ(PrivacyError::ERR_PERMISSION_DENIED, PrivacyKit::AddPermissionUsedRecord(info));
+        ASSERT_EQ(0, SetSelfTokenID(g_selfTokenId));
     }
 }
 #endif

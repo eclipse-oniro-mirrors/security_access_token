@@ -21,7 +21,9 @@
 #include <vector>
 
 #include "access_token.h"
+#ifdef IS_SUPPORT_HAP_RUNNING
 #include "provision/provision_info.h"
+#endif
 
 namespace OHOS {
 namespace Security {
@@ -32,7 +34,7 @@ struct BundleParam final {
     std::string appId;
     uint64_t appIdentifier = 0;
     int32_t apiVersion = 0;
-    Verify::AppDistType distributionType = Verify::AppDistType::NONE_TYPE;
+    int32_t distributionType = 0;
     bool isSystem = false;
     bool isAtomicService = false;
     bool isDebug = false;
@@ -41,7 +43,7 @@ struct BundleParam final {
 class BundleNoCachedInfo final {
 public:
     ATokenAplEnum apl = APL_INVALID;
-    Verify::AppDistType distributionType = Verify::AppDistType::NONE_TYPE;
+    int32_t distributionType = 0;
     uint32_t idType = 0;
     uint64_t ownerid = 0;
 };

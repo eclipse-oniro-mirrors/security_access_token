@@ -61,6 +61,7 @@ group("fuzztest") {
     "setpermissionrequesttogglestatus_fuzzer:SetPermissionRequestToggleStatusFuzzTest",
     "setpermissionstatuswithpolicy_fuzzer:SetPermissionStatusWithPolicyFuzzTest",
     "setuserpolicy_fuzzer:SetUserPolicyFuzzTest",
+    "tooltokenlifecycle_fuzzer:ToolTokenLifecycleFuzzTest",
     "unregisterpermstatechangecallback_fuzzer:UnRegisterPermStateChangeCallbackFuzzTest",
     "updatehaptoken_fuzzer:UpdateHapTokenFuzzTest",
     "verifyaccesstoken001_fuzzer:VerifyAccessToken001FuzzTest",
