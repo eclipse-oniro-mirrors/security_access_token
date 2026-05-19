@@ -35,7 +35,7 @@ ohos_unittest("libpermission_monitor_test") {
 
   sources = [
     "common/parameter.cpp",
-    "permission/access_token_monitor_test.cpp", #need execute firstly
+    "permission/access_token_monitor_test.cpp", # need execute firstly
   ]
 
   sources += accesstoken_manager_base_config.sources
