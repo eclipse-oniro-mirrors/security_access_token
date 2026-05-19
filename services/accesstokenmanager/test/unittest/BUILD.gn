@@ -35,7 +35,7 @@ ohos_unittest("libpermission_monitor_test") {
 
   sources = [
     "common/parameter.cpp",
-    "permission/access_token_monitor_test.cpp",
+    "permission/access_token_monitor_test.cpp", #need execute firstly
   ]
 
   sources += accesstoken_manager_base_config.sources
@@ -115,9 +115,6 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
 
   cflags_cc = accesstoken_manager_base_config.cflags_cc
   cflags_cc += [ "-DATM_TEST_ENABLE" ]
-  if (support_jsapi) {
-    cflags_cc += [ "-DSUPPORT_JSAPI" ]
-  }
 
   configs = accesstoken_manager_base_config.configs
 
