@@ -47,6 +47,7 @@ enum RdbErrorCode {
 enum ColumnType {
     TYPE_INTEGER,
     TYPE_STRING,
+    TYPE_BLOB,
 };
 
 class ValueObject {
@@ -63,6 +64,7 @@ public:
     void PutString(std::string a, std::string b);
     void PutInt(std::string a, int32_t b);
     void PutLong(std::string a, int64_t b);
+    void PutBlob(std::string a, std::vector<uint8_t> b);
 
 private:
     bool isEmpty_ = true;
@@ -79,9 +81,13 @@ public:
     void GetInt(int32_t a, int32_t& b);
     void GetLong(int32_t a, int64_t& b);
     void GetString(int32_t a, std::string& b);
+    void GetBlob(int32_t a, std::vector<uint8_t>& b);
 
-private:
-    bool hasNext_ = true;
+    std::vector<std::string> columnNames_;
+    NativeRdb::ColumnType columnType_ = TYPE_INTEGER;
+    std::vector<uint8_t> blobData_;
+    std::vector<std::vector<std::string>> rowData_;
+    size_t currentRowIndex_ = 0;
 };
 
 typedef ResultSet AbsSharedResultSet;
@@ -144,6 +150,7 @@ public:
     std::pair<int32_t, std::shared_ptr<OHOS::NativeRdb::Transaction>> CreateTransaction(
         OHOS::NativeRdb::Transaction::TransactionType type);
     int32_t ExecuteSql(const std::string& a);
+    std::shared_ptr<ResultSet> QuerySql(const std::string& sql, const std::vector<std::string>& args = {});
 
     RdbStoreConfig config_;
     int32_t createTransFlag_ = 0;
@@ -153,6 +160,11 @@ public:
     std::vector<int32_t> executeSqlResults_;
     size_t executeSqlIndex_ = 0;
     std::shared_ptr<OHOS::NativeRdb::Transaction> transaction_;
+    std::vector<std::string> queryColumnNames_;
+    NativeRdb::ColumnType queryColumnType_ = TYPE_INTEGER;
+    std::vector<uint8_t> queryBlobData_;
+    std::vector<std::vector<std::vector<std::string>>> querySqlResults_;
+    size_t querySqlIndex_ = 0;
 };
 
 class RdbOpenCallback {

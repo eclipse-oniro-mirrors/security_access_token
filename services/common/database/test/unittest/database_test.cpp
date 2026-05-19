@@ -134,6 +134,37 @@ HWTEST_F(DatabaseTest, VariantValue001, TestSize.Level0)
     EXPECT_EQ(ValueType::TYPE_NULL, Test.GetType());
 }
 
+/**
+ * @tc.name: PutBlob001
+ * @tc.desc: Verify the GenericValues put and get blob value function.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DatabaseTest, PutBlob001, TestSize.Level0)
+{
+    GenericValues genericValues;
+    std::string key = "blob_test";
+    std::vector<uint8_t> data = { 1, 2, 3, 4 };
+    genericValues.PutBlob(key, data);
+    EXPECT_EQ(genericValues.GetBlob(key), data);
+    genericValues.Remove(key);
+    EXPECT_TRUE(genericValues.GetBlob(key).empty());
+}
+
+/**
+ * @tc.name: VariantValueBlob001
+ * @tc.desc: Verify VariantValue stores blob values.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DatabaseTest, VariantValueBlob001, TestSize.Level0)
+{
+    std::vector<uint8_t> data = { 7, 8, 9 };
+    VariantValue test(data);
+    EXPECT_EQ(test.GetType(), ValueType::TYPE_BLOB);
+    EXPECT_EQ(test.GetBlob(), data);
+}
+
 static void RemoveTestTokenHapInfo()
 {
     GenericValues condition;

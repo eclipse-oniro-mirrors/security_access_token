@@ -18,6 +18,7 @@
 
 #include <string>
 #include <variant>
+#include <vector>
 
 namespace OHOS {
 namespace Security {
@@ -27,6 +28,7 @@ enum class ValueType {
     TYPE_INT,
     TYPE_INT64,
     TYPE_STRING,
+    TYPE_BLOB,
 };
 
 class VariantValue final {
@@ -37,17 +39,19 @@ public:
     explicit VariantValue(int32_t value);
     explicit VariantValue(int64_t value);
     explicit VariantValue(const std::string& value);
+    explicit VariantValue(const std::vector<uint8_t>& value);
 
     ValueType GetType() const;
     int32_t GetInt() const;
     int64_t GetInt64() const;
     std::string GetString() const;
+    std::vector<uint8_t> GetBlob() const;
 
     static const int32_t DEFAULT_VALUE = -1;
 
 private:
     ValueType type_;
-    std::variant<int32_t, int64_t, std::string> value_;
+    std::variant<int32_t, int64_t, std::string, std::vector<uint8_t>> value_;
 };
 } // namespace AccessToken
 } // namespace Security
