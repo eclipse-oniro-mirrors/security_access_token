@@ -197,6 +197,10 @@ int32_t PermissionDataBrief::GetReqPermissionByName(
         }
     }
 
+    if (!IsDefinedPermissionInner(permissionName)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "PermissionName is invalid %{public}s.", permissionName.c_str());
+        return ERR_PERMISSION_NOT_EXIST;
+    }
     uint32_t permCode;
     if (!TransferPermissionToOpcode(permissionName, permCode)) {
         LOGE(ATM_DOMAIN, ATM_TAG,

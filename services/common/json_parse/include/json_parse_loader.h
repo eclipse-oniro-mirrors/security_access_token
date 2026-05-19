@@ -79,6 +79,7 @@ public:
     virtual bool GetConfigValue(const ConfigType& type, AccessTokenConfigValue& config);
     virtual int32_t GetAllNativeTokenInfo(std::vector<NativeTokenInfoBase>& tokenInfos);
     virtual int32_t GetDlpPermissions(std::vector<PermissionDlpMode>& dlpPerms);
+    virtual int32_t GetPermissionDefinitionExt(std::vector<std::string>& permissions);
     virtual std::string DumpNativeTokenInfo(const NativeTokenInfoBase& native);
     virtual std::string DumpHapTokenInfo(const HapTokenInfo& hapInfo, bool isRemote, bool isPermDialogForbidden,
         const std::vector<PermissionStatus>& permStateList);
@@ -89,6 +90,7 @@ public:
     bool GetConfigValue(const ConfigType& type, AccessTokenConfigValue& config);
     int32_t GetAllNativeTokenInfo(std::vector<NativeTokenInfoBase>& tokenInfos);
     int32_t GetDlpPermissions(std::vector<PermissionDlpMode>& dlpPerms);
+    int32_t GetPermissionDefinitionExt(std::vector<std::string>& permissions);
     std::string DumpNativeTokenInfo(const NativeTokenInfoBase& native);
     std::string DumpHapTokenInfo(const HapTokenInfo& hapInfo, bool isRemote, bool isPermDialogForbidden,
         const std::vector<PermissionStatus>& permStateList);
