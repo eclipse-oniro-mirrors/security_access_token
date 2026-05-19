@@ -7541,7 +7541,7 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
-            "deviceTypes": ["phone", "tablet"]
+            "deviceTypes": ["phone", "tablet", "2in1"]
         },
         {
             "name": "ohos.permission.AUTO_RESTORE_MAIN_WINDOW",
