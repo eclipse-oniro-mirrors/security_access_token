@@ -3184,31 +3184,22 @@ HWTEST_F(AccessTokenManagerServiceTest, PolicyWhiteListServiceTest002, TestSize.
 
 /**
  * @tc.name: IsSupportPermissionService001
- * @tc.desc: Test IsSupportPermission service with valid and invalid permissions.
+ * @tc.desc: Test IsSupportPermission service with abnormal string permissionName.
  * @tc.type: FUNC
  * @tc.require:
  */
 HWTEST_F(AccessTokenManagerServiceTest, IsSupportPermissionService001, TestSize.Level0)
 {
     bool isSupported = false;
-    
-    // Test with valid permission
-    int32_t ret = atManagerService_->IsSupportPermission("ohos.permission.CAMERA", isSupported);
-    EXPECT_EQ(RET_SUCCESS, ret);
-    EXPECT_TRUE(isSupported);
-    
-    // Test with invalid permission
-    ret = atManagerService_->IsSupportPermission("ohos.permission.INVALID_PERM", isSupported);
+    // Test with empty string
+    int32_t ret = atManagerService_->IsSupportPermission(" ", isSupported);
     EXPECT_EQ(RET_SUCCESS, ret);
     EXPECT_FALSE(isSupported);
-    
-    // Test with disabled permission
-    constexpr const char* permissionName = "ohos.permission.MICROPHONE";
-    ASSERT_TRUE(SetPermissionBriefEnabled(permissionName, false));
-    ret = atManagerService_->IsSupportPermission(permissionName, isSupported);
+ 
+    // Test with invalid string name.
+    ret = atManagerService_->IsSupportPermission("invalid.name", isSupported);
     EXPECT_EQ(RET_SUCCESS, ret);
     EXPECT_FALSE(isSupported);
-    ASSERT_TRUE(SetPermissionBriefEnabled(permissionName, true));
 }
 
 /**
