@@ -587,7 +587,7 @@ HWTEST_F(TokensetprocKitTest, SpmAddEntries001, TestSize.Level0)
     SpmData *arr[] = {entry};
     int ret = SpmAddEntries(arr, 1, &idx_err);
     SpmDataFree(entry);
-    if (ret == EOPNOTSUPP) {
+    if (ret == ENOTSUP) {
         GTEST_LOG_(INFO) << "Kernel doesn't support SPM CMD, skip test";
         return;
     }
@@ -649,7 +649,7 @@ HWTEST_F(TokensetprocKitTest, SpmAddEntries004, TestSize.Level0)
     for (int i = 0; i < kCount; i++) {
         SpmDataFree(entries[i]);
     }
-    if (ret == EOPNOTSUPP) {
+    if (ret == ENOTSUP) {
         GTEST_LOG_(INFO) << "Kernel doesn't support SPM CMD, skip test";
         return;
     }
@@ -722,7 +722,7 @@ HWTEST_F(TokensetprocKitTest, SpmAddEntries008, TestSize.Level0)
     uint8_t idx_err = 0;
     SpmData *arr[] = {entry};
     int ret = SpmAddEntries(arr, 1, &idx_err);
-    if (ret == EOPNOTSUPP) {
+    if (ret == ENOTSUP) {
         SpmDataFree(entry);
         GTEST_LOG_(INFO) << "Kernel doesn't support SPM CMD, skip test";
         return;
@@ -752,7 +752,7 @@ HWTEST_F(TokensetprocKitTest, SpmSetEntries001, TestSize.Level0)
     uint8_t idx_err = 0;
     SpmData *arr[] = {entry};
     int ret = SpmAddEntries(arr, 1, &idx_err);
-    if (ret == EOPNOTSUPP) {
+    if (ret == ENOTSUP) {
         SpmDataFree(entry);
         GTEST_LOG_(INFO) << "Kernel doesn't support SPM CMD, skip test";
         return;
@@ -814,7 +814,7 @@ HWTEST_F(TokensetprocKitTest, SpmSetEntries003, TestSize.Level0)
 
     uint8_t idx_err = 0;
     int ret = SpmAddEntries(entries, kCount, &idx_err);
-    if (ret == EOPNOTSUPP) {
+    if (ret == ENOTSUP) {
         for (int i = 0; i < kCount; i++) {
             SpmDataFree(entries[i]);
         }
@@ -869,7 +869,7 @@ HWTEST_F(TokensetprocKitTest, SpmGetEntry001, TestSize.Level0)
     uint8_t idx_err = 0;
     SpmData *arr[] = {entry};
     int ret = SpmAddEntries(arr, 1, &idx_err);
-    if (ret == EOPNOTSUPP) {
+    if (ret == ENOTSUP) {
         SpmDataFree(entry);
         GTEST_LOG_(INFO) << "Kernel doesn't support SPM CMD, skip test";
         return;
@@ -926,7 +926,7 @@ HWTEST_F(TokensetprocKitTest, SpmGetEntry004, TestSize.Level0)
     ASSERT_NE(entry, nullptr);
     int ret = SpmGetEntry(9001, entry);
     SpmDataFree(entry);
-    if (ret == EOPNOTSUPP) {
+    if (ret == ENOTSUP) {
         GTEST_LOG_(INFO) << "Kernel doesn't support SPM CMD, skip test";
         return;
     }
@@ -950,7 +950,7 @@ HWTEST_F(TokensetprocKitTest, SpmGetEntry005, TestSize.Level0)
     SpmData *arr[] = {add_entry};
     int ret = SpmAddEntries(arr, 1, &idx_err);
     SpmDataFree(add_entry);
-    if (ret == EOPNOTSUPP) {
+    if (ret == ENOTSUP) {
         GTEST_LOG_(INFO) << "Kernel doesn't support SPM CMD, skip test";
         return;
     }
@@ -982,7 +982,7 @@ HWTEST_F(TokensetprocKitTest, SpmRemoveEntry001, TestSize.Level0)
     SpmData *arr[] = {entry};
     int ret = SpmAddEntries(arr, 1, &idx_err);
     SpmDataFree(entry);
-    if (ret == EOPNOTSUPP) {
+    if (ret == ENOTSUP) {
         GTEST_LOG_(INFO) << "Kernel doesn't support SPM CMD, skip test";
         return;
     }
@@ -1000,7 +1000,7 @@ HWTEST_F(TokensetprocKitTest, SpmRemoveEntry001, TestSize.Level0)
 HWTEST_F(TokensetprocKitTest, SpmIncUidRefCnt001, TestSize.Level0)
 {
     int ret = SpmIncUidRefCnt(1000, 1);
-    if (ret == EOPNOTSUPP) {
+    if (ret == ENOTSUP) {
         GTEST_LOG_(INFO) << "Kernel doesn't support SPM CMD, skip test";
         return;
     }
@@ -1017,7 +1017,7 @@ HWTEST_F(TokensetprocKitTest, SpmIncUidRefCnt001, TestSize.Level0)
 HWTEST_F(TokensetprocKitTest, SpmDecUidRefCnt001, TestSize.Level0)
 {
     int ret = SpmIncUidRefCnt(1001, 1);
-    if (ret == EOPNOTSUPP) {
+    if (ret == ENOTSUP) {
         GTEST_LOG_(INFO) << "Kernel doesn't support SPM CMD, skip test";
         return;
     }
@@ -1036,7 +1036,7 @@ HWTEST_F(TokensetprocKitTest, SpmGetUidRefCnt001, TestSize.Level0)
     setuid(ACCESS_TOKEN_UID);
     uint64_t refcnt = 0;
     int ret = SpmGetUidRefCnt(1002, &refcnt);
-    if (ret == EOPNOTSUPP) {
+    if (ret == ENOTSUP) {
         GTEST_LOG_(INFO) << "Kernel doesn't support SPM CMD, skip test";
         return;
     }
@@ -1067,7 +1067,7 @@ HWTEST_F(TokensetprocKitTest, SpmGetUidRefCnt002, TestSize.Level0)
 HWTEST_F(TokensetprocKitTest, SpmIncTokenidRefCnt001, TestSize.Level0)
 {
     int ret = SpmIncTokenidRefCnt(11001, 1);
-    if (ret == EOPNOTSUPP) {
+    if (ret == ENOTSUP) {
         GTEST_LOG_(INFO) << "Kernel doesn't support SPM CMD, skip test";
         return;
     }
@@ -1084,7 +1084,7 @@ HWTEST_F(TokensetprocKitTest, SpmIncTokenidRefCnt001, TestSize.Level0)
 HWTEST_F(TokensetprocKitTest, SpmDecTokenidRefCnt001, TestSize.Level0)
 {
     int ret = SpmIncTokenidRefCnt(11002, 1);
-    if (ret == EOPNOTSUPP) {
+    if (ret == ENOTSUP) {
         GTEST_LOG_(INFO) << "Kernel doesn't support SPM CMD, skip test";
         return;
     }
@@ -1103,7 +1103,7 @@ HWTEST_F(TokensetprocKitTest, SpmGetTokenidRefCnt001, TestSize.Level0)
     setuid(ACCESS_TOKEN_UID);
     uint64_t refcnt = 0;
     int ret = SpmGetTokenidRefCnt(11003, &refcnt);
-    if (ret == EOPNOTSUPP) {
+    if (ret == ENOTSUP) {
         GTEST_LOG_(INFO) << "Kernel doesn't support SPM CMD, skip test";
         return;
     }
@@ -1135,7 +1135,7 @@ HWTEST_F(TokensetprocKitTest, SpmGetVersion001, TestSize.Level0)
 {
     uint32_t version = 0;
     int ret = SpmGetVersion(&version);
-    if (ret == EOPNOTSUPP) {
+    if (ret == ENOTSUP) {
         GTEST_LOG_(INFO) << "Kernel doesn't support SPM CMD, skip test";
         return;
     }
@@ -1164,7 +1164,7 @@ HWTEST_F(TokensetprocKitTest, SpmGetVersion002, TestSize.Level0)
 HWTEST_F(TokensetprocKitTest, SpmClearSpawnidRefCnt001, TestSize.Level0)
 {
     int ret = SpmClearSpawnidRefCnt(1);
-    if (ret == EOPNOTSUPP) {
+    if (ret == ENOTSUP) {
         GTEST_LOG_(INFO) << "Kernel doesn't support SPM CMD, skip test";
         return;
     }

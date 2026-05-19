@@ -197,7 +197,7 @@ int32_t AccessTokenIDManager::AllocUid(int32_t localId, int32_t& outUid)
             int32_t uid = localId * UID_TRANSFORM_DIVISOR + candidate % UID_TRANSFORM_DIVISOR;
             uint64_t refcnt = 0;
             int32_t ret = SpmGetUidRefCnt(static_cast<uint32_t>(uid), &refcnt);
-            if (ret != RET_SUCCESS && ret != EOPNOTSUPP) {
+            if (ret != RET_SUCCESS && ret != ENOTSUP) {
                 LOGE(ATM_DOMAIN, ATM_TAG, "SpmGetUidRefCnt failed, bundleId=%{public}d, ret=%{public}d.", candidate,
                     ret);
                 return RET_FAILED;

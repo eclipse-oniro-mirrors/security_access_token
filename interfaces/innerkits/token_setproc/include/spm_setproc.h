@@ -57,7 +57,7 @@ typedef struct {
  * @param idxErr Output: global index of first failed entry on error.
  * @return 0 on success; -EINVAL if entries/idxErr NULL or name.buf NULL;
  *         EEXIST if entry conflicts (caller should handle: skip/overwrite/error);
- *         EOPNOTSUPP if kernel doesn't support this CMD (caller should handle).
+ *         ENOTSUP if kernel doesn't support this CMD (caller should handle).
  */
 int SpmAddEntries(SpmData **entries, uint8_t cnt, uint8_t *idxErr);
 
@@ -68,7 +68,7 @@ int SpmAddEntries(SpmData **entries, uint8_t cnt, uint8_t *idxErr);
  * @param cnt Number of entries. Auto-batched if > SPM_DATA_BATCH_SIZE.
  * @param idxErr Output: global index of first failed entry on error.
  * @return 0 on success; -EINVAL if entries/idxErr NULL or name.buf NULL;
- *         EOPNOTSUPP if kernel doesn't support this CMD (caller should handle).
+ *         ENOTSUP if kernel doesn't support this CMD (caller should handle).
  */
 int SpmSetEntries(SpmData **entries, uint8_t cnt, uint8_t *idxErr);
 
@@ -79,14 +79,14 @@ int SpmSetEntries(SpmData **entries, uint8_t cnt, uint8_t *idxErr);
  *        extendPerms.buf is provided, the caller should also set the corresponding bufSize so
  *        kernel can write back the full entry payload.
  * @return 0 on success; -EINVAL if entry/name.buf NULL;
- *         EOPNOTSUPP if kernel doesn't support this CMD (caller should handle).
+ *         ENOTSUP if kernel doesn't support this CMD (caller should handle).
  */
 int SpmGetEntry(uint32_t tokenid, SpmData *entry);
 
 /**
  * @brief Remove SPM entry by tokenid.
  * @param tokenid Target tokenid.
- * @return 0 on success; EOPNOTSUPP if kernel doesn't support this CMD (caller should handle).
+ * @return 0 on success; ENOTSUP if kernel doesn't support this CMD (caller should handle).
  */
 int SpmRemoveEntry(uint32_t tokenid);
 
@@ -94,7 +94,7 @@ int SpmRemoveEntry(uint32_t tokenid);
  * @brief Increment uid active process refcount.
  * @param uid Target uid.
  * @param spawnid Spawn ID of the process being tracked.
- * @return 0 on success; EOPNOTSUPP if kernel doesn't support this CMD (caller should handle).
+ * @return 0 on success; ENOTSUP if kernel doesn't support this CMD (caller should handle).
  */
 int SpmIncUidRefCnt(uint32_t uid, uint32_t spawnid);
 
@@ -102,7 +102,7 @@ int SpmIncUidRefCnt(uint32_t uid, uint32_t spawnid);
  * @brief Decrement uid active process refcount.
  * @param uid Target uid.
  * @param spawnid Spawn ID of the process being tracked.
- * @return 0 on success; EOPNOTSUPP if kernel doesn't support this CMD (caller should handle).
+ * @return 0 on success; ENOTSUP if kernel doesn't support this CMD (caller should handle).
  */
 int SpmDecUidRefCnt(uint32_t uid, uint32_t spawnid);
 
@@ -110,7 +110,7 @@ int SpmDecUidRefCnt(uint32_t uid, uint32_t spawnid);
  * @brief Get uid active process refcount.
  * @param uid Target uid.
  * @param refcnt Output: refcount value.
- * @return 0 on success; EOPNOTSUPP if kernel doesn't support this CMD (caller should handle).
+ * @return 0 on success; ENOTSUP if kernel doesn't support this CMD (caller should handle).
  */
 int SpmGetUidRefCnt(uint32_t uid, uint64_t *refcnt);
 
@@ -118,7 +118,7 @@ int SpmGetUidRefCnt(uint32_t uid, uint64_t *refcnt);
  * @brief Increment tokenid active process refcount.
  * @param tokenid Target tokenid.
  * @param spawnid Spawn ID of the process being tracked.
- * @return 0 on success; EOPNOTSUPP if kernel doesn't support this CMD (caller should handle).
+ * @return 0 on success; ENOTSUP if kernel doesn't support this CMD (caller should handle).
  */
 int SpmIncTokenidRefCnt(uint32_t tokenid, uint32_t spawnid);
 
@@ -126,7 +126,7 @@ int SpmIncTokenidRefCnt(uint32_t tokenid, uint32_t spawnid);
  * @brief Decrement tokenid active process refcount.
  * @param tokenid Target tokenid.
  * @param spawnid Spawn ID of the process being tracked.
- * @return 0 on success; EOPNOTSUPP if kernel doesn't support this CMD (caller should handle).
+ * @return 0 on success; ENOTSUP if kernel doesn't support this CMD (caller should handle).
  */
 int SpmDecTokenidRefCnt(uint32_t tokenid, uint32_t spawnid);
 
@@ -134,21 +134,21 @@ int SpmDecTokenidRefCnt(uint32_t tokenid, uint32_t spawnid);
  * @brief Get tokenid active process refcount.
  * @param tokenid Target tokenid.
  * @param refcnt Output: refcount value.
- * @return 0 on success; EOPNOTSUPP if kernel doesn't support this CMD (caller should handle).
+ * @return 0 on success; ENOTSUP if kernel doesn't support this CMD (caller should handle).
  */
 int SpmGetTokenidRefCnt(uint32_t tokenid, uint64_t *refcnt);
 
 /**
  * @brief Clear spawnid refcount.
  * @param spawnid Target spawnid.
- * @return 0 on success; EOPNOTSUPP if kernel doesn't support this CMD (caller should handle).
+ * @return 0 on success; ENOTSUP if kernel doesn't support this CMD (caller should handle).
  */
 int SpmClearSpawnidRefCnt(uint32_t spawnid);
 
 /**
  * @brief Get SPM kernel feature version. Initial version is 1.
  * @param version Output: version number.
- * @return 0 on success; EOPNOTSUPP if kernel doesn't support this CMD (caller should handle).
+ * @return 0 on success; ENOTSUP if kernel doesn't support this CMD (caller should handle).
  */
 int SpmGetVersion(uint32_t *version);
 
