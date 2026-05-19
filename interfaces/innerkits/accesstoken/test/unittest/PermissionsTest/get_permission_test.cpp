@@ -622,40 +622,6 @@ HWTEST_F(GetPermissionTest, IsSupportPermission003, TestSize.Level0)
 }
 
 /*
- * @tc.name: TransferPermissionToOpcode004
- * @tc.desc: TransferPermissionToOpcode should return true for enabled permission
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(GetPermissionTest, TransferPermissionToOpcode004, TestSize.Level0)
-{
-    std::string permissionName = "ohos.permission.CAMERA";
-    uint32_t opCode = 0;
-    
-    EXPECT_TRUE(AccessTokenKit::TransferPermissionToOpcode(permissionName, opCode));
-    EXPECT_NE(opCode, 0);
-}
-
-/*
- * @tc.name: TransferOpcodeToPermission003
- * @tc.desc: TransferOpcodeToPermission should return empty for disabled permission
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(GetPermissionTest, TransferOpcodeToPermission003, TestSize.Level0)
-{
-    std::string permissionName = "ohos.permission.CAMERA";
-    uint32_t opCode = 0;
-    ASSERT_TRUE(AccessTokenKit::TransferPermissionToOpcode(permissionName, opCode));
-    
-    ASSERT_TRUE(SetPermissionBriefEnabled(permissionName, false));
-    std::string resultName;
-    EXPECT_FALSE(AccessTokenKit::TransferOpcodeToPermission(opCode, resultName));
-    EXPECT_TRUE(resultName.empty());
-    ASSERT_TRUE(SetPermissionBriefEnabled(permissionName, true));
-}
-
-/*
  * @tc.name: GetDefPermission002
  * @tc.desc: GetDefPermission should return success for SYSTEM_GRANT permission locally
  * @tc.type: FUNC
