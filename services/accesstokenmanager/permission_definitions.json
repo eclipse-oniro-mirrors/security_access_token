@@ -1070,7 +1070,8 @@
             "since": 8,
             "deprecated": "",
             "provisionEnable": true,
-            "distributedSceneEnable": false
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "tv", "wearable", "2in1", "tablet", "car"]
         },
         {
             "name": "ohos.permission.READ_DFX_XPOWER",
@@ -1800,7 +1801,8 @@
             "since": 10,
             "deprecated": "",
             "provisionEnable": true,
-            "distributedSceneEnable": false
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "tv", "wearable", "2in1", "tablet", "car"]
         },
         {
             "name": "ohos.permission.WRITE_HIVIEW_SYSTEM",
@@ -1810,7 +1812,8 @@
             "since": 10,
             "deprecated": "",
             "provisionEnable": true,
-            "distributedSceneEnable": false
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "tv", "wearable", "2in1", "tablet", "car"]
         },
         {
             "name": "ohos.permission.ENTERPRISE_GET_DEVICE_INFO",
