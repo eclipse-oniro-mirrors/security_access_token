@@ -77,14 +77,10 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
     "${access_token_path}/services/accesstokenmanager/test/unittest/permission",
     "${access_token_path}/services/accesstokenmanager/test/unittest/database",
     "${access_token_path}/services/accesstokenmanager/test/unittest/common",
-    "${access_token_path}/services/accesstokenmanager/test/unittest/clawtoken",
     "${access_token_path}/services/accesstokenmanager/test/unittest/tooltoken",
   ]
 
   sources = [
-    "tooltoken/claw_ticket_manager_test.cpp",
-    "tooltoken/permission_map_fence.cpp",
-    "tooltoken/saf_agent_fence.cpp",
     "common/parameter.cpp",
     "common/parameters.cpp",
     "database/database_consistency_test.cpp",
@@ -97,6 +93,9 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
     "permission/token_info_manager_test.cpp",
     "service/accesstoken_manager_service_test.cpp",
     "service/multi_thread_test.cpp",
+    "tooltoken/claw_ticket_manager_test.cpp",
+    "tooltoken/permission_map_fence.cpp",
+    "tooltoken/saf_agent_fence.cpp",
   ]
 
   if (access_token_enhance_capability == true) {
