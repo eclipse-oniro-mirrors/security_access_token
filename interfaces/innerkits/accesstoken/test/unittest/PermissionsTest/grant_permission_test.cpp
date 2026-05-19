@@ -371,11 +371,11 @@ HWTEST_F(GrantPermissionTest, GrantPermissionWithManualTest001, TestSize.Level0)
 HWTEST_F(GrantPermissionTest, GrantPermissionDisabled001, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GrantPermissionDisabled001");
-
+ 
     AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
     ASSERT_NE(INVALID_TOKENID, tokenID);
-
+ 
     std::string permissionName = "ohos.permission.MICROPHONE";
     bool originalEnabled = IsDefinedPermissionInner(permissionName);
     

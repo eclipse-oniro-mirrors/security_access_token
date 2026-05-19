@@ -552,7 +552,7 @@ HWTEST_F(GetPermissionTest, TransferOpcodeToPermission002, TestSize.Level0)
 
 /*
 * @tc.name: TransferPermissionToOpcode001
-* @tc.desc: TransferPermissionToOpcode should fallback to service-side support check when local isEnable is false
+* @tc.desc: The set operation is irrelevant to TransferPermissionToOpcode.
 * @tc.type: FUNC
 * @tc.require:
  */
@@ -561,12 +561,32 @@ HWTEST_F(GetPermissionTest, TransferPermissionToOpcode001, TestSize.Level0)
     std::string permissionName = "ohos.permission.ANSWER_CALL";
     uint32_t opCode = 0;
         
-    ASSERT_TRUE(SetPermissionBriefEnabled(permissionName, false));
-    EXPECT_TRUE(AccessTokenKit::IsSupportPermission(permissionName));
+    EXPECT_TRUE(SetPermissionBriefEnabled(permissionName, true));
     EXPECT_TRUE(AccessTokenKit::TransferPermissionToOpcode(permissionName, opCode));
+    EXPECT_TRUE(SetPermissionBriefEnabled(permissionName, false));
+    EXPECT_TRUE(AccessTokenKit::TransferPermissionToOpcode(permissionName, opCode));
+ 
     EXPECT_TRUE(SetPermissionBriefEnabled(permissionName, true));
 }
- 	 
+ 
+/*
+ * @tc.name: TransferPermissionToOpcode002
+ * @tc.desc: The set command does not affect the server and it does not affect the IsSupport result.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(GetPermissionTest, TransferPermissionToOpcode002, TestSize.Level0)
+{
+    std::string permissionName = "ohos.permission.CAMERA";
+ 
+    EXPECT_TRUE(SetPermissionBriefEnabled(permissionName, true));
+    EXPECT_TRUE(AccessTokenKit::IsSupportPermission(permissionName));
+    EXPECT_TRUE(SetPermissionBriefEnabled(permissionName, false));
+    EXPECT_TRUE(AccessTokenKit::IsSupportPermission(permissionName));
+ 
+    EXPECT_TRUE(SetPermissionBriefEnabled(permissionName, true));
+}
+
 /*
  * @tc.name: IsSupportPermission001
  * @tc.desc: IsSupportPermission should return false for unsupported permission
@@ -599,22 +619,6 @@ HWTEST_F(GetPermissionTest, IsSupportPermission002, TestSize.Level0)
 HWTEST_F(GetPermissionTest, IsSupportPermission003, TestSize.Level0)
 {
     EXPECT_FALSE(AccessTokenKit::IsSupportPermission(""));
-}
-
-/*
- * @tc.name: TransferPermissionToOpcode003
- * @tc.desc: TransferPermissionToOpcode should return false for disabled permission
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(GetPermissionTest, TransferPermissionToOpcode003, TestSize.Level0)
-{
-    std::string permissionName = "ohos.permission.CAMERA";
-    uint32_t opCode = 0;
-    
-    ASSERT_TRUE(SetPermissionBriefEnabled(permissionName, false));
-    EXPECT_FALSE(AccessTokenKit::TransferPermissionToOpcode(permissionName, opCode));
-    EXPECT_TRUE(SetPermissionBriefEnabled(permissionName, true));
 }
 
 /*

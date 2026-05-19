@@ -69,17 +69,36 @@ HWTEST_F(CommonTest, EncryptDevId001, TestSize.Level1)
 }
 
 /*
- * @tc.name: IsDefinedPermissionTest001
- * @tc.desc: IsDefinedPermission function test
+ * @tc.name: IsDefinedPermissionInner001
+ * @tc.desc: IsDefinedPermissionInner function test
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(CommonTest, IsDefinedPermissionTest001, TestSize.Level1)
+HWTEST_F(CommonTest, IsDefinedPermissionInner001, TestSize.Level1)
 {
     bool res = IsDefinedPermissionInner("ohos.permission.ANSWER_CALL");
     EXPECT_EQ(res, true);
     res = IsDefinedPermissionInner("ohos.permission.TTTTT");
     EXPECT_EQ(res, false);
+}
+ 
+/*
+ * @tc.name: IsDefinedPermissionInnerTest002
+ * @tc.desc: IsDefinedPermissionInner function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(CommonTest, IsDefinedPermissionInner002, TestSize.Level1)
+{
+    std::string permission;
+ 
+    permission = "PERMISSION_UNDEFINE";
+    bool result = IsDefinedPermissionInner(permission);
+    EXPECT_FALSE(result);
+ 
+    permission = "  ";
+    result = IsDefinedPermissionInner(permission);
+    EXPECT_FALSE(result);
 }
 
 /*

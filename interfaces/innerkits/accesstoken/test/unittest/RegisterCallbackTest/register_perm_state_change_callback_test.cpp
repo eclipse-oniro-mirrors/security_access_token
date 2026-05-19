@@ -23,7 +23,6 @@
 #include "hap_token_info.h"
 #include "nativetoken_kit.h"
 #include "permission_grant_info.h"
-#include "permission_map.h"
 #include "permission_state_change_info_parcel.h"
 #include "string_ex.h"
 #include "tokenid_kit.h"
@@ -1136,53 +1135,6 @@ HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterSelfPermStateChangeCallbac
     ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, res);
 }
 
-/**
- * @tc.name: RegisterPermStateChangeCallbackDisabled001
- * @tc.desc: RegisterPermStateChangeCallback with disabled permission should not trigger callback.
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterPermStateChangeCallbackDisabled001, TestSize.Level0)
-{
-    static HapPolicyParams infoManagerTestPolicyPrams = {
-        .apl = APL_NORMAL,
-        .domain = "test.domain.disabled",
-        .permStateList = {g_infoManagerTestStateA}
-    };
-    
-    AccessTokenIDEx tokenIdEx = {0};
-    ASSERT_EQ(RET_SUCCESS, TestCommon::AllocTestHapToken(
-        g_infoManagerTestInfoParms, infoManagerTestPolicyPrams, tokenIdEx));
-    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
-    ASSERT_NE(INVALID_TOKENID, tokenID);
-    
-    PermStateChangeScope scopeInfo;
-    scopeInfo.permList = {"ohos.permission.CAMERA"};
-    scopeInfo.tokenIDs = {tokenID};
-    
-    auto callbackPtr = std::make_shared<CbCustomizeTest>(scopeInfo);
-    callbackPtr->ready_ = false;
-    
-    int32_t res = AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr);
-    ASSERT_EQ(RET_SUCCESS, res);
-    
-    // Disable the permission
-    std::string permissionName = "ohos.permission.CAMERA";
-    ASSERT_TRUE(SetPermissionBriefEnabled(permissionName, false));
-    
-    // Grant permission while disabled - callback should not be triggered
-    res = AccessTokenKit::GrantPermission(tokenID, permissionName, PERMISSION_USER_FIXED);
-    EXPECT_EQ(ERR_PERMISSION_NOT_EXIST, res);
-    EXPECT_FALSE(callbackPtr->ready_);
-    
-    // Re-enable the permission
-    ASSERT_TRUE(SetPermissionBriefEnabled(permissionName, true));
-    
-    res = AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr);
-    ASSERT_EQ(RET_SUCCESS, res);
-    
-    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
-}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

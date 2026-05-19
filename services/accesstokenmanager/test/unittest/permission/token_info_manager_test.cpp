@@ -41,6 +41,7 @@
 #include "string_ex.h"
 #include "token_setproc.h"
 #include "system_ability_definition.h"
+#include "permission_map.h"
 
 using namespace testing::ext;
 using namespace OHOS;
@@ -2750,6 +2751,25 @@ HWTEST_F(TokenInfoManagerTest, GetFullRemoteTokenId003, TestSize.Level0)
     GTEST_LOG_(INFO) << "remove the system hap token info";
 }
 #endif
+
+/**
+ * @tc.name: GetReqPermissionByName001
+ * @tc.desc: GetReqPermissionByName test function for disable permissionName.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenInfoManagerTest, GetReqPermissionByName001, TestSize.Level0)
+{
+    AccessTokenID tokenId = 123;
+    std::string permissionName = "invalid.permission";
+    std::string value;
+    bool tokenIdCheck = false;
+
+    int32_t ret = PermissionDataBrief::GetInstance().GetReqPermissionByName(
+        tokenId, permissionName, value, tokenIdCheck);
+ 
+    EXPECT_EQ(ERR_PERMISSION_NOT_EXIST, ret);
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
