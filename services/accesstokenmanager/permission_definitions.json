@@ -2076,7 +2076,7 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
-            "deviceTypes": ["2in1", "tablet"]
+            "deviceTypes": ["phone", "2in1", "tablet"]
         },
         {
             "name": "ohos.permission.CHANGE_OVERLAY_ENABLED_STATE",
