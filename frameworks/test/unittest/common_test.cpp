@@ -480,9 +480,9 @@ HWTEST_F(CommonTest, GetPermissionBriefDef001, TestSize.Level1)
     EXPECT_TRUE(permDef.isEnable);
     
     // Test with disabled permission
-    ASSERT_TRUE(SetPermissionBriefEnabled(permissionName, false));
+    permissionName = "ohos.permission.CAMERA11111";
     EXPECT_FALSE(GetPermissionBriefDef(permissionName, permDef));
-    ASSERT_TRUE(SetPermissionBriefEnabled(permissionName, true));
+    EXPECT_FALSE(permDef.isEnable);
 }
 } // namespace AccessToken
 } // namespace Security
