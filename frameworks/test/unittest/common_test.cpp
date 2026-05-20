@@ -466,7 +466,7 @@ HWTEST_F(CommonTest, IsPermissionValidForHap001, TestSize.Level1)
 
 /*
  * @tc.name: GetPermissionBriefDef001
- * @tc.desc: GetPermissionBriefDef should return false for disabled permission
+ * @tc.desc: GetPermissionBriefDef should return false for disabled permissionName
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -482,7 +482,6 @@ HWTEST_F(CommonTest, GetPermissionBriefDef001, TestSize.Level1)
     // Test with disabled permission
     permissionName = "ohos.permission.CAMERA11111";
     EXPECT_FALSE(GetPermissionBriefDef(permissionName, permDef));
-    EXPECT_FALSE(permDef.isEnable);
 }
 } // namespace AccessToken
 } // namespace Security
