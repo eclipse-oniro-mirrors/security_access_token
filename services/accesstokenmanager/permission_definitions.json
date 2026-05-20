@@ -5157,7 +5157,8 @@
             "provisionEnable": true,
             "distributedSceneEnable": false,
             "label": "$string:ohos_lab_custom_screen_capture",
-            "description": "$string:ohos_desc_custom_screen_capture"
+            "description": "$string:ohos_desc_custom_screen_capture",
+            "deviceTypes": ["phone", "2in1", "tablet"]
         },
         {
             "name": "ohos.permission.READ_HEALTH_DATA",
