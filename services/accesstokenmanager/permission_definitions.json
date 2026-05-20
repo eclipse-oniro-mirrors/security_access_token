@@ -3432,7 +3432,8 @@
             "since": 11,
             "deprecated": "",
             "provisionEnable": true,
-            "distributedSceneEnable": false
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1","car","liteWearable","phone","smartlock","tablet","tv","wearable"]
         },
         {
             "name": "ohos.permission.MANAGE_CLOUD_SYNC_CONFIG",
