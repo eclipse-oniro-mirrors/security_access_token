@@ -292,7 +292,7 @@ static void ExpectUserPolicyDbWhiteList(const std::string& permissionName, const
         AccessTokenDb::GetInstance()->Find(AtmDataType::ACCESSTOKEN_USER_POLICY,
             BuildUserPolicyDbCondition(permissionName), results));
     ASSERT_EQ(1u, results.size());
-    EXPECT_EQ(whiteList, results[0].GetString(TokenFiledConst::FIELD_WHITLIST));
+    EXPECT_EQ(whiteList, results[0].GetString(TokenFiledConst::FIELD_WHITELIST));
 }
 
 static int32_t UpsertUserPolicyDbRecord(
@@ -307,7 +307,7 @@ static int32_t UpsertUserPolicyDbRecord(
     addValue.Put(TokenFiledConst::FIELD_PERMISSION_NAME, permissionName);
     addValue.Put(TokenFiledConst::FIELD_CONTROLLER_TOKENID, static_cast<int32_t>(controllerToken));
     addValue.Put(TokenFiledConst::FIELD_RESTRICTED_USER, userList);
-    addValue.Put(TokenFiledConst::FIELD_WHITLIST, whiteList);
+    addValue.Put(TokenFiledConst::FIELD_WHITELIST, whiteList);
 
     AddInfo addInfo;
     addInfo.addType = AtmDataType::ACCESSTOKEN_USER_POLICY;
@@ -3369,7 +3369,7 @@ HWTEST_F(TokenInfoManagerTest, RemoveTokenFromPolicyWhiteList001, TestSize.Level
     addValue.Put(TokenFiledConst::FIELD_PERMISSION_NAME, permissionName);
     addValue.Put(TokenFiledConst::FIELD_CONTROLLER_TOKENID, static_cast<int32_t>(persistedRecord.controllerToken));
     addValue.Put(TokenFiledConst::FIELD_RESTRICTED_USER, std::to_string(USER_ID));
-    addValue.Put(TokenFiledConst::FIELD_WHITLIST, std::to_string(keptToken) + "," + std::to_string(removedToken));
+    addValue.Put(TokenFiledConst::FIELD_WHITELIST, std::to_string(keptToken) + "," + std::to_string(removedToken));
     addInfo.addValues.emplace_back(addValue);
     EXPECT_EQ(RET_SUCCESS, AccessTokenDb::GetInstance()->DeleteAndInsertValues({}, { addInfo }));
     stateGuard.SetWhiteList(USER_ID, GetSelfTokenID(), persistedRecord.whiteList, true);
@@ -3730,7 +3730,7 @@ HWTEST_F(TokenInfoManagerTest, UserPolicyDbRecoverDirtyData001, TestSize.Level0)
     addValue.Put(TokenFiledConst::FIELD_PERMISSION_NAME, std::string("ohos.permission.CAMERA"));
     addValue.Put(TokenFiledConst::FIELD_CONTROLLER_TOKENID, static_cast<int32_t>(GetSelfTokenID()));
     addValue.Put(TokenFiledConst::FIELD_RESTRICTED_USER, std::string("abc"));
-    addValue.Put(TokenFiledConst::FIELD_WHITLIST, std::string("1"));
+    addValue.Put(TokenFiledConst::FIELD_WHITELIST, std::string("1"));
 
     AddInfo addInfo;
     addInfo.addType = AtmDataType::ACCESSTOKEN_USER_POLICY;

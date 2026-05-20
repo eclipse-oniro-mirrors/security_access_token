@@ -369,7 +369,7 @@ int32_t AccessTokenOpenCallback::CreateUserPolicyTable(NativeRdb::RdbStore& rdbS
         .append(INTEGER_STR)
         .append(TokenFiledConst::FIELD_RESTRICTED_USER)
         .append(TEXT_STR)
-        .append(TokenFiledConst::FIELD_WHITLIST)
+        .append(TokenFiledConst::FIELD_WHITELIST)
         .append(TEXT_STR)
         .append("primary key(")
         .append(TokenFiledConst::FIELD_PERMISSION_NAME)
