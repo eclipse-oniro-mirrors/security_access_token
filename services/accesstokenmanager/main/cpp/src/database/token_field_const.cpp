@@ -63,7 +63,7 @@ const std::string TokenFiledConst::FIELD_NAME = "name";
 const std::string TokenFiledConst::FIELD_APP_DISTRIBUTION_TYPE = "app_distribution_type";
 const std::string TokenFiledConst::FIELD_CONTROLLER_TOKENID = "controller_tokenid";
 const std::string TokenFiledConst::FIELD_RESTRICTED_USER = "restricted_user";
-const std::string TokenFiledConst::FIELD_WHITLIST = "whitlist";
+const std::string TokenFiledConst::FIELD_WHITELIST = "whitelist";
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

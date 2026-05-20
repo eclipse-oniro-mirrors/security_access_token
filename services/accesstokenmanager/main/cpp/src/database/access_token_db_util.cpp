@@ -26,7 +26,7 @@ namespace {
 static const std::vector<std::string> g_StringTypeColumns = {
     "description", "permission_name", "device_id", "bundle_name", "app_id",
     "process_name", "dcap", "native_acls", "label", "value", "name", "app_distribution_type",
-    "restricted_user", "whitlist", "module_name", "path", "hap_path"
+    "restricted_user", "whitelist", "module_name", "path", "hap_path"
 };
 
 static const std::map<AtmDataType, std::string> g_DateTypeToTableName = {

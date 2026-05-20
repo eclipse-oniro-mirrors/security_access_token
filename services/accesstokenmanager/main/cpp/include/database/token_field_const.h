@@ -69,7 +69,7 @@ public:
     const static std::string FIELD_APP_DISTRIBUTION_TYPE;
     const static std::string FIELD_CONTROLLER_TOKENID;
     const static std::string FIELD_RESTRICTED_USER;
-    const static std::string FIELD_WHITLIST;
+    const static std::string FIELD_WHITELIST;
 };
 } // namespace AccessToken
 } // namespace Security
