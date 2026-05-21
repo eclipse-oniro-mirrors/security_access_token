@@ -1641,7 +1641,8 @@
             "since": 12,
             "deprecated": "",
             "provisionEnable": true,
-            "distributedSceneEnable": false
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1", "tablet", "phone"]
         },
         {
             "name": "ohos.permission.ENTERPRISE_CONFIG",
@@ -1651,7 +1652,8 @@
             "since": 12,
             "deprecated": "",
             "provisionEnable": true,
-            "distributedSceneEnable": false
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1", "tablet", "phone", "wearable"]
         },
         {
             "name": "ohos.permission.DUMP",
@@ -2656,7 +2658,8 @@
             "since": 14,
             "deprecated": "",
             "provisionEnable": true,
-            "distributedSceneEnable": false
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1", "tablet", "phone"]
         },
         {
             "name": "ohos.permission.ENTERPRISE_GET_ALL_BUNDLE_INFO",
@@ -2732,7 +2735,8 @@
             "since": 14,
             "deprecated": "",
             "provisionEnable": true,
-            "distributedSceneEnable": false
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1", "tablet", "phone"]
         },
         {
             "name": "ohos.permission.RECEIVE_ENTERPRISE_POLICY_EVENT",
@@ -2742,7 +2746,8 @@
             "since": 14,
             "deprecated": "",
             "provisionEnable": true,
-            "distributedSceneEnable": false
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1", "tablet", "phone"]
         },
         {
             "name": "ohos.permission.PERSONAL_MANAGE_RESTRICTIONS",
@@ -2752,7 +2757,8 @@
             "since": 15,
             "deprecated": "",
             "provisionEnable": true,
-            "distributedSceneEnable": false
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1", "tablet", "phone"]
         },
         {
             "name": "ohos.permission.START_PROVISIONING_MESSAGE",
@@ -2762,7 +2768,8 @@
             "since": 15,
             "deprecated": "",
             "provisionEnable": true,
-            "distributedSceneEnable": false
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1", "tablet", "phone"]
         },
         {
             "name": "ohos.permission.SET_UNREMOVABLE_NOTIFICATION",
@@ -6913,7 +6920,8 @@
             "since": 18,
             "deprecated": "",
             "provisionEnable": true,
-            "distributedSceneEnable": false
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1", "tablet", "phone", "wearable"]
         },
         {
             "name": "ohos.permission.ACCESS_USER_ACCOUNT_INFO",
@@ -7065,7 +7073,8 @@
             "since": 18,
             "deprecated": "",
             "provisionEnable": true,
-            "distributedSceneEnable": false
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1", "tablet", "phone", "wearable"]
         },
         {
             "name": "ohos.permission.UNLOCK_DEVELOPER_MODE",
