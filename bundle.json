@@ -219,6 +219,16 @@
           }
         },
         {
+          "name": "//base/security/access_token/interfaces/innerkits/token_setproc:libpermsetproc_shared",
+          "header": {
+            "header_files":[
+              "perm_setproc_c.h",
+              "setproc_common.h"
+            ],
+            "header_base": "//base/security/access_token/interfaces/innerkits/token_setproc/include"
+          }
+        },
+        {
           "name": "//base/security/access_token/interfaces/innerkits/analysis_model:libcodesignature_analysis",
           "header": {
             "header_files": [

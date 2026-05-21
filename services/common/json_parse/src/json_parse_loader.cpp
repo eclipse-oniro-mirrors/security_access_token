@@ -72,6 +72,7 @@ static const char* JSON_PROCESS_NAME = "processName";
 static const char* JSON_APL = "APL";
 static const char* JSON_VERSION = "version";
 static const char* JSON_TOKEN_ID = "tokenId";
+static const char* JSON_UID = "uid";
 static const char* JSON_TOKEN_ATTR = "tokenAttr";
 static const char* JSON_DCAPS = "dcaps";
 static const char* JSON_PERMS = "permissions";
@@ -400,55 +401,63 @@ static ATokenTypeEnum GetTokenIdTypeEnum(AccessTokenID id)
     return static_cast<ATokenTypeEnum>(idInner->type);
 }
 
-static void GetSingleNativeTokenFromJson(const CJson* j,  std::vector<NativeTokenInfoBase>& tokenInfos)
+static bool ParseNativeTokenBaseInfo(const CJson* j, NativeTokenInfoBase& info)
 {
-    NativeTokenInfoBase info;
     int32_t aplNum = 0;
     if (!GetIntFromJson(j, JSON_APL, aplNum) || !DataValidator::IsAplNumValid(aplNum)) {
-        return;
+        return false;
     }
     info.apl = static_cast<ATokenAplEnum>(aplNum);
-    int32_t ver;
+    int32_t ver = 0;
     GetIntFromJson(j, JSON_VERSION, ver);
     info.ver = static_cast<uint8_t>(ver);
     GetUnsignedIntFromJson(j, JSON_TOKEN_ID, info.tokenID);
     if ((info.ver != DEFAULT_TOKEN_VERSION) || (info.tokenID == 0)) {
-        return;
+        return false;
     }
     ATokenTypeEnum type = GetTokenIdTypeEnum(info.tokenID);
     if ((type != TOKEN_NATIVE) && (type != TOKEN_SHELL)) {
-        return;
+        return false;
     }
-    if (!GetUnsignedIntFromJson(j, JSON_TOKEN_ATTR, info.tokenAttr)) {
-        return;
-    }
+    return GetUnsignedIntFromJson(j, JSON_TOKEN_ATTR, info.tokenAttr);
+}
+
+static bool ParseNativeTokenArrays(const CJson* j, NativeTokenInfoBase& info)
+{
     CJson* dcapsJson = GetArrayFromJson(j, JSON_DCAPS);
     CJson* aclsJson = GetArrayFromJson(j, JSON_ACLS);
     if ((dcapsJson == nullptr) || (aclsJson == nullptr)) {
-        return;
+        return false;
     }
     int32_t dcapLen = cJSON_GetArraySize(dcapsJson);
     int32_t aclLen = cJSON_GetArraySize(aclsJson);
     if ((dcapLen > MAX_DCAPS_NUM) || (aclLen > MAX_REQ_PERM_NUM)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Native dcap oversize.");
-        return;
+        return false;
     }
     for (int32_t i = 0; i < dcapLen; i++) {
-        std::string item = cJSON_GetStringValue(cJSON_GetArrayItem(dcapsJson, i));
-        info.dcap.push_back(item);
+        info.dcap.emplace_back(cJSON_GetStringValue(cJSON_GetArrayItem(dcapsJson, i)));
     }
-    for (int i = 0; i < aclLen; i++) {
-        std::string item = cJSON_GetStringValue(cJSON_GetArrayItem(aclsJson, i));
-        info.nativeAcls.push_back(item);
+    for (int32_t i = 0; i < aclLen; i++) {
+        info.nativeAcls.emplace_back(cJSON_GetStringValue(cJSON_GetArrayItem(aclsJson, i)));
     }
+    return true;
+}
 
-    if (NativeReqPermsGet(j, info.permStateList) != RET_SUCCESS) {
+static void GetSingleNativeTokenFromJson(const CJson* j,  std::vector<NativeTokenInfoBase>& tokenInfos)
+{
+    NativeTokenInfoBase info;
+    if (!ParseNativeTokenBaseInfo(j, info) || !ParseNativeTokenArrays(j, info)) {
         return;
     }
-
-    if (!GetStringFromJson(j, JSON_PROCESS_NAME, info.processName) ||
+    if ((NativeReqPermsGet(j, info.permStateList) != RET_SUCCESS) ||
+        !GetStringFromJson(j, JSON_PROCESS_NAME, info.processName) ||
         !DataValidator::IsProcessNameValid(info.processName) || info.processName.empty()) {
         return;
+    }
+    int32_t uid = 0;
+    if (GetIntFromJson(j, JSON_UID, uid)) {
+        info.uid = uid;
     }
     tokenInfos.emplace_back(info);
 }
@@ -601,6 +610,7 @@ static void AddNativeTokenInfo(CJsonUnique& j, const NativeTokenInfoBase& native
     (void)AddUnsignedIntToJson(j, "tokenID", native.tokenID);
     (void)AddStringToJson(j, "processName", native.processName);
     (void)AddIntToJson(j, "apl", native.apl);
+    (void)AddIntToJson(j, "uid", native.uid);
 }
 
 static void AddPermStateListInNativeTokenInfo(const NativeTokenInfoBase& native,

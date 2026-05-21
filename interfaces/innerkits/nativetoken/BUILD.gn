@@ -40,11 +40,18 @@ if (is_standard_system) {
 
     cflags = [ "-Wall" ]
 
-    include_dirs = [ "${access_token_path}/frameworks/common/include" ]
+    include_dirs = [
+      "${access_token_path}/frameworks/common/include",
+      "${access_token_path}/interfaces/innerkits/token_setproc/include",
+    ]
 
     sources = nativetoken_soruces
 
-    deps = [ "${access_token_path}/frameworks/common:accesstoken_static_log_for_nativetoken" ]
+    deps = [
+      "${access_token_path}/frameworks/common:accesstoken_permission_map_static",
+      "${access_token_path}/frameworks/common:accesstoken_static_log_for_nativetoken",
+      "${access_token_path}/interfaces/innerkits/token_setproc:libperm_setproc",
+    ]
 
     external_deps = [
       "bounds_checking_function:libsec_shared",
@@ -75,11 +82,19 @@ if (is_standard_system) {
 
     cflags = [ "-Wall" ]
 
-    include_dirs = [ "${access_token_path}/frameworks/common/include" ]
+    include_dirs = [
+      "${access_token_path}/frameworks/common/include",
+      "${access_token_path}/interfaces/innerkits/token_setproc/include",
+    ]
 
     sources = nativetoken_soruces
 
-    deps = [ "${access_token_path}/frameworks/common:accesstoken_static_log_for_nativetoken" ]
+    deps = [
+      "${access_token_path}/frameworks/common:accesstoken_common_cxx",
+      "${access_token_path}/frameworks/common:accesstoken_static_log_for_nativetoken",
+      "${access_token_path}/interfaces/innerkits/token_setproc:libpermsetproc_shared",
+      "${access_token_path}/interfaces/innerkits/token_setproc:libtokensetproc_shared",
+    ]
 
     external_deps = [
       "bounds_checking_function:libsec_shared",

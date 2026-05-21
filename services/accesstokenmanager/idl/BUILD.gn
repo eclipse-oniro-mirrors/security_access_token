@@ -59,7 +59,7 @@ ohos_source_set("access_token_manager_proxy") {
     ":access_token_manager_interface",
     "${access_token_path}/frameworks/accesstoken:accesstoken_communication_adapter_cxx",
     "${access_token_path}/frameworks/common:accesstoken_common_cxx",
-    "${access_token_path}/interfaces/innerkits/token_setproc:libperm_setproc",
+    "${access_token_path}/interfaces/innerkits/token_setproc:libpermsetproc_shared",
   ]
 
   external_deps = [
@@ -104,7 +104,7 @@ ohos_source_set("access_token_manager_stub") {
     ":access_token_manager_interface",
     "${access_token_path}/frameworks/accesstoken:accesstoken_communication_adapter_cxx",
     "${access_token_path}/frameworks/common:accesstoken_common_cxx",
-    "${access_token_path}/interfaces/innerkits/token_setproc:libperm_setproc",
+    "${access_token_path}/interfaces/innerkits/token_setproc:libpermsetproc_shared",
   ]
 
   external_deps = [

@@ -19,6 +19,7 @@
 #include "hap_token_info_inner.h"
 #include "perm_setproc.h"
 #include "permission_map.h"
+#include "token_setproc.h"
 
 namespace OHOS {
 namespace Security {
@@ -62,6 +63,22 @@ void PermissionKernelUtils::SetPermToKernel(AccessTokenID tokenID, const std::st
     LOGI(ATM_DOMAIN, ATM_TAG,
         "SetPermissionToKernel(token=%{public}d, permission=(%{public}s), err=%{public}d",
         tokenID, permissionName.c_str(), ret);
+}
+
+bool PermissionKernelUtils::IsKernelSupportGetPermissions()
+{
+    static bool isSupportGetPermissions = false;
+    static bool hasChecked = false;
+    if (hasChecked) {
+        return isSupportGetPermissions;
+    }
+    std::vector<uint32_t> permCodeList = {0};
+    int ret = GetPermissionsFromKernel(static_cast<uint32_t>(GetSelfTokenID()), permCodeList);
+    isSupportGetPermissions = (ret == ENOTSUP) ? false : true;
+    hasChecked = true;
+    LOGE(ATM_DOMAIN, ATM_TAG,
+        "Getting permissions from kernel is %{public}s", isSupportGetPermissions ? "supported" : "not supported");
+    return isSupportGetPermissions;
 }
 } // namespace AccessToken
 } // namespace Security

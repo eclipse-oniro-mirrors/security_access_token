@@ -28,6 +28,7 @@
 #include "access_token_db.h"
 #define private public
 #include "accesstoken_callback_stubs.h"
+#include "access_token_db_operator.h"
 #include "accesstoken_info_utils.h"
 #include "accesstoken_info_manager.h"
 #include "accesstoken_remote_token_manager.h"
@@ -42,12 +43,12 @@
 #include "permission_constraint_check.h"
 #include "token_modify_notifier.h"
 #undef private
-#include "access_token_db_operator.h"
+#include "permission_kernel_utils.h"
+#include "permission_map.h"
 #include "permission_validator.h"
 #include "string_ex.h"
 #include "token_setproc.h"
 #include "system_ability_definition.h"
-#include "permission_map.h"
 
 using namespace testing::ext;
 using namespace OHOS;
@@ -2456,6 +2457,9 @@ HWTEST_F(TokenInfoManagerTest, VerifyNativeAccessToken001, TestSize.Level0)
     AccessTokenID tokenId = 0x280bc142; // 0x280bc142 is random input
     std::string permissionName = "ohos.permission.INVALID_AA";
     AccessTokenID tokenId1 = AccessTokenInfoManager::GetInstance().GetNativeTokenId("accesstoken_service");
+    uint32_t permCode = 0;
+    ASSERT_TRUE(TransferPermissionToOpcode("ohos.permission.KILL_APP_PROCESSES", permCode));
+    AccessTokenInfoManager::GetInstance().nativeTokenInfoMap_[tokenId1].opCodeList.emplace_back(permCode);
     // tokenId is not exist
     ASSERT_EQ(PermissionState::PERMISSION_DENIED,
         AccessTokenInfoManager::GetInstance().VerifyNativeAccessToken(tokenId, permissionName));
@@ -2466,12 +2470,11 @@ HWTEST_F(TokenInfoManagerTest, VerifyNativeAccessToken001, TestSize.Level0)
         AccessTokenInfoManager::GetInstance().VerifyNativeAccessToken(tokenId1, permissionName));
 
     // tokenId is native token, and permission is defined
-    ASSERT_EQ(PermissionState::PERMISSION_DENIED,
+    if (!PermissionKernelUtils::IsKernelSupportGetPermissions()) {
+        permissionName = "ohos.permission.KILL_APP_PROCESSES";
+        ASSERT_EQ(PermissionState::PERMISSION_GRANTED,
         AccessTokenInfoManager::GetInstance().VerifyNativeAccessToken(tokenId1, permissionName));
-
-    permissionName = "ohos.permission.KILL_APP_PROCESSES";
-    ASSERT_EQ(PermissionState::PERMISSION_GRANTED,
-        AccessTokenInfoManager::GetInstance().VerifyNativeAccessToken(tokenId1, permissionName));
+    }
 }
 
 /**

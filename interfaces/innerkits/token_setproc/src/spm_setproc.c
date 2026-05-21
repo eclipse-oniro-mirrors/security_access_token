@@ -280,12 +280,16 @@ static int SpmCopyGetResult(SpmData* entry, const struct IoctlSpmDataQuery* quer
     if (ret != EOK) {
         return ret;
     }
+    entry->perms.bufSize = size;
+
     size = query->entry.extendPermSize;
     offset = query->entry.extendPermsOffset;
     ret = memcpy_s(entry->extendPerms.buf, entry->extendPerms.bufSize, query->buf + offset, size);
     if (ret != EOK) {
         return ret;
     }
+    entry->extendPerms.bufSize = size;
+
     entry->uid = query->entry.uid;
     entry->tokenid = query->entry.tokenid;
     entry->tokenidAttr = query->entry.tokenidAttr;
@@ -553,4 +557,53 @@ void SpmDataFree(SpmData* data)
     free(data->extendPerms.buf);
     free(data->name.buf);
     free(data);
+}
+
+int32_t TransferSpmExternPerms(SpmBlob *data, PermsWithValue *valueList, uint32_t *listSize)
+{
+    if ((data == NULL) || (listSize == NULL) || (*listSize == 0) || (valueList == NULL)) {
+        return ACCESS_TOKEN_PARAM_INVALID;
+    }
+    if (data->bufSize == 0) {
+        *listSize = 0;
+        return ACCESS_TOKEN_OK;
+    }
+    if ((data->bufSize <= sizeof(uint32_t) + sizeof(uint32_t)) || ((data->bufSize > 0) && (data->buf == NULL))) {
+        return ACCESS_TOKEN_PARAM_INVALID;
+    }
+
+    uint32_t capacity = *listSize;
+    uint32_t outputSize = 0;
+    uint32_t offset = 0;
+    while (offset <= data->bufSize - sizeof(uint32_t) - sizeof(uint32_t)) {
+        uint32_t code = 0;
+        uint32_t valueSize = 0;
+        if (memcpy_s(&code, sizeof(code), data->buf + offset, sizeof(code)) != EOK) {
+            return ACCESS_TOKEN_PARAM_INVALID;
+        }
+        offset += sizeof(uint32_t);
+        if (memcpy_s(&valueSize, sizeof(valueSize), data->buf + offset, sizeof(valueSize)) != EOK) {
+            return ACCESS_TOKEN_PARAM_INVALID;
+        }
+        offset += sizeof(uint32_t);
+
+        if (valueSize > data->bufSize - offset) {
+            return ACCESS_TOKEN_PARAM_INVALID;
+        }
+        if (outputSize < capacity) {
+            valueList[outputSize].code = code;
+            valueList[outputSize].value = data->buf + offset;
+        }
+        outputSize++;
+        if (outputSize > capacity) {
+            return ERANGE;
+        }
+        offset += valueSize;
+    }
+
+    *listSize = outputSize;
+    if (offset != data->bufSize) {
+        return ACCESS_TOKEN_PARAM_INVALID;
+    }
+    return ACCESS_TOKEN_OK;
 }

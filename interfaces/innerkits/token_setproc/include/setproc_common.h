@@ -26,6 +26,8 @@ extern "C" {
 #define TOKENID_DEVNODE "/dev/access_token_id"
 
 #define SPM_DATA_BATCH_SIZE 50
+#define MAX_PERM_BIT_MAP_SIZE 64
+#define UINT32_T_BITS 32
 
 enum {
     GET_TOKEN_ID = 1,
@@ -36,6 +38,7 @@ enum {
     REMOVE_PERMISSIONS,
     GET_PERMISSION,
     SET_PERMISSION,
+    GET_ALL_PERMISSIONS = 11,
     ADD_SPM_ENTRIES = 16,
     SET_SPM_ENTRIES = 17,
     GET_SPM_ENTRY = 18,

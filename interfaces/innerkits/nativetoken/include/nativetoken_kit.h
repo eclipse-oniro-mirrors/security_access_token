@@ -34,6 +34,7 @@ typedef struct TokenInfoParams {
     const char **acls;
     const char *processName;
     const char *aplStr;
+    int32_t uid;
 } NativeTokenInfoParams;
 
 extern uint64_t GetAccessTokenId(NativeTokenInfoParams *tokenInfo);

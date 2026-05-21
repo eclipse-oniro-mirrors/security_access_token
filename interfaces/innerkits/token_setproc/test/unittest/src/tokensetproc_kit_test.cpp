@@ -15,8 +15,10 @@
 
 #include "tokensetproc_kit_test.h"
 #include <ctime>
+#include <cstring>
 #include "spm_setproc.h"
 #include "token_setproc.h"
+#include "perm_setproc_c.h"
 #include "securec.h"
 
 using namespace testing::ext;
@@ -47,7 +49,7 @@ void TokensetprocKitTest::SetUp()
 
 void TokensetprocKitTest::TearDown()
 {
-    RemovePermissionFromKernel(g_tokeId);
+    OHOS::Security::AccessToken::RemovePermissionFromKernel(g_tokeId);
     setuid(g_selfUid);
 }
 
@@ -76,7 +78,7 @@ HWTEST_F(TokensetprocKitTest, AddPermissionToKernel002, TestSize.Level0)
     std::vector<uint32_t> opcodeList = {0, 1, 2};
     std::vector<bool> statusList = {0, 0};
     ASSERT_EQ(ACCESS_TOKEN_PARAM_INVALID, AddPermissionToKernel(g_tokeId, opcodeList, statusList));
-    ASSERT_EQ(ACCESS_TOKEN_OK, RemovePermissionFromKernel(g_tokeId));
+    ASSERT_EQ(ACCESS_TOKEN_OK, OHOS::Security::AccessToken::RemovePermissionFromKernel(g_tokeId));
     setuid(g_selfUid);
 }
 
@@ -92,7 +94,7 @@ HWTEST_F(TokensetprocKitTest, AddPermissionToKernel003, TestSize.Level0)
     std::vector<uint32_t> opcodeList;
     std::vector<bool> statusList;
     ASSERT_EQ(ACCESS_TOKEN_OK, AddPermissionToKernel(g_tokeId, opcodeList, statusList));
-    ASSERT_EQ(ACCESS_TOKEN_OK, RemovePermissionFromKernel(g_tokeId));
+    ASSERT_EQ(ACCESS_TOKEN_OK, OHOS::Security::AccessToken::RemovePermissionFromKernel(g_tokeId));
     setuid(g_selfUid);
 }
 
@@ -106,7 +108,7 @@ HWTEST_F(TokensetprocKitTest, AddPermissionToKernel004, TestSize.Level0)
 {
     setuid(ACCESS_TOKEN_UID);
     ASSERT_EQ(ACCESS_TOKEN_OK, AddPermissionToKernel(g_tokeId, g_opCodeList, g_statusList));
-    ASSERT_EQ(ACCESS_TOKEN_OK, RemovePermissionFromKernel(g_tokeId));
+    ASSERT_EQ(ACCESS_TOKEN_OK, OHOS::Security::AccessToken::RemovePermissionFromKernel(g_tokeId));
     setuid(g_selfUid);
 }
 
@@ -133,7 +135,7 @@ HWTEST_F(TokensetprocKitTest, AddPermissionToKernel005, TestSize.Level0)
 
     EXPECT_EQ(ACCESS_TOKEN_OK, GetPermissionFromKernel(g_tokeId, opCodeList2[0], isGranted));
     EXPECT_EQ(true, isGranted);
-    EXPECT_EQ(ACCESS_TOKEN_OK, RemovePermissionFromKernel(g_tokeId));
+    EXPECT_EQ(ACCESS_TOKEN_OK, OHOS::Security::AccessToken::RemovePermissionFromKernel(g_tokeId));
 
     setuid(g_selfUid);
 }
@@ -161,7 +163,7 @@ HWTEST_F(TokensetprocKitTest, AddPermissionToKernel006, TestSize.Level0)
     EXPECT_EQ(ACCESS_TOKEN_OK, GetPermissionFromKernel(g_tokeId, opCodeList2[0], isGranted));
     EXPECT_EQ(false, isGranted);
 
-    EXPECT_EQ(ACCESS_TOKEN_OK, RemovePermissionFromKernel(g_tokeId));
+    EXPECT_EQ(ACCESS_TOKEN_OK, OHOS::Security::AccessToken::RemovePermissionFromKernel(g_tokeId));
 
     setuid(g_selfUid);
 }
@@ -179,8 +181,8 @@ HWTEST_F(TokensetprocKitTest, AddPermissionToKernel007, TestSize.Level0)
     uint32_t token2 = 222;
     ASSERT_EQ(ACCESS_TOKEN_OK, AddPermissionToKernel(token1, g_opCodeList, g_statusList));
     EXPECT_EQ(ACCESS_TOKEN_OK, AddPermissionToKernel(token2, g_opCodeList, g_statusList));
-    EXPECT_EQ(ACCESS_TOKEN_OK, RemovePermissionFromKernel(token1));
-    EXPECT_EQ(ACCESS_TOKEN_OK, RemovePermissionFromKernel(token2));
+    EXPECT_EQ(ACCESS_TOKEN_OK, OHOS::Security::AccessToken::RemovePermissionFromKernel(token1));
+    EXPECT_EQ(ACCESS_TOKEN_OK, OHOS::Security::AccessToken::RemovePermissionFromKernel(token2));
     setuid(g_selfUid);
 }
 
@@ -205,7 +207,7 @@ HWTEST_F(TokensetprocKitTest, AddPermissionToKernel008, TestSize.Level0)
     }
 
     for (uint32_t i = 0; i < tokenList.size(); i++) {
-        RemovePermissionFromKernel(tokenList[i]);
+        OHOS::Security::AccessToken::RemovePermissionFromKernel(tokenList[i]);
     }
     setuid(g_selfUid);
 }
@@ -222,7 +224,7 @@ HWTEST_F(TokensetprocKitTest, AddPermissionToKernel009, TestSize.Level0)
     setuid(ACCESS_TOKEN_UID);
     ASSERT_EQ(ACCESS_TOKEN_OK, AddPermissionToKernel(g_tokeId, g_opCodeList, g_statusList));
 
-    EXPECT_EQ(ACCESS_TOKEN_OK, SetPermissionToKernel(g_tokeId, g_opCodeList[0], true));
+    EXPECT_EQ(ACCESS_TOKEN_OK, OHOS::Security::AccessToken::SetPermissionToKernel(g_tokeId, g_opCodeList[0], true));
     bool isGranted = false;
     EXPECT_EQ(ACCESS_TOKEN_OK, GetPermissionFromKernel(g_tokeId, g_opCodeList[0], isGranted));
     EXPECT_EQ(true, isGranted);
@@ -239,7 +241,7 @@ HWTEST_F(TokensetprocKitTest, AddPermissionToKernel009, TestSize.Level0)
     EXPECT_EQ(ACCESS_TOKEN_OK, GetPermissionFromKernel(g_tokeId, g_opCodeList[0], isGranted));
     EXPECT_EQ(g_statusList[0], isGranted);
 
-    EXPECT_EQ(ACCESS_TOKEN_OK, RemovePermissionFromKernel(g_tokeId));
+    EXPECT_EQ(ACCESS_TOKEN_OK, OHOS::Security::AccessToken::RemovePermissionFromKernel(g_tokeId));
     setuid(g_selfUid);
 }
 
@@ -252,7 +254,7 @@ HWTEST_F(TokensetprocKitTest, AddPermissionToKernel009, TestSize.Level0)
 HWTEST_F(TokensetprocKitTest, RemovePermissionFromKernel001, TestSize.Level0)
 {
     setuid(TEST_UID); // random uid
-    ASSERT_EQ(EPERM, RemovePermissionFromKernel(g_tokeId));
+    ASSERT_EQ(EPERM, OHOS::Security::AccessToken::RemovePermissionFromKernel(g_tokeId));
     setuid(g_selfUid);
 }
 
@@ -266,8 +268,8 @@ HWTEST_F(TokensetprocKitTest, RemovePermissionFromKernel002, TestSize.Level0)
 {
     setuid(ACCESS_TOKEN_UID);
     ASSERT_EQ(ACCESS_TOKEN_OK, AddPermissionToKernel(g_tokeId, g_opCodeList, g_statusList));
-    EXPECT_EQ(ACCESS_TOKEN_OK, RemovePermissionFromKernel(g_tokeId));
-    ASSERT_EQ(ACCESS_TOKEN_OK, RemovePermissionFromKernel(g_tokeId));
+    EXPECT_EQ(ACCESS_TOKEN_OK, OHOS::Security::AccessToken::RemovePermissionFromKernel(g_tokeId));
+    ASSERT_EQ(ACCESS_TOKEN_OK, OHOS::Security::AccessToken::RemovePermissionFromKernel(g_tokeId));
     setuid(g_selfUid);
 }
 
@@ -280,7 +282,7 @@ HWTEST_F(TokensetprocKitTest, RemovePermissionFromKernel002, TestSize.Level0)
 HWTEST_F(TokensetprocKitTest, SetPermissionToKernel001, TestSize.Level0)
 {
     setuid(TEST_UID); // random uid
-    ASSERT_EQ(EPERM, SetPermissionToKernel(g_tokeId, 1, true));
+    ASSERT_EQ(EPERM, OHOS::Security::AccessToken::SetPermissionToKernel(g_tokeId, 1, true));
     setuid(g_selfUid);
 }
 
@@ -293,7 +295,7 @@ HWTEST_F(TokensetprocKitTest, SetPermissionToKernel001, TestSize.Level0)
 HWTEST_F(TokensetprocKitTest, SetPermissionToKernel002, TestSize.Level0)
 {
     setuid(ACCESS_TOKEN_UID);
-    ASSERT_EQ(ENODATA, SetPermissionToKernel(g_tokeId, g_opCodeList[0], true));
+    ASSERT_EQ(ENODATA, OHOS::Security::AccessToken::SetPermissionToKernel(g_tokeId, g_opCodeList[0], true));
     bool isGranted = false;
     ASSERT_EQ(ENODATA, GetPermissionFromKernel(g_tokeId, g_opCodeList[0], isGranted));
     ASSERT_EQ(false, isGranted);
@@ -309,8 +311,8 @@ HWTEST_F(TokensetprocKitTest, SetPermissionToKernel003, TestSize.Level0)
 {
     setuid(ACCESS_TOKEN_UID);
     ASSERT_EQ(ACCESS_TOKEN_OK, AddPermissionToKernel(g_tokeId, g_opCodeList, g_statusList));
-    ASSERT_EQ(ACCESS_TOKEN_OK, RemovePermissionFromKernel(g_tokeId));
-    ASSERT_EQ(ENODATA, SetPermissionToKernel(g_tokeId,  g_opCodeList[0], true));
+    ASSERT_EQ(ACCESS_TOKEN_OK, OHOS::Security::AccessToken::RemovePermissionFromKernel(g_tokeId));
+    ASSERT_EQ(ENODATA, OHOS::Security::AccessToken::SetPermissionToKernel(g_tokeId,  g_opCodeList[0], true));
     bool isGranted = false;
     ASSERT_EQ(ENODATA, GetPermissionFromKernel(g_tokeId, g_opCodeList[0], isGranted));
 }
@@ -342,7 +344,7 @@ HWTEST_F(TokensetprocKitTest, GetPermissionFromKernel001, TestSize.Level0)
         }
     }
 
-    EXPECT_EQ(ACCESS_TOKEN_OK, RemovePermissionFromKernel(g_tokeId));
+    EXPECT_EQ(ACCESS_TOKEN_OK, OHOS::Security::AccessToken::RemovePermissionFromKernel(g_tokeId));
     for (uint32_t i = 0; i < size; i++) {
         bool isGranted = false;
         EXPECT_EQ(ENODATA, GetPermissionFromKernel(g_tokeId, g_opCodeList[i], isGranted));
@@ -365,16 +367,16 @@ HWTEST_F(TokensetprocKitTest, GetPermissionFromKernel002, TestSize.Level0)
 
     // set permission status: false
     bool isGranted = false;
-    EXPECT_EQ(ACCESS_TOKEN_OK, SetPermissionToKernel(g_tokeId, g_opCodeList[0], false));
+    EXPECT_EQ(ACCESS_TOKEN_OK, OHOS::Security::AccessToken::SetPermissionToKernel(g_tokeId, g_opCodeList[0], false));
     EXPECT_EQ(ACCESS_TOKEN_OK, GetPermissionFromKernel(g_tokeId, g_opCodeList[0], isGranted));
     EXPECT_EQ(false, isGranted);
 
     // set permission status: true
-    EXPECT_EQ(ACCESS_TOKEN_OK, SetPermissionToKernel(g_tokeId, g_opCodeList[0], true));
+    EXPECT_EQ(ACCESS_TOKEN_OK, OHOS::Security::AccessToken::SetPermissionToKernel(g_tokeId, g_opCodeList[0], true));
     EXPECT_EQ(ACCESS_TOKEN_OK, GetPermissionFromKernel(g_tokeId, g_opCodeList[0], isGranted));
     EXPECT_EQ(true, isGranted);
 
-    ASSERT_EQ(ACCESS_TOKEN_OK, RemovePermissionFromKernel(g_tokeId));
+    ASSERT_EQ(ACCESS_TOKEN_OK, OHOS::Security::AccessToken::RemovePermissionFromKernel(g_tokeId));
     setuid(g_selfUid);
 }
 
@@ -390,7 +392,7 @@ HWTEST_F(TokensetprocKitTest, InvalidParam1, TestSize.Level0)
     ASSERT_EQ(ACCESS_TOKEN_OK, AddPermissionToKernel(g_tokeId, g_opCodeList, g_statusList));
 
     // set permission fail
-    EXPECT_EQ(EINVAL, SetPermissionToKernel(g_tokeId, INVALID_OP_CODE, false));
+    EXPECT_EQ(EINVAL, OHOS::Security::AccessToken::SetPermissionToKernel(g_tokeId, INVALID_OP_CODE, false));
 
     // get permission fail
     bool isGranted = false;
@@ -404,9 +406,9 @@ static void *ThreadTestFunc01(void *args)
     for (int32_t i = 0; i < CYCLE_TIMES; i++) {
         bool isGranted = false;
         AddPermissionToKernel(token1, g_opCodeList, g_statusList);
-        SetPermissionToKernel(token1, g_opCodeList[0], false);
+        OHOS::Security::AccessToken::SetPermissionToKernel(token1, g_opCodeList[0], false);
         GetPermissionFromKernel(token1, g_opCodeList[0], isGranted);
-        RemovePermissionFromKernel(token1);
+        OHOS::Security::AccessToken::RemovePermissionFromKernel(token1);
         token1++;
     }
     return nullptr;
@@ -419,9 +421,9 @@ static void *ThreadTestFunc02(void *args)
     for (int32_t i = 0; i < CYCLE_TIMES; i++) {
         bool isGranted = false;
         AddPermissionToKernel(token2, g_opCodeList, g_statusList);
-        SetPermissionToKernel(token2, g_opCodeList[size - 1], true);
+        OHOS::Security::AccessToken::SetPermissionToKernel(token2, g_opCodeList[size - 1], true);
         GetPermissionFromKernel(token2, g_opCodeList[size - 1], isGranted);
-        RemovePermissionFromKernel(token2);
+        OHOS::Security::AccessToken::RemovePermissionFromKernel(token2);
         token2++;
     }
     return nullptr;
@@ -493,7 +495,7 @@ HWTEST_F(TokensetprocKitTest, APICostTimeTest001, TestSize.Level0)
     }
 
     for (uint32_t i = 0; i < tokenList.size(); i++) {
-        RemovePermissionFromKernel(tokenList[i]);
+        OHOS::Security::AccessToken::RemovePermissionFromKernel(tokenList[i]);
     }
     setuid(g_selfUid);
 }
@@ -991,12 +993,200 @@ HWTEST_F(TokensetprocKitTest, SpmRemoveEntry001, TestSize.Level0)
     EXPECT_EQ(ret, 0);
 }
 
-/**
- * @tc.name: SpmIncUidRefCnt001
- * @tc.desc: Test incrementing UID reference count.
- * @tc.type: FUNC
- * @tc.require:
- */
+HWTEST_F(TokensetprocKitTest, AddPermissionToKernelForC001, TestSize.Level0)
+{
+    uint32_t perms[MAX_PERM_BIT_MAP_SIZE] = {0};
+    EXPECT_EQ(ACCESS_TOKEN_PARAM_INVALID, ::AddPermissionToKernel(g_tokeId, nullptr, sizeof(perms)));
+    EXPECT_EQ(ACCESS_TOKEN_PARAM_INVALID, ::AddPermissionToKernel(g_tokeId, reinterpret_cast<const char *>(perms), 0));
+    EXPECT_EQ(ACCESS_TOKEN_PARAM_INVALID, ::AddPermissionToKernel(g_tokeId, reinterpret_cast<const char *>(perms), 1));
+    EXPECT_EQ(ACCESS_TOKEN_PARAM_INVALID,
+        ::AddPermissionToKernel(g_tokeId, reinterpret_cast<const char *>(perms), sizeof(perms) + sizeof(uint32_t)));
+}
+
+HWTEST_F(TokensetprocKitTest, AddPermissionToKernelForC002, TestSize.Level0)
+{
+    setuid(ACCESS_TOKEN_UID);
+    uint32_t perms[MAX_PERM_BIT_MAP_SIZE] = {0};
+    perms[0] = 0x5;
+    ASSERT_EQ(ACCESS_TOKEN_OK,
+        ::AddPermissionToKernel(g_tokeId, reinterpret_cast<const char *>(perms), sizeof(perms)));
+
+    std::vector<uint32_t> opCodeList;
+    int32_t ret = GetPermissionsFromKernel(g_tokeId, opCodeList);
+    if (ret == ENOTSUP) {
+        EXPECT_EQ(opCodeList.empty(), true);
+    } else {
+        EXPECT_EQ(std::vector<uint32_t>({0, 2}), opCodeList);
+    }
+
+    uint32_t queryPerms[MAX_PERM_BIT_MAP_SIZE] = {0};
+    ret = ::GetPermissionsFromKernel(g_tokeId, queryPerms);
+    if (ret == ENOTSUP) {
+        EXPECT_EQ(queryPerms[0], 0);
+    } else {
+        EXPECT_EQ(perms[0], queryPerms[0]);
+    }
+    setuid(g_selfUid);
+}
+
+HWTEST_F(TokensetprocKitTest, GetPermissionsFromKernelForC001, TestSize.Level0)
+{
+    EXPECT_EQ(ACCESS_TOKEN_PARAM_INVALID, ::GetPermissionsFromKernel(g_tokeId, nullptr));
+}
+
+HWTEST_F(TokensetprocKitTest, FilterKernelPermissions001, TestSize.Level0)
+{
+    EXPECT_EQ(ACCESS_TOKEN_PARAM_INVALID, FilterKernelPermissions(nullptr, nullptr, nullptr));
+    uint32_t perms[MAX_PERM_BIT_MAP_SIZE] = {0};
+    uint32_t permSize = 1;
+    EXPECT_EQ(ACCESS_TOKEN_PARAM_INVALID, FilterKernelPermissions(perms, nullptr, &permSize));
+}
+
+HWTEST_F(TokensetprocKitTest, FilterKernelPermissions002, TestSize.Level0)
+{
+    uint32_t cameraCode = 0;
+    uint32_t locationCode = 0;
+    ASSERT_TRUE(::TransferPermissionToOpcode("ohos.permission.CAMERA", &cameraCode));
+    ASSERT_TRUE(::TransferPermissionToOpcode("ohos.permission.LOCATION", &locationCode));
+
+    uint32_t perms[MAX_PERM_BIT_MAP_SIZE] = {0};
+    perms[cameraCode / UINT32_T_BITS] |= (static_cast<uint32_t>(1) << (cameraCode % UINT32_T_BITS));
+    perms[locationCode / UINT32_T_BITS] |= (static_cast<uint32_t>(1) << (locationCode % UINT32_T_BITS));
+    perms[MAX_PERM_BIT_MAP_SIZE - 1] = 0x80000000; // out-of-range code should be ignored
+
+    uint16_t kernelPerms[2] = {0};
+    uint32_t permSize = 2;
+    int32_t ret = FilterKernelPermissions(perms, kernelPerms, &permSize);
+    ASSERT_EQ(ret, 0);
+    EXPECT_EQ(permSize, 0);
+    EXPECT_EQ(0, kernelPerms[0]);
+}
+
+HWTEST_F(TokensetprocKitTest, FilterKernelPermissions003, TestSize.Level0)
+{
+    uint32_t cameraCode = 0;
+    uint32_t pluginCode = 0;
+    ASSERT_TRUE(::TransferPermissionToOpcode("ohos.permission.CAMERA", &cameraCode));
+    ASSERT_TRUE(::TransferPermissionToOpcode("ohos.permission.kernel.SUPPORT_PLUGIN", &pluginCode));
+
+    uint32_t perms[MAX_PERM_BIT_MAP_SIZE] = {0};
+    perms[cameraCode / UINT32_T_BITS] |= (static_cast<uint32_t>(1) << (cameraCode % UINT32_T_BITS));
+    perms[pluginCode / UINT32_T_BITS] |= (static_cast<uint32_t>(1) << (pluginCode % UINT32_T_BITS));
+
+    uint16_t kernelPerms[1] = {0};
+    uint32_t permSize = 1;
+    int32_t ret = FilterKernelPermissions(perms, kernelPerms, &permSize);
+    EXPECT_EQ(ret, 0);
+    EXPECT_EQ(permSize, 1);
+}
+
+HWTEST_F(TokensetprocKitTest, TransferPermissionMapForC001, TestSize.Level0)
+{
+    uint32_t opCode = 0;
+    EXPECT_FALSE(::TransferPermissionToOpcode(nullptr, &opCode));
+    EXPECT_FALSE(::TransferPermissionToOpcode("ohos.permission.not_exist", &opCode));
+    EXPECT_FALSE(::TransferPermissionToOpcode("ohos.permission.CAMERA", nullptr));
+
+    ASSERT_TRUE(::TransferPermissionToOpcode("ohos.permission.CAMERA", &opCode));
+    char permissionName[128] = {0};
+    ASSERT_TRUE(::TransferOpCodeToPermission(opCode, permissionName, sizeof(permissionName)));
+    EXPECT_STREQ("ohos.permission.CAMERA", permissionName);
+
+    EXPECT_FALSE(::TransferOpCodeToPermission(opCode, nullptr, sizeof(permissionName)));
+    EXPECT_FALSE(::TransferOpCodeToPermission(opCode, permissionName, 1));
+    EXPECT_FALSE(::TransferOpCodeToPermission(UINT32_MAX, permissionName, sizeof(permissionName)));
+}
+
+HWTEST_F(TokensetprocKitTest, TransferSpmExternPerms001, TestSize.Level0)
+{
+    EXPECT_EQ(ACCESS_TOKEN_PARAM_INVALID, TransferSpmExternPerms(nullptr, nullptr, nullptr));
+
+    uint32_t listSize = 0;
+    SpmBlob data = {
+        .buf = nullptr,
+        .bufSize = 4,
+    };
+    EXPECT_EQ(ACCESS_TOKEN_PARAM_INVALID, TransferSpmExternPerms(&data, nullptr, &listSize));
+
+    data.buf = const_cast<char *>("");
+    EXPECT_EQ(ACCESS_TOKEN_PARAM_INVALID, TransferSpmExternPerms(&data, nullptr, nullptr));
+}
+
+HWTEST_F(TokensetprocKitTest, TransferSpmExternPerms002, TestSize.Level0)
+{
+    char raw[] = {
+        0x01, 0x00, 0x00, 0x00,
+        0x04, 0x00, 0x00, 0x00,
+        'a', 'b', 'c', '\0',
+        0x02, 0x00, 0x00, 0x00,
+        0x02, 0x00, 0x00, 0x00,
+        'x', '\0',
+    };
+    SpmBlob data = {
+        .buf = raw,
+        .bufSize = sizeof(raw),
+    };
+
+    uint32_t listSize = 1;
+    PermsWithValue valueList[1];
+    EXPECT_EQ(ERANGE, TransferSpmExternPerms(&data, valueList, &listSize));
+
+    PermsWithValue fullList[2];
+    listSize = 2;
+    EXPECT_EQ(ACCESS_TOKEN_OK, TransferSpmExternPerms(&data, fullList, &listSize));
+    EXPECT_EQ(2u, listSize);
+    EXPECT_EQ(2u, fullList[1].code);
+    EXPECT_STREQ("x", fullList[1].value);
+}
+
+HWTEST_F(TokensetprocKitTest, TransferSpmExternPerms003, TestSize.Level0)
+{
+    char invalidValueSize[] = {
+        0x01, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00,
+    };
+    SpmBlob data = {
+        .buf = invalidValueSize,
+        .bufSize = sizeof(invalidValueSize),
+    };
+    uint32_t listSize = 1;
+    PermsWithValue valueList[1];
+    EXPECT_EQ(ACCESS_TOKEN_PARAM_INVALID, TransferSpmExternPerms(&data, valueList, &listSize));
+
+    char trailingBytes1[] = {
+        0x01, 0x00, 0x00, 0x00,
+        0x02, 0x00, 0x00, 0x00,
+        'x', '\0',
+        'z',
+    };
+    data.buf = trailingBytes1;
+    data.bufSize = sizeof(trailingBytes1);
+    listSize = 1;
+    EXPECT_EQ(ACCESS_TOKEN_PARAM_INVALID, TransferSpmExternPerms(&data, valueList, &listSize));
+    EXPECT_EQ(1u, listSize);
+
+    char valueSizeInvalid[] = {
+        0x01, 0x00, 0x00, 0x00,
+        0x07, 0x00, 0x00, 0x00,
+        'x', '\0',
+        'z',
+    };
+    data.buf = valueSizeInvalid;
+    data.bufSize = sizeof(valueSizeInvalid);
+    listSize = 1;
+    EXPECT_EQ(ACCESS_TOKEN_PARAM_INVALID, TransferSpmExternPerms(&data, valueList, &listSize));
+
+    char validRaw[] = {
+        0x01, 0x00, 0x00, 0x00,
+        0x02, 0x00, 0x00, 0x00,
+        'x', '\0',
+    };
+    data.buf = validRaw;
+    data.bufSize = sizeof(validRaw);
+    listSize = 0;
+    EXPECT_EQ(ACCESS_TOKEN_PARAM_INVALID, TransferSpmExternPerms(&data, nullptr, &listSize));
+}
+
 HWTEST_F(TokensetprocKitTest, SpmIncUidRefCnt001, TestSize.Level0)
 {
     int ret = SpmIncUidRefCnt(1000, 1);
