@@ -273,7 +273,7 @@ uint32_t HapTokenInfoInner::GetUid() const
     return tokenInfoBasic_.uid;
 }
 
-void HapTokenInfoInner::SetUid(uint32_t uid)
+void HapTokenInfoInner::SetUid(int32_t uid)
 {
     std::unique_lock<std::shared_mutex> infoGuard(this->policySetLock_);
     tokenInfoBasic_.uid = uid;

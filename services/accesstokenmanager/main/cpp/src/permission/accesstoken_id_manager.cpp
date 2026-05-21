@@ -14,11 +14,13 @@
  */
 
 #include "accesstoken_id_manager.h"
+#include <cinttypes>
 #include <mutex>
-#include "accesstoken_common_log.h"
 #include "access_token_error.h"
+#include "accesstoken_common_log.h"
 #include "data_validator.h"
 #include "random.h"
+#include "spm_setproc.h"
 #include "tokenid_attributes.h"
 
 namespace OHOS {
@@ -26,6 +28,9 @@ namespace Security {
 namespace AccessToken {
 namespace {
 std::recursive_mutex g_instanceMutex;
+constexpr int32_t BUNDLE_ID_MIN = 10000;
+constexpr int32_t BUNDLE_ID_MAX = 65535;
+constexpr int32_t UID_TRANSFORM_DIVISOR = 200000;
 }
 
 ATokenTypeEnum AccessTokenIDManager::GetTokenIdType(AccessTokenID id)
@@ -147,6 +152,109 @@ AccessTokenIDManager& AccessTokenIDManager::GetInstance()
         }
     }
     return *instance;
+}
+
+bool AccessTokenIDManager::ExtractBundleId(int32_t uid, int32_t& bundleId) const
+{
+    if (uid < 0) {
+        return false;
+    }
+    int32_t extracted = uid % UID_TRANSFORM_DIVISOR;
+    if (extracted < BUNDLE_ID_MIN || extracted > BUNDLE_ID_MAX) {
+        return false;
+    }
+    bundleId = extracted;
+    return true;
+}
+
+void AccessTokenIDManager::InitSingleBundleIdCache(int32_t uid)
+{
+    int32_t bundleId = 0;
+    if (!ExtractBundleId(uid, bundleId)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Invalid uid=%{public}d.", uid);
+        return;
+    }
+    std::unique_lock<std::mutex> lock(bundleIdLock_);
+    bundleIdSet_.insert(bundleId);
+}
+
+int32_t AccessTokenIDManager::AllocUid(int32_t localId, int32_t& outUid)
+{
+    std::unique_lock<std::mutex> lock(bundleIdLock_);
+    int32_t startId = bundleIdSet_.empty() ? BUNDLE_ID_MIN : (*bundleIdSet_.rbegin() + 1);
+    if (startId > BUNDLE_ID_MAX) {
+        startId = BUNDLE_ID_MIN;
+    }
+
+    // Two-pass scan: [startId, BUNDLE_ID_MAX] then wrap [BUNDLE_ID_MIN, startId-1]
+    int32_t ranges[2][2] = {{startId, BUNDLE_ID_MAX}, {BUNDLE_ID_MIN, startId - 1}};
+    int rangeSize = 2; // size of ranges
+    for (int p = 0; p < rangeSize; p++) {
+        for (int32_t candidate = ranges[p][0]; candidate <= ranges[p][1]; ++candidate) {
+            if (bundleIdSet_.count(candidate) > 0) {
+                continue;
+            }
+            int32_t uid = localId * UID_TRANSFORM_DIVISOR + candidate % UID_TRANSFORM_DIVISOR;
+            uint64_t refcnt = 0;
+            int32_t ret = SpmGetUidRefCnt(static_cast<uint32_t>(uid), &refcnt);
+            if (ret != RET_SUCCESS && ret != ENOTSUP) {
+                LOGE(ATM_DOMAIN, ATM_TAG, "SpmGetUidRefCnt failed, bundleId=%{public}d, ret=%{public}d.", candidate,
+                    ret);
+                return RET_FAILED;
+            }
+            if (ret == RET_SUCCESS && refcnt != 0) {
+                LOGW(ATM_DOMAIN, ATM_TAG, "BundleId=%{public}d has active refcnt %{public}" PRIu64 ", skip.", candidate,
+                    refcnt);
+                continue;
+            }
+            bundleIdSet_.insert(candidate);
+            outUid = uid;
+            return RET_SUCCESS;
+        }
+    }
+    LOGE(ATM_DOMAIN, ATM_TAG, "AllocUid: all bundleIds exhausted.");
+    return ERR_OVERSIZE;
+}
+
+int32_t AccessTokenIDManager::RemoveBundleId(int32_t uid)
+{
+    int32_t bundleId = 0;
+    if (!ExtractBundleId(uid, bundleId)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Invalid uid=%{public}d.", uid);
+        return ERR_PARAM_INVALID;
+    }
+    std::unique_lock<std::mutex> lock(bundleIdLock_);
+    if (bundleIdSet_.count(bundleId) == 0) {
+        LOGW(ATM_DOMAIN, ATM_TAG, "BundleId=%{public}d not in cache.", bundleId);
+        return RET_SUCCESS;
+    }
+    bundleIdSet_.erase(bundleId);
+    return RET_SUCCESS;
+}
+
+int32_t AccessTokenIDManager::TranslateUid(int32_t srcUid, int32_t dstLocalId, int32_t& outUid)
+{
+    int32_t bundleId = 0;
+    if (!ExtractBundleId(srcUid, bundleId)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Invalid srcUid=%{public}d.", srcUid);
+        return ERR_PARAM_INVALID;
+    }
+    outUid = dstLocalId * UID_TRANSFORM_DIVISOR + bundleId % UID_TRANSFORM_DIVISOR;
+    return RET_SUCCESS;
+}
+
+int32_t AccessTokenIDManager::ImportInitialUids(const std::vector<int32_t>& uids)
+{
+    std::unique_lock<std::mutex> lock(bundleIdLock_);
+    for (int32_t uid : uids) {
+        int32_t bundleId = 0;
+        if (ExtractBundleId(uid, bundleId)) {
+            bundleIdSet_.insert(bundleId);
+        } else {
+            LOGW(ATM_DOMAIN, ATM_TAG, "Invalid uid=%{public}d, skip.", uid);
+        }
+    }
+    return RET_SUCCESS;
 }
 } // namespace AccessToken
 } // namespace Security

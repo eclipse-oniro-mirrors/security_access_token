@@ -411,6 +411,7 @@ void AccessTokenInfoManager::Init(uint32_t& hapSize, uint32_t& nativeSize, uint3
         PermissionFeatureManager::GetInstance().SetFeatures(featureValue.permissionFeatures);
     }
 
+    LoadPermissionDefinitionExt(*policy);
     InitHapTokenInfos(hapSize, tokenIdAplMap);
     nativeSize = tokenInfos.size();
     InitNativeTokenInfos(tokenInfos);
@@ -425,6 +426,22 @@ void AccessTokenInfoManager::Init(uint32_t& hapSize, uint32_t& nativeSize, uint3
         std::unique_lock<std::shared_mutex> monitorLock(this->monitorLock_);
         if (this->tokenMonitor_ == nullptr) {
             this->tokenMonitor_ = std::make_shared<VerifyAccessTokenMonitor>();
+        }
+    }
+}
+
+void AccessTokenInfoManager::LoadPermissionDefinitionExt(ConfigPolicyLoaderInterface& policy)
+{
+    std::vector<std::string> permissions;
+    if (policy.GetPermissionDefinitionExt(permissions) != RET_SUCCESS) {
+        LOGE(ATM_DOMAIN, ATM_TAG,
+            "Failed to get permission definition extension");
+        return;
+    }
+    for (const auto& permissionName : permissions) {
+        if (!SetPermissionBriefEnabled(permissionName, true)) {
+            LOGW(ATM_DOMAIN, ATM_TAG,
+                "Permission in ext file is invalid %{public}s.", permissionName.c_str());
         }
     }
 }
@@ -870,7 +887,7 @@ int32_t AccessTokenInfoManager::CheckHapInfoParam(const HapInfoParams& info, con
     }
 
     for (const auto& extendValue : policy.aclExtendedMap) {
-        if (!IsDefinedPermission(extendValue.first)) {
+        if (!IsDefinedPermissionInner(extendValue.first)) {
             continue;
         }
         if (!DataValidator::IsAclExtendedMapContentValid(extendValue.first, extendValue.second)) {
@@ -1000,7 +1017,7 @@ int AccessTokenInfoManager::CreateHapTokenInfo(const HapInfoParams& info, const 
     UserPolicyManager::GetInstance().UpdatePermissionStatusListForUserPolicy(
         tokenId, info.userID, policyNew.permStateList);
     std::shared_ptr<HapTokenInfoInner> tokenInfo = std::make_shared<HapTokenInfoInner>(tokenId, info, policyNew);
-    HapTokenDbContext context(info.appIDDesc, policy, undefValues);
+    HapTokenDbContext context(info.appIDDesc, policyNew, undefValues);
     ret = AddHapTokenInfoToDb(tokenInfo, context);
     if (ret != RET_SUCCESS) {
         LOGC(ATM_DOMAIN, ATM_TAG, "AddHapTokenInfoToDb failed, errCode is %{public}d.", ret);
@@ -1895,7 +1912,7 @@ static bool IsCallerNormalApp(uint64_t fulltokenID)
 static bool GetPermissionFromKernelCache(AccessTokenID tokenID, const std::string& permissionName, int32_t& res)
 {
     uint32_t code = 0;
-    if (!IsDefinedPermission(permissionName)) {
+    if (!IsDefinedPermissionInner(permissionName)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Permission=%{public}s is not defined.", permissionName.c_str());
         res = PERMISSION_DENIED;
         return true;
@@ -1912,7 +1929,7 @@ static bool GetPermissionFromKernelCache(AccessTokenID tokenID, const std::strin
 
 int AccessTokenInfoManager::VerifyNativeAccessToken(AccessTokenID tokenID, const std::string& permissionName)
 {
-    if (!IsDefinedPermission(permissionName)) {
+    if (!IsDefinedPermissionInner(permissionName)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "No definition for permission: %{public}s!", permissionName.c_str());
         return PERMISSION_DENIED;
     }

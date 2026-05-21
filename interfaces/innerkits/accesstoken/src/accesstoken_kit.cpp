@@ -499,15 +499,9 @@ int AccessTokenKit::GetDefPermission(const std::string& permissionName, Permissi
         LOGE(ATM_DOMAIN, ATM_TAG, "PermissionName is invalid");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
-
     PermissionBriefDef briefDef;
     if (!GetPermissionBriefDef(permissionName, briefDef)) {
         return AccessTokenError::ERR_PERMISSION_NOT_EXIST;
-    }
-
-    if (briefDef.grantMode == GrantMode::SYSTEM_GRANT) {
-        ConvertPermissionBriefToDef(briefDef, permissionDefResult);
-        return 0;
     }
 
     return AccessTokenManagerClient::GetInstance().GetDefPermission(permissionName, permissionDefResult);
@@ -985,9 +979,26 @@ int32_t AccessTokenKit::SetPermissionStatusWithPolicy(
     return AccessTokenManagerClient::GetInstance().SetPermissionStatusWithPolicy(tokenID, permissionList, status, flag);
 }
 
+bool AccessTokenKit::IsSupportPermission(const std::string& permissionName)
+{
+    uint32_t permCode = 0;
+    PermissionBriefDef permissionBriefDef;
+    if (!AccessToken::GetPermissionBriefDef(permissionName, permissionBriefDef, permCode)) {
+        return false;
+    }
+    if (permissionBriefDef.isEnable) {
+        return true;
+    }
+    return AccessTokenManagerClient::GetInstance().IsSupportPermission(permissionName);
+}
+ 	 
+
 bool AccessTokenKit::TransferPermissionToOpcode(const std::string& permissionName, uint32_t& permCode)
 {
-    return AccessToken::TransferPermissionToOpcode(permissionName, permCode);
+    if (!AccessToken::TransferPermissionToOpcode(permissionName, permCode)) {
+        return false;
+    }
+    return IsSupportPermission(permissionName);
 }
 
 bool AccessTokenKit::TransferOpcodeToPermission(uint32_t permCode, std::string& permissionName)

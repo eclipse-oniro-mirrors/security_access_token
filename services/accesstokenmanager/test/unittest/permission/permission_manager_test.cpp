@@ -31,6 +31,7 @@
 #undef private
 #include "accesstoken_callback_stubs.h"
 #include "callback_death_recipients.h"
+#include "permission_map.h"
 #include "permission_change_notifier.h"
 #ifdef BGTASKMGR_CONTINUOUS_TASK_ENABLE
 #include "background_task_manager_access_client.h"
@@ -709,6 +710,26 @@ HWTEST_F(PermissionManagerTest, GetPermissionFlag002, TestSize.Level0)
 
     // delete test token
     ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId));
+}
+
+/**
+ * @tc.name: GetPermissionFlag003
+ * @tc.desc: Test GetPermissionFlag for !IsDefinedPermissionInner.
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(PermissionManagerTest, GetPermissionFlag003, TestSize.Level0)
+{
+    AccessTokenID tokenID = 123;
+    std::string permissionName;
+    uint32_t flag = 0;
+    PermissionDataBrief::GetInstance().DeleteBriefPermDataByTokenId(tokenID);
+ 
+    permissionName = "ohos.permission.Camera!";
+    // The permission name contains invalid characters
+    ASSERT_FALSE(SetPermissionBriefEnabled(permissionName, false));
+    ASSERT_EQ(ERR_PERMISSION_NOT_EXIST,
+        PermissionManager::GetInstance().GetPermissionFlag(tokenID, permissionName, flag));
 }
 
 /**

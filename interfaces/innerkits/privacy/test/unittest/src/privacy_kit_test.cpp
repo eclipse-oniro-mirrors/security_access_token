@@ -620,7 +620,7 @@ HWTEST_F(PrivacyKitTest, PrivacyToolToken001, TestSize.Level1)
 
 /**
  * @tc.name: PrivacyToolToken007
- * @tc.desc: Legal cli token can add used record for its related host token without PERMISSION_USED_STATS.
+ * @tc.desc: Legal cli token can add used record only for itself without PERMISSION_USED_STATS.
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -641,7 +641,7 @@ HWTEST_F(PrivacyKitTest, PrivacyToolToken007, TestSize.Level1)
         guard.Arm();
 
         AddPermParamInfo info;
-        info.tokenId = hostTokenId;
+        info.tokenId = toolTokenIdEx.tokenIdExStruct.tokenID;
         info.permissionName = "ohos.permission.LOCATION";
         info.successCount = 1;
         info.failCount = 0;
@@ -664,7 +664,7 @@ HWTEST_F(PrivacyKitTest, PrivacyToolToken007, TestSize.Level1)
 
 /**
  * @tc.name: PrivacyToolToken008
- * @tc.desc: Legal cli token cannot add used record for unrelated host token without PERMISSION_USED_STATS.
+ * @tc.desc: Legal cli token cannot add used record for unrelated token without PERMISSION_USED_STATS.
  * @tc.type: FUNC
  * @tc.require:
  */

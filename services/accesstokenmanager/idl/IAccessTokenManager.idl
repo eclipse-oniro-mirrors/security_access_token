@@ -125,4 +125,5 @@ interface OHOS.Security.AccessToken.IAccessTokenManager{
     [ipccode 207] void GetSkillPermissions([in] unsigned int hostTokenID, [in] String agentID, [in] List<SkillInfoParcel> skillInfoList, [out] SkillPermissionsResultParcel resultParcel);
     [ipccode 208] void GenerateCliAuthResult([in] unsigned int hostTokenID, [in] String agentID, [in] List<CliAuthInfoParcel> authInfoList, [out] ToolAuthResultParcel resultParcel);
     [ipccode 209] void GenerateSkillAuthResult([in] unsigned int hostTokenID, [in] String agentID, [in] List<SkillAuthInfoParcel> authInfoList, [out] ToolAuthResultParcel resultParcel);
+    [ipccode 210] void IsSupportPermission([in] String permission, [out] boolean isSupported);
 }

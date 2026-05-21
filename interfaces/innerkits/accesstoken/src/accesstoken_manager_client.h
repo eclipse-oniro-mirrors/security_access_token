@@ -118,6 +118,7 @@ public:
     int32_t GetHostTokenId(AccessTokenID toolTokenId, AccessTokenID& hostTokenId);
     void DumpTokenInfo(const AtmToolsParamInfo& info, std::string& dumpInfo);
     int32_t GetVersion(uint32_t& version);
+    bool IsSupportPermission(const std::string& permissionName);
     void OnRemoteDiedHandle();
     int32_t SetPermDialogCap(const HapBaseInfo& hapBaseInfo, bool enable);
     void GetPermissionManagerInfo(PermissionGrantInfo& info);

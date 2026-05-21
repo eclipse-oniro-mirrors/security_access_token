@@ -266,6 +266,10 @@ int PermissionManager::GetPermissionFlag(AccessTokenID tokenID, const std::strin
         LOGE(ATM_DOMAIN, ATM_TAG, "%{public}s of %{public}u is invalid!", permissionName.c_str(), tokenID);
         return AccessTokenError::ERR_PARAM_INVALID;
     }
+    if (!IsDefinedPermissionInner(permissionName)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "PermissionName is invalid %{public}s.", permissionName.c_str());
+        return AccessTokenError::ERR_PERMISSION_NOT_EXIST;
+    }
     uint32_t opCode;
     if (!TransferPermissionToOpcode(permissionName, opCode)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "PermissionName is invalid %{public}s.", permissionName.c_str());
@@ -613,7 +617,7 @@ int32_t PermissionManager::CheckAndUpdatePermission(AccessTokenID tokenID, const
         LOGC(ATM_DOMAIN, ATM_TAG, "%{public}s of %{public}u is invalid!", permissionName.c_str(), tokenID);
         return AccessTokenError::ERR_PARAM_INVALID;
     }
-    if (!IsDefinedPermission(permissionName)) {
+    if (!IsDefinedPermissionInner(permissionName)) {
         LOGC(ATM_DOMAIN, ATM_TAG, "No definition for permission: %{public}s!", permissionName.c_str());
         return AccessTokenError::ERR_PERMISSION_NOT_EXIST;
     }
@@ -677,7 +681,7 @@ int32_t PermissionManager::CheckMultiPermissionStatus(
         LOGI(ATM_DOMAIN, ATM_TAG,
             "Id: %{public}d, perm: %{public}s, status: %{public}d, flag: %{public}d.", tokenID,
             permissionName.c_str(), status, flag);
-        if (!IsDefinedPermission(permissionName)) {
+        if (!IsDefinedPermissionInner(permissionName)) {
             LOGC(ATM_DOMAIN, ATM_TAG, "Perm(%{public}s) is not defined!", permissionName.c_str());
             return AccessTokenError::ERR_PERMISSION_NOT_EXIST;
         }
@@ -780,7 +784,7 @@ int32_t PermissionManager::ScopeFilter(const PermStateChangeScope& scopeSrc, Per
     }
     std::set<std::string> permSet;
     for (const auto& permissionName : scopeSrc.permList) {
-        if (IsDefinedPermission(permissionName) &&
+        if (IsDefinedPermissionInner(permissionName) &&
             permSet.count(permissionName) == 0) {
             scopeRes.permList.emplace_back(permissionName);
             permSet.insert(permissionName);
@@ -824,7 +828,7 @@ bool PermissionManager::IsPermissionVaild(const std::string& permissionName)
         return false;
     }
 
-    if (!IsDefinedPermission(permissionName)) {
+    if (!IsDefinedPermissionInner(permissionName)) {
         LOGW(ATM_DOMAIN, ATM_TAG, "Permission %{public}s has no definition ", permissionName.c_str());
         return false;
     }

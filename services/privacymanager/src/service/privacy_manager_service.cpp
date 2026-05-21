@@ -73,16 +73,13 @@ static const int32_t PUBLISH_ERROR_CODE = -1;
 std::mutex g_accessTokenRunningMutex;
 bool g_isAccessTokenRunning = false;
 
-bool IsCliTokenHostRecordCalling(AccessTokenID callingTokenID, AccessTokenID infoTokenId)
+bool IsCliTokenSelfRecordCalling(AccessTokenID callingTokenID, AccessTokenID infoTokenId)
 {
     if (!AccessTokenKit::IsCliToolToken(callingTokenID)) {
         return false;
     }
-    AccessTokenID hostTokenId = INVALID_TOKENID;
-    if (AccessTokenKit::GetHostTokenId(callingTokenID, hostTokenId) != RET_SUCCESS) {
-        return false;
-    }
-    return hostTokenId == infoTokenId;
+    LOGI(PRI_DOMAIN, PRI_TAG, "callingTokenID is %{public}d, infoTokenId is %{public}d", callingTokenID, infoTokenId);
+    return callingTokenID == infoTokenId;
 }
 }
 
@@ -138,7 +135,7 @@ int32_t PrivacyManagerService::AddPermissionUsedRecord(const AddPermParamInfoPar
         return PrivacyError::ERR_NOT_SYSTEM_APP;
     }
     if (!VerifyPermission(PERMISSION_USED_STATS) &&
-        !IsCliTokenHostRecordCalling(callingTokenID, infoParcel.info.tokenId)) {
+        !IsCliTokenSelfRecordCalling(callingTokenID, infoParcel.info.tokenId)) {
         return PrivacyError::ERR_PERMISSION_DENIED;
     }
 

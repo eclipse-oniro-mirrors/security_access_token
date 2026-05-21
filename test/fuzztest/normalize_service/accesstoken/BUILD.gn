@@ -20,9 +20,11 @@ group("fuzztest") {
     "gethaptokeninfoservice_fuzzer:GetHapTokenInfoServiceFuzzTest",
     "getnativetokenidservice_fuzzer:GetNativeTokenIDServiceFuzzTest",
     "getnativetokeninfoservice_fuzzer:GetNativeTokenInfoServiceFuzzTest",
+    "getpermissioncodeservice_fuzzer:GetPermissionCodeServiceFuzzTest",
     "getpermissionflagservice_fuzzer:GetPermissionFlagServiceFuzzTest",
     "grantpermissionservice_fuzzer:GrantPermissionServiceFuzzTest",
     "inithaptokenservice_fuzzer:InitHapTokenServiceFuzzTest",
+    "issupportpermissionservice_fuzzer:IsSupportPermissionServiceFuzzTest",
     "revokepermissionservice_fuzzer:RevokePermissionServiceFuzzTest",
   ]
 }

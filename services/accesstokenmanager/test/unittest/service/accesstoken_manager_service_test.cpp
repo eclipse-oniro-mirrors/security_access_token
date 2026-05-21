@@ -3338,19 +3338,22 @@ HWTEST_F(AccessTokenManagerServiceTest, PolicyWhiteListServiceTest004, TestSize.
     userPolicyIdl.isPersist = true;
     userPolicyIdl.userPolicyList = {{ .userId = USER_ID, .isRestricted = true }};
     ASSERT_EQ(RET_SUCCESS, atManagerService_->SetUserPolicy({ userPolicyIdl }));
-    EXPECT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenId, "ohos.permission.CAMERA"));
+    EXPECT_EQ(PERMISSION_DENIED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenId, "ohos.permission.CAMERA"));
 
     uint32_t permCode = 0;
     ASSERT_TRUE(TransferPermissionToOpcode("ohos.permission.CAMERA", permCode));
     EXPECT_EQ(RET_SUCCESS, atManagerService_->UpdatePolicyWhiteList(tokenId, permCode, static_cast<int32_t>(ADD)));
-    EXPECT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(tokenId, "ohos.permission.CAMERA"));
+    EXPECT_EQ(PERMISSION_GRANTED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenId, "ohos.permission.CAMERA"));
     std::vector<AccessTokenID> tokenIdList;
     EXPECT_EQ(RET_SUCCESS, atManagerService_->GetPolicyWhiteList(permCode, tokenIdList));
     ASSERT_EQ(1u, tokenIdList.size());
     EXPECT_EQ(tokenId, tokenIdList[0]);
 
     EXPECT_EQ(RET_SUCCESS, atManagerService_->UpdatePolicyWhiteList(tokenId, permCode, static_cast<int32_t>(DELETE)));
-    EXPECT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenId, "ohos.permission.CAMERA"));
+    EXPECT_EQ(PERMISSION_DENIED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenId, "ohos.permission.CAMERA"));
     tokenIdList = { tokenId };
     EXPECT_EQ(RET_SUCCESS, atManagerService_->GetPolicyWhiteList(permCode, tokenIdList));
     EXPECT_TRUE(tokenIdList.empty());
@@ -3426,16 +3429,96 @@ HWTEST_F(AccessTokenManagerServiceTest, UserPolicyServiceTest004, TestSize.Level
     userPolicyIdl2.userPolicyList = {{ .userId = USER_ID, .isRestricted = false }};
 
     EXPECT_EQ(RET_SUCCESS, atManagerService_->SetUserPolicy({ userPolicyIdl, userPolicyIdl2 }));
-    EXPECT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenId, "ohos.permission.INTERNET"));
-    EXPECT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(tokenId, "ohos.permission.GET_NETWORK_STATS"));
+    EXPECT_EQ(PERMISSION_DENIED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenId, "ohos.permission.INTERNET"));
+    EXPECT_EQ(PERMISSION_GRANTED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenId, "ohos.permission.GET_NETWORK_STATS"));
 
     EXPECT_EQ(RET_SUCCESS, atManagerService_->ClearUserPolicy({ "ohos.permission.INTERNET" }));
-    EXPECT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(tokenId, "ohos.permission.INTERNET"));
-    EXPECT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(tokenId, "ohos.permission.GET_NETWORK_STATS"));
+    EXPECT_EQ(PERMISSION_GRANTED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenId, "ohos.permission.INTERNET"));
+    EXPECT_EQ(PERMISSION_GRANTED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenId, "ohos.permission.GET_NETWORK_STATS"));
 
     (void)AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId);
 }
 #endif
+
+/**
+ * @tc.name: IsSupportPermissionService001
+ * @tc.desc: Test IsSupportPermission service with abnormal string permissionName.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, IsSupportPermissionService001, TestSize.Level0)
+{
+    bool isSupported = false;
+    // Test with empty string
+    int32_t ret = atManagerService_->IsSupportPermission(" ", isSupported);
+    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_FALSE(isSupported);
+ 
+    // Test with invalid string name.
+    ret = atManagerService_->IsSupportPermission("invalid.name", isSupported);
+    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_FALSE(isSupported);
+}
+
+/**
+ * @tc.name: IsSupportPermissionService002
+ * @tc.desc: Test IsSupportPermission service with valid and invalid permissions.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, IsSupportPermissionService002, TestSize.Level0)
+{
+    bool isSupported = false;
+    
+    // Test with valid permission
+    int32_t ret = atManagerService_->IsSupportPermission("ohos.permission.CAMERA", isSupported);
+    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_TRUE(isSupported);
+    
+    // Test with invalid permission
+    ret = atManagerService_->IsSupportPermission("ohos.permission.INVALID_PERM", isSupported);
+    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_FALSE(isSupported);
+    
+    // Test with disabled permission
+    constexpr const char* permissionName = "ohos.permission.MICROPHONE";
+    ASSERT_TRUE(SetPermissionBriefEnabled(permissionName, false));
+    ret = atManagerService_->IsSupportPermission(permissionName, isSupported);
+    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_FALSE(isSupported);
+    ASSERT_TRUE(SetPermissionBriefEnabled(permissionName, true));
+}
+
+/**
+ * @tc.name: GetPermissionCodeService001
+ * @tc.desc: Test GetPermissionCode service with valid and disabled permissions.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, GetPermissionCodeService001, TestSize.Level0)
+{
+    uint32_t opCode = 0;
+    
+    // Test with valid permission
+    int32_t ret = atManagerService_->GetPermissionCode("ohos.permission.CAMERA", opCode);
+    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_NE(0, opCode);
+    
+    // Test with disabled permission
+    constexpr const char* permissionName = "ohos.permission.MICROPHONE";
+    ASSERT_TRUE(SetPermissionBriefEnabled(permissionName, false));
+    ret = atManagerService_->GetPermissionCode(permissionName, opCode);
+    EXPECT_EQ(ERR_PERMISSION_NOT_EXIST, ret);
+    ASSERT_TRUE(SetPermissionBriefEnabled(permissionName, true));
+    
+    // Test with invalid permission
+    ret = atManagerService_->GetPermissionCode("ohos.permission.INVALID_PERM", opCode);
+    EXPECT_EQ(ERR_PERMISSION_NOT_EXIST, ret);
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

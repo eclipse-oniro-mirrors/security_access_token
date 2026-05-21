@@ -47,6 +47,7 @@
 #include "string_ex.h"
 #include "token_setproc.h"
 #include "system_ability_definition.h"
+#include "permission_map.h"
 
 using namespace testing::ext;
 using namespace OHOS;
@@ -291,7 +292,7 @@ static void ExpectUserPolicyDbWhiteList(const std::string& permissionName, const
         AccessTokenDb::GetInstance()->Find(AtmDataType::ACCESSTOKEN_USER_POLICY,
             BuildUserPolicyDbCondition(permissionName), results));
     ASSERT_EQ(1u, results.size());
-    EXPECT_EQ(whiteList, results[0].GetString(TokenFiledConst::FIELD_WHITLIST));
+    EXPECT_EQ(whiteList, results[0].GetString(TokenFiledConst::FIELD_WHITELIST));
 }
 
 static int32_t UpsertUserPolicyDbRecord(
@@ -306,7 +307,7 @@ static int32_t UpsertUserPolicyDbRecord(
     addValue.Put(TokenFiledConst::FIELD_PERMISSION_NAME, permissionName);
     addValue.Put(TokenFiledConst::FIELD_CONTROLLER_TOKENID, static_cast<int32_t>(controllerToken));
     addValue.Put(TokenFiledConst::FIELD_RESTRICTED_USER, userList);
-    addValue.Put(TokenFiledConst::FIELD_WHITLIST, whiteList);
+    addValue.Put(TokenFiledConst::FIELD_WHITELIST, whiteList);
 
     AddInfo addInfo;
     addInfo.addType = AtmDataType::ACCESSTOKEN_USER_POLICY;
@@ -390,6 +391,7 @@ HWTEST_F(TokenInfoManagerTest, HapTokenInfoInner001, TestSize.Level0)
     ASSERT_EQ(static_cast<int32_t>(608), version);
 }
 
+#ifdef SUPPORT_SANDBOX_APP
 /**
  * @tc.name: IsPermissionAvailableToDlpHap001
  * @tc.desc: DlpPermissionSetManager::IsPermissionAvailableToDlpHap supports permCode input
@@ -406,6 +408,7 @@ HWTEST_F(TokenInfoManagerTest, IsPermissionAvailableToDlpHap001, TestSize.Level0
         manager.IsPermissionAvailableToDlpHap(DLP_READ, cameraCode));
     EXPECT_FALSE(manager.IsPermissionAvailableToDlpHap(DLP_READ, std::numeric_limits<uint32_t>::max()));
 }
+#endif
 
 /**
  * @tc.name: GetBundleInfoInner001
@@ -3366,7 +3369,7 @@ HWTEST_F(TokenInfoManagerTest, RemoveTokenFromPolicyWhiteList001, TestSize.Level
     addValue.Put(TokenFiledConst::FIELD_PERMISSION_NAME, permissionName);
     addValue.Put(TokenFiledConst::FIELD_CONTROLLER_TOKENID, static_cast<int32_t>(persistedRecord.controllerToken));
     addValue.Put(TokenFiledConst::FIELD_RESTRICTED_USER, std::to_string(USER_ID));
-    addValue.Put(TokenFiledConst::FIELD_WHITLIST, std::to_string(keptToken) + "," + std::to_string(removedToken));
+    addValue.Put(TokenFiledConst::FIELD_WHITELIST, std::to_string(keptToken) + "," + std::to_string(removedToken));
     addInfo.addValues.emplace_back(addValue);
     EXPECT_EQ(RET_SUCCESS, AccessTokenDb::GetInstance()->DeleteAndInsertValues({}, { addInfo }));
     stateGuard.SetWhiteList(USER_ID, GetSelfTokenID(), persistedRecord.whiteList, true);
@@ -3727,7 +3730,7 @@ HWTEST_F(TokenInfoManagerTest, UserPolicyDbRecoverDirtyData001, TestSize.Level0)
     addValue.Put(TokenFiledConst::FIELD_PERMISSION_NAME, std::string("ohos.permission.CAMERA"));
     addValue.Put(TokenFiledConst::FIELD_CONTROLLER_TOKENID, static_cast<int32_t>(GetSelfTokenID()));
     addValue.Put(TokenFiledConst::FIELD_RESTRICTED_USER, std::string("abc"));
-    addValue.Put(TokenFiledConst::FIELD_WHITLIST, std::string("1"));
+    addValue.Put(TokenFiledConst::FIELD_WHITELIST, std::string("1"));
 
     AddInfo addInfo;
     addInfo.addType = AtmDataType::ACCESSTOKEN_USER_POLICY;
@@ -3744,25 +3747,43 @@ HWTEST_F(TokenInfoManagerTest, UserPolicyDbRecoverDirtyData001, TestSize.Level0)
 
 /**
  * @tc.name: LoadPersistedPolicies001
- * @tc.desc: LoadPersistedPolicies loads valid rows and ignores invalid permission rows.
+ * @tc.desc: LoadPersistedPolicies loads valid rows and ignores dirty persisted rows.
  * @tc.type: FUNC
  * @tc.require:
  */
 HWTEST_F(TokenInfoManagerTest, LoadPersistedPolicies001, TestSize.Level0)
 {
     const std::string permissionName = "ohos.permission.CAMERA";
+    const std::string invalidPermissionName = "ohos.permission.TEST_INVALID_USER_POLICY";
+    const std::string invalidUserListPermission = "ohos.permission.INTERNET";
+    const std::string invalidWhiteListPermission = "ohos.permission.GET_NETWORK_STATS";
+    const std::string emptyUserListPermission = "ohos.permission.LOCATION";
     uint32_t permCode;
+    uint32_t invalidUserListPermCode;
+    uint32_t invalidWhiteListPermCode;
+    uint32_t emptyUserListPermCode;
     ASSERT_TRUE(TransferPermissionToOpcode(permissionName, permCode));
+    ASSERT_TRUE(TransferPermissionToOpcode(invalidUserListPermission, invalidUserListPermCode));
+    ASSERT_TRUE(TransferPermissionToOpcode(invalidWhiteListPermission, invalidWhiteListPermCode));
+    ASSERT_TRUE(TransferPermissionToOpcode(emptyUserListPermission, emptyUserListPermCode));
     auto& manager = UserPolicyManager::GetInstance();
     UserPolicyRecordsGuard recordsGuard(manager);
     EXPECT_EQ(RET_SUCCESS, UpsertUserPolicyDbRecord(permissionName, GetSelfTokenID(),
         std::to_string(USER_ID), std::to_string(RANDOM_TOKENID)));
-    EXPECT_EQ(RET_SUCCESS, UpsertUserPolicyDbRecord("ohos.permission.TEST_INVALID_USER_POLICY", GetSelfTokenID(),
+    EXPECT_EQ(RET_SUCCESS, UpsertUserPolicyDbRecord(invalidPermissionName, GetSelfTokenID(),
         std::to_string(USER_ID + 1), ""));
+    EXPECT_EQ(RET_SUCCESS, UpsertUserPolicyDbRecord(invalidUserListPermission, GetSelfTokenID(),
+        "abc", ""));
+    EXPECT_EQ(RET_SUCCESS, UpsertUserPolicyDbRecord(invalidWhiteListPermission, GetSelfTokenID(),
+        std::to_string(USER_ID + 2), "abc"));
+    EXPECT_EQ(RET_SUCCESS, UpsertUserPolicyDbRecord(emptyUserListPermission, GetSelfTokenID(), "", ""));
 
     EXPECT_EQ(RET_SUCCESS, manager.LoadPersistedPolicies());
 
     EXPECT_TRUE(manager.IsPolicyPersisted(permCode));
+    EXPECT_FALSE(manager.IsPolicyPersisted(invalidUserListPermCode));
+    EXPECT_FALSE(manager.IsPolicyPersisted(invalidWhiteListPermCode));
+    EXPECT_FALSE(manager.IsPolicyPersisted(emptyUserListPermCode));
     EXPECT_TRUE(manager.IsPermissionRestricted(RANDOM_TOKENID + 1, USER_ID, permCode));
     EXPECT_FALSE(manager.IsPermissionRestricted(RANDOM_TOKENID, USER_ID, permCode));
     std::vector<AccessTokenID> tokenIdList;
@@ -3771,7 +3792,10 @@ HWTEST_F(TokenInfoManagerTest, LoadPersistedPolicies001, TestSize.Level0)
     EXPECT_EQ(RANDOM_TOKENID, tokenIdList[0]);
 
     EXPECT_EQ(RET_SUCCESS, DeleteUserPolicyDbRecord(permissionName));
-    EXPECT_EQ(RET_SUCCESS, DeleteUserPolicyDbRecord("ohos.permission.TEST_INVALID_USER_POLICY"));
+    EXPECT_EQ(RET_SUCCESS, DeleteUserPolicyDbRecord(invalidPermissionName));
+    EXPECT_EQ(RET_SUCCESS, DeleteUserPolicyDbRecord(invalidUserListPermission));
+    EXPECT_EQ(RET_SUCCESS, DeleteUserPolicyDbRecord(invalidWhiteListPermission));
+    EXPECT_EQ(RET_SUCCESS, DeleteUserPolicyDbRecord(emptyUserListPermission));
 }
 
 /**
@@ -4085,6 +4109,25 @@ HWTEST_F(TokenInfoManagerTest, GetFullRemoteTokenId003, TestSize.Level0)
     GTEST_LOG_(INFO) << "remove the system hap token info";
 }
 #endif
+
+/**
+ * @tc.name: GetReqPermissionByName001
+ * @tc.desc: GetReqPermissionByName test function for disable permissionName.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenInfoManagerTest, GetReqPermissionByName001, TestSize.Level0)
+{
+    AccessTokenID tokenId = 123;
+    std::string permissionName = "invalid.permission";
+    std::string value;
+    bool tokenIdCheck = false;
+
+    int32_t ret = PermissionDataBrief::GetInstance().GetReqPermissionByName(
+        tokenId, permissionName, value, tokenIdCheck);
+ 
+    EXPECT_EQ(ERR_PERMISSION_NOT_EXIST, ret);
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

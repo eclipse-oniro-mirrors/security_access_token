@@ -200,6 +200,7 @@
             "header_files": [
               "perm_setproc.h",
               "setproc_common.h",
+              "spm_setproc.h",
               "token_setproc.h"
             ],
             "header_base": "//base/security/access_token/interfaces/innerkits/token_setproc/include"
@@ -211,6 +212,7 @@
             "header_files": [
               "perm_setproc.h",
               "setproc_common.h",
+              "spm_setproc.h",
               "token_setproc.h"
             ],
             "header_base": "//base/security/access_token/interfaces/innerkits/token_setproc/include"

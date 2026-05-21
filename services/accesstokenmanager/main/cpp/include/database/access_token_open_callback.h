@@ -34,6 +34,7 @@ static constexpr const int32_t DATABASE_VERSION_5 = 5;
 static constexpr const int32_t DATABASE_VERSION_6 = 6;
 static constexpr const int32_t DATABASE_VERSION_7 = 7;
 static constexpr const int32_t DATABASE_VERSION_8 = 8;
+static constexpr const int32_t DATABASE_VERSION_9 = 9;
 
 class AccessTokenOpenCallback : public NativeRdb::RdbOpenCallback {
 public:
@@ -56,6 +57,7 @@ public:
 private:
     // OnCreate
     int32_t CreateHapTokenInfoTable(NativeRdb::RdbStore& rdbStore);
+    int32_t CreateHapSignInfoTable(NativeRdb::RdbStore& rdbStore);
     int32_t CreateNativeTokenInfoTable(NativeRdb::RdbStore& rdbStore);
     int32_t CreatePermissionDefinitionTable(NativeRdb::RdbStore& rdbStore);
     int32_t CreatePermissionStateTable(NativeRdb::RdbStore& rdbStore);
@@ -69,6 +71,8 @@ private:
     int32_t CreateVersionSixTable(NativeRdb::RdbStore& rdbStore);
     int32_t CreateUserPolicyTable(NativeRdb::RdbStore& rdbStore);
     int32_t CreateVersionEightTable(NativeRdb::RdbStore& rdbStore);
+    int32_t CreateHapInfoTable(NativeRdb::RdbStore& rdbStore);
+    int32_t CreateVersionNineTable(NativeRdb::RdbStore& rdbStore);
 
     // OnUpgrade
     int32_t AddAvailableTypeColumn(NativeRdb::RdbStore& rdbStore);
@@ -76,6 +80,7 @@ private:
     int32_t AddPermDialogCapColumn(NativeRdb::RdbStore& rdbStore);
     int32_t AddKernelEffectAndHasValueColumn(NativeRdb::RdbStore& rdbStore);
     int32_t AddTimestampColumn(NativeRdb::RdbStore& rdbStore);
+    int32_t AddUidMigratedReservedColumns(NativeRdb::RdbStore& rdbStore);
     int32_t UpgradeFromVersion1(NativeRdb::RdbStore& rdbStore);
     int32_t UpgradeFromVersion2(NativeRdb::RdbStore& rdbStore);
     int32_t UpgradeFromVersion3(NativeRdb::RdbStore& rdbStore);
@@ -83,6 +88,7 @@ private:
     int32_t UpgradeFromVersion5(NativeRdb::RdbStore& rdbStore);
     int32_t UpgradeFromVersion6(NativeRdb::RdbStore& rdbStore);
     int32_t UpgradeFromVersion7(NativeRdb::RdbStore& rdbStore);
+    int32_t UpgradeFromVersion8(NativeRdb::RdbStore& rdbStore);
 };
 } // namespace AccessToken
 } // namespace Security

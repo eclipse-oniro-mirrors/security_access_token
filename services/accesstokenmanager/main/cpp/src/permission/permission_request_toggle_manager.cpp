@@ -55,7 +55,7 @@ int32_t PermissionRequestToggleManager::ValidatePermissionForToggle(
             userID, permissionName.c_str());
         return AccessTokenError::ERR_PARAM_INVALID;
     }
-    if (!IsDefinedPermission(permissionName)) {
+    if (!IsDefinedPermissionInner(permissionName)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Permission=%{public}s is not defined.", permissionName.c_str());
         return AccessTokenError::ERR_PERMISSION_NOT_EXIST;
     }

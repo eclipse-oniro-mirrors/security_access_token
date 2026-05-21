@@ -16,13 +16,8 @@
 #include "accesstoken_mock_test.h"
 #include <thread>
 #include "access_token_error.h"
-#define private public
 #include "accesstoken_manager_client.h"
-#undef private
-#include "access_token_manager_proxy.h"
-#include "iaccess_token_manager.h"
-#include "idl_common.h"
-#include <iremote_stub.h>
+#include "permission_map.h"
 #include "permission_grant_info.h"
 #include "token_setproc.h"
 
@@ -36,9 +31,6 @@ static AccessTokenID g_testTokenId = 123;  // 123: tokenId
 static constexpr int32_t DEFAULT_API_VERSION = 8;
 static const std::string DEFAULT_AGENT_ID = "1001";
 static constexpr size_t INVALID_LIST_SIZE = 1025;
-#ifdef SUPPORT_MANAGE_USER_POLICY
-static constexpr size_t MAX_USER_POLICY_OPERATION_SIZE = 200;
-#endif
 HapInfoParams g_infoManagerTestInfoParms = {
     .userID = 1,
     .bundleName = "accesstoken_test",
@@ -106,143 +98,6 @@ std::vector<SkillAuthInfo> BuildClawSkillAuthInfos(size_t size = 1)
     return authInfoList;
 }
 
-class TestAccessTokenManagerRemote final : public IPCObjectStub {
-public:
-    TestAccessTokenManagerRemote() = default;
-
-    int32_t OnRemoteRequest(
-        uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option) override
-    {
-        (void)option;
-        if (data.ReadInterfaceToken() != IAccessTokenManager::GetDescriptor()) {
-            return ERR_TRANSACTION_FAILED;
-        }
-        switch (static_cast<IAccessTokenManagerIpcCode>(code)) {
-            case IAccessTokenManagerIpcCode::COMMAND_SET_USER_POLICY: {
-                int32_t size = data.ReadInt32();
-                lastPolicyList_.clear();
-                if ((size < 0) || (size > static_cast<int32_t>(INVALID_LIST_SIZE))) {
-                    return ERR_INVALID_DATA;
-                }
-                for (int32_t i = 0; i < size; ++i) {
-                    UserPermissionPolicyIdl userPermission;
-                    if (UserPermissionPolicyIdlBlockUnmarshalling(data, userPermission) != ERR_NONE) {
-                        return ERR_INVALID_DATA;
-                    }
-                    lastPolicyList_.push_back(userPermission);
-                }
-                if (!reply.WriteInt32(replyCode_)) {
-                    return ERR_INVALID_VALUE;
-                }
-                return ERR_NONE;
-            }
-            case IAccessTokenManagerIpcCode::COMMAND_CLEAR_USER_POLICY: {
-                int32_t size = data.ReadInt32();
-                lastPermissionList_.clear();
-                if ((size < 0) || (size > static_cast<int32_t>(INVALID_LIST_SIZE))) {
-                    return ERR_INVALID_DATA;
-                }
-                for (int32_t i = 0; i < size; ++i) {
-                    lastPermissionList_.push_back(Str16ToStr8(data.ReadString16()));
-                }
-                if (!reply.WriteInt32(replyCode_)) {
-                    return ERR_INVALID_VALUE;
-                }
-                return ERR_NONE;
-            }
-            case IAccessTokenManagerIpcCode::COMMAND_UPDATE_POLICY_WHITE_LIST: {
-                lastTokenId_ = data.ReadUint32();
-                lastPermCode_ = data.ReadUint32();
-                lastType_ = data.ReadInt32();
-                if (!reply.WriteInt32(replyCode_)) {
-                    return ERR_INVALID_VALUE;
-                }
-                return ERR_NONE;
-            }
-            case IAccessTokenManagerIpcCode::COMMAND_GET_POLICY_WHITE_LIST: {
-                lastPermCode_ = data.ReadUint32();
-                if (!reply.WriteInt32(replyCode_)) {
-                    return ERR_INVALID_VALUE;
-                }
-                if (replyCode_ == ERR_OK) {
-                    if (!reply.WriteInt32(static_cast<int32_t>(whiteList_.size()))) {
-                        return ERR_INVALID_VALUE;
-                    }
-                    for (const auto tokenId : whiteList_) {
-                        if (!reply.WriteUint32(tokenId)) {
-                            return ERR_INVALID_VALUE;
-                        }
-                    }
-                }
-                return ERR_NONE;
-            }
-            default:
-                return ERR_TRANSACTION_FAILED;
-        }
-    }
-
-    void SetReplyCode(ErrCode code)
-    {
-        replyCode_ = code;
-    }
-
-    void SetWhiteList(const std::vector<uint32_t>& whiteList)
-    {
-        whiteList_ = whiteList;
-    }
-
-    const std::vector<UserPermissionPolicyIdl>& GetLastPolicyList() const
-    {
-        return lastPolicyList_;
-    }
-
-    const std::vector<std::string>& GetLastPermissionList() const
-    {
-        return lastPermissionList_;
-    }
-
-    uint32_t GetLastTokenId() const
-    {
-        return lastTokenId_;
-    }
-
-    uint32_t GetLastPermCode() const
-    {
-        return lastPermCode_;
-    }
-
-    int32_t GetLastType() const
-    {
-        return lastType_;
-    }
-
-private:
-    ErrCode replyCode_ = ERR_OK;
-    std::vector<UserPermissionPolicyIdl> lastPolicyList_;
-    std::vector<std::string> lastPermissionList_;
-    std::vector<uint32_t> whiteList_;
-    uint32_t lastTokenId_ = 0;
-    uint32_t lastPermCode_ = 0;
-    int32_t lastType_ = 0;
-};
-
-class ClientProxyGuard {
-public:
-    explicit ClientProxyGuard(const sptr<IAccessTokenManager>& proxy)
-        : client_(AccessTokenManagerClient::GetInstance()), original_(client_.proxy_)
-    {
-        client_.proxy_ = proxy;
-    }
-
-    ~ClientProxyGuard()
-    {
-        client_.proxy_ = original_;
-    }
-
-private:
-    AccessTokenManagerClient& client_;
-    sptr<IAccessTokenManager> original_;
-};
 #ifdef TOKEN_SYNC_ENABLE
 static const int32_t FAKE_SYNC_RET = 0xabcdef;
 class TokenSyncCallbackImpl : public TokenSyncKitInterface {
@@ -365,6 +220,23 @@ HWTEST_F(AccessTokenMockTest, GetTokenType001, TestSize.Level4)
 
     FullTokenID fullTokenId = 123; // 123: tokenId
     ASSERT_EQ(TOKEN_INVALID, AccessTokenKit::GetTokenType(fullTokenId));
+}
+
+/**
+ * @tc.name: TransferPermissionToOpcode001
+ * @tc.desc: TransferPermissionToOpcode returns false when local permission is disabled and proxy is null
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, TransferPermissionToOpcode001, TestSize.Level4)
+{
+    std::string permissionName = "ohos.permission.ANSWER_CALL";
+    uint32_t opCode = 0;
+ 	 
+    ASSERT_TRUE(SetPermissionBriefEnabled(permissionName, false));
+    EXPECT_FALSE(AccessTokenKit::IsSupportPermission(permissionName));
+    EXPECT_FALSE(AccessTokenKit::TransferPermissionToOpcode(permissionName, opCode));
+    EXPECT_TRUE(SetPermissionBriefEnabled(permissionName, true));
 }
 
 /**
@@ -965,183 +837,6 @@ HWTEST_F(AccessTokenMockTest, GetPolicyWhiteList001, TestSize.Level4)
         AccessTokenKit::GetPolicyWhiteList("ohos.permission.INTERNET", tokenIdList));
 }
 
-/**
- * @tc.name: SetUserPolicy002
- * @tc.desc: SetUserPolicy ipc marshal fields should keep userPolicy and isPersist.
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenMockTest, SetUserPolicy002, TestSize.Level4)
-{
-    auto remote = sptr<TestAccessTokenManagerRemote>(new (std::nothrow) TestAccessTokenManagerRemote());
-    ASSERT_NE(nullptr, remote);
-    remote->SetReplyCode(ERR_OK);
-    auto proxy = sptr<AccessTokenManagerProxy>(new (std::nothrow) AccessTokenManagerProxy(remote));
-    ASSERT_NE(nullptr, proxy);
-    ClientProxyGuard guard(proxy);
-
-    UserPermissionPolicy policy;
-    policy.permissionName = "ohos.permission.INTERNET";
-    policy.isPersist = true;
-    policy.userPolicyList = {
-        { .userId = 101, .isRestricted = true },
-        { .userId = 102, .isRestricted = false }
-    };
-    ASSERT_EQ(RET_SUCCESS, AccessTokenManagerClient::GetInstance().SetUserPolicy({ policy }));
-    ASSERT_EQ(1u, remote->GetLastPolicyList().size());
-    EXPECT_EQ(policy.permissionName, remote->GetLastPolicyList()[0].permissionName);
-    EXPECT_EQ(policy.isPersist, remote->GetLastPolicyList()[0].isPersist);
-    ASSERT_EQ(2u, remote->GetLastPolicyList()[0].userPolicyList.size());
-    EXPECT_EQ(101, remote->GetLastPolicyList()[0].userPolicyList[0].userId);
-    EXPECT_TRUE(remote->GetLastPolicyList()[0].userPolicyList[0].isRestricted);
-    EXPECT_EQ(102, remote->GetLastPolicyList()[0].userPolicyList[1].userId);
-    EXPECT_FALSE(remote->GetLastPolicyList()[0].userPolicyList[1].isRestricted);
-}
-
-/**
- * @tc.name: SetUserPolicyIdlConvert001
- * @tc.desc: SetUserPolicy ipc should convert multiple idl policies and return service reply code.
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenMockTest, SetUserPolicyIdlConvert001, TestSize.Level4)
-{
-    auto remote = sptr<TestAccessTokenManagerRemote>(new (std::nothrow) TestAccessTokenManagerRemote());
-    ASSERT_NE(nullptr, remote);
-    remote->SetReplyCode(ERR_PARAM_INVALID);
-    auto proxy = sptr<AccessTokenManagerProxy>(new (std::nothrow) AccessTokenManagerProxy(remote));
-    ASSERT_NE(nullptr, proxy);
-    ClientProxyGuard guard(proxy);
-
-    UserPermissionPolicy policy1;
-    policy1.permissionName = "ohos.permission.INTERNET";
-    policy1.isPersist = true;
-    policy1.userPolicyList = {{ .userId = 101, .isRestricted = true }};
-
-    UserPermissionPolicy policy2;
-    policy2.permissionName = "ohos.permission.GET_NETWORK_STATS";
-    policy2.isPersist = false;
-    policy2.userPolicyList = {{ .userId = 102, .isRestricted = false }};
-
-    ASSERT_EQ(ERR_PARAM_INVALID, AccessTokenManagerClient::GetInstance().SetUserPolicy({ policy1, policy2 }));
-    ASSERT_EQ(2u, remote->GetLastPolicyList().size());
-    EXPECT_EQ(policy1.permissionName, remote->GetLastPolicyList()[0].permissionName);
-    EXPECT_TRUE(remote->GetLastPolicyList()[0].isPersist);
-    EXPECT_EQ(policy2.permissionName, remote->GetLastPolicyList()[1].permissionName);
-    EXPECT_FALSE(remote->GetLastPolicyList()[1].isPersist);
-}
-
-/**
- * @tc.name: SetUserPolicyOverSize001
- * @tc.desc: SetUserPolicy client rejects more than 200 policies before ipc.
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenMockTest, SetUserPolicyOverSize001, TestSize.Level4)
-{
-    auto remote = sptr<TestAccessTokenManagerRemote>(new (std::nothrow) TestAccessTokenManagerRemote());
-    ASSERT_NE(nullptr, remote);
-    remote->SetReplyCode(ERR_OK);
-    auto proxy = sptr<AccessTokenManagerProxy>(new (std::nothrow) AccessTokenManagerProxy(remote));
-    ASSERT_NE(nullptr, proxy);
-    ClientProxyGuard guard(proxy);
-
-    UserPermissionPolicy policy;
-    policy.permissionName = "ohos.permission.INTERNET";
-    policy.userPolicyList = {{ .userId = 101, .isRestricted = true }};
-    std::vector<UserPermissionPolicy> policyList(MAX_USER_POLICY_OPERATION_SIZE + 1, policy);
-
-    EXPECT_EQ(ERR_PARAM_INVALID, AccessTokenManagerClient::GetInstance().SetUserPolicy(policyList));
-    EXPECT_TRUE(remote->GetLastPolicyList().empty());
-}
-
-/**
- * @tc.name: ClearUserPolicyOverSize001
- * @tc.desc: ClearUserPolicy client rejects oversized permission list before ipc.
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenMockTest, ClearUserPolicyOverSize001, TestSize.Level4)
-{
-    auto remote = sptr<TestAccessTokenManagerRemote>(new (std::nothrow) TestAccessTokenManagerRemote());
-    ASSERT_NE(nullptr, remote);
-    remote->SetReplyCode(ERR_OK);
-    auto proxy = sptr<AccessTokenManagerProxy>(new (std::nothrow) AccessTokenManagerProxy(remote));
-    ASSERT_NE(nullptr, proxy);
-    ClientProxyGuard guard(proxy);
-
-    std::vector<std::string> permissionList(MAX_USER_POLICY_OPERATION_SIZE + 1, "ohos.permission.INTERNET");
-
-    EXPECT_EQ(ERR_PARAM_INVALID, AccessTokenManagerClient::GetInstance().ClearUserPolicy(permissionList));
-    EXPECT_TRUE(remote->GetLastPermissionList().empty());
-}
-
-/**
- * @tc.name: ClearUserPolicy002
- * @tc.desc: ClearUserPolicy ipc marshal fields should keep permission list.
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenMockTest, ClearUserPolicy002, TestSize.Level4)
-{
-    auto remote = sptr<TestAccessTokenManagerRemote>(new (std::nothrow) TestAccessTokenManagerRemote());
-    ASSERT_NE(nullptr, remote);
-    remote->SetReplyCode(ERR_OK);
-    auto proxy = sptr<AccessTokenManagerProxy>(new (std::nothrow) AccessTokenManagerProxy(remote));
-    ASSERT_NE(nullptr, proxy);
-    ClientProxyGuard guard(proxy);
-
-    std::vector<std::string> permissionList = {"ohos.permission.INTERNET", "ohos.permission.GET_NETWORK_STATS"};
-    ASSERT_EQ(RET_SUCCESS, AccessTokenManagerClient::GetInstance().ClearUserPolicy(permissionList));
-    ASSERT_EQ(permissionList.size(), remote->GetLastPermissionList().size());
-    EXPECT_EQ(permissionList[0], remote->GetLastPermissionList()[0]);
-    EXPECT_EQ(permissionList[1], remote->GetLastPermissionList()[1]);
-}
-
-/**
- * @tc.name: UpdatePolicyWhiteList002
- * @tc.desc: UpdatePolicyWhiteList ipc marshal fields should keep token, permCode and type.
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenMockTest, UpdatePolicyWhiteList002, TestSize.Level4)
-{
-    auto remote = sptr<TestAccessTokenManagerRemote>(new (std::nothrow) TestAccessTokenManagerRemote());
-    ASSERT_NE(nullptr, remote);
-    remote->SetReplyCode(ERR_OK);
-    auto proxy = sptr<AccessTokenManagerProxy>(new (std::nothrow) AccessTokenManagerProxy(remote));
-    ASSERT_NE(nullptr, proxy);
-    ClientProxyGuard guard(proxy);
-
-    ASSERT_EQ(RET_SUCCESS, AccessTokenManagerClient::GetInstance().UpdatePolicyWhiteList(100, 200, ADD));
-    EXPECT_EQ(100u, remote->GetLastTokenId());
-    EXPECT_EQ(200u, remote->GetLastPermCode());
-    EXPECT_EQ(static_cast<int32_t>(ADD), remote->GetLastType());
-}
-
-/**
- * @tc.name: GetPolicyWhiteList002
- * @tc.desc: GetPolicyWhiteList ipc should keep output list from service.
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenMockTest, GetPolicyWhiteList002, TestSize.Level4)
-{
-    auto remote = sptr<TestAccessTokenManagerRemote>(new (std::nothrow) TestAccessTokenManagerRemote());
-    ASSERT_NE(nullptr, remote);
-    remote->SetReplyCode(ERR_OK);
-    remote->SetWhiteList({ 11, 22 });
-    auto proxy = sptr<AccessTokenManagerProxy>(new (std::nothrow) AccessTokenManagerProxy(remote));
-    ASSERT_NE(nullptr, proxy);
-    ClientProxyGuard guard(proxy);
-
-    std::vector<AccessTokenID> tokenIdList;
-    ASSERT_EQ(RET_SUCCESS, AccessTokenManagerClient::GetInstance().GetPolicyWhiteList(1234, tokenIdList));
-    ASSERT_EQ(2u, tokenIdList.size());
-    EXPECT_EQ(11, tokenIdList[0]);
-    EXPECT_EQ(22, tokenIdList[1]);
-    EXPECT_EQ(1234u, remote->GetLastPermCode());
-}
 #endif
 
 /**

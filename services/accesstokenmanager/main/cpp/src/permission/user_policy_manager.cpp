@@ -165,7 +165,7 @@ GenericValues BuildUserPolicyValue(const std::string& permissionName, const User
     value.Put(TokenFiledConst::FIELD_PERMISSION_NAME, permissionName);
     value.Put(TokenFiledConst::FIELD_CONTROLLER_TOKENID, static_cast<int32_t>(record.controllerToken));
     value.Put(TokenFiledConst::FIELD_RESTRICTED_USER, SerializeList(record.userList));
-    value.Put(TokenFiledConst::FIELD_WHITLIST, SerializeWhiteTokenList(record.whiteList));
+    value.Put(TokenFiledConst::FIELD_WHITELIST, SerializeWhiteTokenList(record.whiteList));
     return value;
 }
 
@@ -534,7 +534,7 @@ int32_t UserPolicyManager::UpdatePolicyWhiteList(const PolicyWhiteListUpdateInfo
 
     if (stagedRecord.isPersist) {
         GenericValues modifyValue;
-        modifyValue.Put(TokenFiledConst::FIELD_WHITLIST, SerializeWhiteTokenList(stagedRecord.whiteList));
+        modifyValue.Put(TokenFiledConst::FIELD_WHITELIST, SerializeWhiteTokenList(stagedRecord.whiteList));
         ret = AccessTokenDbOperator::Modify(AtmDataType::ACCESSTOKEN_USER_POLICY, modifyValue,
             BuildUserPolicyCondition(permission));
         if (ret != RET_SUCCESS) {
@@ -687,7 +687,7 @@ int32_t UserPolicyManager::LoadPersistedPolicies()
         record.controllerToken = static_cast<AccessTokenID>(item.GetInt(TokenFiledConst::FIELD_CONTROLLER_TOKENID));
         record.isPersist = true;
         if (!ParseUserList(item.GetString(TokenFiledConst::FIELD_RESTRICTED_USER), record.userList) ||
-            !ParseWhiteTokenList(item.GetString(TokenFiledConst::FIELD_WHITLIST), record.whiteList) ||
+            !ParseWhiteTokenList(item.GetString(TokenFiledConst::FIELD_WHITELIST), record.whiteList) ||
             record.userList.empty()) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Ignore invalid persisted policy %{public}s.", permissionName.c_str());
             continue;

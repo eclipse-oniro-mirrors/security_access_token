@@ -151,6 +151,11 @@ bool Constant::TransferOpcodeToPermission(int32_t opCode, std::string& permissio
     permissionName = iter->first;
     return true;
 }
+
+bool Constant::IsPrivacyPermission(const std::string& permissionName)
+{
+    return PERMISSION_OPCODE_MAP.count(permissionName) != 0;
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
