@@ -36,6 +36,21 @@ static uint32_t g_selfUid;
 static const int32_t CYCLE_TIMES = 1000;
 static const int32_t TEST_UID = 1000;
 
+static bool IsKernelSupportSpm()
+{
+    static bool isSupportSpm = false;
+    static bool hasChecked = false;
+    if (hasChecked) {
+        return isSupportSpm;
+    }
+    uint32_t version = 0;
+    int32_t ret = SpmGetVersion(&version);
+    isSupportSpm = (ret != ENOTSUP) ? true : false;
+    hasChecked = true;
+    std::cout << "IsKernelSupportSpm: " << isSupportSpm << std::endl;
+    return isSupportSpm;
+}
+
 void TokensetprocKitTest::SetUpTestCase()
 {
     g_selfUid = getuid();
@@ -1013,7 +1028,7 @@ HWTEST_F(TokensetprocKitTest, AddPermissionToKernelForC002, TestSize.Level0)
 
     std::vector<uint32_t> opCodeList;
     int32_t ret = GetPermissionsFromKernel(g_tokeId, opCodeList);
-    if (ret == ENOTSUP) {
+    if (!IsKernelSupportSpm()) {
         EXPECT_EQ(opCodeList.empty(), true);
     } else {
         EXPECT_EQ(std::vector<uint32_t>({0, 2}), opCodeList);
@@ -1021,7 +1036,7 @@ HWTEST_F(TokensetprocKitTest, AddPermissionToKernelForC002, TestSize.Level0)
 
     uint32_t queryPerms[MAX_PERM_BIT_MAP_SIZE] = {0};
     ret = ::GetPermissionsFromKernel(g_tokeId, queryPerms);
-    if (ret == ENOTSUP) {
+    if (!IsKernelSupportSpm()) {
         EXPECT_EQ(queryPerms[0], 0);
     } else {
         EXPECT_EQ(perms[0], queryPerms[0]);

@@ -1083,10 +1083,11 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId018, TestSize.Level0)
 
     std::vector<uint32_t> kernelPerms;
     int32_t ret = OHOS::Security::AccessToken::GetPermissionsFromKernel(static_cast<uint32_t>(tokenId), kernelPerms);
-    if (ret == ENOTSUP) {
+    if (!IsKernelSupportSpm()) {
         EXPECT_TRUE(kernelPerms.empty());
     } else {
-        EXPECT_EQ(1u, kernelPerms.size());
+        ASSERT_EQ(0, ret);
+        ASSERT_EQ(1u, kernelPerms.size());
         EXPECT_EQ(opcode, kernelPerms[0]);
     }
 

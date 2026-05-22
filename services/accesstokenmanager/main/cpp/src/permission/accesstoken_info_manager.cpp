@@ -758,7 +758,7 @@ void AccessTokenInfoManager::GetAllNativeTokenPerms(const std::vector<uint32_t>&
     std::shared_lock<std::shared_mutex> infoGuard(nativeTokenInfoLock_);
     std::unordered_set<uint32_t> permCodeSet(permCodeList.begin(), permCodeList.end());
     for (const auto& [tokenID, cache] : nativeTokenInfoMap_) {
-        if (!PermissionKernelUtils::IsKernelSupportGetPermissions()) {
+        if (!PermissionKernelUtils::IsKernelSupportSpm()) {
             AddNativePermissionsFromCache(cache, tokenID, permCodeSet, permissionInfoList);
             continue;
         }
@@ -1147,7 +1147,7 @@ void AccessTokenInfoManager::InitNativeTokenInfos(const std::vector<NativeTokenI
         NativeTokenInfoCache cache;
         cache.processName = process;
         cache.apl = static_cast<ATokenAplEnum>(info.apl);
-        if (!PermissionKernelUtils::IsKernelSupportGetPermissions()) {
+        if (!PermissionKernelUtils::IsKernelSupportSpm()) {
             for (const auto& code : opCodeList) {
                 cache.opCodeList.emplace_back(static_cast<uint16_t>(code));
             }
@@ -1974,10 +1974,10 @@ int AccessTokenInfoManager::VerifyNativeAccessToken(AccessTokenID tokenID, const
         LOGE(ATM_DOMAIN, ATM_TAG, "Id %{public}u is not exist.", tokenID);
         return PERMISSION_DENIED;
     }
-    if (!PermissionKernelUtils::IsKernelSupportGetPermissions()) {
+    if (!PermissionKernelUtils::IsKernelSupportSpm()) {
         NativeTokenInfoCache cache = iter->second;
         for (size_t i = 0; i < cache.opCodeList.size(); ++i) {
-            if (code == cache.opCodeList[i]) {
+            if (code == static_cast<uint32_t>(cache.opCodeList[i])) {
                 return PERMISSION_GRANTED;
             }
         }
