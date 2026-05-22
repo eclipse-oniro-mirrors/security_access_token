@@ -927,6 +927,39 @@ HWTEST_F(ToolTokenMockTest, GetCliPermissionRequestInfo_013, TestSize.Level1)
 }
 
 /**
+ * @tc.name: GetCliPermissionRequestInfo_014
+ * @tc.desc: Test unresolved CLI permission returns no dialog and authResult when mapped permissions are resolved.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ToolTokenMockTest, GetCliPermissionRequestInfo_014, TestSize.Level1)
+{
+    TokenCleaner cleaner;
+    auto permStates = BuildQueryAndManagePermissionStates();
+    permStates.emplace_back(BuildAllowThisTimeStatus(CUSTOM_SCREEN_CAPTURE));
+    permStates.emplace_back(BuildDeniedStatus(LOCATION_PERMISSION));
+    permStates.emplace_back(BuildGrantedStatus(WIFI_PERMISSION, PERMISSION_SYSTEM_FIXED));
+    permStates.emplace_back(BuildGrantedStatus(CAMERA_PERMISSION, PERMISSION_SYSTEM_FIXED));
+    permStates.emplace_back(BuildGrantedStatus(MICROPHONE_PERMISSION, PERMISSION_SYSTEM_FIXED));
+    permStates.emplace_back(BuildGrantedStatus(AUDIO_PERMISSION, PERMISSION_SYSTEM_FIXED));
+    permStates.emplace_back(BuildDeniedStatus(PUSH_PERMISSION, PERMISSION_FIXED_FOR_SECURITY_POLICY));
+    permStates.emplace_back(BuildGrantedStatus(KERNEL_PLUGIN_PERMISSION, PERMISSION_SYSTEM_FIXED));
+    PrepareMockEnvironment();
+
+    auto queryResult = QueryCliPermissionRequestInfo(permStates,
+        { BuildCliInfoParcel("location", "query") }, cleaner);
+    const auto& result = queryResult.info;
+    ASSERT_EQ(1, static_cast<int32_t>(result.result.detailList.size()));
+    const auto& detail = result.result.detailList[0];
+    EXPECT_FALSE(detail.needPermissionDialog);
+    ASSERT_FALSE(detail.authResult.empty());
+    ASSERT_EQ(2, static_cast<int32_t>(detail.permissionNameList.size()));
+    EXPECT_EQ(LOCATION_PERMISSION, detail.permissionNameList[0]);
+    EXPECT_EQ(PermissionDecisionStatus::NO_DIALOG_DENIED, detail.statusList[0]);
+    EXPECT_EQ(PUSH_PERMISSION, detail.permissionNameList[1]);
+    EXPECT_EQ(PermissionDecisionStatus::NO_DIALOG_RESTRICTED, detail.statusList[1]);
+}
+
+/**
  * @tc.name: GetCliPermissions_001
  * @tc.desc: Test undeclared CLI Permission and granted self-mapped system permission in one batch.
  * @tc.type: FUNC

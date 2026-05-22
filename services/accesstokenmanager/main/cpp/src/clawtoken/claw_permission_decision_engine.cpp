@@ -72,7 +72,8 @@ int32_t ClawPermissionDecisionEngine::BuildCliDialogDetailByRequiredPermission(
     PermissionDecisionStatus cliPermissionStatus = context.GetPermissionDecisionStatus(
         requiredCliPermission, notDeclaredStatus);
     if (cliPermissionStatus == PermissionDecisionStatus::NEED_PERMISSION_DIALOG) {
-        detail.needPermissionDialog = true;
+        PermissionDecisionStatus resolvedStatus = GetCliPermissionResolvedStatus(context, usedPermissions);
+        detail.needPermissionDialog = (resolvedStatus == PermissionDecisionStatus::NEED_PERMISSION_DIALOG);
     }
     if (ShouldReturnDialogDetailStatus(cliPermissionStatus)) {
         AppendDialogDetailStatus(detail, requiredCliPermission, cliPermissionStatus);
