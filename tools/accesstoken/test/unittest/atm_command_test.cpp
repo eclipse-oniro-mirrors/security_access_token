@@ -265,8 +265,8 @@ HWTEST_F(AtmCommandTest, atm_help_test002, TestSize.Level1)
     EXPECT_TRUE(IsOutputContain(result, "--token-info") || IsOutputContain(result, "-t"));
 
 #ifndef ATM_BUILD_VARIANT_USER_ENABLE
-    EXPECT_TRUE(IsOutputContain(result, "--record") || IsOutputContain(result, "-r"));
-    EXPECT_TRUE(IsOutputContain(result, "--ver") || IsOutputContain(result, "-v"));
+    EXPECT_TRUE(IsOutputContain(result, "--record-info") || IsOutputContain(result, "-r"));
+    EXPECT_TRUE(IsOutputContain(result, "--visit-type") || IsOutputContain(result, "-v"));
 #endif
 }
 
