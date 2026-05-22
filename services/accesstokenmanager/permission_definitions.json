@@ -2696,7 +2696,8 @@
             "since": 11,
             "deprecated": "",
             "provisionEnable": true,
-            "distributedSceneEnable": false
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "wearable", "tv", "2in1", "tablet", "car"]
         },
         {
             "name": "ohos.permission.ACCESS_MCP_AUTHORIZATION",
@@ -4550,7 +4551,8 @@
             "since": 14,
             "deprecated": "",
             "provisionEnable": true,
-            "distributedSceneEnable": false
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "wearable", "tv", "2in1", "tablet", "car"]
         },
         {
             "name": "ohos.permission.EXEMPT_CAPTURE_SCREEN_AUTHORIZE",
@@ -5393,7 +5395,8 @@
             "provisionEnable": true,
             "distributedSceneEnable": false,
             "label": "$string:ohos_lab_read_pasteboard",
-            "description": "$string:ohos_desc_read_pasteboard"
+            "description": "$string:ohos_desc_read_pasteboard",
+            "deviceTypes": ["phone", "wearable", "tv", "2in1", "tablet", "car"]
         },
         {
             "name": "ohos.permission.READ_WRITE_DOWNLOAD_DIRECTORY",
