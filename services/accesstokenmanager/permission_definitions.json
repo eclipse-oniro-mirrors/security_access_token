@@ -243,7 +243,7 @@
             "availableType": "NORMAL",
             "since": 7,
             "deprecated": "",
-            "provisionEnable": true,
+            "provisionEnable": false,
             "distributedSceneEnable": false
         },
         {
@@ -253,7 +253,7 @@
             "availableType": "NORMAL",
             "since": 7,
             "deprecated": "",
-            "provisionEnable": true,
+            "provisionEnable": false,
             "distributedSceneEnable": false
         },
         {
@@ -615,7 +615,7 @@
             "availableType": "NORMAL",
             "since": 7,
             "deprecated": "",
-            "provisionEnable": true,
+            "provisionEnable": false,
             "distributedSceneEnable": false
         },
         {
@@ -5170,7 +5170,7 @@
             "availableType": "NORMAL",
             "since": 7,
             "deprecated": "",
-            "provisionEnable": true,
+            "provisionEnable": false,
             "distributedSceneEnable": false,
             "label": "$string:ohos_lab_read_health_data",
             "description": "$string:ohos_desc_read_health_data"
@@ -5194,7 +5194,7 @@
             "availableType": "NORMAL",
             "since": 7,
             "deprecated": "",
-            "provisionEnable": true,
+            "provisionEnable": false,
             "distributedSceneEnable": false,
             "label": "$string:ohos_lab_activity_motion",
             "description": "$string:ohos_desc_activity_motion"
