@@ -15,38 +15,14 @@
 
 #include "perm_setproc.h"
 
-#include <cerrno>
 #include <cstdint>
-#include <cstdio>
-#include <fcntl.h>
-#include <sys/ioctl.h>
-#include <unistd.h>
+#include <vector>
+
+#include "perm_setproc_c.h"
+
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-const uint32_t UINT32_T_BITS = 32;
-const uint32_t MAX_PERM_SIZE = 64;
-constexpr uint64_t FD_TAG = 0xD005A01;
-struct IoctlAddPermData {
-    uint32_t token;
-    uint32_t perm[MAX_PERM_SIZE] = { 0 };
-};
-
-struct IoctlSetGetPermData {
-    uint32_t token;
-    uint32_t opCode;
-    bool isGranted;
-};
-
-extern "C" {
-#define    ACCESS_TOKENID_ADD_PERMISSIONS \
-    _IOW(ACCESS_TOKEN_ID_IOCTL_BASE, ADD_PERMISSIONS, struct IoctlAddPermData)
-#define    ACCESS_TOKENID_REMOVE_PERMISSIONS \
-    _IOW(ACCESS_TOKEN_ID_IOCTL_BASE, REMOVE_PERMISSIONS, uint32_t)
-#define    ACCESS_TOKENID_GET_PERMISSION \
-    _IOW(ACCESS_TOKEN_ID_IOCTL_BASE, GET_PERMISSION, struct IoctlSetGetPermData)
-#define    ACCESS_TOKENID_SET_PERMISSION \
-    _IOW(ACCESS_TOKEN_ID_IOCTL_BASE, SET_PERMISSION, struct IoctlSetGetPermData)
 
 int32_t AddPermissionToKernel(
     uint32_t tokenID, const std::vector<uint32_t>& opCodeList, const std::vector<bool>& statusList)
@@ -54,94 +30,61 @@ int32_t AddPermissionToKernel(
     if (opCodeList.size() != statusList.size()) {
         return ACCESS_TOKEN_PARAM_INVALID;
     }
-    size_t size = opCodeList.size();
-    struct IoctlAddPermData data;
-    data.token = tokenID;
-    for (uint32_t i = 0; i < size; ++i) {
+
+    uint32_t perms[MAX_PERM_BIT_MAP_SIZE] = {0};
+    for (size_t i = 0; i < opCodeList.size(); ++i) {
         uint32_t opCode = opCodeList[i];
         uint32_t idx = opCode / UINT32_T_BITS;
         uint32_t bitIdx = opCode % UINT32_T_BITS;
-        if (statusList[i]) { // granted
-            data.perm[idx] |= static_cast<uint32_t>(0x01) << bitIdx;
+        if (idx >= MAX_PERM_BIT_MAP_SIZE) {
+            return ACCESS_TOKEN_PARAM_INVALID;
+        }
+        if (statusList[i]) {
+            perms[idx] |= (static_cast<uint32_t>(0x01) << bitIdx);
         } else {
-            data.perm[idx] &= ~(static_cast<uint32_t>(0x01) << bitIdx);
+            perms[idx] &= ~(static_cast<uint32_t>(0x01) << bitIdx);
         }
     }
 
-    int32_t fd = open(TOKENID_DEVNODE, O_RDWR);
-    if (fd < 0) {
-        return ACCESS_TOKEN_OPEN_ERROR;
-    }
-    fdsan_exchange_owner_tag(fd, 0, FD_TAG);
-    int32_t ret = ioctl(fd, ACCESS_TOKENID_ADD_PERMISSIONS, &data);
-    (void)fdsan_close_with_tag(fd, FD_TAG);
-    if (ret != ACCESS_TOKEN_OK) {
-        return errno;
-    }
-
-    return ACCESS_TOKEN_OK;
+    return ::AddPermissionToKernel(tokenID, reinterpret_cast<const char *>(perms), sizeof(perms));
 }
 
 int32_t RemovePermissionFromKernel(uint32_t tokenID)
 {
-    int32_t fd = open(TOKENID_DEVNODE, O_RDWR);
-    if (fd < 0) {
-        return ACCESS_TOKEN_OPEN_ERROR;
-    }
-    fdsan_exchange_owner_tag(fd, 0, FD_TAG);
-    int32_t ret = ioctl(fd, ACCESS_TOKENID_REMOVE_PERMISSIONS, &tokenID);
-    (void)fdsan_close_with_tag(fd, FD_TAG);
-    if (ret) {
-        return errno;
-    }
-
-    return ACCESS_TOKEN_OK;
+    return ::RemovePermissionFromKernel(tokenID);
 }
 
 int32_t SetPermissionToKernel(uint32_t tokenID, int32_t opCode, bool status)
 {
-    struct IoctlSetGetPermData data = {
-        .token = tokenID,
-        .opCode = opCode,
-        .isGranted = status,
-    };
-
-    int32_t fd = open(TOKENID_DEVNODE, O_RDWR);
-    if (fd < 0) {
-        return ACCESS_TOKEN_OPEN_ERROR;
-    }
-    fdsan_exchange_owner_tag(fd, 0, FD_TAG);
-    int32_t ret = ioctl(fd, ACCESS_TOKENID_SET_PERMISSION, &data);
-    (void)fdsan_close_with_tag(fd, FD_TAG);
-    if (ret != ACCESS_TOKEN_OK) {
-        return errno;
-    }
-
-    return ACCESS_TOKEN_OK;
+    return ::SetPermissionToKernel(tokenID, opCode, status);
 }
 
 int32_t GetPermissionFromKernel(uint32_t tokenID, int32_t opCode, bool& isGranted)
 {
-    struct IoctlSetGetPermData data = {
-        .token = tokenID,
-        .opCode = opCode,
-        .isGranted = false,
-    };
-    isGranted =  false;
-
-    int32_t fd = open(TOKENID_DEVNODE, O_RDWR);
-    if (fd < 0) {
-        return ACCESS_TOKEN_OPEN_ERROR;
-    }
-    fdsan_exchange_owner_tag(fd, 0, FD_TAG);
-    int32_t ret = ioctl(fd, ACCESS_TOKENID_GET_PERMISSION, &data);
-    (void)fdsan_close_with_tag(fd, FD_TAG);
-    if (ret < 0) {
-        return errno;
-    }
-    isGranted = (ret == 1);
-    return ACCESS_TOKEN_OK;
+    return ::GetPermissionFromKernel(tokenID, opCode, &isGranted);
 }
+
+int32_t GetPermissionsFromKernel(uint32_t tokenID, std::vector<uint32_t>& opCodeList)
+{
+    uint32_t perms[MAX_PERM_BIT_MAP_SIZE] = {0};
+    opCodeList.clear();
+
+    int32_t ret = ::GetPermissionsFromKernel(tokenID, perms);
+    if (ret != ACCESS_TOKEN_OK) {
+        return ret;
+    }
+
+    for (uint32_t i = 0; i < MAX_PERM_BIT_MAP_SIZE; ++i) {
+        if (perms[i] == 0) {
+            continue;
+        }
+        for (uint32_t j = 0; j < UINT32_T_BITS; ++j) {
+            if ((perms[i] & (static_cast<uint32_t>(0x01) << j)) != 0) {
+                opCodeList.emplace_back(i * UINT32_T_BITS + j);
+            }
+        }
+    }
+    return ACCESS_TOKEN_OK;
 }
 } // namespace AccessToken
 } // namespace Security

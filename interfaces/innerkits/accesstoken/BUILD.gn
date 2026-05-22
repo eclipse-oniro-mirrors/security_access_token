@@ -165,7 +165,7 @@ if (is_standard_system) {
 
     deps = [
       "${access_token_path}/frameworks/common:accesstoken_static_log",
-      "${access_token_path}/interfaces/innerkits/token_setproc:libperm_setproc",
+      "${access_token_path}/interfaces/innerkits/token_setproc:libperm_setproc_for_compat",
       "${access_token_path}/interfaces/innerkits/token_setproc:libtoken_setproc",
     ]
 

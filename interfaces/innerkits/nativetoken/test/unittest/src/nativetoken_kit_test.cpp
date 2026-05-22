@@ -21,6 +21,11 @@
 #include "nativetoken.h"
 #include "nativetoken_json_oper.h"
 #include "nativetoken_kit.h"
+#include "nativetoken_test_common.h"
+#undef NORMAL
+#include "perm_setproc.h"
+#include "perm_setproc_c.h"
+#include "spm_setproc.h"
 
 using namespace testing::ext;
 using namespace OHOS::Security;
@@ -28,6 +33,9 @@ using namespace OHOS::Security;
 extern NativeTokenList *g_tokenListHead;
 extern int32_t g_isNativeTokenInited;
 extern uint32_t GetFileBuff(const char *cfg, char **retBuff);
+
+static constexpr uint32_t KERNEL_PERM_BIT_NUM = 32;
+static constexpr uint32_t ACCESSTOKEN_UID = 3020;
 
 void TokenLibKitTest::SetUpTestCase()
 {}
@@ -97,7 +105,7 @@ static void DeleteGoalItemFromRecord(const char *processName, cJSON *record)
     }
 }
 
-static int32_t DeleteNodeInFile(const char *processName)
+static int32_t DeleteNodeInFile(const char *processName, uint32_t tokenId)
 {
     cJSON *record = nullptr;
     char *fileBuff = nullptr;
@@ -121,6 +129,10 @@ static int32_t DeleteNodeInFile(const char *processName)
     DeleteGoalItemFromRecord(processName, record);
     WriteContentToFile(record);
     cJSON_Delete(record);
+    if (IsKernelSupportSpm()) {
+        SpmRemoveEntry(tokenId);
+    }
+    OHOS::Security::AccessToken::RemovePermissionFromKernel(tokenId);
 
     return ATRET_SUCCESS;
 }
@@ -135,7 +147,7 @@ static int32_t DeleteAccessTokenId(const char *processName)
     NativeTokenList *tokenNode = g_tokenListHead;
     while (tokenNode->next != nullptr) {
         if (strcmp(tokenNode->next->processName, processName) == 0) {
-            result = DeleteNodeInFile(processName);
+            result = DeleteNodeInFile(processName, static_cast<uint32_t>(tokenNode->next->tokenId));
             NativeTokenList *tokenNodeA = tokenNode->next;
             tokenNode->next = tokenNode->next->next;
             free(tokenNodeA);
@@ -144,6 +156,62 @@ static int32_t DeleteAccessTokenId(const char *processName)
         tokenNode = tokenNode->next;
     }
     return result;
+}
+
+static NativeTokenList *FindTokenNodeByProcessName(const char *processName)
+{
+    if ((processName == nullptr) || (g_tokenListHead == nullptr)) {
+        return nullptr;
+    }
+    NativeTokenList *tokenNode = g_tokenListHead->next;
+    while (tokenNode != nullptr) {
+        if (strcmp(tokenNode->processName, processName) == 0) {
+            return tokenNode;
+        }
+        tokenNode = tokenNode->next;
+    }
+    return nullptr;
+}
+
+static bool GetUidFromCfgFileByProcessName(const char *processName, int32_t &uid)
+{
+    char *fileBuff = nullptr;
+    if (GetFileBuff(TOKEN_ID_CFG_FILE_PATH, &fileBuff) != ATRET_SUCCESS) {
+        return false;
+    }
+
+    cJSON *record = nullptr;
+    if (fileBuff == nullptr) {
+        record = cJSON_CreateArray();
+    } else {
+        record = cJSON_Parse(fileBuff);
+        free(fileBuff);
+        fileBuff = nullptr;
+    }
+    if (record == nullptr) {
+        return false;
+    }
+
+    bool found = false;
+    cJSON *rec = nullptr;
+    cJSON_ArrayForEach(rec, record) {
+        cJSON *processNameJson = cJSON_GetObjectItemCaseSensitive(rec, PROCESS_KEY_NAME);
+        if (!cJSON_IsString(processNameJson) || (processNameJson->valuestring == nullptr)) {
+            continue;
+        }
+        if (strcmp(processNameJson->valuestring, processName) != 0) {
+            continue;
+        }
+
+        cJSON *uidJson = cJSON_GetObjectItemCaseSensitive(rec, UID_KEY_NAME);
+        if (cJSON_IsNumber(uidJson)) {
+            uid = uidJson->valueint;
+            found = true;
+        }
+        break;
+    }
+    cJSON_Delete(record);
+    return found;
 }
 
 int32_t Start(const char *processName)
@@ -844,6 +912,7 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId015, TestSize.Level0)
     infoInstance.processName = "GetAccessTokenId015_01";
     tokenId = GetAccessTokenId(&infoInstance);
     ASSERT_NE(tokenId, 0);
+
     ASSERT_EQ(DeleteAccessTokenId(infoInstance.processName), 0);
 
     permsNum = MAX_PERM_NUM - 1;
@@ -862,4 +931,260 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId015, TestSize.Level0)
     ASSERT_EQ(tokenId, 0);
 
     delete[] perms;
+}
+
+/**
+ * @tc.name: GetAccessTokenId016
+ * @tc.desc: cannot getAccessTokenId with invalid perm.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenLibKitTest, GetAccessTokenId016, TestSize.Level0)
+{
+    const char **perms = new (std::nothrow) const char *[MAX_PERM_NUM + 1];
+    ASSERT_NE(perms, nullptr);
+    perms[0] = "ohos.permission.test1";
+    perms[1] = "ohos.permission.test2";
+    int32_t permsNum = 2;
+    uint64_t tokenId;
+    NativeTokenInfoParams infoInstance = {
+        .dcapsNum = 0,
+        .dcaps = nullptr,
+        .perms = perms,
+        .acls = perms,
+        .aplStr = "system_core",
+    };
+
+    for (int32_t i = 0; i < MAX_PERM_NUM + 1; i++) {
+        perms[i] = "ohos.permission.test";
+    }
+
+    infoInstance.permsNum = MAX_PERM_NUM;
+    infoInstance.aclsNum = MAX_PERM_NUM + 1;
+    infoInstance.processName = "GetAccessTokenId016_00";
+    tokenId = GetAccessTokenId(&infoInstance);
+    ASSERT_EQ(tokenId, 0);
+
+    permsNum = MAX_PERM_NUM;
+    infoInstance.permsNum = permsNum;
+    infoInstance.aclsNum = permsNum;
+    infoInstance.processName = "GetAccessTokenId016_01";
+    tokenId = GetAccessTokenId(&infoInstance);
+    ASSERT_NE(tokenId, 0);
+    if (IsKernelSupportSpm()) {
+        SpmData *spmData = SpmDataNew(MAX_SPM_PERM_NUM, DEFAULT_EXTERM_SIZE, MAX_PROCESS_NAME_LEN);
+        ASSERT_EQ(SpmGetEntry(static_cast<uint32_t>(tokenId), spmData), 0);
+        ASSERT_NE(spmData->perms.buf, nullptr);
+        ASSERT_EQ(spmData->perms.bufSize, MAX_SPM_PERM_NUM);
+        for (int i = 0; i < spmData->perms.bufSize; i++) {
+            ASSERT_EQ(spmData->perms.buf[i], 0);
+        }
+        SpmDataFree(spmData);
+    }
+    ASSERT_EQ(DeleteAccessTokenId(infoInstance.processName), 0);
+
+    delete[] perms;
+}
+
+/**
+ * @tc.name: GetAccessTokenId017
+ * @tc.desc: cannot getAccessTokenId with valid perm.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenLibKitTest, GetAccessTokenId017, TestSize.Level0)
+{
+    const char **perms = new (std::nothrow) const char *[MAX_PERM_NUM + 1];
+    ASSERT_NE(perms, nullptr);
+    perms[0] = "ohos.permission.CAMERA";
+    perms[1] = "ohos.permission.MICROPHONE";
+    int32_t permsNum = 2;
+    uint64_t tokenId;
+    NativeTokenInfoParams infoInstance = {
+        .dcapsNum = 0,
+        .dcaps = nullptr,
+        .perms = perms,
+        .acls = perms,
+        .aplStr = "system_core",
+    };
+
+    infoInstance.permsNum = permsNum;
+    infoInstance.aclsNum = permsNum;
+    infoInstance.processName = "GetAccessTokenId017_01";
+
+    uid_t originalUid = getuid();
+    if (IsKernelSupportSpm()) {
+        setuid(0);
+    } else {
+        setuid(ACCESSTOKEN_UID);
+    }
+    tokenId = GetAccessTokenId(&infoInstance);
+    ASSERT_NE(tokenId, 0);
+    uint32_t opcode = 0;
+    ASSERT_EQ(::TransferPermissionToOpcode("ohos.permission.CAMERA", &opcode), true);
+    if (IsKernelSupportSpm()) {
+        SpmData *spmData = SpmDataNew(MAX_SPM_PERM_NUM, DEFAULT_EXTERM_SIZE, MAX_PROCESS_NAME_LEN);
+        ASSERT_EQ(SpmGetEntry(static_cast<uint32_t>(tokenId), spmData), 0);
+        ASSERT_NE(spmData->perms.buf, nullptr);
+        ASSERT_EQ(spmData->perms.bufSize, MAX_SPM_PERM_NUM);
+        auto *perms = reinterpret_cast<uint32_t *>(static_cast<char *>(spmData->perms.buf));
+        uint32_t idx = opcode / KERNEL_PERM_BIT_NUM;
+        uint32_t bitIdx = opcode % KERNEL_PERM_BIT_NUM;
+        ASSERT_NE((perms[idx] & (static_cast<uint32_t>(0x01) << bitIdx)), 0);
+        SpmDataFree(spmData);
+    }
+
+    bool isGranted = false;
+    ASSERT_EQ(
+        OHOS::Security::AccessToken::GetPermissionFromKernel(
+            static_cast<uint32_t>(tokenId),
+            static_cast<int32_t>(opcode),
+            isGranted), 0);
+    ASSERT_EQ(isGranted, true);
+    ASSERT_EQ(DeleteAccessTokenId(infoInstance.processName), 0);
+    setuid(originalUid);
+
+    delete[] perms;
+}
+
+/**
+ * @tc.name: GetAccessTokenId018
+ * @tc.desc: Get AccessTokenId with unsupported permission should skip kernel bit set but still succeed.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenLibKitTest, GetAccessTokenId018, TestSize.Level0)
+{
+    const char *perms[] = {
+        "ohos.permission.CAMERA",
+        "ohos.permission.not_exist",
+    };
+    NativeTokenInfoParams infoInstance = {
+        .dcapsNum = 0,
+        .permsNum = 2,
+        .aclsNum = 0,
+        .dcaps = nullptr,
+        .perms = perms,
+        .acls = nullptr,
+        .processName = "GetAccessTokenId018",
+        .aplStr = "system_core",
+    };
+    uid_t originalUid = getuid();
+    setuid(ACCESSTOKEN_UID);
+    uint64_t tokenId = GetAccessTokenId(&infoInstance);
+    ASSERT_NE(tokenId, 0);
+
+    uint32_t opcode = 0;
+    ASSERT_TRUE(::TransferPermissionToOpcode("ohos.permission.CAMERA", &opcode));
+    bool isGranted = false;
+    ASSERT_EQ(OHOS::Security::AccessToken::GetPermissionFromKernel(
+        static_cast<uint32_t>(tokenId), static_cast<int32_t>(opcode), isGranted), 0);
+    EXPECT_TRUE(isGranted);
+
+    std::vector<uint32_t> kernelPerms;
+    int32_t ret = OHOS::Security::AccessToken::GetPermissionsFromKernel(static_cast<uint32_t>(tokenId), kernelPerms);
+    if (ret == ENOTSUP) {
+        EXPECT_TRUE(kernelPerms.empty());
+    } else {
+        EXPECT_EQ(1u, kernelPerms.size());
+        EXPECT_EQ(opcode, kernelPerms[0]);
+    }
+
+    ASSERT_EQ(DeleteAccessTokenId(infoInstance.processName), 0);
+    setuid(originalUid);
+}
+
+/**
+ * @tc.name: GetAccessTokenId019
+ * @tc.desc: Get AccessTokenId with uid and verify cache/json are updated.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenLibKitTest, GetAccessTokenId019, TestSize.Level0)
+{
+    const char *processName = "GetAccessTokenId019";
+    NativeTokenInfoParams infoInstance = {
+        .dcapsNum = 0,
+        .permsNum = 0,
+        .aclsNum = 0,
+        .dcaps = nullptr,
+        .perms = nullptr,
+        .acls = nullptr,
+        .processName = processName,
+        .aplStr = "system_core",
+        .uid = 12345,
+    };
+
+    uint64_t tokenId = GetAccessTokenId(&infoInstance);
+    ASSERT_NE(tokenId, 0);
+
+    NativeTokenList *tokenNode = FindTokenNodeByProcessName(processName);
+    ASSERT_NE(tokenNode, nullptr);
+    EXPECT_EQ(tokenNode->uid, infoInstance.uid);
+
+    int32_t uidInFile = -1;
+    ASSERT_TRUE(GetUidFromCfgFileByProcessName(processName, uidInFile));
+    EXPECT_EQ(uidInFile, infoInstance.uid);
+
+    ASSERT_EQ(DeleteAccessTokenId(processName), 0);
+}
+
+/**
+ * @tc.name: GetAccessTokenId020
+ * @tc.desc: Update existing native token uid and verify cache/json are refreshed.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenLibKitTest, GetAccessTokenId020, TestSize.Level0)
+{
+    const char *processName = "GetAccessTokenId020";
+    NativeTokenInfoParams infoInstance = {
+        .dcapsNum = 0,
+        .permsNum = 0,
+        .aclsNum = 0,
+        .dcaps = nullptr,
+        .perms = nullptr,
+        .acls = nullptr,
+        .processName = processName,
+        .aplStr = "system_core",
+        .uid = 10001,
+    };
+
+    uint64_t tokenId = GetAccessTokenId(&infoInstance);
+    ASSERT_NE(tokenId, 0);
+
+    infoInstance.uid = 10002;
+    uint64_t updatedTokenId = GetAccessTokenId(&infoInstance);
+    ASSERT_EQ(updatedTokenId, tokenId);
+
+    NativeTokenList *tokenNode = FindTokenNodeByProcessName(processName);
+    ASSERT_NE(tokenNode, nullptr);
+    EXPECT_EQ(tokenNode->uid, infoInstance.uid);
+
+    int32_t uidInFile = -1;
+    ASSERT_TRUE(GetUidFromCfgFileByProcessName(processName, uidInFile));
+    EXPECT_EQ(uidInFile, infoInstance.uid);
+
+    ASSERT_EQ(DeleteAccessTokenId(processName), 0);
+}
+
+/**
+ * @tc.name: PermissionMapForC001
+ * @tc.desc: Verify permission map C adapter invalid params.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenLibKitTest, PermissionMapForC001, TestSize.Level0)
+{
+    uint32_t opcode = 0;
+    EXPECT_FALSE(::TransferPermissionToOpcode(nullptr, &opcode));
+    EXPECT_FALSE(::TransferPermissionToOpcode("ohos.permission.invalid", &opcode));
+    EXPECT_FALSE(::TransferPermissionToOpcode("ohos.permission.CAMERA", nullptr));
+
+    ASSERT_TRUE(::TransferPermissionToOpcode("ohos.permission.CAMERA", &opcode));
+    char permissionName[128] = {0};
+    ASSERT_TRUE(::TransferOpCodeToPermission(opcode, permissionName, sizeof(permissionName)));
+    EXPECT_STREQ("ohos.permission.CAMERA", permissionName);
+    EXPECT_FALSE(::TransferOpCodeToPermission(opcode, nullptr, sizeof(permissionName)));
+    EXPECT_FALSE(::TransferOpCodeToPermission(opcode, permissionName, 1));
 }

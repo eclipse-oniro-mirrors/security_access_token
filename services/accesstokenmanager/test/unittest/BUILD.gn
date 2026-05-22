@@ -48,7 +48,7 @@ ohos_unittest("libpermission_monitor_test") {
   deps = [
     "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
     "${access_token_path}/interfaces/innerkits/nativetoken:libnativetoken_shared",
-    "${access_token_path}/interfaces/innerkits/token_setproc:libperm_setproc",
+    "${access_token_path}/interfaces/innerkits/token_setproc:libpermsetproc_shared",
     "${access_token_path}/interfaces/innerkits/token_setproc:libtokensetproc_shared",
   ]
   deps += accesstoken_manager_base_config.deps
@@ -102,7 +102,7 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
     "tooltoken/claw_ticket_manager_test.cpp",
     "tooltoken/permission_map_fence.cpp",
     "tooltoken/saf_agent_fence.cpp",
-    "tooltoken/tool_token_mock_test.cpp"
+    "tooltoken/tool_token_mock_test.cpp",
   ]
   if (support_jsapi) {
     sources += [
@@ -126,7 +126,7 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
   deps = [
     "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
     "${access_token_path}/interfaces/innerkits/nativetoken:libnativetoken_shared",
-    "${access_token_path}/interfaces/innerkits/token_setproc:libperm_setproc",
+    "${access_token_path}/interfaces/innerkits/token_setproc:libpermsetproc_shared",
     "${access_token_path}/interfaces/innerkits/token_setproc:libtokensetproc_shared",
   ]
   deps += accesstoken_manager_base_config.deps

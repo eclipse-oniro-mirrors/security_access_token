@@ -29,11 +29,16 @@
 #include "nativetoken_hisysevent.h"
 #include "nativetoken_json_oper.h"
 #include "nativetoken_kit.h"
+#include "perm_setproc_c.h"
 #include "securec.h"
+#include "spm_setproc.h"
 
 NativeTokenList *g_tokenListHead;
 int32_t g_isNativeTokenInited = 0;
 const uint64_t g_nativeFdTag = 0xD005A01;
+static const uint32_t SPM_PERM_ARRAY_SIZE = 64;
+static const uint32_t UINT32_BITS_NUM = 32;
+static const int32_t MAX_KERNEL_OPERATE_TRY_TIMES = 2;
 
 #define BREAK_IF_TRUE(cond) \
     if (cond) { \
@@ -124,6 +129,11 @@ static uint32_t GetNativeTokenFromJson(cJSON *cjsonItem, NativeTokenList *tokenN
     ret = GetAplFromJson(cjsonItem, tokenNode);
     if (ret != ATRET_SUCCESS) {
         LOGC("Failed to GetAplFromJson.");
+        return ATRET_FAILED;
+    }
+    ret = GetUidFromJson(cjsonItem, tokenNode);
+    if (ret != ATRET_SUCCESS) {
+        LOGC("Failed to GetUidFromJson.");
         return ATRET_FAILED;
     }
 
@@ -626,6 +636,7 @@ static uint32_t AddNewTokenToListAndFile(const NativeTokenInfoParams *tokenInfo,
     }
     tokenNode->tokenId = id;
     tokenNode->apl = aplIn;
+    tokenNode->uid = tokenInfo->uid;
     if (strcpy_s(tokenNode->processName, MAX_PROCESS_NAME_LEN + 1, tokenInfo->processName) != EOK) {
         LOGC("Failed to copy process name.");
         free(tokenNode);
@@ -712,6 +723,7 @@ static uint32_t UpdateTokenInfoInList(NativeTokenList *tokenNode,
                                       const NativeTokenInfoParams *tokenInfo)
 {
     tokenNode->apl = GetAplLevel(tokenInfo->aplStr);
+    tokenNode->uid = tokenInfo->uid;
 
     uint32_t ret = UpdateStrArrayInList(&tokenNode->dcaps, &(tokenNode->dcapsNum),
         tokenInfo->dcaps, tokenInfo->dcapsNum);
@@ -795,7 +807,7 @@ static uint32_t LockNativeTokenFile(int32_t *lockFileFd)
     lock.l_start = 0;
     lock.l_len = 0; // lock entire file
     int32_t ret = -1;
-    for (int i = 0; i < MAX_RETRY_LOCK_TIMES; i++) {
+    for (int i = 0; i < MAX_RETRY_LOCK_TIMES; ++i) {
         ret = fcntl(fd, F_SETLK, &lock);
         if (ret == -1) {
             LOGE("Failed to lock the file, try %d time, errno is %d.", i, errno);
@@ -836,7 +848,9 @@ static uint32_t UpdateNewTokenToListAndFile(NativeTokenInfoParams *tokenInfo, Na
     uint32_t ret = ATRET_SUCCESS;
     int32_t needTokenUpdate = CompareTokenInfo(tokenNode, tokenInfo->dcaps, tokenInfo->dcapsNum, apl);
     int32_t needPermUpdate = ComparePermsInfo(tokenNode, tokenInfo->perms, tokenInfo->permsNum);
-    if ((needTokenUpdate != 0) || (needPermUpdate != 0)) {
+    int32_t needUidUpdate = (tokenNode->uid != tokenInfo->uid);
+
+    if ((needTokenUpdate != 0) || (needPermUpdate != 0) || (needUidUpdate != 0)) {
         ret = UpdateTokenInfoInList(tokenNode, tokenInfo);
         if (ret != ATRET_SUCCESS) {
             LOGC("Failed to UpdateTokenInfoInList, ret=%u.", ret);
@@ -852,56 +866,150 @@ static uint32_t UpdateNewTokenToListAndFile(NativeTokenInfoParams *tokenInfo, Na
     return ret;
 }
 
-uint64_t GetAccessTokenId(NativeTokenInfoParams *tokenInfo)
+static void BuildSpmPerms(const NativeTokenInfoParams *tokenInfo, uint32_t perms[SPM_PERM_ARRAY_SIZE])
 {
-    NativeAtId tokenId = 0;
-    uint64_t result = 0;
-    int32_t apl;
-    NativeAtIdEx *atPoint = (NativeAtIdEx *)(&result);
+    for (int32_t i = 0; i < tokenInfo->permsNum; ++i) {
+        uint32_t opCode = 0;
+        if (!TransferPermissionToOpcode(tokenInfo->perms[i], &opCode)) {
+            LOGE("Failed to transfer permission to opcode, permission=%{public}s.", tokenInfo->perms[i]);
+            continue;
+        }
+
+        uint32_t index = opCode / UINT32_BITS_NUM;
+        if (index >= SPM_PERM_ARRAY_SIZE) {
+            LOGE("Opcode out of range, opcode=%{public}u.", opCode);
+            continue;
+        }
+        perms[index] |= ((uint32_t)1 << (opCode % UINT32_BITS_NUM));
+    }
+}
+
+static void BuildSpmData(const NativeTokenInfoParams *tokenInfo, uint32_t tokenId, int32_t apl, SpmData *spmData,
+    uint32_t perms[SPM_PERM_ARRAY_SIZE])
+{
+    if ((tokenInfo == NULL) || (spmData == NULL) || (perms == NULL)) {
+        return;
+    }
+
+    (void)memset_s(spmData, sizeof(SpmData), 0, sizeof(SpmData));
+    (void)memset_s(perms, sizeof(uint32_t) * SPM_PERM_ARRAY_SIZE, 0, sizeof(uint32_t) * SPM_PERM_ARRAY_SIZE);
+    BuildSpmPerms(tokenInfo, perms);
+
+    spmData->uid = (uint32_t)tokenInfo->uid;
+    spmData->tokenid = tokenId;
+    spmData->tokenidAttr = 0;
+    spmData->index = 0;
+    spmData->apl = (uint16_t)apl;
+    spmData->distributionType = 0;
+    spmData->idType = 0;
+    spmData->ownerid = 0;
+    spmData->perms.buf = (char *)perms;
+    spmData->perms.bufSize = (uint32_t)(sizeof(uint32_t) * SPM_PERM_ARRAY_SIZE);
+    spmData->extendPerms.buf = NULL;
+    spmData->extendPerms.bufSize = 0;
+    spmData->name.buf = (char *)tokenInfo->processName;
+    spmData->name.bufSize = (uint32_t)strlen(tokenInfo->processName) + 1;
+}
+
+static uint32_t PrepareAccessTokenId(NativeTokenInfoParams *tokenInfo, NativeAtId *tokenId, int32_t *apl,
+    int32_t *sceneCode)
+{
     int32_t fd = -1;
-    int32_t sceneCode = -1;
     uint32_t ret = ATRET_SUCCESS;
-    ClearThreadErrorMsg();
+
     do {
         ret = LockNativeTokenFile(&fd);
-        sceneCode = NATIVE_TOKEN_INIT;
+        *sceneCode = NATIVE_TOKEN_INIT;
         BREAK_IF_TRUE(ret != ATRET_SUCCESS);
 
         if (g_isNativeTokenInited == 0) {
             ret = AtlibInit();
-            sceneCode = NATIVE_TOKEN_INIT;
+            *sceneCode = NATIVE_TOKEN_INIT;
             BREAK_IF_TRUE(ret != ATRET_SUCCESS);
         }
-        ret = CheckProcessInfo(tokenInfo, &apl);
-        sceneCode = CHECK_PROCESS_INFO;
+        ret = CheckProcessInfo(tokenInfo, apl);
+        *sceneCode = CHECK_PROCESS_INFO;
         BREAK_IF_TRUE(ret != ATRET_SUCCESS);
 
         NativeTokenList *tokenNode = g_tokenListHead->next;
         while (tokenNode != NULL) {
             if (strcmp(tokenNode->processName, tokenInfo->processName) == 0) {
-                tokenId = tokenNode->tokenId;
+                *tokenId = tokenNode->tokenId;
                 break;
             }
             tokenNode = tokenNode->next;
         }
 
         if (tokenNode == NULL) {
-            ret = AddNewTokenToListAndFile(tokenInfo, apl, &tokenId);
-            sceneCode = ADD_NODE;
+            ret = AddNewTokenToListAndFile(tokenInfo, *apl, tokenId);
+            *sceneCode = ADD_NODE;
             BREAK_IF_TRUE(ret != ATRET_SUCCESS);
         } else {
-            ret = UpdateNewTokenToListAndFile(tokenInfo, tokenNode, apl);
-            sceneCode = UPDATE_NODE;
+            ret = UpdateNewTokenToListAndFile(tokenInfo, tokenNode, *apl);
+            *sceneCode = UPDATE_NODE;
             BREAK_IF_TRUE(ret != ATRET_SUCCESS);
         }
     } while (0);
     UnlockNativeTokenFile(fd);
+    return ret;
+}
+
+static int32_t TrySpmAddEntries(SpmData *spmData)
+{
+    SpmData *entries[] = { spmData };
+    uint8_t idxErr = 0;
+    int32_t ret = ATRET_SUCCESS;
+
+    for (int32_t i = 0; i < MAX_KERNEL_OPERATE_TRY_TIMES; ++i) {
+        ret = SpmAddEntries(entries, 1, &idxErr);
+        if (ret == ATRET_SUCCESS || ret == ENOTSUP) {
+            return ATRET_SUCCESS;
+        }
+    }
+    LOGE("Failed to add native SPM entry to kernel, tokenId=%u, ret=%d, idxErr=%u.",
+        spmData->tokenid, ret, idxErr);
+    return ATRET_FAILED;
+}
+
+static int32_t TryAddPermissionToKernel(const SpmData *spmData)
+{
+    int32_t ret = ATRET_SUCCESS;
+    for (int32_t i = 0; i < MAX_KERNEL_OPERATE_TRY_TIMES; ++i) {
+        ret = AddPermissionToKernel(spmData->tokenid, spmData->perms.buf, spmData->perms.bufSize);
+        if (ret == ATRET_SUCCESS) {
+            return ret;
+        }
+    }
+    LOGC("Failed to add native permission list to kernel, tokenId=%u, ret=%d.", spmData->tokenid, ret);
+    return ATRET_FAILED;
+}
+
+static void SyncNativeTokenToKernel(const NativeTokenInfoParams *tokenInfo, NativeAtId tokenId, int32_t apl)
+{
+    SpmData spmData;
+    uint32_t perms[SPM_PERM_ARRAY_SIZE];
+
+    BuildSpmData(tokenInfo, tokenId, apl, &spmData, perms);
+    (void)TrySpmAddEntries(&spmData);
+    (void)TryAddPermissionToKernel(&spmData);
+}
+
+uint64_t GetAccessTokenId(NativeTokenInfoParams *tokenInfo)
+{
+    NativeAtId tokenId = 0;
+    uint64_t result = 0;
+    int32_t apl = 0;
+    int32_t sceneCode = -1;
+    NativeAtIdEx *atPoint = (NativeAtIdEx *)(&result);
+
+    ClearThreadErrorMsg();
+    uint32_t ret = PrepareAccessTokenId(tokenInfo, &tokenId, &apl, &sceneCode);
     if (ret != ATRET_SUCCESS) {
         ReportNativeTokenExceptionEvent(sceneCode, (int32_t)ret, GetThreadErrorMsg());
         return INVALID_TOKEN_ID;
     }
     atPoint->tokenId = tokenId;
     atPoint->tokenAttr = 0;
+    SyncNativeTokenToKernel(tokenInfo, tokenId, apl);
     return result;
 }
-

@@ -51,6 +51,18 @@ typedef struct {
 } SpmData;
 
 /**
+ * @brief Parsed view of one external permission item in extendPerms.
+ *        TransferSpmExternPerms parses the raw blob as repeated
+ *        `[uint32_t code][uint32_t valueSize][value bytes]` records and fills this structure.
+ *        `value` points into the caller-provided `SpmBlob::buf`, so it is only valid while that
+ *        buffer remains alive.
+ */
+typedef struct {
+    uint32_t code; /**< Permission opcode. */
+    char *value;   /**< Pointer to the value bytes of this permission item in the raw blob buffer. */
+} PermsWithValue;
+
+/**
  * @brief Batch add SPM entries to kernel.
  * @param entries Array of SpmData to add. Each element's name.buf must be valid.
  * @param cnt Number of entries. Auto-batched if > SPM_DATA_BATCH_SIZE.
@@ -166,6 +178,16 @@ SpmData *SpmDataNew(uint32_t permBufSize, uint32_t extendPermBufSize, uint32_t n
  * @param data SpmData to free. NULL is safe (no-op).
  */
 void SpmDataFree(SpmData *data);
+
+/**
+ * @brief Parse the extendPerms buffer in SpmBlob.
+ *        The buffer layout is [permCode(uint32_t)][valueSize(uint32_t)][value bytes with trailing '\0')]...
+ * @param data Input blob containing extended permission buffer.
+ * @param valueList Caller-allocated output array.
+ * @param listSize Input: valueList capacity. Output: actual parsed item count.
+ * @return ACCESS_TOKEN_OK on success; ACCESS_TOKEN_PARAM_INVALID on invalid args; ERANGE if capacity is insufficient.
+ */
+int32_t TransferSpmExternPerms(SpmBlob *data, PermsWithValue *valueList, uint32_t *listSize);
 
 #ifdef __cplusplus
 }

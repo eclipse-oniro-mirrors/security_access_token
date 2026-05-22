@@ -18,11 +18,14 @@
 #include <fcntl.h>
 #include <poll.h>
 #include <pthread.h>
+#include "cJSON.h"
 #include "securec.h"
 #include "nativetoken.h"
 #include "nativetoken_json_oper.h"
 #include "nativetoken_kit.h"
-#include "cJSON.h"
+#include "nativetoken_test_common.h"
+#include "perm_setproc.h"
+#include "token_setproc.h"
 
 using namespace testing::ext;
 using namespace OHOS::Security;
@@ -586,7 +589,8 @@ HWTEST_F(TokenOperTest, RemoveNodeFromList002, TestSize.Level0)
     (void)AtlibInit();
     EXPECT_NE(g_tokenListHead, nullptr);
     // add the node
-    EXPECT_NE(Start("process3"), 0);
+    uint64_t tokenId = Start("process3");
+    EXPECT_NE(tokenId, 0);
     g_strcpyTime = 0;
 
     // remove the node
@@ -601,6 +605,10 @@ HWTEST_F(TokenOperTest, RemoveNodeFromList002, TestSize.Level0)
         node = node->next;
     }
     EXPECT_EQ(node, nullptr);
+    if (IsKernelSupportSpm()) {
+        EXPECT_EQ(SpmRemoveEntry(static_cast<uint32_t>(tokenId)), 0);
+    }
+    OHOS::Security::AccessToken::RemovePermissionFromKernel(static_cast<uint32_t>(tokenId));
 
     CopyNativeTokenJson(TOKEN_ID_CFG_FILE_COPY_PATH, TOKEN_ID_CFG_FILE_PATH);
     std::remove(TOKEN_ID_CFG_FILE_COPY_PATH);

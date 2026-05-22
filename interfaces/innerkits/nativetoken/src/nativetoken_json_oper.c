@@ -90,6 +90,21 @@ uint32_t GetAplFromJson(cJSON *cjsonItem, NativeTokenList *tokenNode)
     return ATRET_SUCCESS;
 }
 
+uint32_t GetUidFromJson(cJSON *cjsonItem, NativeTokenList *tokenNode)
+{
+    cJSON *uidJson = cJSON_GetObjectItem(cjsonItem, UID_KEY_NAME);
+    if (uidJson == NULL) {
+        tokenNode->uid = -1;
+        return ATRET_SUCCESS;
+    }
+    if (!cJSON_IsNumber(uidJson)) {
+        LOGC("Invalid uidJson.");
+        return ATRET_FAILED;
+    }
+    tokenNode->uid = uidJson->valueint;
+    return ATRET_SUCCESS;
+}
+
 uint32_t GetInfoArrFromJson(cJSON *cjsonItem, char **strArr[], int32_t *strNum, StrArrayAttr *attr)
 {
     cJSON *strArrJson = cJSON_GetObjectItem(cjsonItem, attr->strKey);
@@ -199,6 +214,13 @@ int32_t SetNativeTokenJsonObject(const NativeTokenList *curr, cJSON *object)
         return ATRET_FAILED;
     }
 
+    item = cJSON_CreateNumber(curr->uid);
+    if (item == NULL || !cJSON_AddItemToObject(object, UID_KEY_NAME, item)) {
+        LOGC("Failed to cJSON_AddItemToObject for uid.");
+        cJSON_Delete(item);
+        return ATRET_FAILED;
+    }
+
     int32_t ret = AddStrArrayInfo(object, curr->dcaps, curr->dcapsNum, DCAPS_KEY_NAME);
     if (ret != ATRET_SUCCESS) {
         return ret;
@@ -276,6 +298,24 @@ static uint32_t UpdateItemcontent(const NativeTokenList *tokenNode, cJSON *recor
         cJSON_Delete(itemApl);
         LOGC("Failed to update APL for processName(%s).", tokenNode->processName);
         return ATRET_FAILED;
+    }
+
+    cJSON *itemUid = cJSON_CreateNumber(tokenNode->uid);
+    if (itemUid == NULL) {
+        return ATRET_FAILED;
+    }
+    if (cJSON_GetObjectItem(record, UID_KEY_NAME) != NULL) {
+        if (!cJSON_ReplaceItemInObject(record, UID_KEY_NAME, itemUid)) {
+            cJSON_Delete(itemUid);
+            LOGC("Failed to update uid for processName(%s).", tokenNode->processName);
+            return ATRET_FAILED;
+        }
+    } else {
+        if (!cJSON_AddItemToObject(record, UID_KEY_NAME, itemUid)) {
+            cJSON_Delete(itemUid);
+            LOGC("Failed to add uid for processName(%s).", tokenNode->processName);
+            return ATRET_FAILED;
+        }
     }
 
     uint32_t ret = UpdateStrArrayType(tokenNode->dcaps, tokenNode->dcapsNum, DCAPS_KEY_NAME, record);
