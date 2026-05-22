@@ -158,9 +158,30 @@ bool HasNotDeclaredStatus(const PermissionDialogDetail& detail)
     return false;
 }
 
-std::vector<bool> BuildAuthorizationResults(size_t size)
+bool FindPermissionStatusInDetail(const PermissionDialogDetail& detail, const std::string& permissionName,
+    PermissionDecisionStatus& status)
 {
-    return std::vector<bool>(size, false);
+    for (size_t i = 0; i < detail.permissionNameList.size() && i < detail.statusList.size(); ++i) {
+        if (detail.permissionNameList[i] != permissionName) {
+            continue;
+        }
+        status = detail.statusList[i];
+        return true;
+    }
+    return false;
+}
+
+std::vector<bool> BuildCliAuthorizationResults(const std::vector<std::string>& permissionNames,
+    const PermissionDialogDetail& detail)
+{
+    std::vector<bool> results;
+    results.reserve(permissionNames.size());
+    for (const auto& permissionName : permissionNames) {
+        PermissionDecisionStatus status = PermissionDecisionStatus::NO_DIALOG_GRANTED;
+        bool hasStatus = FindPermissionStatusInDetail(detail, permissionName, status);
+        results.emplace_back(!hasStatus);
+    }
+    return results;
 }
 
 bool IsAgentIdValid(const std::string& agentID)
@@ -282,7 +303,7 @@ int32_t FillCliDialogAuthResultsIfNoDialog(AccessTokenID hostTokenID, const std:
                 cliInfos[i].cliName.c_str(), cliInfos[i].subCliName.c_str(), ret);
             return ret;
         }
-        authInfo.authorizationResults = BuildAuthorizationResults(authInfo.permissionNames.size());
+        authInfo.authorizationResults = BuildCliAuthorizationResults(authInfo.permissionNames, result.detailList[i]);
         detailIndexes.emplace_back(i);
         rawAuthInfoList.emplace_back(std::move(authInfo));
     }
@@ -323,7 +344,7 @@ int32_t FillSkillDialogAuthResultsIfNoDialog(AccessTokenID hostTokenID, const st
         SkillAuthInfo authInfo;
         authInfo.skillInfo = skillInfos[i];
         authInfo.permissionNames = result.detailList[i].permissionNameList;
-        authInfo.authorizationResults = BuildAuthorizationResults(authInfo.permissionNames.size());
+        authInfo.authorizationResults = BuildCliAuthorizationResults(authInfo.permissionNames, result.detailList[i]);
         detailIndexes.emplace_back(i);
         authInfoList.emplace_back(authInfo);
     }

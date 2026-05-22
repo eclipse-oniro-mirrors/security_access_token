@@ -61,6 +61,7 @@ const std::string MANAGE_TOOL_RUNTIME_PERMISSIONS = "ohos.permission.MANAGE_TOOL
 const std::string MANAGE_USER_POLICY = "ohos.permission.MANAGE_USER_POLICY";
 const std::string KERNEL_PLUGIN_PERMISSION = "ohos.permission.kernel.SUPPORT_PLUGIN";
 const std::string WRITE_CALENDAR_PERMISSION = "ohos.permission.WRITE_CALENDAR";
+const std::string UNDECLARED_PERMISSION = "ohos.permission.TEST_UNDECLARED";
 uint64_t g_selfShellTokenId = 0;
 
 std::string BuildInvalidAgentId()
@@ -651,7 +652,7 @@ HWTEST_F(ToolTokenMockTest, GetCliPermissionRequestInfo_004, TestSize.Level1)
 
 /**
  * @tc.name: GetCliPermissionRequestInfo_005
- * @tc.desc: Test undecided runtime permission triggers dialog and no auth result.
+ * @tc.desc: Test undecided runtime permission does not trigger dialog when CLI permission is granted.
  * @tc.type: FUNC
  */
 HWTEST_F(ToolTokenMockTest, GetCliPermissionRequestInfo_005, TestSize.Level1)
@@ -666,8 +667,8 @@ HWTEST_F(ToolTokenMockTest, GetCliPermissionRequestInfo_005, TestSize.Level1)
         { BuildCliInfoParcel("location", "query") }, cleaner).info;
     ASSERT_EQ(1, static_cast<int32_t>(result.result.detailList.size()));
     const auto& detail = result.result.detailList[0];
-    EXPECT_TRUE(detail.needPermissionDialog);
-    EXPECT_TRUE(detail.authResult.empty());
+    EXPECT_FALSE(detail.needPermissionDialog);
+    EXPECT_FALSE(detail.authResult.empty());
     EXPECT_FALSE(ContainsPermission(detail.permissionNameList, CAMERA_PERMISSION));
 }
 
@@ -849,6 +850,80 @@ HWTEST_F(ToolTokenMockTest, GetCliPermissionRequestInfo_011, TestSize.Level1)
     EXPECT_TRUE(ContainsPermission(kernelPermList, KERNEL_PLUGIN_PERMISSION));
     VerifyCliTokenBasics(toolTokenId, queryResult.callerTokenId, "location", "query");
     EXPECT_EQ(RET_SUCCESS, ToolTokenInfoManager::GetInstance().DeleteToolTokenByPid(getpid()));
+}
+
+/**
+ * @tc.name: GetCliPermissionRequestInfo_012
+ * @tc.desc: Test granted CLI permission signs both declared and undeclared mapped permissions.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ToolTokenMockTest, GetCliPermissionRequestInfo_012, TestSize.Level1)
+{
+    TokenCleaner cleaner;
+    auto permStates = BuildQueryPermissionStates();
+    permStates.emplace_back(BuildGrantedStatus(CUSTOM_SCREEN_CAPTURE));
+    permStates.emplace_back(BuildGrantedStatus(WIFI_PERMISSION, PERMISSION_SYSTEM_FIXED));
+
+    ResetMockCounter();
+    SetMockCommandPermissionsForTest(BuildCliCommandMockMap());
+    auto runtimeMap = BuildCliRuntimeMockMap();
+    runtimeMap[CUSTOM_SCREEN_CAPTURE] = { WIFI_PERMISSION, UNDECLARED_PERMISSION };
+    SetMockCliRuntimePermissionsForTest(runtimeMap);
+
+    auto queryResult = QueryCliPermissionRequestInfo(permStates,
+        { BuildCliInfoParcel("location", "query") }, cleaner);
+    const auto& detail = queryResult.info.result.detailList[0];
+    EXPECT_FALSE(detail.needPermissionDialog);
+    EXPECT_TRUE(detail.permissionNameList.empty());
+    EXPECT_TRUE(detail.statusList.empty());
+    ASSERT_FALSE(detail.authResult.empty());
+
+    std::vector<PermissionStatus> permList;
+    ASSERT_EQ(RET_SUCCESS, ClawTicketManager::GetInstance().VerifyCliClawTicket(
+        queryResult.callerTokenId, detail.authResult, BuildCliInfo("location", "query"), permList));
+    ASSERT_EQ(2, static_cast<int32_t>(permList.size()));
+    EXPECT_EQ(WIFI_PERMISSION, permList[0].permissionName);
+    EXPECT_EQ(PERMISSION_GRANTED, permList[0].grantStatus);
+    EXPECT_EQ(UNDECLARED_PERMISSION, permList[1].permissionName);
+    EXPECT_EQ(PERMISSION_GRANTED, permList[1].grantStatus);
+}
+
+/**
+ * @tc.name: GetCliPermissionRequestInfo_013
+ * @tc.desc: Test denied CLI permission keeps granted declared permission and denies undeclared mapped permission.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ToolTokenMockTest, GetCliPermissionRequestInfo_013, TestSize.Level1)
+{
+    TokenCleaner cleaner;
+    auto permStates = BuildQueryPermissionStates();
+    permStates.emplace_back(BuildDeniedStatus(CUSTOM_SCREEN_CAPTURE));
+    permStates.emplace_back(BuildGrantedStatus(WIFI_PERMISSION, PERMISSION_SYSTEM_FIXED));
+
+    ResetMockCounter();
+    SetMockCommandPermissionsForTest(BuildCliCommandMockMap());
+    auto runtimeMap = BuildCliRuntimeMockMap();
+    runtimeMap[CUSTOM_SCREEN_CAPTURE] = { WIFI_PERMISSION, UNDECLARED_PERMISSION };
+    SetMockCliRuntimePermissionsForTest(runtimeMap);
+
+    auto queryResult = QueryCliPermissionRequestInfo(permStates,
+        { BuildCliInfoParcel("location", "query") }, cleaner);
+    const auto& detail = queryResult.info.result.detailList[0];
+    EXPECT_FALSE(detail.needPermissionDialog);
+    ASSERT_EQ(1, static_cast<int32_t>(detail.permissionNameList.size()));
+    EXPECT_EQ(CUSTOM_SCREEN_CAPTURE, detail.permissionNameList[0]);
+    ASSERT_EQ(1, static_cast<int32_t>(detail.statusList.size()));
+    EXPECT_EQ(PermissionDecisionStatus::NO_DIALOG_DENIED, detail.statusList[0]);
+    ASSERT_FALSE(detail.authResult.empty());
+
+    std::vector<PermissionStatus> permList;
+    ASSERT_EQ(RET_SUCCESS, ClawTicketManager::GetInstance().VerifyCliClawTicket(
+        queryResult.callerTokenId, detail.authResult, BuildCliInfo("location", "query"), permList));
+    ASSERT_EQ(2, static_cast<int32_t>(permList.size()));
+    EXPECT_EQ(WIFI_PERMISSION, permList[0].permissionName);
+    EXPECT_EQ(PERMISSION_GRANTED, permList[0].grantStatus);
+    EXPECT_EQ(UNDECLARED_PERMISSION, permList[1].permissionName);
+    EXPECT_EQ(PERMISSION_DENIED, permList[1].grantStatus);
 }
 
 /**
