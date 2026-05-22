@@ -104,8 +104,7 @@
         {
             "cliPermission": "ohos.permission.cli.START_ABILITY",
             "usedPermissions": [
-                "ohos.permission.START_ABILITIES_FROM_BACKGROUND",
-                "ohos.permission.START_INVISIBLE_ABILITY"
+                "ohos.permission.START_ABILITIES_FROM_BACKGROUND"
             ]
         },
         {
