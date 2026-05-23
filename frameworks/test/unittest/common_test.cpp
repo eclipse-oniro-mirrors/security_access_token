@@ -466,7 +466,7 @@ HWTEST_F(CommonTest, IsPermissionValidForHap001, TestSize.Level1)
 
 /*
  * @tc.name: GetPermissionBriefDef001
- * @tc.desc: GetPermissionBriefDef should return false for disabled permissionName
+ * @tc.desc: GetPermissionBriefDef should returns false when the permission name does not exist
  * @tc.type: FUNC
  * @tc.require:
  */
