@@ -561,6 +561,7 @@ void SpmDataFree(SpmData* data)
 
 int32_t TransferSpmExternPerms(SpmBlob *data, PermsWithValue *valueList, uint32_t *listSize)
 {
+    int32_t codeValueSize = sizeof(uint32_t) * 2;
     if ((data == NULL) || (listSize == NULL) || (*listSize == 0) || (valueList == NULL)) {
         return ACCESS_TOKEN_PARAM_INVALID;
     }
@@ -568,14 +569,14 @@ int32_t TransferSpmExternPerms(SpmBlob *data, PermsWithValue *valueList, uint32_
         *listSize = 0;
         return ACCESS_TOKEN_OK;
     }
-    if ((data->bufSize <= sizeof(uint32_t) + sizeof(uint32_t)) || ((data->bufSize > 0) && (data->buf == NULL))) {
+    if ((data->bufSize <= codeValueSize) || ((data->bufSize > 0) && (data->buf == NULL))) {
         return ACCESS_TOKEN_PARAM_INVALID;
     }
 
     uint32_t capacity = *listSize;
     uint32_t outputSize = 0;
     uint32_t offset = 0;
-    while (offset <= data->bufSize - sizeof(uint32_t) - sizeof(uint32_t)) {
+    while (offset <= data->bufSize - codeValueSize) {
         uint32_t code = 0;
         uint32_t valueSize = 0;
         if (memcpy_s(&code, sizeof(code), data->buf + offset, sizeof(code)) != EOK) {

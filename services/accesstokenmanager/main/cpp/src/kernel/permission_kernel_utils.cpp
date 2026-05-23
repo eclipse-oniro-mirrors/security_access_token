@@ -15,10 +15,12 @@
 
 #include "permission_kernel_utils.h"
 
+#include <mutex>
 #include "accesstoken_common_log.h"
 #include "hap_token_info_inner.h"
 #include "perm_setproc.h"
 #include "permission_map.h"
+#include "spm_setproc.h"
 #include "token_setproc.h"
 
 namespace OHOS {
@@ -65,20 +67,22 @@ void PermissionKernelUtils::SetPermToKernel(AccessTokenID tokenID, const std::st
         tokenID, permissionName.c_str(), ret);
 }
 
-bool PermissionKernelUtils::IsKernelSupportGetPermissions()
+bool PermissionKernelUtils::IsKernelSupportSpm()
 {
-    static bool isSupportGetPermissions = false;
+    static bool isSupportSpm = false;
     static bool hasChecked = false;
+    static std::mutex checkMutex;
+    std::lock_guard<std::mutex> lock(checkMutex);
     if (hasChecked) {
-        return isSupportGetPermissions;
+        return isSupportSpm;
     }
-    std::vector<uint32_t> permCodeList = {0};
-    int ret = GetPermissionsFromKernel(static_cast<uint32_t>(GetSelfTokenID()), permCodeList);
-    isSupportGetPermissions = (ret == ENOTSUP) ? false : true;
+    uint32_t version = 0;
+    int ret = SpmGetVersion(&version);
+    isSupportSpm = (ret == ENOTSUP) ? false : true;
     hasChecked = true;
     LOGE(ATM_DOMAIN, ATM_TAG,
-        "Getting permissions from kernel is %{public}s", isSupportGetPermissions ? "supported" : "not supported");
-    return isSupportGetPermissions;
+        "Spm is %{public}s", isSupportSpm ? "supported" : "not supported");
+    return isSupportSpm;
 }
 } // namespace AccessToken
 } // namespace Security

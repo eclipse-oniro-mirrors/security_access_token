@@ -2470,7 +2470,7 @@ HWTEST_F(TokenInfoManagerTest, VerifyNativeAccessToken001, TestSize.Level0)
         AccessTokenInfoManager::GetInstance().VerifyNativeAccessToken(tokenId1, permissionName));
 
     // tokenId is native token, and permission is defined
-    if (!PermissionKernelUtils::IsKernelSupportGetPermissions()) {
+    if (!PermissionKernelUtils::IsKernelSupportSpm()) {
         permissionName = "ohos.permission.KILL_APP_PROCESSES";
         ASSERT_EQ(PermissionState::PERMISSION_GRANTED,
         AccessTokenInfoManager::GetInstance().VerifyNativeAccessToken(tokenId1, permissionName));
