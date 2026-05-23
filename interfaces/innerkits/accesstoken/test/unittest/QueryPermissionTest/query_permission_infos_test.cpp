@@ -246,6 +246,10 @@ std::vector<std::string> CollectNormalAndSystemPermissions()
             continue;
         }
 
+        if (!AccessTokenKit::IsSupportPermission(perm)) {
+            continue;
+        }
+
         PermissionBriefDef permDef;
         if (!AccessToken::GetPermissionBriefDef(perm, permDef)) {
             continue;
