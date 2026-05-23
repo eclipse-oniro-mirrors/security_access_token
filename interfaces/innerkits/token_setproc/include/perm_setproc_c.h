@@ -28,7 +28,7 @@ int32_t AddPermissionToKernel(uint32_t tokenId, const char *perms, uint32_t perm
 int32_t RemovePermissionFromKernel(uint32_t tokenID);
 int32_t SetPermissionToKernel(uint32_t tokenID, int32_t opCode, bool status);
 int32_t GetPermissionFromKernel(uint32_t tokenID, int32_t opCode, bool *isGranted);
-int32_t GetPermissionsFromKernel(uint32_t tokenId, uint32_t perms[MAX_PERM_BIT_MAP_SIZE]);
+int32_t GetPermissionsFromKernel(uint32_t tokenId, uint32_t perms[MAX_PERM_BIT_MAP_SIZE], uint32_t permsSize);
 int32_t FilterKernelPermissions(uint32_t perms[MAX_PERM_BIT_MAP_SIZE], uint16_t *kernelPerms, uint32_t* permSize);
 bool TransferPermissionToOpcode(const char *permissionName, uint32_t *opCode);
 bool TransferOpCodeToPermission(uint32_t opCode, char *permissionName, uint32_t nameSize);

@@ -80,7 +80,7 @@ bool PermissionKernelUtils::IsKernelSupportSpm()
     int ret = SpmGetVersion(&version);
     isSupportSpm = (ret == ENOTSUP) ? false : true;
     hasChecked = true;
-    LOGE(ATM_DOMAIN, ATM_TAG,
+    LOGW(ATM_DOMAIN, ATM_TAG,
         "Spm is %{public}s", isSupportSpm ? "supported" : "not supported");
     return isSupportSpm;
 }

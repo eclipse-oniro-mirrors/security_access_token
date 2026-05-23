@@ -147,9 +147,9 @@ extern "C" int32_t GetPermissionFromKernel(uint32_t tokenID, int32_t opCode, boo
     return ACCESS_TOKEN_OK;
 }
 
-extern "C" int32_t GetPermissionsFromKernel(uint32_t tokenId, uint32_t perms[MAX_PERM_BIT_MAP_SIZE])
+extern "C" int32_t GetPermissionsFromKernel(uint32_t tokenId, uint32_t perms[MAX_PERM_BIT_MAP_SIZE], uint32_t permsSize)
 {
-    if (perms == nullptr) {
+    if (perms == nullptr || permsSize < MAX_PERM_BIT_MAP_SIZE) {
         return ACCESS_TOKEN_PARAM_INVALID;
     }
 
