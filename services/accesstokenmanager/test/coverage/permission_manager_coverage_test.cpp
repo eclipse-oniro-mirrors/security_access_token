@@ -484,7 +484,7 @@ HWTEST_F(PermissionManagerCoverageTest, HandleHapUndefinedInfo003, TestSize.Leve
     GenericValues value;
     value.Put(TokenFiledConst::FIELD_TOKEN_ID, RANDOM_TOKENID);
     // enterprise_normal permission
-    value.Put(TokenFiledConst::FIELD_PERMISSION_NAME, "ohos.permission.FILE_GUARD_MANAGER");
+    value.Put(TokenFiledConst::FIELD_PERMISSION_NAME, "ohos.permission.GET_DOMAIN_ACCOUNTS");
     value.Put(TokenFiledConst::FIELD_ACL, 0);
     value.Put(TokenFiledConst::FIELD_APP_DISTRIBUTION_TYPE, "os_integration");
     AddInfo addInfo;
@@ -581,7 +581,7 @@ HWTEST_F(PermissionManagerCoverageTest, IsPermAvailableRangeSatisfied001, TestSi
 {
     PermissionBriefDef briefDef;
     briefDef.availableType = ATokenAvailableTypeEnum::ENTERPRISE_NORMAL;
-    char permissionName[] = "ohos.permission.FILE_GUARD_MANAGER";
+    char permissionName[] = "ohos.permission.GET_DOMAIN_ACCOUNTS";
     briefDef.permissionName = permissionName;
     BundleParam param;
     param.distributionType = static_cast<int32_t>(Verify::AppDistType::OS_INTEGRATION);

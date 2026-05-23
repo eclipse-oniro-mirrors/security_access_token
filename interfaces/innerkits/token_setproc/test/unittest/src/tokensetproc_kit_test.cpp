@@ -1035,7 +1035,7 @@ HWTEST_F(TokensetprocKitTest, AddPermissionToKernelForC002, TestSize.Level0)
     }
 
     uint32_t queryPerms[MAX_PERM_BIT_MAP_SIZE] = {0};
-    ret = ::GetPermissionsFromKernel(g_tokeId, queryPerms);
+    ret = ::GetPermissionsFromKernel(g_tokeId, queryPerms, MAX_PERM_BIT_MAP_SIZE);
     if (!IsKernelSupportSpm()) {
         EXPECT_EQ(queryPerms[0], 0);
     } else {
@@ -1046,7 +1046,10 @@ HWTEST_F(TokensetprocKitTest, AddPermissionToKernelForC002, TestSize.Level0)
 
 HWTEST_F(TokensetprocKitTest, GetPermissionsFromKernelForC001, TestSize.Level0)
 {
-    EXPECT_EQ(ACCESS_TOKEN_PARAM_INVALID, ::GetPermissionsFromKernel(g_tokeId, nullptr));
+    EXPECT_EQ(ACCESS_TOKEN_PARAM_INVALID, ::GetPermissionsFromKernel(g_tokeId, nullptr, MAX_PERM_BIT_MAP_SIZE));
+
+    uint32_t queryPerms[MAX_PERM_BIT_MAP_SIZE] = {0};
+    EXPECT_EQ(ACCESS_TOKEN_PARAM_INVALID, ::GetPermissionsFromKernel(g_tokeId, queryPerms, MAX_PERM_BIT_MAP_SIZE - 1));
 }
 
 HWTEST_F(TokensetprocKitTest, FilterKernelPermissions001, TestSize.Level0)

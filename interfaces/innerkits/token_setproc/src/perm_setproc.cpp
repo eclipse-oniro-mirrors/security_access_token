@@ -69,7 +69,7 @@ int32_t GetPermissionsFromKernel(uint32_t tokenID, std::vector<uint32_t>& opCode
     uint32_t perms[MAX_PERM_BIT_MAP_SIZE] = {0};
     opCodeList.clear();
 
-    int32_t ret = ::GetPermissionsFromKernel(tokenID, perms);
+    int32_t ret = ::GetPermissionsFromKernel(tokenID, perms, MAX_PERM_BIT_MAP_SIZE);
     if (ret != ACCESS_TOKEN_OK) {
         return ret;
     }

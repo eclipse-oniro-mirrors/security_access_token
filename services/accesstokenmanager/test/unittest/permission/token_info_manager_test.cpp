@@ -1009,8 +1009,8 @@ HWTEST_F(TokenInfoManagerTest, InitHapToken008, TestSize.Level0)
     result.permCheckResult = permCheckResult;
     ASSERT_EQ(result.permCheckResult.permissionName, "ohos.permission.GET_ALL_APP_ACCOUNTS");
     ASSERT_EQ(result.permCheckResult.rule, PERMISSION_ACL_RULE);
-    permissionStateA.permissionName = "ohos.permission.FILE_GUARD_MANAGER";
-    policy.hapPolicy.aclRequestedList = { "ohos.permission.FILE_GUARD_MANAGER" };
+    permissionStateA.permissionName = "ohos.permission.GET_DOMAIN_ACCOUNTS";
+    policy.hapPolicy.aclRequestedList = { "ohos.permission.GET_DOMAIN_ACCOUNTS" };
     policy.hapPolicy.permStateList = { permissionStateA, permissionStateB };
     ASSERT_EQ(0, atManagerService_->InitHapToken(info, policy, fullTokenId, resultInfoIdl));
 }
