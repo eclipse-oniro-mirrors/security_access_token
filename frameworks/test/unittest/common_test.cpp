@@ -69,17 +69,36 @@ HWTEST_F(CommonTest, EncryptDevId001, TestSize.Level1)
 }
 
 /*
- * @tc.name: IsDefinedPermissionTest001
- * @tc.desc: IsDefinedPermission function test
+ * @tc.name: IsDefinedPermissionInner001
+ * @tc.desc: IsDefinedPermissionInner function test
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(CommonTest, IsDefinedPermissionTest001, TestSize.Level1)
+HWTEST_F(CommonTest, IsDefinedPermissionInner001, TestSize.Level1)
 {
-    bool res = IsDefinedPermission("ohos.permission.ANSWER_CALL");
+    bool res = IsDefinedPermissionInner("ohos.permission.ANSWER_CALL");
     EXPECT_EQ(res, true);
-    res = IsDefinedPermission("ohos.permission.TTTTT");
+    res = IsDefinedPermissionInner("ohos.permission.TTTTT");
     EXPECT_EQ(res, false);
+}
+ 
+/*
+ * @tc.name: IsDefinedPermissionInnerTest002
+ * @tc.desc: IsDefinedPermissionInner function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(CommonTest, IsDefinedPermissionInner002, TestSize.Level1)
+{
+    std::string permission;
+ 
+    permission = "PERMISSION_UNDEFINE";
+    bool result = IsDefinedPermissionInner(permission);
+    EXPECT_FALSE(result);
+ 
+    permission = "  ";
+    result = IsDefinedPermissionInner(permission);
+    EXPECT_FALSE(result);
 }
 
 /*
@@ -133,7 +152,7 @@ HWTEST_F(CommonTest, TransferOpcodeToPermission002, TestSize.Level1)
  */
 HWTEST_F(CommonTest, PermissionDefineMapTest, TestSize.Level1)
 {
-    EXPECT_TRUE(IsDefinedPermission("ohos.permission.ANSWER_CALL"));
+    EXPECT_TRUE(IsDefinedPermissionInner("ohos.permission.ANSWER_CALL"));
     PermissionBriefDef permDef;
     EXPECT_TRUE(GetPermissionBriefDef("ohos.permission.ANSWER_CALL", permDef));
     EXPECT_TRUE(strcmp("ohos.permission.ANSWER_CALL", permDef.permissionName) == 0);
@@ -353,6 +372,117 @@ HWTEST_F(CommonTest, IsPermFeatureValid001, TestSize.Level1)
     EXPECT_TRUE(DataValidator::IsPermFeatureValid(""));
     EXPECT_TRUE(DataValidator::IsPermFeatureValid("aaaaa"));
     EXPECT_FALSE(DataValidator::IsPermFeatureValid(std::string(INVALID_FEATURE_LENGTH, 'a')));
+}
+
+/*
+ * @tc.name: SetPermissionBriefEnabled001
+ * @tc.desc: SetPermissionBriefEnabled should disable defined permission
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(CommonTest, SetPermissionBriefEnabled001, TestSize.Level1)
+{
+    std::string permissionName = "ohos.permission.ANSWER_CALL";
+    
+    ASSERT_TRUE(SetPermissionBriefEnabled(permissionName, false));
+    EXPECT_FALSE(IsDefinedPermissionInner(permissionName));
+    ASSERT_TRUE(SetPermissionBriefEnabled(permissionName, true));
+    EXPECT_TRUE(IsDefinedPermissionInner(permissionName));
+}
+
+/*
+ * @tc.name: SetPermissionBriefEnabled002
+ * @tc.desc: SetPermissionBriefEnabled should return false for undefined permission
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(CommonTest, SetPermissionBriefEnabled002, TestSize.Level1)
+{
+    EXPECT_FALSE(SetPermissionBriefEnabled("ohos.permission.NOT_EXIST", false));
+}
+
+/*
+ * @tc.name: SetPermissionBriefEnabled003
+ * @tc.desc: SetPermissionBriefEnabled should re-enable disabled permission
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(CommonTest, SetPermissionBriefEnabled003, TestSize.Level1)
+{
+    std::string permissionName = "ohos.permission.ANSWER_CALL";
+    
+    ASSERT_TRUE(SetPermissionBriefEnabled(permissionName, false));
+    ASSERT_TRUE(SetPermissionBriefEnabled(permissionName, true));
+    
+    PermissionBriefDef permDef;
+    EXPECT_TRUE(GetPermissionBriefDef(permissionName, permDef));
+    EXPECT_TRUE(permDef.isEnable);
+}
+
+/*
+ * @tc.name: IsUserGrantPermission002
+ * @tc.desc: IsUserGrantPermission should return false for disabled permission
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(CommonTest, IsUserGrantPermission002, TestSize.Level1)
+{
+    std::string permissionName = "ohos.permission.CAMERA";
+    
+    ASSERT_TRUE(SetPermissionBriefEnabled(permissionName, false));
+    EXPECT_FALSE(IsUserGrantPermission(permissionName));
+    ASSERT_TRUE(SetPermissionBriefEnabled(permissionName, true));
+}
+
+/*
+ * @tc.name: IsOperablePermission001
+ * @tc.desc: IsOperablePermission should return false for disabled permission
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(CommonTest, IsOperablePermission001, TestSize.Level1)
+{
+    std::string permissionName = "ohos.permission.CAMERA";
+    
+    ASSERT_TRUE(SetPermissionBriefEnabled(permissionName, false));
+    EXPECT_FALSE(IsOperablePermission(permissionName));
+    ASSERT_TRUE(SetPermissionBriefEnabled(permissionName, true));
+}
+
+/*
+ * @tc.name: IsPermissionValidForHap001
+ * @tc.desc: IsPermissionValidForHap should return false for disabled permission
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(CommonTest, IsPermissionValidForHap001, TestSize.Level1)
+{
+    std::string permissionName = "ohos.permission.CAMERA";
+    
+    ASSERT_TRUE(SetPermissionBriefEnabled(permissionName, false));
+    EXPECT_FALSE(IsPermissionValidForHap(permissionName));
+    ASSERT_TRUE(SetPermissionBriefEnabled(permissionName, true));
+}
+
+/*
+ * @tc.name: GetPermissionBriefDef001
+ * @tc.desc: GetPermissionBriefDef should return false for disabled permission
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(CommonTest, GetPermissionBriefDef001, TestSize.Level1)
+{
+    std::string permissionName = "ohos.permission.CAMERA";
+    
+    // Test with enabled permission
+    PermissionBriefDef permDef;
+    ASSERT_TRUE(GetPermissionBriefDef(permissionName, permDef));
+    EXPECT_TRUE(permDef.isEnable);
+    
+    // Test with disabled permission
+    ASSERT_TRUE(SetPermissionBriefEnabled(permissionName, false));
+    EXPECT_FALSE(GetPermissionBriefDef(permissionName, permDef));
+    ASSERT_TRUE(SetPermissionBriefEnabled(permissionName, true));
 }
 } // namespace AccessToken
 } // namespace Security

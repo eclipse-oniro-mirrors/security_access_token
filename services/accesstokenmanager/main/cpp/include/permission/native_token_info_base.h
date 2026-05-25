@@ -27,6 +27,7 @@ struct NativeTokenInfoBase {
     /** native token info */
     ATokenAplEnum apl;
     unsigned char ver;
+    int32_t uid = -1;
     std::string processName;
     std::vector<std::string> dcap;
     AccessTokenID tokenID;
@@ -39,8 +40,7 @@ struct NativeTokenInfoBase {
 struct NativeTokenInfoCache {
     ATokenAplEnum apl;
     std::string processName;
-    std::vector<uint32_t> opCodeList;
-    std::vector<bool> statusList;
+    std::vector<uint16_t> opCodeList;
 };
 } // namespace AccessToken
 } // namespace Security

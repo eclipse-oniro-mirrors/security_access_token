@@ -54,6 +54,7 @@
 #include "permission_data_brief.h"
 #include "idl_common.h"
 #include "perm_setproc.h"
+#include "spm_setproc.h"
 #include "tokenid_attributes.h"
 #include "token_field_const.h"
 #include "token_setproc.h"
@@ -128,6 +129,48 @@ void RollbackRestrictedFlag(AccessTokenID tokenId, uint32_t permCode, bool isRes
     }
 }
 
+void AddGrantedNativePermissionStatus(
+    AccessTokenID tokenID, uint32_t permCode, std::vector<PermissionStatusIdl>& permissionInfoList)
+{
+    PermissionStatusIdl idl;
+    idl.tokenID = tokenID;
+    idl.permCode = permCode;
+    idl.grantStatus = PERMISSION_GRANTED;
+    idl.grantFlag = PERMISSION_SYSTEM_FIXED;
+    idl.timestamp = 0;
+    permissionInfoList.emplace_back(idl);
+}
+
+void AddNativePermissionsFromCache(const NativeTokenInfoCache& cache, AccessTokenID tokenID,
+    const std::unordered_set<uint32_t>& permCodeSet, std::vector<PermissionStatusIdl>& permissionInfoList)
+{
+    for (const auto opCode : cache.opCodeList) {
+        uint32_t permCode = static_cast<uint16_t>(opCode);
+        if (permCodeSet.find(permCode) == permCodeSet.end()) {
+            continue;
+        }
+        AddGrantedNativePermissionStatus(tokenID, permCode, permissionInfoList);
+    }
+}
+
+void AddNativePermissionsFromKernel(const std::vector<uint32_t>& permCodeList, AccessTokenID tokenID,
+    std::vector<PermissionStatusIdl>& permissionInfoList)
+{
+    std::vector<uint32_t> grantedPermCodeList;
+    int32_t ret = GetPermissionsFromKernel(static_cast<uint32_t>(tokenID), grantedPermCodeList);
+    if (ret != ACCESS_TOKEN_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG,
+            "Get native perms from kernel failed, tokenId=%{public}u, ret=%{public}d.", tokenID, ret);
+        return;
+    }
+
+    std::unordered_set<uint32_t> grantedPermCodeSet(grantedPermCodeList.begin(), grantedPermCodeList.end());
+    for (const auto permCode : permCodeList) {
+        if (grantedPermCodeSet.find(permCode) != grantedPermCodeSet.end()) {
+            AddGrantedNativePermissionStatus(tokenID, permCode, permissionInfoList);
+        }
+    }
+}
 }
 
 int32_t AccessTokenInfoManager::FindPermissionByNameFromDb(const std::vector<uint32_t>& permCodeList,
@@ -411,6 +454,7 @@ void AccessTokenInfoManager::Init(uint32_t& hapSize, uint32_t& nativeSize, uint3
         PermissionFeatureManager::GetInstance().SetFeatures(featureValue.permissionFeatures);
     }
 
+    LoadPermissionDefinitionExt(*policy);
     InitHapTokenInfos(hapSize, tokenIdAplMap);
     nativeSize = tokenInfos.size();
     InitNativeTokenInfos(tokenInfos);
@@ -425,6 +469,22 @@ void AccessTokenInfoManager::Init(uint32_t& hapSize, uint32_t& nativeSize, uint3
         std::unique_lock<std::shared_mutex> monitorLock(this->monitorLock_);
         if (this->tokenMonitor_ == nullptr) {
             this->tokenMonitor_ = std::make_shared<VerifyAccessTokenMonitor>();
+        }
+    }
+}
+
+void AccessTokenInfoManager::LoadPermissionDefinitionExt(ConfigPolicyLoaderInterface& policy)
+{
+    std::vector<std::string> permissions;
+    if (policy.GetPermissionDefinitionExt(permissions) != RET_SUCCESS) {
+        LOGE(ATM_DOMAIN, ATM_TAG,
+            "Failed to get permission definition extension");
+        return;
+    }
+    for (const auto& permissionName : permissions) {
+        if (!SetPermissionBriefEnabled(permissionName, true)) {
+            LOGW(ATM_DOMAIN, ATM_TAG,
+                "Permission in ext file is invalid %{public}s.", permissionName.c_str());
         }
     }
 }
@@ -696,30 +756,13 @@ void AccessTokenInfoManager::GetAllNativeTokenPerms(const std::vector<uint32_t>&
     std::vector<PermissionStatusIdl>& permissionInfoList)
 {
     std::shared_lock<std::shared_mutex> infoGuard(nativeTokenInfoLock_);
-
-    // Convert permCodeList to set for O(1) lookup performance
     std::unordered_set<uint32_t> permCodeSet(permCodeList.begin(), permCodeList.end());
-
-    // Only return permissions that are in the requested permCodeList
-    // (i.e., native tokens that have applied for these specific permissions)
     for (const auto& [tokenID, cache] : nativeTokenInfoMap_) {
-        size_t opCodeSize = cache.opCodeList.size();
-        for (size_t i = 0; i < opCodeSize; ++i) {
-            uint32_t permCode = cache.opCodeList[i];
-            // Check if this permCode is in the requested set (O(1) lookup)
-            if (permCodeSet.find(permCode) == permCodeSet.end()) {
-                continue;
-            }
-
-            // Helper lambda to convert permission status
-            PermissionStatusIdl idl;
-            idl.tokenID = tokenID;
-            idl.permCode = permCode;
-            idl.grantStatus = PERMISSION_GRANTED;
-            idl.grantFlag = PERMISSION_SYSTEM_FIXED;
-            idl.timestamp = 0;
-            permissionInfoList.emplace_back(idl);
+        if (!PermissionKernelUtils::IsKernelSupportSpm()) {
+            AddNativePermissionsFromCache(cache, tokenID, permCodeSet, permissionInfoList);
+            continue;
         }
+        AddNativePermissionsFromKernel(permCodeList, tokenID, permissionInfoList);
     }
 }
 
@@ -870,7 +913,7 @@ int32_t AccessTokenInfoManager::CheckHapInfoParam(const HapInfoParams& info, con
     }
 
     for (const auto& extendValue : policy.aclExtendedMap) {
-        if (!IsDefinedPermission(extendValue.first)) {
+        if (!IsDefinedPermissionInner(extendValue.first)) {
             continue;
         }
         if (!DataValidator::IsAclExtendedMapContentValid(extendValue.first, extendValue.second)) {
@@ -1104,11 +1147,14 @@ void AccessTokenInfoManager::InitNativeTokenInfos(const std::vector<NativeTokenI
         NativeTokenInfoCache cache;
         cache.processName = process;
         cache.apl = static_cast<ATokenAplEnum>(info.apl);
-        cache.opCodeList = opCodeList;
-        cache.statusList = statusList;
+        if (!PermissionKernelUtils::IsKernelSupportSpm()) {
+            for (const auto& code : opCodeList) {
+                cache.opCodeList.emplace_back(static_cast<uint16_t>(code));
+            }
+        }
 
         nativeTokenInfoMap_[tokenId] = cache;
-        PermissionKernelUtils::AddNativePermToKernel(tokenId, cache.opCodeList, cache.statusList);
+        PermissionKernelUtils::AddNativePermToKernel(tokenId, opCodeList, statusList);
         LOGI(ATM_DOMAIN, ATM_TAG,
             "Init native token %{public}u process name %{public}s, permSize %{public}zu ok!",
             tokenId, process.c_str(), info.permStateList.size());
@@ -1895,7 +1941,7 @@ static bool IsCallerNormalApp(uint64_t fulltokenID)
 static bool GetPermissionFromKernelCache(AccessTokenID tokenID, const std::string& permissionName, int32_t& res)
 {
     uint32_t code = 0;
-    if (!IsDefinedPermission(permissionName)) {
+    if (!IsDefinedPermissionInner(permissionName)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Permission=%{public}s is not defined.", permissionName.c_str());
         res = PERMISSION_DENIED;
         return true;
@@ -1912,7 +1958,7 @@ static bool GetPermissionFromKernelCache(AccessTokenID tokenID, const std::strin
 
 int AccessTokenInfoManager::VerifyNativeAccessToken(AccessTokenID tokenID, const std::string& permissionName)
 {
-    if (!IsDefinedPermission(permissionName)) {
+    if (!IsDefinedPermissionInner(permissionName)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "No definition for permission: %{public}s!", permissionName.c_str());
         return PERMISSION_DENIED;
     }
@@ -1928,11 +1974,12 @@ int AccessTokenInfoManager::VerifyNativeAccessToken(AccessTokenID tokenID, const
         LOGE(ATM_DOMAIN, ATM_TAG, "Id %{public}u is not exist.", tokenID);
         return PERMISSION_DENIED;
     }
-
-    NativeTokenInfoCache cache = iter->second;
-    for (size_t i = 0; i < cache.opCodeList.size(); ++i) {
-        if (code == cache.opCodeList[i]) {
-            return cache.statusList[i] ? PERMISSION_GRANTED : PERMISSION_DENIED;
+    if (!PermissionKernelUtils::IsKernelSupportSpm()) {
+        NativeTokenInfoCache cache = iter->second;
+        for (size_t i = 0; i < cache.opCodeList.size(); ++i) {
+            if (code == static_cast<uint32_t>(cache.opCodeList[i])) {
+                return PERMISSION_GRANTED;
+            }
         }
     }
 

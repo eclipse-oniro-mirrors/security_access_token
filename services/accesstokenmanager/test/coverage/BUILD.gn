@@ -25,9 +25,8 @@ ohos_unittest("libaccesstoken_manager_service_coverage_test") {
   }
   branch_protector_ret = "pac_ret"
 
-  include_dirs = [
-    "${access_token_path}/services/accesstokenmanager/test/mock/database",
-  ]
+  include_dirs =
+      [ "${access_token_path}/services/accesstokenmanager/test/mock/database" ]
   include_dirs += accesstoken_manager_base_config.include_dirs
   include_dirs += [
     "${access_token_path}/services/accesstokenmanager/test/unittest/common",
@@ -38,8 +37,11 @@ ohos_unittest("libaccesstoken_manager_service_coverage_test") {
     "../unittest/common/parameter.cpp",
     "../unittest/common/parameters.cpp",
     "accesstoken_database_coverage_test.cpp",
-    "permission_manager_coverage_test.cpp",
+    "accesstoken_id_manager_coverage_test.cpp",
   ]
+  if (support_jsapi) {
+    sources += [ "permission_manager_coverage_test.cpp" ]
+  }
   sources += accesstoken_manager_base_config.sources
 
   cflags_cc = accesstoken_manager_base_config.cflags_cc

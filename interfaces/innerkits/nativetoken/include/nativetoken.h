@@ -55,6 +55,7 @@ extern "C" {
 #define APL_KEY_NAME "APL"
 #define VERSION_KEY_NAME "version"
 #define PROCESS_KEY_NAME "processName"
+#define UID_KEY_NAME "uid"
 #define HDC_PROCESS_NAME "hdcd"
 
 #define SYSTEM_CORE 3
@@ -80,6 +81,7 @@ typedef struct {
 typedef struct TokenList {
     NativeAtId tokenId;
     int32_t apl;
+    int32_t uid;
     char **dcaps;
     char **perms;
     char **acls;

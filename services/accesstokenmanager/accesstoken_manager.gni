@@ -150,7 +150,7 @@ accesstoken_manager_base_config = {
     "${access_token_path}/frameworks/accesstoken:accesstoken_communication_adapter_cxx",
     "${access_token_path}/frameworks/common:accesstoken_common_cxx",
     "${access_token_path}/frameworks/json_adapter:accesstoken_cjson_utils",
-    "${access_token_path}/interfaces/innerkits/token_setproc:libperm_setproc",
+    "${access_token_path}/interfaces/innerkits/token_setproc:libpermsetproc_shared",
     "${access_token_path}/interfaces/innerkits/token_setproc:libtoken_setproc",
     "${access_token_path}/services/accesstokenmanager:access_token.rc",
     "${access_token_path}/services/accesstokenmanager:permission_definition_config",

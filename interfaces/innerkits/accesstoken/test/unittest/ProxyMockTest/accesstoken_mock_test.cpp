@@ -17,6 +17,7 @@
 #include <thread>
 #include "access_token_error.h"
 #include "accesstoken_manager_client.h"
+#include "permission_map.h"
 #include "permission_grant_info.h"
 #include "token_setproc.h"
 
@@ -219,6 +220,23 @@ HWTEST_F(AccessTokenMockTest, GetTokenType001, TestSize.Level4)
 
     FullTokenID fullTokenId = 123; // 123: tokenId
     ASSERT_EQ(TOKEN_INVALID, AccessTokenKit::GetTokenType(fullTokenId));
+}
+
+/**
+ * @tc.name: TransferPermissionToOpcode001
+ * @tc.desc: TransferPermissionToOpcode returns false when local permission is disabled and proxy is null
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, TransferPermissionToOpcode001, TestSize.Level4)
+{
+    std::string permissionName = "ohos.permission.ANSWER_CALL";
+    uint32_t opCode = 0;
+ 	 
+    ASSERT_TRUE(SetPermissionBriefEnabled(permissionName, false));
+    EXPECT_FALSE(AccessTokenKit::IsSupportPermission(permissionName));
+    EXPECT_FALSE(AccessTokenKit::TransferPermissionToOpcode(permissionName, opCode));
+    EXPECT_TRUE(SetPermissionBriefEnabled(permissionName, true));
 }
 
 /**

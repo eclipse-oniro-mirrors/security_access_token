@@ -164,6 +164,19 @@ static bool ParseRequestGlobalSwitch(ani_env* env, ani_object& aniContext, ani_i
     return true;
 }
 
+static bool ValidateSwitchType(ani_env* env, ani_object callback, ani_object result, int32_t switchType)
+{
+    if (switchType < CAMERA || switchType > LOCATION) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Invalid switch type: %{public}d", switchType);
+        ani_object error =
+            BusinessErrorAni::CreateError(env, STS_ERROR_PARAM_INVALID, GetErrorMessage(STS_ERROR_PARAM_INVALID,
+            "The switch type is invalid."));
+        (void)ExecuteAsyncCallback(env, callback, error, result);
+        return false;
+    }
+    return true;
+}
+
 void RequestGlobalSwitchExecute([[maybe_unused]] ani_env* env,
     [[maybe_unused]] ani_object object, ani_object aniContext, ani_int type, ani_object callback)
 {
@@ -190,6 +203,10 @@ void RequestGlobalSwitchExecute([[maybe_unused]] ani_env* env,
         return;
     }
     ani_object result = reinterpret_cast<ani_object>(undefRef);
+    
+    if (!ValidateSwitchType(env, callback, result, asyncContext->switchType)) {
+        return;
+    }
     static AccessTokenID selfTokenID = static_cast<AccessTokenID>(GetSelfTokenID());
     if (selfTokenID != asyncContext->tokenId) {
         LOGE(ATM_DOMAIN, ATM_TAG, "The context tokenID %{public}d is not same with selfTokenID %{public}d.",

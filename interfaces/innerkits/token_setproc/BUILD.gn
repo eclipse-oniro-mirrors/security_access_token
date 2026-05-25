@@ -31,7 +31,11 @@ if (is_standard_system) {
 
     include_dirs = [ "src" ]
 
-    sources = [ "src/token_setproc.c" ]
+    sources = [
+      "src/spm_setproc.c",
+      "src/token_setproc.c",
+    ]
+    external_deps = [ "bounds_checking_function:libsec_shared" ]
   }
 
   ohos_shared_library("libtokensetproc_shared") {
@@ -51,7 +55,12 @@ if (is_standard_system) {
 
     include_dirs = [ "src" ]
 
-    sources = [ "src/token_setproc.c" ]
+    sources = [
+      "src/spm_setproc.c",
+      "src/token_setproc.c",
+    ]
+
+    external_deps = [ "bounds_checking_function:libsec_shared" ]
   }
 
   ohos_static_library("libperm_setproc") {
@@ -69,8 +78,81 @@ if (is_standard_system) {
 
     cflags = [ "-Wall" ]
 
-    include_dirs = [ "src" ]
+    include_dirs = [
+      "src",
+      "${access_token_path}/interfaces/innerkits/accesstoken/include",
+      "${access_token_path}/frameworks/common/include",
+    ]
 
-    sources = [ "src/perm_setproc.cpp" ]
+    sources = [
+      "src/perm_setproc.cpp",
+      "src/perm_setproc_c.cpp",
+      "src/permission_map_c.cpp",
+    ]
+    deps = [ "${access_token_path}/frameworks/common:accesstoken_permission_map_static" ]
+
+    external_deps = [ "bounds_checking_function:libsec_shared" ]
+  }
+
+  ohos_static_library("libperm_setproc_for_compat") {
+    subsystem_name = "security"
+    part_name = "access_token"
+    output_name = "libperm_setproc_for_compat"
+    sanitize = {
+      cfi = true
+      cfi_cross_dso = true
+      debug = false
+    }
+    branch_protector_ret = "pac_ret"
+
+    public_configs = [ ":setproc_config" ]
+
+    cflags = [ "-Wall" ]
+
+    include_dirs = [
+      "src",
+      "${access_token_path}/interfaces/innerkits/accesstoken/include",
+      "${access_token_path}/frameworks/common/include",
+    ]
+
+    sources = [
+      "src/perm_setproc.cpp",
+      "src/perm_setproc_c.cpp",
+    ]
+
+    external_deps = [ "bounds_checking_function:libsec_shared" ]
+  }
+
+  ohos_shared_library("libpermsetproc_shared") {
+    subsystem_name = "security"
+    part_name = "access_token"
+    output_name = "libpermsetproc_shared"
+    sanitize = {
+      cfi = true
+      cfi_cross_dso = true
+      debug = false
+    }
+    innerapi_tags = [ "platformsdk" ]
+    branch_protector_ret = "pac_ret"
+
+    public_configs = [ ":setproc_config" ]
+
+    cflags = [ "-Wall" ]
+
+    include_dirs = [
+      "src",
+      "${access_token_path}/interfaces/innerkits/accesstoken/include",
+      "${access_token_path}/frameworks/common/include",
+    ]
+
+    sources = [
+      "src/perm_setproc.cpp",
+      "src/perm_setproc_c.cpp",
+      "src/permission_map_c.cpp",
+    ]
+
+    deps = [ "${access_token_path}/frameworks/common:accesstoken_common_cxx" ]
+
+    external_deps = [ "bounds_checking_function:libsec_shared" ]
   }
 }

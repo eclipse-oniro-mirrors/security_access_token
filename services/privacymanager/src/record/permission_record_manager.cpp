@@ -2449,7 +2449,7 @@ int32_t PermissionRecordManager::PermissionListFilter(
     // filter legal permissions
     std::set<std::string> permSet;
     for (const auto& perm : listSrc) {
-        if (IsDefinedPermission(perm) && (permSet.count(perm) == 0)) {
+        if (Constant::IsPrivacyPermission(perm) && (permSet.count(perm) == 0)) {
             listRes.emplace_back(perm);
             permSet.insert(perm);
             continue;
@@ -2879,7 +2879,7 @@ int32_t PermissionRecordManager::PermListFilter(
 {
     std::set<std::string> permSet;
     for (const auto& perm : listSrc) {
-        if (!IsDefinedPermission(perm)) {
+        if (!Constant::IsPrivacyPermission(perm)) {
             return PrivacyError::ERR_PARAM_INVALID;
         }
 

@@ -2106,6 +2106,14 @@ HWTEST_F(QueryPermissionInfosTest, QueryStatusOverSizeTest001, TestSize.Level1)
         AccessTokenID tokenID = PrepareTestHap(bundleName, validPermissions, true, APL_SYSTEM_CORE);
         if (tokenID != INVALID_TOKENID) {
             tokenIDs.emplace_back(tokenID);
+            if (tokenIDs.size() == 1) {
+                std::vector<PermissionStatus> permissionInfoListTry;
+                ASSERT_EQ(RET_SUCCESS, AccessTokenKit::QueryStatusByTokenID(tokenIDs, permissionInfoListTry));
+                ASSERT_FALSE(permissionInfoListTry.empty());
+                int32_t actualSize = static_cast<int32_t>(permissionInfoListTry.size());
+                appsToCreate = MAX_QUERY_RESULT_SIZE / actualSize + 1;
+                GTEST_LOG_(INFO) << "Actual size of one hap is " << actualSize;
+            }
         }
     }
 

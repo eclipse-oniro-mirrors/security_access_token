@@ -158,9 +158,30 @@ bool HasNotDeclaredStatus(const PermissionDialogDetail& detail)
     return false;
 }
 
-std::vector<bool> BuildAuthorizationResults(size_t size)
+bool FindPermissionStatusInDetail(const PermissionDialogDetail& detail, const std::string& permissionName,
+    PermissionDecisionStatus& status)
 {
-    return std::vector<bool>(size, false);
+    for (size_t i = 0; i < detail.permissionNameList.size() && i < detail.statusList.size(); ++i) {
+        if (detail.permissionNameList[i] != permissionName) {
+            continue;
+        }
+        status = detail.statusList[i];
+        return true;
+    }
+    return false;
+}
+
+std::vector<bool> BuildCliAuthorizationResults(const std::vector<std::string>& permissionNames,
+    const PermissionDialogDetail& detail)
+{
+    std::vector<bool> results;
+    results.reserve(permissionNames.size());
+    for (const auto& permissionName : permissionNames) {
+        PermissionDecisionStatus status = PermissionDecisionStatus::NO_DIALOG_GRANTED;
+        bool hasStatus = FindPermissionStatusInDetail(detail, permissionName, status);
+        results.emplace_back(!hasStatus);
+    }
+    return results;
 }
 
 bool IsAgentIdValid(const std::string& agentID)
@@ -282,7 +303,7 @@ int32_t FillCliDialogAuthResultsIfNoDialog(AccessTokenID hostTokenID, const std:
                 cliInfos[i].cliName.c_str(), cliInfos[i].subCliName.c_str(), ret);
             return ret;
         }
-        authInfo.authorizationResults = BuildAuthorizationResults(authInfo.permissionNames.size());
+        authInfo.authorizationResults = BuildCliAuthorizationResults(authInfo.permissionNames, result.detailList[i]);
         detailIndexes.emplace_back(i);
         rawAuthInfoList.emplace_back(std::move(authInfo));
     }
@@ -323,7 +344,7 @@ int32_t FillSkillDialogAuthResultsIfNoDialog(AccessTokenID hostTokenID, const st
         SkillAuthInfo authInfo;
         authInfo.skillInfo = skillInfos[i];
         authInfo.permissionNames = result.detailList[i].permissionNameList;
-        authInfo.authorizationResults = BuildAuthorizationResults(authInfo.permissionNames.size());
+        authInfo.authorizationResults = BuildCliAuthorizationResults(authInfo.permissionNames, result.detailList[i]);
         detailIndexes.emplace_back(i);
         authInfoList.emplace_back(authInfo);
     }
@@ -616,7 +637,7 @@ int AccessTokenManagerService::GetDefPermission(
     }
 
     PermissionBriefDef briefDef;
-    if (!GetPermissionBriefDef(permissionName, briefDef)) {
+    if (!GetPermissionBriefDef(permissionName, briefDef) || !briefDef.isEnable) {
         return AccessTokenError::ERR_PERMISSION_NOT_EXIST;
     }
 
@@ -1432,10 +1453,20 @@ int32_t AccessTokenManagerService::GetHapTokenInfo(AccessTokenID tokenID, HapTok
 
 int32_t AccessTokenManagerService::GetPermissionCode(const std::string& permission, uint32_t& opCode)
 {
+    if (!IsDefinedPermissionInner(permission)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Perm(%{public}s) is not exist.", permission.c_str());
+        return ERR_PERMISSION_NOT_EXIST;
+    }
     if (!TransferPermissionToOpcode(permission, opCode)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Perm(%{public}s) is not exist.", permission.c_str());
         return ERR_PERMISSION_NOT_EXIST;
     }
+    return RET_SUCCESS;
+}
+
+int32_t AccessTokenManagerService::IsSupportPermission(const std::string& permission, bool& isSupported)
+{
+    isSupported = IsDefinedPermissionInner(permission);
     return RET_SUCCESS;
 }
 
@@ -2034,6 +2065,9 @@ void AccessTokenManagerService::FilterInvalidData(const std::vector<GenericValue
             LOGW(ATM_DOMAIN, ATM_TAG, "permission %{public}s is still invalid!", permissionName.c_str());
             continue;
         }
+        if (!data.isEnable) {
+            continue;
+        }
 
         PermissionRulesEnum rule = PERMISSION_ACL_RULE;
         appDistributionType = result.GetString(TokenFiledConst::FIELD_APP_DISTRIBUTION_TYPE);
@@ -2071,6 +2105,9 @@ void AccessTokenManagerService::UpdateUndefinedInfoCache(const std::vector<Gener
         permissionName = validValue.GetString(TokenFiledConst::FIELD_PERMISSION_NAME);
         PermissionBriefDef data;
         if (!GetPermissionBriefDef(permissionName, data)) {
+            continue;
+        }
+        if (!data.isEnable) {
             continue;
         }
 

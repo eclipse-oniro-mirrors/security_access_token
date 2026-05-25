@@ -16,10 +16,10 @@
 #include "cli_permisison_map.h"
 #include "permission_map_constant.h"
 
+#include <cstring>
 #include <map>
 #include <mutex>
 #include <string>
-#include <vector>
 
 namespace OHOS {
 namespace Security {
@@ -92,7 +92,7 @@ bool IsUserGrantPermission(const std::string& permission)
     if (!TransferPermissionToOpcode(permission, opCode)) {
         return false; // default is false
     }
-    return g_permList[opCode].grantMode == USER_GRANT;
+    return g_permList[opCode].isEnable && g_permList[opCode].grantMode == USER_GRANT;
 }
 
 bool IsOperablePermission(const std::string& permission)
@@ -101,10 +101,11 @@ bool IsOperablePermission(const std::string& permission)
     if (!TransferPermissionToOpcode(permission, opCode)) {
         return false; // default is false
     }
-    return g_permList[opCode].grantMode == USER_GRANT || g_permList[opCode].grantMode == MANUAL_SETTINGS;
+    return g_permList[opCode].isEnable &&
+        (g_permList[opCode].grantMode == USER_GRANT || g_permList[opCode].grantMode == MANUAL_SETTINGS);
 }
 
-bool IsDefinedPermission(const std::string& permission)
+bool IsDefinedPermissionInner(const std::string& permission)
 {
     if (!g_initedPermMap) {
         InitMap();
@@ -113,7 +114,7 @@ bool IsDefinedPermission(const std::string& permission)
     if (it == g_permMap.end()) {
         return false;
     }
-    return true;
+    return g_permList[it->second].isEnable;
 }
 
 bool GetPermissionBriefDef(const std::string& permission, PermissionBriefDef& permissionBriefDef)
@@ -137,6 +138,9 @@ bool GetPermissionBriefDef(const std::string& permission, PermissionBriefDef& pe
 
 void GetPermissionBriefDef(uint32_t opCode, PermissionBriefDef& permissionBriefDef)
 {
+    if (!g_initedPermMap) {
+        InitMap();
+    }
     permissionBriefDef = g_permList[opCode];
 }
 
@@ -159,7 +163,7 @@ bool IsPermissionValidForHap(const std::string& permissionName)
         return false;
     }
 
-    return g_permList[opCode].availableType != ATokenAvailableTypeEnum::SERVICE;
+    return g_permList[opCode].isEnable && g_permList[opCode].availableType != ATokenAvailableTypeEnum::SERVICE;
 }
 
 size_t GetDefPermissionsSize()
@@ -170,6 +174,19 @@ size_t GetDefPermissionsSize()
 const char* GetPermDefVersion()
 {
     return PERMISSION_DEFINITION_VERSION;
+}
+
+bool SetPermissionBriefEnabled(const std::string& permissionName, bool isEnable)
+{
+    if (!g_initedPermMap) {
+        InitMap();
+    }
+    auto it = g_permMap.find(permissionName.c_str());
+    if (it == g_permMap.end()) {
+        return false;
+    }
+    g_permList[it->second].isEnable = isEnable;
+    return true;
 }
 } // namespace AccessToken
 } // namespace Security

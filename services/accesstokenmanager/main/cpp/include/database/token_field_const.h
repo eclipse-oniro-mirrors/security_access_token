@@ -30,11 +30,19 @@ public:
     const static std::string FIELD_DLP_TYPE;
     const static std::string FIELD_APP_ID;
     const static std::string FIELD_DEVICE_ID;
+    const static std::string FIELD_UID;
+    const static std::string FIELD_MIGRATED;
+    const static std::string FIELD_MODULE_NAME;
+    const static std::string FIELD_PATH;
+    const static std::string FIELD_BUNDLE_TYPE;
+    const static std::string FIELD_PERSIST_DATA;
+    const static std::string FIELD_IS_PREINSTALLED;
     const static std::string FIELD_APL;
     const static std::string FIELD_TOKEN_VERSION;
     const static std::string FIELD_TOKEN_ATTR;
     const static std::string FIELD_API_VERSION;
     const static std::string FIELD_FORBID_PERM_DIALOG;
+    const static std::string FIELD_RESERVED;
     const static std::string FIELD_PROCESS_NAME;
     const static std::string FIELD_DCAP;
     const static std::string FIELD_NATIVE_ACLS;
@@ -61,7 +69,7 @@ public:
     const static std::string FIELD_APP_DISTRIBUTION_TYPE;
     const static std::string FIELD_CONTROLLER_TOKENID;
     const static std::string FIELD_RESTRICTED_USER;
-    const static std::string FIELD_WHITLIST;
+    const static std::string FIELD_WHITELIST;
 };
 } // namespace AccessToken
 } // namespace Security

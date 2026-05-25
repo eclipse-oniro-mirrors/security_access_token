@@ -151,6 +151,46 @@ ohos_static_library("accesstoken_static_log_for_nativetoken") {
   ]
 }
 
+ohos_static_library("accesstoken_permission_map_static") {
+  subsystem_name = "security"
+  part_name = "access_token"
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+  branch_protector_ret = "pac_ret"
+
+  public_configs = [ ":accesstoken_common_cxx_public_config" ]
+
+  include_dirs = [
+    "include",
+    "${access_token_path}/interfaces/innerkits/accesstoken/include",
+    rebase_path(target_out_dir),
+  ]
+
+  sources = [
+    "src/permission_map.cpp",
+  ]
+
+  deps = [
+    ":permission_definition_parse",
+    ":cli_permission_map_parse",
+  ]
+
+  external_deps = [
+    "c_utils:utils",
+    "hilog:libhilog",
+  ]
+
+  configs = [
+    "${access_token_path}/config:access_token_compile_flags",
+    "${access_token_path}/config:coverage_flags",
+  ]
+
+  cflags_cc = access_token_cflags_cc
+}
+
 ohos_shared_library("accesstoken_common_cxx") {
   subsystem_name = "security"
   innerapi_tags = [
@@ -177,16 +217,14 @@ ohos_shared_library("accesstoken_common_cxx") {
   sources = [
     "src/constant_common.cpp",
     "src/data_validator.cpp",
-    "src/permission_map.cpp",
     "src/permission_validator.cpp",
     "src/time_util.cpp",
     "src/tokenid_attributes.cpp",
   ]
 
   deps = [
+    ":accesstoken_permission_map_static",
     ":accesstoken_static_log",
-    ":cli_permission_map_parse",
-    ":permission_definition_parse",
   ]
 
   external_deps = [

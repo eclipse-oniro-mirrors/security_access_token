@@ -28,6 +28,7 @@
 #include "access_token_db.h"
 #define private public
 #include "accesstoken_callback_stubs.h"
+#include "access_token_db_operator.h"
 #include "accesstoken_info_utils.h"
 #include "accesstoken_info_manager.h"
 #include "accesstoken_remote_token_manager.h"
@@ -42,7 +43,8 @@
 #include "permission_constraint_check.h"
 #include "token_modify_notifier.h"
 #undef private
-#include "access_token_db_operator.h"
+#include "permission_kernel_utils.h"
+#include "permission_map.h"
 #include "permission_validator.h"
 #include "string_ex.h"
 #include "token_setproc.h"
@@ -291,7 +293,7 @@ static void ExpectUserPolicyDbWhiteList(const std::string& permissionName, const
         AccessTokenDb::GetInstance()->Find(AtmDataType::ACCESSTOKEN_USER_POLICY,
             BuildUserPolicyDbCondition(permissionName), results));
     ASSERT_EQ(1u, results.size());
-    EXPECT_EQ(whiteList, results[0].GetString(TokenFiledConst::FIELD_WHITLIST));
+    EXPECT_EQ(whiteList, results[0].GetString(TokenFiledConst::FIELD_WHITELIST));
 }
 
 static int32_t UpsertUserPolicyDbRecord(
@@ -306,7 +308,7 @@ static int32_t UpsertUserPolicyDbRecord(
     addValue.Put(TokenFiledConst::FIELD_PERMISSION_NAME, permissionName);
     addValue.Put(TokenFiledConst::FIELD_CONTROLLER_TOKENID, static_cast<int32_t>(controllerToken));
     addValue.Put(TokenFiledConst::FIELD_RESTRICTED_USER, userList);
-    addValue.Put(TokenFiledConst::FIELD_WHITLIST, whiteList);
+    addValue.Put(TokenFiledConst::FIELD_WHITELIST, whiteList);
 
     AddInfo addInfo;
     addInfo.addType = AtmDataType::ACCESSTOKEN_USER_POLICY;
@@ -390,6 +392,7 @@ HWTEST_F(TokenInfoManagerTest, HapTokenInfoInner001, TestSize.Level0)
     ASSERT_EQ(static_cast<int32_t>(608), version);
 }
 
+#ifdef SUPPORT_SANDBOX_APP
 /**
  * @tc.name: IsPermissionAvailableToDlpHap001
  * @tc.desc: DlpPermissionSetManager::IsPermissionAvailableToDlpHap supports permCode input
@@ -406,6 +409,7 @@ HWTEST_F(TokenInfoManagerTest, IsPermissionAvailableToDlpHap001, TestSize.Level0
         manager.IsPermissionAvailableToDlpHap(DLP_READ, cameraCode));
     EXPECT_FALSE(manager.IsPermissionAvailableToDlpHap(DLP_READ, std::numeric_limits<uint32_t>::max()));
 }
+#endif
 
 /**
  * @tc.name: GetBundleInfoInner001
@@ -1005,8 +1009,8 @@ HWTEST_F(TokenInfoManagerTest, InitHapToken008, TestSize.Level0)
     result.permCheckResult = permCheckResult;
     ASSERT_EQ(result.permCheckResult.permissionName, "ohos.permission.GET_ALL_APP_ACCOUNTS");
     ASSERT_EQ(result.permCheckResult.rule, PERMISSION_ACL_RULE);
-    permissionStateA.permissionName = "ohos.permission.FILE_GUARD_MANAGER";
-    policy.hapPolicy.aclRequestedList = { "ohos.permission.FILE_GUARD_MANAGER" };
+    permissionStateA.permissionName = "ohos.permission.GET_DOMAIN_ACCOUNTS";
+    policy.hapPolicy.aclRequestedList = { "ohos.permission.GET_DOMAIN_ACCOUNTS" };
     policy.hapPolicy.permStateList = { permissionStateA, permissionStateB };
     ASSERT_EQ(0, atManagerService_->InitHapToken(info, policy, fullTokenId, resultInfoIdl));
 }
@@ -2453,6 +2457,9 @@ HWTEST_F(TokenInfoManagerTest, VerifyNativeAccessToken001, TestSize.Level0)
     AccessTokenID tokenId = 0x280bc142; // 0x280bc142 is random input
     std::string permissionName = "ohos.permission.INVALID_AA";
     AccessTokenID tokenId1 = AccessTokenInfoManager::GetInstance().GetNativeTokenId("accesstoken_service");
+    uint32_t permCode = 0;
+    ASSERT_TRUE(TransferPermissionToOpcode("ohos.permission.KILL_APP_PROCESSES", permCode));
+    AccessTokenInfoManager::GetInstance().nativeTokenInfoMap_[tokenId1].opCodeList.emplace_back(permCode);
     // tokenId is not exist
     ASSERT_EQ(PermissionState::PERMISSION_DENIED,
         AccessTokenInfoManager::GetInstance().VerifyNativeAccessToken(tokenId, permissionName));
@@ -2463,12 +2470,11 @@ HWTEST_F(TokenInfoManagerTest, VerifyNativeAccessToken001, TestSize.Level0)
         AccessTokenInfoManager::GetInstance().VerifyNativeAccessToken(tokenId1, permissionName));
 
     // tokenId is native token, and permission is defined
-    ASSERT_EQ(PermissionState::PERMISSION_DENIED,
+    if (!PermissionKernelUtils::IsKernelSupportSpm()) {
+        permissionName = "ohos.permission.KILL_APP_PROCESSES";
+        ASSERT_EQ(PermissionState::PERMISSION_GRANTED,
         AccessTokenInfoManager::GetInstance().VerifyNativeAccessToken(tokenId1, permissionName));
-
-    permissionName = "ohos.permission.KILL_APP_PROCESSES";
-    ASSERT_EQ(PermissionState::PERMISSION_GRANTED,
-        AccessTokenInfoManager::GetInstance().VerifyNativeAccessToken(tokenId1, permissionName));
+    }
 }
 
 /**
@@ -3366,7 +3372,7 @@ HWTEST_F(TokenInfoManagerTest, RemoveTokenFromPolicyWhiteList001, TestSize.Level
     addValue.Put(TokenFiledConst::FIELD_PERMISSION_NAME, permissionName);
     addValue.Put(TokenFiledConst::FIELD_CONTROLLER_TOKENID, static_cast<int32_t>(persistedRecord.controllerToken));
     addValue.Put(TokenFiledConst::FIELD_RESTRICTED_USER, std::to_string(USER_ID));
-    addValue.Put(TokenFiledConst::FIELD_WHITLIST, std::to_string(keptToken) + "," + std::to_string(removedToken));
+    addValue.Put(TokenFiledConst::FIELD_WHITELIST, std::to_string(keptToken) + "," + std::to_string(removedToken));
     addInfo.addValues.emplace_back(addValue);
     EXPECT_EQ(RET_SUCCESS, AccessTokenDb::GetInstance()->DeleteAndInsertValues({}, { addInfo }));
     stateGuard.SetWhiteList(USER_ID, GetSelfTokenID(), persistedRecord.whiteList, true);
@@ -3727,7 +3733,7 @@ HWTEST_F(TokenInfoManagerTest, UserPolicyDbRecoverDirtyData001, TestSize.Level0)
     addValue.Put(TokenFiledConst::FIELD_PERMISSION_NAME, std::string("ohos.permission.CAMERA"));
     addValue.Put(TokenFiledConst::FIELD_CONTROLLER_TOKENID, static_cast<int32_t>(GetSelfTokenID()));
     addValue.Put(TokenFiledConst::FIELD_RESTRICTED_USER, std::string("abc"));
-    addValue.Put(TokenFiledConst::FIELD_WHITLIST, std::string("1"));
+    addValue.Put(TokenFiledConst::FIELD_WHITELIST, std::string("1"));
 
     AddInfo addInfo;
     addInfo.addType = AtmDataType::ACCESSTOKEN_USER_POLICY;
@@ -4106,6 +4112,25 @@ HWTEST_F(TokenInfoManagerTest, GetFullRemoteTokenId003, TestSize.Level0)
     GTEST_LOG_(INFO) << "remove the system hap token info";
 }
 #endif
+
+/**
+ * @tc.name: GetReqPermissionByName001
+ * @tc.desc: GetReqPermissionByName test function for disable permissionName.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenInfoManagerTest, GetReqPermissionByName001, TestSize.Level0)
+{
+    AccessTokenID tokenId = 123;
+    std::string permissionName = "invalid.permission";
+    std::string value;
+    bool tokenIdCheck = false;
+
+    int32_t ret = PermissionDataBrief::GetInstance().GetReqPermissionByName(
+        tokenId, permissionName, value, tokenIdCheck);
+ 
+    EXPECT_EQ(ERR_PERMISSION_NOT_EXIST, ret);
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
