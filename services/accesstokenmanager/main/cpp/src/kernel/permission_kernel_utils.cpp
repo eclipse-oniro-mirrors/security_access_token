@@ -15,10 +15,13 @@
 
 #include "permission_kernel_utils.h"
 
+#include <mutex>
 #include "accesstoken_common_log.h"
 #include "hap_token_info_inner.h"
 #include "perm_setproc.h"
 #include "permission_map.h"
+#include "spm_setproc.h"
+#include "token_setproc.h"
 
 namespace OHOS {
 namespace Security {
@@ -62,6 +65,24 @@ void PermissionKernelUtils::SetPermToKernel(AccessTokenID tokenID, const std::st
     LOGI(ATM_DOMAIN, ATM_TAG,
         "SetPermissionToKernel(token=%{public}d, permission=(%{public}s), err=%{public}d",
         tokenID, permissionName.c_str(), ret);
+}
+
+bool PermissionKernelUtils::IsKernelSupportSpm()
+{
+    static bool isSupportSpm = false;
+    static bool hasChecked = false;
+    static std::mutex checkMutex;
+    std::lock_guard<std::mutex> lock(checkMutex);
+    if (hasChecked) {
+        return isSupportSpm;
+    }
+    uint32_t version = 0;
+    int ret = SpmGetVersion(&version);
+    isSupportSpm = (ret == ENOTSUP) ? false : true;
+    hasChecked = true;
+    LOGW(ATM_DOMAIN, ATM_TAG,
+        "Spm is %{public}s", isSupportSpm ? "supported" : "not supported");
+    return isSupportSpm;
 }
 } // namespace AccessToken
 } // namespace Security

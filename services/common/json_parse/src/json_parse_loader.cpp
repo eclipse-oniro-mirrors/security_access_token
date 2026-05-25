@@ -18,6 +18,7 @@
 #include <fcntl.h>
 #include <memory>
 #include <set>
+#include <sstream>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -58,6 +59,8 @@ static constexpr const char* GLOBAL_DIALOG_ABILITY_NAME_KEY = "global_dialog_abi
 static constexpr const char* SEND_REQUEST_REPEAT_TIMES_KEY = "send_request_repeat_times";
 
 static constexpr const char* PERMISSION_FEATURES_CONFIG_FILE = "/etc/access_token/accesstoken_permission_features.json";
+static constexpr const char* PERMISSION_DEFINITION_EXT_FILE =
+    "/etc/access_token/accesstoken_permission_definition_ext.txt";
 static constexpr const char* FEATURES_KEY = "features";
 static constexpr const char* FEATURE_NAME_KEY = "name";
 constexpr int32_t MAX_FEATURE_SIZE = 64;
@@ -69,6 +72,7 @@ static const char* JSON_PROCESS_NAME = "processName";
 static const char* JSON_APL = "APL";
 static const char* JSON_VERSION = "version";
 static const char* JSON_TOKEN_ID = "tokenId";
+static const char* JSON_UID = "uid";
 static const char* JSON_TOKEN_ATTR = "tokenAttr";
 static const char* JSON_DCAPS = "dcaps";
 static const char* JSON_PERMS = "permissions";
@@ -78,6 +82,23 @@ static const int32_t MAX_REQ_PERM_NUM = 10 * 1024;
 
 // dlp json
 static const char* CLONE_PERMISSION_CONFIG_FILE = "/system/etc/dlp_permission/clone_app_permission.json";
+
+static void TrimString(std::string& value)
+{
+    auto begin = value.find_first_not_of(" \t\r\n");
+    if (begin == std::string::npos) {
+        value.clear();
+        return;
+    }
+    auto end = value.find_last_not_of(" \t\r\n");
+    value = value.substr(begin, end - begin + 1);
+}
+}
+
+int32_t ConfigPolicyLoaderInterface::GetPermissionDefinitionExt(std::vector<std::string>& permissions)
+{
+    permissions.clear();
+    return RET_SUCCESS;
 }
 
 int32_t ConfigPolicLoader::ReadCfgFile(const std::string& file, std::string& rawData)
@@ -316,6 +337,36 @@ bool ConfigPolicLoader::GetConfigValue(const ConfigType& type, AccessTokenConfig
     return successFlag;
 }
 
+int32_t ConfigPolicLoader::GetPermissionDefinitionExt(std::vector<std::string>& permissions)
+{
+    permissions.clear();
+#ifdef CUSTOMIZATION_CONFIG_POLICY_ENABLE
+    std::vector<std::string> pathList;
+    GetConfigFilePathList(pathList);
+    for (const auto& path : pathList) {
+        std::string fileContent;
+        std::string filePath = path + PERMISSION_DEFINITION_EXT_FILE;
+        int32_t res = ReadCfgFile(filePath, fileContent);
+        if (res != RET_SUCCESS) {
+            LOGI(ATM_DOMAIN, ATM_TAG,
+                "Failed to read configuration file: %{public}s, return code: %{public}d.",
+                (filePath).c_str(), res);
+            continue;
+        }
+
+        std::stringstream ss(fileContent);
+        std::string permissionName;
+        while (std::getline(ss, permissionName)) {
+            TrimString(permissionName);
+            if (!permissionName.empty()) {
+                permissions.emplace_back(permissionName);
+            }
+        }
+    }
+#endif
+    return RET_SUCCESS;
+}
+
 static int32_t NativeReqPermsGet(const CJson* j, std::vector<PermissionStatus>& permStateList)
 {
     CJson* permJson = GetArrayFromJson(j, JSON_PERMS);
@@ -350,55 +401,63 @@ static ATokenTypeEnum GetTokenIdTypeEnum(AccessTokenID id)
     return static_cast<ATokenTypeEnum>(idInner->type);
 }
 
-static void GetSingleNativeTokenFromJson(const CJson* j,  std::vector<NativeTokenInfoBase>& tokenInfos)
+static bool ParseNativeTokenBaseInfo(const CJson* j, NativeTokenInfoBase& info)
 {
-    NativeTokenInfoBase info;
     int32_t aplNum = 0;
     if (!GetIntFromJson(j, JSON_APL, aplNum) || !DataValidator::IsAplNumValid(aplNum)) {
-        return;
+        return false;
     }
     info.apl = static_cast<ATokenAplEnum>(aplNum);
-    int32_t ver;
+    int32_t ver = 0;
     GetIntFromJson(j, JSON_VERSION, ver);
     info.ver = static_cast<uint8_t>(ver);
     GetUnsignedIntFromJson(j, JSON_TOKEN_ID, info.tokenID);
     if ((info.ver != DEFAULT_TOKEN_VERSION) || (info.tokenID == 0)) {
-        return;
+        return false;
     }
     ATokenTypeEnum type = GetTokenIdTypeEnum(info.tokenID);
     if ((type != TOKEN_NATIVE) && (type != TOKEN_SHELL)) {
-        return;
+        return false;
     }
-    if (!GetUnsignedIntFromJson(j, JSON_TOKEN_ATTR, info.tokenAttr)) {
-        return;
-    }
+    return GetUnsignedIntFromJson(j, JSON_TOKEN_ATTR, info.tokenAttr);
+}
+
+static bool ParseNativeTokenArrays(const CJson* j, NativeTokenInfoBase& info)
+{
     CJson* dcapsJson = GetArrayFromJson(j, JSON_DCAPS);
     CJson* aclsJson = GetArrayFromJson(j, JSON_ACLS);
     if ((dcapsJson == nullptr) || (aclsJson == nullptr)) {
-        return;
+        return false;
     }
     int32_t dcapLen = cJSON_GetArraySize(dcapsJson);
     int32_t aclLen = cJSON_GetArraySize(aclsJson);
     if ((dcapLen > MAX_DCAPS_NUM) || (aclLen > MAX_REQ_PERM_NUM)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Native dcap oversize.");
-        return;
+        return false;
     }
     for (int32_t i = 0; i < dcapLen; i++) {
-        std::string item = cJSON_GetStringValue(cJSON_GetArrayItem(dcapsJson, i));
-        info.dcap.push_back(item);
+        info.dcap.emplace_back(cJSON_GetStringValue(cJSON_GetArrayItem(dcapsJson, i)));
     }
-    for (int i = 0; i < aclLen; i++) {
-        std::string item = cJSON_GetStringValue(cJSON_GetArrayItem(aclsJson, i));
-        info.nativeAcls.push_back(item);
+    for (int32_t i = 0; i < aclLen; i++) {
+        info.nativeAcls.emplace_back(cJSON_GetStringValue(cJSON_GetArrayItem(aclsJson, i)));
     }
+    return true;
+}
 
-    if (NativeReqPermsGet(j, info.permStateList) != RET_SUCCESS) {
+static void GetSingleNativeTokenFromJson(const CJson* j,  std::vector<NativeTokenInfoBase>& tokenInfos)
+{
+    NativeTokenInfoBase info;
+    if (!ParseNativeTokenBaseInfo(j, info) || !ParseNativeTokenArrays(j, info)) {
         return;
     }
-
-    if (!GetStringFromJson(j, JSON_PROCESS_NAME, info.processName) ||
+    if ((NativeReqPermsGet(j, info.permStateList) != RET_SUCCESS) ||
+        !GetStringFromJson(j, JSON_PROCESS_NAME, info.processName) ||
         !DataValidator::IsProcessNameValid(info.processName) || info.processName.empty()) {
         return;
+    }
+    int32_t uid = 0;
+    if (GetIntFromJson(j, JSON_UID, uid)) {
+        info.uid = uid;
     }
     tokenInfos.emplace_back(info);
 }
@@ -531,6 +590,9 @@ static bool IsPermissionReqValid(int32_t tokenApl, const std::string& permission
     if (!GetPermissionBriefDef(permissionName, briefDef)) {
         return false;
     }
+    if (!briefDef.isEnable) {
+        return false;
+    }
 
     if (tokenApl >= briefDef.availableLevel) {
         return true;
@@ -548,6 +610,7 @@ static void AddNativeTokenInfo(CJsonUnique& j, const NativeTokenInfoBase& native
     (void)AddUnsignedIntToJson(j, "tokenID", native.tokenID);
     (void)AddStringToJson(j, "processName", native.processName);
     (void)AddIntToJson(j, "apl", native.apl);
+    (void)AddIntToJson(j, "uid", native.uid);
 }
 
 static void AddPermStateListInNativeTokenInfo(const NativeTokenInfoBase& native,

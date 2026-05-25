@@ -1075,7 +1075,7 @@ HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest015, TestSize.Level0)
     infoParams.isSystemApp = false;
     infoParams.appDistributionType = APP_DISTRIBUTION_TYPE_ENTERPRISE_MDM;
     PermissionStateFull permissionStateFull001 = {
-        .permissionName = "ohos.permission.FILE_GUARD_MANAGER",
+        .permissionName = "ohos.permission.GET_DOMAIN_ACCOUNTS",
         .isGeneral = true,
         .resDeviceID = {"local"},
         .grantStatus = {PERMISSION_DENIED},
@@ -1088,11 +1088,11 @@ HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest015, TestSize.Level0)
 
     AccessTokenID tokenID = fullTokenId.tokenIdExStruct.tokenID;
     ASSERT_NE(INVALID_TOKENID, tokenID);
-    ret = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.FILE_GUARD_MANAGER");
+    ret = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.GET_DOMAIN_ACCOUNTS");
     EXPECT_EQ(PERMISSION_GRANTED, ret);
 
     uint32_t flag;
-    ret = AccessTokenKit::GetPermissionFlag(tokenID, "ohos.permission.FILE_GUARD_MANAGER", flag);
+    ret = AccessTokenKit::GetPermissionFlag(tokenID, "ohos.permission.GET_DOMAIN_ACCOUNTS", flag);
     EXPECT_EQ(RET_SUCCESS, ret);
     EXPECT_EQ(PERMISSION_SYSTEM_FIXED, flag);
 
@@ -1117,7 +1117,7 @@ HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest016, TestSize.Level0)
     infoParams.isSystemApp = false;
     infoParams.appDistributionType = APP_DISTRIBUTION_TYPE_ENTERPRISE_NORMAL;
     PermissionStateFull permissionStateFull001 = {
-        .permissionName = "ohos.permission.FILE_GUARD_MANAGER",
+        .permissionName = "ohos.permission.GET_DOMAIN_ACCOUNTS",
         .isGeneral = true,
         .resDeviceID = {"local"},
         .grantStatus = {PERMISSION_DENIED},
@@ -1130,11 +1130,11 @@ HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest016, TestSize.Level0)
 
     AccessTokenID tokenID = fullTokenId.tokenIdExStruct.tokenID;
     ASSERT_NE(INVALID_TOKENID, tokenID);
-    ret = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.FILE_GUARD_MANAGER");
+    ret = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.GET_DOMAIN_ACCOUNTS");
     EXPECT_EQ(PERMISSION_GRANTED, ret);
 
     uint32_t flag;
-    ret = AccessTokenKit::GetPermissionFlag(tokenID, "ohos.permission.FILE_GUARD_MANAGER", flag);
+    ret = AccessTokenKit::GetPermissionFlag(tokenID, "ohos.permission.GET_DOMAIN_ACCOUNTS", flag);
     EXPECT_EQ(RET_SUCCESS, ret);
     EXPECT_EQ(PERMISSION_SYSTEM_FIXED, flag);
 
@@ -1158,7 +1158,7 @@ HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest017, TestSize.Level0)
     policyParams.apl = APL_SYSTEM_CORE;
     infoParams.isSystemApp = true;
     PermissionStateFull permissionStateFull001 = {
-        .permissionName = "ohos.permission.FILE_GUARD_MANAGER",
+        .permissionName = "ohos.permission.GET_DOMAIN_ACCOUNTS",
         .isGeneral = true,
         .resDeviceID = {"local"},
         .grantStatus = {PERMISSION_DENIED},
@@ -1171,11 +1171,11 @@ HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest017, TestSize.Level0)
 
     AccessTokenID tokenID = fullTokenId.tokenIdExStruct.tokenID;
     ASSERT_NE(INVALID_TOKENID, tokenID);
-    ret = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.FILE_GUARD_MANAGER");
+    ret = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.GET_DOMAIN_ACCOUNTS");
     EXPECT_EQ(PERMISSION_GRANTED, ret);
 
     uint32_t flag;
-    ret = AccessTokenKit::GetPermissionFlag(tokenID, "ohos.permission.FILE_GUARD_MANAGER", flag);
+    ret = AccessTokenKit::GetPermissionFlag(tokenID, "ohos.permission.GET_DOMAIN_ACCOUNTS", flag);
     EXPECT_EQ(RET_SUCCESS, ret);
     EXPECT_EQ(PERMISSION_SYSTEM_FIXED, flag);
 
@@ -1200,7 +1200,7 @@ HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest018, TestSize.Level0)
     infoParams.isSystemApp = false;
     infoParams.appDistributionType = APP_DISTRIBUTION_TYPE_NONE;
     PermissionStateFull permissionStateFull001 = {
-        .permissionName = "ohos.permission.FILE_GUARD_MANAGER",
+        .permissionName = "ohos.permission.GET_DOMAIN_ACCOUNTS",
         .isGeneral = true,
         .resDeviceID = {"local"},
         .grantStatus = {PERMISSION_DENIED},
@@ -1213,11 +1213,11 @@ HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest018, TestSize.Level0)
 
     AccessTokenID tokenID = fullTokenId.tokenIdExStruct.tokenID;
     ASSERT_NE(INVALID_TOKENID, tokenID);
-    ret = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.FILE_GUARD_MANAGER");
+    ret = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.GET_DOMAIN_ACCOUNTS");
     EXPECT_EQ(PERMISSION_GRANTED, ret);
 
     uint32_t flag;
-    ret = AccessTokenKit::GetPermissionFlag(tokenID, "ohos.permission.FILE_GUARD_MANAGER", flag);
+    ret = AccessTokenKit::GetPermissionFlag(tokenID, "ohos.permission.GET_DOMAIN_ACCOUNTS", flag);
     EXPECT_EQ(RET_SUCCESS, ret);
     EXPECT_EQ(PERMISSION_SYSTEM_FIXED, flag);
 
@@ -1241,14 +1241,14 @@ HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest019, TestSize.Level0)
     infoParams.isSystemApp = false;
 
     PermissionStateFull permissionStateFull001 = {
-        .permissionName = "ohos.permission.FILE_GUARD_MANAGER",
+        .permissionName = "ohos.permission.GET_DOMAIN_ACCOUNTS",
         .isGeneral = true,
         .resDeviceID = {"local"},
         .grantStatus = {PERMISSION_DENIED},
         .grantFlags = {PERMISSION_SYSTEM_FIXED}
     };
     policyParams.permStateList = {permissionStateFull001};
-    policyParams.aclRequestedList = { "ohos.permission.FILE_GUARD_MANAGER" };
+    policyParams.aclRequestedList = { "ohos.permission.GET_DOMAIN_ACCOUNTS" };
     AccessTokenIDEx fullTokenId;
     int32_t ret = AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId);
     AccessTokenID tokenID = fullTokenId.tokenIdExStruct.tokenID;
@@ -1263,13 +1263,13 @@ HWTEST_F(InitHapTokenTest, InitHapTokenSpecsTest019, TestSize.Level0)
     ret = AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId, result);
     if (isEnterpriseNormal) {
         ASSERT_EQ(ERR_PERM_REQUEST_CFG_FAILED, ret);
-        ASSERT_EQ(result.permCheckResult.permissionName, "ohos.permission.FILE_GUARD_MANAGER");
+        ASSERT_EQ(result.permCheckResult.permissionName, "ohos.permission.GET_DOMAIN_ACCOUNTS");
         ASSERT_EQ(result.permCheckResult.rule, PERMISSION_ENTERPRISE_NORMAL_RULE);
     } else {
         ASSERT_EQ(RET_SUCCESS, ret);
     }
 
-    ret = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.FILE_GUARD_MANAGER");
+    ret = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.GET_DOMAIN_ACCOUNTS");
     EXPECT_EQ(PERMISSION_DENIED, ret);
 }
 

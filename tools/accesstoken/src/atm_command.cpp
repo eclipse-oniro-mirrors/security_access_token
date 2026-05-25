@@ -58,15 +58,20 @@ static const std::string HELP_MSG_DUMP =
     "usage: atm dump <option>.\n"
     "options list:\n"
     "  -h, --help                                               list available options\n"
-    "  -d, --definition [-p <permission-name>]                  list all permission definitions in system\n"
+    "  -d, --definition                                         list all permission definitions in system\n"
+    "  -d, --definition -p <permission-name>                    list definition of the specified permission\n"
     "  -t, --all                                                list all name of token info in system\n"
     "  -t, --token-info -i <token-id>                           list single token info by specific tokenId\n"
     "  -t, --token-info -b <bundle-name>                        list all token info by specific bundleName\n"
     "  -t, --token-info -n <process-name>                       list single token info by specific native processName\n"
     "  -t, --token -p <permission-name>                         list apps by permission (TokenID and BundleName)\n"
 #ifndef ATM_BUILD_VARIANT_USER_ENABLE
-    "  -r, --record-info [-i <token-id>] [-p <permission-name>] list used records in system\n"
-    "  -v, --visit-type [-i <token-id>] [-p <permission-name>]  list all token used type in system\n";
+    "  -r, --record-info                                        list used records in system\n"
+    "  -r, --record-info -i <token-id>                          list used records by specific tokenId\n"
+    "  -r, --record-info -p <permission-name>                   list used records by specific permissionName\n"
+    "  -v, --visit-type                                         list all token used type in system\n"
+    "  -v, --visit-type -i <token-id>                           list token used type by specific tokenId\n"
+    "  -v, --visit-type -p <permission-name>                    list token used type by specific permissionName\n";
 #else
     "";
 #endif
@@ -126,6 +131,7 @@ static const struct option LONG_OPTIONS_DUMP[] = {
     {"token-info", no_argument, nullptr, 't'},
 #ifndef ATM_BUILD_VARIANT_USER_ENABLE
     {"record-info", no_argument, nullptr, 'r'},
+    {"visit-type", no_argument, nullptr, 'v'},
 #endif
     {"token-id", required_argument, nullptr, 'i'},
     {"permission-name", required_argument, nullptr, 'p'},

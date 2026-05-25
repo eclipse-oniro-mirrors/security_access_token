@@ -48,6 +48,7 @@ public:
         const std::vector<PermissionWithValue>& extendPermList);
     static void RemovePermFromKernel(AccessTokenID tokenID);
     static void SetPermToKernel(AccessTokenID tokenID, const std::string& permissionName, bool isGranted);
+    static bool IsKernelSupportSpm();
 
 private:
     PermissionKernelUtils() = delete;

@@ -114,9 +114,8 @@ ohos_executable("QueryPermissionStatus") {
     "query_permission_status.cpp",
     "test_common.cpp",
   ]
-  include_dirs = [
-    "${access_token_path}/interfaces/innerkits/token_setproc/include",
-  ]
+  include_dirs =
+      [ "${access_token_path}/interfaces/innerkits/token_setproc/include" ]
 
   deps = [
     "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
@@ -167,11 +166,12 @@ ohos_executable("SetPermToKernel") {
   branch_protector_ret = "pac_ret"
   sources = [ "set_perm_to_kernel.cpp" ]
 
-  include_dirs = [ "${access_token_path}/interfaces/innerkits/token_setproc/include" ]
+  include_dirs =
+      [ "${access_token_path}/interfaces/innerkits/token_setproc/include" ]
 
   deps = [
     "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
-    "${access_token_path}/interfaces/innerkits/token_setproc:libperm_setproc",
+    "${access_token_path}/interfaces/innerkits/token_setproc:libpermsetproc_shared",
   ]
 
   subsystem_name = "security"
@@ -207,7 +207,7 @@ ohos_executable("Relabel") {
   }
   branch_protector_ret = "pac_ret"
   sources = [
-    "create_hap_token.cpp",
+    "relabel.cpp",
     "test_common.cpp",
   ]
 
@@ -335,8 +335,8 @@ ohos_executable("UpdateHapToken") {
   }
   branch_protector_ret = "pac_ret"
   sources = [
-    "update_hap_token.cpp",
     "test_common.cpp",
+    "update_hap_token.cpp",
   ]
 
   include_dirs = [
@@ -354,19 +354,127 @@ ohos_executable("UpdateHapToken") {
   part_name = "access_token"
 }
 
+ohos_executable("SetUserPolicy") {
+  subsystem_name = "security"
+  part_name = "access_token"
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+  branch_protector_ret = "pac_ret"
+  sources = [
+    "set_user_policy.cpp",
+    "test_common.cpp",
+  ]
+
+  include_dirs = [
+    "${access_token_path}/interfaces/innerkits/nativetoken/include",
+    "${access_token_path}/interfaces/innerkits/token_setproc/include",
+  ]
+
+  deps = [
+    "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
+    "${access_token_path}/interfaces/innerkits/nativetoken:libnativetoken",
+    "${access_token_path}/interfaces/innerkits/token_setproc:libtoken_setproc",
+  ]
+}
+
+ohos_executable("ClearUserPolicy") {
+  subsystem_name = "security"
+  part_name = "access_token"
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+  branch_protector_ret = "pac_ret"
+  sources = [
+    "clear_user_policy.cpp",
+    "test_common.cpp",
+  ]
+
+  include_dirs = [
+    "${access_token_path}/interfaces/innerkits/nativetoken/include",
+    "${access_token_path}/interfaces/innerkits/token_setproc/include",
+  ]
+
+  deps = [
+    "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
+    "${access_token_path}/interfaces/innerkits/nativetoken:libnativetoken",
+    "${access_token_path}/interfaces/innerkits/token_setproc:libtoken_setproc",
+  ]
+}
+
+ohos_executable("GetPolicyWhiteList") {
+  subsystem_name = "security"
+  part_name = "access_token"
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+  branch_protector_ret = "pac_ret"
+  sources = [
+    "get_policy_white_list.cpp",
+    "test_common.cpp",
+  ]
+
+  include_dirs = [
+    "${access_token_path}/interfaces/innerkits/nativetoken/include",
+    "${access_token_path}/interfaces/innerkits/token_setproc/include",
+  ]
+
+  deps = [
+    "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
+    "${access_token_path}/interfaces/innerkits/nativetoken:libnativetoken",
+    "${access_token_path}/interfaces/innerkits/token_setproc:libtoken_setproc",
+  ]
+}
+
+ohos_executable("UpdateWhiteList") {
+  subsystem_name = "security"
+  part_name = "access_token"
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+  branch_protector_ret = "pac_ret"
+  sources = [
+    "test_common.cpp",
+    "update_white_list.cpp",
+  ]
+
+  include_dirs = [
+    "${access_token_path}/interfaces/innerkits/nativetoken/include",
+    "${access_token_path}/interfaces/innerkits/token_setproc/include",
+  ]
+
+  deps = [
+    "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
+    "${access_token_path}/interfaces/innerkits/nativetoken:libnativetoken",
+    "${access_token_path}/interfaces/innerkits/token_setproc:libtoken_setproc",
+  ]
+}
+
 group("accesstoken_tool") {
   deps = [
+    ":ClearUserPolicy",
     ":CreateHapToken",
     ":DeleteHapToken",
+    ":GetPolicyWhiteList",
     ":GrantPermission",
     ":GrantShortTermWriteImageVideo",
     ":Publish",
     ":QueryPermissionStatus",
     ":Relabel",
     ":RevokePermission",
-    ":SetPermToKernel",
     ":SetPermDialogCap",
+    ":SetPermToKernel",
+    ":SetUserPolicy",
     ":UpdateHapToken",
+    ":UpdateWhiteList",
     ":VerifyAccessToken",
   ]
 }

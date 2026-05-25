@@ -497,7 +497,6 @@ public:
      * @param info application info of permission manager
      */
     static void GetPermissionManagerInfo(PermissionGrantInfo& info);
-
     /**
      * @brief Set user permission policy
      * @param userPermissionList list of permission polcy.
@@ -646,9 +645,18 @@ public:
      */
     static int32_t SetPermissionStatusWithPolicy(
         uint32_t tokenID, const std::vector<std::string>& permissionList, int32_t status, uint32_t flag);
-
-    /**
-     * @brief Transfer permission to permCode.
+ 	 
+ 	/**
+ 	 * @brief Query whether permission is supported.
+ 	 * @note When the local permission definition is enabled, this returns true directly without IPC.
+ 	 *       Only when local isEnable is false will it query service side.
+ 	 * @param permissionName permissionName
+ 	 * @return result
+ 	 */
+    static bool IsSupportPermission(const std::string& permissionName);
+ 	 
+ 	/**
+ 	 * @brief Transfer permission to permCode.
      * @param permissionName permissionName
      * @param opCode permCode
      * @return result

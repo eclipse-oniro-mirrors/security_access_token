@@ -48,7 +48,7 @@ ohos_unittest("libpermission_monitor_test") {
   deps = [
     "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
     "${access_token_path}/interfaces/innerkits/nativetoken:libnativetoken_shared",
-    "${access_token_path}/interfaces/innerkits/token_setproc:libperm_setproc",
+    "${access_token_path}/interfaces/innerkits/token_setproc:libpermsetproc_shared",
     "${access_token_path}/interfaces/innerkits/token_setproc:libtokensetproc_shared",
   ]
   deps += accesstoken_manager_base_config.deps
@@ -89,10 +89,8 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
     "database/database_consistency_test.cpp",
     "database/database_test.cpp",
     "permission/accesstoken_info_dumper_test.cpp",
-    "permission/accesstoken_info_utils_test.cpp",
     "permission/claw_permission_decision_engine_test.cpp",
     "permission/hap_cache_commit_test.cpp",
-    "permission/permission_constraint_check_test.cpp",
     "permission/permission_grant_event_test.cpp",
     "permission/permission_manager_temp_permission_test.cpp",
     "permission/permission_manager_test.cpp",
@@ -104,8 +102,14 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
     "tooltoken/claw_ticket_manager_test.cpp",
     "tooltoken/permission_map_fence.cpp",
     "tooltoken/saf_agent_fence.cpp",
-    "tooltoken/tool_token_mock_test.cpp"
+    "tooltoken/tool_token_mock_test.cpp",
   ]
+  if (support_jsapi) {
+    sources += [
+      "permission/accesstoken_info_utils_test.cpp",
+      "permission/permission_constraint_check_test.cpp",
+    ]
+  }
 
   sources += accesstoken_manager_base_config.sources
 
@@ -122,7 +126,7 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
   deps = [
     "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
     "${access_token_path}/interfaces/innerkits/nativetoken:libnativetoken_shared",
-    "${access_token_path}/interfaces/innerkits/token_setproc:libperm_setproc",
+    "${access_token_path}/interfaces/innerkits/token_setproc:libpermsetproc_shared",
     "${access_token_path}/interfaces/innerkits/token_setproc:libtokensetproc_shared",
   ]
   deps += accesstoken_manager_base_config.deps
@@ -136,8 +140,8 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
 
 group("functional_tests") {
   testonly = true
-  deps = [
-    ":libaccesstoken_manager_service_standard_test",
-    ":libpermission_monitor_test",
-  ]
+  deps = [ ":libaccesstoken_manager_service_standard_test" ]
+  if (support_jsapi) {
+    deps += [ ":libpermission_monitor_test" ]
+  }
 }

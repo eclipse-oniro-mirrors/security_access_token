@@ -161,7 +161,7 @@ HWTEST_F(ClawPermissionDecisionEngineTest, BuildCliPermissionDialogInfo002, Test
 
 /**
  * @tc.name: BuildCliPermissionDialogInfo003
- * @tc.desc: Required CLI permission needing dialog should mark the command as needing dialog.
+ * @tc.desc: Undecided required CLI permission should still require dialog when one mapped permission is undecided.
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -222,7 +222,7 @@ HWTEST_F(ClawPermissionDecisionEngineTest, BuildCliPermissionDialogInfo004, Test
     ASSERT_EQ(RET_SUCCESS, ClawPermissionDecisionEngine::GetInstance().BuildCliPermissionDialogInfo(
         tokenId_, cliInfoList, result));
     ASSERT_EQ(1, static_cast<int32_t>(result.detailList.size()));
-    EXPECT_TRUE(result.detailList[0].needPermissionDialog);
+    EXPECT_FALSE(result.detailList[0].needPermissionDialog);
     ASSERT_EQ(1, static_cast<int32_t>(result.detailList[0].permissionNameList.size()));
     EXPECT_EQ("ohos.permission.APPROXIMATELY_LOCATION", result.detailList[0].permissionNameList[0]);
     ASSERT_EQ(1, static_cast<int32_t>(result.detailList[0].statusList.size()));
@@ -267,7 +267,7 @@ HWTEST_F(ClawPermissionDecisionEngineTest, BuildCliPermissionDialogInfo005, Test
 
 /**
  * @tc.name: BuildCliPermissionDialogInfo006
- * @tc.desc: Used permission granted this time should trigger permission dialog again.
+ * @tc.desc: Used permission granted this time should not affect CLI dialog requirement.
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -294,7 +294,7 @@ HWTEST_F(ClawPermissionDecisionEngineTest, BuildCliPermissionDialogInfo006, Test
     ASSERT_EQ(RET_SUCCESS, ClawPermissionDecisionEngine::GetInstance().BuildCliPermissionDialogInfo(
         tokenId_, cliInfoList, result));
     ASSERT_EQ(1, static_cast<int32_t>(result.detailList.size()));
-    EXPECT_TRUE(result.detailList[0].needPermissionDialog);
+    EXPECT_FALSE(result.detailList[0].needPermissionDialog);
     ASSERT_EQ(1, static_cast<int32_t>(result.detailList[0].permissionNameList.size()));
     EXPECT_EQ("ohos.permission.APPROXIMATELY_LOCATION", result.detailList[0].permissionNameList[0]);
     ASSERT_EQ(1, static_cast<int32_t>(result.detailList[0].statusList.size()));
@@ -358,6 +358,35 @@ HWTEST_F(ClawPermissionDecisionEngineTest, BuildCliPermissionDialogInfo008, Test
     ASSERT_EQ(2, static_cast<int32_t>(result.detailList[0].statusList.size()));
     EXPECT_EQ(PermissionDecisionStatus::NO_DIALOG_NOT_DECLARED, result.detailList[0].statusList[0]);
     EXPECT_EQ(PermissionDecisionStatus::NO_DIALOG_NOT_DECLARED, result.detailList[0].statusList[1]);
+}
+
+/**
+ * @tc.name: BuildCliPermissionDialogInfo009
+ * @tc.desc: Undecided required CLI permission should still require dialog when mapped permission is undeclared.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(ClawPermissionDecisionEngineTest, BuildCliPermissionDialogInfo009, TestSize.Level0)
+{
+    PermissionStatus cliState = {
+        .permissionName = "ohos.permission.APPROXIMATELY_LOCATION",
+        .grantStatus = PERMISSION_DENIED,
+        .grantFlag = PERMISSION_DEFAULT_FLAG
+    };
+    tokenId_ = CreateHapToken("claw_permission_cli_required_need_dialog_with_undeclared_used_test", {cliState});
+    ASSERT_NE(INVALID_TOKENID, tokenId_);
+
+    std::vector<CliInfo> cliInfoList = {{
+        .cliName = "location",
+        .subCliName = "query"
+    }};
+    PermissionDialogResult result;
+    ASSERT_EQ(RET_SUCCESS, ClawPermissionDecisionEngine::GetInstance().BuildCliPermissionDialogInfo(
+        tokenId_, cliInfoList, result));
+    ASSERT_EQ(1, static_cast<int32_t>(result.detailList.size()));
+    EXPECT_TRUE(result.detailList[0].needPermissionDialog);
+    EXPECT_TRUE(result.detailList[0].permissionNameList.empty());
+    EXPECT_TRUE(result.detailList[0].statusList.empty());
 }
 
 /**

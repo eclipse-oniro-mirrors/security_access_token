@@ -24,11 +24,19 @@ const std::string TokenFiledConst::FIELD_INST_INDEX = "inst_index";
 const std::string TokenFiledConst::FIELD_DLP_TYPE = "dlp_type";
 const std::string TokenFiledConst::FIELD_APP_ID = "app_id";
 const std::string TokenFiledConst::FIELD_DEVICE_ID = "device_id";
+const std::string TokenFiledConst::FIELD_UID = "uid";
+const std::string TokenFiledConst::FIELD_MIGRATED = "migrated";
+const std::string TokenFiledConst::FIELD_MODULE_NAME = "module_name";
+const std::string TokenFiledConst::FIELD_PATH = "path";
+const std::string TokenFiledConst::FIELD_BUNDLE_TYPE = "bundle_type";
+const std::string TokenFiledConst::FIELD_PERSIST_DATA = "persist_data";
+const std::string TokenFiledConst::FIELD_IS_PREINSTALLED = "is_preinstalled";
 const std::string TokenFiledConst::FIELD_APL = "apl";
 const std::string TokenFiledConst::FIELD_TOKEN_VERSION = "token_version";
 const std::string TokenFiledConst::FIELD_TOKEN_ATTR = "token_attr";
 const std::string TokenFiledConst::FIELD_API_VERSION = "api_version";
 const std::string TokenFiledConst::FIELD_FORBID_PERM_DIALOG = "perm_dialog_cap_state";
+const std::string TokenFiledConst::FIELD_RESERVED = "reserved";
 const std::string TokenFiledConst::FIELD_PROCESS_NAME = "process_name";
 const std::string TokenFiledConst::FIELD_DCAP = "dcap";
 const std::string TokenFiledConst::FIELD_NATIVE_ACLS = "native_acls";
@@ -55,7 +63,7 @@ const std::string TokenFiledConst::FIELD_NAME = "name";
 const std::string TokenFiledConst::FIELD_APP_DISTRIBUTION_TYPE = "app_distribution_type";
 const std::string TokenFiledConst::FIELD_CONTROLLER_TOKENID = "controller_tokenid";
 const std::string TokenFiledConst::FIELD_RESTRICTED_USER = "restricted_user";
-const std::string TokenFiledConst::FIELD_WHITLIST = "whitlist";
+const std::string TokenFiledConst::FIELD_WHITELIST = "whitelist";
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

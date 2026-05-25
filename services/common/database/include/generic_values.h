@@ -36,6 +36,8 @@ public:
 
     void Put(const std::string& key, const std::string& value);
 
+    void PutBlob(const std::string& key, const std::vector<uint8_t>& value);
+
     void Put(const std::string& key, const VariantValue& value);
 
     std::vector<std::string> GetAllKeys() const;
@@ -47,6 +49,8 @@ public:
     int64_t GetInt64(const std::string& key) const;
 
     std::string GetString(const std::string& key) const;
+
+    std::vector<uint8_t> GetBlob(const std::string& key) const;
 
     void Remove(const std::string& key);
 private:
