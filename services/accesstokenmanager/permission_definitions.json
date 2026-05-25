@@ -9343,17 +9343,6 @@
             "deviceTypes": ["phone", "2in1", "tablet", "car", "tv", "wearable"]
         },
         {
-            "name": "ohos.permission.CAPTURE_PLAYBACK_PRIVATE",
-            "grantMode": "system_grant",
-            "availableLevel": "system_basic",
-            "availableType": "SYSTEM",
-            "since": "26.0.0",
-            "deprecated": "",
-            "provisionEnable": false,
-            "distributedSceneEnable": false,
-            "deviceTypes": ["phone", "2in1", "tablet", "car", "tv"]
-        }，
-        {
             "name": "ohos.permission.TV_MANAGE_SOURCE",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
@@ -9495,7 +9484,17 @@
             "provisionEnable": true,
             "distributedSceneEnable": false,
             "deviceTypes": ["tv"]
->>>>>>> upstream/master
+        },
+        {
+            "name": "ohos.permission.CAPTURE_PLAYBACK_PRIVATE",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SERVICE",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": false,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "2in1", "tablet", "car", "tv"]
         }
     ]
 }
