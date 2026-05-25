@@ -244,7 +244,8 @@
             "since": 7,
             "deprecated": "",
             "provisionEnable": false,
-            "distributedSceneEnable": false
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "2in1", "tablet", "tv", "wearable"]
         },
         {
             "name": "ohos.permission.GYROSCOPE",
@@ -254,7 +255,8 @@
             "since": 7,
             "deprecated": "",
             "provisionEnable": false,
-            "distributedSceneEnable": false
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "2in1", "tablet", "tv", "wearable"]
         },
         {
             "name": "ohos.permission.GET_BUNDLE_INFO_PRIVILEGED",
@@ -616,7 +618,8 @@
             "since": 7,
             "deprecated": "",
             "provisionEnable": false,
-            "distributedSceneEnable": false
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "2in1", "tablet", "tv", "wearable"]
         },
         {
             "name": "ohos.permission.CONNECT_IME_ABILITY",
@@ -5173,7 +5176,8 @@
             "provisionEnable": false,
             "distributedSceneEnable": false,
             "label": "$string:ohos_lab_read_health_data",
-            "description": "$string:ohos_desc_read_health_data"
+            "description": "$string:ohos_desc_read_health_data",
+            "deviceTypes": ["phone", "2in1", "tablet", "tv", "wearable"]
         },
         {
             "name": "ohos.permission.MEDIA_LOCATION",
@@ -5197,7 +5201,8 @@
             "provisionEnable": false,
             "distributedSceneEnable": false,
             "label": "$string:ohos_lab_activity_motion",
-            "description": "$string:ohos_desc_activity_motion"
+            "description": "$string:ohos_desc_activity_motion",
+            "deviceTypes": ["phone", "2in1", "tablet", "tv", "wearable"]
         },
         {
             "name": "ohos.permission.WRITE_MEDIA",
