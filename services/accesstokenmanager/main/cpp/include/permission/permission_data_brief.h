@@ -76,10 +76,8 @@ public:
     int32_t VerifyPermissionStatus(AccessTokenID tokenID, const std::string& permission);
     int32_t QueryPermissionStatusAndFlag(AccessTokenID tokenID, uint32_t permCode, int32_t& status, uint32_t& flag);
     void ClearAllSecCompGrantedPerm(std::vector<BriefSecCompData>& clearedSecCompPermList);
-    void GetGrantedPermByTokenId(AccessTokenID tokenID,
-        const std::vector<uint32_t>& constrainedList, std::vector<std::string>& permissionList);
-    void GetPermStatusListByTokenId(AccessTokenID tokenID,
-        const std::vector<uint32_t> constrainedList, std::vector<uint32_t>& opCodeList, std::vector<bool>& statusList);
+    void GetGrantedPermList(AccessTokenID tokenID, std::vector<std::string>& permissionList);
+    void GetGrantedPermCodeList(AccessTokenID tokenID, std::vector<uint32_t>& opCodeList);
     int32_t RefreshPermStateToKernel(AccessTokenID tokenId, uint32_t permCode, bool hapUserIsActive,
         std::map<std::string, bool>& refreshedPermList);
     void AddPermToBriefPermission(

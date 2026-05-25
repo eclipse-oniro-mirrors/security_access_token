@@ -25,12 +25,8 @@ namespace Security {
 namespace AccessToken {
 
 int32_t AddPermissionToKernel(
-    uint32_t tokenID, const std::vector<uint32_t>& opCodeList, const std::vector<bool>& statusList)
+    uint32_t tokenID, const std::vector<uint32_t>& opCodeList)
 {
-    if (opCodeList.size() != statusList.size()) {
-        return ACCESS_TOKEN_PARAM_INVALID;
-    }
-
     uint32_t perms[MAX_PERM_BIT_MAP_SIZE] = {0};
     for (size_t i = 0; i < opCodeList.size(); ++i) {
         uint32_t opCode = opCodeList[i];
@@ -39,11 +35,7 @@ int32_t AddPermissionToKernel(
         if (idx >= MAX_PERM_BIT_MAP_SIZE) {
             return ACCESS_TOKEN_PARAM_INVALID;
         }
-        if (statusList[i]) {
-            perms[idx] |= (static_cast<uint32_t>(0x01) << bitIdx);
-        } else {
-            perms[idx] &= ~(static_cast<uint32_t>(0x01) << bitIdx);
-        }
+        perms[idx] |= (static_cast<uint32_t>(0x01) << bitIdx);
     }
 
     return ::AddPermissionToKernel(tokenID, reinterpret_cast<const char *>(perms), sizeof(perms));
