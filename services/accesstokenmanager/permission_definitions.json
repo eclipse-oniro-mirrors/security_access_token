@@ -9342,6 +9342,127 @@
             "deviceTypes": ["phone", "2in1", "tablet", "car", "tv", "wearable"]
         },
         {
+            "name": "ohos.permission.TV_MANAGE_SOURCE",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["tv"]
+        },
+        {
+            "name": "ohos.permission.TV_MANAGE_PICTURE_QUALITY",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["tv"]
+        },
+        {
+            "name": "ohos.permission.TV_GET_AUDIO_DEVICE_INFO",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["tv"]
+        },
+        {
+            "name": "ohos.permission.TV_SET_AUDIO_DEVICE_INFO",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["tv"]
+        },
+        {
+            "name": "ohos.permission.TV_MANAGE_SOUND_EFFECT",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["tv"]
+        },
+        {
+            "name": "ohos.permission.TV_MANAGE_AI_AQ",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["tv"]
+        },
+        {
+            "name": "ohos.permission.TV_MANAGE_CEC",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["tv"]
+        },
+        {
+            "name": "ohos.permission.TV_CAMERA_AI",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["tv"]
+        },
+        {
+            "name": "ohos.permission.TV_DIAGNOSIS",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["tv"]
+        },
+        {
+            "name": "ohos.permission.TV_ACCESS_PROJECTION",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["tv"]
+        },
+        {
+            "name": "ohos.permission.TV_MANAGE_LOGSYNC",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["tv"]
+        },
+        {
             "name": "ohos.permission.ENTERPRISE_VPN",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
