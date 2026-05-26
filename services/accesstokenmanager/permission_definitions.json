@@ -9304,10 +9304,10 @@
             "deviceTypes": ["phone", "2in1", "tablet", "car", "tv", "wearable"]
         },
         {
-            "name": "ohos.permission.ENTERPRISE_VPN",
+            "name": "ohos.permission.kernel.TRAFFIC_FILTER",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
-            "availableType": "MDM",
+            "availableType": "ENTERPRISE_NORMAL",
             "since": "26.0.0",
             "deprecated": "",
             "provisionEnable": true,
@@ -9315,10 +9315,10 @@
             "deviceTypes": ["2in1"]
         },
         {
-            "name": "ohos.permission.kernel.TRAFFIC_FILTER",
+            "name": "ohos.permission.ENTERPRISE_VPN",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
-            "availableType": "ENTERPRISE_NORMAL",
+            "availableType": "MDM",
             "since": "26.0.0",
             "deprecated": "",
             "provisionEnable": true,
