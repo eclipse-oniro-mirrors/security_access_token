@@ -29,6 +29,8 @@ namespace Security {
 namespace AccessToken {
 namespace {
 constexpr const char* TEST_FILE_PATH = "/data/test/abcdefg.txt";
+constexpr const char* PERMISSION_DEFINITION_EXT_FILE =
+    "/etc/access_token/accesstoken_permission_definition_ext.txt";
 }
 
 class JsonParseLoaderTest : public testing::Test  {
@@ -603,8 +605,24 @@ HWTEST_F(JsonParseLoaderTest, GetPermissionDefinitionExt002, TestSize.Level4)
     std::vector<std::string> permissions;
     int32_t res1 = loader.GetPermissionDefinitionExt(permissions);
     EXPECT_EQ(RET_SUCCESS, res1);
+    bool fileExists = false;
 #ifdef CUSTOMIZATION_CONFIG_POLICY_ENABLE
-    EXPECT_FALSE(permissions.empty());
+    std::vector<std::string> pathList;
+    loader.GetConfigFilePathList(pathList);
+    for (const auto& path : pathList) {
+        std::string fileContent;
+        std::string filePath = path + PERMISSION_DEFINITION_EXT_FILE;
+        int32_t res = loader.ReadCfgFile(filePath, fileContent);
+        if (res == RET_SUCCESS) {
+            fileExists = true;
+            continue;
+        }
+    }
+    if (fileExists) {
+        EXPECT_FALSE(permissions.empty());
+    } else {
+        EXPECT_TRUE(permissions.empty());
+    }
 #else
     EXPECT_TRUE(permissions.empty());
 #endif

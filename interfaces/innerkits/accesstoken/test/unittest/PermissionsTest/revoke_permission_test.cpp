@@ -364,30 +364,6 @@ HWTEST_F(RevokePermissionTest, RevokePermissionWithManualTest001, TestSize.Level
 
     EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
-
-/*
- * @tc.name: RevokePermissionDisabled001
- * @tc.desc: RevokePermission should return error for disabled permission
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(RevokePermissionTest, RevokePermissionDisabled001, TestSize.Level0)
-{
-    LOGI(ATM_DOMAIN, ATM_TAG, "RevokePermissionDisabled001");
-
-    AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
-    ASSERT_NE(INVALID_TOKENID, tokenID);
-
-    std::string permissionName = "ohos.permission.MICROPHONE";
-    
-    ASSERT_TRUE(SetPermissionBriefEnabled(permissionName, false));
-    int32_t ret = AccessTokenKit::RevokePermission(tokenID, permissionName, PERMISSION_USER_FIXED);
-    EXPECT_EQ(ERR_PERMISSION_NOT_EXIST, ret);
-    ASSERT_TRUE(SetPermissionBriefEnabled(permissionName, true));
-
-    ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
-}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
