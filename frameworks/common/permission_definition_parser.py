@@ -54,18 +54,18 @@ PERMISSION_DEFINITION_SUFFIX_1 = '''
 '''
 
 PERMISSION_DEFINITION_SUFFIX_2 = '''
-const uint32_t MAX_PERM_SIZE = sizeof(g_permList) / sizeof(PermissionBriefDef);
+const static uint32_t MAX_PERM_SIZE = sizeof(g_permList) / sizeof(PermissionBriefDef);
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
 #endif // PERMISSION_DEFINITION_PARSER_H
 '''
 
-PERMISSION_NAME_STRING = "const char PERMISSION_NAME_%i[] = \"%s\";\n"
+PERMISSION_NAME_STRING = "const static char PERMISSION_NAME_%i[] = \"%s\";\n"
 
 PERMISSION_LIST_DECLARE = "static PermissionBriefDef g_permList[] = {"
 
-VERSION_STRING = "\nconst char* PERMISSION_DEFINITION_VERSION = \"%s\";"
+VERSION_STRING = "\nconst static char* PERMISSION_DEFINITION_VERSION = \"%s\";"
 
 PERMISSION_BRIEF_DEFINE_PATTERN = '''
 {

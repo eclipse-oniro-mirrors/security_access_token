@@ -40,7 +40,7 @@ public:
         }
     }
 };
-std::map<const char*, uint32_t, CharArrayCompare> g_permMap;
+static std::map<const char*, uint32_t, CharArrayCompare> g_permMap;
 
 static void InitMap()
 {
