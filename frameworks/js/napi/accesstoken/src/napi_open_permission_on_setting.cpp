@@ -629,7 +629,8 @@ bool NapiOpenPermissionOnSetting::CheckManualSettingPerm(
     std::shared_ptr<OpenPermOnSettingAsyncContext>& asyncContextPtr)
 {
     PermissionBriefDef permissionBriefDef;
-    if (!GetPermissionBriefDef(asyncContextPtr->permissionName, permissionBriefDef)) {
+    if (!GetPermissionBriefDef(asyncContextPtr->permissionName, permissionBriefDef) ||
+        !IsSupportPermission(asyncContextPtr->permissionName)) {
         asyncContextPtr->result.errorCode = ERR_PARAM_INVALID;
         asyncContextPtr->result.errorMsg = "The permission is invalid.";
         return true;
