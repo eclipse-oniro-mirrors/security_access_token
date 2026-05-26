@@ -68,6 +68,14 @@ accesstoken_manager_base_config = {
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/service/accesstoken_manager_service.cpp",
   ]
 
+  if (access_token_manager_hapverify_enable) {
+    sources += [ 
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/app_verify_adapter.cpp",
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/hap_sign_verify_manager.cpp",
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/hap_sign_verify_helper.cpp",
+    ]
+  }
+
   # Conditional sources: use mock implementations for minimal system without saf_agent_fence
   if (support_jsapi) {
     # Full system with saf_agent_fence support
@@ -177,6 +185,7 @@ accesstoken_manager_base_config = {
     "relational_store:native_rdb",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
+    "bundle_framework:spm_module_parser",
   ]
 
   # Add global external_deps from access_token.gni
