@@ -4858,7 +4858,8 @@
             "since": 15,
             "deprecated": "",
             "provisionEnable": true,
-            "distributedSceneEnable": false
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1", "tablet"]
         },
         {
             "name": "ohos.permission.INPUT_KEYBOARD_CONTROLLER",
