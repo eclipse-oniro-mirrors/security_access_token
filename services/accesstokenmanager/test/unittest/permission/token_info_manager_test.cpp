@@ -4131,6 +4131,42 @@ HWTEST_F(TokenInfoManagerTest, GetReqPermissionByName001, TestSize.Level0)
  
     EXPECT_EQ(ERR_PERMISSION_NOT_EXIST, ret);
 }
+
+/**
+ * @tc.name: RegisterTokenId002
+ * @tc.desc: Invalid type_ext
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenInfoManagerTest, RegisterTokenId002, TestSize.Level0)
+{
+    AccessTokenIDInner innerId = {0};
+    innerId.version = DEFAULT_TOKEN_VERSION;
+    innerId.type = TOKEN_HAP;
+    innerId.toolFlag = 1;
+    innerId.tokenUniqueID = 1;
+    innerId.type_ext = 1;
+    AccessTokenID tokenId1 = *reinterpret_cast<AccessTokenID*>(&innerId);
+    ASSERT_EQ(ERR_PARAM_INVALID, AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId1, TOKEN_HAP));
+}
+
+/**
+ * @tc.name: RegisterTokenId003
+ * @tc.desc: Invalid type
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenInfoManagerTest, RegisterTokenId003, TestSize.Level0)
+{
+    AccessTokenIDInner innerId = {0};
+    innerId.version = DEFAULT_TOKEN_VERSION;
+    innerId.type = TOKEN_SHELL;
+    innerId.toolFlag = 1;
+    innerId.tokenUniqueID = 1;
+    innerId.type_ext = 0;
+    AccessTokenID tokenId1 = *reinterpret_cast<AccessTokenID*>(&innerId);
+    ASSERT_EQ(ERR_PARAM_INVALID, AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId1, TOKEN_HAP));
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
