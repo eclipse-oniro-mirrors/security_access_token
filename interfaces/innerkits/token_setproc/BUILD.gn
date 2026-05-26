@@ -94,10 +94,10 @@ if (is_standard_system) {
     external_deps = [ "bounds_checking_function:libsec_shared" ]
   }
 
-  ohos_static_library("libperm_setproc_for_compat") {
+  ohos_static_library("libperm_setproc_for_sdk") {
     subsystem_name = "security"
     part_name = "access_token"
-    output_name = "libperm_setproc_for_compat"
+    output_name = "libperm_setproc_for_sdk"
     sanitize = {
       cfi = true
       cfi_cross_dso = true
