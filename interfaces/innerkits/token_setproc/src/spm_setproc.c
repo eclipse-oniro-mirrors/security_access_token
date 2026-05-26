@@ -561,7 +561,7 @@ void SpmDataFree(SpmData* data)
 
 int32_t TransferSpmExternPerms(SpmBlob *data, PermsWithValue *valueList, uint32_t *listSize)
 {
-    int32_t codeValueSize = sizeof(uint32_t) * 2;
+    uint32_t codeValueSize = sizeof(uint32_t) * 2; // 2: code + valuesize
     if ((data == NULL) || (listSize == NULL) || (*listSize == 0) || (valueList == NULL)) {
         return ACCESS_TOKEN_PARAM_INVALID;
     }

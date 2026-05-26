@@ -633,8 +633,9 @@ int AccessTokenInfoManager::AddHapTokenInfo(const std::shared_ptr<HapTokenInfoIn
         (void)RemoveHapTokenInfo(idRemoved);
     }
     // add hap to kernel
-    PermissionKernelUtils::AddHapPermToKernel(
-        id, UserPolicyManager::GetInstance().GetRestrictedPermListByUserId(info->GetUserID()));
+    std::vector<uint32_t> opCodeList;
+    HapTokenInfoInner::GetGrantedPermCodeList(id, opCodeList);
+    (void)PermissionKernelUtils::AddHapPermToKernel(id, opCodeList);
     return RET_SUCCESS;
 }
 
@@ -690,7 +691,9 @@ std::shared_ptr<HapTokenInfoInner> AccessTokenInfoManager::GetHapTokenInfoInnerF
     (void)AccessTokenIDManager::GetInstance().RegisterTokenId(id, TOKEN_HAP);
     hapTokenIdMap_[AccessTokenInfoUtils::GetHapUniqueStr(hap)] = id;
     hapTokenInfoMap_[id] = hap;
-    PermissionKernelUtils::AddHapPermToKernel(id, std::vector<uint32_t>());
+    std::vector<uint32_t> opCodeList;
+    HapTokenInfoInner::GetGrantedPermCodeList(id, opCodeList);
+    (void)PermissionKernelUtils::AddHapPermToKernel(id, opCodeList);
     LOGI(ATM_DOMAIN, ATM_TAG, " Token %{public}u is not found in map(mapSize: %{public}zu), begin load from DB,"
         " restore bundle %{public}s user %{public}d, idx %{public}d, permSize %{public}d.", id, hapTokenInfoMap_.size(),
         hap->GetBundleName().c_str(), hap->GetUserID(), hap->GetInstIndex(), hap->GetReqPermissionSize());
@@ -860,8 +863,7 @@ int AccessTokenInfoManager::RemoveHapTokenInfo(AccessTokenID id, bool isTokenRes
 
     LOGI(ATM_DOMAIN, ATM_TAG, "Remove hap token %{public}u ok!", id);
     std::vector<std::string> permissionList;
-    HapTokenInfoInner::GetGrantedPermByTokenId(
-        id, UserPolicyManager::GetInstance().GetRestrictedPermListByUserId(info->GetUserID()), permissionList);
+    HapTokenInfoInner::GetGrantedPermList(id, permissionList);
     if (permissionList.size() != 0) {
         PermissionChangeNotifier::GetInstance().ParamUpdate(permissionList[0], 0, true);
     }
@@ -1233,8 +1235,9 @@ int32_t AccessTokenInfoManager::UpdateHapToken(AccessTokenIDEx& tokenIdEx, const
     TokenModifyNotifier::GetInstance().NotifyTokenModify(tokenID);
 #endif
     // update hap to kernel
-    PermissionKernelUtils::AddHapPermToKernel(
-        tokenID, UserPolicyManager::GetInstance().GetRestrictedPermListByUserId(infoPtr->GetUserID()));
+    std::vector<uint32_t> opCodeList;
+    HapTokenInfoInner::GetGrantedPermCodeList(tokenID, opCodeList);
+    (void)PermissionKernelUtils::AddHapPermToKernel(tokenID, opCodeList);
     return RET_SUCCESS;
 }
 
@@ -1268,7 +1271,9 @@ int AccessTokenInfoManager::UpdateRemoteHapTokenInfo(AccessTokenID mapID, HapTok
     std::unique_lock<std::shared_mutex> infoGuard(this->hapTokenInfoLock_);
     infoPtr->UpdateRemoteHapTokenInfo(mapID, hapSync.baseInfo, hapSync.permStateList);
     // update remote hap to kernel
-    PermissionKernelUtils::AddHapPermToKernel(mapID, std::vector<uint32_t>());
+    std::vector<uint32_t> opCodeList;
+    HapTokenInfoInner::GetGrantedPermCodeList(mapID, opCodeList);
+    (void)PermissionKernelUtils::AddHapPermToKernel(mapID, opCodeList);
     return RET_SUCCESS;
 }
 
@@ -1709,9 +1714,7 @@ int32_t AccessTokenInfoManager::ClearUserGrantedPermission(AccessTokenID id)
         return ERR_IDENTITY_CHECK_FAILED;
     }
     std::vector<std::string> grantedPermListBefore;
-    std::vector<uint32_t> restrictedPermList =
-        UserPolicyManager::GetInstance().GetRestrictedPermListByUserId(infoPtr->GetUserID());
-    HapTokenInfoInner::GetGrantedPermByTokenId(id, restrictedPermList, grantedPermListBefore);
+    HapTokenInfoInner::GetGrantedPermList(id, grantedPermListBefore);
 
     // reset permission.
     int32_t ret = infoPtr->ResetUserGrantPermissionStatus();
@@ -1719,9 +1722,13 @@ int32_t AccessTokenInfoManager::ClearUserGrantedPermission(AccessTokenID id)
         return ret;
     }
 
+    std::vector<uint32_t> opCodeList;
+    HapTokenInfoInner::GetGrantedPermCodeList(id, opCodeList);
+    (void)PermissionKernelUtils::AddHapPermToKernel(id, opCodeList);
     std::vector<std::string> grantedPermListAfter;
-    HapTokenInfoInner::GetGrantedPermByTokenId(id, restrictedPermList, grantedPermListAfter);
-    PermissionKernelUtils::AddHapPermToKernel(id, restrictedPermList);
+    for (auto opCode: opCodeList) {
+        grantedPermListAfter.emplace_back(TransferOpcodeToPermission(opCode));
+    }
     LOGI(ATM_DOMAIN, ATM_TAG,
         "grantedPermListBefore size %{public}zu, grantedPermListAfter size %{public}zu!",
         grantedPermListBefore.size(), grantedPermListAfter.size());

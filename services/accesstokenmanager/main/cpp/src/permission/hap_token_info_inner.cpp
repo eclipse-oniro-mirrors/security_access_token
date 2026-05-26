@@ -535,17 +535,16 @@ int32_t HapTokenInfoInner::QueryPermissionStatusAndFlag(
     return PermissionDataBrief::GetInstance().QueryPermissionStatusAndFlag(tokenID, permCode, status, flag);
 }
 
-void HapTokenInfoInner::GetPermStatusListByTokenId(AccessTokenID tokenID,
-    const std::vector<uint32_t> constrainedList, std::vector<uint32_t>& opCodeList, std::vector<bool>& statusList)
+void HapTokenInfoInner::GetGrantedPermCodeList(AccessTokenID tokenID,
+    std::vector<uint32_t>& opCodeList)
 {
-    return PermissionDataBrief::GetInstance().GetPermStatusListByTokenId(
-        tokenID, constrainedList, opCodeList, statusList);
+    return PermissionDataBrief::GetInstance().GetGrantedPermCodeList(tokenID, opCodeList);
 }
 
-void HapTokenInfoInner::GetGrantedPermByTokenId(AccessTokenID tokenID,
-    const std::vector<uint32_t>& constrainedList, std::vector<std::string>& permissionList)
+void HapTokenInfoInner::GetGrantedPermList(AccessTokenID tokenID,
+    std::vector<std::string>& permissionList)
 {
-    return PermissionDataBrief::GetInstance().GetGrantedPermByTokenId(tokenID, constrainedList, permissionList);
+    return PermissionDataBrief::GetInstance().GetGrantedPermList(tokenID, permissionList);
 }
 
 void HapTokenInfoInner::ClearAllSecCompGrantedPerm()

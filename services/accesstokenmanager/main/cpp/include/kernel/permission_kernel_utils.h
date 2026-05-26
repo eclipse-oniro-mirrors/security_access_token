@@ -27,7 +27,6 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-class HapTokenInfoInner;
 
 struct SpmDataParam final {
     std::reference_wrapper<const HapTokenInfo> hapInfo;
@@ -40,7 +39,7 @@ class PermissionKernelUtils final {
 public:
     static void AddNativePermToKernel(
         AccessTokenID tokenID, const std::vector<uint32_t>& opCodeList, const std::vector<bool>& statusList);
-    static void AddHapPermToKernel(AccessTokenID tokenID, const std::vector<uint32_t>& constrainedPermList);
+    static int32_t AddHapPermToKernel(AccessTokenID tokenID, const std::vector<uint32_t>& opCodeList);
     static int32_t GetBundleInfoFromKernel(AccessTokenID tokenId, BundleNoCachedInfo& noCachedInfo,
         std::vector<PermissionWithValue>& permList);
     static int32_t AddSpmDataToKernel(const HapTokenInfo& hapInfo, const BundleNoCachedInfo& noCachedInfo,

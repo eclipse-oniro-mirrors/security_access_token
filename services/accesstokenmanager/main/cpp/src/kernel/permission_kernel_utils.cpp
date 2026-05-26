@@ -17,7 +17,6 @@
 
 #include <mutex>
 #include "accesstoken_common_log.h"
-#include "hap_token_info_inner.h"
 #include "perm_setproc.h"
 #include "permission_map.h"
 #include "spm_setproc.h"
@@ -29,23 +28,27 @@ namespace AccessToken {
 void PermissionKernelUtils::AddNativePermToKernel(AccessTokenID tokenID,
     const std::vector<uint32_t>& opCodeList, const std::vector<bool>& statusList)
 {
-    int32_t ret = AddPermissionToKernel(tokenID, opCodeList, statusList);
+    std::vector<uint32_t> grantedPermList;
+    for (size_t i = 0; i < opCodeList.size(); ++i) {
+        if (statusList[i]) {
+            grantedPermList.emplace_back(opCodeList[i]);
+        }
+    }
+    int32_t ret = AddPermissionToKernel(tokenID, grantedPermList);
     if (ret != ACCESS_TOKEN_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "AddPermissionToKernel(token=%{public}d), size=%{public}zu, err=%{public}d",
-            tokenID, opCodeList.size(), ret);
+            tokenID, grantedPermList.size(), ret);
     }
 }
 
-void PermissionKernelUtils::AddHapPermToKernel(AccessTokenID tokenID, const std::vector<uint32_t>& constrainedPermList)
+int32_t PermissionKernelUtils::AddHapPermToKernel(AccessTokenID tokenID, const std::vector<uint32_t>& opCodeList)
 {
-    std::vector<uint32_t> opCodeList;
-    std::vector<bool> statusList;
-    HapTokenInfoInner::GetPermStatusListByTokenId(tokenID, constrainedPermList, opCodeList, statusList);
-    int32_t ret = AddPermissionToKernel(tokenID, opCodeList, statusList);
+    int32_t ret = AddPermissionToKernel(tokenID, opCodeList);
     if (ret != ACCESS_TOKEN_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "AddPermissionToKernel(token=%{public}d), size=%{public}zu, err=%{public}d",
             tokenID, opCodeList.size(), ret);
     }
+    return ret;
 }
 
 void PermissionKernelUtils::RemovePermFromKernel(AccessTokenID tokenID)
