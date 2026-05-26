@@ -630,7 +630,7 @@ bool NapiOpenPermissionOnSetting::CheckManualSettingPerm(
 {
     PermissionBriefDef permissionBriefDef;
     if (!GetPermissionBriefDef(asyncContextPtr->permissionName, permissionBriefDef) ||
-        !IsSupportPermission(asyncContextPtr->permissionName)) {
+        !AccessTokenKit::IsSupportPermission(asyncContextPtr->permissionName)) {
         asyncContextPtr->result.errorCode = ERR_PARAM_INVALID;
         asyncContextPtr->result.errorMsg = "The permission is invalid.";
         return true;
