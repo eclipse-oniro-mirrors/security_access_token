@@ -189,7 +189,8 @@ static bool ParseOpenPermissionOnSetting(ani_env* env, ani_object& aniContext, a
 static bool CheckManualSettingPerm(ani_env* env, const std::string& permissionName, ani_object& error)
 {
     PermissionBriefDef permissionBriefDef;
-    if (!GetPermissionBriefDef(permissionName, permissionBriefDef) || !AccessTokenKit::IsSupportPermission(permissionName)) {
+    if (!GetPermissionBriefDef(permissionName, permissionBriefDef) ||
+        !AccessTokenKit::IsSupportPermission(permissionName)) {
         error = BusinessErrorAni::CreateError(env, STS_ERROR_PARAM_INVALID,
             GetErrorMessage(STS_ERROR_PARAM_INVALID, "The permission is invalid."));
         return true;
