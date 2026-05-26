@@ -20,19 +20,23 @@
 #include <vector>
 
 #include "accesstoken_fuzzdata.h"
-#define private public
-#include "accesstoken_manager_service.h"
-#undef private
 #include "fuzzer/FuzzedDataProvider.h"
+#include "fuzz_service_context_helper.h"
 #include "iaccess_token_manager.h"
-#include "mock_permission.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
 
 namespace OHOS {
+namespace {
+const std::string DEFAULT_CALLER_BUNDLE = "setuserpolicystub.fuzzer";
+const std::string MANAGE_USER_POLICY = "ohos.permission.MANAGE_USER_POLICY";
+uint64_t g_callerFullTokenId = 0;
+}
+
 void ClearUserPolicy(const string& permission)
 {
+    FuzzServiceContext::CallingContextGuard guard(g_callerFullTokenId);
     MessageParcel reply;
     MessageOption option;
     MessageParcel datas;
@@ -55,9 +59,9 @@ bool SetUserPolicyStubFuzzTest(const uint8_t* data, size_t size)
         return false;
     }
 
+    FuzzServiceContext::CallingContextGuard guard(g_callerFullTokenId);
     FuzzedDataProvider provider(data, size);
     std::string permission = ConsumePermissionName(provider);
-    std::vector<std::string> permList = { permission };
 
     UserPermissionPolicyIdl dataBlock;
     dataBlock.permissionName = permission;
@@ -82,7 +86,6 @@ bool SetUserPolicyStubFuzzTest(const uint8_t* data, size_t size)
 
     MessageParcel reply;
     MessageOption option;
-    MockToken mock({ "ohos.permission.MANAGE_USER_POLICY" });
     DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
     ClearUserPolicy(permission);
     return true;
@@ -90,7 +93,8 @@ bool SetUserPolicyStubFuzzTest(const uint8_t* data, size_t size)
 
 void Initialize()
 {
-    DelayedSingleton<AccessTokenManagerService>::GetInstance()->Initialize();
+    FuzzServiceContext::InitializeServiceCallerContext(
+        g_callerFullTokenId, DEFAULT_CALLER_BUNDLE, MANAGE_USER_POLICY);
 }
 } // namespace OHOS
 
