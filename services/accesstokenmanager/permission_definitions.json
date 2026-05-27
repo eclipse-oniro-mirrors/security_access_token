@@ -9499,6 +9499,17 @@
             "deviceTypes": ["tv"]
         },
         {
+            "name": "ohos.permission.START_ABILIIES_FROM_BACKGROUND",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "NORMAL",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "2in1", "tablet", "car", "tv"]
+        },
+        {
             "name": "ohos.permission.CAPTURE_PLAYBACK_PRIVATE",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
