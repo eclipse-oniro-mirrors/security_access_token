@@ -47,7 +47,7 @@ ATokenTypeEnum AccessTokenIDManager::GetTokenIdType(AccessTokenID id)
 int AccessTokenIDManager::RegisterTokenId(AccessTokenID id, ATokenTypeEnum type)
 {
     AccessTokenIDInner *idInner = reinterpret_cast<AccessTokenIDInner *>(&id);
-    if (idInner->version != DEFAULT_TOKEN_VERSION || idInner->type != type) {
+    if (idInner->version != DEFAULT_TOKEN_VERSION || idInner->type != type || idInner->type_ext != 0) {
         return ERR_PARAM_INVALID;
     }
     std::unique_lock<std::shared_mutex> idGuard(this->tokenIdLock_);
@@ -78,6 +78,7 @@ AccessTokenID AccessTokenIDManager::CreateTokenId(ATokenTypeEnum type, int32_t d
     AccessTokenIDInner innerId = {0};
     innerId.version = DEFAULT_TOKEN_VERSION;
     innerId.type = type;
+    innerId.type_ext = 0;
     innerId.res = 0;
     innerId.toolFlag = static_cast<uint32_t>(toolFlag);
     innerId.cloneFlag = static_cast<uint32_t>(cloneFlag);
