@@ -27,6 +27,7 @@ ohos_unittest("libpermission_monitor_test") {
 
   include_dirs = accesstoken_manager_base_config.include_dirs
   include_dirs += [
+    "${access_token_path}/interfaces/innerkits/accesstoken/test/unittest/common",
     "${access_token_path}/services/accesstokenmanager/test/unittest/service",
     "${access_token_path}/services/accesstokenmanager/test/unittest/permission",
     "${access_token_path}/services/accesstokenmanager/test/unittest/database",
@@ -73,6 +74,7 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
 
   include_dirs = accesstoken_manager_base_config.include_dirs
   include_dirs += [
+    "${access_token_path}/interfaces/innerkits/accesstoken/test/unittest/common",
     "${access_token_path}/services/accesstokenmanager/test/unittest/service",
     "${access_token_path}/services/accesstokenmanager/test/unittest/permission",
     "${access_token_path}/services/accesstokenmanager/test/unittest/database",
@@ -104,7 +106,7 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
     "tooltoken/saf_agent_fence.cpp",
     "tooltoken/tool_token_mock_test.cpp",
   ]
-  if (support_jsapi) {
+  if (access_token_manager_hapverify_enable) {
     sources += [
       "permission/accesstoken_info_utils_test.cpp",
       "permission/permission_constraint_check_test.cpp",
@@ -138,10 +140,112 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
   external_deps += accesstoken_manager_base_config.external_deps
 }
 
+ohos_unittest("libspm_data_task_test") {
+  subsystem_name = "accesscontrol"
+  module_out_path = module_output_path_unittest_accesstoken
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+    blocklist = "${access_token_path}/cfi_blocklist.txt"
+  }
+  branch_protector_ret = "pac_ret"
+
+  include_dirs = accesstoken_manager_base_config.include_dirs
+  include_dirs += [
+    "${access_token_path}/interfaces/innerkits/accesstoken/test/unittest/common",
+    "${access_token_path}/services/accesstokenmanager/test/unittest/service",
+    "${access_token_path}/services/accesstokenmanager/test/unittest/permission",
+    "${access_token_path}/services/accesstokenmanager/test/unittest/database",
+    "${access_token_path}/services/accesstokenmanager/test/unittest/common",
+  ]
+
+  sources = [
+    "common/fake_token_setproc.cpp",
+    "common/parameter.cpp",
+    "common/parameters.cpp",
+    "permission/spm_data_task_test.cpp",
+  ]
+
+  sources += accesstoken_manager_base_config.sources
+
+  cflags_cc = accesstoken_manager_base_config.cflags_cc
+  cflags_cc += [ "-DATM_TEST_ENABLE" ]
+
+  configs = accesstoken_manager_base_config.configs
+
+  # Don't depend on libaccesstoken_sdk as it pulls in libperm_setproc
+  # which conflicts with fake_token_setproc.cpp
+  deps = [ "${access_token_path}/interfaces/innerkits/nativetoken:libnativetoken_shared" ]
+  deps += accesstoken_manager_base_config.deps
+
+  external_deps = [
+    "googletest:gmock",
+    "googletest:gtest_main",
+  ]
+  external_deps += accesstoken_manager_base_config.external_deps
+}
+
+# Test suite for kernel-dependent tests that use fake_token_setproc
+ohos_unittest("libaccesstoken_manager_kernel_test") {
+  subsystem_name = "accesscontrol"
+  module_out_path = module_output_path_unittest_accesstoken
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+    blocklist = "${access_token_path}/cfi_blocklist.txt"
+  }
+  branch_protector_ret = "pac_ret"
+
+  include_dirs = accesstoken_manager_base_config.include_dirs
+  include_dirs += [
+    "${access_token_path}/interfaces/innerkits/accesstoken/test/unittest/common",
+    "${access_token_path}/services/accesstokenmanager/test/unittest/service",
+    "${access_token_path}/services/accesstokenmanager/test/unittest/permission",
+    "${access_token_path}/services/accesstokenmanager/test/unittest/database",
+    "${access_token_path}/services/accesstokenmanager/test/unittest/common",
+  ]
+
+  sources = [
+    "${access_token_path}/interfaces/innerkits/accesstoken/test/unittest/common/mock_permission.cpp",
+    "${access_token_path}/interfaces/innerkits/accesstoken/test/unittest/common/test_common.cpp",
+    "common/fake_token_setproc.cpp",
+    "common/parameter.cpp",
+    "common/parameters.cpp",
+    "database/table_item_test.cpp",
+    "permission/token_info_manager_kernel_test.cpp",
+  ]
+
+  sources += accesstoken_manager_base_config.sources
+
+  cflags_cc = accesstoken_manager_base_config.cflags_cc
+  cflags_cc += [ "-DATM_TEST_ENABLE" ]
+
+  configs = accesstoken_manager_base_config.configs
+
+  # Don't depend on libaccesstoken_sdk as it pulls in libperm_setproc
+  # which conflicts with fake_token_setproc.cpp
+  deps = [ "${access_token_path}/interfaces/innerkits/nativetoken:libnativetoken_shared" ]
+  deps += accesstoken_manager_base_config.deps
+
+  external_deps = [
+    "googletest:gmock",
+    "googletest:gtest_main",
+  ]
+  external_deps += accesstoken_manager_base_config.external_deps
+}
+
 group("functional_tests") {
   testonly = true
   deps = [ ":libaccesstoken_manager_service_standard_test" ]
   if (support_jsapi) {
     deps += [ ":libpermission_monitor_test" ]
+  }
+  if (access_token_manager_hapverify_enable) {
+    deps += [
+      ":libaccesstoken_manager_kernel_test",
+      ":libspm_data_task_test",
+    ]
   }
 }

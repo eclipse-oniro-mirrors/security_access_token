@@ -167,6 +167,18 @@ struct Identity final {
 };
 
 /**
+ * @brief App reserved status
+ */
+enum class ReservedType : int32_t {
+    /** normal data */
+    NONE = 0,
+    /** reserve identity, tokenId is reserved but app data is uninstalled */
+    RESERVED_IDENTITY = 1,
+    /** reserve data, app is uninstalled but data is preserved */
+    RESERVED_DATA = 2,
+};
+
+/**
  * @brief Pre-authorization token info class
  */
 class PreAuthorizationInfo final {

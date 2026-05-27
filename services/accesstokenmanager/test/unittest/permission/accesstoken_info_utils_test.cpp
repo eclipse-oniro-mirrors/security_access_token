@@ -61,7 +61,7 @@ HWTEST_F(AccessTokenInfoUtilsTest, BuildBundleFullInfo001, TestSize.Level0)
     BundleParam param;
     param.bundleName = "com.ohos.helper.test";
     param.appIdentifier = 123456;
-    param.distributionType = Verify::AppDistType::NONE_TYPE;
+    param.distributionType = static_cast<int32_t>(Verify::AppDistType::NONE_TYPE);
     param.isDebug = true;
 
     HapPolicy policy;
@@ -259,7 +259,7 @@ HWTEST_F(AccessTokenInfoUtilsTest, BuildBundleFullInfo005, TestSize.Level0)
 {
     BundleParam param;
     param.bundleName = "com.ohos.helper.range";
-    param.distributionType = Verify::AppDistType::APP_GALLERY;
+    param.distributionType = static_cast<int32_t>(Verify::AppDistType::APP_GALLERY);
 
     HapPolicy policy;
     policy.apl = APL_NORMAL;

@@ -37,6 +37,7 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
+
 uint64_t GetPermissionTimestampFromStateValue(const GenericValues& stateValue)
 {
     int64_t timestamp = stateValue.GetInt64(TokenFiledConst::FIELD_TIMESTAMP);

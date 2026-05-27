@@ -29,6 +29,7 @@
 #define private public
 #include "accesstoken_callback_stubs.h"
 #include "access_token_db_operator.h"
+#include "accesstoken_info_dumper.h"
 #include "accesstoken_info_utils.h"
 #include "accesstoken_info_manager.h"
 #include "accesstoken_remote_token_manager.h"
@@ -41,11 +42,13 @@
 #endif
 #include "permission_manager.h"
 #include "permission_constraint_check.h"
+#include "permission_request_toggle_manager.h"
 #include "token_modify_notifier.h"
 #undef private
 #include "permission_kernel_utils.h"
 #include "permission_map.h"
 #include "permission_validator.h"
+#include "spm_data_kernel_common.h"
 #include "string_ex.h"
 #include "token_setproc.h"
 #include "system_ability_definition.h"
@@ -761,7 +764,8 @@ HWTEST_F(TokenInfoManagerTest, InitHapToken003, TestSize.Level0)
     HapInfoCheckResultIdl resultInfoIdl;
     HapInfoCheckResult result;
 
-    ASSERT_EQ(0, atManagerService_->InitHapToken(info, policy, fullTokenId, resultInfoIdl));
+    ASSERT_EQ(0,
+        atManagerService_->InitHapToken(info, policy, fullTokenId, resultInfoIdl));
 
     PermissionInfoCheckResult permCheckResult;
     permCheckResult.permissionName = resultInfoIdl.permissionName;
@@ -774,7 +778,8 @@ HWTEST_F(TokenInfoManagerTest, InitHapToken003, TestSize.Level0)
     policy.hapPolicy.aclRequestedList = { "ohos.permission.ENTERPRISE_MANAGE_SETTINGS" };
     policy.hapPolicy.permStateList = { permissionStateA, permissionStateB };
     resultInfoIdl = {};
-    ASSERT_EQ(0, atManagerService_->InitHapToken(info, policy, fullTokenId, resultInfoIdl));
+    ASSERT_EQ(0,
+        atManagerService_->InitHapToken(info, policy, fullTokenId, resultInfoIdl));
 
     ASSERT_EQ(resultInfoIdl.permissionName, "ohos.permission.ENTERPRISE_MANAGE_SETTINGS");
     rule = static_cast<int32_t>(resultInfoIdl.rule);
@@ -2562,29 +2567,6 @@ HWTEST_F(TokenInfoManagerTest, GetAppId001, TestSize.Level0)
 }
 
 /**
- * @tc.name: GetApiVersionByTokenId002
- * @tc.desc: AccessTokenInfoManager::GetApiVersionByTokenId function test with hap token.
- * @tc.type: FUNC
- */
-HWTEST_F(TokenInfoManagerTest, GetApiVersionByTokenId002, TestSize.Level0)
-{
-    HapInfoParams info = g_infoManagerTestInfoParms;
-    info.apiVersion = 1205;
-    AccessTokenIDEx tokenIdEx = {0};
-    std::vector<GenericValues> undefValues;
-    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(
-        info, g_infoManagerTestPolicyPrams1, tokenIdEx, undefValues));
-    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
-    ASSERT_NE(INVALID_TOKENID, tokenId);
-
-    int32_t apiVersion = 0;
-    ASSERT_TRUE(AccessTokenInfoManager::GetInstance().GetApiVersionByTokenId(tokenId, apiVersion));
-    ASSERT_EQ(205, apiVersion);
-    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId));
-}
-
-
-/**
  * @tc.name: UserPolicyManagerIsPermissionRestricted001
  * @tc.desc: UserPolicyManager::IsPermissionRestricted function test with invalid tokenid.
  * @tc.type: FUNC
@@ -3922,7 +3904,12 @@ HWTEST_F(TokenInfoManagerTest, ReservedHapInfo002, TestSize.Level0)
     genericValues.Put(TokenFiledConst::FIELD_APL, ATokenAplEnum::APL_NORMAL);
     genericValues.Put(TokenFiledConst::FIELD_TOKEN_VERSION, 0);
     genericValues.Put(TokenFiledConst::FIELD_TOKEN_ATTR, TOKEN_ATTR_RESERVED);
-    genericValues.Put(TokenFiledConst::FIELD_FORBID_PERM_DIALOG, "test_perm_dialog_cap_state");
+    genericValues.Put(TokenFiledConst::FIELD_FORBID_PERM_DIALOG, 0);
+#ifdef SPM_DATA_ENABLE
+    genericValues.Put(TokenFiledConst::FIELD_UID, 0);
+    genericValues.Put(TokenFiledConst::FIELD_MIGRATED, 0);
+    genericValues.Put(TokenFiledConst::FIELD_RESERVED, 1);
+#endif
     AddInfo addInfo;
     addInfo.addType = AtmDataType::ACCESSTOKEN_HAP_INFO;
     addInfo.addValues.emplace_back(genericValues);

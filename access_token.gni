@@ -31,14 +31,13 @@ declare_args() {
   access_token_with_distributed_capability = true
   access_token_enhance_capability = true
   access_token_enable_manual_test = false
+  access_token_enable_spm = false
 }
 
 # External dependencies for each feature flag
 access_token_external_deps = []
 
-access_token_cflags_cc = [
-  "-DHILOG_ENABLE",
-]
+access_token_cflags_cc = [ "-DHILOG_ENABLE" ]
 
 if (defined(product_name) &&
     (product_name == "rk3568" || product_name == "standard")) {
@@ -65,8 +64,9 @@ if (access_token_camera_float_window_enable == true) {
   access_token_cflags_cc += [ "-DCAMERA_FLOAT_WINDOW_ENABLE" ]
 }
 
-if (!defined(global_parts_info) || (defined(global_parts_info.distributedhardware_device_manager) &&
-  access_token_with_distributed_capability == true)) {
+if (!defined(global_parts_info) ||
+    (defined(global_parts_info.distributedhardware_device_manager) &&
+     access_token_with_distributed_capability == true)) {
   token_sync_enable = true
   access_token_cflags_cc += [ "-DTOKEN_SYNC_ENABLE" ]
   access_token_external_deps += [ "device_manager:devicemanagersdk" ]
@@ -220,14 +220,16 @@ if ("${target_platform}" == "watch" || "${target_platform}" == "wearable") {
   access_token_cflags_cc += [ "-DREMOTE_PRIVACY_ENABLE" ]
 }
 
-if ("${target_platform}" == "pc" || "${target_platform}" == "tablet" || "${target_platform}" == "phone" || use_libfuzzer) {
+if ("${target_platform}" == "pc" || "${target_platform}" == "tablet" ||
+    "${target_platform}" == "phone" || use_libfuzzer) {
   access_token_manage_user_policy_enable = true
   access_token_cflags_cc += [ "-DSUPPORT_MANAGE_USER_POLICY" ]
 } else {
   access_token_manage_user_policy_enable = false
 }
 
-if ("${target_platform}" == "phone" || "${target_platform}" == "tablet" || "${target_platform}" == "pc") {
+if ("${target_platform}" == "phone" || "${target_platform}" == "tablet" ||
+    "${target_platform}" == "pc") {
   privacy_bundle_start_stop_enable = true
   access_token_cflags_cc += [ "-DPRIVACY_BUNDLE_START_STOP_ENABLE" ]
 } else {
@@ -236,4 +238,17 @@ if ("${target_platform}" == "phone" || "${target_platform}" == "tablet" || "${ta
 
 if (is_emulator) {
   access_token_cflags_cc += [ "-DX86_EMULATOR_MODE" ]
+}
+
+if (defined(global_parts_info) &&
+    defined(global_parts_info.security_appverify)) {
+  access_token_cflags_cc += [ "-DIS_SUPPORT_HAP_RUNNING" ]
+  access_token_manager_hapverify_enable = true
+  access_token_external_deps += [ "appverify:libhapverify" ]
+} else {
+  access_token_manager_hapverify_enable = false
+}
+
+if (access_token_enable_spm) {
+  access_token_cflags_cc += [ "-DSPM_DATA_ENABLE" ]
 }

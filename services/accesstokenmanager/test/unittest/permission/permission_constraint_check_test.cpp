@@ -29,6 +29,10 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 
+constexpr uint32_t SYSTEM_APP_FLAG = 0x0001;
+constexpr uint32_t ATOMIC_SERVICE_FLAG = 0x0002;
+constexpr uint32_t DEBUG_APP_FLAG = 0x0008;
+
 class PermissionConstraintCheckTest : public testing::Test {};
 
 /**
@@ -140,7 +144,7 @@ HWTEST_F(PermissionConstraintCheckTest, IsPermAvailableRangeSatisfied003, TestSi
     BundleParam param = {};
     param.bundleName = "com.example.test";
     param.apiVersion = 12;
-    param.distributionType = Verify::AppDistType::NONE_TYPE;
+    param.distributionType = static_cast<int32_t>(Verify::AppDistType::NONE_TYPE);
     param.isDebug = true;
 
     PermissionBriefDef briefDef = {};
@@ -188,7 +192,7 @@ HWTEST_F(PermissionConstraintCheckTest, AclAndEdmCheck002, TestSize.Level0)
     BundleParam param = {};
     param.bundleName = "com.example.test";
     param.apiVersion = 12;
-    param.distributionType = Verify::AppDistType::APP_GALLERY;
+    param.distributionType = static_cast<int32_t>(Verify::AppDistType::APP_GALLERY);
 
     PermissionBriefDef briefDef = {};
     briefDef.permissionName = const_cast<char *>("ohos.permission.ENTERPRISE_MANAGE_SETTINGS");
@@ -256,7 +260,7 @@ HWTEST_F(PermissionConstraintCheckTest, IsPermAvailableRangeSatisfied006, TestSi
     BundleParam param = {};
     param.bundleName = "com.example.test";
     param.apiVersion = 12;
-    param.distributionType = Verify::AppDistType::APP_GALLERY;
+    param.distributionType = static_cast<int32_t>(Verify::AppDistType::APP_GALLERY);
 
     PermissionBriefDef briefDef = {};
     briefDef.permissionName = const_cast<char *>("ohos.permission.ENTERPRISE_NORMAL_TEST");
@@ -371,6 +375,107 @@ HWTEST_F(PermissionConstraintCheckTest, FixBriefPermData003, TestSize.Level0)
     EXPECT_TRUE(isFixed);
     EXPECT_EQ(static_cast<uint16_t>(microphoneCode), data[0].permCode);
     manager.dlpPermissionModeMap_.clear();
+}
+
+/**
+ * @tc.name: FixPersistentHapInfo001
+ * @tc.desc: Verify FixPersistentHapInfo updates mismatched basic fields.
+ * @tc.type: FUNC
+ */
+HWTEST_F(PermissionConstraintCheckTest, FixPersistentHapInfo001, TestSize.Level0)
+{
+    BundleParam param;
+    param.bundleName = "com.example.test";
+    param.appId = "com.example.test.app";
+    param.apiVersion = 12;
+    param.isSystem = true;
+    param.isAtomicService = false;
+    param.isDebug = false;
+
+    HapPolicy policy;
+    policy.apl = APL_SYSTEM_CORE;
+
+    HapTokenInfoItem hapTokenInfoItem;
+    hapTokenInfoItem.bundleName = "com.example.old";
+    hapTokenInfoItem.appId = "com.example.old.app";
+    hapTokenInfoItem.apiVersion = 9;
+    hapTokenInfoItem.apl = APL_NORMAL;
+    hapTokenInfoItem.tokenAttr = 0;
+
+    bool isFixed = false;
+    PermissionConstraintCheck::FixPersistentHapInfo(param, policy, hapTokenInfoItem, isFixed);
+
+    EXPECT_TRUE(isFixed);
+    EXPECT_EQ("com.example.test", hapTokenInfoItem.bundleName);
+    EXPECT_EQ("com.example.test.app", hapTokenInfoItem.appId);
+    EXPECT_EQ(12, hapTokenInfoItem.apiVersion);
+    EXPECT_EQ(APL_SYSTEM_CORE, hapTokenInfoItem.apl);
+    EXPECT_TRUE((hapTokenInfoItem.tokenAttr & SYSTEM_APP_FLAG) != 0);
+}
+
+/**
+ * @tc.name: FixPersistentHapInfo002
+ * @tc.desc: Verify FixPersistentHapInfo updates tokenAttr flags correctly.
+ * @tc.type: FUNC
+ */
+HWTEST_F(PermissionConstraintCheckTest, FixPersistentHapInfo002, TestSize.Level0)
+{
+    BundleParam param;
+    param.bundleName = "com.example.test";
+    param.isSystem = false;
+    param.isAtomicService = true;
+    param.isDebug = true;
+
+    HapPolicy policy;
+    policy.apl = APL_NORMAL;
+
+    HapTokenInfoItem hapTokenInfoItem;
+    hapTokenInfoItem.bundleName = "com.example.test";
+    hapTokenInfoItem.tokenAttr = SYSTEM_APP_FLAG;
+
+    bool isFixed = false;
+    PermissionConstraintCheck::FixPersistentHapInfo(param, policy, hapTokenInfoItem, isFixed);
+
+    EXPECT_TRUE(isFixed);
+    EXPECT_FALSE((hapTokenInfoItem.tokenAttr & SYSTEM_APP_FLAG) != 0);
+    EXPECT_TRUE((hapTokenInfoItem.tokenAttr & ATOMIC_SERVICE_FLAG) != 0);
+    EXPECT_TRUE((hapTokenInfoItem.tokenAttr & DEBUG_APP_FLAG) != 0);
+}
+
+/**
+ * @tc.name: FixPersistentHapInfo003
+ * @tc.desc: Verify FixPersistentHapInfo does not modify matching fields.
+ * @tc.type: FUNC
+ */
+HWTEST_F(PermissionConstraintCheckTest, FixPersistentHapInfo003, TestSize.Level0)
+{
+    BundleParam param;
+    param.bundleName = "com.example.test";
+    param.appId = "com.example.test.app";
+    param.apiVersion = 12;
+    param.isSystem = true;
+    param.isAtomicService = false;
+    param.isDebug = false;
+
+    HapPolicy policy;
+    policy.apl = APL_SYSTEM_BASIC;
+
+    HapTokenInfoItem hapTokenInfoItem;
+    hapTokenInfoItem.bundleName = "com.example.test";
+    hapTokenInfoItem.appId = "com.example.test.app";
+    hapTokenInfoItem.apiVersion = 12;
+    hapTokenInfoItem.apl = APL_SYSTEM_BASIC;
+    hapTokenInfoItem.tokenAttr = SYSTEM_APP_FLAG;
+
+    bool isFixed = false;
+    PermissionConstraintCheck::FixPersistentHapInfo(param, policy, hapTokenInfoItem, isFixed);
+
+    EXPECT_FALSE(isFixed);
+    EXPECT_EQ("com.example.test", hapTokenInfoItem.bundleName);
+    EXPECT_EQ("com.example.test.app", hapTokenInfoItem.appId);
+    EXPECT_EQ(12, hapTokenInfoItem.apiVersion);
+    EXPECT_EQ(APL_SYSTEM_BASIC, hapTokenInfoItem.apl);
+    EXPECT_TRUE((hapTokenInfoItem.tokenAttr & SYSTEM_APP_FLAG) != 0);
 }
 
 /**

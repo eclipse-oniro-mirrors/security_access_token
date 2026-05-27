@@ -23,7 +23,6 @@
 #include "app_manager_access_client.h"
 #ifdef BGTASKMGR_CONTINUOUS_TASK_ENABLE
 #include "background_task_manager_access_client.h"
-#else
 #include "continuous_task_callback_info.h"
 #endif
 #include "form_manager_access_client.h"
@@ -72,6 +71,7 @@ std::string GetTempPermissionTaskName(AccessTokenID tokenID, const std::string& 
     return TASK_NAME_TEMP_PERMISSION + std::to_string(tokenID) + TEMP_PERMISSION_TASK_DELIMITER + permissionName;
 }
 
+#ifdef BGTASKMGR_CONTINUOUS_TASK_ENABLE
 bool ContainsTypeId(const std::vector<uint32_t>& typeIds, BackgroundMode type)
 {
     return std::find(typeIds.begin(), typeIds.end(), static_cast<uint32_t>(type)) != typeIds.end();
@@ -93,6 +93,7 @@ bool IsMatchedTaskType(TempPermissionType permissionType, const std::vector<uint
     }
     return false;
 }
+#endif
 }
 
 TempPermissionObserver& TempPermissionObserver::GetInstance()
@@ -477,47 +478,20 @@ TempPermissionType TempPermissionObserver::GetPermissionType(const std::string& 
 
 bool TempPermissionObserver::HasLocationTask(AccessTokenID tokenID)
 {
+#ifdef BGTASKMGR_CONTINUOUS_TASK_ENABLE
     return FindContinuousTask(tokenID, TempPermissionType::LOCATION_TYPE);
+#else
+    return false;
+#endif
 }
 
 bool TempPermissionObserver::HasAudioRecordingOrVoipTask(AccessTokenID tokenID)
 {
+#ifdef BGTASKMGR_CONTINUOUS_TASK_ENABLE
     return FindContinuousTask(tokenID, TempPermissionType::MICROPHONE_TYPE);
-}
-
-void TempPermissionObserver::UpsertContinuousTask(AccessTokenID tokenID,
-    int32_t continuousTaskId, const std::vector<uint32_t>& typeIds)
-{
-    std::unique_lock<std::mutex> lck(continuousTaskMutex_);
-    continuousTaskIdMap_[tokenID][continuousTaskId] = typeIds;
-}
-
-void TempPermissionObserver::RemoveContinuousTask(AccessTokenID tokenID, int32_t continuousTaskId)
-{
-    std::unique_lock<std::mutex> lck(continuousTaskMutex_);
-    auto tokenIter = continuousTaskIdMap_.find(tokenID);
-    if (tokenIter == continuousTaskIdMap_.end()) {
-        return;
-    }
-    tokenIter->second.erase(continuousTaskId);
-    if (tokenIter->second.empty()) {
-        continuousTaskIdMap_.erase(tokenIter);
-    }
-}
-
-bool TempPermissionObserver::FindContinuousTask(AccessTokenID tokenID, TempPermissionType type)
-{
-    std::unique_lock<std::mutex> lck(continuousTaskMutex_);
-    auto tokenIter = continuousTaskIdMap_.find(tokenID);
-    if (tokenIter == continuousTaskIdMap_.end()) {
-        return false;
-    }
-    for (const auto& item : tokenIter->second) {
-        if (IsMatchedTaskType(type, item.second)) {
-            return true;
-        }
-    }
+#else
     return false;
+#endif
 }
 
 bool TempPermissionObserver::ReportTempPermissionDeny(AccessTokenID tokenID, const std::string& permissionName,
@@ -563,6 +537,41 @@ bool TempPermissionObserver::CheckTempPermissionByType(AccessTokenID tokenID, co
 }
 
 #ifdef BGTASKMGR_CONTINUOUS_TASK_ENABLE
+void TempPermissionObserver::UpsertContinuousTask(AccessTokenID tokenID,
+    int32_t continuousTaskId, const std::vector<uint32_t>& typeIds)
+{
+    std::unique_lock<std::mutex> lck(continuousTaskMutex_);
+    continuousTaskIdMap_[tokenID][continuousTaskId] = typeIds;
+}
+
+void TempPermissionObserver::RemoveContinuousTask(AccessTokenID tokenID, int32_t continuousTaskId)
+{
+    std::unique_lock<std::mutex> lck(continuousTaskMutex_);
+    auto tokenIter = continuousTaskIdMap_.find(tokenID);
+    if (tokenIter == continuousTaskIdMap_.end()) {
+        return;
+    }
+    tokenIter->second.erase(continuousTaskId);
+    if (tokenIter->second.empty()) {
+        continuousTaskIdMap_.erase(tokenIter);
+    }
+}
+
+bool TempPermissionObserver::FindContinuousTask(AccessTokenID tokenID, TempPermissionType type)
+{
+    std::unique_lock<std::mutex> lck(continuousTaskMutex_);
+    auto tokenIter = continuousTaskIdMap_.find(tokenID);
+    if (tokenIter == continuousTaskIdMap_.end()) {
+        return false;
+    }
+    for (const auto& item : tokenIter->second) {
+        if (IsMatchedTaskType(type, item.second)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 void TempPermissionObserver::CollectContinuousTaskState(AccessTokenID tokenID, bool& hasLocationTask,
     bool& hasAudioTask, std::vector<std::shared_ptr<ContinuousTaskCallbackInfo>>& continuousTaskList)
 {
@@ -597,6 +606,61 @@ void TempPermissionObserver::AssociateGrantedPermissionTasks(AccessTokenID token
             AssociateContinuousTaskIfNeeded(tokenID, info->GetContinuousTaskId(), info->GetTypeIds());
         }
     }
+}
+
+bool TempPermissionObserver::GetContinuousTaskTypeIds(AccessTokenID tokenID, int32_t continuousTaskId,
+    std::vector<uint32_t>& typeIds)
+{
+    std::unique_lock<std::mutex> lck(continuousTaskMutex_);
+    auto tokenIter = continuousTaskIdMap_.find(tokenID);
+    if (tokenIter == continuousTaskIdMap_.end()) {
+        return false;
+    }
+    auto taskIter = tokenIter->second.find(continuousTaskId);
+    if (taskIter == tokenIter->second.end()) {
+        return false;
+    }
+    typeIds = taskIter->second;
+    return true;
+}
+
+bool TempPermissionObserver::AssociateContinuousTaskIfNeeded(
+    AccessTokenID tokenID, int32_t continuousTaskId, const std::vector<uint32_t>& typeIds)
+{
+    bool shouldAssociate = false;
+    if (ContainsTypeId(typeIds, BackgroundMode::LOCATION) &&
+        HasTempPermissionType(tokenID, TempPermissionType::LOCATION_TYPE)) {
+        shouldAssociate = true;
+    }
+    if (HasAudioTaskType(typeIds) &&
+        HasTempPermissionType(tokenID, TempPermissionType::MICROPHONE_TYPE)) {
+        shouldAssociate = true;
+    }
+    if (!shouldAssociate) {
+        return false;
+    }
+    UpsertContinuousTask(tokenID, continuousTaskId, typeIds);
+    return true;
+}
+
+void TempPermissionObserver::HandleContinuousTaskStop(AccessTokenID tokenID, TempPermissionType type,
+    const std::vector<bool>& list)
+{
+    if (type == TempPermissionType::LOCATION_TYPE) {
+        if (FindContinuousTask(tokenID, type)) {
+            return;
+        }
+        if (list[FOREGROUND_FLAG] || list[FORMS_FLAG]) {
+            return;
+        }
+    } else if (type == TempPermissionType::MICROPHONE_TYPE) {
+        if (FindContinuousTask(tokenID, type) || list[FOREGROUND_FLAG]) {
+            return;
+        }
+    } else {
+        return;
+    }
+    DelayRevokePermissionsByType(tokenID, type);
 }
 #endif
 
@@ -727,41 +791,6 @@ bool TempPermissionObserver::HasTempPermissionType(AccessTokenID tokenID, TempPe
         }
     }
     return false;
-}
-
-bool TempPermissionObserver::GetContinuousTaskTypeIds(AccessTokenID tokenID, int32_t continuousTaskId,
-    std::vector<uint32_t>& typeIds)
-{
-    std::unique_lock<std::mutex> lck(continuousTaskMutex_);
-    auto tokenIter = continuousTaskIdMap_.find(tokenID);
-    if (tokenIter == continuousTaskIdMap_.end()) {
-        return false;
-    }
-    auto taskIter = tokenIter->second.find(continuousTaskId);
-    if (taskIter == tokenIter->second.end()) {
-        return false;
-    }
-    typeIds = taskIter->second;
-    return true;
-}
-
-bool TempPermissionObserver::AssociateContinuousTaskIfNeeded(
-    AccessTokenID tokenID, int32_t continuousTaskId, const std::vector<uint32_t>& typeIds)
-{
-    bool shouldAssociate = false;
-    if (ContainsTypeId(typeIds, BackgroundMode::LOCATION) &&
-        HasTempPermissionType(tokenID, TempPermissionType::LOCATION_TYPE)) {
-        shouldAssociate = true;
-    }
-    if (HasAudioTaskType(typeIds) &&
-        HasTempPermissionType(tokenID, TempPermissionType::MICROPHONE_TYPE)) {
-        shouldAssociate = true;
-    }
-    if (!shouldAssociate) {
-        return false;
-    }
-    UpsertContinuousTask(tokenID, continuousTaskId, typeIds);
-    return true;
 }
 
 bool TempPermissionObserver::GetPermissionState(AccessTokenID tokenID,
@@ -1005,26 +1034,6 @@ void TempPermissionObserver::HandleFormInvisibleState(AccessTokenID tokenID, con
     } else {
         DelayRevokePermissionsByType(tokenID, TempPermissionType::LOCATION_TYPE);
     }
-}
-
-void TempPermissionObserver::HandleContinuousTaskStop(AccessTokenID tokenID, TempPermissionType type,
-    const std::vector<bool>& list)
-{
-    if (type == TempPermissionType::LOCATION_TYPE) {
-        if (FindContinuousTask(tokenID, type)) {
-            return;
-        }
-        if (list[FOREGROUND_FLAG] || list[FORMS_FLAG]) {
-            return;
-        }
-    } else if (type == TempPermissionType::MICROPHONE_TYPE) {
-        if (FindContinuousTask(tokenID, type) || list[FOREGROUND_FLAG]) {
-            return;
-        }
-    } else {
-        return;
-    }
-    DelayRevokePermissionsByType(tokenID, type);
 }
 
 bool TempPermissionObserver::DelayRevokePermission(AccessToken::AccessTokenID tokenID,
