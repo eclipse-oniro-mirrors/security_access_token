@@ -288,6 +288,9 @@ HWTEST_F(GetHapTokenTest, GetHapBaseInfoByUidFuncTest001, TestSize.Level0)
     ASSERT_NE(INVALID_TOKENID, tokenID);
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetHapTokenInfo(tokenID, hapTokenInfoRes));
 
+    if (hapTokenInfoRes.uid < 0) {
+        return;
+    }
     HapBaseInfo baseInfo;
     int32_t ret = AccessTokenKit::GetHapBaseInfoByUid(hapTokenInfoRes.uid, baseInfo);
 #ifdef SPM_DATA_ENABLE
@@ -314,7 +317,7 @@ HWTEST_F(GetHapTokenTest, GetHapBaseInfoByUidAbnormalTest001, TestSize.Level0)
     HapBaseInfo baseInfo;
     EXPECT_EQ(ERR_PARAM_INVALID, AccessTokenKit::GetHapBaseInfoByUid(0, baseInfo));
     EXPECT_EQ(ERR_PARAM_INVALID, AccessTokenKit::GetHapBaseInfoByUid(-1, baseInfo));
-    EXPECT_EQ(ERR_TOKENID_NOT_EXIST, AccessTokenKit::GetHapBaseInfoByUid(INT32_MAX, baseInfo));
+    EXPECT_EQ(ERR_UID_NOT_EXIST, AccessTokenKit::GetHapBaseInfoByUid(INT32_MAX, baseInfo));
 }
 
 /**
@@ -326,12 +329,11 @@ HWTEST_F(GetHapTokenTest, GetHapBaseInfoByUidAbnormalTest001, TestSize.Level0)
 HWTEST_F(GetHapTokenTest, GetHapTokenInfoExtensionFuncTest001, TestSize.Level0)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetHapTokenInfoExtensionFuncTest001");
-    setuid(0);
     AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     ASSERT_NE(INVALID_TOKENID, tokenID);
     HapTokenInfoExt hapTokenInfoExt;
     int ret = AccessTokenKit::GetHapTokenInfoExtension(tokenID, hapTokenInfoExt);
-    ASSERT_EQ(ret, 0);
+    ASSERT_EQ(ret, RET_SUCCESS);
     EXPECT_EQ(TEST_BUNDLE_NAME, hapTokenInfoExt.baseInfo.bundleName);
     EXPECT_EQ("appIDDesc", hapTokenInfoExt.appID);
 

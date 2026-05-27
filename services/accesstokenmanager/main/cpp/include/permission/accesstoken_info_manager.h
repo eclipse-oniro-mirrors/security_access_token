@@ -65,6 +65,7 @@ public:
     int GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfoBase& info);
     int AllocAccessTokenIDEx(const HapInfoParams& info, AccessTokenID tokenId, AccessTokenIDEx& tokenIdEx);
     int RemoveHapTokenInfo(AccessTokenID id, bool isTokenReserved = false);
+    int32_t DeleteIdentity(AccessTokenID id, const std::string& bundleName, ReservedType type);
     int RemoveNativeTokenInfo(AccessTokenID id);
     int32_t GetHapAppIdByTokenId(AccessTokenID tokenID, std::string& appId);
     int32_t FillInstallPolicyWithoutHaps(
@@ -120,7 +121,7 @@ public:
     void CommitUpdateHapCache(const HapTokenInfo& hapInfo,
         const std::vector<BriefPermData>& briefPermData,
         const std::shared_ptr<BundleInfoInner>& bundleInfo);
-    void CommitDeleteHapCache(AccessTokenID tokenID, const std::string& bundleName);
+    int32_t CommitDeleteHapCache(AccessTokenID tokenID, const std::string& bundleName);
 
     int32_t QueryStatusByPermission(const std::vector<uint32_t>& permCodeList,
         std::vector<PermissionStatusIdl>& permissionInfoList, bool onlyHap);
@@ -164,9 +165,7 @@ private:
     void AddTokenIdToUndefValues(AccessTokenID tokenId, std::vector<GenericValues>& undefValues);
     int AddHapTokenInfoToDb(const std::shared_ptr<HapTokenInfoInner>& hapInfo,
         const HapTokenDbContext& context);
-    int32_t RemoveHapTokenInfoInner(std::shared_ptr<HapTokenInfoInner>& info, AccessTokenID id, bool isTokenReserved);
-    int RemoveHapTokenInfoFromDb(
-        const std::shared_ptr<HapTokenInfoInner>& info, bool isTokenReserved, AccessTokenID reservedTokenId);
+    int32_t RemoveHapTokenInfoInner(std::shared_ptr<HapTokenInfoInner>& info, AccessTokenID id, ReservedType type);
     int CreateRemoteHapTokenInfo(AccessTokenID mapID, HapTokenInfoForSync& hapSync);
     int UpdateRemoteHapTokenInfo(AccessTokenID mapID, HapTokenInfoForSync& hapSync);
     void DumpHapTokenInfoByTokenId(const AccessTokenID tokenId, std::string& dumpInfo);
@@ -190,12 +189,11 @@ private:
         AccessTokenID tokenId, uint32_t permCode, bool isAllowed, const char* source, bool hasFlagChanged);
     int32_t RefreshUserPolicyFlagForUser(int32_t userId, const UserPolicyChange& policy);
     int32_t CheckHapInfoParam(const HapInfoParams& info, const HapPolicy& policy);
+    void RemoveReservedTokenForBundle(const HapInfoParams& info, std::vector<AccessTokenID>& tokenIds);
+    void DeleteOldReservedTokens(const std::vector<AccessTokenID>& reservedTokenIds, const std::string& bundleName);
     std::shared_ptr<HapTokenInfoInner> GetHapTokenInfoInnerFromDb(AccessTokenID id);
-    void RemoveReservedHapTokenId(int32_t userID, const std::string& bundleName, int32_t instIndex);
-    void AddReservedHapTokenId(int32_t userID, const std::string& bundleName,
-        int32_t instIndex, AccessTokenID tokenID);
-    AccessTokenID GetReservedHapTokenId(int32_t userID, const std::string& bundleName, int32_t instIndex);
     void UpdateTokenAttr(const UpdateHapInfoParams& info, AccessTokenIDEx& tokenIdEx);
+    int32_t DeleteIdentityInner(std::shared_ptr<HapTokenInfoInner> info, ReservedType delType);
     void UpsertBundleInfoInnerCacheWithoutLock(const std::string& bundleName,
         const std::shared_ptr<BundleInfoInner>& bundleInfo);
     void AddTokenIdToBundleInfoInner(const std::shared_ptr<BundleInfoInner>& bundleInfo, AccessTokenID tokenId);
@@ -204,7 +202,6 @@ private:
     bool hasInited_;
 
     std::shared_mutex hapTokenInfoLock_;
-    std::shared_mutex reservedHapTokenInfoLock_;
     std::shared_mutex nativeTokenInfoLock_;
     std::shared_mutex managerLock_;
     std::shared_mutex modifyLock_;
@@ -212,7 +209,6 @@ private:
     std::map<int, std::shared_ptr<HapTokenInfoInner>> hapTokenInfoMap_;
     std::map<std::string, AccessTokenID> hapTokenIdMap_;
     std::map<std::string, std::shared_ptr<BundleInfoInner>> bundleInfoMap_;
-    std::map<std::string, AccessTokenID> reservedHapTokenIdMap_;
     std::map<uint32_t, NativeTokenInfoCache> nativeTokenInfoMap_;
 
     std::shared_ptr<VerifyAccessTokenMonitor> tokenMonitor_;

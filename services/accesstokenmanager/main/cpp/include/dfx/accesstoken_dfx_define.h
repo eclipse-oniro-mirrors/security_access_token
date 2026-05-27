@@ -63,7 +63,12 @@ typedef enum AddHapSceneCode {
 } AddHapSceneCode;
 
 typedef enum DeleteHapSceneCode {
+    AT_DELETE_COMMON_FINISH = 1,
     AT_DELETE_KEEP_TOKEN_FINISH = 2,
+    AT_DELETE_KEEP_DATA = 3,
+    AT_DELETE_NORMAL = 4,
+    AT_DELETE_ALL_BUNDLE = 5,
+    AT_DELETE_RESERVED_TOKEN = 6
 } DeleteHapSceneCode;
 
 typedef enum AccessTokenDbSceneCode {

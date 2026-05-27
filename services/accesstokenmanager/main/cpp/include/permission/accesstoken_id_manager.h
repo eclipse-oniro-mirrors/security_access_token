@@ -56,11 +56,11 @@ public:
 
     // Migration control
     void SetMigrationDone();
+    bool ExtractBundleId(int32_t uid, int32_t &bundleId) const;
 private:
     AccessTokenIDManager() = default;
     DISALLOW_COPY_AND_MOVE(AccessTokenIDManager);
     AccessTokenID CreateTokenId(ATokenTypeEnum type, int32_t dlpFlag, int32_t cloneFlag, int32_t toolFlag) const;
-    bool ExtractBundleId(int32_t uid, int32_t &bundleId) const;
 
     std::shared_mutex tokenIdLock_;
     std::set<AccessTokenID> tokenIdSet_;

@@ -39,6 +39,7 @@
 #include "claw_token_info_manager.h"
 #include "data_usage_dfx.h"
 #include "data_validator.h"
+#include "delete_bundle_manager.h"
 #include "hap_token_info.h"
 #include "hap_token_info_inner.h"
 #include "hisysevent_adapter.h"
@@ -1395,6 +1396,80 @@ int AccessTokenManagerService::DeleteToken(AccessTokenID tokenID, bool isTokenRe
     dfxInfo.duration = TimeUtil::GetCurrentTimestamp() - beginTime;
     ReportSysEventDelHap(errorCode, sceneCode, dfxInfo);
     return errorCode;
+}
+
+int32_t AccessTokenManagerService::DeleteIdentityCore(AccessTokenID tokenID, const std::string& bundleName,
+    ReservedType reservedType, int32_t& sceneCode)
+{
+    // Case 1: tokenID is INVALID_TOKENID
+    if (tokenID == INVALID_TOKENID) {
+        sceneCode = static_cast<int32_t>(AT_DELETE_ALL_BUNDLE);
+        if (reservedType != ReservedType::NONE) {
+            LOGE(ATM_DOMAIN, ATM_TAG,
+                "Invalid param: reservedType must be NONE when tokenID is INVALID.");
+            return AccessTokenError::ERR_PARAM_INVALID;
+        }
+        // Delete all reserved tokens for this bundle and package info
+        return DeleteBundleManager::GetInstance().DeleteBundleAndAllTokens(bundleName);
+    }
+
+    // Case 2: tokenID is valid
+    // Check if it's a HAP token
+    if (this->GetTokenType(tokenID) != TOKEN_HAP) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Token %{public}u is not a HAP token.", tokenID);
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+
+    // Case 2.1: tokenID is a ReservedTokenId
+    if (AccessTokenIDManager::GetInstance().IsReservedTokenId(tokenID)) {
+        sceneCode = static_cast<int32_t>(AT_DELETE_RESERVED_TOKEN);
+        if (reservedType != ReservedType::NONE) {
+            LOGE(ATM_DOMAIN, ATM_TAG,
+                "Invalid param: reservedType must be NONE for reserved tokenID.");
+            return AccessTokenError::ERR_PARAM_INVALID;
+        }
+        // Delete this reserved token completely
+        return DeleteBundleManager::GetInstance().DeleteReservedToken(tokenID, bundleName);
+    }
+
+    if (reservedType == ReservedType::RESERVED_IDENTITY) {
+        sceneCode = static_cast<int32_t>(AT_DELETE_KEEP_TOKEN_FINISH);
+    } else if (reservedType == ReservedType::RESERVED_DATA) {
+        sceneCode = static_cast<int32_t>(AT_DELETE_KEEP_DATA);
+    } else {
+        sceneCode = static_cast<int32_t>(AT_DELETE_NORMAL);
+    }
+    // Case 2.2: tokenID is a normal (non-reserved) token
+    // Match bundleName and call DeleteIdentity
+    return AccessTokenInfoManager::GetInstance().DeleteIdentity(tokenID, bundleName, reservedType);
+}
+
+int32_t AccessTokenManagerService::DeleteIdentity(
+    AccessTokenID tokenID, const std::string& bundleName, ReservedTypeIdl type)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "Id %{public}d, bundle %{public}s, type %{public}d, callerPid %{public}d.",
+        tokenID, bundleName.c_str(), type, IPCSkeleton::GetCallingPid());
+    AccessTokenID callingTokenID = IPCSkeleton::GetCallingTokenID();
+    if (VerifyAccessToken(callingTokenID, MANAGE_HAP_TOKENID_PERMISSION) == PERMISSION_DENIED) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", callingTokenID);
+        return AccessTokenError::ERR_PERMISSION_DENIED;
+    }
+
+    if (bundleName.empty()) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Invalid param: bundle empty.");
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+
+    HapDfxInfo dfxInfo = {};
+    dfxInfo.tokenId = tokenID;
+    dfxInfo.ipcCode = static_cast<int32_t>(IAccessTokenManagerIpcCode::COMMAND_DELETE_IDENTITY);
+    ReservedType reservedType = static_cast<ReservedType>(type);
+    int32_t sceneCode = static_cast<int32_t>(AT_DELETE_COMMON_FINISH);
+    int64_t beginTime = TimeUtil::GetCurrentTimestamp();
+    int32_t ret = DeleteIdentityCore(tokenID, bundleName, reservedType, sceneCode);
+    dfxInfo.duration = TimeUtil::GetCurrentTimestamp() - beginTime;
+    ReportSysEventDelHap(ret, static_cast<int32_t>(sceneCode), dfxInfo);
+    return ret;
 }
 
 int AccessTokenManagerService::GetTokenType(AccessTokenID tokenID)

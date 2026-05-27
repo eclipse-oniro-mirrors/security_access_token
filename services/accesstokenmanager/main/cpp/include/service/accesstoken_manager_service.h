@@ -93,6 +93,7 @@ public:
     int32_t SetPermissionStatusWithPolicy(
         AccessTokenID tokenID, const std::vector<std::string>& permissionList, int32_t status, uint32_t flag) override;
     int DeleteToken(AccessTokenID tokenID, bool isTokenReserved) override;
+    int32_t DeleteIdentity(AccessTokenID tokenID, const std::string& bundleName, ReservedTypeIdl type) override;
     int GetTokenType(AccessTokenID tokenID);
     int GetTokenType(AccessTokenID tokenID, int32_t& tokenType) override;
     int32_t GetHapTokenID(
@@ -208,6 +209,8 @@ private:
     int32_t RefreshUserPolicyPermState(const std::vector<UserPolicyChange>& changedPolicyList);
 #endif
     int32_t CheckHapManagerPermission();
+    int32_t DeleteIdentityCore(AccessTokenID tokenID, const std::string& bundleName,
+        ReservedType reservedType, int32_t& sceneCode);
 
     void FilterPermFeature(bool isSystemApp, HapPolicy& policy);
     bool isInitialize_ = false;

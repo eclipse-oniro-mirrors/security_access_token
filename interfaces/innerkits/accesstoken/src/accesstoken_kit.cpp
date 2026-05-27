@@ -248,6 +248,18 @@ int32_t AccessTokenKit::DeleteToolTokenByPid(int32_t pid)
     return AccessTokenManagerClient::GetInstance().DeleteToolTokenByPid(pid);
 }
 
+int32_t AccessTokenKit::DeleteIdentity(
+    AccessTokenID tokenID, const std::string& bundleName, ReservedType type)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "TokenID=%{public}u, bundle=%{public}s, type=%{public}d.",
+        tokenID, bundleName.c_str(), static_cast<int32_t>(type));
+    if (bundleName.empty() || (type < ReservedType::NONE) || (type > ReservedType::RESERVED_DATA)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Invalid param.");
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    return AccessTokenManagerClient::GetInstance().DeleteIdentity(tokenID, bundleName, type);
+}
+
 ATokenTypeEnum AccessTokenKit::GetTokenType(AccessTokenID tokenID) __attribute__((no_sanitize("cfi")))
 {
     LOGD(ATM_DOMAIN, ATM_TAG, "TokenID=%{public}d.", tokenID);

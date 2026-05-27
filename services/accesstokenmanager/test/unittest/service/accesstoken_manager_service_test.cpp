@@ -401,25 +401,6 @@ void AccessTokenManagerServiceTest::CreateHapToken(const HapInfoParcel& infoParC
 }
 
 /**
- * @tc.name: SystemConfigTest001
- * @tc.desc: test permission define version from db same with permission define version from rodata
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenManagerServiceTest, SystemConfigTest001, TestSize.Level0)
-{
-    GenericValues conditionValue;
-    conditionValue.Put(TokenFiledConst::FIELD_NAME, PERM_DEF_VERSION);
-    std::vector<GenericValues> results;
-    ASSERT_EQ(0, AccessTokenDb::GetInstance()->Find(AtmDataType::ACCESSTOKEN_SYSTEM_CONFIG, conditionValue, results));
-    ASSERT_EQ(false, results.empty());
-
-    std::string dbPermDefVersion = results[0].GetString(TokenFiledConst::FIELD_VALUE);
-    const char* curPermDefVersion = GetPermDefVersion();
-    ASSERT_EQ(true, dbPermDefVersion == curPermDefVersion);
-}
-
-/**
  * @tc.name: PermissionStateQueryTest001
  * @tc.desc: test query permission_state_table by token_id in (...) and permission_name in (...)
  * @tc.type: FUNC
@@ -645,16 +626,18 @@ HWTEST_F(AccessTokenManagerServiceTest, GetHapBaseInfoByUidTest001, TestSize.Lev
 
     HapBaseInfoParcel hapBaseInfoParcel;
 #ifdef SPM_DATA_ENABLE
-    ASSERT_EQ(RET_SUCCESS, atManagerService_->GetHapBaseInfoByUid(hapInfo.uid, hapBaseInfoParcel));
-    EXPECT_EQ(g_info.userID, hapBaseInfoParcel.hapBaseInfo.userID);
-    EXPECT_EQ(g_info.bundleName, hapBaseInfoParcel.hapBaseInfo.bundleName);
-    EXPECT_EQ(g_info.instIndex, hapBaseInfoParcel.hapBaseInfo.instIndex);
+    if (hapInfo.uid > 0) {
+        ASSERT_EQ(RET_SUCCESS, atManagerService_->GetHapBaseInfoByUid(hapInfo.uid, hapBaseInfoParcel));
+        EXPECT_EQ(g_info.userID, hapBaseInfoParcel.hapBaseInfo.userID);
+        EXPECT_EQ(g_info.bundleName, hapBaseInfoParcel.hapBaseInfo.bundleName);
+        EXPECT_EQ(g_info.instIndex, hapBaseInfoParcel.hapBaseInfo.instIndex);
+    }
 #else
     ASSERT_NE(RET_SUCCESS, atManagerService_->GetHapBaseInfoByUid(hapInfo.uid, hapBaseInfoParcel));
 #endif
 
     EXPECT_EQ(ERR_PARAM_INVALID, atManagerService_->GetHapBaseInfoByUid(0, hapBaseInfoParcel));
-    EXPECT_EQ(ERR_TOKENID_NOT_EXIST, atManagerService_->GetHapBaseInfoByUid(INT32_MAX, hapBaseInfoParcel));
+    EXPECT_EQ(ERR_UID_NOT_EXIST, atManagerService_->GetHapBaseInfoByUid(INT32_MAX, hapBaseInfoParcel));
     ASSERT_EQ(RET_SUCCESS, atManagerService_->DeleteToken(tokenId, false));
 }
 

@@ -797,7 +797,7 @@ int32_t BootVerifyScheduler::VerifyBundleWithState(const std::string& bundleName
 }
 
 int32_t BootVerifyScheduler::VerifyBundleList(const std::vector<std::string>& bundleNameList,
-    std::vector<VerifiedBundleState>& stateList)
+    std::map<std::string, VerifiedBundleState>& stateList)
 {
     for (const auto& bundleName : bundleNameList) {
         BundleSignInfo updatedInfo;
@@ -813,7 +813,7 @@ int32_t BootVerifyScheduler::VerifyBundleList(const std::vector<std::string>& bu
             HandleVerifyBundleFailure(bundleName, ret);
             continue;
         }
-        stateList.emplace_back(state);
+        stateList.emplace(bundleName, state);
     }
     return RET_SUCCESS;
 }
@@ -874,33 +874,33 @@ int32_t BootVerifyScheduler::VerifyBundleSignInfoWhenStart()
     }
 
     BuildPriorityBundleList();
-    std::vector<VerifiedBundleState> stateList;
+    std::map<std::string, VerifiedBundleState> stateList;
     ret = VerifyHighPrivilegeBundleList(stateList);
     if (ret != RET_SUCCESS) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Verify high privilege bundle list failed, ret=%{public}d.", ret);
         return ret;
     }
-    ret = HandleHighPrivilegeBundleSpmData(stateList);
-    if (ret != RET_SUCCESS) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Handle high privilege bundle spm data failed, ret=%{public}d.", ret);
-    }
-    return ret;
+    HandleHighPrivilegeBundleSpmData(stateList);
+    return RET_SUCCESS;
 }
 
-int32_t BootVerifyScheduler::VerifyHighPrivilegeBundleList(std::vector<VerifiedBundleState>& stateList)
+int32_t BootVerifyScheduler::VerifyHighPrivilegeBundleList(std::map<std::string, VerifiedBundleState>& stateList)
 {
-    std::vector<std::vector<VerifiedBundleState>> stateGroups;
+    std::vector<std::map<std::string, VerifiedBundleState>> stateGroups;
     int32_t ret = RunHighPrivilegeBundleVerifyTasks(stateGroups);
     if (ret != RET_SUCCESS) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Run high privilege bundle verify tasks failed, ret=%{public}d.", ret);
         return ret;
     }
-    MergeVerifiedStateList(stateGroups, stateList);
+    stateList.clear();
+    for (const auto& infoGroup : stateGroups) {
+        stateList.insert(infoGroup.begin(), infoGroup.end());
+    }
     return RET_SUCCESS;
 }
 
 int32_t BootVerifyScheduler::RunHighPrivilegeBundleVerifyTasks(
-    std::vector<std::vector<VerifiedBundleState>>& stateGroups)
+    std::vector<std::map<std::string, VerifiedBundleState>>& stateGroups)
 {
     auto splitLists = SplitBundleList(highPrivilegeBundleList_, VERIFY_THREAD_COUNT);
     std::vector<std::thread> threads;
@@ -935,15 +935,6 @@ int32_t BootVerifyScheduler::GetVerifyTaskResult(const std::vector<int32_t>& ver
     return RET_SUCCESS;
 }
 
-void BootVerifyScheduler::MergeVerifiedStateList(
-    const std::vector<std::vector<VerifiedBundleState>>& stateGroups, std::vector<VerifiedBundleState>& stateList)
-{
-    stateList.clear();
-    for (const auto& infoGroup : stateGroups) {
-        stateList.insert(stateList.end(), infoGroup.begin(), infoGroup.end());
-    }
-}
-
 bool BootVerifyScheduler::ShouldSkipAddSpmData(const std::string& bundleName)
 {
     std::lock_guard<std::mutex> lock(verifyMutex_);
@@ -962,23 +953,23 @@ bool BootVerifyScheduler::ShouldSkipAddSpmData(const std::string& bundleName)
         });
 }
 
-int32_t BootVerifyScheduler::HandleHighPrivilegeBundleSpmData(const std::vector<VerifiedBundleState>& stateList)
+void BootVerifyScheduler::HandleHighPrivilegeBundleSpmData(const std::map<std::string, VerifiedBundleState>& stateMap)
 {
     for (const auto& bundleName : highPrivilegeBundleList_) {
-        if (ShouldSkipAddSpmData(bundleName)) {
+        auto stateIter = stateMap.find(bundleName);
+        if (ShouldSkipAddSpmData(bundleName) || (stateIter == stateMap.end())) {
             std::lock_guard<std::mutex> lock(verifyMutex_);
             FinishCommitBundleVerifyLocked(bundleName);
             verifyCondition_.notify_all();
             continue;
         }
-        int32_t ret = AddSpmDataAndCommitCache(bundleName, stateList);
+        int32_t ret = AddSpmDataAndCommitCache(bundleName, stateIter->second);
         if (ret != RET_SUCCESS) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Add spm data failed, bundleName=%{public}s, ret=%{public}d.",
                 bundleName.c_str(), ret);
-            return ret;
+            continue;
         }
     }
-    return RET_SUCCESS;
 }
 
 bool BootVerifyScheduler::IsInvalidUid(AccessTokenID tokenId) const
@@ -1054,16 +1045,6 @@ int32_t BootVerifyScheduler::BuildSpmParams(const std::string& bundleName, Bundl
             extendPermListCache.back() });
     }
     return RET_SUCCESS;
-}
-
-const VerifiedBundleState* BootVerifyScheduler::FindVerifiedBundleState(
-    const std::string& bundleName, const std::vector<VerifiedBundleState>& stateList) const
-{
-    auto state = std::find_if(stateList.begin(), stateList.end(),
-        [&bundleName](const VerifiedBundleState& item) {
-            return item.bundleName == bundleName;
-        });
-    return (state == stateList.end()) ? nullptr : &(*state);
 }
 
 int32_t BootVerifyScheduler::GetBundleTokenIds(const std::string& bundleName, std::vector<AccessTokenID>& tokenIds)
@@ -1177,7 +1158,7 @@ void BootVerifyScheduler::FinishCommitBundleVerifyLocked(const std::string& bund
 }
 
 int32_t BootVerifyScheduler::AddSpmDataAndCommitCache(
-    const std::string& bundleName, const std::vector<VerifiedBundleState>& stateList)
+    const std::string& bundleName, const VerifiedBundleState& state)
 {
     BundleNoCachedInfo noCachedInfo;
     std::vector<HapTokenInfo> hapInfoCache;
@@ -1200,12 +1181,9 @@ int32_t BootVerifyScheduler::AddSpmDataAndCommitCache(
         HandleVerifyBundleFailure(bundleName, ret);
         return ret;
     }
-    const VerifiedBundleState* state = FindVerifiedBundleState(bundleName, stateList);
-    if (state != nullptr) {
-        ret = PersistVerifiedBundleState(bundleName, *state, addSpmDataTask);
-        if (ret != RET_SUCCESS) {
-            return ret;
-        }
+    ret = PersistVerifiedBundleState(bundleName, state, addSpmDataTask);
+    if (ret != RET_SUCCESS) {
+        return ret;
     }
 
     {

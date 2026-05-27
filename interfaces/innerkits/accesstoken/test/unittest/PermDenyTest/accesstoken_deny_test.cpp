@@ -877,6 +877,64 @@ HWTEST_F(AccessTokenDenyTest, GenerateSkillAuthResult001, TestSize.Level0)
     EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
         AccessTokenKit::GenerateSkillAuthResult(host.GetTokenId(), DEFAULT_AGENT_ID, { BuildSkillAuthInfo() }, result));
 }
+
+/**
+ * @tc.name: DeleteIdentityAbnormalTest001
+ * @tc.desc: DeleteIdentity without ohos.permission.MANAGE_HAP_TOKENID returns ERR_PERMISSION_DENIED
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenDenyTest, DeleteIdentityAbnormalTest001, TestSize.Level0)
+{
+    RestoreSelfCaller();
+
+    // Create a HAP token for testing
+    HapInfoParams info = {
+        .userID = 100,
+        .bundleName = "test.delete.identity.bundle",
+        .instIndex = 0,
+        .appIDDesc = "test.delete.identity.appid",
+        .apiVersion = 8,
+    };
+
+    HapPolicyParams policy = {
+        .apl = APL_NORMAL,
+        .domain = "test.delete.identity.domain",
+    };
+
+    MockToken mock(g_selfTokenId, MANAGE_RUNTIME_CALLER_PROCESS, true);
+    mock.Grant("ohos.permission.MANAGE_HAP_TOKENID");
+
+    // Create mock token with MANAGE_HAP_TOKENID permission
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::InitHapToken(info, policy, tokenIdEx));
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+
+    // With permission, DeleteIdentity should succeed
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteIdentity(tokenID, info.bundleName, ReservedType::NONE));
+
+    // Restore token for next test (re-create it)
+    ASSERT_NE(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::InitHapToken(info, policy, tokenIdEx));
+    tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+
+    // Set UID to non-zero to enable permission check
+    uid_t uid = getuid();
+    setuid(1000);  // Set to non-zero UID
+    ASSERT_EQ(0, setuid(1000));
+
+    // Revoke the permission
+    mock.Revoke("ohos.permission.MANAGE_HAP_TOKENID");
+
+    // Without permission and with non-zero UID, DeleteIdentity should return ERR_PERMISSION_DENIED
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
+        AccessTokenKit::DeleteIdentity(tokenID, info.bundleName, ReservedType::NONE));
+
+    // Restore UID and clean up
+    ASSERT_EQ(0, setuid(uid));
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

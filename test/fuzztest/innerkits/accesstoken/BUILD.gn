@@ -22,6 +22,7 @@ group("fuzztest") {
     "allochaptoken_fuzzer:AllocHapTokenFuzzTest",
     "alloclocaltokenid_fuzzer:AllocLocalTokenIDFuzzTest",
     "clearusergrantedpermissionstate_fuzzer:ClearUserGrantedPermissionStateFuzzTest",
+    "deleteidentity_fuzzer:DeleteIdentityFuzzTest",
     "deletetoken_fuzzer:DeleteTokenFuzzTest",
     "dumptokeninfo_fuzzer:DumpTokenInfoFuzzTest",
     "generatecliauthresult_fuzzer:GenerateCliAuthResultFuzzTest",

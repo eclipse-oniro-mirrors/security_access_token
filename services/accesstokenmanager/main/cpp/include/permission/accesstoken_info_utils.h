@@ -42,6 +42,7 @@ public:
     static void BuildHapTokenInfo(const Identity& id, const BundleParam& param, HapTokenInfo& info);
     static void BuildBundleFullInfo(const BundleParam& param, const HapPolicy& policy,
         std::shared_ptr<BundleInfoInner>& innerInfo, BundleNoCachedInfo& noCached);
+    static ReservedType GetReservedTokenTypeDBValue(const GenericValues& values);
 
 private:
     AccessTokenInfoUtils() = delete;

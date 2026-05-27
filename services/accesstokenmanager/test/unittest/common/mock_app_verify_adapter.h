@@ -42,6 +42,9 @@ public:
         Security::Verify::BootstrapInfo& bootstrapInfo, Security::Verify::ProvisionInfo& provisionInfo,
         bool& isChanged) const override
     {
+        if (!verifyFailPath_.empty() && params.filePath == verifyFailPath_) {
+            return verifyFailRet_;
+        }
         if (verifyRet_ != RET_SUCCESS) {
             return verifyRet_;
         }
@@ -100,6 +103,7 @@ public:
     }
 
     int32_t verifyRet_ = RET_SUCCESS;
+    int32_t verifyFailRet_ = RET_SUCCESS;
     int32_t parseRet_ = RET_SUCCESS;
     bool verifyIsChanged_ = false;
     int32_t bootstrapVersion_ = 1;
@@ -107,6 +111,7 @@ public:
     std::string moduleRaw_;
     std::string shareFilesRaw_;
     std::string profileJsonRaw_;
+    std::string verifyFailPath_;
     std::string bundleName_ = "com.example.bundle";
     std::string moduleName_ = "entry";
     std::string apl_ = "normal";

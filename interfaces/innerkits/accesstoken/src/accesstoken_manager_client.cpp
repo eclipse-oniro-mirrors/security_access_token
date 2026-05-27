@@ -768,6 +768,22 @@ int32_t AccessTokenManagerClient::DeleteToolTokenByPid(int32_t pid)
     return result;
 }
 
+int32_t AccessTokenManagerClient::DeleteIdentity(
+    AccessTokenID tokenID, const std::string& bundleName, ReservedType type)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+    int32_t result = proxy->DeleteIdentity(tokenID, bundleName, static_cast<ReservedTypeIdl>(type));
+    if (result != RET_SUCCESS) {
+        result = ConvertResult(result);
+    }
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result is %{public}d, id is %{public}u.", result, tokenID);
+    return result;
+}
+
 ATokenTypeEnum AccessTokenManagerClient::GetTokenType(AccessTokenID tokenID)
 {
     auto proxy = GetProxy();

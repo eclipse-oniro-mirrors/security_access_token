@@ -102,7 +102,7 @@ private:
     int32_t BuildVerifyBundleData(const std::string& bundleName, BundleSignInfo& signInfo);
     int32_t VerifyBundleWithState(const std::string& bundleName);
     int32_t VerifyBundleList(
-        const std::vector<std::string>& bundleNameList, std::vector<VerifiedBundleState>& stateList);
+        const std::vector<std::string>& bundleNameList, std::map<std::string, VerifiedBundleState>& stateMap);
     int32_t VerifySingleBundle(const std::string& bundleName, BundleSignInfo& updatedInfo,
         VerifiedBundleState& state);
     void UpdateVerifiedSignInfo(const std::string& bundleName, BundleSignInfo& updatedInfo,
@@ -118,9 +118,7 @@ private:
     bool ShouldSkipVerifyLocked(const std::string& bundleName) const;
     void FinishSkippedBundleVerifyLocked(const std::string& bundleName);
     int32_t AddSpmDataAndCommitCache(
-        const std::string& bundleName, const std::vector<VerifiedBundleState>& stateList);
-    const VerifiedBundleState* FindVerifiedBundleState(
-        const std::string& bundleName, const std::vector<VerifiedBundleState>& stateList) const;
+        const std::string& bundleName, const VerifiedBundleState& state);
     int32_t GetBundleTokenIds(const std::string& bundleName, std::vector<AccessTokenID>& tokenIds);
     void BuildBundlePersistInfos(AccessTokenID tokenId, const VerifiedBundleState& state,
         std::vector<DelInfo>& delInfoVec, std::vector<AddInfo>& addInfoVec);
@@ -139,13 +137,11 @@ private:
         const std::vector<TrustedBundleInfoInner>& trustedInfos);
     static std::vector<std::vector<std::string>> SplitBundleList(
         const std::vector<std::string>& bundleNameList, uint32_t size);
-    int32_t VerifyHighPrivilegeBundleList(std::vector<VerifiedBundleState>& stateList);
-    int32_t RunHighPrivilegeBundleVerifyTasks(std::vector<std::vector<VerifiedBundleState>>& stateGroups);
+    int32_t VerifyHighPrivilegeBundleList(std::map<std::string, VerifiedBundleState>& stateMap);
+    int32_t RunHighPrivilegeBundleVerifyTasks(std::vector<std::map<std::string, VerifiedBundleState>>& stateGroups);
     static int32_t GetVerifyTaskResult(const std::vector<int32_t>& verifyResults);
-    static void MergeVerifiedStateList(
-        const std::vector<std::vector<VerifiedBundleState>>& stateGroups, std::vector<VerifiedBundleState>& stateList);
     bool ShouldSkipAddSpmData(const std::string& bundleName);
-    int32_t HandleHighPrivilegeBundleSpmData(const std::vector<VerifiedBundleState>& stateList);
+    void HandleHighPrivilegeBundleSpmData(const std::map<std::string, VerifiedBundleState>& stateMap);
     BootVerifyScheduler() = default;
     ~BootVerifyScheduler() = default;
     DISALLOW_COPY_AND_MOVE(BootVerifyScheduler);
