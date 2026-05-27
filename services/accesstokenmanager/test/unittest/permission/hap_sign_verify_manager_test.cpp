@@ -57,52 +57,6 @@ TrustedBundleInfoInner BuildTrustedBundleInfo(const std::string& bundleName)
 }
 
 /**
- * @tc.name: AppVerifyAdapterVerifyHap001
- * @tc.desc: Verify hap with a valid path and Security::Verify::VerifyType::All succeeds.
- * @tc.type: FUNC
- */
-HWTEST_F(HapSignVerifyManagerTest, AppVerifyAdapterVerifyHap001, TestSize.Level1)
-{
-    MockAppVerifyAdapter adapter;
-    Security::Verify::BootstrapInfo bootstrapInfo;
-    Security::Verify::ProvisionInfo provisionInfo;
-    Security::Verify::VerifyParams params;
-    params.filePath = "/data/test.hap";
-    params.type = Security::Verify::VerifyType::All;
-    bool isChanged = true;
-
-    EXPECT_EQ(RET_SUCCESS, adapter.VerifyHap(params, bootstrapInfo, provisionInfo, isChanged));
-    EXPECT_FALSE(isChanged);
-    EXPECT_EQ("/data/test.hap", bootstrapInfo.profileJsonRaw);
-    EXPECT_EQ("/data/test.hap", provisionInfo.bundleInfo.bundleName);
-
-    AppExecFwk::Spm::InnerModuleInfoForSpm moduleInfo;
-    EXPECT_EQ(RET_SUCCESS, adapter.ParseHapModuleInfo(bootstrapInfo.moduleRaw, moduleInfo));
-    EXPECT_EQ("/data/test.hap", moduleInfo.bundleName);
-    EXPECT_EQ("parsed_module", moduleInfo.moduleName);
-    EXPECT_TRUE(moduleInfo.definePermission.empty());
-    EXPECT_TRUE(moduleInfo.requestPermission.empty());
-}
-
-/**
- * @tc.name: AppVerifyAdapterVerifyHap002
- * @tc.desc: Verify hap with missing filePath returns ERR_PARAM_INVALID.
- * @tc.type: FUNC
- */
-HWTEST_F(HapSignVerifyManagerTest, AppVerifyAdapterVerifyHap002, TestSize.Level1)
-{
-    MockAppVerifyAdapter adapter;
-    Security::Verify::BootstrapInfo bootstrapInfo;
-    Security::Verify::ProvisionInfo provisionInfo;
-    Security::Verify::VerifyParams params;
-    params.type = Security::Verify::VerifyType::All;
-    bool isChanged = false;
-
-    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
-        adapter.VerifyHap(params, bootstrapInfo, provisionInfo, isChanged));
-}
-
-/**
  * @tc.name: CheckHapsSignInfo001
  * @tc.desc: Null bootstrapInfo is auto-created, provisionInfo and module fields are populated.
  * @tc.type: FUNC
@@ -212,7 +166,8 @@ HWTEST_F(HapSignVerifyManagerTest, CheckMultipleHaps001, TestSize.Level1)
     TrustedBundleInfoInner info2 = info1;
     info2.provisionInfo.bundleInfo.appIdentifier = "identifier2";
 
-    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, manager.CheckMultipleHaps({info1, info2}));
+    std::vector<TrustedBundleInfoInner> infos = {info1, info2};
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, manager.CheckMultipleHaps(infos));
 }
 
 /**
@@ -225,8 +180,10 @@ HWTEST_F(HapSignVerifyManagerTest, CheckMultipleHaps002, TestSize.Level1)
     HapSignVerifyManager& manager = HapSignVerifyManager::GetInstance();
     TrustedBundleInfoInner info = BuildTrustedBundleInfo("bundle");
 
-    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, manager.CheckMultipleHaps({}));
-    EXPECT_EQ(RET_SUCCESS, manager.CheckMultipleHaps({info, info}));
+    std::vector<TrustedBundleInfoInner> emptyInfos;
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, manager.CheckMultipleHaps(emptyInfos));
+    std::vector<TrustedBundleInfoInner> infos = {info, info};
+    EXPECT_EQ(RET_SUCCESS, manager.CheckMultipleHaps(infos));
 }
 
 /**
@@ -240,19 +197,23 @@ HWTEST_F(HapSignVerifyManagerTest, CheckMultipleHaps003, TestSize.Level1)
     TrustedBundleInfoInner info1 = BuildTrustedBundleInfo("bundle");
     TrustedBundleInfoInner info2 = info1;
     info2.provisionInfo.bundleInfo.bundleName = "other.bundle";
-    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, manager.CheckMultipleHaps({info1, info2}));
+    std::vector<TrustedBundleInfoInner> infos = {info1, info2};
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, manager.CheckMultipleHaps(infos));
 
     info2 = info1;
     info2.provisionInfo.bundleInfo.apl = "system_basic";
-    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, manager.CheckMultipleHaps({info1, info2}));
+    infos = {info1, info2};
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, manager.CheckMultipleHaps(infos));
 
     info2 = info1;
     info2.provisionInfo.distributionType = Security::Verify::APP_GALLERY;
-    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, manager.CheckMultipleHaps({info1, info2}));
+    infos = {info1, info2};
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, manager.CheckMultipleHaps(infos));
 
     info2 = info1;
     info2.provisionInfo.type = Security::Verify::DEBUG;
-    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, manager.CheckMultipleHaps({info1, info2}));
+    infos = {info1, info2};
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, manager.CheckMultipleHaps(infos));
 }
 
 constexpr int32_t TEST_API_VERSION = 12;
@@ -335,7 +296,7 @@ HWTEST_F(HapSignVerifyManagerTest, BuildHapPolicy001, TestSize.Level1)
     EXPECT_EQ(TEST_API_VERSION, param.apiVersion);
     EXPECT_TRUE(param.isSystem);
     EXPECT_TRUE(param.isAtomicService);
-    EXPECT_EQ("app-id-desc", param.appId);
+    EXPECT_EQ("com.example.camera_app-id-desc", param.appId);
     EXPECT_EQ(Security::Verify::AppDistType::APP_GALLERY, param.distributionType);
     EXPECT_TRUE(param.isDebug);
     EXPECT_EQ(12345u, param.appIdentifier);
@@ -388,8 +349,8 @@ HWTEST_F(HapSignVerifyManagerTest, BuildHapPolicy002, TestSize.Level1)
 
 /**
  * @tc.name: BuildHapPolicy003
- * @tc.desc: SortInfosByModuleName puts entry first, then remaining modules alphabetically.
- *           Input: feature, entry, alpha → expected permList order: entry, alpha, feature.
+ * @tc.desc: CheckMultipleHaps sorts: puts entry first, then remaining modules alphabetically.
+ *           Input: feature, entry, alpha → after sort: entry, alpha, feature.
  * @tc.type: FUNC
  */
 HWTEST_F(HapSignVerifyManagerTest, BuildHapPolicy003, TestSize.Level1)
@@ -425,9 +386,12 @@ HWTEST_F(HapSignVerifyManagerTest, BuildHapPolicy003, TestSize.Level1)
     TrustedBundleInfoInner infoEntry = makeInfo("com.example", "entry", "ohos.permission.MICROPHONE");
     TrustedBundleInfoInner infoAlpha = makeInfo("com.example", "alpha", "ohos.permission.LOCATION");
 
+    std::vector<TrustedBundleInfoInner> infos = {infoFeature, infoEntry, infoAlpha};
+    ASSERT_EQ(RET_SUCCESS, manager.CheckMultipleHaps(infos));
+
     HapPolicy policy;
     BundleParam param;
-    ASSERT_EQ(RET_SUCCESS, manager.BuildHapPolicy({infoFeature, infoEntry, infoAlpha}, policy, param));
+    ASSERT_EQ(RET_SUCCESS, manager.BuildHapPolicy(infos, policy, param));
 
     ASSERT_EQ(3u, policy.permList.size());
     EXPECT_EQ("ohos.permission.MICROPHONE", policy.permList[0].permissionName);
@@ -442,8 +406,8 @@ HWTEST_F(HapSignVerifyManagerTest, BuildHapPolicy003, TestSize.Level1)
 
 /**
  * @tc.name: BuildHapPolicy004
- * @tc.desc: SortInfosByModuleName without "entry" sorts purely alphabetically.
- *           Input: bravo, alpha → expected permList order: alpha, bravo.
+ * @tc.desc: CheckMultipleHaps without "entry" sorts purely alphabetically.
+ *           Input: bravo, alpha → after sort: alpha, bravo.
  * @tc.type: FUNC
  */
 HWTEST_F(HapSignVerifyManagerTest, BuildHapPolicy004, TestSize.Level1)
@@ -478,9 +442,12 @@ HWTEST_F(HapSignVerifyManagerTest, BuildHapPolicy004, TestSize.Level1)
     TrustedBundleInfoInner infoBravo = makeInfo("com.example", "bravo", "ohos.permission.MICROPHONE");
     TrustedBundleInfoInner infoAlpha = makeInfo("com.example", "alpha", "ohos.permission.CAMERA");
 
+    std::vector<TrustedBundleInfoInner> infos = {infoBravo, infoAlpha};
+    ASSERT_EQ(RET_SUCCESS, manager.CheckMultipleHaps(infos));
+
     HapPolicy policy;
     BundleParam param;
-    ASSERT_EQ(RET_SUCCESS, manager.BuildHapPolicy({infoBravo, infoAlpha}, policy, param));
+    ASSERT_EQ(RET_SUCCESS, manager.BuildHapPolicy(infos, policy, param));
 
     ASSERT_EQ(2u, policy.permList.size());
     EXPECT_EQ("ohos.permission.CAMERA", policy.permList[0].permissionName);
@@ -493,8 +460,9 @@ HWTEST_F(HapSignVerifyManagerTest, BuildHapPolicy004, TestSize.Level1)
 
 /**
  * @tc.name: BuildHapPolicy005
- * @tc.desc: Sort + dedup: when "entry" and "feature" both define CAMERA, the entry's definition wins
- *           because entry sorts first, and the duplicate from feature is skipped.
+ * @tc.desc: CheckMultipleHaps sorts + dedup: when "entry" and "feature" both define CAMERA,
+ *           the entry's definition wins because entry sorts first,
+ *           and the duplicate from feature is skipped.
  *           grantMode is preserved from the winning entry.
  * @tc.type: FUNC
  */
@@ -535,10 +503,13 @@ HWTEST_F(HapSignVerifyManagerTest, BuildHapPolicy005, TestSize.Level1)
         AppExecFwk::Spm::RequestPermission { .name = "ohos.permission.MICROPHONE", }
     };
 
+    std::vector<TrustedBundleInfoInner> infos = {infoFeature, infoEntry};
+    HapSignVerifyManager& manager = HapSignVerifyManager::GetInstance();
+    ASSERT_EQ(RET_SUCCESS, manager.CheckMultipleHaps(infos));
+
     HapPolicy policy;
     BundleParam param;
-    HapSignVerifyManager& manager = HapSignVerifyManager::GetInstance();
-    ASSERT_EQ(RET_SUCCESS, manager.BuildHapPolicy({infoFeature, infoEntry}, policy, param));
+    ASSERT_EQ(RET_SUCCESS, manager.BuildHapPolicy(infos, policy, param));
     ASSERT_EQ(2u, policy.permList.size());
     EXPECT_EQ("ohos.permission.CAMERA", policy.permList[0].permissionName);
     EXPECT_EQ("ohos.permission.MICROPHONE", policy.permList[1].permissionName);

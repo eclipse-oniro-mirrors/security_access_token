@@ -36,13 +36,13 @@ public:
     static ATokenAplEnum ConvertApl(const std::string& apl);
     static int ConvertGrantMode(const std::string& grantMode);
     static ATokenAvailableTypeEnum ConvertAvailableType(const std::string& availableType);
-    static void FillPermissionDefList(const std::vector<TrustedBundleInfoInner>& infos,
+    static void FillPermissionDefList(const std::vector<TrustedBundleInfoInner>& sortedInfos,
         std::vector<PermissionDef>& permList);
-    static void FillAclRequestedList(const std::vector<TrustedBundleInfoInner>& infos,
+    static void FillAclRequestedList(const std::vector<TrustedBundleInfoInner>& sortedInfos,
         std::vector<std::string>& aclRequestedList);
-    static void FillAclExtendedMap(const std::vector<TrustedBundleInfoInner>& infos,
+    static void FillAclExtendedMap(const std::vector<TrustedBundleInfoInner>& sortedInfos,
         std::map<std::string, std::string>& aclExtendedMap);
-    static void FillPermissionStateList(const std::vector<TrustedBundleInfoInner>& infos,
+    static void FillPermissionStateList(const std::vector<TrustedBundleInfoInner>& sortedInfos,
         std::vector<PermissionStatus>& permStateList);
     static void BuildPermBriefDataListFromPolicy(const HapPolicy& policy,
         std::vector<BriefPermData>& permBriefDataList);

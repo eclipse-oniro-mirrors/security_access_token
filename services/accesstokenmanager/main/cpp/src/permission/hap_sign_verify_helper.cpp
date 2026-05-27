@@ -15,7 +15,6 @@
 
 #include "hap_sign_verify_helper.h"
 
-#include <algorithm>
 #include <cstdlib>
 #include <unordered_set>
 
@@ -37,31 +36,9 @@ constexpr const char* GRANT_MODE_SYSTEM_GRANT = "system_grant";
 constexpr const char* GRANT_MODE_MANUAL_SETTINGS = "manual_settings";
 constexpr const char* AVAILABLE_TYPE_MDM = "mdm";
 static constexpr uint64_t TOKEN_ID_MASK = 0xffffffff;
-constexpr const char* MODULE_NAME_ENTRY = "entry";
 constexpr const int BASE_10 = 10;
 const uint32_t IS_KERNEL_EFFECT = (0x1 << 0);
 const uint32_t HAS_VALUE = (0x1 << 1);
-
-std::vector<const TrustedBundleInfoInner*> SortInfosByModuleName(const std::vector<TrustedBundleInfoInner>& infos)
-{
-    std::vector<const TrustedBundleInfoInner*> sorted;
-    sorted.reserve(infos.size());
-    for (const auto& info : infos) {
-        sorted.emplace_back(&info);
-    }
-
-    std::sort(sorted.begin(), sorted.end(), [](const auto* left, const auto* right) {
-        const std::string& leftName = left->GetModuleName();
-        const std::string& rightName = right->GetModuleName();
-        const bool leftIsEntry = (leftName == MODULE_NAME_ENTRY);
-        const bool rightIsEntry = (rightName == MODULE_NAME_ENTRY);
-        if (leftIsEntry != rightIsEntry) {
-            return leftIsEntry;
-        }
-        return leftName < rightName;
-    });
-    return sorted;
-}
 }
 
 std::map<std::string, std::string> HapSignVerifyHelper::ParseAclExtendedMap(
@@ -156,19 +133,18 @@ ATokenAvailableTypeEnum HapSignVerifyHelper::ConvertAvailableType(const std::str
     return availableType == AVAILABLE_TYPE_MDM ? ATokenAvailableTypeEnum::MDM : ATokenAvailableTypeEnum::NORMAL;
 }
 
-void HapSignVerifyHelper::FillPermissionDefList(const std::vector<TrustedBundleInfoInner>& infos,
+void HapSignVerifyHelper::FillPermissionDefList(const std::vector<TrustedBundleInfoInner>& sortedInfos,
     std::vector<PermissionDef>& permList)
 {
     permList.clear();
-    if (infos.empty()) {
+    if (sortedInfos.empty()) {
         return;
     }
 
-    const std::string bundleName = infos.front().GetBundleName();
+    const std::string bundleName = sortedInfos.front().GetBundleName();
     std::unordered_set<std::string> dedupPermissionNames;
-    const auto sortedInfos = SortInfosByModuleName(infos);
-    for (const auto* info : sortedInfos) {
-        for (const auto& definePermission : info->moduleData.definePermission) {
+    for (const auto& info : sortedInfos) {
+        for (const auto& definePermission : info.moduleData.definePermission) {
             if (definePermission.name.empty() || !dedupPermissionNames.emplace(definePermission.name).second) {
                 continue;
             }
@@ -191,14 +167,13 @@ void HapSignVerifyHelper::FillPermissionDefList(const std::vector<TrustedBundleI
     }
 }
 
-void HapSignVerifyHelper::FillAclRequestedList(const std::vector<TrustedBundleInfoInner>& infos,
+void HapSignVerifyHelper::FillAclRequestedList(const std::vector<TrustedBundleInfoInner>& sortedInfos,
     std::vector<std::string>& aclRequestedList)
 {
     aclRequestedList.clear();
     std::unordered_set<std::string> dedupAclNames;
-    const auto sortedInfos = SortInfosByModuleName(infos);
-    for (const auto* info : sortedInfos) {
-        for (const auto& aclName : info->provisionInfo.acls.allowedAcls) {
+    for (const auto& info : sortedInfos) {
+        for (const auto& aclName : info.provisionInfo.acls.allowedAcls) {
             if (aclName.empty() || !dedupAclNames.emplace(aclName).second) {
                 continue;
             }
@@ -207,25 +182,23 @@ void HapSignVerifyHelper::FillAclRequestedList(const std::vector<TrustedBundleIn
     }
 }
 
-void HapSignVerifyHelper::FillAclExtendedMap(const std::vector<TrustedBundleInfoInner>& infos,
+void HapSignVerifyHelper::FillAclExtendedMap(const std::vector<TrustedBundleInfoInner>& sortedInfos,
     std::map<std::string, std::string>& aclExtendedMap)
 {
     aclExtendedMap.clear();
-    const auto sortedInfos = SortInfosByModuleName(infos);
     if (sortedInfos.empty()) {
         return;
     }
-    aclExtendedMap = ParseAclExtendedMap(sortedInfos.front()->provisionInfo.appServiceCapabilities);
+    aclExtendedMap = ParseAclExtendedMap(sortedInfos.front().provisionInfo.appServiceCapabilities);
 }
 
-void HapSignVerifyHelper::FillPermissionStateList(const std::vector<TrustedBundleInfoInner>& infos,
+void HapSignVerifyHelper::FillPermissionStateList(const std::vector<TrustedBundleInfoInner>& sortedInfos,
     std::vector<PermissionStatus>& permStateList)
 {
     permStateList.clear();
     std::unordered_set<std::string> dedupPermissionNames;
-    const auto sortedInfos = SortInfosByModuleName(infos);
-    for (const auto* info : sortedInfos) {
-        for (const auto& requestPermission : info->moduleData.requestPermission) {
+    for (const auto& info : sortedInfos) {
+        for (const auto& requestPermission : info.moduleData.requestPermission) {
             if (requestPermission.name.empty() || !dedupPermissionNames.emplace(requestPermission.name).second) {
                 continue;
             }

@@ -283,13 +283,9 @@ ohos_unittest("libhap_sign_verify_manager_test") {
 
 group("functional_tests") {
   testonly = true
-  deps = [
-    ":libaccesstoken_manager_service_standard_test",
-  ]
+  deps = [ ":libaccesstoken_manager_service_standard_test" ]
   if (support_jsapi) {
-    deps += [ 
-      ":libpermission_monitor_test",
-    ]
+    deps += [ ":libpermission_monitor_test" ]
   }
   if (access_token_manager_hapverify_enable) {
     deps += [

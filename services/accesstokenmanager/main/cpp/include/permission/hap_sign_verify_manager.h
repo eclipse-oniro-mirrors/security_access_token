@@ -82,8 +82,8 @@ public:
 
     int32_t CheckHapsSignInfo(const std::string path, const Security::Verify::VerifyType type, int32_t userId,
         TrustedBundleInfoInner& info, bool& isChanged) const;
-    int32_t CheckMultipleHaps(const std::vector<TrustedBundleInfoInner>& infos) const;
-    int32_t BuildHapPolicy(const std::vector<TrustedBundleInfoInner>& infos, HapPolicy& policy,
+    int32_t CheckMultipleHaps(std::vector<TrustedBundleInfoInner>& infos) const;
+    int32_t BuildHapPolicy(const std::vector<TrustedBundleInfoInner>& sortedInfos, HapPolicy& policy,
         BundleParam& param) const;
     int32_t CheckPermissionRequestValid(const TrustedBundleInfoInner& info, const HapPolicy& policy,
         HapInfoCheckResult& result) const;

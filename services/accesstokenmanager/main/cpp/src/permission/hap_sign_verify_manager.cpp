@@ -38,6 +38,7 @@ namespace Security {
 namespace AccessToken {
 namespace {
 constexpr const char* HAP_POLICY_DEFAULT_DOMAIN = "domain";
+constexpr const char* MODULE_NAME_ENTRY = "entry";
 constexpr char APP_PROVISION_TYPE_DEBUG[] = "debug";
 constexpr char APP_PROVISION_TYPE_RELEASE[] = "release";
 constexpr const char* ENTERPRISE_CERT_PATH =
@@ -68,6 +69,21 @@ std::string GetEnterpriseCertPath(int32_t userId)
         return "";
     }
     return std::string(ENTERPRISE_CERT_PATH) + std::to_string(userId);
+}
+
+void SortTrustedBundles(std::vector<TrustedBundleInfoInner>& infos)
+{
+    std::sort(infos.begin(), infos.end(), [](const TrustedBundleInfoInner& left,
+        const TrustedBundleInfoInner& right) {
+        const std::string& leftName = left.GetModuleName();
+        const std::string& rightName = right.GetModuleName();
+        const bool leftIsEntry = (leftName == MODULE_NAME_ENTRY);
+        const bool rightIsEntry = (rightName == MODULE_NAME_ENTRY);
+        if (leftIsEntry != rightIsEntry) {
+            return leftIsEntry;
+        }
+        return leftName < rightName;
+    });
 }
 }
 
@@ -320,7 +336,7 @@ int32_t HapSignVerifyManager::CheckHapsSignInfo(const std::string path,
     return ret;
 }
 
-int32_t HapSignVerifyManager::CheckMultipleHaps(const std::vector<TrustedBundleInfoInner>& infos) const
+int32_t HapSignVerifyManager::CheckMultipleHaps(std::vector<TrustedBundleInfoInner>& infos) const
 {
     LOGD(ATM_DOMAIN, ATM_TAG, "Check multiple trusted haps.");
     if (infos.empty()) {
@@ -367,21 +383,22 @@ int32_t HapSignVerifyManager::CheckMultipleHaps(const std::vector<TrustedBundleI
     });
     if (!isInvalid) {
         LOGD(ATM_DOMAIN, ATM_TAG, "Check multiple trusted haps successfully.");
+        SortTrustedBundles(infos);
     }
     return isInvalid ? AccessTokenError::ERR_PARAM_INVALID : RET_SUCCESS;
 }
 
 int32_t HapSignVerifyManager::BuildHapPolicy(
-    const std::vector<TrustedBundleInfoInner>& infos, HapPolicy& policy, BundleParam& param) const
+    const std::vector<TrustedBundleInfoInner>& sortedInfos, HapPolicy& policy, BundleParam& param) const
 {
-    if (infos.empty()) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Build hap policy failed, infos is empty.");
+    if (sortedInfos.empty()) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Build hap policy failed, sortedInfos is empty.");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
 
-    const TrustedBundleInfoInner& baseline = infos.front();
+    const TrustedBundleInfoInner& baseline = sortedInfos.front();
 #ifdef X86_EMULATOR_MODE
-    policy.checkIgnore = std::any_of(infos.begin(), infos.end(), [](const auto& info) {
+    policy.checkIgnore = std::any_of(sortedInfos.begin(), sortedInfos.end(), [](const auto& info) {
         return IsIgnoredTrustedBundleInfo(info);
     }) ?
         HapPolicyCheckIgnore::ACL_IGNORE_CHECK : HapPolicyCheckIgnore::NONE;
@@ -390,11 +407,11 @@ int32_t HapSignVerifyManager::BuildHapPolicy(
 #endif
     policy.apl = HapSignVerifyHelper::ConvertApl(baseline.GetApl());
     policy.domain = HAP_POLICY_DEFAULT_DOMAIN;
-    HapSignVerifyHelper::FillPermissionDefList(infos, policy.permList);
-    HapSignVerifyHelper::FillAclRequestedList(infos, policy.aclRequestedList);
-    HapSignVerifyHelper::FillAclExtendedMap(infos, policy.aclExtendedMap);
+    HapSignVerifyHelper::FillPermissionDefList(sortedInfos, policy.permList);
+    HapSignVerifyHelper::FillAclRequestedList(sortedInfos, policy.aclRequestedList);
+    HapSignVerifyHelper::FillAclExtendedMap(sortedInfos, policy.aclExtendedMap);
     policy.isDebugGrant = false;
-    HapSignVerifyHelper::FillPermissionStateList(infos, policy.permStateList);
+    HapSignVerifyHelper::FillPermissionStateList(sortedInfos, policy.permStateList);
 
     param.bundleName = baseline.GetBundleName();
     param.appId = param.bundleName + "_" + baseline.provisionInfo.appId;
