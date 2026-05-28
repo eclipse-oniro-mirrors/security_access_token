@@ -71,8 +71,8 @@ HWTEST_F(HapSignVerifyManagerTest, CheckHapsSignInfo001, TestSize.Level1)
     EXPECT_EQ(RET_SUCCESS, manager.CheckHapsSignInfo("/data/camera.hap",
         Security::Verify::VerifyType::Fast, -1, info, isChanged));
     ASSERT_NE(nullptr, info.bootstrapInfo);
-    EXPECT_EQ("/data/camera.hap", info.provisionInfo.bundleInfo.bundleName);
-    EXPECT_EQ("/data/camera.hap", info.provisionInfo.bundleInfo.appIdentifier);
+    EXPECT_EQ("com.example.bundle", info.provisionInfo.bundleInfo.bundleName);
+    EXPECT_EQ("mock.identifier", info.provisionInfo.bundleInfo.appIdentifier);
     EXPECT_FALSE(isChanged);
 }
 
@@ -93,7 +93,7 @@ HWTEST_F(HapSignVerifyManagerTest, CheckHapsSignInfo002, TestSize.Level1)
     EXPECT_EQ(RET_SUCCESS, manager.CheckHapsSignInfo("/data/camera.hap",
         Security::Verify::VerifyType::Fast, -1, info, isChanged));
     EXPECT_EQ(bootstrapInfo, info.bootstrapInfo);
-    EXPECT_EQ("/data/camera.hap", info.provisionInfo.bundleInfo.bundleName);
+    EXPECT_EQ("com.example.bundle", info.provisionInfo.bundleInfo.bundleName);
     EXPECT_FALSE(isChanged);
 }
 
@@ -113,7 +113,7 @@ HWTEST_F(HapSignVerifyManagerTest, CheckHapsSignInfo003, TestSize.Level1)
         Security::Verify::VerifyType::Fast, -1, info, isChanged));
     EXPECT_TRUE(adapter.isParseCalled_);
     EXPECT_EQ("", adapter.lastCertPath_);
-    EXPECT_EQ("parsed_module", info.moduleData.moduleName);
+    EXPECT_EQ("entry", info.moduleData.moduleName);
     EXPECT_FALSE(isChanged);
 }
 

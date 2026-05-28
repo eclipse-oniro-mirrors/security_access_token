@@ -1086,8 +1086,8 @@ bool PermissionManager::InitPermissionList(const BundleParam& param, const HapPo
     for (const auto& status : policy.permStateList) {
         state = status;
         PermissionBriefDef briefDef;
-        if (!GetPermissionBriefDef(state.permissionName, briefDef)) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "Get definition of %{public}s failed.",
+        if (!GetPermissionBriefDef(state.permissionName, briefDef) || !briefDef.isEnable) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Get definition of %{public}s failed or permission is undefined.",
                 state.permissionName.c_str());
 #ifdef IS_SUPPORT_HAP_RUNNING
             FillUndefinedPermVector(state.permissionName,
@@ -1132,8 +1132,8 @@ bool PermissionManager::InitPermissionList(const BundleParam& param, const HapPo
     for (const auto& status : policy.permStateList) {
         state = status;
         PermissionBriefDef briefDef;
-        if (!GetPermissionBriefDef(state.permissionName, briefDef)) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "Get definition of %{public}s failed.",
+        if (!GetPermissionBriefDef(state.permissionName, briefDef) || !briefDef.isEnable) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Get definition of %{public}s failed or permission is undefined.",
                 state.permissionName.c_str());
             continue;
         }

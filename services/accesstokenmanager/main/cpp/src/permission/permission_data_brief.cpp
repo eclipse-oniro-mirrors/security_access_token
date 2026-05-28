@@ -37,6 +37,7 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
+constexpr uint32_t TOKEN_ID_SHIFT = 32;
 
 uint64_t GetPermissionTimestampFromStateValue(const GenericValues& stateValue)
 {
@@ -99,7 +100,7 @@ bool PermissionDataBrief::GetPermissionBriefData(
             briefPermData.type = 0;
         }
 
-        uint64_t key = (static_cast<uint64_t>(tokenID) << 32) | briefPermData.permCode;
+        uint64_t key = (static_cast<uint64_t>(tokenID) << TOKEN_ID_SHIFT) | briefPermData.permCode;
         if (briefDef.hasValue) {
             auto iter = aclExtendedMap.find(permState.permissionName);
             if (iter != aclExtendedMap.end()) {
@@ -134,7 +135,7 @@ void PermissionDataBrief::GetExtendedValueListInner(
     for (const auto& item : extendedValue_) {
         uint64_t key = item.first;
         uint32_t permCode = key & 0xFFFFFFFF;
-        uint32_t tmpTokenID = key >> 32;
+        uint32_t tmpTokenID = key >> TOKEN_ID_SHIFT;
         if (tmpTokenID != tokenId) {
             continue;
         }
@@ -164,7 +165,7 @@ int32_t PermissionDataBrief::GetKernelPermissions(
         std::string permissionName = TransferOpcodeToPermission(data.permCode);
         std::string value;
         if ((data.type & HAS_VALUE) == HAS_VALUE) {
-            uint64_t key = (static_cast<uint64_t>(tokenId) << 32) | data.permCode;
+            uint64_t key = (static_cast<uint64_t>(tokenId) << TOKEN_ID_SHIFT) | data.permCode;
             auto it = extendedValue_.find(key);
             if (it == extendedValue_.end()) {
                 LOGE(ATM_DOMAIN, ATM_TAG, "%{public}s not with value.", permissionName.c_str());
@@ -208,7 +209,7 @@ int32_t PermissionDataBrief::GetReqPermissionByName(
             "TransferPermissionToOpcode failed, permissionName: %{public}s.", permissionName.c_str());
         return ERR_PERMISSION_NOT_EXIST;
     }
-    uint64_t key = (static_cast<uint64_t>(tokenId) << 32) | permCode;
+    uint64_t key = (static_cast<uint64_t>(tokenId) << TOKEN_ID_SHIFT) | permCode;
     auto it = extendedValue_.find(key);
     if (it == extendedValue_.end()) {
         LOGE(ATM_DOMAIN, ATM_TAG, "%{public}s not with value.", permissionName.c_str());
@@ -657,7 +658,7 @@ void PermissionDataBrief::DeleteExtendedValue(AccessTokenID tokenID)
     auto it = extendedValue_.begin();
     while (it != extendedValue_.end()) {
         uint64_t key = it->first;
-        AccessTokenID tokenIDToDelete = key >> 32;
+        AccessTokenID tokenIDToDelete = key >> TOKEN_ID_SHIFT;
         if (tokenIDToDelete == tokenID) {
             it = extendedValue_.erase(it);
         } else {
@@ -725,6 +726,22 @@ void PermissionDataBrief::GetGrantedPermList(AccessTokenID tokenID,
         LOGD(ATM_DOMAIN, ATM_TAG, "Permission %{public}s is granted.", permission.c_str());
     }
     return;
+}
+
+void PermissionDataBrief::ReplaceExtendedValueByTokenId(
+    AccessTokenID tokenID, const std::map<uint64_t, std::string>& data)
+{
+    if (data.empty()) {
+        return;
+    }
+    std::unique_lock<std::shared_mutex> infoGuard(this->permissionStateDataLock_);
+    DeleteExtendedValue(tokenID);
+    for (const auto& item : data) {
+        if (static_cast<AccessTokenID>(item.first >> TOKEN_ID_SHIFT) != tokenID) {
+            continue;
+        }
+        extendedValue_[item.first] = item.second;
+    }
 }
 
 void PermissionDataBrief::GetGrantedPermCodeList(AccessTokenID tokenID,

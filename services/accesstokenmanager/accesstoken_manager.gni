@@ -53,6 +53,7 @@ accesstoken_manager_base_config = {
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/accesstoken_info_dumper.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/accesstoken_info_manager.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/accesstoken_info_utils.cpp",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/boot_verify_scheduler.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/hap_token_info_inner.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_change_notifier.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_constraint_check.cpp",
@@ -69,10 +70,10 @@ accesstoken_manager_base_config = {
   ]
 
   if (access_token_manager_hapverify_enable) {
-    sources += [ 
+    sources += [
       "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/app_verify_adapter.cpp",
-      "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/hap_sign_verify_manager.cpp",
       "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/hap_sign_verify_helper.cpp",
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/hap_sign_verify_manager.cpp",
     ]
   }
 
@@ -176,6 +177,7 @@ accesstoken_manager_base_config = {
   # ========== External Deps ==========
   # Base external deps (always included)
   external_deps = [
+    "bundle_framework:spm_module_parser",
     "cJSON:cjson",
     "c_utils:utils",
     "hilog:libhilog",
@@ -185,7 +187,6 @@ accesstoken_manager_base_config = {
     "relational_store:native_rdb",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
-    "bundle_framework:spm_module_parser",
   ]
 
   # Add global external_deps from access_token.gni

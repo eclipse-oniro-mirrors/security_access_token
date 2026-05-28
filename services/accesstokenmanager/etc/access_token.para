@@ -15,3 +15,4 @@
 accesstoken.permission.change = 0
 accesstoken.permission.init = 0
 accesstoken.permission.flagchange = 0
+accesstoken.permission.appverify = 0

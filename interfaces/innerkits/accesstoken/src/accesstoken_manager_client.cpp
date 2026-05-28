@@ -708,6 +708,45 @@ AccessTokenIDEx AccessTokenManagerClient::GetHapTokenID(
     return result;
 }
 
+int32_t AccessTokenManagerClient::GetHapIdentity(const HapBaseInfo& info, Identity& identity)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+    HapBaseInfoParcel infoParcel;
+    infoParcel.hapBaseInfo = info;
+    IdentityIdl identityIdl;
+    int32_t errCode = proxy->GetHapIdentity(infoParcel, identityIdl);
+    if (errCode != RET_SUCCESS) {
+        errCode = ConvertResult(errCode);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Request fail, result: %{public}d", errCode);
+        return errCode;
+    }
+    identity.uid = identityIdl.uid;
+    identity.tokenId = identityIdl.tokenId;
+    return RET_SUCCESS;
+}
+
+int32_t AccessTokenManagerClient::GetHapBaseInfoByUid(int32_t uid, HapBaseInfo& info)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+    HapBaseInfoParcel infoParcel;
+    int32_t errCode = proxy->GetHapBaseInfoByUid(uid, infoParcel);
+    if (errCode != RET_SUCCESS) {
+        errCode = ConvertResult(errCode);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Request fail, result: %{public}d", errCode);
+        return errCode;
+    }
+    info = infoParcel.hapBaseInfo;
+    return RET_SUCCESS;
+}
+
 FullTokenID AccessTokenManagerClient::AllocLocalTokenID(
     const std::string& remoteDeviceID, AccessTokenID remoteTokenID)
 {
