@@ -16,7 +16,6 @@
 #ifndef ACCESS_TOKEN_MIGRATION_MANAGER_H
 #define ACCESS_TOKEN_MIGRATION_MANAGER_H
 
-#include <mutex>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -46,19 +45,30 @@ public:
     int32_t MigrateInstalledBundles(const std::vector<MigratedInfoIdl>& migratedInfoList,
         std::vector<BundleMigrateResultIdl>& results);
     int32_t PreMigrateUIDList(const std::vector<int32_t>& uidList);
-    int32_t FinishMigration() const;
+    int32_t FinishMigration();
     bool IsMigrationCompleted() const;
     void Initialize();
-
+    
+private:
+    AccessTokenMigrationManager() = default;
+    
     int32_t AppendHapTokenDbInfo(const PreparedMigrationBundle& preparedBundle,
         std::vector<GenericValues>& addValues);
 
-private:
-    AccessTokenMigrationManager() = default;
+    static int32_t MarkMigrationCompleted();
+    static int32_t ValidateMigratedInfo(const MigratedInfoIdl& migratedInfo);
+    static int32_t GetCachedTokenInfo(AccessTokenID tokenId, const std::string& bundleName,
+        std::shared_ptr<HapTokenInfoInner>& infoPtr);
+    static int32_t CheckCachedUid(const std::shared_ptr<HapTokenInfoInner>& infoPtr, int32_t uid);
+    static int32_t CreateNewTokenInfoForHap(PreparedMigrationBundle& preparedBundle, size_t index,
+        std::shared_ptr<HapTokenInfoInner>& infoPtr);
+    int32_t PrepareIdentityInfos(PreparedMigrationBundle& preparedBundle);
+    int32_t PersistMigratedBundles(const PreparedMigrationBundle& preparedBundles);
+    int32_t ExecutePreparedMigration(PreparedMigrationBundle& preparedBundles);
+    int32_t MigrateSingleBundle(const MigratedInfoIdl& migratedInfo,
+        BundleMigrateResultIdl& result);
 
-    mutable std::mutex preMigratedUidLock_;
     std::unordered_set<int32_t> preMigratedUidSet_;
-
     std::unordered_map<int32_t, GenericValues> dbRowCache_;
 };
 } // namespace AccessToken

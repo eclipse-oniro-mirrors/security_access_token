@@ -86,7 +86,7 @@ void MigrationVerifyWorker::WorkerLoop()
             task = std::move(taskQueue_.front());
             taskQueue_.pop();
         }
-        (void)MigrationVerifyHelper::VerifyMigratedBundle(task.migratedInfo, task.cachedInfos);
+        (void)MigrationVerifyHelper::GetInstance().VerifyMigratedBundle(task.migratedInfo, task.cachedInfos);
     }
     running_ = false;
     LOGI(ATM_DOMAIN, ATM_TAG, "Verification worker thread stopped.");

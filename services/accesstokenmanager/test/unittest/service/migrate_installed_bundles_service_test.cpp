@@ -37,6 +37,7 @@
 #endif
 #include "data_validator.h"
 #include "spm_setproc.h"
+#include "table_item.h"
 #include "test_common.h"
 #include "token_setproc.h"
 #include "token_field_const.h"
@@ -53,13 +54,13 @@ namespace {
 // IsPrivilegedCalling() returns false and permission checks are enforced.
 struct UidGuard {
     uid_t origUid;
-    explicit UidGuard(uid_t newUid) : origUid(getuid())
+    explicit UidGuard(uid_t newUid)
     {
         setuid(newUid);
     }
     ~UidGuard()
     {
-        setuid(origUid);
+        setuid(0);
     }
     UidGuard(const UidGuard&) = delete;
     UidGuard& operator=(const UidGuard&) = delete;
@@ -168,6 +169,8 @@ void BuildMigratedInfo(const HapInfoParams& info, uint64_t tokenIdEx, int32_t ui
 void ExpectMigratedDbState(AccessTokenID tokenId, const std::string& bundleName, int32_t uid,
     ReservedType reserved = ReservedType::NONE, bool checkSignInfo = false)
 {
+    // Ensure all pending verify tasks are completed before checking DB
+    MigrationVerifyWorker::GetInstance().Shutdown();
     GenericValues hapCondition;
     hapCondition.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
     std::vector<GenericValues> hapResults;
@@ -264,6 +267,18 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, PreMigrateUIDList_DbUidConflict, Te
 {
     MockNativeToken mock("foundation");
 
+    // Insert a row with UID 0 into ACCESSTOKEN_HAP_INFO to trigger DB conflict
+    HapTokenInfoItem item;
+    item.tokenId = 99999;
+    item.bundleName = "com.example.uidconflict";
+    item.uid = 0;
+    std::vector<GenericValues> hapValues;
+    item.BuildAddValue(hapValues);
+    AddInfo addInfo;
+    addInfo.addType = AtmDataType::ACCESSTOKEN_HAP_INFO;
+    addInfo.addValues = hapValues;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenDbOperator::DeleteAndInsertValues({}, { addInfo }));
+
     auto service = DelayedSingleton<AccessTokenManagerService>::GetInstance();
     ASSERT_NE(nullptr, service);
     EXPECT_EQ(AccessTokenError::ERR_MIGRATION_UID_DUPLICATED,
@@ -330,7 +345,8 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, MigrateInstalledBundles_AfterFinish
 
 /**
  * @tc.name: MigrateInstalledBundles_UidNotPreRegistered
- * @tc.desc: MigrateInstalledBundles returns ERR_PARAM_INVALID per-item when UID was not registered via PreMigrateUIDList.
+ * @tc.desc: MigrateInstalledBundles returns ERR_PARAM_INVALID per-item when UID was not registered
+ *           via PreMigrateUIDList.
  * @tc.type: FUNC
  */
 HWTEST_F(MigrateInstalledBundlesServiceTest, MigrateInstalledBundles_UidNotPreRegistered, TestSize.Level1)
@@ -657,6 +673,7 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, MigrateInstalledBundles_DuplicateUi
 
     auto service = DelayedSingleton<AccessTokenManagerService>::GetInstance();
     ASSERT_NE(nullptr, service);
+    ASSERT_EQ(RET_SUCCESS, service->PreMigrateUIDList({ 200901 }));
     std::vector<BundleMigrateResultIdl> results;
     EXPECT_EQ(RET_SUCCESS, service->MigrateInstalledBundles({ migratedInfo }, results));
     ASSERT_EQ(1u, results.size());
@@ -1064,9 +1081,6 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, VerifyMigratedBundle_WorkerHapSignV
     ASSERT_EQ(1u, results.size());
     EXPECT_EQ(RET_SUCCESS, results[0].errcode);
 
-    // Shutdown waits for worker to finish (failed) verification
-    MigrationVerifyWorker::GetInstance().Shutdown();
-
     // Migration DB state must still be intact — verification failed, no changes committed
     ExpectMigratedDbState(tokenIdEx.tokenIdExStruct.tokenID, info.bundleName, migratedInfo.uidList[0]);
 
@@ -1107,9 +1121,6 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, VerifyMigratedBundle_WorkerBundleNa
     ASSERT_EQ(1u, results.size());
     EXPECT_EQ(RET_SUCCESS, results[0].errcode);
 
-    // Shutdown waits for worker to finish (mismatch) verification
-    MigrationVerifyWorker::GetInstance().Shutdown();
-
     // Migration DB state must still be intact
     ExpectMigratedDbState(tokenIdEx.tokenIdExStruct.tokenID, info.bundleName, migratedInfo.uidList[0]);
 
@@ -1145,9 +1156,6 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, VerifyMigratedBundle_WorkerSuccess,
     EXPECT_EQ(RET_SUCCESS, service->MigrateInstalledBundles({ migratedInfo }, results));
     ASSERT_EQ(1u, results.size());
     EXPECT_EQ(RET_SUCCESS, results[0].errcode);
-
-    // Shutdown waits for worker to finish verification synchronously
-    MigrationVerifyWorker::GetInstance().Shutdown();
 
     // DB should have both migrated state and verified sign info
     ExpectMigratedDbState(tokenIdEx.tokenIdExStruct.tokenID, info.bundleName, migratedInfo.uidList[0],
@@ -1213,19 +1221,20 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, MigrateInstalledBundles_KitHapBaseI
     baseInfo.bundleName = info.bundleName;
     baseInfo.instIndex = 0;
     migratedInfo.hapBaseInfoList = { baseInfo };
-    migratedInfo.uidList = { 202601 };
+    migratedInfo.uidList = { 202602 };
     migratedInfo.reservedTypeList = { ReservedType::NONE };
 
     auto service = DelayedSingleton<AccessTokenManagerService>::GetInstance();
     ASSERT_NE(nullptr, service);
-    EXPECT_EQ(RET_SUCCESS, service->PreMigrateUIDList({ migratedInfo.uidList[0] }));
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::PreMigrateUIDList({ migratedInfo.uidList[0] }));
     std::vector<BundleMigrateResult> results;
     EXPECT_EQ(RET_SUCCESS, AccessTokenKit::MigrateInstalledBundles({ migratedInfo }, results));
     ASSERT_EQ(1u, results.size());
     EXPECT_EQ(RET_SUCCESS, results[0].errcode);
     ASSERT_EQ(1u, results[0].tokenIdList.size());
 
-    ExpectMigratedDbState(results[0].tokenIdList[0].tokenIDEx, info.bundleName, migratedInfo.uidList[0], ReservedType::RESERVED_DATA);
+    ExpectMigratedDbState(results[0].tokenIdList[0].tokenIDEx, info.bundleName,
+        migratedInfo.uidList[0], ReservedType::RESERVED_DATA);
 
     (void)SpmRemoveEntry(results[0].tokenIdList[0].tokenIDEx);
     (void)AccessTokenKit::DeleteToken(results[0].tokenIdList[0].tokenIDEx);

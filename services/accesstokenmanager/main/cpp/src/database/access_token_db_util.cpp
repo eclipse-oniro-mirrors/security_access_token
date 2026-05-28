@@ -195,10 +195,6 @@ void AccessTokenDbUtil::ResultToGenericValues(const std::shared_ptr<NativeRdb::R
             std::string data;
             resultSet->GetString(columnIndex, data);
             value.Put(columnName, data);
-        } else if (type == NativeRdb::ColumnType::TYPE_BLOB) {
-            std::vector<uint8_t> data;
-            resultSet->GetBlob(columnIndex, data);
-            value.PutBlob(columnName, data);
         }
     }
 }

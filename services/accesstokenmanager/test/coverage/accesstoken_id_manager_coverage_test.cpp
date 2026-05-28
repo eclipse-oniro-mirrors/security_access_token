@@ -199,6 +199,7 @@ HWTEST_F(AccessTokenIdManagerCoverageTest, AllocUid001, TestSize.Level4)
         AccessTokenIDManager::GetInstance().bundleIdSet_.insert(bundleId);
     }
     int32_t outUid = 0;
+    AccessTokenIDManager::GetInstance().SetMigrationDone();
     ASSERT_EQ(ERR_OVERSIZE, AccessTokenIDManager::GetInstance().AllocUid(100, outUid));
 }
 

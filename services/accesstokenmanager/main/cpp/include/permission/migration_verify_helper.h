@@ -26,6 +26,8 @@
 #include "hap_token_info_inner.h"
 #include "idl_common.h"
 #include "add_spm_data_task.h"
+#include "atm_data_type.h"
+
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
@@ -38,18 +40,38 @@ struct VerifiedMigrationBundle final {
 
 class MigrationVerifyHelper final {
 public:
-    static int32_t VerifyMigratedBundle(const MigratedInfoIdl& migratedInfo,
+    static MigrationVerifyHelper& GetInstance();
+    int32_t VerifyMigratedBundle(const MigratedInfoIdl& migratedInfo,
         const std::vector<std::shared_ptr<HapTokenInfoInner>>& cachedInfos);
 
 private:
-    static int32_t PersistSignDbInfo(const MigratedInfoIdl& migratedInfo,
+    MigrationVerifyHelper() = default;
+
+    int32_t PersistDbInfo(const MigratedInfoIdl& migratedInfo,
         const VerifiedMigrationBundle& verifiedBundle,
         const std::vector<std::shared_ptr<HapTokenInfoInner>>& cachedInfos);
-    static int32_t AddKernelData(const VerifiedMigrationBundle& verifiedBundle,
+    int32_t AddKernelData(const BundleNoCachedInfo& noCachedInfo,
+        const std::vector<PermissionWithValue>& extendPermList,
         const std::vector<std::shared_ptr<HapTokenInfoInner>>& cachedInfos,
+        const std::vector<std::vector<BriefPermData>>& permBriefDataPerToken,
         std::unique_ptr<AddSpmDataTask>& kernelTask);
 
-    MigrationVerifyHelper() = delete;
+    int32_t DoVerifyMigratedBundle(const MigratedInfoIdl& migratedInfo,
+        VerifiedMigrationBundle& verifiedBundle);
+    void FixBriefPermDataPerToken(const VerifiedMigrationBundle& verifiedBundle,
+        const std::vector<std::shared_ptr<HapTokenInfoInner>>& cachedInfos,
+        BundleNoCachedInfo& noCached,
+        std::vector<std::vector<BriefPermData>>& fixedPermBriefPerToken);
+    std::vector<GenericValues> BuildPermStateValues(
+        AccessTokenID tokenId, const std::vector<BriefPermData>& data);
+    int32_t BuildBundleSignInfo(const MigratedInfoIdl& migratedInfo,
+        const VerifiedMigrationBundle& verifiedBundle, BundleSignInfo& bundleSignInfo);
+    int32_t PrepareBundleInfoOperations(const BundleSignInfo& bundleSignInfo);
+    void PrepareHapInfoOperations(const BundleParam& param, const HapPolicy& policy,
+        const std::vector<std::shared_ptr<HapTokenInfoInner>>& cachedInfos);
+
+    std::vector<DelInfo> delInfoVec_;
+    std::vector<AddInfo> addInfoVec_;
 };
 
 } // namespace AccessToken

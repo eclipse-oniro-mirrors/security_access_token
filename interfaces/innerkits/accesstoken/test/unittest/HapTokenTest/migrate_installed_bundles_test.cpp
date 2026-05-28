@@ -56,6 +56,7 @@ HWTEST_F(MigrateInstalledBundlesTest, PreMigrateUIDList001, TestSize.Level1)
     EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, AccessTokenKit::PreMigrateUIDList({}));
 }
 
+static constexpr size_t MAX_LIST_SIZE = 1024;
 /**
  * @tc.name: PreMigrateUIDList002
  * @tc.desc: PreMigrateUIDList with list size exceeding MAX_LIST_SIZE (1024) returns ERR_PARAM_INVALID.
@@ -64,13 +65,20 @@ HWTEST_F(MigrateInstalledBundlesTest, PreMigrateUIDList001, TestSize.Level1)
  */
 HWTEST_F(MigrateInstalledBundlesTest, PreMigrateUIDList002, TestSize.Level1)
 {
-    std::vector<int32_t> largeList(1025, 200001);
+    std::vector<int32_t> largeList(MAX_LIST_SIZE + 1, 200001);
     EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, AccessTokenKit::PreMigrateUIDList(largeList));
 }
 
+static constexpr size_t MAX_MIGRATED_INFO_SIZE = 50;
+/**
+ * @tc.name: MigrateInstalledBundles001
+ * @tc.desc: MigrateInstalledBundles with list size exceeding MAX_MIGRATED_INFO_SIZE returns ERR_PARAM_INVALID.
+ *           Validated at kit layer before IPC.
+ * @tc.type: FUNC
+ */
 HWTEST_F(MigrateInstalledBundlesTest, MigrateInstalledBundles001, TestSize.Level1)
 {
-    std::vector<MigratedInfo> migratedInfoList(51);
+    std::vector<MigratedInfo> migratedInfoList(MAX_MIGRATED_INFO_SIZE + 1);
     for (size_t i = 0; i < migratedInfoList.size(); ++i) {
         migratedInfoList[i].bundleName = "com.example.bundle" + std::to_string(i);
     }

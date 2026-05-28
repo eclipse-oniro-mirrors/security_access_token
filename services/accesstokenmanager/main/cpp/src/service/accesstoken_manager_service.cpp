@@ -2201,7 +2201,7 @@ int32_t AccessTokenManagerService::MigrateInstalledBundles(const std::vector<Mig
     std::vector<BundleMigrateResultIdl>& results)
 {
     results.clear();
-    int32_t ret = CheckMigrationPermission();
+    int32_t ret = CheckHapManagerPermission();
     if (ret != RET_SUCCESS) {
         return ret;
     }
@@ -2211,7 +2211,7 @@ int32_t AccessTokenManagerService::MigrateInstalledBundles(const std::vector<Mig
 
 int32_t AccessTokenManagerService::PreMigrateUIDList(const std::vector<int32_t>& uidList)
 {
-    int32_t ret = CheckMigrationPermission();
+    int32_t ret = CheckHapManagerPermission();
     if (ret != RET_SUCCESS) {
         return ret;
     }
@@ -2220,14 +2220,14 @@ int32_t AccessTokenManagerService::PreMigrateUIDList(const std::vector<int32_t>&
 
 int32_t AccessTokenManagerService::FinishMigration()
 {
-    int32_t ret = CheckMigrationPermission();
+    int32_t ret = CheckHapManagerPermission();
     if (ret != RET_SUCCESS) {
         return ret;
     }
     return AccessTokenMigrationManager::GetInstance().FinishMigration();
 }
 
-int32_t AccessTokenManagerService::CheckMigrationPermission()
+int32_t AccessTokenManagerService::CheckHapManagerPermission()
 {
     AccessTokenID callingTokenID = IPCSkeleton::GetCallingTokenID();
     if (!IsPrivilegedCalling() &&

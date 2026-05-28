@@ -207,7 +207,7 @@ private:
     int32_t HandlePolicyWhiteListUpdate(const PolicyWhiteListUpdateInfo& policyContext);
     int32_t RefreshUserPolicyPermState(const std::vector<UserPolicyChange>& changedPolicyList);
 #endif
-    int32_t CheckMigrationPermission();
+    int32_t CheckHapManagerPermission();
 
     void FilterPermFeature(bool isSystemApp, HapPolicy& policy);
     bool isInitialize_ = false;

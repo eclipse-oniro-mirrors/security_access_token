@@ -181,6 +181,7 @@ void AccessTokenIDManager::InitSingleBundleIdCache(int32_t uid)
 
 int32_t AccessTokenIDManager::AllocUid(int32_t localId, int32_t& outUid)
 {
+#ifdef SPM_DATA_ENABLE
     {
         std::unique_lock<std::mutex> lock(migrationLock_);
         if (!migrationDone_) {
@@ -188,6 +189,7 @@ int32_t AccessTokenIDManager::AllocUid(int32_t localId, int32_t& outUid)
             return AccessTokenError::ERR_PARAM_INVALID;
         }
     }
+#endif
     std::unique_lock<std::mutex> lock(bundleIdLock_);
     int32_t startId = bundleIdSet_.empty() ? BUNDLE_ID_MIN : (*bundleIdSet_.rbegin() + 1);
     if (startId > BUNDLE_ID_MAX) {

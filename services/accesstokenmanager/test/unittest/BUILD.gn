@@ -389,7 +389,6 @@ group("functional_tests") {
   testonly = true
   deps = [
     ":libaccesstoken_manager_service_standard_test",
-    ":libmigrate_installed_bundles_service_test",
   ]
   if (support_jsapi) {
     deps += [ ":libpermission_monitor_test" ]

@@ -318,7 +318,7 @@ int32_t HapSignVerifyManager::CheckHapsSignInfo(const std::string path,
         isChanged = false;
         return RET_SUCCESS;
 #else
-        return ERR_ERR_HAP_VERIFY_FAILED;
+        return ERR_HAP_VERIFY_FAILED;
 #endif
     }
     if (!isChanged) {
@@ -336,7 +336,7 @@ int32_t HapSignVerifyManager::CheckHapsSignInfo(const std::string path,
     return ret;
 }
 
-int32_t HapSignVerifyManager::CheckMultipleHaps(std::vector<TrustedBundleInfoInner>& infos) const
+int32_t HapSignVerifyManager::CheckMultipleHaps(const std::vector<TrustedBundleInfoInner>& infos) const
 {
     LOGD(ATM_DOMAIN, ATM_TAG, "Check multiple trusted haps.");
     if (infos.empty()) {
@@ -383,18 +383,23 @@ int32_t HapSignVerifyManager::CheckMultipleHaps(std::vector<TrustedBundleInfoInn
     });
     if (!isInvalid) {
         LOGD(ATM_DOMAIN, ATM_TAG, "Check multiple trusted haps successfully.");
-        SortTrustedBundles(infos);
     }
     return isInvalid ? AccessTokenError::ERR_PARAM_INVALID : RET_SUCCESS;
 }
 
 int32_t HapSignVerifyManager::BuildHapPolicy(
-    const std::vector<TrustedBundleInfoInner>& sortedInfos, HapPolicy& policy, BundleParam& param) const
+    const std::vector<TrustedBundleInfoInner>& infos, HapPolicy& policy, BundleParam& param) const
 {
-    if (sortedInfos.empty()) {
+    if (infos.empty()) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Build hap policy failed, sortedInfos is empty.");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
+
+    const std::vector<TrustedBundleInfoInner> sortedInfos = [&infos]() {
+        std::vector<TrustedBundleInfoInner> copy = infos;
+        SortTrustedBundles(copy);
+        return copy;
+    }();
 
     const TrustedBundleInfoInner& baseline = sortedInfos.front();
 #ifdef X86_EMULATOR_MODE

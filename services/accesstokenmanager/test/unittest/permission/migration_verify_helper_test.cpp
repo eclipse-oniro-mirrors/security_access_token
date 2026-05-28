@@ -126,7 +126,7 @@ HWTEST_F(MigrationVerifyHelperTest, VerifyMigratedBundle001, TestSize.Level1)
     std::vector<std::shared_ptr<HapTokenInfoInner>> cachedInfos = { cachedInfo };
 
     MigratedInfoIdl migratedInfo = BuildBasicMigratedInfo(info.bundleName, info.bundleName);
-    int32_t ret = MigrationVerifyHelper::VerifyMigratedBundle(migratedInfo, cachedInfos);
+    int32_t ret = MigrationVerifyHelper::GetInstance().VerifyMigratedBundle(migratedInfo, cachedInfos);
     EXPECT_EQ(RET_SUCCESS, ret);
 
     // Verify DB: sign info persisted for the bundle
@@ -159,7 +159,7 @@ HWTEST_F(MigrationVerifyHelperTest, VerifyMigratedBundle002, TestSize.Level1)
     MigratedInfoIdl migratedInfo = BuildBasicMigratedInfo("com.example.verify.empty", "com.example.verify.empty");
     std::vector<std::shared_ptr<HapTokenInfoInner>> cachedInfos;
 
-    int32_t ret = MigrationVerifyHelper::VerifyMigratedBundle(migratedInfo, cachedInfos);
+    int32_t ret = MigrationVerifyHelper::GetInstance().VerifyMigratedBundle(migratedInfo, cachedInfos);
     EXPECT_EQ(ERR_PARAM_INVALID, ret);
 }
 
@@ -188,7 +188,7 @@ HWTEST_F(MigrationVerifyHelperTest, VerifyMigratedBundle003, TestSize.Level1)
     // bundle name from hapPath, so mismatch triggers ERR_PARAM_INVALID
     MigratedInfoIdl migratedInfo = BuildBasicMigratedInfo("com.example.mismatched", "com.example.different");
 
-    int32_t ret = MigrationVerifyHelper::VerifyMigratedBundle(migratedInfo, cachedInfos);
+    int32_t ret = MigrationVerifyHelper::GetInstance().VerifyMigratedBundle(migratedInfo, cachedInfos);
     // Bundle name mismatch causes DoVerifyMigratedBundle failure → error propagated
     EXPECT_NE(RET_SUCCESS, ret);
 
@@ -221,10 +221,10 @@ HWTEST_F(MigrationVerifyHelperTest, VerifyMigratedBundle004, TestSize.Level1)
 
     // Force CheckHapsSignInfo to fail via mock adapter
     mockAdapter_.verifyRet_ = AccessTokenError::ERR_PARAM_INVALID;
-    int32_t ret = MigrationVerifyHelper::VerifyMigratedBundle(migratedInfo, cachedInfos);
+    int32_t ret = MigrationVerifyHelper::GetInstance().VerifyMigratedBundle(migratedInfo, cachedInfos);
     mockAdapter_.verifyRet_ = RET_SUCCESS;
     // DoVerifyMigratedBundle failure propagates the error
-    EXPECT_EQ(AccessTokenError::ERR_ERR_HAP_VERIFY_FAILED, ret);
+    EXPECT_EQ(AccessTokenError::ERR_HAP_VERIFY_FAILED, ret);
 
     (void)SpmRemoveEntry(tokenId);
     EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenId));

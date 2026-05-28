@@ -62,8 +62,12 @@ std::map<std::string, std::string> HapSignVerifyHelper::ParseAclExtendedMap(
 
         PermissionBriefDef briefDef;
         uint32_t opCode;
-        if (!GetPermissionBriefDef(child->string, briefDef, opCode) || !briefDef.isEnable) {
-            LOGW(ATM_DOMAIN, ATM_TAG, "Permission %{public}s is invalid or disabled, skip.", child->string);
+        if (!GetPermissionBriefDef(child->string, briefDef, opCode)) {
+            LOGW(ATM_DOMAIN, ATM_TAG, "Permission %{public}s is invalid, skip.", child->string);
+            continue;
+        }
+        if (!briefDef.isEnable) {
+            LOGW(ATM_DOMAIN, ATM_TAG, "Permission %{public}s is not enabled, skip.", child->string);
             continue;
         }
 
@@ -218,7 +222,12 @@ void HapSignVerifyHelper::BuildPermBriefDataListFromPolicy(const HapPolicy& poli
     for (const auto& permState : policy.permStateList) {
         uint32_t opCode;
         PermissionBriefDef briefDef;
-        if (!GetPermissionBriefDef(permState.permissionName, briefDef, opCode) || !briefDef.isEnable) {
+        if (!GetPermissionBriefDef(permState.permissionName, briefDef, opCode)) {
+            LOGW(ATM_DOMAIN, ATM_TAG, "Permission %{public}s is invalid, skip.", permState.permissionName.c_str());
+            continue;
+        }
+        if (!briefDef.isEnable) {
+            LOGW(ATM_DOMAIN, ATM_TAG, "Permission %{public}s is not enabled, skip.", permState.permissionName.c_str());
             continue;
         }
 

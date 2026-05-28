@@ -130,7 +130,7 @@ HWTEST_F(HapSignVerifyManagerTest, CheckHapsSignInfo004, TestSize.Level1)
     TrustedBundleInfoInner info;
     bool isChanged = true;
 
-    EXPECT_EQ(AccessTokenError::ERR_ERR_HAP_VERIFY_FAILED,
+    EXPECT_EQ(AccessTokenError::ERR_HAP_VERIFY_FAILED,
         manager.CheckHapsSignInfo("/data/camera.hap", Security::Verify::VerifyType::Fast, -1, info, isChanged));
     EXPECT_FALSE(adapter.isParseCalled_);
 }
