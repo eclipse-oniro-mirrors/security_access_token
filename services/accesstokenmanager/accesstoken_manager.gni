@@ -30,7 +30,9 @@ accesstoken_manager_base_config = {
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/callback/callback_death_recipients.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/callback/callback_manager.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/clawtoken/claw_permission_decision_engine.cpp",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/src/clawtoken/claw_permission_metadata_provider.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/clawtoken/claw_permission_status_helper.cpp",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/src/clawtoken/claw_ticket_manager.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/clawtoken/claw_token_info_inner_base.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/clawtoken/claw_token_info_manager.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/clawtoken/cli_token_info_inner.cpp",
@@ -69,25 +71,10 @@ accesstoken_manager_base_config = {
   ]
 
   if (access_token_manager_hapverify_enable) {
-    sources += [ 
+    sources += [
       "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/app_verify_adapter.cpp",
       "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/hap_sign_verify_manager.cpp",
       "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/hap_sign_verify_helper.cpp",
-    ]
-  }
-
-  # Conditional sources: use mock implementations for minimal system without saf_agent_fence
-  if (support_jsapi) {
-    # Full system with saf_agent_fence support
-    sources += [
-      "${access_token_path}/services/accesstokenmanager/main/cpp/src/clawtoken/claw_permission_metadata_provider.cpp",
-      "${access_token_path}/services/accesstokenmanager/main/cpp/src/clawtoken/claw_ticket_manager.cpp",
-    ]
-  } else {
-    # Minimal system without saf_agent_fence - use mock implementations
-    sources += [
-      "${access_token_path}/services/accesstokenmanager/main/cpp/src/clawtoken/claw_permission_metadata_provider_mock.cpp",
-      "${access_token_path}/services/accesstokenmanager/main/cpp/src/clawtoken/claw_ticket_manager_mock.cpp",
     ]
   }
 
@@ -190,11 +177,6 @@ accesstoken_manager_base_config = {
 
   # Add global external_deps from access_token.gni
   external_deps += access_token_external_deps
-
-  # Add saf_agent_fence dependency only when support_jsapi is true
-  if (support_jsapi) {
-    external_deps += [ "asset:saf_agent_fence" ]
-  }
 
   if (ohos_indep_compiler_enable) {
     external_deps += [ "bounds_checking_function:libsec_shared" ]

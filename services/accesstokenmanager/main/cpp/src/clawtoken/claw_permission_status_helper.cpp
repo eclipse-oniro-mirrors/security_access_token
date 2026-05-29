@@ -15,8 +15,12 @@
 
 #include "claw_permission_status_helper.h"
 
+#include "access_token_error.h"
 #include "accesstoken_common_log.h"
 #include "permission_manager.h"
+#ifdef SAF_AGENT_FENCE_ENABLE
+#include "saf_result_code.h"
+#endif
 
 namespace OHOS {
 namespace Security {
@@ -89,6 +93,33 @@ bool ResolveCliGrantedPermission(const PermissionStatusMap& permissionStatusMap,
         return false;
     }
     return cliAuthorizationResult;
+}
+
+int32_t TransferErrorCode(int32_t ret)
+{
+    switch (ret) {
+        case ERR_TICKET_NOT_LOGGED_IN:
+            return ERR_NOT_LOGGED_IN;
+        case ERR_TICKET_NETWORK_DISCONNECTED:
+            return ERR_NETWORK_DISCONNECTED;
+#ifdef SAF_AGENT_FENCE_ENABLE
+        case SAF_ERR_IPC_WRITE_DATA_FAIL:
+            return ERR_WRITE_PARCEL_FAILED;
+        case SAF_ERR_IPC_READ_DATA_FAIL:
+            return ERR_READ_PARCEL_FAILED;
+        case SAF_ERR_IPC_SEND_REQUEST_FAIL:
+        case SAF_ERR_IPC_PROXY_FAIL:
+        case SAF_ERR_IPC_ERROR:
+        case SAF_ERR_IPC_INVALID_IPC_CODE:
+            return ERROR_IPC_REQUEST_FAIL;
+        case SAF_ERR_SERVICE_UNAVAILABLE:
+        case SAF_ERR_SERVICE_IS_STOPPING:
+            return ERR_SERVICE_ABNORMAL;
+#endif
+        default:
+            break;
+    }
+    return ret;
 }
 } // namespace AccessToken
 } // namespace Security

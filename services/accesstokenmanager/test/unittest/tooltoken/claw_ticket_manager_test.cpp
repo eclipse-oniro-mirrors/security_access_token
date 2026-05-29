@@ -21,8 +21,12 @@
 #include "access_token_error.h"
 #include "accesstoken_common_log.h"
 #include "accesstoken_info_manager.h"
+#include "claw_permission_status_helper.h"
 #include "cjson_utils.h"
 #include "saf_agent_fence.h"
+#ifdef SAF_AGENT_FENCE_ENABLE
+#include "saf_result_code.h"
+#endif
 
 namespace OHOS {
 namespace Security {
@@ -1190,7 +1194,7 @@ HWTEST_F(ClawTicketManagerTest, DeleteClawTicketTest003, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(ClawTicketManagerTest, DeleteClawTicketByTokenIdTest001, TestSize.Level0)
+HWTEST_F(ClawTicketManagerTest, DeleteClawTicketByTokenIdTest001, TestSize.Level1)
 {
     AccessTokenID tokenId = CreateTestHapToken();
     ASSERT_NE(INVALID_TOKENID, tokenId);
@@ -1216,7 +1220,7 @@ HWTEST_F(ClawTicketManagerTest, DeleteClawTicketByTokenIdTest001, TestSize.Level
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(ClawTicketManagerTest, DeleteClawTicketByTokenIdTest002, TestSize.Level0)
+HWTEST_F(ClawTicketManagerTest, DeleteClawTicketByTokenIdTest002, TestSize.Level1)
 {
     size_t sizeBefore = ClawTicketManager::GetInstance().ticketMap_.size();
 
@@ -1231,7 +1235,7 @@ HWTEST_F(ClawTicketManagerTest, DeleteClawTicketByTokenIdTest002, TestSize.Level
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(ClawTicketManagerTest, DeleteClawTicketByTokenIdTest003, TestSize.Level0)
+HWTEST_F(ClawTicketManagerTest, DeleteClawTicketByTokenIdTest003, TestSize.Level1)
 {
     AccessTokenID tokenId = CreateTestHapToken();
     ASSERT_NE(INVALID_TOKENID, tokenId);
@@ -1253,7 +1257,7 @@ HWTEST_F(ClawTicketManagerTest, DeleteClawTicketByTokenIdTest003, TestSize.Level
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(ClawTicketManagerTest, OnAppStoppedTest001, TestSize.Level0)
+HWTEST_F(ClawTicketManagerTest, OnAppStoppedTest001, TestSize.Level1)
 {
     AccessTokenID tokenId = CreateTestHapToken();
     ASSERT_NE(INVALID_TOKENID, tokenId);
@@ -1284,7 +1288,7 @@ HWTEST_F(ClawTicketManagerTest, OnAppStoppedTest001, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(ClawTicketManagerTest, OnAppStoppedTest002, TestSize.Level0)
+HWTEST_F(ClawTicketManagerTest, OnAppStoppedTest002, TestSize.Level1)
 {
     AccessTokenID tokenId1 = CreateTestHapToken();
     AccessTokenID tokenId2 = CreateTestHapToken();
@@ -1323,7 +1327,7 @@ HWTEST_F(ClawTicketManagerTest, OnAppStoppedTest002, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(ClawTicketManagerTest, OnAppStoppedTest003, TestSize.Level0)
+HWTEST_F(ClawTicketManagerTest, OnAppStoppedTest003, TestSize.Level1)
 {
     AccessTokenID tokenId = CreateTestHapToken();
     ASSERT_NE(INVALID_TOKENID, tokenId);
@@ -1351,7 +1355,7 @@ HWTEST_F(ClawTicketManagerTest, OnAppStoppedTest003, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(ClawTicketManagerTest, OnAppStoppedTest004, TestSize.Level0)
+HWTEST_F(ClawTicketManagerTest, OnAppStoppedTest004, TestSize.Level1)
 {
     AccessTokenID tokenId = CreateTestHapToken();
     ASSERT_NE(INVALID_TOKENID, tokenId);
@@ -1372,6 +1376,145 @@ HWTEST_F(ClawTicketManagerTest, OnAppStoppedTest004, TestSize.Level0)
 
     DeleteTestHapToken(tokenId);
 }
+
+// ==================== TransferErrorCode Test Cases ====================
+
+/**
+ * @tc.name: TransferErrorCodeTest001
+ * @tc.desc: Test TransferErrorCode with ERR_TICKET_NOT_LOGGED_IN
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(ClawTicketManagerTest, TransferErrorCodeTest001, TestSize.Level2)
+{
+    int32_t ret = TransferErrorCode(ERR_TICKET_NOT_LOGGED_IN);
+    EXPECT_EQ(ERR_NOT_LOGGED_IN, ret);
+}
+
+/**
+ * @tc.name: TransferErrorCodeTest002
+ * @tc.desc: Test TransferErrorCode with ERR_TICKET_NETWORK_DISCONNECTED
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(ClawTicketManagerTest, TransferErrorCodeTest002, TestSize.Level2)
+{
+    int32_t ret = TransferErrorCode(ERR_TICKET_NETWORK_DISCONNECTED);
+    EXPECT_EQ(ERR_NETWORK_DISCONNECTED, ret);
+}
+
+/**
+ * @tc.name: TransferErrorCodeTest003
+ * @tc.desc: Test TransferErrorCode with unknown error code returns unchanged
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(ClawTicketManagerTest, TransferErrorCodeTest003, TestSize.Level2)
+{
+    int32_t ret = TransferErrorCode(RET_SUCCESS);
+    EXPECT_EQ(RET_SUCCESS, ret);
+
+    ret = TransferErrorCode(ERR_PERMISSION_DENIED);
+    EXPECT_EQ(ERR_PERMISSION_DENIED, ret);
+}
+
+#ifdef SAF_AGENT_FENCE_ENABLE
+/**
+ * @tc.name: TransferErrorCodeTest004
+ * @tc.desc: Test TransferErrorCode with SAF_ERR_IPC_WRITE_DATA_FAIL
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(ClawTicketManagerTest, TransferErrorCodeTest004, TestSize.Level2)
+{
+    int32_t ret = TransferErrorCode(SAF_ERR_IPC_WRITE_DATA_FAIL);
+    EXPECT_EQ(ERR_WRITE_PARCEL_FAILED, ret);
+}
+
+/**
+ * @tc.name: TransferErrorCodeTest005
+ * @tc.desc: Test TransferErrorCode with SAF_ERR_IPC_READ_DATA_FAIL
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(ClawTicketManagerTest, TransferErrorCodeTest005, TestSize.Level2)
+{
+    int32_t ret = TransferErrorCode(SAF_ERR_IPC_READ_DATA_FAIL);
+    EXPECT_EQ(ERR_READ_PARCEL_FAILED, ret);
+}
+
+/**
+ * @tc.name: TransferErrorCodeTest006
+ * @tc.desc: Test TransferErrorCode with SAF_ERR_IPC_SEND_REQUEST_FAIL
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(ClawTicketManagerTest, TransferErrorCodeTest006, TestSize.Level2)
+{
+    int32_t ret = TransferErrorCode(SAF_ERR_IPC_SEND_REQUEST_FAIL);
+    EXPECT_EQ(ERROR_IPC_REQUEST_FAIL, ret);
+}
+
+/**
+ * @tc.name: TransferErrorCodeTest007
+ * @tc.desc: Test TransferErrorCode with SAF_ERR_IPC_PROXY_FAIL
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(ClawTicketManagerTest, TransferErrorCodeTest007, TestSize.Level2)
+{
+    int32_t ret = TransferErrorCode(SAF_ERR_IPC_PROXY_FAIL);
+    EXPECT_EQ(ERROR_IPC_REQUEST_FAIL, ret);
+}
+
+/**
+ * @tc.name: TransferErrorCodeTest008
+ * @tc.desc: Test TransferErrorCode with SAF_ERR_IPC_ERROR
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(ClawTicketManagerTest, TransferErrorCodeTest008, TestSize.Level2)
+{
+    int32_t ret = TransferErrorCode(SAF_ERR_IPC_ERROR);
+    EXPECT_EQ(ERROR_IPC_REQUEST_FAIL, ret);
+}
+
+/**
+ * @tc.name: TransferErrorCodeTest009
+ * @tc.desc: Test TransferErrorCode with SAF_ERR_IPC_INVALID_IPC_CODE
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(ClawTicketManagerTest, TransferErrorCodeTest009, TestSize.Level2)
+{
+    int32_t ret = TransferErrorCode(SAF_ERR_IPC_INVALID_IPC_CODE);
+    EXPECT_EQ(ERROR_IPC_REQUEST_FAIL, ret);
+}
+
+/**
+ * @tc.name: TransferErrorCodeTest010
+ * @tc.desc: Test TransferErrorCode with SAF_ERR_SERVICE_UNAVAILABLE
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(ClawTicketManagerTest, TransferErrorCodeTest010, TestSize.Level2)
+{
+    int32_t ret = TransferErrorCode(SAF_ERR_SERVICE_UNAVAILABLE);
+    EXPECT_EQ(ERR_SERVICE_ABNORMAL, ret);
+}
+
+/**
+ * @tc.name: TransferErrorCodeTest011
+ * @tc.desc: Test TransferErrorCode with SAF_ERR_SERVICE_IS_STOPPING
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(ClawTicketManagerTest, TransferErrorCodeTest011, TestSize.Level2)
+{
+    int32_t ret = TransferErrorCode(SAF_ERR_SERVICE_IS_STOPPING);
+    EXPECT_EQ(ERR_SERVICE_ABNORMAL, ret);
+}
+#endif
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

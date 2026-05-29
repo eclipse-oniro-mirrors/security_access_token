@@ -43,6 +43,16 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+
+typedef enum {
+    TICKET_CODE_BASE = 0X19 << 12,
+} ExtErrorType;
+
+typedef enum {
+    ERR_TICKET_NETWORK_DISCONNECTED = TICKET_CODE_BASE | 3,
+    ERR_TICKET_NOT_LOGGED_IN = TICKET_CODE_BASE | 4,
+} ExtResultCode;
+
 /**
  * @brief error numbers
  */
@@ -96,6 +106,9 @@ enum AccessTokenError {
     ERR_PERM_POLICY_PERSISTENCE_FLAG_NOT_MATCH,
     // claw error
     ERR_TOOL_TOKEN_ALREADY_EXIST = 12100200,
+    ERR_NOT_LOGGED_IN = 12100201,
+    ERR_NETWORK_DISCONNECTED = 12100202,
+    ERR_QUERY_PERMISSION_FAILED = 12100203,
 
     // kernel error
     ERR_KERNEL_COMMON_FAILED = 12100300,

@@ -2786,7 +2786,7 @@ HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest007_001, TestSi
 
 /**
  * @tc.name: ClawPermissionServiceTest007_002
- * @tc.desc: Test CLI dialog query returns ERR_PARAM_INVALID when metadata queryRet is not success.
+ * @tc.desc: Test CLI dialog query returns ERR_QUERY_PERMISSION_FAILED when metadata queryRet is not success.
  * @tc.require:
  * @tc.type: FUNC
  */
@@ -2799,12 +2799,12 @@ HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest007_002, TestSi
     SetSelfTokenID(fullTokenId);
 
     PermissionDialogResultParcel dialogResult;
-    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID,
+    ASSERT_EQ(AccessTokenError::ERR_QUERY_PERMISSION_FAILED,
         atManagerService_->GetCliPermissionRequestInfo(
             DEFAULT_AGENT_ID, BuildUnknownCliInfoParcels(), dialogResult));
 
     CliPermissionsResultParcel cliPermissionsResult;
-    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID,
+    ASSERT_EQ(AccessTokenError::ERR_QUERY_PERMISSION_FAILED,
         atManagerService_->GetCliPermissions(
             tokenId, DEFAULT_AGENT_ID, BuildUnknownCliInfoParcels(), cliPermissionsResult));
 
