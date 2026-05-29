@@ -20,6 +20,9 @@ group("mock_tests") {
     "database:libaccesstoken_database_null_mock_test",
     "permission:libpermission_manager_mock_test",
   ]
+  if (access_token_enable_spm && access_token_manager_hapverify_enable) {
+    deps += [ "install_session_manager:libinstall_session_manager_mock_test" ]
+  }
   if (lite_device_enable) {
     deps += [ "dlopen:libaccesstoken_manager_service_dlopen_test" ]
   }

@@ -23,6 +23,8 @@
 #include "access_token.h"
 #include "access_token_db_operator.h"
 #include "access_token_error.h"
+#include "bundle_infos_rawdata_helper.h"
+#include "check_hap_sign_result_rawdata_helper.h"
 #include "claw_permission_info.h"
 #include "accesstoken_common_log.h"
 #include "accesstoken_dfx_define.h"
@@ -51,6 +53,9 @@
 #endif
 #include "ipc_skeleton.h"
 #include "libraryloader.h"
+#if defined(SPM_DATA_ENABLE) && defined(IS_SUPPORT_HAP_RUNNING)
+#include "install_session_manager.h"
+#endif
 #include "memory_guard.h"
 #include "parameter.h"
 #include "parameters.h"
@@ -101,6 +106,7 @@ static constexpr int MAX_PERMISSION_SIZE = 1024;
 #ifdef SUPPORT_MANAGE_USER_POLICY
 static constexpr int MAX_SET_USER_POLICY_SIZE = 200;
 #endif
+const std::string GET_TRUSTED_BUNDLE_INFO = "ohos.permission.GET_TRUSTED_BUNDLE_INFO";
 const std::string GRANT_SENSITIVE_PERMISSIONS = "ohos.permission.GRANT_SENSITIVE_PERMISSIONS";
 const std::string REVOKE_SENSITIVE_PERMISSIONS = "ohos.permission.REVOKE_SENSITIVE_PERMISSIONS";
 const std::string GET_SENSITIVE_PERMISSIONS = "ohos.permission.GET_SENSITIVE_PERMISSIONS";
@@ -2522,6 +2528,218 @@ ErrCode AccessTokenManagerService::QueryStatusByTokenID(const std::vector<uint32
     LOGI(ATM_DOMAIN, ATM_TAG, "End, result size: %{public}zu", permissionInfoList.size());
     return RET_SUCCESS;
 }
+
+#if defined(SPM_DATA_ENABLE) && defined(IS_SUPPORT_HAP_RUNNING)
+void TransferBundleHapListFromIdl(const BundleHapListIdl& listIdl, BundleHapList& list)
+{
+    list.hapPaths = listIdl.hapPaths;
+    list.isPreInstalled = listIdl.isPreInstalled;
+    list.userId = listIdl.userId;
+}
+
+void TransferHapBaseInfoFromIdl(const HapBaseInfoIdl& infoIdl, HapBaseInfo& info)
+{
+    info.userID = infoIdl.userID;
+    info.bundleName = infoIdl.bundleName;
+    info.instIndex = infoIdl.instIndex;
+}
+
+void TransferIdentityToIdl(const Identity& identity, IdentityIdl& identityIdl)
+{
+    identityIdl.uid = identity.uid;
+    identityIdl.tokenId = identity.tokenId;
+}
+
+void TransferPreAuthorizationInfoFromIdl(const PreAuthorizationInfoIdl& infoIdl, PreAuthorizationInfo& info)
+{
+    info.permissionName = infoIdl.permissionName;
+    info.userCancelable = infoIdl.userCancelable;
+}
+
+void TransferBundlePolicyFromIdl(const BundlePolicyIdl& policyIdl, BundlePolicy& policy)
+{
+    for (const auto& infoIdl : policyIdl.preAuthorizationInfo) {
+        PreAuthorizationInfo info;
+        TransferPreAuthorizationInfoFromIdl(infoIdl, info);
+        policy.preAuthorizationInfo.emplace_back(info);
+    }
+    policy.dlpType = static_cast<DlpType>(policyIdl.dlpType);
+    policy.isDebugGrant = policyIdl.isDebugGrant;
+}
+
+int32_t AccessTokenManagerService::CheckHapSignInfo(const BundleHapListIdl& list, const sptr<IRemoteObject>& cb,
+    CheckHapSignResultRawdata& result)
+{
+    AccessTokenID tokenID = IPCSkeleton::GetCallingTokenID();
+    if (!IsPrivilegedCalling() &&
+        (VerifyAccessToken(tokenID, MANAGE_HAP_TOKENID_PERMISSION) == PERMISSION_DENIED)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", tokenID);
+        return AccessTokenError::ERR_PERMISSION_DENIED;
+    }
+
+    BundleHapList bundleHapList;
+    TransferBundleHapListFromIdl(list, bundleHapList);
+    int32_t sessionId = 0;
+    std::vector<TrustedBundleInfo> bundleInfoList;
+    int32_t ret = InstallSessionManager::GetInstance().CheckHapSignInfo(
+        bundleHapList, cb, sessionId, bundleInfoList);
+    if (!CheckHapSignResultRawdataHelper::WriteToRawData(ret, sessionId, bundleInfoList, result)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteToRawData failed.");
+        return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
+    }
+    
+    return ERR_OK;
+}
+
+int32_t AccessTokenManagerService::CheckHapPermissionInfo(int32_t sessionId, InstallTypeEnumIdl type,
+    HapInfoCheckResultIdl& resultInfoIdl)
+{
+    AccessTokenID tokenID = IPCSkeleton::GetCallingTokenID();
+    if (!IsPrivilegedCalling() &&
+        (VerifyAccessToken(tokenID, MANAGE_HAP_TOKENID_PERMISSION) == PERMISSION_DENIED)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", tokenID);
+        return AccessTokenError::ERR_PERMISSION_DENIED;
+    }
+
+    HapInfoCheckResult checkResult;
+    int32_t ret = InstallSessionManager::GetInstance().CheckHapPermissionInfo(
+        sessionId, static_cast<InstallTypeEnum>(type), checkResult);
+    resultInfoIdl.realResult = ret;
+    if (ret != ERR_OK) {
+        resultInfoIdl.permissionName = checkResult.permCheckResult.permissionName;
+        resultInfoIdl.rule = static_cast<PermissionRulesEnumIdl>(checkResult.permCheckResult.rule);
+    }
+
+    return ERR_OK;
+}
+
+int32_t AccessTokenManagerService::PrepareHapIdentity(int32_t& sessionId, const HapBaseInfoIdl& info,
+    const BundlePolicyIdl& policy, const sptr<IRemoteObject>& cb, IdentityIdl& identity)
+{
+    AccessTokenID tokenID = IPCSkeleton::GetCallingTokenID();
+    if (!IsPrivilegedCalling() &&
+        (VerifyAccessToken(tokenID, MANAGE_HAP_TOKENID_PERMISSION) == PERMISSION_DENIED)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", tokenID);
+        return AccessTokenError::ERR_PERMISSION_DENIED;
+    }
+    HapBaseInfo hapBaseInfo;
+    TransferHapBaseInfoFromIdl(info, hapBaseInfo);
+    BundlePolicy bundlePolicy;
+    TransferBundlePolicyFromIdl(policy, bundlePolicy);
+    Identity ident;
+    int32_t ret = InstallSessionManager::GetInstance().PrepareHapIdentity(
+        sessionId, hapBaseInfo, bundlePolicy, cb, ident);
+    TransferIdentityToIdl(ident, identity);
+    return ret;
+}
+
+int32_t AccessTokenManagerService::UpdateHapPolicy(int32_t sessionId, AccessTokenID tokenId,
+    const BundlePolicyIdl& policy)
+{
+    AccessTokenID tokenID = IPCSkeleton::GetCallingTokenID();
+    if (!IsPrivilegedCalling() &&
+        (VerifyAccessToken(tokenID, MANAGE_HAP_TOKENID_PERMISSION) == PERMISSION_DENIED)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", tokenID);
+        return AccessTokenError::ERR_PERMISSION_DENIED;
+    }
+    BundlePolicy bundlePolicy;
+    TransferBundlePolicyFromIdl(policy, bundlePolicy);
+    return InstallSessionManager::GetInstance().UpdateHapPolicy(sessionId, tokenId, bundlePolicy);
+}
+
+int32_t AccessTokenManagerService::FinishInstall(int32_t sessionId, bool isSuccess,
+    const std::map<std::string, std::string>& modulePathMap)
+{
+    AccessTokenID tokenID = IPCSkeleton::GetCallingTokenID();
+    if (!IsPrivilegedCalling() &&
+        (VerifyAccessToken(tokenID, MANAGE_HAP_TOKENID_PERMISSION) == PERMISSION_DENIED)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", tokenID);
+        return AccessTokenError::ERR_PERMISSION_DENIED;
+    }
+    int32_t ret = InstallSessionManager::GetInstance().FinishInstall(sessionId, isSuccess, modulePathMap);
+    return ret;
+}
+
+int32_t AccessTokenManagerService::GetCacheSignInfoBySessionId(int32_t sessionId,
+    BundleInfosRawdata& bundleInfos)
+{
+    AccessTokenID tokenID = IPCSkeleton::GetCallingTokenID();
+    if (!IsPrivilegedCalling() && (VerifyAccessToken(tokenID, GET_TRUSTED_BUNDLE_INFO) == PERMISSION_DENIED)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", tokenID);
+        return AccessTokenError::ERR_PERMISSION_DENIED;
+    }
+    std::vector<TrustedBundleInfo> bundleInfoList;
+    int32_t ret = InstallSessionManager::GetInstance().GetCacheSignInfoBySessionId(sessionId, bundleInfoList);
+    
+    if (!BundleInfosRawdataHelper::WriteToRawData(bundleInfoList, bundleInfos)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteToRawData failed.");
+        return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
+    }
+    
+    return ret;
+}
+
+int32_t AccessTokenManagerService::GetHapSignInfo(const std::string& bundleName,
+    BundleInfosRawdata& bundleInfos)
+{
+    AccessTokenID tokenID = IPCSkeleton::GetCallingTokenID();
+    if (!IsPrivilegedCalling() && (VerifyAccessToken(tokenID, GET_TRUSTED_BUNDLE_INFO) == PERMISSION_DENIED)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", tokenID);
+        return AccessTokenError::ERR_PERMISSION_DENIED;
+    }
+    std::vector<TrustedBundleInfo> bundleInfoList;
+    int32_t ret = InstallSessionManager::GetInstance().GetHapSignInfo(bundleName, bundleInfoList);
+    
+    if (!BundleInfosRawdataHelper::WriteToRawData(bundleInfoList, bundleInfos)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteToRawData failed.");
+        return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
+    }
+    
+    return ret;
+}
+#else
+int32_t AccessTokenManagerService::CheckHapSignInfo(const BundleHapListIdl& list, const sptr<IRemoteObject>& cb,
+    CheckHapSignResultRawdata& result)
+{
+    return RET_SUCCESS;
+}
+
+int32_t AccessTokenManagerService::CheckHapPermissionInfo(int32_t sessionId, InstallTypeEnumIdl type,
+    HapInfoCheckResultIdl& resultInfoIdl)
+{
+    return RET_SUCCESS;
+}
+
+int32_t AccessTokenManagerService::PrepareHapIdentity(int32_t& sessionId, const HapBaseInfoIdl& info,
+    const BundlePolicyIdl& policy, const sptr<IRemoteObject>& cb, IdentityIdl& identity)
+{
+    return RET_SUCCESS;
+}
+
+int32_t AccessTokenManagerService::UpdateHapPolicy(int32_t sessionId, AccessTokenID tokenId,
+    const BundlePolicyIdl& policy)
+{
+    return RET_SUCCESS;
+}
+
+int32_t AccessTokenManagerService::FinishInstall(int32_t sessionId, bool isSuccess,
+    const std::map<std::string, std::string>& modulePathMap)
+{
+    return RET_SUCCESS;
+}
+
+int32_t AccessTokenManagerService::GetCacheSignInfoBySessionId(int32_t sessionId,
+    BundleInfosRawdata& bundleInfos)
+{
+    return RET_SUCCESS;
+}
+
+int32_t AccessTokenManagerService::GetHapSignInfo(const std::string& bundleName,
+    BundleInfosRawdata& bundleInfos)
+{
+    return RET_SUCCESS;
+}
+#endif
 
 int32_t AccessTokenManagerService::GetCliPermissionRequestInfo(
     const std::string& agentID, const std::vector<CliInfoParcel>& cliInfoList,

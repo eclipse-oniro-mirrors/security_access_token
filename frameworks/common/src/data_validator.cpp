@@ -275,6 +275,15 @@ bool DataValidator::IsHapCaller(AccessTokenID id)
     return true;
 }
 
+bool DataValidator::IsHapListSizeValid(uint32_t size)
+{
+    if (size == 0 || size > MAX_HAP_LIST_SIZE) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Size is invalid(%{public}u).", size);
+        return false;
+    }
+    return true;
+}
+
 bool DataValidator::IsListSizeValid(uint32_t size)
 {
     if (size <= 0 || size > MAX_LIST_SIZE) {

@@ -88,6 +88,8 @@ public:
         BundleParam& param) const;
     int32_t CheckPermissionRequestValid(const TrustedBundleInfoInner& info, const HapPolicy& policy,
         HapInfoCheckResult& result) const;
+    void ConvertTrustedBundleInfo(
+        const std::vector<TrustedBundleInfoInner>& bundleInfos, std::vector<TrustedBundleInfo>& bundleInfo) const;
 
 private:
     HapSignVerifyManager();

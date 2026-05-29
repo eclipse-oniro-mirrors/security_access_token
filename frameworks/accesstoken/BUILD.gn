@@ -49,6 +49,8 @@ ohos_shared_library("accesstoken_communication_adapter_cxx") {
 
   sources = [
     "src/atm_tools_param_info_parcel.cpp",
+    "src/bundle_infos_rawdata_helper.cpp",
+    "src/check_hap_sign_result_rawdata_helper.cpp",
     "src/claw_auth_info_parcel.cpp",
     "src/claw_token_challenge_parcel.cpp",
     "src/cli_info_parcel.cpp",
@@ -77,10 +79,10 @@ ohos_shared_library("accesstoken_communication_adapter_cxx") {
   external_deps = [
     "bounds_checking_function:libsec_shared",
     "c_utils:utils",
+    "ipc:ipc_single",
   ]
 
   if (security_component_enhance_enable) {
     sources += [ "src/sec_comp_enhance_data_parcel.cpp" ]
-    external_deps += [ "ipc:ipc_single" ]
   }
 }

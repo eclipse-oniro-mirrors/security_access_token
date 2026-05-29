@@ -531,6 +531,129 @@ HWTEST_F(AccessTokenDenyTest, DumpTokenInfo001, TestSize.Level0)
     ASSERT_EQ("", dumpInfo);
 }
 
+#if defined(SPM_DATA_ENABLE) && defined(IS_SUPPORT_HAP_RUNNING)
+/**
+ * @tc.name: CheckHapSignInfoTest001
+ * @tc.desc: CheckHapSignInfo with no permission
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenDenyTest, CheckHapSignInfoTest001, TestSize.Level0)
+{
+    std::string path = "/data/not/exist/test.hap";
+    BundleHapList hapList;
+    hapList.hapPaths.emplace_back(path);
+    hapList.isPreInstalled = false;
+    hapList.userId = 100;
+    int32_t sessionId = 0;
+    std::vector<TrustedBundleInfo> bundleInfo;
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
+        AccessTokenKit::CheckHapSignInfo(hapList, sessionId, bundleInfo));
+}
+
+/**
+ * @tc.name: CheckHapPermissionInfoTest001
+ * @tc.desc: CheckHapPermissionInfo with no permission
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenDenyTest, CheckHapPermissionInfoTest001, TestSize.Level0)
+{
+    int32_t sessionId = 123;
+    InstallTypeEnum type = TYPE_INSTALL;
+    HapInfoCheckResult result;
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
+        AccessTokenKit::CheckHapPermissionInfo(sessionId, type, result));
+}
+
+/**
+ * @tc.name: PrepareHapIdentityTest001
+ * @tc.desc: PrepareHapIdentity with no permission
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenDenyTest, PrepareHapIdentityTest001, TestSize.Level0)
+{
+    int32_t sessionId = 0;
+
+    HapBaseInfo baseInfo;
+    baseInfo.userID = 100;
+    baseInfo.bundleName = "PrepareHapIdentityTest001";
+    baseInfo.instIndex = 0;
+
+    BundlePolicy bundlePolicy;
+    bundlePolicy.dlpType = DLP_COMMON;
+    bundlePolicy.isDebugGrant = false;
+
+    Identity identity;
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
+        AccessTokenKit::PrepareHapIdentity(sessionId, baseInfo, bundlePolicy, identity));
+}
+
+/**
+ * @tc.name: UpdateHapPolicyTest001
+ * @tc.desc: UpdateHapPolicy with no permission
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenDenyTest, UpdateHapPolicyTest001, TestSize.Level0)
+{
+    int32_t sessionId = 123;
+    int32_t tokenId = 123;
+
+    BundlePolicy bundlePolicy;
+    bundlePolicy.dlpType = DLP_COMMON;
+    bundlePolicy.isDebugGrant = false;
+
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
+        AccessTokenKit::UpdateHapPolicy(sessionId, tokenId, bundlePolicy));
+}
+
+/**
+ * @tc.name: FinishInstallTest001
+ * @tc.desc: FinishInstall with no permission
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenDenyTest, FinishInstallTest001, TestSize.Level0)
+{
+    int32_t sessionId = 123;
+    std::map<std::string, std::string> modulePathMap;
+
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
+        AccessTokenKit::FinishInstall(sessionId, false, modulePathMap));
+}
+
+/**
+ * @tc.name: GetCacheSignInfoBySessionIdTest001
+ * @tc.desc: GetCacheSignInfoBySessionId with no permission
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenDenyTest, GetCacheSignInfoBySessionIdTest001, TestSize.Level0)
+{
+    int32_t sessionId = 123;
+    std::vector<TrustedBundleInfo> bundleInfo;
+
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
+        AccessTokenKit::GetCacheSignInfoBySessionId(sessionId, bundleInfo));
+}
+
+/**
+ * @tc.name: GetHapSignInfoTest001
+ * @tc.desc: GetHapSignInfo with no permission
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenDenyTest, GetHapSignInfoTest001, TestSize.Level0)
+{
+    std::string bundleName = "GetHapSignInfoTest001";
+    std::vector<TrustedBundleInfo> bundleInfo;
+
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::GetHapSignInfo(bundleName, bundleInfo));
+}
+#endif
+
 #ifdef TOKEN_SYNC_ENABLE
 /**
  * @tc.name: GetHapTokenInfoFromRemote001

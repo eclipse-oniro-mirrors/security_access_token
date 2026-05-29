@@ -30,6 +30,9 @@
 #include "data_validator.h"
 #include "hisysevent_adapter.h"
 #include "idl_common.h"
+#if defined(SPM_DATA_ENABLE) && defined(IS_SUPPORT_HAP_RUNNING)
+#include "install_session_manager.h"
+#endif
 #ifdef IS_SUPPORT_HAP_RUNNING
 #include "migration_verify_worker.h"
 #endif
@@ -375,6 +378,9 @@ void AccessTokenMigrationManager::Initialize()
 {
     if (IsMigrationCompleted()) {
         AccessTokenIDManager::GetInstance().SetMigrationDone();
+#if defined(SPM_DATA_ENABLE) && defined(IS_SUPPORT_HAP_RUNNING)
+        InstallSessionManager::GetInstance().SetMigrationDone();
+#endif
         LOGI(ATM_DOMAIN, ATM_TAG, "Migration was previously completed, flag set during initialization.");
     }
 }
@@ -510,6 +516,9 @@ int32_t AccessTokenMigrationManager::FinishMigration()
         return ret;
     }
     AccessTokenIDManager::GetInstance().SetMigrationDone();
+#if defined(SPM_DATA_ENABLE) && defined(IS_SUPPORT_HAP_RUNNING)
+    InstallSessionManager::GetInstance().SetMigrationDone();
+#endif
     dbRowCache_.clear();
     preMigratedUidSet_.clear();
     LOGI(ATM_DOMAIN, ATM_TAG, "BMS migration completed successfully.");

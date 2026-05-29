@@ -77,6 +77,17 @@ group("fuzztest") {
       "updateseccompenhance_fuzzer:UpdateSecCompEnhanceFuzzTest",
     ]
   }
+  if (access_token_enable_spm && access_token_manager_hapverify_enable) {
+    deps += [
+      "checkhapsigninfo_fuzzer:CheckHapSignInfoFuzzTest",
+      "checkhappermissioninfo_fuzzer:CheckHapPermissionInfoFuzzTest",
+      "finishinstall_fuzzer:FinishInstallFuzzTest",
+      "getcachesigninfobysessionid_fuzzer:GetCacheSignInfoBySessionIdFuzzTest",
+      "gethapsigninfo_fuzzer:GetHapSignInfoFuzzTest",
+      "preparehapidentity_fuzzer:PrepareHapIdentityFuzzTest",
+      "updatehappolicy_fuzzer:UpdateHapPolicyFuzzTest",
+    ]
+  }
   if (is_standard_system && token_sync_enable) {
     deps += [
       "deleteremotedevicetokens_fuzzer:DeleteRemoteDeviceTokensFuzzTest",

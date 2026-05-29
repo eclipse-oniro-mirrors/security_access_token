@@ -170,6 +170,86 @@ FullTokenID AccessTokenKit::AllocLocalTokenID(const std::string& remoteDeviceID,
 #endif
 }
 
+int32_t AccessTokenKit::CheckHapSignInfo(const BundleHapList& list, int32_t& sessionId,
+    std::vector<TrustedBundleInfo>& bundleInfo)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "CheckHapSignInfo called, hapPaths size=%{public}zu.", list.hapPaths.size());
+    if (!DataValidator::IsHapListSizeValid(list.hapPaths.size())) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "HapPaths is invalid.");
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    return AccessTokenManagerClient::GetInstance().CheckHapSignInfo(list, sessionId, bundleInfo);
+}
+
+int32_t AccessTokenKit::CheckHapPermissionInfo(int32_t sessionId, InstallTypeEnum type, HapInfoCheckResult& result)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "CheckHapPermissionInfo called, sessionId=%{public}d, type=%{public}d",
+        sessionId, static_cast<int32_t>(type));
+    if (sessionId <= 0) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "sessionId is 0.");
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    return AccessTokenManagerClient::GetInstance().CheckHapPermissionInfo(sessionId, type, result);
+}
+
+int32_t AccessTokenKit::PrepareHapIdentity(int32_t& sessionId, const HapBaseInfo& info,
+    const BundlePolicy& policy, Identity& identity)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "PrepareHapIdentity called, sessionId=%{public}d, user=%{public}d, bundleName=%{public}s"
+        ", index=%{public}d", sessionId, info.userID, info.bundleName.c_str(), info.instIndex);
+    if (sessionId < 0 || !DataValidator::IsUserIdValid(info.userID) ||
+        !DataValidator::IsBundleNameValid(info.bundleName)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "HapBaseInfo param check failed.");
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    return AccessTokenManagerClient::GetInstance().PrepareHapIdentity(sessionId, info, policy, identity);
+}
+
+int32_t AccessTokenKit::UpdateHapPolicy(int32_t sessionId, int32_t tokenId, const BundlePolicy& policy)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "UpdateHapPolicy called, sessionId=%{public}d, tokenId=%{public}d.",
+        sessionId, tokenId);
+    if (sessionId <= 0) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "SessionId is invalid.");
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    return AccessTokenManagerClient::GetInstance().UpdateHapPolicy(sessionId, tokenId, policy);
+}
+
+int32_t AccessTokenKit::FinishInstall(int32_t sessionId, bool isSuccess,
+    const std::map<std::string, std::string>& modulePathMap)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "FinishInstall called, sessionId=%{public}d, isSuccess=%{public}d.",
+        sessionId, isSuccess);
+    if (sessionId <= 0) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "SessionId is invalid.");
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    return AccessTokenManagerClient::GetInstance().FinishInstall(sessionId, isSuccess, modulePathMap);
+}
+
+int32_t AccessTokenKit::GetCacheSignInfoBySessionId(int32_t sessionId,
+    std::vector<TrustedBundleInfo>& bundleInfo)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetCacheSignInfoBySessionId called, sessionId=%{public}d.", sessionId);
+    if (sessionId <= 0) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "SessionId is invalid.");
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    return AccessTokenManagerClient::GetInstance().GetCacheSignInfoBySessionId(sessionId, bundleInfo);
+}
+
+int32_t AccessTokenKit::GetHapSignInfo(const std::string& bundleName,
+    std::vector<TrustedBundleInfo>& bundleInfo)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetHapSignInfo called, bundleName=%{public}s.", bundleName.c_str());
+    if (!DataValidator::IsBundleNameValid(bundleName)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "BundleName is invalid.");
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    return AccessTokenManagerClient::GetInstance().GetHapSignInfo(bundleName, bundleInfo);
+}
+
 int32_t AccessTokenKit::UpdateHapToken(
     AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info, const HapPolicyParams& policy)
 {

@@ -733,6 +733,18 @@ std::shared_ptr<HapTokenInfoInner> AccessTokenInfoManager::GetHapTokenInfoInner(
     return GetHapTokenInfoInnerFromDb(id);
 }
 
+std::shared_ptr<HapTokenInfoInner> AccessTokenInfoManager::GetHapTokenInfoInnerFromCache(AccessTokenID id)
+{
+    {
+        std::shared_lock<std::shared_mutex> infoGuard(this->hapTokenInfoLock_);
+        auto iter = hapTokenInfoMap_.find(id);
+        if (iter != hapTokenInfoMap_.end()) {
+            return iter->second;
+        }
+    }
+    return nullptr;
+}
+
 int32_t AccessTokenInfoManager::GetHapTokenDlpType(AccessTokenID id)
 {
     std::shared_lock<std::shared_mutex> infoGuard(this->hapTokenInfoLock_);

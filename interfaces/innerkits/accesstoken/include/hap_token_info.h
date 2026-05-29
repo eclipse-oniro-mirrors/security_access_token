@@ -225,6 +225,23 @@ public:
     PermissionInfoCheckResult permCheckResult;
 };
 
+struct ProfileData {
+    std::string provisionRaw;
+    int32_t profileBlockLength = 0;
+    std::vector<uint8_t> profileBlock;
+    std::string appId;
+    std::string fingerprint;
+    std::string organization;
+    bool isOpenHarmony = false;
+    bool isEnterpriseResigned = false;
+};
+
+struct TrustedBundleInfo {
+    ProfileData profileData;
+    std::string moduleInfo;
+    std::string sharedFiles;
+};
+
 /**
  * @brief Declares hap policy params class
  */
@@ -242,6 +259,7 @@ public:
     std::vector<PreAuthorizationInfo> preAuthorizationInfo;
     HapPolicyCheckIgnore checkIgnore = HapPolicyCheckIgnore::NONE;
     std::map<std::string, std::string> aclExtendedMap;
+    DlpType dlpType = DlpType::DLP_COMMON;
     bool isDebugGrant = false;
 };
 
@@ -270,8 +288,8 @@ struct BundleMigrateResult final {
  */
 struct BundlePolicy {
     std::vector<PreAuthorizationInfo> preAuthorizationInfo;
-    DlpType dlpType;
-    bool isDebugGrant;
+    DlpType dlpType = DlpType::DLP_COMMON;
+    bool isDebugGrant = false;
 };
 
 /**

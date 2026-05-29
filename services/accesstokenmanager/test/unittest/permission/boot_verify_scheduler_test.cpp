@@ -43,7 +43,9 @@ constexpr AccessTokenID TEST_TOKEN_ID = 123456;
 constexpr AccessTokenID TEST_TOKEN_ID_2 = 123457;
 constexpr AccessTokenID TEST_TOKEN_ID_3 = 123458;
 constexpr uint32_t TEST_UID = 20010001;
+#ifdef SPM_DATA_ENABLE
 constexpr int32_t INVALID_UID = -1;
+#endif
 constexpr char DEFAULT_TOKEN_VERSION_VALUE = 1;
 const std::string TEST_BUNDLE_NAME = "com.example.camera";
 const std::string TEST_BUNDLE_NAME_2 = "com.example.music";
@@ -235,6 +237,7 @@ HWTEST_F(BootVerifySchedulerTest, VerifyBundleSignInfoWhenStart002, TestSize.Lev
     SetMockDbFindResult(AtmDataType::ACCESSTOKEN_PERMISSION_STATE, ERR_PARAM_INVALID, {});
     EXPECT_EQ(ERR_PARAM_INVALID, BootVerifyScheduler::GetInstance().VerifyBundleSignInfoWhenStart());
 }
+#ifdef SPM_DATA_ENABLE
 
 HWTEST_F(BootVerifySchedulerTest, VerifyBundleSignInfoWhenStart003, TestSize.Level1)
 {
@@ -295,6 +298,7 @@ HWTEST_F(BootVerifySchedulerTest, VerifyBundleSignInfoWhenStart008, TestSize.Lev
     EXPECT_TRUE(scheduler.bundleInfoMap_.find(TEST_BUNDLE_NAME) != scheduler.bundleInfoMap_.end());
     EXPECT_TRUE(scheduler.bundleNoCachedInfoMap_.find(TEST_BUNDLE_NAME) != scheduler.bundleNoCachedInfoMap_.end());
 }
+#endif // SPM_DATA_ENABLE
 
 HWTEST_F(BootVerifySchedulerTest, BuildPriorityBundleList001, TestSize.Level1)
 {

@@ -166,6 +166,19 @@ public:
         std::vector<PermissionStatusIdl>& permissionInfoList, bool onlyHap) override;
     ErrCode QueryStatusByTokenID(const std::vector<uint32_t>& tokenIDList,
         std::vector<PermissionStatusIdl>& permissionInfoList) override;
+
+    int32_t CheckHapSignInfo(const BundleHapListIdl& list, const sptr<IRemoteObject>& cb,
+        CheckHapSignResultRawdata& result) override;
+    int32_t CheckHapPermissionInfo(int32_t sessionId, InstallTypeEnumIdl type,
+        HapInfoCheckResultIdl& resultInfoIdl) override;
+    int32_t PrepareHapIdentity(int32_t& sessionId, const HapBaseInfoIdl& info, const BundlePolicyIdl& policy,
+        const sptr<IRemoteObject>& cb, IdentityIdl& identity) override;
+    int32_t UpdateHapPolicy(int32_t sessionId, AccessTokenID tokenId, const BundlePolicyIdl& policy) override;
+    int32_t FinishInstall(int32_t sessionId, bool isSuccess,
+        const std::map<std::string, std::string>& modulePathMap) override;
+    int32_t GetCacheSignInfoBySessionId(int32_t sessionId, BundleInfosRawdata& bundleInfos) override;
+    int32_t GetHapSignInfo(const std::string& bundleName, BundleInfosRawdata& bundleInfos) override;
+
     int32_t GetCliPermissionRequestInfo(
         const std::string& agentID, const std::vector<CliInfoParcel>& cliInfoList,
         PermissionDialogResultParcel& resultParcel) override;
