@@ -27,11 +27,12 @@
 #include "accesstoken_info_manager.h"
 #include "add_spm_data_task.h"
 #include "data_translator.h"
-#include "hap_sign_verify_manager.h"
+#ifdef IS_SUPPORT_HAP_RUNNING
 #include "hap_sign_verify_helper.h"
 #include "permission_map.h"
 #include "permission_constraint_check.h"
 #include "permission_manager.h"
+#endif
 #include "parameter.h"
 #include "time_util.h"
 #include "user_policy_manager.h"
@@ -41,6 +42,33 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+#ifndef IS_SUPPORT_HAP_RUNNING
+BootVerifyScheduler& BootVerifyScheduler::GetInstance()
+{
+    static BootVerifyScheduler instance;
+    return instance;
+}
+
+int32_t BootVerifyScheduler::VerifyBundleSignInfoWhenStart()
+{
+    return RET_SUCCESS;
+}
+
+void BootVerifyScheduler::StartVerifyNormalBundleListAsync()
+{}
+
+int32_t BootVerifyScheduler::PreVerifyBundle(const std::string& bundleName)
+{
+    (void)bundleName;
+    return RET_SUCCESS;
+}
+
+int32_t BootVerifyScheduler::PreVerifyBundle(uint32_t tokenID)
+{
+    (void)tokenID;
+    return RET_SUCCESS;
+}
+#else
 namespace {
 constexpr uint32_t VERIFY_THREAD_COUNT = 4;
 constexpr uint32_t SYSTEM_APP_FLAG = 0x0001;
@@ -1248,6 +1276,7 @@ int32_t BootVerifyScheduler::PreVerifyBundle(uint32_t tokenID)
     }
     return PreVerifyBundle(bundleName);
 }
+#endif
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

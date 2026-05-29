@@ -31,7 +31,6 @@
 #include "callback_death_recipients.h"
 #include "parameters.h"
 #include "permission_data_brief.h"
-#include "provision/provision_info.h"
 #include "token_field_const.h"
 #include "token_setproc.h"
 
@@ -50,6 +49,7 @@ static constexpr int32_t RANDOM_TOKENID = 123;
 static constexpr int INVALID_IPC_CODE = 0;
 static constexpr int32_t DELAY_TIME = 10;
 static constexpr int32_t SLEEP_TIME_SECONDS = 3;
+static constexpr int32_t TEST_NON_ENTERPRISE_DISTRIBUTION_TYPE = 0;
 
 static PermissionStatus g_permState = {
     .permissionName = "ohos.permission.CAMERA",
@@ -314,7 +314,7 @@ HWTEST_F(PermissionManagerCoverageTest, InitPermissionList001, TestSize.Level4)
     policy.preAuthorizationInfo.emplace_back(info);
 
     BundleParam param;
-    param.distributionType = static_cast<int32_t>(Verify::AppDistType::OS_INTEGRATION);
+    param.distributionType = TEST_NON_ENTERPRISE_DISTRIBUTION_TYPE;
     std::vector<PermissionStatus> initializedList;
     HapInfoCheckResult result;
     std::vector<GenericValues> undefValues;
@@ -375,7 +375,7 @@ HWTEST_F(PermissionManagerCoverageTest, IsPermAvailableRangeSatisfied001, TestSi
     char permissionName[] = "ohos.permission.GET_DOMAIN_ACCOUNTS";
     briefDef.permissionName = permissionName;
     BundleParam param;
-    param.distributionType = static_cast<int32_t>(Verify::AppDistType::OS_INTEGRATION);
+    param.distributionType = TEST_NON_ENTERPRISE_DISTRIBUTION_TYPE;
     PermissionRulesEnum rule;
     system::SetBoolParameter(ENTERPRISE_NORMAL_CHECK, true);
     ASSERT_FALSE(PermissionConstraintCheck::IsPermAvailableRangeSatisfied(param, briefDef, rule));

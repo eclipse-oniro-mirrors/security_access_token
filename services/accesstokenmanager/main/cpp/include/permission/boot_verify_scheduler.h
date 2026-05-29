@@ -27,6 +27,7 @@
 #include "access_token.h"
 #include "access_token_db_operator.h"
 
+#ifdef IS_SUPPORT_HAP_RUNNING
 #include "app_verify_adapter.h"
 #include "bundle_sign_info.h"
 #include "generic_values.h"
@@ -35,11 +36,13 @@
 #include "permission_kernel_utils.h"
 #include "permission_map.h"
 #include "table_item.h"
+#endif
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
 
+#ifdef IS_SUPPORT_HAP_RUNNING
 struct VerifiedBundleState final {
     std::string bundleName;
     bool needUpdateSignInfo = false;
@@ -49,6 +52,7 @@ struct VerifiedBundleState final {
 };
 
 class AddSpmDataTask;
+#endif
 
 struct BootTokenIdInfo final {
     int32_t apl = 0;
@@ -64,6 +68,7 @@ public:
     int32_t PreVerifyBundle(const std::string& bundleName);
     int32_t PreVerifyBundle(uint32_t tokenID);
 
+#ifdef IS_SUPPORT_HAP_RUNNING
 private:
     static std::vector<DelInfo> BuildDeleteInfos(const std::vector<BundleSignInfo>& infos);
     int32_t LoadVerifyDataFromDb();
@@ -160,6 +165,7 @@ private:
     std::mutex verifyMutex_;
     std::condition_variable verifyCondition_;
     std::set<int32_t> uidSet_;
+#endif
 };
 } // namespace AccessToken
 } // namespace Security
