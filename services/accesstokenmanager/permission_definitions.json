@@ -9524,6 +9524,17 @@
             "provisionEnable": false,
             "distributedSceneEnable": false,
             "deviceTypes": ["phone", "2in1", "tablet", "car", "tv"]
+        },
+        {
+            "name": "ohos.permission.vehicle.VEHICLE_THERMAL",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": false,
+            "distributedSceneEnable": true,
+            "deviceTypes": ["car"]
         }
     ]
 }
