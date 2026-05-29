@@ -100,10 +100,13 @@ public:
     MockToken(const std::vector<std::string>& permissionList, bool isHap = true, bool isSystem = false)
     {
         errMsg_.clear();
+        selfToken_ = GetSelfTokenID();
         tokenId_ = GetTokenByProcessName(isHap ? MOCK_HAP_BUNDLE_NAME : MOCK_NATIVE_PROCESS_NAME);
+        if ((tokenId_ == INVALID_TOKENID) && (selfToken_ != 0)) {
+            tokenId_ = static_cast<AccessTokenID>(selfToken_);
+        }
         AccessTokenIDEx tokenIdEx = {0};
         tokenIdEx.tokenIDEx = static_cast<uint64_t>(tokenId_);
-        selfToken_ = GetSelfTokenID();
         uint64_t fullTokenId = tokenIdEx.tokenIDEx;
         if (isHap && isSystem) {
             fullTokenId |= SYSTEM_APP_MASK;
