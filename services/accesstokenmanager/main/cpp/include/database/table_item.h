@@ -75,7 +75,7 @@ struct HapTokenInfoItem final : public TableItem {
     uint32_t tokenAttr = 0;
     int32_t apiVersion = 0;
     bool permDialogCapState = false;
-    int32_t uid = 0;
+    int32_t uid = -1;
     bool migrated = false;
     ReservedType reserved = ReservedType::NONE;
 

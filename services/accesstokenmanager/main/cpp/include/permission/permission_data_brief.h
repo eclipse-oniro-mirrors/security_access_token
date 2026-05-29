@@ -80,6 +80,7 @@ public:
     void AddPermToBriefPermission(
             AccessTokenID tokenId, const std::vector<PermissionStatus>& permStateList,
             const std::map<std::string, std::string>& aclExtendedMap, bool defCheck);
+    void ReplaceExtendedValueByTokenId(AccessTokenID tokenID, const std::map<uint64_t, std::string>& data);
     void Update(
         AccessTokenID tokenId, const std::vector<PermissionStatus>& permStateList,
         const std::map<std::string, std::string>& aclExtendedMap, bool needUpdatePermByProvision);

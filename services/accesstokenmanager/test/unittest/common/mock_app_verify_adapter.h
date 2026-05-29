@@ -17,6 +17,7 @@
 #define ACCESS_TOKEN_MOCK_APP_VERIFY_ADAPTER_H
 
 #include <string>
+#include <vector>
 
 #include "access_token.h"
 #include "app_verify_adapter.h"
@@ -24,6 +25,14 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+
+inline std::vector<AppExecFwk::Spm::RequestPermission> BuildDefaultMockRequestPermissions()
+{
+    AppExecFwk::Spm::RequestPermission requestPermission;
+    requestPermission.name = "ohos.permission.CAMERA";
+    requestPermission.requiredFeature = "";
+    return { requestPermission };
+}
 
 // Mock adapter for testing HapSignVerifyManager with controllable return values.
 // verifyRet_ and parseRet_ let tests inject failures at the VerifyHap or ParseHapModuleInfo stages.
@@ -36,17 +45,23 @@ public:
         if (verifyRet_ != RET_SUCCESS) {
             return verifyRet_;
         }
-        bootstrapInfo.moduleRaw = params.filePath;
-        bootstrapInfo.profileJsonRaw = params.filePath;
+        bootstrapInfo.version = bootstrapVersion_;
+        bootstrapInfo.moduleRaw = moduleRaw_.empty() ? params.filePath : moduleRaw_;
+        bootstrapInfo.shareFilesRaw = shareFilesRaw_;
+        bootstrapInfo.profileJsonRaw = profileJsonRaw_.empty() ? params.filePath : profileJsonRaw_;
         lastCertPath_ = params.certPath;
         provisionInfo.versionCode = 1;
-        provisionInfo.type = Security::Verify::RELEASE;
-        provisionInfo.distributionType = Security::Verify::NONE_TYPE;
-        provisionInfo.bundleInfo.apl = "normal";
-        provisionInfo.bundleInfo.appIdentifier = params.filePath;
-        provisionInfo.bundleInfo.bundleName = params.filePath;
-        provisionInfo.appId = params.filePath;
-        isChanged = false;
+        provisionInfo.type = provisionType_;
+        provisionInfo.distributionType = distributionType_;
+        provisionInfo.bundleInfo.apl = apl_;
+        provisionInfo.bundleInfo.appIdentifier = appIdentifier_.empty() ? params.filePath : appIdentifier_;
+        provisionInfo.bundleInfo.bundleName = bundleName_.empty() ? params.filePath : bundleName_;
+        provisionInfo.bundleInfo.appFeature = appFeature_;
+        provisionInfo.appId = appId_.empty() ? params.filePath : appId_;
+        provisionInfo.acls.allowedAcls = allowedAcls_;
+        provisionInfo.appServiceCapabilities = appServiceCapabilities_;
+        isChanged = verifyIsChanged_;
+        ++verifyCallCount_;
         return RET_SUCCESS;
     }
 
@@ -57,23 +72,59 @@ public:
         if (parseRet_ != RET_SUCCESS) {
             return parseRet_;
         }
-        moduleInfo.bundleName = moduleRaw;
-        moduleInfo.moduleName = "parsed_module";
-        AppExecFwk::Spm::RequestPermission reqPerm;
-        reqPerm.name = "ohos.permission.CAMERA";
-        moduleInfo.requestPermission.emplace_back(reqPerm);
+        moduleInfo.bundleName = bundleName_.empty() ? moduleRaw : bundleName_;
+        moduleInfo.moduleName = moduleName_;
+        moduleInfo.apiTargetVersion = apiTargetVersion_;
+        moduleInfo.bundleType = bundleType_;
+        moduleInfo.requestPermission = requestPermissions_;
+        moduleInfo.definePermission = definePermissions_;
+        ++parseCallCount_;
         return RET_SUCCESS;
     }
 
     int32_t ParseProvision(const std::string& appProvision, Security::Verify::ProvisionInfo& info) const override
     {
+        (void)appProvision;
+        ++parseProvisionCallCount_;
+        info.versionCode = 1;
+        info.type = provisionType_;
+        info.distributionType = distributionType_;
+        info.bundleInfo.apl = apl_;
+        info.bundleInfo.appIdentifier = appIdentifier_;
+        info.bundleInfo.bundleName = bundleName_;
+        info.bundleInfo.appFeature = appFeature_;
+        info.appId = appId_;
+        info.acls.allowedAcls = allowedAcls_;
+        info.appServiceCapabilities = appServiceCapabilities_;
         return RET_SUCCESS;
     }
 
     int32_t verifyRet_ = RET_SUCCESS;
     int32_t parseRet_ = RET_SUCCESS;
+    bool verifyIsChanged_ = false;
+    int32_t bootstrapVersion_ = 1;
+    int32_t apiTargetVersion_ = 12;
+    std::string moduleRaw_;
+    std::string shareFilesRaw_;
+    std::string profileJsonRaw_;
+    std::string bundleName_ = "com.example.bundle";
+    std::string moduleName_ = "entry";
+    std::string apl_ = "normal";
+    std::string appIdentifier_ = "mock.identifier";
+    std::string appId_ = "mock.appid";
+    std::string appFeature_;
+    std::string appServiceCapabilities_;
+    std::vector<std::string> allowedAcls_;
+    Security::Verify::AppDistType distributionType_ = Security::Verify::NONE_TYPE;
+    Security::Verify::ProvisionType provisionType_ = Security::Verify::RELEASE;
+    AppExecFwk::Spm::BundleType bundleType_ = AppExecFwk::Spm::BundleType::APP;
+    std::vector<AppExecFwk::Spm::RequestPermission> requestPermissions_ = BuildDefaultMockRequestPermissions();
+    std::vector<AppExecFwk::Spm::DefinePermission> definePermissions_;
     mutable bool isParseCalled_ = false;
     mutable std::string lastCertPath_;
+    mutable uint32_t verifyCallCount_ = 0;
+    mutable uint32_t parseCallCount_ = 0;
+    mutable uint32_t parseProvisionCallCount_ = 0;
 };
 
 } // namespace AccessToken

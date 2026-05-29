@@ -369,7 +369,7 @@ HWTEST_F(AccessTokenManagerServiceTest, DumpTokenInfoFuncTest001, TestSize.Level
 }
 
 void AccessTokenManagerServiceTest::CreateHapToken(const HapInfoParcel& infoParCel, const HapPolicyParcel& policyParcel,
-    AccessTokenID& tokenId, std::map<int32_t, TokenIdInfo>& tokenIdAplMap, bool hasInit)
+    AccessTokenID& tokenId, bool hasInit)
 {
     if (!hasInit) {
         atManagerService_->Initialize();
@@ -384,7 +384,20 @@ void AccessTokenManagerServiceTest::CreateHapToken(const HapInfoParcel& infoParC
     tokenIDEx.tokenIDEx = fullTokenId;
     tokenId = tokenIDEx.tokenIdExStruct.tokenID;
     ASSERT_NE(INVALID_TOKENID, tokenId);
-    tokenIdAplMap[static_cast<int32_t>(tokenId)].apl = g_policy.apl;
+}
+
+void AccessTokenManagerServiceTest::CreateHapToken(const HapInfoParcel& infoParCel, const HapPolicyParcel& policyParcel,
+    AccessTokenID& tokenId, std::map<int32_t, BootTokenIdInfo>& tokenIdAplMap, bool hasInit)
+{
+    CreateHapToken(infoParCel, policyParcel, tokenId, hasInit);
+
+    BootTokenIdInfo tokenInfo;
+    tokenInfo.apl = policyParcel.hapPolicy.apl;
+    tokenInfo.isSystemApp = infoParCel.hapInfoParameter.isSystemApp;
+    tokenIdAplMap[static_cast<int32_t>(tokenId)] = tokenInfo;
+#ifdef IS_SUPPORT_HAP_RUNNING
+    BootVerifyScheduler::GetInstance().tokenIdAplMap_[static_cast<int32_t>(tokenId)] = tokenInfo;
+#endif
 }
 
 /**
@@ -447,9 +460,8 @@ HWTEST_F(AccessTokenManagerServiceTest, PermissionStateQueryTest001, TestSize.Le
 
     AccessTokenID tokenId1 = INVALID_TOKENID;
     AccessTokenID tokenId2 = INVALID_TOKENID;
-    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
-    CreateHapToken(infoParcel1, policyParcel, tokenId1, tokenIdAplMap);
-    CreateHapToken(infoParcel2, policyParcel, tokenId2, tokenIdAplMap, true);
+    CreateHapToken(infoParcel1, policyParcel, tokenId1);
+    CreateHapToken(infoParcel2, policyParcel, tokenId2, true);
 
     std::vector<GenericValues> results;
     ASSERT_EQ(RET_SUCCESS, AccessTokenDbOperator::Find(
@@ -480,8 +492,7 @@ HWTEST_F(AccessTokenManagerServiceTest, InitHapTokenTest001, TestSize.Level0)
     HapPolicyParcel policyParcel;
     policyParcel.hapPolicy = g_policy; // KERNEL_ATM_SELF_USE(hasValue is true) + INVALIDA
     AccessTokenID tokenId;
-    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
-    CreateHapToken(infoParCel, policyParcel, tokenId, tokenIdAplMap);
+    CreateHapToken(infoParCel, policyParcel, tokenId);
 
     // query undefine table
     GenericValues conditionValue;
@@ -517,8 +528,7 @@ HWTEST_F(AccessTokenManagerServiceTest, InitHapTokenTest002, TestSize.Level0)
     HapPolicyParcel policyParcel;
     policyParcel.hapPolicy = g_policy; // KERNEL_ATM_SELF_USE + INVALIDA
     AccessTokenID tokenId;
-    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
-    CreateHapToken(infoParCel, policyParcel, tokenId, tokenIdAplMap); // create master app
+    CreateHapToken(infoParCel, policyParcel, tokenId); // create master app
 
     HapInfoParcel infoParCel2;
     infoParCel2.hapInfoParameter = g_info;
@@ -528,7 +538,7 @@ HWTEST_F(AccessTokenManagerServiceTest, InitHapTokenTest002, TestSize.Level0)
     policyParcel2.hapPolicy = g_policy;  // KERNEL_ATM_SELF_USE + INVALIDB, INVALIDB diff from INVALIDA in master app
     policyParcel2.hapPolicy.permStateList = {g_state1, g_state3};
     AccessTokenID tokenId2;
-    CreateHapToken(infoParCel2, policyParcel2, tokenId2, tokenIdAplMap, true); // create dlp app
+    CreateHapToken(infoParCel2, policyParcel2, tokenId2, true); // create dlp app
 
     // query undefine table for dlp app
     GenericValues conditionValue;
@@ -578,6 +588,77 @@ HWTEST_F(AccessTokenManagerServiceTest, InitHapTokenTest003, TestSize.Level0)
 }
 
 /**
+ * @tc.name: GetHapIdentityTest001
+ * @tc.desc: test GetHapIdentity success and token not exist branches.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, GetHapIdentityTest001, TestSize.Level0)
+{
+    atManagerService_->Initialize();
+
+    HapInfoParcel infoParcel;
+    infoParcel.hapInfoParameter = g_info;
+    HapPolicyParcel policyParcel;
+    policyParcel.hapPolicy = g_policy;
+    AccessTokenID tokenId;
+    std::map<int32_t, BootTokenIdInfo> tokenIdAplMap;
+    CreateHapToken(infoParcel, policyParcel, tokenId, tokenIdAplMap, true);
+
+    HapBaseInfoParcel hapBaseInfoParcel;
+    hapBaseInfoParcel.hapBaseInfo.userID = g_info.userID;
+    hapBaseInfoParcel.hapBaseInfo.bundleName = g_info.bundleName;
+    hapBaseInfoParcel.hapBaseInfo.instIndex = g_info.instIndex;
+    IdentityIdl identityIdl;
+    ASSERT_EQ(RET_SUCCESS, atManagerService_->GetHapIdentity(hapBaseInfoParcel, identityIdl));
+    EXPECT_EQ(static_cast<int32_t>(tokenId), identityIdl.tokenId);
+
+    HapTokenInfo hapInfo;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenId, hapInfo));
+    EXPECT_EQ(hapInfo.uid, identityIdl.uid);
+
+    hapBaseInfoParcel.hapBaseInfo.bundleName = "GetHapIdentityTest001_invalid";
+    EXPECT_EQ(ERR_TOKENID_NOT_EXIST, atManagerService_->GetHapIdentity(hapBaseInfoParcel, identityIdl));
+    ASSERT_EQ(RET_SUCCESS, atManagerService_->DeleteToken(tokenId, false));
+}
+
+/**
+ * @tc.name: GetHapBaseInfoByUidTest001
+ * @tc.desc: test GetHapBaseInfoByUid success and abnormal branches.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, GetHapBaseInfoByUidTest001, TestSize.Level0)
+{
+    atManagerService_->Initialize();
+
+    HapInfoParcel infoParcel;
+    infoParcel.hapInfoParameter = g_info;
+    HapPolicyParcel policyParcel;
+    policyParcel.hapPolicy = g_policy;
+    AccessTokenID tokenId;
+    std::map<int32_t, BootTokenIdInfo> tokenIdAplMap;
+    CreateHapToken(infoParcel, policyParcel, tokenId, tokenIdAplMap, true);
+
+    HapTokenInfo hapInfo;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenId, hapInfo));
+
+    HapBaseInfoParcel hapBaseInfoParcel;
+#ifdef SPM_DATA_ENABLE
+    ASSERT_EQ(RET_SUCCESS, atManagerService_->GetHapBaseInfoByUid(hapInfo.uid, hapBaseInfoParcel));
+    EXPECT_EQ(g_info.userID, hapBaseInfoParcel.hapBaseInfo.userID);
+    EXPECT_EQ(g_info.bundleName, hapBaseInfoParcel.hapBaseInfo.bundleName);
+    EXPECT_EQ(g_info.instIndex, hapBaseInfoParcel.hapBaseInfo.instIndex);
+#else
+    ASSERT_NE(RET_SUCCESS, atManagerService_->GetHapBaseInfoByUid(hapInfo.uid, hapBaseInfoParcel));
+#endif
+
+    EXPECT_EQ(ERR_PARAM_INVALID, atManagerService_->GetHapBaseInfoByUid(0, hapBaseInfoParcel));
+    EXPECT_EQ(ERR_TOKENID_NOT_EXIST, atManagerService_->GetHapBaseInfoByUid(INT32_MAX, hapBaseInfoParcel));
+    ASSERT_EQ(RET_SUCCESS, atManagerService_->DeleteToken(tokenId, false));
+}
+
+/**
  * @tc.name: UpdateHapTokenTest001
  * @tc.desc: test update undefine permission change
  * @tc.type: FUNC
@@ -590,8 +671,7 @@ HWTEST_F(AccessTokenManagerServiceTest, UpdateHapTokenTest001, TestSize.Level0)
     HapPolicyParcel policyParcel;
     policyParcel.hapPolicy = g_policy; // KERNEL_ATM_SELF_USE + INVALIDA
     AccessTokenID tokenId;
-    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
-    CreateHapToken(infoParCel, policyParcel, tokenId, tokenIdAplMap);
+    CreateHapToken(infoParCel, policyParcel, tokenId);
 
     // query undefine table
     GenericValues conditionValue;
@@ -641,8 +721,7 @@ HWTEST_F(AccessTokenManagerServiceTest, UpdateHapTokenTest002, TestSize.Level0)
     HapPolicyParcel policyParcel;
     policyParcel.hapPolicy = g_policy; // KERNEL_ATM_SELF_USE + INVALIDA
     AccessTokenID tokenId;
-    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
-    CreateHapToken(infoParCel, policyParcel, tokenId, tokenIdAplMap);
+    CreateHapToken(infoParCel, policyParcel, tokenId);
 
     // update hap
     uint64_t fullTokenId;
@@ -677,8 +756,7 @@ HWTEST_F(AccessTokenManagerServiceTest, UpdateHapTokenTest003, TestSize.Level0)
     HapPolicyParcel policyParcel;
     policyParcel.hapPolicy = g_policy; // KERNEL_ATM_SELF_USE + INVALIDA
     AccessTokenID tokenId;
-    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
-    CreateHapToken(infoParCel, policyParcel, tokenId, tokenIdAplMap);
+    CreateHapToken(infoParCel, policyParcel, tokenId);
 
     // query undefine table
     GenericValues conditionValue;
@@ -1134,518 +1212,6 @@ void AccessTokenManagerServiceTest::DelTestDataAndRestoreOri(AccessTokenID token
     ASSERT_EQ(RET_SUCCESS, AccessTokenDb::GetInstance()->DeleteAndInsertValues(delInfoVec, addInfoVec));
 }
 
-/**
- * @tc.name: OTATest001
- * @tc.desc: test after ota invalid tokenId remain
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenManagerServiceTest, OTATest001, TestSize.Level0)
-{
-    AtmDataType type = AtmDataType::ACCESSTOKEN_HAP_UNDEFINE_INFO;
-    std::vector<GenericValues> oriData;
-    BackupAndDelOriData(oriData);
-
-    HapInfoParcel infoParCel;
-    infoParCel.hapInfoParameter = g_info;
-    HapPolicyParcel policyParcel;
-    policyParcel.hapPolicy = g_policy;
-    policyParcel.hapPolicy.permStateList = {g_state4};
-    policyParcel.hapPolicy.aclExtendedMap = {};
-    AccessTokenID tokenId;
-    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
-    CreateHapToken(infoParCel, policyParcel, tokenId, tokenIdAplMap);
-
-    GenericValues value; // system grant
-    value.Put(TokenFiledConst::FIELD_TOKEN_ID, RANDOM_TOKENID);
-    value.Put(TokenFiledConst::FIELD_PERMISSION_NAME, g_state2.permissionName); // INVALIDA
-    value.Put(TokenFiledConst::FIELD_ACL, 0);
-    AddInfo addInfo;
-    addInfo.addType = type;
-    addInfo.addValues.emplace_back(value);
-
-    std::vector<DelInfo> delInfoVec;
-    std::vector<AddInfo> addInfoVec;
-    addInfoVec.emplace_back(addInfo);
-    EXPECT_EQ(0, AccessTokenDb::GetInstance()->DeleteAndInsertValues(delInfoVec, addInfoVec)); // add test data
-
-    std::vector<DelInfo> delInfoVec2;
-    std::vector<AddInfo> addInfoVec2;
-    atManagerService_->HandleHapUndefinedInfo(tokenIdAplMap, delInfoVec2, addInfoVec2);
-    EXPECT_EQ(0, AccessTokenDb::GetInstance()->DeleteAndInsertValues(delInfoVec2, addInfoVec2));
-
-    GenericValues conditionValue;
-    conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, RANDOM_TOKENID);
-    std::vector<GenericValues> results;
-    EXPECT_EQ(0, AccessTokenDb::GetInstance()->Find(type, conditionValue, results));
-    EXPECT_EQ(false, results.empty()); // undefine table is not empty
-
-    DelTestDataAndRestoreOri(tokenId, oriData);
-}
-
-/**
- * @tc.name: OTATest002
- * @tc.desc: test after ota invalid permission remain
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenManagerServiceTest, OTATest002, TestSize.Level0)
-{
-    AtmDataType type = AtmDataType::ACCESSTOKEN_HAP_UNDEFINE_INFO;
-    std::vector<GenericValues> oriData;
-    BackupAndDelOriData(oriData);
-
-    HapInfoParcel infoParCel;
-    infoParCel.hapInfoParameter = g_info;
-    HapPolicyParcel policyParcel;
-    policyParcel.hapPolicy = g_policy;
-    policyParcel.hapPolicy.permStateList = {g_state4};
-    policyParcel.hapPolicy.aclExtendedMap = {};
-    AccessTokenID tokenId;
-    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
-    CreateHapToken(infoParCel, policyParcel, tokenId, tokenIdAplMap);
-
-    GenericValues value; // system grant
-    value.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
-    value.Put(TokenFiledConst::FIELD_PERMISSION_NAME, g_state2.permissionName); // INVALIDA
-    value.Put(TokenFiledConst::FIELD_ACL, 0);
-    AddInfo addInfo;
-    addInfo.addType = type;
-    addInfo.addValues.emplace_back(value);
-
-    std::vector<DelInfo> delInfoVec;
-    std::vector<AddInfo> addInfoVec;
-    addInfoVec.emplace_back(addInfo);
-    EXPECT_EQ(0, AccessTokenDb::GetInstance()->DeleteAndInsertValues(delInfoVec, addInfoVec)); // add test data
-
-    std::vector<DelInfo> delInfoVec2;
-    std::vector<AddInfo> addInfoVec2;
-    atManagerService_->HandleHapUndefinedInfo(tokenIdAplMap, delInfoVec2, addInfoVec2);
-    EXPECT_EQ(0, AccessTokenDb::GetInstance()->DeleteAndInsertValues(delInfoVec2, addInfoVec2));
-
-    GenericValues conditionValue;
-    conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
-    std::vector<GenericValues> results;
-    EXPECT_EQ(0, AccessTokenDb::GetInstance()->Find(type, conditionValue, results));
-    EXPECT_EQ(false, results.empty()); // undefine table is not empty
-
-    std::vector<GenericValues> results2;
-    EXPECT_EQ(0, AccessTokenDb::GetInstance()->Find(
-        AtmDataType::ACCESSTOKEN_PERMISSION_STATE, conditionValue, results2));
-    for (const auto& value : results2) {
-        EXPECT_NE(value.GetString(TokenFiledConst::FIELD_PERMISSION_NAME), g_state2.permissionName);
-    }
-
-    std::vector<GenericValues> results3;
-    ASSERT_EQ(0, AccessTokenDb::GetInstance()->Find(
-        AtmDataType::ACCESSTOKEN_PERMISSION_EXTEND_VALUE, conditionValue, results3));
-    EXPECT_EQ(true, results3.empty()); // extend table is empty
-
-    DelTestDataAndRestoreOri(tokenId, oriData);
-}
-
-void SetValues003(AccessTokenID tokenId, std::vector<GenericValues>& values)
-{
-    GenericValues value1; // user grant
-    value1.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
-    value1.Put(TokenFiledConst::FIELD_PERMISSION_NAME, g_state4.permissionName);
-    value1.Put(TokenFiledConst::FIELD_ACL, 0);
-    GenericValues value2; // system grant
-    value2.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
-    value2.Put(TokenFiledConst::FIELD_PERMISSION_NAME, g_state5.permissionName);
-    value2.Put(TokenFiledConst::FIELD_ACL, 0);
-    values.emplace_back(value1);
-    values.emplace_back(value2);
-}
-
-/**
- * @tc.name: OTATest003
- * @tc.desc: test after ota valid user grant and system grant permissions move from undefine to permission state
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenManagerServiceTest, OTATest003, TestSize.Level0)
-{
-    AtmDataType type = AtmDataType::ACCESSTOKEN_HAP_UNDEFINE_INFO;
-    std::vector<GenericValues> oriData;
-    BackupAndDelOriData(oriData);
-
-    HapInfoParcel infoParCel;
-    infoParCel.hapInfoParameter = g_info;
-    HapPolicyParcel policyParcel;
-    policyParcel.hapPolicy = g_policy;
-    policyParcel.hapPolicy.permStateList = {g_state1}; // KERNEL_ATM_SELF_USE
-    AccessTokenID tokenId;
-    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
-    CreateHapToken(infoParCel, policyParcel, tokenId, tokenIdAplMap);
-
-    std::vector<GenericValues> values;
-    SetValues003(tokenId, values);
-    AddInfo addInfo;
-    addInfo.addType = type;
-    addInfo.addValues = values;
-
-    std::vector<DelInfo> delInfoVec;
-    std::vector<AddInfo> addInfoVec;
-    addInfoVec.emplace_back(addInfo);
-    EXPECT_EQ(0, AccessTokenDb::GetInstance()->DeleteAndInsertValues(delInfoVec, addInfoVec)); // add test data
-
-    std::vector<DelInfo> delInfoVec2;
-    std::vector<AddInfo> addInfoVec2;
-    atManagerService_->HandleHapUndefinedInfo(tokenIdAplMap, delInfoVec2, addInfoVec2);
-    EXPECT_EQ(0, AccessTokenDb::GetInstance()->DeleteAndInsertValues(delInfoVec2, addInfoVec2));
-
-    GenericValues conditionValue;
-    conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
-    std::vector<GenericValues> results;
-    EXPECT_EQ(0, AccessTokenDb::GetInstance()->Find(type, conditionValue, results));
-    EXPECT_EQ(true, results.empty()); // undefine table is empty
-
-    EXPECT_EQ(0, AccessTokenDb::GetInstance()->Find(AtmDataType::ACCESSTOKEN_PERMISSION_STATE, conditionValue,
-        results));
-
-    for (const auto& value : results) {
-        int32_t state = value.GetInt(TokenFiledConst::FIELD_GRANT_STATE);
-        int32_t flag = value.GetInt(TokenFiledConst::FIELD_GRANT_FLAG);
-        if (value.GetString(TokenFiledConst::FIELD_PERMISSION_NAME) == g_state4.permissionName) { // user grant
-            EXPECT_EQ(state, static_cast<int32_t>(PermissionState::PERMISSION_DENIED)); // state: 0 -> -1
-            EXPECT_EQ(flag, static_cast<int32_t>(PermissionFlag::PERMISSION_DEFAULT_FLAG)); // flag: 4 -> 0
-        } else if (value.GetString(TokenFiledConst::FIELD_PERMISSION_NAME) == g_state5.permissionName) { // system grant
-            EXPECT_EQ(state, static_cast<int32_t>(PermissionState::PERMISSION_GRANTED)); // state: -1 -> 0
-            EXPECT_EQ(flag, static_cast<int32_t>(PermissionFlag::PERMISSION_SYSTEM_FIXED)); // flag: 0 -> 4
-        }
-    }
-
-    DelTestDataAndRestoreOri(tokenId, oriData);
-}
-
-/**
- * @tc.name: OTATest004
- * @tc.desc: test after ota valid system core permission without acl remain in undefine table
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenManagerServiceTest, OTATest004, TestSize.Level0)
-{
-    AtmDataType type = AtmDataType::ACCESSTOKEN_HAP_UNDEFINE_INFO;
-    std::vector<GenericValues> oriData;
-    BackupAndDelOriData(oriData);
-
-    HapInfoParcel infoParCel;
-    infoParCel.hapInfoParameter = g_info;
-    HapPolicyParcel policyParcel;
-    policyParcel.hapPolicy = g_policy;
-    policyParcel.hapPolicy.permStateList = {g_state1}; // KERNEL_ATM_SELF_USE
-    AccessTokenID tokenId;
-    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
-    CreateHapToken(infoParCel, policyParcel, tokenId, tokenIdAplMap);
-
-    GenericValues value; // system grant
-    value.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
-    value.Put(TokenFiledConst::FIELD_PERMISSION_NAME, g_state6.permissionName);
-    value.Put(TokenFiledConst::FIELD_ACL, 0); // system core permission without acl
-    AddInfo addInfo;
-    addInfo.addType = type;
-    addInfo.addValues.emplace_back(value);
-
-    std::vector<DelInfo> delInfoVec;
-    std::vector<AddInfo> addInfoVec;
-    addInfoVec.emplace_back(addInfo);
-    EXPECT_EQ(0, AccessTokenDb::GetInstance()->DeleteAndInsertValues(delInfoVec, addInfoVec)); // add test data
-
-    std::vector<DelInfo> delInfoVec2;
-    std::vector<AddInfo> addInfoVec2;
-    atManagerService_->HandleHapUndefinedInfo(tokenIdAplMap, delInfoVec2, addInfoVec2);
-    EXPECT_EQ(0, AccessTokenDb::GetInstance()->DeleteAndInsertValues(delInfoVec2, addInfoVec2));
-
-    GenericValues conditionValue;
-    conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
-    std::vector<GenericValues> results;
-    EXPECT_EQ(0, AccessTokenDb::GetInstance()->Find(type, conditionValue, results));
-    EXPECT_EQ(false, results.empty()); // undefine table not empty
-
-    std::vector<GenericValues> results2;
-    EXPECT_EQ(0, AccessTokenDb::GetInstance()->Find(
-        AtmDataType::ACCESSTOKEN_PERMISSION_STATE, conditionValue, results2));
-    for (const auto& value : results2) {
-        EXPECT_NE(value.GetString(TokenFiledConst::FIELD_PERMISSION_NAME), g_state6.permissionName);
-    }
-
-    DelTestDataAndRestoreOri(tokenId, oriData);
-}
-
-/**
- * @tc.name: OTATest005
- * @tc.desc: test after ota valid system core permission with acl move from undefine to permission state
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenManagerServiceTest, OTATest005, TestSize.Level0)
-{
-    AtmDataType type = AtmDataType::ACCESSTOKEN_HAP_UNDEFINE_INFO;
-    std::vector<GenericValues> oriData;
-    BackupAndDelOriData(oriData);
-
-    HapInfoParcel infoParCel;
-    infoParCel.hapInfoParameter = g_info;
-    HapPolicyParcel policyParcel;
-    policyParcel.hapPolicy = g_policy;
-    policyParcel.hapPolicy.permStateList = {g_state1}; // KERNEL_ATM_SELF_USE
-    policyParcel.hapPolicy.aclRequestedList = { g_state6.permissionName };
-    AccessTokenID tokenId;
-    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
-    CreateHapToken(infoParCel, policyParcel, tokenId, tokenIdAplMap);
-
-    GenericValues value; // system grant
-    value.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
-    value.Put(TokenFiledConst::FIELD_PERMISSION_NAME, g_state6.permissionName);
-    value.Put(TokenFiledConst::FIELD_ACL, 1); // system core permission with acl
-    AddInfo addInfo;
-    addInfo.addType = type;
-    addInfo.addValues.emplace_back(value);
-
-    std::vector<DelInfo> delInfoVec;
-    std::vector<AddInfo> addInfoVec;
-    addInfoVec.emplace_back(addInfo);
-    EXPECT_EQ(0, AccessTokenDb::GetInstance()->DeleteAndInsertValues(delInfoVec, addInfoVec)); // add test data
-
-    std::vector<DelInfo> delInfoVec2;
-    std::vector<AddInfo> addInfoVec2;
-    atManagerService_->HandleHapUndefinedInfo(tokenIdAplMap, delInfoVec2, addInfoVec2);
-    EXPECT_EQ(0, AccessTokenDb::GetInstance()->DeleteAndInsertValues(delInfoVec2, addInfoVec2));
-
-    GenericValues conditionValue;
-    conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
-    std::vector<GenericValues> results;
-    EXPECT_EQ(0, AccessTokenDb::GetInstance()->Find(type, conditionValue, results));
-    EXPECT_EQ(true, results.empty()); // undefine table is empty
-
-    EXPECT_EQ(0, AccessTokenDb::GetInstance()->Find(AtmDataType::ACCESSTOKEN_PERMISSION_STATE, conditionValue,
-        results));
-    for (const auto& value : results) {
-        std::string permissionName = value.GetString(TokenFiledConst::FIELD_PERMISSION_NAME);
-        int32_t state = value.GetInt(TokenFiledConst::FIELD_GRANT_STATE);
-        int32_t flag = value.GetInt(TokenFiledConst::FIELD_GRANT_FLAG);
-        if (permissionName == g_state6.permissionName) {
-            EXPECT_EQ(state, static_cast<int32_t>(PermissionState::PERMISSION_GRANTED)); // state: -1 -> 0
-            EXPECT_EQ(flag, static_cast<int32_t>(PermissionFlag::PERMISSION_SYSTEM_FIXED)); // flag: 0 -> 4
-        }
-    }
-
-    DelTestDataAndRestoreOri(tokenId, oriData);
-}
-
-void SetValues006(AccessTokenID tokenId, std::vector<GenericValues>& values)
-{
-    GenericValues value; // system grant
-    value.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
-    value.Put(TokenFiledConst::FIELD_PERMISSION_NAME, g_state6.permissionName);
-    value.Put(TokenFiledConst::FIELD_ACL, 1); // system core permission with acl
-    value.Put(TokenFiledConst::FIELD_VALUE, "test"); // system core permission with acl
-    values.emplace_back(value);
-}
-
-/**
- * @tc.name: OTATest006
- * @tc.desc: test after ota valid permission which hasValue is false
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenManagerServiceTest, OTATest006, TestSize.Level0)
-{
-    AtmDataType type = AtmDataType::ACCESSTOKEN_HAP_UNDEFINE_INFO;
-    std::vector<GenericValues> oriData;
-    BackupAndDelOriData(oriData);
-
-    HapInfoParcel infoParCel;
-    infoParCel.hapInfoParameter = g_info;
-    HapPolicyParcel policyParcel;
-    policyParcel.hapPolicy = g_policy;
-    policyParcel.hapPolicy.permStateList = {g_state4};
-    policyParcel.hapPolicy.aclRequestedList = { g_state6.permissionName }; // POWER_MANAGER, hasValue is false
-    policyParcel.hapPolicy.aclExtendedMap = { std::make_pair(g_state6.permissionName, "test") };
-    AccessTokenID tokenId;
-    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
-    CreateHapToken(infoParCel, policyParcel, tokenId, tokenIdAplMap);
-
-    std::vector<GenericValues> values;
-    SetValues006(tokenId, values);
-    AddInfo addInfo;
-    addInfo.addType = type;
-    addInfo.addValues = values;
-
-    std::vector<DelInfo> delInfoVec;
-    std::vector<AddInfo> addInfoVec;
-    addInfoVec.emplace_back(addInfo);
-    EXPECT_EQ(0, AccessTokenDb::GetInstance()->DeleteAndInsertValues(delInfoVec, addInfoVec)); // add test data
-
-    std::vector<DelInfo> delInfoVec2;
-    std::vector<AddInfo> addInfoVec2;
-    atManagerService_->HandleHapUndefinedInfo(tokenIdAplMap, delInfoVec2, addInfoVec2);
-    EXPECT_EQ(0, AccessTokenDb::GetInstance()->DeleteAndInsertValues(delInfoVec2, addInfoVec2));
-
-    GenericValues conditionValue;
-    conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
-    std::vector<GenericValues> results;
-    EXPECT_EQ(0, AccessTokenDb::GetInstance()->Find(type, conditionValue, results));
-    EXPECT_EQ(true, results.empty()); // undefine table is empty
-
-    EXPECT_EQ(0, AccessTokenDb::GetInstance()->Find(AtmDataType::ACCESSTOKEN_PERMISSION_STATE, conditionValue,
-        results));
-    for (const auto& value : results) {
-        std::string permissionName = value.GetString(TokenFiledConst::FIELD_PERMISSION_NAME);
-        int32_t state = value.GetInt(TokenFiledConst::FIELD_GRANT_STATE);
-        int32_t flag = value.GetInt(TokenFiledConst::FIELD_GRANT_FLAG);
-        if (permissionName == g_state6.permissionName) {
-            EXPECT_EQ(state, static_cast<int32_t>(PermissionState::PERMISSION_GRANTED)); // state: -1 -> 0
-            EXPECT_EQ(flag, static_cast<int32_t>(PermissionFlag::PERMISSION_SYSTEM_FIXED)); // flag: 0 -> 4
-        }
-    }
-
-    std::vector<GenericValues> results2;
-    ASSERT_EQ(0, AccessTokenDb::GetInstance()->Find(
-        AtmDataType::ACCESSTOKEN_PERMISSION_EXTEND_VALUE, conditionValue, results2));
-    EXPECT_EQ(true, results2.empty()); // undefine table is empty
-
-    DelTestDataAndRestoreOri(tokenId, oriData);
-}
-
-void SetValues007(AccessTokenID tokenId, std::vector<GenericValues>& values)
-{
-    GenericValues value; // system grant
-    value.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
-    value.Put(TokenFiledConst::FIELD_PERMISSION_NAME, g_state1.permissionName);
-    value.Put(TokenFiledConst::FIELD_ACL, 0); // system core permission without acl
-    value.Put(TokenFiledConst::FIELD_VALUE, "test"); // permission has value
-    values.emplace_back(value);
-}
-
-/**
- * @tc.name: OTATest007
- * @tc.desc: test after ota valid permission which hasValue is true with value
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenManagerServiceTest, OTATest007, TestSize.Level0)
-{
-    AtmDataType type = AtmDataType::ACCESSTOKEN_HAP_UNDEFINE_INFO;
-    std::vector<GenericValues> oriData;
-    BackupAndDelOriData(oriData);
-
-    HapInfoParcel infoParCel;
-    infoParCel.hapInfoParameter = g_info;
-    HapPolicyParcel policyParcel;
-    policyParcel.hapPolicy = g_policy;
-    policyParcel.hapPolicy.permStateList = {g_state4};
-    policyParcel.hapPolicy.aclExtendedMap = {};
-    AccessTokenID tokenId;
-    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
-    CreateHapToken(infoParCel, policyParcel, tokenId, tokenIdAplMap); // KERNEL_ATM_SELF_USE, hasValue is true
-
-    std::vector<GenericValues> values;
-    SetValues007(tokenId, values);
-    AddInfo addInfo = { .addType = type, .addValues = values};
-
-    std::vector<DelInfo> delInfoVec;
-    std::vector<AddInfo> addInfoVec;
-    addInfoVec.emplace_back(addInfo);
-    EXPECT_EQ(0, AccessTokenDb::GetInstance()->DeleteAndInsertValues(delInfoVec, addInfoVec)); // add test data
-
-    std::vector<DelInfo> delInfoVec2;
-    std::vector<AddInfo> addInfoVec2;
-    atManagerService_->HandleHapUndefinedInfo(tokenIdAplMap, delInfoVec2, addInfoVec2);
-    EXPECT_EQ(0, AccessTokenDb::GetInstance()->DeleteAndInsertValues(delInfoVec2, addInfoVec2));
-
-    GenericValues conditionValue;
-    conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
-    std::vector<GenericValues> results;
-    EXPECT_EQ(0, AccessTokenDb::GetInstance()->Find(type, conditionValue, results));
-    EXPECT_EQ(true, results.empty()); // undefine table is empty
-
-    EXPECT_EQ(0, AccessTokenDb::GetInstance()->Find(AtmDataType::ACCESSTOKEN_PERMISSION_STATE, conditionValue,
-        results));
-    for (const auto& value : results) {
-        std::string permissionName = value.GetString(TokenFiledConst::FIELD_PERMISSION_NAME);
-        int32_t state = value.GetInt(TokenFiledConst::FIELD_GRANT_STATE);
-        int32_t flag = value.GetInt(TokenFiledConst::FIELD_GRANT_FLAG);
-        if (permissionName == g_state1.permissionName) {
-            EXPECT_EQ(state, static_cast<int32_t>(PermissionState::PERMISSION_GRANTED)); // state: -1 -> 0
-            EXPECT_EQ(flag, static_cast<int32_t>(PermissionFlag::PERMISSION_SYSTEM_FIXED)); // flag: 0 -> 4
-        }
-    }
-
-    std::vector<GenericValues> results2;
-    ASSERT_EQ(0, AccessTokenDb::GetInstance()->Find(
-        AtmDataType::ACCESSTOKEN_PERMISSION_EXTEND_VALUE, conditionValue, results2));
-    EXPECT_EQ(false, results2.empty()); // extend table is not empty
-    if (!results2.empty()) {
-        EXPECT_EQ(g_state1.permissionName, results2[0].GetString(TokenFiledConst::FIELD_PERMISSION_NAME));
-    }
-
-    DelTestDataAndRestoreOri(tokenId, oriData);
-}
-
-/**
- * @tc.name: OTATest008
- * @tc.desc: test after ota valid permission which hasValue is true without value
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenManagerServiceTest, OTATest008, TestSize.Level0)
-{
-    AtmDataType type = AtmDataType::ACCESSTOKEN_HAP_UNDEFINE_INFO;
-    std::vector<GenericValues> oriData;
-    BackupAndDelOriData(oriData);
-
-    HapInfoParcel infoParCel;
-    infoParCel.hapInfoParameter = g_info;
-    HapPolicyParcel policyParcel;
-    policyParcel.hapPolicy = g_policy;
-    policyParcel.hapPolicy.permStateList = {g_state4};
-    policyParcel.hapPolicy.aclExtendedMap = {};
-    AccessTokenID tokenId;
-    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
-    CreateHapToken(infoParCel, policyParcel, tokenId, tokenIdAplMap);
-
-    GenericValues value; // system grant
-    value.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
-    value.Put(TokenFiledConst::FIELD_PERMISSION_NAME, g_state1.permissionName);
-    value.Put(TokenFiledConst::FIELD_ACL, 0); // system core permission without acl and without value
-    AddInfo addInfo;
-    addInfo.addType = type;
-    addInfo.addValues.emplace_back(value);
-
-    std::vector<DelInfo> delInfoVec;
-    std::vector<AddInfo> addInfoVec;
-    addInfoVec.emplace_back(addInfo);
-    EXPECT_EQ(0, AccessTokenDb::GetInstance()->DeleteAndInsertValues(delInfoVec, addInfoVec)); // add test data
-
-    std::vector<DelInfo> delInfoVec2;
-    std::vector<AddInfo> addInfoVec2;
-    atManagerService_->HandleHapUndefinedInfo(tokenIdAplMap, delInfoVec2, addInfoVec2);
-    EXPECT_EQ(0, AccessTokenDb::GetInstance()->DeleteAndInsertValues(delInfoVec2, addInfoVec2));
-
-    GenericValues conditionValue;
-    conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
-    std::vector<GenericValues> results;
-    ASSERT_EQ(0, AccessTokenDb::GetInstance()->Find(
-        AtmDataType::ACCESSTOKEN_HAP_UNDEFINE_INFO, conditionValue, results));
-    EXPECT_EQ(false, results.empty()); // undefine table is not empty
-
-    std::vector<GenericValues> results2;
-    ASSERT_EQ(0, AccessTokenDb::GetInstance()->Find(
-        AtmDataType::ACCESSTOKEN_PERMISSION_STATE, conditionValue, results2));
-    for (const auto& value : results2) {
-        EXPECT_NE(value.GetString(TokenFiledConst::FIELD_PERMISSION_NAME), g_state1.permissionName);
-    }
-
-    std::vector<GenericValues> results3;
-    ASSERT_EQ(0, AccessTokenDb::GetInstance()->Find(
-        AtmDataType::ACCESSTOKEN_PERMISSION_EXTEND_VALUE, conditionValue, results3));
-    EXPECT_EQ(true, results3.empty()); // extend table is empty
-
-    DelTestDataAndRestoreOri(tokenId, oriData);
-}
 
 /**
  * @tc.name: SetPermissionStatusWithPolicy001
@@ -1743,8 +1309,7 @@ HWTEST_F(AccessTokenManagerServiceTest, RegisterSelfPermStateChangeCallback001, 
     HapPolicyParcel policyParcel;
     policyParcel.hapPolicy = g_policy;
     AccessTokenID tokenId;
-    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
-    CreateHapToken(infoParCel, policyParcel, tokenId, tokenIdAplMap);
+    CreateHapToken(infoParCel, policyParcel, tokenId);
 
     SetSelfTokenID(tokenId);
 
@@ -1788,8 +1353,7 @@ HWTEST_F(AccessTokenManagerServiceTest, QueryStatusByTokenIDServiceTest001, Test
     policyParcel.hapPolicy = g_policy;
 
     AccessTokenID tokenId;
-    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
-    CreateHapToken(infoParcel, policyParcel, tokenId, tokenIdAplMap, true);
+    CreateHapToken(infoParcel, policyParcel, tokenId, true);
     EXPECT_NE(INVALID_TOKENID, tokenId);
 
     // Act: Create tokenIDList with size exceeding MAX_PERMISSION_LIST_SIZE (1024)
@@ -1889,9 +1453,8 @@ HWTEST_F(AccessTokenManagerServiceTest, QueryStatusByPermissionOverSizeTest001, 
     policyParcel.hapPolicy.permStateList = permStates;
 
     // Create a HAP token
-    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
     AccessTokenID tokenID;
-    CreateHapToken(infoParcel, policyParcel, tokenID, tokenIdAplMap);
+    CreateHapToken(infoParcel, policyParcel, tokenID);
 
     size_t originalMaxSize = AccessTokenInfoManager::GetInstance().GetMaxQueryResultSize();
     AccessTokenInfoManager::GetInstance().SetMaxQueryResultSize(0); // 0: Set small max size for testing and query
@@ -1948,8 +1511,7 @@ HWTEST_F(AccessTokenManagerServiceTest, QueryStatusByPermissionServiceTest002, T
     policyParcel.hapPolicy = g_policy;
 
     AccessTokenID tokenId;
-    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
-    CreateHapToken(infoParcel, policyParcel, tokenId, tokenIdAplMap, true);
+    CreateHapToken(infoParcel, policyParcel, tokenId, true);
     EXPECT_NE(INVALID_TOKENID, tokenId);
 
     // Act: Create permissionList with size exceeding MAX_PERMISSION_LIST_SIZE (1024)
@@ -2007,9 +1569,8 @@ HWTEST_F(AccessTokenManagerServiceTest, QueryStatusByPermissionServiceTest003, T
     policyParcel.hapPolicy.permStateList = permStates;
 
     // Create a HAP token
-    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
     AccessTokenID tokenID;
-    CreateHapToken(infoParcel, policyParcel, tokenID, tokenIdAplMap, true);
+    CreateHapToken(infoParcel, policyParcel, tokenID, true);
     EXPECT_NE(INVALID_TOKENID, tokenID);
 
     // Act: Query with valid permissionList
@@ -2076,9 +1637,8 @@ HWTEST_F(AccessTokenManagerServiceTest, QueryStatusByTokenIDOverSizeTest001, Tes
     policyParcel.hapPolicy.permStateList = permStates;
 
     // Create a HAP token
-    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
     AccessTokenID tokenID;
-    CreateHapToken(infoParcel, policyParcel, tokenID, tokenIdAplMap);
+    CreateHapToken(infoParcel, policyParcel, tokenID);
 
     size_t originalMaxSize = AccessTokenInfoManager::GetInstance().GetMaxQueryResultSize();
     AccessTokenInfoManager::GetInstance().SetMaxQueryResultSize(0); // 0: Set small max size for testing and query
@@ -3210,8 +2770,7 @@ HWTEST_F(AccessTokenManagerServiceTest, PolicyWhiteListServiceTest001, TestSize.
     policyParcel.hapPolicy.permStateList = {internetState};
 
     AccessTokenID tokenId;
-    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
-    CreateHapToken(infoParcel, policyParcel, tokenId, tokenIdAplMap);
+    CreateHapToken(infoParcel, policyParcel, tokenId);
 
     uint32_t permCode = 0;
     ASSERT_TRUE(TransferPermissionToOpcode("ohos.permission.INTERNET", permCode));

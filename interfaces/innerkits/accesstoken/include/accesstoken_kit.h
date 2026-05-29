@@ -215,6 +215,22 @@ public:
      * @return union AccessTokenIDEx, see access_token.h
      */
     static AccessTokenIDEx GetHapTokenIDEx(int32_t userID, const std::string& bundleName, int32_t instIndex);
+
+    /**
+     * @brief Get hap identity by hap base info.
+     * @param info hap base info
+     * @param identity hap identity
+     * @return error code, see access_token_error.h
+     */
+    static int32_t GetHapIdentity(const HapBaseInfo& info, Identity& identity);
+
+    /**
+     * @brief Get hap base info by uid.
+     * @param uid hap uid
+     * @param info hap base info
+     * @return error code, see access_token_error.h
+     */
+    static int32_t GetHapBaseInfoByUid(int32_t uid, HapBaseInfo& info);
     /**
      * @brief Get hap token info by token id.
      * @param tokenID token id

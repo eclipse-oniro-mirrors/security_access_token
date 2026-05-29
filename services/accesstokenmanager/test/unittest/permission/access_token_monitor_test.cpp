@@ -17,6 +17,7 @@
 
 #define private public
 #include "accesstoken_info_manager.h"
+#include "boot_verify_scheduler.h"
 #include "permission_manager.h"
 #include "verify_accesstoken_monitor.h"
 #undef private
@@ -38,6 +39,7 @@ constexpr const int32_t REPORT_THRESHOLD = 5;
 constexpr const int64_t REPORT_TIME_WINDOW = 5; // 5s
 constexpr const int64_t MONITOR_TIME_WINDOW = 2; // 2s
 constexpr const int64_t DENIED_TIME_WINDOW = 3; // 3s
+constexpr const int32_t SLEEP_TIME_SECONDS = 3;
 static AccessTokenID g_selfTokenId = 0;
 static PermissionDef g_infoManagerTestPermDef1 = {
     .permissionName = "open the door",
@@ -116,8 +118,10 @@ void AccessTokenMonitorTest::SetUpTestCase()
     uint32_t nativeSize = 0;
     uint32_t pefDefSize = 0;
     uint32_t dlpSize = 0;
-    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
-    AccessTokenInfoManager::GetInstance().Init(hapSize, nativeSize, pefDefSize, dlpSize, tokenIdAplMap);
+    AccessTokenInfoManager::GetInstance().Init(hapSize, nativeSize, pefDefSize, dlpSize);
+    (void)BootVerifyScheduler::GetInstance().VerifyBundleSignInfoWhenStart();
+    BootVerifyScheduler::GetInstance().StartVerifyNormalBundleListAsync();
+    sleep(SLEEP_TIME_SECONDS);
 }
 
 void AccessTokenMonitorTest::TearDownTestCase()

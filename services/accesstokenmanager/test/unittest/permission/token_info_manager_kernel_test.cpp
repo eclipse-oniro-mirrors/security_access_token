@@ -26,6 +26,7 @@
 #endif
 #define private public
 #include "accesstoken_info_manager.h"
+#include "boot_verify_scheduler.h"
 #undef private
 
 #include "permission_map.h"
@@ -36,6 +37,7 @@ using namespace OHOS::Security::AccessToken;
 
 namespace {
 constexpr int32_t USER_ID = 100;
+constexpr int32_t SLEEP_TIME_SECONDS = 3;
 }
 
 class TokenInfoManagerKernelTest : public testing::Test {
@@ -51,8 +53,10 @@ public:
         uint32_t nativeSize = 0;
         uint32_t pefDefSize = 0;
         uint32_t dlpSize = 0;
-        std::map<int32_t, TokenIdInfo> tokenIdAplMap;
-        AccessTokenInfoManager::GetInstance().Init(hapSize, nativeSize, pefDefSize, dlpSize, tokenIdAplMap);
+        AccessTokenInfoManager::GetInstance().Init(hapSize, nativeSize, pefDefSize, dlpSize);
+        (void)BootVerifyScheduler::GetInstance().VerifyBundleSignInfoWhenStart();
+        BootVerifyScheduler::GetInstance().StartVerifyNormalBundleListAsync();
+        sleep(SLEEP_TIME_SECONDS);
     }
 };
 
@@ -177,7 +181,7 @@ HWTEST_F(TokenInfoManagerKernelTest, FillInstallPolicyWithoutHaps003, TestSize.L
     EXPECT_EQ(bundleName, param.bundleName);
     EXPECT_EQ(1u, param.appIdentifier);
     EXPECT_EQ(10, param.apiVersion);
-    EXPECT_EQ(Security::Verify::AppDistType::NONE_TYPE, static_cast<int32_t>(param.distributionType));
+    EXPECT_EQ(OHOS::Security::Verify::AppDistType::NONE_TYPE, static_cast<int32_t>(param.distributionType));
     EXPECT_EQ(2u, policy.permStateList.size());
     EXPECT_TRUE(policy.aclExtendedMap.empty());
 }

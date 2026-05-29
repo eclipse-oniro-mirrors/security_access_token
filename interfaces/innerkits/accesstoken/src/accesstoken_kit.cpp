@@ -302,6 +302,27 @@ AccessTokenIDEx AccessTokenKit::GetHapTokenIDEx(int32_t userID, const std::strin
     return AccessTokenManagerClient::GetInstance().GetHapTokenID(userID, bundleName, instIndex);
 }
 
+int32_t AccessTokenKit::GetHapIdentity(const HapBaseInfo& info, Identity& identity)
+{
+    LOGD(ATM_DOMAIN, ATM_TAG, "UserID=%{public}d, bundleName=%{public}s, instIndex=%{public}d.",
+        info.userID, info.bundleName.c_str(), info.instIndex);
+    if ((!DataValidator::IsUserIdValid(info.userID)) || (!DataValidator::IsBundleNameValid(info.bundleName))) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Hap base info param check failed");
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    return AccessTokenManagerClient::GetInstance().GetHapIdentity(info, identity);
+}
+
+int32_t AccessTokenKit::GetHapBaseInfoByUid(int32_t uid, HapBaseInfo& info)
+{
+    LOGD(ATM_DOMAIN, ATM_TAG, "Uid=%{public}d.", uid);
+    if (uid <= 0) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Uid=%{public}d is invalid.", uid);
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    return AccessTokenManagerClient::GetInstance().GetHapBaseInfoByUid(uid, info);
+}
+
 int32_t AccessTokenKit::GetTokenIDByUserID(int32_t userID, std::unordered_set<AccessTokenID>& tokenIdList)
 {
     LOGD(ATM_DOMAIN, ATM_TAG, "UserID=%{public}d.", userID);

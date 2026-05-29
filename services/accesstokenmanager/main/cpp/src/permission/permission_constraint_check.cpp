@@ -161,10 +161,6 @@ void PermissionConstraintCheck::FixPersistentHapInfo(
         hapTokenInfoItem.bundleName = param.bundleName;
         isFixed = true;
     }
-    if (hapTokenInfoItem.appId != param.appId) {
-        hapTokenInfoItem.appId = param.appId;
-        isFixed = true;
-    }
     if (hapTokenInfoItem.apiVersion != param.apiVersion) {
         hapTokenInfoItem.apiVersion = param.apiVersion;
         isFixed = true;
@@ -237,6 +233,9 @@ void PermissionConstraintCheck::FixBriefPermData(
         BriefPermData initPermData = {0};
         PermissionBriefDef briefDef;
         (void) GetPermissionBriefDef(permCode, briefDef);
+        if (!briefDef.isEnable) {
+            continue;
+        }
         initPermData.permCode = static_cast<uint16_t>(permCode);
         if (briefDef.grantMode == GrantMode::SYSTEM_GRANT) {
             initPermData.status = PERMISSION_GRANTED;

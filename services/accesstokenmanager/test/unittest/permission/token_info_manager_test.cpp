@@ -33,6 +33,7 @@
 #include "accesstoken_info_utils.h"
 #include "accesstoken_info_manager.h"
 #include "accesstoken_remote_token_manager.h"
+#include "boot_verify_scheduler.h"
 #include "dlp_permission_set_manager.h"
 #include "libraryloader.h"
 #include "token_field_const.h"
@@ -71,6 +72,7 @@ static constexpr uint32_t USER_POLICY_MAX_LIST_SIZE = 1024;
 #endif
 static constexpr int32_t INVALID_GRANT_MODE = 1000;
 static const int32_t TOKEN_ATTR_RESERVED = 0x4;
+static const int32_t SLEEP_TIME_SECONDS = 3;
 static AccessTokenID g_selfTokenId = 0;
 static PermissionDef g_infoManagerTestPermDef1 = {
     .permissionName = "open the door",
@@ -342,8 +344,10 @@ void TokenInfoManagerTest::SetUpTestCase()
     uint32_t nativeSize = 0;
     uint32_t pefDefSize = 0;
     uint32_t dlpSize = 0;
-    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
-    AccessTokenInfoManager::GetInstance().Init(hapSize, nativeSize, pefDefSize, dlpSize, tokenIdAplMap);
+    AccessTokenInfoManager::GetInstance().Init(hapSize, nativeSize, pefDefSize, dlpSize);
+    (void)BootVerifyScheduler::GetInstance().VerifyBundleSignInfoWhenStart();
+    BootVerifyScheduler::GetInstance().StartVerifyNormalBundleListAsync();
+    sleep(SLEEP_TIME_SECONDS);
 }
 
 void TokenInfoManagerTest::TearDownTestCase()
@@ -1764,8 +1768,7 @@ HWTEST_F(TokenInfoManagerTest, AccessTokenInfoManager001, TestSize.Level0)
     uint32_t nativeSize = 0;
     uint32_t pefDefSize = 0;
     uint32_t dlpSize = 0;
-    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
-    AccessTokenInfoManager::GetInstance().Init(hapSize, nativeSize, pefDefSize, dlpSize, tokenIdAplMap);
+    AccessTokenInfoManager::GetInstance().Init(hapSize, nativeSize, pefDefSize, dlpSize);
     AccessTokenInfoManager::GetInstance().hasInited_ = false;
     ASSERT_EQ(false, AccessTokenInfoManager::GetInstance().hasInited_);
 }
@@ -3923,8 +3926,10 @@ HWTEST_F(TokenInfoManagerTest, ReservedHapInfo002, TestSize.Level0)
     uint32_t nativeSize = 0;
     uint32_t pefDefSize = 0;
     uint32_t dlpSize = 0;
-    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
-    AccessTokenInfoManager::GetInstance().Init(hapSize, nativeSize, pefDefSize, dlpSize, tokenIdAplMap);
+    AccessTokenInfoManager::GetInstance().Init(hapSize, nativeSize, pefDefSize, dlpSize);
+    (void)BootVerifyScheduler::GetInstance().VerifyBundleSignInfoWhenStart();
+    BootVerifyScheduler::GetInstance().StartVerifyNormalBundleListAsync();
+    sleep(3);
     std::string HapUniqueKey = AccessTokenInfoUtils::GetHapUniqueStr(100, "test_bundle_name", 0);
     auto it = AccessTokenInfoManager::GetInstance().reservedHapTokenIdMap_.find(HapUniqueKey);
     EXPECT_NE(it, AccessTokenInfoManager::GetInstance().reservedHapTokenIdMap_.end());

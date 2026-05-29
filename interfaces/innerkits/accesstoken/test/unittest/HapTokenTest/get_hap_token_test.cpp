@@ -272,6 +272,51 @@ HWTEST_F(GetHapTokenTest, GetHapTokenInfoAbnormalTest001, TestSize.Level0)
     EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
 }
 
+
+/**
+ * @tc.name: GetHapBaseInfoByUidFuncTest001
+ * @tc.desc: get hap base info by valid uid.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(GetHapTokenTest, GetHapBaseInfoByUidFuncTest001, TestSize.Level0)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetHapBaseInfoByUidFuncTest001");
+
+    HapTokenInfo hapTokenInfoRes;
+    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetHapTokenInfo(tokenID, hapTokenInfoRes));
+
+    HapBaseInfo baseInfo;
+    int32_t ret = AccessTokenKit::GetHapBaseInfoByUid(hapTokenInfoRes.uid, baseInfo);
+#ifdef SPM_DATA_ENABLE
+    ASSERT_EQ(RET_SUCCESS, ret);
+    EXPECT_EQ(TEST_USER_ID, baseInfo.userID);
+    EXPECT_EQ(TEST_BUNDLE_NAME, baseInfo.bundleName);
+    EXPECT_EQ(0, baseInfo.instIndex);
+#else
+    ASSERT_NE(RET_SUCCESS, ret);
+#endif
+}
+
+
+/**
+ * @tc.name: GetHapBaseInfoByUidAbnormalTest001
+ * @tc.desc: get hap base info by invalid uid.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(GetHapTokenTest, GetHapBaseInfoByUidAbnormalTest001, TestSize.Level0)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetHapBaseInfoByUidAbnormalTest001");
+
+    HapBaseInfo baseInfo;
+    EXPECT_EQ(ERR_PARAM_INVALID, AccessTokenKit::GetHapBaseInfoByUid(0, baseInfo));
+    EXPECT_EQ(ERR_PARAM_INVALID, AccessTokenKit::GetHapBaseInfoByUid(-1, baseInfo));
+    EXPECT_EQ(ERR_TOKENID_NOT_EXIST, AccessTokenKit::GetHapBaseInfoByUid(INT32_MAX, baseInfo));
+}
+
 /**
  * @tc.name: GetHapTokenInfoExtensionFuncTest001
  * @tc.desc: GetHapTokenInfoExt001.
