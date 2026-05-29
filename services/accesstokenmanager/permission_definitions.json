@@ -9535,6 +9535,19 @@
             "provisionEnable": false,
             "distributedSceneEnable": true,
             "deviceTypes": ["car"]
+        },
+        {
+            "name": "ohos.permission.kernel.SUPPORT_LOCAL_PLUGIN",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "NORMAL",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1"],
+            "isKernelEffect": true,
+            "hasValue": false
         }
     ]
 }
