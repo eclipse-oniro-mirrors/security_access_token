@@ -21,14 +21,9 @@
 #include <vector>
 
 #include "accesstoken_fuzzdata.h"
-#undef private
-#include "access_token.h"
 #include "accesstoken_kit.h"
-#define private public
-#include "accesstoken_manager_service.h"
-#undef private
-#include "mock_permission.h"
 #include "fuzzer/FuzzedDataProvider.h"
+#include "fuzz_service_context_helper.h"
 #include "iaccess_token_manager.h"
 
 using namespace std;
@@ -36,50 +31,47 @@ using namespace OHOS::Security::AccessToken;
 
 namespace OHOS {
 namespace {
-std::unique_ptr<MockToken> g_mockToken;
+const std::string DEFAULT_CALLER_BUNDLE = "setpermdialogcapstub.fuzzer";
+const std::string DISABLE_PERMISSION_DIALOG = "ohos.permission.DISABLE_PERMISSION_DIALOG";
+uint64_t g_callerFullTokenId = 0;
 }
 
-    void GetMockToken()
-    {
-        g_mockToken.reset(new MockToken({ "ohos.permission.DISABLE_PERMISSION_DIALOG" }));
+void Initialize()
+{
+    FuzzServiceContext::InitializeServiceCallerContext(
+        g_callerFullTokenId, DEFAULT_CALLER_BUNDLE, DISABLE_PERMISSION_DIALOG);
+}
+
+bool SetPermDialogCapStubFuzzTest(const uint8_t* data, size_t size)
+{
+    if ((data == nullptr) || (size == 0)) {
+        return false;
     }
 
-    bool SetPermDialogCapStubFuzzTest(const uint8_t* data, size_t size)
-    {
-        if ((data == nullptr) || (size == 0)) {
-            return false;
-        }
+    FuzzServiceContext::CallingContextGuard guard(g_callerFullTokenId);
+    FuzzedDataProvider provider(data, size);
+    HapBaseInfoParcel baseInfoParcel;
+    baseInfoParcel.hapBaseInfo.userID = provider.ConsumeIntegralInRange<int32_t>(-1, INT_MAX);
+    baseInfoParcel.hapBaseInfo.bundleName = provider.ConsumeRandomLengthString();
+    baseInfoParcel.hapBaseInfo.instIndex = provider.ConsumeIntegral<int32_t>();
 
-        FuzzedDataProvider provider(data, size);
-        HapBaseInfoParcel baseInfoParcel;
-        baseInfoParcel.hapBaseInfo.userID = provider.ConsumeIntegralInRange<int32_t>(-1, INT_MAX);
-        baseInfoParcel.hapBaseInfo.bundleName = provider.ConsumeRandomLengthString();
-        baseInfoParcel.hapBaseInfo.instIndex = provider.ConsumeIntegral<int32_t>();
-
-        MessageParcel datas;
-        datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
-        if (!datas.WriteParcelable(&baseInfoParcel)) {
-            return false;
-        }
-        uint32_t code = static_cast<uint32_t>(IAccessTokenManagerIpcCode::COMMAND_SET_PERM_DIALOG_CAP);
-
-        MessageParcel reply;
-        MessageOption option;
-
-        DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
-        return true;
+    MessageParcel datas;
+    datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
+    if (!datas.WriteParcelable(&baseInfoParcel)) {
+        return false;
     }
+    uint32_t code = static_cast<uint32_t>(IAccessTokenManagerIpcCode::COMMAND_SET_PERM_DIALOG_CAP);
 
-    void Initialize()
-    {
-        DelayedSingleton<AccessTokenManagerService>::GetInstance()->Initialize();
-    }
+    MessageParcel reply;
+    MessageOption option;
+
+    DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
+    return true;
 }
 
 extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv)
 {
     OHOS::Initialize();
-    OHOS::GetMockToken();
     return 0;
 }
 
@@ -90,3 +82,5 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     OHOS::SetPermDialogCapStubFuzzTest(data, size);
     return 0;
 }
+
+} // namespace OHOS
