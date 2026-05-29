@@ -9532,8 +9532,8 @@
             "availableType": "SYSTEM",
             "since": "26.0.0",
             "deprecated": "",
-            "provisionEnable": false,
-            "distributedSceneEnable": true,
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
             "deviceTypes": ["car"]
         },
         {
