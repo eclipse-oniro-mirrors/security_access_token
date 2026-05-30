@@ -24,6 +24,7 @@
 
 #include "accesstoken_info_manager.h"
 #include "access_token_manager_stub.h"
+#include "boot_verify_scheduler.h"
 #ifdef EVENTHANDLER_ENABLE
 #include "access_event_handler.h"
 #endif
@@ -96,6 +97,8 @@ public:
     int GetTokenType(AccessTokenID tokenID, int32_t& tokenType) override;
     int32_t GetHapTokenID(
         int32_t userID, const std::string& bundleName, int32_t instIndex, uint64_t& fullTokenId) override;
+    int32_t GetHapIdentity(const HapBaseInfoParcel& hapBaseInfoParcel, IdentityIdl& identityIdl) override;
+    int32_t GetHapBaseInfoByUid(int32_t uid, HapBaseInfoParcel& hapBaseInfoParcel) override;
     int32_t AllocLocalTokenID(
         const std::string& remoteDeviceID, AccessTokenID remoteTokenID, FullTokenID& tokenId) override;
     int GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfoParcel& infoParcel) override;
@@ -145,6 +148,10 @@ public:
     int32_t GetCliTokenInfo(AccessTokenID tokenId, CliInfoResultParcel& infoParcel) override;
     int32_t GetSkillTokenInfo(AccessTokenID tokenId, SkillInfoResultParcel& infoParcel) override;
     int32_t GetHostTokenId(AccessTokenID toolTokenId, AccessTokenID& hostTokenId) override;
+    int32_t PreMigrateUIDList(const std::vector<int32_t>& uidList) override;
+    int32_t MigrateInstalledBundles(const std::vector<MigratedInfoIdl>& migratedInfoList,
+        std::vector<BundleMigrateResultIdl>& results) override;
+    int32_t FinishMigration() override;
     int SetPermDialogCap(const HapBaseInfoParcel& hapBaseInfoParcel, bool enable) override;
     int32_t GetPermissionManagerInfo(PermissionGrantInfoParcel& infoParcel) override;
 #ifdef SUPPORT_MANAGE_USER_POLICY
@@ -191,20 +198,16 @@ private:
         const HapPolicy& policy, int64_t beginTime, int32_t errorCode);
     void ReportUpdateHap(AccessTokenIDEx fullTokenId, const HapTokenInfo& info,
         const HapPolicy& policy, int64_t beginTime, int32_t errorCode);
+    int32_t PreVerifyHapTokenIfNeeded(AccessTokenID tokenID);
+    int32_t PreVerifyBundleIfNeeded(const std::string& bundleName);
+    int32_t PreVerifyHapTokenListIfNeeded(const std::vector<uint32_t>& tokenIDList);
     bool IsPermissionValid(int32_t hapApl, const PermissionBriefDef& data, const std::string& value, bool isAcl);
-    void FilterInvalidData(const std::vector<GenericValues>& results,
-        const std::map<int32_t, TokenIdInfo>& tokenIdAplMap, std::vector<GenericValues>& validValueList);
-    void UpdateUndefinedInfoCache(const std::vector<GenericValues>& validValueList,
-        std::vector<GenericValues>& stateValues, std::vector<GenericValues>& extendValues);
-    void HandleHapUndefinedInfo(const std::map<int32_t, TokenIdInfo>& tokenIdAplMap, std::vector<DelInfo>& delInfoVec,
-        std::vector<AddInfo>& addInfoVec);
-    void UpdateDatabaseAsync(const std::vector<DelInfo>& delInfoVec, const std::vector<AddInfo>& addInfoVec);
-    void HandlePermDefUpdate(const std::map<int32_t, TokenIdInfo>& tokenIdAplMap);
 #ifdef SUPPORT_MANAGE_USER_POLICY
     void RollbackPolicyWhiteList(const PolicyWhiteListUpdateInfo& context);
     int32_t HandlePolicyWhiteListUpdate(const PolicyWhiteListUpdateInfo& policyContext);
     int32_t RefreshUserPolicyPermState(const std::vector<UserPolicyChange>& changedPolicyList);
 #endif
+    int32_t CheckHapManagerPermission();
 
     void FilterPermFeature(bool isSystemApp, HapPolicy& policy);
     bool isInitialize_ = false;

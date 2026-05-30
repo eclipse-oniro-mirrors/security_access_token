@@ -48,11 +48,6 @@ typedef struct {
     uint32_t tokenId;
 } BriefSecCompData;
 
-typedef enum AppProvisionType {
-    DEBUG = 0,
-    RELEASE = 1,
-} AppProvisionType;
-
 class PermissionDataBrief final {
 public:
     enum class PermissionStatusChangeType : uint32_t {
@@ -76,10 +71,8 @@ public:
     int32_t VerifyPermissionStatus(AccessTokenID tokenID, const std::string& permission);
     int32_t QueryPermissionStatusAndFlag(AccessTokenID tokenID, uint32_t permCode, int32_t& status, uint32_t& flag);
     void ClearAllSecCompGrantedPerm(std::vector<BriefSecCompData>& clearedSecCompPermList);
-    void GetGrantedPermByTokenId(AccessTokenID tokenID,
-        const std::vector<uint32_t>& constrainedList, std::vector<std::string>& permissionList);
-    void GetPermStatusListByTokenId(AccessTokenID tokenID,
-        const std::vector<uint32_t> constrainedList, std::vector<uint32_t>& opCodeList, std::vector<bool>& statusList);
+    void GetGrantedPermList(AccessTokenID tokenID, std::vector<std::string>& permissionList);
+    void GetGrantedPermCodeList(AccessTokenID tokenID, std::vector<uint32_t>& opCodeList);
     int32_t RefreshPermStateToKernel(AccessTokenID tokenId, uint32_t permCode, bool hapUserIsActive,
         std::map<std::string, bool>& refreshedPermList);
     void AddPermToBriefPermission(
@@ -87,6 +80,7 @@ public:
     void AddPermToBriefPermission(
             AccessTokenID tokenId, const std::vector<PermissionStatus>& permStateList,
             const std::map<std::string, std::string>& aclExtendedMap, bool defCheck);
+    void ReplaceExtendedValueByTokenId(AccessTokenID tokenID, const std::map<uint64_t, std::string>& data);
     void Update(
         AccessTokenID tokenId, const std::vector<PermissionStatus>& permStateList,
         const std::map<std::string, std::string>& aclExtendedMap, bool needUpdatePermByProvision);

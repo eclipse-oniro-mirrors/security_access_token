@@ -18,15 +18,11 @@
 #include <vector>
 
 #include "accesstoken_fuzzdata.h"
-#include "access_token.h"
-#define private public
-#include "accesstoken_manager_service.h"
-#undef private
 #include "accesstoken_kit.h"
 #include "claw_permission_fuzzdata.h"
 #include "cli_info_parcel.h"
-#include "mock_permission.h"
 #include "fuzzer/FuzzedDataProvider.h"
+#include "fuzz_service_context_helper.h"
 #include "iaccess_token_manager.h"
 #include "message_parcel.h"
 
@@ -34,17 +30,25 @@ using namespace OHOS::Security::AccessToken;
 
 namespace OHOS {
 namespace {
-std::unique_ptr<MockToken> g_mockToken;
+const std::string DEFAULT_AGENT_ID = "1001";
+const std::string DEFAULT_CLI_NAME = "ohos-queryTime";
+const std::string DEFAULT_SUB_CLI_NAME = "get-wall-time";
+const std::string DEFAULT_CALLER_BUNDLE = "getclipermissionsstub.fuzzer";
+const std::string MANAGE_TOOL_RUNTIME_PERMISSIONS = "ohos.permission.MANAGE_TOOL_RUNTIME_PERMISSIONS";
+uint64_t g_callerFullTokenId = 0;
 
 void InitializeClawPermissionStubFuzz()
 {
-    g_mockToken.reset(new MockToken({ "ohos.permission.MANAGE_TOOL_RUNTIME_PERMISSIONS" }, true, true));
-    DelayedSingleton<AccessTokenManagerService>::GetInstance()->Initialize();
+    FuzzServiceContext::InitializeServiceCallerContext(
+        g_callerFullTokenId, DEFAULT_CALLER_BUNDLE, MANAGE_TOOL_RUNTIME_PERMISSIONS);
 }
 
 bool WriteCliInfoParcelsToParcel(MessageParcel& data, FuzzedDataProvider& provider)
 {
     std::vector<CliInfo> infos = ConsumeCliInfoList(provider);
+    if (provider.ConsumeBool() && infos.empty()) {
+        infos.push_back({ DEFAULT_CLI_NAME, DEFAULT_SUB_CLI_NAME });
+    }
     if (!data.WriteInt32(static_cast<int32_t>(infos.size()))) {
         return false;
     }
@@ -65,13 +69,16 @@ bool GetCliPermissionsStubFuzzTest(const uint8_t* data, size_t size)
         return false;
     }
 
+    FuzzServiceContext::CallingContextGuard guard(g_callerFullTokenId);
     FuzzedDataProvider provider(data, size);
     MessageParcel datas;
     datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
-    if (!datas.WriteUint32(ConsumeTokenId(provider))) {
+    if (!datas.WriteUint32(provider.ConsumeBool() ?
+        FuzzServiceContext::GetCallerTokenId(g_callerFullTokenId) : ConsumeTokenId(provider))) {
         return false;
     }
-    if (!datas.WriteString(ConsumeAgentID(provider))) {
+    std::string agentId = provider.ConsumeBool() ? DEFAULT_AGENT_ID : ConsumeAgentID(provider);
+    if (!datas.WriteString(agentId)) {
         return false;
     }
     if (!WriteCliInfoParcelsToParcel(datas, provider)) {

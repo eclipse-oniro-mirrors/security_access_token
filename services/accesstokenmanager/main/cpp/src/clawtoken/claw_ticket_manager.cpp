@@ -20,8 +20,11 @@
 #include "access_token_error.h"
 #include "accesstoken_common_log.h"
 #include "accesstoken_info_manager.h"
+#include "claw_permission_status_helper.h"
 #include "cjson_utils.h"
+#ifdef SAF_AGENT_FENCE_ENABLE
 #include "saf_agent_fence.h"
+#endif
 
 namespace OHOS {
 namespace Security {
@@ -41,11 +44,13 @@ int32_t GetUserIdByTokenId(AccessTokenID callerTokenId)
     return hapInfo->GetUserID();
 }
 
+#ifdef SAF_AGENT_FENCE_ENABLE
 bool IsCliInfoMatched(const CliInfo& expectedCliInfo, const CliInfo& actualCliInfo)
 {
     return (expectedCliInfo.cliName == actualCliInfo.cliName) &&
         (expectedCliInfo.subCliName == actualCliInfo.subCliName);
 }
+#endif
 
 std::string SerializeCliAuthInfo(const CliAuthInfo& cliAuth)
 {
@@ -120,6 +125,7 @@ std::string SerializeSkillAuthInfo(const SkillAuthInfo& skillAuth)
     return PackJsonToString(skillObj);
 }
 
+#ifdef SAF_AGENT_FENCE_ENABLE
 CliAuthInfo DeserializeCliAuthInfo(const std::string& json)
 {
     CliAuthInfo cliAuth;
@@ -162,6 +168,7 @@ CliAuthInfo DeserializeCliAuthInfo(const std::string& json)
     }
     return cliAuth;
 }
+
 SkillAuthInfo DeserializeSkillAuthInfo(const std::string& json)
 {
     SkillAuthInfo skillAuth;
@@ -206,6 +213,7 @@ SkillAuthInfo DeserializeSkillAuthInfo(const std::string& json)
 
     return skillAuth;
 }
+#endif
 }
 
 ClawTicketManager& ClawTicketManager::GetInstance()
@@ -303,12 +311,13 @@ int32_t ClawTicketManager::GenerateCliTicket(AccessTokenID callerTokenId,
         messages.emplace_back(SerializeCliAuthInfo(cliAuth));
     }
 
+#ifdef SAF_AGENT_FENCE_ENABLE
     SAF::SafAgentFence safAgentFence;
     std::vector<SAF::VerifyTicketInfo> tickets;
     int32_t ret = safAgentFence.BatchGenerateTicket(userId, std::to_string(callerTokenId), messages, tickets);
     if (ret != RET_SUCCESS) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Generate cli ticket failed, ret=%{public}d", ret);
-        return ret;
+        return TransferErrorCode(ret);
     }
 
     std::unique_lock<std::shared_mutex> lock(multiLock_);
@@ -324,6 +333,7 @@ int32_t ClawTicketManager::GenerateCliTicket(AccessTokenID callerTokenId,
         ticket.ticket = tickets[i].ticket;
         ticketMap_[tickets[i].challenge] = ticket;
     }
+#endif
 
     return RET_SUCCESS;
 }
@@ -346,12 +356,13 @@ int32_t ClawTicketManager::GenerateSkillTicket(AccessTokenID callerTokenId,
         messages.emplace_back(SerializeSkillAuthInfo(skillAuth));
     }
 
+#ifdef SAF_AGENT_FENCE_ENABLE
     SAF::SafAgentFence safAgentFence;
     std::vector<SAF::VerifyTicketInfo> tickets;
     int32_t ret = safAgentFence.BatchGenerateTicket(userId, std::to_string(callerTokenId), messages, tickets);
     if (ret != RET_SUCCESS) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Generate skill ticket failed, ret=%{public}d", ret);
-        return ret;
+        return TransferErrorCode(ret);
     }
 
     std::unique_lock<std::shared_mutex> lock(multiLock_);
@@ -367,6 +378,7 @@ int32_t ClawTicketManager::GenerateSkillTicket(AccessTokenID callerTokenId,
         ticket.ticket = tickets[i].ticket;
         ticketMap_[tickets[i].challenge] = ticket;
     }
+#endif
 
     return RET_SUCCESS;
 }
@@ -382,6 +394,7 @@ int32_t ClawTicketManager::VerifyCliClawTicket(AccessTokenID hostTokenId, const 
     }
 #endif
 
+#ifdef SAF_AGENT_FENCE_ENABLE
     auto it = ticketMap_.find(challenge);
     if (it == ticketMap_.end()) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Verify cli ticket failed, challenge not found");
@@ -399,7 +412,7 @@ int32_t ClawTicketManager::VerifyCliClawTicket(AccessTokenID hostTokenId, const 
     int32_t ret = safAgentFence.BatchVerifyTicket(userId, std::to_string(hostTokenId), verifyInfos, verifyRes);
     if (ret != RET_SUCCESS) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Verify cli ticket failed, ret=%{public}d", ret);
-        return ret;
+        return TransferErrorCode(ret);
     }
     if (hostTokenId != it->second.callerTokenId) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Verify cli ticket failed, hostTokenId=%{public}d", hostTokenId);
@@ -411,9 +424,8 @@ int32_t ClawTicketManager::VerifyCliClawTicket(AccessTokenID hostTokenId, const 
         if (!IsCliInfoMatched(cliInfo, cliAuth.cliInfo)) {
             LOGE(ATM_DOMAIN, ATM_TAG,
                 "Verify cli ticket failed, cliInfo mismatch, inputCliName=%{public}s, inputSubCliName=%{public}s, "
-                "ticketCliName=%{public}s, ticketSubCliName=%{public}s.",
-                cliInfo.cliName.c_str(), cliInfo.subCliName.c_str(),
-                cliAuth.cliInfo.cliName.c_str(), cliAuth.cliInfo.subCliName.c_str());
+                "ticketCliName=%{public}s, ticketSubCliName=%{public}s.", cliInfo.cliName.c_str(),
+                cliInfo.subCliName.c_str(), cliAuth.cliInfo.cliName.c_str(), cliAuth.cliInfo.subCliName.c_str());
             return AccessTokenError::ERR_PARAM_INVALID;
         }
         for (size_t permIdx = 0; permIdx < cliAuth.permissionNames.size(); ++permIdx) {
@@ -424,6 +436,7 @@ int32_t ClawTicketManager::VerifyCliClawTicket(AccessTokenID hostTokenId, const 
             permList.emplace_back(status);
         }
     }
+#endif
 
     return RET_SUCCESS;
 }
@@ -437,6 +450,7 @@ int32_t ClawTicketManager::VerifySkillClawTicket(AccessTokenID hostTokenId, cons
     return RET_SUCCESS;
 #endif
 
+#ifdef SAF_AGENT_FENCE_ENABLE
     auto it = ticketMap_.find(challenge);
     if (it == ticketMap_.end()) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Verify skill ticket failed, challenge not found");
@@ -454,7 +468,7 @@ int32_t ClawTicketManager::VerifySkillClawTicket(AccessTokenID hostTokenId, cons
     int32_t ret = safAgentFence.BatchVerifyTicket(userId, std::to_string(hostTokenId), verifyInfos, verifyRes);
     if (ret != RET_SUCCESS) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Verify skill ticket failed, ret=%{public}d", ret);
-        return ret;
+        return TransferErrorCode(ret);
     }
 
     for (size_t ticketIdx = 0; ticketIdx < verifyInfos.size(); ++ticketIdx) {
@@ -468,6 +482,7 @@ int32_t ClawTicketManager::VerifySkillClawTicket(AccessTokenID hostTokenId, cons
             permList.emplace_back(status);
         }
     }
+#endif
 
     return RET_SUCCESS;
 }

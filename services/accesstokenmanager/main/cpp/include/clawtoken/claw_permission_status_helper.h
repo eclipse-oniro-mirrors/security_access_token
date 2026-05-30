@@ -34,6 +34,7 @@ bool IsGrantedWithoutDialog(const PermissionStatus& status);
 int32_t BuildPermissionStatusMap(AccessTokenID tokenId, PermissionStatusMap& permissionStatusMap);
 bool ResolveCliGrantedPermission(const PermissionStatusMap& permissionStatusMap,
     const std::string& permissionName, bool cliAuthorizationResult);
+int32_t TransferErrorCode(int32_t ret);
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

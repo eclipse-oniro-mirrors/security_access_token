@@ -29,6 +29,8 @@ group("fuzztest") {
     "getclipermissionrequestinfostub_fuzzer:GetCliPermissionRequestInfoStubFuzzTest",
     "getclipermissionsstub_fuzzer:GetCliPermissionsStubFuzzTest",
     "getdefpermissionstub_fuzzer:GetDefPermissionStubFuzzTest",
+    "gethapbaseinfobyuistub_fuzzer:GetHapBaseInfoByUidStubFuzzTest",
+    "gethapidentitystub_fuzzer:GetHapIdentityStubFuzzTest",
     "gethaptokenidstub_fuzzer:GetHapTokenIDStubFuzzTest",
     "gethaptokeninfocompatstub_fuzzer:GetHapTokenInfoCompatStubFuzzTest",
     "gethaptokeninfoextstub_fuzzer:GetHapTokenInfoExtStubFuzzTest",
@@ -67,6 +69,9 @@ group("fuzztest") {
     "updatehaptokenstub_fuzzer:UpdateHapTokenStubFuzzTest",
     "verifyaccesstokenstub_fuzzer:VerifyAccessTokenStubFuzzTest",
     "verifyaccesstokenwithliststub_fuzzer:VerifyAccessTokenWithListStubFuzzTest",
+    "migrateinstalledbundlesstub_fuzzer:MigrateInstalledBundlesStubFuzzTest",
+    "premigrateuidliststub_fuzzer:PreMigrateUIDListStubFuzzTest",
+    "finishmigrationstub_fuzzer:FinishMigrationStubFuzzTest",
   ]
 
   if (access_token_manage_user_policy_enable) {

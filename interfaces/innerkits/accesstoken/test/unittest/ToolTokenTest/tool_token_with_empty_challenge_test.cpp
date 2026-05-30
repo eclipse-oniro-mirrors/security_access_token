@@ -140,7 +140,7 @@ class ToolTokenWithEmptyChallengeTest : public testing::Test {
 public:
     static void SetUpTestCase()
     {
-        g_selfTokenId = GetSelfTokenID();
+        g_selfTokenId = 805442407; // 805442407 is mocked shell tokenid
         TestCommon::SetTestEvironment(g_selfTokenId);
         g_rootCallerTokenId = TestCommon::GetShellTokenId();
         g_manageToolCallerTokenId = TestCommon::GetNativeTokenIdFromProcess(MANAGE_TOOL_CALLER_PROCESS);

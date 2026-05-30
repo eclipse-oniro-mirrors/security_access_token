@@ -142,6 +142,25 @@ public:
     static int32_t UpdateHapToken(AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info,
         const HapPolicyParams& policy, HapInfoCheckResult& result);
     /**
+     * @brief Stage the UID list for installed-bundle migration.
+     * @param uidList UID list that should be accepted by the later migration step.
+     * @return error code, see access_token_error.h
+     */
+    static int32_t PreMigrateUIDList(const std::vector<int32_t>& uidList);
+    /**
+     * @brief Migrate installed bundles.
+     * @param migratedInfoList migrated bundle information list.
+     * @param results migration result for each migrated bundle.
+     * @return error code, see access_token_error.h
+     */
+    static int32_t MigrateInstalledBundles(const std::vector<MigratedInfo>& migratedInfoList,
+        std::vector<BundleMigrateResult>& results);
+    /**
+     * @brief Finish installed-bundle migration.
+     * @return error code, see access_token_error.h
+     */
+    static int32_t FinishMigration();
+    /**
      * @brief Delete token info.
      * @param tokenID token id
      * @return error code, see access_token_error.h
@@ -215,6 +234,22 @@ public:
      * @return union AccessTokenIDEx, see access_token.h
      */
     static AccessTokenIDEx GetHapTokenIDEx(int32_t userID, const std::string& bundleName, int32_t instIndex);
+
+    /**
+     * @brief Get hap identity by hap base info.
+     * @param info hap base info
+     * @param identity hap identity
+     * @return error code, see access_token_error.h
+     */
+    static int32_t GetHapIdentity(const HapBaseInfo& info, Identity& identity);
+
+    /**
+     * @brief Get hap base info by uid.
+     * @param uid hap uid
+     * @param info hap base info
+     * @return error code, see access_token_error.h
+     */
+    static int32_t GetHapBaseInfoByUid(int32_t uid, HapBaseInfo& info);
     /**
      * @brief Get hap token info by token id.
      * @param tokenID token id

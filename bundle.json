@@ -36,6 +36,7 @@
         "audio_framework",
         "ace_engine",
         "bounds_checking_function",
+        "bundle_framework",
         "c_utils",
         "camera_framework",
         "cJSON",

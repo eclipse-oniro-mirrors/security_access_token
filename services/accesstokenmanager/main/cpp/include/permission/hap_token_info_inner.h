@@ -96,10 +96,8 @@ public:
     static PermUsedTypeEnum GetPermissionUsedType(AccessTokenID tokenID, const std::string& permissionName);
     static int32_t QueryPermissionStatusAndFlag(
         AccessTokenID tokenID, uint32_t permCode, int32_t& status, uint32_t& flag);
-    static void GetPermStatusListByTokenId(AccessTokenID tokenID,
-        const std::vector<uint32_t> constrainedList, std::vector<uint32_t>& opCodeList, std::vector<bool>& statusList);
-    static void GetGrantedPermByTokenId(AccessTokenID tokenID,
-        const std::vector<uint32_t>& constrainedList, std::vector<std::string>& permissionList);
+    static void GetGrantedPermCodeList(AccessTokenID tokenID, std::vector<uint32_t>& opCodeList);
+    static void GetGrantedPermList(AccessTokenID tokenID, std::vector<std::string>& permissionList);
     static void ClearAllSecCompGrantedPerm();
     static bool IsPermissionGrantedWithSecComp(AccessTokenID tokenID, const std::string& permissionName);
 

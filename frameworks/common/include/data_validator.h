@@ -18,6 +18,7 @@
 
 #include <map>
 #include <string>
+#include <vector>
 #include "access_token.h"
 
 namespace OHOS {
@@ -69,6 +70,7 @@ public:
     static bool IsAclExtendedMapContentValid(const std::string& permissionName, const std::string& value);
     static bool IsAppProvisionTypeValid(const std::string& appProvisionType);
     static bool IsListSizeValid(uint32_t size);
+    static bool IsStringListValid(const std::vector<std::string>& valueList);
     static bool IsPermFeatureValid(const std::string& feature);
 
 private:

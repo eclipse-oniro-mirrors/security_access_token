@@ -167,6 +167,18 @@ struct Identity final {
 };
 
 /**
+ * @brief App reserved status
+ */
+enum class ReservedType : int32_t {
+    /** normal data */
+    NONE = 0,
+    /** reserve identity, tokenId is reserved but app data is uninstalled */
+    RESERVED_IDENTITY = 1,
+    /** reserve data, app is uninstalled but data is preserved */
+    RESERVED_DATA = 2,
+};
+
+/**
  * @brief Pre-authorization token info class
  */
 class PreAuthorizationInfo final {
@@ -231,6 +243,26 @@ public:
     HapPolicyCheckIgnore checkIgnore = HapPolicyCheckIgnore::NONE;
     std::map<std::string, std::string> aclExtendedMap;
     bool isDebugGrant = false;
+};
+
+struct BundleHapList final {
+    std::vector<std::string> hapPaths;
+    bool isPreInstalled = false;
+    int32_t userId;
+};
+
+struct MigratedInfo final {
+    std::string bundleName;
+    BundleHapList pathList;
+    std::vector<HapBaseInfo> hapBaseInfoList;
+    std::vector<int32_t> uidList;
+    std::vector<ReservedType> reservedTypeList;
+};
+
+struct BundleMigrateResult final {
+    std::vector<AccessTokenIDEx> tokenIdList;
+    std::vector<ReservedType> reservedTypeList;
+    int32_t errcode = 0;
 };
 
 /**

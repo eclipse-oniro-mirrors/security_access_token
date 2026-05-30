@@ -47,7 +47,7 @@ ATokenTypeEnum AccessTokenIDManager::GetTokenIdType(AccessTokenID id)
 int AccessTokenIDManager::RegisterTokenId(AccessTokenID id, ATokenTypeEnum type)
 {
     AccessTokenIDInner *idInner = reinterpret_cast<AccessTokenIDInner *>(&id);
-    if (idInner->version != DEFAULT_TOKEN_VERSION || idInner->type != type) {
+    if (idInner->version != DEFAULT_TOKEN_VERSION || idInner->type != type || idInner->type_ext != 0) {
         return ERR_PARAM_INVALID;
     }
     std::unique_lock<std::shared_mutex> idGuard(this->tokenIdLock_);
@@ -78,6 +78,7 @@ AccessTokenID AccessTokenIDManager::CreateTokenId(ATokenTypeEnum type, int32_t d
     AccessTokenIDInner innerId = {0};
     innerId.version = DEFAULT_TOKEN_VERSION;
     innerId.type = type;
+    innerId.type_ext = 0;
     innerId.res = 0;
     innerId.toolFlag = static_cast<uint32_t>(toolFlag);
     innerId.cloneFlag = static_cast<uint32_t>(cloneFlag);
@@ -180,6 +181,15 @@ void AccessTokenIDManager::InitSingleBundleIdCache(int32_t uid)
 
 int32_t AccessTokenIDManager::AllocUid(int32_t localId, int32_t& outUid)
 {
+#ifdef SPM_DATA_ENABLE
+    {
+        std::unique_lock<std::mutex> lock(migrationLock_);
+        if (!migrationDone_) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "AllocUid failed, migration not completed.");
+            return AccessTokenError::ERR_PARAM_INVALID;
+        }
+    }
+#endif
     std::unique_lock<std::mutex> lock(bundleIdLock_);
     int32_t startId = bundleIdSet_.empty() ? BUNDLE_ID_MIN : (*bundleIdSet_.rbegin() + 1);
     if (startId > BUNDLE_ID_MAX) {
@@ -255,6 +265,13 @@ int32_t AccessTokenIDManager::ImportInitialUids(const std::vector<int32_t>& uids
         }
     }
     return RET_SUCCESS;
+}
+
+void AccessTokenIDManager::SetMigrationDone()
+{
+    std::unique_lock<std::mutex> lock(migrationLock_);
+    migrationDone_ = true;
+    LOGI(ATM_DOMAIN, ATM_TAG, "Migration done flag set to true.");
 }
 } // namespace AccessToken
 } // namespace Security

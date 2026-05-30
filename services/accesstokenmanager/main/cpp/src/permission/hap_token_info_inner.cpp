@@ -196,7 +196,7 @@ int HapTokenInfoInner::RestoreHapTokenBasicInfo(const GenericValues& inGenericVa
     }
     tokenInfoBasic_.tokenAttr = (uint32_t)inGenericValues.GetInt(TokenFiledConst::FIELD_TOKEN_ATTR);
     isPermDialogForbidden_ = inGenericValues.GetInt(TokenFiledConst::FIELD_FORBID_PERM_DIALOG);
-#ifdef SPM_DATA_ENBALE
+#ifdef SPM_DATA_ENABLE
     tokenInfoBasic_.uid = inGenericValues.GetInt(TokenFiledConst::FIELD_UID);
     isMigrated_ = inGenericValues.GetInt(TokenFiledConst::FIELD_MIGRATED) != 0;
 #endif
@@ -535,17 +535,16 @@ int32_t HapTokenInfoInner::QueryPermissionStatusAndFlag(
     return PermissionDataBrief::GetInstance().QueryPermissionStatusAndFlag(tokenID, permCode, status, flag);
 }
 
-void HapTokenInfoInner::GetPermStatusListByTokenId(AccessTokenID tokenID,
-    const std::vector<uint32_t> constrainedList, std::vector<uint32_t>& opCodeList, std::vector<bool>& statusList)
+void HapTokenInfoInner::GetGrantedPermCodeList(AccessTokenID tokenID,
+    std::vector<uint32_t>& opCodeList)
 {
-    return PermissionDataBrief::GetInstance().GetPermStatusListByTokenId(
-        tokenID, constrainedList, opCodeList, statusList);
+    return PermissionDataBrief::GetInstance().GetGrantedPermCodeList(tokenID, opCodeList);
 }
 
-void HapTokenInfoInner::GetGrantedPermByTokenId(AccessTokenID tokenID,
-    const std::vector<uint32_t>& constrainedList, std::vector<std::string>& permissionList)
+void HapTokenInfoInner::GetGrantedPermList(AccessTokenID tokenID,
+    std::vector<std::string>& permissionList)
 {
-    return PermissionDataBrief::GetInstance().GetGrantedPermByTokenId(tokenID, constrainedList, permissionList);
+    return PermissionDataBrief::GetInstance().GetGrantedPermList(tokenID, permissionList);
 }
 
 void HapTokenInfoInner::ClearAllSecCompGrantedPerm()

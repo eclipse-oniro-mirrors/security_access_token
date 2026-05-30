@@ -34,6 +34,7 @@ using namespace OHOS::Security::AccessToken;
 #ifdef TOKEN_SYNC_ENABLE
 const int CONSTANTS_NUMBER_TWO = 2;
 #endif
+const int SLEEP_TIME_SECONDS = 3;
 
 namespace OHOS {
     bool DeleteRemoteDeviceTokensStubFuzzTest(const uint8_t* data, size_t size)
@@ -65,8 +66,10 @@ namespace OHOS {
             uint32_t nativeSize = 0;
             uint32_t pefDefSize = 0;
             uint32_t dlpSize = 0;
-            std::map<int32_t, TokenIdInfo> tokenIdAplMap;
-            AccessTokenInfoManager::GetInstance().Init(hapSize, nativeSize, pefDefSize, dlpSize, tokenIdAplMap);
+            AccessTokenInfoManager::GetInstance().Init(hapSize, nativeSize, pefDefSize, dlpSize);
+            (void)BootVerifyScheduler::GetInstance().VerifyBundleSignInfoWhenStart();
+            BootVerifyScheduler::GetInstance().StartVerifyNormalBundleListAsync();
+            sleep(SLEEP_TIME_SECONDS);
         }
         DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
         AccessTokenID hdcd = AccessTokenKit::GetNativeTokenId("hdcd");

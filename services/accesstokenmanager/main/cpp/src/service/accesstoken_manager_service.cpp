@@ -34,6 +34,7 @@
 #include "accesstoken_id_manager.h"
 #include "accesstoken_info_dumper.h"
 #include "callback_manager.h"
+#include "accesstoken_migration_manager.h"
 #include "constant_common.h"
 #include "claw_token_info_manager.h"
 #include "data_usage_dfx.h"
@@ -209,6 +210,44 @@ bool AreCliInfosValid(const std::vector<CliInfoParcel>& cliInfoList)
 bool IsCliInfoListSizeValid(size_t size)
 {
     return (size > 0) && (size <= MAX_CLAW_CLI_INFO_LIST_SIZE);
+}
+
+void UpdatePermissionStates(const std::vector<PermissionStatus>& permsList,
+    std::vector<PermissionListStateParcel>& reqPermList, int32_t apiVersion, bool& needRes, bool& fixedByPolicyRes)
+{
+    for (auto& reqPerm : reqPermList) {
+        bool isLocationPermission = ((reqPerm.permsState.permissionName == VAGUE_LOCATION_PERMISSION_NAME) ||
+            (reqPerm.permsState.permissionName == ACCURATE_LOCATION_PERMISSION_NAME) ||
+            (reqPerm.permsState.permissionName == BACKGROUND_LOCATION_PERMISSION_NAME)) &&
+            (apiVersion >= ACCURATE_LOCATION_API_VERSION);
+        if (isLocationPermission) {
+            continue;
+        }
+
+        PermissionManager::GetInstance().GetSelfPermissionState(permsList, reqPerm.permsState, apiVersion);
+        auto permOper = static_cast<PermissionOper>(reqPerm.permsState.state);
+        needRes = (permOper == DYNAMIC_OPER) ? true : needRes;
+        if (permOper == FORBIDDEN_OPER) {
+            fixedByPolicyRes = true;
+        }
+        LOGD(ATM_DOMAIN, ATM_TAG, "Perm %{public}s, state %{public}d, errorReason %{public}d.",
+            reqPerm.permsState.permissionName.c_str(), reqPerm.permsState.state, reqPerm.permsState.errorReason);
+    }
+}
+
+PermissionOper HandlePermissionDialogCap(AccessTokenID tokenID, std::vector<PermissionListStateParcel>& reqPermList)
+{
+    if (AccessTokenInfoManager::GetInstance().GetPermDialogCap(tokenID)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Id %{public}d is under control.", tokenID);
+        for (auto& reqPerm : reqPermList) {
+            if (reqPerm.permsState.state != INVALID_OPER) {
+                reqPerm.permsState.state = FORBIDDEN_OPER;
+                reqPerm.permsState.errorReason = PRIVACY_STATEMENT_NOT_AGREED;
+            }
+        }
+        return FORBIDDEN_OPER;
+    }
+    return PASS_OPER;
 }
 
 bool AreCliAuthInfosValid(const std::vector<CliAuthInfoParcel>& authInfoList)
@@ -497,9 +536,41 @@ int32_t AccessTokenManagerService::GetPermissionUsedType(
         permUsedType = static_cast<int32_t>(PermUsedTypeEnum::INVALID_USED_TYPE);
         return permUsedType;
     }
+    int32_t ret = PreVerifyHapTokenIfNeeded(tokenID);
+    if (ret != RET_SUCCESS) {
+        permUsedType = static_cast<int32_t>(PermUsedTypeEnum::INVALID_USED_TYPE);
+        return ret;
+    }
     permUsedType = static_cast<int32_t>(
         PermissionManager::GetInstance().GetPermissionUsedType(tokenID, permissionName));
     return ERR_OK;
+}
+
+int32_t AccessTokenManagerService::PreVerifyHapTokenIfNeeded(AccessTokenID tokenID)
+{
+    if (TokenIDAttributes::GetTokenIdTypeEnum(tokenID) != TOKEN_HAP) {
+        return RET_SUCCESS;
+    }
+    return BootVerifyScheduler::GetInstance().PreVerifyBundle(tokenID);
+}
+
+int32_t AccessTokenManagerService::PreVerifyBundleIfNeeded(const std::string& bundleName)
+{
+    if (bundleName.empty()) {
+        return RET_SUCCESS;
+    }
+    return BootVerifyScheduler::GetInstance().PreVerifyBundle(bundleName);
+}
+
+int32_t AccessTokenManagerService::PreVerifyHapTokenListIfNeeded(const std::vector<uint32_t>& tokenIDList)
+{
+    for (const auto tokenID : tokenIDList) {
+        int32_t ret = PreVerifyHapTokenIfNeeded(tokenID);
+        if (ret != RET_SUCCESS) {
+            return ret;
+        }
+    }
+    return RET_SUCCESS;
 }
 
 int32_t AccessTokenManagerService::VerifyAccessToken(
@@ -514,6 +585,12 @@ int AccessTokenManagerService::VerifyAccessToken(AccessTokenID tokenID, const st
 #ifdef HITRACE_NATIVE_ENABLE
     StartTraceEx(HiTraceOutputLevel::HITRACE_LEVEL_DEBUG, HITRACE_TAG_ACCESS_CONTROL, "AccessTokenVerifyPermission");
 #endif
+    int32_t ret = PreVerifyHapTokenIfNeeded(tokenID);
+    if (ret != RET_SUCCESS) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Pre verify bundle by token failed, tokenID=%{public}u, ret=%{public}d.",
+            tokenID, ret);
+        return PERMISSION_DENIED;
+    }
     int32_t res = PERMISSION_DENIED;
     if (ToolTokenInfoManager::GetInstance().IsToolToken(tokenID)) {
         res = ToolTokenInfoManager::GetInstance().VerifyToolAccessToken(tokenID, permissionName);
@@ -679,16 +756,22 @@ int AccessTokenManagerService::GetReqPermissions(
         LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", callingTokenID);
         return AccessTokenError::ERR_PERMISSION_DENIED;
     }
+    int32_t ret = PreVerifyHapTokenIfNeeded(tokenID);
+    if (ret != RET_SUCCESS) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Pre verify bundle by token failed, tokenID=%{public}u, ret=%{public}d.",
+            tokenID, ret);
+        return ret;
+    }
 
     std::vector<PermissionStatus> permList;
-    int ret = PermissionManager::GetInstance().GetReqPermissions(tokenID, permList, isSystemGrant);
+    int result = PermissionManager::GetInstance().GetReqPermissions(tokenID, permList, isSystemGrant);
 
     for (const auto& perm : permList) {
         PermissionStatusParcel permParcel;
         permParcel.permState = perm;
         reqPermList.emplace_back(permParcel);
     }
-    return ret;
+    return result;
 }
 
 int32_t AccessTokenManagerService::GetSelfPermissionStatus(const std::string& permissionName, int32_t& status)
@@ -727,6 +810,12 @@ int32_t AccessTokenManagerService::GetSelfPermissionsState(std::vector<Permissio
     infoParcel.info.grantAbilityName = grantAbilityName_;
     infoParcel.info.grantServiceAbilityName = grantServiceAbilityName_;
     AccessTokenID callingTokenID = IPCSkeleton::GetCallingTokenID();
+    int32_t verifyRet = PreVerifyHapTokenIfNeeded(callingTokenID); // 影响API的错误码返回
+    if (verifyRet != RET_SUCCESS) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Pre verify bundle by token failed, tokenID=%{public}u, ret=%{public}d.",
+            callingTokenID, verifyRet);
+        return verifyRet;
+    }
     permOper = GetPermissionsState(callingTokenID, reqPermList);
     return ERR_OK;
 }
@@ -744,6 +833,13 @@ int32_t AccessTokenManagerService::GetPermissionsStatus(AccessTokenID tokenID,
         return AccessTokenError::ERR_PERMISSION_DENIED;
     }
 
+    int32_t ret = PreVerifyHapTokenIfNeeded(tokenID);
+    if (ret != RET_SUCCESS) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Pre verify bundle by token failed, tokenID=%{public}u, ret=%{public}d.",
+            tokenID, ret);
+        return ret;
+    }
+
     uint32_t size = reqPermList.size();
     if (size > MAX_PERMISSION_SIZE) {
         LOGE(ATM_DOMAIN, ATM_TAG, "PermList size %{public}d is invalid.", size);
@@ -754,11 +850,11 @@ int32_t AccessTokenManagerService::GetPermissionsStatus(AccessTokenID tokenID,
         LOGE(ATM_DOMAIN, ATM_TAG, "Id %{public}d does not exist.", tokenID);
         return ERR_TOKENID_NOT_EXIST;
     }
-    PermissionOper ret = GetPermissionsState(tokenID, reqPermList);
-    return ret == INVALID_OPER ? RET_FAILED : RET_SUCCESS;
+    PermissionOper permOper = GetPermissionsState(tokenID, reqPermList);
+    return permOper == INVALID_OPER ? RET_FAILED : RET_SUCCESS;
 }
 
-static bool GetAppReqPermissions(AccessTokenID tokenID, std::vector<PermissionStatus>& permsList)
+bool GetAppReqPermissions(AccessTokenID tokenID, std::vector<PermissionStatus>& permsList)
 {
     int retUserGrant = PermissionManager::GetInstance().GetReqPermissions(tokenID, permsList, false);
     int retSysGrant = PermissionManager::GetInstance().GetReqPermissions(tokenID, permsList, true);
@@ -782,6 +878,12 @@ bool AccessTokenManagerService::IsLocationPermSpecialHandle(std::string permissi
 PermissionOper AccessTokenManagerService::GetPermissionsState(AccessTokenID tokenID,
     std::vector<PermissionListStateParcel>& reqPermList)
 {
+    int32_t ret = PreVerifyHapTokenIfNeeded(tokenID);
+    if (ret != RET_SUCCESS) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Pre verify bundle by token failed, tokenID=%{public}u, ret=%{public}d.",
+            tokenID, ret);
+        return INVALID_OPER;
+    }
     int32_t apiVersion = 0;
     if (!AccessTokenInfoManager::GetInstance().GetApiVersionByTokenId(tokenID, apiVersion)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Get api version error.");
@@ -802,32 +904,9 @@ PermissionOper AccessTokenManagerService::GetPermissionsState(AccessTokenID toke
             tokenID, reqPermList, permsList, apiVersion);
     }
 
-    uint32_t size = reqPermList.size();
-    for (uint32_t i = 0; i < size; i++) {
-        // api9 location permission special handle above
-        if (IsLocationPermSpecialHandle(reqPermList[i].permsState.permissionName, apiVersion)) {
-            continue;
-        }
-
-        PermissionManager::GetInstance().GetSelfPermissionState(permsList, reqPermList[i].permsState, apiVersion);
-        needRes = (static_cast<PermissionOper>(reqPermList[i].permsState.state) == DYNAMIC_OPER) ? true : needRes;
-        if (static_cast<PermissionOper>(reqPermList[i].permsState.state) == FORBIDDEN_OPER) {
-            fixedByPolicyRes = true;
-        }
-        LOGD(ATM_DOMAIN, ATM_TAG, "Perm %{public}s, state %{public}d, errorReason %{public}d.",
-            reqPermList[i].permsState.permissionName.c_str(), reqPermList[i].permsState.state,
-            reqPermList[i].permsState.errorReason);
-    }
+    UpdatePermissionStates(permsList, reqPermList, apiVersion, needRes, fixedByPolicyRes);
     if (GetTokenType(tokenID) == TOKEN_HAP && AccessTokenInfoManager::GetInstance().GetPermDialogCap(tokenID)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Id %{public}d is under control.", tokenID);
-        uint32_t size = reqPermList.size();
-        for (uint32_t i = 0; i < size; i++) {
-            if (reqPermList[i].permsState.state != INVALID_OPER) {
-                reqPermList[i].permsState.state = FORBIDDEN_OPER;
-                reqPermList[i].permsState.errorReason = PRIVACY_STATEMENT_NOT_AGREED;
-            }
-        }
-        return FORBIDDEN_OPER;
+        return HandlePermissionDialogCap(tokenID, reqPermList);
     }
     if (needRes) {
         return DYNAMIC_OPER;
@@ -852,6 +931,12 @@ int AccessTokenManagerService::GetPermissionFlag(
         VerifyAccessToken(callingTokenID, MANAGE_EDM_POLICY) == PERMISSION_DENIED) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", callingTokenID);
         return AccessTokenError::ERR_PERMISSION_DENIED;
+    }
+    int32_t ret = PreVerifyHapTokenIfNeeded(tokenID);
+    if (ret != RET_SUCCESS) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Pre verify bundle by token failed, tokenID=%{public}u, ret=%{public}d.",
+            tokenID, ret);
+        return ret;
     }
     return PermissionManager::GetInstance().GetPermissionFlag(tokenID, permissionName, flag);
 }
@@ -893,12 +978,18 @@ int32_t AccessTokenManagerService::GetPermissionRequestToggleStatus(
 
 int32_t AccessTokenManagerService::RequestAppPermOnSetting(AccessTokenID tokenID)
 {
+    int32_t ret = PreVerifyHapTokenIfNeeded(tokenID);
+    if (ret != RET_SUCCESS) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Pre verify bundle by token failed, tokenID=%{public}u, ret=%{public}d.",
+            tokenID, ret);
+        return ret;
+    }
     if (!IsSystemAppCalling()) {
         return AccessTokenError::ERR_NOT_SYSTEM_APP;
     }
 
     HapTokenInfo hapInfo;
-    int32_t ret = AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenID, hapInfo);
+    ret = AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenID, hapInfo);
     if (ret != ERR_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "GetHapTokenInfo failed, err %{public}d.", ret);
         return ret;
@@ -910,6 +1001,12 @@ int32_t AccessTokenManagerService::RequestAppPermOnSetting(AccessTokenID tokenID
 int AccessTokenManagerService::GrantPermission(
     AccessTokenID tokenID, const std::string& permissionName, uint32_t flag, int32_t updateFlag)
 {
+    int32_t ret = PreVerifyHapTokenIfNeeded(tokenID);
+    if (ret != RET_SUCCESS) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Pre verify bundle by token failed, tokenID=%{public}u, ret=%{public}d.",
+            tokenID, ret);
+        return ret;
+    }
     AccessTokenID callingTokenID = IPCSkeleton::GetCallingTokenID();
     if ((this->GetTokenType(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
         return AccessTokenError::ERR_NOT_SYSTEM_APP;
@@ -922,14 +1019,20 @@ int AccessTokenManagerService::GrantPermission(
         return AccessTokenError::ERR_PERMISSION_DENIED;
     }
 
-    int32_t ret = PermissionManager::GetInstance().GrantPermission(
+    int32_t grantRet = PermissionManager::GetInstance().GrantPermission(
         tokenID, permissionName, flag, static_cast<UpdatePermissionFlag>(updateFlag));
-    return ret;
+    return grantRet;
 }
 
 int AccessTokenManagerService::RevokePermission(
     AccessTokenID tokenID, const std::string& permissionName, uint32_t flag, int32_t updateFlag, bool killProcess)
 {
+    int32_t ret = PreVerifyHapTokenIfNeeded(tokenID);
+    if (ret != RET_SUCCESS) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Pre verify bundle by token failed, tokenID=%{public}u, ret=%{public}d.",
+            tokenID, ret);
+        return ret;
+    }
     AccessTokenID callingTokenID = IPCSkeleton::GetCallingTokenID();
     if ((this->GetTokenType(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
         return AccessTokenError::ERR_NOT_SYSTEM_APP;
@@ -967,6 +1070,12 @@ int AccessTokenManagerService::GrantPermissionForSpecifiedTime(
 
 int AccessTokenManagerService::ClearUserGrantedPermissionState(AccessTokenID tokenID)
 {
+    int32_t ret = PreVerifyHapTokenIfNeeded(tokenID);
+    if (ret != RET_SUCCESS) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Pre verify bundle by token failed, tokenID=%{public}u, ret=%{public}d.",
+            tokenID, ret);
+        return ret;
+    }
     LOGI(ATM_DOMAIN, ATM_TAG, "TokenID: %{public}d, callerPid %{public}d.", tokenID, IPCSkeleton::GetCallingPid());
     uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
     if (!IsPrivilegedCalling() &&
@@ -1205,7 +1314,7 @@ int32_t AccessTokenManagerService::InitHapToken(const HapInfoParcel& info, const
         bundleParam.appId = hapInfoParm.appIDDesc;
         bundleParam.apiVersion = hapInfoParm.apiVersion;
 #ifdef IS_SUPPORT_HAP_RUNNING
-        bundleParam.distributionType = Verify::ParseAppDistType(hapInfoParm.appDistributionType);
+        bundleParam.distributionType = static_cast<int32_t>(Verify::ParseAppDistType(hapInfoParm.appDistributionType));
 #endif
         bundleParam.isSystem = hapInfoParm.isSystemApp;
         bundleParam.isAtomicService = hapInfoParm.isAtomicService;
@@ -1313,9 +1422,54 @@ int32_t AccessTokenManagerService::GetHapTokenID(
         fullTokenId = tokenIdEx.tokenIDEx;
         return ERR_OK;
     }
+    if (!DataValidator::IsBundleNameValid(bundleName)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Bundle name is invalid.");
+        fullTokenId = 0;
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    int32_t res = PreVerifyBundleIfNeeded(bundleName);
+    if (res != RET_SUCCESS) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Pre verify bundle failed, res %{public}d.", res);
+        fullTokenId = 0;
+        return res;
+    }
     AccessTokenIDEx tokenIdEx = AccessTokenInfoManager::GetInstance().GetHapTokenID(userID, bundleName, instIndex);
     fullTokenId = tokenIdEx.tokenIDEx;
     return ERR_OK;
+}
+
+int32_t AccessTokenManagerService::GetHapIdentity(const HapBaseInfoParcel& hapBaseInfoParcel, IdentityIdl& identityIdl)
+{
+    const HapBaseInfo& info = hapBaseInfoParcel.hapBaseInfo;
+    LOGD(ATM_DOMAIN, ATM_TAG, "UserID %{public}d, bundle %{public}s, instIndex %{public}d.",
+        info.userID, info.bundleName.c_str(), info.instIndex);
+    if (!IsNativeProcessCalling() && !IsPrivilegedCalling()) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", IPCSkeleton::GetCallingTokenID());
+        return AccessTokenError::ERR_PERMISSION_DENIED;
+    }
+    int32_t ret = PreVerifyBundleIfNeeded(info.bundleName);
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
+
+    Identity identity;
+    ret = AccessTokenInfoManager::GetInstance().GetHapIdentity(info, identity);
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
+    identityIdl.uid = identity.uid;
+    identityIdl.tokenId = identity.tokenId;
+    return RET_SUCCESS;
+}
+
+int32_t AccessTokenManagerService::GetHapBaseInfoByUid(int32_t uid, HapBaseInfoParcel& hapBaseInfoParcel)
+{
+    LOGD(ATM_DOMAIN, ATM_TAG, "Uid %{public}d.", uid);
+    if (!IsNativeProcessCalling() && !IsPrivilegedCalling()) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", IPCSkeleton::GetCallingTokenID());
+        return AccessTokenError::ERR_PERMISSION_DENIED;
+    }
+    return AccessTokenInfoManager::GetInstance().GetHapBaseInfoByUid(uid, hapBaseInfoParcel.hapBaseInfo);
 }
 
 int32_t AccessTokenManagerService::AllocLocalTokenID(
@@ -1382,7 +1536,7 @@ int32_t AccessTokenManagerService::UpdateHapToken(uint64_t& fullTokenId, const U
     bundleParam.appId = info.appIDDesc;
     bundleParam.apiVersion = info.apiVersion;
 #ifdef IS_SUPPORT_HAP_RUNNING
-    bundleParam.distributionType = Verify::ParseAppDistType(info.appDistributionType);
+    bundleParam.distributionType = static_cast<int32_t>(Verify::ParseAppDistType(info.appDistributionType));
 #endif
     bundleParam.isSystem = info.isSystemApp;
     bundleParam.isAtomicService = info.isAtomicService;
@@ -2043,229 +2197,45 @@ int32_t AccessTokenManagerService::GetReqPermissionByName(
         tokenId, permissionName, value);
 }
 
-void AccessTokenManagerService::FilterInvalidData(const std::vector<GenericValues>& results,
-    const std::map<int32_t, TokenIdInfo>& tokenIdAplMap, std::vector<GenericValues>& validValueList)
+int32_t AccessTokenManagerService::MigrateInstalledBundles(const std::vector<MigratedInfoIdl>& migratedInfoList,
+    std::vector<BundleMigrateResultIdl>& results)
 {
-    int32_t tokenId = 0;
-    std::string permissionName;
-    std::string appDistributionType;
-    int32_t acl = 0;
-    std::string value;
-    PermissionBriefDef data;
-
-    for (const auto& result : results) {
-        tokenId = result.GetInt(TokenFiledConst::FIELD_TOKEN_ID);
-        auto iter = tokenIdAplMap.find(tokenId);
-        if (iter == tokenIdAplMap.end()) {
-            continue;
-        }
-
-        permissionName = result.GetString(TokenFiledConst::FIELD_PERMISSION_NAME);
-        if (!GetPermissionBriefDef(permissionName, data)) {
-            LOGW(ATM_DOMAIN, ATM_TAG, "permission %{public}s is still invalid!", permissionName.c_str());
-            continue;
-        }
-        if (!data.isEnable) {
-            continue;
-        }
-
-        PermissionRulesEnum rule = PERMISSION_ACL_RULE;
-        appDistributionType = result.GetString(TokenFiledConst::FIELD_APP_DISTRIBUTION_TYPE);
-        BundleParam bundleParam;
-#ifdef IS_SUPPORT_HAP_RUNNING
-        bundleParam.distributionType = Verify::ParseAppDistType(appDistributionType);
-#endif
-        bundleParam.isSystem = iter->second.isSystemApp;
-        bundleParam.isDebug = (appDistributionType == "none"); // only debug hap can use none type
-        if (!PermissionConstraintCheck::IsPermAvailableRangeSatisfied(bundleParam, data, rule)) {
-            continue;
-        }
-
-        acl = result.GetInt(TokenFiledConst::FIELD_ACL);
-        value = result.GetString(TokenFiledConst::FIELD_VALUE);
-        if (!IsPermissionValid(iter->second.apl, data, value, (acl == 1))) {
-            // hap apl less than perm apl without acl is invalid now, keep them in db, maybe valid someday
-            continue;
-        }
-
-        validValueList.emplace_back(result);
+    results.clear();
+    int32_t ret = CheckHapManagerPermission();
+    if (ret != RET_SUCCESS) {
+        return ret;
     }
+
+    return AccessTokenMigrationManager::GetInstance().MigrateInstalledBundles(migratedInfoList, results);
 }
 
-void AccessTokenManagerService::UpdateUndefinedInfoCache(const std::vector<GenericValues>& validValueList,
-    std::vector<GenericValues>& stateValues, std::vector<GenericValues>& extendValues)
+int32_t AccessTokenManagerService::PreMigrateUIDList(const std::vector<int32_t>& uidList)
 {
-    std::string permissionName;
-    PermissionState grantStatus;
-    PermissionFlag grantFlag;
-    AccessTokenID tokenId = 0;
-    std::string value;
-
-    for (const auto& validValue : validValueList) {
-        permissionName = validValue.GetString(TokenFiledConst::FIELD_PERMISSION_NAME);
-        PermissionBriefDef data;
-        if (!GetPermissionBriefDef(permissionName, data)) {
-            continue;
-        }
-        if (!data.isEnable) {
-            continue;
-        }
-
-        if (data.grantMode == GrantMode::USER_GRANT || data.grantMode == GrantMode::MANUAL_SETTINGS) {
-            grantStatus = PermissionState::PERMISSION_DENIED;
-            grantFlag = PermissionFlag::PERMISSION_DEFAULT_FLAG;
-        } else {
-            grantStatus = PermissionState::PERMISSION_GRANTED;
-            grantFlag = PermissionFlag::PERMISSION_SYSTEM_FIXED;
-        }
-
-        tokenId = static_cast<AccessTokenID>(validValue.GetInt(TokenFiledConst::FIELD_TOKEN_ID));
-        value = validValue.GetString(TokenFiledConst::FIELD_VALUE);
-
-        int32_t res = PermissionDataBrief::GetInstance().AddBriefPermData(tokenId, permissionName, grantStatus,
-            grantFlag, value);
-        if (res != RET_SUCCESS) {
-            continue;
-        }
-
-        PermissionKernelUtils::SetPermToKernel(tokenId, permissionName,
-            (grantStatus == PermissionState::PERMISSION_GRANTED));
-
-        GenericValues stateValue;
-        stateValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
-        stateValue.Put(TokenFiledConst::FIELD_PERMISSION_NAME, permissionName);
-        stateValue.Put(TokenFiledConst::FIELD_DEVICE_ID, "");
-        stateValue.Put(TokenFiledConst::FIELD_GRANT_IS_GENERAL, 1);
-        stateValue.Put(TokenFiledConst::FIELD_GRANT_STATE, static_cast<int32_t>(grantStatus));
-        stateValue.Put(TokenFiledConst::FIELD_GRANT_FLAG, static_cast<int32_t>(grantFlag));
-        stateValues.emplace_back(stateValue);
-
-        if ((data.hasValue) && !value.empty()) {
-            GenericValues extendValue;
-            extendValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
-            extendValue.Put(TokenFiledConst::FIELD_PERMISSION_NAME, permissionName);
-            extendValue.Put(TokenFiledConst::FIELD_VALUE, value);
-            extendValues.emplace_back(extendValue);
-        }
+    int32_t ret = CheckHapManagerPermission();
+    if (ret != RET_SUCCESS) {
+        return ret;
     }
+    return AccessTokenMigrationManager::GetInstance().PreMigrateUIDList(uidList);
 }
 
-bool AccessTokenManagerService::IsPermissionValid(int32_t hapApl, const PermissionBriefDef& data,
-    const std::string& value, bool isAcl)
+int32_t AccessTokenManagerService::FinishMigration()
 {
-    if (hapApl >= static_cast<int32_t>(data.availableLevel)) {
-        return true; // not cross apl, this is valid
+    int32_t ret = CheckHapManagerPermission();
+    if (ret != RET_SUCCESS) {
+        return ret;
     }
-
-    if (isAcl) {
-        return true; // cross apl but request by acl, this is valid
-    } else {
-        if (data.hasValue) {
-            return !value.empty(); // permission hasValue is true and request with value, this is valid
-        }
-        return false;
-    }
-
-    return false;
+    return AccessTokenMigrationManager::GetInstance().FinishMigration();
 }
 
-void AccessTokenManagerService::HandleHapUndefinedInfo(const std::map<int32_t, TokenIdInfo>& tokenIdAplMap,
-    std::vector<DelInfo>& delInfoVec, std::vector<AddInfo>& addInfoVec)
+int32_t AccessTokenManagerService::CheckHapManagerPermission()
 {
-    GenericValues conditionValue;
-    std::vector<GenericValues> results;
-
-    // get all hap undefined data
-    int32_t res = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_UNDEFINE_INFO, conditionValue, results);
-    if (res != 0) {
-        return;
+    AccessTokenID callingTokenID = IPCSkeleton::GetCallingTokenID();
+    if (!IsPrivilegedCalling() &&
+        (VerifyAccessToken(callingTokenID, MANAGE_HAP_TOKENID_PERMISSION) == PERMISSION_DENIED)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", callingTokenID);
+        return AccessTokenError::ERR_PERMISSION_DENIED;
     }
-
-    if (results.empty()) {
-        return;
-    }
-
-    // filter invalid data
-    std::vector<GenericValues> validValueList;
-    FilterInvalidData(results, tokenIdAplMap, validValueList);
-
-    std::vector<GenericValues> stateValues;
-    std::vector<GenericValues> extendValues;
-    UpdateUndefinedInfoCache(validValueList, stateValues, extendValues);
-
-    DelInfo delInfo;
-    for (const auto& value : validValueList) {
-        delInfo.delType = AtmDataType::ACCESSTOKEN_HAP_UNDEFINE_INFO;
-        delInfo.delValue = value;
-        delInfoVec.emplace_back(delInfo);
-    }
-
-    AddInfo addInfo;
-    addInfo.addType = AtmDataType::ACCESSTOKEN_PERMISSION_STATE;
-    addInfo.addValues = stateValues;
-    addInfoVec.emplace_back(addInfo);
-    addInfo.addType = AtmDataType::ACCESSTOKEN_PERMISSION_EXTEND_VALUE;
-    addInfo.addValues = extendValues;
-    addInfoVec.emplace_back(addInfo);
-}
-
-void AccessTokenManagerService::UpdateDatabaseAsync(const std::vector<DelInfo>& delInfoVec,
-    const std::vector<AddInfo>& addInfoVec)
-{
-    auto task = [delInfoVec, addInfoVec]() {
-        LOGI(ATM_DOMAIN, ATM_TAG, "Entry!");
-        (void)AccessTokenDbOperator::DeleteAndInsertValues(delInfoVec, addInfoVec);
-    };
-    std::thread updateDbThread(task);
-    updateDbThread.detach();
-}
-
-void AccessTokenManagerService::HandlePermDefUpdate(const std::map<int32_t, TokenIdInfo>& tokenIdAplMap)
-{
-    std::string dbPermDefVersion;
-    GenericValues conditionValue;
-    conditionValue.Put(TokenFiledConst::FIELD_NAME, PERM_DEF_VERSION);
-    std::vector<GenericValues> results;
-    int32_t res = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_SYSTEM_CONFIG, conditionValue, results);
-    if (res != 0) {
-        return;
-    }
-
-    if (!results.empty()) {
-        dbPermDefVersion = results[0].GetString(TokenFiledConst::FIELD_VALUE);
-    }
-
-    const char* curPermDefVersion = GetPermDefVersion();
-    bool isUpdate = dbPermDefVersion != std::string(curPermDefVersion);
-    if (isUpdate) {
-        LOGI(ATM_DOMAIN, ATM_TAG,
-            "Perm definition version from db %{public}s is not same with current version %{public}s.",
-            dbPermDefVersion.c_str(), curPermDefVersion);
-
-        GenericValues delValue;
-        delValue.Put(TokenFiledConst::FIELD_NAME, PERM_DEF_VERSION);
-        GenericValues addValue;
-        addValue.Put(TokenFiledConst::FIELD_NAME, PERM_DEF_VERSION);
-        addValue.Put(TokenFiledConst::FIELD_VALUE, std::string(curPermDefVersion));
-        DelInfo delInfo;
-        delInfo.delType = AtmDataType::ACCESSTOKEN_SYSTEM_CONFIG;
-        delInfo.delValue = delValue;
-        AddInfo addInfo;
-        addInfo.addType = AtmDataType::ACCESSTOKEN_SYSTEM_CONFIG;
-        addInfo.addValues.emplace_back(addValue);
-
-        // update or insert permission define version to db
-        std::vector<DelInfo> delInfoVec;
-        delInfoVec.emplace_back(delInfo);
-        std::vector<AddInfo> addInfoVec;
-        addInfoVec.emplace_back(addInfo);
-
-        if (!dbPermDefVersion.empty()) { // dbPermDefVersion empty means undefine table is empty
-            HandleHapUndefinedInfo(tokenIdAplMap, delInfoVec, addInfoVec);
-        }
-
-        UpdateDatabaseAsync(delInfoVec, addInfoVec);
-    }
+    return RET_SUCCESS;
 }
 
 bool AccessTokenManagerService::Initialize()
@@ -2277,15 +2247,20 @@ bool AccessTokenManagerService::Initialize()
     uint32_t nativeSize = 0;
     uint32_t pefDefSize = 0;
     uint32_t dlpSize = 0;
-    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
-    AccessTokenInfoManager::GetInstance().Init(hapSize, nativeSize, pefDefSize, dlpSize, tokenIdAplMap);
+    int32_t ret = RET_SUCCESS;
+    AccessTokenInfoManager::GetInstance().Init(hapSize, nativeSize, pefDefSize, dlpSize);
+    ret = BootVerifyScheduler::GetInstance().VerifyBundleSignInfoWhenStart();
+    if (ret != RET_SUCCESS) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Verify bundle sign info when start failed, ret=%{public}d.", ret);
+        return false;
+    }
+    BootVerifyScheduler::GetInstance().StartVerifyNormalBundleListAsync();
 #ifdef SUPPORT_MANAGE_USER_POLICY
-    int32_t ret = UserPolicyManager::GetInstance().LoadPersistedPolicies();
+    ret = UserPolicyManager::GetInstance().LoadPersistedPolicies();
     if (ret != RET_SUCCESS) {
         ReportSysEventServiceStartError(INIT_USER_POLICY_ERROR, "Load user policy from db fail.", ret);
     }
 #endif
-    HandlePermDefUpdate(tokenIdAplMap);
 
 #ifdef EVENTHANDLER_ENABLE
     TempPermissionObserver::GetInstance().InitEventHandler();
@@ -2304,6 +2279,8 @@ bool AccessTokenManagerService::Initialize()
     ReportSysEventServiceStart(dfxInfo);
     std::thread reportUserData(ReportAccessTokenUserData);
     reportUserData.detach();
+
+    AccessTokenMigrationManager::GetInstance().Initialize();
     LOGI(ATM_DOMAIN, ATM_TAG, "Initialize success.");
     return true;
 }

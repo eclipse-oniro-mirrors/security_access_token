@@ -63,7 +63,10 @@ interface OHOS.Security.AccessToken.IAccessTokenManager{
     [ipccode 14] void RequestAppPermOnSetting([in] unsigned int tokenID);
     [ipccode 16] void GetTokenType([in] unsigned int tokenID, [out] int tokenType);
 
-    [ipccode 18] void GetHapTokenID([in] int userID, [in] String bundleName, [in] int instIndex, [out] unsigned long fullTokenId);
+    [ipccode 18] void GetHapTokenID(
+        [in] int userID, [in] String bundleName, [in] int instIndex, [out] unsigned long fullTokenId);
+    [ipccode 24] void GetHapIdentity([in] HapBaseInfoParcel hapBaseInfoParcel, [out] IdentityIdl identityIdl);
+    [ipccode 25] void GetHapBaseInfoByUid([in] int uid, [out] HapBaseInfoParcel hapBaseInfoParcel);
     [ipccode 19] void AllocLocalTokenID([in] String remoteDeviceID, [in] unsigned int remoteTokenID, [out] unsigned long tokenId);
     [ipccode 20] void GetNativeTokenInfo([in] unsigned int tokenID, [out] NativeTokenInfoParcel nativeTokenInfoRes);
     [ipccode 21] void GetHapTokenInfo([in] unsigned int tokenID, [out] HapTokenInfoParcel hapTokenInfoRes);
@@ -108,6 +111,9 @@ interface OHOS.Security.AccessToken.IAccessTokenManager{
     [ipccode 72] void GetCliTokenInfo([in] unsigned int tokenId, [out] CliInfoResultParcel infoParcel);
     [ipccode 73] void GetSkillTokenInfo([in] unsigned int tokenId, [out] SkillInfoResultParcel infoParcel);
     [ipccode 74] void GetHostTokenId([in] unsigned int toolTokenId, [out] unsigned int hostTokenId);
+    [ipccode 75] void PreMigrateUIDList([in] List<int> uidList);
+    [ipccode 76] void MigrateInstalledBundles([in] List<MigratedInfoIdl> migratedInfoList, [out] List<BundleMigrateResultIdl> results);
+    [ipccode 77] void FinishMigration();
     [ipccode 80] void VerifyAccessToken([in] unsigned int tokenID, [in] List<String> permissionList, [out] List<int> permStateList);  
     [ipccode 81] void GetSelfPermissionStatus([in] String permissionName, [out] int status);
     [ipccode 101, macrodef SECURITY_COMPONENT_ENHANCE_ENABLE, oneway] void RegisterSecCompEnhance([in] SecCompEnhanceDataParcel enhanceParcel);

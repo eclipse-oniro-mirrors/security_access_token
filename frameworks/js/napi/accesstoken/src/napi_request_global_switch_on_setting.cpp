@@ -613,12 +613,26 @@ bool NapiRequestGlobalSwitch::ParseRequestGlobalSwitch(const napi_env& env,
     return true;
 }
 
+static bool ValidateSwitchType(std::shared_ptr<RequestGlobalSwitchAsyncContext>& asyncContext)
+{
+    if (asyncContext->switchType < CAMERA || asyncContext->switchType > LOCATION) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Invalid switch type: %{public}d", asyncContext->switchType);
+        asyncContext->result.errorCode = ERR_PARAM_INVALID;
+        asyncContext->result.errorMsg = "The switch type is invalid.";
+        return false;
+    }
+    return true;
+}
+
 void NapiRequestGlobalSwitch::RequestGlobalSwitchExecute(napi_env env, void* data)
 {
     // asyncContext release in complete
     RequestGlobalSwitchAsyncContextHandle* asyncContextHandle =
         reinterpret_cast<RequestGlobalSwitchAsyncContextHandle*>(data);
     if ((asyncContextHandle == nullptr) || (asyncContextHandle->asyncContextPtr == nullptr)) {
+        return;
+    }
+    if (!ValidateSwitchType(asyncContextHandle->asyncContextPtr)) {
         return;
     }
     if (asyncContextHandle->asyncContextPtr->uiAbilityFlag) {
