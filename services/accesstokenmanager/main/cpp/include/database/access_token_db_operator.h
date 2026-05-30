@@ -37,6 +37,9 @@ public:
         std::vector<GenericValues>& results);
     static int32_t DeleteAndInsertValues(const std::vector<DelInfo>& delInfoVec,
         const std::vector<AddInfo>& addInfoVec);
+    static int32_t Modify(const AtmDataType type,
+        const std::vector<GenericValues>& modifyValues,
+        const std::vector<GenericValues>& conditions);
 };
 } // namespace AccessToken
 } // namespace Security

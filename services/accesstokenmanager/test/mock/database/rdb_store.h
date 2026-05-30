@@ -120,9 +120,11 @@ public:
     int32_t Commit();
     std::pair<int32_t, int64_t> BatchInsert(const std::string& a, const std::vector<NativeRdb::ValuesBucket>& b);
     std::pair<int32_t, int32_t> Delete(const NativeRdb::RdbPredicates& a);
+    std::pair<int32_t, int32_t> Update(const NativeRdb::ValuesBucket& row, const NativeRdb::RdbPredicates& predicates);
     int32_t commitFlag_ = 0;
     int32_t insertFlag_ = 0;
     int32_t deleteFlag_ = 0;
+    int32_t updateFlag_ = 0;
     int64_t insertRows_ = 1;
 };
 

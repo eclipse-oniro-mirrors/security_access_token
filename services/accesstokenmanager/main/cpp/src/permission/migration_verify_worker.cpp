@@ -70,7 +70,7 @@ void MigrationVerifyWorker::EnsureThreadRunning()
 void MigrationVerifyWorker::WorkerLoop()
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "Verification worker thread started.");
-    while (!shuttingDown_) {
+    while (true) {
         Task task;
         {
             std::unique_lock<std::mutex> lock(mutex_);

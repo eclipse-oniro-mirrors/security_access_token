@@ -27,11 +27,14 @@
 #include "accesstoken_dfx_define.h"
 #include "accesstoken_id_manager.h"
 #include "accesstoken_info_manager.h"
+#include "bundle_sign_info.h"
 #include "data_validator.h"
+#include "interfaces/hap_verify.h"
 #include "hisysevent_adapter.h"
 #include "idl_common.h"
 #ifdef IS_SUPPORT_HAP_RUNNING
 #include "migration_verify_worker.h"
+#include "migration_verify_helper.h"
 #endif
 #include "token_setproc.h"
 #include "token_field_const.h"
@@ -248,6 +251,32 @@ int32_t AccessTokenMigrationManager::PersistMigratedBundles(const PreparedMigrat
         addInfo.addValues = hapInfoValues;
         addInfoVec.emplace_back(addInfo);
     }
+
+    BundleSignInfo placeholderSign;
+    placeholderSign.bundleName = preparedBundle.migratedInfo.bundleName;
+    placeholderSign.isPreInstalled = preparedBundle.migratedInfo.pathList.isPreInstalled;
+    Security::Verify::BootstrapInfo sentinelBootstrap = {};
+    sentinelBootstrap.version = -1;
+    for (const auto& hapPath : preparedBundle.migratedInfo.pathList.hapPaths) {
+        placeholderSign.moduleNameList.emplace_back(MIGRATION_PLACEHOLDER_MODULE);
+        placeholderSign.pathList.emplace_back(hapPath);
+        placeholderSign.bundleType.emplace_back(0);
+        uint8_t* dumped = sentinelBootstrap.Dump();
+        std::vector<uint8_t> blob;
+        if (dumped != nullptr) {
+            blob.assign(dumped, dumped + sentinelBootstrap.GetSize());
+            delete[] dumped;
+        }
+        placeholderSign.persistDataList.emplace_back(std::move(blob));
+    }
+    std::vector<GenericValues> signValues;
+    if (placeholderSign.ToGenericValues(signValues) == RET_SUCCESS) {
+        AddInfo signAddInfo;
+        signAddInfo.addType = AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO;
+        signAddInfo.addValues = signValues;
+        addInfoVec.emplace_back(signAddInfo);
+    }
+
     return AccessTokenDbOperator::DeleteAndInsertValues(delInfoVec, addInfoVec);
 }
 
@@ -357,8 +386,6 @@ int32_t AccessTokenMigrationManager::AppendHapTokenDbInfo(
         addValues[valueIndex].Remove(TokenFiledConst::FIELD_MIGRATED);
         addValues[valueIndex].Put(TokenFiledConst::FIELD_MIGRATED, preparedBundle.migratedInfo.uidList[i]);
         ReservedTypeIdl reserved = preparedBundle.migratedInfo.reservedTypeList[i];
-        LOGE(ATM_DOMAIN, ATM_TAG, "Set reserved type %{public}d for tokenId %{public}u.",
-            static_cast<int>(reserved), tokenId);
         addValues[valueIndex].Remove(TokenFiledConst::FIELD_RESERVED);
         addValues[valueIndex].Put(TokenFiledConst::FIELD_RESERVED, static_cast<int32_t>(reserved));
     }

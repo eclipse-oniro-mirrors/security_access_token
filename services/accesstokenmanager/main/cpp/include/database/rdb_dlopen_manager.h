@@ -45,6 +45,9 @@ public:
         std::vector<GenericValues>& results);
     int32_t DeleteAndInsertValues(const std::vector<DelInfo>& delInfoVec,
         const std::vector<AddInfo>& addInfoVec);
+    int32_t Modify(const AtmDataType type,
+        const std::vector<GenericValues>& modifyValues,
+        const std::vector<GenericValues>& conditions);
 
 private:
     DISALLOW_COPY_AND_MOVE(RdbDlopenManager);

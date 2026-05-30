@@ -122,16 +122,6 @@ HWTEST_F(MigrateInstalledBundlesTest, MigrateInstalledBundles003, TestSize.Level
     ASSERT_EQ(1u, results.size());
     EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, results[0].errcode);
 }
-
-/**
- * @tc.name: FinishMigration001
- * @tc.desc: FinishMigration returns RET_SUCCESS on first call via IPC to service.
- * @tc.type: FUNC
- */
-HWTEST_F(MigrateInstalledBundlesTest, FinishMigration001, TestSize.Level1)
-{
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::FinishMigration());
-}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

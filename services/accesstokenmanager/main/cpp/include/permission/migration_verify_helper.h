@@ -31,6 +31,7 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+const std::string MIGRATION_PLACEHOLDER_MODULE = "(migration_placeholder_module)";
 
 struct VerifiedMigrationBundle final {
     std::vector<TrustedBundleInfoInner> verifiedInfos;
@@ -66,7 +67,7 @@ private:
         AccessTokenID tokenId, const std::vector<BriefPermData>& data);
     int32_t BuildBundleSignInfo(const MigratedInfoIdl& migratedInfo,
         const VerifiedMigrationBundle& verifiedBundle, BundleSignInfo& bundleSignInfo);
-    int32_t PrepareBundleInfoOperations(const BundleSignInfo& bundleSignInfo);
+    int32_t DoBundleInfoOperations(const BundleSignInfo& bundleSignInfo);
     void PrepareHapInfoOperations(const BundleParam& param, const HapPolicy& policy,
         const std::vector<std::shared_ptr<HapTokenInfoInner>>& cachedInfos);
 

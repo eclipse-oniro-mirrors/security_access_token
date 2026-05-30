@@ -123,28 +123,29 @@ int32_t MigrationVerifyHelper::BuildBundleSignInfo(const MigratedInfoIdl& migrat
     return RET_SUCCESS;
 }
 
-int32_t MigrationVerifyHelper::PrepareBundleInfoOperations(const BundleSignInfo& bundleSignInfo)
+int32_t MigrationVerifyHelper::DoBundleInfoOperations(const BundleSignInfo& bundleSignInfo)
 {
-    GenericValues delCondition;
-    delCondition.Put(TokenFiledConst::FIELD_BUNDLE_NAME, bundleSignInfo.bundleName);
-    DelInfo delInfo;
-    delInfo.delType = AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO;
-    delInfo.delValue = delCondition;
-    delInfoVec_.emplace_back(delInfo);
-
     std::vector<GenericValues> addValues;
     int32_t ret = bundleSignInfo.ToGenericValues(addValues);
     if (ret != RET_SUCCESS) {
-        LOGW(ATM_DOMAIN, ATM_TAG, "AppendBundleSignDbInfo failed for %{public}s, ret=%{public}d.",
+        LOGW(ATM_DOMAIN, ATM_TAG, "BundleSignInfo.ToGenericValues failed for %{public}s, ret=%{public}d.",
             bundleSignInfo.bundleName.c_str(), ret);
         return ret;
     }
-
-    if (!addValues.empty()) {
-        AddInfo addInfo;
-        addInfo.addType = AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO;
-        addInfo.addValues = addValues;
-        addInfoVec_.emplace_back(addInfo);
+    std::vector<GenericValues> conditions;
+    conditions.reserve(addValues.size());
+    for (const auto& value : addValues) {
+        GenericValues cond;
+        cond.Put(TokenFiledConst::FIELD_BUNDLE_NAME, bundleSignInfo.bundleName);
+        cond.Put(TokenFiledConst::FIELD_PATH, value.GetString(TokenFiledConst::FIELD_PATH));
+        cond.Put(TokenFiledConst::FIELD_MODULE_NAME, MIGRATION_PLACEHOLDER_MODULE);
+        conditions.emplace_back(cond);
+    }
+    ret = AccessTokenDbOperator::Modify(
+        AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO, addValues, conditions);
+    if (ret != RET_SUCCESS) {
+        LOGW(ATM_DOMAIN, ATM_TAG, "Replace sign info failed for %{public}s, ret=%{public}d.",
+            bundleSignInfo.bundleName.c_str(), ret);
     }
     return RET_SUCCESS;
 }
@@ -222,7 +223,7 @@ int32_t MigrationVerifyHelper::PersistDbInfo(const MigratedInfoIdl& migratedInfo
         return ret;
     }
     
-    ret = PrepareBundleInfoOperations(bundleSignInfo);
+    ret = DoBundleInfoOperations(bundleSignInfo);
     if (ret != RET_SUCCESS) {
         return ret;
     }
@@ -231,7 +232,7 @@ int32_t MigrationVerifyHelper::PersistDbInfo(const MigratedInfoIdl& migratedInfo
 
     ret = AccessTokenDbOperator::DeleteAndInsertValues(delInfoVec_, addInfoVec_);
     if (ret != RET_SUCCESS) {
-        LOGW(ATM_DOMAIN, ATM_TAG, "Sign info DB persist failed for %{public}s, ret=%{public}d.",
+        LOGW(ATM_DOMAIN, ATM_TAG, "Hap info DB persist failed for %{public}s, ret=%{public}d.",
             migratedInfo.bundleName.c_str(), ret);
     }
     return ret;

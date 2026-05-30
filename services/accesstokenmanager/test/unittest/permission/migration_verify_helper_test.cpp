@@ -125,17 +125,41 @@ HWTEST_F(MigrationVerifyHelperTest, VerifyMigratedBundle001, TestSize.Level1)
     auto cachedInfo = BuildCachedInfo(tokenId, info.userID, info.bundleName, 0);
     std::vector<std::shared_ptr<HapTokenInfoInner>> cachedInfos = { cachedInfo };
 
+    // Configure mock adapter to return a verified bundle name matching migratedInfo.bundleName
+    mockAdapter_.bundleName_ = info.bundleName;
     MigratedInfoIdl migratedInfo = BuildBasicMigratedInfo(info.bundleName, info.bundleName);
+    // Insert a placeholder sign info row so DoBundleInfoOperations can Modify (UPDATE) it;
+    // without a placeholder, Modify affects zero rows and sign info is never persisted.
+    {
+        GenericValues placeholder;
+        placeholder.Put(TokenFiledConst::FIELD_BUNDLE_NAME, migratedInfo.bundleName);
+        placeholder.Put(TokenFiledConst::FIELD_MODULE_NAME, MIGRATION_PLACEHOLDER_MODULE);
+        placeholder.Put(TokenFiledConst::FIELD_PATH, migratedInfo.pathList.hapPaths[0]);
+        placeholder.Put(TokenFiledConst::FIELD_IS_PREINSTALLED, false);
+        placeholder.Put(TokenFiledConst::FIELD_BUNDLE_TYPE, 0);
+        std::vector<uint8_t> emptyBlob {1};
+        placeholder.PutBlob(TokenFiledConst::FIELD_PERSIST_DATA, emptyBlob);
+        AddInfo addInfo;
+        addInfo.addType = AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO;
+        addInfo.addValues = { placeholder };
+        ASSERT_EQ(RET_SUCCESS, AccessTokenDbOperator::DeleteAndInsertValues({}, { addInfo }));
+    }
+
+
     int32_t ret = MigrationVerifyHelper::GetInstance().VerifyMigratedBundle(migratedInfo, cachedInfos);
     EXPECT_EQ(RET_SUCCESS, ret);
 
-    // Verify DB: sign info persisted for the bundle
+    // Verify DB: sign info persisted for the bundle with valid fields
     GenericValues signCondition;
     signCondition.Put(TokenFiledConst::FIELD_BUNDLE_NAME, info.bundleName);
     std::vector<GenericValues> signResults;
     ASSERT_EQ(RET_SUCCESS, AccessTokenDbOperator::Find(
         AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO, signCondition, signResults));
-    EXPECT_FALSE(signResults.empty());
+    ASSERT_FALSE(signResults.empty());
+    for (const auto& row : signResults) {
+        std::string moduleName = row.GetString(TokenFiledConst::FIELD_MODULE_NAME);
+        EXPECT_NE(moduleName, MIGRATION_PLACEHOLDER_MODULE);
+    }
 
     // Verify cache: permission data populated for the token
     std::vector<BriefPermData> briefDataList;
@@ -420,6 +444,8 @@ HWTEST_F(MigrationVerifyWorkerTest, WorkerShutdownDuringProcessing005, TestSize.
 
     // Immediately shutdown while worker may still be processing
     MigrationVerifyWorker::GetInstance().Shutdown();
+
+    EXPECT_EQ(true, MigrationVerifyWorker::GetInstance().taskQueue_.empty());
 
     // Double shutdown should be safe
     MigrationVerifyWorker::GetInstance().Shutdown();

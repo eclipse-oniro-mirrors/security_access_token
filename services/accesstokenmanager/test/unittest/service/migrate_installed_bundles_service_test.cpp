@@ -130,6 +130,29 @@ void CleanupTestDbArtifacts()
         std::vector<AddInfo> addInfoVec;
         (void)AccessTokenDbOperator::DeleteAndInsertValues(delInfoVec, addInfoVec);
     }
+
+    // Also scan HAP_PACKAGE_INFO directly for orphaned sign info rows
+    // (e.g. placeholder rows written by PersistMigratedBundles for new tokens).
+    std::vector<GenericValues> signResults;
+    ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO, emptyCondition, signResults);
+    if (ret == RET_SUCCESS) {
+        std::vector<DelInfo> signDelVec;
+        for (const auto& row : signResults) {
+            std::string bundleName = row.GetString(TokenFiledConst::FIELD_BUNDLE_NAME);
+            if (bundleName.find("com.example.") == 0) {
+                GenericValues signDelValue;
+                signDelValue.Put(TokenFiledConst::FIELD_BUNDLE_NAME, bundleName);
+                DelInfo signDelInfo;
+                signDelInfo.delType = AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO;
+                signDelInfo.delValue = signDelValue;
+                signDelVec.emplace_back(signDelInfo);
+            }
+        }
+        if (!signDelVec.empty()) {
+            std::vector<AddInfo> emptyAdd;
+            (void)AccessTokenDbOperator::DeleteAndInsertValues(signDelVec, emptyAdd);
+        }
+    }
 }
 
 int32_t AllocHapTokenLocally(const HapInfoParams& info, HapPolicyParams& policyParams, AccessTokenIDEx& tokenIdEx)
@@ -186,7 +209,11 @@ void ExpectMigratedDbState(AccessTokenID tokenId, const std::string& bundleName,
         std::vector<GenericValues> signResults;
         ASSERT_EQ(RET_SUCCESS, AccessTokenDbOperator::Find(
             AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO, signCondition, signResults));
-        EXPECT_FALSE(signResults.empty());
+        ASSERT_FALSE(signResults.empty());
+        for (const auto& row : signResults) {
+            std::string moduleName = row.GetString(TokenFiledConst::FIELD_MODULE_NAME);
+            EXPECT_NE(moduleName, MIGRATION_PLACEHOLDER_MODULE);
+        }
     }
 }
 } // namespace
@@ -1148,6 +1175,9 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, VerifyMigratedBundle_WorkerSuccess,
 
     MigratedInfoIdl migratedInfo;
     BuildMigratedInfo(info, tokenIdEx.tokenIDEx, 202201, migratedInfo);
+
+    // Configure mock adapter to return a verified bundle name matching migratedInfo.bundleName
+    mockAdapter_.bundleName_ = info.bundleName;
 
     auto service = DelayedSingleton<AccessTokenManagerService>::GetInstance();
     ASSERT_NE(nullptr, service);
