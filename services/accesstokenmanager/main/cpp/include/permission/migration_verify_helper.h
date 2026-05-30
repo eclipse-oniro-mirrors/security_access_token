@@ -31,7 +31,11 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-const std::string MIGRATION_PLACEHOLDER_MODULE = "(migration_placeholder_module)";
+
+inline std::string GetPlaceholderModuleName(int32_t index)
+{
+    return "#" + std::to_string(index);
+}
 
 struct VerifiedMigrationBundle final {
     std::vector<TrustedBundleInfoInner> verifiedInfos;

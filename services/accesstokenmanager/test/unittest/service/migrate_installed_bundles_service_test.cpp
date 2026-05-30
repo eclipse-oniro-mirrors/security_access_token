@@ -126,17 +126,11 @@ void CleanupTestDbArtifacts()
         }
     }
 
-    if (!delInfoVec.empty()) {
-        std::vector<AddInfo> addInfoVec;
-        (void)AccessTokenDbOperator::DeleteAndInsertValues(delInfoVec, addInfoVec);
-    }
-
     // Also scan HAP_PACKAGE_INFO directly for orphaned sign info rows
     // (e.g. placeholder rows written by PersistMigratedBundles for new tokens).
     std::vector<GenericValues> signResults;
     ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO, emptyCondition, signResults);
     if (ret == RET_SUCCESS) {
-        std::vector<DelInfo> signDelVec;
         for (const auto& row : signResults) {
             std::string bundleName = row.GetString(TokenFiledConst::FIELD_BUNDLE_NAME);
             if (bundleName.find("com.example.") == 0) {
@@ -145,13 +139,11 @@ void CleanupTestDbArtifacts()
                 DelInfo signDelInfo;
                 signDelInfo.delType = AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO;
                 signDelInfo.delValue = signDelValue;
-                signDelVec.emplace_back(signDelInfo);
+                delInfoVec.emplace_back(signDelInfo);
             }
         }
-        if (!signDelVec.empty()) {
-            std::vector<AddInfo> emptyAdd;
-            (void)AccessTokenDbOperator::DeleteAndInsertValues(signDelVec, emptyAdd);
-        }
+        std::vector<AddInfo> emptyAdd;
+        (void)AccessTokenDbOperator::DeleteAndInsertValues(delInfoVec, emptyAdd);
     }
 }
 
@@ -193,7 +185,9 @@ void ExpectMigratedDbState(AccessTokenID tokenId, const std::string& bundleName,
     ReservedType reserved = ReservedType::NONE, bool checkSignInfo = false)
 {
     // Ensure all pending verify tasks are completed before checking DB
+#ifdef IS_SUPPORT_HAP_RUNNING
     MigrationVerifyWorker::GetInstance().Shutdown();
+#endif
     GenericValues hapCondition;
     hapCondition.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
     std::vector<GenericValues> hapResults;
@@ -203,6 +197,7 @@ void ExpectMigratedDbState(AccessTokenID tokenId, const std::string& bundleName,
     EXPECT_EQ(uid, hapResults[0].GetInt(TokenFiledConst::FIELD_UID));
     EXPECT_EQ(static_cast<int32_t>(reserved), hapResults[0].GetInt(TokenFiledConst::FIELD_RESERVED));
 
+#ifdef IS_SUPPORT_HAP_RUNNING
     if (checkSignInfo) {
         GenericValues signCondition;
         signCondition.Put(TokenFiledConst::FIELD_BUNDLE_NAME, bundleName);
@@ -212,9 +207,10 @@ void ExpectMigratedDbState(AccessTokenID tokenId, const std::string& bundleName,
         ASSERT_FALSE(signResults.empty());
         for (const auto& row : signResults) {
             std::string moduleName = row.GetString(TokenFiledConst::FIELD_MODULE_NAME);
-            EXPECT_NE(moduleName, MIGRATION_PLACEHOLDER_MODULE);
+            EXPECT_EQ(moduleName, mockAdapter_.moduleName_);
         }
     }
+#endif
 }
 } // namespace
 

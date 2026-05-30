@@ -133,7 +133,7 @@ HWTEST_F(MigrationVerifyHelperTest, VerifyMigratedBundle001, TestSize.Level1)
     {
         GenericValues placeholder;
         placeholder.Put(TokenFiledConst::FIELD_BUNDLE_NAME, migratedInfo.bundleName);
-        placeholder.Put(TokenFiledConst::FIELD_MODULE_NAME, MIGRATION_PLACEHOLDER_MODULE);
+        placeholder.Put(TokenFiledConst::FIELD_MODULE_NAME, "#0");
         placeholder.Put(TokenFiledConst::FIELD_PATH, migratedInfo.pathList.hapPaths[0]);
         placeholder.Put(TokenFiledConst::FIELD_IS_PREINSTALLED, false);
         placeholder.Put(TokenFiledConst::FIELD_BUNDLE_TYPE, 0);
@@ -158,7 +158,7 @@ HWTEST_F(MigrationVerifyHelperTest, VerifyMigratedBundle001, TestSize.Level1)
     ASSERT_FALSE(signResults.empty());
     for (const auto& row : signResults) {
         std::string moduleName = row.GetString(TokenFiledConst::FIELD_MODULE_NAME);
-        EXPECT_NE(moduleName, MIGRATION_PLACEHOLDER_MODULE);
+        EXPECT_EQ(moduleName, mockAdapter_.moduleName_);
     }
 
     // Verify cache: permission data populated for the token
@@ -249,6 +249,72 @@ HWTEST_F(MigrationVerifyHelperTest, VerifyMigratedBundle004, TestSize.Level1)
     mockAdapter_.verifyRet_ = RET_SUCCESS;
     // DoVerifyMigratedBundle failure propagates the error
     EXPECT_EQ(AccessTokenError::ERR_HAP_VERIFY_FAILED, ret);
+
+    (void)SpmRemoveEntry(tokenId);
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenId));
+}
+
+/**
+ * @tc.name: VerifyMigratedBundle006
+ * @tc.desc: Same as 001 but the database value is not updated since the value is not a placeholder
+ * @tc.type: FUNC
+ */
+HWTEST_F(MigrationVerifyHelperTest, VerifyMigratedBundle006, TestSize.Level1)
+{
+    MockNativeToken mock("foundation");
+
+    HapInfoParams info = TestCommon::GetInfoManagerTestSystemInfoParms();
+    info.bundleName = "com.example.verify.updated";
+    info.appIDDesc = info.bundleName;
+    HapPolicyParams policy = TestCommon::GetTestPolicyParams();
+
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS, TestCommon::AllocTestHapToken(info, policy, tokenIdEx));
+
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    auto cachedInfo = BuildCachedInfo(tokenId, info.userID, info.bundleName, 0);
+    std::vector<std::shared_ptr<HapTokenInfoInner>> cachedInfos = { cachedInfo };
+
+    // Configure mock adapter to return a verified bundle name matching migratedInfo.bundleName
+    mockAdapter_.bundleName_ = info.bundleName;
+    MigratedInfoIdl migratedInfo = BuildBasicMigratedInfo(info.bundleName, info.bundleName);
+    // Insert a placeholder sign info row so DoBundleInfoOperations can Modify (UPDATE) it;
+    // without a placeholder, Modify affects zero rows and sign info is never persisted.
+    {
+        GenericValues placeholder;
+        placeholder.Put(TokenFiledConst::FIELD_BUNDLE_NAME, migratedInfo.bundleName);
+        placeholder.Put(TokenFiledConst::FIELD_MODULE_NAME, "valid_module_name");
+        placeholder.Put(TokenFiledConst::FIELD_PATH, migratedInfo.pathList.hapPaths[0]);
+        placeholder.Put(TokenFiledConst::FIELD_IS_PREINSTALLED, false);
+        placeholder.Put(TokenFiledConst::FIELD_BUNDLE_TYPE, 0);
+        std::vector<uint8_t> emptyBlob {1};
+        placeholder.PutBlob(TokenFiledConst::FIELD_PERSIST_DATA, emptyBlob);
+        AddInfo addInfo;
+        addInfo.addType = AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO;
+        addInfo.addValues = { placeholder };
+        ASSERT_EQ(RET_SUCCESS, AccessTokenDbOperator::DeleteAndInsertValues({}, { addInfo }));
+    }
+
+    int32_t ret = MigrationVerifyHelper::GetInstance().VerifyMigratedBundle(migratedInfo, cachedInfos);
+    EXPECT_EQ(RET_SUCCESS, ret);
+
+    // Verify DB: sign info persisted for the bundle with valid fields
+    GenericValues signCondition;
+    signCondition.Put(TokenFiledConst::FIELD_BUNDLE_NAME, info.bundleName);
+    std::vector<GenericValues> signResults;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenDbOperator::Find(
+        AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO, signCondition, signResults));
+    ASSERT_FALSE(signResults.empty());
+    for (const auto& row : signResults) {
+        std::string moduleName = row.GetString(TokenFiledConst::FIELD_MODULE_NAME);
+        EXPECT_EQ(moduleName, "valid_module_name");
+    }
+
+    // Verify cache: permission data populated for the token
+    std::vector<BriefPermData> briefDataList;
+    EXPECT_EQ(RET_SUCCESS, PermissionDataBrief::GetInstance().GetBriefPermDataByTokenId(
+        tokenId, briefDataList));
+    EXPECT_FALSE(briefDataList.empty());
 
     (void)SpmRemoveEntry(tokenId);
     EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenId));

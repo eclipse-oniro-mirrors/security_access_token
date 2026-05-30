@@ -98,8 +98,10 @@ HWTEST_F(MigrateInstalledBundlesTest, MigrateInstalledBundles002, TestSize.Level
 {
     std::vector<MigratedInfo> emptyList;
     std::vector<BundleMigrateResult> results;
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::MigrateInstalledBundles(emptyList, results));
-    EXPECT_TRUE(results.empty());
+    int32_t ret = AccessTokenKit::MigrateInstalledBundles(emptyList, results);
+    // Depending on whether migration has been finished in the test environment
+    bool pass = ret == RET_SUCCESS || ret == ERR_MIGRATION_COMPLETED;
+    EXPECT_TRUE(pass);
 }
 
 /**
@@ -118,9 +120,25 @@ HWTEST_F(MigrateInstalledBundlesTest, MigrateInstalledBundles003, TestSize.Level
     migratedInfo.reservedTypeList = {ReservedType::RESERVED_IDENTITY};
 
     std::vector<BundleMigrateResult> results;
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::MigrateInstalledBundles({migratedInfo}, results));
-    ASSERT_EQ(1u, results.size());
-    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, results[0].errcode);
+    int32_t ret = AccessTokenKit::MigrateInstalledBundles({ migratedInfo }, results);
+    bool pass = ret == RET_SUCCESS || ret == ERR_MIGRATION_COMPLETED;
+    EXPECT_TRUE(pass);
+    if (ret == RET_SUCCESS) {
+        ASSERT_EQ(1u, results.size());
+        EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, results[0].errcode);
+    }
+}
+
+/**
+* @tc.name: FinishMigration001
+* @tc.desc: FinishMigration returns RET_SUCCESS or ERR_MIGRATION_COMPLETED on first call via IPC to service.
+* @tc.type: FUNC
+*/
+HWTEST_F(MigrateInstalledBundlesTest, FinishMigration001, TestSize.Level1)
+{
+    int32_t ret = AccessTokenKit::FinishMigration();
+    bool pass = ret == RET_SUCCESS || ret == ERR_MIGRATION_COMPLETED;
+    EXPECT_TRUE(pass);
 }
 } // namespace AccessToken
 } // namespace Security

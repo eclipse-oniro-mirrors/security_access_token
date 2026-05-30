@@ -29,10 +29,10 @@
 #include "accesstoken_info_manager.h"
 #include "bundle_sign_info.h"
 #include "data_validator.h"
-#include "interfaces/hap_verify.h"
 #include "hisysevent_adapter.h"
 #include "idl_common.h"
 #ifdef IS_SUPPORT_HAP_RUNNING
+#include "interfaces/hap_verify.h"
 #include "migration_verify_worker.h"
 #include "migration_verify_helper.h"
 #endif
@@ -233,10 +233,7 @@ int32_t AccessTokenMigrationManager::PersistMigratedBundles(const PreparedMigrat
         GenericValues delValue;
         delValue.Put(TokenFiledConst::FIELD_TOKEN_ID,
             static_cast<int32_t>(info->GetHapInfoBasic().tokenID));
-        DelInfo delInfo;
-        delInfo.delType = AtmDataType::ACCESSTOKEN_HAP_INFO;
-        delInfo.delValue = delValue;
-        delInfoVec.emplace_back(delInfo);
+        delInfoVec.emplace_back(DelInfo {AtmDataType::ACCESSTOKEN_HAP_INFO, delValue});
     }
 
     int32_t ret = AppendHapTokenDbInfo(preparedBundle, hapInfoValues);
@@ -246,19 +243,17 @@ int32_t AccessTokenMigrationManager::PersistMigratedBundles(const PreparedMigrat
 
     std::vector<AddInfo> addInfoVec;
     if (!hapInfoValues.empty()) {
-        AddInfo addInfo;
-        addInfo.addType = AtmDataType::ACCESSTOKEN_HAP_INFO;
-        addInfo.addValues = hapInfoValues;
-        addInfoVec.emplace_back(addInfo);
+        addInfoVec.emplace_back(AddInfo {AtmDataType::ACCESSTOKEN_HAP_INFO, hapInfoValues});
     }
-
+#ifdef IS_SUPPORT_HAP_RUNNING
     BundleSignInfo placeholderSign;
     placeholderSign.bundleName = preparedBundle.migratedInfo.bundleName;
     placeholderSign.isPreInstalled = preparedBundle.migratedInfo.pathList.isPreInstalled;
     Security::Verify::BootstrapInfo sentinelBootstrap = {};
     sentinelBootstrap.version = -1;
-    for (const auto& hapPath : preparedBundle.migratedInfo.pathList.hapPaths) {
-        placeholderSign.moduleNameList.emplace_back(MIGRATION_PLACEHOLDER_MODULE);
+    for (size_t i = 0; i < preparedBundle.migratedInfo.pathList.hapPaths.size(); ++i) {
+        const auto& hapPath = preparedBundle.migratedInfo.pathList.hapPaths[i];
+        placeholderSign.moduleNameList.emplace_back(GetPlaceholderModuleName(i)); // Just a mark for "bad module"
         placeholderSign.pathList.emplace_back(hapPath);
         placeholderSign.bundleType.emplace_back(0);
         uint8_t* dumped = sentinelBootstrap.Dump();
@@ -271,11 +266,9 @@ int32_t AccessTokenMigrationManager::PersistMigratedBundles(const PreparedMigrat
     }
     std::vector<GenericValues> signValues;
     if (placeholderSign.ToGenericValues(signValues) == RET_SUCCESS) {
-        AddInfo signAddInfo;
-        signAddInfo.addType = AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO;
-        signAddInfo.addValues = signValues;
-        addInfoVec.emplace_back(signAddInfo);
+        addInfoVec.emplace_back(AddInfo {AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO, signValues});
     }
+#endif
 
     return AccessTokenDbOperator::DeleteAndInsertValues(delInfoVec, addInfoVec);
 }

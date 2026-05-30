@@ -325,7 +325,7 @@ int32_t AccessTokenDb::ModifyInner(const AtmDataType type,
     if (tableName.empty()) {
         return AccessTokenError::ERR_PARAM_INVALID;
     }
-    for (size_t i = 0; i < modifyValues.size() && i < conditions.size(); ++i) {
+    for (size_t i = 0; i < modifyValues.size(); ++i) {
         NativeRdb::RdbPredicates predicates(tableName);
         AccessTokenDbUtil::ToRdbPredicates(conditions[i], predicates);
         NativeRdb::ValuesBucket bucket;
