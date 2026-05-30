@@ -1043,10 +1043,10 @@ HWTEST_F(ClawPermissionDecisionEngineTest, ClawPermissionMetadataProvider001, Te
 HWTEST_F(ClawPermissionDecisionEngineTest, ClawPermissionMetadataProvider002, TestSize.Level0)
 {
     std::vector<std::string> permissions;
-    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
+    EXPECT_EQ(AccessTokenError::ERR_QUERY_PERMISSION_FAILED,
         ClawPermissionMetadataProvider::GetInstance().GetRequiredCliPermissions({"", "capture"}, permissions));
     EXPECT_TRUE(permissions.empty());
-    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
+    EXPECT_EQ(AccessTokenError::ERR_QUERY_PERMISSION_FAILED,
         ClawPermissionMetadataProvider::GetInstance().GetRequiredCliPermissions({"unknown", "cmd"}, permissions));
     EXPECT_TRUE(permissions.empty());
     EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
@@ -1063,7 +1063,7 @@ HWTEST_F(ClawPermissionDecisionEngineTest, ClawPermissionMetadataProvider002, Te
     EXPECT_EQ(RET_SUCCESS,
         ClawPermissionMetadataProvider::GetInstance().GetRequiredCliPermissions({"empty", "run"}, permissions));
     EXPECT_TRUE(permissions.empty());
-    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
+    EXPECT_EQ(AccessTokenError::ERR_QUERY_PERMISSION_FAILED,
         ClawPermissionMetadataProvider::GetInstance().GetRequiredCliPermissions({"abnormal", "run"}, permissions));
     EXPECT_TRUE(permissions.empty());
     tokenId_ = CreateEmptyHapToken("claw_permission_cli_missing_mapping_test");
@@ -1080,7 +1080,7 @@ HWTEST_F(ClawPermissionDecisionEngineTest, ClawPermissionMetadataProvider002, Te
 
 /**
  * @tc.name: ClawPermissionMetadataProvider003
- * @tc.desc: Non-success queryRet should return ERR_PARAM_INVALID.
+ * @tc.desc: Non-success queryRet should return ERR_QUERY_PERMISSION_FAILED.
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -1092,7 +1092,7 @@ HWTEST_F(ClawPermissionDecisionEngineTest, ClawPermissionMetadataProvider003, Te
         {.cliName = "camera", .subCliName = "capture"},
     };
     std::vector<std::vector<std::string>> cliPermissions;
-    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID,
+    ASSERT_EQ(AccessTokenError::ERR_QUERY_PERMISSION_FAILED,
         ClawPermissionMetadataProvider::GetInstance().GetCliCallablePermissions(
         cliInfoList, cliPermissions));
     EXPECT_TRUE(cliPermissions.empty());
@@ -1114,6 +1114,48 @@ HWTEST_F(ClawPermissionDecisionEngineTest, BuildCliPermissions007, TestSize.Leve
         tokenId_, std::vector<CliInfo>{{"empty", "run"}}, result));
     ASSERT_EQ(1, static_cast<int32_t>(result.permList.size()));
     EXPECT_TRUE(result.permList[0].requiredCliPermissions.empty());
+}
+
+/**
+ * @tc.name: TransferQueryRetTest001
+ * @tc.desc: Test TransferQueryRet with queryRet=1 returns ERR_PARAM_INVALID
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(ClawPermissionDecisionEngineTest, TransferQueryRetTest001, TestSize.Level2)
+{
+    CliInfo cliInfo = {.cliName = "test", .subCliName = "cmd"};
+    int32_t ret = ClawPermissionMetadataProvider::GetInstance().TransferQueryRet(cliInfo, 1);
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
+}
+
+/**
+ * @tc.name: TransferQueryRetTest002
+ * @tc.desc: Test TransferQueryRet with non-success non-1 queryRet returns ERR_QUERY_PERMISSION_FAILED
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(ClawPermissionDecisionEngineTest, TransferQueryRetTest002, TestSize.Level2)
+{
+    CliInfo cliInfo = {.cliName = "test", .subCliName = "cmd"};
+    int32_t ret = ClawPermissionMetadataProvider::GetInstance().TransferQueryRet(cliInfo, -1);
+    EXPECT_EQ(AccessTokenError::ERR_QUERY_PERMISSION_FAILED, ret);
+
+    ret = ClawPermissionMetadataProvider::GetInstance().TransferQueryRet(cliInfo, 2);
+    EXPECT_EQ(AccessTokenError::ERR_QUERY_PERMISSION_FAILED, ret);
+}
+
+/**
+ * @tc.name: TransferQueryRetTest003
+ * @tc.desc: Test TransferQueryRet with RET_SUCCESS returns ERR_QUERY_PERMISSION_FAILED
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(ClawPermissionDecisionEngineTest, TransferQueryRetTest003, TestSize.Level2)
+{
+    CliInfo cliInfo = {.cliName = "test", .subCliName = "cmd"};
+    int32_t ret = ClawPermissionMetadataProvider::GetInstance().TransferQueryRet(cliInfo, RET_SUCCESS);
+    EXPECT_EQ(AccessTokenError::ERR_QUERY_PERMISSION_FAILED, ret);
 }
 
 } // namespace AccessToken
