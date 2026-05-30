@@ -120,6 +120,9 @@ ohos_unittest("libaccesstoken_sdk_test") {
   if (access_token_enable_manual_test == true) {
     sources += [ "ToolTokenTest/tool_token_test.cpp" ]
   }
+  if (access_token_enable_spm == true) {
+    sources += [ "HapTokenTest/migrate_installed_bundles_test.cpp" ]
+  }
 }
 
 ohos_unittest("accesstoken_mock_test") {

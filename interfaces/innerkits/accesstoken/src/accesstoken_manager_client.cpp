@@ -60,6 +60,16 @@ static constexpr int32_t MAX_USER_POLICY_SIZE = 200;
 #endif
 static constexpr int32_t MAX_EXTENDED_VALUE_LIST_SIZE = 512;
 static constexpr uint32_t MAX_CALLBACK_MAP_SIZE = 200;
+
+ReservedTypeIdl ConvertReservedType(ReservedType reserved)
+{
+    return static_cast<ReservedTypeIdl>(reserved);
+}
+
+ReservedType ConvertReservedType(ReservedTypeIdl reserved)
+{
+    return static_cast<ReservedType>(reserved);
+}
 } // namespace
 
 AccessTokenManagerClient& AccessTokenManagerClient::GetInstance()
@@ -640,6 +650,92 @@ int32_t AccessTokenManagerClient::InitHapToken(const HapInfoParams& info, HapPol
     }
     LOGI(ATM_DOMAIN, ATM_TAG, "Result is %{public}d, id is %{public}llu.", res, fullTokenId.tokenIDEx);
     return res;
+}
+
+int32_t AccessTokenManagerClient::PreMigrateUIDList(const std::vector<int32_t>& uidList)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+
+    int32_t result = proxy->PreMigrateUIDList(uidList);
+    if (result != RET_SUCCESS) {
+        result = ConvertResult(result);
+    }
+    return result;
+}
+
+int32_t AccessTokenManagerClient::MigrateInstalledBundles(const std::vector<MigratedInfo>& migratedInfoList,
+    std::vector<BundleMigrateResult>& results)
+{
+    results.clear();
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+
+    std::vector<MigratedInfoIdl> migratedInfoIdlList;
+    for (const auto& migratedInfo : migratedInfoList) {
+        MigratedInfoIdl migratedInfoIdl;
+        migratedInfoIdl.bundleName = migratedInfo.bundleName;
+        migratedInfoIdl.pathList.hapPaths = migratedInfo.pathList.hapPaths;
+        migratedInfoIdl.pathList.isPreInstalled = migratedInfo.pathList.isPreInstalled;
+        for (const auto& hapBaseInfo : migratedInfo.hapBaseInfoList) {
+            HapBaseInfoIdl hapBaseInfoIdl;
+            hapBaseInfoIdl.userID = hapBaseInfo.userID;
+            hapBaseInfoIdl.bundleName = hapBaseInfo.bundleName;
+            hapBaseInfoIdl.instIndex = hapBaseInfo.instIndex;
+            migratedInfoIdl.hapBaseInfoList.emplace_back(hapBaseInfoIdl);
+        }
+        migratedInfoIdl.uidList = migratedInfo.uidList;
+        for (const auto& reserved : migratedInfo.reservedTypeList) {
+            migratedInfoIdl.reservedTypeList.emplace_back(ConvertReservedType(reserved));
+        }
+        migratedInfoIdlList.emplace_back(migratedInfoIdl);
+    }
+
+    std::vector<BundleMigrateResultIdl> resultsIdl;
+    int32_t result = proxy->MigrateInstalledBundles(migratedInfoIdlList, resultsIdl);
+    if (result != RET_SUCCESS) {
+        result = ConvertResult(result);
+        return result;
+    }
+
+    results.reserve(resultsIdl.size());
+    for (const auto& resultIdl : resultsIdl) {
+        BundleMigrateResult resultItem;
+        resultItem.errcode = resultIdl.errcode;
+        resultItem.tokenIdList.reserve(resultIdl.tokenIdList.size());
+        for (const auto tokenId : resultIdl.tokenIdList) {
+            AccessTokenIDEx tidEx;
+            tidEx.tokenIDEx = tokenId;
+            resultItem.tokenIdList.emplace_back(tidEx);
+        }
+        resultItem.reservedTypeList.reserve(resultIdl.reservedTypeList.size());
+        for (const auto& reserved : resultIdl.reservedTypeList) {
+            resultItem.reservedTypeList.emplace_back(ConvertReservedType(reserved));
+        }
+        results.emplace_back(std::move(resultItem));
+    }
+    return RET_SUCCESS;
+}
+
+int32_t AccessTokenManagerClient::FinishMigration()
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+
+    int32_t result = proxy->FinishMigration();
+    if (result != RET_SUCCESS) {
+        result = ConvertResult(result);
+    }
+    return result;
 }
 
 int AccessTokenManagerClient::DeleteToken(AccessTokenID tokenID, bool isTokenReserved)

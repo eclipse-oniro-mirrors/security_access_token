@@ -45,6 +45,7 @@ bool IsAgentIdValid(const std::string& agentID)
 }
 static const int FIRSTCALLER_TOKENID_DEFAULT = 0;
 static const int MAX_LENGTH = 256;
+static constexpr size_t MAX_MIGRATED_INFO_SIZE = 50;
 } // namespace
 
 PermUsedTypeEnum AccessTokenKit::GetPermissionUsedType(
@@ -193,6 +194,35 @@ isAtomicService: %{public}d",
     HapPolicy newPolicy;
     TransferHapPolicyParams(policy, newPolicy);
     return AccessTokenManagerClient::GetInstance().UpdateHapToken(tokenIdEx, info, newPolicy, result);
+}
+
+int32_t AccessTokenKit::PreMigrateUIDList(const std::vector<int32_t>& uidList)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "PreMigrateUIDList size=%{public}zu.", uidList.size());
+    if (!DataValidator::IsListSizeValid(static_cast<uint32_t>(uidList.size()))) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Uid list size %{public}zu is invalid.", uidList.size());
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    return AccessTokenManagerClient::GetInstance().PreMigrateUIDList(uidList);
+}
+
+int32_t AccessTokenKit::MigrateInstalledBundles(const std::vector<MigratedInfo>& migratedInfoList,
+    std::vector<BundleMigrateResult>& results)
+{
+    results.clear();
+    LOGI(ATM_DOMAIN, ATM_TAG, "MigrateInstalledBundles size=%{public}zu.", migratedInfoList.size());
+    if (migratedInfoList.size() > MAX_MIGRATED_INFO_SIZE) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Migrated info size %{public}zu is invalid.", migratedInfoList.size());
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+
+    return AccessTokenManagerClient::GetInstance().MigrateInstalledBundles(migratedInfoList, results);
+}
+
+int32_t AccessTokenKit::FinishMigration()
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "FinishMigration.");
+    return AccessTokenManagerClient::GetInstance().FinishMigration();
 }
 
 int AccessTokenKit::DeleteToken(AccessTokenID tokenID)

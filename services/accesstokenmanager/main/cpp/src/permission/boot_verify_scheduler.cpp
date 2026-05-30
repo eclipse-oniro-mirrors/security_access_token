@@ -106,7 +106,6 @@ void MergeBriefPermData(std::vector<BriefPermData>& permBriefDataList, const Bri
     permBriefDataList.emplace_back(data);
 }
 
-
 void BuildExtendedPermListFromPolicy(const HapPolicy& policy, std::vector<PermissionWithValue>& extendPermList)
 {
     extendPermList.clear();

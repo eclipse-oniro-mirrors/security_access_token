@@ -565,6 +565,7 @@ std::string ConfigPolicLoader::DumpHapTokenInfo(const HapTokenInfo& hapInfo, boo
     (void)AddUnsignedIntToJson(j, "tokenAttr", hapInfo.tokenAttr);
     (void)AddIntToJson(j, "ver", static_cast<int>(hapInfo.ver));
     (void)AddIntToJson(j, "userId", hapInfo.userID);
+    (void)AddIntToJson(j, "uid", hapInfo.uid);
     (void)AddStringToJson(j, "bundleName", hapInfo.bundleName);
     (void)AddIntToJson(j, "instIndex", hapInfo.instIndex);
     (void)AddIntToJson(j, "dlpType", hapInfo.dlpType);

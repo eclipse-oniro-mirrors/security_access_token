@@ -178,7 +178,7 @@ int32_t HapSignVerifyManager::BuildTrustedBundleInfo(
     int32_t ret = adapter_->ParseHapModuleInfo(bootstrapInfo->moduleRaw, moduleInfo);
     if (ret != RET_SUCCESS) {
         LOGE(ATM_DOMAIN, ATM_TAG, "ParseHapModuleInfo failed, ret=%{public}d.", ret);
-        return AccessTokenError::ERR_PARAM_INVALID;
+        return AccessTokenError::ERR_HAP_MODULE_INVALID;
     }
     moduleInfo.apiTargetVersion %= API_VERSION_MASK;
     info.moduleData = moduleInfo;
@@ -318,14 +318,14 @@ int32_t HapSignVerifyManager::CheckHapsSignInfo(const std::string path,
         isChanged = false;
         return RET_SUCCESS;
 #else
-        return ret;
+        return ERR_HAP_VERIFY_FAILED;
 #endif
     }
     if (!isChanged) {
         ret = adapter_->ParseProvision(info.bootstrapInfo->profileJsonRaw, provisionInfo);
         if (ret != RET_SUCCESS) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Parse provision failed, ret=%{public}d.", ret);
-            return ret;
+            return ERR_HAP_PROVISION_INVALID;
         }
     }
     std::shared_ptr<Security::Verify::BootstrapInfo> bootstrapInfo = info.bootstrapInfo;
@@ -336,7 +336,7 @@ int32_t HapSignVerifyManager::CheckHapsSignInfo(const std::string path,
     return ret;
 }
 
-int32_t HapSignVerifyManager::CheckMultipleHaps(std::vector<TrustedBundleInfoInner>& infos) const
+int32_t HapSignVerifyManager::CheckMultipleHaps(const std::vector<TrustedBundleInfoInner>& infos) const
 {
     LOGD(ATM_DOMAIN, ATM_TAG, "Check multiple trusted haps.");
     if (infos.empty()) {
@@ -383,18 +383,23 @@ int32_t HapSignVerifyManager::CheckMultipleHaps(std::vector<TrustedBundleInfoInn
     });
     if (!isInvalid) {
         LOGD(ATM_DOMAIN, ATM_TAG, "Check multiple trusted haps successfully.");
-        SortTrustedBundles(infos);
     }
     return isInvalid ? AccessTokenError::ERR_PARAM_INVALID : RET_SUCCESS;
 }
 
 int32_t HapSignVerifyManager::BuildHapPolicy(
-    const std::vector<TrustedBundleInfoInner>& sortedInfos, HapPolicy& policy, BundleParam& param) const
+    const std::vector<TrustedBundleInfoInner>& infos, HapPolicy& policy, BundleParam& param) const
 {
-    if (sortedInfos.empty()) {
+    if (infos.empty()) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Build hap policy failed, sortedInfos is empty.");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
+
+    const std::vector<TrustedBundleInfoInner> sortedInfos = [&infos]() {
+        std::vector<TrustedBundleInfoInner> copy = infos;
+        SortTrustedBundles(copy);
+        return copy;
+    }();
 
     const TrustedBundleInfoInner& baseline = sortedInfos.front();
 #ifdef X86_EMULATOR_MODE

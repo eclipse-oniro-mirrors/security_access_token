@@ -34,6 +34,7 @@
 #include "accesstoken_id_manager.h"
 #include "accesstoken_info_dumper.h"
 #include "callback_manager.h"
+#include "accesstoken_migration_manager.h"
 #include "constant_common.h"
 #include "claw_token_info_manager.h"
 #include "data_usage_dfx.h"
@@ -2196,6 +2197,47 @@ int32_t AccessTokenManagerService::GetReqPermissionByName(
         tokenId, permissionName, value);
 }
 
+int32_t AccessTokenManagerService::MigrateInstalledBundles(const std::vector<MigratedInfoIdl>& migratedInfoList,
+    std::vector<BundleMigrateResultIdl>& results)
+{
+    results.clear();
+    int32_t ret = CheckHapManagerPermission();
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
+
+    return AccessTokenMigrationManager::GetInstance().MigrateInstalledBundles(migratedInfoList, results);
+}
+
+int32_t AccessTokenManagerService::PreMigrateUIDList(const std::vector<int32_t>& uidList)
+{
+    int32_t ret = CheckHapManagerPermission();
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
+    return AccessTokenMigrationManager::GetInstance().PreMigrateUIDList(uidList);
+}
+
+int32_t AccessTokenManagerService::FinishMigration()
+{
+    int32_t ret = CheckHapManagerPermission();
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
+    return AccessTokenMigrationManager::GetInstance().FinishMigration();
+}
+
+int32_t AccessTokenManagerService::CheckHapManagerPermission()
+{
+    AccessTokenID callingTokenID = IPCSkeleton::GetCallingTokenID();
+    if (!IsPrivilegedCalling() &&
+        (VerifyAccessToken(callingTokenID, MANAGE_HAP_TOKENID_PERMISSION) == PERMISSION_DENIED)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", callingTokenID);
+        return AccessTokenError::ERR_PERMISSION_DENIED;
+    }
+    return RET_SUCCESS;
+}
+
 bool AccessTokenManagerService::Initialize()
 {
     MemoryGuard guard;
@@ -2237,6 +2279,8 @@ bool AccessTokenManagerService::Initialize()
     ReportSysEventServiceStart(dfxInfo);
     std::thread reportUserData(ReportAccessTokenUserData);
     reportUserData.detach();
+
+    AccessTokenMigrationManager::GetInstance().Initialize();
     LOGI(ATM_DOMAIN, ATM_TAG, "Initialize success.");
     return true;
 }
