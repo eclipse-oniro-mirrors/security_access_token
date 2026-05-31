@@ -81,6 +81,7 @@ public:
     int32_t FinishMigration();
     int DeleteToken(AccessTokenID tokenID, bool isTokenReserved);
     int32_t DeleteToolTokenByPid(int32_t pid);
+    int32_t DeleteIdentity(AccessTokenID tokenID, const std::string& bundleName, ReservedType type);
     ATokenTypeEnum GetTokenType(AccessTokenID tokenID);
     AccessTokenIDEx GetHapTokenID(int32_t userID, const std::string& bundleName, int32_t instIndex);
     int32_t GetHapIdentity(const HapBaseInfo& info, Identity& identity);

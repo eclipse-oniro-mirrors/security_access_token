@@ -56,6 +56,7 @@ accesstoken_manager_base_config = {
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/accesstoken_info_manager.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/accesstoken_info_utils.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/boot_verify_scheduler.cpp",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/delete_bundle_manager.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/hap_token_info_inner.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_change_notifier.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_constraint_check.cpp",

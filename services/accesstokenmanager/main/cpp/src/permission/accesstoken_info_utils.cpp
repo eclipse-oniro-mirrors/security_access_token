@@ -27,9 +27,9 @@ namespace Security {
 namespace AccessToken {
 namespace {
 static const char* SYSTEM_RESOURCE_BUNDLE_NAME = "ohos.global.systemres";
-static const unsigned int SYSTEM_APP_FLAG = 0x0001;
-static const unsigned int ATOMIC_SERVICE_FLAG = 0x0002;
-static const unsigned int DEBUG_APP_FLAG = 0x0008;
+static const uint32_t SYSTEM_APP_FLAG = 0x0001;
+static const uint32_t ATOMIC_SERVICE_FLAG = 0x0002;
+static const uint32_t DEBUG_APP_FLAG = 0x0008;
 static constexpr int32_t BASE_USER_RANGE = 200000;
 }
 
@@ -149,6 +149,19 @@ void AccessTokenInfoUtils::BuildBundleFullInfo(const BundleParam& param, const H
             innerInfo->permCodeList.emplace_back(shortPermCode);
         }
     }
+}
+
+ReservedType AccessTokenInfoUtils::GetReservedTokenTypeDBValue(const GenericValues& values)
+{
+#ifdef SPM_DATA_ENABLE
+    return static_cast<ReservedType>(values.GetInt(TokenFiledConst::FIELD_RESERVED));
+#else
+    if (AccessTokenInfoUtils::CheckSpecifiedFlag(
+        values.GetInt(TokenFiledConst::FIELD_TOKEN_ATTR), 0x0004)) { // 0x0004: reserved
+        return ReservedType::RESERVED_IDENTITY;
+    }
+    return ReservedType::NONE;
+#endif
 }
 } // namespace AccessToken
 } // namespace Security

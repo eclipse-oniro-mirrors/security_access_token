@@ -112,3 +112,4 @@ struct BundleMigrateResultIdl {
     List<ReservedTypeIdl> reservedTypeList;
     int errcode;
 };
+

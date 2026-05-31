@@ -174,6 +174,14 @@ public:
      */
     static int DeleteToken(AccessTokenID tokenID, bool isTokenReserved);
     /**
+     * @brief Delete identity with differentiated uninstall policy.
+     * @param tokenID token id (0 means clean all bundle info)
+     * @param bundleName bundle name of the app
+     * @param type reserved mode, see ReservedType in hap_token_info.h
+     * @return error code, see access_token_error.h
+     */
+    static int32_t DeleteIdentity(AccessTokenID tokenID, const std::string& bundleName, ReservedType type);
+    /**
      * @brief Delete claw token info.
      * @param pid caller pid
      * @return error code, see access_token_error.h

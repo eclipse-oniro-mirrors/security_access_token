@@ -99,6 +99,7 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
     "permission/permission_request_toggle_manager_test.cpp",
     "permission/short_grant_manager_test.cpp",
     "permission/token_info_manager_test.cpp",
+    "permission/delete_identity_test.cpp",
     "service/accesstoken_manager_service_test.cpp",
     "service/multi_thread_test.cpp",
     "tooltoken/claw_ticket_manager_test.cpp",

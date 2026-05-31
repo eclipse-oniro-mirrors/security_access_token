@@ -25,7 +25,9 @@
 #include "interfaces/hap_verify.h"
 #include "mock_access_token_db_operator.h"
 #include "mock_app_verify_adapter.h"
+#include "parameter.h"
 #define private public
+#include "accesstoken_id_manager.h"
 #include "boot_verify_scheduler.h"
 #include "hap_sign_verify_manager.h"
 #undef private
@@ -39,9 +41,11 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-constexpr AccessTokenID TEST_TOKEN_ID = 123456;
-constexpr AccessTokenID TEST_TOKEN_ID_2 = 123457;
-constexpr AccessTokenID TEST_TOKEN_ID_3 = 123458;
+constexpr AccessTokenID TEST_TOKEN_ID = 0x20000001;
+constexpr AccessTokenID TEST_TOKEN_ID_2 = 0x20000002;
+constexpr AccessTokenID TEST_TOKEN_ID_3 = 0x20000003;
+constexpr const char* APP_VERIFY_PARAM = "accesstoken.permission.appverify";
+constexpr uint32_t PARAM_VALUE_MAX_LEN = 32;
 constexpr uint32_t TEST_UID = 20010001;
 constexpr int32_t INVALID_UID = -1;
 constexpr char DEFAULT_TOKEN_VERSION_VALUE = 1;
@@ -49,18 +53,40 @@ const std::string TEST_BUNDLE_NAME = "com.example.camera";
 const std::string TEST_BUNDLE_NAME_2 = "com.example.music";
 const std::string TEST_BUNDLE_NAME_3 = "com.example.notes";
 const std::string TEST_PATH = "/data/test/camera.hap";
+std::string g_appVerifyParamBackup;
 }
 
 class BootVerifySchedulerTest : public testing::Test {
 public:
-    static void SetUpTestCase() {}
-    static void TearDownTestCase() {}
+    static void SetUpTestCase()
+    {
+        char value[PARAM_VALUE_MAX_LEN] = {0};
+        if (GetParameter(APP_VERIFY_PARAM, "", value, PARAM_VALUE_MAX_LEN - 1) >= 0) {
+            g_appVerifyParamBackup = value;
+        } else {
+            g_appVerifyParamBackup.clear();
+        }
+    }
+
+    static void TearDownTestCase()
+    {
+        if (g_appVerifyParamBackup.empty()) {
+            SetParameter(APP_VERIFY_PARAM, "");
+            return;
+        }
+        SetParameter(APP_VERIFY_PARAM, g_appVerifyParamBackup.c_str());
+    }
 
     void SetUp() override
     {
         ResetMockDbState();
+        SetParameter(APP_VERIFY_PARAM, "0");
+        AccessTokenIDManager::GetInstance().ReleaseTokenId(TEST_TOKEN_ID);
+        AccessTokenIDManager::GetInstance().ReleaseTokenId(TEST_TOKEN_ID_2);
+        AccessTokenIDManager::GetInstance().ReleaseTokenId(TEST_TOKEN_ID_3);
         PermissionDataBrief::GetInstance().DeleteBriefPermDataByTokenId(TEST_TOKEN_ID);
         PermissionDataBrief::GetInstance().DeleteBriefPermDataByTokenId(TEST_TOKEN_ID_2);
+        PermissionDataBrief::GetInstance().DeleteBriefPermDataByTokenId(TEST_TOKEN_ID_3);
         auto& scheduler = BootVerifyScheduler::GetInstance();
         scheduler.ClearBundleVerifyContext();
         scheduler.bundleSignInfoMap_.clear();
@@ -80,12 +106,17 @@ public:
     void TearDown() override
     {
         HapSignVerifyManager::GetInstance().adapter_ = originAdapter_;
+        SetParameter(APP_VERIFY_PARAM, "0");
+        AccessTokenIDManager::GetInstance().ReleaseTokenId(TEST_TOKEN_ID);
+        AccessTokenIDManager::GetInstance().ReleaseTokenId(TEST_TOKEN_ID_2);
+        AccessTokenIDManager::GetInstance().ReleaseTokenId(TEST_TOKEN_ID_3);
         auto& scheduler = BootVerifyScheduler::GetInstance();
         scheduler.ClearBundleVerifyContext();
         scheduler.bundleSignInfoMap_.clear();
         scheduler.uidSet_.clear();
         PermissionDataBrief::GetInstance().DeleteBriefPermDataByTokenId(TEST_TOKEN_ID);
         PermissionDataBrief::GetInstance().DeleteBriefPermDataByTokenId(TEST_TOKEN_ID_2);
+        PermissionDataBrief::GetInstance().DeleteBriefPermDataByTokenId(TEST_TOKEN_ID_3);
         ResetMockDbState();
     }
 
@@ -222,12 +253,22 @@ protected:
     const IAppVerifyAdapter* originAdapter_ = nullptr;
 };
 
+/**
+ * @tc.name: VerifyBundleSignInfoWhenStart001
+ * @tc.desc: Verify startup verification returns DB find error when hap info loading fails.
+ * @tc.type: FUNC
+ */
 HWTEST_F(BootVerifySchedulerTest, VerifyBundleSignInfoWhenStart001, TestSize.Level1)
 {
     SetMockDbFindResult(AtmDataType::ACCESSTOKEN_HAP_INFO, ERR_PARAM_INVALID, {});
     EXPECT_EQ(ERR_PARAM_INVALID, BootVerifyScheduler::GetInstance().VerifyBundleSignInfoWhenStart());
 }
 
+/**
+ * @tc.name: VerifyBundleSignInfoWhenStart002
+ * @tc.desc: Verify startup verification returns permission state loading error after hap info loads.
+ * @tc.type: FUNC
+ */
 HWTEST_F(BootVerifySchedulerTest, VerifyBundleSignInfoWhenStart002, TestSize.Level1)
 {
     SetMockDbFindResult(AtmDataType::ACCESSTOKEN_HAP_INFO, RET_SUCCESS,
@@ -236,22 +277,70 @@ HWTEST_F(BootVerifySchedulerTest, VerifyBundleSignInfoWhenStart002, TestSize.Lev
     EXPECT_EQ(ERR_PARAM_INVALID, BootVerifyScheduler::GetInstance().VerifyBundleSignInfoWhenStart());
 }
 
+/**
+ * @tc.name: VerifyBundleSignInfoWhenStart003
+ * @tc.desc: Verify startup verification classifies a preinstalled bundle as high privilege
+ *           and persists fixed hap info when the verified APL differs from cached hap info.
+ * @tc.type: FUNC
+ */
 HWTEST_F(BootVerifySchedulerTest, VerifyBundleSignInfoWhenStart003, TestSize.Level1)
 {
+    // PrepareVerifyDb seeds cached hap info from mock DB with default APL_NORMAL.
     PrepareVerifyDb(true);
+    // Mock verify result upgrades the verified APL to system_core, forcing hap info persistence.
+    adapter_->apl_ = "system_core";
     EXPECT_EQ(RET_SUCCESS, BootVerifyScheduler::GetInstance().VerifyBundleSignInfoWhenStart());
     EXPECT_TRUE(BootVerifyScheduler::GetInstance().highPrivilegeBundleList_.size() == 1);
     EXPECT_TRUE(BootVerifyScheduler::GetInstance().normalBundleList_.empty());
     EXPECT_EQ(1U, GetMockDbState().deleteAndInsertCallCount);
 }
 
+/**
+ * @tc.name: VerifyBundleSignInfoWhenStart004
+ * @tc.desc: Verify one preinstalled bundle verify failure does not block later preinstalled bundle verification,
+ *           and a later successful bundle can still finish hap info persistence.
+ * @tc.type: FUNC
+ */
 HWTEST_F(BootVerifySchedulerTest, VerifyBundleSignInfoWhenStart004, TestSize.Level1)
 {
-    PrepareVerifyDb(true);
-    adapter_->verifyRet_ = ERR_PARAM_INVALID;
-    EXPECT_EQ(ERR_HAP_VERIFY_FAILED, BootVerifyScheduler::GetInstance().VerifyBundleSignInfoWhenStart());
+    const std::string secondPath = "/data/test/music.hap";
+    // Prepare two preinstalled high-privilege bundles in mock DB so startup verification handles them in sequence.
+    SetMockDbFindResult(AtmDataType::ACCESSTOKEN_HAP_INFO, RET_SUCCESS, {
+        BuildHapInfoValue(TEST_TOKEN_ID, TEST_BUNDLE_NAME, TEST_UID),
+        BuildHapInfoValue(TEST_TOKEN_ID_2, TEST_BUNDLE_NAME_2, TEST_UID + 1),
+    });
+    SetMockDbFindResult(AtmDataType::ACCESSTOKEN_PERMISSION_STATE, RET_SUCCESS, {
+        BuildPermStateValue(TEST_TOKEN_ID, "ohos.permission.CAMERA"),
+        BuildPermStateValue(TEST_TOKEN_ID_2, "ohos.permission.CAMERA"),
+    });
+    SetMockDbFindResult(AtmDataType::ACCESSTOKEN_PERMISSION_EXTEND_VALUE, RET_SUCCESS, {});
+    SetMockDbFindResult(AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO, RET_SUCCESS, {
+        BuildBundleSignValue(TEST_BUNDLE_NAME, "entry", TEST_PATH, true,
+            static_cast<int32_t>(AppExecFwk::Spm::BundleType::APP),
+            BuildPersistData(TEST_BUNDLE_NAME, TEST_BUNDLE_NAME)),
+        BuildBundleSignValue(TEST_BUNDLE_NAME_2, "entry", secondPath, true,
+            static_cast<int32_t>(AppExecFwk::Spm::BundleType::APP),
+            BuildPersistData(TEST_BUNDLE_NAME_2, TEST_BUNDLE_NAME_2)),
+    });
+    SetMockDbFindResult(AtmDataType::ACCESSTOKEN_SYSTEM_CONFIG, RET_SUCCESS, {});
+    SetMockDbFindResult(AtmDataType::ACCESSTOKEN_HAP_UNDEFINE_INFO, RET_SUCCESS, {});
+
+    // Step 1: Fail the first bundle only during verify.
+    adapter_->verifyFailPath_ = TEST_PATH;
+    adapter_->verifyFailRet_ = ERR_PARAM_INVALID;
+    // Step 2: Make the second bundle produce a verified APL mismatch so successful verification triggers persistence.
+    adapter_->apl_ = "system_core";
+    // Step 3: Verify startup flow still completes and persists the later successful bundle.
+    EXPECT_EQ(RET_SUCCESS, BootVerifyScheduler::GetInstance().VerifyBundleSignInfoWhenStart());
+    EXPECT_EQ(2U, BootVerifyScheduler::GetInstance().highPrivilegeBundleList_.size());
+    EXPECT_EQ(1U, GetMockDbState().deleteAndInsertCallCount);
 }
 
+/**
+ * @tc.name: VerifyBundleSignInfoWhenStart005
+ * @tc.desc: Verify non-preinstalled bundle is classified into normal bundle list at startup.
+ * @tc.type: FUNC
+ */
 HWTEST_F(BootVerifySchedulerTest, VerifyBundleSignInfoWhenStart005, TestSize.Level1)
 {
     PrepareVerifyDb(false);
@@ -260,6 +349,11 @@ HWTEST_F(BootVerifySchedulerTest, VerifyBundleSignInfoWhenStart005, TestSize.Lev
     EXPECT_TRUE(BootVerifyScheduler::GetInstance().normalBundleList_.size() == 1);
 }
 
+/**
+ * @tc.name: VerifyBundleSignInfoWhenStart006
+ * @tc.desc: Verify startup verification skips SPM persistence for invalid uid and unmigrated bundle.
+ * @tc.type: FUNC
+ */
 HWTEST_F(BootVerifySchedulerTest, VerifyBundleSignInfoWhenStart006, TestSize.Level1)
 {
     PrepareVerifyDb(true, static_cast<uint32_t>(INVALID_UID), false);
@@ -269,6 +363,11 @@ HWTEST_F(BootVerifySchedulerTest, VerifyBundleSignInfoWhenStart006, TestSize.Lev
     EXPECT_TRUE(BootVerifyScheduler::GetInstance().isVerifiedMap_[TEST_BUNDLE_NAME]);
 }
 
+/**
+ * @tc.name: VerifyBundleSignInfoWhenStart007
+ * @tc.desc: Verify startup verification persists bundle package info when verified sign data changes.
+ * @tc.type: FUNC
+ */
 HWTEST_F(BootVerifySchedulerTest, VerifyBundleSignInfoWhenStart007, TestSize.Level1)
 {
     PrepareVerifyDb(true);
@@ -285,17 +384,32 @@ HWTEST_F(BootVerifySchedulerTest, VerifyBundleSignInfoWhenStart007, TestSize.Lev
     EXPECT_TRUE(hasPackageInfo);
 }
 
+/**
+ * @tc.name: VerifyBundleSignInfoWhenStart008
+ * @tc.desc: Verify startup verification keeps a non-preinstalled bundle in normal bundle flow
+ *           without marking it verified during the high-privilege stage.
+ * @tc.type: FUNC
+ */
 HWTEST_F(BootVerifySchedulerTest, VerifyBundleSignInfoWhenStart008, TestSize.Level1)
 {
     PrepareVerifyDb(false);
     auto& scheduler = BootVerifyScheduler::GetInstance();
     EXPECT_EQ(RET_SUCCESS, scheduler.VerifyBundleSignInfoWhenStart());
-    EXPECT_TRUE(scheduler.isVerifiedMap_[TEST_BUNDLE_NAME]);
+    EXPECT_TRUE(scheduler.highPrivilegeBundleList_.empty());
+    EXPECT_EQ(1U, scheduler.normalBundleList_.size());
+    EXPECT_EQ(TEST_BUNDLE_NAME, scheduler.normalBundleList_[0]);
+    EXPECT_FALSE(scheduler.isVerifiedMap_[TEST_BUNDLE_NAME]);
     EXPECT_FALSE(scheduler.isVerifyingMap_[TEST_BUNDLE_NAME]);
     EXPECT_TRUE(scheduler.bundleInfoMap_.find(TEST_BUNDLE_NAME) != scheduler.bundleInfoMap_.end());
     EXPECT_TRUE(scheduler.bundleNoCachedInfoMap_.find(TEST_BUNDLE_NAME) != scheduler.bundleNoCachedInfoMap_.end());
 }
 
+/**
+ * @tc.name: BuildPriorityBundleList001
+ * @tc.desc: Verify priority list builder classifies preinstalled or signless bundles as high privilege
+ *           and non-preinstalled signed bundles as normal.
+ * @tc.type: FUNC
+ */
 HWTEST_F(BootVerifySchedulerTest, BuildPriorityBundleList001, TestSize.Level1)
 {
     auto& scheduler = BootVerifyScheduler::GetInstance();
@@ -318,6 +432,11 @@ HWTEST_F(BootVerifySchedulerTest, BuildPriorityBundleList001, TestSize.Level1)
         scheduler.normalBundleList_.end(), TEST_BUNDLE_NAME_2) != scheduler.normalBundleList_.end());
 }
 
+/**
+ * @tc.name: PreVerifyBundle001
+ * @tc.desc: Verify PreVerifyBundle by bundle name succeeds after startup preparation for normal bundle.
+ * @tc.type: FUNC
+ */
 HWTEST_F(BootVerifySchedulerTest, PreVerifyBundle001, TestSize.Level1)
 {
     PrepareVerifyDb(false);
@@ -325,6 +444,11 @@ HWTEST_F(BootVerifySchedulerTest, PreVerifyBundle001, TestSize.Level1)
     EXPECT_EQ(RET_SUCCESS, BootVerifyScheduler::GetInstance().PreVerifyBundle(TEST_BUNDLE_NAME));
 }
 
+/**
+ * @tc.name: PreVerifyBundle002
+ * @tc.desc: Verify PreVerifyBundle by token id succeeds after startup preparation for normal bundle.
+ * @tc.type: FUNC
+ */
 HWTEST_F(BootVerifySchedulerTest, PreVerifyBundle002, TestSize.Level1)
 {
     PrepareVerifyDb(false);
@@ -332,11 +456,21 @@ HWTEST_F(BootVerifySchedulerTest, PreVerifyBundle002, TestSize.Level1)
     EXPECT_EQ(RET_SUCCESS, BootVerifyScheduler::GetInstance().PreVerifyBundle(TEST_TOKEN_ID));
 }
 
+/**
+ * @tc.name: PreVerifyBundle003
+ * @tc.desc: Verify PreVerifyBundle by token id returns success when no verification context exists.
+ * @tc.type: FUNC
+ */
 HWTEST_F(BootVerifySchedulerTest, PreVerifyBundle003, TestSize.Level1)
 {
     EXPECT_EQ(RET_SUCCESS, BootVerifyScheduler::GetInstance().PreVerifyBundle(TEST_TOKEN_ID));
 }
 
+/**
+ * @tc.name: PreVerifyBundle004
+ * @tc.desc: Verify PreVerifyBundle completes verification state update for cached bundle context.
+ * @tc.type: FUNC
+ */
 HWTEST_F(BootVerifySchedulerTest, PreVerifyBundle004, TestSize.Level1)
 {
     auto& scheduler = BootVerifyScheduler::GetInstance();
@@ -351,6 +485,11 @@ HWTEST_F(BootVerifySchedulerTest, PreVerifyBundle004, TestSize.Level1)
     EXPECT_FALSE(scheduler.isVerifyingMap_[TEST_BUNDLE_NAME]);
 }
 
+/**
+ * @tc.name: LoadVerifyDataFromDb001
+ * @tc.desc: Verify LoadVerifyDataFromDb tolerates extended permission query failure.
+ * @tc.type: FUNC
+ */
 HWTEST_F(BootVerifySchedulerTest, LoadVerifyDataFromDb001, TestSize.Level1)
 {
     PrepareVerifyDb(true);
@@ -358,6 +497,11 @@ HWTEST_F(BootVerifySchedulerTest, LoadVerifyDataFromDb001, TestSize.Level1)
     EXPECT_EQ(RET_SUCCESS, BootVerifyScheduler::GetInstance().LoadVerifyDataFromDb());
 }
 
+/**
+ * @tc.name: RefreshBundleSignInfoMap001
+ * @tc.desc: Verify RefreshBundleSignInfoMap skips invalid bundle type entries.
+ * @tc.type: FUNC
+ */
 HWTEST_F(BootVerifySchedulerTest, RefreshBundleSignInfoMap001, TestSize.Level1)
 {
     PrepareVerifyDb(true);
@@ -368,6 +512,11 @@ HWTEST_F(BootVerifySchedulerTest, RefreshBundleSignInfoMap001, TestSize.Level1)
     EXPECT_TRUE(BootVerifyScheduler::GetInstance().bundleSignInfoMap_[TEST_BUNDLE_NAME].bundleType.empty());
 }
 
+/**
+ * @tc.name: BuildSpmParams001
+ * @tc.desc: Verify BuildSpmParams builds one SPM parameter set for a valid cached bundle context.
+ * @tc.type: FUNC
+ */
 HWTEST_F(BootVerifySchedulerTest, BuildSpmParams001, TestSize.Level1)
 {
     auto& scheduler = BootVerifyScheduler::GetInstance();
@@ -398,6 +547,11 @@ HWTEST_F(BootVerifySchedulerTest, BuildSpmParams001, TestSize.Level1)
     EXPECT_EQ(1U, params.size());
 }
 
+/**
+ * @tc.name: BuildSpmParams002
+ * @tc.desc: Verify BuildSpmParams returns ERR_BUNDLE_NOT_EXIST for missing bundle cache.
+ * @tc.type: FUNC
+ */
 HWTEST_F(BootVerifySchedulerTest, BuildSpmParams002, TestSize.Level1)
 {
     BundleNoCachedInfo noCachedInfo;
@@ -409,29 +563,58 @@ HWTEST_F(BootVerifySchedulerTest, BuildSpmParams002, TestSize.Level1)
         noCachedInfo, hapInfoCache, permBriefDataListCache, extendPermListCache, params));
 }
 
+/**
+ * @tc.name: AddSpmDataAndCommitCache001
+ * @tc.desc: Verify AddSpmDataAndCommitCache marks a bundle verified after minimal single-bundle
+ *           cache, permission, and verified-state inputs are prepared.
+ * @tc.type: FUNC
+ */
 HWTEST_F(BootVerifySchedulerTest, AddSpmDataAndCommitCache001, TestSize.Level1)
 {
     auto& scheduler = BootVerifyScheduler::GetInstance();
+    // Step 1: Prepare the minimal cached bundle/token context required by BuildSpmParams.
     scheduler.bundleInfoMap_[TEST_BUNDLE_NAME] = std::make_shared<BundleInfoInner>();
-    scheduler.bundleInfoMap_[TEST_BUNDLE_NAME]->tokenIds.clear();
+    scheduler.bundleInfoMap_[TEST_BUNDLE_NAME]->tokenIds = { TEST_TOKEN_ID };
     scheduler.bundleNoCachedInfoMap_[TEST_BUNDLE_NAME] = BundleNoCachedInfo {};
+    scheduler.hapTokenInfoMap_[TEST_TOKEN_ID] = BuildHapTokenInfoItem(TEST_TOKEN_ID);
+    scheduler.requestedPermData_[TEST_TOKEN_ID] = {};
+    scheduler.extendedPermMap_[TEST_TOKEN_ID] = {};
     scheduler.isVerifiedMap_[TEST_BUNDLE_NAME] = false;
     scheduler.isVerifyingMap_[TEST_BUNDLE_NAME] = true;
-    EXPECT_EQ(RET_SUCCESS, scheduler.AddSpmDataAndCommitCache(TEST_BUNDLE_NAME, {}));
+    // Step 2: Execute single-bundle SPM add and cache commit with the verified result of this bundle.
+    VerifiedBundleState state;
+    state.bundleName = TEST_BUNDLE_NAME;
+    EXPECT_EQ(RET_SUCCESS, scheduler.AddSpmDataAndCommitCache(TEST_BUNDLE_NAME, state));
+    // Step 3: Verify the bundle is marked verified after commit.
     EXPECT_TRUE(scheduler.isVerifiedMap_[TEST_BUNDLE_NAME]);
 }
 
+/**
+ * @tc.name: SplitBundleList001
+ * @tc.desc: Verify SplitBundleList returns empty groups when split size is zero.
+ * @tc.type: FUNC
+ */
 HWTEST_F(BootVerifySchedulerTest, SplitBundleList001, TestSize.Level1)
 {
     auto splitList = BootVerifyScheduler::SplitBundleList({ "a", "b", "c" }, 0);
     EXPECT_TRUE(splitList.empty());
 }
 
+/**
+ * @tc.name: GetVerifyTaskResult001
+ * @tc.desc: Verify GetVerifyTaskResult returns the first non-success task result.
+ * @tc.type: FUNC
+ */
 HWTEST_F(BootVerifySchedulerTest, GetVerifyTaskResult001, TestSize.Level1)
 {
     EXPECT_EQ(ERR_PARAM_INVALID, BootVerifyScheduler::GetVerifyTaskResult({ RET_SUCCESS, ERR_PARAM_INVALID }));
 }
 
+/**
+ * @tc.name: VerifySingleBundle001
+ * @tc.desc: Verify VerifySingleBundle builds verified state and refreshes bundle cache.
+ * @tc.type: FUNC
+ */
 HWTEST_F(BootVerifySchedulerTest, VerifySingleBundle001, TestSize.Level1)
 {
     auto& scheduler = BootVerifyScheduler::GetInstance();
@@ -447,6 +630,11 @@ HWTEST_F(BootVerifySchedulerTest, VerifySingleBundle001, TestSize.Level1)
     EXPECT_TRUE(scheduler.bundleNoCachedInfoMap_.find(TEST_BUNDLE_NAME) != scheduler.bundleNoCachedInfoMap_.end());
 }
 
+/**
+ * @tc.name: ReconcileVerifiedBundleCache001
+ * @tc.desc: Verify ReconcileVerifiedBundleCache updates bundle cache while preserving unchanged no-cache fields.
+ * @tc.type: FUNC
+ */
 HWTEST_F(BootVerifySchedulerTest, ReconcileVerifiedBundleCache001, TestSize.Level1)
 {
     auto& scheduler = BootVerifyScheduler::GetInstance();
@@ -477,6 +665,11 @@ HWTEST_F(BootVerifySchedulerTest, ReconcileVerifiedBundleCache001, TestSize.Leve
     EXPECT_EQ(oldNoCachedInfo.ownerid, scheduler.bundleNoCachedInfoMap_[TEST_BUNDLE_NAME].ownerid);
 }
 
+/**
+ * @tc.name: VerifyBundleWithState001
+ * @tc.desc: Verify VerifyBundleWithState completes cached bundle verification and updates state flags.
+ * @tc.type: FUNC
+ */
 HWTEST_F(BootVerifySchedulerTest, VerifyBundleWithState001, TestSize.Level1)
 {
     auto& scheduler = BootVerifyScheduler::GetInstance();
@@ -490,6 +683,11 @@ HWTEST_F(BootVerifySchedulerTest, VerifyBundleWithState001, TestSize.Level1)
     EXPECT_FALSE(scheduler.isVerifyingMap_[TEST_BUNDLE_NAME]);
 }
 
+/**
+ * @tc.name: VerifyBundleWithState002
+ * @tc.desc: Verify VerifyBundleWithState handles cached permission data for the bundle verification path.
+ * @tc.type: FUNC
+ */
 HWTEST_F(BootVerifySchedulerTest, VerifyBundleWithState002, TestSize.Level1)
 {
     auto& scheduler = BootVerifyScheduler::GetInstance();
@@ -511,6 +709,12 @@ HWTEST_F(BootVerifySchedulerTest, VerifyBundleWithState002, TestSize.Level1)
     EXPECT_FALSE(scheduler.isVerifyingMap_[TEST_BUNDLE_NAME]);
 }
 
+/**
+ * @tc.name: VerifyBundleWithState003
+ * @tc.desc: Verify VerifyBundleWithState persists hap info and permission state when verified
+ *           bundle data differs from cached bundle data.
+ * @tc.type: FUNC
+ */
 HWTEST_F(BootVerifySchedulerTest, VerifyBundleWithState003, TestSize.Level1)
 {
     auto& scheduler = BootVerifyScheduler::GetInstance();
@@ -549,18 +753,26 @@ HWTEST_F(BootVerifySchedulerTest, VerifyBundleWithState003, TestSize.Level1)
     EXPECT_FALSE(scheduler.isVerifyingMap_[TEST_BUNDLE_NAME]);
 }
 
+/**
+ * @tc.name: VerifyBundleList001
+ * @tc.desc: Verify VerifyBundleList records successful verification results into the per-bundle state map.
+ * @tc.type: FUNC
+ */
 HWTEST_F(BootVerifySchedulerTest, VerifyBundleList001, TestSize.Level1)
 {
     auto& scheduler = BootVerifyScheduler::GetInstance();
-    scheduler.bundleInfoMap_[TEST_BUNDLE_NAME] = BuildBundleInfo({});
+    scheduler.bundleInfoMap_[TEST_BUNDLE_NAME] = BuildBundleInfo({ TEST_TOKEN_ID });
     scheduler.bundleSignInfoMap_[TEST_BUNDLE_NAME] = BuildSignInfo();
+    scheduler.hapTokenInfoMap_[TEST_TOKEN_ID] = BuildHapTokenInfoItem(TEST_TOKEN_ID);
+    scheduler.requestedPermData_[TEST_TOKEN_ID] = {};
+    scheduler.extendedPermMap_[TEST_TOKEN_ID] = {};
     scheduler.isVerifiedMap_[TEST_BUNDLE_NAME] = false;
     scheduler.isVerifyingMap_[TEST_BUNDLE_NAME] = false;
 
-    std::vector<VerifiedBundleState> stateList;
-    EXPECT_EQ(RET_SUCCESS, scheduler.VerifyBundleList({ TEST_BUNDLE_NAME }, stateList));
-    ASSERT_EQ(1U, stateList.size());
-    EXPECT_EQ(TEST_BUNDLE_NAME, stateList[0].bundleName);
+    std::map<std::string, VerifiedBundleState> stateMap;
+    EXPECT_EQ(RET_SUCCESS, scheduler.VerifyBundleList({ TEST_BUNDLE_NAME }, stateMap));
+    ASSERT_EQ(1U, stateMap.size());
+    EXPECT_TRUE(stateMap.find(TEST_BUNDLE_NAME) != stateMap.end());
 }
 
 } // namespace AccessToken

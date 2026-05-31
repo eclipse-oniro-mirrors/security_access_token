@@ -22,6 +22,7 @@ group("fuzztest") {
     "clearusergrantedpermissionstatestub_fuzzer:ClearUserGrantedPermissionStateStubFuzzTest",
     "deleteremotedevicetokensstub_fuzzer:DeleteRemoteDeviceTokensStubFuzzTest",
     "deleteremotetokenstub_fuzzer:DeleteRemoteTokenStubFuzzTest",
+    "deleteidentitystub_fuzzer:DeleteIdentityStubFuzzTest",
     "deletetokenstub_fuzzer:DeleteTokenStubFuzzTest",
     "dumptokeninfostub_fuzzer:DumpTokenInfoStubFuzzTest",
     "generatecliauthresultstub_fuzzer:GenerateCliAuthResultStubFuzzTest",
