@@ -46,9 +46,10 @@ public:
     /**
      * @brief Delete all reserved tokens for a bundle and package info.
      * @param bundleName Bundle name.
+     * @param activeTokens Output active token IDs that need cache cleanup.
      * @return Returns 0 if success, otherwise failed.
      */
-    int32_t DeleteBundleAndAllTokens(const std::string& bundleName);
+    int32_t DeleteBundleAndAllTokens(const std::string& bundleName, std::vector<AccessTokenID>& activeTokens);
 
     /**
      * @brief Remove HAP token info from database.

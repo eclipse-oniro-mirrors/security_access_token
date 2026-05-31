@@ -15,6 +15,7 @@
 
 #include "delete_bundle_manager.h"
 
+#include <algorithm>
 #include "accesstoken_common_log.h"
 #include "access_token_db_operator.h"
 #include "access_token_error.h"
@@ -232,7 +233,8 @@ int32_t DeleteBundleManager::DeleteDataByTokenId(AccessTokenID tokenID, const st
     return RET_SUCCESS;
 }
 
-int32_t DeleteBundleManager::DeleteBundleAndAllTokens(const std::string& bundleName)
+int32_t DeleteBundleManager::DeleteBundleAndAllTokens(const std::string& bundleName,
+    std::vector<AccessTokenID>& activeTokens)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "DeleteBundleAndAllTokens: bundleName = %{public}s", bundleName.c_str());
     // 1. Check if there are any non-reserved tokens for this bundle
@@ -248,19 +250,23 @@ int32_t DeleteBundleManager::DeleteBundleAndAllTokens(const std::string& bundleN
 
     // Check for non-reserved tokens
     std::vector<AccessTokenID> tokens;
+    activeTokens.clear();
     for (const auto& result : tokenResults) {
-        int32_t reserved = result.GetInt(TokenFiledConst::FIELD_RESERVED);
-        if (reserved == static_cast<int32_t>(ReservedType::NONE)) {
+        if (AccessTokenInfoUtils::GetReservedTokenTypeDBValue(result) == ReservedType::NONE) {
             LOGW(ATM_DOMAIN, ATM_TAG,
                 "Bundle %{public}s has active tokens (reserved=0), cannot delete all reserved tokens.",
                 bundleName.c_str());
+            // Collect active tokens (reserved=0) that need cache cleanup
+            AccessTokenID tokenID = static_cast<AccessTokenID>(result.GetInt(TokenFiledConst::FIELD_TOKEN_ID));
+            activeTokens.emplace_back(tokenID);
         }
         AccessTokenID tokenID = static_cast<AccessTokenID>(result.GetInt(TokenFiledConst::FIELD_TOKEN_ID));
         tokens.emplace_back(tokenID);
     }
 
-    LOGI(ATM_DOMAIN, ATM_TAG, "DeleteBundleAndAllTokens: bundleName = %{public}s, token size = %{public}zu",
-        bundleName.c_str(), tokens.size());
+    LOGI(ATM_DOMAIN, ATM_TAG, "DeleteBundleAndAllTokens: bundleName = %{public}s, token size = %{public}zu," \
+        "active size = %{public}zu",
+        bundleName.c_str(), tokens.size(), activeTokens.size());
 
     // 2. Delete all reserved tokens for this bundle
     std::vector<DelInfo> delInfoVec;
@@ -285,9 +291,13 @@ int32_t DeleteBundleManager::DeleteBundleAndAllTokens(const std::string& bundleN
         return ret;
     }
 
-    // Clear ReservedTokenId
+    // Clear ReservedTokenId for reserved tokens (reserved != 0)
     for (const auto& tokenID : tokens) {
-        AccessTokenIDManager::GetInstance().RemoveReservedTokenId(tokenID);
+        // Only release ReservedTokenId for reserved tokens
+        // Active tokens (reserved=0) will be handled by caller via cache cleanup
+        if (std::find(activeTokens.begin(), activeTokens.end(), tokenID) == activeTokens.end()) {
+            AccessTokenIDManager::GetInstance().RemoveReservedTokenId(tokenID);
+        }
     }
     return RET_SUCCESS;
 }

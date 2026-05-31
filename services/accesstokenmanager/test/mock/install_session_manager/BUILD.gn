@@ -28,6 +28,7 @@ ohos_unittest("libinstall_session_manager_mock_test") {
   include_dirs = accesstoken_manager_base_config.include_dirs
 
   sources = [
+    "delete_identity_mock_test.cpp",
     "hap_sign_verify_manager_mock.cpp",
     "install_session_manager_mock_test.cpp",
   ]
