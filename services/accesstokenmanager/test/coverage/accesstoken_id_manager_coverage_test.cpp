@@ -203,6 +203,22 @@ HWTEST_F(AccessTokenIdManagerCoverageTest, AllocUid001, TestSize.Level4)
     ASSERT_EQ(ERR_OVERSIZE, AccessTokenIDManager::GetInstance().AllocUid(100, outUid));
 }
 
+#ifdef SPM_DATA_ENABLE
+/*
+ * @tc.name: AllocUid002
+ * @tc.desc: Alloc without migration done return ERR_PARAM_INVALID
+ * @tc.type: FUNC
+ * @tc.require: TDD
+ */
+HWTEST_F(AccessTokenIdManagerCoverageTest, AllocUid002, TestSize.Level4)
+{
+    // Fill the entire bundleId range [10000, 65535]; AllocUid skips kernel call for occupied entries
+    AccessTokenIDManager::GetInstance().migrationDone_ = false;
+    int32_t outUid = 0;
+    ASSERT_EQ(ERR_PARAM_INVALID, AccessTokenIDManager::GetInstance().AllocUid(100, outUid));
+}
+#endif
+
 /*
  * @tc.name: SetMigrationDone001
  * @tc.desc: SetMigrationDone sets the migration flag to true

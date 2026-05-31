@@ -581,8 +581,8 @@ void BootVerifyScheduler::UpdateBundleSignInfoByTrustedInfos(BundleSignInfo& sig
             continue;
         }
         std::unique_ptr<uint8_t[]> dumpData(trustedInfos[index].bootstrapInfo->Dump());
-        int64_t dumpSize = trustedInfos[index].bootstrapInfo->GetSize();
-        if (dumpData == nullptr || dumpSize <= 0) {
+        uint64_t dumpSize = trustedInfos[index].bootstrapInfo->GetSize();
+        if (dumpData == nullptr || dumpSize == 0) {
             continue;
         }
         signInfo.persistDataList[index] = std::vector<uint8_t>(dumpData.get(), dumpData.get() + dumpSize);

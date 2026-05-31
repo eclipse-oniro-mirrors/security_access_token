@@ -31,9 +31,8 @@
 #include "migration_verify_worker.h"
 #include "hap_sign_verify_manager.h"
 #include "hap_sign_verify_helper.h"
-#undef private
-
 #include "migration_verify_helper.h"
+#undef private
 #include "mock_app_verify_adapter.h"
 #include "test_common.h"
 #include "token_setproc.h"
@@ -321,6 +320,124 @@ HWTEST_F(MigrationVerifyHelperTest, VerifyMigratedBundle006, TestSize.Level1)
 }
 
 /**
+ * @tc.name: VerifyMigratedBundle007
+ * @tc.desc: CheckMultipleHaps fails due to mismatched appIdentifier
+ * @tc.type: FUNC
+ */
+HWTEST_F(MigrationVerifyHelperTest, VerifyMigratedBundle007, TestSize.Level1)
+{
+    MockNativeToken mock("foundation");
+
+    HapInfoParams info = TestCommon::GetInfoManagerTestSystemInfoParms();
+    info.bundleName = "com.example.verify.multifail";
+    info.appIDDesc = info.bundleName;
+    HapPolicyParams policy = TestCommon::GetTestPolicyParams();
+
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS, TestCommon::AllocTestHapToken(info, policy, tokenIdEx));
+
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    auto cachedInfo = BuildCachedInfo(tokenId, info.userID, info.bundleName, 0);
+    std::vector<std::shared_ptr<HapTokenInfoInner>> cachedInfos = { cachedInfo };
+
+    // Build migratedInfo with 2 different hapPaths
+    MigratedInfoIdl migratedInfo;
+    migratedInfo.bundleName = info.bundleName;
+    migratedInfo.pathList.hapPaths = { info.bundleName + "_a", info.bundleName + "_b" };
+    migratedInfo.pathList.isPreInstalled = false;
+    migratedInfo.uidList = { 200100, 200101 };
+    migratedInfo.reservedTypeList = { ReservedTypeIdl::NONE, ReservedTypeIdl::NONE };
+    HapBaseInfoIdl baseInfo;
+    baseInfo.bundleName = info.bundleName;
+    baseInfo.userID = 100;
+    baseInfo.instIndex = 0;
+    migratedInfo.hapBaseInfoList = { baseInfo, baseInfo };
+
+    mockAdapter_.bundleName_ = info.bundleName;
+    // Clear appIdentifier_: each VerifyHap call uses params.filePath (hapPath) as appIdentifier
+    // → two hapPaths produce different appIdentifiers → CheckMultipleHaps detects mismatch
+    mockAdapter_.appIdentifier_ = "";
+
+    int32_t ret = MigrationVerifyHelper::GetInstance().VerifyMigratedBundle(migratedInfo, cachedInfos);
+    // CheckMultipleHaps fails with ERR_PARAM_INVALID → line 70 → DoVerifyMigratedBundle returns error
+    EXPECT_NE(RET_SUCCESS, ret);
+
+    mockAdapter_.appIdentifier_ = "mock.identifier";
+
+    (void)SpmRemoveEntry(tokenId);
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenId));
+}
+
+/**
+ * @tc.name: VerifyMigratedBundle008
+ * @tc.desc: ToGenericValues fails due to mismatched list sizes
+ * @tc.type: FUNC
+ */
+HWTEST_F(MigrationVerifyHelperTest, VerifyMigratedBundle008, TestSize.Level1)
+{
+    MockNativeToken mock("foundation");
+
+    // Construct a BundleSignInfo with mismatched list sizes
+    BundleSignInfo bundleSignInfo;
+    bundleSignInfo.bundleName = "com.example.badsign";
+    bundleSignInfo.moduleNameList = { "entry" };
+    bundleSignInfo.pathList = {};  // empty, size 0 != moduleNameList size 1
+    bundleSignInfo.bundleType = { 0 };
+    bundleSignInfo.persistDataList = { {} };
+
+    int32_t ret = MigrationVerifyHelper::GetInstance().DoBundleInfoOperations(bundleSignInfo);
+    // ToGenericValues detects size mismatch → returns ERR_PARAM_INVALID → line 131
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
+}
+
+/**
+ * @tc.name: VerifyMigratedBundle009
+ * @tc.desc: BuildBundleSignInfo fails with mismatched sizes
+ * @tc.type: FUNC
+ */
+HWTEST_F(MigrationVerifyHelperTest, VerifyMigratedBundle009, TestSize.Level1)
+{
+    MockNativeToken mock("foundation");
+
+    // Construct mismatched MigratedInfoIdl and VerifiedMigrationBundle
+    MigratedInfoIdl migratedInfo;
+    migratedInfo.bundleName = "com.example.badsize";
+    migratedInfo.pathList.hapPaths = { "hap_a", "hap_b" };  // 2 hapPaths
+    VerifiedMigrationBundle verifiedBundle;
+    // Only 1 verifiedInfo → verifiedSize=1 != hapPaths.size()=2 → line 99
+    auto info1 = std::make_shared<TrustedBundleInfoInner>();
+    verifiedBundle.verifiedInfos = { *info1 };
+
+    BundleSignInfo bundleSignInfo;
+    int32_t ret = MigrationVerifyHelper::GetInstance().BuildBundleSignInfo(
+        migratedInfo, verifiedBundle, bundleSignInfo);
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
+}
+
+/**
+ * @tc.name: VerifyMigratedBundle010
+ * @tc.desc: BuildPermStateValues with unknown permCode
+ * @tc.type: FUNC
+ */
+HWTEST_F(MigrationVerifyHelperTest, VerifyMigratedBundle010, TestSize.Level1)
+{
+    MockNativeToken mock("foundation");
+
+    // Construct BriefPermData with an unknown permCode (0xFFFF)
+    std::vector<BriefPermData> data;
+    BriefPermData badPerm;
+    badPerm.permCode = 0xFFFF;  // non-existent permCode → TransferOpcodeToPermission returns empty
+    badPerm.status = PERMISSION_GRANTED;
+    badPerm.flag = PERMISSION_SYSTEM_FIXED;
+    data.emplace_back(badPerm);
+
+    AccessTokenID testTokenId = 1;
+    std::vector<GenericValues> result =
+        MigrationVerifyHelper::GetInstance().BuildPermStateValues(testTokenId, data);
+    ASSERT_EQ(0U, result.size());
+}
+
+/**
  * @tc.name: BuildPermBriefDataFromPolicy001
  * @tc.desc: BuildPermBriefDataListFromPolicy and BuildExtendPermListFromPolicy
  * with known policy produce correct output.
@@ -515,6 +632,23 @@ HWTEST_F(MigrationVerifyWorkerTest, WorkerShutdownDuringProcessing005, TestSize.
 
     // Double shutdown should be safe
     MigrationVerifyWorker::GetInstance().Shutdown();
+}
+
+/**
+ * @tc.name: ThreadAutoShutdown001
+ * @tc.desc: Ensure thread shutdown automatically after idle timeout
+ * @tc.type: FUNC
+ */
+HWTEST_F(MigrationVerifyWorkerTest, ThreadAutoShutdown001, TestSize.Level1)
+{
+    MigrationVerifyWorker::GetInstance().IDLE_TIMEOUT = std::chrono::seconds(1);
+    MigrationVerifyWorker::GetInstance().EnsureThreadRunning();
+    MigrationVerifyWorker::GetInstance().EnsureThreadRunning();
+
+    std::this_thread::sleep_for(std::chrono::seconds(2));
+    
+    EXPECT_EQ(false, MigrationVerifyWorker::GetInstance().running_);
+    MigrationVerifyWorker::GetInstance().IDLE_TIMEOUT = std::chrono::seconds(30);
 }
 } // namespace AccessToken
 } // namespace Security

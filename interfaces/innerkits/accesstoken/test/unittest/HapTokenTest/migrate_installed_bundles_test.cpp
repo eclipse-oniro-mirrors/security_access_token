@@ -69,6 +69,20 @@ HWTEST_F(MigrateInstalledBundlesTest, PreMigrateUIDList002, TestSize.Level1)
     EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, AccessTokenKit::PreMigrateUIDList(largeList));
 }
 
+/**
+ * @tc.name: PreMigrateUIDList003
+ * @tc.desc: PreMigrateUIDList with duplicate values returns ERR_MIGRATION_UID_DUPLICATED.
+ * @tc.type: FUNC
+ */
+HWTEST_F(MigrateInstalledBundlesTest, PreMigrateUIDList003, TestSize.Level1)
+{
+    int32_t ret = AccessTokenKit::PreMigrateUIDList({ 200001, 200001 });
+    bool pass = ret == AccessTokenError::ERR_MIGRATION_UID_DUPLICATED ||
+                ret == AccessTokenError::ERR_MIGRATION_COMPLETED;
+    EXPECT_TRUE(pass);
+}
+
+
 static constexpr size_t MAX_MIGRATED_INFO_SIZE = 50;
 /**
  * @tc.name: MigrateInstalledBundles001
@@ -130,6 +144,20 @@ HWTEST_F(MigrateInstalledBundlesTest, MigrateInstalledBundles003, TestSize.Level
 }
 
 /**
+ * @tc.name: MigrateInstalledBundles004
+ * @tc.desc: MigrateInstalledBundles after FinishMigration returns ERR_MIGRATION_COMPLETED with empty results.
+ * @tc.type: FUNC
+ */
+HWTEST_F(MigrateInstalledBundlesTest, MigrateInstalledBundles004, TestSize.Level1)
+{
+    std::vector<MigratedInfo> emptyList;
+    std::vector<BundleMigrateResult> results;
+    (void)AccessTokenKit::FinishMigration();
+    int32_t ret = AccessTokenKit::MigrateInstalledBundles(emptyList, results);
+    EXPECT_EQ(ret, ERR_MIGRATION_COMPLETED);
+}
+
+/**
 * @tc.name: FinishMigration001
 * @tc.desc: FinishMigration returns RET_SUCCESS or ERR_MIGRATION_COMPLETED on first call via IPC to service.
 * @tc.type: FUNC
@@ -139,6 +167,7 @@ HWTEST_F(MigrateInstalledBundlesTest, FinishMigration001, TestSize.Level1)
     int32_t ret = AccessTokenKit::FinishMigration();
     bool pass = ret == RET_SUCCESS || ret == ERR_MIGRATION_COMPLETED;
     EXPECT_TRUE(pass);
+    EXPECT_EQ(AccessTokenKit::FinishMigration(), ERR_MIGRATION_COMPLETED);
 }
 } // namespace AccessToken
 } // namespace Security

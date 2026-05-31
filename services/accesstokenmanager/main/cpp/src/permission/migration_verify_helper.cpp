@@ -139,7 +139,7 @@ int32_t MigrationVerifyHelper::DoBundleInfoOperations(const BundleSignInfo& bund
         GenericValues cond;
         cond.Put(TokenFiledConst::FIELD_BUNDLE_NAME, bundleSignInfo.bundleName);
         cond.Put(TokenFiledConst::FIELD_PATH, value.GetString(TokenFiledConst::FIELD_PATH));
-        cond.Put(TokenFiledConst::FIELD_MODULE_NAME, "#" + std::to_string(i));
+        cond.Put(TokenFiledConst::FIELD_MODULE_NAME, GetPlaceholderModuleName(i));
         conditions.emplace_back(cond);
     }
     ret = AccessTokenDbOperator::Modify(
