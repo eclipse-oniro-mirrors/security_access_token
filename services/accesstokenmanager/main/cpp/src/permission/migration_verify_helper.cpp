@@ -123,28 +123,30 @@ int32_t MigrationVerifyHelper::BuildBundleSignInfo(const MigratedInfoIdl& migrat
     return RET_SUCCESS;
 }
 
-int32_t MigrationVerifyHelper::PrepareBundleInfoOperations(const BundleSignInfo& bundleSignInfo)
+int32_t MigrationVerifyHelper::DoBundleInfoOperations(const BundleSignInfo& bundleSignInfo)
 {
-    GenericValues delCondition;
-    delCondition.Put(TokenFiledConst::FIELD_BUNDLE_NAME, bundleSignInfo.bundleName);
-    DelInfo delInfo;
-    delInfo.delType = AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO;
-    delInfo.delValue = delCondition;
-    delInfoVec_.emplace_back(delInfo);
-
     std::vector<GenericValues> addValues;
     int32_t ret = bundleSignInfo.ToGenericValues(addValues);
     if (ret != RET_SUCCESS) {
-        LOGW(ATM_DOMAIN, ATM_TAG, "AppendBundleSignDbInfo failed for %{public}s, ret=%{public}d.",
+        LOGW(ATM_DOMAIN, ATM_TAG, "BundleSignInfo.ToGenericValues failed for %{public}s, ret=%{public}d.",
             bundleSignInfo.bundleName.c_str(), ret);
         return ret;
     }
-
-    if (!addValues.empty()) {
-        AddInfo addInfo;
-        addInfo.addType = AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO;
-        addInfo.addValues = addValues;
-        addInfoVec_.emplace_back(addInfo);
+    std::vector<GenericValues> conditions;
+    conditions.reserve(addValues.size());
+    for (size_t i = 0;i < addValues.size(); ++i) {
+        const auto& value = addValues[i];
+        GenericValues cond;
+        cond.Put(TokenFiledConst::FIELD_BUNDLE_NAME, bundleSignInfo.bundleName);
+        cond.Put(TokenFiledConst::FIELD_PATH, value.GetString(TokenFiledConst::FIELD_PATH));
+        cond.Put(TokenFiledConst::FIELD_MODULE_NAME, "#" + std::to_string(i));
+        conditions.emplace_back(cond);
+    }
+    ret = AccessTokenDbOperator::Modify(
+        AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO, addValues, conditions);
+    if (ret != RET_SUCCESS) {
+        LOGW(ATM_DOMAIN, ATM_TAG, "Replace sign info failed for %{public}s, ret=%{public}d.",
+            bundleSignInfo.bundleName.c_str(), ret);
     }
     return RET_SUCCESS;
 }
@@ -191,15 +193,8 @@ void MigrationVerifyHelper::PrepareHapInfoOperations(const BundleParam& param, c
 
         GenericValues condition;
         condition.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(hapInfo.tokenID));
-        DelInfo hapDelInfo;
-        hapDelInfo.delType = AtmDataType::ACCESSTOKEN_HAP_INFO;
-        hapDelInfo.delValue = condition;
-        delInfoVec_.emplace_back(hapDelInfo);
-
-        AddInfo hapAddInfo;
-        hapAddInfo.addType = AtmDataType::ACCESSTOKEN_HAP_INFO;
-        hapAddInfo.addValues = hapAddValues;
-        addInfoVec_.emplace_back(hapAddInfo);
+        delInfoVec_.emplace_back(DelInfo {AtmDataType::ACCESSTOKEN_HAP_INFO, condition});
+        addInfoVec_.emplace_back(AddInfo {AtmDataType::ACCESSTOKEN_HAP_INFO, hapAddValues});
         LOGI(ATM_DOMAIN, ATM_TAG, "Fixed hap info for tokenId=%{public}u.", hapInfo.tokenID);
     }
 }
@@ -222,7 +217,7 @@ int32_t MigrationVerifyHelper::PersistDbInfo(const MigratedInfoIdl& migratedInfo
         return ret;
     }
     
-    ret = PrepareBundleInfoOperations(bundleSignInfo);
+    ret = DoBundleInfoOperations(bundleSignInfo);
     if (ret != RET_SUCCESS) {
         return ret;
     }
@@ -231,7 +226,7 @@ int32_t MigrationVerifyHelper::PersistDbInfo(const MigratedInfoIdl& migratedInfo
 
     ret = AccessTokenDbOperator::DeleteAndInsertValues(delInfoVec_, addInfoVec_);
     if (ret != RET_SUCCESS) {
-        LOGW(ATM_DOMAIN, ATM_TAG, "Sign info DB persist failed for %{public}s, ret=%{public}d.",
+        LOGW(ATM_DOMAIN, ATM_TAG, "Hap info DB persist failed for %{public}s, ret=%{public}d.",
             migratedInfo.bundleName.c_str(), ret);
     }
     return ret;
@@ -248,11 +243,14 @@ int32_t MigrationVerifyHelper::AddKernelData(const BundleNoCachedInfo& noCachedI
         kernelTask = nullptr;
         return RET_SUCCESS;
     }
+    std::vector<HapTokenInfo> hapInfoCache;
+    hapInfoCache.reserve(cachedInfos.size());
     std::vector<SpmDataParam> params;
     params.reserve(cachedInfos.size());
     for (size_t i = 0; i < cachedInfos.size(); ++i) {
-        HapTokenInfo hapInfo = cachedInfos[i]->GetHapInfoBasic();
-        params.emplace_back(SpmDataParam { hapInfo, noCachedInfo, permBriefDataPerToken[i], extendPermList });
+        hapInfoCache.emplace_back(cachedInfos[i]->GetHapInfoBasic());
+        params.emplace_back(SpmDataParam { hapInfoCache.back(), noCachedInfo,
+            permBriefDataPerToken[i], extendPermList });
     }
 
     kernelTask = std::make_unique<AddSpmDataTask>(params);
@@ -289,19 +287,11 @@ void MigrationVerifyHelper::FixBriefPermDataPerToken(const VerifiedMigrationBund
             GenericValues delCondition;
             delCondition.Put(TokenFiledConst::FIELD_TOKEN_ID,
                 static_cast<int32_t>(hapInfo.tokenID));
-            DelInfo permDelInfo;
-            permDelInfo.delType = AtmDataType::ACCESSTOKEN_PERMISSION_STATE;
-            permDelInfo.delValue = delCondition;
-            delInfoVec.emplace_back(permDelInfo);
+            delInfoVec.emplace_back(DelInfo {AtmDataType::ACCESSTOKEN_PERMISSION_STATE, delCondition});
 
             std::vector<GenericValues> newPermValues =
                 BuildPermStateValues(hapInfo.tokenID, existingData);
-            if (!newPermValues.empty()) {
-                AddInfo permAddInfo;
-                permAddInfo.addType = AtmDataType::ACCESSTOKEN_PERMISSION_STATE;
-                permAddInfo.addValues = newPermValues;
-                addInfoVec.emplace_back(permAddInfo);
-            }
+            addInfoVec.emplace_back(AddInfo {AtmDataType::ACCESSTOKEN_PERMISSION_STATE, newPermValues});
         }
         fixedPermBriefPerToken.emplace_back(std::move(existingData));
     }
