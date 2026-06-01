@@ -14,11 +14,14 @@
  */
 
 #include "accesstoken_id_manager.h"
+#include <atomic>
 #include <cinttypes>
+#include <cstdlib>
 #include <mutex>
 #include "access_token_error.h"
 #include "accesstoken_common_log.h"
 #include "data_validator.h"
+#include "parameter.h"
 #include "random.h"
 #include "spm_setproc.h"
 #include "tokenid_attributes.h"
@@ -31,6 +34,31 @@ std::recursive_mutex g_instanceMutex;
 constexpr int32_t BUNDLE_ID_MIN = 10000;
 constexpr int32_t BUNDLE_ID_MAX = 65535;
 constexpr int32_t UID_TRANSFORM_DIVISOR = 200000;
+static std::atomic<int32_t> g_bundleIdMin = -1;
+}
+
+static int32_t GetBundleIdMin()
+{
+    int32_t expectedValue = g_bundleIdMin.load();
+    if (expectedValue != -1) {
+        return expectedValue;
+    }
+
+    constexpr int32_t VALUE_MAX_LEN = 32;
+    char value[VALUE_MAX_LEN] = {0};
+    int32_t ret = GetParameter("const.product.baseappid", "", value, VALUE_MAX_LEN - 1);
+    if (ret <= 0) {
+        g_bundleIdMin = BUNDLE_ID_MIN;
+        return g_bundleIdMin.load();
+    }
+
+    int32_t bundleIdMin = static_cast<int32_t>(std::atoll(value));
+    if (bundleIdMin < BUNDLE_ID_MIN || bundleIdMin >= BUNDLE_ID_MAX) {
+        g_bundleIdMin = BUNDLE_ID_MIN;
+    } else {
+        g_bundleIdMin = bundleIdMin;
+    }
+    return g_bundleIdMin.load();
 }
 
 ATokenTypeEnum AccessTokenIDManager::GetTokenIdType(AccessTokenID id)
@@ -191,9 +219,9 @@ int32_t AccessTokenIDManager::AllocUid(int32_t localId, int32_t& outUid)
     }
 #endif
     std::unique_lock<std::mutex> lock(bundleIdLock_);
-    int32_t startId = bundleIdSet_.empty() ? BUNDLE_ID_MIN : (*bundleIdSet_.rbegin() + 1);
+    int32_t startId = bundleIdSet_.empty() ? GetBundleIdMin() : (*bundleIdSet_.rbegin() + 1);
     if (startId > BUNDLE_ID_MAX) {
-        startId = BUNDLE_ID_MIN;
+        startId = GetBundleIdMin();
     }
 
     // Two-pass scan: [startId, BUNDLE_ID_MAX] then wrap [BUNDLE_ID_MIN, startId-1]

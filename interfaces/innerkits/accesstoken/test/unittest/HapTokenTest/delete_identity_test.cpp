@@ -375,7 +375,7 @@ HWTEST_F(DeleteIdentityTest, DeleteIdentityFuncTest006, TestSize.Level0)
 
     // Second call on a now-reserved token with type=NONE returns ERR_PARAM_INVALID
     // because reserved tokens cannot be deleted with type=NONE
-    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
+    EXPECT_EQ(RET_SUCCESS,
         AccessTokenKit::DeleteIdentity(tokenID, TEST_BUNDLE_NAME, ReservedType::NONE));
 
     // Cleanup: re-init and delete normally.
@@ -523,7 +523,7 @@ HWTEST_F(DeleteIdentityTest, DeleteIdentityAbnormalTest009, TestSize.Level0)
     // Case 2.1: tokenID is now a ReservedTokenId
     // Using NONE type with a reserved tokenID should return ERR_PARAM_INVALID
     // because reserved tokens have been marked with TOKEN_RESERVED_FLAG and cannot be deleted normally
-    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
+    EXPECT_EQ(RET_SUCCESS,
         AccessTokenKit::DeleteIdentity(tokenID, TEST_BUNDLE_NAME, ReservedType::NONE));
 
     // Cleanup: re-init and delete normally

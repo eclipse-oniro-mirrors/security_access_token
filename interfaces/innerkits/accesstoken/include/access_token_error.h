@@ -43,7 +43,6 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-
 typedef enum {
     TICKET_CODE_BASE = 0X19 << 12,
 } ExtErrorType;

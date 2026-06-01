@@ -913,7 +913,7 @@ int32_t AccessTokenInfoManager::DeleteIdentityInner(std::shared_ptr<HapTokenInfo
 int32_t AccessTokenInfoManager::DeleteIdentity(AccessTokenID id, const std::string &bundleName, ReservedType type)
 {
     // 0. Check Token Type
-    ATokenTypeEnum tokenType = AccessTokenIDManager::GetInstance().GetTokenIdType(id);
+    ATokenTypeEnum tokenType = TokenIDAttributes::GetTokenIdTypeEnum(id);
     if (tokenType != TOKEN_HAP) {
         LOGC(ATM_DOMAIN, ATM_TAG, "Token %{public}u is not hap.", id);
         return ERR_PARAM_INVALID;

@@ -1416,12 +1416,26 @@ int32_t AccessTokenManagerService::DeleteIdentityCore(AccessTokenID tokenID, con
             return AccessTokenError::ERR_PARAM_INVALID;
         }
         // Delete all reserved tokens for this bundle and package info
-        return DeleteBundleManager::GetInstance().DeleteBundleAndAllTokens(bundleName);
+        std::vector<AccessTokenID> activeTokens;
+        int32_t ret = DeleteBundleManager::GetInstance().DeleteBundleAndAllTokens(bundleName, activeTokens);
+        if (ret != RET_SUCCESS) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to delete bundle %{public}s, err %{public}d.",
+                bundleName.c_str(), ret);
+            return ret;
+        }
+
+        // Clean up cache for active tokens
+        for (const auto& tokenId : activeTokens) {
+            AccessTokenInfoManager::GetInstance().CommitDeleteHapCache(tokenId, bundleName);
+            // Release TokenId for active tokens
+            AccessTokenIDManager::GetInstance().ReleaseTokenId(tokenId);
+        }
+        return RET_SUCCESS;
     }
 
     // Case 2: tokenID is valid
     // Check if it's a HAP token
-    if (this->GetTokenType(tokenID) != TOKEN_HAP) {
+    if (TokenIDAttributes::GetTokenIdTypeEnum(tokenID) != TOKEN_HAP) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Token %{public}u is not a HAP token.", tokenID);
         return AccessTokenError::ERR_PARAM_INVALID;
     }

@@ -582,7 +582,9 @@ HWTEST_F(DeleteIdentityTest, DeleteBundleAndAllTokens001, TestSize.Level0)
 #endif
 
     // Delete all reserved tokens for the bundle
-    int32_t ret = DeleteBundleManager::GetInstance().DeleteBundleAndAllTokens(bundleName);
+    std::vector<AccessTokenID> activeTokens;
+    int32_t ret = DeleteBundleManager::GetInstance().DeleteBundleAndAllTokens(
+        bundleName, activeTokens);
     EXPECT_EQ(RET_SUCCESS, ret);
 
     // === Verify complete deletion from database ===
@@ -648,7 +650,8 @@ HWTEST_F(DeleteIdentityTest, DeleteBundleAndAllTokens002, TestSize.Level0)
     MarkTokenAsReservedDirectly(token2, ReservedType::RESERVED_IDENTITY);
 
     // Delete all tokens for the bundle (both active and reserved)
-    int32_t ret = DeleteBundleManager::GetInstance().DeleteBundleAndAllTokens(bundleName);
+    std::vector<AccessTokenID> activeTokens;
+    int32_t ret = DeleteBundleManager::GetInstance().DeleteBundleAndAllTokens(bundleName, activeTokens);
     EXPECT_EQ(RET_SUCCESS, ret);
 
     // === Verify HAP_PACKAGE_INFO is deleted ===
@@ -841,7 +844,7 @@ HWTEST_F(DeleteIdentityTest, DeleteIdentity003, TestSize.Level0)
  */
 HWTEST_F(DeleteIdentityTest, DeleteIdentity004, TestSize.Level0)
 {
-    AccessTokenID fakeTokenID = 888888;
+     AccessTokenID fakeTokenID = 805920561; //805920561 is a native tokenId
     std::string bundleName = "test.bundle.name";
 
     int32_t ret = AccessTokenInfoManager::GetInstance().DeleteIdentity(
@@ -912,7 +915,8 @@ HWTEST_F(DeleteIdentityTest, DeleteIdentity006, TestSize.Level0)
 
     // DeleteIdentity with INVALID_TOKENID is not yet implemented.
     // Use DeleteBundleAndAllTokens instead.
-    int32_t ret = DeleteBundleManager::GetInstance().DeleteBundleAndAllTokens(bundleName);
+    std::vector<AccessTokenID> activeTokens;
+    int32_t ret = DeleteBundleManager::GetInstance().DeleteBundleAndAllTokens(bundleName, activeTokens);
     EXPECT_EQ(RET_SUCCESS, ret);
 
     // === Verify complete deletion from database ===
@@ -1119,7 +1123,9 @@ HWTEST_F(DeleteIdentityTest, MultipleInstances001, TestSize.Level0)
     }
 
     // Delete all reserved tokens for the bundle
-    int32_t ret = DeleteBundleManager::GetInstance().DeleteBundleAndAllTokens(bundleName);
+    std::vector<AccessTokenID> activeTokens;
+    int32_t ret = DeleteBundleManager::GetInstance().DeleteBundleAndAllTokens(
+        bundleName, activeTokens);
     EXPECT_EQ(RET_SUCCESS, ret);
 
     // Verify all tokens removed from reserved set
@@ -1459,7 +1465,8 @@ HWTEST_F(DeleteIdentityTest, DeleteIdentityInvalidTokenIDWithPackageInfo001, Tes
     EXPECT_TRUE(AccessTokenIDManager::GetInstance().IsReservedTokenId(token2));
 
     // Delete all reserved tokens for the bundle using DeleteBundleAndAllTokens
-    int32_t ret = DeleteBundleManager::GetInstance().DeleteBundleAndAllTokens(bundleName);
+    std::vector<AccessTokenID> activeTokens;
+    int32_t ret = DeleteBundleManager::GetInstance().DeleteBundleAndAllTokens(bundleName, activeTokens);
     EXPECT_EQ(RET_SUCCESS, ret);
 
     // === Verify all tokens are deleted ===
