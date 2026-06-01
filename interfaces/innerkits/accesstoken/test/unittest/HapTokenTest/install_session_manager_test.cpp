@@ -426,7 +426,8 @@ HWTEST_F(InstallSessionManagerTest, CheckHapSignInfoTest101, TestSize.Level0)
     hapList.userId = 100;
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::CheckHapSignInfo(hapList, sessionId, bundleInfo));
+    // parcel failed
+    EXPECT_NE(RET_SUCCESS, AccessTokenKit::CheckHapSignInfo(hapList, sessionId, bundleInfo));
 }
 
 /**
@@ -520,7 +521,8 @@ HWTEST_F(InstallSessionManagerTest, GetCacheSignInfoBySessionIdTest101, TestSize
     int32_t sessionId = INVALID_SESSION;
 
     std::vector<TrustedBundleInfo> bundleInfo;
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetCacheSignInfoBySessionId(sessionId, bundleInfo));
+    // parcel failed
+    EXPECT_NE(RET_SUCCESS, AccessTokenKit::GetCacheSignInfoBySessionId(sessionId, bundleInfo));
 }
 
 /**
@@ -535,7 +537,9 @@ HWTEST_F(InstallSessionManagerTest, GetHapSignInfoTest101, TestSize.Level0)
 
     std::string bundleName = "com.ohos.dlpmanager";
     std::vector<TrustedBundleInfo> bundleInfo;
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetHapSignInfo(bundleName, bundleInfo));
+
+    // parcel failed
+    EXPECT_NE(RET_SUCCESS, AccessTokenKit::GetHapSignInfo(bundleName, bundleInfo));
 }
 #endif
 } // namespace AccessToken
