@@ -447,6 +447,30 @@ int32_t HapSignVerifyManager::CheckPermissionRequestValid(
     }
     return RET_SUCCESS;
 }
+
+void HapSignVerifyManager::ConvertTrustedBundleInfo(
+    const std::vector<TrustedBundleInfoInner>& bundleInfos, std::vector<TrustedBundleInfo>& bundleInfo) const
+{
+    for (const auto& infoInner : bundleInfos) {
+        if (infoInner.bootstrapInfo != nullptr) {
+            TrustedBundleInfo info;
+            info.profileData.provisionRaw = infoInner.bootstrapInfo->profileJsonRaw;
+            info.profileData.profileBlockLength = infoInner.provisionInfo.profileBlockLength;
+            if (infoInner.provisionInfo.profileBlock != nullptr && infoInner.provisionInfo.profileBlockLength > 0) {
+                info.profileData.profileBlock.assign(infoInner.provisionInfo.profileBlock.get(),
+                    infoInner.provisionInfo.profileBlock.get() + infoInner.provisionInfo.profileBlockLength);
+            }
+            info.profileData.appId = infoInner.provisionInfo.appId;
+            info.profileData.fingerprint = infoInner.provisionInfo.fingerprint;
+            info.profileData.organization = infoInner.provisionInfo.organization;
+            info.profileData.isOpenHarmony = infoInner.provisionInfo.isOpenHarmony;
+            info.profileData.isEnterpriseResigned = infoInner.provisionInfo.isEnterpriseResigned;
+            info.moduleInfo = infoInner.bootstrapInfo->moduleRaw;
+            info.sharedFiles = infoInner.bootstrapInfo->shareFilesRaw;
+            bundleInfo.emplace_back(info);
+        }
+    }
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

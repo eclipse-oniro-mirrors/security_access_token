@@ -61,6 +61,7 @@ public:
     void GetAllHapTokenId(std::unordered_set<AccessTokenID>& tokenIdList);
     void GetAllNativeTokenId(std::unordered_set<AccessTokenID>& tokenIdList);
     std::shared_ptr<HapTokenInfoInner> GetHapTokenInfoInner(AccessTokenID id);
+    std::shared_ptr<HapTokenInfoInner> GetHapTokenInfoInnerFromCache(AccessTokenID id);
     int GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo& infoParcel);
     int GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfoBase& info);
     int AllocAccessTokenIDEx(const HapInfoParams& info, AccessTokenID tokenId, AccessTokenIDEx& tokenIdEx);

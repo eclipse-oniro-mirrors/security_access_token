@@ -34,6 +34,7 @@
 #include "accesstoken_callbacks.h"
 #include "permission_state_full.h"
 #include "perm_state_change_callback_customize.h"
+#include "proxy_death_callback.h"
 #ifdef TOKEN_SYNC_ENABLE
 #include "token_sync_kit_interface.h"
 #endif // TOKEN_SYNC_ENABLE
@@ -144,6 +145,15 @@ public:
         std::vector<PermissionStatus>& permissionInfoList, bool onlyHap);
     int32_t QueryStatusByTokenID(const std::vector<AccessTokenID>& tokenIDList,
         std::vector<PermissionStatus>& permissionInfoList);
+    int32_t CheckHapSignInfo(const BundleHapList& list, int32_t& sessionId,
+        std::vector<TrustedBundleInfo>& bundleInfo);
+    int32_t CheckHapPermissionInfo(int32_t sessionId, InstallTypeEnum type, HapInfoCheckResult& result);
+    int32_t PrepareHapIdentity(int32_t& sessionId, const HapBaseInfo& info,
+        const BundlePolicy& policy, Identity& identity);
+    int32_t UpdateHapPolicy(int32_t sessionId, int32_t tokenId, const BundlePolicy& policy);
+    int32_t FinishInstall(int32_t sessionId, bool isSuccess, const std::map<std::string, std::string>& modulePathMap);
+    int32_t GetCacheSignInfoBySessionId(int32_t sessionId, std::vector<TrustedBundleInfo>& bundleInfo);
+    int32_t GetHapSignInfo(const std::string& bundleName, std::vector<TrustedBundleInfo>& bundleInfo);
     int32_t GetCliPermissionRequestInfo(
         const std::string& agentID, const std::vector<CliInfo>& cliInfoList, PermissionDialogResult& result);
     int32_t GetSkillPermissionRequestInfo(
@@ -163,6 +173,7 @@ private:
         const std::shared_ptr<PermStateChangeCallbackCustomize>& customizedCb,
         sptr<PermissionStateChangeCallback>& callback);
     void ReregisterTokenSyncCallback();
+    sptr<ProxyDeathCallBack> GetAnonyStub();
 
     DISALLOW_COPY_AND_MOVE(AccessTokenManagerClient);
     std::mutex proxyMutex_;
@@ -179,6 +190,9 @@ private:
     std::shared_ptr<TokenSyncKitInterface> syncCallbackImpl_ = nullptr;
     sptr<TokenSyncCallback> tokenSyncCallback_ = nullptr;
 #endif // TOKEN_SYNC_ENABLE
+
+    sptr<ProxyDeathCallBack> anonyStub_ = nullptr;
+    std::mutex stubMutex_;
 };
 } // namespace AccessToken
 } // namespace Security

@@ -119,6 +119,64 @@ public:
      */
     static FullTokenID AllocLocalTokenID(const std::string& remoteDeviceID, AccessTokenID remoteTokenID);
     /**
+     * @brief Check hap sign info.
+     * @param list hap list to be checked
+     * @param sessionId session id
+     * @param bundleInfo trusted bundle info list
+     * @return error code, see access_token_error.h
+     */
+    static int32_t CheckHapSignInfo(const BundleHapList& list, int32_t& sessionId,
+        std::vector<TrustedBundleInfo>& bundleInfo);
+    /**
+     * @brief Check hap sign info.
+     * @param sessionId session id
+     * @param type install type
+     * @param result hap info check result
+     * @return error code, see access_token_error.h
+     */
+    static int32_t CheckHapPermissionInfo(int32_t sessionId, InstallTypeEnum type, HapInfoCheckResult& result);
+    /**
+     * @brief Prepare hap identity.
+     * @param sessionId session id
+     * @param info hap base info
+     * @param policy bundle policy
+     * @param identity hap identity
+     * @return error code, see access_token_error.h
+     */
+    static int32_t PrepareHapIdentity(int32_t& sessionId, const HapBaseInfo& info,
+        const BundlePolicy& policy, Identity& identity);
+    /**
+     * @brief Update hap policy.
+     * @param sessionId session id
+     * @param tokenId token id
+     * @param policy bundle policy
+     * @return error code, see access_token_error.h
+     */
+    static int32_t UpdateHapPolicy(int32_t sessionId, int32_t tokenId, const BundlePolicy& policy);
+    /**
+     * @brief Finish install.
+     * @param sessionId session id
+     * @param isSuccess is install success
+     * @param modulePathMap module path map
+     * @return error code, see access_token_error.h
+     */
+    static int32_t FinishInstall(int32_t sessionId, bool isSuccess,
+        const std::map<std::string, std::string>& modulePathMap);
+    /**
+     * @brief Get cache sign info by session id.
+     * @param sessionId session id
+     * @param bundleInfo trusted bundle info list
+     * @return error code, see access_token_error.h
+     */
+    static int32_t GetCacheSignInfoBySessionId(int32_t sessionId, std::vector<TrustedBundleInfo>& bundleInfo);
+    /**
+     * @brief Get cache sign info by bundle name.
+     * @param bundleName bundle name
+     * @param bundleInfo trusted bundle info list
+     * @return error code, see access_token_error.h
+     */
+    static int32_t GetHapSignInfo(const std::string& bundleName, std::vector<TrustedBundleInfo>& bundleInfo);
+    /**
      * @brief Update hap token info.
      * @param tokenIdEx union AccessTokenIDEx quote, see access_token.h
      * @param isSystemApp is system app or not

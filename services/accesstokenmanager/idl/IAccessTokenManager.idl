@@ -41,6 +41,9 @@ sequenceable OHOS.Security.AccessToken.CliInfoResultParcel;
 sequenceable OHOS.Security.AccessToken.SecCompEnhanceDataParcel;
 sequenceable OHOS.Security.AccessToken.SkillInfoResultParcel;
 
+rawdata OHOS.Security.AccessToken.BundleInfosRawdata;
+rawdata OHOS.Security.AccessToken.CheckHapSignResultRawdata;
+
 import IdlCommon;
 
 option_stub_hooks on;
@@ -116,6 +119,15 @@ interface OHOS.Security.AccessToken.IAccessTokenManager{
     [ipccode 77] void FinishMigration();
     [ipccode 80] void VerifyAccessToken([in] unsigned int tokenID, [in] List<String> permissionList, [out] List<int> permStateList);  
     [ipccode 81] void GetSelfPermissionStatus([in] String permissionName, [out] int status);
+
+    [ipccode 82] void CheckHapSignInfo([in] BundleHapListIdl list, [in] IRemoteObject cb, [out] CheckHapSignResultRawdata checkResult);
+    [ipccode 83] void PrepareHapIdentity([inout] int sessionId, [in] HapBaseInfoIdl info, [in] BundlePolicyIdl policy, [in] IRemoteObject cb, [out] IdentityIdl identity);
+    [ipccode 84] void UpdateHapPolicy([in] int sessionId, [in] unsigned int tokenId, [in] BundlePolicyIdl policy);
+    [ipccode 85] void FinishInstall([in] int sessionId, [in] boolean isSuccess, [in] OrderedMap<String, String> modulePathMap);
+    [ipccode 86] void GetCacheSignInfoBySessionId([in] int sessionId, [out] BundleInfosRawdata bundleInfos);
+    [ipccode 87] void GetHapSignInfo([in] String bundleName, [out] BundleInfosRawdata bundleInfos);
+    [ipccode 88] void CheckHapPermissionInfo([in] int sessionId, [in] InstallTypeEnumIdl type, [out] HapInfoCheckResultIdl resultInfoIdl);
+
     [ipccode 101, macrodef SECURITY_COMPONENT_ENHANCE_ENABLE, oneway] void RegisterSecCompEnhance([in] SecCompEnhanceDataParcel enhanceParcel);
     [ipccode 102, macrodef SECURITY_COMPONENT_ENHANCE_ENABLE] void UpdateSecCompEnhance([in] int pid, [in] unsigned int seqNum);
     [ipccode 103, macrodef SECURITY_COMPONENT_ENHANCE_ENABLE] void GetSecCompEnhance([in] int pid, [out] SecCompEnhanceDataParcel enhanceParcel);

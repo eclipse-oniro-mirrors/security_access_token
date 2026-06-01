@@ -335,6 +335,15 @@ typedef enum TypePermissionRulesEnum {
 } PermissionRulesEnum;
 
 /**
+ * @brief InstallType
+ */
+typedef enum TypeInstallTypeEnum {
+    TYPE_INSTALL = 0,
+    TYPE_REPLACE,
+    TYPE_MERGE
+} InstallTypeEnum;
+
+/**
  * @brief Permission change registration type
  */
 typedef enum RegisterPermissionChangeType {
