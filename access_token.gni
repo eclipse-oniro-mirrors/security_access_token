@@ -31,7 +31,7 @@ declare_args() {
   access_token_with_distributed_capability = true
   access_token_enhance_capability = true
   access_token_enable_manual_test = false
-  access_token_enable_spm = false
+  access_token_enable_spm = true
 }
 
 # External dependencies for each feature flag
