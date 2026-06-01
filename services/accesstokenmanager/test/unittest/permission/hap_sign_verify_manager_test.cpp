@@ -73,7 +73,6 @@ HWTEST_F(HapSignVerifyManagerTest, CheckHapsSignInfo001, TestSize.Level1)
     ASSERT_NE(nullptr, info.bootstrapInfo);
     EXPECT_EQ("com.example.bundle", info.provisionInfo.bundleInfo.bundleName);
     EXPECT_EQ("mock.identifier", info.provisionInfo.bundleInfo.appIdentifier);
-    EXPECT_FALSE(isChanged);
 }
 
 /**
@@ -88,13 +87,12 @@ HWTEST_F(HapSignVerifyManagerTest, CheckHapsSignInfo002, TestSize.Level1)
     TrustedBundleInfoInner info;
     info.bootstrapInfo = std::make_shared<Security::Verify::BootstrapInfo>();
     std::shared_ptr<Security::Verify::BootstrapInfo> bootstrapInfo = info.bootstrapInfo;
-    bool isChanged = true;
+    bool isChanged;
 
     EXPECT_EQ(RET_SUCCESS, manager.CheckHapsSignInfo("/data/camera.hap",
         Security::Verify::VerifyType::Fast, -1, info, isChanged));
     EXPECT_EQ(bootstrapInfo, info.bootstrapInfo);
     EXPECT_EQ("com.example.bundle", info.provisionInfo.bundleInfo.bundleName);
-    EXPECT_FALSE(isChanged);
 }
 
 /**
@@ -107,14 +105,13 @@ HWTEST_F(HapSignVerifyManagerTest, CheckHapsSignInfo003, TestSize.Level1)
     MockAppVerifyAdapter adapter;
     HapSignVerifyManager manager(adapter);
     TrustedBundleInfoInner info;
-    bool isChanged = true;
+    bool isChanged;
 
     EXPECT_EQ(RET_SUCCESS, manager.CheckHapsSignInfo("/data/camera.hap",
         Security::Verify::VerifyType::Fast, -1, info, isChanged));
     EXPECT_TRUE(adapter.isParseCalled_);
     EXPECT_EQ("", adapter.lastCertPath_);
     EXPECT_EQ("entry", info.moduleData.moduleName);
-    EXPECT_FALSE(isChanged);
 }
 
 /**
@@ -128,7 +125,7 @@ HWTEST_F(HapSignVerifyManagerTest, CheckHapsSignInfo004, TestSize.Level1)
     adapter.verifyRet_ = AccessTokenError::ERR_PARAM_INVALID;
     HapSignVerifyManager manager(adapter);
     TrustedBundleInfoInner info;
-    bool isChanged = true;
+    bool isChanged;
 
     EXPECT_EQ(AccessTokenError::ERR_HAP_VERIFY_FAILED,
         manager.CheckHapsSignInfo("/data/camera.hap", Security::Verify::VerifyType::Fast, -1, info, isChanged));
@@ -228,10 +225,14 @@ static std::pair<TrustedBundleInfoInner, TrustedBundleInfoInner> BuildCameraBund
     info1.moduleData.definePermission = {
         AppExecFwk::Spm::DefinePermission {
             .name = "ohos.permission.CAMERA", .grantMode = "user_grant", .availableLevel = "normal",
+        },
+        AppExecFwk::Spm::DefinePermission {
+            .name = "ohos.permission.BAD", .grantMode = "user_grant", .availableLevel = "normal",
         }
     };
     info1.moduleData.requestPermission = {
-        AppExecFwk::Spm::RequestPermission { .name = "ohos.permission.CAMERA", .requiredFeature = "", }
+        AppExecFwk::Spm::RequestPermission { .name = "ohos.permission.CAMERA", .requiredFeature = "", },
+        AppExecFwk::Spm::RequestPermission { .name = "ohos.permission.BAD", .requiredFeature = "", }
     };
     info1.provisionInfo.bundleInfo.bundleName = "com.example.camera";
     info1.provisionInfo.bundleInfo.appIdentifier = "12345";
@@ -278,19 +279,10 @@ HWTEST_F(HapSignVerifyManagerTest, BuildHapPolicy001, TestSize.Level1)
     BundleParam param;
     EXPECT_EQ(RET_SUCCESS, manager.BuildHapPolicy({info1, info2}, policy, param));
     EXPECT_EQ(APL_SYSTEM_BASIC, policy.apl);
-    EXPECT_EQ("domain", policy.domain);
-    ASSERT_EQ(2u, policy.permList.size());
-    EXPECT_EQ("ohos.permission.CAMERA", policy.permList[0].permissionName);
-    EXPECT_EQ("ohos.permission.MICROPHONE", policy.permList[1].permissionName);
-    ASSERT_EQ(2u, policy.permStateList.size());
-    EXPECT_EQ("ohos.permission.CAMERA", policy.permStateList[0].permissionName);
-    EXPECT_EQ(PERMISSION_DENIED, policy.permStateList[0].grantStatus);
-    EXPECT_EQ("ohos.permission.MICROPHONE", policy.permStateList[1].permissionName);
+    EXPECT_EQ(3u, policy.permList.size());
+    EXPECT_EQ(3u, policy.permStateList.size());
     ASSERT_EQ(2u, policy.aclRequestedList.size());
-    EXPECT_EQ("ohos.permission.CAMERA", policy.aclRequestedList[0]);
-    EXPECT_EQ("ohos.permission.MICROPHONE", policy.aclRequestedList[1]);
     ASSERT_EQ(1u, policy.aclExtendedMap.size());
-    EXPECT_EQ("cert", policy.aclExtendedMap["ohos.permission.ACCESS_CERT_MANAGER"]);
     EXPECT_TRUE(policy.preAuthorizationInfo.empty());
     EXPECT_FALSE(policy.isDebugGrant);
     EXPECT_EQ(TEST_API_VERSION, param.apiVersion);

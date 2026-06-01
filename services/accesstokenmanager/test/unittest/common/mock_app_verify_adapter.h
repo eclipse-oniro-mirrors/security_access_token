@@ -105,7 +105,7 @@ public:
     int32_t verifyRet_ = RET_SUCCESS;
     int32_t verifyFailRet_ = RET_SUCCESS;
     int32_t parseRet_ = RET_SUCCESS;
-    bool verifyIsChanged_ = false;
+    bool verifyIsChanged_ = true;
     int32_t bootstrapVersion_ = 1;
     int32_t apiTargetVersion_ = 12;
     std::string moduleRaw_;

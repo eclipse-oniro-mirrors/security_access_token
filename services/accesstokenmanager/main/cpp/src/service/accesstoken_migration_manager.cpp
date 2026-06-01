@@ -49,7 +49,7 @@ namespace Security {
 namespace AccessToken {
 const std::string BMS_MIGRATE_COMPLETED = "bms_migrate_completed";
 const std::string SYSTEM_CONFIG_TRUE_VALUE = "1";
-static constexpr uint32_t INVALID_HAP_UID = static_cast<uint32_t>(-1);
+static constexpr int32_t INVALID_HAP_UID = -1;
 static constexpr size_t MAX_MIGRATED_INFO_SIZE = 50;
 static constexpr size_t MAX_UID_LIST_SIZE = 102400;
 
@@ -139,11 +139,11 @@ int32_t AccessTokenMigrationManager::GetCachedTokenInfo(AccessTokenID tokenId, c
 int32_t AccessTokenMigrationManager::CheckCachedUid(const std::shared_ptr<HapTokenInfoInner>& infoPtr,
     int32_t uid)
 {
-    uint32_t cachedUid = infoPtr->GetUid();
-    if ((cachedUid == INVALID_HAP_UID) || (cachedUid == static_cast<uint32_t>(uid))) {
+    int32_t cachedUid = infoPtr->GetUid();
+    if ((cachedUid == INVALID_HAP_UID) || (cachedUid == uid)) {
         return RET_SUCCESS;
     }
-    LOGC(ATM_DOMAIN, ATM_TAG, "Migrate installed bundles failed, cached uid %{public}u differs from migration uid "
+    LOGC(ATM_DOMAIN, ATM_TAG, "Migrate installed bundles failed, cached uid %{public}d differs from migration uid "
         "%{public}d while migrating tokenId %{public}u.", cachedUid, uid, infoPtr->GetTokenID());
     ReportSysCommonEventError(
         static_cast<int32_t>(IAccessTokenManagerIpcCode::COMMAND_MIGRATE_INSTALLED_BUNDLES),
@@ -171,7 +171,7 @@ int32_t AccessTokenMigrationManager::CreateNewTokenInfoForHap(
     hapTokenInfo.userID = hapBaseInfo.userID;
     hapTokenInfo.bundleName = hapBaseInfo.bundleName;
     hapTokenInfo.instIndex = hapBaseInfo.instIndex;
-    hapTokenInfo.uid = static_cast<uint32_t>(uid);
+    hapTokenInfo.uid = uid;
     infoPtr->SetTokenBaseInfo(hapTokenInfo);
     infoPtr->SetMigrated(true);
     return RET_SUCCESS;
