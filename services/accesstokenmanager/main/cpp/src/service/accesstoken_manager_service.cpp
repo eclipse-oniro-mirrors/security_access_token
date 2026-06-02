@@ -1227,6 +1227,7 @@ static void TransferHapPolicy(const HapPolicyParcel& policyIn, HapPolicy& policy
     policyOut.checkIgnore = policyIn.hapPolicy.checkIgnore;
     policyOut.aclExtendedMap = policyIn.hapPolicy.aclExtendedMap;
     policyOut.isDebugGrant = policyIn.hapPolicy.isDebugGrant;
+    policyOut.idType = policyIn.hapPolicy.idType;
 }
 
 static void DumpEventInfo(const HapPolicy& policy, HapDfxInfo& dfxInfo)

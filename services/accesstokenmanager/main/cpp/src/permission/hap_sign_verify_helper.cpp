@@ -33,6 +33,11 @@ namespace {
 constexpr const char* AVAILABLE_LEVEL_SYSTEM_BASIC = "system_basic";
 constexpr const char* AVAILABLE_LEVEL_SYSTEM_CORE = "system_core";
 constexpr const char* GRANT_MODE_SYSTEM_GRANT = "system_grant";
+constexpr const char* TEMP_JIT_ALLOW_PERMISSION = "TEMPJITALLOW";
+constexpr uint32_t PROCESS_OWNERID_APP = 2;
+constexpr uint32_t PROCESS_OWNERID_DEBUG = 3;
+constexpr uint32_t PROCESS_OWNERID_COMPAT = 5;
+constexpr uint32_t PROCESS_OWNERID_APP_TEMP_ALLOW = 10;
 constexpr const char* GRANT_MODE_MANUAL_SETTINGS = "manual_settings";
 constexpr const char* AVAILABLE_TYPE_MDM = "mdm";
 static constexpr uint64_t TOKEN_ID_MASK = 0xffffffff;
@@ -103,6 +108,24 @@ uint64_t HapSignVerifyHelper::BuildOwnerId(const std::string& appIdentifier)
         return 0;
     }
     return ownerId;
+}
+
+uint32_t HapSignVerifyHelper::BuildIdType(bool isDebug, const std::string& appIdentifier,
+    const std::vector<PermissionStatus>& permStateList)
+{
+    if (isDebug) {
+        return PROCESS_OWNERID_DEBUG;
+    }
+    if (appIdentifier.empty()) {
+        return PROCESS_OWNERID_COMPAT;
+    }
+    if (std::any_of(permStateList.begin(), permStateList.end(),
+        [](const PermissionStatus& status) {
+            return status.permissionName == TEMP_JIT_ALLOW_PERMISSION;
+        })) {
+        return PROCESS_OWNERID_APP_TEMP_ALLOW;
+    }
+    return PROCESS_OWNERID_APP;
 }
 
 AccessTokenID HapSignVerifyHelper::GetTokenId(uint64_t tokenIdEx)

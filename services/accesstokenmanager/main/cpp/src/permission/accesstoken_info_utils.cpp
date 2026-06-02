@@ -119,7 +119,7 @@ void AccessTokenInfoUtils::BuildBundleFullInfo(const BundleParam& param, const H
     innerInfo->tokenIds.clear();
     noCached.apl = policy.apl;
     noCached.distributionType = param.distributionType;
-    noCached.idType = static_cast<uint32_t>(PermissionConstraintCheck::BuildIdType(param, policy));
+    noCached.idType = static_cast<uint32_t>(policy.idType);
     noCached.ownerid = param.appIdentifier;
 
     std::unordered_set<uint32_t> permCodeSet;
