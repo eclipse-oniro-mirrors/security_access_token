@@ -235,6 +235,7 @@ public:
 #endif
         CleanupTestDbArtifacts();
         ClearMigrationCompletedRecord();
+        TestCommon::ResetTestEvironment();
     }
 
     void SetUp() override

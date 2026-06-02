@@ -824,6 +824,47 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapTest016, TestSize.Level0)
 }
 
 /**
+ * @tc.name: InstallHapTest017
+ * @tc.desc: Test install a new hap, with ATOMIC.
+ * @tc.type: FUNC
+ * @tc.require: Issue
+ */
+HWTEST_F(InstallSessionManagerMockTest, InstallHapTest017, TestSize.Level0)
+{
+    std::string path =
+        "/SYSTEM/system_basic/ATOMIC/state:[cam,mic,syswin,getwifi]/acl:[getwifi]/Module001/InstallHapTest017";
+    std::vector<std::string> hapPaths = {path};
+    HapBaseInfo baseInfo;
+    baseInfo.userID = 100;
+    baseInfo.bundleName = "InstallHapTest017";
+    baseInfo.instIndex = 0;
+    BundlePolicy bundlePolicy;
+    bundlePolicy.dlpType = DLP_COMMON;
+    bundlePolicy.isDebugGrant = false;
+    Identity identity;
+    InstallHap(hapPaths, baseInfo, bundlePolicy, identity);
+    AccessTokenID tokenId = static_cast<AccessTokenID>(identity.tokenId);
+
+    EXPECT_TRUE(
+        atManagerService_->VerifyAccessToken(tokenId, "ohos.permission.SYSTEM_FLOAT_WINDOW") == PERMISSION_GRANTED);
+    EXPECT_TRUE(
+        atManagerService_->VerifyAccessToken(tokenId, "ohos.permission.GET_WIFI_INFO_INTERNAL") == PERMISSION_GRANTED);
+
+    EXPECT_TRUE(atManagerService_->VerifyAccessToken(tokenId, "ohos.permission.CAMERA") == PERMISSION_DENIED);
+    int32_t ret = atManagerService_->GrantPermission(tokenId, "ohos.permission.CAMERA", 2, USER_GRANTED_PERM);
+    EXPECT_EQ(ERR_OK, ret);
+    EXPECT_TRUE(atManagerService_->VerifyAccessToken(tokenId, "ohos.permission.CAMERA") == PERMISSION_GRANTED);
+
+    ret = atManagerService_->RevokePermission(tokenId, "ohos.permission.CAMERA", 2, USER_GRANTED_PERM, false);
+    EXPECT_EQ(ERR_OK, ret);
+    EXPECT_TRUE(atManagerService_->VerifyAccessToken(tokenId, "ohos.permission.CAMERA") == PERMISSION_DENIED);
+
+    int32_t sceneCode = 0;
+    ret = atManagerService_->DeleteIdentityCore(tokenId, "InstallHapTest017", ReservedType::NONE, sceneCode);
+    EXPECT_EQ(ERR_OK, ret);
+}
+
+/**
  * @tc.name: InstallHapFailedTest001
  * @tc.desc: Test install a new hap, check hap sign failed.
  * @tc.type: FUNC

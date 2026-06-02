@@ -485,6 +485,16 @@ HWTEST_F(MigrationVerifyHelperTest, BuildPermBriefDataFromPolicy002, TestSize.Le
 
 class MigrationVerifyWorkerTest : public testing::Test {
 public:
+    static void SetUpTestCase()
+    {
+        TestCommon::SetTestEvironment(GetSelfTokenID());
+    }
+
+    static void TearDownTestCase()
+    {
+        TestCommon::ResetTestEvironment();
+    }
+
     void SetUp() override
     {
         // Ensure worker is in a clean state

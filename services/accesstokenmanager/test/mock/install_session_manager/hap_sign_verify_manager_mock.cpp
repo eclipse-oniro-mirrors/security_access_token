@@ -75,6 +75,8 @@ bool FillModuelData(const std::string path, TrustedBundleInfoInner& info)
         info.moduleData.bundleType = AppExecFwk::Spm::BundleType::APP_PLUGIN;
     } else if (path.find("SKILL") != std::string::npos) {
         info.moduleData.bundleType = AppExecFwk::Spm::BundleType::SKILL;
+    } else if (path.find("ATOMIC") != std::string::npos) {
+        info.moduleData.bundleType = AppExecFwk::Spm::BundleType::ATOMIC_SERVICE;
     }
 
     info.provisionInfo.bundleInfo.appIdentifier = bundleName;
