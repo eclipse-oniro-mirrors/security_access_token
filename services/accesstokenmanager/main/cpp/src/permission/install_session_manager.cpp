@@ -1073,7 +1073,8 @@ int32_t InstallSessionManager::PrepareSessionIdentity(int32_t sessionId, const H
     }
     if (!cache.bundleInfos.empty()) {
         auto bundleType = cache.bundleInfos.front().GetBundleType();
-        if (bundleType != static_cast<int32_t>(AppExecFwk::Spm::BundleType::APP)) {
+        if (bundleType != static_cast<int32_t>(AppExecFwk::Spm::BundleType::APP) &&
+            bundleType != static_cast<int32_t>(AppExecFwk::Spm::BundleType::ATOMIC_SERVICE)) {
             LOGE(ATM_DOMAIN, ATM_TAG, "BundleType %{public}d not allow create tokenID",
                 static_cast<int32_t>(bundleType));
             RollbackAll(sessionId);

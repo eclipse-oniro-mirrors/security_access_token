@@ -38,6 +38,7 @@ public:
     static void SetUpTestCase()
     {
         g_selfTokenId = GetSelfTokenID();
+        TestCommon::SetTestEvironment(g_selfTokenId);
         g_mock = new (std::nothrow) MockNativeToken("foundation");
     }
 
@@ -48,6 +49,7 @@ public:
             g_mock = nullptr;
         }
         SetSelfTokenID(g_selfTokenId);
+        TestCommon::ResetTestEvironment();
     }
 };
 
