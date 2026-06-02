@@ -1056,7 +1056,9 @@ HWTEST_F(AccessTokenDenyTest, DeleteIdentityAbnormalTest001, TestSize.Level0)
 
     // Restore UID and clean up
     ASSERT_EQ(0, setuid(uid));
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
+    mock.Grant("ohos.permission.MANAGE_HAP_TOKENID");
+    ASSERT_EQ(RET_SUCCESS,
+        AccessTokenKit::DeleteIdentity(tokenID, info.bundleName, ReservedType::NONE));
 }
 } // namespace AccessToken
 } // namespace Security
