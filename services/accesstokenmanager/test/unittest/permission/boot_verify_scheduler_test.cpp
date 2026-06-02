@@ -538,6 +538,26 @@ HWTEST_F(BootVerifySchedulerTest, RefreshBundleSignInfoMap002, TestSize.Level1)
     EXPECT_EQ(static_cast<uint32_t>(AppExecFwk::Spm::BundleType::ATOMIC_SERVICE),
         scheduler.bundleSignInfoMap_[TEST_BUNDLE_NAME].bundleType[0]);
 }
+
+/**
+ * @tc.name: RefreshBundleSignInfoMap003
+ * @tc.desc: Verify RefreshBundleSignInfoMap correctly loads valid bundle type entries.
+ * @tc.type: FUNC
+ */
+HWTEST_F(BootVerifySchedulerTest, RefreshBundleSignInfoMap003, TestSize.Level1)
+{
+    PrepareVerifyDb(true);
+    GenericValues appServiceFwkValue = BuildBundleSignValue(TEST_BUNDLE_NAME, "entry", TEST_PATH, true,
+        static_cast<int32_t>(AppExecFwk::Spm::BundleType::APP_SERVICE_FWK),
+        BuildPersistData(TEST_BUNDLE_NAME, TEST_BUNDLE_NAME));
+    SetMockDbFindResult(AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO, RET_SUCCESS, {appServiceFwkValue});
+    auto& scheduler = BootVerifyScheduler::GetInstance();
+    EXPECT_EQ(RET_SUCCESS, scheduler.RefreshBundleSignInfoMap());
+    ASSERT_TRUE(scheduler.bundleSignInfoMap_.find(TEST_BUNDLE_NAME) != scheduler.bundleSignInfoMap_.end());
+    ASSERT_EQ(1U, scheduler.bundleSignInfoMap_[TEST_BUNDLE_NAME].bundleType.size());
+    EXPECT_EQ(static_cast<uint32_t>(AppExecFwk::Spm::BundleType::APP_SERVICE_FWK),
+        scheduler.bundleSignInfoMap_[TEST_BUNDLE_NAME].bundleType[0]);
+}
 #endif
 
 /**

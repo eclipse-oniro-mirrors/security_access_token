@@ -574,6 +574,7 @@ HWTEST_F(AccessTokenManagerServiceTest, InitHapTokenTest003, TestSize.Level0)
 HWTEST_F(AccessTokenManagerServiceTest, GetHapIdentityTest001, TestSize.Level0)
 {
     atManagerService_->Initialize();
+    sleep(1); // wait for db init
 
     HapInfoParcel infoParcel;
     infoParcel.hapInfoParameter = g_info;
@@ -609,6 +610,7 @@ HWTEST_F(AccessTokenManagerServiceTest, GetHapIdentityTest001, TestSize.Level0)
 HWTEST_F(AccessTokenManagerServiceTest, GetHapBaseInfoByUidTest001, TestSize.Level0)
 {
     atManagerService_->Initialize();
+    sleep(1); // wait for db init
 
     HapInfoParcel infoParcel;
     infoParcel.hapInfoParameter = g_info;

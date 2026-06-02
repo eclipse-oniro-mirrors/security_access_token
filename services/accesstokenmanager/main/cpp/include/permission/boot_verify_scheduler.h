@@ -48,7 +48,6 @@ struct VerifiedBundleState final {
     bool needUpdateSignInfo = false;
     bool needPersistHapInfo = false;
     bool needPersistPermState = false;
-    bool needPersistExtendPerm = false;
 };
 
 class AddSpmDataTask;
