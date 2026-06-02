@@ -997,6 +997,26 @@ int32_t InstallSessionManager::CheckHapPermissionInfo(
     return RET_SUCCESS;
 }
 
+int32_t InstallSessionManager::GetAppIdFromDb(const std::string& bundleName, std::string& appId)
+{
+    GenericValues conditionValue;
+    conditionValue.Put(TokenFiledConst::FIELD_BUNDLE_NAME, bundleName);
+    std::vector<GenericValues> hapTokenResults;
+    int32_t ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_INFO, conditionValue, hapTokenResults);
+    if (ret != RET_SUCCESS) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Query failed, ret: %{public}d", ret);
+        return ERR_DATABASE_OPERATE_FAILED;
+    }
+
+    if (hapTokenResults.empty()) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Query empty");
+        return ERR_PARAM_INVALID;
+    }
+
+    appId = hapTokenResults[0].GetString(TokenFiledConst::FIELD_APP_ID);
+    return RET_SUCCESS;
+}
+
 int32_t InstallSessionManager::FillInstallPolicy(
     const std::string& bundleName, const BundlePolicy& bundlePolicy, InstallCache& cache)
 {
@@ -1010,7 +1030,7 @@ int32_t InstallSessionManager::FillInstallPolicy(
         for (auto status : cache.policy.permStateList) {
             cache.policy.aclRequestedList.emplace_back(status.permissionName);
         }
-        return RET_SUCCESS;
+        return GetAppIdFromDb(cache.bundleParam.bundleName, cache.bundleParam.appId);
     }
 
     LOGI(ATM_DOMAIN, ATM_TAG, "Kernel not supported, fallback to db verify");
@@ -1297,6 +1317,10 @@ int32_t InstallSessionManager::GetCacheSignInfoBySessionId(
         HapSignVerifyManager::GetInstance().ConvertTrustedBundleInfo(
             std::vector<TrustedBundleInfoInner>(it->second.bundleInfos.begin(),
             it->second.bundleInfos.begin() + it->second.list.hapPaths.size()), bundleInfo);
+    }
+    if (bundleInfo.empty()) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "SessionId %{public}d bundleInfo is empty", sessionId);
+        return ERR_PARAM_INVALID;
     }
     return RET_SUCCESS;
 }
