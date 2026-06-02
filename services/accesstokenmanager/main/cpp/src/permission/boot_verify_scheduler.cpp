@@ -71,7 +71,6 @@ int32_t BootVerifyScheduler::PreVerifyBundle(uint32_t tokenID)
 #else
 namespace {
 constexpr uint32_t VERIFY_THREAD_COUNT = 4;
-constexpr uint32_t SYSTEM_APP_FLAG = 0x0001;
 constexpr int32_t INVALID_UID = -1;
 constexpr AccessTokenID INVALID_TOKEN_ID = 0;
 constexpr uint32_t TOKEN_ID_SHIFT = 32;
@@ -434,10 +433,6 @@ void BootVerifyScheduler::BuildBriefPermDataFromDb(const std::vector<GenericValu
 void BootVerifyScheduler::UpdateBundleVerifyContext(const std::string& bundleName, AccessTokenID tokenId,
     const GenericValues& tokenValue, const std::vector<BriefPermData>& briefPermData)
 {
-    tokenIdAplMap_[static_cast<int32_t>(tokenId)] = {
-        tokenValue.GetInt(TokenFiledConst::FIELD_APL),
-        (static_cast<uint32_t>(tokenValue.GetInt(TokenFiledConst::FIELD_TOKEN_ATTR)) & SYSTEM_APP_FLAG) != 0
-    };
     auto& bundleInfo = bundleInfoMap_[bundleName];
     if (bundleInfo == nullptr) {
         bundleInfo = std::make_shared<BundleInfoInner>();
@@ -504,8 +499,8 @@ int32_t BootVerifyScheduler::RefreshBundleSignInfoMap()
         std::string bundleName = result.GetString(TokenFiledConst::FIELD_BUNDLE_NAME);
         auto& info = bundleSignInfoMap_[bundleName];
         int32_t bundleType = result.GetInt(TokenFiledConst::FIELD_BUNDLE_TYPE);
-        if (bundleType != static_cast<int32_t>(AppExecFwk::Spm::BundleType::SKILL) &&
-            bundleType != static_cast<int32_t>(AppExecFwk::Spm::BundleType::APP)) {
+        if (bundleType != static_cast<int32_t>(AppExecFwk::Spm::BundleType::APP) &&
+            bundleType != static_cast<int32_t>(AppExecFwk::Spm::BundleType::ATOMIC_SERVICE)) {
             LOGW(ATM_DOMAIN, ATM_TAG, "Invalid bundle type in db, bundleName=%{public}s, bundleType=%{public}d.",
                 bundleName.c_str(), bundleType);
             continue;
@@ -978,13 +973,6 @@ bool BootVerifyScheduler::IsInvalidUid(AccessTokenID tokenId) const
     return hapIter != hapTokenInfoMap_.end() && static_cast<int32_t>(hapIter->second.uid) == INVALID_UID;
 }
 
-bool BootVerifyScheduler::IsInvalidUidUnmigratedTokenLocked(AccessTokenID tokenId) const
-{
-    auto hapIter = hapTokenInfoMap_.find(tokenId);
-    return hapIter != hapTokenInfoMap_.end() && static_cast<int32_t>(hapIter->second.uid) == INVALID_UID &&
-        !hapIter->second.migrated;
-}
-
 bool BootVerifyScheduler::ShouldSkipVerifyLocked(const std::string& bundleName) const
 {
     auto bundleIter = bundleInfoMap_.find(bundleName);
@@ -997,7 +985,7 @@ bool BootVerifyScheduler::ShouldSkipVerifyLocked(const std::string& bundleName) 
     return bundleSignInfoMap_.find(bundleName) == bundleSignInfoMap_.end() ||
         std::all_of(bundleIter->second->tokenIds.begin(), bundleIter->second->tokenIds.end(),
         [this](AccessTokenID tokenId) {
-            return IsInvalidUidUnmigratedTokenLocked(tokenId);
+            return IsInvalidUid(tokenId);
         });
 }
 

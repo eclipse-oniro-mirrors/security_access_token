@@ -395,9 +395,6 @@ void AccessTokenManagerServiceTest::CreateHapToken(const HapInfoParcel& infoParC
     tokenInfo.apl = policyParcel.hapPolicy.apl;
     tokenInfo.isSystemApp = infoParCel.hapInfoParameter.isSystemApp;
     tokenIdAplMap[static_cast<int32_t>(tokenId)] = tokenInfo;
-#ifdef IS_SUPPORT_HAP_RUNNING
-    BootVerifyScheduler::GetInstance().tokenIdAplMap_[static_cast<int32_t>(tokenId)] = tokenInfo;
-#endif
 }
 
 /**

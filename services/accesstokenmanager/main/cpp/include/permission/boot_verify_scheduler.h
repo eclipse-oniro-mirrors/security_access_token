@@ -114,7 +114,6 @@ private:
         std::vector<HapTokenInfo>& hapInfoCache, std::vector<std::vector<BriefPermData>>& permBriefDataListCache,
         std::vector<std::vector<PermissionWithValue>>& extendPermListCache, std::vector<SpmDataParam>& params);
     bool IsInvalidUid(AccessTokenID tokenId) const;
-    bool IsInvalidUidUnmigratedTokenLocked(AccessTokenID tokenId) const;
     bool ShouldSkipVerifyLocked(const std::string& bundleName) const;
     void FinishSkippedBundleVerifyLocked(const std::string& bundleName);
     int32_t AddSpmDataAndCommitCache(
@@ -153,7 +152,6 @@ private:
     std::map<std::string, BundleNoCachedInfo> bundleNoCachedInfoMap_;
     std::map<uint32_t, std::vector<BriefPermData>> requestedPermData_;
     std::map<AccessTokenID, std::vector<PermissionWithValue>> extendedPermMap_;
-    std::map<int32_t, BootTokenIdInfo> tokenIdAplMap_;
     std::map<std::string, BundleSignInfo> bundleSignInfoMap_;
     std::map<std::string, bool> isVerifiedMap_;
     std::map<std::string, bool> isVerifyingMap_;

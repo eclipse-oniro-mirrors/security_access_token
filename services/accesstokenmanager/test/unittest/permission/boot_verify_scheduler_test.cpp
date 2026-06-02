@@ -103,6 +103,7 @@ public:
         adapter_->moduleRaw_ = TEST_BUNDLE_NAME;
         adapter_->profileJsonRaw_ = TEST_BUNDLE_NAME;
         HapSignVerifyManager::GetInstance().adapter_ = adapter_.get();
+        adapter_->verifyIsChanged_ = false;
     }
 
     void TearDown() override
@@ -385,6 +386,7 @@ HWTEST_F(BootVerifySchedulerTest, VerifyBundleSignInfoWhenStart007, TestSize.Lev
         }
     }
     EXPECT_TRUE(hasPackageInfo);
+    adapter_->verifyIsChanged_ = false;
 }
 
 /**
@@ -515,6 +517,28 @@ HWTEST_F(BootVerifySchedulerTest, RefreshBundleSignInfoMap001, TestSize.Level1)
     EXPECT_EQ(RET_SUCCESS, BootVerifyScheduler::GetInstance().RefreshBundleSignInfoMap());
     EXPECT_TRUE(BootVerifyScheduler::GetInstance().bundleSignInfoMap_[TEST_BUNDLE_NAME].bundleType.empty());
 }
+
+#ifdef SPM_DATA_ENABLE
+/**
+ * @tc.name: RefreshBundleSignInfoMap002
+ * @tc.desc: Verify RefreshBundleSignInfoMap correctly loads valid bundle type entries.
+ * @tc.type: FUNC
+ */
+HWTEST_F(BootVerifySchedulerTest, RefreshBundleSignInfoMap002, TestSize.Level1)
+{
+    PrepareVerifyDb(true);
+    GenericValues atomicServiceValue = BuildBundleSignValue(TEST_BUNDLE_NAME, "entry", TEST_PATH, true,
+        static_cast<int32_t>(AppExecFwk::Spm::BundleType::ATOMIC_SERVICE),
+        BuildPersistData(TEST_BUNDLE_NAME, TEST_BUNDLE_NAME));
+    SetMockDbFindResult(AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO, RET_SUCCESS, {atomicServiceValue});
+    auto& scheduler = BootVerifyScheduler::GetInstance();
+    EXPECT_EQ(RET_SUCCESS, scheduler.RefreshBundleSignInfoMap());
+    ASSERT_TRUE(scheduler.bundleSignInfoMap_.find(TEST_BUNDLE_NAME) != scheduler.bundleSignInfoMap_.end());
+    ASSERT_EQ(1U, scheduler.bundleSignInfoMap_[TEST_BUNDLE_NAME].bundleType.size());
+    EXPECT_EQ(static_cast<uint32_t>(AppExecFwk::Spm::BundleType::ATOMIC_SERVICE),
+        scheduler.bundleSignInfoMap_[TEST_BUNDLE_NAME].bundleType[0]);
+}
+#endif
 
 /**
  * @tc.name: BuildSpmParams001
