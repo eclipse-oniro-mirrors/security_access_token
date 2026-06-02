@@ -1777,6 +1777,7 @@ int32_t AccessTokenInfoManager::FillInstallPolicyWithoutHaps(
     policy.apl = noCached.apl;
     policy.preAuthorizationInfo = bundlePolicy.preAuthorizationInfo;
     policy.isDebugGrant = bundlePolicy.isDebugGrant;
+    policy.idType = noCached.idType;
     PermissionConstraintCheck::FixBriefPermData(*bundleInfo, bundlePolicy.dlpType, briefPermDataList, isFixed);
 
     HapTokenInfo hapInfo;
