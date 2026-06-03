@@ -52,6 +52,7 @@ const std::string SYSTEM_CONFIG_TRUE_VALUE = "1";
 static constexpr int32_t INVALID_HAP_UID = -1;
 static constexpr size_t MAX_MIGRATED_INFO_SIZE = 50;
 static constexpr size_t MAX_UID_LIST_SIZE = 102400;
+static constexpr int32_t IS_MIGRATED = 1;
 
 int32_t AccessTokenMigrationManager::MarkMigrationCompleted()
 {
@@ -380,7 +381,7 @@ int32_t AccessTokenMigrationManager::AppendHapTokenDbInfo(
         addValues[valueIndex].Remove(TokenFiledConst::FIELD_UID);
         addValues[valueIndex].Put(TokenFiledConst::FIELD_UID, preparedBundle.migratedInfo.uidList[i]);
         addValues[valueIndex].Remove(TokenFiledConst::FIELD_MIGRATED);
-        addValues[valueIndex].Put(TokenFiledConst::FIELD_MIGRATED, preparedBundle.migratedInfo.uidList[i]);
+        addValues[valueIndex].Put(TokenFiledConst::FIELD_MIGRATED, IS_MIGRATED);
         ReservedTypeIdl reserved = preparedBundle.migratedInfo.reservedTypeList[i];
         addValues[valueIndex].Remove(TokenFiledConst::FIELD_RESERVED);
         addValues[valueIndex].Put(TokenFiledConst::FIELD_RESERVED, static_cast<int32_t>(reserved));

@@ -63,6 +63,7 @@ HWTEST_F(AccessTokenInfoUtilsTest, BuildBundleFullInfo001, TestSize.Level0)
     param.appIdentifier = 123456;
     param.distributionType = static_cast<int32_t>(Verify::AppDistType::NONE_TYPE);
     param.isDebug = true;
+    param.idType = 3;
 
     HapPolicy policy;
     policy.apl = APL_NORMAL;
