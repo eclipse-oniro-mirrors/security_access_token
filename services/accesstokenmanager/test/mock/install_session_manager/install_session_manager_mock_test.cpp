@@ -512,6 +512,22 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapTest010, TestSize.Level0)
     ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, result);
     EXPECT_EQ(ERR_OK, ret);
 
+    HapBaseInfo baseInfo;
+    baseInfo.userID = 100;
+    baseInfo.bundleName = "InstallHapTest010";
+    baseInfo.instIndex = 0;
+
+    BundlePolicy bundlePolicy;
+    bundlePolicy.dlpType = DLP_COMMON;
+    bundlePolicy.isDebugGrant = false;
+
+    Identity identity;
+    ret = g_installSessionManager->PrepareHapIdentity(sessionId, baseInfo, bundlePolicy, nullptr, identity);
+    EXPECT_EQ(ERR_OK, ret);
+    EXPECT_NE(0, identity.uid);
+    EXPECT_NE(0, identity.tokenId);
+    AccessTokenID tokenId = static_cast<AccessTokenID>(identity.tokenId);
+
     std::map<std::string, std::string> modulePathMap;
     modulePathMap[path] = path;
     ret = g_installSessionManager->FinishInstall(sessionId, true, modulePathMap);
@@ -522,7 +538,11 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapTest010, TestSize.Level0)
     conditionValue.Put(TokenFiledConst::FIELD_BUNDLE_NAME, "InstallHapTest010");
     ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO, conditionValue, results);
     EXPECT_EQ(ERR_OK, ret);
-    EXPECT_EQ(results.size(), 0);
+    EXPECT_EQ(results.size(), 1);
+
+    int32_t sceneCode = 0;
+    ret = atManagerService_->DeleteIdentityCore(tokenId, "InstallHapTest010", ReservedType::NONE, sceneCode);
+    EXPECT_EQ(ERR_OK, ret);
 }
 
 /**
@@ -1463,6 +1483,82 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapFailedTest019, TestSize.Level0
 }
 
 /**
+ * @tc.name: InstallHapFailedTest020
+ * @tc.desc: Test install a new hap, APP_PLUGIN not allow prepare.
+ * @tc.type: FUNC
+ * @tc.require: Issue
+ */
+HWTEST_F(InstallSessionManagerMockTest, InstallHapFailedTest020, TestSize.Level0)
+{
+    BundleHapList hapList;
+    hapList.hapPaths.emplace_back(
+        "/SYSTEM/system_basic/state:[cam,mic,syswin]/APP_PLUGIN/Module001/InstallHapFailedTest020");
+    hapList.isPreInstalled = false;
+    hapList.userId = 100;
+    
+    int32_t sessionId = 0;
+    std::vector<TrustedBundleInfo> bundleInfo;
+
+    int32_t ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo);
+    EXPECT_EQ(ERR_OK, ret);
+
+    HapInfoCheckResult result;
+    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, result);
+    EXPECT_EQ(ERR_OK, ret);
+
+    HapBaseInfo baseInfo;
+    baseInfo.userID = 100;
+    baseInfo.bundleName = "InstallHapFailedTest020";
+    baseInfo.instIndex = 0;
+
+    BundlePolicy bundlePolicy;
+    bundlePolicy.dlpType = DLP_COMMON;
+    bundlePolicy.isDebugGrant = false;
+
+    Identity identity;
+    ret = g_installSessionManager->PrepareHapIdentity(sessionId, baseInfo, bundlePolicy, nullptr, identity);
+    EXPECT_NE(ERR_OK, ret);
+}
+
+/**
+ * @tc.name: InstallHapFailedTest021
+ * @tc.desc: Test install a new hap, SHARED not allow prepare.
+ * @tc.type: FUNC
+ * @tc.require: Issue
+ */
+HWTEST_F(InstallSessionManagerMockTest, InstallHapFailedTest021, TestSize.Level0)
+{
+    BundleHapList hapList;
+    hapList.hapPaths.emplace_back(
+        "/SYSTEM/system_basic/state:[cam,mic,syswin]/SHARED/Module001/InstallHapFailedTest021");
+    hapList.isPreInstalled = false;
+    hapList.userId = 100;
+    
+    int32_t sessionId = 0;
+    std::vector<TrustedBundleInfo> bundleInfo;
+
+    int32_t ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo);
+    EXPECT_EQ(ERR_OK, ret);
+
+    HapInfoCheckResult result;
+    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, result);
+    EXPECT_EQ(ERR_OK, ret);
+
+    HapBaseInfo baseInfo;
+    baseInfo.userID = 100;
+    baseInfo.bundleName = "InstallHapFailedTest021";
+    baseInfo.instIndex = 0;
+
+    BundlePolicy bundlePolicy;
+    bundlePolicy.dlpType = DLP_COMMON;
+    bundlePolicy.isDebugGrant = false;
+
+    Identity identity;
+    ret = g_installSessionManager->PrepareHapIdentity(sessionId, baseInfo, bundlePolicy, nullptr, identity);
+    EXPECT_NE(ERR_OK, ret);
+}
+
+/**
  * @tc.name: UpdateHapTest001
  * @tc.desc: Test update a new hap.
  * @tc.type: FUNC
@@ -2111,40 +2207,6 @@ HWTEST_F(InstallSessionManagerMockTest, FinishHapTest002, TestSize.Level0)
     std::vector<GenericValues> results;
     GenericValues conditionValue;
     conditionValue.Put(TokenFiledConst::FIELD_BUNDLE_NAME, "FinishHapTest002");
-    EXPECT_EQ(ERR_OK, AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO, conditionValue, results));
-    EXPECT_EQ(results.size(), 0);
-}
-
-/**
- * @tc.name: FinishHapTest003
- * @tc.desc: Test finish a new hap, with bundle type APP_SERVICE_FWK.
- * @tc.type: FUNC
- * @tc.require: Issue
- */
-HWTEST_F(InstallSessionManagerMockTest, FinishHapTest003, TestSize.Level0)
-{
-    std::string path =
-        "/SYSTEM/system_basic/APP_SERVICE_FWK/state:[cam,mic,syswin,getwifi]/acl:[getwifi]/Module001/FinishHapTest003";
-    BundleHapList hapList;
-    hapList.hapPaths.emplace_back(path);
-    hapList.isPreInstalled = false;
-    hapList.userId = 100;
-    
-    int32_t sessionId = 0;
-    std::vector<TrustedBundleInfo> bundleInfo;
-
-    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo));
-
-    HapInfoCheckResult result;
-    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, result));
-
-    std::map<std::string, std::string> modulePathMap;
-    modulePathMap[path] = path;
-    EXPECT_EQ(ERR_OK, g_installSessionManager->FinishInstall(sessionId, true, modulePathMap));
-
-    std::vector<GenericValues> results;
-    GenericValues conditionValue;
-    conditionValue.Put(TokenFiledConst::FIELD_BUNDLE_NAME, "FinishHapTest003");
     EXPECT_EQ(ERR_OK, AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO, conditionValue, results));
     EXPECT_EQ(results.size(), 0);
 }

@@ -1094,7 +1094,8 @@ int32_t InstallSessionManager::PrepareSessionIdentity(int32_t sessionId, const H
     if (!cache.bundleInfos.empty()) {
         auto bundleType = cache.bundleInfos.front().GetBundleType();
         if (bundleType != static_cast<int32_t>(AppExecFwk::Spm::BundleType::APP) &&
-            bundleType != static_cast<int32_t>(AppExecFwk::Spm::BundleType::ATOMIC_SERVICE)) {
+            bundleType != static_cast<int32_t>(AppExecFwk::Spm::BundleType::ATOMIC_SERVICE) &&
+            bundleType != static_cast<int32_t>(AppExecFwk::Spm::BundleType::APP_SERVICE_FWK)) {
             LOGE(ATM_DOMAIN, ATM_TAG, "BundleType %{public}d not allow create tokenID",
                 static_cast<int32_t>(bundleType));
             RollbackAll(sessionId);
@@ -1280,7 +1281,6 @@ int32_t InstallSessionManager::FinishInstall(int32_t sessionId, bool isSuccess,
     if (!it->second.bundleInfos.empty()) {
         int32_t bundleType = it->second.bundleInfos.front().GetBundleType();
         if (bundleType == static_cast<int32_t>(AppExecFwk::Spm::BundleType::SHARED) ||
-            bundleType == static_cast<int32_t>(AppExecFwk::Spm::BundleType::APP_SERVICE_FWK) ||
             bundleType == static_cast<int32_t>(AppExecFwk::Spm::BundleType::APP_PLUGIN)) {
             LOGI(ATM_DOMAIN, ATM_TAG, "Type %{public}d no need Finish", static_cast<int32_t>(bundleType));
             int32_t callerPid = it->second.callerPid;
