@@ -261,7 +261,6 @@ public:
     std::map<std::string, std::string> aclExtendedMap;
     DlpType dlpType = DlpType::DLP_COMMON;
     bool isDebugGrant = false;
-    int32_t idType = 0;
 };
 
 struct BundleHapList final {

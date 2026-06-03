@@ -414,7 +414,7 @@ int32_t HapSignVerifyManager::BuildHapPolicy(
     param.appIdentifier = HapSignVerifyHelper::BuildOwnerId(
         baseline.GetAppIdentifier());
 
-    policy.idType = HapSignVerifyHelper::BuildIdType(
+    param.idType = HapSignVerifyHelper::BuildIdType(
         param.isDebug, baseline.GetAppIdentifier(), policy.permStateList);
 
     return RET_SUCCESS;

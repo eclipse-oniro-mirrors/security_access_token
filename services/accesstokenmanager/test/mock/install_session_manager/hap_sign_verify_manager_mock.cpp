@@ -26,9 +26,6 @@ namespace AccessToken {
 namespace {
 constexpr char APP_PROVISION_TYPE_DEBUG[] = "debug";
 constexpr char APP_PROVISION_TYPE_RELEASE[] = "release";
-constexpr uint32_t PROCESS_OWNERID_APP = 2;
-constexpr uint32_t PROCESS_OWNERID_DEBUG = 3;
-constexpr uint32_t PROCESS_OWNERID_COMPAT = 5;
 constexpr int32_t TEST_API_VERSION = 10;
 }
 
@@ -351,17 +348,6 @@ bool TrustedBundleInfoInner::IsSystemApp() const
 bool TrustedBundleInfoInner::IsAtomicService() const
 {
     return moduleData.bundleType == AppExecFwk::Spm::BundleType::ATOMIC_SERVICE;
-}
-
-uint32_t TrustedBundleInfoInner::GetSpmIdType() const
-{
-    if (provisionInfo.type == Security::Verify::DEBUG) {
-        return PROCESS_OWNERID_DEBUG;
-    }
-    if (provisionInfo.bundleInfo.appIdentifier.empty()) {
-        return PROCESS_OWNERID_COMPAT;
-    }
-    return PROCESS_OWNERID_APP;
 }
 
 int32_t HapSignVerifyManager::BuildTrustedBundleInfo(

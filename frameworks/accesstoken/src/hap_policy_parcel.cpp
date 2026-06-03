@@ -73,7 +73,6 @@ bool HapPolicyParcel::Marshalling(Parcel& out) const
         RETURN_IF_FALSE(out.WriteString(iter.second));
     }
     RETURN_IF_FALSE(out.WriteBool(this->hapPolicy.isDebugGrant));
-    RETURN_IF_FALSE(out.WriteInt32(this->hapPolicy.idType));
     return true;
 }
 
@@ -147,7 +146,6 @@ HapPolicyParcel* HapPolicyParcel::Unmarshalling(Parcel& in)
     }
     RELEASE_IF_FALSE(ReadLeftHapPolicyParcel(in, hapPolicyParcel), hapPolicyParcel);
     RELEASE_IF_FALSE(in.ReadBool(hapPolicyParcel->hapPolicy.isDebugGrant), hapPolicyParcel);
-    RELEASE_IF_FALSE(in.ReadInt32(hapPolicyParcel->hapPolicy.idType), hapPolicyParcel);
     return hapPolicyParcel;
 }
 } // namespace AccessToken
