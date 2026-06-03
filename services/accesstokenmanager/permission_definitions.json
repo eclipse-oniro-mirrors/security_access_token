@@ -9572,6 +9572,17 @@
             "deviceTypes": ["phone", "2in1", "tablet", "car", "tv", "wearable"]
         },
         {
+            "name": "ohos.permission.HDC_REPORT_INFO",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "2in1", "tablet"]
+        },
+        {
             "name": "ohos.permission.ACCESS_DIGITAL_IDENTITY",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
