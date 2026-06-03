@@ -2717,6 +2717,52 @@ HWTEST_F(InstallSessionManagerMockTest, InstallReservedHapTest005, TestSize.Leve
 }
 
 /**
+ * @tc.name: IsCheckPermTest001
+ * @tc.desc: Test IsCheckPerm mark.
+ * @tc.type: FUNC
+ * @tc.require: Issue
+ */
+HWTEST_F(InstallSessionManagerMockTest, IsCheckPermTest001, TestSize.Level0)
+{
+    std::string path =
+        "/SYSTEM/system_basic/state:[cam,mic,syswin,getwifi]/acl:[getwifi]/Module001/IsCheckPermTest001";
+    BundleHapList hapList;
+    hapList.hapPaths.emplace_back(path);
+    hapList.isPreInstalled = false;
+    hapList.userId = 100;
+
+    int32_t sessionId = 0;
+    std::vector<TrustedBundleInfo> bundleInfo;
+
+    int32_t ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo);
+    EXPECT_EQ(ERR_OK, ret);
+
+    HapBaseInfo baseInfo;
+    baseInfo.userID = 100;
+    baseInfo.bundleName = "IsCheckPermTest001";
+    baseInfo.instIndex = 0;
+
+    BundlePolicy bundlePolicy;
+    bundlePolicy.dlpType = DLP_COMMON;
+    bundlePolicy.isDebugGrant = false;
+
+    Identity identity;
+    ret = g_installSessionManager->PrepareHapIdentity(sessionId, baseInfo, bundlePolicy, nullptr, identity);
+    EXPECT_NE(ERR_OK, ret);
+
+    ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo);
+    EXPECT_EQ(ERR_OK, ret);
+    ret = g_installSessionManager->UpdateHapPolicy(sessionId, INVALID_SESSION, bundlePolicy);
+    EXPECT_NE(ERR_OK, ret);
+
+    ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo);
+    EXPECT_EQ(ERR_OK, ret);
+    std::map<std::string, std::string> modulePathMap;
+    ret = g_installSessionManager->FinishInstall(sessionId, true, modulePathMap);
+    EXPECT_NE(ERR_OK, ret);
+}
+
+/**
  * @tc.name: GetInfoBySessionTest001
  * @tc.desc: Test GetCacheSignInfoBySessionId.
  * @tc.type: FUNC

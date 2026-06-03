@@ -993,7 +993,7 @@ int32_t InstallSessionManager::CheckHapPermissionInfo(
         RollbackAll(sessionId);
         return ret;
     }
-
+    cache.isCheckPerm = true;
     return RET_SUCCESS;
 }
 
@@ -1045,6 +1045,7 @@ int32_t InstallSessionManager::CreateInstallSession(const HapBaseInfo& info, con
         LOGE(ATM_DOMAIN, ATM_TAG, "FillInstallPolicy failed ret=%{public}d", ret);
         return ret;
     }
+    cache.isCheckPerm = true;
 
     int32_t callerPid = IPCSkeleton::GetCallingPid();
     cache.callerPid = callerPid;
@@ -1070,6 +1071,11 @@ int32_t InstallSessionManager::PrepareSessionIdentity(int32_t sessionId, const H
         LOGE(ATM_DOMAIN, ATM_TAG, "Already prepare");
         RollbackAll(sessionId);
         return AccessTokenError::ERR_ALREADY_PREPARE;
+    }
+    if (!cache.isCheckPerm) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Not check permission!");
+        RollbackAll(sessionId);
+        return AccessTokenError::ERR_NOT_CHECK_PERMISSION;
     }
     if (!cache.bundleInfos.empty()) {
         auto bundleType = cache.bundleInfos.front().GetBundleType();
@@ -1122,6 +1128,11 @@ int32_t InstallSessionManager::UpdateHapPolicy(int32_t sessionId, int32_t tokenI
         if (it == sessionToInstallCache.end()) {
             LOGE(ATM_DOMAIN, ATM_TAG, "sessionId not exist");
             return AccessTokenError::ERR_SESSION_NOT_EXIST;
+        }
+        if (!it->second.isCheckPerm) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Not check permission!");
+            RollbackAll(sessionId);
+            return AccessTokenError::ERR_NOT_CHECK_PERMISSION;
         }
         
         std::shared_ptr<HapTokenInfoInner> infoPtr =
@@ -1255,6 +1266,12 @@ int32_t InstallSessionManager::FinishInstall(int32_t sessionId, bool isSuccess,
     if (it == sessionToInstallCache.end()) {
         LOGE(ATM_DOMAIN, ATM_TAG, "sessionId not exist");
         return AccessTokenError::ERR_SESSION_NOT_EXIST;
+    }
+
+    if (!it->second.isCheckPerm) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Not check permission!");
+        RollbackAll(sessionId);
+        return AccessTokenError::ERR_NOT_CHECK_PERMISSION;
     }
 
     if (!it->second.bundleInfos.empty()) {
