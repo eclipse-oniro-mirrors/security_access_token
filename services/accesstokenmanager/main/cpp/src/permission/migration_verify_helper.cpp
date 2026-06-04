@@ -369,7 +369,7 @@ int32_t MigrationVerifyHelper::VerifyMigratedBundle(const MigratedInfoIdl& migra
     for (size_t i = 0; i < cachedInfos.size() && i < fixedPermBriefPerToken.size(); ++i) {
         HapTokenInfo hapInfo = cachedInfos[i]->GetHapInfoBasic();
         PermissionDataBrief::GetInstance().ReplaceBriefPermDataByTokenId(
-            hapInfo.tokenID, fixedPermBriefPerToken[i]);
+            hapInfo.tokenID, fixedPermBriefPerToken[i], extendPermList);
     }
     LOGI(ATM_DOMAIN, ATM_TAG, "Verification finished for %{public}s.", migratedInfo.bundleName.c_str());
     return RET_SUCCESS;

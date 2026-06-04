@@ -23,7 +23,6 @@
 
 #include "access_token_error.h"
 #include "accesstoken_common_log.h"
-#include "accesstoken_id_manager.h"
 #include "accesstoken_info_manager.h"
 #include "add_spm_data_task.h"
 #include "data_translator.h"
@@ -73,7 +72,6 @@ namespace {
 constexpr uint32_t VERIFY_THREAD_COUNT = 4;
 constexpr int32_t INVALID_UID = -1;
 constexpr AccessTokenID INVALID_TOKEN_ID = 0;
-constexpr uint32_t TOKEN_ID_SHIFT = 32;
 constexpr uint32_t IS_KERNEL_EFFECT = (0x1 << 0);
 constexpr uint32_t HAS_VALUE = (0x1 << 1);
 constexpr uint32_t API_VERSION_SUFFIX_LEN = 3;
@@ -372,9 +370,9 @@ bool BootVerifyScheduler::BuildHapTokenInfoItemFromDb(AccessTokenID tokenId, con
     hapTokenInfoItem.tokenAttr = static_cast<uint32_t>(tokenValue.GetInt(TokenFiledConst::FIELD_TOKEN_ATTR));
     hapTokenInfoItem.apl = static_cast<ATokenAplEnum>(tokenValue.GetInt(TokenFiledConst::FIELD_APL));
     hapTokenInfoItem.deviceId = tokenValue.GetString(TokenFiledConst::FIELD_DEVICE_ID);
-    hapTokenInfoItem.reserved = static_cast<ReservedType>(tokenValue.GetInt(TokenFiledConst::FIELD_RESERVED));
     hapTokenInfoItem.permDialogCapState = tokenValue.GetInt(TokenFiledConst::FIELD_FORBID_PERM_DIALOG) != 0;
 #ifdef SPM_DATA_ENABLE
+    hapTokenInfoItem.reserved = static_cast<ReservedType>(tokenValue.GetInt(TokenFiledConst::FIELD_RESERVED));
     hapTokenInfoItem.migrated = tokenValue.GetInt(TokenFiledConst::FIELD_MIGRATED) != 0;
     hapTokenInfoItem.uid = static_cast<uint32_t>(tokenValue.GetInt(TokenFiledConst::FIELD_UID));
 #endif
@@ -513,21 +511,11 @@ void BootVerifyScheduler::CommitBundleCacheLocked(const std::string& bundleName)
         return;
     }
 
+    std::vector<AccessTokenInfoManager::HapTokenRestoreData> tokenRestoreDataList;
     for (const auto tokenId : bundleIter->second->tokenIds) {
         auto hapIter = hapTokenInfoMap_.find(tokenId);
         if (hapIter == hapTokenInfoMap_.end()) {
             continue;
-        }
-        std::map<uint64_t, std::string> extendValueMap;
-        auto extendedPermIter = extendedPermMap_.find(tokenId);
-        if (extendedPermIter != extendedPermMap_.end() && !extendedPermIter->second.empty()) {
-            for (const auto& perm : extendedPermIter->second) {
-                uint32_t permCode = 0;
-                if (!TransferPermissionToOpcode(perm.permissionName, permCode)) {
-                    continue;
-                }
-                extendValueMap[(static_cast<uint64_t>(tokenId) << TOKEN_ID_SHIFT) | permCode] = perm.value;
-            }
         }
 
         int32_t tryTime = 3;
@@ -537,11 +525,19 @@ void BootVerifyScheduler::CommitBundleCacheLocked(const std::string& bundleName)
                 break;
             }
         }
-        PermissionDataBrief::GetInstance().ReplaceExtendedValueByTokenId(tokenId, extendValueMap);
-        HapTokenInfo hapInfo = ConvertToHapTokenInfo(hapIter->second);
-        AccessTokenInfoManager::GetInstance().CommitCreateHapCache(
-            hapInfo, requestedPermData_[tokenId], bundleIter->second);
+
+        AccessTokenInfoManager::HapTokenRestoreData restoreData;
+        restoreData.hapTokenInfoItem = hapIter->second;
+        restoreData.requestedPermData = requestedPermData_[tokenId];
+        auto extendedPermIter = extendedPermMap_.find(tokenId);
+        if (extendedPermIter != extendedPermMap_.end()) {
+            restoreData.extendedPermList = extendedPermIter->second;
+        }
+        tokenRestoreDataList.emplace_back(restoreData);
     }
+
+    AccessTokenInfoManager::GetInstance().RestoreHapCache(
+        bundleName, bundleIter->second, tokenRestoreDataList);
 }
 
 bool BootVerifyScheduler::IsAllBundlesVerified() const
@@ -622,6 +618,11 @@ int32_t BootVerifyScheduler::VerifySingleBundle(const std::string& bundleName, B
         LOGE(ATM_DOMAIN, ATM_TAG, "Check multiple haps failed, bundleName=%{public}s, ret=%{public}d.",
             bundleName.c_str(), ret);
         return ret;
+    }
+    if (!trustedInfos.empty() && bundleName != trustedInfos[0].GetBundleName()) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Bundle name mismatch, bundleName=%{public}s, trustedBundleName=%{public}s.",
+            bundleName.c_str(), trustedInfos[0].GetBundleName().c_str());
+        return ERR_HAP_VERIFY_FAILED;
     }
 
     UpdateVerifiedSignInfo(bundleName, updatedInfo, changedIndexList, trustedInfos, state);
@@ -767,6 +768,7 @@ int32_t BootVerifyScheduler::VerifyBundleWithState(const std::string& bundleName
     if (ret != RET_SUCCESS) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Verify single bundle failed, bundleName=%{public}s, ret=%{public}d.",
             bundleName.c_str(), ret);
+        ChangeTokenIdStatus(bundleName, TokenIdStatus::UNTRUSTED);
         HandleVerifyBundleFailure(bundleName, ret);
     }
 
@@ -775,6 +777,23 @@ int32_t BootVerifyScheduler::VerifyBundleWithState(const std::string& bundleName
     }
     verifyCondition_.notify_all();
     return ret;
+}
+
+void BootVerifyScheduler::ChangeTokenIdStatus(const std::string& bundleName, TokenIdStatus status)
+{
+    auto bundleIter = bundleInfoMap_.find(bundleName);
+    if (bundleIter == bundleInfoMap_.end() || bundleIter->second == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Change tokenId status failed, bundle info not exist, bundleName=%{public}s.",
+            bundleName.c_str());
+        return;
+    }
+    const auto tokenIds = bundleIter->second->tokenIds;
+    for (const auto tokenId : tokenIds) {
+        int32_t ret = AccessTokenIDManager::GetInstance().ChangeTokenIdStatus(tokenId, status);
+        if (ret != RET_SUCCESS) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "ChangeTokenIdStatus failed, tokenId=%{public}u, ret=%{public}d.", tokenId, ret);
+        }
+    }
 }
 
 int32_t BootVerifyScheduler::VerifyBundleList(const std::vector<std::string>& bundleNameList,
@@ -791,6 +810,7 @@ int32_t BootVerifyScheduler::VerifyBundleList(const std::vector<std::string>& bu
         }
         int32_t ret = VerifySingleBundle(bundleName, updatedInfo, state);
         if (ret != RET_SUCCESS) {
+            ChangeTokenIdStatus(bundleName, TokenIdStatus::UNTRUSTED);
             HandleVerifyBundleFailure(bundleName, ret);
             continue;
         }

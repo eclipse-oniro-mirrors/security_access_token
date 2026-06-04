@@ -28,6 +28,7 @@
 #include "parameter.h"
 #define private public
 #include "accesstoken_id_manager.h"
+#include "accesstoken_info_manager.h"
 #include "boot_verify_scheduler.h"
 #include "hap_sign_verify_manager.h"
 #undef private
@@ -83,6 +84,9 @@ public:
     {
         ResetMockDbState();
         SetParameter(APP_VERIFY_PARAM, "0");
+        AccessTokenIDManager::GetInstance().tokenIdSet_.clear();
+        AccessTokenIDManager::GetInstance().reservedTokenIdSet_.clear();
+        AccessTokenIDManager::GetInstance().untrustedTokenIdSet_.clear();
         AccessTokenIDManager::GetInstance().ReleaseTokenId(TEST_TOKEN_ID);
         AccessTokenIDManager::GetInstance().ReleaseTokenId(TEST_TOKEN_ID_2);
         AccessTokenIDManager::GetInstance().ReleaseTokenId(TEST_TOKEN_ID_3);
@@ -113,6 +117,9 @@ public:
     {
         HapSignVerifyManager::GetInstance().adapter_ = originAdapter_;
         SetParameter(APP_VERIFY_PARAM, "0");
+        AccessTokenIDManager::GetInstance().tokenIdSet_.clear();
+        AccessTokenIDManager::GetInstance().reservedTokenIdSet_.clear();
+        AccessTokenIDManager::GetInstance().untrustedTokenIdSet_.clear();
         AccessTokenIDManager::GetInstance().ReleaseTokenId(TEST_TOKEN_ID);
         AccessTokenIDManager::GetInstance().ReleaseTokenId(TEST_TOKEN_ID_2);
         AccessTokenIDManager::GetInstance().ReleaseTokenId(TEST_TOKEN_ID_3);
@@ -132,7 +139,7 @@ public:
 protected:
     GenericValues BuildHapInfoValue(AccessTokenID tokenId, const std::string& bundleName, uint32_t uid,
         int32_t apl = APL_NORMAL, uint32_t tokenAttr = 0, bool migrated = true,
-        ReservedType reserved = ReservedType::NONE) const
+        ReservedType reserved = ReservedType::NONE, bool forbidPermDialog = false) const
     {
         GenericValues value;
         value.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
@@ -147,6 +154,7 @@ protected:
         value.Put(TokenFiledConst::FIELD_APL, apl);
         value.Put(TokenFiledConst::FIELD_MIGRATED, migrated ? 1 : 0);
         value.Put(TokenFiledConst::FIELD_RESERVED, static_cast<int32_t>(reserved));
+        value.Put(TokenFiledConst::FIELD_FORBID_PERM_DIALOG, forbidPermDialog ? 1 : 0);
         return value;
     }
 
@@ -318,8 +326,8 @@ HWTEST_F(BootVerifySchedulerTest, VerifyBundleSignInfoWhenStart004, TestSize.Lev
     const std::string secondPath = "/data/test/music.hap";
     // Prepare two preinstalled high-privilege bundles in mock DB so startup verification handles them in sequence.
     SetMockDbFindResult(AtmDataType::ACCESSTOKEN_HAP_INFO, RET_SUCCESS, {
-        BuildHapInfoValue(TEST_TOKEN_ID, TEST_BUNDLE_NAME, TEST_UID),
-        BuildHapInfoValue(TEST_TOKEN_ID_2, TEST_BUNDLE_NAME_2, TEST_UID + 1),
+        BuildHapInfoValue(TEST_TOKEN_ID, TEST_BUNDLE_NAME_2, TEST_UID),
+        BuildHapInfoValue(TEST_TOKEN_ID_2, TEST_BUNDLE_NAME, TEST_UID + 1),
     });
     SetMockDbFindResult(AtmDataType::ACCESSTOKEN_PERMISSION_STATE, RET_SUCCESS, {
         BuildPermStateValue(TEST_TOKEN_ID, "ohos.permission.CAMERA"),
@@ -327,12 +335,12 @@ HWTEST_F(BootVerifySchedulerTest, VerifyBundleSignInfoWhenStart004, TestSize.Lev
     });
     SetMockDbFindResult(AtmDataType::ACCESSTOKEN_PERMISSION_EXTEND_VALUE, RET_SUCCESS, {});
     SetMockDbFindResult(AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO, RET_SUCCESS, {
-        BuildBundleSignValue(TEST_BUNDLE_NAME, "entry", TEST_PATH, true,
-            static_cast<int32_t>(AppExecFwk::Spm::BundleType::APP),
-            BuildPersistData(TEST_BUNDLE_NAME, TEST_BUNDLE_NAME)),
-        BuildBundleSignValue(TEST_BUNDLE_NAME_2, "entry", secondPath, true,
+        BuildBundleSignValue(TEST_BUNDLE_NAME_2, "entry", TEST_PATH, true,
             static_cast<int32_t>(AppExecFwk::Spm::BundleType::APP),
             BuildPersistData(TEST_BUNDLE_NAME_2, TEST_BUNDLE_NAME_2)),
+        BuildBundleSignValue(TEST_BUNDLE_NAME, "entry", secondPath, true,
+            static_cast<int32_t>(AppExecFwk::Spm::BundleType::APP),
+            BuildPersistData(TEST_BUNDLE_NAME, TEST_BUNDLE_NAME)),
     });
     SetMockDbFindResult(AtmDataType::ACCESSTOKEN_SYSTEM_CONFIG, RET_SUCCESS, {});
     SetMockDbFindResult(AtmDataType::ACCESSTOKEN_HAP_UNDEFINE_INFO, RET_SUCCESS, {});
@@ -500,6 +508,98 @@ HWTEST_F(BootVerifySchedulerTest, PreVerifyBundle004, TestSize.Level1)
 }
 
 /**
+ * @tc.name: PreVerifyBundle005
+ * @tc.desc: Verify PreVerifyBundle returns error when DB bundle name mismatches verified bundle name.
+ * @tc.type: FUNC
+ */
+HWTEST_F(BootVerifySchedulerTest, PreVerifyBundle005, TestSize.Level1)
+{
+    PrepareVerifyDb(false);
+    ASSERT_EQ(RET_SUCCESS, BootVerifyScheduler::GetInstance().VerifyBundleSignInfoWhenStart());
+
+    adapter_->bundleName_ = TEST_BUNDLE_NAME_2;
+
+    EXPECT_EQ(ERR_HAP_VERIFY_FAILED, BootVerifyScheduler::GetInstance().PreVerifyBundle(TEST_TOKEN_ID));
+}
+
+/**
+ * @tc.name: ChangeTokenIdStatus001
+ * @tc.desc: Verify ChangeTokenIdStatus returns directly when bundle info does not exist.
+ * @tc.type: FUNC
+ */
+HWTEST_F(BootVerifySchedulerTest, ChangeTokenIdStatus001, TestSize.Level1)
+{
+    auto& scheduler = BootVerifyScheduler::GetInstance();
+    scheduler.ChangeTokenIdStatus(TEST_BUNDLE_NAME, TokenIdStatus::UNTRUSTED);
+    EXPECT_TRUE(AccessTokenIDManager::GetInstance().untrustedTokenIdSet_.empty());
+}
+
+/**
+ * @tc.name: ChangeTokenIdStatus002
+ * @tc.desc: Verify ChangeTokenIdStatus returns directly when bundle info is nullptr.
+ * @tc.type: FUNC
+ */
+HWTEST_F(BootVerifySchedulerTest, ChangeTokenIdStatus002, TestSize.Level1)
+{
+    auto& scheduler = BootVerifyScheduler::GetInstance();
+    scheduler.bundleInfoMap_[TEST_BUNDLE_NAME] = nullptr;
+
+    scheduler.ChangeTokenIdStatus(TEST_BUNDLE_NAME, TokenIdStatus::UNTRUSTED);
+    EXPECT_TRUE(AccessTokenIDManager::GetInstance().untrustedTokenIdSet_.empty());
+}
+
+/**
+ * @tc.name: ChangeTokenIdStatus003
+ * @tc.desc: Verify ChangeTokenIdStatus stops when AccessTokenIDManager reports token not found.
+ * @tc.type: FUNC
+ */
+HWTEST_F(BootVerifySchedulerTest, ChangeTokenIdStatus003, TestSize.Level1)
+{
+    auto& scheduler = BootVerifyScheduler::GetInstance();
+    scheduler.bundleInfoMap_[TEST_BUNDLE_NAME] = BuildBundleInfo({TEST_TOKEN_ID});
+
+    scheduler.ChangeTokenIdStatus(TEST_BUNDLE_NAME, TokenIdStatus::UNTRUSTED);
+    EXPECT_EQ(0U, AccessTokenIDManager::GetInstance().untrustedTokenIdSet_.count(TEST_TOKEN_ID));
+}
+
+/**
+ * @tc.name: ChangeTokenIdStatus004
+ * @tc.desc: Verify ChangeTokenIdStatus moves all bundle tokenIds to target status on success path.
+ * @tc.type: FUNC
+ */
+HWTEST_F(BootVerifySchedulerTest, ChangeTokenIdStatus004, TestSize.Level1)
+{
+    auto& scheduler = BootVerifyScheduler::GetInstance();
+    scheduler.bundleInfoMap_[TEST_BUNDLE_NAME] = BuildBundleInfo({TEST_TOKEN_ID, TEST_TOKEN_ID_2});
+    AccessTokenIDManager::GetInstance().tokenIdSet_.insert(TEST_TOKEN_ID);
+    AccessTokenIDManager::GetInstance().reservedTokenIdSet_.insert(TEST_TOKEN_ID_2);
+
+    scheduler.ChangeTokenIdStatus(TEST_BUNDLE_NAME, TokenIdStatus::UNTRUSTED);
+
+    EXPECT_EQ(0U, AccessTokenIDManager::GetInstance().tokenIdSet_.count(TEST_TOKEN_ID));
+    EXPECT_EQ(0U, AccessTokenIDManager::GetInstance().reservedTokenIdSet_.count(TEST_TOKEN_ID_2));
+    EXPECT_EQ(1U, AccessTokenIDManager::GetInstance().untrustedTokenIdSet_.count(TEST_TOKEN_ID));
+    EXPECT_EQ(1U, AccessTokenIDManager::GetInstance().untrustedTokenIdSet_.count(TEST_TOKEN_ID_2));
+}
+
+/**
+ * @tc.name: ChangeTokenIdStatus005
+ * @tc.desc: Verify ChangeTokenIdStatus stops after first failure and does not process later tokenIds.
+ * @tc.type: FUNC
+ */
+HWTEST_F(BootVerifySchedulerTest, ChangeTokenIdStatus005, TestSize.Level1)
+{
+    auto& scheduler = BootVerifyScheduler::GetInstance();
+    scheduler.bundleInfoMap_[TEST_BUNDLE_NAME] = BuildBundleInfo({TEST_TOKEN_ID, TEST_TOKEN_ID_2});
+    AccessTokenIDManager::GetInstance().tokenIdSet_.insert(TEST_TOKEN_ID);
+
+    scheduler.ChangeTokenIdStatus(TEST_BUNDLE_NAME, TokenIdStatus::UNTRUSTED);
+
+    EXPECT_EQ(1U, AccessTokenIDManager::GetInstance().untrustedTokenIdSet_.count(TEST_TOKEN_ID));
+    EXPECT_EQ(0U, AccessTokenIDManager::GetInstance().untrustedTokenIdSet_.count(TEST_TOKEN_ID_2));
+}
+
+/**
  * @tc.name: LoadVerifyDataFromDb001
  * @tc.desc: Verify LoadVerifyDataFromDb tolerates extended permission query failure.
  * @tc.type: FUNC
@@ -509,6 +609,32 @@ HWTEST_F(BootVerifySchedulerTest, LoadVerifyDataFromDb001, TestSize.Level1)
     PrepareVerifyDb(true);
     SetMockDbFindResult(AtmDataType::ACCESSTOKEN_PERMISSION_EXTEND_VALUE, ERR_PARAM_INVALID, {});
     EXPECT_EQ(RET_SUCCESS, BootVerifyScheduler::GetInstance().LoadVerifyDataFromDb());
+}
+
+/**
+ * @tc.name: LoadVerifyDataFromDbPermDialogCap001
+ * @tc.desc: Verify boot restore keeps FIELD_FORBID_PERM_DIALOG from DB and restores it into hap cache.
+ * @tc.type: FUNC
+ */
+HWTEST_F(BootVerifySchedulerTest, LoadVerifyDataFromDbPermDialogCap001, TestSize.Level1)
+{
+    SetMockDbFindResult(AtmDataType::ACCESSTOKEN_HAP_INFO, RET_SUCCESS,
+        {BuildHapInfoValue(TEST_TOKEN_ID, TEST_BUNDLE_NAME, TEST_UID, APL_NORMAL, 0, true,
+            ReservedType::NONE, true)});
+    SetMockDbFindResult(AtmDataType::ACCESSTOKEN_PERMISSION_STATE, RET_SUCCESS,
+        {BuildPermStateValue(TEST_TOKEN_ID, "ohos.permission.CAMERA")});
+    SetMockDbFindResult(AtmDataType::ACCESSTOKEN_PERMISSION_EXTEND_VALUE, RET_SUCCESS, {});
+    SetMockDbFindResult(AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO, RET_SUCCESS,
+        {BuildBundleSignValue(TEST_BUNDLE_NAME, "entry", TEST_PATH, false,
+            static_cast<int32_t>(AppExecFwk::Spm::BundleType::APP),
+            BuildPersistData(TEST_BUNDLE_NAME, TEST_BUNDLE_NAME))});
+    SetMockDbFindResult(AtmDataType::ACCESSTOKEN_SYSTEM_CONFIG, RET_SUCCESS, {});
+    SetMockDbFindResult(AtmDataType::ACCESSTOKEN_HAP_UNDEFINE_INFO, RET_SUCCESS, {});
+
+    auto& scheduler = BootVerifyScheduler::GetInstance();
+    ASSERT_EQ(RET_SUCCESS, scheduler.VerifyBundleSignInfoWhenStart());
+    ASSERT_EQ(RET_SUCCESS, scheduler.PreVerifyBundle(TEST_TOKEN_ID));
+    EXPECT_TRUE(AccessTokenInfoManager::GetInstance().GetPermDialogCap(TEST_TOKEN_ID));
 }
 
 #ifdef SPM_DATA_ENABLE
