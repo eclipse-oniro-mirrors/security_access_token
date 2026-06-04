@@ -101,6 +101,7 @@ private:
 #ifdef X86_EMULATOR_MODE
     static TrustedBundleInfoInner BuildIgnoredTrustedBundleInfo();
 #endif
+    bool CheckAppIdentifier(const TrustedBundleInfoInner &oldInfo, const TrustedBundleInfoInner &newInfo) const;
 };
 
 class RdDeviceChecker final {
