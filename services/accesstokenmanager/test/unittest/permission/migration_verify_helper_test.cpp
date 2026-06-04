@@ -357,12 +357,14 @@ HWTEST_F(MigrationVerifyHelperTest, VerifyMigratedBundle007, TestSize.Level1)
     // Clear appIdentifier_: each VerifyHap call uses params.filePath (hapPath) as appIdentifier
     // → two hapPaths produce different appIdentifiers → CheckMultipleHaps detects mismatch
     mockAdapter_.appIdentifier_ = "";
+    mockAdapter_.appId_ = "";
 
     int32_t ret = MigrationVerifyHelper::GetInstance().VerifyMigratedBundle(migratedInfo, cachedInfos);
     // CheckMultipleHaps fails with ERR_PARAM_INVALID → line 70 → DoVerifyMigratedBundle returns error
     EXPECT_NE(RET_SUCCESS, ret);
 
     mockAdapter_.appIdentifier_ = "mock.identifier";
+    mockAdapter_.appId_ = "mock.appid";
 
     (void)SpmRemoveEntry(tokenId);
     EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenId));

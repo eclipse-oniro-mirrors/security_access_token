@@ -162,9 +162,18 @@ HWTEST_F(HapSignVerifyManagerTest, CheckMultipleHaps001, TestSize.Level1)
 
     TrustedBundleInfoInner info2 = info1;
     info2.provisionInfo.bundleInfo.appIdentifier = "identifier2";
+    
+    std::vector<TrustedBundleInfoInner> infos_matched_1 = {info1, info2};
+    EXPECT_EQ(RET_SUCCESS, manager.CheckMultipleHaps(infos_matched_1));
+    
+    info2.provisionInfo.bundleInfo.appIdentifier = info1.provisionInfo.bundleInfo.appIdentifier;
+    info2.provisionInfo.appId = "app-id-desc2";
+    std::vector<TrustedBundleInfoInner> infos_matched_2 = {info1, info2};
+    EXPECT_EQ(RET_SUCCESS, manager.CheckMultipleHaps(infos_matched_2));
 
-    std::vector<TrustedBundleInfoInner> infos = {info1, info2};
-    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, manager.CheckMultipleHaps(infos));
+    info2.provisionInfo.bundleInfo.appIdentifier = "identifier2";
+    std::vector<TrustedBundleInfoInner> infos_mismatch = {info1, info2};
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, manager.CheckMultipleHaps(infos_mismatch));
 }
 
 /**

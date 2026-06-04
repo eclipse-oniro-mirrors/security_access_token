@@ -343,14 +343,8 @@ int32_t HapSignVerifyManager::CheckMultipleHaps(const std::vector<TrustedBundleI
             LOGE(ATM_DOMAIN, ATM_TAG, "Check multiple haps failed, hap files have different bundleName.");
             return true;
         }
-#ifdef SUPPORT_APPID_PARSING
-        if (baseline.GetAppId() != info.GetAppId()) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "Check multiple haps failed, hap files have different appId.");
-            return true;
-        }
-#endif
-        if (baseline.GetAppIdentifier() != info.GetAppIdentifier()) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "Check multiple haps failed, hap files have different appIdentifier.");
+        if (baseline.GetAppId() != info.GetAppId() && baseline.GetAppIdentifier() != info.GetAppIdentifier()) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Check multiple haps failed, hap files have different appId and appIdentifier.");
             return true;
         }
         if (baseline.GetApl() != info.GetApl()) {
