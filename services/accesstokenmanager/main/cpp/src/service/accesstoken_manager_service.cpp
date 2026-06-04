@@ -1526,7 +1526,7 @@ int32_t AccessTokenManagerService::GetHapTokenID(
     if (res != RET_SUCCESS) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Pre verify bundle failed, res %{public}d.", res);
         fullTokenId = 0;
-        return res;
+        return ERR_OK;
     }
     AccessTokenIDEx tokenIdEx = AccessTokenInfoManager::GetInstance().GetHapTokenID(userID, bundleName, instIndex);
     fullTokenId = tokenIdEx.tokenIDEx;

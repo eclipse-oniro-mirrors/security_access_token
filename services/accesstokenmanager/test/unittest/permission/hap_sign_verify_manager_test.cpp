@@ -538,47 +538,6 @@ HWTEST_F(HapSignVerifyManagerTest, CheckPermissionRequestValid001, TestSize.Leve
     EXPECT_EQ(RET_SUCCESS, manager.CheckPermissionRequestValid(info, policy, result));
 }
 
-#define PROCESS_OWNERID_APP 2
-#define PROCESS_OWNERID_DEBUG 3
-#define PROCESS_OWNERID_COMPAT 5
-/**
- * @tc.name: GetSpmIdType001
- * @tc.desc: GetSpmIdType returns PROCESS_OWNERID_DEBUG when provisionInfo.type is DEBUG.
- * @tc.type: FUNC
- */
-HWTEST_F(HapSignVerifyManagerTest, GetSpmIdType001, TestSize.Level1)
-{
-    TrustedBundleInfoInner info;
-    info.provisionInfo.type = Security::Verify::DEBUG;
-    EXPECT_EQ(PROCESS_OWNERID_DEBUG, info.GetSpmIdType());
-}
-
-/**
- * @tc.name: GetSpmIdType002
- * @tc.desc: GetSpmIdType returns PROCESS_OWNERID_COMPAT when appIdentifier is empty and type is not DEBUG.
- * @tc.type: FUNC
- */
-HWTEST_F(HapSignVerifyManagerTest, GetSpmIdType002, TestSize.Level1)
-{
-    TrustedBundleInfoInner info;
-    info.provisionInfo.type = Security::Verify::RELEASE;
-    info.provisionInfo.bundleInfo.appIdentifier.clear();
-    EXPECT_EQ(PROCESS_OWNERID_COMPAT, info.GetSpmIdType());
-}
-
-/**
- * @tc.name: GetSpmIdType003
- * @tc.desc: GetSpmIdType returns PROCESS_OWNERID_APP when type is not DEBUG and appIdentifier is non-empty.
- * @tc.type: FUNC
- */
-HWTEST_F(HapSignVerifyManagerTest, GetSpmIdType003, TestSize.Level1)
-{
-    TrustedBundleInfoInner info;
-    info.provisionInfo.type = Security::Verify::RELEASE;
-    info.provisionInfo.bundleInfo.appIdentifier = "12345";
-    EXPECT_EQ(PROCESS_OWNERID_APP, info.GetSpmIdType());
-}
-
 /**
  * @tc.name: GetBundleName004
  * @tc.desc: GetBundleName falls back to moduleData.moduleName when both bundleNames are empty.
@@ -911,6 +870,37 @@ HWTEST_F(HapSignVerifyManagerTest, BuildExtendPermList002, TestSize.Level1)
     std::vector<PermissionWithValue> extendPermList;
     HapSignVerifyHelper::BuildExtendPermListFromPolicy(policy, extendPermList);
     EXPECT_TRUE(extendPermList.empty());
+}
+
+#define PROCESS_OWNERID_APP 2
+#define PROCESS_OWNERID_DEBUG 3
+#define PROCESS_OWNERID_COMPAT 5
+#define PROCESS_OWNERID_APP_TEMP_ALLOW 10
+
+/**
+ * @tc.name: BuildIdType001
+ * @tc.desc: HapSignVerifyHelper::BuildIdType returns correct idType for debug, compat, temp_jit, and normal app.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HapSignVerifyManagerTest, BuildIdType001, TestSize.Level1)
+{
+    // Case 1: Debug → PROCESS_OWNERID_DEBUG
+    EXPECT_EQ(PROCESS_OWNERID_DEBUG,
+        HapSignVerifyHelper::BuildIdType(true, "12345", {}));
+
+    // Case 2: Empty appIdentifier → PROCESS_OWNERID_COMPAT
+    EXPECT_EQ(PROCESS_OWNERID_COMPAT,
+        HapSignVerifyHelper::BuildIdType(false, "", {}));
+
+    // Case 3: Has TEMP_JIT_ALLOW → PROCESS_OWNERID_APP_TEMP_ALLOW
+    PermissionStatus tempJitAllow;
+    tempJitAllow.permissionName = "TEMPJITALLOW";
+    EXPECT_EQ(PROCESS_OWNERID_APP_TEMP_ALLOW,
+        HapSignVerifyHelper::BuildIdType(false, "12345", {tempJitAllow}));
+
+    // Case 4: Normal app → PROCESS_OWNERID_APP
+    EXPECT_EQ(PROCESS_OWNERID_APP,
+        HapSignVerifyHelper::BuildIdType(false, "12345", {}));
 }
 } // namespace AccessToken
 } // namespace Security

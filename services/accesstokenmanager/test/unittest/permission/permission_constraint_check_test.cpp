@@ -34,12 +34,6 @@ constexpr uint32_t ATOMIC_SERVICE_FLAG = 0x0002;
 constexpr uint32_t DEBUG_APP_FLAG = 0x0008;
 constexpr int32_t TEST_API_VERSION = 12;
 constexpr int32_t OLD_API_VERSION = 9;
-constexpr int32_t DEBUG_ID_TYPE = 3;
-constexpr int32_t APP_IDENTIFIER_ZERO = 0;
-constexpr int32_t APP_IDENTIFIER_ONE = 1;
-constexpr int32_t BASE_APP_ID_TYPE = 5;
-constexpr int32_t JIT_GRANTED_ID_TYPE = 10;
-constexpr int32_t DEFAULT_ID_TYPE = 2;
 
 class PermissionConstraintCheckTest : public testing::Test {};
 
@@ -481,33 +475,6 @@ HWTEST_F(PermissionConstraintCheckTest, FixPersistentHapInfo003, TestSize.Level0
     EXPECT_EQ(TEST_API_VERSION, hapTokenInfoItem.apiVersion);
     EXPECT_EQ(APL_SYSTEM_BASIC, hapTokenInfoItem.apl);
     EXPECT_TRUE((hapTokenInfoItem.tokenAttr & SYSTEM_APP_FLAG) != 0);
-}
-
-/**
- * @tc.name: BuildIdType001
- * @tc.desc: PermissionConstraintCheck::BuildIdType function test.
- * @tc.type: FUNC
- */
-HWTEST_F(PermissionConstraintCheckTest, BuildIdType001, TestSize.Level0)
-{
-    BundleParam param;
-    HapPolicy policy;
-
-    param.isDebug = true;
-    EXPECT_EQ(DEBUG_ID_TYPE, PermissionConstraintCheck::BuildIdType(param, policy));
-
-    param.isDebug = false;
-    param.appIdentifier = APP_IDENTIFIER_ZERO;
-    EXPECT_EQ(BASE_APP_ID_TYPE, PermissionConstraintCheck::BuildIdType(param, policy));
-
-    param.appIdentifier = APP_IDENTIFIER_ONE;
-    PermissionStatus tempJitAllow;
-    tempJitAllow.permissionName = "TEMPJITALLOW";
-    policy.permStateList = { tempJitAllow };
-    EXPECT_EQ(JIT_GRANTED_ID_TYPE, PermissionConstraintCheck::BuildIdType(param, policy));
-
-    policy.permStateList.clear();
-    EXPECT_EQ(DEFAULT_ID_TYPE, PermissionConstraintCheck::BuildIdType(param, policy));
 }
 } // namespace AccessToken
 } // namespace Security

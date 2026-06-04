@@ -1790,6 +1790,7 @@ int32_t AccessTokenInfoManager::FillInstallPolicyWithoutHaps(
     param.isSystem = AccessTokenInfoUtils::CheckSpecifiedFlag(hapInfo.tokenAttr, SYSTEM_APP_FLAG);
     param.isAtomicService = AccessTokenInfoUtils::CheckSpecifiedFlag(hapInfo.tokenAttr, ATOMIC_SERVICE_FLAG);
     param.isDebug = AccessTokenInfoUtils::CheckSpecifiedFlag(hapInfo.tokenAttr, DEBUG_APP_FLAG);
+    param.idType = noCached.idType;
 
     policy.permStateList.reserve(briefPermDataList.size());
     for (const auto& briefPermData : briefPermDataList) {

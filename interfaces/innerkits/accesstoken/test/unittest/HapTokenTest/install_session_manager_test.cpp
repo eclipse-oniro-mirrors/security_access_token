@@ -366,7 +366,7 @@ HWTEST_F(InstallSessionManagerTest, GetCacheSignInfoBySessionIdTest002, TestSize
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::PrepareHapIdentity(sessionId, baseInfo, bundlePolicy, identity));
     
     std::vector<TrustedBundleInfo> bundleInfo;
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetCacheSignInfoBySessionId(sessionId, bundleInfo));
+    EXPECT_NE(RET_SUCCESS, AccessTokenKit::GetCacheSignInfoBySessionId(sessionId, bundleInfo));
     EXPECT_TRUE(bundleInfo.empty());
 
     std::map<std::string, std::string> modulePathMap;

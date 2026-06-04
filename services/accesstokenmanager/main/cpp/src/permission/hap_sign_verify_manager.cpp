@@ -46,10 +46,6 @@ constexpr const char* ENTERPRISE_CERT_PATH =
 
 constexpr int32_t API_VERSION_MASK = 1000;
 
-constexpr uint32_t PROCESS_OWNERID_APP = 2;
-constexpr uint32_t PROCESS_OWNERID_DEBUG = 3;
-constexpr uint32_t PROCESS_OWNERID_COMPAT = 5;
-
 #ifdef X86_EMULATOR_MODE
 bool IsIgnoredTrustedBundleInfo(const TrustedBundleInfoInner& info)
 {
@@ -245,19 +241,6 @@ bool TrustedBundleInfoInner::IsAtomicService() const
     return moduleData.bundleType == AppExecFwk::Spm::BundleType::ATOMIC_SERVICE;
 }
 
-uint32_t TrustedBundleInfoInner::GetSpmIdType() const
-{
-    if (provisionInfo.type == Security::Verify::DEBUG) {
-        return PROCESS_OWNERID_DEBUG;
-    }
-    if (provisionInfo.bundleInfo.appIdentifier.empty()) {
-        return PROCESS_OWNERID_COMPAT;
-    }
-    // access_token does not currently receive the APP_FLAGS_TEMP_JIT signal used by
-    // appspawn SetXpmConfig(), so PROCESS_OWNERID_APP_TEMP_ALLOW cannot be derived here yet.
-    return PROCESS_OWNERID_APP;
-}
-
 #ifdef X86_EMULATOR_MODE
 TrustedBundleInfoInner HapSignVerifyManager::BuildIgnoredTrustedBundleInfo()
 {
@@ -318,6 +301,7 @@ int32_t HapSignVerifyManager::CheckHapsSignInfo(const std::string path,
         isChanged = false;
         return RET_SUCCESS;
 #else
+        LOGE(ATM_DOMAIN, ATM_TAG, "Verify hap failed, ret=%{public}d.", ret);
         return ERR_HAP_VERIFY_FAILED;
 #endif
     }
@@ -429,6 +413,10 @@ int32_t HapSignVerifyManager::BuildHapPolicy(
     param.isDebug = (baseline.GetAppProvisionType() == "debug");
     param.appIdentifier = HapSignVerifyHelper::BuildOwnerId(
         baseline.GetAppIdentifier());
+
+    param.idType = HapSignVerifyHelper::BuildIdType(
+        param.isDebug, baseline.GetAppIdentifier(), policy.permStateList);
+
     return RET_SUCCESS;
 }
 

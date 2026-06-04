@@ -69,7 +69,6 @@ public:
     std::string GetAppProvisionType() const;
     bool IsSystemApp() const;
     bool IsAtomicService() const;
-    uint32_t GetSpmIdType() const;
 
 private:
     AppExecFwk::Spm::InnerModuleInfoForSpm moduleData;

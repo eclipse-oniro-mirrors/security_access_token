@@ -132,6 +132,7 @@ private:
         const sptr<IRemoteObject>& cb, int32_t& sessionId);
     int32_t PrepareSessionIdentity(int32_t sessionId, const HapBaseInfo& info,
         const BundlePolicy& policy, Identity& identity);
+    int32_t GetAppIdFromDb(const std::string& bundleName, std::string& appId);
     int32_t CheckType(std::vector<std::string>& additionalPaths, InstallTypeEnum type);
     int32_t DeleteFromDbByTokenId(AccessTokenID tokenID);
     int32_t GetTokenIdAndUid(InstallCache& cache, const BundlePolicy& bundlePolicy);

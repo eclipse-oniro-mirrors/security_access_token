@@ -395,9 +395,6 @@ void AccessTokenManagerServiceTest::CreateHapToken(const HapInfoParcel& infoParC
     tokenInfo.apl = policyParcel.hapPolicy.apl;
     tokenInfo.isSystemApp = infoParCel.hapInfoParameter.isSystemApp;
     tokenIdAplMap[static_cast<int32_t>(tokenId)] = tokenInfo;
-#ifdef IS_SUPPORT_HAP_RUNNING
-    BootVerifyScheduler::GetInstance().tokenIdAplMap_[static_cast<int32_t>(tokenId)] = tokenInfo;
-#endif
 }
 
 /**
@@ -577,6 +574,7 @@ HWTEST_F(AccessTokenManagerServiceTest, InitHapTokenTest003, TestSize.Level0)
 HWTEST_F(AccessTokenManagerServiceTest, GetHapIdentityTest001, TestSize.Level0)
 {
     atManagerService_->Initialize();
+    sleep(1); // wait for db init
 
     HapInfoParcel infoParcel;
     infoParcel.hapInfoParameter = g_info;
@@ -612,6 +610,7 @@ HWTEST_F(AccessTokenManagerServiceTest, GetHapIdentityTest001, TestSize.Level0)
 HWTEST_F(AccessTokenManagerServiceTest, GetHapBaseInfoByUidTest001, TestSize.Level0)
 {
     atManagerService_->Initialize();
+    sleep(1); // wait for db init
 
     HapInfoParcel infoParcel;
     infoParcel.hapInfoParameter = g_info;
