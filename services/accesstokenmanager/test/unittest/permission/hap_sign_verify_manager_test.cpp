@@ -162,16 +162,7 @@ HWTEST_F(HapSignVerifyManagerTest, CheckMultipleHaps001, TestSize.Level1)
 
     TrustedBundleInfoInner info2 = info1;
     info2.provisionInfo.bundleInfo.appIdentifier = "identifier2";
-    
-    std::vector<TrustedBundleInfoInner> infos_matched_1 = {info1, info2};
-    EXPECT_EQ(RET_SUCCESS, manager.CheckMultipleHaps(infos_matched_1));
-    
-    info2.provisionInfo.bundleInfo.appIdentifier = info1.provisionInfo.bundleInfo.appIdentifier;
     info2.provisionInfo.appId = "app-id-desc2";
-    std::vector<TrustedBundleInfoInner> infos_matched_2 = {info1, info2};
-    EXPECT_EQ(RET_SUCCESS, manager.CheckMultipleHaps(infos_matched_2));
-
-    info2.provisionInfo.bundleInfo.appIdentifier = "identifier2";
     std::vector<TrustedBundleInfoInner> infos_mismatch = {info1, info2};
     EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, manager.CheckMultipleHaps(infos_mismatch));
 }
@@ -910,6 +901,83 @@ HWTEST_F(HapSignVerifyManagerTest, BuildIdType001, TestSize.Level1)
     // Case 4: Normal app → PROCESS_OWNERID_APP
     EXPECT_EQ(PROCESS_OWNERID_APP,
         HapSignVerifyHelper::BuildIdType(false, "12345", {}));
+}
+
+/**
+ * @tc.name: CheckAppIdentifier001
+ * @tc.desc: CheckAppIdentifier covers all branches:
+ *           (1) same non-empty appIdentifier → true
+ *           (2) different appIdentifier, same appId → true
+ *           (3) different appIdentifier, different appId → false
+ *           (4) old appIdentifier empty, same appId → true
+ *           (5) old appIdentifier empty, different appId → false
+ *           (6) new appIdentifier empty, same appId → true
+ *           (7) both appIdentifier empty, same appId → true
+ *           (8) both appIdentifier empty, different appId → false
+ * @tc.type: FUNC
+ */
+HWTEST_F(HapSignVerifyManagerTest, CheckAppIdentifier001, TestSize.Level1)
+{
+    HapSignVerifyManager& manager = HapSignVerifyManager::GetInstance();
+
+    TrustedBundleInfoInner oldInfo;
+    TrustedBundleInfoInner newInfo;
+
+    // (1) Both appIdentifiers non-empty and equal → true (versionCode update path)
+    oldInfo.provisionInfo.bundleInfo.appIdentifier = "12345";
+    newInfo.provisionInfo.bundleInfo.appIdentifier = "12345";
+    oldInfo.provisionInfo.appId = "old-app-id";
+    newInfo.provisionInfo.appId = "new-app-id";
+    EXPECT_TRUE(manager.CheckAppIdentifier(oldInfo, newInfo));
+
+    // (2) Different appIdentifier, same appId → true (appId fallback path)
+    oldInfo.provisionInfo.bundleInfo.appIdentifier = "11111";
+    newInfo.provisionInfo.bundleInfo.appIdentifier = "22222";
+    oldInfo.provisionInfo.appId = "same-app-id";
+    newInfo.provisionInfo.appId = "same-app-id";
+    EXPECT_TRUE(manager.CheckAppIdentifier(oldInfo, newInfo));
+
+    // (3) Different appIdentifier, different appId → false
+    oldInfo.provisionInfo.bundleInfo.appIdentifier = "11111";
+    newInfo.provisionInfo.bundleInfo.appIdentifier = "22222";
+    oldInfo.provisionInfo.appId = "old-app-id";
+    newInfo.provisionInfo.appId = "new-app-id";
+    EXPECT_FALSE(manager.CheckAppIdentifier(oldInfo, newInfo));
+
+    // (4) Old appIdentifier empty, same appId → true
+    oldInfo.provisionInfo.bundleInfo.appIdentifier = "";
+    newInfo.provisionInfo.bundleInfo.appIdentifier = "22222";
+    oldInfo.provisionInfo.appId = "same-app-id";
+    newInfo.provisionInfo.appId = "same-app-id";
+    EXPECT_TRUE(manager.CheckAppIdentifier(oldInfo, newInfo));
+
+    // (5) Old appIdentifier empty, different appId → false
+    oldInfo.provisionInfo.bundleInfo.appIdentifier = "";
+    newInfo.provisionInfo.bundleInfo.appIdentifier = "22222";
+    oldInfo.provisionInfo.appId = "old-app-id";
+    newInfo.provisionInfo.appId = "new-app-id";
+    EXPECT_FALSE(manager.CheckAppIdentifier(oldInfo, newInfo));
+
+    // (6) New appIdentifier empty, same appId → true
+    oldInfo.provisionInfo.bundleInfo.appIdentifier = "11111";
+    newInfo.provisionInfo.bundleInfo.appIdentifier = "";
+    oldInfo.provisionInfo.appId = "same-app-id";
+    newInfo.provisionInfo.appId = "same-app-id";
+    EXPECT_TRUE(manager.CheckAppIdentifier(oldInfo, newInfo));
+
+    // (7) Both appIdentifiers empty, same appId → true
+    oldInfo.provisionInfo.bundleInfo.appIdentifier = "";
+    newInfo.provisionInfo.bundleInfo.appIdentifier = "";
+    oldInfo.provisionInfo.appId = "same-app-id";
+    newInfo.provisionInfo.appId = "same-app-id";
+    EXPECT_TRUE(manager.CheckAppIdentifier(oldInfo, newInfo));
+
+    // (8) Both appIdentifiers empty, different appId → false
+    oldInfo.provisionInfo.bundleInfo.appIdentifier = "";
+    newInfo.provisionInfo.bundleInfo.appIdentifier = "";
+    oldInfo.provisionInfo.appId = "old-app-id";
+    newInfo.provisionInfo.appId = "new-app-id";
+    EXPECT_FALSE(manager.CheckAppIdentifier(oldInfo, newInfo));
 }
 } // namespace AccessToken
 } // namespace Security
