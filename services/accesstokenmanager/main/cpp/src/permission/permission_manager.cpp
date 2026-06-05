@@ -46,6 +46,7 @@
 #include "permission_validator.h"
 #include "tokenid_attributes.h"
 #include "token_field_const.h"
+#include "user_policy_manager.h"
 #ifdef TOKEN_SYNC_ENABLE
 #include "token_modify_notifier.h"
 #endif
@@ -323,17 +324,29 @@ int32_t PermissionManager::RequestAppPermOnSetting(const HapTokenInfo& hapInfo,
     return ERR_OK;
 }
 
-void PermissionManager::NotifyWhenPermissionStateUpdated(AccessTokenID tokenID, const std::string& permissionName,
+void PermissionManager::NotifyWhenPermissionStateUpdated(const std::string& permissionName,
     bool isGranted, uint32_t flag, const std::shared_ptr<HapTokenInfoInner>& infoPtr)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "IsUpdated");
-    int32_t changeType = isGranted ? STATE_CHANGE_GRANTED : STATE_CHANGE_REVOKED;
+    AccessTokenID tokenID = infoPtr->GetTokenID();
+    int32_t userID = infoPtr->GetUserID();
 
-    // set to kernel(grant/revoke)
-    PermissionKernelUtils::SetPermToKernel(tokenID, permissionName, isGranted);
-
-    // To notify the listener register.
-    CallbackManager::GetInstance().ExecuteCallbackAsync(tokenID, permissionName, changeType);
+    uint32_t permCode = 0;
+    (void)TransferPermissionToOpcode(permissionName, permCode);
+    bool isGrantedBefore = false;
+    int32_t ret = PermissionKernelUtils::GetPermFromKernel(tokenID, permCode, isGrantedBefore);
+    bool isRestricted = UserPolicyManager::GetInstance().IsPermissionRestricted(tokenID, userID, permCode);
+    bool effectiveGranted = isGranted && !isRestricted;
+    int32_t changeType = effectiveGranted ? STATE_CHANGE_GRANTED : STATE_CHANGE_REVOKED;
+    if (ret != RET_SUCCESS) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "GetPermFromKernel failed, tokenID=%{public}u, permCode=%{public}u, ret=%{public}d.",
+            tokenID, permCode, ret);
+        PermissionKernelUtils::SetPermToKernel(tokenID, permissionName, effectiveGranted);
+    } else if (isGrantedBefore != effectiveGranted) {
+        // Keep kernel permission denied when the grant is still restricted by user policy.
+        PermissionKernelUtils::SetPermToKernel(tokenID, permissionName, effectiveGranted);
+        CallbackManager::GetInstance().ExecuteCallbackAsync(tokenID, permissionName, changeType);
+    }
 
     // To notify the client cache to update by resetting paramValue_.
     PermissionChangeNotifier::GetInstance().ParamUpdate(permissionName, flag, false);
@@ -365,7 +378,7 @@ int32_t PermissionManager::UpdateTokenPermissionState(const std::shared_ptr<HapT
         return ret;
     }
     if (statusChanged) {
-        NotifyWhenPermissionStateUpdated(tokenID, permission, isGranted, flag, infoPtr);
+        NotifyWhenPermissionStateUpdated(permission, isGranted, flag, infoPtr);
         // To notify kill process when perm is revoke
         if (needKill && (!isGranted && !isSecCompGrantedBefore)) {
             LOGI(ATM_DOMAIN, ATM_TAG, "(%{public}s) is revoked, kill process(%{public}u, %{public}s).",
@@ -463,7 +476,7 @@ int32_t PermissionManager::UpdateTokenPermissionState(
     PermissionChangeNotifier::GetInstance().ParamFlagUpdate();
 
     if (statusChanged) {
-        NotifyWhenPermissionStateUpdated(id, permission, isGranted, flag, infoPtr);
+        NotifyWhenPermissionStateUpdated(permission, isGranted, flag, infoPtr);
         // To notify kill process when perm is revoke
         if (needKill && (!isGranted && !isSecCompGrantedBefore)) {
             LOGI(ATM_DOMAIN, ATM_TAG, "(%{public}s) is revoked, kill process(%{public}u).", permission.c_str(), id);

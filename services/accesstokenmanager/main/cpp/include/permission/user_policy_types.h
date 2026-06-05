@@ -19,6 +19,7 @@
 #include <set>
 
 #include "access_token.h"
+#include "permission_status.h"
 
 namespace OHOS {
 namespace Security {
@@ -27,6 +28,19 @@ struct UserPolicyChange {
     uint32_t permCode;
     bool isPersist = false;
     std::set<int32_t> changedUserList;
+};
+
+enum class UserPolicyRefreshTarget : uint8_t {
+    HAP = 0,
+    TOOL,
+};
+
+struct UserPolicyRefreshSnapshot {
+    UserPolicyRefreshTarget target = UserPolicyRefreshTarget::HAP;
+    AccessTokenID tokenId = INVALID_TOKENID;
+    uint32_t permCode = 0;
+    int32_t originalStatus = PERMISSION_DENIED;
+    uint32_t originalFlag = 0;
 };
 } // namespace AccessToken
 } // namespace Security

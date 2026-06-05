@@ -507,13 +507,6 @@ int32_t HapTokenInfoInner::ResetUserGrantPermissionStatus(void)
     return RET_SUCCESS;
 }
 
-void HapTokenInfoInner::RefreshPermStateToKernel(AccessTokenID tokenId, uint32_t permCode, bool hapUserIsActive,
-    std::map<std::string, bool>& refreshedPermList)
-{
-    (void)PermissionDataBrief::GetInstance().RefreshPermStateToKernel(
-        tokenId, permCode, hapUserIsActive, refreshedPermList);
-}
-
 int32_t HapTokenInfoInner::VerifyPermissionStatus(AccessTokenID tokenID, const std::string& permissionName)
 {
     return PermissionDataBrief::GetInstance().VerifyPermissionStatus(tokenID, permissionName);
@@ -532,7 +525,7 @@ PermUsedTypeEnum HapTokenInfoInner::GetPermissionUsedType(AccessTokenID tokenID,
 int32_t HapTokenInfoInner::QueryPermissionStatusAndFlag(
     AccessTokenID tokenID, uint32_t permCode, int32_t& status, uint32_t& flag)
 {
-    return PermissionDataBrief::GetInstance().QueryPermissionStatusAndFlag(tokenID, permCode, status, flag);
+    return PermissionDataBrief::GetInstance().QueryEffectivePermissionStatusAndFlag(tokenID, permCode, status, flag);
 }
 
 void HapTokenInfoInner::GetGrantedPermCodeList(AccessTokenID tokenID,

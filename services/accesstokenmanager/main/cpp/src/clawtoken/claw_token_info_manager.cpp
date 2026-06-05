@@ -91,6 +91,35 @@ void BuildPermStatusList(ToolTokenType toolType, const std::vector<PermissionSta
     }
 }
 
+int32_t RestoreRestrictedFlagForToolToken(AccessTokenID tokenId, uint32_t permCode, uint32_t originalFlag)
+{
+    int32_t currentStatus = PERMISSION_DENIED;
+    uint32_t currentFlag = 0;
+    int32_t ret = PermissionDataBrief::GetInstance().QueryStoredPermissionStatusAndFlag(
+        tokenId, permCode, currentStatus, currentFlag);
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
+    bool currentRestricted = (currentFlag & PERMISSION_RESTRICTED_BY_ADMIN) != 0;
+    bool originalRestricted = (originalFlag & PERMISSION_RESTRICTED_BY_ADMIN) != 0;
+    if (currentRestricted == originalRestricted) {
+        return RET_SUCCESS;
+    }
+
+    PermissionDataBrief::PermissionStatusChangeType rollbackChangeType =
+        PermissionDataBrief::PermissionStatusChangeType::NO_CHANGE;
+    return PermissionDataBrief::GetInstance().UpdatePermissionFlag(
+        tokenId, permCode, PERMISSION_RESTRICTED_BY_ADMIN, originalRestricted, rollbackChangeType);
+}
+
+void RestoreToolKernelPermissionState(
+    AccessTokenID tokenId, uint32_t permCode, int32_t originalStatus, uint32_t originalFlag)
+{
+    std::string permissionName = TransferOpcodeToPermission(permCode);
+    bool kernelStatus = ((originalFlag & PERMISSION_RESTRICTED_BY_ADMIN) == 0) &&
+        (originalStatus == PERMISSION_GRANTED);
+    PermissionKernelUtils::SetPermToKernel(tokenId, permissionName, kernelStatus);
+}
 }
 
 ToolTokenInfoManager& ToolTokenInfoManager::GetInstance()
@@ -507,48 +536,77 @@ int32_t ToolTokenInfoManager::UpdateRestrictedFlag(
     return inner->UpdateRestrictedFlag(permCode, isRestricted, hasFlagChanged);
 }
 
-int32_t ToolTokenInfoManager::RefreshTokenPermStateToKernel(
-    AccessTokenID tokenId, uint32_t permCode, bool isAllowed, const char* source, bool hasFlagChanged) const
-{
-    std::map<std::string, bool> refreshedPermList;
-    int32_t ret = PermissionDataBrief::GetInstance().RefreshPermStateToKernel(
-        tokenId, permCode, isAllowed, refreshedPermList);
-    if (hasFlagChanged || !refreshedPermList.empty()) {
-        PermissionChangeNotifier::GetInstance().ParamFlagUpdate();
-    }
-    for (const auto& perm : refreshedPermList) {
-        LOGI(ATM_DOMAIN, ATM_TAG, "Perm %{public}s refreshed by %{public}s, isAllowed %{public}d.",
-            perm.first.c_str(), source, perm.second);
-        int32_t changeType = perm.second ? STATE_CHANGE_GRANTED : STATE_CHANGE_REVOKED;
-        CallbackManager::GetInstance().ExecuteCallbackAsync(tokenId, perm.first, changeType);
-    }
-    return ret;
-}
-
-int32_t ToolTokenInfoManager::RefreshUserPolicyFlagForUser(int32_t userId, const UserPolicyChange& policy) const
+int32_t ToolTokenInfoManager::RefreshUserPolicyFlagForUser(int32_t userId, const UserPolicyChange& policy,
+    std::vector<UserPolicyRefreshSnapshot>& appliedSnapshots) const
 {
     std::unordered_set<AccessTokenID> toolTokenIdSet;
     GetToolTokenIDByUserID(userId, toolTokenIdSet);
     for (const auto tokenId : toolTokenIdSet) {
         bool isRestricted = UserPolicyManager::GetInstance().IsPermissionRestricted(tokenId, userId, policy.permCode);
-        bool isFlagChanged = false;
-        int32_t ret = UpdateRestrictedFlag(tokenId, policy.permCode, isRestricted, isFlagChanged);
-        if (ret == AccessTokenError::ERR_PERMISSION_NOT_EXIST) {
-            continue;
+        int32_t originalStatus = PERMISSION_DENIED;
+        uint32_t originalFlag = 0;
+        int32_t ret = PermissionDataBrief::GetInstance().QueryStoredPermissionStatusAndFlag(
+            tokenId, policy.permCode, originalStatus, originalFlag);
+        if (ret != RET_SUCCESS) {
+            if (ret == AccessTokenError::ERR_PERMISSION_NOT_EXIST) {
+                continue;
+            }
+            return ret;
         }
+
+        bool isFlagChanged = false;
+        ret = UpdateRestrictedFlag(tokenId, policy.permCode, isRestricted, isFlagChanged);
         if (ret != RET_SUCCESS) {
             return ret;
         }
-        (void)RefreshTokenPermStateToKernel(tokenId, policy.permCode, !isRestricted, "user policy", isFlagChanged);
+        std::string permissionName = TransferOpcodeToPermission(policy.permCode);
+        bool kernelStatusBefore =
+            ((originalFlag & PERMISSION_RESTRICTED_BY_ADMIN) == 0) && (originalStatus == PERMISSION_GRANTED);
+        bool kernelStatusAfter = !isRestricted && (originalStatus == PERMISSION_GRANTED);
+        if (isFlagChanged) {
+            PermissionChangeNotifier::GetInstance().ParamFlagUpdate();
+        }
+        if (kernelStatusBefore != kernelStatusAfter) {
+            PermissionKernelUtils::SetPermToKernel(tokenId, permissionName, kernelStatusAfter);
+            int32_t changeType = kernelStatusAfter ? STATE_CHANGE_GRANTED : STATE_CHANGE_REVOKED;
+            CallbackManager::GetInstance().ExecuteCallbackAsync(tokenId, permissionName, changeType);
+        }
+        LOGI(ATM_DOMAIN, ATM_TAG, "Perm %{public}s refreshed by user policy, isAllowed %{public}d.",
+            permissionName.c_str(), kernelStatusAfter);
+        appliedSnapshots.emplace_back(UserPolicyRefreshSnapshot {
+            .target = UserPolicyRefreshTarget::TOOL,
+            .tokenId = tokenId,
+            .permCode = policy.permCode,
+            .originalStatus = originalStatus,
+            .originalFlag = originalFlag
+        });
     }
     return RET_SUCCESS;
 }
 
-int32_t ToolTokenInfoManager::RefreshUserPolicyFlag(const std::vector<UserPolicyChange>& changedPolicyList) const
+void ToolTokenInfoManager::RollbackUserPolicyFlag(
+    const std::vector<UserPolicyRefreshSnapshot>& appliedSnapshots) const
+{
+    for (auto iter = appliedSnapshots.rbegin(); iter != appliedSnapshots.rend(); ++iter) {
+        if (iter->target != UserPolicyRefreshTarget::TOOL) {
+            continue;
+        }
+        int32_t ret = RestoreRestrictedFlagForToolToken(iter->tokenId, iter->permCode, iter->originalFlag);
+        if (ret != RET_SUCCESS) {
+            LOGE(ATM_DOMAIN, ATM_TAG,
+                "Rollback restricted flag failed, tokenId=%{public}u, permCode=%{public}u, ret=%{public}d.",
+                iter->tokenId, iter->permCode, ret);
+        }
+        RestoreToolKernelPermissionState(iter->tokenId, iter->permCode, iter->originalStatus, iter->originalFlag);
+    }
+}
+
+int32_t ToolTokenInfoManager::RefreshUserPolicyFlag(const std::vector<UserPolicyChange>& changedPolicyList,
+    std::vector<UserPolicyRefreshSnapshot>& appliedSnapshots) const
 {
     for (const auto& policy : changedPolicyList) {
         for (const auto& userId : policy.changedUserList) {
-            int32_t ret = RefreshUserPolicyFlagForUser(userId, policy);
+            int32_t ret = RefreshUserPolicyFlagForUser(userId, policy, appliedSnapshots);
             if (ret != RET_SUCCESS) {
                 return ret;
             }

@@ -245,7 +245,8 @@ static void ExpectBriefPermissionState(AccessTokenID tokenId, uint32_t permCode,
     int32_t cacheStatus = PermissionState::PERMISSION_DENIED;
     uint32_t cacheFlag = PermissionFlag::PERMISSION_DEFAULT_FLAG;
     EXPECT_EQ(RET_SUCCESS,
-        PermissionDataBrief::GetInstance().QueryPermissionStatusAndFlag(tokenId, permCode, cacheStatus, cacheFlag));
+        PermissionDataBrief::GetInstance().QueryEffectivePermissionStatusAndFlag(
+            tokenId, permCode, cacheStatus, cacheFlag));
     EXPECT_EQ(status, cacheStatus);
     EXPECT_EQ(flag, cacheFlag);
 }

@@ -45,6 +45,7 @@ public:
     static int32_t AddHapPermToKernel(AccessTokenID tokenID, const std::vector<BriefPermData>& permBriefDataList);
     static int32_t GetBundleInfoFromKernel(AccessTokenID tokenId, BundleNoCachedInfo& noCachedInfo,
         std::vector<PermissionWithValue>& permList);
+    static int32_t GetPermFromKernel(AccessTokenID tokenID, uint32_t permCode, bool& isGranted);
     static void RemovePermFromKernel(AccessTokenID tokenID);
     static void SetPermToKernel(AccessTokenID tokenID, const std::string& permissionName, bool isGranted);
     static bool IsKernelSupportSpm();

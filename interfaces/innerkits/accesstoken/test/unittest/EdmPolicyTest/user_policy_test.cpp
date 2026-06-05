@@ -1466,6 +1466,62 @@ HWTEST_F(UserPolicyTest, UserPolicyTestForUpdateHap, TestSize.Level1)
 }
 
 /**
+ * @tc.name: UserPolicyTestForUpdateHapWithWhiteList
+ * @tc.desc: UpdateHapToken removes and re-adds INTERNET, whitelist should still keep INTERNET granted after re-add.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(UserPolicyTest, UserPolicyTestForUpdateHapWithWhiteList, TestSize.Level1)
+{
+    HapPolicyParams testPolicyParams1 = {
+        .apl = APL_SYSTEM_CORE, .domain = "test.domain2", .permStateList = { g_infoManagerInternetState }};
+    HapInfoParams testHapInfo = g_testHapInfoParams;
+    testHapInfo.userID = MOCK_USER_ID_10001;
+    AccessTokenIDEx fullIdUser1;
+    EXPECT_EQ(RET_SUCCESS, TestCommon::AllocTestHapToken(testHapInfo, testPolicyParams1, fullIdUser1));
+    AccessTokenID tokenId = fullIdUser1.tokenIdExStruct.tokenID;
+    ExpectPermissionQueryState(tokenId, INTERNET, PERMISSION_GRANTED, PERMISSION_GRANTED, 0u);
+
+    UserPermissionPolicy policy = {.permissionName = INTERNET,
+        .userPolicyList = {{ .userId = MOCK_USER_ID_10001, .isRestricted = true }}, .isPersist = true};
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::SetUserPolicy({ policy }));
+    ExpectPermissionQueryState(tokenId, INTERNET, PERMISSION_DENIED, PERMISSION_DENIED, PERMISSION_RESTRICTED_BY_ADMIN);
+
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::UpdatePolicyWhiteList(tokenId, INTERNET, ADD));
+    ExpectPermissionQueryState(tokenId, INTERNET, PERMISSION_GRANTED, PERMISSION_GRANTED, 0u);
+
+    HapPolicyParams testPolicyParams2 = {
+        .apl = APL_SYSTEM_CORE, .domain = "test.domain2", .permStateList = {}};
+    UpdateHapInfoParams info;
+    info.appIDDesc = "TEST";
+    info.apiVersion = 12;
+    info.isSystemApp = false;
+    {
+        MockToken mock(g_selfShellTokenId, "accesstoken_service", false);
+        mock.Grant("ohos.permission.MANAGE_HAP_TOKENID");
+        EXPECT_EQ(RET_SUCCESS, AccessTokenKit::UpdateHapToken(fullIdUser1, info, testPolicyParams2));
+    }
+    EXPECT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenId, INTERNET));
+
+    HapPolicyParams testPolicyParams3 = {
+        .apl = APL_SYSTEM_CORE, .domain = "test.domain2", .permStateList = { g_infoManagerInternetState }};
+    {
+        MockToken mock(g_selfShellTokenId, "accesstoken_service", false);
+        mock.Grant("ohos.permission.MANAGE_HAP_TOKENID");
+        EXPECT_EQ(RET_SUCCESS, AccessTokenKit::UpdateHapToken(fullIdUser1, info, testPolicyParams3));
+    }
+    ExpectPermissionQueryState(tokenId, INTERNET, PERMISSION_GRANTED, PERMISSION_GRANTED, 0u);
+
+    std::vector<AccessTokenID> tokenIdList;
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetPolicyWhiteList(INTERNET, tokenIdList));
+    ASSERT_EQ(1u, tokenIdList.size());
+    EXPECT_EQ(tokenId, tokenIdList[0]);
+
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::ClearUserPolicy({ INTERNET }));
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenId));
+}
+
+/**
  * @tc.name: UserPolicyTestForRemove
  * @tc.desc: UpdateHapToken and check permission status with user policy.
  * @tc.type: FUNC

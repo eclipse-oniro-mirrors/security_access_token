@@ -49,7 +49,6 @@ namespace {
 static std::shared_ptr<AccessTokenManagerService> atManagerService_;
 static InstallSessionManager* g_installSessionManager = nullptr;
 static constexpr int32_t UID_MASK = 200000;
-static constexpr int32_t INIT_WAIT_TIME = 3;
 }
 
 void DeleteIdentityMockTest::SetUpTestCase()
@@ -62,10 +61,6 @@ void DeleteIdentityMockTest::SetUpTestCase()
     uint32_t pefDefSize = 0;
     uint32_t dlpSize = 0;
     AccessTokenInfoManager::GetInstance().Init(hapSize, nativeSize, pefDefSize, dlpSize);
-
-    (void)BootVerifyScheduler::GetInstance().VerifyBundleSignInfoWhenStart();
-    BootVerifyScheduler::GetInstance().StartVerifyNormalBundleListAsync();
-    std::this_thread::sleep_for(std::chrono::seconds(INIT_WAIT_TIME));
 
     AccessTokenMigrationManager::GetInstance().Initialize();
     AccessTokenMigrationManager::GetInstance().FinishMigration();

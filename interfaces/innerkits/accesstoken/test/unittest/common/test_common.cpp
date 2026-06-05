@@ -373,7 +373,10 @@ AccessTokenID TestCommon::GetNativeTokenIdFromProcess(const std::string &process
     info.processName = process;
     AccessTokenKit::DumpTokenInfo(info, dumpInfo);
     size_t pos = dumpInfo.find("\"tokenID\": ");
+    // Restore before every return; some test environments do not contain all
+    // native processes in the token table.
     if (pos == std::string::npos) {
+        EXPECT_EQ(0, SetSelfTokenID(selfTokenId));
         return 0;
     }
     pos += std::string("\"tokenID\": ").length();

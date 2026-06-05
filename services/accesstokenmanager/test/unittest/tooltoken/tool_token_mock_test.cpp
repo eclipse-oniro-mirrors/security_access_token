@@ -19,12 +19,13 @@
 
 #define private public
 #include "accesstoken_manager_service.h"
+#include "claw_token_info_manager.h"
 #undef private
 
 #include "access_token_error.h"
+#include "accesstoken_id_manager.h"
 #include "accesstoken_info_manager.h"
 #include "claw_ticket_manager.h"
-#include "claw_token_info_manager.h"
 #include "cli_info_parcel.h"
 #include "cli_permissions_result_parcel.h"
 #include "generic_values.h"
@@ -63,6 +64,19 @@ const std::string KERNEL_PLUGIN_PERMISSION = "ohos.permission.kernel.SUPPORT_PLU
 const std::string WRITE_CALENDAR_PERMISSION = "ohos.permission.WRITE_CALENDAR";
 const std::string UNDECLARED_PERMISSION = "ohos.permission.TEST_UNDECLARED";
 uint64_t g_selfShellTokenId = 0;
+
+class FailingCliTokenInfoInner final : public ClawTokenInfoInnerBase {
+public:
+    int32_t InitForTest(const ClawTokenBaseInfo& baseInfo)
+    {
+        return InitBaseInfo(baseInfo);
+    }
+
+    ToolTokenType GetType() const override
+    {
+        return ToolTokenType::CLI;
+    }
+};
 
 std::string BuildInvalidAgentId()
 {
@@ -2081,7 +2095,8 @@ HWTEST_F(ToolTokenMockTest, UpdateRestrictedFlag_002, TestSize.Level1)
  */
 HWTEST_F(ToolTokenMockTest, RefreshUserPolicyFlag_001, TestSize.Level1)
 {
-    EXPECT_EQ(RET_SUCCESS, ToolTokenInfoManager::GetInstance().RefreshUserPolicyFlag({}));
+    std::vector<UserPolicyRefreshSnapshot> appliedSnapshots;
+    EXPECT_EQ(RET_SUCCESS, ToolTokenInfoManager::GetInstance().RefreshUserPolicyFlag({}, appliedSnapshots));
 }
 
 /**
@@ -2166,6 +2181,179 @@ HWTEST_F(ToolTokenMockTest, RefreshUserPolicyFlag_002, TestSize.Level1)
     EXPECT_EQ(RET_SUCCESS, ClearUserPolicyRet({ CAMERA_PERMISSION }));
 }
 #endif
+
+/**
+ * @tc.name: RefreshUserPolicyFlag_003
+ * @tc.desc: Test RefreshUserPolicyFlag returns token-invalid when tool token brief permission data has been removed.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ToolTokenMockTest, RefreshUserPolicyFlag_003, TestSize.Level1)
+{
+    AccessTokenID hostTokenId = INVALID_TOKENID;
+    TokenCleaner cleaner;
+    uint64_t hostFullTokenId = CreateServiceTestToken("tooltoken_user_policy_no_brief_host", true,
+        { BuildGrantedStatus(ACCESS_SYSTEM_SETTINGS, PERMISSION_SYSTEM_FIXED) });
+    ASSERT_NE(0, hostFullTokenId);
+    hostTokenId = GetTokenIdFromFullTokenId(hostFullTokenId);
+    cleaner.Add(hostTokenId);
+
+    PrepareMockEnvironment();
+    auto authInfo =
+        BuildCliAuthInfoParcel(BuildCliInfo("settings", "set"), { ACCESS_SYSTEM_SETTINGS }, { true });
+    MockSingleCliAuthChallenge(authInfo, "user_policy_no_brief_challenge", "user_policy_no_brief_ticket");
+    ToolAuthResultParcel authResult = GenerateCliAuthResult(hostTokenId, { authInfo }, cleaner);
+    ASSERT_EQ(1, static_cast<int32_t>(authResult.result.authResults.size()));
+    CliInitInfoParcel initInfoParcel;
+    initInfoParcel.cliInitInfo = {
+        .hostTokenId = hostTokenId,
+        .challenge = authResult.result.authResults[0],
+        .cliInfo = BuildCliInfo("settings", "set"),
+    };
+    uint64_t fullTokenId = 0;
+    std::vector<PermissionWithValueIdl> kernelPermIdlList;
+    ASSERT_EQ(RET_SUCCESS, InitCliToolTokenRet(initInfoParcel, fullTokenId, kernelPermIdlList));
+    AccessTokenID tokenId = GetTokenIdFromFullTokenId(fullTokenId);
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+    ASSERT_EQ(RET_SUCCESS, PermissionDataBrief::GetInstance().DeleteBriefPermDataByTokenId(tokenId));
+
+    uint32_t permCode = 0;
+    ASSERT_TRUE(TransferPermissionToOpcode(ACCESS_SYSTEM_SETTINGS, permCode));
+    UserPolicyChange policy = { .permCode = permCode, .isPersist = false, .changedUserList = { USER_ID } };
+    std::vector<UserPolicyRefreshSnapshot> appliedSnapshots;
+    EXPECT_EQ(ERR_TOKEN_INVALID,
+        ToolTokenInfoManager::GetInstance().RefreshUserPolicyFlag({ policy }, appliedSnapshots));
+
+    EXPECT_EQ(RET_SUCCESS, ToolTokenInfoManager::GetInstance().DeleteToolTokenByPid(getpid()));
+}
+
+/**
+ * @tc.name: RefreshUserPolicyFlag_004
+ * @tc.desc: Test RefreshUserPolicyFlag rolls back earlier tool token changes when a later refresh fails.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ToolTokenMockTest, RefreshUserPolicyFlag_004, TestSize.Level1)
+{
+    AccessTokenID hostTokenId = INVALID_TOKENID;
+    TokenCleaner cleaner;
+    uint64_t hostFullTokenId = CreateServiceTestToken("tooltoken_user_policy_rollback_host", true,
+        { BuildGrantedStatus(ACCESS_SYSTEM_SETTINGS, PERMISSION_SYSTEM_FIXED) });
+    ASSERT_NE(0, hostFullTokenId);
+    hostTokenId = GetTokenIdFromFullTokenId(hostFullTokenId);
+    cleaner.Add(hostTokenId);
+
+    PrepareMockEnvironment();
+    auto authInfo =
+        BuildCliAuthInfoParcel(BuildCliInfo("settings", "set"), { ACCESS_SYSTEM_SETTINGS }, { true });
+    MockSingleCliAuthChallenge(authInfo, "user_policy_rollback_challenge", "user_policy_rollback_ticket");
+    ToolAuthResultParcel authResult = GenerateCliAuthResult(hostTokenId, { authInfo }, cleaner);
+    ASSERT_EQ(1, static_cast<int32_t>(authResult.result.authResults.size()));
+    CliInitInfoParcel initInfoParcel;
+    initInfoParcel.cliInitInfo = {
+        .hostTokenId = hostTokenId,
+        .challenge = authResult.result.authResults[0],
+        .cliInfo = BuildCliInfo("settings", "set"),
+    };
+    uint64_t fullTokenId = 0;
+    std::vector<PermissionWithValueIdl> kernelPermIdlList;
+    ASSERT_EQ(RET_SUCCESS, InitCliToolTokenRet(initInfoParcel, fullTokenId, kernelPermIdlList));
+    AccessTokenID tokenId = GetTokenIdFromFullTokenId(fullTokenId);
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+    ASSERT_EQ(PERMISSION_GRANTED, VerifyRuntimePermission(tokenId, ACCESS_SYSTEM_SETTINGS));
+
+    AccessTokenID failingTokenId = AccessTokenIDManager::GetInstance().CreateAndRegisterTokenId(TOKEN_SHELL, 0, 0, 1);
+    ASSERT_NE(INVALID_TOKENID, failingTokenId);
+    auto failingInner = std::make_shared<FailingCliTokenInfoInner>();
+    ClawTokenBaseInfo baseInfo = {
+        .toolType = ToolTokenType::CLI,
+        .tokenId = failingTokenId,
+        .hostTokenId = hostTokenId,
+        .userId = USER_ID,
+        .callerPid = getpid() + 1000,
+    };
+    ASSERT_EQ(RET_SUCCESS, failingInner->InitForTest(baseInfo));
+    {
+        std::unique_lock<std::shared_mutex> lock(ToolTokenInfoManager::GetInstance().lock_);
+        ToolTokenInfoManager::GetInstance().toolTokenInfoMap_[failingTokenId] = failingInner;
+        ToolTokenInfoManager::GetInstance().hostToolTokenMap_[hostTokenId].insert(failingTokenId);
+        ToolTokenInfoManager::GetInstance().pidToolTokenMap_[baseInfo.callerPid] = failingTokenId;
+    }
+
+    uint32_t permCode = 0;
+    ASSERT_TRUE(TransferPermissionToOpcode(ACCESS_SYSTEM_SETTINGS, permCode));
+    UserPolicyChange policy = { .permCode = permCode, .isPersist = false, .changedUserList = { USER_ID } };
+    std::vector<UserPolicyRefreshSnapshot> appliedSnapshots;
+    EXPECT_NE(RET_SUCCESS, ToolTokenInfoManager::GetInstance().RefreshUserPolicyFlag({ policy }, appliedSnapshots));
+    EXPECT_EQ(PERMISSION_GRANTED, VerifyRuntimePermission(tokenId, ACCESS_SYSTEM_SETTINGS));
+
+    EXPECT_EQ(RET_SUCCESS, ToolTokenInfoManager::GetInstance().DeleteToolTokenByPid(baseInfo.callerPid));
+    AccessTokenIDManager::GetInstance().ReleaseTokenId(failingTokenId);
+    EXPECT_EQ(RET_SUCCESS, ToolTokenInfoManager::GetInstance().DeleteToolTokenByPid(getpid()));
+}
+
+/**
+ * @tc.name: RefreshUserPolicyFlag_005
+ * @tc.desc: Test tool rollback continues when one snapshot restore fails.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ToolTokenMockTest, RefreshUserPolicyFlag_005, TestSize.Level1)
+{
+    AccessTokenID hostTokenId = INVALID_TOKENID;
+    TokenCleaner cleaner;
+    uint64_t hostFullTokenId = CreateServiceTestToken("tooltoken_user_policy_rollback_continue_host", true,
+        { BuildGrantedStatus(ACCESS_SYSTEM_SETTINGS, PERMISSION_SYSTEM_FIXED) });
+    ASSERT_NE(0, hostFullTokenId);
+    hostTokenId = GetTokenIdFromFullTokenId(hostFullTokenId);
+    cleaner.Add(hostTokenId);
+
+    PrepareMockEnvironment();
+    auto authInfo =
+        BuildCliAuthInfoParcel(BuildCliInfo("settings", "set"), { ACCESS_SYSTEM_SETTINGS }, { true });
+    MockSingleCliAuthChallenge(authInfo, "user_policy_rollback_continue_challenge",
+        "user_policy_rollback_continue_ticket");
+    ToolAuthResultParcel authResult = GenerateCliAuthResult(hostTokenId, { authInfo }, cleaner);
+    ASSERT_EQ(1, static_cast<int32_t>(authResult.result.authResults.size()));
+    CliInitInfoParcel initInfoParcel;
+    initInfoParcel.cliInitInfo = {
+        .hostTokenId = hostTokenId,
+        .challenge = authResult.result.authResults[0],
+        .cliInfo = BuildCliInfo("settings", "set"),
+    };
+    uint64_t fullTokenId = 0;
+    std::vector<PermissionWithValueIdl> kernelPermIdlList;
+    ASSERT_EQ(RET_SUCCESS, InitCliToolTokenRet(initInfoParcel, fullTokenId, kernelPermIdlList));
+    AccessTokenID tokenId = GetTokenIdFromFullTokenId(fullTokenId);
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+
+    uint32_t permCode = 0;
+    ASSERT_TRUE(TransferPermissionToOpcode(ACCESS_SYSTEM_SETTINGS, permCode));
+    bool hasFlagChanged = false;
+    ASSERT_EQ(RET_SUCCESS,
+        ToolTokenInfoManager::GetInstance().UpdateRestrictedFlag(tokenId, permCode, true, hasFlagChanged));
+    ASSERT_TRUE(hasFlagChanged);
+    ASSERT_EQ(PERMISSION_DENIED, VerifyRuntimePermission(tokenId, ACCESS_SYSTEM_SETTINGS));
+
+    std::vector<UserPolicyRefreshSnapshot> snapshots = {
+        {
+            .target = UserPolicyRefreshTarget::TOOL,
+            .tokenId = tokenId,
+            .permCode = permCode,
+            .originalStatus = PERMISSION_GRANTED,
+            .originalFlag = PERMISSION_SYSTEM_FIXED,
+        },
+        {
+            .target = UserPolicyRefreshTarget::TOOL,
+            .tokenId = INVALID_TOKENID,
+            .permCode = permCode,
+            .originalStatus = PERMISSION_GRANTED,
+            .originalFlag = PERMISSION_SYSTEM_FIXED,
+        }
+    };
+
+    ToolTokenInfoManager::GetInstance().RollbackUserPolicyFlag(snapshots);
+    EXPECT_EQ(PERMISSION_GRANTED, VerifyRuntimePermission(tokenId, ACCESS_SYSTEM_SETTINGS));
+
+    EXPECT_EQ(RET_SUCCESS, ToolTokenInfoManager::GetInstance().DeleteToolTokenByPid(getpid()));
+}
 }
 }
 }

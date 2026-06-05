@@ -22,6 +22,10 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+
+#ifdef SAF_AGENT_FENCE_ENABLE
+#include "saf_agent_fence.h"
+#endif
 #include "access_token.h"
 #include "app_manager_access_client.h"
 #include "app_manager_death_callback.h"
@@ -88,7 +92,10 @@ private:
 
     void RegisterAppStateObserver();
     void UnregisterAppStateObserver();
-
+#ifdef SAF_AGENT_FENCE_ENABLE
+    int32_t PrepareVerifiedTicketInfo(AccessTokenID hostTokenId, const std::string& challenge,
+        ClawTicket& ticket, std::vector<SAF::VerifyTicketInfo>& verifyInfos, std::vector<int32_t>& verifyRes);
+#endif
     std::shared_mutex multiLock_;
     std::unordered_map<std::string, ClawTicket> ticketMap_;
 

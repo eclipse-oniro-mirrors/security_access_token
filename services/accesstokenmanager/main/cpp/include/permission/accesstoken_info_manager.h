@@ -90,7 +90,9 @@ public:
     int32_t ClearUserGrantedPermission(AccessTokenID tokenID);
     int32_t UpdateRestrictedFlagAndRefreshKernel(
         AccessTokenID tokenId, uint32_t permCode, bool isRestricted, bool isPersist, const char* source);
-    int32_t RefreshUserPolicyFlag(const std::vector<UserPolicyChange>& changedPolicyList);
+    int32_t RefreshUserPolicyFlag(const std::vector<UserPolicyChange>& changedPolicyList,
+        std::vector<UserPolicyRefreshSnapshot>& appliedSnapshots);
+    void RollbackUserPolicyFlag(const std::vector<UserPolicyRefreshSnapshot>& appliedSnapshots);
     int32_t VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName);
     int32_t VerifyNativeAccessToken(AccessTokenID tokenID, const std::string& permissionName);
     bool GetApiVersionByTokenId(AccessTokenID tokenID, int32_t& apiVersion);
@@ -184,11 +186,11 @@ private:
         std::vector<GenericValues>& permStateResults);
     int32_t FindPermissionByTokenIdFromDb(const std::vector<AccessTokenID>& tokenIDList,
         std::vector<GenericValues>& permStateResults);
+    int32_t UpdateRestrictedFlagToDb(AccessTokenID tokenId, uint32_t permCode);
     int32_t UpdateRestrictedFlag(
         AccessTokenID tokenId, uint32_t permCode, bool isRestricted, bool isPersist, bool& hasFlagChanged);
-    int32_t RefreshTokenPermStateToKernel(
-        AccessTokenID tokenId, uint32_t permCode, bool isAllowed, const char* source, bool hasFlagChanged);
-    int32_t RefreshUserPolicyFlagForUser(int32_t userId, const UserPolicyChange& policy);
+    int32_t RefreshUserPolicyFlagForUser(int32_t userId, const UserPolicyChange& policy,
+        std::vector<UserPolicyRefreshSnapshot>& appliedSnapshots);
     int32_t CheckHapInfoParam(const HapInfoParams& info, const HapPolicy& policy);
     void RemoveReservedTokenForBundle(const HapInfoParams& info, std::vector<AccessTokenID>& tokenIds);
     void DeleteOldReservedTokens(const std::vector<AccessTokenID>& reservedTokenIds, const std::string& bundleName);
