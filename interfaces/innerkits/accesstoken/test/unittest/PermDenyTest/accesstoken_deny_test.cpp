@@ -652,6 +652,22 @@ HWTEST_F(AccessTokenDenyTest, GetHapSignInfoTest001, TestSize.Level0)
 
     EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::GetHapSignInfo(bundleName, bundleInfo));
 }
+
+/**
+ * @tc.name: GetCachePolicyBySessionIdTest001
+ * @tc.desc: GetCachePolicyBySessionId with no permission
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenDenyTest, GetCachePolicyBySessionIdTest001, TestSize.Level0)
+{
+    int32_t sessionId = 123;
+    std::string bundleName = "GetCachePolicyBySessionIdTest001";
+    BundlePolicyInfo bundlePolicyInfo;
+
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
+        AccessTokenKit::GetCachePolicyBySessionId(sessionId, bundleName, bundlePolicyInfo));
+}
 #endif
 
 #ifdef TOKEN_SYNC_ENABLE

@@ -105,6 +105,10 @@ struct BundleHapListIdl {
     int userId;
 };
 
+struct BundlePolicyInfoIdl {
+    List<String> reqPermissions;
+};
+
 struct IdentityIdl {
     int uid;
     unsigned long tokenId;

@@ -250,6 +250,18 @@ int32_t AccessTokenKit::GetHapSignInfo(const std::string& bundleName,
     return AccessTokenManagerClient::GetInstance().GetHapSignInfo(bundleName, bundleInfo);
 }
 
+int32_t AccessTokenKit::GetCachePolicyBySessionId(int32_t sessionId, const std::string& bundleName,
+    BundlePolicyInfo& bundlePolicyInfo)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetCachePolicyBySessionId called, sessionId=%{public}d, bundleName=%{public}s.",
+        sessionId, bundleName.c_str());
+    if (sessionId <= 0 || !DataValidator::IsBundleNameValid(bundleName)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Param is invalid.");
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    return AccessTokenManagerClient::GetInstance().GetCachePolicyBySessionId(sessionId, bundleName, bundlePolicyInfo);
+}
+
 int32_t AccessTokenKit::UpdateHapToken(
     AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info, const HapPolicyParams& policy)
 {

@@ -242,6 +242,10 @@ struct TrustedBundleInfo {
     std::string sharedFiles;
 };
 
+struct BundlePolicyInfo {
+    std::vector<std::string> reqPermissions;
+};
+
 /**
  * @brief Declares hap policy params class
  */
