@@ -9128,6 +9128,17 @@
             "deviceTypes": ["car", "phone", "tv", "wearable", "2in1", "tablet"]
         },
         {
+            "name": "ohos.permission.CAMERA_SHARED",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["car"]
+        },
+        {
             "name": "ohos.permission.ENTERPRISE_GET_INSTALLED_BUNDLE_LIST",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
