@@ -17,6 +17,7 @@
 #include "gtest/gtest.h"
 #include <gtest/hwext/gtest-multithread.h>
 
+#define private public
 #include "accesstoken_callbacks.h"
 #include "accesstoken_info_manager.h"
 #include "accesstoken_kit.h"
@@ -45,6 +46,7 @@
 #include "token_field_const.h"
 #include "token_setproc.h"
 #include "user_policy_manager.h"
+#undef private
 
 const char* DEVELOPER_MODE_STATE = "const.security.developermode.state";
 
@@ -67,6 +69,9 @@ static constexpr int32_t API_VERSION_9 = 9;
 static constexpr int32_t RANDOM_TOKENID = 123;
 static const std::string DEFAULT_AGENT_ID = "1001";
 static const std::string MANAGE_USER_POLICY = "ohos.permission.MANAGE_USER_POLICY";
+static const std::string MANAGE_EDM_POLICY = "ohos.permission.MANAGE_EDM_POLICY";
+static const std::string GRANT_SENSITIVE_PERMISSIONS = "ohos.permission.GRANT_SENSITIVE_PERMISSIONS";
+static const std::string REVOKE_SENSITIVE_PERMISSIONS = "ohos.permission.REVOKE_SENSITIVE_PERMISSIONS";
 static const unsigned int DEBUG_APP_FLAG = 0x0008;
 static uint64_t g_selfShellTokenId = 0;
 
@@ -171,7 +176,7 @@ static HapPolicy g_policy = {
     .aclExtendedMap = { std::make_pair("ohos.permission.KERNEL_ATM_SELF_USE", "test") },
 };
 
-uint64_t CreateClawServiceTestToken(
+uint64_t CreateServiceTestHapToken(
     const std::string& bundleName, bool isSystemApp, const std::vector<PermissionStatus>& permStateList,
     AccessTokenID& tokenId)
 {
@@ -344,6 +349,12 @@ void AccessTokenManagerServiceTest::TearDown()
  */
 HWTEST_F(AccessTokenManagerServiceTest, DumpTokenInfoFuncTest001, TestSize.Level1)
 {
+    uint64_t selfTokenId = GetSelfTokenID();
+    AccessTokenID shellTokenId = AccessTokenIDManager::GetInstance().CreateAndRegisterTokenId(TOKEN_SHELL, 0, 0, 0);
+    ASSERT_NE(INVALID_TOKENID, shellTokenId);
+    ASSERT_EQ(TOKEN_SHELL, AccessTokenIDManager::GetInstance().GetTokenIdType(shellTokenId));
+    SetSelfTokenID(shellTokenId);
+
     std::string dumpInfo;
     AtmToolsParamInfoParcel infoParcel;
     infoParcel.info.processName = "hdcd";
@@ -366,6 +377,8 @@ HWTEST_F(AccessTokenManagerServiceTest, DumpTokenInfoFuncTest001, TestSize.Level
     EXPECT_NE("", dumpInfo);
 
     system::SetBoolParameter(DEVELOPER_MODE_STATE, state);
+    SetSelfTokenID(selfTokenId);
+    AccessTokenIDManager::GetInstance().ReleaseTokenId(shellTokenId);
 }
 
 void AccessTokenManagerServiceTest::CreateHapToken(const HapInfoParcel& infoParCel, const HapPolicyParcel& policyParcel,
@@ -1278,6 +1291,24 @@ public:
     bool ready_;
 };
 
+class RecordingCbCustomizeTest : public PermStateChangeCallbackCustomize {
+public:
+    explicit RecordingCbCustomizeTest(const PermStateChangeScope& scopeInfo)
+        : PermStateChangeCallbackCustomize(scopeInfo)
+    {}
+
+    ~RecordingCbCustomizeTest() override = default;
+
+    void PermStateChangeCallback(PermStateChangeInfo& result) override
+    {
+        ready_ = true;
+        lastInfo_ = result;
+    }
+
+    bool ready_ = false;
+    PermStateChangeInfo lastInfo_ = {};
+};
+
 /**
  * @tc.name: RegisterSelfPermStateChangeCallback001
  * @tc.desc: Test RegisterSelfPermStateChangeCallback with different tokenID scope
@@ -2018,7 +2049,7 @@ HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest001, TestSize.L
 HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest002, TestSize.Level1)
 {
     AccessTokenID tokenId = INVALID_TOKENID;
-    uint64_t fullTokenId = CreateClawServiceTestToken("claw_permission_non_system_test", false, {}, tokenId);
+    uint64_t fullTokenId = CreateServiceTestHapToken("claw_permission_non_system_test", false, {}, tokenId);
     ASSERT_NE(0, fullTokenId);
     SetSelfTokenID(fullTokenId);
 
@@ -2046,7 +2077,7 @@ HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest002, TestSize.L
 HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest002_001, TestSize.Level1)
 {
     AccessTokenID tokenId = INVALID_TOKENID;
-    uint64_t fullTokenId = CreateClawServiceTestToken("claw_permission_no_api_permission_test", true, {}, tokenId);
+    uint64_t fullTokenId = CreateServiceTestHapToken("claw_permission_no_api_permission_test", true, {}, tokenId);
     ASSERT_NE(0, fullTokenId);
     SetSelfTokenID(fullTokenId);
 
@@ -2101,7 +2132,7 @@ HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest003, TestSize.L
     auto permStates = BuildClawQueryAndManagePermissionStates();
     permStates.emplace_back(cliState);
     AccessTokenID tokenId = INVALID_TOKENID;
-    uint64_t fullTokenId = CreateClawServiceTestToken(
+    uint64_t fullTokenId = CreateServiceTestHapToken(
         "claw_permission_system_service_test", true, permStates, tokenId);
     ASSERT_NE(0, fullTokenId);
     SetSelfTokenID(fullTokenId);
@@ -2132,7 +2163,7 @@ HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest003, TestSize.L
 HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest004, TestSize.Level1)
 {
     AccessTokenID tokenId = INVALID_TOKENID;
-    uint64_t fullTokenId = CreateClawServiceTestToken(
+    uint64_t fullTokenId = CreateServiceTestHapToken(
         "claw_permission_skill_service_test", true, BuildClawQueryAndManagePermissionStates(), tokenId);
     ASSERT_NE(0, fullTokenId);
     SetSelfTokenID(fullTokenId);
@@ -2175,7 +2206,7 @@ HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest004, TestSize.L
 HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest005, TestSize.Level1)
 {
     AccessTokenID tokenId = INVALID_TOKENID;
-    uint64_t fullTokenId = CreateClawServiceTestToken(
+    uint64_t fullTokenId = CreateServiceTestHapToken(
         "claw_permission_cli_challenge_test", true, BuildClawManagePermissionStates(), tokenId);
     ASSERT_NE(0, fullTokenId);
     SetSelfTokenID(fullTokenId);
@@ -2216,7 +2247,7 @@ HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest005, TestSize.L
 HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest006, TestSize.Level1)
 {
     AccessTokenID tokenId = INVALID_TOKENID;
-    uint64_t fullTokenId = CreateClawServiceTestToken(
+    uint64_t fullTokenId = CreateServiceTestHapToken(
         "claw_permission_cli_undeclared_test", true, BuildClawQueryAndManagePermissionStates(), tokenId);
     ASSERT_NE(0, fullTokenId);
     SetSelfTokenID(fullTokenId);
@@ -2262,7 +2293,7 @@ HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest007, TestSize.L
     auto permStates = BuildClawQueryAndManagePermissionStates();
     permStates.emplace_back(cliState);
     AccessTokenID tokenId = INVALID_TOKENID;
-    uint64_t fullTokenId = CreateClawServiceTestToken(
+    uint64_t fullTokenId = CreateServiceTestHapToken(
         "claw_permission_cli_denied_status_test", true, permStates, tokenId);
     ASSERT_NE(0, fullTokenId);
     SetSelfTokenID(fullTokenId);
@@ -2303,7 +2334,7 @@ HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest007_001, TestSi
     auto permStates = BuildClawQueryPermissionStates();
     permStates.emplace_back(cliCameraState);
     AccessTokenID tokenId = INVALID_TOKENID;
-    uint64_t fullTokenId = CreateClawServiceTestToken(
+    uint64_t fullTokenId = CreateServiceTestHapToken(
         "claw_permission_cli_mixed_dialog_test", true, permStates, tokenId);
     ASSERT_NE(0, fullTokenId);
     SetSelfTokenID(fullTokenId);
@@ -2335,7 +2366,7 @@ HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest007_001, TestSi
 HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest007_002, TestSize.Level1)
 {
     AccessTokenID tokenId = INVALID_TOKENID;
-    uint64_t fullTokenId = CreateClawServiceTestToken(
+    uint64_t fullTokenId = CreateServiceTestHapToken(
         "claw_permission_cli_validate_error_test", true, BuildClawQueryAndManagePermissionStates(), tokenId);
     ASSERT_NE(0, fullTokenId);
     SetSelfTokenID(fullTokenId);
@@ -2363,7 +2394,7 @@ HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest007_002, TestSi
 HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest007_003, TestSize.Level1)
 {
     AccessTokenID tokenId = INVALID_TOKENID;
-    uint64_t fullTokenId = CreateClawServiceTestToken(
+    uint64_t fullTokenId = CreateServiceTestHapToken(
         "claw_permission_cli_build_error_test", true, BuildClawQueryPermissionStates(), tokenId);
     ASSERT_NE(0, fullTokenId);
     SetSelfTokenID(fullTokenId);
@@ -2386,7 +2417,7 @@ HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest007_003, TestSi
 HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest007_004, TestSize.Level1)
 {
     AccessTokenID tokenId = INVALID_TOKENID;
-    uint64_t fullTokenId = CreateClawServiceTestToken(
+    uint64_t fullTokenId = CreateServiceTestHapToken(
         "claw_permission_cli_empty_permission_test", true, BuildClawQueryAndManagePermissionStates(), tokenId);
     ASSERT_NE(0, fullTokenId);
     SetSelfTokenID(fullTokenId);
@@ -2428,7 +2459,7 @@ HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest008, TestSize.L
     auto permStates = BuildClawManagePermissionStates();
     permStates.emplace_back(cameraState);
     AccessTokenID tokenId = INVALID_TOKENID;
-    uint64_t fullTokenId = CreateClawServiceTestToken(
+    uint64_t fullTokenId = CreateServiceTestHapToken(
         "claw_permission_skill_no_grant_test", true, permStates, tokenId);
     ASSERT_NE(0, fullTokenId);
     SetSelfTokenID(fullTokenId);
@@ -2471,7 +2502,7 @@ HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest008_001, TestSi
     auto permStates = BuildClawQueryPermissionStates();
     permStates.emplace_back(cameraState);
     AccessTokenID tokenId = INVALID_TOKENID;
-    uint64_t fullTokenId = CreateClawServiceTestToken(
+    uint64_t fullTokenId = CreateServiceTestHapToken(
         "claw_permission_skill_all_dialog_test", true, permStates, tokenId);
     ASSERT_NE(0, fullTokenId);
     SetSelfTokenID(fullTokenId);
@@ -2503,7 +2534,7 @@ HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest008_002, TestSi
     auto permStates = BuildClawQueryPermissionStates();
     permStates.emplace_back(cameraState);
     AccessTokenID tokenId = INVALID_TOKENID;
-    uint64_t fullTokenId = CreateClawServiceTestToken(
+    uint64_t fullTokenId = CreateServiceTestHapToken(
         "claw_permission_skill_mixed_dialog_test", true, permStates, tokenId);
     ASSERT_NE(0, fullTokenId);
     SetSelfTokenID(fullTokenId);
@@ -2536,7 +2567,7 @@ HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest008_002, TestSi
 HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest009, TestSize.Level1)
 {
     AccessTokenID tokenId = INVALID_TOKENID;
-    uint64_t fullTokenId = CreateClawServiceTestToken(
+    uint64_t fullTokenId = CreateServiceTestHapToken(
         "claw_permission_cli_no_grant_test", true, BuildClawManagePermissionStates(), tokenId);
     ASSERT_NE(0, fullTokenId);
     SetSelfTokenID(fullTokenId);
@@ -2564,7 +2595,7 @@ HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest009, TestSize.L
 HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest010, TestSize.Level1)
 {
     AccessTokenID tokenId = INVALID_TOKENID;
-    uint64_t fullTokenId = CreateClawServiceTestToken(
+    uint64_t fullTokenId = CreateServiceTestHapToken(
         "claw_permission_cli_challenge_order_test", true, BuildClawManagePermissionStates(), tokenId);
     ASSERT_NE(0, fullTokenId);
     SetSelfTokenID(fullTokenId);
@@ -2603,7 +2634,7 @@ HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest010, TestSize.L
 HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest011, TestSize.Level1)
 {
     AccessTokenID tokenId = INVALID_TOKENID;
-    uint64_t fullTokenId = CreateClawServiceTestToken(
+    uint64_t fullTokenId = CreateServiceTestHapToken(
         "claw_permission_cli_expand_used_permissions_test", true, BuildClawManagePermissionStates(), tokenId);
     ASSERT_NE(0, fullTokenId);
     SetSelfTokenID(fullTokenId);
@@ -2650,7 +2681,7 @@ HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest012, TestSize.L
     auto permStates = BuildClawManagePermissionStates();
     permStates.emplace_back(cliState);
     AccessTokenID tokenId = INVALID_TOKENID;
-    uint64_t fullTokenId = CreateClawServiceTestToken(
+    uint64_t fullTokenId = CreateServiceTestHapToken(
         "claw_permission_cli_keep_granted_system_permission_test", true, permStates, tokenId);
     ASSERT_NE(0, fullTokenId);
     SetSelfTokenID(fullTokenId);
@@ -2715,7 +2746,7 @@ HWTEST_F(AccessTokenManagerServiceTest, UserPolicyServiceTest002, TestSize.Level
 HWTEST_F(AccessTokenManagerServiceTest, UserPolicyServiceTest003, TestSize.Level1)
 {
     AccessTokenID tokenId = INVALID_TOKENID;
-    uint64_t fullTokenId = CreateClawServiceTestToken("user_policy_service_no_permission_test", true, {}, tokenId);
+    uint64_t fullTokenId = CreateServiceTestHapToken("user_policy_service_no_permission_test", true, {}, tokenId);
     ASSERT_NE(0, fullTokenId);
     SetSelfTokenID(fullTokenId);
 
@@ -2728,6 +2759,459 @@ HWTEST_F(AccessTokenManagerServiceTest, UserPolicyServiceTest003, TestSize.Level
     EXPECT_EQ(ERR_PERMISSION_DENIED, atManagerService_->ClearUserPolicy({ "ohos.permission.INTERNET" }));
 
     SetSelfTokenID(g_selfShellTokenId);
+    (void)AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId);
+}
+
+/**
+ * @tc.name: UserPolicyServiceTest004
+ * @tc.desc: Test SetUserPolicy service idl conversion and permission state refresh.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, UserPolicyServiceTest004, TestSize.Level1)
+{
+    MockToken mock(g_selfShellTokenId, "accesstoken_service", false);
+    mock.Grant(MANAGE_USER_POLICY);
+    AccessTokenID tokenId = INVALID_TOKENID;
+    uint64_t fullTokenId = CreateServiceTestHapToken("user_policy_service_convert_test", true,
+        {
+            BuildGrantedPermissionStatus("ohos.permission.INTERNET"),
+            BuildGrantedPermissionStatus("ohos.permission.GET_NETWORK_STATS")
+        }, tokenId);
+    ASSERT_NE(0, fullTokenId);
+
+    UserPermissionPolicyIdl userPolicyIdl;
+    userPolicyIdl.permissionName = "ohos.permission.INTERNET";
+    userPolicyIdl.isPersist = true;
+    userPolicyIdl.userPolicyList = {{ .userId = USER_ID, .isRestricted = true }};
+    UserPermissionPolicyIdl userPolicyIdl2 = userPolicyIdl;
+    userPolicyIdl2.permissionName = "ohos.permission.GET_NETWORK_STATS";
+    userPolicyIdl2.isPersist = false;
+    userPolicyIdl2.userPolicyList = {{ .userId = USER_ID, .isRestricted = false }};
+
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->SetUserPolicy({ userPolicyIdl, userPolicyIdl2 }));
+    EXPECT_EQ(PERMISSION_DENIED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenId, "ohos.permission.INTERNET"));
+    EXPECT_EQ(PERMISSION_GRANTED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenId, "ohos.permission.GET_NETWORK_STATS"));
+
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->ClearUserPolicy({ "ohos.permission.INTERNET" }));
+    EXPECT_EQ(PERMISSION_GRANTED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenId, "ohos.permission.INTERNET"));
+    EXPECT_EQ(PERMISSION_GRANTED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenId, "ohos.permission.GET_NETWORK_STATS"));
+
+    (void)AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId);
+}
+
+/**
+ * @tc.name: UserPolicyServiceTest005
+ * @tc.desc: Test SetPermissionStatusWithPolicy grant does not override active user policy restriction.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, UserPolicyServiceTest005, TestSize.Level1)
+{
+    MockToken mock(g_selfShellTokenId, "accesstoken_service", false);
+    mock.Grant(MANAGE_USER_POLICY);
+    mock.Grant(MANAGE_EDM_POLICY);
+    AccessTokenID tokenId = INVALID_TOKENID;
+    uint64_t fullTokenId = CreateServiceTestHapToken("user_policy_service_independent_test", true,
+        {
+            {
+                .permissionName = "ohos.permission.MICROPHONE",
+                .grantStatus = PermissionState::PERMISSION_GRANTED,
+                .grantFlag = PermissionFlag::PERMISSION_USER_FIXED
+            }
+        }, tokenId);
+    ASSERT_NE(0, fullTokenId);
+    EXPECT_EQ(PERMISSION_GRANTED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenId, "ohos.permission.MICROPHONE"));
+
+    UserPermissionPolicyIdl userPolicyIdl;
+    userPolicyIdl.permissionName = "ohos.permission.MICROPHONE";
+    userPolicyIdl.isPersist = false;
+    userPolicyIdl.userPolicyList = {{ .userId = USER_ID, .isRestricted = true }};
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->SetUserPolicy({ userPolicyIdl }));
+    EXPECT_EQ(PERMISSION_DENIED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenId, "ohos.permission.MICROPHONE"));
+
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->SetPermissionStatusWithPolicy(tokenId,
+        { "ohos.permission.MICROPHONE" }, PERMISSION_GRANTED, PERMISSION_FIXED_BY_ADMIN_POLICY));
+    EXPECT_EQ(PERMISSION_DENIED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenId, "ohos.permission.MICROPHONE"));
+
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->ClearUserPolicy({ "ohos.permission.MICROPHONE" }));
+    EXPECT_EQ(PERMISSION_GRANTED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenId, "ohos.permission.MICROPHONE"));
+
+    (void)AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId);
+}
+
+/**
+ * @tc.name: UserPolicyServiceTest006
+ * @tc.desc: Test active user policy restriction suppresses permission granted by SetPermissionStatusWithPolicy.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, UserPolicyServiceTest006, TestSize.Level1)
+{
+    MockToken mock(g_selfShellTokenId, "accesstoken_service", false);
+    mock.Grant(MANAGE_USER_POLICY);
+    mock.Grant(MANAGE_EDM_POLICY);
+    AccessTokenID tokenId = INVALID_TOKENID;
+    uint64_t fullTokenId = CreateServiceTestHapToken("user_policy_service_grant_then_restrict_test", true,
+        {
+            {
+                .permissionName = "ohos.permission.MICROPHONE",
+                .grantStatus = PermissionState::PERMISSION_DENIED,
+                .grantFlag = PermissionFlag::PERMISSION_DEFAULT_FLAG
+            }
+        }, tokenId);
+    ASSERT_NE(0, fullTokenId);
+    EXPECT_EQ(PERMISSION_DENIED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenId, "ohos.permission.MICROPHONE"));
+
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->SetPermissionStatusWithPolicy(tokenId,
+        { "ohos.permission.MICROPHONE" }, PERMISSION_GRANTED, PERMISSION_FIXED_BY_ADMIN_POLICY));
+    EXPECT_EQ(PERMISSION_GRANTED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenId, "ohos.permission.MICROPHONE"));
+
+    UserPermissionPolicyIdl userPolicyIdl;
+    userPolicyIdl.permissionName = "ohos.permission.MICROPHONE";
+    userPolicyIdl.isPersist = false;
+    userPolicyIdl.userPolicyList = {{ .userId = USER_ID, .isRestricted = true }};
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->SetUserPolicy({ userPolicyIdl }));
+    EXPECT_EQ(PERMISSION_DENIED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenId, "ohos.permission.MICROPHONE"));
+
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->ClearUserPolicy({ "ohos.permission.MICROPHONE" }));
+    EXPECT_EQ(PERMISSION_GRANTED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenId, "ohos.permission.MICROPHONE"));
+
+    (void)AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId);
+}
+
+/**
+ * @tc.name: UserPolicyServiceTest007
+ * @tc.desc: Test GrantPermission takes effect after active user policy restriction is cleared.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, UserPolicyServiceTest007, TestSize.Level1)
+{
+    MockToken mock(g_selfShellTokenId, "accesstoken_service", false);
+    mock.Grant(MANAGE_USER_POLICY);
+    mock.Grant(GRANT_SENSITIVE_PERMISSIONS);
+    mock.Grant("ohos.permission.GET_SENSITIVE_PERMISSIONS");
+    AccessTokenID tokenId = INVALID_TOKENID;
+    uint64_t fullTokenId = CreateServiceTestHapToken("user_policy_service_grant_under_restrict_test", true,
+        {
+            {
+                .permissionName = "ohos.permission.MICROPHONE",
+                .grantStatus = PermissionState::PERMISSION_DENIED,
+                .grantFlag = PermissionFlag::PERMISSION_DEFAULT_FLAG
+            }
+        }, tokenId);
+    ASSERT_NE(0, fullTokenId);
+
+    UserPermissionPolicyIdl userPolicyIdl;
+    userPolicyIdl.permissionName = "ohos.permission.MICROPHONE";
+    userPolicyIdl.isPersist = false;
+    userPolicyIdl.userPolicyList = {{ .userId = USER_ID, .isRestricted = true }};
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->SetUserPolicy({ userPolicyIdl }));
+    EXPECT_EQ(PERMISSION_DENIED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenId, "ohos.permission.MICROPHONE"));
+
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->GrantPermission(
+        tokenId, "ohos.permission.MICROPHONE", PERMISSION_USER_FIXED, USER_GRANTED_PERM));
+    EXPECT_EQ(PERMISSION_DENIED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenId, "ohos.permission.MICROPHONE"));
+
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->ClearUserPolicy({ "ohos.permission.MICROPHONE" }));
+    EXPECT_EQ(PERMISSION_GRANTED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenId, "ohos.permission.MICROPHONE"));
+
+    (void)AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId);
+}
+
+/**
+ * @tc.name: UserPolicyServiceTest008
+ * @tc.desc: Test RevokePermission takes effect after active user policy restriction is cleared.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, UserPolicyServiceTest008, TestSize.Level1)
+{
+    MockToken mock(g_selfShellTokenId, "accesstoken_service", false);
+    mock.Grant(MANAGE_USER_POLICY);
+    mock.Grant(REVOKE_SENSITIVE_PERMISSIONS);
+    AccessTokenID tokenId = INVALID_TOKENID;
+    uint64_t fullTokenId = CreateServiceTestHapToken("user_policy_service_revoke_under_restrict_test", true,
+        {
+            {
+                .permissionName = "ohos.permission.MICROPHONE",
+                .grantStatus = PermissionState::PERMISSION_GRANTED,
+                .grantFlag = PermissionFlag::PERMISSION_USER_FIXED
+            }
+        }, tokenId);
+    ASSERT_NE(0, fullTokenId);
+    EXPECT_EQ(PERMISSION_GRANTED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenId, "ohos.permission.MICROPHONE"));
+
+    UserPermissionPolicyIdl userPolicyIdl;
+    userPolicyIdl.permissionName = "ohos.permission.MICROPHONE";
+    userPolicyIdl.isPersist = false;
+    userPolicyIdl.userPolicyList = {{ .userId = USER_ID, .isRestricted = true }};
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->SetUserPolicy({ userPolicyIdl }));
+    EXPECT_EQ(PERMISSION_DENIED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenId, "ohos.permission.MICROPHONE"));
+
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->RevokePermission(
+        tokenId, "ohos.permission.MICROPHONE", PERMISSION_USER_FIXED, USER_GRANTED_PERM));
+    EXPECT_EQ(PERMISSION_DENIED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenId, "ohos.permission.MICROPHONE"));
+
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->ClearUserPolicy({ "ohos.permission.MICROPHONE" }));
+    EXPECT_EQ(PERMISSION_DENIED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenId, "ohos.permission.MICROPHONE"));
+
+    (void)AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId);
+}
+
+/**
+ * @tc.name: UserPolicyServiceTest009
+ * @tc.desc: Test ClearUserGrantedPermissionState keeps active user policy restriction.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, UserPolicyServiceTest009, TestSize.Level1)
+{
+    MockToken mock(g_selfShellTokenId, "accesstoken_service", false);
+    mock.Grant(MANAGE_USER_POLICY);
+    mock.Grant(REVOKE_SENSITIVE_PERMISSIONS);
+    AccessTokenID tokenId = INVALID_TOKENID;
+    uint64_t fullTokenId = CreateServiceTestHapToken("user_policy_service_clear_user_grant_test", true,
+        {
+            {
+                .permissionName = "ohos.permission.MICROPHONE",
+                .grantStatus = PermissionState::PERMISSION_GRANTED,
+                .grantFlag = PermissionFlag::PERMISSION_USER_FIXED
+            }
+        }, tokenId);
+    ASSERT_NE(0, fullTokenId);
+    EXPECT_EQ(PERMISSION_GRANTED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenId, "ohos.permission.MICROPHONE"));
+
+    UserPermissionPolicyIdl userPolicyIdl;
+    userPolicyIdl.permissionName = "ohos.permission.MICROPHONE";
+    userPolicyIdl.isPersist = false;
+    userPolicyIdl.userPolicyList = {{ .userId = USER_ID, .isRestricted = true }};
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->SetUserPolicy({ userPolicyIdl }));
+    EXPECT_EQ(PERMISSION_DENIED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenId, "ohos.permission.MICROPHONE"));
+
+    uint32_t flag = 0;
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->GetPermissionFlag(tokenId, "ohos.permission.MICROPHONE", flag));
+    EXPECT_NE(0U, flag & PERMISSION_RESTRICTED_BY_ADMIN);
+
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->ClearUserGrantedPermissionState(tokenId));
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->GetPermissionFlag(tokenId, "ohos.permission.MICROPHONE", flag));
+    EXPECT_NE(0U, flag & PERMISSION_RESTRICTED_BY_ADMIN);
+    EXPECT_EQ(PERMISSION_DENIED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenId, "ohos.permission.MICROPHONE"));
+
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->ClearUserPolicy({ "ohos.permission.MICROPHONE" }));
+    (void)AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId);
+}
+
+/**
+ * @tc.name: UserPolicyServiceTest010
+ * @tc.desc: Test SetUserPolicy and ClearUserPolicy service parameter validation branches.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, UserPolicyServiceTest010, TestSize.Level1)
+{
+    MockToken mock(g_selfShellTokenId, "accesstoken_service", false);
+    mock.Grant(MANAGE_USER_POLICY);
+
+    UserPermissionPolicyIdl emptyUserListPolicy;
+    emptyUserListPolicy.permissionName = "ohos.permission.INTERNET";
+    emptyUserListPolicy.isPersist = false;
+    EXPECT_EQ(ERR_PARAM_INVALID, atManagerService_->SetUserPolicy({ emptyUserListPolicy }));
+
+    UserPermissionPolicyIdl userPolicyIdl;
+    userPolicyIdl.permissionName = "ohos.permission.INTERNET";
+    userPolicyIdl.isPersist = false;
+    userPolicyIdl.userPolicyList = {{ .userId = USER_ID, .isRestricted = true }};
+    UserPermissionPolicyIdl duplicatePolicyIdl = userPolicyIdl;
+    EXPECT_EQ(ERR_PARAM_INVALID, atManagerService_->SetUserPolicy({ userPolicyIdl, duplicatePolicyIdl }));
+
+    duplicatePolicyIdl.isPersist = true;
+    EXPECT_EQ(ERR_PERM_POLICY_PERSISTENCE_FLAG_NOT_MATCH,
+        atManagerService_->SetUserPolicy({ userPolicyIdl, duplicatePolicyIdl }));
+
+    EXPECT_EQ(ERR_PARAM_INVALID, atManagerService_->ClearUserPolicy({ "ohos.permission.INVALID" }));
+    EXPECT_EQ(ERR_PERM_POLICY_NOT_SET, atManagerService_->ClearUserPolicy({ "ohos.permission.INTERNET" }));
+}
+
+/**
+ * @tc.name: UserPolicyServiceTest011
+ * @tc.desc: Test permission state callback is skipped while grant stays restricted by user policy.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, UserPolicyServiceTest011, TestSize.Level1)
+{
+    MockToken mock(g_selfShellTokenId, "accesstoken_service", false);
+    mock.Grant(MANAGE_USER_POLICY);
+    mock.Grant(GRANT_SENSITIVE_PERMISSIONS);
+    mock.Grant("ohos.permission.GET_SENSITIVE_PERMISSIONS");
+
+    AccessTokenID tokenId = INVALID_TOKENID;
+    uint64_t fullTokenId = CreateServiceTestHapToken("user_policy_service_callback_effective_state_test", true,
+        {
+            {
+                .permissionName = "ohos.permission.MICROPHONE",
+                .grantStatus = PermissionState::PERMISSION_DENIED,
+                .grantFlag = PermissionFlag::PERMISSION_DEFAULT_FLAG
+            }
+        }, tokenId);
+    ASSERT_NE(0, fullTokenId);
+
+    UserPermissionPolicyIdl userPolicyIdl;
+    userPolicyIdl.permissionName = "ohos.permission.MICROPHONE";
+    userPolicyIdl.isPersist = false;
+    userPolicyIdl.userPolicyList = {{ .userId = USER_ID, .isRestricted = true }};
+    ASSERT_EQ(RET_SUCCESS, atManagerService_->SetUserPolicy({ userPolicyIdl }));
+
+    PermStateChangeScope scopeInfo;
+    scopeInfo.tokenIDs = {tokenId};
+    scopeInfo.permList = {"ohos.permission.MICROPHONE"};
+    auto callbackPtr = std::make_shared<RecordingCbCustomizeTest>(scopeInfo);
+    auto callback = new (std::nothrow) PermissionStateChangeCallback(callbackPtr);
+    ASSERT_NE(nullptr, callback);
+    PermStateChangeScopeParcel scopeParcel;
+    scopeParcel.scope = scopeInfo;
+    ASSERT_EQ(RET_SUCCESS, atManagerService_->RegisterPermStateChangeCallback(
+        scopeParcel, callback->AsObject()));
+
+    ASSERT_EQ(RET_SUCCESS, atManagerService_->GrantPermission(
+        tokenId, "ohos.permission.MICROPHONE", PERMISSION_USER_FIXED, USER_GRANTED_PERM));
+    usleep(500000); // 500000us = 0.5s
+
+    EXPECT_FALSE(callbackPtr->ready_);
+    EXPECT_EQ(PERMISSION_DENIED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenId, "ohos.permission.MICROPHONE"));
+
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->UnRegisterPermStateChangeCallback(callback->AsObject()));
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->ClearUserPolicy({ "ohos.permission.MICROPHONE" }));
+    (void)AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId);
+}
+
+/**
+ * @tc.name: UserPolicyServiceTest012
+ * @tc.desc: Test SetUserPolicy rolls back refreshed hap permission state when a later hap refresh fails.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, UserPolicyServiceTest012, TestSize.Level1)
+{
+    MockToken mock(g_selfShellTokenId, "accesstoken_service", false);
+    mock.Grant(MANAGE_USER_POLICY);
+
+    AccessTokenID tokenId = INVALID_TOKENID;
+    uint64_t fullTokenId = CreateServiceTestHapToken("user_policy_service_refresh_rollback_test", true,
+        { BuildGrantedPermissionStatus("ohos.permission.INTERNET") }, tokenId);
+    ASSERT_NE(0, fullTokenId);
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+    uint32_t flag = 0;
+    ASSERT_EQ(RET_SUCCESS, atManagerService_->GetPermissionFlag(tokenId, "ohos.permission.INTERNET", flag));
+    ASSERT_EQ(PERMISSION_SYSTEM_FIXED, flag);
+    int32_t statusBefore = AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenId, "ohos.permission.INTERNET");
+
+    AccessTokenID invalidSameUserTokenId =
+        AccessTokenIDManager::GetInstance().CreateAndRegisterTokenId(TOKEN_HAP, 0, 0, 0);
+    ASSERT_NE(INVALID_TOKENID, invalidSameUserTokenId);
+    auto invalidInfo = std::make_shared<HapTokenInfoInner>();
+    invalidInfo->tokenInfoBasic_.tokenID = invalidSameUserTokenId;
+    invalidInfo->tokenInfoBasic_.userID = USER_ID;
+    invalidInfo->tokenInfoBasic_.bundleName = "invalid_refresh_rollback";
+    invalidInfo->tokenInfoBasic_.instIndex = 0;
+    invalidInfo->tokenInfoBasic_.apiVersion = API_VERSION_9;
+    AccessTokenInfoManager::GetInstance().hapTokenInfoMap_[invalidSameUserTokenId] = invalidInfo;
+
+    UserPermissionPolicyIdl userPolicyIdl;
+    userPolicyIdl.permissionName = "ohos.permission.INTERNET";
+    userPolicyIdl.isPersist = false;
+    userPolicyIdl.userPolicyList = {{ .userId = USER_ID, .isRestricted = true }};
+
+    EXPECT_NE(RET_SUCCESS, atManagerService_->SetUserPolicy({ userPolicyIdl }));
+    EXPECT_EQ(statusBefore,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenId, "ohos.permission.INTERNET"));
+
+    AccessTokenInfoManager::GetInstance().hapTokenInfoMap_.erase(invalidSameUserTokenId);
+    AccessTokenIDManager::GetInstance().ReleaseTokenId(invalidSameUserTokenId);
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->ClearUserPolicy({ "ohos.permission.INTERNET" }));
+    (void)AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId);
+}
+
+/**
+ * @tc.name: UserPolicyServiceTest013
+ * @tc.desc: Test RefreshUserPolicyPermState handles empty input.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, UserPolicyServiceTest013, TestSize.Level1)
+{
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->RefreshUserPolicyPermState({}));
+}
+
+/**
+ * @tc.name: UserPolicyServiceTest014
+ * @tc.desc: Test hap rollback continues when one snapshot restore fails.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, UserPolicyServiceTest014, TestSize.Level1)
+{
+    AccessTokenID tokenId = INVALID_TOKENID;
+    uint64_t fullTokenId = CreateServiceTestHapToken("user_policy_service_hap_rollback_continue_test", true,
+        { BuildGrantedPermissionStatus("ohos.permission.INTERNET") }, tokenId);
+    ASSERT_NE(0, fullTokenId);
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+
+    uint32_t permCode = 0;
+    ASSERT_TRUE(TransferPermissionToOpcode("ohos.permission.INTERNET", permCode));
+    ASSERT_EQ(PERMISSION_GRANTED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenId, "ohos.permission.INTERNET"));
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().UpdateRestrictedFlagAndRefreshKernel(
+        tokenId, permCode, true, false, "test"));
+    ASSERT_EQ(PERMISSION_DENIED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenId, "ohos.permission.INTERNET"));
+
+    std::vector<UserPolicyRefreshSnapshot> snapshots = {
+        {
+            .target = UserPolicyRefreshTarget::HAP,
+            .tokenId = tokenId,
+            .permCode = permCode,
+            .originalStatus = PERMISSION_GRANTED,
+            .originalFlag = PERMISSION_SYSTEM_FIXED,
+        },
+        {
+            .target = UserPolicyRefreshTarget::HAP,
+            .tokenId = INVALID_TOKENID,
+            .permCode = permCode,
+            .originalStatus = PERMISSION_GRANTED,
+            .originalFlag = PERMISSION_SYSTEM_FIXED,
+        }
+    };
+
+    AccessTokenInfoManager::GetInstance().RollbackUserPolicyFlag(snapshots);
+    EXPECT_EQ(PERMISSION_GRANTED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenId, "ohos.permission.INTERNET"));
+
     (void)AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId);
 }
 
@@ -2805,61 +3289,6 @@ HWTEST_F(AccessTokenManagerServiceTest, PolicyWhiteListServiceTest003, TestSize.
 }
 
 /**
- * @tc.name: PolicyWhiteListServicePermissionTest001
- * @tc.desc: Test UpdatePolicyWhiteList returns permission denied before manager whitelist update.
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenManagerServiceTest, PolicyWhiteListServicePermissionTest001, TestSize.Level1)
-{
-    AccessTokenID callerTokenId = INVALID_TOKENID;
-    uint64_t callerFullTokenId = CreateClawServiceTestToken(
-        "user_policy_service_permission_test_update", true, {}, callerTokenId);
-    ASSERT_NE(0, callerFullTokenId);
-
-    AccessTokenID targetTokenId = INVALID_TOKENID;
-    uint64_t targetFullTokenId = CreateClawServiceTestToken(
-        "user_policy_service_permission_target_update", true, {}, targetTokenId);
-    ASSERT_NE(0, targetFullTokenId);
-
-    uint32_t permCode = 0;
-    ASSERT_TRUE(TransferPermissionToOpcode("ohos.permission.INTERNET", permCode));
-    SetSelfTokenID(callerFullTokenId);
-
-    EXPECT_EQ(ERR_PERMISSION_DENIED,
-        atManagerService_->UpdatePolicyWhiteList(targetTokenId, permCode, static_cast<int32_t>(ADD)));
-
-    SetSelfTokenID(g_selfShellTokenId);
-    (void)AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(callerTokenId);
-    (void)AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(targetTokenId);
-}
-
-/**
- * @tc.name: PolicyWhiteListServicePermissionTest002
- * @tc.desc: Test GetPolicyWhiteList returns permission denied and clears output list.
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenManagerServiceTest, PolicyWhiteListServicePermissionTest002, TestSize.Level1)
-{
-    AccessTokenID callerTokenId = INVALID_TOKENID;
-    uint64_t callerFullTokenId = CreateClawServiceTestToken(
-        "user_policy_service_permission_test_get", true, {}, callerTokenId);
-    ASSERT_NE(0, callerFullTokenId);
-
-    uint32_t permCode = 0;
-    ASSERT_TRUE(TransferPermissionToOpcode("ohos.permission.INTERNET", permCode));
-    SetSelfTokenID(callerFullTokenId);
-
-    std::vector<AccessTokenID> tokenIdList = {RANDOM_TOKENID};
-    EXPECT_EQ(ERR_PERMISSION_DENIED, atManagerService_->GetPolicyWhiteList(permCode, tokenIdList));
-    EXPECT_TRUE(tokenIdList.empty());
-
-    SetSelfTokenID(g_selfShellTokenId);
-    (void)AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(callerTokenId);
-}
-
-/**
  * @tc.name: PolicyWhiteListServiceTest004
  * @tc.desc: Test UpdatePolicyWhiteList service updates whitelist and restricted flag.
  * @tc.type: FUNC
@@ -2870,7 +3299,7 @@ HWTEST_F(AccessTokenManagerServiceTest, PolicyWhiteListServiceTest004, TestSize.
     MockToken mock(g_selfShellTokenId, "accesstoken_service", false);
     mock.Grant(MANAGE_USER_POLICY);
     AccessTokenID tokenId = INVALID_TOKENID;
-    uint64_t fullTokenId = CreateClawServiceTestToken("policy_whitelist_service_success", true,
+    uint64_t fullTokenId = CreateServiceTestHapToken("policy_whitelist_service_success", true,
         { BuildGrantedPermissionStatus("ohos.permission.CAMERA") }, tokenId);
     ASSERT_NE(0, fullTokenId);
 
@@ -2914,7 +3343,7 @@ HWTEST_F(AccessTokenManagerServiceTest, PolicyWhiteListServiceTest005, TestSize.
     MockToken mock(g_selfShellTokenId, "accesstoken_service", false);
     mock.Grant(MANAGE_USER_POLICY);
     AccessTokenID tokenId = INVALID_TOKENID;
-    uint64_t fullTokenId = CreateClawServiceTestToken("policy_whitelist_service_rollback", true,
+    uint64_t fullTokenId = CreateServiceTestHapToken("policy_whitelist_service_rollback", true,
         { BuildGrantedPermissionStatus("ohos.permission.GET_NETWORK_STATS") }, tokenId);
     ASSERT_NE(0, fullTokenId);
 
@@ -2943,45 +3372,99 @@ HWTEST_F(AccessTokenManagerServiceTest, PolicyWhiteListServiceTest005, TestSize.
 }
 
 /**
- * @tc.name: UserPolicyServiceTest004
- * @tc.desc: Test SetUserPolicy service idl conversion and permission state refresh.
+ * @tc.name: PolicyWhiteListServiceTest006
+ * @tc.desc: Test UpdatePolicyWhiteList validation branches for policy state.
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenManagerServiceTest, UserPolicyServiceTest004, TestSize.Level1)
+HWTEST_F(AccessTokenManagerServiceTest, PolicyWhiteListServiceTest006, TestSize.Level1)
 {
     MockToken mock(g_selfShellTokenId, "accesstoken_service", false);
     mock.Grant(MANAGE_USER_POLICY);
     AccessTokenID tokenId = INVALID_TOKENID;
-    uint64_t fullTokenId = CreateClawServiceTestToken("user_policy_service_convert_test", true,
-        {
-            BuildGrantedPermissionStatus("ohos.permission.INTERNET"),
-            BuildGrantedPermissionStatus("ohos.permission.GET_NETWORK_STATS")
-        }, tokenId);
+    uint64_t fullTokenId = CreateServiceTestHapToken("policy_whitelist_service_branch_test", true,
+        { BuildGrantedPermissionStatus("ohos.permission.CAMERA") }, tokenId);
     ASSERT_NE(0, fullTokenId);
 
+    uint32_t cameraCode = 0;
+    ASSERT_TRUE(TransferPermissionToOpcode("ohos.permission.CAMERA", cameraCode));
+    EXPECT_EQ(ERR_PERM_POLICY_NOT_SET,
+        atManagerService_->UpdatePolicyWhiteList(tokenId, cameraCode, static_cast<int32_t>(ADD)));
+
     UserPermissionPolicyIdl userPolicyIdl;
-    userPolicyIdl.permissionName = "ohos.permission.INTERNET";
-    userPolicyIdl.isPersist = true;
+    userPolicyIdl.permissionName = "ohos.permission.CAMERA";
+    userPolicyIdl.isPersist = false;
+    userPolicyIdl.userPolicyList = {{ .userId = USER_ID + 1, .isRestricted = true }};
+    ASSERT_EQ(RET_SUCCESS, atManagerService_->SetUserPolicy({ userPolicyIdl }));
+    EXPECT_EQ(ERR_TOKENID_NOT_IN_POLICY_USERLIST,
+        atManagerService_->UpdatePolicyWhiteList(tokenId, cameraCode, static_cast<int32_t>(ADD)));
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->ClearUserPolicy({ "ohos.permission.CAMERA" }));
+
     userPolicyIdl.userPolicyList = {{ .userId = USER_ID, .isRestricted = true }};
-    UserPermissionPolicyIdl userPolicyIdl2 = userPolicyIdl;
-    userPolicyIdl2.permissionName = "ohos.permission.GET_NETWORK_STATS";
-    userPolicyIdl2.isPersist = false;
-    userPolicyIdl2.userPolicyList = {{ .userId = USER_ID, .isRestricted = false }};
+    ASSERT_EQ(RET_SUCCESS, atManagerService_->SetUserPolicy({ userPolicyIdl }));
+    EXPECT_EQ(ERR_TOKENID_NOT_IN_POLICY_WHITELIST,
+        atManagerService_->UpdatePolicyWhiteList(tokenId, cameraCode, static_cast<int32_t>(DELETE)));
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->UpdatePolicyWhiteList(tokenId, cameraCode, static_cast<int32_t>(ADD)));
+    EXPECT_EQ(ERR_TOKENID_ALREADY_IN_POLICY_WHITELIST,
+        atManagerService_->UpdatePolicyWhiteList(tokenId, cameraCode, static_cast<int32_t>(ADD)));
 
-    EXPECT_EQ(RET_SUCCESS, atManagerService_->SetUserPolicy({ userPolicyIdl, userPolicyIdl2 }));
-    EXPECT_EQ(PERMISSION_DENIED,
-        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenId, "ohos.permission.INTERNET"));
-    EXPECT_EQ(PERMISSION_GRANTED,
-        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenId, "ohos.permission.GET_NETWORK_STATS"));
-
-    EXPECT_EQ(RET_SUCCESS, atManagerService_->ClearUserPolicy({ "ohos.permission.INTERNET" }));
-    EXPECT_EQ(PERMISSION_GRANTED,
-        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenId, "ohos.permission.INTERNET"));
-    EXPECT_EQ(PERMISSION_GRANTED,
-        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenId, "ohos.permission.GET_NETWORK_STATS"));
-
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->ClearUserPolicy({ "ohos.permission.CAMERA" }));
     (void)AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId);
+}
+
+/**
+ * @tc.name: PolicyWhiteListServicePermissionTest001
+ * @tc.desc: Test UpdatePolicyWhiteList returns permission denied before manager whitelist update.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, PolicyWhiteListServicePermissionTest001, TestSize.Level1)
+{
+    AccessTokenID callerTokenId = INVALID_TOKENID;
+    uint64_t callerFullTokenId = CreateServiceTestHapToken(
+        "user_policy_service_permission_test_update", true, {}, callerTokenId);
+    ASSERT_NE(0, callerFullTokenId);
+
+    AccessTokenID targetTokenId = INVALID_TOKENID;
+    uint64_t targetFullTokenId = CreateServiceTestHapToken(
+        "user_policy_service_permission_target_update", true, {}, targetTokenId);
+    ASSERT_NE(0, targetFullTokenId);
+
+    uint32_t permCode = 0;
+    ASSERT_TRUE(TransferPermissionToOpcode("ohos.permission.INTERNET", permCode));
+    SetSelfTokenID(callerFullTokenId);
+
+    EXPECT_EQ(ERR_PERMISSION_DENIED,
+        atManagerService_->UpdatePolicyWhiteList(targetTokenId, permCode, static_cast<int32_t>(ADD)));
+
+    SetSelfTokenID(g_selfShellTokenId);
+    (void)AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(callerTokenId);
+    (void)AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(targetTokenId);
+}
+
+/**
+ * @tc.name: PolicyWhiteListServicePermissionTest002
+ * @tc.desc: Test GetPolicyWhiteList returns permission denied and clears output list.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, PolicyWhiteListServicePermissionTest002, TestSize.Level1)
+{
+    AccessTokenID callerTokenId = INVALID_TOKENID;
+    uint64_t callerFullTokenId = CreateServiceTestHapToken(
+        "user_policy_service_permission_test_get", true, {}, callerTokenId);
+    ASSERT_NE(0, callerFullTokenId);
+
+    uint32_t permCode = 0;
+    ASSERT_TRUE(TransferPermissionToOpcode("ohos.permission.INTERNET", permCode));
+    SetSelfTokenID(callerFullTokenId);
+
+    std::vector<AccessTokenID> tokenIdList = {RANDOM_TOKENID};
+    EXPECT_EQ(ERR_PERMISSION_DENIED, atManagerService_->GetPolicyWhiteList(permCode, tokenIdList));
+    EXPECT_TRUE(tokenIdList.empty());
+
+    SetSelfTokenID(g_selfShellTokenId);
+    (void)AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(callerTokenId);
 }
 #endif
 

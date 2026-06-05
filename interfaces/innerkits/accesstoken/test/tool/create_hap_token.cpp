@@ -29,21 +29,15 @@ struct CreateHapTokenOptions final {
     std::vector<std::string> reqPerm;
     std::vector<std::string> preAuthPerm;
     bool isSystemApp = true;
+    int32_t userId = 0;
 };
 
 void PrintCreateHapTokenHelp()
 {
-    std::cout << "Help: ./CreateHapToken bundleName [reqPermission ...] [--preauth permission ...]\n"
-        << "--preauth: switch subsequent arguments to pre-authorized permissions.\n"
-        << "--system-app <true|false>: set HapInfoParams.isSystemApp, default true.\n"
-        << "Note: every --preauth permission must also appear in the req permission list.\n"
-        << "Example1: ./CreateHapToken com.example.demo ohos.permission.CAMERA "
-        << "--preauth ohos.permission.CAMERA\n"
-        << "Example2: ./CreateHapToken com.example.demo --system-app false "
-        << "ohos.permission.CAMERA\n"
-        << "Example3: ./CreateHapToken com.example.demo --system-app true "
-        << "ohos.permission.CAMERA ohos.permission.MICROPHONE "
-        << "--preauth ohos.permission.MICROPHONE\n"
+    std::cout << "Usage: ./CreateHapToken <bundleName> [userId] [--user <userId>] [--system-app <true|false>] "
+        << "<reqPermission...> [--preauth <permission...>]\n"
+        << "Example: ./CreateHapToken com.example.demo 100 ohos.permission.CAMERA\n"
+        << "Note: --preauth permissions must also appear in req permissions.\n"
         << std::endl;
 }
 
@@ -54,7 +48,7 @@ bool ValidatePreAuthorizedPermissions(const std::vector<std::string>& reqPerm,
     for (const auto& permission : preAuthPerm) {
         if (reqPermSet.count(permission) == 0) {
             std::cout << "CreateHapToken failed, pre-authorized permission must be declared in req permissions: "
-                << permission << std::endl << std::endl;
+                << permission << std::endl;
             return false;
         }
     }
@@ -74,10 +68,22 @@ bool ParseBoolArg(const std::string& value, bool& result)
     return false;
 }
 
+bool ParseInt32Arg(const std::string& value, int32_t& result)
+{
+    char* end = nullptr;
+    long parsedValue = strtol(value.c_str(), &end, 10); // 10: decimal base
+    if ((end == value.c_str()) || (*end != '\0')) {
+        return false;
+    }
+    result = static_cast<int32_t>(parsedValue);
+    return true;
+}
+
 bool ParseCreateHapTokenArgs(int argc, char* argv[], CreateHapTokenOptions& options)
 {
     options.bundleName = argv[1]; // 1: index
     bool isPreAuthMode = false;
+    bool hasUserId = false;
     for (int32_t i = 2; i < argc; ++i) { // 2: start index
         std::string arg = argv[i];
         if (arg == "--preauth") {
@@ -86,20 +92,38 @@ bool ParseCreateHapTokenArgs(int argc, char* argv[], CreateHapTokenOptions& opti
         }
         if (arg == "--system-app") {
             if ((i + 1) >= argc) {
-                std::cout << "CreateHapToken failed, missing value for --system-app" << std::endl << std::endl;
+                std::cout << "CreateHapToken failed, missing value for --system-app" << std::endl;
                 return false;
             }
             if (!ParseBoolArg(argv[i + 1], options.isSystemApp)) {
-                std::cout << "CreateHapToken failed, invalid --system-app value: " << argv[i + 1]
-                    << std::endl << std::endl;
+                std::cout << "CreateHapToken failed, invalid --system-app value: " << argv[i + 1] << std::endl;
                 return false;
             }
             ++i;
             continue;
         }
+        if ((arg == "--user") || (arg == "--user-id")) {
+            if ((i + 1) >= argc) {
+                std::cout << "CreateHapToken failed, missing value for " << arg << std::endl;
+                return false;
+            }
+            if (!ParseInt32Arg(argv[i + 1], options.userId)) {
+                std::cout << "CreateHapToken failed, invalid " << arg << " value: " << argv[i + 1] << std::endl;
+                return false;
+            }
+            hasUserId = true;
+            ++i;
+            continue;
+        }
         if (!arg.empty() && arg[0] == '-') {
-            std::cout << "CreateHapToken failed, unsupported option: " << arg << std::endl << std::endl;
+            std::cout << "CreateHapToken failed, unsupported option: " << arg << std::endl;
             return false;
+        }
+        int32_t userId = 0;
+        if (!hasUserId && options.reqPerm.empty() && options.preAuthPerm.empty() && ParseInt32Arg(arg, userId)) {
+            options.userId = userId;
+            hasUserId = true;
+            continue;
         }
         if (isPreAuthMode) {
             options.preAuthPerm.emplace_back(arg);
@@ -113,16 +137,15 @@ bool ParseCreateHapTokenArgs(int argc, char* argv[], CreateHapTokenOptions& opti
 int32_t RunCreateHapToken(const CreateHapTokenOptions& options)
 {
     FullTokenID tokenId = GetHapTokenId(
-        options.bundleName, options.reqPerm, options.preAuthPerm, options.isSystemApp);
+        options.bundleName, options.reqPerm, options.preAuthPerm, options.isSystemApp, options.userId);
     if (tokenId == INVALID_TOKENID) {
-        std::cout << "CreateHapToken failed, bundleName=" << options.bundleName << std::endl << std::endl;
+        std::cout << "CreateHapToken ret=" << RET_FAILED << ", bundleName=" << options.bundleName << std::endl;
         return RET_FAILED;
     }
-    std::cout << "CreateHapToken success, bundleName=" << options.bundleName
-        << ", isSystemApp=" << options.isSystemApp
-        << ", permissionCount=" << options.reqPerm.size()
-        << ", preAuthPermissionCount=" << options.preAuthPerm.size()
-        << ", tokenId=" << tokenId << std::endl << std::endl;
+    std::cout << "CreateHapToken ret=" << RET_SUCCESS
+        << ", tokenId=" << tokenId
+        << ", bundleName=" << options.bundleName
+        << ", userId=" << options.userId << std::endl;
     return RET_SUCCESS;
 }
 }

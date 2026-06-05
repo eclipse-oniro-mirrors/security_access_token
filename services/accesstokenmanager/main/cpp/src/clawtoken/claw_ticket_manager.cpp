@@ -44,14 +44,6 @@ int32_t GetUserIdByTokenId(AccessTokenID callerTokenId)
     return hapInfo->GetUserID();
 }
 
-#ifdef SAF_AGENT_FENCE_ENABLE
-bool IsCliInfoMatched(const CliInfo& expectedCliInfo, const CliInfo& actualCliInfo)
-{
-    return (expectedCliInfo.cliName == actualCliInfo.cliName) &&
-        (expectedCliInfo.subCliName == actualCliInfo.subCliName);
-}
-#endif
-
 std::string SerializeCliAuthInfo(const CliAuthInfo& cliAuth)
 {
     CJsonUnique cliObj = CreateJson();
@@ -126,6 +118,12 @@ std::string SerializeSkillAuthInfo(const SkillAuthInfo& skillAuth)
 }
 
 #ifdef SAF_AGENT_FENCE_ENABLE
+bool IsCliInfoMatched(const CliInfo& expectedCliInfo, const CliInfo& actualCliInfo)
+{
+    return (expectedCliInfo.cliName == actualCliInfo.cliName) &&
+        (expectedCliInfo.subCliName == actualCliInfo.subCliName);
+}
+
 CliAuthInfo DeserializeCliAuthInfo(const std::string& json)
 {
     CliAuthInfo cliAuth;
@@ -395,26 +393,14 @@ int32_t ClawTicketManager::VerifyCliClawTicket(AccessTokenID hostTokenId, const 
 #endif
 
 #ifdef SAF_AGENT_FENCE_ENABLE
-    auto it = ticketMap_.find(challenge);
-    if (it == ticketMap_.end()) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Verify cli ticket failed, challenge not found");
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-
-    int32_t userId = GetUserIdByTokenId(hostTokenId);
-    if (userId < 0) {
-        return AccessTokenError::ERR_TOKENID_NOT_EXIST;
-    }
-
-    SAF::SafAgentFence safAgentFence;
-    std::vector<SAF::VerifyTicketInfo> verifyInfos = {{it->second.message, challenge, it->second.ticket}};
+    ClawTicket ticket;
+    std::vector<SAF::VerifyTicketInfo> verifyInfos;
     std::vector<int32_t> verifyRes;
-    int32_t ret = safAgentFence.BatchVerifyTicket(userId, std::to_string(hostTokenId), verifyInfos, verifyRes);
+    int32_t ret = PrepareVerifiedTicketInfo(hostTokenId, challenge, ticket, verifyInfos, verifyRes);
     if (ret != RET_SUCCESS) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Verify cli ticket failed, ret=%{public}d", ret);
-        return TransferErrorCode(ret);
+        return ret;
     }
-    if (hostTokenId != it->second.callerTokenId) {
+    if (hostTokenId != ticket.callerTokenId) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Verify cli ticket failed, hostTokenId=%{public}d", hostTokenId);
         return AccessTokenError::ERR_PARAM_INVALID;
     }
@@ -429,10 +415,11 @@ int32_t ClawTicketManager::VerifyCliClawTicket(AccessTokenID hostTokenId, const 
             return AccessTokenError::ERR_PARAM_INVALID;
         }
         for (size_t permIdx = 0; permIdx < cliAuth.permissionNames.size(); ++permIdx) {
-            PermissionStatus status;
+            PermissionStatus status = {};
             status.permissionName = cliAuth.permissionNames[permIdx];
-            status.grantStatus = ticketValid ?
-                (cliAuth.authorizationResults[permIdx] ? PERMISSION_GRANTED : PERMISSION_DENIED) : PERMISSION_DENIED;
+            status.grantStatus = (ticketValid && cliAuth.authorizationResults[permIdx]) ?
+                PERMISSION_GRANTED : PERMISSION_DENIED;
+            status.grantFlag = PERMISSION_DEFAULT_FLAG;
             permList.emplace_back(status);
         }
     }
@@ -451,34 +438,23 @@ int32_t ClawTicketManager::VerifySkillClawTicket(AccessTokenID hostTokenId, cons
 #endif
 
 #ifdef SAF_AGENT_FENCE_ENABLE
-    auto it = ticketMap_.find(challenge);
-    if (it == ticketMap_.end()) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Verify skill ticket failed, challenge not found");
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-
-    int32_t userId = GetUserIdByTokenId(hostTokenId);
-    if (userId < 0) {
-        return AccessTokenError::ERR_TOKENID_NOT_EXIST;
-    }
-
-    SAF::SafAgentFence safAgentFence;
-    std::vector<SAF::VerifyTicketInfo> verifyInfos = {{it->second.message, challenge, it->second.ticket}};
+    ClawTicket ticket;
+    std::vector<SAF::VerifyTicketInfo> verifyInfos;
     std::vector<int32_t> verifyRes;
-    int32_t ret = safAgentFence.BatchVerifyTicket(userId, std::to_string(hostTokenId), verifyInfos, verifyRes);
+    int32_t ret = PrepareVerifiedTicketInfo(hostTokenId, challenge, ticket, verifyInfos, verifyRes);
     if (ret != RET_SUCCESS) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Verify skill ticket failed, ret=%{public}d", ret);
-        return TransferErrorCode(ret);
+        return ret;
     }
 
     for (size_t ticketIdx = 0; ticketIdx < verifyInfos.size(); ++ticketIdx) {
         bool ticketValid = (verifyRes[ticketIdx] == 0);
         SkillAuthInfo skillAuth = DeserializeSkillAuthInfo(verifyInfos[ticketIdx].message);
         for (size_t permIdx = 0; permIdx < skillAuth.permissionNames.size(); ++permIdx) {
-            PermissionStatus status;
+            PermissionStatus status = {};
             status.permissionName = skillAuth.permissionNames[permIdx];
-            status.grantStatus = ticketValid ?
-                (skillAuth.authorizationResults[permIdx] ? PERMISSION_GRANTED : PERMISSION_DENIED) : PERMISSION_DENIED;
+            status.grantStatus = (ticketValid && skillAuth.authorizationResults[permIdx]) ?
+                PERMISSION_GRANTED : PERMISSION_DENIED;
+            status.grantFlag = PERMISSION_DEFAULT_FLAG;
             permList.emplace_back(status);
         }
     }
@@ -486,6 +462,33 @@ int32_t ClawTicketManager::VerifySkillClawTicket(AccessTokenID hostTokenId, cons
 
     return RET_SUCCESS;
 }
+
+#ifdef SAF_AGENT_FENCE_ENABLE
+int32_t ClawTicketManager::PrepareVerifiedTicketInfo(AccessTokenID hostTokenId, const std::string& challenge,
+    ClawTicket& ticket, std::vector<SAF::VerifyTicketInfo>& verifyInfos, std::vector<int32_t>& verifyRes)
+{
+    auto it = ticketMap_.find(challenge);
+    if (it == ticketMap_.end()) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Verify ticket failed, challenge not found");
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    ticket = it->second;
+
+    int32_t userId = GetUserIdByTokenId(hostTokenId);
+    if (userId < 0) {
+        return AccessTokenError::ERR_TOKENID_NOT_EXIST;
+    }
+
+    SAF::SafAgentFence safAgentFence;
+    verifyInfos = {{ticket.message, challenge, ticket.ticket}};
+    int32_t ret = safAgentFence.BatchVerifyTicket(userId, std::to_string(hostTokenId), verifyInfos, verifyRes);
+    if (ret != RET_SUCCESS) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Verify ticket failed, ret=%{public}d", ret);
+        return TransferErrorCode(ret);
+    }
+    return RET_SUCCESS;
+}
+#endif
 
 int32_t ClawTicketManager::DeleteClawTicket(const std::string& challenge)
 {

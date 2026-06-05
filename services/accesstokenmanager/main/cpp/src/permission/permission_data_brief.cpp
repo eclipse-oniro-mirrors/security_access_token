@@ -455,7 +455,7 @@ int32_t PermissionDataBrief::BuildPermissionStateValues(AccessTokenID tokenId,
 
 static uint32_t UpdateWithNewFlag(uint32_t oldFlag, uint32_t currFlag)
 {
-    uint32_t newFlag = currFlag | (oldFlag & PERMISSION_PRE_AUTHORIZED_CANCELABLE);
+    uint32_t newFlag = currFlag | (oldFlag & (PERMISSION_PRE_AUTHORIZED_CANCELABLE | PERMISSION_RESTRICTED_BY_ADMIN));
     return newFlag;
 }
 
@@ -869,7 +869,7 @@ bool PermissionDataBrief::IsPermissionGrantedWithSecComp(AccessTokenID tokenID, 
     return false;
 }
 
-int32_t PermissionDataBrief::QueryPermissionStatusAndFlag(AccessTokenID tokenID, uint32_t permCode,
+int32_t PermissionDataBrief::QueryEffectivePermissionStatusAndFlag(AccessTokenID tokenID, uint32_t permCode,
     int32_t& status, uint32_t& flag)
 {
     int32_t ret = QueryPermissionStatusAndFlagInner(tokenID, permCode, status, flag);
@@ -877,6 +877,27 @@ int32_t PermissionDataBrief::QueryPermissionStatusAndFlag(AccessTokenID tokenID,
         return ret;
     }
     flag = ConstantCommon::GetFlagWithoutSpecifiedElement(flag, PERMISSION_PRE_AUTHORIZED_CANCELABLE);
+    return RET_SUCCESS;
+}
+
+int32_t PermissionDataBrief::QueryStoredPermissionStatusAndFlag(AccessTokenID tokenID, uint32_t permCode,
+    int32_t& status, uint32_t& flag)
+{
+    std::shared_lock<std::shared_mutex> infoGuard(this->permissionStateDataLock_);
+    std::vector<BriefPermData> dataList;
+    int32_t ret = GetBriefPermDataByTokenIdInner(tokenID, dataList);
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
+    auto iter = std::find_if(dataList.begin(), dataList.end(), [permCode](const BriefPermData& data) {
+        return data.permCode == permCode;
+    });
+    if (iter == dataList.end()) {
+        LOGD(ATM_DOMAIN, ATM_TAG, "PermCode %{public}u is not in requestedPerm list.", permCode);
+        return AccessTokenError::ERR_PERMISSION_NOT_EXIST;
+    }
+    status = static_cast<int32_t>(iter->status);
+    flag = iter->flag;
     return RET_SUCCESS;
 }
 
@@ -970,45 +991,6 @@ void PermissionDataBrief::ClearAllSecCompGrantedPermById(AccessTokenID tokenID)
             ++secCompData;
         }
     }
-}
-
-int32_t PermissionDataBrief::RefreshPermStateToKernel(AccessTokenID tokenId, uint32_t permCode, bool hapUserIsActive,
-    std::map<std::string, bool>& refreshedPermList)
-{
-    std::shared_lock<std::shared_mutex> infoGuard(this->permissionStateDataLock_);
-    auto iter = requestedPermData_.find(tokenId);
-    if (iter == requestedPermData_.end()) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "TokenID(%{public}u) is not exist in requestedPermData_.", tokenId);
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-
-    for (const auto& data : iter->second) {
-        if (data.permCode != permCode) {
-            continue;
-        }
-        bool isGrantedCurr;
-        int32_t ret = GetPermissionFromKernel(tokenId, data.permCode, isGrantedCurr);
-        if (ret != RET_SUCCESS) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "GetPermissionToKernel err=%{public}d", ret);
-            continue;
-        }
-        bool isGrantedToBe = (data.status == PERMISSION_GRANTED) && hapUserIsActive;
-        LOGI(ATM_DOMAIN, ATM_TAG,
-            "Id=%{public}u, opCode=%{public}u, isGrantedToBe=%{public}d, hapUserIsActive=%{public}d",
-            tokenId, data.permCode, isGrantedToBe, hapUserIsActive);
-        if (isGrantedCurr == isGrantedToBe) {
-            continue;
-        }
-        ret = SetPermissionToKernel(tokenId, data.permCode, isGrantedToBe);
-        if (ret != RET_SUCCESS) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "SetPermissionToKernel err=%{public}d", ret);
-            continue;
-        }
-        std::string permission = TransferOpcodeToPermission(data.permCode);
-        refreshedPermList[permission] = isGrantedToBe;
-        break;
-    }
-    return RET_SUCCESS;
 }
 
 int32_t PermissionDataBrief::AddBriefPermData(AccessTokenID tokenID, const std::string& permissionName,

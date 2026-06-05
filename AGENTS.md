@@ -168,9 +168,19 @@ run -t FUZZ -tp access_token
 ```
 
 ## Coding Guide
-[Coding Style Guide](../../../docs/en/contribute/OpenHarmony-c-coding-style-guide.md)
+[OpenHarmony C Coding Style Guide](https://gitcode.com/openharmony/docs/blob/master/en/contribute/OpenHarmony-c-coding-style-guide.md)
 
-[Secure Coding Guide](../../../docs/en/contribute/OpenHarmony-c-cpp-secure-coding-guide.md)
+[OpenHarmony C++ Coding Style Guide](https://gitcode.com/openharmony/docs/blob/master/en/contribute/OpenHarmony-cpp-coding-style-guide.md)
+
+[OpenHarmony C/C++ Secure Coding Guide](https://gitcode.com/openharmony/docs/blob/master/en/contribute/OpenHarmony-c-cpp-secure-coding-guide.md)
+
+[OpenHarmony Security Design Guide](https://gitcode.com/openharmony/docs/blob/master/en/contribute/OpenHarmony-security-design-guide.md)
+
+[OpenHarmony Security Test Guide](https://gitcode.com/openharmony/docs/blob/master/en/contribute/OpenHarmony-security-test-guide.md)
+
+### Additional Coding Rules
+- Do not mix signed and unsigned types. Keep integer types consistent in declarations, comparisons, arithmetic, and loop/index logic to avoid implicit conversions and unexpected behavior.
+- Do not introduce circular dependencies. Keep dependencies acyclic across modules, directories, and files, and avoid mutual inclusion or call chains that create circular references between files within the same directory.
 
 ## API Reference
 [Public API for Access Token Manager ](../../../docs/en/application-dev/reference/apis-ability-kit/js-apis-abilityAccessCtrl.md)

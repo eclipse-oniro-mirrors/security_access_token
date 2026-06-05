@@ -182,6 +182,36 @@ void AddNativePermissionsFromKernel(const std::vector<uint32_t>& permCodeList, A
         }
     }
 }
+
+int32_t RestoreRestrictedFlag(AccessTokenID tokenId, uint32_t permCode, uint32_t originalFlag)
+{
+    int32_t currentStatus = PERMISSION_DENIED;
+    uint32_t currentFlag = 0;
+    int32_t ret = PermissionDataBrief::GetInstance().QueryStoredPermissionStatusAndFlag(
+        tokenId, permCode, currentStatus, currentFlag);
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
+    bool currentRestricted = (currentFlag & PERMISSION_RESTRICTED_BY_ADMIN) != 0;
+    bool originalRestricted = (originalFlag & PERMISSION_RESTRICTED_BY_ADMIN) != 0;
+    if (currentRestricted == originalRestricted) {
+        return RET_SUCCESS;
+    }
+
+    PermissionDataBrief::PermissionStatusChangeType rollbackChangeType =
+        PermissionDataBrief::PermissionStatusChangeType::NO_CHANGE;
+    return PermissionDataBrief::GetInstance().UpdatePermissionFlag(
+        tokenId, permCode, PERMISSION_RESTRICTED_BY_ADMIN, originalRestricted, rollbackChangeType);
+}
+
+void RestoreKernelPermissionState(
+    AccessTokenID tokenId, uint32_t permCode, int32_t originalStatus, uint32_t originalFlag)
+{
+    std::string permissionName = TransferOpcodeToPermission(permCode);
+    bool kernelStatus = ((originalFlag & PERMISSION_RESTRICTED_BY_ADMIN) == 0) &&
+        (originalStatus == PERMISSION_GRANTED);
+    PermissionKernelUtils::SetPermToKernel(tokenId, permissionName, kernelStatus);
+}
 }
 
 int32_t AccessTokenInfoManager::FindPermissionByNameFromDb(const std::vector<uint32_t>& permCodeList,
@@ -1876,13 +1906,21 @@ int32_t AccessTokenInfoManager::UpdateRestrictedFlag(
         return RET_SUCCESS;
     }
 
+    ret = UpdateRestrictedFlagToDb(tokenId, permCode);
+    if (ret != RET_SUCCESS) {
+        RollbackRestrictedFlag(tokenId, permCode, isRestricted);
+    }
+    return ret;
+}
+
+int32_t AccessTokenInfoManager::UpdateRestrictedFlagToDb(AccessTokenID tokenId, uint32_t permCode)
+{
     std::string permissionName = TransferOpcodeToPermission(permCode);
     std::vector<GenericValues> permStateValues;
-    ret = PermissionDataBrief::GetInstance().BuildPermissionStateValues(tokenId, {}, permStateValues);
+    int32_t ret = PermissionDataBrief::GetInstance().BuildPermissionStateValues(tokenId, {}, permStateValues);
     if (ret != RET_SUCCESS) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Build permission state failed, id=%{public}u, permCode=%{public}u, ret=%{public}d.",
             tokenId, permCode, ret);
-        RollbackRestrictedFlag(tokenId, permCode, isRestricted);
         return ret;
     }
     bool hasUpdatedTargetPermState = false;
@@ -1898,7 +1936,6 @@ int32_t AccessTokenInfoManager::UpdateRestrictedFlag(
             LOGE(ATM_DOMAIN, ATM_TAG,
                 "Modify permission state failed, tokenId=%{public}u, permission=%{public}s, ret=%{public}d.",
                 tokenId, permissionName.c_str(), ret);
-            RollbackRestrictedFlag(tokenId, permCode, isRestricted);
             return AccessTokenError::ERR_DATABASE_OPERATE_FAILED;
         }
         hasUpdatedTargetPermState = true;
@@ -1907,48 +1944,62 @@ int32_t AccessTokenInfoManager::UpdateRestrictedFlag(
     if (!hasUpdatedTargetPermState) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Permission %{public}s not found when update restricted flag db, tokenId=%{public}u.",
             permissionName.c_str(), tokenId);
-        RollbackRestrictedFlag(tokenId, permCode, isRestricted);
         return AccessTokenError::ERR_PERMISSION_NOT_EXIST;
     }
     return RET_SUCCESS;
 }
 
-int32_t AccessTokenInfoManager::RefreshTokenPermStateToKernel(
-    AccessTokenID tokenId, uint32_t permCode, bool isAllowed, const char* source, bool hasFlagChanged)
-{
-    std::map<std::string, bool> refreshedPermList;
-    int32_t ret = PermissionDataBrief::GetInstance().RefreshPermStateToKernel(
-        tokenId, permCode, isAllowed, refreshedPermList);
-    if (hasFlagChanged || !refreshedPermList.empty()) {
-        PermissionChangeNotifier::GetInstance().ParamFlagUpdate();
-    }
-    for (const auto& perm : refreshedPermList) {
-        LOGI(ATM_DOMAIN, ATM_TAG, "Perm %{public}s refreshed by %{public}s, isAllowed %{public}d.",
-            perm.first.c_str(), source, perm.second);
-        int32_t changeType = perm.second ? STATE_CHANGE_GRANTED : STATE_CHANGE_REVOKED;
-        CallbackManager::GetInstance().ExecuteCallbackAsync(tokenId, perm.first, changeType);
-    }
-    return ret;
-}
-
 int32_t AccessTokenInfoManager::UpdateRestrictedFlagAndRefreshKernel(
     AccessTokenID tokenId, uint32_t permCode, bool isRestricted, bool isPersist, const char* source)
 {
-    bool isFlagChanged = false;
-    int32_t ret = UpdateRestrictedFlag(tokenId, permCode, isRestricted, isPersist, isFlagChanged);
+    int32_t originalStatus = PERMISSION_DENIED;
+    uint32_t originalFlag = 0;
+    int32_t ret = PermissionDataBrief::GetInstance().QueryStoredPermissionStatusAndFlag(
+        tokenId, permCode, originalStatus, originalFlag);
     if (ret != RET_SUCCESS) {
         return ret;
     }
-    return RefreshTokenPermStateToKernel(tokenId, permCode, !isRestricted, source, isFlagChanged);
+
+    bool isFlagChanged = false;
+    ret = UpdateRestrictedFlag(tokenId, permCode, isRestricted, isPersist, isFlagChanged);
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
+    std::string permissionName = TransferOpcodeToPermission(permCode);
+    bool kernelStatusBefore =
+        ((originalFlag & PERMISSION_RESTRICTED_BY_ADMIN) == 0) && (originalStatus == PERMISSION_GRANTED);
+    bool kernelStatusAfter = !isRestricted && (originalStatus == PERMISSION_GRANTED);
+    if (isFlagChanged) {
+        PermissionChangeNotifier::GetInstance().ParamFlagUpdate();
+    }
+    if (kernelStatusBefore != kernelStatusAfter) {
+        PermissionKernelUtils::SetPermToKernel(tokenId, permissionName, kernelStatusAfter);
+        int32_t changeType = kernelStatusAfter ? STATE_CHANGE_GRANTED : STATE_CHANGE_REVOKED;
+        CallbackManager::GetInstance().ExecuteCallbackAsync(tokenId, permissionName, changeType);
+    }
+    LOGI(ATM_DOMAIN, ATM_TAG, "Perm %{public}s refreshed by %{public}s, isAllowed %{public}d.",
+        permissionName.c_str(), source, kernelStatusAfter);
+    return RET_SUCCESS;
 }
 
-int32_t AccessTokenInfoManager::RefreshUserPolicyFlagForUser(int32_t userId, const UserPolicyChange& policy)
+int32_t AccessTokenInfoManager::RefreshUserPolicyFlagForUser(int32_t userId, const UserPolicyChange& policy,
+    std::vector<UserPolicyRefreshSnapshot>& appliedSnapshots)
 {
     std::unordered_set<AccessTokenID> hapTokenIdSet;
     GetTokenIDByUserID(userId, hapTokenIdSet);
     for (const auto tokenId : hapTokenIdSet) {
         bool isRestricted = UserPolicyManager::GetInstance().IsPermissionRestricted(tokenId, userId, policy.permCode);
-        int32_t ret = UpdateRestrictedFlagAndRefreshKernel(
+        int32_t originalStatus = PERMISSION_DENIED;
+        uint32_t originalFlag = 0;
+        int32_t ret = PermissionDataBrief::GetInstance().QueryStoredPermissionStatusAndFlag(
+            tokenId, policy.permCode, originalStatus, originalFlag);
+        if (ret == AccessTokenError::ERR_PERMISSION_NOT_EXIST) {
+            continue;
+        }
+        if (ret != RET_SUCCESS) {
+            return ret;
+        }
+        ret = UpdateRestrictedFlagAndRefreshKernel(
             tokenId, policy.permCode, isRestricted, policy.isPersist, "user policy");
         if (ret == AccessTokenError::ERR_PERMISSION_NOT_EXIST) {
             continue;
@@ -1956,15 +2007,46 @@ int32_t AccessTokenInfoManager::RefreshUserPolicyFlagForUser(int32_t userId, con
         if (ret != RET_SUCCESS) {
             return ret;
         }
+        appliedSnapshots.emplace_back(UserPolicyRefreshSnapshot {
+            .target = UserPolicyRefreshTarget::HAP,
+            .tokenId = tokenId,
+            .permCode = policy.permCode,
+            .originalStatus = originalStatus,
+            .originalFlag = originalFlag
+        });
     }
     return RET_SUCCESS;
 }
 
-int32_t AccessTokenInfoManager::RefreshUserPolicyFlag(const std::vector<UserPolicyChange>& changedPolicyList)
+void AccessTokenInfoManager::RollbackUserPolicyFlag(const std::vector<UserPolicyRefreshSnapshot>& appliedSnapshots)
+{
+    for (auto iter = appliedSnapshots.rbegin(); iter != appliedSnapshots.rend(); ++iter) {
+        if (iter->target != UserPolicyRefreshTarget::HAP) {
+            continue;
+        }
+        int32_t ret = RestoreRestrictedFlag(iter->tokenId, iter->permCode, iter->originalFlag);
+        if (ret != RET_SUCCESS) {
+            LOGE(ATM_DOMAIN, ATM_TAG,
+                "Rollback restricted flag failed, tokenId=%{public}u, permCode=%{public}u, ret=%{public}d.",
+                iter->tokenId, iter->permCode, ret);
+            continue;
+        }
+        ret = UpdateRestrictedFlagToDb(iter->tokenId, iter->permCode);
+        if (ret != RET_SUCCESS && ret != AccessTokenError::ERR_PERMISSION_NOT_EXIST) {
+            LOGE(ATM_DOMAIN, ATM_TAG,
+                "Rollback restricted flag db failed, tokenId=%{public}u, permCode=%{public}u, ret=%{public}d.",
+                iter->tokenId, iter->permCode, ret);
+        }
+        RestoreKernelPermissionState(iter->tokenId, iter->permCode, iter->originalStatus, iter->originalFlag);
+    }
+}
+
+int32_t AccessTokenInfoManager::RefreshUserPolicyFlag(const std::vector<UserPolicyChange>& changedPolicyList,
+    std::vector<UserPolicyRefreshSnapshot>& appliedSnapshots)
 {
     for (const auto& policy : changedPolicyList) {
         for (const auto& userId : policy.changedUserList) {
-            int32_t ret = RefreshUserPolicyFlagForUser(userId, policy);
+            int32_t ret = RefreshUserPolicyFlagForUser(userId, policy, appliedSnapshots);
             if (ret != RET_SUCCESS) {
                 return ret;
             }
@@ -2212,7 +2294,8 @@ int32_t AccessTokenInfoManager::QueryStatusByPermission(const std::vector<uint32
 
         int32_t status = PERMISSION_DENIED;
         uint32_t flag = 0;
-        (void)PermissionDataBrief::GetInstance().QueryPermissionStatusAndFlag(tokenID, permIter->second, status, flag);
+        (void)PermissionDataBrief::GetInstance().QueryEffectivePermissionStatusAndFlag(
+            tokenID, permIter->second, status, flag);
 
         PermissionStatusIdl idl;
         idl.tokenID = tokenID;
@@ -2251,7 +2334,8 @@ int32_t AccessTokenInfoManager::QueryStatusByTokenID(const std::vector<AccessTok
 
         int32_t status = PERMISSION_DENIED;
         uint32_t flag = 0;
-        (void)PermissionDataBrief::GetInstance().QueryPermissionStatusAndFlag(tokenID, permCode, status, flag);
+        (void)PermissionDataBrief::GetInstance().QueryEffectivePermissionStatusAndFlag(
+            tokenID, permCode, status, flag);
 
         PermissionStatusIdl idl;
         idl.tokenID = tokenID;

@@ -2022,13 +2022,18 @@ int32_t AccessTokenManagerService::RefreshUserPolicyPermState(const std::vector<
         return RET_SUCCESS;
     }
 
-    int32_t ret = AccessTokenInfoManager::GetInstance().RefreshUserPolicyFlag(changedPolicyList);
+    std::vector<UserPolicyRefreshSnapshot> hapSnapshots;
+    int32_t ret = AccessTokenInfoManager::GetInstance().RefreshUserPolicyFlag(changedPolicyList, hapSnapshots);
     if (ret != RET_SUCCESS) {
+        AccessTokenInfoManager::GetInstance().RollbackUserPolicyFlag(hapSnapshots);
         return ret;
     }
 
-    ret = ToolTokenInfoManager::GetInstance().RefreshUserPolicyFlag(changedPolicyList);
+    std::vector<UserPolicyRefreshSnapshot> toolSnapshots;
+    ret = ToolTokenInfoManager::GetInstance().RefreshUserPolicyFlag(changedPolicyList, toolSnapshots);
     if (ret != RET_SUCCESS) {
+        ToolTokenInfoManager::GetInstance().RollbackUserPolicyFlag(toolSnapshots);
+        AccessTokenInfoManager::GetInstance().RollbackUserPolicyFlag(hapSnapshots);
         return ret;
     }
     return RET_SUCCESS;
@@ -2070,11 +2075,7 @@ int32_t AccessTokenManagerService::SetUserPolicy(const std::vector<UserPermissio
     if (ret != RET_SUCCESS) {
         return ret;
     }
-    ret = RefreshUserPolicyPermState(changedPolicyList);
-    if (ret != RET_SUCCESS) {
-        return ret;
-    }
-    return RET_SUCCESS;
+    return RefreshUserPolicyPermState(changedPolicyList);
 }
 
 int32_t AccessTokenManagerService::ClearUserPolicy(const std::vector<std::string>& permissionList)
