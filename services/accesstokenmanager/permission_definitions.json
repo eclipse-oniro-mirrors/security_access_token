@@ -6510,7 +6510,7 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
-            "deviceTypes": ["2in1"]
+            "deviceTypes": ["2in1", "tablet"]
         },
         {
             "name": "ohos.permission.ACCESS_SUPER_HUB",
