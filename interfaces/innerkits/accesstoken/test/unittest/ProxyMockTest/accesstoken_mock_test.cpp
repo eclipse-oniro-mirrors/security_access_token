@@ -933,6 +933,32 @@ HWTEST_F(AccessTokenMockTest, GetSecCompEnhance001, TestSize.Level4)
     SecCompEnhanceData data;
     ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::GetSecCompEnhance(getpid(), data));
 }
+
+/**
+ * @tc.name: StoreSecCompEnhanceKey001
+ * @tc.desc: StoreSecCompEnhanceKey with proxy is null
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, StoreSecCompEnhanceKey001, TestSize.Level4)
+{
+    SecCompEnhanceKey enhanceKey;
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, AccessTokenKit::StoreSecCompEnhanceKey(enhanceKey));
+    enhanceKey.key.size = 1;
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::StoreSecCompEnhanceKey(enhanceKey));
+}
+
+/**
+ * @tc.name: GetSecCompEnhanceKey001
+ * @tc.desc: GetSecCompEnhanceKey with proxy is null
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, GetSecCompEnhanceKey001, TestSize.Level4)
+{
+    SecCompEnhanceKey enhanceKey;
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::GetSecCompEnhanceKey(enhanceKey));
+}
 #endif
 
 /**

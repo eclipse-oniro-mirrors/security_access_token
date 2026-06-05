@@ -36,6 +36,7 @@
 #include "proxy_death_callback_stub.h"
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
 #include "sec_comp_enhance_data_parcel.h"
+#include "sec_comp_enhance_key_parcel.h"
 #endif
 
 namespace OHOS {
@@ -1631,6 +1632,34 @@ int32_t AccessTokenManagerClient::GetSecCompEnhance(int32_t pid, SecCompEnhanceD
         return ConvertResult(res);
     }
     enhance = parcel.enhanceData;
+    return RET_SUCCESS;
+}
+
+int32_t AccessTokenManagerClient::StoreSecCompEnhanceKey(const SecCompEnhanceKey& enhanceKey)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+    SecCompEnhanceKeyParcel parcel;
+    parcel.enhanceKey = enhanceKey;
+    return ConvertResult(proxy->StoreSecCompEnhanceKey(parcel));
+}
+
+int32_t AccessTokenManagerClient::GetSecCompEnhanceKey(SecCompEnhanceKey& enhanceKey)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+    SecCompEnhanceKeyParcel parcel;
+    int32_t res = proxy->GetSecCompEnhanceKey(parcel);
+    if (res != RET_SUCCESS) {
+        return ConvertResult(res);
+    }
+    enhanceKey = parcel.enhanceKey;
     return RET_SUCCESS;
 }
 #endif // SECURITY_COMPONENT_ENHANCE_ENABLE

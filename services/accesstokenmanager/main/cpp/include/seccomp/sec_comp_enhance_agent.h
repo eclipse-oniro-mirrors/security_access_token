@@ -26,12 +26,6 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
-constexpr uint32_t MAC_KEY_SIZE = 160;
-struct EnhanceKey {
-    uint8_t data[MAC_KEY_SIZE] = { 0 };
-    uint32_t size = MAC_KEY_SIZE;
-};
-
 class SecCompUsageObserver : public ApplicationStateObserverStub {
 public:
     SecCompUsageObserver() = default;
@@ -58,6 +52,8 @@ public:
     int32_t RegisterSecCompEnhance(const SecCompEnhanceData& enhanceData);
     int32_t UpdateSecCompEnhance(int32_t pid, uint32_t seqNum);
     int32_t GetSecCompEnhance(int32_t pid, SecCompEnhanceData& enhanceData);
+    int32_t StoreSecCompEnhanceKey(const SecCompEnhanceKey& enhanceKey);
+    int32_t GetSecCompEnhanceKey(SecCompEnhanceKey& enhanceKey);
     void RemoveSecCompEnhance(int pid, uint32_t tokenId);
     void OnAppMgrRemoteDiedHandle();
 
@@ -71,6 +67,9 @@ private:
     std::shared_ptr<SecCompAppManagerDeathCallback> appManagerDeathCallback_ = nullptr;
     std::mutex secCompEnhanceMutex_;
     std::vector<SecCompEnhanceData> secCompEnhanceData_;
+    std::mutex secCompEnhanceKeyMutex_;
+    SecCompEnhanceKey secCompEnhanceKey_;
+    bool hasSecCompEnhanceKey_ = false;
 };
 #endif
 } // namespace AccessToken

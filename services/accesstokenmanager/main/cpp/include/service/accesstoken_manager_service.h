@@ -121,6 +121,8 @@ public:
     int32_t RegisterSecCompEnhance(const SecCompEnhanceDataParcel& enhanceParcel) override;
     int32_t UpdateSecCompEnhance(int32_t pid, uint32_t seqNum) override;
     int32_t GetSecCompEnhance(int32_t pid, SecCompEnhanceDataParcel& enhanceParcel) override;
+    int32_t StoreSecCompEnhanceKey(const SecCompEnhanceKeyParcel& enhanceKeyParcel) override;
+    int32_t GetSecCompEnhanceKey(SecCompEnhanceKeyParcel& enhanceKeyParcel) override;
 #endif
 
 #ifdef TOKEN_SYNC_ENABLE
