@@ -140,6 +140,7 @@ private:
     static int32_t GetVerifyTaskResult(const std::vector<int32_t>& verifyResults);
     bool ShouldSkipAddSpmData(const std::string& bundleName);
     void HandleHighPrivilegeBundleSpmData(const std::map<std::string, VerifiedBundleState>& stateMap);
+    bool HandleHapInfoUid(AccessTokenID tokenId, int32_t uid);
     BootVerifyScheduler() = default;
     ~BootVerifyScheduler() = default;
     DISALLOW_COPY_AND_MOVE(BootVerifyScheduler);

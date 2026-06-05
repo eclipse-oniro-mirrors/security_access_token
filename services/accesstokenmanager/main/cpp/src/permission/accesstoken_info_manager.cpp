@@ -546,21 +546,18 @@ void AccessTokenInfoManager::InitDmCallback(void)
 }
 #endif
 
-bool AccessTokenInfoManager::AddReservedHapInfoFromDb(const GenericValues& tokenValue)
+bool AccessTokenInfoManager::AddReservedHapInfoFromDbValues(const GenericValues& tokenValue)
 {
     AccessTokenID tokenId = static_cast<AccessTokenID>(tokenValue.GetInt(TokenFiledConst::FIELD_TOKEN_ID));
     std::string bundle = tokenValue.GetString(TokenFiledConst::FIELD_BUNDLE_NAME);
     ReservedType type = AccessTokenInfoUtils::GetReservedTokenTypeDBValue(tokenValue);
-    if (type == ReservedType::RESERVED_IDENTITY) {
+    if (type != ReservedType::NONE) {
         AccessTokenIDManager::GetInstance().AddReservedTokenId(tokenId);
         LOGI(ATM_DOMAIN, ATM_TAG, "Restore reserved hap token %{public}u bundle name %{public}s ",
             tokenId, bundle.c_str());
         return true;
     }
-    if (type == ReservedType::RESERVED_DATA) {
-        (void)AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, TOKEN_HAP);
-        return true;
-    }
+
     return false;
 }
 

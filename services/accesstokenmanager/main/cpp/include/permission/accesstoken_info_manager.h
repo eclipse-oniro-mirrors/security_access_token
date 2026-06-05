@@ -129,7 +129,7 @@ public:
     int32_t QueryStatusByTokenID(const std::vector<AccessTokenID>& tokenIDList,
         std::vector<PermissionStatusIdl>& permissionInfoList);
     size_t GetMaxQueryResultSize() const;
-    bool AddReservedHapInfoFromDb(const GenericValues& tokenValue);
+    bool AddReservedHapInfoFromDbValues(const GenericValues& tokenValue);
 
 #ifdef ATM_TEST_ENABLE
     void SetMaxQueryResultSize(size_t maxSize);

@@ -178,7 +178,7 @@ int32_t InstallSessionManager::RebuildHapPolicy(InstallCache& cache, const std::
         return ret;
     }
 
-    for (auto i = 0; i < paths.size() && i < bundleInfos.size(); i++) {
+    for (size_t i = 0; i < paths.size() && i < bundleInfos.size(); i++) {
         bool needAdd = true;
         for (auto& info : cache.bundleInfos) {
             if (bundleInfos[i].GetModuleName() == info.GetModuleName()) {
@@ -1328,7 +1328,7 @@ int32_t InstallSessionManager::GetCacheSignInfoBySessionId(
 int32_t InstallSessionManager::FastVerify(const std::vector<std::string>& paths,
     std::vector<std::vector<uint8_t>>& persistDatas, std::vector<TrustedBundleInfoInner>& bundleInfos, int32_t userId)
 {
-    for (auto i = 0; i < paths.size() && i < persistDatas.size(); ++i) {
+    for (size_t i = 0; i < paths.size() && i < persistDatas.size(); ++i) {
         TrustedBundleInfoInner infoInner;
         infoInner.bootstrapInfo = std::make_shared<Security::Verify::BootstrapInfo>();
         infoInner.bootstrapInfo->Load(persistDatas[i].data(), persistDatas[i].size());

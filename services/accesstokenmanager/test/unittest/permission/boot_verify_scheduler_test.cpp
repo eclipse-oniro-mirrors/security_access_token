@@ -86,6 +86,9 @@ public:
         AccessTokenIDManager::GetInstance().ReleaseTokenId(TEST_TOKEN_ID);
         AccessTokenIDManager::GetInstance().ReleaseTokenId(TEST_TOKEN_ID_2);
         AccessTokenIDManager::GetInstance().ReleaseTokenId(TEST_TOKEN_ID_3);
+        AccessTokenIDManager::GetInstance().RemoveReservedTokenId(TEST_TOKEN_ID);
+        AccessTokenIDManager::GetInstance().RemoveReservedTokenId(TEST_TOKEN_ID_2);
+        AccessTokenIDManager::GetInstance().RemoveReservedTokenId(TEST_TOKEN_ID_3);
         PermissionDataBrief::GetInstance().DeleteBriefPermDataByTokenId(TEST_TOKEN_ID);
         PermissionDataBrief::GetInstance().DeleteBriefPermDataByTokenId(TEST_TOKEN_ID_2);
         PermissionDataBrief::GetInstance().DeleteBriefPermDataByTokenId(TEST_TOKEN_ID_3);
@@ -113,6 +116,9 @@ public:
         AccessTokenIDManager::GetInstance().ReleaseTokenId(TEST_TOKEN_ID);
         AccessTokenIDManager::GetInstance().ReleaseTokenId(TEST_TOKEN_ID_2);
         AccessTokenIDManager::GetInstance().ReleaseTokenId(TEST_TOKEN_ID_3);
+        AccessTokenIDManager::GetInstance().RemoveReservedTokenId(TEST_TOKEN_ID);
+        AccessTokenIDManager::GetInstance().RemoveReservedTokenId(TEST_TOKEN_ID_2);
+        AccessTokenIDManager::GetInstance().RemoveReservedTokenId(TEST_TOKEN_ID_3);
         auto& scheduler = BootVerifyScheduler::GetInstance();
         scheduler.ClearBundleVerifyContext();
         scheduler.bundleSignInfoMap_.clear();
@@ -125,7 +131,8 @@ public:
 
 protected:
     GenericValues BuildHapInfoValue(AccessTokenID tokenId, const std::string& bundleName, uint32_t uid,
-        int32_t apl = APL_NORMAL, uint32_t tokenAttr = 0, bool migrated = true) const
+        int32_t apl = APL_NORMAL, uint32_t tokenAttr = 0, bool migrated = true,
+        ReservedType reserved = ReservedType::NONE) const
     {
         GenericValues value;
         value.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
@@ -139,6 +146,7 @@ protected:
         value.Put(TokenFiledConst::FIELD_TOKEN_ATTR, static_cast<int32_t>(tokenAttr));
         value.Put(TokenFiledConst::FIELD_APL, apl);
         value.Put(TokenFiledConst::FIELD_MIGRATED, migrated ? 1 : 0);
+        value.Put(TokenFiledConst::FIELD_RESERVED, static_cast<int32_t>(reserved));
         return value;
     }
 
@@ -502,6 +510,29 @@ HWTEST_F(BootVerifySchedulerTest, LoadVerifyDataFromDb001, TestSize.Level1)
     SetMockDbFindResult(AtmDataType::ACCESSTOKEN_PERMISSION_EXTEND_VALUE, ERR_PARAM_INVALID, {});
     EXPECT_EQ(RET_SUCCESS, BootVerifyScheduler::GetInstance().LoadVerifyDataFromDb());
 }
+
+#ifdef SPM_DATA_ENABLE
+HWTEST_F(BootVerifySchedulerTest, LoadVerifyDataFromDb002, TestSize.Level1)
+{
+    SetMockDbFindResult(AtmDataType::ACCESSTOKEN_HAP_INFO, RET_SUCCESS,
+        {
+            BuildHapInfoValue(TEST_TOKEN_ID, TEST_BUNDLE_NAME, TEST_UID, APL_NORMAL, 0, true,
+                ReservedType::RESERVED_DATA),
+            BuildHapInfoValue(TEST_TOKEN_ID_2, TEST_BUNDLE_NAME_2, static_cast<uint32_t>(INVALID_UID), APL_NORMAL, 0,
+                true, ReservedType::RESERVED_IDENTITY),
+        });
+    SetMockDbFindResult(AtmDataType::ACCESSTOKEN_PERMISSION_STATE, RET_SUCCESS, {});
+    SetMockDbFindResult(AtmDataType::ACCESSTOKEN_PERMISSION_EXTEND_VALUE, RET_SUCCESS, {});
+    SetMockDbFindResult(AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO, RET_SUCCESS, {});
+    auto& scheduler = BootVerifyScheduler::GetInstance();
+
+    EXPECT_EQ(RET_SUCCESS, scheduler.LoadVerifyDataFromDb());
+    EXPECT_TRUE(scheduler.uidSet_.count(static_cast<int32_t>(TEST_UID)) > 0);
+    EXPECT_TRUE(scheduler.uidSet_.count(INVALID_UID) == 0);
+    EXPECT_TRUE(AccessTokenIDManager::GetInstance().IsReservedTokenId(TEST_TOKEN_ID));
+    EXPECT_TRUE(AccessTokenIDManager::GetInstance().IsReservedTokenId(TEST_TOKEN_ID_2));
+}
+#endif
 
 /**
  * @tc.name: RefreshBundleSignInfoMap001

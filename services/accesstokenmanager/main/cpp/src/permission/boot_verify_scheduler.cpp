@@ -247,6 +247,8 @@ void BootVerifyScheduler::ClearBundleVerifyContext()
     isVerifyingMap_.clear();
     highPrivilegeBundleList_.clear();
     normalBundleList_.clear();
+    bundleSignInfoMap_.clear();
+    uidSet_.clear();
 }
 
 void BootVerifyScheduler::InitPermStateContext(const std::vector<GenericValues>& permStateRes,
@@ -290,6 +292,21 @@ void BootVerifyScheduler::InitHapTokenContext(const std::vector<GenericValues>& 
     }
 }
 
+bool BootVerifyScheduler::HandleHapInfoUid(AccessTokenID tokenId, int32_t uid)
+{
+    if (uid <= 0) {
+        return true;
+    }
+
+    if (uidSet_.count(uid) == 0) {
+        uidSet_.insert(uid);
+        AccessTokenIDManager::GetInstance().InitSingleBundleIdCache(uid);
+        return true;
+    }
+    LOGW(ATM_DOMAIN, ATM_TAG, "Duplicate uid found for tokenId=%{public}u, uid=%{public}d.", tokenId, uid);
+    return false;
+}
+
 bool BootVerifyScheduler::InitSingleHapTokenContext(const GenericValues& tokenValue,
     const std::map<AccessTokenID, std::vector<GenericValues>>& permStateMap,
     const std::map<AccessTokenID, std::vector<GenericValues>>& extendedPermMap)
@@ -301,7 +318,11 @@ bool BootVerifyScheduler::InitSingleHapTokenContext(const GenericValues& tokenVa
             bundleName.c_str(), tokenId);
         return false;
     }
-    if (AccessTokenInfoManager::GetInstance().AddReservedHapInfoFromDb(tokenValue)) {
+    if (AccessTokenInfoManager::GetInstance().AddReservedHapInfoFromDbValues(tokenValue)) {
+#ifdef SPM_DATA_ENABLE
+        int32_t uid = tokenValue.GetInt(TokenFiledConst::FIELD_UID);
+        (void)HandleHapInfoUid(tokenId, uid);
+#endif
         return false;
     }
 
@@ -323,15 +344,8 @@ bool BootVerifyScheduler::InitSingleHapTokenContext(const GenericValues& tokenVa
         return false;
     }
 #if SPM_DATA_ENABLE
-    if (hapTokenInfoItem.uid > 0) {
-        if (uidSet_.count(static_cast<int32_t>(hapTokenInfoItem.uid)) == 0) {
-            uidSet_.insert(static_cast<int32_t>(hapTokenInfoItem.uid));
-            AccessTokenIDManager::GetInstance().InitSingleBundleIdCache(static_cast<int32_t>(hapTokenInfoItem.uid));
-        } else {
-            LOGW(ATM_DOMAIN, ATM_TAG, "Duplicate uid found for tokenId=%{public}u, uid=%{public}d.", tokenId,
-                hapTokenInfoItem.uid);
-            return false;
-        }
+    if (!HandleHapInfoUid(tokenId, static_cast<int32_t>(hapTokenInfoItem.uid))) {
+        return false;
     }
 #endif
     hapTokenInfoMap_[tokenId] = hapTokenInfoItem;
