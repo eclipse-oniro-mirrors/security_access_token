@@ -71,14 +71,8 @@ public:
     int32_t GenerateCliTicket(AccessTokenID callerTokenId,
         const std::vector<CliAuthInfo>& cliAuthInfos, std::vector<std::string>& authResults);
 
-    int32_t GenerateSkillTicket(AccessTokenID callerTokenId,
-        const std::vector<SkillAuthInfo>& skillAuthInfos, std::vector<std::string>& authResults);
-
     int32_t VerifyCliClawTicket(AccessTokenID hostTokenId, const std::string& challenge,
         const CliInfo& cliInfo, std::vector<PermissionStatus>& permList);
-
-    int32_t VerifySkillClawTicket(AccessTokenID hostTokenId, const std::string& challenge,
-        const SkillInfo& skillInfo, std::vector<PermissionStatus>& permList);
 
     int32_t DeleteClawTicket(const std::string& challenge);
 

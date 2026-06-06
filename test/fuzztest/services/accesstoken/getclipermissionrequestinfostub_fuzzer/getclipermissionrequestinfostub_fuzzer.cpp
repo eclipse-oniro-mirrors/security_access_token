@@ -20,7 +20,6 @@
 
 #include "accesstoken_kit.h"
 #include "claw_permission_fuzzdata.h"
-#include "cli_info_parcel.h"
 #include "fuzzer/FuzzedDataProvider.h"
 #define private public
 #include "accesstoken_manager_service.h"
@@ -43,7 +42,7 @@ void InitializeClawPermissionStubFuzz()
     DelayedSingleton<AccessTokenManagerService>::GetInstance()->Initialize();
 }
 
-bool WriteCliInfoParcelsToParcel(MessageParcel& data, FuzzedDataProvider& provider)
+bool WriteCliInfoIdlsToParcel(MessageParcel& data, FuzzedDataProvider& provider)
 {
     std::vector<CliInfo> infos = ConsumeCliInfoList(provider);
     if (provider.ConsumeBool() && infos.empty()) {
@@ -53,9 +52,11 @@ bool WriteCliInfoParcelsToParcel(MessageParcel& data, FuzzedDataProvider& provid
         return false;
     }
     for (const auto& info : infos) {
-        CliInfoParcel parcel;
-        parcel.cliInfo = info;
-        if (!data.WriteParcelable(&parcel)) {
+        CliInfoIdl infoIdl = {
+            .cliName = info.cliName,
+            .subCliName = info.subCliName,
+        };
+        if (CliInfoIdlBlockMarshalling(data, infoIdl) != ERR_NONE) {
             return false;
         }
     }
@@ -77,7 +78,7 @@ bool GetCliPermissionRequestInfoStubFuzzTest(const uint8_t* data, size_t size)
     if (!datas.WriteString(agentId)) {
         return false;
     }
-    if (!WriteCliInfoParcelsToParcel(datas, provider)) {
+    if (!WriteCliInfoIdlsToParcel(datas, provider)) {
         return false;
     }
 

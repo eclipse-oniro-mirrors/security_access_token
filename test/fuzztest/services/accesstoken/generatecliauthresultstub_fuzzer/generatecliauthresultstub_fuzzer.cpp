@@ -19,10 +19,10 @@
 
 #include "accesstoken_fuzzdata.h"
 #include "accesstoken_kit.h"
-#include "claw_auth_info_parcel.h"
 #include "claw_permission_fuzzdata.h"
 #include "fuzzer/FuzzedDataProvider.h"
 #include "fuzz_service_context_helper.h"
+#include "idl_common.h"
 #include "iaccess_token_manager.h"
 #include "message_parcel.h"
 
@@ -44,7 +44,7 @@ void InitializeClawPermissionStubFuzz()
         g_callerFullTokenId, DEFAULT_CALLER_BUNDLE, MANAGE_TOOL_RUNTIME_PERMISSIONS);
 }
 
-bool WriteCliAuthInfoParcelsToParcel(MessageParcel& data, FuzzedDataProvider& provider)
+bool WriteCliAuthInfosToParcel(MessageParcel& data, FuzzedDataProvider& provider)
 {
     std::vector<CliAuthInfo> infos = ConsumeCliAuthInfoList(provider);
     if (provider.ConsumeBool() && infos.empty()) {
@@ -58,9 +58,14 @@ bool WriteCliAuthInfoParcelsToParcel(MessageParcel& data, FuzzedDataProvider& pr
         return false;
     }
     for (const auto& info : infos) {
-        CliAuthInfoParcel parcel;
-        parcel.info = info;
-        if (!data.WriteParcelable(&parcel)) {
+        CliAuthInfoIdl infoIdl;
+        infoIdl.cliInfo = {
+            .cliName = info.cliInfo.cliName,
+            .subCliName = info.cliInfo.subCliName,
+        };
+        infoIdl.permissionNames = info.permissionNames;
+        infoIdl.authorizationResults.assign(info.authorizationResults.begin(), info.authorizationResults.end());
+        if (CliAuthInfoIdlBlockMarshalling(data, infoIdl) != ERR_NONE) {
             return false;
         }
     }
@@ -86,7 +91,7 @@ bool GenerateCliAuthResultStubFuzzTest(const uint8_t* data, size_t size)
     if (!datas.WriteString(agentId)) {
         return false;
     }
-    if (!WriteCliAuthInfoParcelsToParcel(datas, provider)) {
+    if (!WriteCliAuthInfosToParcel(datas, provider)) {
         return false;
     }
 

@@ -20,7 +20,6 @@
 #include "accesstoken_fuzzdata.h"
 #include "accesstoken_kit.h"
 #include "claw_permission_fuzzdata.h"
-#include "cli_info_parcel.h"
 #include "fuzzer/FuzzedDataProvider.h"
 #include "fuzz_service_context_helper.h"
 #include "iaccess_token_manager.h"
@@ -43,7 +42,7 @@ void InitializeClawPermissionStubFuzz()
         g_callerFullTokenId, DEFAULT_CALLER_BUNDLE, MANAGE_TOOL_RUNTIME_PERMISSIONS);
 }
 
-bool WriteCliInfoParcelsToParcel(MessageParcel& data, FuzzedDataProvider& provider)
+bool WriteCliInfoIdlsToParcel(MessageParcel& data, FuzzedDataProvider& provider)
 {
     std::vector<CliInfo> infos = ConsumeCliInfoList(provider);
     if (provider.ConsumeBool() && infos.empty()) {
@@ -53,9 +52,11 @@ bool WriteCliInfoParcelsToParcel(MessageParcel& data, FuzzedDataProvider& provid
         return false;
     }
     for (const auto& info : infos) {
-        CliInfoParcel parcel;
-        parcel.cliInfo = info;
-        if (!data.WriteParcelable(&parcel)) {
+        CliInfoIdl infoIdl = {
+            .cliName = info.cliName,
+            .subCliName = info.subCliName,
+        };
+        if (CliInfoIdlBlockMarshalling(data, infoIdl) != ERR_NONE) {
             return false;
         }
     }
@@ -81,7 +82,7 @@ bool GetCliPermissionsStubFuzzTest(const uint8_t* data, size_t size)
     if (!datas.WriteString(agentId)) {
         return false;
     }
-    if (!WriteCliInfoParcelsToParcel(datas, provider)) {
+    if (!WriteCliInfoIdlsToParcel(datas, provider)) {
         return false;
     }
 
