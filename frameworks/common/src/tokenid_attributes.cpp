@@ -19,7 +19,23 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static const uint64_t SYSTEM_APP_MASK = (static_cast<uint64_t>(1) << 32);
+static constexpr uint32_t TOKEN_ID_LOW_BITS = 32;
+static constexpr uint32_t SYSTEM_APP_ATTR_INDEX = 0;
+static constexpr uint32_t DEBUG_APP_ATTR_INDEX = 3;
+
+static constexpr uint64_t GetFullTokenAttrMask(uint32_t attrIndex)
+{
+    return static_cast<uint64_t>(1) << (TOKEN_ID_LOW_BITS + attrIndex);
+}
+
+static constexpr uint32_t GetTokenAttrMask(uint32_t attrIndex)
+{
+    return static_cast<uint32_t>(1) << attrIndex;
+}
+
+static constexpr uint64_t SYSTEM_APP_MASK = GetFullTokenAttrMask(SYSTEM_APP_ATTR_INDEX);
+static constexpr uint64_t DEBUG_APP_MASK = GetFullTokenAttrMask(DEBUG_APP_ATTR_INDEX);
+static constexpr uint32_t DEBUG_APP_ATTR_MASK = GetTokenAttrMask(DEBUG_APP_ATTR_INDEX);
 }
 ATokenTypeEnum TokenIDAttributes::GetTokenIdTypeEnum(AccessTokenID id)
 {
@@ -31,6 +47,16 @@ bool TokenIDAttributes::IsToolTokenId(AccessTokenID id)
 {
     AccessTokenIDInner* idInner = reinterpret_cast<AccessTokenIDInner*>(&id);
     return idInner->toolFlag == 1;
+}
+
+bool TokenIDAttributes::IsDebugApp(FullTokenID fullTokenId)
+{
+    return (fullTokenId & DEBUG_APP_MASK) == DEBUG_APP_MASK;
+}
+
+bool TokenIDAttributes::IsDebugAppAttr(AccessTokenAttr tokenAttr)
+{
+    return (static_cast<uint32_t>(tokenAttr) & DEBUG_APP_ATTR_MASK) == DEBUG_APP_ATTR_MASK;
 }
 
 int TokenIDAttributes::GetTokenIdDlpFlag(AccessTokenID id)

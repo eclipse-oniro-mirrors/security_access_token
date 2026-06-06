@@ -430,6 +430,19 @@ HWTEST_F(AccessTokenDenyTest, ClearUserGrantedPermissionState001, TestSize.Level
     ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::ClearUserGrantedPermissionState(tokenId));
 }
 
+/**
+ * @tc.name: ClearUserGrantedPermStateByBundle001
+ * @tc.desc: ClearUserGrantedPermStateByBundle with no permission
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenDenyTest, ClearUserGrantedPermStateByBundle001, TestSize.Level0)
+{
+    const std::string bundleName = "ClearUserGrantedPermStateByBundleDeny";
+    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
+        AccessTokenKit::ClearUserGrantedPermStateByBundle(bundleName));
+}
+
 class CbCustomizeTest1 : public PermStateChangeCallbackCustomize {
 public:
     explicit CbCustomizeTest1(const PermStateChangeScope &scopeInfo)

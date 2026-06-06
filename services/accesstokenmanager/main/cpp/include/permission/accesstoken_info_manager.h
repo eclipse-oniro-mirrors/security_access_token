@@ -59,6 +59,7 @@ public:
     void GetAllNativeTokenPerms(const std::vector<uint32_t>& permCodeList,
         std::vector<PermissionStatusIdl>& permissionInfoList);
     void GetAllHapTokenId(std::unordered_set<AccessTokenID>& tokenIdList);
+    int32_t GetHapTokenIdListByBundleName(const std::string& bundleName, std::vector<AccessTokenID>& tokenIdList);
     void GetAllNativeTokenId(std::unordered_set<AccessTokenID>& tokenIdList);
     std::shared_ptr<HapTokenInfoInner> GetHapTokenInfoInner(AccessTokenID id);
     std::shared_ptr<HapTokenInfoInner> GetHapTokenInfoInnerFromCache(AccessTokenID id);
@@ -81,6 +82,7 @@ public:
         const std::vector<PermissionStatus>& permStateList, const HapPolicy& hapPolicy,
         std::vector<GenericValues>& undefValues);
     bool IsTokenIdExist(AccessTokenID id);
+    bool IsHapTokenIdExist(AccessTokenID id);
     AccessTokenID GetNativeTokenId(const std::string& processName);
     void GetRelatedSandBoxHapList(AccessTokenID tokenId, std::vector<AccessTokenID>& tokenIdList);
     int32_t GetHapTokenDlpType(AccessTokenID id);

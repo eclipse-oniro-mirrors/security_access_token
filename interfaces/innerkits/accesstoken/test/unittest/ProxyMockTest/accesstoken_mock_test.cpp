@@ -511,6 +511,30 @@ HWTEST_F(AccessTokenMockTest, ClearUserGrantedPermissionState001, TestSize.Level
     ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::ClearUserGrantedPermissionState(tokenId));
 }
 
+/**
+ * @tc.name: ClearUserGrantedPermStateByBundle001
+ * @tc.desc: ClearUserGrantedPermStateByBundle with invalid bundle name
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, ClearUserGrantedPermStateByBundle001, TestSize.Level4)
+{
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID,
+        AccessTokenKit::ClearUserGrantedPermStateByBundle(""));
+}
+
+/**
+ * @tc.name: ClearUserGrantedPermStateByBundle002
+ * @tc.desc: ClearUserGrantedPermStateByBundle with proxy is null
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, ClearUserGrantedPermStateByBundle002, TestSize.Level4)
+{
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL,
+        AccessTokenKit::ClearUserGrantedPermStateByBundle("com.example.test"));
+}
+
 class CbCustomizeTest : public PermStateChangeCallbackCustomize {
 public:
     explicit CbCustomizeTest(const PermStateChangeScope &scopeInfo)

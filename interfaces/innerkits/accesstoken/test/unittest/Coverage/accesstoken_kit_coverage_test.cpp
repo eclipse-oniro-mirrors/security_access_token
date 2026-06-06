@@ -38,11 +38,26 @@ namespace Security {
 namespace AccessToken {
 namespace {
 static constexpr int32_t DEFAULT_API_VERSION = 8;
+static constexpr uint64_t CLI_BINARY_MASK = (static_cast<uint64_t>(1) << 36);
+static constexpr uint64_t EXISTING_TOKEN_ATTR_MASK =
+    (static_cast<uint64_t>(1) << 32) | (static_cast<uint64_t>(1) << 33) |
+    (static_cast<uint64_t>(1) << 34) | (static_cast<uint64_t>(1) << 35);
+static constexpr uint64_t TOKEN_ID_LOWMASK = 0xffffffff;
 static const std::string TEST_BUNDLE_NAME = "ohos";
 static const std::string TEST_PERMISSION_NAME_ALPHA = "ohos.permission.ALPHA";
 static const std::string TEST_PERMISSION_NAME_BETA = "ohos.permission.BETA";
 static const int TEST_USER_ID = 0;
 uint64_t g_selfShellTokenId;
+
+uint64_t BuildFullTokenId(ATokenTypeEnum type)
+{
+    AccessTokenIDInner idInner = {0};
+    idInner.tokenUniqueID = 1;
+    idInner.type = type;
+    idInner.version = DEFAULT_TOKEN_VERSION;
+    AccessTokenID tokenId = *reinterpret_cast<AccessTokenID*>(&idInner);
+    return static_cast<uint64_t>(tokenId);
+}
 }
 
 void AccessTokenCoverageTest::SetUpTestCase()
@@ -323,6 +338,120 @@ HWTEST_F(AccessTokenCoverageTest, GetRenderTokenIDTest003, TestSize.Level4)
 
     retTokenId = AccessTokenKit::GetRenderTokenID(invalidTokenID);
     ASSERT_EQ(invalidTokenID, retTokenId);
+}
+
+/**
+ * @tc.name: AddCliBinaryInvokerTokenFlagTest001
+ * @tc.desc: TokenIdKit::AddCliBinaryInvokerTokenFlag function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenCoverageTest, AddCliBinaryInvokerTokenFlagTest001, TestSize.Level4)
+{
+    uint64_t validTokenID = BuildFullTokenId(TOKEN_HAP);
+    uint64_t retTokenId = TokenIdKit::AddCliBinaryInvokerTokenFlag(validTokenID);
+
+    ASSERT_EQ(validTokenID & TOKEN_ID_LOWMASK, retTokenId & TOKEN_ID_LOWMASK);
+    ASSERT_EQ(CLI_BINARY_MASK, retTokenId & CLI_BINARY_MASK);
+}
+
+/**
+ * @tc.name: AddCliBinaryInvokerTokenFlagTest002
+ * @tc.desc: TokenIdKit::AddCliBinaryInvokerTokenFlag invalid token id test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenCoverageTest, AddCliBinaryInvokerTokenFlagTest002, TestSize.Level4)
+{
+    uint64_t invalidTokenID = 0;
+    uint64_t retTokenId = TokenIdKit::AddCliBinaryInvokerTokenFlag(invalidTokenID);
+
+    ASSERT_EQ(INVALID_TOKENID, retTokenId);
+}
+
+/**
+ * @tc.name: AddCliBinaryInvokerTokenFlagTest003
+ * @tc.desc: TokenIdKit::AddCliBinaryInvokerTokenFlag native token id test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenCoverageTest, AddCliBinaryInvokerTokenFlagTest003, TestSize.Level4)
+{
+    uint64_t validTokenID = BuildFullTokenId(TOKEN_NATIVE);
+    uint64_t retTokenId = TokenIdKit::AddCliBinaryInvokerTokenFlag(validTokenID);
+
+    ASSERT_EQ(validTokenID & TOKEN_ID_LOWMASK, retTokenId & TOKEN_ID_LOWMASK);
+    ASSERT_EQ(CLI_BINARY_MASK, retTokenId & CLI_BINARY_MASK);
+}
+
+/**
+ * @tc.name: IsCliBinaryInvokerTokenTest001
+ * @tc.desc: TokenIdKit::IsCliBinaryInvokerToken function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenCoverageTest, IsCliBinaryInvokerTokenTest001, TestSize.Level4)
+{
+    uint64_t validTokenID = BuildFullTokenId(TOKEN_HAP);
+    uint64_t cliBinaryTokenId = TokenIdKit::AddCliBinaryInvokerTokenFlag(validTokenID);
+
+    ASSERT_TRUE(TokenIdKit::IsCliBinaryInvokerToken(cliBinaryTokenId));
+}
+
+/**
+ * @tc.name: IsCliBinaryInvokerTokenTest002
+ * @tc.desc: TokenIdKit::IsCliBinaryInvokerToken invalid token id test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenCoverageTest, IsCliBinaryInvokerTokenTest002, TestSize.Level4)
+{
+    uint64_t invalidTokenID = 0;
+
+    ASSERT_FALSE(TokenIdKit::IsCliBinaryInvokerToken(invalidTokenID));
+}
+
+/**
+ * @tc.name: IsCliBinaryInvokerTokenTest003
+ * @tc.desc: TokenIdKit::IsCliBinaryInvokerToken native token id test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenCoverageTest, IsCliBinaryInvokerTokenTest003, TestSize.Level4)
+{
+    uint64_t validTokenID = BuildFullTokenId(TOKEN_NATIVE);
+    uint64_t cliBinaryTokenId = TokenIdKit::AddCliBinaryInvokerTokenFlag(validTokenID);
+
+    ASSERT_TRUE(TokenIdKit::IsCliBinaryInvokerToken(cliBinaryTokenId));
+}
+
+/**
+ * @tc.name: IsCliBinaryInvokerTokenTest004
+ * @tc.desc: TokenIdKit::IsCliBinaryInvokerToken untagged token id test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenCoverageTest, IsCliBinaryInvokerTokenTest004, TestSize.Level4)
+{
+    uint64_t validTokenID = BuildFullTokenId(TOKEN_HAP);
+
+    ASSERT_FALSE(TokenIdKit::IsCliBinaryInvokerToken(validTokenID));
+}
+
+/**
+ * @tc.name: CliBinaryInvokerTokenFlagPreserveAttrTest001
+ * @tc.desc: TokenIdKit::AddCliBinaryInvokerTokenFlag preserves existing token attr bits.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenCoverageTest, CliBinaryInvokerTokenFlagPreserveAttrTest001, TestSize.Level4)
+{
+    uint64_t validTokenID = BuildFullTokenId(TOKEN_HAP) | EXISTING_TOKEN_ATTR_MASK;
+    uint64_t cliBinaryTokenId = TokenIdKit::AddCliBinaryInvokerTokenFlag(validTokenID);
+
+    ASSERT_EQ(EXISTING_TOKEN_ATTR_MASK, cliBinaryTokenId & EXISTING_TOKEN_ATTR_MASK);
+    ASSERT_EQ(CLI_BINARY_MASK, cliBinaryTokenId & CLI_BINARY_MASK);
+    ASSERT_TRUE(TokenIdKit::IsCliBinaryInvokerToken(cliBinaryTokenId));
 }
 
 #ifdef TOKEN_SYNC_ENABLE

@@ -26,6 +26,7 @@
 #undef private
 #include "permission_validator.h"
 #include "privacy_param.h"
+#include "tokenid_attributes.h"
 
 using namespace testing::ext;
 
@@ -35,6 +36,9 @@ namespace AccessToken {
 namespace {
 const static uint32_t MAX_PERM_SIZE = 2048;
 const static int32_t INVALID_FEATURE_LENGTH = 130;
+static constexpr uint64_t SYSTEM_APP_MASK = (static_cast<uint64_t>(1) << 32);
+static constexpr uint64_t DEBUG_APP_MASK = (static_cast<uint64_t>(1) << 35);
+static constexpr AccessTokenAttr DEBUG_APP_ATTR_MASK = (static_cast<uint32_t>(1) << 3);
 }
 class CommonTest : public testing::Test  {
 public:
@@ -81,7 +85,25 @@ HWTEST_F(CommonTest, IsDefinedPermissionInner001, TestSize.Level1)
     res = IsDefinedPermissionInner("ohos.permission.TTTTT");
     EXPECT_EQ(res, false);
 }
- 
+
+/*
+ * @tc.name: TokenIDAttributesTest001
+ * @tc.desc: Test system app and debug app token attribute helpers.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(CommonTest, TokenIDAttributesTest001, TestSize.Level1)
+{
+    uint64_t fullTokenId = SYSTEM_APP_MASK | DEBUG_APP_MASK;
+
+    EXPECT_TRUE(TokenIDAttributes::IsSystemApp(fullTokenId));
+    EXPECT_TRUE(TokenIDAttributes::IsDebugApp(fullTokenId));
+    EXPECT_TRUE(TokenIDAttributes::IsDebugAppAttr(DEBUG_APP_ATTR_MASK));
+    EXPECT_FALSE(TokenIDAttributes::IsSystemApp(0));
+    EXPECT_FALSE(TokenIDAttributes::IsDebugApp(0));
+    EXPECT_FALSE(TokenIDAttributes::IsDebugAppAttr(0));
+}
+
 /*
  * @tc.name: IsDefinedPermissionInnerTest002
  * @tc.desc: IsDefinedPermissionInner function test

@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include "clear_user_granted__permission_state_test.h"
+#include "clear_user_granted_permission_state_test.h"
 #include "gtest/gtest.h"
 #include <thread>
 
@@ -193,7 +193,7 @@ HWTEST_F(ClearUserGrantedPermissionStateTest, ClearUserGrantedPermissionStateAbn
 
     ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::ClearUserGrantedPermissionState(tokenID));
+    ASSERT_EQ(AccessTokenError::ERR_TOKENID_NOT_EXIST, AccessTokenKit::ClearUserGrantedPermissionState(tokenID));
 }
 
 /**
@@ -215,6 +215,7 @@ HWTEST_F(ClearUserGrantedPermissionStateTest, ClearUserGrantedPermissionStateSpe
     }
     ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
+
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
