@@ -15,6 +15,7 @@
 
 #include "accesstoken_manager_service.h"
 
+#include <memory>
 #include <mutex>
 #include <stack>
 #include <unordered_set>
@@ -1020,7 +1021,8 @@ int AccessTokenManagerService::GrantPermission(
     }
     
     if (!IsPrivilegedCalling() &&
-        VerifyAccessToken(callingTokenID, GRANT_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {
+        VerifyAccessToken(callingTokenID, GRANT_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED &&
+        !IsShellCallingForDebugHap(tokenID)) {
         ReportPermissionVerifyEvent(callingTokenID, permissionName);
         LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", callingTokenID);
         return AccessTokenError::ERR_PERMISSION_DENIED;
@@ -1046,7 +1048,8 @@ int AccessTokenManagerService::RevokePermission(
     }
 
     if (!IsPrivilegedCalling() &&
-        VerifyAccessToken(callingTokenID, REVOKE_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {
+        VerifyAccessToken(callingTokenID, REVOKE_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED &&
+        !IsShellCallingForDebugHap(tokenID)) {
         ReportPermissionVerifyEvent(callingTokenID, permissionName);
         LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", callingTokenID);
         return AccessTokenError::ERR_PERMISSION_DENIED;
@@ -1086,14 +1089,64 @@ int AccessTokenManagerService::ClearUserGrantedPermissionState(AccessTokenID tok
     LOGI(ATM_DOMAIN, ATM_TAG, "TokenID: %{public}d, callerPid %{public}d.", tokenID, IPCSkeleton::GetCallingPid());
     uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
     if (!IsPrivilegedCalling() &&
-        VerifyAccessToken(callingTokenID, REVOKE_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {
+        VerifyAccessToken(callingTokenID, REVOKE_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED &&
+        !IsShellCallingForDebugHap(tokenID)) {
         ReportPermissionVerifyEvent(callingTokenID, "");
         LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", callingTokenID);
         return AccessTokenError::ERR_PERMISSION_DENIED;
     }
-
+    if (!AccessTokenInfoManager::GetInstance().IsHapTokenIdExist(tokenID)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "TokenID %{public}u does not exist or is not a valid hap token.", tokenID);
+        return AccessTokenError::ERR_TOKENID_NOT_EXIST;
+    }
     AccessTokenInfoManager::GetInstance().ClearUserGrantedPermissionState(tokenID);
     AccessTokenInfoManager::GetInstance().SetPermDialogCap(tokenID, false);
+    return RET_SUCCESS;
+}
+
+int32_t AccessTokenManagerService::ClearUserGrantedPermStateByBundle(const std::string& bundleName)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "Bundle %{public}s, callerPid %{public}d.", bundleName.c_str(),
+        IPCSkeleton::GetCallingPid());
+    AccessTokenID callingTokenID = IPCSkeleton::GetCallingTokenID();
+    if (!IsShellProcessCalling()) {
+        ReportPermissionVerifyEvent(callingTokenID, "");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Caller is not shell, callerTokenID=%{public}d.", callingTokenID);
+        return AccessTokenError::ERR_PERMISSION_DENIED;
+    }
+    if (!DataValidator::IsBundleNameValid(bundleName)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Bundle name is invalid.");
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    int32_t ret = PreVerifyBundleIfNeeded(bundleName);
+    if (ret != RET_SUCCESS) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Pre verify bundle failed, bundle=%{public}s, ret=%{public}d.",
+            bundleName.c_str(), ret);
+        return ret;
+    }
+
+    std::vector<AccessTokenID> tokenIdList;
+    ret = AccessTokenInfoManager::GetInstance().GetHapTokenIdListByBundleName(bundleName, tokenIdList);
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
+
+    bool isCleared = false;
+    for (const auto tokenID : tokenIdList) {
+#ifdef ATM_BUILD_VARIANT_USER_ENABLE
+        if (!IsDebugHapToken(tokenID)) {
+            continue;
+        }
+#endif
+        AccessTokenInfoManager::GetInstance().ClearUserGrantedPermissionState(tokenID);
+        AccessTokenInfoManager::GetInstance().SetPermDialogCap(tokenID, false);
+        isCleared = true;
+    }
+    if (!isCleared) {
+        ReportPermissionVerifyEvent(callingTokenID, "");
+        LOGE(ATM_DOMAIN, ATM_TAG, "No debug hap can be cleared, bundle=%{public}s.", bundleName.c_str());
+        return AccessTokenError::ERR_PERMISSION_DENIED;
+    }
     return RET_SUCCESS;
 }
 
@@ -1675,12 +1728,26 @@ int AccessTokenManagerService::GetHapTokenInfo(AccessTokenID tokenID, HapTokenIn
 {
     LOGD(ATM_DOMAIN, ATM_TAG, "Id %{public}d.", tokenID);
 
-    if (!IsNativeProcessCalling() && !IsPrivilegedCalling()) {
+    if (IsNativeProcessCalling() || IsPrivilegedCalling()) {
+        return AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenID, infoParcel.hapTokenInfoParams);
+    }
+
+    if (!IsShellProcessCalling()) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", IPCSkeleton::GetCallingTokenID());
         return AccessTokenError::ERR_PERMISSION_DENIED;
     }
 
-    return AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenID, infoParcel.hapTokenInfoParams);
+    std::shared_ptr<HapTokenInfoInner> infoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenID);
+    if (infoPtr == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Token %{public}u is not exist.", tokenID);
+        return AccessTokenError::ERR_TOKENID_NOT_EXIST;
+    }
+    if (!TokenIDAttributes::IsDebugAppAttr(infoPtr->GetAttr())) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", IPCSkeleton::GetCallingTokenID());
+        return AccessTokenError::ERR_PERMISSION_DENIED;
+    }
+    infoPtr->TranslateToHapTokenInfo(infoParcel.hapTokenInfoParams);
+    return RET_SUCCESS;
 }
 
 int32_t AccessTokenManagerService::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfoCompatIdl& infoIdl)
@@ -2414,6 +2481,31 @@ bool AccessTokenManagerService::IsShellProcessCalling()
 {
     AccessTokenID tokenCaller = IPCSkeleton::GetCallingTokenID();
     return this->GetTokenType(tokenCaller) == TOKEN_SHELL;
+}
+
+bool AccessTokenManagerService::IsShellCallingForDebugHap(AccessTokenID tokenID)
+{
+    if (!IsShellProcessCalling()) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Caller is not shell, callerTokenID=%{public}d.",
+            IPCSkeleton::GetCallingTokenID());
+        return false;
+    }
+
+    return IsDebugHapToken(tokenID);
+}
+
+bool AccessTokenManagerService::IsDebugHapToken(AccessTokenID tokenID)
+{
+    std::shared_ptr<HapTokenInfoInner> infoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenID);
+    if (infoPtr == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "TokenID %{public}d is not a valid hap token.", tokenID);
+        return false;
+    }
+    if (!TokenIDAttributes::IsDebugAppAttr(infoPtr->GetAttr())) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "TokenID %{public}d is not a debug hap token.", tokenID);
+        return false;
+    }
+    return true;
 }
 
 bool AccessTokenManagerService::IsSystemAppCalling() const

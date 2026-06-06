@@ -803,6 +803,12 @@ bool AccessTokenInfoManager::IsTokenIdExist(AccessTokenID id)
     return false;
 }
 
+bool AccessTokenInfoManager::IsHapTokenIdExist(AccessTokenID id)
+{
+    std::shared_lock<std::shared_mutex> infoGuard(this->hapTokenInfoLock_);
+    return hapTokenInfoMap_.count(id) != 0;
+}
+
 void AccessTokenInfoManager::GetTokenIDByUserID(int32_t userID, std::unordered_set<AccessTokenID>& tokenIdList)
 {
     std::shared_lock<std::shared_mutex> infoGuard(hapTokenInfoLock_);
@@ -835,6 +841,20 @@ void AccessTokenInfoManager::GetAllHapTokenId(std::unordered_set<AccessTokenID>&
             tokenIdList.emplace(tokenInfoPtr->GetTokenID());
         }
     }
+}
+
+int32_t AccessTokenInfoManager::GetHapTokenIdListByBundleName(
+    const std::string& bundleName, std::vector<AccessTokenID>& tokenIdList)
+{
+    tokenIdList.clear();
+    std::shared_lock<std::shared_mutex> infoGuard(hapTokenInfoLock_);
+    auto iter = bundleInfoMap_.find(bundleName);
+    if (iter == bundleInfoMap_.end() || iter->second == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Bundle %{public}s does not exist.", bundleName.c_str());
+        return ERR_BUNDLE_NOT_EXIST;
+    }
+    tokenIdList = iter->second->tokenIds;
+    return RET_SUCCESS;
 }
 
 void AccessTokenInfoManager::GetAllNativeTokenId(std::unordered_set<AccessTokenID>& tokenIdList)

@@ -64,6 +64,7 @@ interface OHOS.Security.AccessToken.IAccessTokenManager{
     [ipccode 12] void GetPermissionRequestToggleStatus([in] String permissionName, [out] unsigned int status, [in] int userID);
     [ipccode 13] void GrantPermissionForSpecifiedTime([in] unsigned int tokenID, [in] String permissionName, [in] unsigned int onceTime);
     [ipccode 14] void RequestAppPermOnSetting([in] unsigned int tokenID);
+    [ipccode 15] void ClearUserGrantedPermStateByBundle([in] String bundleName);
     [ipccode 16] void GetTokenType([in] unsigned int tokenID, [out] int tokenType);
 
     [ipccode 18] void GetHapTokenID(

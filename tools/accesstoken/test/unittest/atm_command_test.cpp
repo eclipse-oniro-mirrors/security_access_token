@@ -56,7 +56,8 @@ static HapInfoParams g_HapInfoParms = {
     .bundleName = "com.example.atm.test",
     .instIndex = 0,
     .appIDDesc = "atm.test.app",
-    .isSystemApp = false
+    .isSystemApp = false,
+    .appProvisionType = "debug"
 };
 
 static HapPolicyParams g_HapPolicyPrams = {
@@ -111,7 +112,6 @@ static AccessTokenID CreateTestHapTokenID()
 
     return 0;
 }
-
 
 static void DeleteTestHapTokenID()
 {
@@ -243,8 +243,8 @@ HWTEST_F(AtmCommandTest, atm_help_test001, TestSize.Level1)
     EXPECT_TRUE(IsOutputContain(result, "usage: atm <command>"));
     EXPECT_TRUE(IsOutputContain(result, "help"));
     EXPECT_TRUE(IsOutputContain(result, "dump"));
-#ifndef ATM_BUILD_VARIANT_USER_ENABLE
     EXPECT_TRUE(IsOutputContain(result, "perm"));
+#ifndef ATM_BUILD_VARIANT_USER_ENABLE
     EXPECT_TRUE(IsOutputContain(result, "toggle"));
 #endif
 }
@@ -270,10 +270,9 @@ HWTEST_F(AtmCommandTest, atm_help_test002, TestSize.Level1)
 #endif
 }
 
-#ifndef ATM_BUILD_VARIANT_USER_ENABLE
 /**
  * @tc.name: atm_help_test003
- * @tc.desc: Display perm command help (non-user variant)
+ * @tc.desc: Display perm command help
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -285,7 +284,9 @@ HWTEST_F(AtmCommandTest, atm_help_test003, TestSize.Level1)
     EXPECT_TRUE(IsOutputContain(result, "usage: atm perm"));
     EXPECT_TRUE(IsOutputContain(result, "--grant") || IsOutputContain(result, "-g"));
     EXPECT_TRUE(IsOutputContain(result, "--cancel") || IsOutputContain(result, "-c"));
+    EXPECT_TRUE(IsOutputContain(result, "--reset") || IsOutputContain(result, "-r"));
 }
+#ifndef ATM_BUILD_VARIANT_USER_ENABLE
 /**
  * @tc.name: atm_help_test004
  * @tc.desc: Display toggle request help (non-user variant)
@@ -570,6 +571,7 @@ HWTEST_F(AtmCommandTest, atm_dump_token_test011, TestSize.Level1)
     int32_t argc = sizeof(argv) / sizeof(argv[0]);
     std::string result = ExecAtmCommand(argc, const_cast<char**>(argv));
     EXPECT_TRUE(IsOutputContain(result, "mutually exclusive") || IsOutputContain(result, "Only one of them"));
+    EXPECT_TRUE(IsOutputContain(result, "usage: atm dump"));
 }
 
 /**
@@ -585,6 +587,22 @@ HWTEST_F(AtmCommandTest, atm_dump_token_test012, TestSize.Level1)
     int32_t argc = sizeof(argv) / sizeof(argv[0]);
     std::string result = ExecAtmCommand(argc, const_cast<char**>(argv));
     EXPECT_TRUE(IsOutputContain(result, "mutually exclusive") || IsOutputContain(result, "Only one of them"));
+    EXPECT_TRUE(IsOutputContain(result, "usage: atm dump"));
+}
+
+/**
+ * @tc.name: atm_dump_token_test013
+ * @tc.desc: Dump command with selector option but without dump operation
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AtmCommandTest, atm_dump_token_test013, TestSize.Level1)
+{
+    const char* argv[] = {"atm", "dump", "-i", "123456"};
+    int32_t argc = sizeof(argv) / sizeof(argv[0]);
+    std::string result = ExecAtmCommand(argc, const_cast<char**>(argv));
+    EXPECT_TRUE(IsOutputContain(result, "Missing option"));
+    EXPECT_TRUE(IsOutputContain(result, "usage: atm dump"));
 }
 
 #ifndef ATM_BUILD_VARIANT_USER_ENABLE
@@ -1192,6 +1210,76 @@ HWTEST_F(AtmCommandTest, atm_stab_test002, TestSize.Level3)
     SUCCEED() << "Multiple commands executed successfully";
 }
 
+/**
+ * @tc.name: atm_perm_parse_test001
+ * @tc.desc: Perm command requires explicit operation
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AtmCommandTest, atm_perm_parse_test001, TestSize.Level1)
+{
+    const char* argv[] = {"atm", "perm", "-i", "123", "-p", PERM_CAMERA.c_str()};
+    int32_t argc = sizeof(argv) / sizeof(argv[0]);
+    std::string result = ExecAtmCommand(argc, const_cast<char**>(argv));
+    EXPECT_TRUE(IsOutputContain(result, "Missing required operation"));
+}
+
+/**
+ * @tc.name: atm_perm_parse_test002
+ * @tc.desc: Perm command rejects multiple operations
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AtmCommandTest, atm_perm_parse_test002, TestSize.Level1)
+{
+    const char* argv[] = {"atm", "perm", "-g", "-c", "-i", "123", "-p", PERM_CAMERA.c_str()};
+    int32_t argc = sizeof(argv) / sizeof(argv[0]);
+    std::string result = ExecAtmCommand(argc, const_cast<char**>(argv));
+    EXPECT_TRUE(IsOutputContain(result, "Only one of -g, -c or -r"));
+}
+
+/**
+ * @tc.name: atm_perm_parse_test003
+ * @tc.desc: Reset permission state does not accept permission name
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AtmCommandTest, atm_perm_parse_test003, TestSize.Level1)
+{
+    const char* argv[] = {"atm", "perm", "-r", "-i", "123", "-p", PERM_CAMERA.c_str()};
+    int32_t argc = sizeof(argv) / sizeof(argv[0]);
+    std::string result = ExecAtmCommand(argc, const_cast<char**>(argv));
+    EXPECT_TRUE(IsOutputContain(result, "not supported with -r"));
+}
+
+/**
+ * @tc.name: atm_perm_parse_test004
+ * @tc.desc: Grant permission command requires permission name
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AtmCommandTest, atm_perm_parse_test004, TestSize.Level1)
+{
+    const char* argv[] = {"atm", "perm", "-g", "-i", "123"};
+    int32_t argc = sizeof(argv) / sizeof(argv[0]);
+    std::string result = ExecAtmCommand(argc, const_cast<char**>(argv));
+    EXPECT_TRUE(IsOutputContain(result, "Missing required parameter: -p"));
+}
+
+/**
+ * @tc.name: atm_perm_parse_test005
+ * @tc.desc: Reset permission command requires token id
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AtmCommandTest, atm_perm_parse_test005, TestSize.Level1)
+{
+    const char* argv[] = {"atm", "perm", "-r"};
+    int32_t argc = sizeof(argv) / sizeof(argv[0]);
+    std::string result = ExecAtmCommand(argc, const_cast<char**>(argv));
+    EXPECT_TRUE(IsOutputContain(result, "exactly one of -i"));
+}
+
 #ifndef ATM_BUILD_VARIANT_USER_ENABLE
 /**
  * @tc.name: atm_perm_error_test001
@@ -1250,6 +1338,290 @@ HWTEST_F(AtmCommandTest, atm_perm_error_test004, TestSize.Level1)
 }
 
 /**
+ * @tc.name: atm_perm_reset_test001
+ * @tc.desc: Reset user granted permission state for shell token
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AtmCommandTest, atm_perm_reset_test001, TestSize.Level1)
+{
+    std::string tokenIdStr = std::to_string(g_shellTokenId);
+    const char* argv[] = {"atm", "perm", "-r", "-i", tokenIdStr.c_str()};
+    int32_t argc = sizeof(argv) / sizeof(argv[0]);
+    std::string result = ExecAtmCommand(argc, const_cast<char**>(argv));
+    EXPECT_TRUE(IsOutputContain(result, "TokenID does not exist") ||
+        IsOutputContain(result, "is not requested by the application"));
+}
+
+/**
+ * @tc.name: atm_perm_reset_test002
+ * @tc.desc: Reset user granted permission state for HAP token
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AtmCommandTest, atm_perm_reset_test002, TestSize.Level1)
+{
+    std::string tokenIdStr = std::to_string(g_hapTokenId);
+    const char* argv[] = {"atm", "perm", "-r", "-i", tokenIdStr.c_str()};
+    int32_t argc = sizeof(argv) / sizeof(argv[0]);
+    std::string result = ExecAtmCommand(argc, const_cast<char**>(argv));
+    EXPECT_TRUE(IsOutputContain(result, "Success") || IsOutputContain(result, "Failure"));
+}
+
+/**
+ * @tc.name: atm_perm_reset_test003
+ * @tc.desc: Reset user granted permission state for invalid token
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AtmCommandTest, atm_perm_reset_test003, TestSize.Level1)
+{
+    const char* argv[] = {"atm", "perm", "-r", "-i", "99999999"};
+    int32_t argc = sizeof(argv) / sizeof(argv[0]);
+    std::string result = ExecAtmCommand(argc, const_cast<char**>(argv));
+    EXPECT_TRUE(IsOutputContain(result, "TokenID") && IsOutputContain(result, "does not exist"));
+    EXPECT_FALSE(IsOutputContain(result, "Failure"));
+}
+
+/**
+ * @tc.name: atm_perm_reset_test004
+ * @tc.desc: Reset permission state with permission name parameter
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AtmCommandTest, atm_perm_reset_test004, TestSize.Level1)
+{
+    std::string tokenIdStr = std::to_string(g_hapTokenId);
+    const char* argv[] = {"atm", "perm", "-r", "-i", tokenIdStr.c_str(), "-p", PERM_CAMERA.c_str()};
+    int32_t argc = sizeof(argv) / sizeof(argv[0]);
+    std::string result = ExecAtmCommand(argc, const_cast<char**>(argv));
+    EXPECT_TRUE(IsOutputContain(result, "not supported with -r"));
+}
+
+/**
+ * @tc.name: atm_perm_reset_test015
+ * @tc.desc: Reset permission state with unsupported permission option missing value
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AtmCommandTest, atm_perm_reset_test015, TestSize.Level1)
+{
+    const char* argv[] = {"atm", "perm", "-r", "-i", "13", "-p"};
+    int32_t argc = sizeof(argv) / sizeof(argv[0]);
+    std::string result = ExecAtmCommand(argc, const_cast<char**>(argv));
+    EXPECT_TRUE(IsOutputContain(result, "not supported with -r"));
+    EXPECT_FALSE(IsOutputContain(result, "Option requires a value"));
+}
+
+/**
+ * @tc.name: atm_perm_reset_test005
+ * @tc.desc: Reset permission state without tokenID parameter
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AtmCommandTest, atm_perm_reset_test005, TestSize.Level1)
+{
+    const char* argv[] = {"atm", "perm", "-r"};
+    int32_t argc = sizeof(argv) / sizeof(argv[0]);
+    std::string result = ExecAtmCommand(argc, const_cast<char**>(argv));
+    EXPECT_TRUE(IsOutputContain(result, "Missing required parameter") || IsOutputContain(result, "-i"));
+}
+
+/**
+ * @tc.name: atm_perm_reset_test006
+ * @tc.desc: Reset permission state with tokenID=0
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AtmCommandTest, atm_perm_reset_test006, TestSize.Level1)
+{
+    const char* argv[] = {"atm", "perm", "-r", "-i", "0"};
+    int32_t argc = sizeof(argv) / sizeof(argv[0]);
+    std::string result = ExecAtmCommand(argc, const_cast<char**>(argv));
+    EXPECT_TRUE(IsOutputContain(result, "TokenID is invalid"));
+}
+
+/**
+ * @tc.name: atm_perm_reset_test007
+ * @tc.desc: Reset permission state for non-existent tokenID
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AtmCommandTest, atm_perm_reset_test007, TestSize.Level1)
+{
+    const char* argv[] = {"atm", "perm", "-r", "-i", "99999999"};
+    int32_t argc = sizeof(argv) / sizeof(argv[0]);
+    std::string result = ExecAtmCommand(argc, const_cast<char**>(argv));
+    EXPECT_TRUE(IsOutputContain(result, "TokenID") && IsOutputContain(result, "does not exist"));
+}
+
+/**
+ * @tc.name: atm_perm_reset_test008
+ * @tc.desc: Reset permission state rejects multiple operations
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AtmCommandTest, atm_perm_reset_test008, TestSize.Level1)
+{
+    std::string tokenIdStr = std::to_string(g_hapTokenId);
+    const char* argv[] = {"atm", "perm", "-r", "-g", "-i", tokenIdStr.c_str(), "-p", PERM_CAMERA.c_str()};
+    int32_t argc = sizeof(argv) / sizeof(argv[0]);
+    std::string result = ExecAtmCommand(argc, const_cast<char**>(argv));
+    EXPECT_TRUE(IsOutputContain(result, "Only one of -g, -c or -r"));
+}
+
+/**
+ * @tc.name: atm_perm_reset_test009
+ * @tc.desc: Reset user granted permission state by bundle name
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AtmCommandTest, atm_perm_reset_test009, TestSize.Level1)
+{
+    const char* argv[] = {"atm", "perm", "-r", "-b", TEST_BUNDLE_NAME.c_str()};
+    int32_t argc = sizeof(argv) / sizeof(argv[0]);
+    std::string result = ExecAtmCommand(argc, const_cast<char**>(argv));
+    EXPECT_TRUE(IsOutputContain(result, "Success") || IsOutputContain(result, "BundleName") ||
+        IsOutputContain(result, "No debug hap token"));
+    EXPECT_FALSE(IsOutputContain(result, "Failure"));
+}
+
+/**
+ * @tc.name: atm_perm_reset_test010
+ * @tc.desc: Reset permission state rejects token id and bundle name together
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AtmCommandTest, atm_perm_reset_test010, TestSize.Level1)
+{
+    std::string tokenIdStr = std::to_string(g_hapTokenId);
+    const char* argv[] = {"atm", "perm", "-r", "-i", tokenIdStr.c_str(), "-b", TEST_BUNDLE_NAME.c_str()};
+    int32_t argc = sizeof(argv) / sizeof(argv[0]);
+    std::string result = ExecAtmCommand(argc, const_cast<char**>(argv));
+    EXPECT_TRUE(IsOutputContain(result, "exactly one of -i"));
+}
+
+/**
+ * @tc.name: atm_perm_reset_test011
+ * @tc.desc: Reset permission state by bundle name rejects permission name
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AtmCommandTest, atm_perm_reset_test011, TestSize.Level1)
+{
+    const char* argv[] = {"atm", "perm", "-r", "-b", TEST_BUNDLE_NAME.c_str(), "-p", PERM_CAMERA.c_str()};
+    int32_t argc = sizeof(argv) / sizeof(argv[0]);
+    std::string result = ExecAtmCommand(argc, const_cast<char**>(argv));
+    EXPECT_TRUE(IsOutputContain(result, "not supported with -r"));
+}
+
+/**
+ * @tc.name: atm_perm_reset_test012
+ * @tc.desc: Bundle name option is only supported with reset operation
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AtmCommandTest, atm_perm_reset_test012, TestSize.Level1)
+{
+    const char* argv[] = {"atm", "perm", "-c", "-b", TEST_BUNDLE_NAME.c_str(), "-p", PERM_CAMERA.c_str()};
+    int32_t argc = sizeof(argv) / sizeof(argv[0]);
+    std::string result = ExecAtmCommand(argc, const_cast<char**>(argv));
+    EXPECT_TRUE(IsOutputContain(result, "only supported with -r"));
+}
+
+/**
+ * @tc.name: atm_perm_reset_test013
+ * @tc.desc: Reset permission state by nonexistent bundle name
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AtmCommandTest, atm_perm_reset_test013, TestSize.Level1)
+{
+    const char* argv[] = {"atm", "perm", "-r", "-b", INVALID_BUNDLE_NAME.c_str()};
+    int32_t argc = sizeof(argv) / sizeof(argv[0]);
+    std::string result = ExecAtmCommand(argc, const_cast<char**>(argv));
+    EXPECT_TRUE(IsOutputContain(result, "BundleName") && IsOutputContain(result, "does not exist"));
+    EXPECT_FALSE(IsOutputContain(result, "Failure"));
+}
+
+#ifdef ATM_BUILD_VARIANT_USER_ENABLE
+static AccessTokenID CreateTestHapTokenIDByProvision(const std::string& bundleName, const std::string& provisionType)
+{
+    AccessTokenID foundationTokenId = GetNativeTokenIdFromProcess(TEST_PROCESS_NAME);
+    if (foundationTokenId == 0) {
+        return 0;
+    }
+
+    HapInfoParams hapInfo = g_HapInfoParms;
+    hapInfo.bundleName = bundleName;
+    hapInfo.appProvisionType = provisionType;
+
+    SetSelfTokenID(foundationTokenId);
+    AccessTokenIDEx tokenIdEx;
+    int32_t ret = AccessTokenKit::InitHapToken(hapInfo, g_HapPolicyPrams, tokenIdEx);
+    SetSelfTokenID(g_shellTokenId);
+
+    return (ret == RET_SUCCESS) ? tokenIdEx.tokenIdExStruct.tokenID : 0;
+}
+
+static void DeleteHapTokenID(AccessTokenID tokenID)
+{
+    AccessTokenID foundationTokenId = GetNativeTokenIdFromProcess(TEST_PROCESS_NAME);
+    if (foundationTokenId == 0 || tokenID == 0) {
+        return;
+    }
+
+    SetSelfTokenID(foundationTokenId);
+    AccessTokenKit::DeleteToken(tokenID);
+    SetSelfTokenID(g_shellTokenId);
+}
+
+/**
+ * @tc.name: atm_perm_reset_test014
+ * @tc.desc: Reset permission state by release-only bundle name in user build
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AtmCommandTest, atm_perm_reset_test014, TestSize.Level1)
+{
+    const std::string bundleName = "com.example.atm.release.reset.test";
+    AccessTokenID tokenID = CreateTestHapTokenIDByProvision(bundleName, "release");
+    ASSERT_NE(0, tokenID);
+    EXPECT_EQ(0, SetSelfTokenID(g_shellTokenId));
+
+    const char* argv[] = {"atm", "perm", "-r", "-b", bundleName.c_str()};
+    int32_t argc = sizeof(argv) / sizeof(argv[0]);
+    std::string result = ExecAtmCommand(argc, const_cast<char**>(argv));
+
+    EXPECT_TRUE(IsOutputContain(result, "No debug hap token can be modified in user build."));
+    EXPECT_FALSE(IsOutputContain(result, "Failure"));
+    DeleteHapTokenID(tokenID);
+}
+
+/**
+ * @tc.name: atm_perm_grant_test012
+ * @tc.desc: Grant permission to release hap with shell caller in user build
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AtmCommandTest, atm_perm_grant_test012, TestSize.Level1)
+{
+    AccessTokenID tokenID = CreateTestHapTokenIDByProvision("com.example.atm.release.test", "release");
+    ASSERT_NE(0, tokenID);
+    EXPECT_EQ(0, SetSelfTokenID(g_shellTokenId));
+
+    std::string tokenIdStr = std::to_string(tokenID);
+    const char* argv[] = {"atm", "perm", "-g", "-i", tokenIdStr.c_str(), "-p", PERM_CAMERA.c_str()};
+    int32_t argc = sizeof(argv) / sizeof(argv[0]);
+    std::string result = ExecAtmCommand(argc, const_cast<char**>(argv));
+
+    EXPECT_TRUE(IsOutputContain(result, "Only debug hap token can be modified in user build."));
+    EXPECT_FALSE(IsOutputContain(result, "Failure"));
+    DeleteHapTokenID(tokenID);
+}
+#endif
+
+/**
  * @tc.name: atm_perm_grant_test001
  * @tc.desc: Grant permission to shell token (should fail)
  * @tc.type: FUNC
@@ -1261,12 +1633,13 @@ HWTEST_F(AtmCommandTest, atm_perm_grant_test001, TestSize.Level1)
     const char* argv[] = {"atm", "perm", "-g", "-i", tokenIdStr.c_str(), "-p", PERM_CAMERA.c_str()};
     int32_t argc = sizeof(argv) / sizeof(argv[0]);
     std::string result = ExecAtmCommand(argc, const_cast<char**>(argv));
-    EXPECT_TRUE(IsOutputContain(result, "Error: TokenID does not exist or is not a valid application TokenID."));
+    EXPECT_TRUE(IsOutputContain(result, "TokenID does not exist") ||
+        IsOutputContain(result, "is not requested by the application"));
 }
 
 /**
  * @tc.name: atm_perm_grant_test002
- * @tc.desc: Grant permission to HAP token
+ * @tc.desc: Grant permission not requested by HAP token
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -1277,8 +1650,8 @@ HWTEST_F(AtmCommandTest, atm_perm_grant_test002, TestSize.Level1)
                           "-p", PERM_CAMERA.c_str()};
     int32_t argc = sizeof(argv) / sizeof(argv[0]);
     std::string result = ExecAtmCommand(argc, const_cast<char**>(argv));
-    // HAP token can be granted permissions through atm perm command
-    EXPECT_TRUE(IsOutputContain(result, "Success") || IsOutputContain(result, "Failure"));
+    EXPECT_TRUE(IsOutputContain(result, "Permission") && IsOutputContain(result, "is not requested"));
+    EXPECT_FALSE(IsOutputContain(result, "Failure"));
 }
 
 /**
@@ -1292,7 +1665,7 @@ HWTEST_F(AtmCommandTest, atm_perm_grant_test003, TestSize.Level1)
     const char* argv[] = {"atm", "perm", "-g", "-i", "99999999", "-p", PERM_CAMERA.c_str()};
     int32_t argc = sizeof(argv) / sizeof(argv[0]);
     std::string result = ExecAtmCommand(argc, const_cast<char**>(argv));
-    EXPECT_TRUE(IsOutputContain(result, "Failure") || IsOutputContain(result, "not exist"));
+    EXPECT_TRUE(IsOutputContain(result, "TokenID does not exist or is not a valid application TokenID."));
 }
 
 /**
@@ -1382,7 +1755,7 @@ HWTEST_F(AtmCommandTest, atm_perm_grant_test009, TestSize.Level2)
     ExecAtmCommand(argc, const_cast<char**>(argv));
     std::string result = ExecAtmCommand(argc, const_cast<char**>(argv));
     EXPECT_TRUE(IsOutputContain(result, "Success") || IsOutputContain(result, "already granted") ||
-        IsOutputContain(result, "Failure"));
+        IsOutputContain(result, "is not requested"));
 }
 
 /**
@@ -1397,8 +1770,28 @@ HWTEST_F(AtmCommandTest, atm_perm_grant_test010, TestSize.Level2)
     const char* argv[] = {"atm", "perm", "-g", "-i", tokenIdStr.c_str(), "-p", PERM_CAMERA.c_str()};
     int32_t argc = sizeof(argv) / sizeof(argv[0]);
     std::string result = ExecAtmCommand(argc, const_cast<char**>(argv));
-    EXPECT_TRUE(IsOutputContain(result, "Success") || IsOutputContain(result, "Failure") ||
+    EXPECT_TRUE(IsOutputContain(result, "Success") || IsOutputContain(result, "is not requested") ||
         IsOutputContain(result, "not allowed"));
+}
+
+/**
+ * @tc.name: atm_perm_grant_test011
+ * @tc.desc: Grant permission to debug hap with shell caller
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AtmCommandTest, atm_perm_grant_test011, TestSize.Level1)
+{
+    EXPECT_EQ(0, SetSelfTokenID(g_shellTokenId));
+
+    std::string tokenIdStr = std::to_string(g_hapTokenId);
+    const char* argv[] = {"atm", "perm", "-g", "-i", tokenIdStr.c_str(), "-p", PERM_CAMERA.c_str()};
+    int32_t argc = sizeof(argv) / sizeof(argv[0]);
+    std::string result = ExecAtmCommand(argc, const_cast<char**>(argv));
+
+    EXPECT_EQ(0, SetSelfTokenID(g_shellTokenId));
+    EXPECT_TRUE(IsOutputContain(result, "Success") || IsOutputContain(result, "is not requested"));
+    EXPECT_FALSE(IsOutputContain(result, "Failure"));
 }
 
 /**
@@ -1413,7 +1806,8 @@ HWTEST_F(AtmCommandTest, atm_perm_revoke_test001, TestSize.Level1)
     const char* argv[] = {"atm", "perm", "-c", "-i", tokenIdStr.c_str(), "-p", PERM_CAMERA.c_str()};
     int32_t argc = sizeof(argv) / sizeof(argv[0]);
     std::string result = ExecAtmCommand(argc, const_cast<char**>(argv));
-    EXPECT_TRUE(IsOutputContain(result, "Error: TokenID does not exist or is not a valid application TokenID."));
+    EXPECT_TRUE(IsOutputContain(result, "TokenID does not exist") ||
+        IsOutputContain(result, "is not requested by the application"));
 }
 
 /**
@@ -1428,8 +1822,7 @@ HWTEST_F(AtmCommandTest, atm_perm_revoke_test002, TestSize.Level1)
     const char* argv[] = {"atm", "perm", "-c", "-i", tokenIdStr.c_str(), "-p", PERM_CAMERA.c_str()};
     int32_t argc = sizeof(argv) / sizeof(argv[0]);
     std::string result = ExecAtmCommand(argc, const_cast<char**>(argv));
-    // HAP token can have permissions revoked through atm perm command
-    EXPECT_TRUE(IsOutputContain(result, "Success") || IsOutputContain(result, "Failure"));
+    EXPECT_TRUE(IsOutputContain(result, "Success") || IsOutputContain(result, "is not requested"));
 }
 
 /**
@@ -1443,7 +1836,7 @@ HWTEST_F(AtmCommandTest, atm_perm_revoke_test003, TestSize.Level1)
     const char* argv[] = {"atm", "perm", "-c", "-i", "99999999", "-p", PERM_CAMERA.c_str()};
     int32_t argc = sizeof(argv) / sizeof(argv[0]);
     std::string result = ExecAtmCommand(argc, const_cast<char**>(argv));
-    EXPECT_TRUE(IsOutputContain(result, "Failure") || IsOutputContain(result, "not exist"));
+    EXPECT_TRUE(IsOutputContain(result, "TokenID") && IsOutputContain(result, "does not exist"));
 }
 
 /**
@@ -1517,6 +1910,26 @@ HWTEST_F(AtmCommandTest, atm_perm_revoke_test008, TestSize.Level1)
     int32_t argc = sizeof(argv) / sizeof(argv[0]);
     std::string result = ExecAtmCommand(argc, const_cast<char**>(argv));
     EXPECT_TRUE(IsOutputContain(result, "Missing required parameter") || IsOutputContain(result, "-p"));
+}
+
+/**
+ * @tc.name: atm_perm_revoke_test009
+ * @tc.desc: Revoke permission from debug hap with shell caller
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AtmCommandTest, atm_perm_revoke_test009, TestSize.Level1)
+{
+    EXPECT_EQ(0, SetSelfTokenID(g_shellTokenId));
+
+    std::string tokenIdStr = std::to_string(g_hapTokenId);
+    const char* argv[] = {"atm", "perm", "-c", "-i", tokenIdStr.c_str(), "-p", PERM_CAMERA.c_str()};
+    int32_t argc = sizeof(argv) / sizeof(argv[0]);
+    std::string result = ExecAtmCommand(argc, const_cast<char**>(argv));
+
+    EXPECT_EQ(0, SetSelfTokenID(g_shellTokenId));
+    EXPECT_TRUE(IsOutputContain(result, "Success") || IsOutputContain(result, "is not requested"));
+    EXPECT_FALSE(IsOutputContain(result, "Failure"));
 }
 
 /**

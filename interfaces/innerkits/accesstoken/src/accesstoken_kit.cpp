@@ -738,6 +738,15 @@ int AccessTokenKit::ClearUserGrantedPermissionState(AccessTokenID tokenID)
     return AccessTokenManagerClient::GetInstance().ClearUserGrantedPermissionState(tokenID);
 }
 
+int32_t AccessTokenKit::ClearUserGrantedPermStateByBundle(const std::string& bundleName)
+{
+    LOGD(ATM_DOMAIN, ATM_TAG, "BundleName=%{public}s.", bundleName.c_str());
+    if (!DataValidator::IsBundleNameValid(bundleName)) {
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    return AccessTokenManagerClient::GetInstance().ClearUserGrantedPermStateByBundle(bundleName);
+}
+
 int32_t AccessTokenKit::SetPermissionRequestToggleStatus(const std::string& permissionName, uint32_t status,
     int32_t userID = 0)
 {

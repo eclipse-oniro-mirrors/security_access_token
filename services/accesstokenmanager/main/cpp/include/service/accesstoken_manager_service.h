@@ -90,6 +90,7 @@ public:
     int GrantPermissionForSpecifiedTime(
         AccessTokenID tokenID, const std::string& permissionName, uint32_t onceTime) override;
     int ClearUserGrantedPermissionState(AccessTokenID tokenID) override;
+    int32_t ClearUserGrantedPermStateByBundle(const std::string& bundleName) override;
     int32_t SetPermissionStatusWithPolicy(
         AccessTokenID tokenID, const std::vector<std::string>& permissionList, int32_t status, uint32_t flag) override;
     int DeleteToken(AccessTokenID tokenID, bool isTokenReserved) override;
@@ -242,6 +243,8 @@ private:
     bool IsAccessTokenCalling();
     bool IsNativeProcessCalling();
     bool IsSystemAppCalling() const;
+    bool IsShellCallingForDebugHap(AccessTokenID tokenID);
+    bool IsDebugHapToken(AccessTokenID tokenID);
     int32_t ValidateGetCliPermissionRequestInfoCaller(
         AccessTokenID callingTokenId, const std::string& agentID, const std::vector<CliInfoParcel>& cliInfoList);
     int32_t ValidateGetCliPermissionsCaller(

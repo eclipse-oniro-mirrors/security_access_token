@@ -471,6 +471,12 @@ public:
      */
     static int ClearUserGrantedPermissionState(AccessTokenID tokenID);
     /**
+     * @brief Clear all user granted permissions state by bundle name.
+     * @param bundleName bundle name
+     * @return error code, see access_token_error.h
+     */
+    static int32_t ClearUserGrantedPermStateByBundle(const std::string& bundleName);
+    /**
      * @brief Register permission state change callback.
      * @param callback smart point of class PermStateChangeCallbackCustomize quote
      * @return error code, see access_token_error.h

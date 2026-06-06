@@ -71,6 +71,7 @@ public:
     int GrantPermissionForSpecifiedTime(
         AccessTokenID tokenID, const std::string& permissionName, uint32_t onceTime);
     int ClearUserGrantedPermissionState(AccessTokenID tokenID);
+    int32_t ClearUserGrantedPermStateByBundle(const std::string& bundleName);
     int32_t SetPermissionStatusWithPolicy(
         AccessTokenID tokenID, const std::vector<std::string>& permissionList, int32_t status, uint32_t flag);
     AccessTokenIDEx AllocHapToken(const HapInfoParams& info, const HapPolicy& policy);

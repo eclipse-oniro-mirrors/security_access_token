@@ -25,6 +25,7 @@ namespace Security {
 namespace AccessToken {
 namespace {
 static const uint64_t SYSTEM_APP_MASK = (static_cast<uint64_t>(1) << 32);
+static const uint64_t CLI_BINARY_MASK = (static_cast<uint64_t>(1) << 36);
 static const uint64_t TOKEN_ID_LOWMASK = 0xffffffff;
 }
 
@@ -46,6 +47,26 @@ uint64_t TokenIdKit::GetRenderTokenID(uint64_t tokenId)
 
     id = *reinterpret_cast<AccessTokenID*>(idInner);
     return static_cast<uint64_t>(id);
+}
+
+uint64_t TokenIdKit::AddCliBinaryInvokerTokenFlag(uint64_t tokenId)
+{
+    AccessTokenID id = tokenId & TOKEN_ID_LOWMASK;
+    if (id == INVALID_TOKENID) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "TokenID is invalid");
+        return INVALID_TOKENID;
+    }
+    return tokenId | CLI_BINARY_MASK;
+}
+
+bool TokenIdKit::IsCliBinaryInvokerToken(uint64_t tokenId)
+{
+    AccessTokenID id = tokenId & TOKEN_ID_LOWMASK;
+    if (id == INVALID_TOKENID) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "TokenID is invalid");
+        return false;
+    }
+    return (tokenId & CLI_BINARY_MASK) == CLI_BINARY_MASK;
 }
 }  // namespace AccessToken
 }  // namespace Security
