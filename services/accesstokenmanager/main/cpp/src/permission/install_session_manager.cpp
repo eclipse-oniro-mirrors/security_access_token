@@ -904,13 +904,13 @@ int32_t InstallSessionManager::CheckHapSignInfo(const BundleHapList& list, const
         cache.bundleInfos.emplace_back(infoInner);
     }
 
+    HapSignVerifyManager::GetInstance().ConvertTrustedBundleInfo(cache.bundleInfos, bundleInfo);
+
     int32_t ret = HapSignVerifyManager::GetInstance().CheckMultipleHaps(cache.bundleInfos);
     if (ret != RET_SUCCESS) {
         LOGE(ATM_DOMAIN, ATM_TAG, "CheckMultipleHaps failed ret=%{public}d", ret);
         return ERR_CHECK_MULTIPLE_HAP_FAILED;
     }
-
-    HapSignVerifyManager::GetInstance().ConvertTrustedBundleInfo(cache.bundleInfos, bundleInfo);
 
     int32_t callerPid = IPCSkeleton::GetCallingPid();
     cache.callerPid = callerPid;
