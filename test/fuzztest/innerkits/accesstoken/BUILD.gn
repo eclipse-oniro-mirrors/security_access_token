@@ -21,6 +21,7 @@ group("fuzztest") {
     "accesstokenkitcoverage_fuzzer:AccessTokenKitCoverageFuzzTest",
     "allochaptoken_fuzzer:AllocHapTokenFuzzTest",
     "alloclocaltokenid_fuzzer:AllocLocalTokenIDFuzzTest",
+    "clearusergrantedpermstatebybundle_fuzzer:ClearUserGrantedPermStateByBundleFuzzTest",
     "clearusergrantedpermissionstate_fuzzer:ClearUserGrantedPermissionStateFuzzTest",
     "deleteidentity_fuzzer:DeleteIdentityFuzzTest",
     "deletetoken_fuzzer:DeleteTokenFuzzTest",
