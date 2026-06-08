@@ -26,6 +26,7 @@
 
 #include "access_token.h"
 #include "access_token_db_operator.h"
+#include "accesstoken_id_manager.h"
 
 #ifdef IS_SUPPORT_HAP_RUNNING
 #include "app_verify_adapter.h"
@@ -128,6 +129,7 @@ private:
     bool PrepareBundleForBatchVerifyLocked(const std::string& bundleName, BundleSignInfo& updatedInfo);
     void HandleVerifyBundleFailure(const std::string& bundleName, int32_t ret);
     void CommitBundleCacheLocked(const std::string& bundleName);
+    void ChangeTokenIdStatus(const std::string& bundleName, TokenIdStatus status);
     static bool IsPermissionValid(int32_t hapApl, const PermissionBriefDef& data,
         const std::string& value, bool isAcl);
     static void UpdateBundleSignInfoByTrustedInfos(BundleSignInfo& signInfo,

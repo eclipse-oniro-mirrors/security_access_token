@@ -68,7 +68,6 @@ const uint32_t HAS_VALUE = (0x1 << 1);
 static const uint32_t SYSTEM_APP_FLAG = 0x0001;
 static const uint32_t ATOMIC_SERVICE_FLAG = 0x0002;
 static const uint32_t DEBUG_APP_FLAG = 0x0008;
-constexpr uint32_t TOKEN_ID_SHIFT = 32;
 }
 InstallSessionManager* InstallSessionManager::implInstance_ = nullptr;
 std::mutex InstallSessionManager::mutex_;
@@ -284,12 +283,8 @@ int32_t InstallSessionManager::HandleReservedToken(
     cache.reserved = static_cast<int32_t>(ReservedType::RESERVED_DATA);
     cache.oldTokenId = tokenId;
     cache.oldAttr = oldAttr;
-    AccessTokenIDManager::GetInstance().RemoveReservedTokenId(tokenId);
-    int32_t ret = AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, TOKEN_HAP);
-    if (ret != RET_SUCCESS) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "RegisterTokenId failed, ret: %{public}d", ret);
-    }
-    return ret;
+    (void)AccessTokenIDManager::GetInstance().ChangeTokenIdStatus(tokenId, TokenIdStatus::ACTIVE);
+    return RET_SUCCESS;
 }
 
 int32_t InstallSessionManager::DeleteFromDbByTokenId(AccessTokenID tokenID)
@@ -807,22 +802,6 @@ int32_t InstallSessionManager::DeleteAndInsertValueToDb(const InstallCache& cach
     return ret;
 }
 
-void InstallSessionManager::RefreshExtendedPerm(const InstallCache& cache, const FinishContext& context)
-{
-    for (size_t i = 0; i < context.hapInfos.size(); ++i) {
-        std::map<uint64_t, std::string> extendValueMap;
-        for (auto& it : context.extendPermLists[i]) {
-            uint32_t permCode = 0;
-            if (!TransferPermissionToOpcode(it.permissionName, permCode)) {
-                continue;
-            }
-            extendValueMap[(static_cast<uint64_t>(context.hapInfos[i].tokenID) << TOKEN_ID_SHIFT) | permCode] =
-                it.value;
-        }
-        PermissionDataBrief::GetInstance().ReplaceExtendedValueByTokenId(context.hapInfos[i].tokenID, extendValueMap);
-    }
-}
-
 void InstallSessionManager::RefreshCache(const InstallCache& cache, const FinishContext& context,
     std::shared_ptr<BundleInfoInner>& innerInfo)
 {
@@ -836,19 +815,17 @@ void InstallSessionManager::RefreshCache(const InstallCache& cache, const Finish
     }
     if (hasNewInstall) {
         AccessTokenInfoManager::GetInstance().CommitCreateHapCache(
-            context.hapInfos.front(), context.permBriefDataLists.front(), innerInfo);
+            context.hapInfos.front(), context.permBriefDataLists.front(), context.extendPermLists.front(),
+            innerInfo);
     }
 
     for (size_t i = hasNewInstall ? 1 : 0; i < context.hapInfos.size(); ++i) {
         AccessTokenInfoManager::GetInstance().CommitUpdateHapCache(
-            context.hapInfos[i], context.permBriefDataLists[i], innerInfo);
+            context.hapInfos[i], context.permBriefDataLists[i], context.extendPermLists[i], innerInfo);
 #ifdef TOKEN_SYNC_ENABLE
         TokenModifyNotifier::GetInstance().NotifyTokenModify(context.hapInfos[i].tokenID);
 #endif
     }
-
-    RefreshExtendedPerm(cache, context);
-
     if (cache.reserved == static_cast<int32_t>(ReservedType::RESERVED_IDENTITY)) {
         AccessTokenIDManager::GetInstance().RemoveReservedTokenId(cache.oldTokenId);
     }
@@ -861,10 +838,12 @@ void InstallSessionManager::RollbackAll(int32_t sessionId, bool eraseCache)
         return;
     }
     if (it->second.identity.tokenId != 0) {
-        AccessTokenIDManager::GetInstance().ReleaseTokenId(
-            static_cast<AccessTokenID>(it->second.identity.tokenId));
         if (it->second.reserved == static_cast<int32_t>(ReservedType::RESERVED_DATA)) {
-            AccessTokenIDManager::GetInstance().AddReservedTokenId(it->second.identity.tokenId);
+            (void)AccessTokenIDManager::GetInstance().ChangeTokenIdStatus(
+                static_cast<AccessTokenID>(it->second.identity.tokenId), TokenIdStatus::RESERVED);
+        } else {
+            AccessTokenIDManager::GetInstance().ReleaseTokenId(
+                static_cast<AccessTokenID>(it->second.identity.tokenId));
         }
         
         if (it->second.isNewBundleId) {

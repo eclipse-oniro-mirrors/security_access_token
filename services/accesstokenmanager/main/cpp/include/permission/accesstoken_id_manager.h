@@ -30,6 +30,12 @@ namespace AccessToken {
 static constexpr unsigned int TOKEN_RANDOM_MASK = (1 << 20) - 1;
 static const int MAX_CREATE_TOKEN_ID_RETRY = 1000;
 
+enum class TokenIdStatus : uint32_t {
+    ACTIVE = 0,      // tokenId in tokenIdSet_
+    RESERVED = 1,    // tokenId in reservedTokenIdSet_
+    UNTRUSTED = 2    // tokenId in untrustedTokenIdSet_
+};
+
 class AccessTokenIDManager final {
 public:
     static AccessTokenIDManager& GetInstance();
@@ -44,6 +50,7 @@ public:
     void RemoveReservedTokenId(AccessTokenID id);
     bool IsReservedTokenId(AccessTokenID id);
     ATokenTypeEnum GetTokenIdType(AccessTokenID id);
+    int32_t ChangeTokenIdStatus(AccessTokenID id, TokenIdStatus targetStatus);
 
     // Identity bundleId management
     // Note: Callers are responsible for determining whether to add or remove bundleId based on their own logic.
@@ -57,16 +64,17 @@ public:
     // Migration control
     void SetMigrationDone();
     bool ExtractBundleId(int32_t uid, int32_t &bundleId) const;
+    int32_t GetTokenIdStatus(AccessTokenID id, TokenIdStatus& status);
 private:
     AccessTokenIDManager() = default;
     DISALLOW_COPY_AND_MOVE(AccessTokenIDManager);
     AccessTokenID CreateTokenId(ATokenTypeEnum type, int32_t dlpFlag, int32_t cloneFlag, int32_t toolFlag) const;
+    int32_t GetTokenIdStatusLocked(AccessTokenID id, TokenIdStatus& status) const;
 
     std::shared_mutex tokenIdLock_;
     std::set<AccessTokenID> tokenIdSet_;
-
-    std::shared_mutex reservedTokenIdLock_;
     std::set<AccessTokenID> reservedTokenIdSet_;
+    std::set<AccessTokenID> untrustedTokenIdSet_;
     std::mutex bundleIdLock_;
     std::set<int32_t> bundleIdSet_;
     std::mutex migrationLock_;

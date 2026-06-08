@@ -708,10 +708,14 @@ int32_t PermissionDataBrief::GetBriefPermDataByTokenId(AccessTokenID tokenID, st
     return GetBriefPermDataByTokenIdInner(tokenID, list);
 }
 
-void PermissionDataBrief::ReplaceBriefPermDataByTokenId(AccessTokenID tokenID, const std::vector<BriefPermData>& data)
+void PermissionDataBrief::ReplaceBriefPermDataByTokenId(AccessTokenID tokenID,
+    const std::vector<BriefPermData>& data,
+    const std::vector<PermissionWithValue>& aclExtendedList
+)
 {
     std::unique_lock<std::shared_mutex> infoGuard(this->permissionStateDataLock_);
     AddBriefPermDataByTokenId(tokenID, data);
+    ReplaceExtendedValueByTokenIdLocked(tokenID, aclExtendedList);
 }
 
 void PermissionDataBrief::GetGrantedPermList(AccessTokenID tokenID,
@@ -728,19 +732,22 @@ void PermissionDataBrief::GetGrantedPermList(AccessTokenID tokenID,
     return;
 }
 
-void PermissionDataBrief::ReplaceExtendedValueByTokenId(
-    AccessTokenID tokenID, const std::map<uint64_t, std::string>& data)
+void PermissionDataBrief::ReplaceExtendedValueByTokenIdLocked(
+    AccessTokenID tokenID, const std::vector<PermissionWithValue>& data)
 {
     if (data.empty()) {
         return;
     }
-    std::unique_lock<std::shared_mutex> infoGuard(this->permissionStateDataLock_);
     DeleteExtendedValue(tokenID);
-    for (const auto& item : data) {
-        if (static_cast<AccessTokenID>(item.first >> TOKEN_ID_SHIFT) != tokenID) {
+    for (const auto& it : data) {
+        uint32_t permCode = 0;
+        PermissionBriefDef permDef;
+        if (!GetPermissionBriefDef(it.permissionName, permDef, permCode)
+            || !permDef.isEnable || !permDef.hasValue) {
             continue;
         }
-        extendedValue_[item.first] = item.second;
+        extendedValue_[(static_cast<uint64_t>(tokenID) << TOKEN_ID_SHIFT) | permCode] =
+            it.value;
     }
 }
 

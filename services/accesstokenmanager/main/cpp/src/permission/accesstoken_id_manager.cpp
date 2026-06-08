@@ -79,17 +79,11 @@ int AccessTokenIDManager::RegisterTokenId(AccessTokenID id, ATokenTypeEnum type)
         return ERR_PARAM_INVALID;
     }
     std::unique_lock<std::shared_mutex> idGuard(this->tokenIdLock_);
-    if (IsReservedTokenId(id)) {
+    TokenIdStatus status;
+    if (GetTokenIdStatusLocked(id, status) == RET_SUCCESS) {
         return ERR_TOKENID_HAS_EXISTED;
     }
 
-    for (std::set<AccessTokenID>::iterator it = tokenIdSet_.begin(); it != tokenIdSet_.end(); ++it) {
-        AccessTokenID tokenId = *it;
-        AccessTokenIDInner *idInnerExist = reinterpret_cast<AccessTokenIDInner *>(&tokenId);
-        if ((type == idInnerExist->type) && (idInnerExist->tokenUniqueID == idInner->tokenUniqueID)) {
-            return ERR_TOKENID_HAS_EXISTED;
-        }
-    }
     tokenIdSet_.insert(id);
     return RET_SUCCESS;
 }
@@ -154,20 +148,99 @@ void AccessTokenIDManager::ReleaseTokenId(AccessTokenID id)
 
 bool AccessTokenIDManager::IsReservedTokenId(AccessTokenID id)
 {
-    std::shared_lock<std::shared_mutex> idGuard(this->reservedTokenIdLock_);
+    std::shared_lock<std::shared_mutex> idGuard(this->tokenIdLock_);
     return reservedTokenIdSet_.count(id) > 0;
 }
 
 void AccessTokenIDManager::AddReservedTokenId(AccessTokenID id)
 {
-    std::unique_lock<std::shared_mutex> idGuard(this->reservedTokenIdLock_);
+    std::unique_lock<std::shared_mutex> idGuard(this->tokenIdLock_);
     reservedTokenIdSet_.insert(id);
 }
 
 void AccessTokenIDManager::RemoveReservedTokenId(AccessTokenID id)
 {
-    std::unique_lock<std::shared_mutex> idGuard(this->reservedTokenIdLock_);
+    std::unique_lock<std::shared_mutex> idGuard(this->tokenIdLock_);
     reservedTokenIdSet_.erase(id);
+}
+
+int32_t AccessTokenIDManager::GetTokenIdStatus(AccessTokenID id, TokenIdStatus& status)
+{
+    std::shared_lock<std::shared_mutex> idGuard(this->tokenIdLock_);
+    return GetTokenIdStatusLocked(id, status);
+}
+
+int32_t AccessTokenIDManager::GetTokenIdStatusLocked(AccessTokenID id, TokenIdStatus& status) const
+{
+    bool inActive = (tokenIdSet_.count(id) > 0);
+    bool inReserved = (reservedTokenIdSet_.count(id) > 0);
+    bool inUntrusted = (untrustedTokenIdSet_.count(id) > 0);
+
+    if (inActive) {
+        status = TokenIdStatus::ACTIVE;
+        return RET_SUCCESS;
+    } else if (inReserved) {
+        status = TokenIdStatus::RESERVED;
+        return RET_SUCCESS;
+    } else if (inUntrusted) {
+        status = TokenIdStatus::UNTRUSTED;
+        return RET_SUCCESS;
+    } else {
+        // avoid log too much when device is rebooting, only log in debug level
+        LOGD(ATM_DOMAIN, ATM_TAG, "TokenId %{public}u not found in any set.", id);
+        return ERR_TOKENID_NOT_EXIST;
+    }
+}
+
+int32_t AccessTokenIDManager::ChangeTokenIdStatus(AccessTokenID id, TokenIdStatus targetStatus)
+{
+    std::unique_lock<std::shared_mutex> idGuard(this->tokenIdLock_);
+
+    TokenIdStatus currentStatus;
+    int32_t result = GetTokenIdStatusLocked(id, currentStatus);
+    if (result != RET_SUCCESS) {
+        return result;
+    }
+
+    // If already in target status, return success
+    if (currentStatus == targetStatus) {
+        LOGD(ATM_DOMAIN, ATM_TAG, "TokenId %{public}u already in target status %{public}u.", id,
+            static_cast<uint32_t>(targetStatus));
+        return RET_SUCCESS;
+    }
+
+    // Remove from current set
+    switch (currentStatus) {
+        case TokenIdStatus::ACTIVE:
+            tokenIdSet_.erase(id);
+            break;
+        case TokenIdStatus::RESERVED:
+            reservedTokenIdSet_.erase(id);
+            break;
+        case TokenIdStatus::UNTRUSTED:
+            untrustedTokenIdSet_.erase(id);
+            break;
+        default:
+            return ERR_PARAM_INVALID;
+    }
+    // Add to target set
+    switch (targetStatus) {
+        case TokenIdStatus::ACTIVE:
+            tokenIdSet_.insert(id);
+            break;
+        case TokenIdStatus::RESERVED:
+            reservedTokenIdSet_.insert(id);
+            break;
+        case TokenIdStatus::UNTRUSTED:
+            untrustedTokenIdSet_.insert(id);
+            break;
+        default:
+            return ERR_PARAM_INVALID;
+    }
+
+    LOGI(ATM_DOMAIN, ATM_TAG, "TokenId %{public}u status changed from %{public}u to %{public}u.", id,
+        static_cast<uint32_t>(currentStatus), static_cast<uint32_t>(targetStatus));
+    return RET_SUCCESS;
 }
 
 AccessTokenIDManager& AccessTokenIDManager::GetInstance()
@@ -189,6 +262,9 @@ bool AccessTokenIDManager::ExtractBundleId(int32_t uid, int32_t& bundleId) const
         return false;
     }
     int32_t extracted = uid % UID_TRANSFORM_DIVISOR;
+
+    // Don't use GetBundleIdMin() here because GetBundleIdMin() value may be changed by system parameter,
+    // which is invalid for exsisted bundleId.
     if (extracted < BUNDLE_ID_MIN || extracted > BUNDLE_ID_MAX) {
         return false;
     }
@@ -225,7 +301,7 @@ int32_t AccessTokenIDManager::AllocUid(int32_t localId, int32_t& outUid)
     }
 
     // Two-pass scan: [startId, BUNDLE_ID_MAX] then wrap [BUNDLE_ID_MIN, startId-1]
-    int32_t ranges[2][2] = {{startId, BUNDLE_ID_MAX}, {BUNDLE_ID_MIN, startId - 1}};
+    int32_t ranges[2][2] = {{startId, BUNDLE_ID_MAX}, {GetBundleIdMin(), startId - 1}};
     int rangeSize = 2; // size of ranges
     for (int p = 0; p < rangeSize; p++) {
         for (int32_t candidate = ranges[p][0]; candidate <= ranges[p][1]; ++candidate) {
