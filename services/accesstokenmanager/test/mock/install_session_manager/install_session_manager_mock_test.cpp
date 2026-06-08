@@ -899,6 +899,7 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapFailedTest001, TestSize.Level0
     int32_t ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo);
     EXPECT_NE(ERR_OK, ret);
 
+    bundleInfo.clear();
     BundleHapList hapList2;
     ret = g_installSessionManager->CheckHapSignInfo(hapList2, nullptr, sessionId, bundleInfo);
     EXPECT_NE(ERR_OK, ret);

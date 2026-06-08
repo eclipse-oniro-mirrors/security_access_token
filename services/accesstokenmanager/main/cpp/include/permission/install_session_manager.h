@@ -78,7 +78,7 @@ struct InstallCache {
     // Reserved token flag: 0-normal, 1-reserved for update, 2-reserved token reused
     int32_t reserved = 0;
     // Old token ID for reserved != 0 scenario
-    int32_t oldTokenId = 0;
+    AccessTokenID oldTokenId = 0;
     // Old tokenAttr for reserved is 2
     int32_t oldAttr = 0;
 
