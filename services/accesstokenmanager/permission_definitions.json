@@ -9548,6 +9548,17 @@
             "deviceTypes": ["phone", "2in1", "tablet", "car", "tv"]
         },
         {
+            "name": "ohos.permission.vehicle.VEHICLE_THERMAL",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["car"]
+        },
+        {
             "name": "ohos.permission.kernel.SUPPORT_LOCAL_PLUGIN",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
