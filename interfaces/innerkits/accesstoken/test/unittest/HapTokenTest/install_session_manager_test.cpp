@@ -408,6 +408,30 @@ HWTEST_F(InstallSessionManagerTest, GetHapSignInfoTest002, TestSize.Level0)
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetHapSignInfo(bundleName, bundleInfo));
     EXPECT_FALSE(bundleInfo.empty());
 }
+
+/**
+ * @tc.name: GetCachePolicyBySessionIdTest001
+ * @tc.desc: Test GetCachePolicyBySessionId, with invalid param.
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(InstallSessionManagerTest, GetCachePolicyBySessionIdTest001, TestSize.Level0)
+{
+    MockNativeToken mock("foundation");
+
+    int32_t sessionId = 0;
+    std::string bundleName = "";
+
+    BundlePolicyInfo bundlePolicyInfo;
+    std::vector<TrustedBundleInfo> bundleInfo;
+    EXPECT_NE(RET_SUCCESS, AccessTokenKit::GetCachePolicyBySessionId(sessionId, bundleName, bundlePolicyInfo));
+
+    sessionId = INVALID_SESSION;
+    EXPECT_NE(RET_SUCCESS, AccessTokenKit::GetCachePolicyBySessionId(sessionId, bundleName, bundlePolicyInfo));
+
+    bundleName = "GetCachePolicyBySessionIdTest001";
+    EXPECT_NE(RET_SUCCESS, AccessTokenKit::GetCachePolicyBySessionId(sessionId, bundleName, bundlePolicyInfo));
+}
 #else
 /**
  * @tc.name: CheckHapSignInfoTest101

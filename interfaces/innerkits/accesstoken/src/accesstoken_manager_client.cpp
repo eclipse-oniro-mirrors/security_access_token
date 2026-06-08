@@ -1892,6 +1892,26 @@ int32_t AccessTokenManagerClient::GetHapSignInfo(const std::string& bundleName,
     return res;
 }
 
+int32_t AccessTokenManagerClient::GetCachePolicyBySessionId(int32_t sessionId, const std::string& bundleName,
+    BundlePolicyInfo& bundlePolicyInfo)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+
+    BundlePolicyInfoIdl bundlePolicyInfoIdl;
+    int32_t res = proxy->GetCachePolicyBySessionId(sessionId, bundleName, bundlePolicyInfoIdl);
+    if (res != RET_SUCCESS) {
+        res = ConvertResult(res);
+    } else {
+        bundlePolicyInfo.reqPermissions = bundlePolicyInfoIdl.reqPermissions;
+    }
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result=%{public}d", res);
+    return res;
+}
+
 sptr<ProxyDeathCallBack> AccessTokenManagerClient::GetAnonyStub()
 {
     std::lock_guard<std::mutex> lock(stubMutex_);

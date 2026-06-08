@@ -177,6 +177,15 @@ public:
      */
     static int32_t GetHapSignInfo(const std::string& bundleName, std::vector<TrustedBundleInfo>& bundleInfo);
     /**
+     * @brief Get cache BundlePolicyInfo by session id.
+     * @param sessionId session id
+     * @param bundleName bundle name
+     * @param bundlePolicyInfo bundle policy info
+     * @return error code, see access_token_error.h
+     */
+    static int32_t GetCachePolicyBySessionId(int32_t sessionId, const std::string& bundleName,
+        BundlePolicyInfo& bundlePolicyInfo);
+    /**
      * @brief Update hap token info.
      * @param tokenIdEx union AccessTokenIDEx quote, see access_token.h
      * @param isSystemApp is system app or not

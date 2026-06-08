@@ -118,6 +118,8 @@ public:
     int32_t GetCacheSignInfoBySessionId(int32_t sessionId, std::vector<TrustedBundleInfo>& bundleInfo);
     int32_t GetHapSignInfo(const std::string& bundleName, std::vector<TrustedBundleInfo>& bundleInfo);
     void ClearSessionByPid(int32_t pid);
+    int32_t GetCachePolicyBySessionId(int32_t sessionId, const std::string& bundleName,
+        BundlePolicyInfo& bundlePolicyInfo);
 
     void SetMigrationDone();
 

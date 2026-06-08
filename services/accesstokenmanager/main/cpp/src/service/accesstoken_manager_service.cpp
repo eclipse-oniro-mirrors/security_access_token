@@ -2883,6 +2883,23 @@ int32_t AccessTokenManagerService::GetHapSignInfo(const std::string& bundleName,
     
     return ret;
 }
+
+int32_t AccessTokenManagerService::GetCachePolicyBySessionId(int32_t sessionId, const std::string& bundleName,
+    BundlePolicyInfoIdl& bundlePolicyInfoIdl)
+{
+    AccessTokenID tokenID = IPCSkeleton::GetCallingTokenID();
+    if (!IsPrivilegedCalling() && (VerifyAccessToken(tokenID, GET_TRUSTED_BUNDLE_INFO) == PERMISSION_DENIED)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", tokenID);
+        return AccessTokenError::ERR_PERMISSION_DENIED;
+    }
+
+    BundlePolicyInfo bundlePolicyInfo;
+    int32_t ret = InstallSessionManager::GetInstance().GetCachePolicyBySessionId(
+        sessionId, bundleName, bundlePolicyInfo);
+    bundlePolicyInfoIdl.reqPermissions = bundlePolicyInfo.reqPermissions;
+
+    return ret;
+}
 #else
 int32_t AccessTokenManagerService::CheckHapSignInfo(const BundleHapListIdl& list, const sptr<IRemoteObject>& cb,
     CheckHapSignResultRawdata& result)
@@ -2922,6 +2939,12 @@ int32_t AccessTokenManagerService::GetCacheSignInfoBySessionId(int32_t sessionId
 
 int32_t AccessTokenManagerService::GetHapSignInfo(const std::string& bundleName,
     BundleInfosRawdata& bundleInfos)
+{
+    return RET_SUCCESS;
+}
+
+int32_t AccessTokenManagerService::GetCachePolicyBySessionId(int32_t sessionId, const std::string& bundleName,
+    BundlePolicyInfoIdl& bundlePolicyInfoIdl)
 {
     return RET_SUCCESS;
 }

@@ -1377,6 +1377,30 @@ int32_t InstallSessionManager::GetHapSignInfo(const std::string& bundleName, std
     return RET_SUCCESS;
 }
 
+int32_t InstallSessionManager::GetCachePolicyBySessionId(int32_t sessionId, const std::string& bundleName,
+    BundlePolicyInfo& bundlePolicyInfo)
+{
+    {
+        std::lock_guard<std::mutex> lock(cacheMutex_);
+        auto it = sessionToInstallCache.find(sessionId);
+        if (it == sessionToInstallCache.end()) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "sessionId not exist");
+            return AccessTokenError::ERR_SESSION_NOT_EXIST;
+        }
+
+        if (bundleName != it->second.bundleParam.bundleName) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Session bundle %{public}s not match",
+                it->second.bundleInfos[0].GetBundleName().c_str());
+            return AccessTokenError::ERR_PARAM_INVALID;
+        }
+
+        for (auto permState : it->second.policy.permStateList) {
+            bundlePolicyInfo.reqPermissions.emplace_back(permState.permissionName);
+        }
+    }
+    return RET_SUCCESS;
+}
+
 void InstallSessionManager::SetMigrationDone()
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "Migration done, flag set to true.");

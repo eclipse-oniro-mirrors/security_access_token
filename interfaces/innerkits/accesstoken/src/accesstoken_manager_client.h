@@ -151,6 +151,8 @@ public:
     int32_t FinishInstall(int32_t sessionId, bool isSuccess, const std::map<std::string, std::string>& modulePathMap);
     int32_t GetCacheSignInfoBySessionId(int32_t sessionId, std::vector<TrustedBundleInfo>& bundleInfo);
     int32_t GetHapSignInfo(const std::string& bundleName, std::vector<TrustedBundleInfo>& bundleInfo);
+    int32_t GetCachePolicyBySessionId(int32_t sessionId, const std::string& bundleName,
+        BundlePolicyInfo& bundlePolicyInfo);
     int32_t GetCliPermissionRequestInfo(
         const std::string& agentID, const std::vector<CliInfo>& cliInfoList, PermissionDialogResult& result);
     int32_t GetCliPermissions(AccessTokenID hostTokenID, const std::string& agentID,

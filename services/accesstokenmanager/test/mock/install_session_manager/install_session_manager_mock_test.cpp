@@ -2914,6 +2914,146 @@ HWTEST_F(InstallSessionManagerMockTest, GetInfoByBundleNameFailTest001, TestSize
     ret = AccessTokenDbOperator::DeleteAndInsertValues(delInfoVec2, addInfoVec2);
     EXPECT_EQ(ERR_OK, ret);
 }
+
+/**
+ * @tc.name: GetCachePolicyBySessionIdTest001
+ * @tc.desc: Test GetCachePolicyBySessionId, bundle name not match.
+ * @tc.type: FUNC
+ * @tc.require: Issue
+ */
+HWTEST_F(InstallSessionManagerMockTest, GetCachePolicyBySessionIdTest001, TestSize.Level0)
+{
+    BundlePolicyInfo bundlePolicyInfo;
+    EXPECT_NE(ERR_OK, g_installSessionManager->GetCachePolicyBySessionId(
+        INVALID_SESSION, "GetCachePolicyBySessionIdTest001", bundlePolicyInfo));
+
+    std::string path =
+        "/SYSTEM/system_basic/state:[cam,mic,syswin,getwifi]/acl:[getwifi]/Module001/GetCachePolicyBySessionIdTest001";
+    BundleHapList hapList;
+    hapList.hapPaths.emplace_back(path);
+    hapList.isPreInstalled = false;
+    hapList.userId = 100;
+    
+    int32_t sessionId = 0;
+    std::vector<TrustedBundleInfo> bundleInfo;
+
+    int32_t ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo);
+    EXPECT_EQ(ERR_OK, ret);
+
+    HapInfoCheckResult result;
+    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, result);
+    EXPECT_EQ(ERR_OK, ret);
+
+    HapBaseInfo baseInfo;
+    baseInfo.userID = 100;
+    baseInfo.bundleName = "GetCachePolicyBySessionIdTest001";
+    baseInfo.instIndex = 0;
+
+    BundlePolicy bundlePolicy;
+    bundlePolicy.dlpType = DLP_COMMON;
+    bundlePolicy.isDebugGrant = false;
+
+    Identity identity;
+    ret = g_installSessionManager->PrepareHapIdentity(sessionId, baseInfo, bundlePolicy, nullptr, identity);
+    EXPECT_EQ(ERR_OK, ret);
+    EXPECT_NE(0, identity.uid);
+    EXPECT_NE(0, identity.tokenId);
+
+    BundlePolicyInfo bundlePolicyInfo2;
+    EXPECT_NE(ERR_OK, g_installSessionManager->GetCachePolicyBySessionId(
+        sessionId, "NotMatchBundle", bundlePolicyInfo2));
+
+    std::map<std::string, std::string> modulePathMap;
+    EXPECT_EQ(ERR_OK, g_installSessionManager->FinishInstall(sessionId, false, modulePathMap));
+}
+
+/**
+ * @tc.name: GetCachePolicyBySessionIdTest002
+ * @tc.desc: Test GetCachePolicyBySessionId, reqPerm has value.
+ * @tc.type: FUNC
+ * @tc.require: Issue
+ */
+HWTEST_F(InstallSessionManagerMockTest, GetCachePolicyBySessionIdTest002, TestSize.Level0)
+{
+    std::string path =
+        "/SYSTEM/system_basic/state:[cam,mic,syswin,getwifi]/acl:[getwifi]/Module001/GetCachePolicyBySessionIdTest002";
+    BundleHapList hapList;
+    hapList.hapPaths.emplace_back(path);
+    hapList.isPreInstalled = false;
+    hapList.userId = 100;
+    
+    int32_t sessionId = 0;
+    std::vector<TrustedBundleInfo> bundleInfo;
+
+    int32_t ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo);
+    EXPECT_EQ(ERR_OK, ret);
+
+    HapInfoCheckResult result;
+    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, result);
+    EXPECT_EQ(ERR_OK, ret);
+
+    HapBaseInfo baseInfo;
+    baseInfo.userID = 100;
+    baseInfo.bundleName = "GetCachePolicyBySessionIdTest002";
+    baseInfo.instIndex = 0;
+
+    BundlePolicy bundlePolicy;
+    bundlePolicy.dlpType = DLP_COMMON;
+    bundlePolicy.isDebugGrant = false;
+
+    Identity identity;
+    ret = g_installSessionManager->PrepareHapIdentity(sessionId, baseInfo, bundlePolicy, nullptr, identity);
+    EXPECT_EQ(ERR_OK, ret);
+    EXPECT_NE(0, identity.uid);
+    EXPECT_NE(0, identity.tokenId);
+
+    BundlePolicyInfo bundlePolicyInfo;
+    EXPECT_EQ(ERR_OK, g_installSessionManager->GetCachePolicyBySessionId(
+        sessionId, "GetCachePolicyBySessionIdTest002", bundlePolicyInfo));
+    EXPECT_FALSE(bundlePolicyInfo.reqPermissions.empty());
+
+    std::map<std::string, std::string> modulePathMap;
+    EXPECT_EQ(ERR_OK, g_installSessionManager->FinishInstall(sessionId, false, modulePathMap));
+}
+
+/**
+ * @tc.name: GetCachePolicyBySessionIdTest003
+ * @tc.desc: Test GetCachePolicyBySessionId, prepare and query, reqPerm has value.
+ * @tc.type: FUNC
+ * @tc.require: Issue
+ */
+HWTEST_F(InstallSessionManagerMockTest, GetCachePolicyBySessionIdTest003, TestSize.Level0)
+{
+    std::string path =
+        "/SYSTEM/system_basic/state:[cam,mic,syswin,getwifi]/acl:[getwifi]/Module001/GetCachePolicyBySessionIdTest003";
+    std::vector<std::string> hapPaths = {path};
+    HapBaseInfo baseInfo;
+    baseInfo.userID = 100;
+    baseInfo.bundleName = "GetCachePolicyBySessionIdTest003";
+    baseInfo.instIndex = 0;
+    BundlePolicy bundlePolicy;
+    bundlePolicy.dlpType = DLP_COMMON;
+    bundlePolicy.isDebugGrant = false;
+    Identity identity;
+    InstallHap(hapPaths, baseInfo, bundlePolicy, identity);
+    AccessTokenID tokenId = static_cast<AccessTokenID>(identity.tokenId);
+
+    int32_t sessionId = 0;
+    baseInfo.instIndex = 1;
+
+    Identity identity2;
+    int32_t ret = g_installSessionManager->PrepareHapIdentity(sessionId, baseInfo, bundlePolicy, nullptr, identity2);
+    EXPECT_EQ(ERR_OK, ret);
+    EXPECT_NE(0, identity2.uid);
+    EXPECT_NE(0, identity2.tokenId);
+
+    std::map<std::string, std::string> modulePathMap;
+    EXPECT_EQ(ERR_OK, g_installSessionManager->FinishInstall(sessionId, false, modulePathMap));
+
+    int32_t sceneCode = 0;
+    EXPECT_EQ(ERR_OK, atManagerService_->DeleteIdentityCore(
+        tokenId, "GetCachePolicyBySessionIdTest003", ReservedType::NONE, sceneCode));
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

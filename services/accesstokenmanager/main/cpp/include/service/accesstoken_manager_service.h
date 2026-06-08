@@ -170,6 +170,8 @@ public:
         const std::map<std::string, std::string>& modulePathMap) override;
     int32_t GetCacheSignInfoBySessionId(int32_t sessionId, BundleInfosRawdata& bundleInfos) override;
     int32_t GetHapSignInfo(const std::string& bundleName, BundleInfosRawdata& bundleInfos) override;
+    int32_t GetCachePolicyBySessionId(int32_t sessionId, const std::string& bundleName,
+        BundlePolicyInfoIdl& bundlePolicyInfoIdl) override;
 
     int32_t GetCliPermissionRequestInfo(
         const std::string& agentID, const std::vector<CliInfoIdl>& cliInfoList,
