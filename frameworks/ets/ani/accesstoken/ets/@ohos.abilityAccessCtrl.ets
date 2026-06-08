@@ -91,12 +91,6 @@ export default namespace abilityAccessCtrl {
         subCliName: string;
     }
 
-    export interface SkillInfo {
-        skillName: string;
-        bundleName: string;
-        moduleName: string;
-    }
-
     export interface PermissionDialogDetail {
         needPermissionDialog: boolean;
         permissionNameList: Array<Permissions>;
@@ -122,23 +116,8 @@ export default namespace abilityAccessCtrl {
         permList: Array<CliCommandPermissionResult>;
     }
 
-    export interface SkillCommandPermissionResult {
-        usedPermissions: Array<Permissions>;
-        statusList: Array<PermissionDecisionStatus>;
-    }
-
-    export interface SkillPermissionsResult {
-        permList: Array<SkillCommandPermissionResult>;
-    }
-
     export interface CliAuthInfo {
         cliInfo: CliInfo;
-        permissionNames: Array<Permissions>;
-        authorizationResults: Array<boolean>;
-    }
-
-    export interface SkillAuthInfo {
-        skillInfo: SkillInfo;
         permissionNames: Array<Permissions>;
         authorizationResults: Array<boolean>;
     }
@@ -197,13 +176,6 @@ export default namespace abilityAccessCtrl {
     }
     class CliPermissionsResultInner implements CliPermissionsResult {
         permList: Array<CliCommandPermissionResult>;
-    }
-    class SkillCommandPermissionResultInner implements SkillCommandPermissionResult {
-        usedPermissions: Array<Permissions>;
-        statusList: Array<PermissionDecisionStatus>;
-    }
-    class SkillPermissionsResultInner implements SkillPermissionsResult {
-        permList: Array<SkillCommandPermissionResult>;
     }
     class ToolAuthResultInner implements ToolAuthResult {
         authResults: Array<string>;
@@ -329,14 +301,9 @@ export default namespace abilityAccessCtrl {
         queryStatusByPermission(permissionList: Array<Permissions>): Promise<Array<PermissionStatusInfo>>;
         queryStatusByTokenID(tokenIDList: Array<int>): Promise<Array<PermissionStatusInfo>>;
         getCliPermissionRequestInfo(agentID: string, cliList: Array<CliInfo>): Promise<PermissionDialogResult>;
-        getSkillPermissionRequestInfo(agentID: string, skillList: Array<SkillInfo>): Promise<PermissionDialogResult>;
         getCliPermissions(hostTokenID: int, agentID: string, cliInfoList: Array<CliInfo>):
             Promise<CliPermissionsResult>;
-        getSkillPermissions(hostTokenID: int, agentID: string, skillInfoList: Array<SkillInfo>):
-            Promise<SkillPermissionsResult>;
         generateCliAuthResult(hostTokenID: int, agentID: string, authInfoList: Array<CliAuthInfo>):
-            Promise<ToolAuthResult>;
-        generateSkillAuthResult(hostTokenID: int, agentID: string, authInfoList: Array<SkillAuthInfo>):
             Promise<ToolAuthResult>;
     }
 
@@ -375,15 +342,9 @@ export default namespace abilityAccessCtrl {
         native queryStatusByPermissionExecute(permissionList: Array<Permissions>): Array<PermissionStatusInfo>;
         native queryStatusByTokenIDExecute(tokenIDList: Array<int>): Array<PermissionStatusInfo>;
         native getCliPermissionRequestInfoExecute(agentID: string, cliList: Array<CliInfo>): PermissionDialogResult;
-        native getSkillPermissionRequestInfoExecute(agentID: string, skillList: Array<SkillInfo>):
-            PermissionDialogResult;
         native getCliPermissionsExecute(hostTokenID: int, agentID: string, cliInfoList: Array<CliInfo>):
             CliPermissionsResult;
-        native getSkillPermissionsExecute(hostTokenID: int, agentID: string, skillInfoList: Array<SkillInfo>):
-            SkillPermissionsResult;
         native generateCliAuthResultExecute(hostTokenID: int, agentID: string, authInfoList: Array<CliAuthInfo>):
-            ToolAuthResult;
-        native generateSkillAuthResultExecute(hostTokenID: int, agentID: string, authInfoList: Array<SkillAuthInfo>):
             ToolAuthResult;
 
         verifyAccessTokenSync(tokenID: int, permissionName: Permissions): GrantStatus {
@@ -808,22 +769,6 @@ export default namespace abilityAccessCtrl {
             return p;
         }
 
-        getSkillPermissionRequestInfo(agentID: string, skillList: Array<SkillInfo>): Promise<PermissionDialogResult> {
-            let p = new Promise<PermissionDialogResult>(
-                (resolve: (v: PermissionDialogResult) => void,
-                    reject: (err: Error) => void): void => {
-                    let p1 = taskpool.execute((): PermissionDialogResult => {
-                        return new AtManagerInner().getSkillPermissionRequestInfoExecute(agentID, skillList);
-                    });
-                    p1.then((e: Any): void => {
-                        resolve(e as PermissionDialogResult);
-                    }).catch((err: Error): void => {
-                        reject(err as BusinessError);
-                    });
-                });
-            return p;
-        }
-
         getCliPermissions(hostTokenID: int, agentID: string, cliInfoList: Array<CliInfo>):
             Promise<CliPermissionsResult> {
             let p = new Promise<CliPermissionsResult>(
@@ -835,24 +780,6 @@ export default namespace abilityAccessCtrl {
                     });
                     p1.then((e: Any): void => {
                         resolve(e as CliPermissionsResult);
-                    }).catch((err: Error): void => {
-                        reject(err as BusinessError);
-                    });
-                });
-            return p;
-        }
-
-        getSkillPermissions(hostTokenID: int, agentID: string, skillInfoList: Array<SkillInfo>):
-            Promise<SkillPermissionsResult> {
-            let p = new Promise<SkillPermissionsResult>(
-                (resolve: (v: SkillPermissionsResult) => void,
-                    reject: (err: Error) => void): void => {
-                    let p1 = taskpool.execute((): SkillPermissionsResult => {
-                        return new AtManagerInner().getSkillPermissionsExecute(
-                            hostTokenID, agentID, skillInfoList);
-                    });
-                    p1.then((e: Any): void => {
-                        resolve(e as SkillPermissionsResult);
                     }).catch((err: Error): void => {
                         reject(err as BusinessError);
                     });
@@ -878,22 +805,5 @@ export default namespace abilityAccessCtrl {
             return p;
         }
 
-        generateSkillAuthResult(hostTokenID: int, agentID: string, authInfoList: Array<SkillAuthInfo>):
-            Promise<ToolAuthResult> {
-            let p = new Promise<ToolAuthResult>(
-                (resolve: (v: ToolAuthResult) => void,
-                    reject: (err: Error) => void): void => {
-                    let p1 = taskpool.execute((): ToolAuthResult => {
-                        return new AtManagerInner().generateSkillAuthResultExecute(
-                            hostTokenID, agentID, authInfoList);
-                    });
-                    p1.then((e: Any): void => {
-                        resolve(e as ToolAuthResult);
-                    }).catch((err: Error): void => {
-                        reject(err as BusinessError);
-                    });
-                });
-            return p;
-        }
     }
 }

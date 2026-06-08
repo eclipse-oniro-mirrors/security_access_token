@@ -25,14 +25,12 @@
 #include "accesstoken_manager_service.h"
 #undef private
 #include "accesstoken_kit.h"
-#include "cli_init_info_parcel.h"
-#include "claw_auth_info_parcel.h"
 #include "claw_permission_fuzzdata.h"
 #include "fuzzer/FuzzedDataProvider.h"
+#include "idl_common.h"
 #include "iaccess_token_manager.h"
 #include "message_parcel.h"
 #include "mock_permission.h"
-#include "skill_init_info_parcel.h"
 #include "token_setproc.h"
 
 using namespace OHOS::Security::AccessToken;
@@ -48,23 +46,15 @@ const std::string MANAGE_TOOL_RUNTIME_PERMISSIONS = "ohos.permission.MANAGE_TOOL
 const std::string DEFAULT_AGENT_ID = "1001";
 const std::string DEFAULT_CLI_NAME = "tooltokenstub";
 const std::string DEFAULT_SUB_CLI_NAME = "stubsubtool";
-const std::string DEFAULT_BUNDLE_NAME = "com.ohos.tooltokenstub";
-const std::string DEFAULT_MODULE_NAME = "entry";
-const std::string DEFAULT_SKILL_NAME = "stubSkill";
-
 enum class StubCommandChoice : uint8_t {
     INIT_CLI_TOKEN,
-    INIT_SKILL_TOKEN,
     DELETE_TOOL_TOKEN_BY_PID,
-    GET_CLI_TOKEN_INFO,
-    GET_SKILL_TOKEN_INFO,
     GET_HOST_TOKEN_ID,
     END,
 };
 
 enum class QueryTokenChoice : uint8_t {
     CLI_TOKEN,
-    SKILL_TOKEN,
     HOST_TOKEN,
     FUZZ_TOKEN,
     END,
@@ -115,15 +105,6 @@ CliInfo BuildDefaultCliInfo()
     return info;
 }
 
-SkillInfo BuildDefaultSkillInfo()
-{
-    SkillInfo info;
-    info.bundleName = DEFAULT_BUNDLE_NAME;
-    info.moduleName = DEFAULT_MODULE_NAME;
-    info.skillName = DEFAULT_SKILL_NAME;
-    return info;
-}
-
 std::string ConsumeValidOrDefault(FuzzedDataProvider& provider, const std::string& defaultValue)
 {
     std::string value = ConsumeClawString(provider);
@@ -138,15 +119,6 @@ CliInfo ConsumeStubCliInfo(FuzzedDataProvider& provider)
     return info;
 }
 
-SkillInfo ConsumeStubSkillInfo(FuzzedDataProvider& provider)
-{
-    SkillInfo info;
-    info.bundleName = ConsumeValidOrDefault(provider, DEFAULT_BUNDLE_NAME);
-    info.moduleName = ConsumeValidOrDefault(provider, DEFAULT_MODULE_NAME);
-    info.skillName = ConsumeValidOrDefault(provider, DEFAULT_SKILL_NAME);
-    return info;
-}
-
 std::string GenerateCliChallenge(AccessTokenID hostTokenId)
 {
     MockToken runtimeCaller({ MANAGE_TOOL_RUNTIME_PERMISSIONS }, true, true);
@@ -154,16 +126,6 @@ std::string GenerateCliChallenge(AccessTokenID hostTokenId)
     authInfo.cliInfo = BuildDefaultCliInfo();
     ToolAuthResult result;
     (void)AccessTokenKit::GenerateCliAuthResult(hostTokenId, DEFAULT_AGENT_ID, { authInfo }, result);
-    return result.authResults.empty() ? "" : result.authResults[0];
-}
-
-std::string GenerateSkillChallenge(AccessTokenID hostTokenId)
-{
-    MockToken runtimeCaller({ MANAGE_TOOL_RUNTIME_PERMISSIONS }, true, true);
-    SkillAuthInfo authInfo;
-    authInfo.skillInfo = BuildDefaultSkillInfo();
-    ToolAuthResult result;
-    (void)AccessTokenKit::GenerateSkillAuthResult(hostTokenId, DEFAULT_AGENT_ID, { authInfo }, result);
     return result.authResults.empty() ? "" : result.authResults[0];
 }
 
@@ -221,28 +183,18 @@ void SendInitCliToken(const CliInitInfo& initInfo, uid_t uid)
     if (!WriteCommonHeader(data)) {
         return;
     }
-    CliInitInfoParcel parcel;
-    parcel.cliInitInfo = initInfo;
-    if (!data.WriteParcelable(&parcel)) {
+    CliInitInfoIdl initInfoIdl = {
+        .hostTokenId = initInfo.hostTokenId,
+        .challenge = initInfo.challenge,
+        .cliInfo = {
+            .cliName = initInfo.cliInfo.cliName,
+            .subCliName = initInfo.cliInfo.subCliName,
+        },
+    };
+    if (CliInitInfoIdlBlockMarshalling(data, initInfoIdl) != ERR_NONE) {
         return;
     }
     SendStubRequest(static_cast<uint32_t>(IAccessTokenManagerIpcCode::COMMAND_INIT_CLI_TOKEN), data);
-}
-
-void SendInitSkillToken(const SkillInitInfo& initInfo, uid_t uid)
-{
-    CallingContextGuard guard;
-    SwitchToUid(uid);
-    MessageParcel data;
-    if (!WriteCommonHeader(data)) {
-        return;
-    }
-    SkillInitInfoParcel parcel;
-    parcel.skillInitInfo = initInfo;
-    if (!data.WriteParcelable(&parcel)) {
-        return;
-    }
-    SendStubRequest(static_cast<uint32_t>(IAccessTokenManagerIpcCode::COMMAND_INIT_SKILL_TOKEN), data);
 }
 
 void CleanupCurrentToolToken()
@@ -263,16 +215,6 @@ AccessTokenID InitCliTokenByKit(const CliInitInfo& initInfo)
     return tokenIdEx.tokenIdExStruct.tokenID;
 }
 
-AccessTokenID InitSkillTokenByKit(const SkillInitInfo& initInfo)
-{
-    CallingContextGuard guard;
-    SwitchToUid(AIMGR_UID);
-    AccessTokenIDEx tokenIdEx = {0};
-    std::vector<PermissionWithValue> kernelPermList;
-    (void)AccessTokenKit::InitSkillToken(initInfo, tokenIdEx, kernelPermList);
-    return tokenIdEx.tokenIdExStruct.tokenID;
-}
-
 CliInitInfo BuildCliInitInfo(FuzzedDataProvider& provider, AccessTokenID hostTokenId)
 {
     CliInitInfo initInfo;
@@ -282,25 +224,14 @@ CliInitInfo BuildCliInitInfo(FuzzedDataProvider& provider, AccessTokenID hostTok
     return initInfo;
 }
 
-SkillInitInfo BuildSkillInitInfo(FuzzedDataProvider& provider, AccessTokenID hostTokenId)
-{
-    SkillInitInfo initInfo;
-    initInfo.hostTokenId = provider.ConsumeBool() ? hostTokenId : ConsumeTokenId(provider);
-    initInfo.challenge = provider.ConsumeBool() ? GenerateSkillChallenge(hostTokenId) : ConsumeClawString(provider);
-    initInfo.skillInfo = provider.ConsumeBool() ? BuildDefaultSkillInfo() : ConsumeStubSkillInfo(provider);
-    return initInfo;
-}
-
 AccessTokenID ConsumeQueryTokenId(
-    FuzzedDataProvider& provider, AccessTokenID hostTokenId, AccessTokenID cliTokenId, AccessTokenID skillTokenId)
+    FuzzedDataProvider& provider, AccessTokenID hostTokenId, AccessTokenID cliTokenId)
 {
     auto choice = static_cast<QueryTokenChoice>(provider.ConsumeIntegralInRange<uint8_t>(
         0, static_cast<uint8_t>(QueryTokenChoice::END) - 1));
     switch (choice) {
         case QueryTokenChoice::CLI_TOKEN:
             return cliTokenId;
-        case QueryTokenChoice::SKILL_TOKEN:
-            return skillTokenId;
         case QueryTokenChoice::HOST_TOKEN:
             return hostTokenId;
         case QueryTokenChoice::FUZZ_TOKEN:
@@ -345,17 +276,8 @@ void ExerciseSpecificStubCases(FuzzedDataProvider& provider, AccessTokenID hostT
     CleanupCurrentToolToken();
     AccessTokenID cliTokenId = InitCliTokenByKit(cliInitInfo);
 
-    SkillInitInfo skillInitInfo = BuildSkillInitInfo(provider, hostTokenId);
-    SendInitSkillToken(skillInitInfo, AIMGR_UID);
-    CleanupCurrentToolToken();
-    AccessTokenID skillTokenId = InitSkillTokenByKit(skillInitInfo);
-
-    SendTokenQuery(provider, static_cast<uint32_t>(IAccessTokenManagerIpcCode::COMMAND_GET_CLI_TOKEN_INFO),
-        ConsumeQueryTokenId(provider, hostTokenId, cliTokenId, skillTokenId));
-    SendTokenQuery(provider, static_cast<uint32_t>(IAccessTokenManagerIpcCode::COMMAND_GET_SKILL_TOKEN_INFO),
-        ConsumeQueryTokenId(provider, hostTokenId, cliTokenId, skillTokenId));
     SendTokenQuery(provider, static_cast<uint32_t>(IAccessTokenManagerIpcCode::COMMAND_GET_HOST_TOKEN_ID),
-        ConsumeQueryTokenId(provider, hostTokenId, cliTokenId, skillTokenId));
+        ConsumeQueryTokenId(provider, hostTokenId, cliTokenId));
     SendDeleteToolTokenByPid(provider, ConsumeDeletePid(provider));
     SendDeleteToolTokenByPid(provider, getpid());
 }
@@ -368,20 +290,8 @@ void ExerciseConsumedStubCase(FuzzedDataProvider& provider, AccessTokenID hostTo
         case StubCommandChoice::INIT_CLI_TOKEN:
             SendInitCliToken(BuildCliInitInfo(provider, hostTokenId), provider.ConsumeBool() ? ROOT_UID : getuid());
             break;
-        case StubCommandChoice::INIT_SKILL_TOKEN:
-            SendInitSkillToken(
-                BuildSkillInitInfo(provider, hostTokenId), provider.ConsumeBool() ? AIMGR_UID : getuid());
-            break;
         case StubCommandChoice::DELETE_TOOL_TOKEN_BY_PID:
             SendDeleteToolTokenByPid(provider, ConsumeDeletePid(provider));
-            break;
-        case StubCommandChoice::GET_CLI_TOKEN_INFO:
-            SendTokenQuery(provider, static_cast<uint32_t>(IAccessTokenManagerIpcCode::COMMAND_GET_CLI_TOKEN_INFO),
-                ConsumeTokenId(provider));
-            break;
-        case StubCommandChoice::GET_SKILL_TOKEN_INFO:
-            SendTokenQuery(provider, static_cast<uint32_t>(IAccessTokenManagerIpcCode::COMMAND_GET_SKILL_TOKEN_INFO),
-                ConsumeTokenId(provider));
             break;
         case StubCommandChoice::GET_HOST_TOKEN_ID:
             SendTokenQuery(provider, static_cast<uint32_t>(IAccessTokenManagerIpcCode::COMMAND_GET_HOST_TOKEN_ID),

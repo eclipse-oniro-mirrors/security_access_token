@@ -120,10 +120,6 @@ public:
         AccessTokenID tokenId, const std::string& permissionName, std::string& value);
     int32_t InitCliToken(const CliInitInfo& info,
         AccessTokenIDEx& tokenIdEx, std::vector<PermissionWithValue>& kernelPermList);
-    int32_t InitSkillToken(const SkillInitInfo& info,
-        AccessTokenIDEx& tokenIdEx, std::vector<PermissionWithValue>& kernelPermList);
-    int32_t GetCliTokenInfo(AccessTokenID tokenId, CliTokenInfo& info);
-    int32_t GetSkillTokenInfo(AccessTokenID tokenId, SkillTokenInfo& info);
     int32_t GetHostTokenId(AccessTokenID toolTokenId, AccessTokenID& hostTokenId);
     void DumpTokenInfo(const AtmToolsParamInfo& info, std::string& dumpInfo);
     int32_t GetVersion(uint32_t& version);
@@ -157,16 +153,10 @@ public:
     int32_t GetHapSignInfo(const std::string& bundleName, std::vector<TrustedBundleInfo>& bundleInfo);
     int32_t GetCliPermissionRequestInfo(
         const std::string& agentID, const std::vector<CliInfo>& cliInfoList, PermissionDialogResult& result);
-    int32_t GetSkillPermissionRequestInfo(
-        const std::string& agentID, const std::vector<SkillInfo>& skillInfoList, PermissionDialogResult& result);
     int32_t GetCliPermissions(AccessTokenID hostTokenID, const std::string& agentID,
         const std::vector<CliInfo>& cliInfoList, CliPermissionsResult& result);
-    int32_t GetSkillPermissions(AccessTokenID hostTokenID, const std::string& agentID,
-        const std::vector<SkillInfo>& skillInfoList, SkillPermissionsResult& result);
     int32_t GenerateCliAuthResult(AccessTokenID hostTokenID, const std::string& agentID,
         const std::vector<CliAuthInfo>& authInfoList, ToolAuthResult& result);
-    int32_t GenerateSkillAuthResult(AccessTokenID hostTokenID, const std::string& agentID,
-        const std::vector<SkillAuthInfo>& authInfoList, ToolAuthResult& result);
 
 private:
     AccessTokenManagerClient();

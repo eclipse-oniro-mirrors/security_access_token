@@ -26,13 +26,11 @@
 #include "accesstoken_id_manager.h"
 #include "accesstoken_info_manager.h"
 #include "claw_ticket_manager.h"
-#include "cli_info_parcel.h"
-#include "cli_permissions_result_parcel.h"
+#include "claw_token_info_manager.h"
 #include "generic_values.h"
 #include "hap_info_parcel.h"
 #include "hap_policy_parcel.h"
 #include "mock_permission.h"
-#include "permission_dialog_result_parcel.h"
 #include "permission_map.h"
 #include "permission_map_fence.h"
 #include "saf_agent_fence.h"
@@ -144,21 +142,100 @@ CliInfo BuildCliInfo(const std::string& cliName, const std::string& subCliName)
     return { .cliName = cliName, .subCliName = subCliName };
 }
 
-CliInfoParcel BuildCliInfoParcel(const std::string& cliName, const std::string& subCliName)
+CliInfoIdl ConvertCliInfoToIdl(const CliInfo& info)
 {
-    CliInfoParcel parcel;
-    parcel.cliInfo = BuildCliInfo(cliName, subCliName);
-    return parcel;
+    return {
+        .cliName = info.cliName,
+        .subCliName = info.subCliName,
+    };
 }
 
-CliAuthInfoParcel BuildCliAuthInfoParcel(
-    const CliInfo& cliInfo, const std::vector<std::string>& permissions, const std::vector<bool>& results)
+std::vector<CliInfoIdl> ConvertCliInfosToIdls(const std::vector<CliInfo>& infos)
 {
-    CliAuthInfoParcel parcel;
-    parcel.info.cliInfo = cliInfo;
-    parcel.info.permissionNames = permissions;
-    parcel.info.authorizationResults = results;
-    return parcel;
+    std::vector<CliInfoIdl> cliInfos;
+    cliInfos.reserve(infos.size());
+    for (const auto& info : infos) {
+        cliInfos.emplace_back(ConvertCliInfoToIdl(info));
+    }
+    return cliInfos;
+}
+
+CliAuthInfoIdl ConvertCliAuthInfoToIdl(const CliAuthInfo& info)
+{
+    CliAuthInfoIdl infoIdl;
+    infoIdl.cliInfo = {
+        .cliName = info.cliInfo.cliName,
+        .subCliName = info.cliInfo.subCliName,
+    };
+    infoIdl.permissionNames = info.permissionNames;
+    infoIdl.authorizationResults.assign(info.authorizationResults.begin(), info.authorizationResults.end());
+    return infoIdl;
+}
+
+std::vector<CliAuthInfoIdl> ConvertCliAuthInfosToIdls(const std::vector<CliAuthInfo>& infos)
+{
+    std::vector<CliAuthInfoIdl> authInfos;
+    authInfos.reserve(infos.size());
+    for (const auto& info : infos) {
+        authInfos.emplace_back(ConvertCliAuthInfoToIdl(info));
+    }
+    return authInfos;
+}
+
+CliPermissionsResult ConvertCliPermissionsResult(const CliPermissionsResultIdl& resultIdl)
+{
+    CliPermissionsResult result;
+    result.permList.reserve(resultIdl.permList.size());
+    for (const auto& permResultIdl : resultIdl.permList) {
+        CliCommandPermissionResult permResult;
+        permResult.requiredCliPermissions.reserve(permResultIdl.requiredCliPermissions.size());
+        for (const auto& detailIdl : permResultIdl.requiredCliPermissions) {
+            permResult.requiredCliPermissions.emplace_back(CliPermissionDetail {
+                .requiredCliPermission = detailIdl.requiredCliPermission,
+                .cliPermissionStatus = static_cast<PermissionDecisionStatus>(detailIdl.cliPermissionStatus),
+                .usedPermissions = detailIdl.usedPermissions,
+            });
+        }
+        result.permList.emplace_back(std::move(permResult));
+    }
+    return result;
+}
+
+PermissionDialogResult ConvertPermissionDialogResult(const PermissionDialogResultIdl& resultIdl)
+{
+    PermissionDialogResult result;
+    result.detailList.reserve(resultIdl.detailList.size());
+    for (const auto& detailIdl : resultIdl.detailList) {
+        PermissionDialogDetail detail;
+        detail.needPermissionDialog = detailIdl.needPermissionDialog;
+        detail.permissionNameList = detailIdl.permissionNameList;
+        detail.authResult = detailIdl.authResult;
+        detail.statusList.reserve(detailIdl.statusList.size());
+        for (const auto& statusIdl : detailIdl.statusList) {
+            detail.statusList.emplace_back(static_cast<PermissionDecisionStatus>(statusIdl));
+        }
+        result.detailList.emplace_back(std::move(detail));
+    }
+    return result;
+}
+
+ToolAuthResult ConvertToolAuthResult(const ToolAuthResultIdl& resultIdl)
+{
+    ToolAuthResult result;
+    result.authResults = resultIdl.authResults;
+    return result;
+}
+
+CliInitInfoIdl ConvertCliInitInfoToIdl(const CliInitInfo& info)
+{
+    return {
+        .hostTokenId = info.hostTokenId,
+        .challenge = info.challenge,
+        .cliInfo = {
+            .cliName = info.cliInfo.cliName,
+            .subCliName = info.cliInfo.subCliName,
+        },
+    };
 }
 
 std::string BuildCliAuthInfoMessage(
@@ -183,12 +260,21 @@ std::string BuildCliAuthInfoMessage(
     return message;
 }
 
+CliAuthInfo BuildCliAuthInfo(
+    const CliInfo& cliInfo, const std::vector<std::string>& permissions, const std::vector<bool>& results)
+{
+    return {
+        .cliInfo = cliInfo,
+        .permissionNames = permissions,
+        .authorizationResults = results,
+    };
+}
+
 void MockSingleCliAuthChallenge(
-    const CliAuthInfoParcel& authInfo, const std::string& challenge, const std::string& ticket)
+    const CliAuthInfo& authInfo, const std::string& challenge, const std::string& ticket)
 {
     SetMockGenerateTicketResult({ {
-        BuildCliAuthInfoMessage(
-            authInfo.info.cliInfo, authInfo.info.permissionNames, authInfo.info.authorizationResults),
+        BuildCliAuthInfoMessage(authInfo.cliInfo, authInfo.permissionNames, authInfo.authorizationResults),
             challenge,
             ticket,
         } }, RET_SUCCESS);
@@ -335,12 +421,12 @@ private:
 };
 
 struct CliPermissionRequestInfoQueryResult {
-    PermissionDialogResultParcel info;
+    PermissionDialogResult info;
     AccessTokenID callerTokenId = INVALID_TOKENID;
 };
 
 struct CliPermissionsQueryResult {
-    CliPermissionsResultParcel info;
+    CliPermissionsResult info;
     AccessTokenID callerTokenId = INVALID_TOKENID;
 };
 
@@ -370,15 +456,11 @@ int32_t VerifyRuntimePermission(AccessTokenID tokenId, const std::string& permis
 void VerifyCliTokenBasics(
     AccessTokenID toolTokenId, AccessTokenID hostTokenId, const std::string& cliName, const std::string& subCliName)
 {
-    CliTokenInfo tokenInfo;
-    ASSERT_EQ(RET_SUCCESS, ToolTokenInfoManager::GetInstance().GetCliTokenInfo(toolTokenId, tokenInfo));
-    EXPECT_EQ(hostTokenId, tokenInfo.hostTokenId);
-    EXPECT_EQ(cliName, tokenInfo.cliName);
-    EXPECT_EQ(subCliName, tokenInfo.subCliName);
-
     AccessTokenID queriedHostTokenId = INVALID_TOKENID;
     ASSERT_EQ(RET_SUCCESS, ToolTokenInfoManager::GetInstance().GetHostTokenId(toolTokenId, queriedHostTokenId));
     EXPECT_EQ(hostTokenId, queriedHostTokenId);
+    (void)cliName;
+    (void)subCliName;
 }
 
 } // namespace
@@ -423,7 +505,7 @@ public:
 
 protected:
     CliPermissionRequestInfoQueryResult QueryCliPermissionRequestInfo(
-        const std::vector<PermissionStatus>& permStates, const std::vector<CliInfoParcel>& cliInfos,
+        const std::vector<PermissionStatus>& permStates, const std::vector<CliInfo>& cliInfos,
         TokenCleaner& cleaner)
     {
         CliPermissionRequestInfoQueryResult result;
@@ -437,12 +519,15 @@ protected:
 
         SelfTokenGuard guard;
         SetSelfTokenID(callerFullTokenId);
-        EXPECT_EQ(RET_SUCCESS, atManagerService_->GetCliPermissionRequestInfo(DEFAULT_AGENT_ID, cliInfos, result.info));
+        PermissionDialogResultIdl resultIdl;
+        EXPECT_EQ(RET_SUCCESS, atManagerService_->GetCliPermissionRequestInfo(
+            DEFAULT_AGENT_ID, ConvertCliInfosToIdls(cliInfos), resultIdl));
+        result.info = ConvertPermissionDialogResult(resultIdl);
         return result;
     }
 
     CliPermissionsQueryResult QueryCliPermissions(
-        AccessTokenID hostTokenId, const std::vector<CliInfoParcel>& cliInfos, TokenCleaner& cleaner)
+        AccessTokenID hostTokenId, const std::vector<CliInfo>& cliInfos, TokenCleaner& cleaner)
     {
         CliPermissionsQueryResult result;
         uint64_t callerFullTokenId =
@@ -456,13 +541,15 @@ protected:
 
         SelfTokenGuard guard;
         SetSelfTokenID(callerFullTokenId);
-        EXPECT_EQ(RET_SUCCESS, atManagerService_->GetCliPermissions(hostTokenId, DEFAULT_AGENT_ID, cliInfos,
-            result.info));
+        CliPermissionsResultIdl resultIdl;
+        EXPECT_EQ(RET_SUCCESS, atManagerService_->GetCliPermissions(
+            hostTokenId, DEFAULT_AGENT_ID, ConvertCliInfosToIdls(cliInfos), resultIdl));
+        result.info = ConvertCliPermissionsResult(resultIdl);
         return result;
     }
 
-    ToolAuthResultParcel GenerateCliAuthResult(
-        AccessTokenID hostTokenId, const std::vector<CliAuthInfoParcel>& authInfos, TokenCleaner& cleaner)
+    ToolAuthResult GenerateCliAuthResult(
+        AccessTokenID hostTokenId, const std::vector<CliAuthInfo>& authInfos, TokenCleaner& cleaner)
     {
         uint64_t callerFullTokenId = CreateServiceTestToken(
             "tooltoken_manage_caller_" + std::to_string(++manageToolCallerIndex_), true,
@@ -475,34 +562,14 @@ protected:
 
         SelfTokenGuard guard;
         SetSelfTokenID(callerFullTokenId);
-        ToolAuthResultParcel result;
-        EXPECT_EQ(RET_SUCCESS, atManagerService_->GenerateCliAuthResult(hostTokenId, DEFAULT_AGENT_ID, authInfos,
-            result));
-        return result;
-    }
-
-    ToolAuthResultParcel GenerateSkillAuthResult(
-        AccessTokenID hostTokenId, const std::vector<SkillAuthInfoParcel>& authInfos, TokenCleaner& cleaner)
-    {
-        uint64_t callerFullTokenId = CreateServiceTestToken(
-            "tooltoken_manage_caller_" + std::to_string(++manageToolCallerIndex_), true,
-            BuildManagePermissionStates());
-        EXPECT_NE(0, callerFullTokenId);
-        if (callerFullTokenId == 0) {
-            return {};
-        }
-        cleaner.Add(GetTokenIdFromFullTokenId(callerFullTokenId));
-
-        SelfTokenGuard guard;
-        SetSelfTokenID(callerFullTokenId);
-        ToolAuthResultParcel result;
-        EXPECT_EQ(RET_SUCCESS, atManagerService_->GenerateSkillAuthResult(hostTokenId, DEFAULT_AGENT_ID, authInfos,
-            result));
-        return result;
+        ToolAuthResultIdl resultIdl;
+        EXPECT_EQ(RET_SUCCESS, atManagerService_->GenerateCliAuthResult(
+            hostTokenId, DEFAULT_AGENT_ID, ConvertCliAuthInfosToIdls(authInfos), resultIdl));
+        return ConvertToolAuthResult(resultIdl);
     }
 
     int32_t QueryCliPermissionsRet(AccessTokenID hostTokenId, const std::string& agentId,
-        const std::vector<CliInfoParcel>& cliInfos, CliPermissionsResultParcel result, TokenCleaner& cleaner)
+        const std::vector<CliInfo>& cliInfos, CliPermissionsResult& result, TokenCleaner& cleaner)
     {
         uint64_t callerFullTokenId =
             CreateServiceTestToken("tooltoken_query_caller", true, BuildManagePermissionStates());
@@ -514,11 +581,15 @@ protected:
 
         SelfTokenGuard guard;
         SetSelfTokenID(callerFullTokenId);
-        return atManagerService_->GetCliPermissions(hostTokenId, agentId, cliInfos, result);
+        CliPermissionsResultIdl resultIdl;
+        int32_t ret = atManagerService_->GetCliPermissions(
+            hostTokenId, agentId, ConvertCliInfosToIdls(cliInfos), resultIdl);
+        result = ConvertCliPermissionsResult(resultIdl);
+        return ret;
     }
 
-    int32_t GenerateCliAuthResultRet(AccessTokenID hostTokenId, const std::vector<CliAuthInfoParcel>& authInfos,
-        ToolAuthResultParcel& result, TokenCleaner& cleaner)
+    int32_t GenerateCliAuthResultRet(AccessTokenID hostTokenId, const std::vector<CliAuthInfo>& authInfos,
+        ToolAuthResult& result, TokenCleaner& cleaner)
     {
         uint64_t callerFullTokenId = CreateServiceTestToken(
             "tooltoken_manage_caller_" + std::to_string(++manageToolCallerIndex_), true,
@@ -531,15 +602,19 @@ protected:
 
         SelfTokenGuard guard;
         SetSelfTokenID(callerFullTokenId);
-        return atManagerService_->GenerateCliAuthResult(hostTokenId, DEFAULT_AGENT_ID, authInfos, result);
+        ToolAuthResultIdl resultIdl;
+        int32_t ret = atManagerService_->GenerateCliAuthResult(
+            hostTokenId, DEFAULT_AGENT_ID, ConvertCliAuthInfosToIdls(authInfos), resultIdl);
+        result = ConvertToolAuthResult(resultIdl);
+        return ret;
     }
 
-    int32_t InitCliToolTokenRet(const CliInitInfoParcel& initInfoParcel, uint64_t& fullTokenId,
+    int32_t InitCliToolTokenRet(const CliInitInfo& initInfo, uint64_t& fullTokenId,
         std::vector<PermissionWithValueIdl>& kernelPermIdlList)
     {
         UidGuard uidGuard;
         (void)setuid(ROOT_UID);
-        return atManagerService_->InitCliToken(initInfoParcel, fullTokenId, kernelPermIdlList);
+        return atManagerService_->InitCliToken(ConvertCliInitInfoToIdl(initInfo), fullTokenId, kernelPermIdlList);
     }
 
 #ifdef SUPPORT_MANAGE_USER_POLICY
@@ -559,12 +634,12 @@ protected:
 #endif
 
     std::string GenerateSingleCliAuthChallenge(
-        AccessTokenID hostTokenId, const CliAuthInfoParcel& authInfo, TokenCleaner& cleaner)
+        AccessTokenID hostTokenId, const CliAuthInfo& authInfo, TokenCleaner& cleaner)
     {
         auto authResult = GenerateCliAuthResult(hostTokenId, { authInfo }, cleaner);
-        EXPECT_EQ(1, static_cast<int32_t>(authResult.result.authResults.size()));
-        EXPECT_FALSE(authResult.result.authResults[0].empty());
-        return authResult.result.authResults[0];
+        EXPECT_EQ(1, static_cast<int32_t>(authResult.authResults.size()));
+        EXPECT_FALSE(authResult.authResults[0].empty());
+        return authResult.authResults[0];
     }
 
     uint32_t manageToolCallerIndex_ = 0;
@@ -582,9 +657,9 @@ HWTEST_F(ToolTokenMockTest, GetCliPermissionRequestInfo_001, TestSize.Level1)
     PrepareMockEnvironment();
 
     auto result = QueryCliPermissionRequestInfo(permStates,
-        { BuildCliInfoParcel("location", "query") }, cleaner).info;
-    ASSERT_EQ(1, static_cast<int32_t>(result.result.detailList.size()));
-    const auto& detail = result.result.detailList[0];
+        { BuildCliInfo("location", "query") }, cleaner).info;
+    ASSERT_EQ(1, static_cast<int32_t>(result.detailList.size()));
+    const auto& detail = result.detailList[0];
     EXPECT_FALSE(detail.needPermissionDialog);
     ASSERT_EQ(1, static_cast<int32_t>(detail.permissionNameList.size()));
     EXPECT_EQ(CUSTOM_SCREEN_CAPTURE, detail.permissionNameList[0]);
@@ -609,11 +684,11 @@ HWTEST_F(ToolTokenMockTest, GetCliPermissionRequestInfo_002, TestSize.Level1)
 
     SelfTokenGuard guard;
     SetSelfTokenID(fullTokenId);
-    PermissionDialogResultParcel result;
+    PermissionDialogResultIdl result;
     EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
         atManagerService_->GetCliPermissionRequestInfo(
-            BuildInvalidAgentId(), { BuildCliInfoParcel("location", "query") }, result));
-    EXPECT_TRUE(result.result.detailList.empty());
+            BuildInvalidAgentId(), ConvertCliInfosToIdls({ BuildCliInfo("location", "query") }), result));
+    EXPECT_TRUE(result.detailList.empty());
 }
 
 /**
@@ -632,10 +707,11 @@ HWTEST_F(ToolTokenMockTest, GetCliPermissionRequestInfo_003, TestSize.Level1)
 
     SelfTokenGuard guard;
     SetSelfTokenID(fullTokenId);
-    PermissionDialogResultParcel result;
+    PermissionDialogResultIdl result;
     EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
-        atManagerService_->GetCliPermissionRequestInfo(DEFAULT_AGENT_ID, {}, result));
-    EXPECT_TRUE(result.result.detailList.empty());
+        atManagerService_->GetCliPermissionRequestInfo(
+            DEFAULT_AGENT_ID, std::vector<CliInfoIdl> {}, result));
+    EXPECT_TRUE(result.detailList.empty());
 }
 
 /**
@@ -653,9 +729,9 @@ HWTEST_F(ToolTokenMockTest, GetCliPermissionRequestInfo_004, TestSize.Level1)
     PrepareMockEnvironment();
 
     auto result = QueryCliPermissionRequestInfo(permStates,
-        { BuildCliInfoParcel("location", "query") }, cleaner).info;
-    ASSERT_EQ(1, static_cast<int32_t>(result.result.detailList.size()));
-    const auto& detail = result.result.detailList[0];
+        { BuildCliInfo("location", "query") }, cleaner).info;
+    ASSERT_EQ(1, static_cast<int32_t>(result.detailList.size()));
+    const auto& detail = result.detailList[0];
     EXPECT_FALSE(detail.needPermissionDialog);
     EXPECT_FALSE(detail.authResult.empty());
     ASSERT_EQ(1, static_cast<int32_t>(detail.permissionNameList.size()));
@@ -678,9 +754,9 @@ HWTEST_F(ToolTokenMockTest, GetCliPermissionRequestInfo_005, TestSize.Level1)
     PrepareMockEnvironment();
 
     auto result = QueryCliPermissionRequestInfo(permStates,
-        { BuildCliInfoParcel("location", "query") }, cleaner).info;
-    ASSERT_EQ(1, static_cast<int32_t>(result.result.detailList.size()));
-    const auto& detail = result.result.detailList[0];
+        { BuildCliInfo("location", "query") }, cleaner).info;
+    ASSERT_EQ(1, static_cast<int32_t>(result.detailList.size()));
+    const auto& detail = result.detailList[0];
     EXPECT_FALSE(detail.needPermissionDialog);
     EXPECT_FALSE(detail.authResult.empty());
     EXPECT_FALSE(ContainsPermission(detail.permissionNameList, CAMERA_PERMISSION));
@@ -701,9 +777,9 @@ HWTEST_F(ToolTokenMockTest, GetCliPermissionRequestInfo_006, TestSize.Level1)
     PrepareMockEnvironment();
 
     auto result = QueryCliPermissionRequestInfo(permStates,
-        { BuildCliInfoParcel("location", "query") }, cleaner).info;
-    ASSERT_EQ(1, static_cast<int32_t>(result.result.detailList.size()));
-    const auto& detail = result.result.detailList[0];
+        { BuildCliInfo("location", "query") }, cleaner).info;
+    ASSERT_EQ(1, static_cast<int32_t>(result.detailList.size()));
+    const auto& detail = result.detailList[0];
     EXPECT_FALSE(detail.needPermissionDialog);
     EXPECT_FALSE(detail.authResult.empty());
     ASSERT_EQ(1, static_cast<int32_t>(detail.permissionNameList.size()));
@@ -728,9 +804,9 @@ HWTEST_F(ToolTokenMockTest, GetCliPermissionRequestInfo_007, TestSize.Level1)
     PrepareMockEnvironment();
 
     auto result = QueryCliPermissionRequestInfo(permStates,
-        { BuildCliInfoParcel("location", "query") }, cleaner).info;
-    ASSERT_EQ(1, static_cast<int32_t>(result.result.detailList.size()));
-    const auto& detail = result.result.detailList[0];
+        { BuildCliInfo("location", "query") }, cleaner).info;
+    ASSERT_EQ(1, static_cast<int32_t>(result.detailList.size()));
+    const auto& detail = result.detailList[0];
     EXPECT_FALSE(detail.needPermissionDialog);
     EXPECT_TRUE(detail.permissionNameList.empty());
     EXPECT_TRUE(detail.statusList.empty());
@@ -756,18 +832,18 @@ HWTEST_F(ToolTokenMockTest, GetCliPermissionRequestInfo_008, TestSize.Level1)
     PrepareMockEnvironment(commandMap);
 
     auto result = QueryCliPermissionRequestInfo(permStates, {
-        BuildCliInfoParcel("settings", "set"),
-        BuildCliInfoParcel("camera", "capture"),
-        BuildCliInfoParcel("location", "query"),
+        BuildCliInfo("settings", "set"),
+        BuildCliInfo("camera", "capture"),
+        BuildCliInfo("location", "query"),
     }, cleaner).info;
-    ASSERT_EQ(3, static_cast<int32_t>(result.result.detailList.size()));
-    EXPECT_FALSE(result.result.detailList[0].needPermissionDialog);
-    EXPECT_TRUE(result.result.detailList[1].needPermissionDialog);
-    EXPECT_FALSE(result.result.detailList[2].needPermissionDialog);
-    EXPECT_FALSE(result.result.detailList[0].authResult.empty());
-    EXPECT_TRUE(result.result.detailList[1].authResult.empty());
-    EXPECT_FALSE(result.result.detailList[2].authResult.empty());
-    EXPECT_NE(result.result.detailList[0].authResult, result.result.detailList[2].authResult);
+    ASSERT_EQ(3, static_cast<int32_t>(result.detailList.size()));
+    EXPECT_FALSE(result.detailList[0].needPermissionDialog);
+    EXPECT_TRUE(result.detailList[1].needPermissionDialog);
+    EXPECT_FALSE(result.detailList[2].needPermissionDialog);
+    EXPECT_FALSE(result.detailList[0].authResult.empty());
+    EXPECT_TRUE(result.detailList[1].authResult.empty());
+    EXPECT_FALSE(result.detailList[2].authResult.empty());
+    EXPECT_NE(result.detailList[0].authResult, result.detailList[2].authResult);
 }
 
 /**
@@ -785,8 +861,8 @@ HWTEST_F(ToolTokenMockTest, GetCliPermissionRequestInfo_009, TestSize.Level1)
     PrepareMockEnvironment();
 
     auto result = QueryCliPermissionRequestInfo(permStates,
-        { BuildCliInfoParcel("location", "query") }, cleaner).info;
-    const auto& detail = result.result.detailList[0];
+        { BuildCliInfo("location", "query") }, cleaner).info;
+    const auto& detail = result.detailList[0];
     ASSERT_EQ(detail.permissionNameList.size(), detail.statusList.size());
     ASSERT_EQ(2, static_cast<int32_t>(detail.permissionNameList.size()));
     EXPECT_EQ(LOCATION_PERMISSION, detail.permissionNameList[0]);
@@ -808,10 +884,10 @@ HWTEST_F(ToolTokenMockTest, GetCliPermissionRequestInfo_010, TestSize.Level1)
     PrepareMockEnvironment();
 
     auto queryResult = QueryCliPermissionRequestInfo(permStates,
-        { BuildCliInfoParcel("settings", "set") }, cleaner);
+        { BuildCliInfo("settings", "set") }, cleaner);
     const auto& result = queryResult.info;
-    ASSERT_EQ(1, static_cast<int32_t>(result.result.detailList.size()));
-    const auto& detail = result.result.detailList[0];
+    ASSERT_EQ(1, static_cast<int32_t>(result.detailList.size()));
+    const auto& detail = result.detailList[0];
     EXPECT_FALSE(detail.needPermissionDialog);
     EXPECT_TRUE(detail.permissionNameList.empty());
     EXPECT_TRUE(detail.statusList.empty());
@@ -840,10 +916,10 @@ HWTEST_F(ToolTokenMockTest, GetCliPermissionRequestInfo_011, TestSize.Level1)
     PrepareMockEnvironment();
 
     auto queryResult = QueryCliPermissionRequestInfo(permStates,
-        { BuildCliInfoParcel("location", "query") }, cleaner);
+        { BuildCliInfo("location", "query") }, cleaner);
     const auto& result = queryResult.info;
-    ASSERT_EQ(1, static_cast<int32_t>(result.result.detailList.size()));
-    const auto& detail = result.result.detailList[0];
+    ASSERT_EQ(1, static_cast<int32_t>(result.detailList.size()));
+    const auto& detail = result.detailList[0];
     EXPECT_FALSE(detail.needPermissionDialog);
     ASSERT_FALSE(detail.authResult.empty());
     ASSERT_EQ(2, static_cast<int32_t>(detail.permissionNameList.size()));
@@ -885,8 +961,8 @@ HWTEST_F(ToolTokenMockTest, GetCliPermissionRequestInfo_012, TestSize.Level1)
     SetMockCliRuntimePermissionsForTest(runtimeMap);
 
     auto queryResult = QueryCliPermissionRequestInfo(permStates,
-        { BuildCliInfoParcel("location", "query") }, cleaner);
-    const auto& detail = queryResult.info.result.detailList[0];
+        { BuildCliInfo("location", "query") }, cleaner);
+    const auto& detail = queryResult.info.detailList[0];
     EXPECT_FALSE(detail.needPermissionDialog);
     EXPECT_TRUE(detail.permissionNameList.empty());
     EXPECT_TRUE(detail.statusList.empty());
@@ -921,8 +997,8 @@ HWTEST_F(ToolTokenMockTest, GetCliPermissionRequestInfo_013, TestSize.Level1)
     SetMockCliRuntimePermissionsForTest(runtimeMap);
 
     auto queryResult = QueryCliPermissionRequestInfo(permStates,
-        { BuildCliInfoParcel("location", "query") }, cleaner);
-    const auto& detail = queryResult.info.result.detailList[0];
+        { BuildCliInfo("location", "query") }, cleaner);
+    const auto& detail = queryResult.info.detailList[0];
     EXPECT_FALSE(detail.needPermissionDialog);
     ASSERT_EQ(1, static_cast<int32_t>(detail.permissionNameList.size()));
     EXPECT_EQ(CUSTOM_SCREEN_CAPTURE, detail.permissionNameList[0]);
@@ -960,10 +1036,10 @@ HWTEST_F(ToolTokenMockTest, GetCliPermissionRequestInfo_014, TestSize.Level1)
     PrepareMockEnvironment();
 
     auto queryResult = QueryCliPermissionRequestInfo(permStates,
-        { BuildCliInfoParcel("location", "query") }, cleaner);
+        { BuildCliInfo("location", "query") }, cleaner);
     const auto& result = queryResult.info;
-    ASSERT_EQ(1, static_cast<int32_t>(result.result.detailList.size()));
-    const auto& detail = result.result.detailList[0];
+    ASSERT_EQ(1, static_cast<int32_t>(result.detailList.size()));
+    const auto& detail = result.detailList[0];
     EXPECT_FALSE(detail.needPermissionDialog);
     ASSERT_FALSE(detail.authResult.empty());
     ASSERT_EQ(2, static_cast<int32_t>(detail.permissionNameList.size()));
@@ -990,15 +1066,15 @@ HWTEST_F(ToolTokenMockTest, GetCliPermissions_001, TestSize.Level1)
     PrepareMockEnvironment();
 
     auto result = QueryCliPermissions(hostTokenId, {
-        BuildCliInfoParcel("location", "query"),
-        BuildCliInfoParcel("settings", "set"),
+        BuildCliInfo("location", "query"),
+        BuildCliInfo("settings", "set"),
     }, cleaner).info;
-    ASSERT_EQ(2, static_cast<int32_t>(result.result.permList.size()));
-    const auto& detail0 = result.result.permList[0].requiredCliPermissions[0];
+    ASSERT_EQ(2, static_cast<int32_t>(result.permList.size()));
+    const auto& detail0 = result.permList[0].requiredCliPermissions[0];
     EXPECT_EQ(CUSTOM_SCREEN_CAPTURE, detail0.requiredCliPermission);
     EXPECT_EQ((PermissionDecisionStatus::NO_DIALOG_NOT_DECLARED), detail0.cliPermissionStatus);
     EXPECT_TRUE(detail0.usedPermissions.empty());
-    const auto& detail1 = result.result.permList[1].requiredCliPermissions[0];
+    const auto& detail1 = result.permList[1].requiredCliPermissions[0];
     EXPECT_EQ(ACCESS_SYSTEM_SETTINGS, detail1.requiredCliPermission);
     EXPECT_EQ((PermissionDecisionStatus::NO_DIALOG_GRANTED), detail1.cliPermissionStatus);
 }
@@ -1019,8 +1095,8 @@ HWTEST_F(ToolTokenMockTest, GetCliPermissions_002, TestSize.Level1)
     cleaner.Add(hostTokenId);
     PrepareMockEnvironment();
 
-    auto result = QueryCliPermissions(hostTokenId, { BuildCliInfoParcel("location", "query") }, cleaner).info;
-    const auto& detail = result.result.permList[0].requiredCliPermissions[0];
+    auto result = QueryCliPermissions(hostTokenId, { BuildCliInfo("location", "query") }, cleaner).info;
+    const auto& detail = result.permList[0].requiredCliPermissions[0];
     EXPECT_EQ((PermissionDecisionStatus::NO_DIALOG_GRANTED), detail.cliPermissionStatus);
     EXPECT_EQ(BuildMockTypeARuntimePermissions(), detail.usedPermissions);
 }
@@ -1047,8 +1123,8 @@ HWTEST_F(ToolTokenMockTest, GetCliPermissions_003, TestSize.Level1)
     cleaner.Add(hostTokenId);
     PrepareMockEnvironment();
 
-    auto result = QueryCliPermissions(hostTokenId, { BuildCliInfoParcel("location", "query") }, cleaner).info;
-    const auto& detail = result.result.permList[0].requiredCliPermissions[0];
+    auto result = QueryCliPermissions(hostTokenId, { BuildCliInfo("location", "query") }, cleaner).info;
+    const auto& detail = result.permList[0].requiredCliPermissions[0];
     EXPECT_EQ((PermissionDecisionStatus::NEED_PERMISSION_DIALOG), detail.cliPermissionStatus);
     EXPECT_EQ(BuildMockTypeARuntimePermissions(), detail.usedPermissions);
 }
@@ -1072,8 +1148,8 @@ HWTEST_F(ToolTokenMockTest, GetCliPermissions_004, TestSize.Level1)
     cleaner.Add(hostTokenId);
     PrepareMockEnvironment();
 
-    auto result = QueryCliPermissions(hostTokenId, { BuildCliInfoParcel("location", "query") }, cleaner).info;
-    const auto& detail = result.result.permList[0].requiredCliPermissions[0];
+    auto result = QueryCliPermissions(hostTokenId, { BuildCliInfo("location", "query") }, cleaner).info;
+    const auto& detail = result.permList[0].requiredCliPermissions[0];
     EXPECT_EQ((PermissionDecisionStatus::NO_DIALOG_CLI_PERMISSION_RESOLVED),
         detail.cliPermissionStatus);
     EXPECT_EQ(BuildMockTypeARuntimePermissions(), detail.usedPermissions);
@@ -1101,15 +1177,15 @@ HWTEST_F(ToolTokenMockTest, GetCliPermissions_005, TestSize.Level1)
     PrepareMockEnvironment();
 
     auto result = QueryCliPermissions(hostTokenId, {
-        BuildCliInfoParcel("settings", "set"),
-        BuildCliInfoParcel("camera", "capture"),
-        BuildCliInfoParcel("location", "query"),
+        BuildCliInfo("settings", "set"),
+        BuildCliInfo("camera", "capture"),
+        BuildCliInfo("location", "query"),
     }, cleaner).info;
-    ASSERT_EQ(3, static_cast<int32_t>(result.result.permList.size()));
+    ASSERT_EQ(3, static_cast<int32_t>(result.permList.size()));
     EXPECT_EQ(ACCESS_SYSTEM_SETTINGS,
-        result.result.permList[0].requiredCliPermissions[0].requiredCliPermission);
-    EXPECT_EQ(CAMERA_PERMISSION, result.result.permList[1].requiredCliPermissions[0].requiredCliPermission);
-    EXPECT_EQ(CUSTOM_SCREEN_CAPTURE, result.result.permList[2].requiredCliPermissions[0].requiredCliPermission);
+        result.permList[0].requiredCliPermissions[0].requiredCliPermission);
+    EXPECT_EQ(CAMERA_PERMISSION, result.permList[1].requiredCliPermissions[0].requiredCliPermission);
+    EXPECT_EQ(CUSTOM_SCREEN_CAPTURE, result.permList[2].requiredCliPermissions[0].requiredCliPermission);
 }
 
 /**
@@ -1120,11 +1196,11 @@ HWTEST_F(ToolTokenMockTest, GetCliPermissions_005, TestSize.Level1)
 HWTEST_F(ToolTokenMockTest, GetCliPermissions_006, TestSize.Level1)
 {
     TokenCleaner cleaner;
-    CliPermissionsResultParcel result;
+    CliPermissionsResult result;
     EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
         QueryCliPermissionsRet(
-            INVALID_TOKENID, DEFAULT_AGENT_ID, { BuildCliInfoParcel("location", "query") }, result, cleaner));
-    EXPECT_TRUE(result.result.permList.empty());
+            INVALID_TOKENID, DEFAULT_AGENT_ID, { BuildCliInfo("location", "query") }, result, cleaner));
+    EXPECT_TRUE(result.permList.empty());
 }
 
 /**
@@ -1135,10 +1211,10 @@ HWTEST_F(ToolTokenMockTest, GetCliPermissions_006, TestSize.Level1)
 HWTEST_F(ToolTokenMockTest, GetCliPermissions_007, TestSize.Level1)
 {
     TokenCleaner cleaner;
-    CliPermissionsResultParcel result;
+    CliPermissionsResult result;
     EXPECT_EQ(AccessTokenError::ERR_TOKENID_NOT_EXIST, QueryCliPermissionsRet(
-        GetNativeProcessTokenId(), DEFAULT_AGENT_ID, { BuildCliInfoParcel("location", "query") }, result, cleaner));
-    EXPECT_TRUE(result.result.permList.empty());
+        GetNativeProcessTokenId(), DEFAULT_AGENT_ID, { BuildCliInfo("location", "query") }, result, cleaner));
+    EXPECT_TRUE(result.permList.empty());
 }
 
 /**
@@ -1155,11 +1231,11 @@ HWTEST_F(ToolTokenMockTest, GetCliPermissions_008, TestSize.Level1)
     hostTokenId = GetTokenIdFromFullTokenId(hostFullTokenId);
     cleaner.Add(hostTokenId);
 
-    CliPermissionsResultParcel result;
+    CliPermissionsResult result;
     EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
         QueryCliPermissionsRet(
-            hostTokenId, BuildInvalidAgentId(), { BuildCliInfoParcel("location", "query") }, result, cleaner));
-    EXPECT_TRUE(result.result.permList.empty());
+            hostTokenId, BuildInvalidAgentId(), { BuildCliInfo("location", "query") }, result, cleaner));
+    EXPECT_TRUE(result.permList.empty());
 }
 
 /**
@@ -1176,10 +1252,10 @@ HWTEST_F(ToolTokenMockTest, GetCliPermissions_009, TestSize.Level1)
     hostTokenId = GetTokenIdFromFullTokenId(hostFullTokenId);
     cleaner.Add(hostTokenId);
 
-    CliPermissionsResultParcel result;
+    CliPermissionsResult result;
     EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
         QueryCliPermissionsRet(hostTokenId, DEFAULT_AGENT_ID, {}, result, cleaner));
-    EXPECT_TRUE(result.result.permList.empty());
+    EXPECT_TRUE(result.permList.empty());
 }
 
 /**
@@ -1200,8 +1276,8 @@ HWTEST_F(ToolTokenMockTest, GetCliPermissions_010, TestSize.Level1)
     SetMockCliRuntimePermissionsForTest(
         { { CUSTOM_SCREEN_CAPTURE, { LOCATION_PERMISSION, CAMERA_PERMISSION } } });
 
-    auto result = QueryCliPermissions(hostTokenId, { BuildCliInfoParcel("location", "query") }, cleaner).info;
-    const auto& detail = result.result.permList[0].requiredCliPermissions[0];
+    auto result = QueryCliPermissions(hostTokenId, { BuildCliInfo("location", "query") }, cleaner).info;
+    const auto& detail = result.permList[0].requiredCliPermissions[0];
     EXPECT_EQ(CUSTOM_SCREEN_CAPTURE, detail.requiredCliPermission);
     EXPECT_EQ(PermissionDecisionStatus::NO_DIALOG_GRANTED, detail.cliPermissionStatus);
     EXPECT_EQ((std::vector<std::string> { LOCATION_PERMISSION, CAMERA_PERMISSION }), detail.usedPermissions);
@@ -1229,11 +1305,11 @@ HWTEST_F(ToolTokenMockTest, GenerateCliAuthResult_001, TestSize.Level1)
     PrepareMockEnvironment();
 
     auto authResult = GenerateCliAuthResult(hostTokenId,
-        { BuildCliAuthInfoParcel(BuildCliInfo("location", "query"), { CUSTOM_SCREEN_CAPTURE }, { true }) }, cleaner);
-    ASSERT_EQ(1, static_cast<int32_t>(authResult.result.authResults.size()));
+        { BuildCliAuthInfo(BuildCliInfo("location", "query"), { CUSTOM_SCREEN_CAPTURE }, { true }) }, cleaner);
+    ASSERT_EQ(1, static_cast<int32_t>(authResult.authResults.size()));
     std::vector<std::string> kernelPermList;
     AccessTokenID toolTokenId = InitCliToolToken(
-        hostTokenId, authResult.result.authResults[0], BuildCliInfo("location", "query"), kernelPermList);
+        hostTokenId, authResult.authResults[0], BuildCliInfo("location", "query"), kernelPermList);
     EXPECT_EQ(PERMISSION_DENIED, VerifyRuntimePermission(toolTokenId, LOCATION_PERMISSION));
     EXPECT_EQ(PERMISSION_GRANTED, VerifyRuntimePermission(toolTokenId, WIFI_PERMISSION));
     EXPECT_EQ(PERMISSION_GRANTED, VerifyRuntimePermission(toolTokenId, CAMERA_PERMISSION));
@@ -1266,11 +1342,11 @@ HWTEST_F(ToolTokenMockTest, GenerateCliAuthResult_002, TestSize.Level1)
     PrepareMockEnvironment();
 
     auto authResult = GenerateCliAuthResult(hostTokenId,
-        { BuildCliAuthInfoParcel(BuildCliInfo("location", "query"), { CUSTOM_SCREEN_CAPTURE }, { false }) }, cleaner);
-    ASSERT_EQ(1, static_cast<int32_t>(authResult.result.authResults.size()));
+        { BuildCliAuthInfo(BuildCliInfo("location", "query"), { CUSTOM_SCREEN_CAPTURE }, { false }) }, cleaner);
+    ASSERT_EQ(1, static_cast<int32_t>(authResult.authResults.size()));
     std::vector<std::string> kernelPermList;
     AccessTokenID toolTokenId = InitCliToolToken(
-        hostTokenId, authResult.result.authResults[0], BuildCliInfo("location", "query"), kernelPermList);
+        hostTokenId, authResult.authResults[0], BuildCliInfo("location", "query"), kernelPermList);
     EXPECT_EQ(PERMISSION_DENIED, VerifyRuntimePermission(toolTokenId, LOCATION_PERMISSION));
     EXPECT_EQ(PERMISSION_GRANTED, VerifyRuntimePermission(toolTokenId, WIFI_PERMISSION));
     EXPECT_EQ(PERMISSION_DENIED, VerifyRuntimePermission(toolTokenId, CAMERA_PERMISSION));
@@ -1296,13 +1372,13 @@ HWTEST_F(ToolTokenMockTest, GenerateCliAuthResult_003, TestSize.Level1)
     cleaner.Add(hostTokenId);
 
     auto authResult = GenerateCliAuthResult(hostTokenId,
-        { BuildCliAuthInfoParcel(BuildCliInfo("settings", "set"), { ACCESS_SYSTEM_SETTINGS }, { true }) }, cleaner);
-    ASSERT_EQ(1, static_cast<int32_t>(authResult.result.authResults.size()));
-    ASSERT_FALSE(authResult.result.authResults[0].empty());
+        { BuildCliAuthInfo(BuildCliInfo("settings", "set"), { ACCESS_SYSTEM_SETTINGS }, { true }) }, cleaner);
+    ASSERT_EQ(1, static_cast<int32_t>(authResult.authResults.size()));
+    ASSERT_FALSE(authResult.authResults[0].empty());
 
     std::vector<std::string> kernelPermList;
     AccessTokenID toolTokenId = InitCliToolToken(
-        hostTokenId, authResult.result.authResults[0], BuildCliInfo("settings", "set"), kernelPermList);
+        hostTokenId, authResult.authResults[0], BuildCliInfo("settings", "set"), kernelPermList);
     EXPECT_EQ(PERMISSION_GRANTED, VerifyRuntimePermission(toolTokenId, ACCESS_SYSTEM_SETTINGS));
     EXPECT_EQ(RET_SUCCESS, ToolTokenInfoManager::GetInstance().DeleteToolTokenByPid(getpid()));
 }
@@ -1323,13 +1399,13 @@ HWTEST_F(ToolTokenMockTest, GenerateCliAuthResult_004, TestSize.Level1)
     cleaner.Add(hostTokenId);
 
     auto authResult = GenerateCliAuthResult(hostTokenId,
-        { BuildCliAuthInfoParcel(BuildCliInfo("settings", "set"), { ACCESS_SYSTEM_SETTINGS }, { false }) }, cleaner);
-    ASSERT_EQ(1, static_cast<int32_t>(authResult.result.authResults.size()));
-    ASSERT_FALSE(authResult.result.authResults[0].empty());
+        { BuildCliAuthInfo(BuildCliInfo("settings", "set"), { ACCESS_SYSTEM_SETTINGS }, { false }) }, cleaner);
+    ASSERT_EQ(1, static_cast<int32_t>(authResult.authResults.size()));
+    ASSERT_FALSE(authResult.authResults[0].empty());
 
     std::vector<std::string> kernelPermList;
     AccessTokenID toolTokenId = InitCliToolToken(
-        hostTokenId, authResult.result.authResults[0], BuildCliInfo("settings", "set"), kernelPermList);
+        hostTokenId, authResult.authResults[0], BuildCliInfo("settings", "set"), kernelPermList);
     EXPECT_EQ(PERMISSION_GRANTED, VerifyRuntimePermission(toolTokenId, ACCESS_SYSTEM_SETTINGS));
     EXPECT_EQ(RET_SUCCESS, ToolTokenInfoManager::GetInstance().DeleteToolTokenByPid(getpid()));
 }
@@ -1350,13 +1426,13 @@ HWTEST_F(ToolTokenMockTest, GenerateCliAuthResult_005, TestSize.Level1)
     cleaner.Add(hostTokenId);
 
     auto authResult = GenerateCliAuthResult(hostTokenId,
-        { BuildCliAuthInfoParcel(BuildCliInfo("settings", "set"), { CAMERA_PERMISSION }, { true }) }, cleaner);
-    ASSERT_EQ(1, static_cast<int32_t>(authResult.result.authResults.size()));
-    ASSERT_FALSE(authResult.result.authResults[0].empty());
+        { BuildCliAuthInfo(BuildCliInfo("settings", "set"), { CAMERA_PERMISSION }, { true }) }, cleaner);
+    ASSERT_EQ(1, static_cast<int32_t>(authResult.authResults.size()));
+    ASSERT_FALSE(authResult.authResults[0].empty());
 
     std::vector<std::string> kernelPermList;
     AccessTokenID toolTokenId = InitCliToolToken(
-        hostTokenId, authResult.result.authResults[0], BuildCliInfo("settings", "set"), kernelPermList);
+        hostTokenId, authResult.authResults[0], BuildCliInfo("settings", "set"), kernelPermList);
     EXPECT_EQ(PERMISSION_GRANTED, VerifyRuntimePermission(toolTokenId, CAMERA_PERMISSION));
     EXPECT_EQ(RET_SUCCESS, ToolTokenInfoManager::GetInstance().DeleteToolTokenByPid(getpid()));
 }
@@ -1377,13 +1453,13 @@ HWTEST_F(ToolTokenMockTest, GenerateCliAuthResult_006, TestSize.Level1)
     cleaner.Add(hostTokenId);
 
     auto authResult = GenerateCliAuthResult(hostTokenId,
-        { BuildCliAuthInfoParcel(BuildCliInfo("settings", "set"), { CAMERA_PERMISSION }, { false }) }, cleaner);
-    ASSERT_EQ(1, static_cast<int32_t>(authResult.result.authResults.size()));
-    ASSERT_FALSE(authResult.result.authResults[0].empty());
+        { BuildCliAuthInfo(BuildCliInfo("settings", "set"), { CAMERA_PERMISSION }, { false }) }, cleaner);
+    ASSERT_EQ(1, static_cast<int32_t>(authResult.authResults.size()));
+    ASSERT_FALSE(authResult.authResults[0].empty());
 
     std::vector<std::string> kernelPermList;
     AccessTokenID toolTokenId = InitCliToolToken(
-        hostTokenId, authResult.result.authResults[0], BuildCliInfo("settings", "set"), kernelPermList);
+        hostTokenId, authResult.authResults[0], BuildCliInfo("settings", "set"), kernelPermList);
     EXPECT_EQ(PERMISSION_DENIED, VerifyRuntimePermission(toolTokenId, CAMERA_PERMISSION));
     EXPECT_EQ(RET_SUCCESS, ToolTokenInfoManager::GetInstance().DeleteToolTokenByPid(getpid()));
 }
@@ -1397,10 +1473,10 @@ HWTEST_F(ToolTokenMockTest, GenerateCliAuthResult_007, TestSize.Level1)
 {
     TokenCleaner cleaner;
 
-    ToolAuthResultParcel result;
+    ToolAuthResult result;
     EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, GenerateCliAuthResultRet(
         INVALID_TOKENID,
-        { BuildCliAuthInfoParcel(BuildCliInfo("settings", "set"), { ACCESS_SYSTEM_SETTINGS }, { true }) },
+        { BuildCliAuthInfo(BuildCliInfo("settings", "set"), { ACCESS_SYSTEM_SETTINGS }, { true }) },
         result, cleaner));
 }
 
@@ -1419,7 +1495,7 @@ HWTEST_F(ToolTokenMockTest, GenerateCliAuthResult_008, TestSize.Level1)
     hostTokenId = GetTokenIdFromFullTokenId(hostFullTokenId);
     cleaner.Add(hostTokenId);
 
-    ToolAuthResultParcel result;
+    ToolAuthResult result;
     EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
         GenerateCliAuthResultRet(hostTokenId, {}, result, cleaner));
 }
@@ -1439,10 +1515,10 @@ HWTEST_F(ToolTokenMockTest, GenerateCliAuthResult_009, TestSize.Level1)
     hostTokenId = GetTokenIdFromFullTokenId(hostFullTokenId);
     cleaner.Add(hostTokenId);
 
-    ToolAuthResultParcel result;
+    ToolAuthResult result;
     EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
         GenerateCliAuthResultRet(hostTokenId,
-            { BuildCliAuthInfoParcel(BuildCliInfo("settings", "set"), { ACCESS_SYSTEM_SETTINGS }, {}) },
+            { BuildCliAuthInfo(BuildCliInfo("settings", "set"), { ACCESS_SYSTEM_SETTINGS }, {}) },
             result, cleaner));
 }
 
@@ -1462,19 +1538,18 @@ HWTEST_F(ToolTokenMockTest, GenerateCliAuthResult_010, TestSize.Level1)
     PrepareMockEnvironment();
 
     auto result = GenerateCliAuthResult(hostTokenId,
-        { BuildCliAuthInfoParcel(BuildCliInfo("location", "query"), { CUSTOM_SCREEN_CAPTURE }, { true }) }, cleaner);
-    ASSERT_EQ(1, static_cast<int32_t>(result.result.authResults.size()));
-    EXPECT_FALSE(result.result.authResults[0].empty());
+        { BuildCliAuthInfo(BuildCliInfo("location", "query"), { CUSTOM_SCREEN_CAPTURE }, { true }) }, cleaner);
+    ASSERT_EQ(1, static_cast<int32_t>(result.authResults.size()));
+    EXPECT_FALSE(result.authResults[0].empty());
 
-    CliInitInfoParcel initInfoParcel;
-    initInfoParcel.cliInitInfo = {
+    CliInitInfo initInfo = {
         .hostTokenId = hostTokenId,
-        .challenge = result.result.authResults[0],
+        .challenge = result.authResults[0],
         .cliInfo = BuildCliInfo("location", "query"),
     };
     uint64_t fullTokenId = 0;
     std::vector<PermissionWithValueIdl> kernelPermIdlList;
-    EXPECT_EQ(RET_SUCCESS, InitCliToolTokenRet(initInfoParcel, fullTokenId, kernelPermIdlList));
+    EXPECT_EQ(RET_SUCCESS, InitCliToolTokenRet(initInfo, fullTokenId, kernelPermIdlList));
 }
 
 /**
@@ -1492,13 +1567,12 @@ HWTEST_F(ToolTokenMockTest, GenerateCliAuthResult_011, TestSize.Level1)
     hostTokenId = GetTokenIdFromFullTokenId(hostFullTokenId);
     cleaner.Add(hostTokenId);
     PrepareMockEnvironment();
-    auto authInfo =
-        BuildCliAuthInfoParcel(BuildCliInfo("settings", "set"), { ACCESS_SYSTEM_SETTINGS }, { true });
+    auto authInfo = BuildCliAuthInfo(BuildCliInfo("settings", "set"), { ACCESS_SYSTEM_SETTINGS }, { true });
     MockSingleCliAuthChallenge(authInfo, "auth_010_challenge", "auth_010_ticket");
 
     auto result = GenerateCliAuthResult(hostTokenId, { authInfo }, cleaner);
-    ASSERT_EQ(1, static_cast<int32_t>(result.result.authResults.size()));
-    EXPECT_EQ("auth_010_challenge", result.result.authResults[0]);
+    ASSERT_EQ(1, static_cast<int32_t>(result.authResults.size()));
+    EXPECT_EQ("auth_010_challenge", result.authResults[0]);
 }
 
 /**
@@ -1510,12 +1584,12 @@ HWTEST_F(ToolTokenMockTest, GenerateCliAuthResult_012, TestSize.Level1)
 {
     TokenCleaner cleaner;
 
-    ToolAuthResultParcel result;
+    ToolAuthResult result;
     EXPECT_EQ(AccessTokenError::ERR_TOKENID_NOT_EXIST,
         GenerateCliAuthResultRet(GetNativeProcessTokenId(),
-            { BuildCliAuthInfoParcel(BuildCliInfo("settings", "set"), { ACCESS_SYSTEM_SETTINGS }, { true }) },
+            { BuildCliAuthInfo(BuildCliInfo("settings", "set"), { ACCESS_SYSTEM_SETTINGS }, { true }) },
             result, cleaner));
-    EXPECT_TRUE(result.result.authResults.empty());
+    EXPECT_TRUE(result.authResults.empty());
 }
 
 /**
@@ -1541,12 +1615,13 @@ HWTEST_F(ToolTokenMockTest, GenerateCliAuthResult_013, TestSize.Level1)
 
     SelfTokenGuard guard;
     SetSelfTokenID(callerFullTokenId);
-    ToolAuthResultParcel result;
+    ToolAuthResultIdl result;
     EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
         atManagerService_->GenerateCliAuthResult(hostTokenId, BuildInvalidAgentId(),
-            { BuildCliAuthInfoParcel(BuildCliInfo("settings", "set"), { ACCESS_SYSTEM_SETTINGS }, { true }) },
+            ConvertCliAuthInfosToIdls(
+                { BuildCliAuthInfo(BuildCliInfo("settings", "set"), { ACCESS_SYSTEM_SETTINGS }, { true }) }),
             result));
-    EXPECT_TRUE(result.result.authResults.empty());
+    EXPECT_TRUE(result.authResults.empty());
 }
 
 /**
@@ -1564,8 +1639,7 @@ HWTEST_F(ToolTokenMockTest, InitCliToken_001, TestSize.Level1)
     hostTokenId = GetTokenIdFromFullTokenId(hostFullTokenId);
     cleaner.Add(hostTokenId);
 
-    CliInitInfoParcel initInfoParcel;
-    initInfoParcel.cliInitInfo = {
+    CliInitInfo initInfo = {
         .hostTokenId = hostTokenId,
         .challenge = "not_exist_challenge",
         .cliInfo = BuildCliInfo("settings", "set"),
@@ -1573,7 +1647,7 @@ HWTEST_F(ToolTokenMockTest, InitCliToken_001, TestSize.Level1)
     uint64_t fullTokenId = 0;
     std::vector<PermissionWithValueIdl> kernelPermIdlList;
     EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
-        InitCliToolTokenRet(initInfoParcel, fullTokenId, kernelPermIdlList));
+        InitCliToolTokenRet(initInfo, fullTokenId, kernelPermIdlList));
 }
 
 /**
@@ -1592,26 +1666,24 @@ HWTEST_F(ToolTokenMockTest, InitCliToken_002, TestSize.Level1)
     cleaner.Add(hostTokenId);
 
     PrepareMockEnvironment();
-    auto authInfo =
-        BuildCliAuthInfoParcel(BuildCliInfo("settings", "set"), { ACCESS_SYSTEM_SETTINGS }, { true });
+    auto authInfo = BuildCliAuthInfo(BuildCliInfo("settings", "set"), { ACCESS_SYSTEM_SETTINGS }, { true });
     MockSingleCliAuthChallenge(authInfo, "init_010_challenge", "init_010_ticket");
     std::string challenge = GenerateSingleCliAuthChallenge(hostTokenId, authInfo, cleaner);
-    CliInitInfoParcel initInfoParcel;
-    initInfoParcel.cliInitInfo = {
+    CliInitInfo initInfo = {
         .hostTokenId = hostTokenId,
         .challenge = challenge,
         .cliInfo = BuildCliInfo("settings", "set"),
     };
     uint64_t fullTokenId = 0;
     std::vector<PermissionWithValueIdl> kernelPermIdlList;
-    ASSERT_EQ(RET_SUCCESS, InitCliToolTokenRet(initInfoParcel, fullTokenId, kernelPermIdlList));
+    ASSERT_EQ(RET_SUCCESS, InitCliToolTokenRet(initInfo, fullTokenId, kernelPermIdlList));
     AccessTokenID tokenId = GetTokenIdFromFullTokenId(fullTokenId);
     ASSERT_NE(INVALID_TOKENID, tokenId);
 
     uint64_t secondFullTokenId = 0;
     std::vector<PermissionWithValueIdl> secondKernelPermIdlList;
     EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
-        InitCliToolTokenRet(initInfoParcel, secondFullTokenId, secondKernelPermIdlList));
+        InitCliToolTokenRet(initInfo, secondFullTokenId, secondKernelPermIdlList));
     EXPECT_EQ(RET_SUCCESS, ToolTokenInfoManager::GetInstance().DeleteToolTokenByPid(getpid()));
 }
 
@@ -1631,12 +1703,10 @@ HWTEST_F(ToolTokenMockTest, InitCliToken_003, TestSize.Level1)
     cleaner.Add(hostTokenId);
 
     PrepareMockEnvironment();
-    auto authInfo =
-        BuildCliAuthInfoParcel(BuildCliInfo("settings", "set"), { ACCESS_SYSTEM_SETTINGS }, { true });
+    auto authInfo = BuildCliAuthInfo(BuildCliInfo("settings", "set"), { ACCESS_SYSTEM_SETTINGS }, { true });
     MockSingleCliAuthChallenge(authInfo, "init_011_challenge", "init_011_ticket");
     std::string challenge = GenerateSingleCliAuthChallenge(hostTokenId, authInfo, cleaner);
-    CliInitInfoParcel failedInitInfoParcel;
-    failedInitInfoParcel.cliInitInfo = {
+    CliInitInfo failedInitInfo = {
         .hostTokenId = hostTokenId,
         .challenge = challenge,
         .cliInfo = BuildCliInfo("settings", "wrong"),
@@ -1644,17 +1714,16 @@ HWTEST_F(ToolTokenMockTest, InitCliToken_003, TestSize.Level1)
     uint64_t failedFullTokenId = 0;
     std::vector<PermissionWithValueIdl> failedKernelPermIdlList;
     EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
-        InitCliToolTokenRet(failedInitInfoParcel, failedFullTokenId, failedKernelPermIdlList));
+        InitCliToolTokenRet(failedInitInfo, failedFullTokenId, failedKernelPermIdlList));
 
-    CliInitInfoParcel initInfoParcel;
-    initInfoParcel.cliInitInfo = {
+    CliInitInfo initInfo = {
         .hostTokenId = hostTokenId,
         .challenge = challenge,
         .cliInfo = BuildCliInfo("settings", "set"),
     };
     uint64_t fullTokenId = 0;
     std::vector<PermissionWithValueIdl> kernelPermIdlList;
-    ASSERT_EQ(RET_SUCCESS, InitCliToolTokenRet(initInfoParcel, fullTokenId, kernelPermIdlList));
+    ASSERT_EQ(RET_SUCCESS, InitCliToolTokenRet(initInfo, fullTokenId, kernelPermIdlList));
     AccessTokenID tokenId = GetTokenIdFromFullTokenId(fullTokenId);
     ASSERT_NE(INVALID_TOKENID, tokenId);
     EXPECT_EQ(RET_SUCCESS, ToolTokenInfoManager::GetInstance().DeleteToolTokenByPid(getpid()));
@@ -1682,13 +1751,11 @@ HWTEST_F(ToolTokenMockTest, InitCliToken_004, TestSize.Level1)
     cleaner.Add(otherHostTokenId);
 
     PrepareMockEnvironment();
-    auto authInfo =
-        BuildCliAuthInfoParcel(BuildCliInfo("settings", "set"), { ACCESS_SYSTEM_SETTINGS }, { true });
+    auto authInfo = BuildCliAuthInfo(BuildCliInfo("settings", "set"), { ACCESS_SYSTEM_SETTINGS }, { true });
     MockSingleCliAuthChallenge(authInfo, "init_016_challenge", "init_016_ticket");
     std::string challenge = GenerateSingleCliAuthChallenge(hostTokenId, authInfo, cleaner);
 
-    CliInitInfoParcel failedInitInfoParcel;
-    failedInitInfoParcel.cliInitInfo = {
+    CliInitInfo failedInitInfo = {
         .hostTokenId = otherHostTokenId,
         .challenge = challenge,
         .cliInfo = BuildCliInfo("settings", "set"),
@@ -1696,17 +1763,16 @@ HWTEST_F(ToolTokenMockTest, InitCliToken_004, TestSize.Level1)
     uint64_t failedFullTokenId = 0;
     std::vector<PermissionWithValueIdl> failedKernelPermIdlList;
     EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
-        InitCliToolTokenRet(failedInitInfoParcel, failedFullTokenId, failedKernelPermIdlList));
+        InitCliToolTokenRet(failedInitInfo, failedFullTokenId, failedKernelPermIdlList));
 
-    CliInitInfoParcel initInfoParcel;
-    initInfoParcel.cliInitInfo = {
+    CliInitInfo initInfo = {
         .hostTokenId = hostTokenId,
         .challenge = challenge,
         .cliInfo = BuildCliInfo("settings", "set"),
     };
     uint64_t fullTokenId = 0;
     std::vector<PermissionWithValueIdl> kernelPermIdlList;
-    ASSERT_EQ(RET_SUCCESS, InitCliToolTokenRet(initInfoParcel, fullTokenId, kernelPermIdlList));
+    ASSERT_EQ(RET_SUCCESS, InitCliToolTokenRet(initInfo, fullTokenId, kernelPermIdlList));
     AccessTokenID tokenId = GetTokenIdFromFullTokenId(fullTokenId);
     ASSERT_NE(INVALID_TOKENID, tokenId);
     EXPECT_EQ(RET_SUCCESS, ToolTokenInfoManager::GetInstance().DeleteToolTokenByPid(getpid()));
@@ -1728,26 +1794,23 @@ HWTEST_F(ToolTokenMockTest, InitCliToken_005, TestSize.Level1)
     cleaner.Add(hostTokenId);
 
     PrepareMockEnvironment();
-    auto authInfo =
-        BuildCliAuthInfoParcel(BuildCliInfo("settings", "set"), { ACCESS_SYSTEM_SETTINGS }, { true });
+    auto authInfo = BuildCliAuthInfo(BuildCliInfo("settings", "set"), { ACCESS_SYSTEM_SETTINGS }, { true });
     MockSingleCliAuthChallenge(authInfo, "init_012_first_challenge", "init_012_first_ticket");
     std::string firstChallenge = GenerateSingleCliAuthChallenge(hostTokenId, authInfo, cleaner);
-    CliInitInfoParcel firstInitInfoParcel;
-    firstInitInfoParcel.cliInitInfo = {
+    CliInitInfo firstInitInfo = {
         .hostTokenId = hostTokenId,
         .challenge = firstChallenge,
         .cliInfo = BuildCliInfo("settings", "set"),
     };
     uint64_t firstFullTokenId = 0;
     std::vector<PermissionWithValueIdl> firstKernelPermIdlList;
-    ASSERT_EQ(RET_SUCCESS, InitCliToolTokenRet(firstInitInfoParcel, firstFullTokenId, firstKernelPermIdlList));
+    ASSERT_EQ(RET_SUCCESS, InitCliToolTokenRet(firstInitInfo, firstFullTokenId, firstKernelPermIdlList));
     AccessTokenID tokenId = GetTokenIdFromFullTokenId(firstFullTokenId);
     ASSERT_NE(INVALID_TOKENID, tokenId);
 
     MockSingleCliAuthChallenge(authInfo, "init_012_second_challenge", "init_012_second_ticket");
     std::string secondChallenge = GenerateSingleCliAuthChallenge(hostTokenId, authInfo, cleaner);
-    CliInitInfoParcel secondInitInfoParcel;
-    secondInitInfoParcel.cliInitInfo = {
+    CliInitInfo secondInitInfo = {
         .hostTokenId = hostTokenId,
         .challenge = secondChallenge,
         .cliInfo = BuildCliInfo("settings", "set"),
@@ -1755,7 +1818,7 @@ HWTEST_F(ToolTokenMockTest, InitCliToken_005, TestSize.Level1)
     uint64_t secondFullTokenId = 0;
     std::vector<PermissionWithValueIdl> secondKernelPermIdlList;
     EXPECT_EQ(AccessTokenError::ERR_TOOL_TOKEN_ALREADY_EXIST,
-        InitCliToolTokenRet(secondInitInfoParcel, secondFullTokenId, secondKernelPermIdlList));
+        InitCliToolTokenRet(secondInitInfo, secondFullTokenId, secondKernelPermIdlList));
     EXPECT_EQ(RET_SUCCESS, ToolTokenInfoManager::GetInstance().DeleteToolTokenByPid(getpid()));
 }
 
@@ -1775,34 +1838,31 @@ HWTEST_F(ToolTokenMockTest, InitCliToken_006, TestSize.Level1)
     cleaner.Add(hostTokenId);
 
     PrepareMockEnvironment();
-    auto authInfo =
-        BuildCliAuthInfoParcel(BuildCliInfo("settings", "set"), { ACCESS_SYSTEM_SETTINGS }, { true });
+    auto authInfo = BuildCliAuthInfo(BuildCliInfo("settings", "set"), { ACCESS_SYSTEM_SETTINGS }, { true });
     MockSingleCliAuthChallenge(authInfo, "init_013_first_challenge", "init_013_first_ticket");
     std::string firstChallenge = GenerateSingleCliAuthChallenge(hostTokenId, authInfo, cleaner);
-    CliInitInfoParcel firstInitInfoParcel;
-    firstInitInfoParcel.cliInitInfo = {
+    CliInitInfo firstInitInfo = {
         .hostTokenId = hostTokenId,
         .challenge = firstChallenge,
         .cliInfo = BuildCliInfo("settings", "set"),
     };
     uint64_t firstFullTokenId = 0;
     std::vector<PermissionWithValueIdl> firstKernelPermIdlList;
-    ASSERT_EQ(RET_SUCCESS, InitCliToolTokenRet(firstInitInfoParcel, firstFullTokenId, firstKernelPermIdlList));
+    ASSERT_EQ(RET_SUCCESS, InitCliToolTokenRet(firstInitInfo, firstFullTokenId, firstKernelPermIdlList));
     AccessTokenID firstTokenId = GetTokenIdFromFullTokenId(firstFullTokenId);
     ASSERT_NE(INVALID_TOKENID, firstTokenId);
     EXPECT_EQ(RET_SUCCESS, ToolTokenInfoManager::GetInstance().DeleteToolTokenByPid(getpid()));
 
     MockSingleCliAuthChallenge(authInfo, "init_013_second_challenge", "init_013_second_ticket");
     std::string secondChallenge = GenerateSingleCliAuthChallenge(hostTokenId, authInfo, cleaner);
-    CliInitInfoParcel secondInitInfoParcel;
-    secondInitInfoParcel.cliInitInfo = {
+    CliInitInfo secondInitInfo = {
         .hostTokenId = hostTokenId,
         .challenge = secondChallenge,
         .cliInfo = BuildCliInfo("settings", "set"),
     };
     uint64_t secondFullTokenId = 0;
     std::vector<PermissionWithValueIdl> secondKernelPermIdlList;
-    ASSERT_EQ(RET_SUCCESS, InitCliToolTokenRet(secondInitInfoParcel, secondFullTokenId, secondKernelPermIdlList));
+    ASSERT_EQ(RET_SUCCESS, InitCliToolTokenRet(secondInitInfo, secondFullTokenId, secondKernelPermIdlList));
     AccessTokenID secondTokenId = GetTokenIdFromFullTokenId(secondFullTokenId);
     ASSERT_NE(INVALID_TOKENID, secondTokenId);
     EXPECT_EQ(RET_SUCCESS, ToolTokenInfoManager::GetInstance().DeleteToolTokenByPid(getpid()));
@@ -1823,21 +1883,20 @@ HWTEST_F(ToolTokenMockTest, InitCliToken_007, TestSize.Level1)
     cleaner.Add(hostTokenId);
 
     PrepareMockEnvironment();
-    auto authInfo = BuildCliAuthInfoParcel(BuildCliInfo("camera", "capture"), {}, {});
+    auto authInfo = BuildCliAuthInfo(BuildCliInfo("camera", "capture"), {}, {});
     MockSingleCliAuthChallenge(authInfo, "mock_empty_perm_challenge", "mock_empty_perm_ticket");
-    ToolAuthResultParcel authResult = GenerateCliAuthResult(hostTokenId, { authInfo }, cleaner);
-    ASSERT_EQ(1, static_cast<int32_t>(authResult.result.authResults.size()));
-    ASSERT_FALSE(authResult.result.authResults[0].empty());
+    ToolAuthResult authResult = GenerateCliAuthResult(hostTokenId, { authInfo }, cleaner);
+    ASSERT_EQ(1, static_cast<int32_t>(authResult.authResults.size()));
+    ASSERT_FALSE(authResult.authResults[0].empty());
 
-    CliInitInfoParcel initInfoParcel;
-    initInfoParcel.cliInitInfo = {
+    CliInitInfo initInfo = {
         .hostTokenId = hostTokenId,
-        .challenge = authResult.result.authResults[0],
+        .challenge = authResult.authResults[0],
         .cliInfo = BuildCliInfo("camera", "capture"),
     };
     uint64_t fullTokenId = 0;
     std::vector<PermissionWithValueIdl> kernelPermIdlList;
-    ASSERT_EQ(RET_SUCCESS, InitCliToolTokenRet(initInfoParcel, fullTokenId, kernelPermIdlList));
+    ASSERT_EQ(RET_SUCCESS, InitCliToolTokenRet(initInfo, fullTokenId, kernelPermIdlList));
     AccessTokenID tokenId = GetTokenIdFromFullTokenId(fullTokenId);
     EXPECT_TRUE(kernelPermIdlList.empty());
     EXPECT_EQ(PERMISSION_DENIED, VerifyRuntimePermission(tokenId, LOCATION_PERMISSION));
@@ -1859,65 +1918,23 @@ HWTEST_F(ToolTokenMockTest, DeleteToolTokenByPid_001, TestSize.Level1)
     cleaner.Add(hostTokenId);
 
     PrepareMockEnvironment();
-    auto authInfo = BuildCliAuthInfoParcel(BuildCliInfo("camera", "capture"), {}, {});
+    auto authInfo = BuildCliAuthInfo(BuildCliInfo("camera", "capture"), {}, {});
     MockSingleCliAuthChallenge(authInfo, "delete_003_challenge", "delete_003_ticket");
-    ToolAuthResultParcel authResult = GenerateCliAuthResult(hostTokenId, { authInfo }, cleaner);
-    ASSERT_EQ(1, static_cast<int32_t>(authResult.result.authResults.size()));
-    CliInitInfoParcel initInfoParcel;
-    initInfoParcel.cliInitInfo = {
+    ToolAuthResult authResult = GenerateCliAuthResult(hostTokenId, { authInfo }, cleaner);
+    ASSERT_EQ(1, static_cast<int32_t>(authResult.authResults.size()));
+    CliInitInfo initInfo = {
         .hostTokenId = hostTokenId,
-        .challenge = authResult.result.authResults[0],
+        .challenge = authResult.authResults[0],
         .cliInfo = BuildCliInfo("camera", "capture"),
     };
     uint64_t fullTokenId = 0;
     std::vector<PermissionWithValueIdl> kernelPermIdlList;
-    ASSERT_EQ(RET_SUCCESS, InitCliToolTokenRet(initInfoParcel, fullTokenId, kernelPermIdlList));
+    ASSERT_EQ(RET_SUCCESS, InitCliToolTokenRet(initInfo, fullTokenId, kernelPermIdlList));
     AccessTokenID tokenId = GetTokenIdFromFullTokenId(fullTokenId);
     ASSERT_NE(INVALID_TOKENID, tokenId);
     EXPECT_EQ(RET_SUCCESS, ToolTokenInfoManager::GetInstance().DeleteToolTokenByPid(getpid()));
     EXPECT_EQ(AccessTokenError::ERR_TOKENID_NOT_EXIST,
         ToolTokenInfoManager::GetInstance().DeleteToolTokenByPid(getpid()));
-}
-
-/**
- * @tc.name: GetCliTokenInfo_001
- * @tc.desc: Test deleted and non-existent token return token-not-exist.
- * @tc.type: FUNC
- */
-HWTEST_F(ToolTokenMockTest, GetCliTokenInfo_001, TestSize.Level1)
-{
-    AccessTokenID hostTokenId = INVALID_TOKENID;
-    TokenCleaner cleaner;
-    uint64_t hostFullTokenId = CreateServiceTestToken("tooltoken_getcli_001_host", true, {});
-    ASSERT_NE(0, hostFullTokenId);
-    hostTokenId = GetTokenIdFromFullTokenId(hostFullTokenId);
-    cleaner.Add(hostTokenId);
-
-    PrepareMockEnvironment();
-    auto authInfo = BuildCliAuthInfoParcel(BuildCliInfo("camera", "capture"), {}, {});
-    MockSingleCliAuthChallenge(authInfo, "getcli_004_challenge", "getcli_004_ticket");
-    ToolAuthResultParcel authResult = GenerateCliAuthResult(hostTokenId, { authInfo }, cleaner);
-    ASSERT_EQ(1, static_cast<int32_t>(authResult.result.authResults.size()));
-    CliInitInfoParcel initInfoParcel;
-    initInfoParcel.cliInitInfo = {
-        .hostTokenId = hostTokenId,
-        .challenge = authResult.result.authResults[0],
-        .cliInfo = BuildCliInfo("camera", "capture"),
-    };
-    uint64_t fullTokenId = 0;
-    std::vector<PermissionWithValueIdl> kernelPermIdlList;
-    ASSERT_EQ(RET_SUCCESS, InitCliToolTokenRet(initInfoParcel, fullTokenId, kernelPermIdlList));
-    AccessTokenID tokenId = GetTokenIdFromFullTokenId(fullTokenId);
-    ASSERT_NE(INVALID_TOKENID, tokenId);
-    int32_t deleteRet = ToolTokenInfoManager::GetInstance().DeleteToolTokenByPid(getpid());
-    EXPECT_EQ(RET_SUCCESS, deleteRet);
-    CliTokenInfo tokenInfo;
-
-    CliTokenInfo infoParcel;
-    EXPECT_EQ(AccessTokenError::ERR_TOKENID_NOT_EXIST,
-        ToolTokenInfoManager::GetInstance().GetCliTokenInfo(tokenId, infoParcel));
-    EXPECT_EQ(AccessTokenError::ERR_TOKENID_NOT_EXIST,
-        ToolTokenInfoManager::GetInstance().GetCliTokenInfo(INVALID_TOKENID, infoParcel));
 }
 
 /**
@@ -1935,19 +1952,18 @@ HWTEST_F(ToolTokenMockTest, GetHostTokenId_001, TestSize.Level1)
     cleaner.Add(hostTokenId);
 
     PrepareMockEnvironment();
-    auto authInfo = BuildCliAuthInfoParcel(BuildCliInfo("camera", "capture"), {}, {});
+    auto authInfo = BuildCliAuthInfo(BuildCliInfo("camera", "capture"), {}, {});
     MockSingleCliAuthChallenge(authInfo, "gethost_004_challenge", "gethost_004_ticket");
-    ToolAuthResultParcel authResult = GenerateCliAuthResult(hostTokenId, { authInfo }, cleaner);
-    ASSERT_EQ(1, static_cast<int32_t>(authResult.result.authResults.size()));
-    CliInitInfoParcel initInfoParcel;
-    initInfoParcel.cliInitInfo = {
+    ToolAuthResult authResult = GenerateCliAuthResult(hostTokenId, { authInfo }, cleaner);
+    ASSERT_EQ(1, static_cast<int32_t>(authResult.authResults.size()));
+    CliInitInfo initInfo = {
         .hostTokenId = hostTokenId,
-        .challenge = authResult.result.authResults[0],
+        .challenge = authResult.authResults[0],
         .cliInfo = BuildCliInfo("camera", "capture"),
     };
     uint64_t fullTokenId = 0;
     std::vector<PermissionWithValueIdl> kernelPermIdlList;
-    ASSERT_EQ(RET_SUCCESS, InitCliToolTokenRet(initInfoParcel, fullTokenId, kernelPermIdlList));
+    ASSERT_EQ(RET_SUCCESS, InitCliToolTokenRet(initInfo, fullTokenId, kernelPermIdlList));
     AccessTokenID tokenId = GetTokenIdFromFullTokenId(fullTokenId);
     ASSERT_NE(INVALID_TOKENID, tokenId);
     EXPECT_EQ(RET_SUCCESS, ToolTokenInfoManager::GetInstance().DeleteToolTokenByPid(getpid()));
@@ -1994,19 +2010,18 @@ HWTEST_F(ToolTokenMockTest, GetUserId_001, TestSize.Level1)
     EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, ToolTokenInfoManager::GetInstance().GetUserId(hostTokenId, userId));
 
     PrepareMockEnvironment();
-    auto authInfo = BuildCliAuthInfoParcel(BuildCliInfo("camera", "capture"), {}, {});
+    auto authInfo = BuildCliAuthInfo(BuildCliInfo("camera", "capture"), {}, {});
     MockSingleCliAuthChallenge(authInfo, "getuser_001_challenge", "getuser_001_ticket");
-    ToolAuthResultParcel authResult = GenerateCliAuthResult(hostTokenId, { authInfo }, cleaner);
-    ASSERT_EQ(1, static_cast<int32_t>(authResult.result.authResults.size()));
-    CliInitInfoParcel initInfoParcel;
-    initInfoParcel.cliInitInfo = {
+    ToolAuthResult authResult = GenerateCliAuthResult(hostTokenId, { authInfo }, cleaner);
+    ASSERT_EQ(1, static_cast<int32_t>(authResult.authResults.size()));
+    CliInitInfo initInfo = {
         .hostTokenId = hostTokenId,
-        .challenge = authResult.result.authResults[0],
+        .challenge = authResult.authResults[0],
         .cliInfo = BuildCliInfo("camera", "capture"),
     };
     uint64_t fullTokenId = 0;
     std::vector<PermissionWithValueIdl> kernelPermIdlList;
-    ASSERT_EQ(RET_SUCCESS, InitCliToolTokenRet(initInfoParcel, fullTokenId, kernelPermIdlList));
+    ASSERT_EQ(RET_SUCCESS, InitCliToolTokenRet(initInfo, fullTokenId, kernelPermIdlList));
     AccessTokenID toolTokenId = GetTokenIdFromFullTokenId(fullTokenId);
     ASSERT_NE(INVALID_TOKENID, toolTokenId);
 
@@ -2050,19 +2065,18 @@ HWTEST_F(ToolTokenMockTest, UpdateRestrictedFlag_002, TestSize.Level1)
     cleaner.Add(hostTokenId);
 
     PrepareMockEnvironment();
-    auto authInfo = BuildCliAuthInfoParcel(BuildCliInfo("camera", "capture"), { CAMERA_PERMISSION }, { true });
+    auto authInfo = BuildCliAuthInfo(BuildCliInfo("camera", "capture"), { CAMERA_PERMISSION }, { true });
     MockSingleCliAuthChallenge(authInfo, "restricted_flag_challenge", "restricted_flag_ticket");
-    ToolAuthResultParcel authResult = GenerateCliAuthResult(hostTokenId, { authInfo }, cleaner);
-    ASSERT_EQ(1, static_cast<int32_t>(authResult.result.authResults.size()));
-    CliInitInfoParcel initInfoParcel;
-    initInfoParcel.cliInitInfo = {
+    ToolAuthResult authResult = GenerateCliAuthResult(hostTokenId, { authInfo }, cleaner);
+    ASSERT_EQ(1, static_cast<int32_t>(authResult.authResults.size()));
+    CliInitInfo initInfo = {
         .hostTokenId = hostTokenId,
-        .challenge = authResult.result.authResults[0],
+        .challenge = authResult.authResults[0],
         .cliInfo = BuildCliInfo("camera", "capture"),
     };
     uint64_t fullTokenId = 0;
     std::vector<PermissionWithValueIdl> kernelPermIdlList;
-    ASSERT_EQ(RET_SUCCESS, InitCliToolTokenRet(initInfoParcel, fullTokenId, kernelPermIdlList));
+    ASSERT_EQ(RET_SUCCESS, InitCliToolTokenRet(initInfo, fullTokenId, kernelPermIdlList));
     AccessTokenID tokenId = GetTokenIdFromFullTokenId(fullTokenId);
     ASSERT_NE(INVALID_TOKENID, tokenId);
 
@@ -2116,20 +2130,18 @@ HWTEST_F(ToolTokenMockTest, RefreshUserPolicyFlag_002, TestSize.Level1)
     cleaner.Add(hostTokenId);
 
     PrepareMockEnvironment();
-    auto authInfo =
-        BuildCliAuthInfoParcel(BuildCliInfo("settings", "set"), { ACCESS_SYSTEM_SETTINGS }, { true });
+    auto authInfo = BuildCliAuthInfo(BuildCliInfo("settings", "set"), { ACCESS_SYSTEM_SETTINGS }, { true });
     MockSingleCliAuthChallenge(authInfo, "user_policy_challenge", "user_policy_ticket");
-    ToolAuthResultParcel authResult = GenerateCliAuthResult(hostTokenId, { authInfo }, cleaner);
-    ASSERT_EQ(1, static_cast<int32_t>(authResult.result.authResults.size()));
-    CliInitInfoParcel initInfoParcel;
-    initInfoParcel.cliInitInfo = {
+    ToolAuthResult authResult = GenerateCliAuthResult(hostTokenId, { authInfo }, cleaner);
+    ASSERT_EQ(1, static_cast<int32_t>(authResult.authResults.size()));
+    CliInitInfo initInfo = {
         .hostTokenId = hostTokenId,
-        .challenge = authResult.result.authResults[0],
+        .challenge = authResult.authResults[0],
         .cliInfo = BuildCliInfo("settings", "set"),
     };
     uint64_t fullTokenId = 0;
     std::vector<PermissionWithValueIdl> kernelPermIdlList;
-    ASSERT_EQ(RET_SUCCESS, InitCliToolTokenRet(initInfoParcel, fullTokenId, kernelPermIdlList));
+    ASSERT_EQ(RET_SUCCESS, InitCliToolTokenRet(initInfo, fullTokenId, kernelPermIdlList));
     AccessTokenID tokenId = GetTokenIdFromFullTokenId(fullTokenId);
     ASSERT_NE(INVALID_TOKENID, tokenId);
     EXPECT_EQ(PERMISSION_GRANTED,
@@ -2198,20 +2210,22 @@ HWTEST_F(ToolTokenMockTest, RefreshUserPolicyFlag_003, TestSize.Level1)
     cleaner.Add(hostTokenId);
 
     PrepareMockEnvironment();
-    auto authInfo =
-        BuildCliAuthInfoParcel(BuildCliInfo("settings", "set"), { ACCESS_SYSTEM_SETTINGS }, { true });
+    CliAuthInfo authInfo = {
+        .cliInfo = BuildCliInfo("settings", "set"),
+        .permissionNames = { ACCESS_SYSTEM_SETTINGS },
+        .authorizationResults = { true },
+    };
     MockSingleCliAuthChallenge(authInfo, "user_policy_no_brief_challenge", "user_policy_no_brief_ticket");
-    ToolAuthResultParcel authResult = GenerateCliAuthResult(hostTokenId, { authInfo }, cleaner);
-    ASSERT_EQ(1, static_cast<int32_t>(authResult.result.authResults.size()));
-    CliInitInfoParcel initInfoParcel;
-    initInfoParcel.cliInitInfo = {
+    ToolAuthResult authResult = GenerateCliAuthResult(hostTokenId, { authInfo }, cleaner);
+    ASSERT_EQ(1, static_cast<int32_t>(authResult.authResults.size()));
+    CliInitInfo initInfo = {
         .hostTokenId = hostTokenId,
-        .challenge = authResult.result.authResults[0],
+        .challenge = authResult.authResults[0],
         .cliInfo = BuildCliInfo("settings", "set"),
     };
     uint64_t fullTokenId = 0;
     std::vector<PermissionWithValueIdl> kernelPermIdlList;
-    ASSERT_EQ(RET_SUCCESS, InitCliToolTokenRet(initInfoParcel, fullTokenId, kernelPermIdlList));
+    ASSERT_EQ(RET_SUCCESS, InitCliToolTokenRet(initInfo, fullTokenId, kernelPermIdlList));
     AccessTokenID tokenId = GetTokenIdFromFullTokenId(fullTokenId);
     ASSERT_NE(INVALID_TOKENID, tokenId);
     ASSERT_EQ(RET_SUCCESS, PermissionDataBrief::GetInstance().DeleteBriefPermDataByTokenId(tokenId));
@@ -2242,20 +2256,22 @@ HWTEST_F(ToolTokenMockTest, RefreshUserPolicyFlag_004, TestSize.Level1)
     cleaner.Add(hostTokenId);
 
     PrepareMockEnvironment();
-    auto authInfo =
-        BuildCliAuthInfoParcel(BuildCliInfo("settings", "set"), { ACCESS_SYSTEM_SETTINGS }, { true });
+    CliAuthInfo authInfo = {
+        .cliInfo = BuildCliInfo("settings", "set"),
+        .permissionNames = { ACCESS_SYSTEM_SETTINGS },
+        .authorizationResults = { true },
+    };
     MockSingleCliAuthChallenge(authInfo, "user_policy_rollback_challenge", "user_policy_rollback_ticket");
-    ToolAuthResultParcel authResult = GenerateCliAuthResult(hostTokenId, { authInfo }, cleaner);
-    ASSERT_EQ(1, static_cast<int32_t>(authResult.result.authResults.size()));
-    CliInitInfoParcel initInfoParcel;
-    initInfoParcel.cliInitInfo = {
+    ToolAuthResult authResult = GenerateCliAuthResult(hostTokenId, { authInfo }, cleaner);
+    ASSERT_EQ(1, static_cast<int32_t>(authResult.authResults.size()));
+    CliInitInfo initInfo = {
         .hostTokenId = hostTokenId,
-        .challenge = authResult.result.authResults[0],
+        .challenge = authResult.authResults[0],
         .cliInfo = BuildCliInfo("settings", "set"),
     };
     uint64_t fullTokenId = 0;
     std::vector<PermissionWithValueIdl> kernelPermIdlList;
-    ASSERT_EQ(RET_SUCCESS, InitCliToolTokenRet(initInfoParcel, fullTokenId, kernelPermIdlList));
+    ASSERT_EQ(RET_SUCCESS, InitCliToolTokenRet(initInfo, fullTokenId, kernelPermIdlList));
     AccessTokenID tokenId = GetTokenIdFromFullTokenId(fullTokenId);
     ASSERT_NE(INVALID_TOKENID, tokenId);
     ASSERT_EQ(PERMISSION_GRANTED, VerifyRuntimePermission(tokenId, ACCESS_SYSTEM_SETTINGS));
@@ -2306,21 +2322,23 @@ HWTEST_F(ToolTokenMockTest, RefreshUserPolicyFlag_005, TestSize.Level1)
     cleaner.Add(hostTokenId);
 
     PrepareMockEnvironment();
-    auto authInfo =
-        BuildCliAuthInfoParcel(BuildCliInfo("settings", "set"), { ACCESS_SYSTEM_SETTINGS }, { true });
+    CliAuthInfo authInfo = {
+        .cliInfo = BuildCliInfo("settings", "set"),
+        .permissionNames = { ACCESS_SYSTEM_SETTINGS },
+        .authorizationResults = { true },
+    };
     MockSingleCliAuthChallenge(authInfo, "user_policy_rollback_continue_challenge",
         "user_policy_rollback_continue_ticket");
-    ToolAuthResultParcel authResult = GenerateCliAuthResult(hostTokenId, { authInfo }, cleaner);
-    ASSERT_EQ(1, static_cast<int32_t>(authResult.result.authResults.size()));
-    CliInitInfoParcel initInfoParcel;
-    initInfoParcel.cliInitInfo = {
+    ToolAuthResult authResult = GenerateCliAuthResult(hostTokenId, { authInfo }, cleaner);
+    ASSERT_EQ(1, static_cast<int32_t>(authResult.authResults.size()));
+    CliInitInfo initInfo = {
         .hostTokenId = hostTokenId,
-        .challenge = authResult.result.authResults[0],
+        .challenge = authResult.authResults[0],
         .cliInfo = BuildCliInfo("settings", "set"),
     };
     uint64_t fullTokenId = 0;
     std::vector<PermissionWithValueIdl> kernelPermIdlList;
-    ASSERT_EQ(RET_SUCCESS, InitCliToolTokenRet(initInfoParcel, fullTokenId, kernelPermIdlList));
+    ASSERT_EQ(RET_SUCCESS, InitCliToolTokenRet(initInfo, fullTokenId, kernelPermIdlList));
     AccessTokenID tokenId = GetTokenIdFromFullTokenId(fullTokenId);
     ASSERT_NE(INVALID_TOKENID, tokenId);
 

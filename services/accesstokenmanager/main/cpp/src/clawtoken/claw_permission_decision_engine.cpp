@@ -260,42 +260,6 @@ int32_t ClawPermissionDecisionEngine::BuildCliPermissionDialogInfo(
     return RET_SUCCESS;
 }
 
-int32_t ClawPermissionDecisionEngine::BuildSkillPermissionDialogInfo(
-    AccessTokenID clawTokenId, const std::vector<SkillInfo>& skillInfoList, PermissionDialogResult& result)
-{
-    result.detailList.clear();
-    result.detailList.reserve(skillInfoList.size());
-    DecisionContext context(clawTokenId);
-    int32_t ret = context.Init();
-    if (ret != RET_SUCCESS) {
-        return ret;
-    }
-
-    for (const auto& skillInfo : skillInfoList) {
-        std::vector<std::string> usedPermissions;
-        ret = ClawPermissionMetadataProvider::GetInstance().GetSkillUsedPermissions(skillInfo, usedPermissions);
-        if (ret != RET_SUCCESS) {
-            return ret;
-        }
-
-        PermissionDialogDetail detail;
-        detail.statusList.reserve(usedPermissions.size());
-        for (const auto& permission : usedPermissions) {
-            PermissionDecisionStatus status = context.GetPermissionDecisionStatus(
-                permission, PermissionDecisionStatus::NO_DIALOG_NOT_DECLARED);
-            if (status == PermissionDecisionStatus::NEED_PERMISSION_DIALOG) {
-                detail.needPermissionDialog = true;
-            }
-            if (ShouldReturnDialogDetailStatus(status)) {
-                detail.permissionNameList.emplace_back(permission);
-                detail.statusList.emplace_back(status);
-            }
-        }
-        result.detailList.emplace_back(detail);
-    }
-    return RET_SUCCESS;
-}
-
 int32_t ClawPermissionDecisionEngine::BuildCliPermissions(
     AccessTokenID clawTokenId, const std::vector<CliInfo>& cliInfoList, CliPermissionsResult& result)
 {
@@ -330,34 +294,6 @@ int32_t ClawPermissionDecisionEngine::BuildCliPermissions(
     return RET_SUCCESS;
 }
 
-int32_t ClawPermissionDecisionEngine::BuildSkillPermissions(
-    AccessTokenID clawTokenId, const std::vector<SkillInfo>& skillInfoList, SkillPermissionsResult& result)
-{
-    result.permList.clear();
-    result.permList.reserve(skillInfoList.size());
-    DecisionContext context(clawTokenId);
-    int32_t ret = context.Init();
-    if (ret != RET_SUCCESS) {
-        return ret;
-    }
-
-    for (const auto& skillInfo : skillInfoList) {
-        SkillCommandPermissionResult commandResult;
-        ret = ClawPermissionMetadataProvider::GetInstance().GetSkillUsedPermissions(
-            skillInfo, commandResult.usedPermissions);
-        if (ret != RET_SUCCESS) {
-            return ret;
-        }
-
-        commandResult.statusList.reserve(commandResult.usedPermissions.size());
-        for (const auto& permission : commandResult.usedPermissions) {
-            commandResult.statusList.emplace_back(context.GetPermissionDecisionStatus(
-                permission, PermissionDecisionStatus::NO_DIALOG_NOT_DECLARED));
-        }
-        result.permList.emplace_back(commandResult);
-    }
-    return RET_SUCCESS;
-}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

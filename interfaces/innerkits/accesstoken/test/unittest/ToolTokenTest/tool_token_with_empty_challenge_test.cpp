@@ -44,15 +44,6 @@ CliInfo BuildCliInfo()
     };
 }
 
-SkillInfo BuildSkillInfo()
-{
-    return {
-        .skillName = "cameraSkill",
-        .bundleName = "com.ohos.tool.demo",
-        .moduleName = "entry"
-    };
-}
-
 void SwitchToRootCaller()
 {
     EXPECT_EQ(0, SetSelfTokenID(g_rootCallerTokenId));
@@ -76,24 +67,6 @@ int32_t InitCliToolTokenWithEmptyChallenge(AccessTokenID hostTokenId, const CliI
         .cliInfo = cliInfo,
     };
     int32_t ret = AccessTokenKit::InitCliToken(initInfo, tokenIdEx, kernelPermList);
-    EXPECT_EQ(0, setuid(callerUid));
-    EXPECT_EQ(0, SetSelfTokenID(callerTokenId));
-    return ret;
-}
-
-int32_t InitSkillToolTokenWithEmptyChallenge(AccessTokenID hostTokenId, const SkillInfo& skillInfo,
-    AccessTokenIDEx& tokenIdEx, std::vector<PermissionWithValue>& kernelPermList)
-{
-    AccessTokenID callerTokenId = GetSelfTokenID();
-    uint32_t callerUid = getuid();
-    SwitchToRootCaller();
-    EXPECT_EQ(0, setuid(AIMGR_UID));
-    SkillInitInfo initInfo = {
-        .hostTokenId = hostTokenId,
-        .challenge = "",
-        .skillInfo = skillInfo,
-    };
-    int32_t ret = AccessTokenKit::InitSkillToken(initInfo, tokenIdEx, kernelPermList);
     EXPECT_EQ(0, setuid(callerUid));
     EXPECT_EQ(0, SetSelfTokenID(callerTokenId));
     return ret;
@@ -174,7 +147,6 @@ HWTEST_F(ToolTokenWithEmptyChallengeTest, GetHostTokenId001, TestSize.Level4)
     ToolTokenGuard guard;
     AccessTokenIDEx tokenIdEx = {0};
     std::vector<PermissionWithValue> kernelPermList;
-    CliTokenInfo tokenInfo;
     AccessTokenID queriedHostTokenId = INVALID_TOKENID;
     CliInfo cliInfo = BuildCliInfo();
     {
@@ -189,46 +161,6 @@ HWTEST_F(ToolTokenWithEmptyChallengeTest, GetHostTokenId001, TestSize.Level4)
         SwitchToManageToolCaller();
         ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetHostTokenId(tokenIdEx.tokenIdExStruct.tokenID, queriedHostTokenId));
         EXPECT_EQ(hostTokenId, queriedHostTokenId);
-
-        ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetCliTokenInfo(tokenIdEx.tokenIdExStruct.tokenID, tokenInfo));
-        EXPECT_EQ(hostTokenId, tokenInfo.hostTokenId);
-        EXPECT_EQ(cliInfo.cliName, tokenInfo.cliName);
-        EXPECT_EQ(cliInfo.subCliName, tokenInfo.subCliName);
-    }
-}
-
-/**
- * @tc.name: GetHostTokenId002
- * @tc.desc: GetHostTokenId returns host token for skill tool token created with empty challenge.
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(ToolTokenWithEmptyChallengeTest, GetHostTokenId002, TestSize.Level4)
-{
-    ToolTokenGuard guard;
-    AccessTokenIDEx tokenIdEx = {0};
-    std::vector<PermissionWithValue> kernelPermList;
-    SkillTokenInfo tokenInfo;
-    AccessTokenID queriedHostTokenId = INVALID_TOKENID;
-    SkillInfo skillInfo = BuildSkillInfo();
-    {
-        MockHapToken hostToken("GetHostTokenId002", {}, true);
-        AccessTokenID hostTokenId = hostToken.GetTokenID();
-        ASSERT_NE(INVALID_TOKENID, hostTokenId);
-
-        ASSERT_EQ(RET_SUCCESS, InitSkillToolTokenWithEmptyChallenge(hostTokenId, skillInfo, tokenIdEx, kernelPermList));
-        ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIdExStruct.tokenID);
-        guard.Arm();
-
-        SwitchToManageToolCaller();
-        ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetHostTokenId(tokenIdEx.tokenIdExStruct.tokenID, queriedHostTokenId));
-        EXPECT_EQ(hostTokenId, queriedHostTokenId);
-
-        ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetSkillTokenInfo(tokenIdEx.tokenIdExStruct.tokenID, tokenInfo));
-        EXPECT_EQ(hostTokenId, tokenInfo.hostTokenId);
-        EXPECT_EQ(skillInfo.skillName, tokenInfo.skillName);
-        EXPECT_EQ(skillInfo.bundleName, tokenInfo.bundleName);
-        EXPECT_EQ(skillInfo.moduleName, tokenInfo.moduleName);
     }
 }
 

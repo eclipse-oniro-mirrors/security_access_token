@@ -233,7 +233,7 @@ HWTEST_F(ToolTokenTest, InitCliToken001, TestSize.Level4)
 
 /**
  * @tc.name: InitCliToken002
- * @tc.desc: GetCliTokenInfo and GetHostTokenId succeed for no-permission tool token.
+ * @tc.desc: GetHostTokenId succeeds for no-permission tool token.
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -243,7 +243,6 @@ HWTEST_F(ToolTokenTest, InitCliToken002, TestSize.Level4)
     AccessTokenIDEx tokenIdEx = {0};
     std::vector<PermissionWithValue> kernelPermList;
     std::string challenge;
-    CliTokenInfo tokenInfo;
     AccessTokenID queriedHostTokenId = INVALID_TOKENID;
     MockHapToken hostToken("InitCliToken002", {}, true, 100);
     AccessTokenID hostTokenId = hostToken.GetTokenID();
@@ -252,10 +251,6 @@ HWTEST_F(ToolTokenTest, InitCliToken002, TestSize.Level4)
         hostTokenId, tokenIdEx, kernelPermList, challenge));
     guard.Arm();
     SwitchToManageToolCaller();
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetCliTokenInfo(tokenIdEx.tokenIdExStruct.tokenID, tokenInfo));
-    EXPECT_EQ(hostTokenId, tokenInfo.hostTokenId);
-    EXPECT_EQ(BuildCliInfo().cliName, tokenInfo.cliName);
-    EXPECT_EQ(BuildCliInfo().subCliName, tokenInfo.subCliName);
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetHostTokenId(tokenIdEx.tokenIdExStruct.tokenID, queriedHostTokenId));
     EXPECT_EQ(hostTokenId, queriedHostTokenId);
 }
@@ -325,18 +320,18 @@ HWTEST_F(ToolTokenTest, InitCliToken004, TestSize.Level4)
 }
 
 /**
- * @tc.name: InitCliToken006
+ * @tc.name: InitCliToken005
  * @tc.desc: InitCliToken fails on invalid challenge or mismatched cliInfo and keeps challenge for retry.
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(ToolTokenTest, InitCliToken006, TestSize.Level4)
+HWTEST_F(ToolTokenTest, InitCliToken005, TestSize.Level4)
 {
     ToolTokenGuard guard;
     AccessTokenIDEx tokenIdEx = {0};
     std::vector<PermissionWithValue> kernelPermList;
     ToolAuthResult authResult;
-    MockHapToken hostToken("InitCliToken006", {}, true, 100);
+    MockHapToken hostToken("InitCliToken005", {}, true, 100);
     AccessTokenID hostTokenId = hostToken.GetTokenID();
 
     EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, InitCliToolTokenWithChallenge(
@@ -356,18 +351,18 @@ HWTEST_F(ToolTokenTest, InitCliToken006, TestSize.Level4)
 }
 
 /**
- * @tc.name: InitCliToken007
+ * @tc.name: InitCliToken006
  * @tc.desc: InitCliToken fails when cliName mismatches and original challenge can retry.
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(ToolTokenTest, InitCliToken007, TestSize.Level4)
+HWTEST_F(ToolTokenTest, InitCliToken006, TestSize.Level4)
 {
     ToolTokenGuard guard;
     AccessTokenIDEx tokenIdEx = {0};
     std::vector<PermissionWithValue> kernelPermList;
     ToolAuthResult authResult;
-    MockHapToken hostToken("InitCliToken007", {}, true, 100);
+    MockHapToken hostToken("InitCliToken006", {}, true, 100);
     AccessTokenID hostTokenId = hostToken.GetTokenID();
 
     ASSERT_EQ(RET_SUCCESS, GenerateEmptyPermissionCliAuthResult(hostTokenId, authResult));
@@ -386,18 +381,18 @@ HWTEST_F(ToolTokenTest, InitCliToken007, TestSize.Level4)
 }
 
 /**
- * @tc.name: InitCliToken008
+ * @tc.name: InitCliToken007
  * @tc.desc: InitCliToken fails when subCliName mismatches and original challenge can retry.
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(ToolTokenTest, InitCliToken008, TestSize.Level4)
+HWTEST_F(ToolTokenTest, InitCliToken007, TestSize.Level4)
 {
     ToolTokenGuard guard;
     AccessTokenIDEx tokenIdEx = {0};
     std::vector<PermissionWithValue> kernelPermList;
     ToolAuthResult authResult;
-    MockHapToken hostToken("InitCliToken008", {}, true, 100);
+    MockHapToken hostToken("InitCliToken007", {}, true, 100);
     AccessTokenID hostTokenId = hostToken.GetTokenID();
 
     ASSERT_EQ(RET_SUCCESS, GenerateEmptyPermissionCliAuthResult(hostTokenId, authResult));
@@ -427,7 +422,6 @@ HWTEST_F(ToolTokenTest, DeleteToolTokenByPid001, TestSize.Level4)
     AccessTokenIDEx tokenIdEx = {0};
     std::vector<PermissionWithValue> kernelPermList;
     std::string challenge;
-    CliTokenInfo tokenInfo;
     AccessTokenID queriedHostTokenId = INVALID_TOKENID;
     MockHapToken hostToken("DeleteToolTokenByPid001", {}, true, 100);
     AccessTokenID hostTokenId = hostToken.GetTokenID();
@@ -439,54 +433,9 @@ HWTEST_F(ToolTokenTest, DeleteToolTokenByPid001, TestSize.Level4)
     guard.Disarm();
     SwitchToManageToolCaller();
     EXPECT_EQ(AccessTokenError::ERR_TOKENID_NOT_EXIST,
-        AccessTokenKit::GetCliTokenInfo(tokenIdEx.tokenIdExStruct.tokenID, tokenInfo));
-    EXPECT_EQ(AccessTokenError::ERR_TOKENID_NOT_EXIST,
         AccessTokenKit::GetHostTokenId(tokenIdEx.tokenIdExStruct.tokenID, queriedHostTokenId));
     EXPECT_EQ(PERMISSION_DENIED,
         AccessTokenKit::VerifyAccessToken(tokenIdEx.tokenIdExStruct.tokenID, LOCATION_PERMISSION));
-}
-
-/**
- * @tc.name: GetCliTokenInfo001
- * @tc.desc: GetCliTokenInfo returns token-not-exist for deleted or invalid tool token.
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(ToolTokenTest, GetCliTokenInfo001, TestSize.Level4)
-{
-    ToolTokenGuard guard;
-    AccessTokenIDEx tokenIdEx = {0};
-    std::vector<PermissionWithValue> kernelPermList;
-    std::string challenge;
-    CliTokenInfo tokenInfo;
-    MockHapToken hostToken("GetCliTokenInfo001", {}, true, 100);
-    AccessTokenID hostTokenId = hostToken.GetTokenID();
-
-    ASSERT_EQ(RET_SUCCESS, InitCliToolTokenWithEmptyPermissionAuth(
-        hostTokenId, tokenIdEx, kernelPermList, challenge));
-    guard.Arm();
-    ASSERT_EQ(RET_SUCCESS, DeleteToolTokenByCurrentPid());
-    guard.Disarm();
-    SwitchToManageToolCaller();
-    EXPECT_EQ(AccessTokenError::ERR_TOKENID_NOT_EXIST,
-        AccessTokenKit::GetCliTokenInfo(tokenIdEx.tokenIdExStruct.tokenID, tokenInfo));
-    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, AccessTokenKit::GetCliTokenInfo(INVALID_TOKENID, tokenInfo));
-}
-
-/**
- * @tc.name: GetCliTokenInfo002
- * @tc.desc: GetCliTokenInfo returns invalid-param for existing non-tool token.
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(ToolTokenTest, GetCliTokenInfo002, TestSize.Level4)
-{
-    MockHapToken hostToken("GetCliTokenInfo002", {}, true, 100);
-    CliTokenInfo tokenInfo;
-
-    SwitchToManageToolCaller();
-    EXPECT_EQ(AccessTokenError::ERR_TOKENID_NOT_EXIST,
-        AccessTokenKit::GetCliTokenInfo(hostToken.GetTokenID(), tokenInfo));
 }
 
 /**

@@ -30,7 +30,6 @@ namespace Security {
 namespace AccessToken {
 namespace {
 constexpr size_t CLI_DIALOG_PARAM_COUNT = 2;
-constexpr size_t SKILL_DIALOG_PARAM_COUNT = 2;
 constexpr size_t SYSTEM_PARAM_COUNT = 3;
 constexpr size_t CHALLENGE_PARAM_COUNT = 3;
 constexpr size_t THIRD_PARAM_INDEX = 2;
@@ -82,16 +81,6 @@ bool ParseCliInfo(napi_env env, napi_value value, CliInfo& info)
         return false;
     }
     return true;
-}
-
-bool ParseSkillInfo(napi_env env, napi_value value, SkillInfo& info)
-{
-    if (!CheckType(env, value, napi_object)) {
-        return false;
-    }
-    return GetNamedString(env, value, "skillName", info.skillName) &&
-        GetNamedString(env, value, "bundleName", info.bundleName) &&
-        GetNamedString(env, value, "moduleName", info.moduleName);
 }
 
 bool GetNamedStringArray(napi_env env, napi_value obj, const char* name, std::vector<std::string>& values)
@@ -203,34 +192,17 @@ bool ValidateClawPermissionInput(ClawPermissionAsyncContext& context)
         case ClawPermissionApiType::GET_CLI_PERMISSION_DIALOG_INFO:
             return IsCliInfoListValueValid(context.cliInfoList) ||
                 SetParamError(context, "The cliList is invalid.");
-        case ClawPermissionApiType::GET_SKILL_PERMISSION_DIALOG_INFO:
-            return true;
         case ClawPermissionApiType::GET_CLI_PERMISSIONS:
             return ValidateHostTokenID(context) &&
                 (IsCliInfoListValueValid(context.cliInfoList) ||
                     SetParamError(context, "The cliInfoList is invalid."));
-        case ClawPermissionApiType::GET_SKILL_PERMISSIONS:
-            return ValidateHostTokenID(context);
         case ClawPermissionApiType::GENERATE_CLI_AUTH_RESULT:
             return ValidateHostTokenID(context) &&
                 (IsCliAuthInfoListValueValid(context.cliAuthInfoList) ||
                     SetParamError(context, "The authInfoList is invalid."));
-        case ClawPermissionApiType::GENERATE_SKILL_AUTH_RESULT:
-            return ValidateHostTokenID(context);
         default:
             return true;
     }
-}
-
-bool ParseSkillAuthInfo(napi_env env, napi_value value, SkillAuthInfo& info)
-{
-    napi_value skillValue = nullptr;
-    if (!CheckType(env, value, napi_object) || !IsNeedParseProperty(env, value, "skillInfo", skillValue)) {
-        return false;
-    }
-    return ParseSkillInfo(env, skillValue, info.skillInfo) &&
-        GetNamedStringArray(env, value, "permissionNames", info.permissionNames) &&
-        GetNamedBoolArray(env, value, "authorizationResults", info.authorizationResults);
 }
 
 template<typename T, typename Parser>
@@ -369,23 +341,6 @@ napi_value CreateCliPermissionsResult(napi_env env, const CliPermissionsResult& 
     return obj;
 }
 
-napi_value CreateSkillCommandPermissionResult(napi_env env, const SkillCommandPermissionResult& result)
-{
-    napi_value obj = nullptr;
-    NAPI_CALL(env, napi_create_object(env, &obj));
-    SetNamedRef(env, obj, "usedPermissions", CreateStringArray(env, result.usedPermissions));
-    SetNamedRef(env, obj, "statusList", CreateStatusArray(env, result.statusList));
-    return obj;
-}
-
-napi_value CreateSkillPermissionsResult(napi_env env, const SkillPermissionsResult& result)
-{
-    napi_value obj = nullptr;
-    NAPI_CALL(env, napi_create_object(env, &obj));
-    SetNamedRef(env, obj, "permList", CreateObjectArray(env, result.permList, CreateSkillCommandPermissionResult));
-    return obj;
-}
-
 napi_value CreateToolAuthResult(napi_env env, const ToolAuthResult& result)
 {
     napi_value obj = nullptr;
@@ -449,35 +404,6 @@ napi_value NapiClawPermission::GetCliPermissionRequestInfo(napi_env env, napi_ca
     return result;
 }
 
-napi_value NapiClawPermission::GetSkillPermissionRequestInfo(napi_env env, napi_callback_info info)
-{
-    auto* asyncContext = new (std::nothrow) ClawPermissionAsyncContext(env);
-    if (asyncContext == nullptr) {
-        return nullptr;
-    }
-    std::unique_ptr<ClawPermissionAsyncContext> context {asyncContext};
-
-    size_t argc = SKILL_DIALOG_PARAM_COUNT;
-    napi_value argv[SKILL_DIALOG_PARAM_COUNT] = { nullptr };
-    NAPI_CALL(env, napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr));
-    if (argc < SKILL_DIALOG_PARAM_COUNT) {
-        napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, "Parameter is missing."));
-        return nullptr;
-    }
-    if (!ParseAgentID(env, argv[0], asyncContext->agentID)) {
-        ThrowParamTypeError(env, "agentID", "string");
-        return nullptr;
-    }
-    if (!ParseObjectArray(env, argv[1], asyncContext->skillInfoList, ParseSkillInfo)) {
-        ThrowParamTypeError(env, "skillList", "Array<SkillInfo>");
-        return nullptr;
-    }
-    asyncContext->apiType = ClawPermissionApiType::GET_SKILL_PERMISSION_DIALOG_INFO;
-    napi_value result = CreatePromiseWork(env, asyncContext, "GetSkillPermissionRequestInfo");
-    context.release();
-    return result;
-}
-
 napi_value NapiClawPermission::GetCliPermissions(napi_env env, napi_callback_info info)
 {
     auto* asyncContext = new (std::nothrow) ClawPermissionAsyncContext(env);
@@ -507,39 +433,6 @@ napi_value NapiClawPermission::GetCliPermissions(napi_env env, napi_callback_inf
     }
     asyncContext->apiType = ClawPermissionApiType::GET_CLI_PERMISSIONS;
     napi_value result = CreatePromiseWork(env, asyncContext, "GetCliPermissions");
-    context.release();
-    return result;
-}
-
-napi_value NapiClawPermission::GetSkillPermissions(napi_env env, napi_callback_info info)
-{
-    auto* asyncContext = new (std::nothrow) ClawPermissionAsyncContext(env);
-    if (asyncContext == nullptr) {
-        return nullptr;
-    }
-    std::unique_ptr<ClawPermissionAsyncContext> context {asyncContext};
-
-    size_t argc = SYSTEM_PARAM_COUNT;
-    napi_value argv[SYSTEM_PARAM_COUNT] = { nullptr };
-    NAPI_CALL(env, napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr));
-    if (argc < SYSTEM_PARAM_COUNT) {
-        napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, "Parameter is missing."));
-        return nullptr;
-    }
-    if (!ParseUint32(env, argv[0], asyncContext->hostTokenID)) {
-        ThrowParamTypeError(env, "hostTokenID", "number");
-        return nullptr;
-    }
-    if (!ParseAgentID(env, argv[1], asyncContext->agentID)) {
-        ThrowParamTypeError(env, "agentID", "string");
-        return nullptr;
-    }
-    if (!ParseObjectArray(env, argv[THIRD_PARAM_INDEX], asyncContext->skillInfoList, ParseSkillInfo)) {
-        ThrowParamTypeError(env, "skillInfoList", "Array<SkillInfo>");
-        return nullptr;
-    }
-    asyncContext->apiType = ClawPermissionApiType::GET_SKILL_PERMISSIONS;
-    napi_value result = CreatePromiseWork(env, asyncContext, "GetSkillPermissions");
     context.release();
     return result;
 }
@@ -576,38 +469,6 @@ napi_value NapiClawPermission::GenerateCliAuthResult(napi_env env, napi_callback
     return result;
 }
 
-napi_value NapiClawPermission::GenerateSkillAuthResult(napi_env env, napi_callback_info info)
-{
-    auto* asyncContext = new (std::nothrow) ClawPermissionAsyncContext(env);
-    if (asyncContext == nullptr) {
-        return nullptr;
-    }
-    std::unique_ptr<ClawPermissionAsyncContext> context {asyncContext};
-    size_t argc = CHALLENGE_PARAM_COUNT;
-    napi_value argv[CHALLENGE_PARAM_COUNT] = { nullptr };
-    NAPI_CALL(env, napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr));
-    if (argc < CHALLENGE_PARAM_COUNT) {
-        napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, "Parameter is missing."));
-        return nullptr;
-    }
-    if (!ParseUint32(env, argv[0], asyncContext->hostTokenID)) {
-        ThrowParamTypeError(env, "hostTokenID", "number");
-        return nullptr;
-    }
-    if (!ParseAgentID(env, argv[1], asyncContext->agentID)) {
-        ThrowParamTypeError(env, "agentID", "string");
-        return nullptr;
-    }
-    if (!ParseObjectArray(env, argv[THIRD_PARAM_INDEX], asyncContext->skillAuthInfoList, ParseSkillAuthInfo)) {
-        ThrowParamTypeError(env, "authInfoList", "Array<SkillAuthInfo>");
-        return nullptr;
-    }
-    asyncContext->apiType = ClawPermissionApiType::GENERATE_SKILL_AUTH_RESULT;
-    napi_value result = CreatePromiseWork(env, asyncContext, "GenerateSkillAuthResult");
-    context.release();
-    return result;
-}
-
 void NapiClawPermission::Execute(napi_env env, void* data)
 {
     ClawPermissionAsyncContext* asyncContext = reinterpret_cast<ClawPermissionAsyncContext*>(data);
@@ -624,25 +485,13 @@ void NapiClawPermission::Execute(napi_env env, void* data)
             asyncContext->errorCode = AccessTokenKit::GetCliPermissionRequestInfo(
                 asyncContext->agentID, asyncContext->cliInfoList, asyncContext->dialogResult);
             break;
-        case ClawPermissionApiType::GET_SKILL_PERMISSION_DIALOG_INFO:
-            asyncContext->errorCode = AccessTokenKit::GetSkillPermissionRequestInfo(
-                asyncContext->agentID, asyncContext->skillInfoList, asyncContext->dialogResult);
-            break;
         case ClawPermissionApiType::GET_CLI_PERMISSIONS:
             asyncContext->errorCode = AccessTokenKit::GetCliPermissions(asyncContext->hostTokenID,
                 asyncContext->agentID, asyncContext->cliInfoList, asyncContext->cliPermissionsResult);
             break;
-        case ClawPermissionApiType::GET_SKILL_PERMISSIONS:
-            asyncContext->errorCode = AccessTokenKit::GetSkillPermissions(asyncContext->hostTokenID,
-                asyncContext->agentID, asyncContext->skillInfoList, asyncContext->skillPermissionsResult);
-            break;
         case ClawPermissionApiType::GENERATE_CLI_AUTH_RESULT:
             asyncContext->errorCode = AccessTokenKit::GenerateCliAuthResult(asyncContext->hostTokenID,
                 asyncContext->agentID, asyncContext->cliAuthInfoList, asyncContext->toolAuthResult);
-            break;
-        case ClawPermissionApiType::GENERATE_SKILL_AUTH_RESULT:
-            asyncContext->errorCode = AccessTokenKit::GenerateSkillAuthResult(asyncContext->hostTokenID,
-                asyncContext->agentID, asyncContext->skillAuthInfoList, asyncContext->toolAuthResult);
             break;
         default:
             asyncContext->errorCode = RET_FAILED;
@@ -662,17 +511,12 @@ void NapiClawPermission::Complete(napi_env env, napi_status status, void* data)
     napi_value result = nullptr;
     switch (asyncContext->apiType) {
         case ClawPermissionApiType::GET_CLI_PERMISSION_DIALOG_INFO:
-        case ClawPermissionApiType::GET_SKILL_PERMISSION_DIALOG_INFO:
             result = CreatePermissionDialogResult(env, asyncContext->dialogResult);
             break;
         case ClawPermissionApiType::GET_CLI_PERMISSIONS:
             result = CreateCliPermissionsResult(env, asyncContext->cliPermissionsResult);
             break;
-        case ClawPermissionApiType::GET_SKILL_PERMISSIONS:
-            result = CreateSkillPermissionsResult(env, asyncContext->skillPermissionsResult);
-            break;
         case ClawPermissionApiType::GENERATE_CLI_AUTH_RESULT:
-        case ClawPermissionApiType::GENERATE_SKILL_AUTH_RESULT:
             result = CreateToolAuthResult(env, asyncContext->toolAuthResult);
             break;
         default:

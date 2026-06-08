@@ -35,7 +35,6 @@ public:
     int32_t GetRequiredCliPermissions(const CliInfo& cliInfo, std::vector<std::string>& requiredCliPermissions);
     int32_t GetUsedPermissionsByCliPermission(
         const std::string& requiredCliPermission, std::vector<std::string>& usedPermissions);
-    int32_t GetSkillUsedPermissions(const SkillInfo& skillInfo, std::vector<std::string>& usedPermissions);
     int32_t TransferQueryRet(const CliInfo& cliInfo, int32_t queryRet);
 
 private:

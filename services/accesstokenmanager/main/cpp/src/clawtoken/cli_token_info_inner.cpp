@@ -33,14 +33,6 @@ ToolTokenType CliTokenInfoInner::GetType() const
 {
     return ToolTokenType::CLI;
 }
-
-void CliTokenInfoInner::GetTokenInfo(CliTokenInfo& info) const
-{
-    info.hostTokenId = GetHostTokenId();
-    info.userId = GetUserId();
-    info.cliName = info_.cliName;
-    info.subCliName = info_.subCliName;
-}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
