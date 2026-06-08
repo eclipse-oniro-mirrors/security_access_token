@@ -431,9 +431,11 @@ static void DeleteRegisterInVector(const RegisterPermActiveChangeContext* contex
         bool isEqual = true;
         if (!AniIsCallbackRefEqual(
             context->env, (*item)->callbackRef, context->callbackRef, (*item)->threadId, isEqual)) {
+            ++item;
             continue;
         }
         if (!isEqual) {
+            ++item;
             continue;
         }
 
