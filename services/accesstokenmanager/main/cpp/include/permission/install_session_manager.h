@@ -63,6 +63,8 @@ struct InstallCache {
     BundleParam bundleParam;
     // PID of the calling process for death monitoring
     int32_t callerPid = -1;
+    // Session already check permission
+    bool isCheckPerm = false;
 
     // Install info:
     // Install type: TYPE_INSTALL, TYPE_REPLACE, or TYPE_MERGE
