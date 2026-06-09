@@ -8379,7 +8379,6 @@
             "distributedSceneEnable": false,
             "deviceTypes": ["car"]
         },
-
         {
             "name": "ohos.permission.vehicle.VEHICLE_CDM_WRITE",
             "grantMode": "system_grant",
