@@ -8379,6 +8379,7 @@
             "distributedSceneEnable": false,
             "deviceTypes": ["car"]
         },
+
         {
             "name": "ohos.permission.vehicle.VEHICLE_CDM_WRITE",
             "grantMode": "system_grant",
@@ -9550,6 +9551,83 @@
         },
         {
             "name": "ohos.permission.vehicle.VEHICLE_THERMAL",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["car"]
+        },
+        {
+            "name": "ohos.permission.vehicle.ACCESS_CAR_SECURITY_PRIVACY",
+            "grantMode": "system_grant",
+            "availableLevel": "normal",
+            "availableType": "NORMAL",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["car"]
+        },
+        {
+            "name": "ohos.permission.vehicle.CAR_SECURITY_PRIVACY_SET_PRIVACY_CONSENT",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["car"]
+        },
+        {
+            "name": "ohos.permission.vehicle.CAR_SECURITY_PRIVACY_SET_DRIVER_SEAT_PRIVACY",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["car"]
+        },
+        {
+            "name": "ohos.permission.vehicle.CAR_SECURITY_PRIVACY_SET_CLEAR_TRACE",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["car"]
+        },
+        {
+            "name": "ohos.permission.vehicle.CAR_SECURITY_PRIVACY_SET_SENSORTYPE_STATE",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["car"]
+        },
+        {
+            "name": "ohos.permission.vehicle.CAR_SECURITY_PRIVACY_SET_REMOTELOCATION",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["car"]
+        },
+        {
+            "name": "ohos.permission.vehicle.CAR_SECURITY_PRIVACY_ANONYMIZE_VOICE",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
