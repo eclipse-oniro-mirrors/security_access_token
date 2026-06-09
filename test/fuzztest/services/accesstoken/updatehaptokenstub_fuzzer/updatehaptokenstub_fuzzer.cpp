@@ -27,6 +27,53 @@
 using namespace std;
 using namespace OHOS::Security::AccessToken;
 namespace OHOS {
+namespace {
+constexpr int32_t TEST_USER_ID = 0;
+constexpr int32_t DEFAULT_API_VERSION = 8;
+const std::string TEST_BUNDLE_NAME = "updatehaptokenstub.fuzzer";
+}
+
+void InitValidHapInfoParams(HapInfoParams& param)
+{
+    param.userID = TEST_USER_ID;
+    param.bundleName = TEST_BUNDLE_NAME;
+    param.instIndex = 0;
+    param.dlpType = static_cast<int32_t>(HapDlpType::DLP_COMMON);
+    param.appIDDesc = "fuzzer";
+    param.apiVersion = DEFAULT_API_VERSION;
+    param.isSystemApp = false;
+    param.appDistributionType = "";
+    param.isRestore = false;
+    param.tokenID = 0;
+    param.isAtomicService = false;
+}
+
+void InitValidHapPolicy(HapPolicy& policy)
+{
+    policy.apl = APL_SYSTEM_CORE;
+    policy.domain = "test_domain";
+}
+
+uint64_t EnsureValidFullTokenId()
+{
+    static uint64_t fullTokenIdValue = 0;
+    if (fullTokenIdValue != 0) {
+        return fullTokenIdValue;
+    }
+
+    HapInfoParcel hapInfoParcel;
+    InitValidHapInfoParams(hapInfoParcel.hapInfoParameter);
+    HapPolicyParcel hapPolicyParcel;
+    InitValidHapPolicy(hapPolicyParcel.hapPolicy);
+
+    int32_t ret = DelayedSingleton<AccessTokenManagerService>::GetInstance()->AllocHapToken(
+        hapInfoParcel, hapPolicyParcel, fullTokenIdValue);
+    if (ret != RET_SUCCESS) {
+        return 0;
+    }
+    return fullTokenIdValue;
+}
+
     void InitHapPolicy(FuzzedDataProvider& provider, HapPolicy& policy)
     {
         std::string permissionName = ConsumePermissionName(provider);
@@ -82,7 +129,11 @@ namespace OHOS {
         }
 
         FuzzedDataProvider provider(data, size);
-        uint64_t fullTokenId = provider.ConsumeIntegral<uint64_t>();
+        uint64_t validFullTokenId = EnsureValidFullTokenId();
+        if (validFullTokenId == 0) {
+            return false;
+        }
+        uint64_t fullTokenId = provider.ConsumeBool() ? validFullTokenId : provider.ConsumeIntegral<uint64_t>();
         UpdateHapInfoParamsIdl infoIdl = {
             .appIDDesc = provider.ConsumeRandomLengthString(),
             .apiVersion = provider.ConsumeIntegral<int32_t>(),
