@@ -86,9 +86,12 @@ void MigrationVerifyWorker::WorkerLoop()
             task = std::move(taskQueue_.front());
             taskQueue_.pop();
         }
-        (void)MigrationVerifyHelper::GetInstance().VerifyMigratedBundle(task.migratedInfo, task.cachedInfos);
+        (void)MigrationVerifyHelper::GetInstance().HandleMigratedBundleTask(task.migratedInfo, task.cachedInfos);
     }
-    running_ = false;
+    {
+        std::unique_lock<std::mutex> lock(mutex_);
+        running_ = false;
+    }
     LOGI(ATM_DOMAIN, ATM_TAG, "Verification worker thread stopped.");
 }
 } // namespace AccessToken

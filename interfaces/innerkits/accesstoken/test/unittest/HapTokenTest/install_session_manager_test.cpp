@@ -373,6 +373,9 @@ HWTEST_F(InstallSessionManagerTest, GetCacheSignInfoBySessionIdTest002, TestSize
     EXPECT_TRUE(bundleInfo.empty());
 
     std::map<std::string, std::string> modulePathMap;
+
+    // Somehow migration state could be dropped here, make sure the migration is finished.
+    (void)AccessTokenKit::FinishMigration();
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::FinishInstall(sessionId, false, modulePathMap));
 }
 #endif

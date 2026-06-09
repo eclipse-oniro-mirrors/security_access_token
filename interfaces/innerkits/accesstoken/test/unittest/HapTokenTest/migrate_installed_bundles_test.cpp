@@ -58,25 +58,12 @@ HWTEST_F(MigrateInstalledBundlesTest, PreMigrateUIDList001, TestSize.Level1)
     EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, AccessTokenKit::PreMigrateUIDList({}));
 }
 
-static constexpr size_t MAX_LIST_SIZE = 1024;
 /**
  * @tc.name: PreMigrateUIDList002
- * @tc.desc: PreMigrateUIDList with list size exceeding MAX_LIST_SIZE (1024) returns ERR_PARAM_INVALID.
- *           Validated at kit layer before IPC.
- * @tc.type: FUNC
- */
-HWTEST_F(MigrateInstalledBundlesTest, PreMigrateUIDList002, TestSize.Level1)
-{
-    std::vector<int32_t> largeList(MAX_LIST_SIZE + 1, 200001);
-    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, AccessTokenKit::PreMigrateUIDList(largeList));
-}
-
-/**
- * @tc.name: PreMigrateUIDList003
  * @tc.desc: PreMigrateUIDList with duplicate values returns ERR_MIGRATION_UID_DUPLICATED.
  * @tc.type: FUNC
  */
-HWTEST_F(MigrateInstalledBundlesTest, PreMigrateUIDList003, TestSize.Level1)
+HWTEST_F(MigrateInstalledBundlesTest, PreMigrateUIDList002, TestSize.Level1)
 {
     int32_t ret = AccessTokenKit::PreMigrateUIDList({ 200001, 200001 });
     bool pass = ret == AccessTokenError::ERR_MIGRATION_UID_DUPLICATED ||

@@ -344,6 +344,7 @@ if (access_token_manager_hapverify_enable) {
     sources += accesstoken_manager_base_config.sources
 
     cflags_cc = accesstoken_manager_base_config.cflags_cc
+    cflags_cc += [ "-DATM_TEST_ENABLE" ]
 
     configs = accesstoken_manager_base_config.configs
 

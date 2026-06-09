@@ -102,6 +102,23 @@ public:
         return RET_SUCCESS;
     }
 
+    int32_t ParseProfile(const std::string& appProvision, Security::Verify::ProvisionInfo& info) const override
+    {
+        (void)appProvision;
+        ++parseProfileCallCount_;
+        info.versionCode = 1;
+        info.type = provisionType_;
+        info.distributionType = distributionType_;
+        info.bundleInfo.apl = apl_;
+        info.bundleInfo.appIdentifier = appIdentifier_;
+        info.bundleInfo.bundleName = bundleName_;
+        info.bundleInfo.appFeature = appFeature_;
+        info.appId = appId_;
+        info.acls.allowedAcls = allowedAcls_;
+        info.appServiceCapabilities = appServiceCapabilities_;
+        return RET_SUCCESS;
+    }
+
     int32_t verifyRet_ = RET_SUCCESS;
     int32_t verifyFailRet_ = RET_SUCCESS;
     int32_t parseRet_ = RET_SUCCESS;
@@ -130,6 +147,7 @@ public:
     mutable uint32_t verifyCallCount_ = 0;
     mutable uint32_t parseCallCount_ = 0;
     mutable uint32_t parseProvisionCallCount_ = 0;
+    mutable uint32_t parseProfileCallCount_ = 0;
 };
 
 } // namespace AccessToken
