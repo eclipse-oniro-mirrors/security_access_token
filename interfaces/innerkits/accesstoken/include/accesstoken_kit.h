@@ -123,10 +123,11 @@ public:
      * @param list hap list to be checked
      * @param sessionId session id
      * @param bundleInfo trusted bundle info list
+     * @param resultInfo hap verify result info
      * @return error code, see access_token_error.h
      */
     static int32_t CheckHapSignInfo(const BundleHapList& list, int32_t& sessionId,
-        std::vector<TrustedBundleInfo>& bundleInfo);
+        std::vector<TrustedBundleInfo>& bundleInfo, HapVerifyResultInfo& resultInfo);
     /**
      * @brief Check hap sign info.
      * @param sessionId session id

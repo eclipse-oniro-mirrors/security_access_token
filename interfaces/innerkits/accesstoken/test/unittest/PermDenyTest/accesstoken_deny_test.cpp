@@ -542,8 +542,9 @@ HWTEST_F(AccessTokenDenyTest, CheckHapSignInfoTest001, TestSize.Level0)
     hapList.userId = 100;
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
+    HapVerifyResultInfo resultInfo;
     EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
-        AccessTokenKit::CheckHapSignInfo(hapList, sessionId, bundleInfo));
+        AccessTokenKit::CheckHapSignInfo(hapList, sessionId, bundleInfo, resultInfo));
 }
 
 /**

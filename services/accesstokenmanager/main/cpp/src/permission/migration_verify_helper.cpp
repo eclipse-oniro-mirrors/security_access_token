@@ -60,7 +60,7 @@ int32_t MigrationVerifyHelper::DoVerifyMigratedBundle(const MigratedInfoIdl& mig
             INVALID_USERID, trustedBundleInfo, isChanged);
         if (ret != RET_SUCCESS) {
             LOGE(ATM_DOMAIN, ATM_TAG, "CheckHapsSignInfo failed, ret=%{public}d.", ret);
-            return ret;
+            return ERR_HAP_SIGN_VERIFY_FAILED;
         }
         verifiedInfos.emplace_back(trustedBundleInfo);
     }

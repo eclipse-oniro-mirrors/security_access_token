@@ -859,7 +859,7 @@ void InstallSessionManager::RollbackAll(int32_t sessionId, bool eraseCache)
 }
 
 int32_t InstallSessionManager::CheckHapSignInfo(const BundleHapList& list, const sptr<IRemoteObject>& cb,
-    int32_t& sessionId, std::vector<TrustedBundleInfo>& bundleInfo)
+    int32_t& sessionId, std::vector<TrustedBundleInfo>& bundleInfo, HapVerifyResultInfo& resultInfo)
 {
     ClearTimeoutData();
 
@@ -871,13 +871,15 @@ int32_t InstallSessionManager::CheckHapSignInfo(const BundleHapList& list, const
     InstallCache cache;
     cache.list = list;
 
-    for (auto path : cache.list.hapPaths) {
+    for (size_t i = 0; i < cache.list.hapPaths.size(); i++) {
         TrustedBundleInfoInner infoInner;
         bool isChanged = false;
         int32_t ret = HapSignVerifyManager::GetInstance().CheckHapsSignInfo(
-            path, Security::Verify::VerifyType::All, list.userId, infoInner, isChanged);
+            cache.list.hapPaths[i], Security::Verify::VerifyType::All, list.userId, infoInner, isChanged);
         if (ret != RET_SUCCESS) {
             LOGE(ATM_DOMAIN, ATM_TAG, "CheckHapsSignInfo failed ret=%{public}d", ret);
+            resultInfo.index = i;
+            resultInfo.errorCode = ret;
             return ERR_HAP_SIGN_VERIFY_FAILED;
         }
         cache.bundleInfos.emplace_back(infoInner);

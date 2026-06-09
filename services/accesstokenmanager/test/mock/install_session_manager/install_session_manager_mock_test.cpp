@@ -93,8 +93,8 @@ void InstallHap(const std::vector<std::string>& hapPaths, const HapBaseInfo& bas
 
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
-
-    int32_t ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo);
+    HapVerifyResultInfo resultInfo;
+    int32_t ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo);
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result;
@@ -130,8 +130,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapTest001, TestSize.Level0)
     
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
-
-    int32_t ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo);
+    HapVerifyResultInfo resultInfo;
+    int32_t ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo);
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result;
@@ -461,8 +461,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapTest009, TestSize.Level0)
     
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
-
-    int32_t ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo);
+    HapVerifyResultInfo resultInfo;
+    int32_t ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo);
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result;
@@ -499,8 +499,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapTest010, TestSize.Level0)
     
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
-
-    int32_t ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo);
+    HapVerifyResultInfo resultInfo;
+    int32_t ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo);
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result;
@@ -557,8 +557,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapTest011, TestSize.Level0)
     
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
-
-    int32_t ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo);
+    HapVerifyResultInfo resultInfo;
+    int32_t ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo);
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result;
@@ -595,8 +595,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapTest012, TestSize.Level0)
     
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
-
-    int32_t ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo);
+    HapVerifyResultInfo resultInfo;
+    int32_t ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo);
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result;
@@ -703,8 +703,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapTest014, TestSize.Level0)
     
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
-
-    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo));
+    HapVerifyResultInfo resultInfo;
+    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo));
 
     HapInfoCheckResult result;
     EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, result));
@@ -764,8 +764,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapTest015, TestSize.Level0)
     
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
-
-    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo));
+    HapVerifyResultInfo resultInfo;
+    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo));
 
     HapInfoCheckResult result;
     EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, result));
@@ -810,8 +810,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapTest016, TestSize.Level0)
     
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
-
-    int32_t ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo);
+    HapVerifyResultInfo resultInfo;
+    int32_t ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo);
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result;
@@ -895,13 +895,14 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapFailedTest001, TestSize.Level0
     
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
-
-    int32_t ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo);
+    HapVerifyResultInfo resultInfo;
+    int32_t ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo);
     EXPECT_NE(ERR_OK, ret);
 
     bundleInfo.clear();
     BundleHapList hapList2;
-    ret = g_installSessionManager->CheckHapSignInfo(hapList2, nullptr, sessionId, bundleInfo);
+    HapVerifyResultInfo resultInfo2;
+    ret = g_installSessionManager->CheckHapSignInfo(hapList2, nullptr, sessionId, bundleInfo, resultInfo2);
     EXPECT_NE(ERR_OK, ret);
 }
 
@@ -923,8 +924,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapFailedTest002, TestSize.Level0
     
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
-
-    int32_t ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo);
+    HapVerifyResultInfo resultInfo;
+    int32_t ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo);
     EXPECT_NE(ERR_OK, ret);
 }
 
@@ -944,8 +945,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapFailedTest003, TestSize.Level0
     
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
-
-    int32_t ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo);
+    HapVerifyResultInfo resultInfo;
+    int32_t ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo);
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result;
@@ -983,8 +984,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapFailedTest004, TestSize.Level0
     
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
-
-    int32_t ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo);
+    HapVerifyResultInfo resultInfo;
+    int32_t ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo);
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result;
@@ -1015,8 +1016,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapFailedTest005, TestSize.Level0
     
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
-
-    int32_t ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo);
+    HapVerifyResultInfo resultInfo;
+    int32_t ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo);
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result;
@@ -1025,7 +1026,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapFailedTest005, TestSize.Level0
 
     sessionId = 0;
     bundleInfo.clear();
-    ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo);
+    HapVerifyResultInfo resultInfo2;
+    ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo2);
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result2;
@@ -1067,8 +1069,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapFailedTest006, TestSize.Level0
     
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
-
-    ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo);
+    HapVerifyResultInfo resultInfo;
+    ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo);
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result;
@@ -1118,8 +1120,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapFailedTest007, TestSize.Level0
     
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
-
-    ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo);
+    HapVerifyResultInfo resultInfo;
+    ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo);
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result;
@@ -1151,8 +1153,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapFailedTest008, TestSize.Level0
     
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
-
-    int32_t ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo);
+    HapVerifyResultInfo resultInfo;
+    int32_t ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo);
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result;
@@ -1205,8 +1207,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapFailedTest010, TestSize.Level0
     
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
-
-    int32_t ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo);
+    HapVerifyResultInfo resultInfo;
+    int32_t ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo);
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result;
@@ -1249,8 +1251,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapFailedTest014, TestSize.Level0
     
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
-
-    int32_t ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo);
+    HapVerifyResultInfo resultInfo;
+    int32_t ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo);
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result;
@@ -1287,8 +1289,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapFailedTest015, TestSize.Level0
     
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
-
-    int32_t ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo);
+    HapVerifyResultInfo resultInfo;
+    int32_t ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo);
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result;
@@ -1348,8 +1350,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapFailedTest017, TestSize.Level0
     
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
-
-    int32_t ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo);
+    HapVerifyResultInfo resultInfo;
+    int32_t ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo);
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result;
@@ -1404,8 +1406,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapFailedTest018, TestSize.Level0
     
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
-
-    int32_t ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo);
+    HapVerifyResultInfo resultInfo;
+    int32_t ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo);
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result;
@@ -1461,8 +1463,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapFailedTest019, TestSize.Level0
     
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
-
-    int32_t ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo);
+    HapVerifyResultInfo resultInfo;
+    int32_t ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo);
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result;
@@ -1494,8 +1496,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapFailedTest020, TestSize.Level0
     
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
-
-    int32_t ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo);
+    HapVerifyResultInfo resultInfo;
+    int32_t ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo);
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result;
@@ -1532,8 +1534,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapFailedTest021, TestSize.Level0
     
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
-
-    int32_t ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo);
+    HapVerifyResultInfo resultInfo;
+    int32_t ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo);
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result;
@@ -1588,7 +1590,8 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest001, TestSize.Level0)
 
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
-    ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo);
+    HapVerifyResultInfo resultInfo;
+    ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo);
     EXPECT_EQ(ERR_OK, ret);
     HapInfoCheckResult result;
     ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, result);
@@ -1640,7 +1643,8 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest002, TestSize.Level0)
 
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
-    int32_t ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo);
+    HapVerifyResultInfo resultInfo;
+    int32_t ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo);
     EXPECT_EQ(ERR_OK, ret);
     HapInfoCheckResult result;
     ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, result);
@@ -1696,7 +1700,8 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest003, TestSize.Level0)
 
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
-    ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo);
+    HapVerifyResultInfo resultInfo;
+    ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo);
     EXPECT_EQ(ERR_OK, ret);
     HapInfoCheckResult result;
     ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, result);
@@ -1760,7 +1765,8 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest004, TestSize.Level0)
 
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
-    ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo);
+    HapVerifyResultInfo resultInfo;
+    ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo);
     EXPECT_EQ(ERR_OK, ret);
     HapInfoCheckResult result;
     ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, result);
@@ -1823,7 +1829,8 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest005, TestSize.Level0)
 
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
-    ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo);
+    HapVerifyResultInfo resultInfo;
+    ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo);
     EXPECT_EQ(ERR_OK, ret);
     HapInfoCheckResult result;
     ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, result);
@@ -1886,7 +1893,8 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest006, TestSize.Level0)
 
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
-    ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo);
+    HapVerifyResultInfo resultInfo;
+    ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo);
     EXPECT_EQ(ERR_OK, ret);
     HapInfoCheckResult result;
     ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, result);
@@ -1948,7 +1956,8 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest007, TestSize.Level0)
 
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
-    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo));
+    HapVerifyResultInfo resultInfo;
+    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo));
     HapInfoCheckResult result;
     EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_MERGE, result));
 
@@ -2004,7 +2013,8 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapFailedTest001, TestSize.Level0)
     hapList.userId = 100;
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
-    int32_t ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo);
+    HapVerifyResultInfo resultInfo;
+    int32_t ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo);
     EXPECT_EQ(ERR_OK, ret);
     HapInfoCheckResult result;
     ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, result);
@@ -2063,7 +2073,8 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapFailedTest002, TestSize.Level0)
     hapList.userId = 100;
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
-    int32_t ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo);
+    HapVerifyResultInfo resultInfo;
+    int32_t ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo);
     EXPECT_EQ(ERR_OK, ret);
     HapInfoCheckResult result;
     ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, result);
@@ -2110,7 +2121,8 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapFailedTest003, TestSize.Level0)
     hapList.userId = 100;
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
-    int32_t ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo);
+    HapVerifyResultInfo resultInfo;
+    int32_t ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo);
     EXPECT_EQ(ERR_OK, ret);
     HapInfoCheckResult result;
     ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, result);
@@ -2141,8 +2153,8 @@ HWTEST_F(InstallSessionManagerMockTest, FinishHapTest001, TestSize.Level0)
     
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
-
-    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo));
+    HapVerifyResultInfo resultInfo;
+    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo));
 
     HapInfoCheckResult result;
     EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, result));
@@ -2190,8 +2202,8 @@ HWTEST_F(InstallSessionManagerMockTest, FinishHapTest002, TestSize.Level0)
     
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
-
-    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo));
+    HapVerifyResultInfo resultInfo;
+    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo));
 
     HapInfoCheckResult result;
     EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, result));
@@ -2224,8 +2236,8 @@ HWTEST_F(InstallSessionManagerMockTest, FinishHapTest004, TestSize.Level0)
     
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
-
-    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo));
+    HapVerifyResultInfo resultInfo;
+    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo));
 
     HapInfoCheckResult result;
     EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, result));
@@ -2260,8 +2272,8 @@ HWTEST_F(InstallSessionManagerMockTest, FinishHapFailedTest001, TestSize.Level0)
     
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
-
-    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo));
+    HapVerifyResultInfo resultInfo;
+    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo));
 
     HapInfoCheckResult result;
     EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, result));
@@ -2516,7 +2528,8 @@ HWTEST_F(InstallSessionManagerMockTest, AppCloneTest005, TestSize.Level0)
     hapList.hapPaths.emplace_back(path2);
     sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
-    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo));
+    HapVerifyResultInfo resultInfo;
+    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo));
 
     HapInfoCheckResult result;
     EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, result));
@@ -2791,8 +2804,8 @@ HWTEST_F(InstallSessionManagerMockTest, IsCheckPermTest001, TestSize.Level0)
 
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
-
-    int32_t ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo);
+    HapVerifyResultInfo resultInfo;
+    int32_t ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo);
     EXPECT_EQ(ERR_OK, ret);
 
     HapBaseInfo baseInfo;
@@ -2808,12 +2821,14 @@ HWTEST_F(InstallSessionManagerMockTest, IsCheckPermTest001, TestSize.Level0)
     ret = g_installSessionManager->PrepareHapIdentity(sessionId, baseInfo, bundlePolicy, nullptr, identity);
     EXPECT_NE(ERR_OK, ret);
 
-    ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo);
+    HapVerifyResultInfo resultInfo2;
+    ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo2);
     EXPECT_EQ(ERR_OK, ret);
     ret = g_installSessionManager->UpdateHapPolicy(sessionId, INVALID_SESSION, bundlePolicy);
     EXPECT_NE(ERR_OK, ret);
 
-    ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo);
+    HapVerifyResultInfo resultInfo3;
+    ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo3);
     EXPECT_EQ(ERR_OK, ret);
     std::map<std::string, std::string> modulePathMap;
     ret = g_installSessionManager->FinishInstall(sessionId, true, modulePathMap);
@@ -2840,8 +2855,8 @@ HWTEST_F(InstallSessionManagerMockTest, GetInfoBySessionTest001, TestSize.Level0
     
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
-
-    int32_t ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo);
+    HapVerifyResultInfo resultInfo;
+    int32_t ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo);
     EXPECT_EQ(ERR_OK, ret);
 
     std::vector<TrustedBundleInfo> bundleInfo2;
@@ -2880,7 +2895,8 @@ HWTEST_F(InstallSessionManagerMockTest, GetInfoByBundleNameTest001, TestSize.Lev
     
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
-    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo));
+    HapVerifyResultInfo resultInfo;
+    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo));
 
     HapInfoCheckResult result;
     EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, result));
@@ -2983,8 +2999,8 @@ HWTEST_F(InstallSessionManagerMockTest, GetCachePolicyBySessionIdTest001, TestSi
     
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
-
-    int32_t ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo);
+    HapVerifyResultInfo resultInfo;
+    int32_t ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo);
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result;
@@ -3031,8 +3047,8 @@ HWTEST_F(InstallSessionManagerMockTest, GetCachePolicyBySessionIdTest002, TestSi
     
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
-
-    int32_t ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo);
+    HapVerifyResultInfo resultInfo;
+    int32_t ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo);
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result;
