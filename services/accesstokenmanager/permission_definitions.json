@@ -9030,6 +9030,17 @@
             "deviceTypes": ["tablet", "phone"]
         },
         {
+            "name": "ohos.permission.CROSS_OS_INTERCONNECT",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": true,
+            "deviceTypes": ["phone"]
+        },
+        {
             "name": "ohos.permission.EXEMPT_MOTION_SENSORS_RESTRICTION",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
