@@ -8975,6 +8975,17 @@
             "deviceTypes": ["phone", "tv", "tablet"]
         },
         {
+            "name": "ohos.permission.CLI_MANAGE_WEB_SANDBOX",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1"]
+        },
+        {
             "name": "ohos.permission.QUERY_CLI_TOOL",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
