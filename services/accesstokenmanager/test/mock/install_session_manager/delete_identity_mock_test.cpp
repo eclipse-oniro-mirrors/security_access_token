@@ -100,8 +100,8 @@ void DeleteIdentityMockTest::InstallHap(const std::vector<std::string>& hapPaths
 
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
-
-    int32_t ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo);
+    HapVerifyResultInfo resultInfo;
+    int32_t ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo);
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result;

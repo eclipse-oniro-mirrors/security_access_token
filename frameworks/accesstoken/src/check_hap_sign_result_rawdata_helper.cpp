@@ -27,6 +27,7 @@ bool CheckHapSignResultRawdataHelper::WriteToRawData(
     int32_t realResult,
     int32_t sessionId,
     const std::vector<TrustedBundleInfo>& bundleInfos,
+    const HapVerifyResultInfo& resultInfo,
     CheckHapSignResultRawdata& rawData)
 {
     MessageParcel parcel;
@@ -50,6 +51,9 @@ bool CheckHapSignResultRawdataHelper::WriteToRawData(
         RETURN_IF_FALSE(parcel.WriteString(info.moduleInfo));
         RETURN_IF_FALSE(parcel.WriteString(info.sharedFiles));
     }
+
+    RETURN_IF_FALSE(parcel.WriteUint32(resultInfo.index));
+    RETURN_IF_FALSE(parcel.WriteInt32(resultInfo.errorCode));
     
     size_t bufferSize = parcel.GetDataSize();
     RETURN_IF_FALSE(bufferSize <= MAX_BUNDLE_INFOS_RAW_DATA_SIZE);
@@ -63,7 +67,8 @@ bool CheckHapSignResultRawdataHelper::ReadFromRawData(
     const CheckHapSignResultRawdata& rawData,
     int32_t& realResult,
     int32_t& sessionId,
-    std::vector<TrustedBundleInfo>& bundleInfos)
+    std::vector<TrustedBundleInfo>& bundleInfos,
+    HapVerifyResultInfo& resultInfo)
 {
     if ((rawData.data == nullptr) || (rawData.size == 0)) {
         return false;
@@ -99,6 +104,9 @@ bool CheckHapSignResultRawdataHelper::ReadFromRawData(
         
         bundleInfos.push_back(info);
     }
+
+    RETURN_IF_FALSE(parcel.ReadUint32(resultInfo.index));
+    RETURN_IF_FALSE(parcel.ReadInt32(resultInfo.errorCode));
     
     return true;
 }

@@ -171,14 +171,14 @@ FullTokenID AccessTokenKit::AllocLocalTokenID(const std::string& remoteDeviceID,
 }
 
 int32_t AccessTokenKit::CheckHapSignInfo(const BundleHapList& list, int32_t& sessionId,
-    std::vector<TrustedBundleInfo>& bundleInfo)
+    std::vector<TrustedBundleInfo>& bundleInfo, HapVerifyResultInfo& resultInfo)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "CheckHapSignInfo called, hapPaths size=%{public}zu.", list.hapPaths.size());
     if (!DataValidator::IsHapListSizeValid(list.hapPaths.size())) {
         LOGE(ATM_DOMAIN, ATM_TAG, "HapPaths is invalid.");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
-    return AccessTokenManagerClient::GetInstance().CheckHapSignInfo(list, sessionId, bundleInfo);
+    return AccessTokenManagerClient::GetInstance().CheckHapSignInfo(list, sessionId, bundleInfo, resultInfo);
 }
 
 int32_t AccessTokenKit::CheckHapPermissionInfo(int32_t sessionId, InstallTypeEnum type, HapInfoCheckResult& result)

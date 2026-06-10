@@ -2767,9 +2767,10 @@ int32_t AccessTokenManagerService::CheckHapSignInfo(const BundleHapListIdl& list
     TransferBundleHapListFromIdl(list, bundleHapList);
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfoList;
+    HapVerifyResultInfo resultInfo;
     int32_t ret = InstallSessionManager::GetInstance().CheckHapSignInfo(
-        bundleHapList, cb, sessionId, bundleInfoList);
-    if (!CheckHapSignResultRawdataHelper::WriteToRawData(ret, sessionId, bundleInfoList, result)) {
+        bundleHapList, cb, sessionId, bundleInfoList, resultInfo);
+    if (!CheckHapSignResultRawdataHelper::WriteToRawData(ret, sessionId, bundleInfoList, resultInfo, result)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "WriteToRawData failed.");
         return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
     }

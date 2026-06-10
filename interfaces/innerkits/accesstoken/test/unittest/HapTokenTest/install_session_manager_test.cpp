@@ -78,10 +78,12 @@ HWTEST_F(InstallSessionManagerTest, CheckHapSignInfoTest001, TestSize.Level0)
     hapList.userId = 100;
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
-    EXPECT_NE(RET_SUCCESS, AccessTokenKit::CheckHapSignInfo(hapList, sessionId, bundleInfo));
+    HapVerifyResultInfo resultInfo;
+    EXPECT_NE(RET_SUCCESS, AccessTokenKit::CheckHapSignInfo(hapList, sessionId, bundleInfo, resultInfo));
     
+    HapVerifyResultInfo resultInfo2;
     hapList.hapPaths = std::vector<std::string>(MAX_BUNDLE_LIST_SIZE + 1, "test");
-    EXPECT_NE(RET_SUCCESS, AccessTokenKit::CheckHapSignInfo(hapList, sessionId, bundleInfo));
+    EXPECT_NE(RET_SUCCESS, AccessTokenKit::CheckHapSignInfo(hapList, sessionId, bundleInfo, resultInfo2));
 }
 #if defined(SPM_DATA_ENABLE) && defined(IS_SUPPORT_HAP_RUNNING)
 /**
@@ -101,7 +103,8 @@ HWTEST_F(InstallSessionManagerTest, CheckHapSignInfoTest002, TestSize.Level0)
     hapList.userId = 100;
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
-    EXPECT_NE(RET_SUCCESS, AccessTokenKit::CheckHapSignInfo(hapList, sessionId, bundleInfo));
+    HapVerifyResultInfo resultInfo;
+    EXPECT_NE(RET_SUCCESS, AccessTokenKit::CheckHapSignInfo(hapList, sessionId, bundleInfo, resultInfo));
 }
 #endif
 
@@ -450,8 +453,9 @@ HWTEST_F(InstallSessionManagerTest, CheckHapSignInfoTest101, TestSize.Level0)
     hapList.userId = 100;
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
+    HapVerifyResultInfo resultInfo;
     // parcel failed
-    EXPECT_NE(RET_SUCCESS, AccessTokenKit::CheckHapSignInfo(hapList, sessionId, bundleInfo));
+    EXPECT_NE(RET_SUCCESS, AccessTokenKit::CheckHapSignInfo(hapList, sessionId, bundleInfo, resultInfo));
 }
 
 /**
