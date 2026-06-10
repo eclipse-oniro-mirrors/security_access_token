@@ -42,6 +42,7 @@ const std::string DEFAULT_CALLER_BUNDLE = "setuserpolicystub.fuzzer";
 uint64_t g_callerFullTokenId = 0;
 constexpr int32_t DEFAULT_API_VERSION = 8;
 const std::string MANAGE_USER_POLICY_PERMISSION = "ohos.permission.MANAGE_USER_POLICY";
+const std::string VALID_POLICY_PERMISSION = "ohos.permission.INTERNET";
 }
 
 void InitHapInfoParams(HapInfoParams& param)
@@ -87,6 +88,37 @@ AccessTokenID EnsureTestHapToken()
     AccessTokenIDEx fullTokenId = { .tokenIDEx = fullTokenIdValue };
     mockTokenId = fullTokenId.tokenIdExStruct.tokenID;
     return mockTokenId;
+}
+
+bool SeedValidUserPolicy(AccessTokenID tokenId)
+{
+    FuzzServiceContext::CallingContextGuard guard(g_callerFullTokenId);
+    MessageParcel reply;
+    MessageOption option;
+    MessageParcel datas;
+    if (!datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
+        return false;
+    }
+    if (!datas.WriteUint32(1)) { // 1: policy list size
+        return false;
+    }
+
+    UserPermissionPolicyIdl dataBlock;
+    dataBlock.permissionName = VALID_POLICY_PERMISSION;
+    dataBlock.isPersist = true;
+    UserPolicyIdl userPolicyIdl;
+    userPolicyIdl.userId = TEST_USER_ID;
+    userPolicyIdl.isRestricted = true;
+    dataBlock.userPolicyList.emplace_back(userPolicyIdl);
+    if (UserPermissionPolicyIdlBlockMarshalling(datas, dataBlock) != ERR_NONE) {
+        return false;
+    }
+
+    MockToken mock({ MANAGE_USER_POLICY_PERMISSION });
+    uint32_t code = static_cast<uint32_t>(IAccessTokenManagerIpcCode::COMMAND_SET_USER_POLICY);
+    int32_t ret = DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(
+        code, datas, reply, option);
+    return ret == RET_SUCCESS;
 }
 
 void ClearUserPolicy(const string& permission)
@@ -152,12 +184,13 @@ bool SetUserPolicyStubFuzzTest(const uint8_t* data, size_t size)
 
     FuzzServiceContext::CallingContextGuard guard(g_callerFullTokenId);
     FuzzedDataProvider provider(data, size);
-    std::string permission = ConsumePermissionName(provider);
+    std::string permission = provider.ConsumeBool() ? VALID_POLICY_PERMISSION : ConsumePermissionName(provider);
 
     UserPermissionPolicyIdl dataBlock;
     dataBlock.permissionName = permission;
     UserPolicyIdl userPolicyIdl;
-    userPolicyIdl.userId = provider.ConsumeIntegralInRange<int32_t>(-1, INT_MAX),
+    userPolicyIdl.userId = provider.ConsumeBool() ? TEST_USER_ID :
+        provider.ConsumeIntegralInRange<int32_t>(-1, INT_MAX),
     userPolicyIdl.isRestricted = provider.ConsumeBool();
     dataBlock.userPolicyList.emplace_back(userPolicyIdl);
 
@@ -193,17 +226,21 @@ bool UpdatePolicyWhiteListStubFuzzTest(const uint8_t* data, size_t size)
     }
 
     FuzzedDataProvider provider(data, size);
-    std::string permission = ConsumePermissionName(provider);
+    AccessTokenID testTokenId = EnsureTestHapToken();
+    if (testTokenId == INVALID_TOKENID) {
+        return false;
+    }
+    if (!SeedValidUserPolicy(testTokenId)) {
+        return false;
+    }
+
+    std::string permission = provider.ConsumeBool() ? VALID_POLICY_PERMISSION : ConsumePermissionName(provider);
     uint32_t permCode = 0;
     if (!AccessTokenKit::TransferPermissionToOpcode(permission, permCode)) {
         return false;
     }
 
     AccessTokenID randomTokenId = ConsumeTokenId(provider);
-    AccessTokenID testTokenId = EnsureTestHapToken();
-    if (testTokenId == INVALID_TOKENID) {
-        return false;
-    }
     MockToken mock({ MANAGE_USER_POLICY_PERMISSION });
     int32_t type = provider.ConsumeBool() ? static_cast<int32_t>(UpdateWhiteListType::ADD) :
         static_cast<int32_t>(UpdateWhiteListType::DELETE);
@@ -219,15 +256,20 @@ bool GetPolicyWhiteListStubFuzzTest(const uint8_t* data, size_t size)
     }
 
     FuzzedDataProvider provider(data, size);
-    std::string permission = ConsumePermissionName(provider);
+    AccessTokenID testTokenId = EnsureTestHapToken();
+    if (testTokenId == INVALID_TOKENID) {
+        return false;
+    }
+    if (!SeedValidUserPolicy(testTokenId)) {
+        return false;
+    }
+
+    std::string permission = provider.ConsumeBool() ? VALID_POLICY_PERMISSION : ConsumePermissionName(provider);
     uint32_t permCode = 0;
     if (!AccessTokenKit::TransferPermissionToOpcode(permission, permCode)) {
         return false;
     }
 
-    if (EnsureTestHapToken() == INVALID_TOKENID) {
-        return false;
-    }
     MockToken mock({ MANAGE_USER_POLICY_PERMISSION });
     GetPolicyWhiteList(permCode);
     return true;
@@ -240,10 +282,15 @@ bool ClearUserPolicyStubFuzzTest(const uint8_t* data, size_t size)
     }
 
     FuzzedDataProvider provider(data, size);
-    std::string permission = ConsumePermissionName(provider);
-    if (EnsureTestHapToken() == INVALID_TOKENID) {
+    AccessTokenID testTokenId = EnsureTestHapToken();
+    if (testTokenId == INVALID_TOKENID) {
         return false;
     }
+    if (!SeedValidUserPolicy(testTokenId)) {
+        return false;
+    }
+
+    std::string permission = provider.ConsumeBool() ? VALID_POLICY_PERMISSION : ConsumePermissionName(provider);
     MockToken mock({ MANAGE_USER_POLICY_PERMISSION });
     ClearUserPolicy(permission);
     return true;
