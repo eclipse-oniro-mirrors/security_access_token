@@ -1338,6 +1338,7 @@ void AccessTokenManagerService::ReportUpdateHap(AccessTokenIDEx fullTokenId, con
     dfxInfo.bundleName = info.bundleName;
     dfxInfo.instIndex = info.instIndex;
     dfxInfo.duration = TimeUtil::GetCurrentTimestamp() - beginTime;
+    dfxInfo.sceneCode = CommonSceneCode::AT_COMMON_FINISH;
 
     DumpEventInfo(policy, dfxInfo);
     ReportSysEventUpdateHap(errorCode, dfxInfo);

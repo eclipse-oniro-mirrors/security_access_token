@@ -29,6 +29,7 @@
 #include "generic_values.h"
 #include "hap_token_info.h"
 #include "hap_token_info_inner.h"
+#include "hisysevent_adapter.h"
 #include "iremote_broker.h"
 #include "libraryloader.h"
 #include "nocopyable.h"
@@ -91,6 +92,7 @@ struct InstallCache {
 
 struct FinishContext {
     BundleNoCachedInfo noCachedInfo;
+    std::shared_ptr<BundleInfoInner> innerInfo;
     std::vector<HapTokenInfo> hapInfos;
     std::vector<std::vector<BriefPermData>> permBriefDataLists;
     std::vector<std::vector<PermissionWithValue>> extendPermLists;
@@ -163,10 +165,10 @@ private:
     int32_t InitDlpPermission(const HapBaseInfo& baseInfo, HapPolicy& policy);
     int32_t DeleteAndInsertValueToDb(const InstallCache& cache,
         const FinishContext& context, const std::map<std::string, std::string>& modulePathMap);
-    void RefreshCache(const InstallCache& cache, const FinishContext& context,
-        std::shared_ptr<BundleInfoInner>& innerInfo);
+    void RefreshCache(int32_t sessionId, const InstallCache& cache, const FinishContext& context);
     void RefreshExtendedPerm(const InstallCache& cache, const FinishContext& context);
-    void RollbackAll(int32_t sessionId, bool eraseCache = true);
+    void RollbackAll(int32_t sessionId, int32_t sceneCode, int32_t errorCode, AccessTokenID tokenId,
+        bool eraseCache = true);
     int32_t FillFinishContext(int32_t sessionId, const InstallCache& cache, FinishContext& context);
     int32_t ExecuteSpmKernelTasks(int32_t sessionId, const InstallCache& cache,
         const FinishContext& context, SpmTaskContext& spmContext);
@@ -189,6 +191,11 @@ private:
         std::vector<TrustedBundleInfoInner>& bundleInfos);
     int32_t FillInstallPolicy(const std::string& bundleName,
         const BundlePolicy& bundlePolicy, InstallCache& cache);
+    void ReportAddHap(const InstallCache& cache, int32_t sceneCode, int32_t errorCode, const HapDfxInfo& dfxInfoRaw);
+    void ReportUpdateHap(AccessTokenID tokenID, const BundlePolicy& bundlePolicy, int32_t sceneCode, int32_t errorCode,
+        const HapDfxInfo& dfxInfoRaw);
+    void ReportSessionFinish(int32_t sessionId, const InstallCache& cache, int32_t sceneCode, int32_t errorCode);
+    void ReportSessionError(const InstallCache& cache, int32_t sceneCode, int32_t errorCode, AccessTokenID tokenId);
     
     std::shared_ptr<ProxyDeathHandler> GetProxyDeathHandler();
     void ProcessProxyDeathStub(const sptr<IRemoteObject>& anonyStub);
@@ -201,7 +208,7 @@ private:
     std::mutex cacheMutex_;
     int32_t sessionCnt = 0;
     std::unordered_map<int32_t, InstallCache> sessionToInstallCache;
-    std::unordered_map<int32_t, uint64_t> sessionToTimestamp;
+    std::unordered_map<int32_t, int64_t> sessionToTimestamp;
 
     std::atomic<bool> migrationDone_{false};
     

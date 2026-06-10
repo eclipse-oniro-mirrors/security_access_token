@@ -38,6 +38,7 @@ namespace AccessToken {
 namespace {
 constexpr uint32_t MAX_UID_RANGE = 200000;
 static InstallSessionManager* g_installSessionManager = nullptr;
+static std::map<std::string, std::string> g_modulePathMap;
 
 HapTokenInfo BuildHapInfo(AccessTokenID tokenId, const std::string& bundleName)
 {
@@ -128,7 +129,7 @@ public:
             sessionList.emplace_back(it.first);
         }
         for (auto session : sessionList) {
-            g_installSessionManager->RollbackAll(session);
+            g_installSessionManager->FinishInstall(session, false, g_modulePathMap);
         }
     }
 };

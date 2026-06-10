@@ -45,6 +45,7 @@ std::shared_ptr<AccessTokenManagerService> atManagerService_;
 static InstallSessionManager* g_installSessionManager = nullptr;
 static constexpr int32_t INVALID_SESSION = 999;
 static constexpr int32_t UID_MASK = 200000;
+static std::map<std::string, std::string> g_modulePathMap;
 }
 
 void InstallSessionManagerMockTest::SetUpTestCase()
@@ -79,7 +80,7 @@ void InstallSessionManagerMockTest::TearDown()
         sessionList.emplace_back(it.first);
     }
     for (auto session : sessionList) {
-        g_installSessionManager->RollbackAll(session);
+        g_installSessionManager->FinishInstall(session, false, g_modulePathMap);
     }
 }
 
@@ -3118,6 +3119,44 @@ HWTEST_F(InstallSessionManagerMockTest, GetCachePolicyBySessionIdTest003, TestSi
     int32_t sceneCode = 0;
     EXPECT_EQ(ERR_OK, atManagerService_->DeleteIdentityCore(
         tokenId, "GetCachePolicyBySessionIdTest003", ReservedType::NONE, sceneCode));
+}
+
+/**
+ * @tc.name: SessionMgrCoverageTest001
+ * @tc.desc: coverage test.
+ * @tc.type: FUNC
+ * @tc.require: Issue
+ */
+HWTEST_F(InstallSessionManagerMockTest, SessionMgrCoverageTest001, TestSize.Level4)
+{
+    AccessTokenID tokenID = 123;
+    BundlePolicy bundlePolicy;
+    int32_t sceneCode = 0;
+    int32_t errorCode = 0;
+    HapDfxInfo dfxInfoRaw;
+    g_installSessionManager->ReportUpdateHap(tokenID, bundlePolicy, sceneCode, errorCode, dfxInfoRaw);
+
+    std::vector<BriefPermData> permBriefDataList;
+    std::vector<BriefPermData> oldPermBriefDataList;
+    bool noNeedPermissionInheritance = true;
+    BriefPermData permData;
+    permData.permCode = 10;
+    permData.flag = PERMISSION_FIXED_BY_ADMIN_POLICY;
+    permBriefDataList.emplace_back(permData);
+    oldPermBriefDataList.emplace_back(permData);
+    g_installSessionManager->MergePermission(permBriefDataList, oldPermBriefDataList, noNeedPermissionInheritance);
+
+    permData.flag = PERMISSION_RESTRICTED_BY_ADMIN;
+    permBriefDataList.clear();
+    oldPermBriefDataList.clear();
+    permBriefDataList.emplace_back(permData);
+    oldPermBriefDataList.emplace_back(permData);
+    g_installSessionManager->MergePermission(permBriefDataList, oldPermBriefDataList, noNeedPermissionInheritance);
+
+    PermissionStatus permState;
+    permState.permissionName = "INVALID_PERM_NAME";
+    BriefPermData briefPermData;
+    EXPECT_EQ(false, g_installSessionManager->GetPermissionBriefData(permState, briefPermData));
 }
 } // namespace AccessToken
 } // namespace Security
