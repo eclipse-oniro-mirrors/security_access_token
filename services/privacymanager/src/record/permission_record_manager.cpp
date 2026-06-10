@@ -69,6 +69,7 @@ constexpr const char* MICROPHONE_PERMISSION_NAME = "ohos.permission.MICROPHONE";
 constexpr const char* MICROPHONE_BACKGROUND_PERMISSION_NAME = "ohos.permission.MICROPHONE_BACKGROUND";
 const std::unordered_set<std::string> g_supportAddCallbackPermList = {
     "ohos.permission.READ_IMAGEVIDEO",
+    "ohos.permission.WRITE_IMAGEVIDEO",
 };
 constexpr const char* EDM_MIC_MUTE_KEY = "persist.edm.mic_disable";
 constexpr const char* EDM_CAMERA_MUTE_KEY = "persist.edm.camera_disable";
