@@ -9019,6 +9019,17 @@
             "deviceTypes": ["general"]
         },
         {
+            "name": "ohos.permission.ACCESS_FUNCTION",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.1.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["general"]
+        },
+        {
             "name": "ohos.permission.START_ABILITY_TO_PAGE",
             "grantMode": "system_grant",
             "availableLevel": "system_core",
