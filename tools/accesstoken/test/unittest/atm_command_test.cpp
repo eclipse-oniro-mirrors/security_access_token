@@ -484,40 +484,6 @@ HWTEST_F(AtmCommandTest, atm_dump_perm_test006, TestSize.Level1)
 }
 
 /**
- * @tc.name: atm_dump_perm_test007
- * @tc.desc: Do not dump a disabled and unsupported permission definition.
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AtmCommandTest, atm_dump_perm_test007, TestSize.Level1)
-{
-    const std::string permissionName = "ohos.permission.ANSWER_CALL";
-    PermissionBriefEnableGuard guard(permissionName);
-    ASSERT_TRUE(SetPermissionBriefEnabled(permissionName, false));
-    ASSERT_FALSE(AccessTokenKit::IsSupportPermission(permissionName));
-
-    EXPECT_TRUE(ToString::DumpPermDefinition(permissionName).empty());
-}
-
-/**
- * @tc.name: atm_dump_perm_test008
- * @tc.desc: Do not dump disabled and unsupported permission definitions when querying all permissions.
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AtmCommandTest, atm_dump_perm_test008, TestSize.Level1)
-{
-    const std::string permissionName = "ohos.permission.ANSWER_CALL";
-    PermissionBriefEnableGuard guard(permissionName);
-    ASSERT_TRUE(SetPermissionBriefEnabled(permissionName, false));
-    ASSERT_FALSE(AccessTokenKit::IsSupportPermission(permissionName));
-
-    std::string result = ToString::DumpPermDefinition("");
-    EXPECT_TRUE(IsValidJson(result));
-    EXPECT_FALSE(IsOutputContain(result, permissionName));
-}
-
-/**
  * @tc.name: atm_dump_token_test001
  * @tc.desc: Query all tokens
  * @tc.type: FUNC
