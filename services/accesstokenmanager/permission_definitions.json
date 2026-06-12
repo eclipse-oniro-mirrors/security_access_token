@@ -1562,7 +1562,7 @@
             "availableType": "NORMAL",
             "since": 9,
             "deprecated": "",
-            "provisionEnable": true,
+            "provisionEnable": false,
             "distributedSceneEnable": false
         },
         {
