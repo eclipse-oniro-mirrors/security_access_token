@@ -60,8 +60,8 @@ bool CheckHapSignInfoFuzzTest(const uint8_t* data, size_t size)
     
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
-    
-    AccessTokenKit::CheckHapSignInfo(hapList, sessionId, bundleInfo);
+    HapVerifyResultInfo resultInfo;
+    AccessTokenKit::CheckHapSignInfo(hapList, sessionId, bundleInfo, resultInfo);
     
     return true;
 }

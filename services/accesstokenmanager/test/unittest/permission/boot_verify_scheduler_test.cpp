@@ -519,7 +519,7 @@ HWTEST_F(BootVerifySchedulerTest, PreVerifyBundle005, TestSize.Level1)
 
     adapter_->bundleName_ = TEST_BUNDLE_NAME_2;
 
-    EXPECT_EQ(ERR_HAP_VERIFY_FAILED, BootVerifyScheduler::GetInstance().PreVerifyBundle(TEST_TOKEN_ID));
+    EXPECT_EQ(ERR_HAP_SIGN_VERIFY_FAILED, BootVerifyScheduler::GetInstance().PreVerifyBundle(TEST_TOKEN_ID));
 }
 
 /**

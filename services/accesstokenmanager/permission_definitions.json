@@ -8986,6 +8986,17 @@
             "deviceTypes": ["phone", "2in1", "tablet"]
         },
         {
+            "name": "ohos.permission.QUERY_PUBLIC_CLI_TOOL",
+            "grantMode": "system_grant",
+            "availableLevel": "normal",
+            "availableType": "NORMAL",
+            "since": "26.1.0",
+            "deprecated": "",
+            "provisionEnable": false,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1"]
+        },
+        {
             "name": "ohos.permission.EXEC_CLI_TOOL",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
@@ -8995,6 +9006,17 @@
             "provisionEnable": true,
             "distributedSceneEnable": false,
             "deviceTypes": ["phone", "2in1", "tablet"]
+        },
+        {
+            "name": "ohos.permission.EXEC_PUBLIC_CLI_TOOL",
+            "grantMode": "system_grant",
+            "availableLevel": "normal",
+            "availableType": "NORMAL",
+            "since": "26.1.0",
+            "deprecated": "",
+            "provisionEnable": false,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1"]
         },
         {
             "name": "ohos.permission.REGISTER_CLI_TOOL",
@@ -9549,6 +9571,17 @@
             "deviceTypes": ["tv"]
         },
         {
+            "name": "ohos.permission.MANAGE_AUDIO_ACCESSORY",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "NORMAL",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "2in1", "tablet", "car", "tv"]
+        },
+        {
             "name": "ohos.permission.CAPTURE_PLAYBACK_PRIVATE",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
@@ -9604,6 +9637,19 @@
             "provisionEnable": true,
             "distributedSceneEnable": false,
             "deviceTypes": ["phone", "tablet"]
+        },
+        {
+            "name": "ohos.permission.FORM_CUSTOM_CONFIG",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SERVICE",
+            "since": 20,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "isKernelEffect": false,
+            "hasValue": false,
+            "deviceTypes": ["phone"]
         },
         {
             "name": "ohos.permission.ACCESS_GAME_BUDDY_SERVICE",

@@ -143,7 +143,7 @@ public:
     int32_t QueryStatusByTokenID(const std::vector<AccessTokenID>& tokenIDList,
         std::vector<PermissionStatus>& permissionInfoList);
     int32_t CheckHapSignInfo(const BundleHapList& list, int32_t& sessionId,
-        std::vector<TrustedBundleInfo>& bundleInfo);
+        std::vector<TrustedBundleInfo>& bundleInfo, HapVerifyResultInfo& resultInfo);
     int32_t CheckHapPermissionInfo(int32_t sessionId, InstallTypeEnum type, HapInfoCheckResult& result);
     int32_t PrepareHapIdentity(int32_t& sessionId, const HapBaseInfo& info,
         const BundlePolicy& policy, Identity& identity);

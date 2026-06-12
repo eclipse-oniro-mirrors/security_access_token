@@ -32,6 +32,54 @@ namespace OHOS {
 namespace {
 constexpr uint32_t MAX_PRE_AUTH_COUNT = 5;
 constexpr uint32_t IPC_CODE_UPDATE_HAP_POLICY = 84;
+constexpr int32_t TEST_USER_ID = 0;
+constexpr int32_t DEFAULT_API_VERSION = 8;
+const std::string TEST_BUNDLE_NAME = "updatehappolicystub.fuzzer";
+}
+
+void InitValidHapInfoParams(HapInfoParams& param)
+{
+    param.userID = TEST_USER_ID;
+    param.bundleName = TEST_BUNDLE_NAME;
+    param.instIndex = 0;
+    param.dlpType = static_cast<int32_t>(HapDlpType::DLP_COMMON);
+    param.appIDDesc = "fuzzer";
+    param.apiVersion = DEFAULT_API_VERSION;
+    param.isSystemApp = false;
+    param.appDistributionType = "";
+    param.isRestore = false;
+    param.tokenID = 0;
+    param.isAtomicService = false;
+}
+
+void InitValidHapPolicy(HapPolicy& policy)
+{
+    policy.apl = APL_SYSTEM_CORE;
+    policy.domain = "test_domain";
+}
+
+uint32_t EnsureValidTokenId()
+{
+    static uint32_t tokenIdValue = 0;
+    if (tokenIdValue != 0) {
+        return tokenIdValue;
+    }
+
+    HapInfoParcel hapInfoParcel;
+    InitValidHapInfoParams(hapInfoParcel.hapInfoParameter);
+    HapPolicyParcel hapPolicyParcel;
+    InitValidHapPolicy(hapPolicyParcel.hapPolicy);
+
+    uint64_t fullTokenIdValue = 0;
+    int32_t ret = DelayedSingleton<AccessTokenManagerService>::GetInstance()->AllocHapToken(
+        hapInfoParcel, hapPolicyParcel, fullTokenIdValue);
+    if (ret != RET_SUCCESS) {
+        return 0;
+    }
+
+    AccessTokenIDEx fullTokenId = { .tokenIDEx = fullTokenIdValue };
+    tokenIdValue = fullTokenId.tokenIdExStruct.tokenID;
+    return tokenIdValue;
 }
 
 void InitBundlePolicyParcel(FuzzedDataProvider& provider, MessageParcel& datas)
@@ -53,10 +101,14 @@ bool UpdateHapPolicyStubFuzzTest(const uint8_t* data, size_t size)
     }
 
     FuzzedDataProvider provider(data, size);
+    uint32_t validTokenId = EnsureValidTokenId();
+    if (validTokenId == 0) {
+        return false;
+    }
 
     MessageParcel datas;
     datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
-    datas.WriteInt32(provider.ConsumeIntegral<int32_t>());
+    datas.WriteInt32(provider.ConsumeBool() ? static_cast<int32_t>(validTokenId) : provider.ConsumeIntegral<int32_t>());
     datas.WriteUint32(provider.ConsumeIntegral<uint32_t>());
     InitBundlePolicyParcel(provider, datas);
 

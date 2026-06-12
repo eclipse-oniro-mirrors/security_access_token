@@ -111,7 +111,7 @@ public:
     virtual ~InstallSessionManager();
 
     int32_t CheckHapSignInfo(const BundleHapList& list, const sptr<IRemoteObject>& cb, int32_t& sessionId,
-        std::vector<TrustedBundleInfo>& bundleInfo);
+        std::vector<TrustedBundleInfo>& bundleInfo, HapVerifyResultInfo& resultInfo);
     int32_t CheckHapPermissionInfo(int32_t sessionId, InstallTypeEnum type, HapInfoCheckResult& result);
     int32_t PrepareHapIdentity(int32_t& sessionId, const HapBaseInfo& info, const BundlePolicy& policy,
         const sptr<IRemoteObject>& cb, Identity& identity);

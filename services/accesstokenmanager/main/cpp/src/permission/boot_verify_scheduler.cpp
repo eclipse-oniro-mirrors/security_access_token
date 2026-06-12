@@ -605,7 +605,7 @@ int32_t BootVerifyScheduler::VerifySingleBundle(const std::string& bundleName, B
             LOGE(ATM_DOMAIN, ATM_TAG,
                 "Check hap sign info failed, bundleName=%{public}s, path=%{public}s, ret=%{public}d.",
                 bundleName.c_str(), updatedInfo.pathList[i].c_str(), ret);
-            return ERR_HAP_VERIFY_FAILED;
+            return ERR_HAP_SIGN_VERIFY_FAILED;
         }
         trustedInfos.emplace_back(trustedInfo);
         if (isChanged) {
@@ -622,7 +622,7 @@ int32_t BootVerifyScheduler::VerifySingleBundle(const std::string& bundleName, B
     if (!trustedInfos.empty() && bundleName != trustedInfos[0].GetBundleName()) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Bundle name mismatch, bundleName=%{public}s, trustedBundleName=%{public}s.",
             bundleName.c_str(), trustedInfos[0].GetBundleName().c_str());
-        return ERR_HAP_VERIFY_FAILED;
+        return ERR_HAP_SIGN_VERIFY_FAILED;
     }
 
     UpdateVerifiedSignInfo(bundleName, updatedInfo, changedIndexList, trustedInfos, state);
