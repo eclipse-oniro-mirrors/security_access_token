@@ -1696,7 +1696,7 @@ int32_t AccessTokenManagerClient::QueryStatusByTokenID(const std::vector<AccessT
 }
 
 int32_t AccessTokenManagerClient::CheckHapSignInfo(const BundleHapList& list, int32_t& sessionId,
-    std::vector<TrustedBundleInfo>& bundleInfo)
+    std::vector<TrustedBundleInfo>& bundleInfo, HapVerifyResultInfo& resultInfo)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
@@ -1720,7 +1720,7 @@ int32_t AccessTokenManagerClient::CheckHapSignInfo(const BundleHapList& list, in
     }
     
     if (!CheckHapSignResultRawdataHelper::ReadFromRawData(
-        resultRawData, res, sessionId, bundleInfo)) {
+        resultRawData, res, sessionId, bundleInfo, resultInfo)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "ReadFromRawData failed.");
         bundleInfo.clear();
         return AccessTokenError::ERR_READ_PARCEL_FAILED;

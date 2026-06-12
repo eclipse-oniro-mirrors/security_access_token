@@ -63,6 +63,8 @@ struct InstallCache {
     BundleParam bundleParam;
     // PID of the calling process for death monitoring
     int32_t callerPid = -1;
+    // Session already check permission
+    bool isCheckPerm = false;
 
     // Install info:
     // Install type: TYPE_INSTALL, TYPE_REPLACE, or TYPE_MERGE
@@ -109,7 +111,7 @@ public:
     virtual ~InstallSessionManager();
 
     int32_t CheckHapSignInfo(const BundleHapList& list, const sptr<IRemoteObject>& cb, int32_t& sessionId,
-        std::vector<TrustedBundleInfo>& bundleInfo);
+        std::vector<TrustedBundleInfo>& bundleInfo, HapVerifyResultInfo& resultInfo);
     int32_t CheckHapPermissionInfo(int32_t sessionId, InstallTypeEnum type, HapInfoCheckResult& result);
     int32_t PrepareHapIdentity(int32_t& sessionId, const HapBaseInfo& info, const BundlePolicy& policy,
         const sptr<IRemoteObject>& cb, Identity& identity);

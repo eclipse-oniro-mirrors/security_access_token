@@ -37,6 +37,59 @@ const int CONSTANTS_NUMBER_TWO = 2;
 #endif
 
 namespace OHOS {
+namespace {
+#ifdef TOKEN_SYNC_ENABLE
+const std::string TEST_REMOTE_DEVICE_ID = "fuzz_remote_device";
+const std::string TEST_NETWORK_ID = "fuzz_network_id";
+constexpr AccessTokenID TEST_REMOTE_TOKEN_ID = 0x20100000;
+#endif
+}
+
+#ifdef TOKEN_SYNC_ENABLE
+AccessTokenID EnsureRemoteMapTokenId()
+{
+    static AccessTokenID mapTokenId = INVALID_TOKENID;
+    if (mapTokenId != INVALID_TOKENID) {
+        return mapTokenId;
+    }
+
+    HapTokenInfoForSync remoteTokenInfo = {
+        .baseInfo = {
+            .ver = 1,
+            .userID = 1,
+            .bundleName = "fuzz.remote.bundle",
+            .apiVersion = 8,
+            .instIndex = 0,
+            .dlpType = static_cast<int32_t>(HapDlpType::DLP_COMMON),
+            .tokenID = TEST_REMOTE_TOKEN_ID,
+            .tokenAttr = 0,
+        },
+        .permStateList = {
+            {
+                .permissionName = "ohos.permission.INTERNET",
+                .grantStatus = PermissionState::PERMISSION_GRANTED,
+                .grantFlag = PermissionFlag::PERMISSION_USER_SET
+            }
+        }
+    };
+
+    int32_t ret = AccessTokenInfoManager::GetInstance().SetRemoteHapTokenInfo(
+        TEST_REMOTE_DEVICE_ID, remoteTokenInfo);
+    if (ret != RET_SUCCESS) {
+        return INVALID_TOKENID;
+    }
+
+    uint64_t fullTokenId = AccessTokenInfoManager::GetInstance().AllocLocalTokenID(
+        TEST_NETWORK_ID, TEST_REMOTE_TOKEN_ID);
+    if (fullTokenId == 0) {
+        return INVALID_TOKENID;
+    }
+    AccessTokenIDEx tokenIdEx = { .tokenIDEx = fullTokenId };
+    mapTokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    return mapTokenId;
+}
+#endif
+
     bool DeleteRemoteTokenStubFuzzTest(const uint8_t* data, size_t size)
     {
     #ifdef TOKEN_SYNC_ENABLE
@@ -45,8 +98,12 @@ namespace OHOS {
         }
 
         FuzzedDataProvider provider(data, size);
-        std::string deviceID = provider.ConsumeRandomLengthString();
-        AccessTokenID tokenId = ConsumeTokenId(provider);
+        AccessTokenID validTokenId = EnsureRemoteMapTokenId();
+        if (validTokenId == INVALID_TOKENID) {
+            return false;
+        }
+        std::string deviceID = provider.ConsumeBool() ? TEST_REMOTE_DEVICE_ID : provider.ConsumeRandomLengthString();
+        AccessTokenID tokenId = provider.ConsumeBool() ? TEST_REMOTE_TOKEN_ID : ConsumeTokenId(provider);
 
         MessageParcel datas;
         datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());

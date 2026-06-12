@@ -110,8 +110,6 @@ public:
     TempPermissionType GetPermissionType(const std::string& permissionName) const;
     bool HasLocationTask(AccessTokenID tokenID);
     bool HasAudioRecordingOrVoipTask(AccessTokenID tokenID);
-    void UpsertContinuousTask(AccessTokenID tokenID, int32_t continuousTaskId, const std::vector<uint32_t>& typeIds);
-    void RemoveContinuousTask(AccessTokenID tokenID, int32_t continuousTaskId);
     bool FindContinuousTask(AccessTokenID tokenID, TempPermissionType type);
     bool CheckLocationPermission(AccessTokenID tokenID, const std::string& bundleName,
         const std::string& permissionName, bool isForeground, bool isFormVisible, bool hasLocationTask);
@@ -139,6 +137,8 @@ public:
     int32_t NotifyWhetherFormsVisible(const FormVisibilityType visibleType,
         const std::string &bundleName, std::vector<FormInstance> &formInstances);
 #ifdef BGTASKMGR_CONTINUOUS_TASK_ENABLE
+    void UpsertContinuousTask(AccessTokenID tokenID, int32_t continuousTaskId, const std::vector<uint32_t>& typeIds);
+    void RemoveContinuousTask(AccessTokenID tokenID, int32_t continuousTaskId);
     void OnContinuousTaskStart(const std::shared_ptr<ContinuousTaskCallbackInfo> &continuousTaskCallbackInfo);
     void OnContinuousTaskUpdate(const std::shared_ptr<ContinuousTaskCallbackInfo> &continuousTaskCallbackInfo);
     void OnContinuousTaskStop(const std::shared_ptr<ContinuousTaskCallbackInfo> &continuousTaskCallbackInfo);
@@ -159,12 +159,12 @@ private:
         const std::string& bundleName, const PermissionCheckContext& context);
     bool GetTempPermissionNames(AccessTokenID tokenID, std::set<std::string>& permissionNames);
     bool HasTempPermissionType(AccessTokenID tokenID, TempPermissionType type);
-    bool GetContinuousTaskTypeIds(AccessTokenID tokenID, int32_t continuousTaskId, std::vector<uint32_t>& typeIds);
-    bool AssociateContinuousTaskIfNeeded(
-        AccessTokenID tokenID, int32_t continuousTaskId, const std::vector<uint32_t>& typeIds);
     bool RemoveTempPermissionRecord(
         AccessTokenID tokenID, const std::string& permissionName, bool& clearTaskState, bool& needUnregister);
 #ifdef BGTASKMGR_CONTINUOUS_TASK_ENABLE
+    bool GetContinuousTaskTypeIds(AccessTokenID tokenID, int32_t continuousTaskId, std::vector<uint32_t>& typeIds);
+    bool AssociateContinuousTaskIfNeeded(
+        AccessTokenID tokenID, int32_t continuousTaskId, const std::vector<uint32_t>& typeIds);
     void CollectContinuousTaskState(AccessTokenID tokenID, bool& hasLocationTask, bool& hasAudioTask,
         std::vector<std::shared_ptr<ContinuousTaskCallbackInfo>>& continuousTaskList);
     void AssociateGrantedPermissionTasks(AccessTokenID tokenID, TempPermissionType permissionType,

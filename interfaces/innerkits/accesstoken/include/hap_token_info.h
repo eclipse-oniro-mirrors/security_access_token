@@ -225,6 +225,9 @@ public:
     PermissionInfoCheckResult permCheckResult;
 };
 
+/**
+ * @brief Declares the result of signed profile data
+ */
 struct ProfileData {
     std::string provisionRaw;
     int32_t profileBlockLength = 0;
@@ -236,14 +239,28 @@ struct ProfileData {
     bool isEnterpriseResigned = false;
 };
 
+/**
+ * @brief Declares the result of trusted bundle info
+ */
 struct TrustedBundleInfo {
     ProfileData profileData;
     std::string moduleInfo;
     std::string sharedFiles;
 };
 
+/**
+ * @brief Declares the result of bundle policy info
+ */
 struct BundlePolicyInfo {
     std::vector<std::string> reqPermissions;
+};
+
+/**
+ * @brief Declares the result of hap verify result info
+ */
+struct HapVerifyResultInfo {
+    uint32_t index = 0;
+    int32_t errorCode = 0;
 };
 
 /**
@@ -267,6 +284,9 @@ public:
     bool isDebugGrant = false;
 };
 
+/**
+ * @brief Declares bundle hap list
+ */
 struct BundleHapList final {
     std::vector<std::string> hapPaths;
     bool isPreInstalled = false;

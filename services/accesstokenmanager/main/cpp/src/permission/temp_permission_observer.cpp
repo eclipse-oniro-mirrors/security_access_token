@@ -77,20 +77,24 @@ bool ContainsTypeId(const std::vector<uint32_t>& typeIds, BackgroundMode type)
     return std::find(typeIds.begin(), typeIds.end(), static_cast<uint32_t>(type)) != typeIds.end();
 }
 
+#ifdef TEMP_PERMISSION_BACKGROUND_REVOKE_CAMERA_MIC_ENABLE
 bool HasAudioTaskType(const std::vector<uint32_t>& typeIds)
 {
     return ContainsTypeId(typeIds, BackgroundMode::AUDIO_RECORDING) ||
         ContainsTypeId(typeIds, BackgroundMode::VOIP);
 }
+#endif
 
 bool IsMatchedTaskType(TempPermissionType permissionType, const std::vector<uint32_t>& typeIds)
 {
     if (permissionType == TempPermissionType::LOCATION_TYPE) {
         return ContainsTypeId(typeIds, BackgroundMode::LOCATION);
     }
+#ifdef TEMP_PERMISSION_BACKGROUND_REVOKE_CAMERA_MIC_ENABLE
     if (permissionType == TempPermissionType::MICROPHONE_TYPE) {
         return HasAudioTaskType(typeIds);
     }
+#endif
     return false;
 }
 #endif
@@ -356,10 +360,12 @@ void TempPermissionObserver::OnContinuousTaskStart(
     if (ContainsTypeId(continuousTaskCallbackInfo->GetTypeIds(), BackgroundMode::LOCATION)) {
         CancelDelayedTasks(tokenID, TempPermissionType::LOCATION_TYPE);
     }
+#ifdef TEMP_PERMISSION_BACKGROUND_REVOKE_CAMERA_MIC_ENABLE
     if (ContainsTypeId(continuousTaskCallbackInfo->GetTypeIds(), BackgroundMode::AUDIO_RECORDING) ||
         ContainsTypeId(continuousTaskCallbackInfo->GetTypeIds(), BackgroundMode::VOIP)) {
         CancelDelayedTasks(tokenID, TempPermissionType::MICROPHONE_TYPE);
     }
+#endif
 }
 
 void TempPermissionObserver::OnContinuousTaskUpdate(
@@ -387,18 +393,20 @@ void TempPermissionObserver::OnContinuousTaskUpdate(
     const auto& newTypeIds = continuousTaskCallbackInfo->GetTypeIds();
     bool hadLocation = ContainsTypeId(oldTypeIds, BackgroundMode::LOCATION);
     bool hasLocation = ContainsTypeId(newTypeIds, BackgroundMode::LOCATION);
-    bool hadAudio = HasAudioTaskType(oldTypeIds);
-    bool hasAudio = HasAudioTaskType(newTypeIds);
     if (hasLocation) {
         CancelDelayedTasks(tokenID, TempPermissionType::LOCATION_TYPE);
     } else if (hadLocation) {
         HandleContinuousTaskStop(tokenID, TempPermissionType::LOCATION_TYPE, list);
     }
+#ifdef TEMP_PERMISSION_BACKGROUND_REVOKE_CAMERA_MIC_ENABLE
+    bool hadAudio = HasAudioTaskType(oldTypeIds);
+    bool hasAudio = HasAudioTaskType(newTypeIds);
     if (hasAudio) {
         CancelDelayedTasks(tokenID, TempPermissionType::MICROPHONE_TYPE);
     } else if (hadAudio) {
         HandleContinuousTaskStop(tokenID, TempPermissionType::MICROPHONE_TYPE, list);
     }
+#endif
 }
 
 void TempPermissionObserver::OnContinuousTaskStop(
@@ -425,9 +433,11 @@ void TempPermissionObserver::OnContinuousTaskStop(
     if (ContainsTypeId(oldTypeIds, BackgroundMode::LOCATION)) {
         HandleContinuousTaskStop(tokenID, TempPermissionType::LOCATION_TYPE, list);
     }
+#ifdef TEMP_PERMISSION_BACKGROUND_REVOKE_CAMERA_MIC_ENABLE
     if (HasAudioTaskType(oldTypeIds)) {
         HandleContinuousTaskStop(tokenID, TempPermissionType::MICROPHONE_TYPE, list);
     }
+#endif
 }
 #endif
 
@@ -583,9 +593,11 @@ void TempPermissionObserver::CollectContinuousTaskState(AccessTokenID tokenID, b
         if (ContainsTypeId(info->GetTypeIds(), BackgroundMode::LOCATION)) {
             hasLocationTask = true;
         }
+#ifdef TEMP_PERMISSION_BACKGROUND_REVOKE_CAMERA_MIC_ENABLE
         if (HasAudioTaskType(info->GetTypeIds())) {
             hasAudioTask = true;
         }
+#endif
     }
 }
 
@@ -602,9 +614,11 @@ void TempPermissionObserver::AssociateGrantedPermissionTasks(AccessTokenID token
             AssociateContinuousTaskIfNeeded(tokenID, info->GetContinuousTaskId(), info->GetTypeIds());
             continue;
         }
+#ifdef TEMP_PERMISSION_BACKGROUND_REVOKE_CAMERA_MIC_ENABLE
         if (permissionType == TempPermissionType::MICROPHONE_TYPE && HasAudioTaskType(info->GetTypeIds())) {
             AssociateContinuousTaskIfNeeded(tokenID, info->GetContinuousTaskId(), info->GetTypeIds());
         }
+#endif
     }
 }
 
@@ -632,10 +646,12 @@ bool TempPermissionObserver::AssociateContinuousTaskIfNeeded(
         HasTempPermissionType(tokenID, TempPermissionType::LOCATION_TYPE)) {
         shouldAssociate = true;
     }
+#ifdef TEMP_PERMISSION_BACKGROUND_REVOKE_CAMERA_MIC_ENABLE
     if (HasAudioTaskType(typeIds) &&
         HasTempPermissionType(tokenID, TempPermissionType::MICROPHONE_TYPE)) {
         shouldAssociate = true;
     }
+#endif
     if (!shouldAssociate) {
         return false;
     }
@@ -1008,10 +1024,12 @@ void TempPermissionObserver::DelayRevokePermissionsByType(AccessTokenID tokenID,
 
 void TempPermissionObserver::HandleBackgroundState(AccessTokenID tokenID, const std::vector<bool>& list)
 {
+#ifdef TEMP_PERMISSION_BACKGROUND_REVOKE_CAMERA_MIC_ENABLE
     DelayRevokePermissionsByType(tokenID, TempPermissionType::CAMERA_TYPE);
     if (!HasAudioRecordingOrVoipTask(tokenID)) {
         DelayRevokePermissionsByType(tokenID, TempPermissionType::MICROPHONE_TYPE);
     }
+#endif
     if (!list[FORMS_FLAG]) {
         DelayRevokePermissionsByType(tokenID, TempPermissionType::PASTEBOARD_TYPE);
     }

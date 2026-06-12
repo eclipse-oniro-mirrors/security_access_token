@@ -859,7 +859,7 @@ void InstallSessionManager::RollbackAll(int32_t sessionId, bool eraseCache)
 }
 
 int32_t InstallSessionManager::CheckHapSignInfo(const BundleHapList& list, const sptr<IRemoteObject>& cb,
-    int32_t& sessionId, std::vector<TrustedBundleInfo>& bundleInfo)
+    int32_t& sessionId, std::vector<TrustedBundleInfo>& bundleInfo, HapVerifyResultInfo& resultInfo)
 {
     ClearTimeoutData();
 
@@ -871,13 +871,15 @@ int32_t InstallSessionManager::CheckHapSignInfo(const BundleHapList& list, const
     InstallCache cache;
     cache.list = list;
 
-    for (auto path : cache.list.hapPaths) {
+    for (size_t i = 0; i < cache.list.hapPaths.size(); i++) {
         TrustedBundleInfoInner infoInner;
         bool isChanged = false;
         int32_t ret = HapSignVerifyManager::GetInstance().CheckHapsSignInfo(
-            path, Security::Verify::VerifyType::All, list.userId, infoInner, isChanged);
+            cache.list.hapPaths[i], Security::Verify::VerifyType::All, list.userId, infoInner, isChanged);
         if (ret != RET_SUCCESS) {
             LOGE(ATM_DOMAIN, ATM_TAG, "CheckHapsSignInfo failed ret=%{public}d", ret);
+            resultInfo.index = i;
+            resultInfo.errorCode = ret;
             return ERR_HAP_SIGN_VERIFY_FAILED;
         }
         cache.bundleInfos.emplace_back(infoInner);
@@ -972,7 +974,7 @@ int32_t InstallSessionManager::CheckHapPermissionInfo(
         RollbackAll(sessionId);
         return ret;
     }
-
+    cache.isCheckPerm = true;
     return RET_SUCCESS;
 }
 
@@ -1044,6 +1046,7 @@ int32_t InstallSessionManager::CreateInstallSession(const HapBaseInfo& info, con
         LOGE(ATM_DOMAIN, ATM_TAG, "FillInstallPolicy failed ret=%{public}d", ret);
         return ret;
     }
+    cache.isCheckPerm = true;
 
     int32_t callerPid = IPCSkeleton::GetCallingPid();
     cache.callerPid = callerPid;
@@ -1069,6 +1072,11 @@ int32_t InstallSessionManager::PrepareSessionIdentity(int32_t sessionId, const H
         LOGE(ATM_DOMAIN, ATM_TAG, "Already prepare");
         RollbackAll(sessionId);
         return AccessTokenError::ERR_ALREADY_PREPARE;
+    }
+    if (!cache.isCheckPerm) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Not check permission!");
+        RollbackAll(sessionId);
+        return AccessTokenError::ERR_NOT_CHECK_PERMISSION;
     }
     if (!cache.bundleInfos.empty()) {
         auto bundleType = cache.bundleInfos.front().GetBundleType();
@@ -1122,6 +1130,11 @@ int32_t InstallSessionManager::UpdateHapPolicy(int32_t sessionId, int32_t tokenI
         if (it == sessionToInstallCache.end()) {
             LOGE(ATM_DOMAIN, ATM_TAG, "sessionId not exist");
             return AccessTokenError::ERR_SESSION_NOT_EXIST;
+        }
+        if (!it->second.isCheckPerm) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Not check permission!");
+            RollbackAll(sessionId);
+            return AccessTokenError::ERR_NOT_CHECK_PERMISSION;
         }
         
         std::shared_ptr<HapTokenInfoInner> infoPtr =
@@ -1255,6 +1268,12 @@ int32_t InstallSessionManager::FinishInstall(int32_t sessionId, bool isSuccess,
     if (it == sessionToInstallCache.end()) {
         LOGE(ATM_DOMAIN, ATM_TAG, "sessionId not exist");
         return AccessTokenError::ERR_SESSION_NOT_EXIST;
+    }
+
+    if (!it->second.isCheckPerm) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Not check permission!");
+        RollbackAll(sessionId);
+        return AccessTokenError::ERR_NOT_CHECK_PERMISSION;
     }
 
     if (!it->second.bundleInfos.empty()) {
