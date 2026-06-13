@@ -86,7 +86,7 @@ static const std::string HELP_MSG_PERM =
     "  -r, --reset -i <token-id>                         reset user granted permission state\n"
     "  -r, --reset -b <bundle-name>                      reset user granted permission state by bundle name\n"
 #ifdef ATM_BUILD_VARIANT_USER_ENABLE
-    "  Note: user build only supports modifying debug hap tokens.\n";
+    "  Note: only debug hap tokens can be modified.\n";
 #else
     "";
 #endif
@@ -526,13 +526,16 @@ int32_t AtmCommand::CheckPermCommandToken(AccessTokenID tokenId)
     int32_t ret = AccessTokenKit::GetHapTokenInfo(tokenId, hapInfo);
     if (ret != RET_SUCCESS) {
         if (ret == AccessTokenError::ERR_PERMISSION_DENIED) {
-            resultReceiver_.append("Error: Only debug hap token can be modified in user build.\n");
+            resultReceiver_.append("Error: Only debug hap token can be modified.\n");
             return ERR_INVALID_VALUE;
+        }
+        if (ret == AccessTokenError::ERR_PARAM_INVALID) {
+            return AccessTokenError::ERR_TOKENID_NOT_EXIST;
         }
         return ret;
     }
     if (!TokenIDAttributes::IsDebugAppAttr(hapInfo.tokenAttr)) {
-        resultReceiver_.append("Error: Only debug hap token can be modified in user build.\n");
+        resultReceiver_.append("Error: Only debug hap token can be modified.\n");
         return ERR_INVALID_VALUE;
     }
     return RET_SUCCESS;
@@ -544,7 +547,7 @@ int32_t AtmCommand::ModifyPermission(const PermOptionsContext& context)
         int32_t ret = AccessTokenKit::ClearUserGrantedPermStateByBundle(context.bundleName);
 #ifdef ATM_BUILD_VARIANT_USER_ENABLE
         if (ret == AccessTokenError::ERR_PERMISSION_DENIED) {
-            resultReceiver_.append("Error: No debug hap token can be modified in user build.\n");
+            resultReceiver_.append("Error: Only debug hap token can be modified.\n");
             return ERR_INVALID_VALUE;
         }
 #endif

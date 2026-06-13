@@ -19,6 +19,7 @@ group("fuzztest") {
     "accesstokenstub_fuzzer:AccessTokenStubFuzzTest",
     "allochaptokenstub_fuzzer:AllocHapTokenStubFuzzTest",
     "alloclocaltokenidstub_fuzzer:AllocLocalTokenIDStubFuzzTest",
+    "clearusergrantedpermstatebybundlestub_fuzzer:ClearUserGrantedPermStateByBundleStubFuzzTest",
     "clearusergrantedpermissionstatestub_fuzzer:ClearUserGrantedPermissionStateStubFuzzTest",
     "deleteremotedevicetokensstub_fuzzer:DeleteRemoteDeviceTokensStubFuzzTest",
     "deleteremotetokenstub_fuzzer:DeleteRemoteTokenStubFuzzTest",

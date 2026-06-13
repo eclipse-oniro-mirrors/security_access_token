@@ -314,17 +314,35 @@ void SetCameraMicrophoneUserFixedStateByService(AccessTokenID tokenID)
     ASSERT_TRUE(AccessTokenInfoManager::GetInstance().GetPermDialogCap(tokenID));
 }
 
+void AssertCameraMicrophoneCanShowDialog(
+    const std::shared_ptr<AccessTokenManagerService>& service, AccessTokenIDEx tokenIdEx)
+{
+    PermissionListStateParcel cameraState;
+    cameraState.permsState.permissionName = "ohos.permission.CAMERA";
+    PermissionListStateParcel microphoneState;
+    microphoneState.permsState.permissionName = "ohos.permission.MICROPHONE";
+    std::vector<PermissionListStateParcel> reqPermList = {cameraState, microphoneState};
+    PermissionGrantInfoParcel infoParcel;
+    int32_t permOper = INVALID_OPER;
+
+    uint64_t selfTokenId = GetSelfTokenID();
+    int32_t setRet = SetSelfTokenID(tokenIdEx.tokenIDEx);
+    int32_t ret = service->GetSelfPermissionsState(reqPermList, infoParcel, permOper);
+    int32_t restoreRet = SetSelfTokenID(selfTokenId);
+
+    ASSERT_EQ(RET_SUCCESS, setRet);
+    ASSERT_EQ(RET_SUCCESS, restoreRet);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    ASSERT_EQ(DYNAMIC_OPER, permOper);
+    ASSERT_EQ(DYNAMIC_OPER, reqPermList[0].permsState.state);
+    ASSERT_EQ(DYNAMIC_OPER, reqPermList[1].permsState.state);
+}
+
 uint64_t SetShellCallerByTest()
 {
     uint64_t selfTokenId = GetSelfTokenID();
-    AccessTokenID shellToken = AccessTokenInfoManager::GetInstance().GetNativeTokenId("hdcd");
-    AccessTokenID selfShellToken = static_cast<AccessTokenID>(g_selfShellTokenId);
-    if (shellToken == INVALID_TOKENID && AccessTokenKit::GetTokenTypeFlag(selfShellToken) == TOKEN_SHELL) {
-        shellToken = selfShellToken;
-    }
-    EXPECT_NE(INVALID_TOKENID, shellToken);
-    EXPECT_EQ(TOKEN_SHELL, AccessTokenKit::GetTokenTypeFlag(shellToken));
-    EXPECT_EQ(RET_SUCCESS, SetSelfTokenID(shellToken));
+    EXPECT_NE(INVALID_TOKENID, g_selfShellTokenId);
+    EXPECT_EQ(RET_SUCCESS, SetSelfTokenID(g_selfShellTokenId));
     return selfTokenId;
 }
 
@@ -3403,59 +3421,66 @@ HWTEST_F(AccessTokenManagerServiceTest, ClearUserGrantedPermStateByBundleFuncTes
     AccessTokenIDEx tokenIdEx = CreateBundleClearHapToken(bundleName, 0, "debug");
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
     UpsertBundleCacheByTest(bundleName, {tokenID});
-    ASSERT_NO_FATAL_FAILURE(SetCameraMicrophoneUserFixedStateByService(tokenID));
-
+    SetCameraMicrophoneUserFixedStateByService(tokenID);
     uint64_t selfTokenId = SetShellCallerByTest();
     int32_t ret = atManagerService_->ClearUserGrantedPermStateByBundle(bundleName);
     RestoreCallerByTest(selfTokenId);
     ASSERT_EQ(RET_SUCCESS, ret);
 
     ASSERT_FALSE(AccessTokenInfoManager::GetInstance().GetPermDialogCap(tokenID));
+    AssertCameraMicrophoneCanShowDialog(atManagerService_, tokenIdEx);
     DeleteBundleClearToken(tokenID);
 }
 
 /**
- * @tc.name: ClearUserGrantedPermStateByBundleFuncTest004
+ * @tc.name: ClearUserGrantedPermStateByBundleFuncTest002
  * @tc.desc: Clear user granted permission state by bundle for multiple debug hap tokens.
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenManagerServiceTest, ClearUserGrantedPermStateByBundleFuncTest004, TestSize.Level0)
+HWTEST_F(AccessTokenManagerServiceTest, ClearUserGrantedPermStateByBundleFuncTest002, TestSize.Level0)
 {
     atManagerService_->Initialize();
     const std::string bundleName = "ClearUserGrantedPermStateByBundleMultiDebugService";
-    AccessTokenID tokenID1 = CreateBundleClearHapToken(bundleName, 0, "debug").tokenIdExStruct.tokenID;
-    AccessTokenID tokenID2 = CreateBundleClearHapToken(bundleName, 1, "debug").tokenIdExStruct.tokenID;
+    AccessTokenIDEx tokenIdEx1 = CreateBundleClearHapToken(bundleName, 0, "debug");
+    AccessTokenIDEx tokenIdEx2 = CreateBundleClearHapToken(bundleName, 1, "debug");
+    AccessTokenID tokenID1 = tokenIdEx1.tokenIdExStruct.tokenID;
+    AccessTokenID tokenID2 = tokenIdEx2.tokenIdExStruct.tokenID;
     UpsertBundleCacheByTest(bundleName, {tokenID1, tokenID2});
-    ASSERT_NO_FATAL_FAILURE(SetCameraMicrophoneUserFixedStateByService(tokenID1));
-    ASSERT_NO_FATAL_FAILURE(SetCameraMicrophoneUserFixedStateByService(tokenID2));
+    SetCameraMicrophoneUserFixedStateByService(tokenID1);
+    SetCameraMicrophoneUserFixedStateByService(tokenID2);
 
     uint64_t selfTokenId = SetShellCallerByTest();
     int32_t ret = atManagerService_->ClearUserGrantedPermStateByBundle(bundleName);
     RestoreCallerByTest(selfTokenId);
+
     ASSERT_EQ(RET_SUCCESS, ret);
 
     ASSERT_FALSE(AccessTokenInfoManager::GetInstance().GetPermDialogCap(tokenID1));
     ASSERT_FALSE(AccessTokenInfoManager::GetInstance().GetPermDialogCap(tokenID2));
+    AssertCameraMicrophoneCanShowDialog(atManagerService_, tokenIdEx1);
+    AssertCameraMicrophoneCanShowDialog(atManagerService_, tokenIdEx2);
     DeleteBundleClearToken(tokenID1);
     DeleteBundleClearToken(tokenID2);
 }
 
 /**
- * @tc.name: ClearUserGrantedPermStateByBundleFuncTest005
+ * @tc.name: ClearUserGrantedPermStateByBundleFuncTest003
  * @tc.desc: Clear only debug hap token state when debug and release hap tokens share one bundle name.
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenManagerServiceTest, ClearUserGrantedPermStateByBundleFuncTest005, TestSize.Level0)
+HWTEST_F(AccessTokenManagerServiceTest, ClearUserGrantedPermStateByBundleFuncTest003, TestSize.Level0)
 {
     atManagerService_->Initialize();
     const std::string bundleName = "ClearUserGrantedPermStateByBundleMixedService";
-    AccessTokenID debugTokenID = CreateBundleClearHapToken(bundleName, 0, "debug").tokenIdExStruct.tokenID;
-    AccessTokenID releaseTokenID = CreateBundleClearHapToken(bundleName, 1, "release").tokenIdExStruct.tokenID;
+    AccessTokenIDEx debugTokenIdEx = CreateBundleClearHapToken(bundleName, 0, "debug");
+    AccessTokenIDEx releaseTokenIdEx = CreateBundleClearHapToken(bundleName, 1, "release");
+    AccessTokenID debugTokenID = debugTokenIdEx.tokenIdExStruct.tokenID;
+    AccessTokenID releaseTokenID = releaseTokenIdEx.tokenIdExStruct.tokenID;
     UpsertBundleCacheByTest(bundleName, {debugTokenID, releaseTokenID});
-    ASSERT_NO_FATAL_FAILURE(SetCameraMicrophoneUserFixedStateByService(debugTokenID));
-    ASSERT_NO_FATAL_FAILURE(SetCameraMicrophoneUserFixedStateByService(releaseTokenID));
+    SetCameraMicrophoneUserFixedStateByService(debugTokenID);
+    SetCameraMicrophoneUserFixedStateByService(releaseTokenID);
 
     uint64_t selfTokenId = SetShellCallerByTest();
     int32_t ret = atManagerService_->ClearUserGrantedPermStateByBundle(bundleName);
@@ -3463,28 +3488,30 @@ HWTEST_F(AccessTokenManagerServiceTest, ClearUserGrantedPermStateByBundleFuncTes
     ASSERT_EQ(RET_SUCCESS, ret);
 
     ASSERT_FALSE(AccessTokenInfoManager::GetInstance().GetPermDialogCap(debugTokenID));
+    AssertCameraMicrophoneCanShowDialog(atManagerService_, debugTokenIdEx);
 #ifdef ATM_BUILD_VARIANT_USER_ENABLE
     ASSERT_TRUE(AccessTokenInfoManager::GetInstance().GetPermDialogCap(releaseTokenID));
 #else
     ASSERT_FALSE(AccessTokenInfoManager::GetInstance().GetPermDialogCap(releaseTokenID));
+    AssertCameraMicrophoneCanShowDialog(atManagerService_, releaseTokenIdEx);
 #endif
     DeleteBundleClearToken(debugTokenID);
     DeleteBundleClearToken(releaseTokenID);
 }
 
 /**
- * @tc.name: ClearUserGrantedPermStateByBundleAbnormalTest008
+ * @tc.name: ClearUserGrantedPermStateByBundleAbnormalTest001
  * @tc.desc: Clear user granted permission state by bundle for release-only hap tokens.
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenManagerServiceTest, ClearUserGrantedPermStateByBundleAbnormalTest008, TestSize.Level0)
+HWTEST_F(AccessTokenManagerServiceTest, ClearUserGrantedPermStateByBundleAbnormalTest001, TestSize.Level0)
 {
     atManagerService_->Initialize();
     const std::string bundleName = "ClearUserGrantedPermStateByBundleReleaseOnlyService";
     AccessTokenID tokenID = CreateBundleClearHapToken(bundleName, 0, "release").tokenIdExStruct.tokenID;
     UpsertBundleCacheByTest(bundleName, {tokenID});
-    ASSERT_NO_FATAL_FAILURE(SetCameraMicrophoneUserFixedStateByService(tokenID));
+    SetCameraMicrophoneUserFixedStateByService(tokenID);
 
     uint64_t selfTokenId = SetShellCallerByTest();
     int32_t ret = atManagerService_->ClearUserGrantedPermStateByBundle(bundleName);
@@ -3500,12 +3527,12 @@ HWTEST_F(AccessTokenManagerServiceTest, ClearUserGrantedPermStateByBundleAbnorma
 }
 
 /**
- * @tc.name: ClearUserGrantedPermStateByBundleAbnormalTest009
+ * @tc.name: ClearUserGrantedPermStateByBundleAbnormalTest002
  * @tc.desc: Clear user granted permission state by bundle rejects nonexistent bundle name.
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenManagerServiceTest, ClearUserGrantedPermStateByBundleAbnormalTest009, TestSize.Level0)
+HWTEST_F(AccessTokenManagerServiceTest, ClearUserGrantedPermStateByBundleAbnormalTest002, TestSize.Level0)
 {
     atManagerService_->Initialize();
     uint64_t selfTokenId = SetShellCallerByTest();
@@ -3516,12 +3543,12 @@ HWTEST_F(AccessTokenManagerServiceTest, ClearUserGrantedPermStateByBundleAbnorma
 }
 
 /**
- * @tc.name: ClearUserGrantedPermStateByBundleAbnormalTest010
+ * @tc.name: ClearUserGrantedPermStateByBundleAbnormalTest003
  * @tc.desc: Clear user granted permission state by bundle rejects invalid bundle name.
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenManagerServiceTest, ClearUserGrantedPermStateByBundleAbnormalTest010, TestSize.Level0)
+HWTEST_F(AccessTokenManagerServiceTest, ClearUserGrantedPermStateByBundleAbnormalTest003, TestSize.Level0)
 {
     atManagerService_->Initialize();
     uint64_t selfTokenId = SetShellCallerByTest();
@@ -3530,17 +3557,54 @@ HWTEST_F(AccessTokenManagerServiceTest, ClearUserGrantedPermStateByBundleAbnorma
     ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, emptyRet);
 }
 
+#ifdef IS_SUPPORT_HAP_RUNNING
 /**
- * @tc.name: ClearUserGrantedPermStateByBundleFuncTest002
+ * @tc.name: ClearUserGrantedPermStateByBundleAbnormalTest004
+ * @tc.desc: Clear user granted permission state by bundle rejects pre-verify failure.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, ClearUserGrantedPermStateByBundleAbnormalTest004, TestSize.Level0)
+{
+    atManagerService_->Initialize();
+    const std::string bundleName = "ClearUserGrantedPermStateByBundlePreVerifyFailService";
+    AccessTokenID tokenID = CreateBundleClearHapToken(bundleName, 0, "debug").tokenIdExStruct.tokenID;
+    UpsertBundleCacheByTest(bundleName, {tokenID});
+    auto& scheduler = BootVerifyScheduler::GetInstance();
+    bool isAllVerified = scheduler.isAllHapBundlesVerified_.load();
+    auto iter = scheduler.isVerifiedMap_.find(bundleName);
+    bool hasVerifiedState = iter != scheduler.isVerifiedMap_.end();
+    bool verifiedState = hasVerifiedState ? iter->second : false;
+    scheduler.isAllHapBundlesVerified_.store(false);
+    scheduler.isVerifiedMap_[bundleName] = false;
+
+    uint64_t selfTokenId = SetShellCallerByTest();
+    int32_t ret = atManagerService_->ClearUserGrantedPermStateByBundle(bundleName);
+    RestoreCallerByTest(selfTokenId);
+    scheduler.isAllHapBundlesVerified_.store(isAllVerified);
+    if (hasVerifiedState) {
+        scheduler.isVerifiedMap_[bundleName] = verifiedState;
+    } else {
+        scheduler.isVerifiedMap_.erase(bundleName);
+    }
+
+    ASSERT_EQ(AccessTokenError::ERR_BUNDLE_NOT_EXIST, ret);
+    DeleteBundleClearToken(tokenID);
+}
+#endif
+
+/**
+ * @tc.name: ClearUserGrantedPermStateByBundleFuncTest004
  * @tc.desc: Clear user granted permission state by bundle without user setting.
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenManagerServiceTest, ClearUserGrantedPermStateByBundleFuncTest002, TestSize.Level0)
+HWTEST_F(AccessTokenManagerServiceTest, ClearUserGrantedPermStateByBundleFuncTest004, TestSize.Level0)
 {
     atManagerService_->Initialize();
     const std::string bundleName = "ClearUserGrantedPermStateByBundleNoSettingService";
-    AccessTokenID tokenID = CreateBundleClearHapToken(bundleName, 0, "debug").tokenIdExStruct.tokenID;
+    AccessTokenIDEx tokenIdEx = CreateBundleClearHapToken(bundleName, 0, "debug");
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
     UpsertBundleCacheByTest(bundleName, {tokenID});
     ASSERT_FALSE(AccessTokenInfoManager::GetInstance().GetPermDialogCap(tokenID));
 
@@ -3550,6 +3614,7 @@ HWTEST_F(AccessTokenManagerServiceTest, ClearUserGrantedPermStateByBundleFuncTes
     ASSERT_EQ(RET_SUCCESS, ret);
 
     ASSERT_FALSE(AccessTokenInfoManager::GetInstance().GetPermDialogCap(tokenID));
+    AssertCameraMicrophoneCanShowDialog(atManagerService_, tokenIdEx);
     DeleteBundleClearToken(tokenID);
 }
 } // namespace AccessToken
