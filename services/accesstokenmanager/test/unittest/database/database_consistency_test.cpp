@@ -160,7 +160,7 @@ HWTEST_F(AccessTokenDbConsistencyTest, CreateHapTokenCompareTest001, TestSize.Le
 
     std::vector<GenericValues> results2;
     EXPECT_EQ(RET_SUCCESS, AccessTokenDb::GetInstance()->Find(
-        AtmDataType::ACCESSTOKEN_HAP_INFO, conditionValue, results2));
+        AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, conditionValue, results2));
     EXPECT_EQ(1, results2.size());
 
     EXPECT_EQ(RET_SUCCESS, atManagerService_->DeleteToken(tokenId, false));
@@ -215,7 +215,7 @@ HWTEST_F(AccessTokenDbConsistencyTest, UpdateHapTokenCompareTest001, TestSize.Le
 
     std::vector<GenericValues> results2;
     EXPECT_EQ(RET_SUCCESS, AccessTokenDb::GetInstance()->Find(
-        AtmDataType::ACCESSTOKEN_HAP_INFO, conditionValue, results2));
+        AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, conditionValue, results2));
     EXPECT_EQ(1, results2.size());
 
     EXPECT_EQ(RET_SUCCESS, atManagerService_->DeleteToken(tokenId, false));
@@ -279,7 +279,7 @@ HWTEST_F(AccessTokenDbConsistencyTest, UpdatePermStatusCompareTest001, TestSize.
 
     std::vector<GenericValues> results3;
     EXPECT_EQ(RET_SUCCESS, AccessTokenDb::GetInstance()->Find(
-        AtmDataType::ACCESSTOKEN_HAP_INFO, conditionValue, results3));
+        AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, conditionValue, results3));
     EXPECT_EQ(1, results3.size());
 
     EXPECT_EQ(RET_SUCCESS, atManagerService_->DeleteToken(tokenId, false));
@@ -318,7 +318,7 @@ HWTEST_F(AccessTokenDbConsistencyTest, DeleteHapTokenCompareTest001, TestSize.Le
 
     std::vector<GenericValues> results2;
     EXPECT_EQ(RET_SUCCESS, AccessTokenDb::GetInstance()->Find(
-        AtmDataType::ACCESSTOKEN_HAP_INFO, conditionValue, results2));
+        AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, conditionValue, results2));
     EXPECT_EQ(0, results2.size()); // size is 0
 }
 } // namespace AccessToken
