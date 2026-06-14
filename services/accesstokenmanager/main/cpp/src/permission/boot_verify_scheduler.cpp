@@ -192,7 +192,7 @@ int32_t BootVerifyScheduler::LoadVerifyDataFromDb()
     std::vector<GenericValues> hapTokenRes;
     std::vector<GenericValues> permStateRes;
     std::vector<GenericValues> extendedPermRes;
-    int32_t ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_INFO, conditionValue, hapTokenRes);
+    int32_t ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, conditionValue, hapTokenRes);
     if (ret != RET_SUCCESS) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Load hap token info failed, ret=%{public}d.", ret);
         return ret;
@@ -1057,14 +1057,14 @@ void BootVerifyScheduler::BuildBundlePersistInfos(AccessTokenID tokenId, const V
     GenericValues condition;
     condition.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
     if (state.needPersistHapInfo) {
-        delInfoVec.emplace_back(DelInfo { AtmDataType::ACCESSTOKEN_HAP_INFO, condition });
+        delInfoVec.emplace_back(DelInfo { AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, condition });
         std::vector<GenericValues> hapInfoValues;
         {
             std::lock_guard<std::mutex> lock(verifyMutex_);
             hapTokenInfoMap_[tokenId].BuildAddValue(hapInfoValues);
         }
         if (!hapInfoValues.empty()) {
-            addInfoVec.emplace_back(AddInfo { AtmDataType::ACCESSTOKEN_HAP_INFO, hapInfoValues });
+            addInfoVec.emplace_back(AddInfo { AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, hapInfoValues });
         }
     }
     if (state.needPersistPermState) {

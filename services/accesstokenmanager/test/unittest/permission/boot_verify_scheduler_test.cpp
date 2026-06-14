@@ -217,7 +217,7 @@ protected:
     void PrepareVerifyDb(bool preInstalled = true, uint32_t uid = TEST_UID, bool migrated = true,
         uint32_t tokenAttr = 0)
     {
-        SetMockDbFindResult(AtmDataType::ACCESSTOKEN_HAP_INFO, RET_SUCCESS,
+        SetMockDbFindResult(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, RET_SUCCESS,
             {BuildHapInfoValue(TEST_TOKEN_ID, TEST_BUNDLE_NAME, uid, APL_NORMAL, tokenAttr, migrated)});
         SetMockDbFindResult(AtmDataType::ACCESSTOKEN_PERMISSION_STATE, RET_SUCCESS,
             {BuildPermStateValue(TEST_TOKEN_ID, "ohos.permission.CAMERA")});
@@ -279,7 +279,7 @@ protected:
  */
 HWTEST_F(BootVerifySchedulerTest, VerifyBundleSignInfoWhenStart001, TestSize.Level1)
 {
-    SetMockDbFindResult(AtmDataType::ACCESSTOKEN_HAP_INFO, ERR_PARAM_INVALID, {});
+    SetMockDbFindResult(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, ERR_PARAM_INVALID, {});
     EXPECT_EQ(ERR_PARAM_INVALID, BootVerifyScheduler::GetInstance().VerifyBundleSignInfoWhenStart());
 }
 
@@ -290,7 +290,7 @@ HWTEST_F(BootVerifySchedulerTest, VerifyBundleSignInfoWhenStart001, TestSize.Lev
  */
 HWTEST_F(BootVerifySchedulerTest, VerifyBundleSignInfoWhenStart002, TestSize.Level1)
 {
-    SetMockDbFindResult(AtmDataType::ACCESSTOKEN_HAP_INFO, RET_SUCCESS,
+    SetMockDbFindResult(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, RET_SUCCESS,
         {BuildHapInfoValue(TEST_TOKEN_ID, TEST_BUNDLE_NAME, TEST_UID)});
     SetMockDbFindResult(AtmDataType::ACCESSTOKEN_PERMISSION_STATE, ERR_PARAM_INVALID, {});
     EXPECT_EQ(ERR_PARAM_INVALID, BootVerifyScheduler::GetInstance().VerifyBundleSignInfoWhenStart());
@@ -325,7 +325,7 @@ HWTEST_F(BootVerifySchedulerTest, VerifyBundleSignInfoWhenStart004, TestSize.Lev
 {
     const std::string secondPath = "/data/test/music.hap";
     // Prepare two preinstalled high-privilege bundles in mock DB so startup verification handles them in sequence.
-    SetMockDbFindResult(AtmDataType::ACCESSTOKEN_HAP_INFO, RET_SUCCESS, {
+    SetMockDbFindResult(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, RET_SUCCESS, {
         BuildHapInfoValue(TEST_TOKEN_ID, TEST_BUNDLE_NAME_2, TEST_UID),
         BuildHapInfoValue(TEST_TOKEN_ID_2, TEST_BUNDLE_NAME, TEST_UID + 1),
     });
@@ -618,7 +618,7 @@ HWTEST_F(BootVerifySchedulerTest, LoadVerifyDataFromDb001, TestSize.Level1)
  */
 HWTEST_F(BootVerifySchedulerTest, LoadVerifyDataFromDbPermDialogCap001, TestSize.Level1)
 {
-    SetMockDbFindResult(AtmDataType::ACCESSTOKEN_HAP_INFO, RET_SUCCESS,
+    SetMockDbFindResult(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, RET_SUCCESS,
         {BuildHapInfoValue(TEST_TOKEN_ID, TEST_BUNDLE_NAME, TEST_UID, APL_NORMAL, 0, true,
             ReservedType::NONE, true)});
     SetMockDbFindResult(AtmDataType::ACCESSTOKEN_PERMISSION_STATE, RET_SUCCESS,
@@ -640,7 +640,7 @@ HWTEST_F(BootVerifySchedulerTest, LoadVerifyDataFromDbPermDialogCap001, TestSize
 #ifdef SPM_DATA_ENABLE
 HWTEST_F(BootVerifySchedulerTest, LoadVerifyDataFromDb002, TestSize.Level1)
 {
-    SetMockDbFindResult(AtmDataType::ACCESSTOKEN_HAP_INFO, RET_SUCCESS,
+    SetMockDbFindResult(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, RET_SUCCESS,
         {
             BuildHapInfoValue(TEST_TOKEN_ID, TEST_BUNDLE_NAME, TEST_UID, APL_NORMAL, 0, true,
                 ReservedType::RESERVED_DATA),
@@ -945,7 +945,7 @@ HWTEST_F(BootVerifySchedulerTest, VerifyBundleWithState003, TestSize.Level1)
     bool hasHapInfoUpdate = false;
     bool hasPermStateUpdate = false;
     for (const auto& addInfo : GetMockDbState().lastAddInfos) {
-        if (addInfo.addType == AtmDataType::ACCESSTOKEN_HAP_INFO) {
+        if (addInfo.addType == AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO) {
             hasHapInfoUpdate = true;
         }
         if (addInfo.addType == AtmDataType::ACCESSTOKEN_PERMISSION_STATE) {

@@ -170,7 +170,7 @@ static void RemoveTestTokenHapInfo()
     GenericValues condition;
     condition.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(TEST_TOKEN_ID));
     DelInfo delInfo;
-    delInfo.delType = AtmDataType::ACCESSTOKEN_HAP_INFO;
+    delInfo.delType = AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO;
     delInfo.delValue = condition;
 
     std::vector<DelInfo> delInfoVec;
@@ -210,7 +210,7 @@ HWTEST_F(DatabaseTest, SqliteStorageModifyTest001, TestSize.Level0)
     genericValues.Put(TokenFiledConst::FIELD_RESERVED, 1);
 #endif
     AddInfo addInfo;
-    addInfo.addType = AtmDataType::ACCESSTOKEN_HAP_INFO;
+    addInfo.addType = AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO;
     addInfo.addValues.emplace_back(genericValues);
 
     std::vector<DelInfo> delInfoVec;
@@ -225,12 +225,13 @@ HWTEST_F(DatabaseTest, SqliteStorageModifyTest001, TestSize.Level0)
     conditions.Put(TokenFiledConst::FIELD_TOKEN_ID, TEST_TOKEN_ID);
     conditions.Put(TokenFiledConst::FIELD_USER_ID, 100);
 
-    ASSERT_EQ(0, AccessTokenDb::GetInstance()->Modify(AtmDataType::ACCESSTOKEN_HAP_INFO, modifyValues, conditions));
+    ASSERT_EQ(0, AccessTokenDb::GetInstance()->Modify(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, modifyValues,
+        conditions));
 
     bool modifySuccess = false;
     GenericValues conditionValue;
     std::vector<GenericValues> hapInfoResults;
-    AccessTokenDb::GetInstance()->Find(AtmDataType::ACCESSTOKEN_HAP_INFO, conditionValue, hapInfoResults);
+    AccessTokenDb::GetInstance()->Find(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, conditionValue, hapInfoResults);
     for (GenericValues hapInfoValue : hapInfoResults) {
         AccessTokenID tokenId = (AccessTokenID)hapInfoValue.GetInt(TokenFiledConst::FIELD_TOKEN_ID);
         if (tokenId == TEST_TOKEN_ID) {

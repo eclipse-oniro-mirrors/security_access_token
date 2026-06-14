@@ -294,7 +294,7 @@ int32_t InstallSessionManager::DeleteFromDbByTokenId(AccessTokenID tokenID)
     condition.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenID));
 
     std::vector<DelInfo> delInfoVec;
-    AccessTokenInfoUtils::GenerateDelInfoToVec(AtmDataType::ACCESSTOKEN_HAP_INFO, condition, delInfoVec);
+    AccessTokenInfoUtils::GenerateDelInfoToVec(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, condition, delInfoVec);
     AccessTokenInfoUtils::GenerateDelInfoToVec(AtmDataType::ACCESSTOKEN_PERMISSION_STATE, condition, delInfoVec);
     AccessTokenInfoUtils::GenerateDelInfoToVec(
         AtmDataType::ACCESSTOKEN_PERMISSION_EXTEND_VALUE, condition, delInfoVec);
@@ -336,7 +336,7 @@ int32_t InstallSessionManager::GetTokenIdAndUid(InstallCache& cache, const Bundl
     conditionValue.Put(TokenFiledConst::FIELD_BUNDLE_NAME, cache.baseInfo.bundleName);
     conditionValue.Put(TokenFiledConst::FIELD_INST_INDEX, cache.baseInfo.instIndex);
     std::vector<GenericValues> hapTokenResults;
-    int32_t ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_INFO, conditionValue, hapTokenResults);
+    int32_t ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, conditionValue, hapTokenResults);
     if (ret != RET_SUCCESS) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Query failed, ret: %{public}d", ret);
         return ERR_DATABASE_OPERATE_FAILED;
@@ -554,7 +554,7 @@ void InstallSessionManager::CreateUpdateHapInfo(const InstallCache& cache, Finis
     for (const auto& [tokenIdInt, bundlePolicy] : cache.tokenIDToBundlePolicy) {
         AccessTokenID tokenId = static_cast<AccessTokenID>(tokenIdInt);
         std::shared_ptr<HapTokenInfoInner> infoPtr =
-            AccessTokenInfoManager::GetInstance().GetHapTokenInfoInnerFromCache(tokenId);
+            AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId, false);
         if (infoPtr == nullptr) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Token %{public}u is invalid.", tokenId);
             continue;
@@ -599,7 +599,7 @@ void InstallSessionManager::GenerateHapTokenInfoItem(const InstallCache& cache, 
 {
     HapTokenInfoItem item;
     std::shared_ptr<HapTokenInfoInner> infoPtr =
-        AccessTokenInfoManager::GetInstance().GetHapTokenInfoInnerFromCache(hapInfo.tokenID);
+        AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(hapInfo.tokenID, false);
     if (infoPtr != nullptr) {
         item.permDialogCapState = infoPtr->IsPermDialogForbidden();
         item.migrated = infoPtr->IsMigrated();
@@ -740,12 +740,12 @@ void InstallSessionManager::GenerateOneDbInfo(const InstallCache& cache, const H
     std::vector<GenericValues> permDefValues;
     GeneratePermDefFromHapPolicy(tokenId, cache.policy, hapInfo.bundleName, permDefValues);
 
-    AccessTokenInfoUtils::GenerateAddInfoToVec(AtmDataType::ACCESSTOKEN_HAP_INFO, hapTokenInfoValues, addInfoVec);
+    AccessTokenInfoUtils::GenerateAddInfoToVec(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, hapTokenInfoValues, addInfoVec);
     AccessTokenInfoUtils::GenerateAddInfoToVec(AtmDataType::ACCESSTOKEN_PERMISSION_STATE, permStateValues, addInfoVec);
 
     GenericValues condition;
     condition.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
-    AccessTokenInfoUtils::GenerateDelInfoToVec(AtmDataType::ACCESSTOKEN_HAP_INFO, condition, delInfoVec);
+    AccessTokenInfoUtils::GenerateDelInfoToVec(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, condition, delInfoVec);
     AccessTokenInfoUtils::GenerateDelInfoToVec(AtmDataType::ACCESSTOKEN_PERMISSION_STATE, condition, delInfoVec);
 
     if (!permDefValues.empty()) {
@@ -789,7 +789,7 @@ int32_t InstallSessionManager::DeleteAndInsertValueToDb(const InstallCache& cach
         GenericValues condition;
         condition.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(cache.oldTokenId));
         DelInfo delInfo;
-        delInfo.delType = AtmDataType::ACCESSTOKEN_HAP_INFO;
+        delInfo.delType = AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO;
         delInfo.delValue = condition;
         delInfoVec.emplace_back(delInfo);
     }
@@ -825,6 +825,8 @@ void InstallSessionManager::RefreshCache(const InstallCache& cache, const Finish
 #ifdef TOKEN_SYNC_ENABLE
         TokenModifyNotifier::GetInstance().NotifyTokenModify(context.hapInfos[i].tokenID);
 #endif
+        AccessTokenInfoManager::GetInstance().ReleaseInactiveTokenInfoInner(context.hapInfos[i].tokenID);
+        AccessTokenIDManager::GetInstance().ChangeTokenIdStatus(context.hapInfos[i].tokenID, TokenIdStatus::ACTIVE);
     }
     if (cache.reserved == static_cast<int32_t>(ReservedType::RESERVED_IDENTITY)) {
         AccessTokenIDManager::GetInstance().RemoveReservedTokenId(cache.oldTokenId);
@@ -849,6 +851,13 @@ void InstallSessionManager::RollbackAll(int32_t sessionId, bool eraseCache)
         if (it->second.isNewBundleId) {
             AccessTokenIDManager::GetInstance().RemoveBundleId(it->second.identity.uid);
         }
+    }
+    for (auto it: it->second.tokenIDToBundlePolicy) {
+        TokenIdStatus status;
+        if (AccessTokenIDManager::GetInstance().GetTokenIdStatus(it.first, status) != RET_SUCCESS) {
+            continue;
+        }
+        AccessTokenInfoManager::GetInstance().ReleaseInactiveTokenInfoInner(it.first);
     }
     int32_t callerPid = it->second.callerPid;
     if (eraseCache) {
@@ -983,7 +992,7 @@ int32_t InstallSessionManager::GetAppIdFromDb(const std::string& bundleName, std
     GenericValues conditionValue;
     conditionValue.Put(TokenFiledConst::FIELD_BUNDLE_NAME, bundleName);
     std::vector<GenericValues> hapTokenResults;
-    int32_t ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_INFO, conditionValue, hapTokenResults);
+    int32_t ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, conditionValue, hapTokenResults);
     if (ret != RET_SUCCESS) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Query failed, ret: %{public}d", ret);
         return ERR_DATABASE_OPERATE_FAILED;
@@ -1136,9 +1145,8 @@ int32_t InstallSessionManager::UpdateHapPolicy(int32_t sessionId, int32_t tokenI
             RollbackAll(sessionId);
             return AccessTokenError::ERR_NOT_CHECK_PERMISSION;
         }
-        
         std::shared_ptr<HapTokenInfoInner> infoPtr =
-            AccessTokenInfoManager::GetInstance().GetHapTokenInfoInnerFromCache(tokenId);
+            AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId, false);
         if (infoPtr == nullptr || infoPtr->GetBundleName() != it->second.bundleParam.bundleName) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Token %{public}u is invalid or not match bundleName.", tokenId);
             RollbackAll(sessionId);

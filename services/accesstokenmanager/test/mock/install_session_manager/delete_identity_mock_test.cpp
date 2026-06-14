@@ -142,7 +142,7 @@ bool DeleteIdentityMockTest::VerifyTokenDeletedFromDatabase(AccessTokenID tokenI
     GenericValues conditionValue;
     conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
     std::vector<GenericValues> results;
-    int32_t ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_INFO, conditionValue, results);
+    int32_t ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, conditionValue, results);
     if (ret != ERR_OK || results.size() != 0) {
         return false;
     }
@@ -159,7 +159,7 @@ bool DeleteIdentityMockTest::VerifyTokenExistsInDatabase(AccessTokenID tokenId, 
     GenericValues conditionValue;
     conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
     std::vector<GenericValues> results;
-    int32_t ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_INFO, conditionValue, results);
+    int32_t ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, conditionValue, results);
     if (ret != ERR_OK || results.size() != 1) {
         return false;
     }
@@ -190,7 +190,7 @@ bool DeleteIdentityMockTest::VerifyPermissionDeletedFromDatabase(AccessTokenID t
 
 bool DeleteIdentityMockTest::VerifyTokenInCache(AccessTokenID tokenId)
 {
-    auto tokenInfo = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInnerFromCache(tokenId);
+    auto tokenInfo = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId);
     return tokenInfo != nullptr;
 }
 
