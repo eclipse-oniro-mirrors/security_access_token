@@ -9794,6 +9794,17 @@
             "isKernelEffect": false,
             "hasValue": false,
             "deviceTypes": ["phone"]
+        },
+        {
+            "name": "ohos.permission.ENTERPRISE_SPACE_FILE_TRANSFER_DATA_ACCESS",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1"]
         }
     ]
 }
