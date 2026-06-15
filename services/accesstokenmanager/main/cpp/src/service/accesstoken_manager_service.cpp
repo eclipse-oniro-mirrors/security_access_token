@@ -1122,15 +1122,8 @@ int32_t AccessTokenManagerService::ClearUserGrantedPermStateByBundle(const std::
         LOGE(ATM_DOMAIN, ATM_TAG, "Bundle name is invalid.");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
-    int32_t ret = PreVerifyBundleIfNeeded(bundleName);
-    if (ret != RET_SUCCESS) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Pre verify bundle failed, bundle=%{public}s, ret=%{public}d.",
-            bundleName.c_str(), ret);
-        return ret;
-    }
-
     std::vector<AccessTokenID> tokenIdList;
-    ret = AccessTokenInfoManager::GetInstance().GetHapTokenIdListByBundleName(bundleName, tokenIdList);
+    int32_t ret = AccessTokenInfoManager::GetInstance().GetHapTokenIdListByBundleName(bundleName, tokenIdList);
     if (ret != RET_SUCCESS) {
         return ret;
     }
