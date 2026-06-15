@@ -5366,8 +5366,9 @@
             "availableType": "NORMAL",
             "since": 8,
             "deprecated": "",
-            "provisionEnable": true,
+            "provisionEnable": false,
             "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "tv", "wearable", "2in1", "tablet", "car"],
             "label": "$string:ohos_lab_microphone",
             "description": "$string:ohos_desc_microphone"
         },
