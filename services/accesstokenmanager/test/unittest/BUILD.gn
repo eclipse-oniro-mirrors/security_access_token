@@ -222,6 +222,7 @@ ohos_unittest("libspm_data_task_test") {
     "common/fake_token_setproc.cpp",
     "common/parameter.cpp",
     "common/parameters.cpp",
+    "permission/install_session_spm_task_test.cpp",
     "permission/spm_data_task_test.cpp",
     # Directly compile nativetoken sources instead of linking libnativetoken_shared
     # to avoid pulling in libpermsetproc_shared which contains real perm_setproc.cpp
