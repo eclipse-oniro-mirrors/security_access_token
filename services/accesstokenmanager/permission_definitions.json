@@ -9125,7 +9125,7 @@
             "deprecated": "",
             "provisionEnable": false,
             "distributedSceneEnable": false,
-            "deviceTypes": ["general"]
+            "deviceTypes": ["phone", "2in1", "tablet"]
         },
         {
             "name": "ohos.permission.EXECUTE_DISTRIBUTED_INTENT",
