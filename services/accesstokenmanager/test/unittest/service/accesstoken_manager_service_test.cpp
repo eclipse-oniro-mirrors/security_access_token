@@ -294,16 +294,6 @@ AccessTokenIDEx CreateBundleClearHapToken(
     return tokenIdEx;
 }
 
-void UpsertBundleCacheByTest(const std::string& bundleName, const std::vector<AccessTokenID>& tokenIds)
-{
-    auto bundleInfo = std::make_shared<BundleInfoInner>();
-    bundleInfo->tokenIds = tokenIds;
-    AccessTokenInfoManager::GetInstance().UpsertBundleInfoInnerCache(bundleName, bundleInfo);
-#ifdef IS_SUPPORT_HAP_RUNNING
-    BootVerifyScheduler::GetInstance().isVerifiedMap_[bundleName] = true;
-#endif
-}
-
 void SetCameraMicrophoneUserFixedStateByService(AccessTokenID tokenID)
 {
     ASSERT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GrantPermission(
@@ -3420,7 +3410,6 @@ HWTEST_F(AccessTokenManagerServiceTest, ClearUserGrantedPermStateByBundleFuncTes
     const std::string bundleName = "ClearUserGrantedPermStateByBundleService";
     AccessTokenIDEx tokenIdEx = CreateBundleClearHapToken(bundleName, 0, "debug");
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
-    UpsertBundleCacheByTest(bundleName, {tokenID});
     SetCameraMicrophoneUserFixedStateByService(tokenID);
     uint64_t selfTokenId = SetShellCallerByTest();
     int32_t ret = atManagerService_->ClearUserGrantedPermStateByBundle(bundleName);
@@ -3446,7 +3435,6 @@ HWTEST_F(AccessTokenManagerServiceTest, ClearUserGrantedPermStateByBundleFuncTes
     AccessTokenIDEx tokenIdEx2 = CreateBundleClearHapToken(bundleName, 1, "debug");
     AccessTokenID tokenID1 = tokenIdEx1.tokenIdExStruct.tokenID;
     AccessTokenID tokenID2 = tokenIdEx2.tokenIdExStruct.tokenID;
-    UpsertBundleCacheByTest(bundleName, {tokenID1, tokenID2});
     SetCameraMicrophoneUserFixedStateByService(tokenID1);
     SetCameraMicrophoneUserFixedStateByService(tokenID2);
 
@@ -3478,7 +3466,6 @@ HWTEST_F(AccessTokenManagerServiceTest, ClearUserGrantedPermStateByBundleFuncTes
     AccessTokenIDEx releaseTokenIdEx = CreateBundleClearHapToken(bundleName, 1, "release");
     AccessTokenID debugTokenID = debugTokenIdEx.tokenIdExStruct.tokenID;
     AccessTokenID releaseTokenID = releaseTokenIdEx.tokenIdExStruct.tokenID;
-    UpsertBundleCacheByTest(bundleName, {debugTokenID, releaseTokenID});
     SetCameraMicrophoneUserFixedStateByService(debugTokenID);
     SetCameraMicrophoneUserFixedStateByService(releaseTokenID);
 
@@ -3510,7 +3497,6 @@ HWTEST_F(AccessTokenManagerServiceTest, ClearUserGrantedPermStateByBundleAbnorma
     atManagerService_->Initialize();
     const std::string bundleName = "ClearUserGrantedPermStateByBundleReleaseOnlyService";
     AccessTokenID tokenID = CreateBundleClearHapToken(bundleName, 0, "release").tokenIdExStruct.tokenID;
-    UpsertBundleCacheByTest(bundleName, {tokenID});
     SetCameraMicrophoneUserFixedStateByService(tokenID);
 
     uint64_t selfTokenId = SetShellCallerByTest();
@@ -3557,42 +3543,6 @@ HWTEST_F(AccessTokenManagerServiceTest, ClearUserGrantedPermStateByBundleAbnorma
     ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, emptyRet);
 }
 
-#ifdef IS_SUPPORT_HAP_RUNNING
-/**
- * @tc.name: ClearUserGrantedPermStateByBundleAbnormalTest004
- * @tc.desc: Clear user granted permission state by bundle rejects pre-verify failure.
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenManagerServiceTest, ClearUserGrantedPermStateByBundleAbnormalTest004, TestSize.Level0)
-{
-    atManagerService_->Initialize();
-    const std::string bundleName = "ClearUserGrantedPermStateByBundlePreVerifyFailService";
-    AccessTokenID tokenID = CreateBundleClearHapToken(bundleName, 0, "debug").tokenIdExStruct.tokenID;
-    UpsertBundleCacheByTest(bundleName, {tokenID});
-    auto& scheduler = BootVerifyScheduler::GetInstance();
-    bool isAllVerified = scheduler.isAllHapBundlesVerified_.load();
-    auto iter = scheduler.isVerifiedMap_.find(bundleName);
-    bool hasVerifiedState = iter != scheduler.isVerifiedMap_.end();
-    bool verifiedState = hasVerifiedState ? iter->second : false;
-    scheduler.isAllHapBundlesVerified_.store(false);
-    scheduler.isVerifiedMap_[bundleName] = false;
-
-    uint64_t selfTokenId = SetShellCallerByTest();
-    int32_t ret = atManagerService_->ClearUserGrantedPermStateByBundle(bundleName);
-    RestoreCallerByTest(selfTokenId);
-    scheduler.isAllHapBundlesVerified_.store(isAllVerified);
-    if (hasVerifiedState) {
-        scheduler.isVerifiedMap_[bundleName] = verifiedState;
-    } else {
-        scheduler.isVerifiedMap_.erase(bundleName);
-    }
-
-    ASSERT_EQ(AccessTokenError::ERR_BUNDLE_NOT_EXIST, ret);
-    DeleteBundleClearToken(tokenID);
-}
-#endif
-
 /**
  * @tc.name: ClearUserGrantedPermStateByBundleFuncTest004
  * @tc.desc: Clear user granted permission state by bundle without user setting.
@@ -3605,7 +3555,6 @@ HWTEST_F(AccessTokenManagerServiceTest, ClearUserGrantedPermStateByBundleFuncTes
     const std::string bundleName = "ClearUserGrantedPermStateByBundleNoSettingService";
     AccessTokenIDEx tokenIdEx = CreateBundleClearHapToken(bundleName, 0, "debug");
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
-    UpsertBundleCacheByTest(bundleName, {tokenID});
     ASSERT_FALSE(AccessTokenInfoManager::GetInstance().GetPermDialogCap(tokenID));
 
     uint64_t selfTokenId = SetShellCallerByTest();

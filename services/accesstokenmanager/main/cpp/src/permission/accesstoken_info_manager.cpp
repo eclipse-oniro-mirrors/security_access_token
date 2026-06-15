@@ -873,12 +873,17 @@ int32_t AccessTokenInfoManager::GetHapTokenIdListByBundleName(
 {
     tokenIdList.clear();
     std::shared_lock<std::shared_mutex> infoGuard(hapTokenInfoLock_);
-    auto iter = bundleInfoMap_.find(bundleName);
-    if (iter == bundleInfoMap_.end() || iter->second == nullptr) {
+    for (const auto& item : hapTokenInfoMap_) {
+        const auto& tokenInfoPtr = item.second;
+        if (tokenInfoPtr != nullptr && !tokenInfoPtr->IsRemote() &&
+            tokenInfoPtr->GetBundleName() == bundleName) {
+            tokenIdList.emplace_back(tokenInfoPtr->GetTokenID());
+        }
+    }
+    if (tokenIdList.empty()) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Bundle %{public}s does not exist.", bundleName.c_str());
         return ERR_BUNDLE_NOT_EXIST;
     }
-    tokenIdList = iter->second->tokenIds;
     return RET_SUCCESS;
 }
 

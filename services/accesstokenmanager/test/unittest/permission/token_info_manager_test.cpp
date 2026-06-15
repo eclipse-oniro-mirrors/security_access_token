@@ -474,6 +474,52 @@ HWTEST_F(TokenInfoManagerTest, UpsertBundleInfoInnerCache001, TestSize.Level0)
 }
 
 /**
+ * @tc.name: GetHapTokenIdListByBundleName001
+ * @tc.desc: AccessTokenInfoManager::GetHapTokenIdListByBundleName gets token IDs from hap token info cache.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenInfoManagerTest, GetHapTokenIdListByBundleName001, TestSize.Level0)
+{
+    auto& manager = AccessTokenInfoManager::GetInstance();
+    HapInfoParams info = g_infoManagerTestInfoParms;
+    info.bundleName = "com.ohos.bundle.token.id.list";
+    info.appIDDesc = info.bundleName;
+
+    AccessTokenIDEx tokenIdEx = {0};
+    std::vector<GenericValues> undefValues;
+    ASSERT_EQ(RET_SUCCESS, manager.CreateHapTokenInfo(info, g_infoManagerTestPolicyPrams1, tokenIdEx, undefValues));
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+
+    manager.bundleInfoMap_.erase(info.bundleName);
+    std::vector<AccessTokenID> tokenIdList;
+    ASSERT_EQ(RET_SUCCESS, manager.GetHapTokenIdListByBundleName(info.bundleName, tokenIdList));
+    ASSERT_EQ(1u, tokenIdList.size());
+    EXPECT_EQ(tokenId, tokenIdList[0]);
+
+    AccessTokenID remoteTokenId = 0x20240615;
+    HapTokenInfo remoteInfo = {
+        .ver = DEFAULT_TOKEN_VERSION,
+        .userID = info.userID,
+        .bundleName = info.bundleName,
+        .instIndex = 1,
+        .tokenID = remoteTokenId
+    };
+    auto remoteHap = std::make_shared<HapTokenInfoInner>(remoteTokenId, remoteInfo, std::vector<PermissionStatus>());
+    remoteHap->SetRemote(true);
+    manager.hapTokenInfoMap_[remoteTokenId] = remoteHap;
+
+    tokenIdList.clear();
+    ASSERT_EQ(RET_SUCCESS, manager.GetHapTokenIdListByBundleName(info.bundleName, tokenIdList));
+    ASSERT_EQ(1u, tokenIdList.size());
+    EXPECT_EQ(tokenId, tokenIdList[0]);
+
+    manager.hapTokenInfoMap_.erase(remoteTokenId);
+    (void)manager.RemoveHapTokenInfo(tokenId);
+}
+
+/**
  * @tc.name: CreateHapTokenInfo001
  * @tc.desc: Verify the CreateHapTokenInfo add one hap token function.
  * @tc.type: FUNC
