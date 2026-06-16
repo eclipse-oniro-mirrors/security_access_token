@@ -21,6 +21,7 @@ namespace Security {
 namespace AccessToken {
 namespace {
 static constexpr int64_t ONE_SECOND_MILLISECONDS = 1000;
+static constexpr int64_t MS_PER_MINUTE = 60 * 1000;
 }
 int64_t TimeUtil::GetCurrentTimestamp()
 {
@@ -33,15 +34,7 @@ int64_t TimeUtil::GetCurrentTimestamp()
 
 bool TimeUtil::IsTimeStampsSameMinute(int64_t timeStamp1, int64_t timeStamp2)
 {
-    struct tm t1 = {0};
-    time_t time1 = static_cast<time_t>(timeStamp1 / 1000);
-    // localtime is not thread safe, localtime_r first param unit is second, timestamp unit is ms, so divided by 1000
-    localtime_r(&time1, &t1);
-    struct tm t2 = {0};
-    time_t time2 = static_cast<time_t>(timeStamp2 / 1000);
-    localtime_r(&time2, &t2);
-
-    return t1.tm_min == t2.tm_min;
+    return (timeStamp1 / MS_PER_MINUTE) == (timeStamp2 / MS_PER_MINUTE);
 }
 } // namespace AccessToken
 } // namespace Security

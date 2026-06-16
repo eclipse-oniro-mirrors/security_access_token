@@ -882,7 +882,8 @@ int32_t InstallSessionManager::CheckHapSignInfo(const BundleHapList& list, const
                 Security::Verify::VerifyType::All, list.userId),
             false, infoInner, isChanged);
         if (ret != RET_SUCCESS) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "CheckHapsSignInfo failed ret=%{public}d", ret);
+            LOGE(ATM_DOMAIN, ATM_TAG, "CheckHapsSignInfo failed ret=%{public}d, path=%{public}s",
+                ret, cache.list.hapPaths[i].c_str());
             resultInfo.index = i;
             resultInfo.errorCode = ret;
             return ERR_HAP_SIGN_VERIFY_FAILED;
@@ -907,6 +908,8 @@ int32_t InstallSessionManager::CheckHapSignInfo(const BundleHapList& list, const
         sessionId = ++sessionCnt;
         sessionToInstallCache[sessionId] = cache;
         sessionToTimestamp[sessionId] = TimeUtil::GetCurrentTimestamp();
+        LOGI(ATM_DOMAIN, ATM_TAG, "sessionId=%{public}d, bundle=%{public}s",
+            sessionId, cache.bundleInfos.front().GetBundleName().c_str());
     }
     return RET_SUCCESS;
 }
@@ -1064,6 +1067,7 @@ int32_t InstallSessionManager::CreateInstallSession(const HapBaseInfo& info, con
     sessionId = ++sessionCnt;
     sessionToInstallCache[sessionId] = cache;
     sessionToTimestamp[sessionId] = TimeUtil::GetCurrentTimestamp();
+    LOGI(ATM_DOMAIN, ATM_TAG, "sessionId=%{public}d, bundle=%{public}s", sessionId, info.bundleName.c_str());
     return RET_SUCCESS;
 }
 
@@ -1289,6 +1293,14 @@ int32_t InstallSessionManager::FinishInstall(int32_t sessionId, bool isSuccess,
         return AccessTokenError::ERR_SESSION_NOT_EXIST;
     }
 
+    std::string bundleName;
+    if (!it->second.bundleInfos.empty()) {
+        bundleName = it->second.bundleInfos.front().GetBundleName();
+    } else {
+        bundleName = it->second.baseInfo.bundleName;
+    }
+    LOGI(ATM_DOMAIN, ATM_TAG, "Start finish, sessionId=%{public}d, bundle=%{public}s", sessionId, bundleName.c_str());
+
     if (!it->second.isCheckPerm) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Not check permission!");
         RollbackAll(sessionId, SessionFinishSceneCode::FINISH_INSTALL, AccessTokenError::ERR_NOT_CHECK_PERMISSION, 0);
@@ -1354,7 +1366,8 @@ int32_t InstallSessionManager::FastVerify(const std::vector<std::string>& paths,
             HapSignVerifyManager::MakeVerifyParams(paths[i], Security::Verify::VerifyType::Fast, userId),
             false, infoInner, isChanged);
         if (ret != RET_SUCCESS) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "CheckHapsSignInfo failed ret=%{public}d", ret);
+            LOGE(ATM_DOMAIN, ATM_TAG, "CheckHapsSignInfo failed ret=%{public}d, path=%{public}s",
+                ret, paths[i].c_str());
             return ERR_HAP_SIGN_VERIFY_FAILED;
         }
         bundleInfos.emplace_back(infoInner);

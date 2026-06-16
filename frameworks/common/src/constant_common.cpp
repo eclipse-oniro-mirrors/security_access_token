@@ -14,6 +14,7 @@
  */
 
 #include "constant_common.h"
+#include <mutex>
 #include <string>
 
 #include "access_token.h"
@@ -25,6 +26,7 @@ namespace AccessToken {
 namespace {
 constexpr const char* REPLACE_TARGET = "****";
 constexpr const char* REPLACE_TARGET_LESS_THAN_MINLEN = "*******";
+std::mutex g_mutex;
 } // namespace
 std::string ConstantCommon::EncryptDevId(std::string deviceId)
 {
@@ -42,6 +44,7 @@ std::string ConstantCommon::EncryptDevId(std::string deviceId)
 
 std::string ConstantCommon::GetLocalDeviceId()
 {
+    std::lock_guard<std::mutex> lock(g_mutex);
     static std::string localDeviceId;
     if (!localDeviceId.empty()) {
         return localDeviceId;
