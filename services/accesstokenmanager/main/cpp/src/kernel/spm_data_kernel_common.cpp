@@ -221,6 +221,16 @@ int32_t LoadSpmDataFromKernel(AccessTokenID tokenId, SpmDataPtr& spmData)
     return ERR_KERNEL_COMMON_FAILED;
 }
 
+bool IsSpmDataExists(AccessTokenID tokenId)
+{
+    SpmDataPtr spmData = nullptr;
+    int32_t ret = LoadSpmDataFromKernel(tokenId, spmData);
+    if (ret != RET_SUCCESS) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Load spm data failed, ret=%{public}d.", ret);
+    }
+    return ret == RET_SUCCESS;
+}
+
 void RemoveSpmEntryFromKernel(AccessTokenID tokenId)
 {
     int32_t ret = SpmRemoveEntry(static_cast<uint32_t>(tokenId));

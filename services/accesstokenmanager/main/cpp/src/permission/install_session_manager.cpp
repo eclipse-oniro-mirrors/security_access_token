@@ -1187,9 +1187,7 @@ int32_t InstallSessionManager::ExecuteSpmKernelTasks(int32_t sessionId, const In
     }
 
     for (size_t i = startIndex; i < context.hapInfos.size(); ++i) {
-        TokenIdStatus status;
-        if (AccessTokenIDManager::GetInstance().GetTokenIdStatus(context.hapInfos[i].tokenID, status) == RET_SUCCESS &&
-            status == TokenIdStatus::ACTIVE) {
+        if (KernelDetail::IsSpmDataExists(context.hapInfos[i].tokenID)) {
             std::vector<BriefPermData>* oldPermPtr = (i < context.oldPermList.size()) ?
                 context.oldPermList[i].get() : nullptr;
             spmContext.updateParams.emplace_back(SpmDataParam{context.hapInfos[i], context.noCachedInfo,
