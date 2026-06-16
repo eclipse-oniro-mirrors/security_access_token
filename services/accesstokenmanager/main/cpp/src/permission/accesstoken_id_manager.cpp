@@ -155,6 +155,11 @@ bool AccessTokenIDManager::IsReservedTokenId(AccessTokenID id)
 void AccessTokenIDManager::AddReservedTokenId(AccessTokenID id)
 {
     std::unique_lock<std::shared_mutex> idGuard(this->tokenIdLock_);
+    TokenIdStatus status;
+    if (GetTokenIdStatusLocked(id, status) == RET_SUCCESS) {
+        LOGW(ATM_DOMAIN, ATM_TAG, "Id %{public}u already exist as %{public}d", id, static_cast<int32_t>(status));
+        return;
+    }
     reservedTokenIdSet_.insert(id);
 }
 
