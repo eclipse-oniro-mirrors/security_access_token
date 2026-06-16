@@ -1185,7 +1185,23 @@ int32_t InstallSessionManager::ExecuteSpmKernelTasks(int32_t sessionId, const In
         startIndex = 1;
         spmContext.addParams.emplace_back(SpmDataParam{context.hapInfos.front(), context.noCachedInfo,
             context.permBriefDataLists.front(), context.extendPermLists.front(), nullptr, true});
+    }
 
+    for (size_t i = startIndex; i < context.hapInfos.size(); ++i) {
+        TokenIdStatus status;
+        if (AccessTokenIDManager::GetInstance().GetTokenIdStatus(context.hapInfos[i].tokenID, status) == RET_SUCCESS &&
+            status == TokenIdStatus::ACTIVE) {
+            std::vector<BriefPermData>* oldPermPtr = (i < context.oldPermList.size()) ?
+                context.oldPermList[i].get() : nullptr;
+            spmContext.updateParams.emplace_back(SpmDataParam{context.hapInfos[i], context.noCachedInfo,
+                context.permBriefDataLists[i], context.extendPermLists[i], oldPermPtr, true});
+        } else {
+            spmContext.addParams.emplace_back(SpmDataParam{context.hapInfos[i], context.noCachedInfo,
+                context.permBriefDataLists[i], context.extendPermLists[i], nullptr, true});
+        }
+    }
+
+    if (!spmContext.addParams.empty()) {
         spmContext.addTask = std::make_shared<AddSpmDataTask>(spmContext.addParams);
         uint32_t errIndex = 0;
         int32_t ret = spmContext.addTask->Add(errIndex);
@@ -1193,13 +1209,6 @@ int32_t InstallSessionManager::ExecuteSpmKernelTasks(int32_t sessionId, const In
             LOGE(ATM_DOMAIN, ATM_TAG, "Add cache failed, ret=%{public}d", ret);
             return ERR_KERNEL_OPERATION_FAILED;
         }
-    }
-
-    for (size_t i = startIndex; i < context.hapInfos.size(); ++i) {
-        std::vector<BriefPermData>* oldPermPtr = (i < context.oldPermList.size()) ?
-            context.oldPermList[i].get() : nullptr;
-        spmContext.updateParams.emplace_back(SpmDataParam{context.hapInfos[i], context.noCachedInfo,
-            context.permBriefDataLists[i], context.extendPermLists[i], oldPermPtr, true});
     }
 
     if (spmContext.updateParams.empty()) {
