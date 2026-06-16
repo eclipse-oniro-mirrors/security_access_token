@@ -453,7 +453,7 @@ static void RevokePermissionExecute([[maybe_unused]] ani_env* env,
 static ani_int GetVersionExecute([[maybe_unused]] ani_env* env, [[maybe_unused]] ani_object object)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetVersionExecute begin.");
-    uint32_t version = -1;
+    uint32_t version = 0;
     if (env == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Env is null.");
         return static_cast<ani_int>(version);

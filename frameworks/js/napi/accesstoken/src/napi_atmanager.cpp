@@ -868,7 +868,7 @@ void NapiAtManager::GetVersionExecute(napi_env env, void* data)
     if (asyncContext == nullptr) {
         return;
     }
-    uint32_t version;
+    uint32_t version = 0;
     int32_t result = AccessTokenKit::GetVersion(version);
     if (result != RET_SUCCESS) {
         asyncContext->errorCode = result;
