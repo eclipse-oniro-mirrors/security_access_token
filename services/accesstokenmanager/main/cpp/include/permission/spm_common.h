@@ -21,7 +21,6 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-inline const char* SPM_ENFORCE_PARAMETER = "accesstoken.permission.spm.enforcing";
 inline std::string GetPlaceholderModuleName(int32_t index)
 {
     return "#" + std::to_string(index);

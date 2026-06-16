@@ -21,6 +21,7 @@
 #include <vector>
 
 #include "access_token_error.h"
+#include "accesstoken_info_utils.h"
 #include "generic_values.h"
 #include "interfaces/hap_verify.h"
 #include "mock_access_token_db_operator.h"
@@ -45,7 +46,6 @@ namespace {
 constexpr AccessTokenID TEST_TOKEN_ID = 0x20000001;
 constexpr AccessTokenID TEST_TOKEN_ID_2 = 0x20000002;
 constexpr AccessTokenID TEST_TOKEN_ID_3 = 0x20000003;
-constexpr const char* APP_VERIFY_PARAM = "accesstoken.permission.appverify";
 constexpr uint32_t PARAM_VALUE_MAX_LEN = 32;
 constexpr uint32_t TEST_UID = 20010001;
 #ifdef SPM_DATA_ENABLE
@@ -55,8 +55,9 @@ constexpr char DEFAULT_TOKEN_VERSION_VALUE = 1;
 const std::string TEST_BUNDLE_NAME = "com.example.camera";
 const std::string TEST_BUNDLE_NAME_2 = "com.example.music";
 const std::string TEST_BUNDLE_NAME_3 = "com.example.notes";
-const std::string TEST_PATH = "/data/test/camera.hap";
+const std::string TEST_PATH = "/data/app/el1/bundle/public/camera.hap";
 std::string g_appVerifyParamBackup;
+std::string g_spmEnforcingParamBackup;
 }
 
 class BootVerifySchedulerTest : public testing::Test {
@@ -64,26 +65,31 @@ public:
     static void SetUpTestCase()
     {
         char value[PARAM_VALUE_MAX_LEN] = {0};
-        if (GetParameter(APP_VERIFY_PARAM, "", value, PARAM_VALUE_MAX_LEN - 1) >= 0) {
+        if (GetParameter(ACCESS_TOKEN_SERVICE_APP_VERIFY_KEY, "", value, PARAM_VALUE_MAX_LEN - 1) >= 0) {
             g_appVerifyParamBackup = value;
         } else {
             g_appVerifyParamBackup.clear();
+        }
+        if (GetParameter(ACCESS_TOKEN_SERVICE_SPM_ENFORCING_KEY, "", value, PARAM_VALUE_MAX_LEN - 1) >= 0) {
+            g_spmEnforcingParamBackup = value;
+        } else {
+            g_spmEnforcingParamBackup.clear();
         }
     }
 
     static void TearDownTestCase()
     {
-        if (g_appVerifyParamBackup.empty()) {
-            SetParameter(APP_VERIFY_PARAM, "");
-            return;
-        }
-        SetParameter(APP_VERIFY_PARAM, g_appVerifyParamBackup.c_str());
+        SetParameter(ACCESS_TOKEN_SERVICE_APP_VERIFY_KEY,
+            g_appVerifyParamBackup.empty() ? "" : g_appVerifyParamBackup.c_str());
+        SetParameter(ACCESS_TOKEN_SERVICE_SPM_ENFORCING_KEY,
+            g_spmEnforcingParamBackup.empty() ? "" : g_spmEnforcingParamBackup.c_str());
     }
 
     void SetUp() override
     {
         ResetMockDbState();
-        SetParameter(APP_VERIFY_PARAM, "0");
+        SetParameter(ACCESS_TOKEN_SERVICE_APP_VERIFY_KEY, "0");
+        SetParameter(ACCESS_TOKEN_SERVICE_SPM_ENFORCING_KEY, "0");
         AccessTokenIDManager::GetInstance().tokenIdSet_.clear();
         AccessTokenIDManager::GetInstance().reservedTokenIdSet_.clear();
         AccessTokenIDManager::GetInstance().untrustedTokenIdSet_.clear();
@@ -116,7 +122,8 @@ public:
     void TearDown() override
     {
         HapSignVerifyManager::GetInstance().adapter_ = originAdapter_;
-        SetParameter(APP_VERIFY_PARAM, "0");
+        SetParameter(ACCESS_TOKEN_SERVICE_APP_VERIFY_KEY, "0");
+        SetParameter(ACCESS_TOKEN_SERVICE_SPM_ENFORCING_KEY, "0");
         AccessTokenIDManager::GetInstance().tokenIdSet_.clear();
         AccessTokenIDManager::GetInstance().reservedTokenIdSet_.clear();
         AccessTokenIDManager::GetInstance().untrustedTokenIdSet_.clear();
@@ -436,22 +443,24 @@ HWTEST_F(BootVerifySchedulerTest, BuildPriorityBundleList001, TestSize.Level1)
 {
     auto& scheduler = BootVerifyScheduler::GetInstance();
     scheduler.bundleSignInfoMap_[TEST_BUNDLE_NAME] = BuildSignInfo(TEST_BUNDLE_NAME);
+    scheduler.bundleSignInfoMap_[TEST_BUNDLE_NAME].pathList.emplace_back("/data/test/camera2.hap");
+    scheduler.bundleSignInfoMap_[TEST_BUNDLE_NAME].moduleNameList.emplace_back("feature1");
+    scheduler.bundleSignInfoMap_[TEST_BUNDLE_NAME].bundleType.emplace_back(
+        static_cast<uint32_t>(AppExecFwk::Spm::BundleType::APP));
+    scheduler.bundleSignInfoMap_[TEST_BUNDLE_NAME].persistDataList.emplace_back(
+        BuildPersistData(TEST_BUNDLE_NAME, TEST_BUNDLE_NAME));
     scheduler.bundleSignInfoMap_[TEST_BUNDLE_NAME_2] = BuildSignInfo(TEST_BUNDLE_NAME_2);
     scheduler.bundleSignInfoMap_[TEST_BUNDLE_NAME_2].isPreInstalled = false;
-    scheduler.hapTokenInfoMap_[TEST_TOKEN_ID] = BuildHapTokenInfoItem(TEST_TOKEN_ID, TEST_BUNDLE_NAME);
-    scheduler.hapTokenInfoMap_[TEST_TOKEN_ID_2] = BuildHapTokenInfoItem(TEST_TOKEN_ID_2, TEST_BUNDLE_NAME_2);
-    scheduler.hapTokenInfoMap_[TEST_TOKEN_ID_3] = BuildHapTokenInfoItem(TEST_TOKEN_ID_3, TEST_BUNDLE_NAME_3);
+    scheduler.bundleSignInfoMap_[TEST_BUNDLE_NAME_3] = BuildSignInfo(TEST_BUNDLE_NAME_3);
+    scheduler.bundleSignInfoMap_[TEST_BUNDLE_NAME_3].isPreInstalled = false;
 
     scheduler.BuildPriorityBundleList();
 
-    EXPECT_EQ(2U, scheduler.highPrivilegeBundleList_.size());
-    EXPECT_EQ(1U, scheduler.normalBundleList_.size());
-    EXPECT_TRUE(std::find(scheduler.highPrivilegeBundleList_.begin(),
-        scheduler.highPrivilegeBundleList_.end(), TEST_BUNDLE_NAME) != scheduler.highPrivilegeBundleList_.end());
-    EXPECT_TRUE(std::find(scheduler.highPrivilegeBundleList_.begin(),
-        scheduler.highPrivilegeBundleList_.end(), TEST_BUNDLE_NAME_3) != scheduler.highPrivilegeBundleList_.end());
-    EXPECT_TRUE(std::find(scheduler.normalBundleList_.begin(),
-        scheduler.normalBundleList_.end(), TEST_BUNDLE_NAME_2) != scheduler.normalBundleList_.end());
+    ASSERT_EQ(1U, scheduler.highPrivilegeBundleList_.size());
+    ASSERT_EQ(2U, scheduler.normalBundleList_.size());
+    EXPECT_EQ(TEST_BUNDLE_NAME, scheduler.highPrivilegeBundleList_[0]);
+    EXPECT_EQ(TEST_BUNDLE_NAME_2, scheduler.normalBundleList_[0]);
+    EXPECT_EQ(TEST_BUNDLE_NAME_3, scheduler.normalBundleList_[1]);
 }
 
 /**
@@ -496,7 +505,7 @@ HWTEST_F(BootVerifySchedulerTest, PreVerifyBundle003, TestSize.Level1)
 HWTEST_F(BootVerifySchedulerTest, PreVerifyBundle004, TestSize.Level1)
 {
     auto& scheduler = BootVerifyScheduler::GetInstance();
-    scheduler.bundleInfoMap_[TEST_BUNDLE_NAME] = BuildBundleInfo({});
+    scheduler.bundleInfoMap_[TEST_BUNDLE_NAME] = BuildBundleInfo({TEST_TOKEN_ID});
     scheduler.bundleSignInfoMap_[TEST_BUNDLE_NAME] = BuildSignInfo();
     scheduler.hapTokenInfoMap_[TEST_TOKEN_ID] = BuildHapTokenInfoItem(TEST_TOKEN_ID);
     scheduler.isVerifiedMap_[TEST_BUNDLE_NAME] = false;
@@ -507,6 +516,7 @@ HWTEST_F(BootVerifySchedulerTest, PreVerifyBundle004, TestSize.Level1)
     EXPECT_FALSE(scheduler.isVerifyingMap_[TEST_BUNDLE_NAME]);
 }
 
+#ifdef SPM_DATA_ENABLE
 /**
  * @tc.name: PreVerifyBundle005
  * @tc.desc: Verify PreVerifyBundle returns error when DB bundle name mismatches verified bundle name.
@@ -521,81 +531,92 @@ HWTEST_F(BootVerifySchedulerTest, PreVerifyBundle005, TestSize.Level1)
 
     EXPECT_EQ(ERR_HAP_SIGN_VERIFY_FAILED, BootVerifyScheduler::GetInstance().PreVerifyBundle(TEST_TOKEN_ID));
 }
+#endif
 
 /**
- * @tc.name: ChangeTokenIdStatus001
- * @tc.desc: Verify ChangeTokenIdStatus returns directly when bundle info does not exist.
+ * @tc.name: ChangeTokenIdToUntrustedStatus001
+ * @tc.desc: Verify ChangeTokenIdToUntrustedStatus returns directly when bundle info does not exist.
  * @tc.type: FUNC
  */
-HWTEST_F(BootVerifySchedulerTest, ChangeTokenIdStatus001, TestSize.Level1)
+HWTEST_F(BootVerifySchedulerTest, ChangeTokenIdToUntrustedStatus001, TestSize.Level1)
 {
     auto& scheduler = BootVerifyScheduler::GetInstance();
-    scheduler.ChangeTokenIdStatus(TEST_BUNDLE_NAME, TokenIdStatus::UNTRUSTED);
+    scheduler.ChangeTokenIdToUntrustedStatus(TEST_BUNDLE_NAME);
     EXPECT_TRUE(AccessTokenIDManager::GetInstance().untrustedTokenIdSet_.empty());
 }
 
 /**
- * @tc.name: ChangeTokenIdStatus002
- * @tc.desc: Verify ChangeTokenIdStatus returns directly when bundle info is nullptr.
+ * @tc.name: ChangeTokenIdToUntrustedStatus002
+ * @tc.desc: Verify ChangeTokenIdToUntrustedStatus returns directly when bundle info is nullptr.
  * @tc.type: FUNC
  */
-HWTEST_F(BootVerifySchedulerTest, ChangeTokenIdStatus002, TestSize.Level1)
+HWTEST_F(BootVerifySchedulerTest, ChangeTokenIdToUntrustedStatus002, TestSize.Level1)
 {
     auto& scheduler = BootVerifyScheduler::GetInstance();
     scheduler.bundleInfoMap_[TEST_BUNDLE_NAME] = nullptr;
 
-    scheduler.ChangeTokenIdStatus(TEST_BUNDLE_NAME, TokenIdStatus::UNTRUSTED);
+    scheduler.ChangeTokenIdToUntrustedStatus(TEST_BUNDLE_NAME);
     EXPECT_TRUE(AccessTokenIDManager::GetInstance().untrustedTokenIdSet_.empty());
 }
 
 /**
- * @tc.name: ChangeTokenIdStatus003
- * @tc.desc: Verify ChangeTokenIdStatus stops when AccessTokenIDManager reports token not found.
+ * @tc.name: ChangeTokenIdToUntrustedStatus003
+ * @tc.desc: Verify ChangeTokenIdToUntrustedStatus stops when AccessTokenIDManager reports token not found.
  * @tc.type: FUNC
  */
-HWTEST_F(BootVerifySchedulerTest, ChangeTokenIdStatus003, TestSize.Level1)
+HWTEST_F(BootVerifySchedulerTest, ChangeTokenIdToUntrustedStatus003, TestSize.Level1)
 {
     auto& scheduler = BootVerifyScheduler::GetInstance();
     scheduler.bundleInfoMap_[TEST_BUNDLE_NAME] = BuildBundleInfo({TEST_TOKEN_ID});
 
-    scheduler.ChangeTokenIdStatus(TEST_BUNDLE_NAME, TokenIdStatus::UNTRUSTED);
+    scheduler.ChangeTokenIdToUntrustedStatus(TEST_BUNDLE_NAME);
     EXPECT_EQ(0U, AccessTokenIDManager::GetInstance().untrustedTokenIdSet_.count(TEST_TOKEN_ID));
 }
 
 /**
- * @tc.name: ChangeTokenIdStatus004
- * @tc.desc: Verify ChangeTokenIdStatus moves all bundle tokenIds to target status on success path.
+ * @tc.name: ChangeTokenIdToUntrustedStatus004
+ * @tc.desc: Verify ChangeTokenIdToUntrustedStatus moves all bundle tokenIds to untrusted on success path.
  * @tc.type: FUNC
  */
-HWTEST_F(BootVerifySchedulerTest, ChangeTokenIdStatus004, TestSize.Level1)
+HWTEST_F(BootVerifySchedulerTest, ChangeTokenIdToUntrustedStatus004, TestSize.Level1)
 {
     auto& scheduler = BootVerifyScheduler::GetInstance();
     scheduler.bundleInfoMap_[TEST_BUNDLE_NAME] = BuildBundleInfo({TEST_TOKEN_ID, TEST_TOKEN_ID_2});
     AccessTokenIDManager::GetInstance().tokenIdSet_.insert(TEST_TOKEN_ID);
     AccessTokenIDManager::GetInstance().reservedTokenIdSet_.insert(TEST_TOKEN_ID_2);
 
-    scheduler.ChangeTokenIdStatus(TEST_BUNDLE_NAME, TokenIdStatus::UNTRUSTED);
-
-    EXPECT_EQ(0U, AccessTokenIDManager::GetInstance().tokenIdSet_.count(TEST_TOKEN_ID));
-    EXPECT_EQ(0U, AccessTokenIDManager::GetInstance().reservedTokenIdSet_.count(TEST_TOKEN_ID_2));
-    EXPECT_EQ(1U, AccessTokenIDManager::GetInstance().untrustedTokenIdSet_.count(TEST_TOKEN_ID));
-    EXPECT_EQ(1U, AccessTokenIDManager::GetInstance().untrustedTokenIdSet_.count(TEST_TOKEN_ID_2));
+    scheduler.ChangeTokenIdToUntrustedStatus(TEST_BUNDLE_NAME);
+    if (AccessTokenInfoUtils::IsSystemSpmEnforcing()) {
+        EXPECT_EQ(0U, AccessTokenIDManager::GetInstance().tokenIdSet_.count(TEST_TOKEN_ID));
+        EXPECT_EQ(0U, AccessTokenIDManager::GetInstance().reservedTokenIdSet_.count(TEST_TOKEN_ID_2));
+        EXPECT_EQ(1U, AccessTokenIDManager::GetInstance().untrustedTokenIdSet_.count(TEST_TOKEN_ID));
+        EXPECT_EQ(1U, AccessTokenIDManager::GetInstance().untrustedTokenIdSet_.count(TEST_TOKEN_ID_2));
+    } else {
+        EXPECT_EQ(1U, AccessTokenIDManager::GetInstance().tokenIdSet_.count(TEST_TOKEN_ID));
+        EXPECT_EQ(1U, AccessTokenIDManager::GetInstance().reservedTokenIdSet_.count(TEST_TOKEN_ID_2));
+        EXPECT_EQ(0U, AccessTokenIDManager::GetInstance().untrustedTokenIdSet_.count(TEST_TOKEN_ID));
+        EXPECT_EQ(0U, AccessTokenIDManager::GetInstance().untrustedTokenIdSet_.count(TEST_TOKEN_ID_2));
+    }
 }
 
 /**
- * @tc.name: ChangeTokenIdStatus005
- * @tc.desc: Verify ChangeTokenIdStatus stops after first failure and does not process later tokenIds.
+ * @tc.name: ChangeTokenIdToUntrustedStatus005
+ * @tc.desc: Verify ChangeTokenIdToUntrustedStatus stops after first failure and does not process later tokenIds.
  * @tc.type: FUNC
  */
-HWTEST_F(BootVerifySchedulerTest, ChangeTokenIdStatus005, TestSize.Level1)
+HWTEST_F(BootVerifySchedulerTest, ChangeTokenIdToUntrustedStatus005, TestSize.Level1)
 {
     auto& scheduler = BootVerifyScheduler::GetInstance();
     scheduler.bundleInfoMap_[TEST_BUNDLE_NAME] = BuildBundleInfo({TEST_TOKEN_ID, TEST_TOKEN_ID_2});
     AccessTokenIDManager::GetInstance().tokenIdSet_.insert(TEST_TOKEN_ID);
 
-    scheduler.ChangeTokenIdStatus(TEST_BUNDLE_NAME, TokenIdStatus::UNTRUSTED);
+    scheduler.ChangeTokenIdToUntrustedStatus(TEST_BUNDLE_NAME);
+    if (AccessTokenInfoUtils::IsSystemSpmEnforcing()) {
+        EXPECT_EQ(1U, AccessTokenIDManager::GetInstance().untrustedTokenIdSet_.count(TEST_TOKEN_ID));
+    } else {
+        EXPECT_EQ(0U, AccessTokenIDManager::GetInstance().untrustedTokenIdSet_.count(TEST_TOKEN_ID));
+    }
 
-    EXPECT_EQ(1U, AccessTokenIDManager::GetInstance().untrustedTokenIdSet_.count(TEST_TOKEN_ID));
     EXPECT_EQ(0U, AccessTokenIDManager::GetInstance().untrustedTokenIdSet_.count(TEST_TOKEN_ID_2));
 }
 
@@ -795,6 +816,27 @@ HWTEST_F(BootVerifySchedulerTest, AddSpmDataAndCommitCache001, TestSize.Level1)
 }
 
 /**
+ * @tc.name: AddSpmDataAndCommitCache002
+ * @tc.desc: Verify AddSpmDataAndCommitCache skips SPM add path when system app verification is already finished.
+ * @tc.type: FUNC
+ */
+HWTEST_F(BootVerifySchedulerTest, AddSpmDataAndCommitCache002, TestSize.Level1)
+{
+    SetParameter(ACCESS_TOKEN_SERVICE_APP_VERIFY_KEY, "1");
+    auto& scheduler = BootVerifyScheduler::GetInstance();
+    scheduler.bundleInfoMap_[TEST_BUNDLE_NAME] = std::make_shared<BundleInfoInner>();
+    scheduler.bundleInfoMap_[TEST_BUNDLE_NAME]->tokenIds = { TEST_TOKEN_ID };
+    scheduler.isVerifiedMap_[TEST_BUNDLE_NAME] = false;
+    scheduler.isVerifyingMap_[TEST_BUNDLE_NAME] = true;
+
+    VerifiedBundleState state;
+    state.bundleName = TEST_BUNDLE_NAME;
+    EXPECT_EQ(RET_SUCCESS, scheduler.AddSpmDataAndCommitCache(TEST_BUNDLE_NAME, state));
+    EXPECT_TRUE(scheduler.isVerifiedMap_[TEST_BUNDLE_NAME]);
+    EXPECT_FALSE(scheduler.isVerifyingMap_[TEST_BUNDLE_NAME]);
+}
+
+/**
  * @tc.name: SplitBundleList001
  * @tc.desc: Verify SplitBundleList returns empty groups when split size is zero.
  * @tc.type: FUNC
@@ -803,16 +845,6 @@ HWTEST_F(BootVerifySchedulerTest, SplitBundleList001, TestSize.Level1)
 {
     auto splitList = BootVerifyScheduler::SplitBundleList({ "a", "b", "c" }, 0);
     EXPECT_TRUE(splitList.empty());
-}
-
-/**
- * @tc.name: GetVerifyTaskResult001
- * @tc.desc: Verify GetVerifyTaskResult returns the first non-success task result.
- * @tc.type: FUNC
- */
-HWTEST_F(BootVerifySchedulerTest, GetVerifyTaskResult001, TestSize.Level1)
-{
-    EXPECT_EQ(ERR_PARAM_INVALID, BootVerifyScheduler::GetVerifyTaskResult({ RET_SUCCESS, ERR_PARAM_INVALID }));
 }
 
 /**
@@ -879,8 +911,9 @@ HWTEST_F(BootVerifySchedulerTest, ReconcileVerifiedBundleCache001, TestSize.Leve
 HWTEST_F(BootVerifySchedulerTest, VerifyBundleWithState001, TestSize.Level1)
 {
     auto& scheduler = BootVerifyScheduler::GetInstance();
-    scheduler.bundleInfoMap_[TEST_BUNDLE_NAME] = BuildBundleInfo({});
+    scheduler.bundleInfoMap_[TEST_BUNDLE_NAME] = BuildBundleInfo({ TEST_TOKEN_ID });
     scheduler.bundleSignInfoMap_[TEST_BUNDLE_NAME] = BuildSignInfo();
+    scheduler.hapTokenInfoMap_[TEST_TOKEN_ID] = BuildHapTokenInfoItem(TEST_TOKEN_ID);
     scheduler.isVerifiedMap_[TEST_BUNDLE_NAME] = false;
     scheduler.isVerifyingMap_[TEST_BUNDLE_NAME] = false;
 
@@ -960,12 +993,13 @@ HWTEST_F(BootVerifySchedulerTest, VerifyBundleWithState003, TestSize.Level1)
 }
 
 /**
- * @tc.name: VerifyBundleList001
- * @tc.desc: Verify VerifyBundleList records successful verification results into the per-bundle state map.
+ * @tc.name: VerifyBundleWithState004
+ * @tc.desc: Verify verify failure finishes bundle as verified when system spm enforcing is disabled.
  * @tc.type: FUNC
  */
-HWTEST_F(BootVerifySchedulerTest, VerifyBundleList001, TestSize.Level1)
+HWTEST_F(BootVerifySchedulerTest, VerifyBundleWithState004, TestSize.Level1)
 {
+    SetParameter(ACCESS_TOKEN_SERVICE_SPM_ENFORCING_KEY, "0");
     auto& scheduler = BootVerifyScheduler::GetInstance();
     scheduler.bundleInfoMap_[TEST_BUNDLE_NAME] = BuildBundleInfo({ TEST_TOKEN_ID });
     scheduler.bundleSignInfoMap_[TEST_BUNDLE_NAME] = BuildSignInfo();
@@ -974,9 +1008,130 @@ HWTEST_F(BootVerifySchedulerTest, VerifyBundleList001, TestSize.Level1)
     scheduler.extendedPermMap_[TEST_TOKEN_ID] = {};
     scheduler.isVerifiedMap_[TEST_BUNDLE_NAME] = false;
     scheduler.isVerifyingMap_[TEST_BUNDLE_NAME] = false;
+    adapter_->verifyRet_ = ERR_PARAM_INVALID;
 
+    EXPECT_EQ(ERR_HAP_SIGN_VERIFY_FAILED, scheduler.VerifyBundleWithState(TEST_BUNDLE_NAME));
+    EXPECT_TRUE(scheduler.isVerifiedMap_[TEST_BUNDLE_NAME]);
+    EXPECT_FALSE(scheduler.isVerifyingMap_[TEST_BUNDLE_NAME]);
+    EXPECT_EQ(0U, AccessTokenIDManager::GetInstance().untrustedTokenIdSet_.count(TEST_TOKEN_ID));
+}
+
+/**
+ * @tc.name: VerifyBundleWithState005
+ * @tc.desc: Verify verify failure marks token untrusted
+ *           and keeps bundle unverified when system spm enforcing is enabled.
+ * @tc.type: FUNC
+ */
+HWTEST_F(BootVerifySchedulerTest, VerifyBundleWithState005, TestSize.Level1)
+{
+    SetParameter(ACCESS_TOKEN_SERVICE_SPM_ENFORCING_KEY, "1");
+    ASSERT_EQ(AccessTokenInfoUtils::IsSystemSpmEnforcing(), true);
+    auto& scheduler = BootVerifyScheduler::GetInstance();
+    scheduler.bundleInfoMap_[TEST_BUNDLE_NAME] = BuildBundleInfo({ TEST_TOKEN_ID });
+    scheduler.bundleSignInfoMap_[TEST_BUNDLE_NAME] = BuildSignInfo();
+    scheduler.hapTokenInfoMap_[TEST_TOKEN_ID] = BuildHapTokenInfoItem(TEST_TOKEN_ID);
+    scheduler.requestedPermData_[TEST_TOKEN_ID] = {};
+    scheduler.extendedPermMap_[TEST_TOKEN_ID] = {};
+    scheduler.isVerifiedMap_[TEST_BUNDLE_NAME] = false;
+    scheduler.isVerifyingMap_[TEST_BUNDLE_NAME] = false;
+    AccessTokenIDManager::GetInstance().tokenIdSet_.insert(TEST_TOKEN_ID);
+    adapter_->verifyRet_ = ERR_PARAM_INVALID;
+
+    EXPECT_EQ(ERR_HAP_SIGN_VERIFY_FAILED, scheduler.VerifyBundleWithState(TEST_BUNDLE_NAME));
+    EXPECT_FALSE(scheduler.isVerifiedMap_[TEST_BUNDLE_NAME]);
+    EXPECT_FALSE(scheduler.isVerifyingMap_[TEST_BUNDLE_NAME]);
+    EXPECT_EQ(1U, AccessTokenIDManager::GetInstance().untrustedTokenIdSet_.count(TEST_TOKEN_ID));
+}
+
+/**
+ * @tc.name: HandleHighPrivilegeBundleSpmData001
+ * @tc.desc: Verify missing state still finishes high-privilege bundle when system spm enforcing is disabled.
+ * @tc.type: FUNC
+ */
+HWTEST_F(BootVerifySchedulerTest, HandleHighPrivilegeBundleSpmData001, TestSize.Level1)
+{
+    SetParameter(ACCESS_TOKEN_SERVICE_SPM_ENFORCING_KEY, "0");
+    auto& scheduler = BootVerifyScheduler::GetInstance();
+    scheduler.highPrivilegeBundleList_ = { TEST_BUNDLE_NAME };
+    scheduler.bundleInfoMap_[TEST_BUNDLE_NAME] = BuildBundleInfo({});
+    scheduler.isVerifiedMap_[TEST_BUNDLE_NAME] = false;
+    scheduler.isVerifyingMap_[TEST_BUNDLE_NAME] = true;
+    AccessTokenInfoManager::GetInstance().bundleInfoMap_.erase(TEST_BUNDLE_NAME);
+
+    scheduler.HandleHighPrivilegeBundleSpmData({});
+
+    EXPECT_TRUE(scheduler.isVerifiedMap_[TEST_BUNDLE_NAME]);
+    EXPECT_FALSE(scheduler.isVerifyingMap_[TEST_BUNDLE_NAME]);
+    EXPECT_TRUE(AccessTokenInfoManager::GetInstance().GetBundleInfoInner(TEST_BUNDLE_NAME) != nullptr);
+}
+
+/**
+ * @tc.name: HandleHighPrivilegeBundleSpmData002
+ * @tc.desc: Verify missing state does not commit bundle cache when system spm enforcing is enabled.
+ * @tc.type: FUNC
+ */
+HWTEST_F(BootVerifySchedulerTest, HandleHighPrivilegeBundleSpmData002, TestSize.Level1)
+{
+    SetParameter(ACCESS_TOKEN_SERVICE_SPM_ENFORCING_KEY, "1");
+    ASSERT_EQ(AccessTokenInfoUtils::IsSystemSpmEnforcing(), true);
+    auto& scheduler = BootVerifyScheduler::GetInstance();
+    scheduler.highPrivilegeBundleList_ = { TEST_BUNDLE_NAME };
+    scheduler.bundleInfoMap_[TEST_BUNDLE_NAME] = BuildBundleInfo({});
+    scheduler.isVerifiedMap_[TEST_BUNDLE_NAME] = false;
+    scheduler.isVerifyingMap_[TEST_BUNDLE_NAME] = true;
+    AccessTokenInfoManager::GetInstance().bundleInfoMap_.erase(TEST_BUNDLE_NAME);
+
+    scheduler.HandleHighPrivilegeBundleSpmData({});
+
+    EXPECT_FALSE(scheduler.isVerifiedMap_[TEST_BUNDLE_NAME]);
+    EXPECT_TRUE(scheduler.isVerifyingMap_[TEST_BUNDLE_NAME]);
+    EXPECT_TRUE(AccessTokenInfoManager::GetInstance().GetBundleInfoInner(TEST_BUNDLE_NAME) == nullptr);
+}
+
+/**
+ * @tc.name: HandleHighPrivilegeBundleSpmData003
+ * @tc.desc: Verify existing state enters ShouldSkipVerifyLocked branch and directly finishes bundle verification.
+ * @tc.type: FUNC
+ */
+HWTEST_F(BootVerifySchedulerTest, HandleHighPrivilegeBundleSpmData003, TestSize.Level1)
+{
+    auto& scheduler = BootVerifyScheduler::GetInstance();
+    scheduler.highPrivilegeBundleList_ = { TEST_BUNDLE_NAME };
+    scheduler.bundleInfoMap_[TEST_BUNDLE_NAME] = BuildBundleInfo({});
+    scheduler.isVerifiedMap_[TEST_BUNDLE_NAME] = false;
+    scheduler.isVerifyingMap_[TEST_BUNDLE_NAME] = true;
+    scheduler.bundleSignInfoMap_.erase(TEST_BUNDLE_NAME);
+    AccessTokenInfoManager::GetInstance().bundleInfoMap_.erase(TEST_BUNDLE_NAME);
+
+    VerifiedBundleState state;
+    state.bundleName = TEST_BUNDLE_NAME;
+    scheduler.HandleHighPrivilegeBundleSpmData({ { TEST_BUNDLE_NAME, state } });
+
+    EXPECT_TRUE(scheduler.isVerifiedMap_[TEST_BUNDLE_NAME]);
+    EXPECT_FALSE(scheduler.isVerifyingMap_[TEST_BUNDLE_NAME]);
+    EXPECT_TRUE(AccessTokenInfoManager::GetInstance().GetBundleInfoInner(TEST_BUNDLE_NAME) != nullptr);
+}
+
+/**
+ * @tc.name: VerifyBundleList001
+ * @tc.desc: Verify VerifyBundleList records successful verification results into the per-bundle state map.
+ * @tc.type: FUNC
+ */
+HWTEST_F(BootVerifySchedulerTest, VerifyBundleList001, TestSize.Level1)
+{
+    auto& scheduler = BootVerifyScheduler::GetInstance();
+    scheduler.highPrivilegeBundleList_ = { TEST_BUNDLE_NAME };
+    scheduler.bundleInfoMap_[TEST_BUNDLE_NAME] = BuildBundleInfo({ TEST_TOKEN_ID });
+    scheduler.bundleSignInfoMap_[TEST_BUNDLE_NAME] = BuildSignInfo();
+    scheduler.hapTokenInfoMap_[TEST_TOKEN_ID] = BuildHapTokenInfoItem(TEST_TOKEN_ID);
+    scheduler.requestedPermData_[TEST_TOKEN_ID] = {};
+    scheduler.extendedPermMap_[TEST_TOKEN_ID] = {};
+    scheduler.isVerifiedMap_[TEST_BUNDLE_NAME] = false;
+    scheduler.isVerifyingMap_[TEST_BUNDLE_NAME] = false;
+
+    std::atomic_size_t nextBundleIndex = 0;
     std::map<std::string, VerifiedBundleState> stateMap;
-    EXPECT_EQ(RET_SUCCESS, scheduler.VerifyBundleList({ TEST_BUNDLE_NAME }, stateMap));
+    scheduler.VerifyBundleList(nextBundleIndex, stateMap);
     ASSERT_EQ(1U, stateMap.size());
     EXPECT_TRUE(stateMap.find(TEST_BUNDLE_NAME) != stateMap.end());
 }

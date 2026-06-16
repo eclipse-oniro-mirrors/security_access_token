@@ -172,6 +172,11 @@ int32_t AddSpmEntriesToKernel(const std::vector<SpmData*>& entries, uint8_t& idx
         LOGE(ATM_DOMAIN, ATM_TAG, "SpmAddEntries conflict at index=%{public}u.", idxErr);
         return ERR_DATA_CONFLICT_WITH_KERNEL;
     }
+    idxErr = 0;
+    ret = SpmAddEntries(const_cast<SpmData**>(entries.data()), static_cast<uint8_t>(entries.size()), &idxErr);
+    if (ret == RET_SUCCESS) {
+        return RET_SUCCESS;
+    }
     LOGE(ATM_DOMAIN, ATM_TAG, "SpmAddEntries failed at index=%{public}u, ret=%{public}d.", idxErr, ret);
     return ERR_KERNEL_COMMON_FAILED;
 }
@@ -190,6 +195,11 @@ int32_t SetSpmEntriesToKernel(const std::vector<SpmData*>& entries, uint8_t& idx
     if (ret == EEXIST) {
         LOGE(ATM_DOMAIN, ATM_TAG, "SpmSetEntries conflict at index=%{public}u.", idxErr);
         return ERR_DATA_CONFLICT_WITH_KERNEL;
+    }
+    idxErr = 0;
+    ret = SpmSetEntries(const_cast<SpmData**>(entries.data()), static_cast<uint8_t>(entries.size()), &idxErr);
+    if (ret == RET_SUCCESS) {
+        return RET_SUCCESS;
     }
     LOGE(ATM_DOMAIN, ATM_TAG, "SpmSetEntries failed at index=%{public}u, ret=%{public}d.", idxErr, ret);
     return ERR_KERNEL_COMMON_FAILED;

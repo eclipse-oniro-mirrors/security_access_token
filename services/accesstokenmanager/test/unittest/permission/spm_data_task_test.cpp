@@ -345,10 +345,10 @@ HWTEST_F(SpmDataTaskTest, UpdateSpmDataTask002, TestSize.Level0)
     uint32_t errIndex = 99;
     EXPECT_EQ(ERR_KERNEL_COMMON_FAILED, task.Update(errIndex));
     EXPECT_EQ(1u, errIndex);
-    ASSERT_EQ(2u, GetFakeSpmKernelState().setTokenBatches.size());
+    ASSERT_EQ(4u, GetFakeSpmKernelState().setTokenBatches.size());
     EXPECT_EQ(static_cast<AccessTokenID>(0x106), GetFakeSpmKernelState().setTokenBatches[0][0]);
     EXPECT_EQ(static_cast<AccessTokenID>(0x107), GetFakeSpmKernelState().setTokenBatches[0][1]);
-    ASSERT_EQ(1u, GetFakeSpmKernelState().setTokenBatches[1].size());
+    ASSERT_EQ(1u, GetFakeSpmKernelState().setTokenBatches[2].size());
     EXPECT_EQ(static_cast<AccessTokenID>(0x106), GetFakeSpmKernelState().setTokenBatches[1][0]);
 }
 
@@ -462,13 +462,14 @@ HWTEST_F(SpmDataTaskTest, UpdateSpmDataTaskRollback001, TestSize.Level0)
 
     UpdateSpmDataTask task(params);
     uint32_t errIndex = 99;
+    // [0x108, 0x109] [0x108, 0x109] [0x108] [0x108]
     EXPECT_EQ(ERR_KERNEL_COMMON_FAILED, task.Update(errIndex));
     EXPECT_EQ(1u, errIndex);
-    ASSERT_EQ(2u, GetFakeSpmKernelState().setTokenBatches.size());
-    ASSERT_EQ(1u, GetFakeSpmKernelState().setTokenBatches[1].size());
+    ASSERT_EQ(4u, GetFakeSpmKernelState().setTokenBatches.size());
+    ASSERT_EQ(1u, GetFakeSpmKernelState().setTokenBatches[2].size());
     EXPECT_EQ(static_cast<AccessTokenID>(0x108), GetFakeSpmKernelState().setTokenBatches[1][0]);
     EXPECT_EQ(RET_SUCCESS, task.Rollback());
-    ASSERT_EQ(2u, GetFakeSpmKernelState().setTokenBatches.size());
+    ASSERT_EQ(4u, GetFakeSpmKernelState().setTokenBatches.size());
 }
 
 /**
@@ -499,14 +500,14 @@ HWTEST_F(SpmDataTaskTest, UpdateSpmDataTaskRollback002, TestSize.Level0)
     EXPECT_EQ(ERR_KERNEL_COMMON_FAILED, task.Update(errIndex));
     EXPECT_EQ(1u, errIndex);
     // Two calls: one in Update (fails), one in Rollback (restores old data)
-    ASSERT_EQ(2u, GetFakeSpmKernelState().setTokenBatches.size());
+    ASSERT_EQ(4u, GetFakeSpmKernelState().setTokenBatches.size());
     // First call: tried to set new data for both tokens
     ASSERT_EQ(2u, GetFakeSpmKernelState().setTokenBatches[0].size());
     EXPECT_EQ(static_cast<AccessTokenID>(0x10C), GetFakeSpmKernelState().setTokenBatches[0][0]);
     EXPECT_EQ(static_cast<AccessTokenID>(0x10D), GetFakeSpmKernelState().setTokenBatches[0][1]);
     // Second call (Rollback): restores old data for first token only (index1 failed)
-    ASSERT_EQ(1u, GetFakeSpmKernelState().setTokenBatches[1].size());
-    EXPECT_EQ(static_cast<AccessTokenID>(0x10C), GetFakeSpmKernelState().setTokenBatches[1][0]);
+    ASSERT_EQ(1u, GetFakeSpmKernelState().setTokenBatches[2].size());
+    EXPECT_EQ(static_cast<AccessTokenID>(0x10C), GetFakeSpmKernelState().setTokenBatches[2][0]);
 }
 
 /**
@@ -653,7 +654,7 @@ HWTEST_F(SpmDataTaskTest, AddSpmDataTaskSequence001, TestSize.Level0)
         { hapInfo3, noCached3, brief3, extendPerms, nullptr, false },
     };
 
-    GetFakeSpmKernelState().addRetSequence = { RET_SUCCESS, EEXIST, RET_FAILED };
+    GetFakeSpmKernelState().addRetSequence = { RET_SUCCESS, EEXIST, RET_FAILED, RET_FAILED };
 
     AddSpmDataTask task1(params1);
     uint32_t errIndex1 = 99;

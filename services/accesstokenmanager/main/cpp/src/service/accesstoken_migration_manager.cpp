@@ -27,6 +27,7 @@
 #include "accesstoken_dfx_define.h"
 #include "accesstoken_id_manager.h"
 #include "accesstoken_info_manager.h"
+#include "accesstoken_info_utils.h"
 #include "bundle_sign_info.h"
 #include "data_validator.h"
 #include "hisysevent_adapter.h"
@@ -546,7 +547,7 @@ int32_t AccessTokenMigrationManager::FinishMigration()
     InstallSessionManager::GetInstance().SetMigrationDone();
 #endif
 
-    if (OHOS::system::GetBoolParameter(SPM_ENFORCE_PARAMETER, false)) {
+    if (AccessTokenInfoUtils::IsSystemSpmEnforcing()) {
         GenericValues uidCondition;
         uidCondition.Put(TokenFiledConst::FIELD_UID, INVALID_HAP_UID);
         std::vector<GenericValues> invalidUidResults;

@@ -387,10 +387,10 @@ int32_t MigrationVerifyHelper::HandleMigratedBundleTask(const MigratedInfoIdl& m
     int32_t ret = VerifyMigratedBundle(migratedInfo, cachedInfos);
     if (ret != RET_SUCCESS) {
 #ifndef ATM_TEST_ENABLE
-        static bool isSpmEnforce = OHOS::system::GetBoolParameter(SPM_ENFORCE_PARAMETER, false);
+        static bool isSpmEnforce = AccessTokenInfoUtils::IsSystemSpmEnforcing();
 #else
         // Unit tests require this parameter to be changed on the
-        bool isSpmEnforce = OHOS::system::GetBoolParameter(SPM_ENFORCE_PARAMETER, false);
+        bool isSpmEnforce = AccessTokenInfoUtils::IsSystemSpmEnforcing();
 #endif
         LOGC(ATM_DOMAIN, ATM_TAG, "Verification failed for %{public}s, ret=%{public}d, spmEnforce=%{public}d.",
             migratedInfo.bundleName.c_str(), ret, static_cast<int>(isSpmEnforce));
