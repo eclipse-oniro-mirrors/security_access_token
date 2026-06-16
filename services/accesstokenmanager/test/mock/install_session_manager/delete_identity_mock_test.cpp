@@ -49,6 +49,7 @@ namespace {
 static std::shared_ptr<AccessTokenManagerService> atManagerService_;
 static InstallSessionManager* g_installSessionManager = nullptr;
 static constexpr int32_t UID_MASK = 200000;
+static std::map<std::string, std::string> g_modulePathMap;
 }
 
 void DeleteIdentityMockTest::SetUpTestCase()
@@ -86,7 +87,7 @@ void DeleteIdentityMockTest::TearDown()
         sessionList.emplace_back(it.first);
     }
     for (auto session : sessionList) {
-        g_installSessionManager->RollbackAll(session);
+        g_installSessionManager->FinishInstall(session, false, g_modulePathMap);
     }
 }
 
