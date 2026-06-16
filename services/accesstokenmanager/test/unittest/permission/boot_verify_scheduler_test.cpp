@@ -264,7 +264,7 @@ protected:
         item.uid = uid;
         item.migrated = migrated;
         item.apl = APL_NORMAL;
-        item.appId = "mock.appid";
+        item.appId = bundleName + "_mock.appid";
         return item;
     }
 
@@ -860,7 +860,8 @@ HWTEST_F(BootVerifySchedulerTest, ReconcileVerifiedBundleCache001, TestSize.Leve
     trustedInfo.bootstrapInfo = std::make_shared<Security::Verify::BootstrapInfo>();
     trustedInfo.bootstrapInfo->Load(updatedInfo.persistDataList[0].data(), updatedInfo.persistDataList[0].size());
     ASSERT_EQ(RET_SUCCESS, HapSignVerifyManager::GetInstance().CheckHapsSignInfo(
-        updatedInfo.pathList[0], Verify::VerifyType::Fast, -1, trustedInfo, isChanged));
+        HapSignVerifyManager::MakeVerifyParams(updatedInfo.pathList[0], Verify::VerifyType::Fast, -1),
+        true, trustedInfo, isChanged));
     ASSERT_EQ(RET_SUCCESS, HapSignVerifyManager::GetInstance().BuildHapPolicy({ trustedInfo }, policy, param));
 
     VerifiedBundleState state;

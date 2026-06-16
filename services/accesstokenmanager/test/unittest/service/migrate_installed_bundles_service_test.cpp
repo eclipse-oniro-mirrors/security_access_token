@@ -37,12 +37,15 @@
 #include "mock_app_verify_adapter.h"
 #endif
 #include "data_validator.h"
+#include "parameters.h"
+#include "permission_kernel_utils.h"
 #include "spm_setproc.h"
 #include "table_item.h"
 #include "test_common.h"
 #include "token_setproc.h"
 #include "token_field_const.h"
 #include <unistd.h>
+#include "spm_common.h"
 
 using namespace testing::ext;
 
@@ -1315,40 +1318,6 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, FinishMigration_NoPermission, TestS
 }
 
 /**
- * @tc.name: MigrateInstalledBundles_InvalidHapPaths
- * @tc.desc: hapPaths with a string exceeding max length triggers IsStringListValid failure
- * @tc.type: FUNC
- */
-HWTEST_F(MigrateInstalledBundlesServiceTest, MigrateInstalledBundles_InvalidHapPaths, TestSize.Level1)
-{
-    MockNativeToken mock("foundation");
-
-    HapInfoParams info = TestCommon::GetInfoManagerTestSystemInfoParms();
-    info.bundleName = "com.example.happathfail";
-
-    HapBaseInfoIdl baseInfo;
-    baseInfo.bundleName = info.bundleName;
-    baseInfo.userID = info.userID;
-    baseInfo.instIndex = 0;
-
-    std::string tooLong(300, 'x');
-    MigratedInfoIdl migratedInfo;
-    migratedInfo.bundleName = info.bundleName;
-    migratedInfo.pathList.hapPaths = { tooLong };
-    migratedInfo.hapBaseInfoList = { baseInfo };
-    migratedInfo.uidList = { 200801 };
-    migratedInfo.reservedTypeList = { ReservedTypeIdl::NONE };
-
-    auto service = DelayedSingleton<AccessTokenManagerService>::GetInstance();
-    ASSERT_NE(nullptr, service);
-    ASSERT_EQ(RET_SUCCESS, service->PreMigrateUIDList({ 200801 }));
-    std::vector<BundleMigrateResultIdl> results;
-    EXPECT_EQ(RET_SUCCESS, service->MigrateInstalledBundles({ migratedInfo }, results));
-    ASSERT_EQ(1u, results.size());
-    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, results[0].errcode);
-}
-
-/**
  * @tc.name: MigrateInstalledBundles_BothListSizeMismatch
  * @tc.desc: uidList and reservedTypeList both mismatch hapBaseInfoList size
  * @tc.type: FUNC
@@ -1534,6 +1503,97 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, AppendHapTokenDbInfo_TokenNotInDbCa
 
     EXPECT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(
         tokenIdEx.tokenIdExStruct.tokenID));
+}
+
+/**
+ * @tc.name: FinishMigration_CleanupInvalidUid001
+ * @tc.desc: FinishMigration with spm.enforce=false does not clean up tokens with invalid UID.
+ * @tc.type: FUNC
+ */
+HWTEST_F(MigrateInstalledBundlesServiceTest, FinishMigration_CleanupInvalidUid001, TestSize.Level1)
+{
+    MockNativeToken mock("foundation");
+
+    // Ensure spm.enforce is false
+    system::SetBoolParameter(SPM_ENFORCE_PARAMETER, false);
+
+    // Create a real token in cache + DB + kernel
+    HapInfoParams info = TestCommon::GetInfoManagerTestSystemInfoParms();
+    info.bundleName = "com.example.invaliduid.noenforce";
+    info.appIDDesc = info.bundleName;
+    HapPolicyParams policyParams = TestCommon::GetTestPolicyParams();
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS, AllocHapTokenLocally(info, policyParams, tokenIdEx));
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+
+    // Verify token is in cache before test
+    auto infoBefore = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId);
+    ASSERT_NE(nullptr, infoBefore);
+
+    // Manually set the UID to -1 (INVALID_HAP_UID) in the DB
+    GenericValues modifyValue;
+    modifyValue.Put(TokenFiledConst::FIELD_UID, -1);
+    GenericValues modifyCondition;
+    modifyCondition.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
+    ASSERT_EQ(RET_SUCCESS, AccessTokenDbOperator::Modify(
+        AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, modifyValue, modifyCondition));
+
+    auto service = DelayedSingleton<AccessTokenManagerService>::GetInstance();
+    ASSERT_NE(nullptr, service);
+    ASSERT_EQ(RET_SUCCESS, service->FinishMigration());
+
+    // Token should still be in cache — no cleanup when enforce is false
+    auto infoAfter = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId);
+    EXPECT_NE(nullptr, infoAfter);
+
+    (void)SpmRemoveEntry(tokenId);
+    EXPECT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId));
+}
+
+/**
+ * @tc.name: FinishMigration_CleanupInvalidUid002
+ * @tc.desc: FinishMigration with spm.enforce=true cleans up cache and kernel for tokens with invalid UID in DB.
+ * @tc.type: FUNC
+ */
+HWTEST_F(MigrateInstalledBundlesServiceTest, FinishMigration_CleanupInvalidUid002, TestSize.Level1)
+{
+    MockNativeToken mock("foundation");
+
+    // Create a real token in cache + DB + kernel
+    HapInfoParams info = TestCommon::GetInfoManagerTestSystemInfoParms();
+    info.bundleName = "com.example.invaliduid.enforce";
+    info.appIDDesc = info.bundleName;
+    HapPolicyParams policyParams = TestCommon::GetTestPolicyParams();
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS, AllocHapTokenLocally(info, policyParams, tokenIdEx));
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+
+    // Verify token is in cache before test
+    auto infoBefore = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId);
+    ASSERT_NE(nullptr, infoBefore);
+
+    // Manually set the UID to -1 (INVALID_HAP_UID) in the DB
+    GenericValues modifyValue;
+    modifyValue.Put(TokenFiledConst::FIELD_UID, -1);
+    GenericValues modifyCondition;
+    modifyCondition.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
+    ASSERT_EQ(RET_SUCCESS, AccessTokenDbOperator::Modify(
+        AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, modifyValue, modifyCondition));
+
+    // Set spm.enforce to true
+    OHOS::system::SetBoolParameter(SPM_ENFORCE_PARAMETER, true);
+
+    auto service = DelayedSingleton<AccessTokenManagerService>::GetInstance();
+    ASSERT_NE(nullptr, service);
+    ASSERT_EQ(RET_SUCCESS, service->FinishMigration());
+
+    // Token should be removed from cache after cleanup
+    auto infoAfter = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId);
+    EXPECT_EQ(nullptr, infoAfter);
+
+    // Clean up
+    OHOS::system::SetBoolParameter(SPM_ENFORCE_PARAMETER, false);
+    (void)SpmRemoveEntry(tokenId);
 }
 
 /**

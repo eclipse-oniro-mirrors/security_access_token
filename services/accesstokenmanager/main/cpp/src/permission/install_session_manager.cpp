@@ -884,7 +884,9 @@ int32_t InstallSessionManager::CheckHapSignInfo(const BundleHapList& list, const
         TrustedBundleInfoInner infoInner;
         bool isChanged = false;
         int32_t ret = HapSignVerifyManager::GetInstance().CheckHapsSignInfo(
-            cache.list.hapPaths[i], Security::Verify::VerifyType::All, list.userId, infoInner, isChanged);
+            HapSignVerifyManager::MakeVerifyParams(cache.list.hapPaths[i],
+                Security::Verify::VerifyType::All, list.userId),
+            false, infoInner, isChanged);
         if (ret != RET_SUCCESS) {
             LOGE(ATM_DOMAIN, ATM_TAG, "CheckHapsSignInfo failed ret=%{public}d", ret);
             resultInfo.index = i;
@@ -1349,7 +1351,8 @@ int32_t InstallSessionManager::FastVerify(const std::vector<std::string>& paths,
         infoInner.bootstrapInfo->Load(persistDatas[i].data(), persistDatas[i].size());
         bool isChanged = false;
         int32_t ret = HapSignVerifyManager::GetInstance().CheckHapsSignInfo(
-            paths[i], Security::Verify::VerifyType::Fast, userId, infoInner, isChanged);
+            HapSignVerifyManager::MakeVerifyParams(paths[i], Security::Verify::VerifyType::Fast, userId),
+            false, infoInner, isChanged);
         if (ret != RET_SUCCESS) {
             LOGE(ATM_DOMAIN, ATM_TAG, "CheckHapsSignInfo failed ret=%{public}d", ret);
             return ERR_HAP_SIGN_VERIFY_FAILED;

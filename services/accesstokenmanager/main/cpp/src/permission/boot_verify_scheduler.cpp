@@ -600,7 +600,8 @@ int32_t BootVerifyScheduler::VerifySingleBundle(const std::string& bundleName, B
         trustedInfo.bootstrapInfo->Load(
             updatedInfo.persistDataList[i].data(), updatedInfo.persistDataList[i].size());
         ret = verifyManager.CheckHapsSignInfo(
-            updatedInfo.pathList[i], Verify::VerifyType::Fast, -1, trustedInfo, isChanged);
+            HapSignVerifyManager::MakeVerifyParams(updatedInfo.pathList[i], Verify::VerifyType::Fast, -1),
+            true, trustedInfo, isChanged);
         if (ret != RET_SUCCESS) {
             LOGE(ATM_DOMAIN, ATM_TAG,
                 "Check hap sign info failed, bundleName=%{public}s, path=%{public}s, ret=%{public}d.",

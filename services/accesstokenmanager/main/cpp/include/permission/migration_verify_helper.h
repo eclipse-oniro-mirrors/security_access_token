@@ -32,11 +32,6 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 
-inline std::string GetPlaceholderModuleName(int32_t index)
-{
-    return "#" + std::to_string(index);
-}
-
 struct VerifiedMigrationBundle final {
     std::vector<TrustedBundleInfoInner> verifiedInfos;
     HapPolicy policy;
@@ -46,12 +41,14 @@ struct VerifiedMigrationBundle final {
 class MigrationVerifyHelper final {
 public:
     static MigrationVerifyHelper& GetInstance();
-    int32_t VerifyMigratedBundle(const MigratedInfoIdl& migratedInfo,
+    int32_t HandleMigratedBundleTask(const MigratedInfoIdl& migratedInfo,
         const std::vector<std::shared_ptr<HapTokenInfoInner>>& cachedInfos);
 
 private:
     MigrationVerifyHelper() = default;
 
+    int32_t VerifyMigratedBundle(const MigratedInfoIdl& migratedInfo,
+        const std::vector<std::shared_ptr<HapTokenInfoInner>>& cachedInfos);
     int32_t PersistDbInfo(const MigratedInfoIdl& migratedInfo,
         const VerifiedMigrationBundle& verifiedBundle,
         const std::vector<std::shared_ptr<HapTokenInfoInner>>& cachedInfos);

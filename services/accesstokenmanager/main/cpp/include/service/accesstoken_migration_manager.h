@@ -36,6 +36,7 @@ struct PreparedMigrationBundle final {
     MigratedInfoIdl migratedInfo;
     std::vector<std::shared_ptr<HapTokenInfoInner>> cachedInfos;
     std::vector<bool> newTokenFlags;
+    bool needVerification = false;
 };
 
 class AccessTokenMigrationManager final {
