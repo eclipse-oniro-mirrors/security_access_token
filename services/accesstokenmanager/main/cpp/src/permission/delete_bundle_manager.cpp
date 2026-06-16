@@ -51,7 +51,7 @@ void DeleteBundleManager::GenerateHapTokenDelInfoVec(
     GenericValues condition;
     condition.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenID));
 
-    AccessTokenInfoUtils::GenerateDelInfoToVec(AtmDataType::ACCESSTOKEN_HAP_INFO, condition, delInfoVec);
+    AccessTokenInfoUtils::GenerateDelInfoToVec(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, condition, delInfoVec);
 
     if (includePermissionState) {
         AccessTokenInfoUtils::GenerateDelInfoToVec(
@@ -78,7 +78,7 @@ int32_t DeleteBundleManager::DeleteReservedToken(AccessTokenID tokenID, const st
     GenericValues condition;
     condition.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenID));
     std::vector<GenericValues> tokenResults;
-    int32_t ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_INFO, condition, tokenResults);
+    int32_t ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, condition, tokenResults);
     if (ret != RET_SUCCESS) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to query token %{public}u from db, err %{public}d.", tokenID, ret);
         return ret;
@@ -96,7 +96,7 @@ int32_t DeleteBundleManager::DeleteReservedToken(AccessTokenID tokenID, const st
     }
     // If tokenResults is empty, it's a no-op (idempotent operation)
 
-    // 3. Delete from database: ACCESSTOKEN_HAP_INFO and ACCESSTOKEN_PERMISSION_STATE
+    // 3. Delete from database: ACCESSTOKEN_HAP_TOKEN_INFO and ACCESSTOKEN_PERMISSION_STATE
     std::vector<DelInfo> delInfoVec;
     GenerateHapTokenDelInfoVec(tokenID, bundleName, delInfoVec, true);
 
@@ -142,7 +142,7 @@ int32_t DeleteBundleManager::RemoveHapTokenInfoFromDb(
                 addValues[0].Remove(TokenFiledConst::FIELD_TOKEN_ID);
                 addValues[0].Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(id));
             }
-            AccessTokenInfoUtils::GenerateAddInfoToVec(AtmDataType::ACCESSTOKEN_HAP_INFO, addValues, addInfoVec);
+            AccessTokenInfoUtils::GenerateAddInfoToVec(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, addValues, addInfoVec);
         }
     }
     int32_t ret = AccessTokenDbOperator::DeleteAndInsertValues(delInfoVec, addInfoVec);
@@ -162,7 +162,7 @@ int32_t DeleteBundleManager::TryCleanBundleInfo(const std::shared_ptr<HapTokenIn
     GenericValues condition;
     condition.Put(TokenFiledConst::FIELD_BUNDLE_NAME, bundleName);
     std::vector<GenericValues> tokenResults;
-    int32_t ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_INFO, condition, tokenResults);
+    int32_t ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, condition, tokenResults);
     if (ret != RET_SUCCESS) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to query tokens for bundle %{public}s.", bundleName.c_str());
         return ret;
@@ -241,7 +241,7 @@ int32_t DeleteBundleManager::DeleteBundleAndAllTokens(const std::string& bundleN
     GenericValues condition;
     condition.Put(TokenFiledConst::FIELD_BUNDLE_NAME, bundleName);
     std::vector<GenericValues> tokenResults;
-    int32_t ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_INFO, condition, tokenResults);
+    int32_t ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, condition, tokenResults);
     if (ret != RET_SUCCESS) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to query tokens for bundle %{public}s, err %{public}d.",
             bundleName.c_str(), ret);
@@ -271,7 +271,7 @@ int32_t DeleteBundleManager::DeleteBundleAndAllTokens(const std::string& bundleN
     // 2. Delete all reserved tokens for this bundle
     std::vector<DelInfo> delInfoVec;
     for (const auto& tokenID : tokens) {
-        // Delete from database: ACCESSTOKEN_HAP_INFO and ACCESSTOKEN_PERMISSION_STATE
+        // Delete from database: ACCESSTOKEN_HAP_TOKEN_INFO and ACCESSTOKEN_PERMISSION_STATE
         GenerateHapTokenDelInfoVec(tokenID, bundleName, delInfoVec, true);
     }
 

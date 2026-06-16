@@ -52,7 +52,7 @@ static int32_t GetTableColumnList(NativeRdb::RdbStore& rdbStore, const std::stri
 int32_t AccessTokenOpenCallback::CreateHapTokenInfoTable(NativeRdb::RdbStore& rdbStore)
 {
     std::string tableName;
-    AccessTokenDbUtil::GetTableNameByType(AtmDataType::ACCESSTOKEN_HAP_INFO, tableName);
+    AccessTokenDbUtil::GetTableNameByType(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, tableName);
 
     std::string sql = "create table if not exists " + tableName;
     sql.append(" (")
@@ -535,7 +535,7 @@ int32_t AccessTokenOpenCallback::AddRequestToggleStatusColumn(NativeRdb::RdbStor
 int32_t AccessTokenOpenCallback::AddPermDialogCapColumn(NativeRdb::RdbStore& rdbStore)
 {
     std::string tableName;
-    AccessTokenDbUtil::GetTableNameByType(AtmDataType::ACCESSTOKEN_HAP_INFO, tableName);
+    AccessTokenDbUtil::GetTableNameByType(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, tableName);
 
     // check if column perm_dialog_cap_state exsit
     std::string checkSql = "SELECT 1 FROM " + tableName + " WHERE " +
@@ -666,7 +666,7 @@ static int32_t AddColumn(const std::vector<std::string>& columnList, NativeRdb::
 int32_t AccessTokenOpenCallback::AddUidMigratedReservedColumns(NativeRdb::RdbStore& rdbStore)
 {
     std::string tableName;
-    AccessTokenDbUtil::GetTableNameByType(AtmDataType::ACCESSTOKEN_HAP_INFO, tableName);
+    AccessTokenDbUtil::GetTableNameByType(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, tableName);
     std::vector<std::string> columnList;
     int32_t res = GetTableColumnList(rdbStore, tableName, columnList);
     if (res != NativeRdb::E_OK) {

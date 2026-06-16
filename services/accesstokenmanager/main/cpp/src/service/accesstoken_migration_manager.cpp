@@ -237,7 +237,7 @@ int32_t AccessTokenMigrationManager::PersistMigratedBundles(const PreparedMigrat
         GenericValues delValue;
         delValue.Put(TokenFiledConst::FIELD_TOKEN_ID,
             static_cast<int32_t>(info->GetHapInfoBasic().tokenID));
-        delInfoVec.emplace_back(DelInfo {AtmDataType::ACCESSTOKEN_HAP_INFO, delValue});
+        delInfoVec.emplace_back(DelInfo {AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, delValue});
     }
 
     int32_t ret = AppendHapTokenDbInfo(preparedBundle, hapInfoValues);
@@ -247,7 +247,7 @@ int32_t AccessTokenMigrationManager::PersistMigratedBundles(const PreparedMigrat
 
     std::vector<AddInfo> addInfoVec;
     if (!hapInfoValues.empty()) {
-        addInfoVec.emplace_back(AddInfo {AtmDataType::ACCESSTOKEN_HAP_INFO, hapInfoValues});
+        addInfoVec.emplace_back(AddInfo {AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, hapInfoValues});
     }
 #ifdef IS_SUPPORT_HAP_RUNNING
     BundleSignInfo placeholderSign;
@@ -494,7 +494,7 @@ int32_t AccessTokenMigrationManager::PreMigrateUIDList(const std::vector<int32_t
     // Query all existing UIDs from the DB and reject any overlap with the incoming list.
     GenericValues emptyCondition;
     std::vector<GenericValues> dbResults;
-    int32_t ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_INFO, emptyCondition, dbResults);
+    int32_t ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, emptyCondition, dbResults);
     if (ret != RET_SUCCESS) {
         LOGE(ATM_DOMAIN, ATM_TAG, "PreMigrateUIDList query all hap info failed, ret=%{public}d.", ret);
         return ERR_DATABASE_OPERATE_FAILED;

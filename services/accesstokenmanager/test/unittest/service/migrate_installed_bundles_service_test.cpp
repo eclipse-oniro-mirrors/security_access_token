@@ -96,7 +96,7 @@ void CleanupTestDbArtifacts()
     // Find all hap info rows — empty condition returns all rows from the table
     GenericValues emptyCondition;
     std::vector<GenericValues> hapResults;
-    int32_t ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_INFO, emptyCondition, hapResults);
+    int32_t ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, emptyCondition, hapResults);
     if (ret != RET_SUCCESS) {
         return;
     }
@@ -108,7 +108,7 @@ void CleanupTestDbArtifacts()
             GenericValues delValue;
             delValue.Put(TokenFiledConst::FIELD_TOKEN_ID, row.GetInt(TokenFiledConst::FIELD_TOKEN_ID));
             DelInfo delInfo;
-            delInfo.delType = AtmDataType::ACCESSTOKEN_HAP_INFO;
+            delInfo.delType = AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO;
             delInfo.delValue = delValue;
             delInfoVec.emplace_back(delInfo);
 
@@ -193,7 +193,7 @@ void ExpectMigratedDbState(AccessTokenID tokenId, const std::string& bundleName,
     hapCondition.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
     std::vector<GenericValues> hapResults;
     ASSERT_EQ(RET_SUCCESS, AccessTokenDbOperator::Find(
-        AtmDataType::ACCESSTOKEN_HAP_INFO, hapCondition, hapResults));
+        AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, hapCondition, hapResults));
     ASSERT_EQ(1u, hapResults.size());
     EXPECT_EQ(uid, hapResults[0].GetInt(TokenFiledConst::FIELD_UID));
     EXPECT_EQ(static_cast<int32_t>(reserved), hapResults[0].GetInt(TokenFiledConst::FIELD_RESERVED));
@@ -292,7 +292,7 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, PreMigrateUIDList_DbUidConflict, Te
 {
     MockNativeToken mock("foundation");
 
-    // Insert a row with UID 0 into ACCESSTOKEN_HAP_INFO to trigger DB conflict
+    // Insert a row with UID 0 into ACCESSTOKEN_HAP_TOKEN_INFO to trigger DB conflict
     HapTokenInfoItem item;
     item.tokenId = 99999;
     item.bundleName = "com.example.uidconflict";
@@ -300,7 +300,7 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, PreMigrateUIDList_DbUidConflict, Te
     std::vector<GenericValues> hapValues;
     item.BuildAddValue(hapValues);
     AddInfo addInfo;
-    addInfo.addType = AtmDataType::ACCESSTOKEN_HAP_INFO;
+    addInfo.addType = AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO;
     addInfo.addValues = hapValues;
     ASSERT_EQ(RET_SUCCESS, AccessTokenDbOperator::DeleteAndInsertValues({}, { addInfo }));
 
@@ -871,7 +871,7 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, MigrateInstalledBundles_NewToken, T
         static_cast<int32_t>(results[0].tokenIdList[0]));
     std::vector<GenericValues> hapResults;
     ASSERT_EQ(RET_SUCCESS, AccessTokenDbOperator::Find(
-        AtmDataType::ACCESSTOKEN_HAP_INFO, hapCondition, hapResults));
+        AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, hapCondition, hapResults));
     ASSERT_EQ(1u, hapResults.size());
     EXPECT_EQ(migratedInfo.uidList[0], hapResults[0].GetInt(TokenFiledConst::FIELD_UID));
 
@@ -882,7 +882,7 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, MigrateInstalledBundles_NewToken, T
     delValue.Put(TokenFiledConst::FIELD_TOKEN_ID,
         static_cast<int32_t>(results[0].tokenIdList[0]));
     DelInfo delInfo;
-    delInfo.delType = AtmDataType::ACCESSTOKEN_HAP_INFO;
+    delInfo.delType = AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO;
     delInfo.delValue = delValue;
     (void)AccessTokenDbOperator::DeleteAndInsertValues({delInfo}, {});
     (void)AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(results[0].tokenIdList[0]);

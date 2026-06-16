@@ -374,7 +374,7 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapTest007, TestSize.Level0)
     GenericValues conditionValue2;
     conditionValue2.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
     std::vector<GenericValues> hapTokenResults;
-    ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_INFO, conditionValue2, hapTokenResults);
+    ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, conditionValue2, hapTokenResults);
     EXPECT_EQ(ERR_OK, ret);
     EXPECT_EQ(hapTokenResults.size(), 1);
 
@@ -616,7 +616,7 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapTest012, TestSize.Level0)
     EXPECT_EQ(results.size(), 1);
 
     std::vector<GenericValues> hapResults;
-    ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_INFO, conditionValue, hapResults);
+    ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, conditionValue, hapResults);
     EXPECT_EQ(ERR_OK, ret);
     EXPECT_EQ(hapResults.size(), 0);
 
@@ -716,7 +716,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapTest014, TestSize.Level0)
     GenericValues conditionValue;
     conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
     std::vector<GenericValues> hapTokenResults;
-    EXPECT_EQ(ERR_OK, AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_INFO, conditionValue, hapTokenResults));
+    EXPECT_EQ(ERR_OK, AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, conditionValue,
+        hapTokenResults));
     EXPECT_EQ(hapTokenResults.size(), 1);
 
     if (hapTokenResults.size() > 0) {
@@ -777,7 +778,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapTest015, TestSize.Level0)
     GenericValues conditionValue;
     conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
     std::vector<GenericValues> hapTokenResults;
-    EXPECT_EQ(ERR_OK, AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_INFO, conditionValue, hapTokenResults));
+    EXPECT_EQ(ERR_OK, AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, conditionValue,
+        hapTokenResults));
     EXPECT_EQ(hapTokenResults.size(), 1);
 
     if (hapTokenResults.size() > 0) {

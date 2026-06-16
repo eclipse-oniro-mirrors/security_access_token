@@ -245,7 +245,7 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, Modify001, TestSize.Level4)
     ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID,
         AccessTokenDb::GetInstance()->Modify(type, modifyValue, conditionValue));
 
-    type = AtmDataType::ACCESSTOKEN_HAP_INFO;
+    type = AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO;
     ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID,
         AccessTokenDb::GetInstance()->Modify(type, modifyValue, conditionValue));
 
@@ -301,7 +301,7 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, Modify002, TestSize.Level4)
  */
 HWTEST_F(AccessTokenDatabaseCoverageTest, Modify003, TestSize.Level4)
 {
-    AtmDataType type = AtmDataType::ACCESSTOKEN_HAP_INFO;
+    AtmDataType type = AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO;
     std::vector<GenericValues> modifyValues;
     GenericValues modifyValue;
     modifyValue.Put(TokenFiledConst::FIELD_PROCESS_NAME, "hdcd");
@@ -334,7 +334,7 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, Modify004, TestSize.Level4)
  */
 HWTEST_F(AccessTokenDatabaseCoverageTest, Modify005, TestSize.Level4)
 {
-    AtmDataType type = AtmDataType::ACCESSTOKEN_HAP_INFO;
+    AtmDataType type = AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO;
     std::vector<GenericValues> modifyValues(1);
     std::vector<GenericValues> conditions(1);
     std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance()->GetRdb();
@@ -352,7 +352,7 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, Modify005, TestSize.Level4)
  */
 HWTEST_F(AccessTokenDatabaseCoverageTest, Modify006, TestSize.Level4)
 {
-    AtmDataType type = AtmDataType::ACCESSTOKEN_HAP_INFO;
+    AtmDataType type = AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO;
     std::vector<GenericValues> modifyValues(1);
     std::vector<GenericValues> conditions(1);
     std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance()->GetRdb();
@@ -370,7 +370,7 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, Modify006, TestSize.Level4)
  */
 HWTEST_F(AccessTokenDatabaseCoverageTest, Modify007, TestSize.Level4)
 {
-    AtmDataType type = AtmDataType::ACCESSTOKEN_HAP_INFO;
+    AtmDataType type = AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO;
     std::vector<GenericValues> modifyValues(1);
     std::vector<GenericValues> conditions(1);
     std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance()->GetRdb();
@@ -389,7 +389,7 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, Modify007, TestSize.Level4)
  */
 HWTEST_F(AccessTokenDatabaseCoverageTest, Modify008, TestSize.Level4)
 {
-    AtmDataType type = AtmDataType::ACCESSTOKEN_HAP_INFO;
+    AtmDataType type = AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO;
     std::vector<GenericValues> modifyValues(1);
     std::vector<GenericValues> conditions(1);
     std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance()->GetRdb();
@@ -408,7 +408,7 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, Modify008, TestSize.Level4)
  */
 HWTEST_F(AccessTokenDatabaseCoverageTest, Modify009, TestSize.Level4)
 {
-    AtmDataType type = AtmDataType::ACCESSTOKEN_HAP_INFO;
+    AtmDataType type = AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO;
     std::vector<GenericValues> modifyValues(2);
     modifyValues[0].Put(TokenFiledConst::FIELD_PROCESS_NAME, "hdcd");
     modifyValues[1].Put(TokenFiledConst::FIELD_PROCESS_NAME, "foundation");
@@ -433,7 +433,7 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, Find001, TestSize.Level4)
     ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID,
         AccessTokenDb::GetInstance()->Find(type, conditionValue, results));
 
-    type = AtmDataType::ACCESSTOKEN_HAP_INFO;
+    type = AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO;
     ASSERT_EQ(NativeRdb::E_OK, AccessTokenDb::GetInstance()->Find(type, conditionValue, results));
 
     conditionValue.Put(TokenFiledConst::FIELD_PROCESS_NAME, "hdcd");

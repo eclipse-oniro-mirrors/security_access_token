@@ -162,7 +162,7 @@ void MigrationVerifyHelper::PrepareHapInfoOperations(const BundleParam& param, c
     }
     std::vector<GenericValues> dbResults;
     int32_t ret = AccessTokenDbOperator::Find(
-        AtmDataType::ACCESSTOKEN_HAP_INFO, TokenFiledConst::FIELD_TOKEN_ID, tokenIdValues, dbResults);
+        AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, TokenFiledConst::FIELD_TOKEN_ID, tokenIdValues, dbResults);
     if (ret != RET_SUCCESS) {
         LOGW(ATM_DOMAIN, ATM_TAG, "Batch query hap info failed, ret=%{public}d, skip fix.", ret);
         return;
@@ -193,8 +193,8 @@ void MigrationVerifyHelper::PrepareHapInfoOperations(const BundleParam& param, c
 
         GenericValues condition;
         condition.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(hapInfo.tokenID));
-        delInfoVec_.emplace_back(DelInfo {AtmDataType::ACCESSTOKEN_HAP_INFO, condition});
-        addInfoVec_.emplace_back(AddInfo {AtmDataType::ACCESSTOKEN_HAP_INFO, hapAddValues});
+        delInfoVec_.emplace_back(DelInfo {AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, condition});
+        addInfoVec_.emplace_back(AddInfo {AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, hapAddValues});
         LOGI(ATM_DOMAIN, ATM_TAG, "Fixed hap info for tokenId=%{public}u.", hapInfo.tokenID);
     }
 }

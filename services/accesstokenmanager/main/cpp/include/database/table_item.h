@@ -79,7 +79,7 @@ struct HapTokenInfoItem final : public TableItem {
     bool migrated = false;
     ReservedType reserved = ReservedType::NONE;
 
-    inline static constexpr AtmDataType type_ = ACCESSTOKEN_HAP_INFO;
+    inline static constexpr AtmDataType type_ = ACCESSTOKEN_HAP_TOKEN_INFO;
 
     void BuildAddValue(std::vector<GenericValues>& addValues) const;
     void BuildDeleteValues(GenericValues& deleteValue) const;

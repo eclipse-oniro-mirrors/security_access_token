@@ -15,6 +15,7 @@
 
 #include "to_string.h"
 
+#include "accesstoken_kit.h"
 #include "constant_common.h"
 #include "permission_map.h"
 
@@ -161,6 +162,14 @@ static void PermDefToJson(const PermissionBriefDef& briefDef, CJsonUnique& permD
     (void)AddBoolToJson(permDefJson, "hasValue", briefDef.hasValue);
 }
 
+static bool IsPermDefinitionPrintable(const PermissionBriefDef& briefDef)
+{
+    if (briefDef.isEnable) {
+        return true;
+    }
+    return AccessTokenKit::IsSupportPermission(briefDef.permissionName);
+}
+
 std::string ToString::DumpPermDefinition(const std::string& permissionName)
 {
     CJsonUnique permDefJson = nullptr;
@@ -170,6 +179,9 @@ std::string ToString::DumpPermDefinition(const std::string& permissionName)
         for (size_t i = 0; i < count; ++i) {
             PermissionBriefDef briefDef;
             GetPermissionBriefDef(i, briefDef);
+            if (!IsPermDefinitionPrintable(briefDef)) {
+                continue;
+            }
             CJsonUnique sinPrmDefJson = CreateJson();
             PermDefToJson(briefDef, sinPrmDefJson);
 
@@ -180,6 +192,9 @@ std::string ToString::DumpPermDefinition(const std::string& permissionName)
         if (TransferPermissionToOpcode(permissionName, code)) {
             PermissionBriefDef briefDef;
             GetPermissionBriefDef(code, briefDef);
+            if (!IsPermDefinitionPrintable(briefDef)) {
+                return "Error: Permission '" + permissionName + "' does not exist.";
+            }
             permDefJson = CreateJson();
             PermDefToJson(briefDef, permDefJson);
         } else {
