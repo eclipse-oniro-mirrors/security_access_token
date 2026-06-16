@@ -60,6 +60,7 @@ int32_t BuildSpmData(const HapTokenInfo& hapInfo, const BundleNoCachedInfo& noCa
 int32_t AddSpmEntriesToKernel(const std::vector<SpmData*>& entries, uint8_t& idxErr);
 int32_t SetSpmEntriesToKernel(const std::vector<SpmData*>& entries, uint8_t& idxErr);
 int32_t LoadSpmDataFromKernel(AccessTokenID tokenId, SpmDataPtr& spmData);
+bool IsSpmDataExists(AccessTokenID tokenId);
 void RemoveSpmEntryFromKernel(AccessTokenID tokenId);
 } // namespace KernelDetail
 } // namespace AccessToken
