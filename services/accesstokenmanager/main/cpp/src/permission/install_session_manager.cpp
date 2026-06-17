@@ -277,7 +277,6 @@ int32_t InstallSessionManager::HandleReservedToken(
     cache.reserved = static_cast<int32_t>(ReservedType::RESERVED_DATA);
     cache.oldTokenId = tokenId;
     cache.oldAttr = oldAttr;
-    (void)AccessTokenIDManager::GetInstance().ChangeTokenIdStatus(tokenId, TokenIdStatus::ACTIVE);
     return RET_SUCCESS;
 }
 
@@ -596,7 +595,9 @@ void InstallSessionManager::GenerateHapTokenInfoItem(const InstallCache& cache, 
     HapTokenInfoItem item;
     std::shared_ptr<HapTokenInfoInner> infoPtr =
         AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(hapInfo.tokenID, false);
-    if (infoPtr != nullptr) {
+    // update or reserved is 2
+    if (infoPtr != nullptr && (hapInfo.tokenID != static_cast<uint32_t>(cache.identity.tokenId) ||
+        cache.reserved == static_cast<int32_t>(ReservedType::RESERVED_DATA))) {
         item.permDialogCapState = infoPtr->IsPermDialogForbidden();
         item.migrated = infoPtr->IsMigrated();
     } else {
@@ -817,7 +818,12 @@ void InstallSessionManager::RefreshCache(int32_t sessionId, const InstallCache& 
         AccessTokenIDManager::GetInstance().ChangeTokenIdStatus(context.hapInfos[i].tokenID, TokenIdStatus::ACTIVE);
     }
     if (cache.reserved == static_cast<int32_t>(ReservedType::RESERVED_IDENTITY)) {
+        AccessTokenInfoManager::GetInstance().ReleaseInactiveTokenInfoInner(cache.oldTokenId);
         AccessTokenIDManager::GetInstance().RemoveReservedTokenId(cache.oldTokenId);
+    }
+    if (cache.reserved == static_cast<int32_t>(ReservedType::RESERVED_DATA)) {
+        AccessTokenInfoManager::GetInstance().ReleaseInactiveTokenInfoInner(cache.identity.tokenId);
+        (void)AccessTokenIDManager::GetInstance().ChangeTokenIdStatus(cache.identity.tokenId, TokenIdStatus::ACTIVE);
     }
     ReportSessionFinish(sessionId, cache, SessionFinishSceneCode::SESSION_FINISH, 0);
 }
@@ -831,10 +837,7 @@ void InstallSessionManager::RollbackAll(int32_t sessionId, int32_t sceneCode, in
     }
     ReportSessionError(it->second, sceneCode, errorCode, tokenId);
     if (it->second.identity.tokenId != 0) {
-        if (it->second.reserved == static_cast<int32_t>(ReservedType::RESERVED_DATA)) {
-            (void)AccessTokenIDManager::GetInstance().ChangeTokenIdStatus(
-                static_cast<AccessTokenID>(it->second.identity.tokenId), TokenIdStatus::RESERVED);
-        } else {
+        if (it->second.reserved != static_cast<int32_t>(ReservedType::RESERVED_DATA)) {
             AccessTokenIDManager::GetInstance().ReleaseTokenId(
                 static_cast<AccessTokenID>(it->second.identity.tokenId));
         }
@@ -1142,6 +1145,12 @@ int32_t InstallSessionManager::UpdateHapPolicy(int32_t sessionId, int32_t tokenI
             RollbackAll(sessionId,
                 SessionFinishSceneCode::UPDATE_HAP_POLICY, AccessTokenError::ERR_NOT_CHECK_PERMISSION, tokenId);
             return AccessTokenError::ERR_NOT_CHECK_PERMISSION;
+        }
+        if (AccessTokenIDManager::GetInstance().IsReservedTokenId(tokenId)) {
+            LOGC(ATM_DOMAIN, ATM_TAG, "Token %{public}u in reserved list", tokenId);
+            RollbackAll(sessionId,
+                SessionFinishSceneCode::UPDATE_HAP_POLICY, AccessTokenError::ERR_PARAM_INVALID, tokenId);
+            return AccessTokenError::ERR_PARAM_INVALID;
         }
         std::shared_ptr<HapTokenInfoInner> infoPtr =
             AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId, false);

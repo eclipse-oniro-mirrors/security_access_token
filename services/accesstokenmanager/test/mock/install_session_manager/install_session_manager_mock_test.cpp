@@ -2140,6 +2140,52 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapFailedTest003, TestSize.Level0)
 }
 
 /**
+ * @tc.name: UpdateHapFailedTest004
+ * @tc.desc: Test update a new hap, with reserved tokenID.
+ * @tc.type: FUNC
+ * @tc.require: Issue
+ */
+HWTEST_F(InstallSessionManagerMockTest, UpdateHapFailedTest004, TestSize.Level0)
+{
+    std::string path =
+        "/SYSTEM/system_basic/state:[cam,mic,syswin,getwifi]/acl:[getwifi]/Module001/UpdateHapFailedTest004";
+    std::vector<std::string> hapPaths = {path};
+    HapBaseInfo baseInfo;
+    baseInfo.userID = 100;
+    baseInfo.bundleName = "UpdateHapFailedTest004";
+    baseInfo.instIndex = 0;
+    BundlePolicy bundlePolicy;
+    bundlePolicy.dlpType = DLP_COMMON;
+    bundlePolicy.isDebugGrant = false;
+    Identity identity;
+    InstallHap(hapPaths, baseInfo, bundlePolicy, identity);
+    AccessTokenID tokenId = static_cast<AccessTokenID>(identity.tokenId);
+    int32_t sceneCode = 0;
+    int32_t ret = atManagerService_->DeleteIdentityCore(
+        tokenId, "UpdateHapFailedTest004", ReservedType::RESERVED_DATA, sceneCode);
+    EXPECT_EQ(ERR_OK, ret);
+
+    BundleHapList hapList;
+    hapList.hapPaths.emplace_back(path);
+    hapList.isPreInstalled = false;
+    hapList.userId = 100;
+    int32_t sessionId = 0;
+    std::vector<TrustedBundleInfo> bundleInfo;
+    HapVerifyResultInfo resultInfo;
+    ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo);
+    EXPECT_EQ(ERR_OK, ret);
+    HapInfoCheckResult result;
+    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, result);
+    EXPECT_EQ(ERR_OK, ret);
+
+    ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenId, bundlePolicy);
+    EXPECT_NE(ERR_OK, ret);
+
+    ret = atManagerService_->DeleteIdentityCore(0, "UpdateHapFailedTest004", ReservedType::NONE, sceneCode);
+    EXPECT_EQ(ERR_OK, ret);
+}
+
+/**
  * @tc.name: FinishHapTest001
  * @tc.desc: Test finish a new hap, success is false.
  * @tc.type: FUNC
@@ -2788,6 +2834,50 @@ HWTEST_F(InstallSessionManagerMockTest, InstallReservedHapTest005, TestSize.Leve
 
     EXPECT_EQ(ERR_OK,
         atManagerService_->DeleteIdentityCore(tokenId2, "InstallReservedHapTest005", ReservedType::NONE, sceneCode));
+}
+
+/**
+ * @tc.name: InstallReservedHapTest006
+ * @tc.desc: Test install a new hap, with reserved 2, install - delete2 - install - delete0 - install.
+ * @tc.type: FUNC
+ * @tc.require: Issue
+ */
+HWTEST_F(InstallSessionManagerMockTest, InstallReservedHapTest006, TestSize.Level0)
+{
+    std::string path =
+        "/SYSTEM/system_basic/state:[cam,mic,syswin,getwifi]/acl:[getwifi]/Module001/InstallReservedHapTest006";
+    std::vector<std::string> hapPaths = {path};
+    HapBaseInfo baseInfo;
+    baseInfo.userID = 100;
+    baseInfo.bundleName = "InstallReservedHapTest006";
+    baseInfo.instIndex = 0;
+    BundlePolicy bundlePolicy;
+    bundlePolicy.dlpType = DLP_COMMON;
+    bundlePolicy.isDebugGrant = false;
+
+    Identity identity;
+    InstallHap(hapPaths, baseInfo, bundlePolicy, identity);
+    AccessTokenID tokenId = static_cast<AccessTokenID>(identity.tokenId);
+
+    int32_t sceneCode = 0;
+    EXPECT_EQ(ERR_OK, atManagerService_->DeleteIdentityCore(
+        tokenId, "InstallReservedHapTest006", ReservedType::RESERVED_DATA, sceneCode));
+
+    Identity identity2;
+    InstallHap(hapPaths, baseInfo, bundlePolicy, identity2);
+    AccessTokenID tokenId2 = static_cast<AccessTokenID>(identity2.tokenId);
+    EXPECT_EQ(tokenId, tokenId2);
+
+    EXPECT_EQ(ERR_OK,
+        atManagerService_->DeleteIdentityCore(tokenId2, "InstallReservedHapTest006", ReservedType::NONE, sceneCode));
+
+    Identity identity3;
+    InstallHap(hapPaths, baseInfo, bundlePolicy, identity3);
+    AccessTokenID tokenId3 = static_cast<AccessTokenID>(identity3.tokenId);
+    EXPECT_NE(tokenId, tokenId3);
+
+    EXPECT_EQ(ERR_OK,
+        atManagerService_->DeleteIdentityCore(tokenId3, "InstallReservedHapTest006", ReservedType::NONE, sceneCode));
 }
 
 /**
