@@ -22,6 +22,7 @@
 #include "access_token_db_operator.h"
 #include "access_token_error.h"
 #include "accesstoken_common_log.h"
+#include "accesstoken_info_utils.h"
 #include "hap_token_info_inner.h"
 #include "idl_common.h"
 #include "permission_data_brief.h"
@@ -35,7 +36,7 @@
 #undef private
 #include "accesstoken_info_manager.h"
 #include "mock_app_verify_adapter.h"
-#include "parameters.h"
+#include "parameter.h"
 #include "permission_kernel_utils.h"
 #include "test_common.h"
 #include "token_setproc.h"
@@ -582,7 +583,8 @@ HWTEST_F(MigrationVerifyHelperTest, HandleMigratedBundleTask002, TestSize.Level1
     MigratedInfoIdl migratedInfo = BuildBasicMigratedInfo(info.bundleName, info.bundleName);
 
     // Ensure spm.enforce is false (default in mock)
-    system::SetBoolParameter(SPM_ENFORCE_PARAMETER, false);
+
+    SetParameter(ACCESS_TOKEN_SERVICE_SPM_ENFORCING_KEY, "0");
 
     auto infoBefore = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId);
     ASSERT_NE(nullptr, infoBefore);
@@ -626,7 +628,7 @@ HWTEST_F(MigrationVerifyHelperTest, HandleMigratedBundleTask003, TestSize.Level1
     MigratedInfoIdl migratedInfo = BuildBasicMigratedInfo(info.bundleName, info.bundleName);
 
     // Set spm.enforce to true
-    OHOS::system::SetBoolParameter(SPM_ENFORCE_PARAMETER, true);
+    SetParameter(ACCESS_TOKEN_SERVICE_SPM_ENFORCING_KEY, "1");
     auto infoBefore = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId);
     // Force CheckHapsSignInfo to fail via mock adapter
     mockAdapter_.verifyRet_ = AccessTokenError::ERR_PARAM_INVALID;
@@ -639,7 +641,7 @@ HWTEST_F(MigrationVerifyHelperTest, HandleMigratedBundleTask003, TestSize.Level1
     EXPECT_EQ(nullptr, infoAfter);
 
     // Clean up: reset spm.enforce and remove token (may have been cleaned already)
-    OHOS::system::SetBoolParameter(SPM_ENFORCE_PARAMETER, false)  ;
+    SetParameter(ACCESS_TOKEN_SERVICE_SPM_ENFORCING_KEY, "0");
     (void)SpmRemoveEntry(tokenId);
     (void)AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId);
     TearDownVerifyEnvironment();

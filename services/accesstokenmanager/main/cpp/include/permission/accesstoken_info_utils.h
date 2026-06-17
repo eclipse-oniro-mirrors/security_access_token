@@ -29,6 +29,10 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+
+static const char* ACCESS_TOKEN_SERVICE_APP_VERIFY_KEY = "accesstoken.permission.appverified";
+static const char* ACCESS_TOKEN_SERVICE_SPM_ENFORCING_KEY = "accesstoken.permission.spm.enforcing";
+
 class AccessTokenInfoUtils final {
 public:
     static bool IsSystemResource(const std::string& bundleName);
@@ -43,6 +47,9 @@ public:
     static void BuildBundleFullInfo(const BundleParam& param, const HapPolicy& policy,
         std::shared_ptr<BundleInfoInner>& innerInfo, BundleNoCachedInfo& noCached);
     static ReservedType GetReservedTokenTypeDBValue(const GenericValues& values);
+    static void AccessTokenServiceAppVerifyParamSet();
+    static bool IsSystemAppVerified();
+    static bool IsSystemSpmEnforcing();
 
 private:
     AccessTokenInfoUtils() = delete;

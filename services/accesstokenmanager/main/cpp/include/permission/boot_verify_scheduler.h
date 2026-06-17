@@ -96,13 +96,11 @@ private:
     int32_t RefreshBundleSignInfoMap();
     void StartNormalBundleVerifyThread();
     void VerifyNormalBundleListAsync();
-    void AccessTokenServiceAppVerifyParamSet() const;
-    bool IsSystemAppVerified() const;
     bool IsAllBundlesVerified() const;
     int32_t BuildVerifyBundleData(const std::string& bundleName, BundleSignInfo& signInfo);
     int32_t VerifyBundleWithState(const std::string& bundleName);
-    int32_t VerifyBundleList(
-        const std::vector<std::string>& bundleNameList, std::map<std::string, VerifiedBundleState>& stateMap);
+    void VerifyBundleList(std::atomic_size_t& nextBundleIndex,
+        std::map<std::string, VerifiedBundleState>& stateMap);
     int32_t VerifySingleBundle(const std::string& bundleName, BundleSignInfo& updatedInfo,
         VerifiedBundleState& state);
     void UpdateVerifiedSignInfo(const std::string& bundleName, BundleSignInfo& updatedInfo,
@@ -129,7 +127,7 @@ private:
     bool PrepareBundleForBatchVerifyLocked(const std::string& bundleName, BundleSignInfo& updatedInfo);
     void HandleVerifyBundleFailure(const std::string& bundleName, int32_t ret);
     void CommitBundleCacheLocked(const std::string& bundleName);
-    void ChangeTokenIdStatus(const std::string& bundleName, TokenIdStatus status);
+    void ChangeTokenIdToUntrustedStatus(const std::string& bundleName);
     static bool IsPermissionValid(int32_t hapApl, const PermissionBriefDef& data,
         const std::string& value, bool isAcl);
     static void UpdateBundleSignInfoByTrustedInfos(BundleSignInfo& signInfo,
@@ -137,10 +135,8 @@ private:
         const std::vector<TrustedBundleInfoInner>& trustedInfos);
     static std::vector<std::vector<std::string>> SplitBundleList(
         const std::vector<std::string>& bundleNameList, uint32_t size);
-    int32_t VerifyHighPrivilegeBundleList(std::map<std::string, VerifiedBundleState>& stateMap);
-    int32_t RunHighPrivilegeBundleVerifyTasks(std::vector<std::map<std::string, VerifiedBundleState>>& stateGroups);
-    static int32_t GetVerifyTaskResult(const std::vector<int32_t>& verifyResults);
-    bool ShouldSkipAddSpmData(const std::string& bundleName);
+    void VerifyHighPrivilegeBundleList(std::map<std::string, VerifiedBundleState>& stateMap);
+    void RunHighPrivilegeBundleVerifyTasks(std::vector<std::map<std::string, VerifiedBundleState>>& stateGroups);
     void HandleHighPrivilegeBundleSpmData(const std::map<std::string, VerifiedBundleState>& stateMap);
     bool HandleHapInfoUid(AccessTokenID tokenId, int32_t uid);
     BootVerifyScheduler() = default;

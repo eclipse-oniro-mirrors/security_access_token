@@ -21,6 +21,7 @@
 #include "access_token_error.h"
 #include "accesstoken_kit.h"
 #include "accesstoken_info_manager.h"
+#include "accesstoken_info_utils.h"
 
 #define private public
 #ifdef IS_SUPPORT_HAP_RUNNING
@@ -37,7 +38,7 @@
 #include "mock_app_verify_adapter.h"
 #endif
 #include "data_validator.h"
-#include "parameters.h"
+#include "parameter.h"
 #include "permission_kernel_utils.h"
 #include "spm_setproc.h"
 #include "table_item.h"
@@ -1515,7 +1516,7 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, FinishMigration_CleanupInvalidUid00
     MockNativeToken mock("foundation");
 
     // Ensure spm.enforce is false
-    system::SetBoolParameter(SPM_ENFORCE_PARAMETER, false);
+    SetParameter(ACCESS_TOKEN_SERVICE_SPM_ENFORCING_KEY, "0");
 
     // Create a real token in cache + DB + kernel
     HapInfoParams info = TestCommon::GetInfoManagerTestSystemInfoParms();
@@ -1581,7 +1582,7 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, FinishMigration_CleanupInvalidUid00
         AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, modifyValue, modifyCondition));
 
     // Set spm.enforce to true
-    OHOS::system::SetBoolParameter(SPM_ENFORCE_PARAMETER, true);
+    SetParameter(ACCESS_TOKEN_SERVICE_SPM_ENFORCING_KEY, "1");
 
     auto service = DelayedSingleton<AccessTokenManagerService>::GetInstance();
     ASSERT_NE(nullptr, service);
@@ -1592,7 +1593,7 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, FinishMigration_CleanupInvalidUid00
     EXPECT_EQ(nullptr, infoAfter);
 
     // Clean up
-    OHOS::system::SetBoolParameter(SPM_ENFORCE_PARAMETER, false);
+    SetParameter(ACCESS_TOKEN_SERVICE_SPM_ENFORCING_KEY, "0");
     (void)SpmRemoveEntry(tokenId);
 }
 
