@@ -321,6 +321,84 @@ HWTEST_F(GetHapTokenTest, GetHapBaseInfoByUidAbnormalTest001, TestSize.Level0)
 }
 
 /**
+ * @tc.name: GetHapIdentityFuncTest001
+ * @tc.desc: get hap identity by valid hap base info.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(GetHapTokenTest, GetHapIdentityFuncTest001, TestSize.Level0)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetHapIdentityFuncTest001");
+
+    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+
+    HapTokenInfo hapTokenInfoRes;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetHapTokenInfo(tokenID, hapTokenInfoRes));
+
+    HapBaseInfo baseInfo;
+    baseInfo.userID = TEST_USER_ID;
+    baseInfo.bundleName = TEST_BUNDLE_NAME;
+    baseInfo.instIndex = 0;
+
+    Identity identity = {0};
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetHapIdentity(baseInfo, identity));
+    EXPECT_EQ(hapTokenInfoRes.uid, identity.uid);
+    EXPECT_EQ(AccessTokenKit::GetHapTokenIDEx(TEST_USER_ID, TEST_BUNDLE_NAME, 0).tokenIDEx, identity.tokenId);
+}
+
+/**
+ * @tc.name: GetHapIdentityFuncTest001
+ * @tc.desc: get hap identity by valid hap base info.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(GetHapTokenTest, GetHapIdentityFuncTest002, TestSize.Level0)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetHapIdentityFuncTest002");
+
+    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+
+    HapTokenInfo hapTokenInfoRes;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetHapTokenInfo(tokenID, hapTokenInfoRes));
+
+    HapBaseInfo baseInfo;
+    baseInfo.userID = TEST_USER_ID;
+    baseInfo.bundleName = TEST_BUNDLE_NAME;
+    baseInfo.instIndex = 0;
+
+    Identity identity = {0};
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetHapIdentity(baseInfo, identity));
+    EXPECT_EQ(hapTokenInfoRes.uid, identity.uid);
+    EXPECT_EQ(AccessTokenKit::GetHapTokenIDEx(TEST_USER_ID, TEST_BUNDLE_NAME, 0).tokenIDEx, identity.tokenId);
+}
+
+/**
+ * @tc.name: GetHapIdentityAbnormalTest001
+ * @tc.desc: get hap identity with invalid hap base info.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(GetHapTokenTest, GetHapIdentityAbnormalTest001, TestSize.Level0)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetHapIdentityAbnormalTest001");
+
+    HapBaseInfo baseInfo;
+    Identity identity = {0};
+
+    baseInfo.userID = TEST_USER_ID_INVALID;
+    baseInfo.bundleName = TEST_BUNDLE_NAME;
+    baseInfo.instIndex = 0;
+    EXPECT_EQ(ERR_PARAM_INVALID, AccessTokenKit::GetHapIdentity(baseInfo, identity));
+
+    baseInfo.userID = TEST_USER_ID;
+    baseInfo.bundleName = "";
+    baseInfo.instIndex = 0;
+    EXPECT_EQ(ERR_PARAM_INVALID, AccessTokenKit::GetHapIdentity(baseInfo, identity));
+}
+
+/**
  * @tc.name: GetHapTokenInfoExtensionFuncTest001
  * @tc.desc: GetHapTokenInfoExt001.
  * @tc.type: FUNC
