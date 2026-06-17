@@ -734,21 +734,6 @@ int32_t AccessTokenManagerClient::InitHapToken(const HapInfoParams& info, HapPol
     return res;
 }
 
-int32_t AccessTokenManagerClient::PreMigrateUIDList(const std::vector<int32_t>& uidList)
-{
-    auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
-        return AccessTokenError::ERR_SERVICE_ABNORMAL;
-    }
-
-    int32_t result = proxy->PreMigrateUIDList(uidList);
-    if (result != RET_SUCCESS) {
-        result = ConvertResult(result);
-    }
-    return result;
-}
-
 int32_t AccessTokenManagerClient::MigrateInstalledBundles(const std::vector<MigratedInfo>& migratedInfoList,
     std::vector<BundleMigrateResult>& results)
 {

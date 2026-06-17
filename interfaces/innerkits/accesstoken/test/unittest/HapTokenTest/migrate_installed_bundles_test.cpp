@@ -53,25 +53,6 @@ public:
     }
 };
 
-HWTEST_F(MigrateInstalledBundlesTest, PreMigrateUIDList001, TestSize.Level1)
-{
-    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, AccessTokenKit::PreMigrateUIDList({}));
-}
-
-/**
- * @tc.name: PreMigrateUIDList002
- * @tc.desc: PreMigrateUIDList with duplicate values returns ERR_MIGRATION_UID_DUPLICATED.
- * @tc.type: FUNC
- */
-HWTEST_F(MigrateInstalledBundlesTest, PreMigrateUIDList002, TestSize.Level1)
-{
-    int32_t ret = AccessTokenKit::PreMigrateUIDList({ 200001, 200001 });
-    bool pass = ret == AccessTokenError::ERR_MIGRATION_UID_DUPLICATED ||
-                ret == AccessTokenError::ERR_MIGRATION_COMPLETED;
-    EXPECT_TRUE(pass);
-}
-
-
 static constexpr size_t MAX_MIGRATED_INFO_SIZE = 50;
 /**
  * @tc.name: MigrateInstalledBundles001

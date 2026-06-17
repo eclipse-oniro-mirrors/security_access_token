@@ -77,7 +77,6 @@ public:
     AccessTokenIDEx AllocHapToken(const HapInfoParams& info, const HapPolicy& policy);
     int32_t InitHapToken(const HapInfoParams& info, HapPolicy& policy,
         AccessTokenIDEx& fullTokenId, HapInfoCheckResult& result);
-    int32_t PreMigrateUIDList(const std::vector<int32_t>& uidList);
     int32_t MigrateInstalledBundles(const std::vector<MigratedInfo>& migratedInfoList,
         std::vector<BundleMigrateResult>& results);
     int32_t FinishMigration();

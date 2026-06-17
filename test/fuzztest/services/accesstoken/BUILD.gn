@@ -69,7 +69,6 @@ group("fuzztest") {
     "verifyaccesstokenstub_fuzzer:VerifyAccessTokenStubFuzzTest",
     "verifyaccesstokenwithliststub_fuzzer:VerifyAccessTokenWithListStubFuzzTest",
     "migrateinstalledbundlesstub_fuzzer:MigrateInstalledBundlesStubFuzzTest",
-    "premigrateuidliststub_fuzzer:PreMigrateUIDListStubFuzzTest",
     "finishmigrationstub_fuzzer:FinishMigrationStubFuzzTest",
   ]
 

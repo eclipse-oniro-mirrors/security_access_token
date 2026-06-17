@@ -140,7 +140,6 @@ public:
         uint64_t& fullTokenId, std::vector<PermissionWithValueIdl>& kernelPermIdlList) override;
     int32_t DeleteToolTokenByPid(int32_t pid) override;
     int32_t GetHostTokenId(AccessTokenID toolTokenId, AccessTokenID& hostTokenId) override;
-    int32_t PreMigrateUIDList(const std::vector<int32_t>& uidList) override;
     int32_t MigrateInstalledBundles(const std::vector<MigratedInfoIdl>& migratedInfoList,
         std::vector<BundleMigrateResultIdl>& results) override;
     int32_t FinishMigration() override;

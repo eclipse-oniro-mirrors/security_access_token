@@ -2370,15 +2370,6 @@ int32_t AccessTokenManagerService::MigrateInstalledBundles(const std::vector<Mig
     return AccessTokenMigrationManager::GetInstance().MigrateInstalledBundles(migratedInfoList, results);
 }
 
-int32_t AccessTokenManagerService::PreMigrateUIDList(const std::vector<int32_t>& uidList)
-{
-    int32_t ret = CheckHapManagerPermission();
-    if (ret != RET_SUCCESS) {
-        return ret;
-    }
-    return AccessTokenMigrationManager::GetInstance().PreMigrateUIDList(uidList);
-}
-
 int32_t AccessTokenManagerService::FinishMigration()
 {
     int32_t ret = CheckHapManagerPermission();

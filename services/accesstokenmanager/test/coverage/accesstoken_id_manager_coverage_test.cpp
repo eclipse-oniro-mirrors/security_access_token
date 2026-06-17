@@ -103,38 +103,6 @@ HWTEST_F(AccessTokenIdManagerCoverageTest, InitSingleBundleIdCache003, TestSize.
 }
 
 /*
- * @tc.name: ImportInitialUids001
- * @tc.desc: Import valid uids into empty cache succeeds and populates bundleIdSet_
- * @tc.type: FUNC
- * @tc.require: TDD
- */
-HWTEST_F(AccessTokenIdManagerCoverageTest, ImportInitialUids001, TestSize.Level4)
-{
-    std::vector<int32_t> uids = {10000, 10001, 10002};
-    ASSERT_EQ(RET_SUCCESS, AccessTokenIDManager::GetInstance().ImportInitialUids(uids));
-    ASSERT_EQ(3U, AccessTokenIDManager::GetInstance().bundleIdSet_.size());
-    ASSERT_EQ(1U, AccessTokenIDManager::GetInstance().bundleIdSet_.count(10000));
-    ASSERT_EQ(1U, AccessTokenIDManager::GetInstance().bundleIdSet_.count(10001));
-    ASSERT_EQ(1U, AccessTokenIDManager::GetInstance().bundleIdSet_.count(10002));
-}
-
-/*
- * @tc.name: ImportInitialUids002
- * @tc.desc: Mixed valid/invalid uids: invalid ones are silently skipped
- * @tc.type: FUNC
- * @tc.require: TDD
- */
-HWTEST_F(AccessTokenIdManagerCoverageTest, ImportInitialUids002, TestSize.Level4)
-{
-    // -1: negative; 5000: bundleId < 10000; 10000, 10001: valid
-    std::vector<int32_t> uids = {-1, 5000, 10000, 10001};
-    ASSERT_EQ(RET_SUCCESS, AccessTokenIDManager::GetInstance().ImportInitialUids(uids));
-    ASSERT_EQ(2U, AccessTokenIDManager::GetInstance().bundleIdSet_.size());
-    ASSERT_EQ(1U, AccessTokenIDManager::GetInstance().bundleIdSet_.count(10000));
-    ASSERT_EQ(1U, AccessTokenIDManager::GetInstance().bundleIdSet_.count(10001));
-}
-
-/*
  * @tc.name: RemoveBundleId001
  * @tc.desc: Remove existing bundleId succeeds and removes it from cache
  * @tc.type: FUNC

@@ -357,19 +357,6 @@ int32_t AccessTokenIDManager::TranslateUid(int32_t srcUid, int32_t dstLocalId, i
     return RET_SUCCESS;
 }
 
-int32_t AccessTokenIDManager::ImportInitialUids(const std::vector<int32_t>& uids)
-{
-    std::unique_lock<std::mutex> lock(bundleIdLock_);
-    for (int32_t uid : uids) {
-        int32_t bundleId = 0;
-        if (ExtractBundleId(uid, bundleId)) {
-            bundleIdSet_.insert(bundleId);
-        } else {
-            LOGW(ATM_DOMAIN, ATM_TAG, "Invalid uid=%{public}d, skip.", uid);
-        }
-    }
-    return RET_SUCCESS;
-}
 
 void AccessTokenIDManager::SetMigrationDone()
 {
