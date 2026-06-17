@@ -222,7 +222,6 @@ ohos_unittest("libspm_data_task_test") {
     "common/fake_token_setproc.cpp",
     "common/parameter.cpp",
     "common/parameters.cpp",
-    "permission/install_session_spm_task_test.cpp",
     "permission/spm_data_task_test.cpp",
     # Directly compile nativetoken sources instead of linking libnativetoken_shared
     # to avoid pulling in libpermsetproc_shared which contains real perm_setproc.cpp
@@ -230,6 +229,10 @@ ohos_unittest("libspm_data_task_test") {
     "${access_token_path}/interfaces/innerkits/nativetoken/src/nativetoken_hisysevent.c",
     "${access_token_path}/interfaces/innerkits/nativetoken/src/nativetoken_json_oper.c",
   ]
+
+  if (access_token_enable_spm && access_token_manager_hapverify_enable) {
+    sources += [ "permission/install_session_spm_task_test.cpp" ]
+  }
 
   sources += accesstoken_manager_base_config.sources
 
