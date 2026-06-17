@@ -9164,6 +9164,17 @@
             "deviceTypes": ["general"]
         },
         {
+            "name": "ohos.permission.DCAS_RUN_MODEL",
+            "grantMode": "system_grant",
+            "availableLevel": "normal",
+            "availableType": "NORMAL",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": false,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "2in1", "tablet"]
+        },
+        {
             "name": "ohos.permission.EXECUTE_DISTRIBUTED_INTENT",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
