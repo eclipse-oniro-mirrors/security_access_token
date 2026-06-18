@@ -1017,6 +1017,24 @@ HWTEST_F(BootVerifySchedulerTest, VerifyBundleWithState004, TestSize.Level1)
 }
 
 /**
+ * @tc.name: VerifyBundleWithStateSkipEmptyTokenIds001
+ * @tc.desc: Verify bundle verification is skipped when sign info exists but bundle tokenIds are empty.
+ * @tc.type: FUNC
+ */
+HWTEST_F(BootVerifySchedulerTest, VerifyBundleWithStateSkipEmptyTokenIds001, TestSize.Level1)
+{
+    auto& scheduler = BootVerifyScheduler::GetInstance();
+    scheduler.bundleInfoMap_[TEST_BUNDLE_NAME] = BuildBundleInfo({});
+    scheduler.bundleSignInfoMap_[TEST_BUNDLE_NAME] = BuildSignInfo();
+    scheduler.isVerifiedMap_[TEST_BUNDLE_NAME] = false;
+    scheduler.isVerifyingMap_[TEST_BUNDLE_NAME] = false;
+
+    EXPECT_EQ(RET_SUCCESS, scheduler.VerifyBundleWithState(TEST_BUNDLE_NAME));
+    EXPECT_TRUE(scheduler.isVerifiedMap_[TEST_BUNDLE_NAME]);
+    EXPECT_FALSE(scheduler.isVerifyingMap_[TEST_BUNDLE_NAME]);
+}
+
+/**
  * @tc.name: VerifyBundleWithState005
  * @tc.desc: Verify verify failure marks token untrusted
  *           and keeps bundle unverified when system spm enforcing is enabled.
@@ -1134,6 +1152,64 @@ HWTEST_F(BootVerifySchedulerTest, VerifyBundleList001, TestSize.Level1)
     scheduler.VerifyBundleList(nextBundleIndex, stateMap);
     ASSERT_EQ(1U, stateMap.size());
     EXPECT_TRUE(stateMap.find(TEST_BUNDLE_NAME) != stateMap.end());
+}
+
+/**
+ * @tc.name: VerifyBundleList002
+ * @tc.desc: Verify VerifyBundleList skips bundle verification and does not record state when tokenIds are empty.
+ * @tc.type: FUNC
+ */
+HWTEST_F(BootVerifySchedulerTest, VerifyBundleList002, TestSize.Level1)
+{
+    auto& scheduler = BootVerifyScheduler::GetInstance();
+    scheduler.highPrivilegeBundleList_ = { TEST_BUNDLE_NAME };
+    scheduler.bundleInfoMap_[TEST_BUNDLE_NAME] = BuildBundleInfo({});
+    scheduler.bundleSignInfoMap_[TEST_BUNDLE_NAME] = BuildSignInfo();
+    scheduler.isVerifiedMap_[TEST_BUNDLE_NAME] = false;
+    scheduler.isVerifyingMap_[TEST_BUNDLE_NAME] = false;
+
+    std::atomic_size_t nextBundleIndex = 0;
+    std::map<std::string, VerifiedBundleState> stateMap;
+    scheduler.VerifyBundleList(nextBundleIndex, stateMap);
+    EXPECT_TRUE(stateMap.empty());
+    EXPECT_TRUE(stateMap.find(TEST_BUNDLE_NAME) == stateMap.end());
+}
+
+/**
+ * @tc.name: ShouldSkipVerifyLocked001
+ * @tc.desc: Verify ShouldSkipVerifyLocked returns true when bundle info does not exist.
+ * @tc.type: FUNC
+ */
+HWTEST_F(BootVerifySchedulerTest, ShouldSkipVerifyLocked001, TestSize.Level1)
+{
+    auto& scheduler = BootVerifyScheduler::GetInstance();
+    scheduler.bundleInfoMap_.erase(TEST_BUNDLE_NAME);
+    scheduler.bundleSignInfoMap_[TEST_BUNDLE_NAME] = BuildSignInfo();
+
+    EXPECT_TRUE(scheduler.ShouldSkipVerifyLocked(TEST_BUNDLE_NAME));
+
+    scheduler.bundleInfoMap_[TEST_BUNDLE_NAME] = nullptr;
+    EXPECT_TRUE(scheduler.ShouldSkipVerifyLocked(TEST_BUNDLE_NAME));
+
+    scheduler.bundleInfoMap_[TEST_BUNDLE_NAME] = BuildBundleInfo({});
+    EXPECT_TRUE(scheduler.ShouldSkipVerifyLocked(TEST_BUNDLE_NAME));
+
+    scheduler.bundleSignInfoMap_.erase(TEST_BUNDLE_NAME);
+    EXPECT_TRUE(scheduler.ShouldSkipVerifyLocked(TEST_BUNDLE_NAME));
+}
+
+/**
+ * @tc.name: ShouldSkipVerifyLocked002
+ * @tc.desc: Verify ShouldSkipVerifyLocked returns false when bundle info and sign info are complete.
+ * @tc.type: FUNC
+ */
+HWTEST_F(BootVerifySchedulerTest, ShouldSkipVerifyLocked002, TestSize.Level1)
+{
+    auto& scheduler = BootVerifyScheduler::GetInstance();
+    scheduler.bundleInfoMap_[TEST_BUNDLE_NAME] = BuildBundleInfo({ TEST_TOKEN_ID });
+    scheduler.bundleSignInfoMap_[TEST_BUNDLE_NAME] = BuildSignInfo();
+
+    EXPECT_FALSE(scheduler.ShouldSkipVerifyLocked(TEST_BUNDLE_NAME));
 }
 
 } // namespace AccessToken

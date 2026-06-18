@@ -956,6 +956,10 @@ bool BootVerifyScheduler::IsInvalidUid(AccessTokenID tokenId) const
 
 bool BootVerifyScheduler::ShouldSkipVerifyLocked(const std::string& bundleName) const
 {
+    auto bundleIter = bundleInfoMap_.find(bundleName);
+    if (bundleIter == bundleInfoMap_.end() || bundleIter->second == nullptr || bundleIter->second->tokenIds.empty()) {
+        return true;
+    }
     return bundleSignInfoMap_.find(bundleName) == bundleSignInfoMap_.end();
 }
 
