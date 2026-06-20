@@ -38,7 +38,6 @@ static const uint64_t SYSTEM_APP_MASK = (static_cast<uint64_t>(1) << 32);
 static const uint64_t ATOMIC_SERVICE_MASK = (static_cast<uint64_t>(1) << 33);
 static const uint64_t TOKEN_ID_LOWMASK = 0xffffffff;
 static const int INVALID_DLP_TOKEN_FLAG = -1;
-static const size_t MAX_UID_LIST_SIZE = 102400;
 
 bool IsAgentIdValid(const std::string& agentID)
 {
@@ -287,16 +286,6 @@ isAtomicService: %{public}d",
     HapPolicy newPolicy;
     TransferHapPolicyParams(policy, newPolicy);
     return AccessTokenManagerClient::GetInstance().UpdateHapToken(tokenIdEx, info, newPolicy, result);
-}
-
-int32_t AccessTokenKit::PreMigrateUIDList(const std::vector<int32_t>& uidList)
-{
-    LOGI(ATM_DOMAIN, ATM_TAG, "PreMigrateUIDList size=%{public}zu.", uidList.size());
-    if (uidList.size() > MAX_UID_LIST_SIZE || uidList.empty()) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Uid list size %{public}zu is invalid.", uidList.size());
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-    return AccessTokenManagerClient::GetInstance().PreMigrateUIDList(uidList);
 }
 
 int32_t AccessTokenKit::MigrateInstalledBundles(const std::vector<MigratedInfo>& migratedInfoList,

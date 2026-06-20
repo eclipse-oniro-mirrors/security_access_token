@@ -210,12 +210,6 @@ public:
     static int32_t UpdateHapToken(AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info,
         const HapPolicyParams& policy, HapInfoCheckResult& result);
     /**
-     * @brief Stage the UID list for installed-bundle migration.
-     * @param uidList UID list that should be accepted by the later migration step.
-     * @return error code, see access_token_error.h
-     */
-    static int32_t PreMigrateUIDList(const std::vector<int32_t>& uidList);
-    /**
      * @brief Migrate installed bundles.
      * @param migratedInfoList migrated bundle information list.
      * @param results migration result for each migrated bundle.

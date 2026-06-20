@@ -100,7 +100,6 @@ interface OHOS.Security.AccessToken.IAccessTokenManager{
     [ipccode 69] void InitCliToken([in] CliInitInfoIdl initInfoIdl, [out] unsigned long fullTokenId, [out] List<PermissionWithValueIdl> kernelPermIdlList);
     [ipccode 71] void DeleteToolTokenByPid([in] int pid);
     [ipccode 74] void GetHostTokenId([in] unsigned int toolTokenId, [out] unsigned int hostTokenId);
-    [ipccode 75] void PreMigrateUIDList([in] List<int> uidList);
     [ipccode 76] void MigrateInstalledBundles([in] List<MigratedInfoIdl> migratedInfoList, [out] List<BundleMigrateResultIdl> results);
     [ipccode 77] void FinishMigration();
     [ipccode 80] void VerifyAccessToken([in] unsigned int tokenID, [in] List<String> permissionList, [out] List<int> permStateList);  
