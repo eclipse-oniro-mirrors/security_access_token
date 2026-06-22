@@ -84,6 +84,7 @@ private:
     ~ClawTicketManager();
     DISALLOW_COPY_AND_MOVE(ClawTicketManager);
 
+    int32_t QueryCommandPermissions(const CliInfo& cliInfo, std::vector<PermissionStatus>& permList);
     void RegisterAppStateObserver();
     void UnregisterAppStateObserver();
 #ifdef SAF_AGENT_FENCE_ENABLE
