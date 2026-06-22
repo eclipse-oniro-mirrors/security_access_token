@@ -30,7 +30,7 @@ group("fuzztest") {
     "getclipermissionrequestinfostub_fuzzer:GetCliPermissionRequestInfoStubFuzzTest",
     "getclipermissionsstub_fuzzer:GetCliPermissionsStubFuzzTest",
     "getdefpermissionstub_fuzzer:GetDefPermissionStubFuzzTest",
-    "gethapbaseinfobyuistub_fuzzer:GetHapBaseInfoByUidStubFuzzTest",
+    "gethapbaseinfobyuidstub_fuzzer:GetHapBaseInfoByUidStubFuzzTest",
     "gethapidentitystub_fuzzer:GetHapIdentityStubFuzzTest",
     "gethaptokenidstub_fuzzer:GetHapTokenIDStubFuzzTest",
     "gethaptokeninfocompatstub_fuzzer:GetHapTokenInfoCompatStubFuzzTest",

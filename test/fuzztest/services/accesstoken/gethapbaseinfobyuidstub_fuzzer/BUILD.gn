@@ -19,7 +19,7 @@ ohos_fuzztest("GetHapBaseInfoByUidStubFuzzTest") {
   module_out_path = module_output_path_service_access_token
   fuzz_config_file = "."
 
-  sources = [ "gethapbaseinfobyuistub_fuzzer.cpp" ]
+  sources = [ "gethapbaseinfobyuidstub_fuzzer.cpp" ]
   sources += access_token_stub_fuzz_sources
 
   include_dirs = access_token_stub_fuzz_include_dirs

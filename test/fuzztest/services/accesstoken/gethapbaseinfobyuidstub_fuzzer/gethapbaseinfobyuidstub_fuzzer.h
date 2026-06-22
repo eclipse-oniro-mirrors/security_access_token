@@ -19,6 +19,6 @@
 #include <cstddef>
 #include <cstdint>
 
-#define FUZZ_PROJECT_NAME "gethapbaseinfobyuistub_fuzzer"
+#define FUZZ_PROJECT_NAME "gethapbaseinfobyuidstub_fuzzer"
 
 #endif // GETHAPBASEINFOBYUISTUB_FUZZER_H
