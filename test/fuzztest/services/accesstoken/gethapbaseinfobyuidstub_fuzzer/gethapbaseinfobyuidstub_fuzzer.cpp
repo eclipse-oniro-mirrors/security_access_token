@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include "gethapbaseinfobyuistub_fuzzer.h"
+#include "gethapbaseinfobyuidstub_fuzzer.h"
 
 #include <climits>
 
