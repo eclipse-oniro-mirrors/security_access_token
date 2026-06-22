@@ -33,12 +33,8 @@ public:
 
     int32_t BuildCliPermissionDialogInfo(
         AccessTokenID clawTokenId, const std::vector<CliInfo>& cliInfoList, PermissionDialogResult& result);
-    int32_t BuildSkillPermissionDialogInfo(
-        AccessTokenID clawTokenId, const std::vector<SkillInfo>& skillInfoList, PermissionDialogResult& result);
     int32_t BuildCliPermissions(
         AccessTokenID clawTokenId, const std::vector<CliInfo>& cliInfoList, CliPermissionsResult& result);
-    int32_t BuildSkillPermissions(
-        AccessTokenID clawTokenId, const std::vector<SkillInfo>& skillInfoList, SkillPermissionsResult& result);
     int32_t ValidateClawCliAccess(AccessTokenID clawTokenId, const std::vector<CliInfo>& cliInfoList);
 
 private:

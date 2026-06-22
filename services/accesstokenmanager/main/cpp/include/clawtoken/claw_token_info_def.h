@@ -20,7 +20,6 @@
 #include <vector>
 
 #include "access_token.h"
-#include "claw_permission_info.h"
 #include "permission_status.h"
 
 namespace OHOS {
@@ -45,14 +44,6 @@ struct CliMessage {
     AccessTokenID hostTokenId = INVALID_TOKENID;
     std::string cliName;
     std::string subCliName;
-    std::vector<PermissionStatus> permStateList;
-};
-
-struct SkillMessage {
-    AccessTokenID hostTokenId = INVALID_TOKENID;
-    std::string bundleName;
-    std::string moduleName;
-    std::string skillName;
     std::vector<PermissionStatus> permStateList;
 };
 } // namespace AccessToken

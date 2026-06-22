@@ -30,13 +30,15 @@ public:
         int32_t realResult,
         int32_t sessionId,
         const std::vector<TrustedBundleInfo>& bundleInfos,
+        const HapVerifyResultInfo& resultInfo,
         CheckHapSignResultRawdata& rawData);
     
     static bool ReadFromRawData(
         const CheckHapSignResultRawdata& rawData,
         int32_t& realResult,
         int32_t& sessionId,
-        std::vector<TrustedBundleInfo>& bundleInfos);
+        std::vector<TrustedBundleInfo>& bundleInfos,
+        HapVerifyResultInfo& resultInfo);
 };
 
 } // namespace AccessToken

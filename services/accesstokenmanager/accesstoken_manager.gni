@@ -36,7 +36,6 @@ accesstoken_manager_base_config = {
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/clawtoken/claw_token_info_inner_base.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/clawtoken/claw_token_info_manager.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/clawtoken/cli_token_info_inner.cpp",
-    "${access_token_path}/services/accesstokenmanager/main/cpp/src/clawtoken/skill_token_info_inner.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/access_token_db_operator.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/data_translator.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/table_item.cpp",

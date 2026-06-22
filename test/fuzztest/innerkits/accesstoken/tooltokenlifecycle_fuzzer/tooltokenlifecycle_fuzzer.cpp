@@ -40,10 +40,6 @@ const std::string MANAGE_TOOL_RUNTIME_PERMISSIONS = "ohos.permission.MANAGE_TOOL
 const std::string DEFAULT_AGENT_ID = "1001";
 const std::string DEFAULT_CLI_NAME = "tooltoken";
 const std::string DEFAULT_SUB_CLI_NAME = "subtool";
-const std::string DEFAULT_BUNDLE_NAME = "com.ohos.tooltoken";
-const std::string DEFAULT_MODULE_NAME = "entry";
-const std::string DEFAULT_SKILL_NAME = "defaultSkill";
-
 enum class QueryTokenChoice : uint8_t {
     TOOL_TOKEN,
     HOST_TOKEN,
@@ -91,9 +87,7 @@ void SwitchToUid(uid_t uid)
 }
 
 CliInfo BuildDefaultCliInfo();
-SkillInfo BuildDefaultSkillInfo();
 std::vector<CliAuthInfo> BuildDefaultCliAuthInfos();
-std::vector<SkillAuthInfo> BuildDefaultSkillAuthInfos();
 std::vector<std::string> ConsumeDeletePermissions(FuzzedDataProvider& provider);
 std::vector<std::string> ConsumePermissionList(FuzzedDataProvider& provider, const std::string& permissionName);
 
@@ -108,15 +102,6 @@ CliInfo ConsumeLifecycleCliInfo(FuzzedDataProvider& provider)
     CliInfo info;
     info.cliName = ConsumeValidOrDefault(provider, DEFAULT_CLI_NAME);
     info.subCliName = provider.ConsumeBool() ? ConsumeClawString(provider) : DEFAULT_SUB_CLI_NAME;
-    return info;
-}
-
-SkillInfo ConsumeLifecycleSkillInfo(FuzzedDataProvider& provider)
-{
-    SkillInfo info;
-    info.bundleName = ConsumeValidOrDefault(provider, DEFAULT_BUNDLE_NAME);
-    info.moduleName = ConsumeValidOrDefault(provider, DEFAULT_MODULE_NAME);
-    info.skillName = ConsumeValidOrDefault(provider, DEFAULT_SKILL_NAME);
     return info;
 }
 
@@ -157,26 +142,10 @@ CliInfo BuildDefaultCliInfo()
     return info;
 }
 
-SkillInfo BuildDefaultSkillInfo()
-{
-    SkillInfo info;
-    info.skillName = DEFAULT_SKILL_NAME;
-    info.bundleName = DEFAULT_BUNDLE_NAME;
-    info.moduleName = DEFAULT_MODULE_NAME;
-    return info;
-}
-
 std::vector<CliAuthInfo> BuildDefaultCliAuthInfos()
 {
     CliAuthInfo authInfo;
     authInfo.cliInfo = BuildDefaultCliInfo();
-    return { authInfo };
-}
-
-std::vector<SkillAuthInfo> BuildDefaultSkillAuthInfos()
-{
-    SkillAuthInfo authInfo;
-    authInfo.skillInfo = BuildDefaultSkillInfo();
     return { authInfo };
 }
 
@@ -185,17 +154,6 @@ std::string GenerateCliChallenge(AccessTokenID hostTokenId)
     MockToken runtimeCaller({ MANAGE_TOOL_RUNTIME_PERMISSIONS }, true, true);
     ToolAuthResult result;
     (void)AccessTokenKit::GenerateCliAuthResult(hostTokenId, DEFAULT_AGENT_ID, BuildDefaultCliAuthInfos(), result);
-    if (result.authResults.empty()) {
-        return "";
-    }
-    return result.authResults[0];
-}
-
-std::string GenerateSkillChallenge(AccessTokenID hostTokenId)
-{
-    MockToken runtimeCaller({ MANAGE_TOOL_RUNTIME_PERMISSIONS }, true, true);
-    ToolAuthResult result;
-    (void)AccessTokenKit::GenerateSkillAuthResult(hostTokenId, DEFAULT_AGENT_ID, BuildDefaultSkillAuthInfos(), result);
     if (result.authResults.empty()) {
         return "";
     }
@@ -219,22 +177,6 @@ void ExerciseAuthResultApi(FuzzedDataProvider& provider, AccessTokenID hostToken
         (void)AccessTokenKit::GenerateCliAuthResult(ConsumeHostTokenId(provider, hostTokenId),
             ConsumeAgentId(provider), ConsumeCliAuthInfoList(provider), result);
     }
-
-    (void)AccessTokenKit::GenerateSkillAuthResult(ConsumeHostTokenId(provider, hostTokenId),
-        ConsumeAgentId(provider), ConsumeSkillAuthInfoList(provider), result);
-    {
-        MockToken caller(
-            ConsumePermissionList(provider, MANAGE_TOOL_RUNTIME_PERMISSIONS), true, provider.ConsumeBool());
-        (void)AccessTokenKit::GenerateSkillAuthResult(ConsumeHostTokenId(provider, hostTokenId),
-            ConsumeAgentId(provider), ConsumeSkillAuthInfoList(provider), result);
-    }
-    {
-        MockToken runtimeCaller({ MANAGE_TOOL_RUNTIME_PERMISSIONS }, true, true);
-        (void)AccessTokenKit::GenerateSkillAuthResult(
-            hostTokenId, DEFAULT_AGENT_ID, BuildDefaultSkillAuthInfos(), result);
-        (void)AccessTokenKit::GenerateSkillAuthResult(ConsumeHostTokenId(provider, hostTokenId),
-            ConsumeAgentId(provider), ConsumeSkillAuthInfoList(provider), result);
-    }
 }
 
 AccessTokenID TryInitCliToken(const CliInitInfo& initInfo)
@@ -254,26 +196,6 @@ AccessTokenID TryInitCliTokenWithUid(const CliInitInfo& initInfo, uid_t uid)
     std::vector<PermissionWithValue> kernelPermList;
     SwitchToUid(uid);
     (void)AccessTokenKit::InitCliToken(initInfo, tokenIdEx, kernelPermList);
-    return tokenIdEx.tokenIdExStruct.tokenID;
-}
-
-AccessTokenID TryInitSkillToken(const SkillInitInfo& initInfo)
-{
-    CallingContextGuard guard;
-    AccessTokenIDEx tokenIdEx = {0};
-    std::vector<PermissionWithValue> kernelPermList;
-    SwitchToUid(AIMGR_UID);
-    (void)AccessTokenKit::InitSkillToken(initInfo, tokenIdEx, kernelPermList);
-    return tokenIdEx.tokenIdExStruct.tokenID;
-}
-
-AccessTokenID TryInitSkillTokenWithUid(const SkillInitInfo& initInfo, uid_t uid)
-{
-    CallingContextGuard guard;
-    AccessTokenIDEx tokenIdEx = {0};
-    std::vector<PermissionWithValue> kernelPermList;
-    SwitchToUid(uid);
-    (void)AccessTokenKit::InitSkillToken(initInfo, tokenIdEx, kernelPermList);
     return tokenIdEx.tokenIdExStruct.tokenID;
 }
 
@@ -367,19 +289,11 @@ AccessTokenID TryInitConsumedToolToken(FuzzedDataProvider& provider, AccessToken
     if (!provider.ConsumeBool()) {
         return INVALID_TOKENID;
     }
-    if (provider.ConsumeBool()) {
-        CliInitInfo initInfo;
-        initInfo.hostTokenId = provider.ConsumeBool() ? hostTokenId : ConsumeTokenId(provider);
-        initInfo.challenge = provider.ConsumeBool() ? GenerateCliChallenge(hostTokenId) : ConsumeClawString(provider);
-        initInfo.cliInfo = provider.ConsumeBool() ? BuildDefaultCliInfo() : ConsumeLifecycleCliInfo(provider);
-        return TryInitCliTokenWithUid(initInfo, ConsumeUid(provider));
-    }
-
-    SkillInitInfo initInfo;
+    CliInitInfo initInfo;
     initInfo.hostTokenId = provider.ConsumeBool() ? hostTokenId : ConsumeTokenId(provider);
-    initInfo.challenge = provider.ConsumeBool() ? GenerateSkillChallenge(hostTokenId) : ConsumeClawString(provider);
-    initInfo.skillInfo = provider.ConsumeBool() ? BuildDefaultSkillInfo() : ConsumeLifecycleSkillInfo(provider);
-    return TryInitSkillTokenWithUid(initInfo, ConsumeUid(provider));
+    initInfo.challenge = provider.ConsumeBool() ? GenerateCliChallenge(hostTokenId) : ConsumeClawString(provider);
+    initInfo.cliInfo = provider.ConsumeBool() ? BuildDefaultCliInfo() : ConsumeLifecycleCliInfo(provider);
+    return TryInitCliTokenWithUid(initInfo, ConsumeUid(provider));
 }
 
 void ExerciseDeleteToolTokenByPid(FuzzedDataProvider& provider, AccessTokenID toolTokenId)
@@ -409,60 +323,22 @@ void ExerciseCliLifecycle(FuzzedDataProvider& provider, AccessTokenID hostTokenI
     AccessTokenID toolTokenId = TryInitCliTokenWithUid(initInfo, ConsumeUid(provider));
     (void)AccessTokenKit::IsCliToolToken(toolTokenId);
 
-    CliTokenInfo cliTokenInfo;
     AccessTokenID hostTokenIdOut = INVALID_TOKENID;
-    (void)AccessTokenKit::GetCliTokenInfo(ConsumeQueryTokenId(provider, toolTokenId, hostTokenId), cliTokenInfo);
     (void)AccessTokenKit::GetHostTokenId(ConsumeQueryTokenId(provider, toolTokenId, hostTokenId), hostTokenIdOut);
     {
         MockToken caller(ConsumeDeletePermissions(provider), true, provider.ConsumeBool());
-        (void)AccessTokenKit::GetCliTokenInfo(ConsumeQueryTokenId(provider, toolTokenId, hostTokenId), cliTokenInfo);
         (void)AccessTokenKit::GetHostTokenId(ConsumeQueryTokenId(provider, toolTokenId, hostTokenId), hostTokenIdOut);
     }
 
     ExerciseDeleteToolTokenByPid(provider, toolTokenId);
-    (void)AccessTokenKit::GetCliTokenInfo(toolTokenId, cliTokenInfo);
-    (void)AccessTokenKit::GetHostTokenId(toolTokenId, hostTokenIdOut);
-}
-
-void ExerciseSkillLifecycle(FuzzedDataProvider& provider, AccessTokenID hostTokenId)
-{
-    SkillInitInfo initInfo;
-    initInfo.hostTokenId = provider.ConsumeBool() ? hostTokenId : ConsumeTokenId(provider);
-    initInfo.challenge = provider.ConsumeBool() ? "" : ConsumeClawString(provider);
-    initInfo.skillInfo = ConsumeLifecycleSkillInfo(provider);
-
-    AccessTokenID toolTokenId = TryInitSkillTokenWithUid(initInfo, ConsumeUid(provider));
-    (void)AccessTokenKit::IsCliToolToken(toolTokenId);
-
-    SkillTokenInfo skillTokenInfo;
-    AccessTokenID hostTokenIdOut = INVALID_TOKENID;
-    (void)AccessTokenKit::GetSkillTokenInfo(ConsumeQueryTokenId(provider, toolTokenId, hostTokenId), skillTokenInfo);
-    (void)AccessTokenKit::GetHostTokenId(ConsumeQueryTokenId(provider, toolTokenId, hostTokenId), hostTokenIdOut);
-    {
-        MockToken caller(ConsumeDeletePermissions(provider), true, provider.ConsumeBool());
-        (void)AccessTokenKit::GetSkillTokenInfo(
-            ConsumeQueryTokenId(provider, toolTokenId, hostTokenId), skillTokenInfo);
-        (void)AccessTokenKit::GetHostTokenId(ConsumeQueryTokenId(provider, toolTokenId, hostTokenId), hostTokenIdOut);
-    }
-
-    ExerciseDeleteToolTokenByPid(provider, toolTokenId);
-    (void)AccessTokenKit::GetSkillTokenInfo(toolTokenId, skillTokenInfo);
     (void)AccessTokenKit::GetHostTokenId(toolTokenId, hostTokenIdOut);
 }
 
 void ExerciseDefaultLifecycle(FuzzedDataProvider& provider, AccessTokenID hostTokenId)
 {
     AccessTokenID hostTokenIdOut = INVALID_TOKENID;
-    CliTokenInfo cliTokenInfo;
-    SkillTokenInfo skillTokenInfo;
-    auto queryCliToken = [&cliTokenInfo, &hostTokenIdOut](AccessTokenID tokenId) {
+    auto queryCliToken = [&hostTokenIdOut](AccessTokenID tokenId) {
         MockToken unprivilegedCaller({}, true, false);
-        (void)AccessTokenKit::GetCliTokenInfo(tokenId, cliTokenInfo);
-        (void)AccessTokenKit::GetHostTokenId(tokenId, hostTokenIdOut);
-    };
-    auto querySkillToken = [&skillTokenInfo, &hostTokenIdOut](AccessTokenID tokenId) {
-        MockToken unprivilegedCaller({}, true, false);
-        (void)AccessTokenKit::GetSkillTokenInfo(tokenId, skillTokenInfo);
         (void)AccessTokenKit::GetHostTokenId(tokenId, hostTokenIdOut);
     };
 
@@ -475,30 +351,13 @@ void ExerciseDefaultLifecycle(FuzzedDataProvider& provider, AccessTokenID hostTo
     ExerciseDeleteToolTokenByPid(provider, cliTokenId);
     queryCliToken(cliTokenId);
 
-    SkillInitInfo skillInitInfo;
-    skillInitInfo.hostTokenId = hostTokenId;
-    skillInitInfo.challenge = GenerateSkillChallenge(hostTokenId);
-    skillInitInfo.skillInfo = BuildDefaultSkillInfo();
-    AccessTokenID skillTokenId = TryInitSkillToken(skillInitInfo);
-    querySkillToken(skillTokenId);
-    ExerciseDeleteToolTokenByPid(provider, skillTokenId);
-    querySkillToken(skillTokenId);
-
     cliInitInfo.challenge = "";
     AccessTokenID emptyCliTokenId = TryInitCliToken(cliInitInfo);
     ExerciseDeleteToolTokenByPid(provider, emptyCliTokenId);
 
-    skillInitInfo.challenge = "";
-    AccessTokenID emptySkillTokenId = TryInitSkillToken(skillInitInfo);
-    ExerciseDeleteToolTokenByPid(provider, emptySkillTokenId);
-
     CliInitInfo invalidCliInfo = cliInitInfo;
     invalidCliInfo.hostTokenId = INVALID_TOKENID;
     (void)TryInitCliToken(invalidCliInfo);
-
-    SkillInitInfo invalidSkillInfo = skillInitInfo;
-    invalidSkillInfo.skillInfo.skillName.clear();
-    (void)TryInitSkillToken(invalidSkillInfo);
 }
 }
 
@@ -515,7 +374,6 @@ bool ToolTokenLifecycleFuzzTest(const uint8_t* data, size_t size)
     ExerciseConsumedDeleteToolTokenByPid(provider, hostTokenId);
     ExerciseDefaultLifecycle(provider, hostTokenId);
     ExerciseCliLifecycle(provider, hostTokenId);
-    ExerciseSkillLifecycle(provider, hostTokenId);
     return true;
 }
 }

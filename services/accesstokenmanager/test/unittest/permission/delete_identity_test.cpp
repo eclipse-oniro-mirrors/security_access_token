@@ -227,7 +227,7 @@ void DeleteIdentityTest::MarkTokenAsReservedDirectly(AccessTokenID tokenID, Rese
     condition.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenID));
 
     int32_t ret = AccessTokenDbOperator::Modify(
-        AtmDataType::ACCESSTOKEN_HAP_INFO, modifyValues, condition);
+        AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, modifyValues, condition);
     EXPECT_EQ(RET_SUCCESS, ret);
 
     // 2. Remove from cache (reserved tokens should not be in AccessTokenInfoManager cache)
@@ -307,7 +307,7 @@ bool DeleteIdentityTest::TokenExistsInDatabase(AccessTokenID tokenID)
     condition.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenID));
     std::vector<GenericValues> results;
     int32_t ret = AccessTokenDbOperator::Find(
-        AtmDataType::ACCESSTOKEN_HAP_INFO, condition, results);
+        AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, condition, results);
     if (ret != RET_SUCCESS) {
         return false;
     }
@@ -320,7 +320,7 @@ bool DeleteIdentityTest::GetTokenInfoFromDatabase(AccessTokenID tokenID, Generic
     condition.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenID));
     std::vector<GenericValues> results;
     int32_t ret = AccessTokenDbOperator::Find(
-        AtmDataType::ACCESSTOKEN_HAP_INFO, condition, results);
+        AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, condition, results);
     if (ret != RET_SUCCESS || results.empty()) {
         return false;
     }
@@ -358,7 +358,7 @@ bool DeleteIdentityTest::GetReservedFieldFromDatabase(AccessTokenID tokenID, int
 
 bool DeleteIdentityTest::VerifyTokenCompletelyDeleted(AccessTokenID tokenID)
 {
-    // Check ACCESSTOKEN_HAP_INFO table
+    // Check ACCESSTOKEN_HAP_TOKEN_INFO table
     if (TokenExistsInDatabase(tokenID)) {
         return false; // Token still exists in HAP_INFO table
     }
@@ -1154,7 +1154,7 @@ HWTEST_F(DeleteIdentityTest, DatabaseConsistency001, TestSize.Level0)
     GenericValues condition;
     condition.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenID));
     std::vector<GenericValues> dbResults;
-    int32_t ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_INFO, condition, dbResults);
+    int32_t ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, condition, dbResults);
     EXPECT_EQ(RET_SUCCESS, ret);
     EXPECT_EQ(1u, dbResults.size());
 
@@ -1170,7 +1170,7 @@ HWTEST_F(DeleteIdentityTest, DatabaseConsistency001, TestSize.Level0)
 
     // Verify database is updated with reserved flag
     dbResults.clear();
-    ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_INFO, condition, dbResults);
+    ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, condition, dbResults);
     EXPECT_EQ(RET_SUCCESS, ret);
     EXPECT_EQ(1u, dbResults.size());
 #ifdef SPM_DATA_ENABLE

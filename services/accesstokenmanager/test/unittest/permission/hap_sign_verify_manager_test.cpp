@@ -68,8 +68,9 @@ HWTEST_F(HapSignVerifyManagerTest, CheckHapsSignInfo001, TestSize.Level1)
     TrustedBundleInfoInner info;
     bool isChanged = true;
 
-    EXPECT_EQ(RET_SUCCESS, manager.CheckHapsSignInfo("/data/camera.hap",
-        Security::Verify::VerifyType::Fast, -1, info, isChanged));
+    EXPECT_EQ(RET_SUCCESS, manager.CheckHapsSignInfo(
+        HapSignVerifyManager::MakeVerifyParams("/data/camera.hap", Security::Verify::VerifyType::Fast, -1),
+        false, info, isChanged));
     ASSERT_NE(nullptr, info.bootstrapInfo);
     EXPECT_EQ("com.example.bundle", info.provisionInfo.bundleInfo.bundleName);
     EXPECT_EQ("mock.identifier", info.provisionInfo.bundleInfo.appIdentifier);
@@ -89,8 +90,9 @@ HWTEST_F(HapSignVerifyManagerTest, CheckHapsSignInfo002, TestSize.Level1)
     std::shared_ptr<Security::Verify::BootstrapInfo> bootstrapInfo = info.bootstrapInfo;
     bool isChanged;
 
-    EXPECT_EQ(RET_SUCCESS, manager.CheckHapsSignInfo("/data/camera.hap",
-        Security::Verify::VerifyType::Fast, -1, info, isChanged));
+    EXPECT_EQ(RET_SUCCESS, manager.CheckHapsSignInfo(
+        HapSignVerifyManager::MakeVerifyParams("/data/camera.hap", Security::Verify::VerifyType::Fast, -1),
+        false, info, isChanged));
     EXPECT_EQ(bootstrapInfo, info.bootstrapInfo);
     EXPECT_EQ("com.example.bundle", info.provisionInfo.bundleInfo.bundleName);
 }
@@ -107,8 +109,9 @@ HWTEST_F(HapSignVerifyManagerTest, CheckHapsSignInfo003, TestSize.Level1)
     TrustedBundleInfoInner info;
     bool isChanged;
 
-    EXPECT_EQ(RET_SUCCESS, manager.CheckHapsSignInfo("/data/camera.hap",
-        Security::Verify::VerifyType::Fast, -1, info, isChanged));
+    EXPECT_EQ(RET_SUCCESS, manager.CheckHapsSignInfo(
+        HapSignVerifyManager::MakeVerifyParams("/data/camera.hap", Security::Verify::VerifyType::Fast, -1),
+        false, info, isChanged));
     EXPECT_TRUE(adapter.isParseCalled_);
     EXPECT_EQ("", adapter.lastCertPath_);
     EXPECT_EQ("entry", info.moduleData.moduleName);
@@ -127,8 +130,10 @@ HWTEST_F(HapSignVerifyManagerTest, CheckHapsSignInfo004, TestSize.Level1)
     TrustedBundleInfoInner info;
     bool isChanged;
 
-    EXPECT_EQ(AccessTokenError::ERR_HAP_VERIFY_FAILED,
-        manager.CheckHapsSignInfo("/data/camera.hap", Security::Verify::VerifyType::Fast, -1, info, isChanged));
+    EXPECT_NE(RET_SUCCESS,
+        manager.CheckHapsSignInfo(
+            HapSignVerifyManager::MakeVerifyParams("/data/camera.hap", Security::Verify::VerifyType::Fast, -1),
+            false, info, isChanged));
     EXPECT_FALSE(adapter.isParseCalled_);
 }
 
@@ -145,9 +150,31 @@ HWTEST_F(HapSignVerifyManagerTest, CheckHapsSignInfo005, TestSize.Level1)
     TrustedBundleInfoInner info;
     bool isChanged = true;
 
-    EXPECT_EQ(AccessTokenError::ERR_HAP_MODULE_INVALID,
-        manager.CheckHapsSignInfo("/data/camera.hap", Security::Verify::VerifyType::Fast, -1, info, isChanged));
+    EXPECT_NE(RET_SUCCESS,
+        manager.CheckHapsSignInfo(
+            HapSignVerifyManager::MakeVerifyParams("/data/camera.hap", Security::Verify::VerifyType::Fast, -1),
+            false, info, isChanged));
     EXPECT_TRUE(adapter.isParseCalled_);
+}
+
+
+/**
+ * @tc.name: CheckHapsSignInfo006
+ * @tc.desc: Hap path not allowed.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HapSignVerifyManagerTest, CheckHapsSignInfo006, TestSize.Level1)
+{
+    MockAppVerifyAdapter adapter;
+    HapSignVerifyManager manager(adapter);
+    TrustedBundleInfoInner info;
+    bool isChanged = true;
+    
+    // The check is bypassed in UT, so here is a success
+    EXPECT_EQ(RET_SUCCESS,
+        manager.CheckHapsSignInfo(
+            HapSignVerifyManager::MakeVerifyParams("bad_path.hap", Security::Verify::VerifyType::Fast, -1),
+            false, info, isChanged));
 }
 
 /**

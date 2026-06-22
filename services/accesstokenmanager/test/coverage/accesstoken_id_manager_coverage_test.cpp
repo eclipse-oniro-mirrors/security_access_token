@@ -26,6 +26,10 @@ using namespace testing::ext;
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+namespace {
+constexpr AccessTokenID TEST_TOKEN_ID = 0x20000001;
+constexpr AccessTokenID TEST_TOKEN_ID_2 = 0x20000002;
+}
 
 class AccessTokenIdManagerCoverageTest : public testing::Test {
 public:
@@ -34,6 +38,9 @@ public:
 
     void SetUp()
     {
+        AccessTokenIDManager::GetInstance().tokenIdSet_.clear();
+        AccessTokenIDManager::GetInstance().reservedTokenIdSet_.clear();
+        AccessTokenIDManager::GetInstance().untrustedTokenIdSet_.clear();
         AccessTokenIDManager::GetInstance().bundleIdSet_.clear();
         // Reset migration done flag for test isolation
         {
@@ -44,6 +51,9 @@ public:
 
     void TearDown()
     {
+        AccessTokenIDManager::GetInstance().tokenIdSet_.clear();
+        AccessTokenIDManager::GetInstance().reservedTokenIdSet_.clear();
+        AccessTokenIDManager::GetInstance().untrustedTokenIdSet_.clear();
         AccessTokenIDManager::GetInstance().bundleIdSet_.clear();
         // Reset migration done flag after test
         {
@@ -90,38 +100,6 @@ HWTEST_F(AccessTokenIdManagerCoverageTest, InitSingleBundleIdCache003, TestSize.
     // uid=5000, bundleId = 5000 < 10000 → invalid
     AccessTokenIDManager::GetInstance().InitSingleBundleIdCache(5000);
     ASSERT_TRUE(AccessTokenIDManager::GetInstance().bundleIdSet_.empty());
-}
-
-/*
- * @tc.name: ImportInitialUids001
- * @tc.desc: Import valid uids into empty cache succeeds and populates bundleIdSet_
- * @tc.type: FUNC
- * @tc.require: TDD
- */
-HWTEST_F(AccessTokenIdManagerCoverageTest, ImportInitialUids001, TestSize.Level4)
-{
-    std::vector<int32_t> uids = {10000, 10001, 10002};
-    ASSERT_EQ(RET_SUCCESS, AccessTokenIDManager::GetInstance().ImportInitialUids(uids));
-    ASSERT_EQ(3U, AccessTokenIDManager::GetInstance().bundleIdSet_.size());
-    ASSERT_EQ(1U, AccessTokenIDManager::GetInstance().bundleIdSet_.count(10000));
-    ASSERT_EQ(1U, AccessTokenIDManager::GetInstance().bundleIdSet_.count(10001));
-    ASSERT_EQ(1U, AccessTokenIDManager::GetInstance().bundleIdSet_.count(10002));
-}
-
-/*
- * @tc.name: ImportInitialUids002
- * @tc.desc: Mixed valid/invalid uids: invalid ones are silently skipped
- * @tc.type: FUNC
- * @tc.require: TDD
- */
-HWTEST_F(AccessTokenIdManagerCoverageTest, ImportInitialUids002, TestSize.Level4)
-{
-    // -1: negative; 5000: bundleId < 10000; 10000, 10001: valid
-    std::vector<int32_t> uids = {-1, 5000, 10000, 10001};
-    ASSERT_EQ(RET_SUCCESS, AccessTokenIDManager::GetInstance().ImportInitialUids(uids));
-    ASSERT_EQ(2U, AccessTokenIDManager::GetInstance().bundleIdSet_.size());
-    ASSERT_EQ(1U, AccessTokenIDManager::GetInstance().bundleIdSet_.count(10000));
-    ASSERT_EQ(1U, AccessTokenIDManager::GetInstance().bundleIdSet_.count(10001));
 }
 
 /*
@@ -241,6 +219,121 @@ HWTEST_F(AccessTokenIdManagerCoverageTest, SetMigrationDone001, TestSize.Level4)
         std::unique_lock<std::mutex> lock(AccessTokenIDManager::GetInstance().migrationLock_);
         ASSERT_TRUE(AccessTokenIDManager::GetInstance().migrationDone_);
     }
+}
+
+/*
+ * @tc.name: GetTokenIdStatusLocked001
+ * @tc.desc: Return UNTRUSTED when token exists only in untrustedTokenIdSet_
+ * @tc.type: FUNC
+ * @tc.require: TDD
+ */
+HWTEST_F(AccessTokenIdManagerCoverageTest, GetTokenIdStatusLocked001, TestSize.Level4)
+{
+    auto& manager = AccessTokenIDManager::GetInstance();
+    manager.untrustedTokenIdSet_.insert(TEST_TOKEN_ID);
+
+    TokenIdStatus status = TokenIdStatus::ACTIVE;
+    ASSERT_EQ(RET_SUCCESS, manager.GetTokenIdStatusLocked(TEST_TOKEN_ID, status));
+    ASSERT_EQ(TokenIdStatus::UNTRUSTED, status);
+}
+
+/*
+ * @tc.name: ChangeTokenIdStatus001
+ * @tc.desc: Return ERR_TOKENID_NOT_EXIST when token is absent from all sets
+ * @tc.type: FUNC
+ * @tc.require: TDD
+ */
+HWTEST_F(AccessTokenIdManagerCoverageTest, ChangeTokenIdStatus001, TestSize.Level4)
+{
+    ASSERT_EQ(ERR_TOKENID_NOT_EXIST,
+        AccessTokenIDManager::GetInstance().ChangeTokenIdStatus(TEST_TOKEN_ID, TokenIdStatus::ACTIVE));
+}
+
+/*
+ * @tc.name: ChangeTokenIdStatus002
+ * @tc.desc: Move token from untrustedTokenIdSet_ to tokenIdSet_
+ * @tc.type: FUNC
+ * @tc.require: TDD
+ */
+HWTEST_F(AccessTokenIdManagerCoverageTest, ChangeTokenIdStatus002, TestSize.Level4)
+{
+    auto& manager = AccessTokenIDManager::GetInstance();
+    manager.untrustedTokenIdSet_.insert(TEST_TOKEN_ID);
+
+    ASSERT_EQ(RET_SUCCESS, manager.ChangeTokenIdStatus(TEST_TOKEN_ID, TokenIdStatus::ACTIVE));
+    ASSERT_EQ(1U, manager.tokenIdSet_.count(TEST_TOKEN_ID));
+    ASSERT_EQ(0U, manager.untrustedTokenIdSet_.count(TEST_TOKEN_ID));
+}
+
+/*
+ * @tc.name: ChangeTokenIdStatus003
+ * @tc.desc: Return success when current status already equals target status
+ * @tc.type: FUNC
+ * @tc.require: TDD
+ */
+HWTEST_F(AccessTokenIdManagerCoverageTest, ChangeTokenIdStatus003, TestSize.Level4)
+{
+    auto& manager = AccessTokenIDManager::GetInstance();
+    manager.tokenIdSet_.insert(TEST_TOKEN_ID);
+
+    ASSERT_EQ(RET_SUCCESS, manager.ChangeTokenIdStatus(TEST_TOKEN_ID, TokenIdStatus::ACTIVE));
+    ASSERT_EQ(1U, manager.tokenIdSet_.count(TEST_TOKEN_ID));
+    ASSERT_TRUE(manager.reservedTokenIdSet_.empty());
+    ASSERT_TRUE(manager.untrustedTokenIdSet_.empty());
+}
+
+/*
+ * @tc.name: ChangeTokenIdStatus004
+ * @tc.desc: Move token from tokenIdSet_ to untrustedTokenIdSet_
+ * @tc.type: FUNC
+ * @tc.require: TDD
+ */
+HWTEST_F(AccessTokenIdManagerCoverageTest, ChangeTokenIdStatus004, TestSize.Level4)
+{
+    auto& manager = AccessTokenIDManager::GetInstance();
+    manager.tokenIdSet_.insert(TEST_TOKEN_ID);
+
+    ASSERT_EQ(RET_SUCCESS, manager.ChangeTokenIdStatus(TEST_TOKEN_ID, TokenIdStatus::UNTRUSTED));
+    ASSERT_EQ(0U, manager.tokenIdSet_.count(TEST_TOKEN_ID));
+    ASSERT_EQ(1U, manager.untrustedTokenIdSet_.count(TEST_TOKEN_ID));
+}
+
+/*
+ * @tc.name: ChangeTokenIdStatus005
+ * @tc.desc: Cover ACTIVE->RESERVED and RESERVED->ACTIVE branches
+ * @tc.type: FUNC
+ * @tc.require: TDD
+ */
+HWTEST_F(AccessTokenIdManagerCoverageTest, ChangeTokenIdStatus005, TestSize.Level4)
+{
+    auto& manager = AccessTokenIDManager::GetInstance();
+    manager.tokenIdSet_.insert(TEST_TOKEN_ID);
+    manager.reservedTokenIdSet_.insert(TEST_TOKEN_ID_2);
+
+    ASSERT_EQ(RET_SUCCESS, manager.ChangeTokenIdStatus(TEST_TOKEN_ID, TokenIdStatus::RESERVED));
+    ASSERT_EQ(0U, manager.tokenIdSet_.count(TEST_TOKEN_ID));
+    ASSERT_EQ(1U, manager.reservedTokenIdSet_.count(TEST_TOKEN_ID));
+
+    ASSERT_EQ(RET_SUCCESS, manager.ChangeTokenIdStatus(TEST_TOKEN_ID_2, TokenIdStatus::ACTIVE));
+    ASSERT_EQ(0U, manager.reservedTokenIdSet_.count(TEST_TOKEN_ID_2));
+    ASSERT_EQ(1U, manager.tokenIdSet_.count(TEST_TOKEN_ID_2));
+}
+
+/*
+ * @tc.name: ChangeTokenIdStatus006
+ * @tc.desc: Return ERR_PARAM_INVALID when target status is invalid
+ * @tc.type: FUNC
+ * @tc.require: TDD
+ */
+HWTEST_F(AccessTokenIdManagerCoverageTest, ChangeTokenIdStatus006, TestSize.Level4)
+{
+    auto& manager = AccessTokenIDManager::GetInstance();
+    manager.tokenIdSet_.insert(TEST_TOKEN_ID);
+
+    ASSERT_EQ(ERR_PARAM_INVALID, manager.ChangeTokenIdStatus(TEST_TOKEN_ID, static_cast<TokenIdStatus>(100)));
+    ASSERT_EQ(0U, manager.tokenIdSet_.count(TEST_TOKEN_ID));
+    ASSERT_TRUE(manager.reservedTokenIdSet_.empty());
+    ASSERT_TRUE(manager.untrustedTokenIdSet_.empty());
 }
 
 } // namespace AccessToken

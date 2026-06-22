@@ -103,6 +103,22 @@ HapTokenInfoInner::HapTokenInfoInner(AccessTokenID id,
     PermissionDataBrief::GetInstance().AddPermToBriefPermission(id, permStateList, true);
 }
 
+HapTokenInfoInner::HapTokenInfoInner(const HapTokenInfoItem& item) : permUpdateTimestamp_(0), isRemote_(false)
+{
+    std::unique_lock<std::shared_mutex> infoGuard(this->policySetLock_);
+    tokenInfoBasic_.ver = DEFAULT_TOKEN_VERSION;
+    tokenInfoBasic_.tokenID = item.tokenId;
+    tokenInfoBasic_.tokenAttr = item.tokenAttr;
+    tokenInfoBasic_.userID = item.userId;
+    tokenInfoBasic_.apiVersion = item.apiVersion;
+    tokenInfoBasic_.instIndex = item.instIndex;
+    tokenInfoBasic_.dlpType = item.dlpType;
+    tokenInfoBasic_.uid = item.uid;
+    tokenInfoBasic_.bundleName = item.bundleName;
+    isPermDialogForbidden_ = item.permDialogCapState;
+    isMigrated_ = item.migrated;
+}
+
 HapTokenInfoInner::HapTokenInfoInner(AccessTokenID id,
     const HapTokenInfoForSync& info) : isRemote_(true)
 {

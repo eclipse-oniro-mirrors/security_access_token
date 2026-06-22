@@ -80,43 +80,6 @@ std::string SerializeCliAuthInfo(const CliAuthInfo& cliAuth)
     return PackJsonToString(cliObj);
 }
 
-std::string SerializeSkillAuthInfo(const SkillAuthInfo& skillAuth)
-{
-    CJsonUnique skillObj = CreateJson();
-    if (skillObj == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Create skill auth info failed");
-        return "";
-    }
-
-    CJsonUnique skillInfoObj = CreateJson();
-    if (skillInfoObj == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Create skill info object failed");
-        return "";
-    }
-    (void)AddStringToJson(skillInfoObj, "bundleName", skillAuth.skillInfo.bundleName);
-    (void)AddStringToJson(skillInfoObj, "moduleName", skillAuth.skillInfo.moduleName);
-    (void)AddStringToJson(skillInfoObj, "skillName", skillAuth.skillInfo.skillName);
-    (void)AddObjToJson(skillObj, "skillInfo", skillInfoObj);
-
-    CJsonUnique permNamesArr = CreateJsonArray();
-    if (permNamesArr != nullptr) {
-        for (const auto& permName : skillAuth.permissionNames) {
-            (void)AddStringToArray(permNamesArr, permName);
-        }
-        (void)AddObjToJson(skillObj, "permissionNames", permNamesArr);
-    }
-
-    CJsonUnique permStatusArr = CreateJsonArray();
-    if (permStatusArr != nullptr) {
-        for (bool status : skillAuth.authorizationResults) {
-            (void)AddStringToArray(permStatusArr, status ? "true" : "false");
-        }
-        (void)AddObjToJson(skillObj, "authorizationResults", permStatusArr);
-    }
-
-    return PackJsonToString(skillObj);
-}
-
 #ifdef SAF_AGENT_FENCE_ENABLE
 bool IsCliInfoMatched(const CliInfo& expectedCliInfo, const CliInfo& actualCliInfo)
 {
@@ -167,50 +130,6 @@ CliAuthInfo DeserializeCliAuthInfo(const std::string& json)
     return cliAuth;
 }
 
-SkillAuthInfo DeserializeSkillAuthInfo(const std::string& json)
-{
-    SkillAuthInfo skillAuth;
-    if (json.empty()) {
-        return skillAuth;
-    }
-    CJsonUnique jsonRoot = CreateJsonFromString(json);
-    if (jsonRoot == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Deserialize skill auth info failed");
-        return skillAuth;
-    }
-    cJSON* root = jsonRoot.get();
-
-    cJSON* skillInfoObj = GetObjFromJson(root, "skillInfo");
-    if (skillInfoObj != nullptr) {
-        GetStringFromJson(skillInfoObj, "bundleName", skillAuth.skillInfo.bundleName);
-        GetStringFromJson(skillInfoObj, "moduleName", skillAuth.skillInfo.moduleName);
-        GetStringFromJson(skillInfoObj, "skillName", skillAuth.skillInfo.skillName);
-    }
-
-    cJSON* permNamesArr = GetArrayFromJson(root, "permissionNames");
-    if (permNamesArr != nullptr) {
-        int size = cJSON_GetArraySize(permNamesArr);
-        for (int i = 0; i < size; ++i) {
-            cJSON* item = cJSON_GetArrayItem(permNamesArr, i);
-            if (item != nullptr && item->type == cJSON_String) {
-                skillAuth.permissionNames.emplace_back(item->valuestring);
-            }
-        }
-    }
-
-    cJSON* permStatusArr = GetArrayFromJson(root, "authorizationResults");
-    if (permStatusArr != nullptr) {
-        int size = cJSON_GetArraySize(permStatusArr);
-        for (int i = 0; i < size; ++i) {
-            cJSON* item = cJSON_GetArrayItem(permStatusArr, i);
-            if (item != nullptr && item->type == cJSON_String) {
-                skillAuth.authorizationResults.emplace_back(std::string(item->valuestring) == "true");
-            }
-        }
-    }
-
-    return skillAuth;
-}
 #endif
 }
 
@@ -336,51 +255,6 @@ int32_t ClawTicketManager::GenerateCliTicket(AccessTokenID callerTokenId,
     return RET_SUCCESS;
 }
 
-int32_t ClawTicketManager::GenerateSkillTicket(AccessTokenID callerTokenId,
-    const std::vector<SkillAuthInfo>& skillAuthInfos, std::vector<std::string>& authResults)
-{
-    LOGI(ATM_DOMAIN, ATM_TAG, "callerTokenId=%{public}u", callerTokenId);
-    if (callerTokenId == INVALID_TOKENID) {
-        return AccessTokenError::ERR_TOKEN_INVALID;
-    }
-
-    int32_t userId = GetUserIdByTokenId(callerTokenId);
-    if (userId < 0) {
-        return AccessTokenError::ERR_TOKENID_NOT_EXIST;
-    }
-
-    std::vector<std::string> messages;
-    for (const auto& skillAuth : skillAuthInfos) {
-        messages.emplace_back(SerializeSkillAuthInfo(skillAuth));
-    }
-
-#ifdef SAF_AGENT_FENCE_ENABLE
-    SAF::SafAgentFence safAgentFence;
-    std::vector<SAF::VerifyTicketInfo> tickets;
-    int32_t ret = safAgentFence.BatchGenerateTicket(userId, std::to_string(callerTokenId), messages, tickets);
-    if (ret != RET_SUCCESS) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Generate skill ticket failed, ret=%{public}d", ret);
-        return TransferErrorCode(ret);
-    }
-
-    std::unique_lock<std::shared_mutex> lock(multiLock_);
-
-    for (size_t i = 0; i < tickets.size(); ++i) {
-        authResults.emplace_back(tickets[i].challenge);
-        if (tickets[i].challenge.empty()) {
-            continue;
-        }
-        ClawTicket ticket;
-        ticket.callerTokenId = callerTokenId;
-        ticket.message = tickets[i].message;
-        ticket.ticket = tickets[i].ticket;
-        ticketMap_[tickets[i].challenge] = ticket;
-    }
-#endif
-
-    return RET_SUCCESS;
-}
-
 int32_t ClawTicketManager::VerifyCliClawTicket(AccessTokenID hostTokenId, const std::string& challenge,
     const CliInfo& cliInfo, std::vector<PermissionStatus>& permList)
 {
@@ -418,41 +292,6 @@ int32_t ClawTicketManager::VerifyCliClawTicket(AccessTokenID hostTokenId, const 
             PermissionStatus status = {};
             status.permissionName = cliAuth.permissionNames[permIdx];
             status.grantStatus = (ticketValid && cliAuth.authorizationResults[permIdx]) ?
-                PERMISSION_GRANTED : PERMISSION_DENIED;
-            status.grantFlag = PERMISSION_DEFAULT_FLAG;
-            permList.emplace_back(status);
-        }
-    }
-#endif
-
-    return RET_SUCCESS;
-}
-
-int32_t ClawTicketManager::VerifySkillClawTicket(AccessTokenID hostTokenId, const std::string& challenge,
-    const SkillInfo& skillInfo, std::vector<PermissionStatus>& permList)
-{
-    std::shared_lock<std::shared_mutex> lock(multiLock_);
-
-#ifndef ENHANCE_CAPABILITY
-    return RET_SUCCESS;
-#endif
-
-#ifdef SAF_AGENT_FENCE_ENABLE
-    ClawTicket ticket;
-    std::vector<SAF::VerifyTicketInfo> verifyInfos;
-    std::vector<int32_t> verifyRes;
-    int32_t ret = PrepareVerifiedTicketInfo(hostTokenId, challenge, ticket, verifyInfos, verifyRes);
-    if (ret != RET_SUCCESS) {
-        return ret;
-    }
-
-    for (size_t ticketIdx = 0; ticketIdx < verifyInfos.size(); ++ticketIdx) {
-        bool ticketValid = (verifyRes[ticketIdx] == 0);
-        SkillAuthInfo skillAuth = DeserializeSkillAuthInfo(verifyInfos[ticketIdx].message);
-        for (size_t permIdx = 0; permIdx < skillAuth.permissionNames.size(); ++permIdx) {
-            PermissionStatus status = {};
-            status.permissionName = skillAuth.permissionNames[permIdx];
-            status.grantStatus = (ticketValid && skillAuth.authorizationResults[permIdx]) ?
                 PERMISSION_GRANTED : PERMISSION_DENIED;
             status.grantFlag = PERMISSION_DEFAULT_FLAG;
             permList.emplace_back(status);

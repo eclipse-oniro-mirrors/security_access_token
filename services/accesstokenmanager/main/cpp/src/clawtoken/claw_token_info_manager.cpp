@@ -33,7 +33,6 @@
 #include "permission_data_brief.h"
 #include "permission_state_change_info.h"
 #include "permission_validator.h"
-#include "skill_token_info_inner.h"
 #include "tokenid_attributes.h"
 #include "user_policy_manager.h"
 
@@ -138,19 +137,6 @@ bool ToolTokenInfoManager::CheckCliInfo(const CliInfo& info) const
         LOGE(ATM_DOMAIN, ATM_TAG,
             "Invalid subCliName, cliName=%{public}s, subCliName=%{public}s, info.subCliName.length()=%{public}zu.",
             info.cliName.c_str(), info.subCliName.c_str(), info.subCliName.length());
-        return false;
-    }
-    return true;
-}
-
-bool ToolTokenInfoManager::CheckSkillInfo(const SkillInfo& info) const
-{
-    if (!DataValidator::IsBundleNameValid(info.bundleName) ||
-        !DataValidator::IsBundleNameValid(info.moduleName) ||
-        !DataValidator::IsBundleNameValid(info.skillName)) {
-        LOGE(ATM_DOMAIN, ATM_TAG,
-            "Invalid skill info, bundleName=%{public}s, moduleName=%{public}s, skillName=%{public}s.",
-            info.bundleName.c_str(), info.moduleName.c_str(), info.skillName.c_str());
         return false;
     }
     return true;
@@ -290,36 +276,6 @@ int32_t ToolTokenInfoManager::InitCliToken(const CliInitInfo& info, int32_t call
     return FinalizeToolTokenInit(inner, baseInfo, permStateList, kernelPermList);
 }
 
-int32_t ToolTokenInfoManager::InitSkillToken(const SkillInitInfo& info, int32_t callerPid,
-    AccessTokenIDEx& tokenIdEx, std::vector<std::string>& kernelPermList)
-{
-    std::vector<PermissionStatus> permStateList;
-    int32_t ret = VerifySkillInitInputAndTicket(info, callerPid, permStateList);
-    if (ret != RET_SUCCESS) {
-        return ret;
-    }
-
-    ClawTokenBaseInfo baseInfo;
-    ret = BuildToolTokenBaseInfo(
-        info.hostTokenId, callerPid, ToolTokenType::SKILL, info.challenge, tokenIdEx, baseInfo);
-    if (ret != RET_SUCCESS) {
-        return ret;
-    }
-    UserPolicyManager::GetInstance().UpdatePermissionStatusListForUserPolicy(
-        baseInfo.tokenId, baseInfo.userId, permStateList);
-
-    auto inner = std::make_shared<SkillTokenInfoInner>();
-    ret = inner->Init(baseInfo, info.skillInfo, permStateList);
-    if (ret != RET_SUCCESS) {
-        LOGE(ATM_DOMAIN, ATM_TAG,
-            "SkillTokenInfoInner init failed, hostTokenId=%{public}u, callerPid=%{public}d, tokenId=%{public}u.",
-            info.hostTokenId, callerPid, baseInfo.tokenId);
-        AccessTokenIDManager::GetInstance().ReleaseTokenId(baseInfo.tokenId);
-        return ret;
-    }
-    return FinalizeToolTokenInit(inner, baseInfo, permStateList, kernelPermList);
-}
-
 int32_t ToolTokenInfoManager::VerifyCliInitInputAndTicket(const CliInitInfo& info, int32_t callerPid,
     std::vector<PermissionStatus>& permStateList) const
 {
@@ -340,30 +296,6 @@ int32_t ToolTokenInfoManager::VerifyCliInitInputAndTicket(const CliInitInfo& inf
             "cliName=%{public}s, subCliName=%{public}s, ret=%{public}d.",
             info.hostTokenId, callerPid, info.challenge.c_str(), info.cliInfo.cliName.c_str(),
             info.cliInfo.subCliName.c_str(), ret);
-    }
-    return ret;
-}
-
-int32_t ToolTokenInfoManager::VerifySkillInitInputAndTicket(const SkillInitInfo& info, int32_t callerPid,
-    std::vector<PermissionStatus>& permStateList) const
-{
-    if (!CheckSkillInfo(info.skillInfo) || !CheckToolInitCommonInput(info.hostTokenId, info.challenge)) {
-        LOGE(ATM_DOMAIN, ATM_TAG,
-            "InitSkillToken input invalid, hostTokenId=%{public}u, callerPid=%{public}d, challenge=%{public}s, "
-            "bundleName=%{public}s, moduleName=%{public}s, skillName=%{public}s.",
-            info.hostTokenId, callerPid, info.challenge.c_str(), info.skillInfo.bundleName.c_str(),
-            info.skillInfo.moduleName.c_str(), info.skillInfo.skillName.c_str());
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-
-    int32_t ret = ClawTicketManager::GetInstance().VerifySkillClawTicket(
-        info.hostTokenId, info.challenge, info.skillInfo, permStateList);
-    if (ret != RET_SUCCESS) {
-        LOGE(ATM_DOMAIN, ATM_TAG,
-            "VerifySkillClawTicket failed, hostTokenId=%{public}u, callerPid=%{public}d, challenge=%{public}s, "
-            "bundleName=%{public}s, moduleName=%{public}s, skillName=%{public}s, ret=%{public}d.",
-            info.hostTokenId, callerPid, info.challenge.c_str(), info.skillInfo.bundleName.c_str(),
-            info.skillInfo.moduleName.c_str(), info.skillInfo.skillName.c_str(), ret);
     }
     return ret;
 }
@@ -615,31 +547,6 @@ int32_t ToolTokenInfoManager::RefreshUserPolicyFlag(const std::vector<UserPolicy
     return RET_SUCCESS;
 }
 
-int32_t ToolTokenInfoManager::GetCliTokenInfo(AccessTokenID tokenId, CliTokenInfo& info) const
-{
-    std::shared_lock<std::shared_mutex> lock(lock_);
-    auto iter = toolTokenInfoMap_.find(tokenId);
-    if (iter == toolTokenInfoMap_.end() || iter->second == nullptr ||
-        iter->second->GetType() != ToolTokenType::CLI) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Cli tool token info not found, tokenId=%{public}u.", tokenId);
-        return AccessTokenError::ERR_TOKENID_NOT_EXIST;
-    }
-    std::static_pointer_cast<CliTokenInfoInner>(iter->second)->GetTokenInfo(info);
-    return RET_SUCCESS;
-}
-
-int32_t ToolTokenInfoManager::GetSkillTokenInfo(AccessTokenID tokenId, SkillTokenInfo& info) const
-{
-    std::shared_lock<std::shared_mutex> lock(lock_);
-    auto iter = toolTokenInfoMap_.find(tokenId);
-    if (iter == toolTokenInfoMap_.end() || iter->second == nullptr ||
-        iter->second->GetType() != ToolTokenType::SKILL) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Skill tool token info not found, tokenId=%{public}u.", tokenId);
-        return AccessTokenError::ERR_TOKENID_NOT_EXIST;
-    }
-    std::static_pointer_cast<SkillTokenInfoInner>(iter->second)->GetTokenInfo(info);
-    return RET_SUCCESS;
-}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

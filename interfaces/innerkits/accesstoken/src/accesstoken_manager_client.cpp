@@ -24,27 +24,16 @@
 #include "atm_tools_param_info_parcel.h"
 #include "bundle_infos_rawdata_helper.h"
 #include "check_hap_sign_result_rawdata_helper.h"
-#include "claw_auth_info_parcel.h"
-#include "claw_token_challenge_parcel.h"
-#include "cli_info_parcel.h"
-#include "cli_info_result_parcel.h"
-#include "cli_init_info_parcel.h"
-#include "cli_permissions_result_parcel.h"
 #include "hap_token_info.h"
 #include "hap_token_info_for_sync_parcel.h"
 #include "idl_common.h"
 #include "iservice_registry.h"
 #include "parameter.h"
 #include "perm_state_change_scope_parcel.h"
-#include "permission_dialog_result_parcel.h"
 #include "permission_grant_info_parcel.h"
 #include "permission_map.h"
 #include "permission_status_parcel.h"
 #include "proxy_death_callback_stub.h"
-#include "skill_info_parcel.h"
-#include "skill_info_result_parcel.h"
-#include "skill_init_info_parcel.h"
-#include "skill_permissions_result_parcel.h"
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
 #include "sec_comp_enhance_data_parcel.h"
 #endif
@@ -72,6 +61,81 @@ ReservedTypeIdl ConvertReservedType(ReservedType reserved)
 ReservedType ConvertReservedType(ReservedTypeIdl reserved)
 {
     return static_cast<ReservedType>(reserved);
+}
+
+CliInfoIdl ConvertCliInfo(const CliInfo& info)
+{
+    return {
+        .cliName = info.cliName,
+        .subCliName = info.subCliName,
+    };
+}
+
+CliInitInfoIdl ConvertCliInitInfo(const CliInitInfo& info)
+{
+    return {
+        .hostTokenId = info.hostTokenId,
+        .challenge = info.challenge,
+        .cliInfo = ConvertCliInfo(info.cliInfo),
+    };
+}
+
+PermissionDecisionStatus ConvertPermissionDecisionStatus(PermissionDecisionStatusIdl status)
+{
+    return static_cast<PermissionDecisionStatus>(status);
+}
+
+CliPermissionsResult ConvertCliPermissionsResult(const CliPermissionsResultIdl& resultIdl)
+{
+    CliPermissionsResult result;
+    result.permList.reserve(resultIdl.permList.size());
+    for (const auto& permResultIdl : resultIdl.permList) {
+        CliCommandPermissionResult permResult;
+        permResult.requiredCliPermissions.reserve(permResultIdl.requiredCliPermissions.size());
+        for (const auto& cliPermDetailIdl : permResultIdl.requiredCliPermissions) {
+            permResult.requiredCliPermissions.emplace_back(CliPermissionDetail {
+                .requiredCliPermission = cliPermDetailIdl.requiredCliPermission,
+                .cliPermissionStatus = ConvertPermissionDecisionStatus(cliPermDetailIdl.cliPermissionStatus),
+                .usedPermissions = cliPermDetailIdl.usedPermissions,
+            });
+        }
+        result.permList.emplace_back(std::move(permResult));
+    }
+    return result;
+}
+
+PermissionDialogResult ConvertPermissionDialogResult(const PermissionDialogResultIdl& resultIdl)
+{
+    PermissionDialogResult result;
+    result.detailList.reserve(resultIdl.detailList.size());
+    for (const auto& detailIdl : resultIdl.detailList) {
+        PermissionDialogDetail detail;
+        detail.needPermissionDialog = detailIdl.needPermissionDialog;
+        detail.permissionNameList = detailIdl.permissionNameList;
+        detail.authResult = detailIdl.authResult;
+        detail.statusList.reserve(detailIdl.statusList.size());
+        for (const auto& statusIdl : detailIdl.statusList) {
+            detail.statusList.emplace_back(ConvertPermissionDecisionStatus(statusIdl));
+        }
+        result.detailList.emplace_back(std::move(detail));
+    }
+    return result;
+}
+
+CliAuthInfoIdl ConvertCliAuthInfo(const CliAuthInfo& info)
+{
+    CliAuthInfoIdl authInfoIdl;
+    authInfoIdl.cliInfo = ConvertCliInfo(info.cliInfo);
+    authInfoIdl.permissionNames = info.permissionNames;
+    authInfoIdl.authorizationResults.assign(info.authorizationResults.begin(), info.authorizationResults.end());
+    return authInfoIdl;
+}
+
+ToolAuthResult ConvertToolAuthResult(const ToolAuthResultIdl& resultIdl)
+{
+    ToolAuthResult result;
+    result.authResults = resultIdl.authResults;
+    return result;
 }
 } // namespace
 
@@ -668,21 +732,6 @@ int32_t AccessTokenManagerClient::InitHapToken(const HapInfoParams& info, HapPol
     }
     LOGI(ATM_DOMAIN, ATM_TAG, "Result is %{public}d, id is %{public}llu.", res, fullTokenId.tokenIDEx);
     return res;
-}
-
-int32_t AccessTokenManagerClient::PreMigrateUIDList(const std::vector<int32_t>& uidList)
-{
-    auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
-        return AccessTokenError::ERR_SERVICE_ABNORMAL;
-    }
-
-    int32_t result = proxy->PreMigrateUIDList(uidList);
-    if (result != RET_SUCCESS) {
-        result = ConvertResult(result);
-    }
-    return result;
 }
 
 int32_t AccessTokenManagerClient::MigrateInstalledBundles(const std::vector<MigratedInfo>& migratedInfoList,
@@ -1480,11 +1529,9 @@ int32_t AccessTokenManagerClient::InitCliToken(const CliInitInfo& info, AccessTo
         LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
-    CliInitInfoParcel infoParcel;
-    infoParcel.cliInitInfo = info;
     std::vector<PermissionWithValueIdl> kernelPermIdlList;
     uint64_t fullToken = 0;
-    int32_t errCode = proxy->InitCliToken(infoParcel, fullToken, kernelPermIdlList);
+    int32_t errCode = proxy->InitCliToken(ConvertCliInitInfo(info), fullToken, kernelPermIdlList);
     if (errCode != RET_SUCCESS) {
         return ConvertResult(errCode);
     }
@@ -1496,65 +1543,6 @@ int32_t AccessTokenManagerClient::InitCliToken(const CliInitInfo& info, AccessTo
         kernelPermList.emplace_back(tmp);
     }
     tokenIdEx.tokenIDEx = fullToken;
-    return RET_SUCCESS;
-}
-
-int32_t AccessTokenManagerClient::InitSkillToken(const SkillInitInfo& info, AccessTokenIDEx& tokenIdEx,
-    std::vector<PermissionWithValue>& kernelPermList)
-{
-    auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
-        return AccessTokenError::ERR_SERVICE_ABNORMAL;
-    }
-    SkillInitInfoParcel infoParcel;
-    infoParcel.skillInitInfo = info;
-    uint64_t fullToken = 0;
-    std::vector<PermissionWithValueIdl> kernelPermIdlList;
-    int32_t errCode = proxy->InitSkillToken(infoParcel, fullToken, kernelPermIdlList);
-    if (errCode != RET_SUCCESS) {
-        return ConvertResult(errCode);
-    }
-    kernelPermList.clear();
-    for (const auto& item : kernelPermIdlList) {
-        PermissionWithValue tmp;
-        tmp.permissionName = item.permissionName;
-        tmp.value = item.value;
-        kernelPermList.emplace_back(tmp);
-    }
-    tokenIdEx.tokenIDEx = fullToken;
-    return RET_SUCCESS;
-}
-
-int32_t AccessTokenManagerClient::GetCliTokenInfo(AccessTokenID tokenId, CliTokenInfo& info)
-{
-    auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
-        return AccessTokenError::ERR_SERVICE_ABNORMAL;
-    }
-    CliInfoResultParcel infoParcel;
-    int32_t errCode = proxy->GetCliTokenInfo(tokenId, infoParcel);
-    if (errCode != RET_SUCCESS) {
-        return ConvertResult(errCode);
-    }
-    info = infoParcel.cliTokenInfo;
-    return RET_SUCCESS;
-}
-
-int32_t AccessTokenManagerClient::GetSkillTokenInfo(AccessTokenID tokenId, SkillTokenInfo& info)
-{
-    auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
-        return AccessTokenError::ERR_SERVICE_ABNORMAL;
-    }
-    SkillInfoResultParcel infoParcel;
-    int32_t errCode = proxy->GetSkillTokenInfo(tokenId, infoParcel);
-    if (errCode != RET_SUCCESS) {
-        return ConvertResult(errCode);
-    }
-    info = infoParcel.skillTokenInfo;
     return RET_SUCCESS;
 }
 
@@ -1693,7 +1681,7 @@ int32_t AccessTokenManagerClient::QueryStatusByTokenID(const std::vector<AccessT
 }
 
 int32_t AccessTokenManagerClient::CheckHapSignInfo(const BundleHapList& list, int32_t& sessionId,
-    std::vector<TrustedBundleInfo>& bundleInfo)
+    std::vector<TrustedBundleInfo>& bundleInfo, HapVerifyResultInfo& resultInfo)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
@@ -1717,7 +1705,7 @@ int32_t AccessTokenManagerClient::CheckHapSignInfo(const BundleHapList& list, in
     }
     
     if (!CheckHapSignResultRawdataHelper::ReadFromRawData(
-        resultRawData, res, sessionId, bundleInfo)) {
+        resultRawData, res, sessionId, bundleInfo, resultInfo)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "ReadFromRawData failed.");
         bundleInfo.clear();
         return AccessTokenError::ERR_READ_PARCEL_FAILED;
@@ -1889,6 +1877,26 @@ int32_t AccessTokenManagerClient::GetHapSignInfo(const std::string& bundleName,
     return res;
 }
 
+int32_t AccessTokenManagerClient::GetCachePolicyBySessionId(int32_t sessionId, const std::string& bundleName,
+    BundlePolicyInfo& bundlePolicyInfo)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+
+    BundlePolicyInfoIdl bundlePolicyInfoIdl;
+    int32_t res = proxy->GetCachePolicyBySessionId(sessionId, bundleName, bundlePolicyInfoIdl);
+    if (res != RET_SUCCESS) {
+        res = ConvertResult(res);
+    } else {
+        bundlePolicyInfo.reqPermissions = bundlePolicyInfoIdl.reqPermissions;
+    }
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result=%{public}d", res);
+    return res;
+}
+
 sptr<ProxyDeathCallBack> AccessTokenManagerClient::GetAnonyStub()
 {
     std::lock_guard<std::mutex> lock(stubMutex_);
@@ -1907,46 +1915,18 @@ int32_t AccessTokenManagerClient::GetCliPermissionRequestInfo(
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
 
-    std::vector<CliInfoParcel> parcelList;
-    parcelList.reserve(cliInfoList.size());
+    std::vector<CliInfoIdl> idlList;
+    idlList.reserve(cliInfoList.size());
     for (const auto& item : cliInfoList) {
-        CliInfoParcel parcel;
-        parcel.cliInfo = item;
-        parcelList.emplace_back(parcel);
+        idlList.emplace_back(ConvertCliInfo(item));
     }
 
-    PermissionDialogResultParcel resultParcel;
-    int32_t errCode = proxy->GetCliPermissionRequestInfo(agentID, parcelList, resultParcel);
+    PermissionDialogResultIdl resultIdl;
+    int32_t errCode = proxy->GetCliPermissionRequestInfo(agentID, idlList, resultIdl);
     if (errCode != RET_SUCCESS) {
         return ConvertResult(errCode);
     }
-    result = resultParcel.result;
-    return RET_SUCCESS;
-}
-
-int32_t AccessTokenManagerClient::GetSkillPermissionRequestInfo(
-    const std::string& agentID, const std::vector<SkillInfo>& skillInfoList, PermissionDialogResult& result)
-{
-    auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
-        return AccessTokenError::ERR_SERVICE_ABNORMAL;
-    }
-
-    std::vector<SkillInfoParcel> parcelList;
-    parcelList.reserve(skillInfoList.size());
-    for (const auto& item : skillInfoList) {
-        SkillInfoParcel parcel;
-        parcel.skillInfo = item;
-        parcelList.emplace_back(parcel);
-    }
-
-    PermissionDialogResultParcel resultParcel;
-    int32_t errCode = proxy->GetSkillPermissionRequestInfo(agentID, parcelList, resultParcel);
-    if (errCode != RET_SUCCESS) {
-        return ConvertResult(errCode);
-    }
-    result = resultParcel.result;
+    result = ConvertPermissionDialogResult(resultIdl);
     return RET_SUCCESS;
 }
 
@@ -1959,46 +1939,18 @@ int32_t AccessTokenManagerClient::GetCliPermissions(AccessTokenID hostTokenID, c
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
 
-    std::vector<CliInfoParcel> parcelList;
-    parcelList.reserve(cliInfoList.size());
+    std::vector<CliInfoIdl> idlList;
+    idlList.reserve(cliInfoList.size());
     for (const auto& item : cliInfoList) {
-        CliInfoParcel parcel;
-        parcel.cliInfo = item;
-        parcelList.emplace_back(parcel);
+        idlList.emplace_back(ConvertCliInfo(item));
     }
 
-    CliPermissionsResultParcel resultParcel;
-    int32_t errCode = proxy->GetCliPermissions(hostTokenID, agentID, parcelList, resultParcel);
+    CliPermissionsResultIdl resultIdl;
+    int32_t errCode = proxy->GetCliPermissions(hostTokenID, agentID, idlList, resultIdl);
     if (errCode != RET_SUCCESS) {
         return ConvertResult(errCode);
     }
-    result = resultParcel.result;
-    return RET_SUCCESS;
-}
-
-int32_t AccessTokenManagerClient::GetSkillPermissions(AccessTokenID hostTokenID, const std::string& agentID,
-    const std::vector<SkillInfo>& skillInfoList, SkillPermissionsResult& result)
-{
-    auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
-        return AccessTokenError::ERR_SERVICE_ABNORMAL;
-    }
-
-    std::vector<SkillInfoParcel> parcelList;
-    parcelList.reserve(skillInfoList.size());
-    for (const auto& item : skillInfoList) {
-        SkillInfoParcel parcel;
-        parcel.skillInfo = item;
-        parcelList.emplace_back(parcel);
-    }
-
-    SkillPermissionsResultParcel resultParcel;
-    int32_t errCode = proxy->GetSkillPermissions(hostTokenID, agentID, parcelList, resultParcel);
-    if (errCode != RET_SUCCESS) {
-        return ConvertResult(errCode);
-    }
-    result = resultParcel.result;
+    result = ConvertCliPermissionsResult(resultIdl);
     return RET_SUCCESS;
 }
 
@@ -2011,46 +1963,20 @@ int32_t AccessTokenManagerClient::GenerateCliAuthResult(
         LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
-    std::vector<CliAuthInfoParcel> parcelList;
-    parcelList.reserve(authInfoList.size());
+    std::vector<CliAuthInfoIdl> authInfoIdlList;
+    authInfoIdlList.reserve(authInfoList.size());
     for (const auto& item : authInfoList) {
-        CliAuthInfoParcel parcel;
-        parcel.info = item;
-        parcelList.emplace_back(parcel);
+        authInfoIdlList.emplace_back(ConvertCliAuthInfo(item));
     }
-    ToolAuthResultParcel resultParcel;
-    int32_t errCode = proxy->GenerateCliAuthResult(hostTokenID, agentID, parcelList, resultParcel);
+    ToolAuthResultIdl resultIdl;
+    int32_t errCode = proxy->GenerateCliAuthResult(hostTokenID, agentID, authInfoIdlList, resultIdl);
     if (errCode != RET_SUCCESS) {
         return ConvertResult(errCode);
     }
-    result = resultParcel.result;
+    result = ConvertToolAuthResult(resultIdl);
     return RET_SUCCESS;
 }
 
-int32_t AccessTokenManagerClient::GenerateSkillAuthResult(
-    AccessTokenID hostTokenID, const std::string& agentID,
-    const std::vector<SkillAuthInfo>& authInfoList, ToolAuthResult& result)
-{
-    auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
-        return AccessTokenError::ERR_SERVICE_ABNORMAL;
-    }
-    std::vector<SkillAuthInfoParcel> parcelList;
-    parcelList.reserve(authInfoList.size());
-    for (const auto& item : authInfoList) {
-        SkillAuthInfoParcel parcel;
-        parcel.info = item;
-        parcelList.emplace_back(parcel);
-    }
-    ToolAuthResultParcel resultParcel;
-    int32_t errCode = proxy->GenerateSkillAuthResult(hostTokenID, agentID, parcelList, resultParcel);
-    if (errCode != RET_SUCCESS) {
-        return ConvertResult(errCode);
-    }
-    result = resultParcel.result;
-    return RET_SUCCESS;
-}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

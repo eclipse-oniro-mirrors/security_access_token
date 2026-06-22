@@ -163,21 +163,6 @@ int32_t ClawPermissionMetadataProvider::GetUsedPermissionsByCliPermission(
     return RET_SUCCESS;
 }
 
-int32_t ClawPermissionMetadataProvider::GetSkillUsedPermissions(
-    const SkillInfo& skillInfo, std::vector<std::string>& usedPermissions)
-{
-    usedPermissions.clear();
-    if (skillInfo.skillName.empty() || skillInfo.bundleName.empty() || skillInfo.moduleName.empty()) {
-        LOGE(ATM_DOMAIN, ATM_TAG,
-            "Get skill used permissions failed, invalid skill info, bundle=%{public}s, module=%{public}s, "
-            "skill=%{public}s.",
-            skillInfo.bundleName.c_str(), skillInfo.moduleName.c_str(), skillInfo.skillName.c_str());
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-
-    return RET_SUCCESS;
-}
-
 int32_t ClawPermissionMetadataProvider::TransferQueryRet(const CliInfo& cliInfo, int32_t queryRet)
 {
     LOGE(ATM_DOMAIN, ATM_TAG, "Get required cli permissions queryRet is not success, cli=%{public}s/%{public}s, "

@@ -78,10 +78,12 @@ HWTEST_F(InstallSessionManagerTest, CheckHapSignInfoTest001, TestSize.Level0)
     hapList.userId = 100;
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
-    EXPECT_NE(RET_SUCCESS, AccessTokenKit::CheckHapSignInfo(hapList, sessionId, bundleInfo));
+    HapVerifyResultInfo resultInfo;
+    EXPECT_NE(RET_SUCCESS, AccessTokenKit::CheckHapSignInfo(hapList, sessionId, bundleInfo, resultInfo));
     
+    HapVerifyResultInfo resultInfo2;
     hapList.hapPaths = std::vector<std::string>(MAX_BUNDLE_LIST_SIZE + 1, "test");
-    EXPECT_NE(RET_SUCCESS, AccessTokenKit::CheckHapSignInfo(hapList, sessionId, bundleInfo));
+    EXPECT_NE(RET_SUCCESS, AccessTokenKit::CheckHapSignInfo(hapList, sessionId, bundleInfo, resultInfo2));
 }
 #if defined(SPM_DATA_ENABLE) && defined(IS_SUPPORT_HAP_RUNNING)
 /**
@@ -101,7 +103,8 @@ HWTEST_F(InstallSessionManagerTest, CheckHapSignInfoTest002, TestSize.Level0)
     hapList.userId = 100;
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
-    EXPECT_NE(RET_SUCCESS, AccessTokenKit::CheckHapSignInfo(hapList, sessionId, bundleInfo));
+    HapVerifyResultInfo resultInfo;
+    EXPECT_NE(RET_SUCCESS, AccessTokenKit::CheckHapSignInfo(hapList, sessionId, bundleInfo, resultInfo));
 }
 #endif
 
@@ -370,6 +373,9 @@ HWTEST_F(InstallSessionManagerTest, GetCacheSignInfoBySessionIdTest002, TestSize
     EXPECT_TRUE(bundleInfo.empty());
 
     std::map<std::string, std::string> modulePathMap;
+
+    // Somehow migration state could be dropped here, make sure the migration is finished.
+    (void)AccessTokenKit::FinishMigration();
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::FinishInstall(sessionId, false, modulePathMap));
 }
 #endif
@@ -408,6 +414,30 @@ HWTEST_F(InstallSessionManagerTest, GetHapSignInfoTest002, TestSize.Level0)
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetHapSignInfo(bundleName, bundleInfo));
     EXPECT_FALSE(bundleInfo.empty());
 }
+
+/**
+ * @tc.name: GetCachePolicyBySessionIdTest001
+ * @tc.desc: Test GetCachePolicyBySessionId, with invalid param.
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(InstallSessionManagerTest, GetCachePolicyBySessionIdTest001, TestSize.Level0)
+{
+    MockNativeToken mock("foundation");
+
+    int32_t sessionId = 0;
+    std::string bundleName = "";
+
+    BundlePolicyInfo bundlePolicyInfo;
+    std::vector<TrustedBundleInfo> bundleInfo;
+    EXPECT_NE(RET_SUCCESS, AccessTokenKit::GetCachePolicyBySessionId(sessionId, bundleName, bundlePolicyInfo));
+
+    sessionId = INVALID_SESSION;
+    EXPECT_NE(RET_SUCCESS, AccessTokenKit::GetCachePolicyBySessionId(sessionId, bundleName, bundlePolicyInfo));
+
+    bundleName = "GetCachePolicyBySessionIdTest001";
+    EXPECT_NE(RET_SUCCESS, AccessTokenKit::GetCachePolicyBySessionId(sessionId, bundleName, bundlePolicyInfo));
+}
 #else
 /**
  * @tc.name: CheckHapSignInfoTest101
@@ -426,8 +456,9 @@ HWTEST_F(InstallSessionManagerTest, CheckHapSignInfoTest101, TestSize.Level0)
     hapList.userId = 100;
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
+    HapVerifyResultInfo resultInfo;
     // parcel failed
-    EXPECT_NE(RET_SUCCESS, AccessTokenKit::CheckHapSignInfo(hapList, sessionId, bundleInfo));
+    EXPECT_NE(RET_SUCCESS, AccessTokenKit::CheckHapSignInfo(hapList, sessionId, bundleInfo, resultInfo));
 }
 
 /**

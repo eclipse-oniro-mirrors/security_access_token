@@ -77,7 +77,6 @@ public:
     AccessTokenIDEx AllocHapToken(const HapInfoParams& info, const HapPolicy& policy);
     int32_t InitHapToken(const HapInfoParams& info, HapPolicy& policy,
         AccessTokenIDEx& fullTokenId, HapInfoCheckResult& result);
-    int32_t PreMigrateUIDList(const std::vector<int32_t>& uidList);
     int32_t MigrateInstalledBundles(const std::vector<MigratedInfo>& migratedInfoList,
         std::vector<BundleMigrateResult>& results);
     int32_t FinishMigration();
@@ -120,10 +119,6 @@ public:
         AccessTokenID tokenId, const std::string& permissionName, std::string& value);
     int32_t InitCliToken(const CliInitInfo& info,
         AccessTokenIDEx& tokenIdEx, std::vector<PermissionWithValue>& kernelPermList);
-    int32_t InitSkillToken(const SkillInitInfo& info,
-        AccessTokenIDEx& tokenIdEx, std::vector<PermissionWithValue>& kernelPermList);
-    int32_t GetCliTokenInfo(AccessTokenID tokenId, CliTokenInfo& info);
-    int32_t GetSkillTokenInfo(AccessTokenID tokenId, SkillTokenInfo& info);
     int32_t GetHostTokenId(AccessTokenID toolTokenId, AccessTokenID& hostTokenId);
     void DumpTokenInfo(const AtmToolsParamInfo& info, std::string& dumpInfo);
     int32_t GetVersion(uint32_t& version);
@@ -147,7 +142,7 @@ public:
     int32_t QueryStatusByTokenID(const std::vector<AccessTokenID>& tokenIDList,
         std::vector<PermissionStatus>& permissionInfoList);
     int32_t CheckHapSignInfo(const BundleHapList& list, int32_t& sessionId,
-        std::vector<TrustedBundleInfo>& bundleInfo);
+        std::vector<TrustedBundleInfo>& bundleInfo, HapVerifyResultInfo& resultInfo);
     int32_t CheckHapPermissionInfo(int32_t sessionId, InstallTypeEnum type, HapInfoCheckResult& result);
     int32_t PrepareHapIdentity(int32_t& sessionId, const HapBaseInfo& info,
         const BundlePolicy& policy, Identity& identity);
@@ -155,18 +150,14 @@ public:
     int32_t FinishInstall(int32_t sessionId, bool isSuccess, const std::map<std::string, std::string>& modulePathMap);
     int32_t GetCacheSignInfoBySessionId(int32_t sessionId, std::vector<TrustedBundleInfo>& bundleInfo);
     int32_t GetHapSignInfo(const std::string& bundleName, std::vector<TrustedBundleInfo>& bundleInfo);
+    int32_t GetCachePolicyBySessionId(int32_t sessionId, const std::string& bundleName,
+        BundlePolicyInfo& bundlePolicyInfo);
     int32_t GetCliPermissionRequestInfo(
         const std::string& agentID, const std::vector<CliInfo>& cliInfoList, PermissionDialogResult& result);
-    int32_t GetSkillPermissionRequestInfo(
-        const std::string& agentID, const std::vector<SkillInfo>& skillInfoList, PermissionDialogResult& result);
     int32_t GetCliPermissions(AccessTokenID hostTokenID, const std::string& agentID,
         const std::vector<CliInfo>& cliInfoList, CliPermissionsResult& result);
-    int32_t GetSkillPermissions(AccessTokenID hostTokenID, const std::string& agentID,
-        const std::vector<SkillInfo>& skillInfoList, SkillPermissionsResult& result);
     int32_t GenerateCliAuthResult(AccessTokenID hostTokenID, const std::string& agentID,
         const std::vector<CliAuthInfo>& authInfoList, ToolAuthResult& result);
-    int32_t GenerateSkillAuthResult(AccessTokenID hostTokenID, const std::string& agentID,
-        const std::vector<SkillAuthInfo>& authInfoList, ToolAuthResult& result);
 
 private:
     AccessTokenManagerClient();

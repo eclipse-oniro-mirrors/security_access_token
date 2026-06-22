@@ -64,7 +64,8 @@ public:
     int32_t AddBriefPermData(AccessTokenID tokenID, const std::string& permissionName, PermissionState grantStatus,
         PermissionFlag grantFlag, const std::string& value);
     int32_t GetBriefPermDataByTokenId(AccessTokenID tokenID, std::vector<BriefPermData>& data);
-    void ReplaceBriefPermDataByTokenId(AccessTokenID tokenID, const std::vector<BriefPermData>& data);
+    void ReplaceBriefPermDataByTokenId(AccessTokenID tokenID, const std::vector<BriefPermData>& data,
+        const std::vector<PermissionWithValue>& aclExtendedList = {});
     void ToString(std::string& info);
     PermUsedTypeEnum GetPermissionUsedType(AccessTokenID tokenID, int32_t opCode);
     bool IsPermissionGrantedWithSecComp(AccessTokenID tokenID, const std::string& permissionName);
@@ -83,7 +84,7 @@ public:
     void AddPermToBriefPermission(
             AccessTokenID tokenId, const std::vector<PermissionStatus>& permStateList,
             const std::map<std::string, std::string>& aclExtendedMap, bool defCheck);
-    void ReplaceExtendedValueByTokenId(AccessTokenID tokenID, const std::map<uint64_t, std::string>& data);
+    void ReplaceExtendedValueByTokenIdLocked(AccessTokenID tokenID, const std::vector<PermissionWithValue>& data);
     void Update(
         AccessTokenID tokenId, const std::vector<PermissionStatus>& permStateList,
         const std::map<std::string, std::string>& aclExtendedMap, bool needUpdatePermByProvision);

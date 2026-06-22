@@ -911,7 +911,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission021, TestSize.Level0)
 
 /**
  * @tc.name: GrantTempPermission022
- * @tc.desc: Test camera temp permission revoke after switching to background
+ * @tc.desc: Test camera temp permission is kept after switching to background
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -930,7 +930,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission022, TestSize.Level0)
     appStateObserver_->OnAppStateChanged(appStateData);
     sleep(1);
 
-    EXPECT_EQ(PERMISSION_DENIED,
+    EXPECT_EQ(PERMISSION_GRANTED,
         AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.CAMERA"));
     int32_t ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID);
     ASSERT_EQ(RET_SUCCESS, ret);
@@ -939,7 +939,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission022, TestSize.Level0)
 #ifdef BGTASKMGR_CONTINUOUS_TASK_ENABLE
 /**
  * @tc.name: GrantTempPermission023
- * @tc.desc: Test microphone temp permission keep with audio task and revoke after task stops
+ * @tc.desc: Test microphone temp permission keep with audio task and keep after task stops
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -968,7 +968,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission023, TestSize.Level0)
     backgroundTaskObserver_->OnContinuousTaskStop(continuousTaskCallbackInfo);
     sleep(1);
 
-    EXPECT_EQ(PERMISSION_DENIED,
+    EXPECT_EQ(PERMISSION_GRANTED,
         AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.MICROPHONE"));
     int32_t ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID);
     ASSERT_EQ(RET_SUCCESS, ret);
@@ -1043,7 +1043,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission024, TestSize.Level0)
 #ifdef BGTASKMGR_CONTINUOUS_TASK_ENABLE
 /**
  * @tc.name: GrantTempPermission025
- * @tc.desc: Test microphone temp permission reacts to continuous task update
+ * @tc.desc: Test microphone temp permission reacts to continuous task update without background-only revoke
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -1065,7 +1065,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission025, TestSize.Level0)
     appStateData.accessTokenId = tokenID;
     appStateObserver_->OnAppStateChanged(appStateData);
     sleep(1);
-    EXPECT_EQ(PERMISSION_DENIED,
+    EXPECT_EQ(PERMISSION_GRANTED,
         AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.MICROPHONE"));
 
     EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GrantPermission(tokenID,
@@ -1083,7 +1083,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission025, TestSize.Level0)
     continuousTaskCallbackInfo->typeId_ = static_cast<uint32_t>(BackgroundMode::DATA_TRANSFER);
     backgroundTaskObserver_->OnContinuousTaskUpdate(continuousTaskCallbackInfo);
     sleep(1);
-    EXPECT_EQ(PERMISSION_DENIED,
+    EXPECT_EQ(PERMISSION_GRANTED,
         AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.MICROPHONE"));
 
     backgroundTaskObserver_->OnContinuousTaskStop(continuousTaskCallbackInfo);
@@ -1094,6 +1094,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission025, TestSize.Level0)
 /**
  * @tc.name: GrantTempPermission026
  * @tc.desc: Test unrelated task start is not associated for microphone temp permission
+ * and background does not revoke it
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -1118,7 +1119,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission026, TestSize.Level0)
     appStateObserver_->OnAppStateChanged(appStateData);
     sleep(1);
 
-    EXPECT_EQ(PERMISSION_DENIED,
+    EXPECT_EQ(PERMISSION_GRANTED,
         AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.MICROPHONE"));
     int32_t ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID);
     ASSERT_EQ(RET_SUCCESS, ret);
@@ -1126,7 +1127,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission026, TestSize.Level0)
 
 /**
  * @tc.name: GrantTempPermission027
- * @tc.desc: Test related task start is associated for microphone temp permission
+ * @tc.desc: Test related task start is ignored for microphone temp permission when background revoke feature is off
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -1139,12 +1140,11 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission027, TestSize.Level0)
     EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GrantPermission(tokenID,
         "ohos.permission.MICROPHONE", PERMISSION_ALLOW_THIS_TIME));
 
-    // Use a fixed test-only continuous task id to verify related task start is associated.
+    // Use a fixed test-only continuous task id to verify microphone task association is skipped.
     auto taskInfo = CreateContinuousTaskInfo(tokenID, 1004, {BackgroundMode::VOIP});
     backgroundTaskObserver_->OnContinuousTaskStart(taskInfo);
     auto tokenIter = TempPermissionObserver::GetInstance().continuousTaskIdMap_.find(tokenID);
-    ASSERT_NE(TempPermissionObserver::GetInstance().continuousTaskIdMap_.end(), tokenIter);
-    EXPECT_NE(tokenIter->second.end(), tokenIter->second.find(1004));
+    ASSERT_EQ(TempPermissionObserver::GetInstance().continuousTaskIdMap_.end(), tokenIter);
 
     AppStateData appStateData;
     appStateData.state = static_cast<int32_t>(ApplicationState::APP_STATE_BACKGROUND);
@@ -1160,7 +1160,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission027, TestSize.Level0)
 
 /**
  * @tc.name: GrantTempPermission028
- * @tc.desc: Test task update can associate an unassociated task to microphone temp permission
+ * @tc.desc: Test task update does not associate microphone task when background revoke feature is off
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -1173,7 +1173,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission028, TestSize.Level0)
     EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GrantPermission(tokenID,
         "ohos.permission.MICROPHONE", PERMISSION_ALLOW_THIS_TIME));
 
-    // Use a fixed test-only continuous task id to verify update can associate an existing task.
+    // Use a fixed test-only continuous task id to verify update does not associate microphone task.
     auto taskInfo = CreateContinuousTaskInfo(tokenID, 1005, {BackgroundMode::DATA_TRANSFER});
     backgroundTaskObserver_->OnContinuousTaskStart(taskInfo);
     EXPECT_EQ(TempPermissionObserver::GetInstance().continuousTaskIdMap_.end(),
@@ -1184,8 +1184,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission028, TestSize.Level0)
     taskInfo->typeId_ = static_cast<uint32_t>(BackgroundMode::AUDIO_RECORDING);
     backgroundTaskObserver_->OnContinuousTaskUpdate(taskInfo);
     auto tokenIter = TempPermissionObserver::GetInstance().continuousTaskIdMap_.find(tokenID);
-    ASSERT_NE(TempPermissionObserver::GetInstance().continuousTaskIdMap_.end(), tokenIter);
-    EXPECT_NE(tokenIter->second.end(), tokenIter->second.find(1005));
+    ASSERT_EQ(TempPermissionObserver::GetInstance().continuousTaskIdMap_.end(), tokenIter);
 
     AppStateData appStateData;
     appStateData.state = static_cast<int32_t>(ApplicationState::APP_STATE_BACKGROUND);
@@ -1201,7 +1200,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission028, TestSize.Level0)
 
 /**
  * @tc.name: GrantTempPermission029
- * @tc.desc: Test task stop removes association and then revokes microphone temp permission
+ * @tc.desc: Test task stop removes association but does not revoke microphone temp permission
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -1232,7 +1231,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission029, TestSize.Level0)
         tokenIter->second.find(1006) == tokenIter->second.end());
     sleep(1);
 
-    EXPECT_EQ(PERMISSION_DENIED,
+    EXPECT_EQ(PERMISSION_GRANTED,
         AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.MICROPHONE"));
     int32_t ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID);
     ASSERT_EQ(RET_SUCCESS, ret);
@@ -1240,7 +1239,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission029, TestSize.Level0)
 
 /**
  * @tc.name: GrantTempPermission030
- * @tc.desc: Test microphone temp permission revoke after background without continuous task
+ * @tc.desc: Test microphone temp permission is kept after background without continuous task
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -1259,7 +1258,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission030, TestSize.Level0)
     appStateObserver_->OnAppStateChanged(appStateData);
     sleep(1);
 
-    EXPECT_EQ(PERMISSION_DENIED,
+    EXPECT_EQ(PERMISSION_GRANTED,
         AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.MICROPHONE"));
     int32_t ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID);
     ASSERT_EQ(RET_SUCCESS, ret);
@@ -1267,7 +1266,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission030, TestSize.Level0)
 
 /**
  * @tc.name: GrantTempPermission031
- * @tc.desc: Test microphone temp permission keep after second related task starts and first task stops
+ * @tc.desc: Test microphone temp permission ignores related tasks when background revoke feature is off
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -1280,7 +1279,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission031, TestSize.Level0)
     EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GrantPermission(tokenID,
         "ohos.permission.MICROPHONE", PERMISSION_ALLOW_THIS_TIME));
 
-    // Use fixed test-only continuous task ids to verify multiple related tasks keep permission alive.
+    // Use fixed test-only continuous task ids to verify microphone task associations are skipped.
     auto audioTaskInfo = CreateContinuousTaskInfo(tokenID, 1007, {BackgroundMode::AUDIO_RECORDING});
     backgroundTaskObserver_->OnContinuousTaskStart(audioTaskInfo);
     auto voipTaskInfo = CreateContinuousTaskInfo(tokenID, 1008, {BackgroundMode::VOIP});
@@ -1297,9 +1296,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission031, TestSize.Level0)
 
     backgroundTaskObserver_->OnContinuousTaskStop(audioTaskInfo);
     auto tokenIter = TempPermissionObserver::GetInstance().continuousTaskIdMap_.find(tokenID);
-    ASSERT_NE(TempPermissionObserver::GetInstance().continuousTaskIdMap_.end(), tokenIter);
-    EXPECT_EQ(tokenIter->second.end(), tokenIter->second.find(1007));
-    EXPECT_NE(tokenIter->second.end(), tokenIter->second.find(1008));
+    ASSERT_EQ(TempPermissionObserver::GetInstance().continuousTaskIdMap_.end(), tokenIter);
     sleep(1);
 
     EXPECT_EQ(PERMISSION_GRANTED,
@@ -1307,7 +1304,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission031, TestSize.Level0)
 
     backgroundTaskObserver_->OnContinuousTaskStop(voipTaskInfo);
     sleep(1);
-    EXPECT_EQ(PERMISSION_DENIED,
+    EXPECT_EQ(PERMISSION_GRANTED,
         AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.MICROPHONE"));
     int32_t ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID);
     ASSERT_EQ(RET_SUCCESS, ret);

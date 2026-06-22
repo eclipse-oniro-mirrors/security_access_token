@@ -40,6 +40,7 @@ ohos_source_set("access_token_manager_proxy") {
   if (build_variant == "user") {
     cflags_cc += [ "-DATM_BUILD_VARIANT_USER_ENABLE" ]
   }
+  branch_protector_ret = "pac_ret"
 
   output_values = get_target_outputs(":access_token_manager_interface")
 
@@ -80,6 +81,7 @@ ohos_source_set("access_token_manager_stub") {
     cfi_cross_dso = true
     debug = false
   }
+  branch_protector_ret = "pac_ret"
 
   cflags_cc = access_token_cflags_cc
   if (build_variant == "user") {

@@ -99,6 +99,7 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
     "permission/permission_request_toggle_manager_test.cpp",
     "permission/short_grant_manager_test.cpp",
     "permission/token_info_manager_test.cpp",
+    "permission/token_state_management_test.cpp",
     "permission/delete_identity_test.cpp",
     "service/accesstoken_manager_service_test.cpp",
     "service/multi_thread_test.cpp",
@@ -229,6 +230,10 @@ ohos_unittest("libspm_data_task_test") {
     "${access_token_path}/interfaces/innerkits/nativetoken/src/nativetoken_json_oper.c",
   ]
 
+  if (access_token_enable_spm && access_token_manager_hapverify_enable) {
+    sources += [ "permission/install_session_spm_task_test.cpp" ]
+  }
+
   sources += accesstoken_manager_base_config.sources
 
   cflags_cc = accesstoken_manager_base_config.cflags_cc
@@ -343,6 +348,7 @@ if (access_token_manager_hapverify_enable) {
     sources += accesstoken_manager_base_config.sources
 
     cflags_cc = accesstoken_manager_base_config.cflags_cc
+    cflags_cc += [ "-DATM_TEST_ENABLE" ]
 
     configs = accesstoken_manager_base_config.configs
 

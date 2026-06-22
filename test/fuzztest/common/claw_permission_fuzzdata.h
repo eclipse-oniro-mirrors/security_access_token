@@ -51,15 +51,6 @@ inline CliInfo ConsumeCliInfo(FuzzedDataProvider& provider)
     return info;
 }
 
-inline SkillInfo ConsumeSkillInfo(FuzzedDataProvider& provider)
-{
-    SkillInfo info;
-    info.skillName = ConsumeClawString(provider);
-    info.bundleName = ConsumeClawString(provider);
-    info.moduleName = ConsumeClawString(provider);
-    return info;
-}
-
 inline std::vector<std::string> ConsumePermissionNames(FuzzedDataProvider& provider)
 {
     std::vector<std::string> permissions;
@@ -92,32 +83,10 @@ inline std::vector<CliInfo> ConsumeCliInfoList(FuzzedDataProvider& provider)
     return infos;
 }
 
-inline std::vector<SkillInfo> ConsumeSkillInfoList(FuzzedDataProvider& provider)
-{
-    std::vector<SkillInfo> infos;
-    size_t size = provider.ConsumeIntegralInRange<size_t>(0, MAX_CLAW_FUZZ_LIST_SIZE);
-    infos.reserve(size);
-    for (size_t i = 0; i < size; ++i) {
-        infos.emplace_back(ConsumeSkillInfo(provider));
-    }
-    return infos;
-}
-
 inline CliAuthInfo ConsumeCliAuthInfo(FuzzedDataProvider& provider)
 {
     CliAuthInfo info;
     info.cliInfo = ConsumeCliInfo(provider);
-    info.permissionNames = ConsumePermissionNames(provider);
-    size_t resultSize = provider.ConsumeBool() ? info.permissionNames.size() :
-        provider.ConsumeIntegralInRange<size_t>(0, MAX_CLAW_FUZZ_PERMISSION_SIZE);
-    info.authorizationResults = ConsumeAuthorizationResults(provider, resultSize);
-    return info;
-}
-
-inline SkillAuthInfo ConsumeSkillAuthInfo(FuzzedDataProvider& provider)
-{
-    SkillAuthInfo info;
-    info.skillInfo = ConsumeSkillInfo(provider);
     info.permissionNames = ConsumePermissionNames(provider);
     size_t resultSize = provider.ConsumeBool() ? info.permissionNames.size() :
         provider.ConsumeIntegralInRange<size_t>(0, MAX_CLAW_FUZZ_PERMISSION_SIZE);
@@ -136,16 +105,6 @@ inline std::vector<CliAuthInfo> ConsumeCliAuthInfoList(FuzzedDataProvider& provi
     return infos;
 }
 
-inline std::vector<SkillAuthInfo> ConsumeSkillAuthInfoList(FuzzedDataProvider& provider)
-{
-    std::vector<SkillAuthInfo> infos;
-    size_t size = provider.ConsumeIntegralInRange<size_t>(0, MAX_CLAW_FUZZ_LIST_SIZE);
-    infos.reserve(size);
-    for (size_t i = 0; i < size; ++i) {
-        infos.emplace_back(ConsumeSkillAuthInfo(provider));
-    }
-    return infos;
-}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

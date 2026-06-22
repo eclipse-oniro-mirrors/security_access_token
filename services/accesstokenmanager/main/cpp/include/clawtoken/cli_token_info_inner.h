@@ -16,6 +16,7 @@
 #ifndef ACCESS_TOKEN_CLI_TOKEN_INFO_INNER_H
 #define ACCESS_TOKEN_CLI_TOKEN_INFO_INNER_H
 
+#include "claw_permission_info.h"
 #include "claw_token_info_inner_base.h"
 
 namespace OHOS {
@@ -27,7 +28,6 @@ public:
         const std::vector<PermissionStatus>& permStateList);
 
     ToolTokenType GetType() const override;
-    void GetTokenInfo(CliTokenInfo& info) const;
 
 private:
     CliInfo info_;

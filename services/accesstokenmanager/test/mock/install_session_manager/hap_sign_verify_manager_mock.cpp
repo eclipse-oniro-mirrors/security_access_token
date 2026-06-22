@@ -84,14 +84,14 @@ bool FillModuelData(const std::string path, TrustedBundleInfoInner& info)
     return true;
 }
 
-int32_t HapSignVerifyManager::CheckHapsSignInfo(const std::string path, const Security::Verify::VerifyType type,
-    int32_t userId, TrustedBundleInfoInner& info, bool& isChanged) const
+int32_t HapSignVerifyManager::CheckHapsSignInfo(Security::Verify::VerifyParams params, bool booting,
+    TrustedBundleInfoInner& info, bool& isChanged) const
 {
-    if (CheckFailed(path)) {
+    if (CheckFailed(params.filePath)) {
         return AccessTokenError::ERR_PARAM_INVALID;
     }
 
-    if (!FillModuelData(path, info)) {
+    if (!FillModuelData(params.filePath, info)) {
         return AccessTokenError::ERR_PARAM_INVALID;
     }
 
@@ -142,6 +142,17 @@ void HapSignVerifyManager::ConvertTrustedBundleInfo(
         }
     }
 }
+
+Security::Verify::VerifyParams HapSignVerifyManager::MakeVerifyParams(
+    const std::string& path, Security::Verify::VerifyType type, int32_t userId)
+{
+    Security::Verify::VerifyParams params;
+    params.filePath = path;
+    params.certPath = "";
+    params.type = type;
+    return params;
+}
+
 
 void FillBundleParam(const TrustedBundleInfoInner& info, BundleParam& param)
 {

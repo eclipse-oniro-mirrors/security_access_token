@@ -38,25 +38,11 @@ std::vector<CliInfo> BuildCliInfos()
     return {CliInfo {.cliName = "camera", .subCliName = "capture"}};
 }
 
-std::vector<SkillInfo> BuildSkillInfos()
-{
-    return {SkillInfo {.skillName = "cameraSkill", .bundleName = "com.ohos.claw.demo", .moduleName = "entry"}};
-}
-
 std::vector<CliAuthInfo> BuildCliAuthInfos()
 {
     return {CliAuthInfo {
         .cliInfo = {.cliName = "camera", .subCliName = "capture"},
         .permissionNames = {"ohos.permission.POWER_MANAGER"},
-        .authorizationResults = {true},
-    }};
-}
-
-std::vector<SkillAuthInfo> BuildSkillAuthInfos()
-{
-    return {SkillAuthInfo {
-        .skillInfo = {.skillName = "cameraSkill", .bundleName = "com.ohos.claw.demo", .moduleName = "entry"},
-        .permissionNames = {"ohos.permission.CAMERA"},
         .authorizationResults = {true},
     }};
 }
@@ -139,26 +125,16 @@ HWTEST_F(ClawPermissionKitTest, ClawPermissionKitNonSystem001, TestSize.Level3)
     PermissionDialogResult dialogResult;
     EXPECT_EQ(AccessTokenError::ERR_NOT_SYSTEM_APP,
         AccessTokenKit::GetCliPermissionRequestInfo(DEFAULT_AGENT_ID, BuildCliInfos(), dialogResult));
-    EXPECT_EQ(AccessTokenError::ERR_NOT_SYSTEM_APP,
-        AccessTokenKit::GetSkillPermissionRequestInfo(DEFAULT_AGENT_ID, BuildSkillInfos(), dialogResult));
 
     CliPermissionsResult cliPermissionsResult;
     EXPECT_EQ(AccessTokenError::ERR_NOT_SYSTEM_APP,
         AccessTokenKit::GetCliPermissions(
             caller.GetTokenId(), DEFAULT_AGENT_ID, BuildCliInfos(), cliPermissionsResult));
 
-    SkillPermissionsResult skillPermissionsResult;
-    EXPECT_EQ(AccessTokenError::ERR_NOT_SYSTEM_APP,
-        AccessTokenKit::GetSkillPermissions(
-            caller.GetTokenId(), DEFAULT_AGENT_ID, BuildSkillInfos(), skillPermissionsResult));
-
     ToolAuthResult authResult;
     EXPECT_EQ(AccessTokenError::ERR_NOT_SYSTEM_APP,
         AccessTokenKit::GenerateCliAuthResult(
             caller.GetTokenId(), DEFAULT_AGENT_ID, BuildCliAuthInfos(), authResult));
-    EXPECT_EQ(AccessTokenError::ERR_NOT_SYSTEM_APP,
-        AccessTokenKit::GenerateSkillAuthResult(
-            caller.GetTokenId(), DEFAULT_AGENT_ID, BuildSkillAuthInfos(), authResult));
 }
 } // namespace AccessToken
 } // namespace Security

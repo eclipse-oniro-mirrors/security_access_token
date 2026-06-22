@@ -30,11 +30,8 @@ namespace Security {
 namespace AccessToken {
 enum class ClawPermissionApiType {
     GET_CLI_PERMISSION_DIALOG_INFO,
-    GET_SKILL_PERMISSION_DIALOG_INFO,
     GET_CLI_PERMISSIONS,
-    GET_SKILL_PERMISSIONS,
     GENERATE_CLI_AUTH_RESULT,
-    GENERATE_SKILL_AUTH_RESULT,
 };
 
 struct ClawPermissionAsyncContext : public AtManagerAsyncWorkData {
@@ -47,23 +44,17 @@ struct ClawPermissionAsyncContext : public AtManagerAsyncWorkData {
     AccessTokenID hostTokenID = 0;
     std::string agentID;
     std::vector<CliInfo> cliInfoList;
-    std::vector<SkillInfo> skillInfoList;
     std::vector<CliAuthInfo> cliAuthInfoList;
-    std::vector<SkillAuthInfo> skillAuthInfoList;
     PermissionDialogResult dialogResult;
     CliPermissionsResult cliPermissionsResult;
-    SkillPermissionsResult skillPermissionsResult;
     ToolAuthResult toolAuthResult;
 };
 
 class NapiClawPermission {
 public:
     static napi_value GetCliPermissionRequestInfo(napi_env env, napi_callback_info info);
-    static napi_value GetSkillPermissionRequestInfo(napi_env env, napi_callback_info info);
     static napi_value GetCliPermissions(napi_env env, napi_callback_info info);
-    static napi_value GetSkillPermissions(napi_env env, napi_callback_info info);
     static napi_value GenerateCliAuthResult(napi_env env, napi_callback_info info);
-    static napi_value GenerateSkillAuthResult(napi_env env, napi_callback_info info);
     static void Execute(napi_env env, void* data);
     static void Complete(napi_env env, napi_status status, void* data);
 };

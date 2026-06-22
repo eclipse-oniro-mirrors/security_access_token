@@ -123,10 +123,11 @@ public:
      * @param list hap list to be checked
      * @param sessionId session id
      * @param bundleInfo trusted bundle info list
+     * @param resultInfo hap verify result info
      * @return error code, see access_token_error.h
      */
     static int32_t CheckHapSignInfo(const BundleHapList& list, int32_t& sessionId,
-        std::vector<TrustedBundleInfo>& bundleInfo);
+        std::vector<TrustedBundleInfo>& bundleInfo, HapVerifyResultInfo& resultInfo);
     /**
      * @brief Check hap sign info.
      * @param sessionId session id
@@ -177,6 +178,15 @@ public:
      */
     static int32_t GetHapSignInfo(const std::string& bundleName, std::vector<TrustedBundleInfo>& bundleInfo);
     /**
+     * @brief Get cache BundlePolicyInfo by session id.
+     * @param sessionId session id
+     * @param bundleName bundle name
+     * @param bundlePolicyInfo bundle policy info
+     * @return error code, see access_token_error.h
+     */
+    static int32_t GetCachePolicyBySessionId(int32_t sessionId, const std::string& bundleName,
+        BundlePolicyInfo& bundlePolicyInfo);
+    /**
      * @brief Update hap token info.
      * @param tokenIdEx union AccessTokenIDEx quote, see access_token.h
      * @param isSystemApp is system app or not
@@ -199,12 +209,6 @@ public:
      */
     static int32_t UpdateHapToken(AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info,
         const HapPolicyParams& policy, HapInfoCheckResult& result);
-    /**
-     * @brief Stage the UID list for installed-bundle migration.
-     * @param uidList UID list that should be accepted by the later migration step.
-     * @return error code, see access_token_error.h
-     */
-    static int32_t PreMigrateUIDList(const std::vector<int32_t>& uidList);
     /**
      * @brief Migrate installed bundles.
      * @param migratedInfoList migrated bundle information list.
@@ -669,32 +673,6 @@ public:
         AccessTokenIDEx& tokenIdEx, std::vector<PermissionWithValue>& kernelPermList);
 
     /**
-     * @brief Init skill token info.
-     * @param info skill init input
-     * @param tokenIdEx output token id
-     * @param kernelPermList requested kernel permissions
-     * @return error code, see access_token_error.h
-     */
-    static int32_t InitSkillToken(const SkillInitInfo& info,
-        AccessTokenIDEx& tokenIdEx, std::vector<PermissionWithValue>& kernelPermList);
-
-    /**
-     * @brief Get cli token info.
-     * @param tokenID token id
-     * @param info query result
-     * @return error code, see access_token_error.h
-     */
-    static int32_t GetCliTokenInfo(AccessTokenID tokenID, CliTokenInfo& info);
-
-    /**
-     * @brief Get skill token info.
-     * @param tokenID token id
-     * @param info query result
-     * @return error code, see access_token_error.h
-     */
-    static int32_t GetSkillTokenInfo(AccessTokenID tokenID, SkillTokenInfo& info);
-
-    /**
      * @brief Get host token id by tool token id.
      * @param toolTokenId tool token id
      * @param hostTokenId query result
@@ -819,16 +797,6 @@ public:
         const std::string& agentID, const std::vector<CliInfo>& cliInfoList, PermissionDialogResult& result);
 
     /**
-     * @brief Query whether the current caller needs a permission dialog for skill commands.
-     * @note If no permission dialog is required, uses tokenId and command information to return mock challenge.
-     * @param skillInfoList Skill command list.
-     * @param result Output parameter, returns dialog decision result for each command.
-     * @return Returns RET_SUCCESS(0) on success, returns corresponding error code on failure.
-     */
-    static int32_t GetSkillPermissionRequestInfo(
-        const std::string& agentID, const std::vector<SkillInfo>& skillInfoList, PermissionDialogResult& result);
-
-    /**
      * @brief Query CLI permission details for the target claw application.
      * @note Returns ERR_PERMISSION_DENIED if target claw fails CLI control permission check.
      * @note requiredCliPermission returns its own status directly when already granted, denied, restricted,
@@ -843,16 +811,6 @@ public:
         const std::vector<CliInfo>& cliInfoList, CliPermissionsResult& result);
 
     /**
-     * @brief Query skill permission details for the target claw application.
-     * @param hostTokenID Access token ID of the target host application.
-     * @param skillInfoList Skill command list.
-     * @param result Output parameter, returns skill permission query result.
-     * @return Returns RET_SUCCESS(0) on success, returns corresponding error code on failure.
-     */
-    static int32_t GetSkillPermissions(AccessTokenID hostTokenID, const std::string& agentID,
-        const std::vector<SkillInfo>& skillInfoList, SkillPermissionsResult& result);
-
-    /**
      * @brief Generate auth info for CLI authorization result.
      * @param hostTokenID Access token ID of the target host application.
      * @param authInfoList CLI authorization result list.
@@ -861,16 +819,6 @@ public:
      */
     static int32_t GenerateCliAuthResult(AccessTokenID hostTokenID, const std::string& agentID,
         const std::vector<CliAuthInfo>& authInfoList, ToolAuthResult& result);
-
-    /**
-     * @brief Generate auth info for skill authorization result.
-     * @param hostTokenID Access token ID of the target host application.
-     * @param authInfoList Skill authorization result list.
-     * @param result Output parameter, returns generated auth result.
-     * @return Returns RET_SUCCESS(0) on success, returns corresponding error code on failure.
-     */
-    static int32_t GenerateSkillAuthResult(AccessTokenID hostTokenID, const std::string& agentID,
-        const std::vector<SkillAuthInfo>& authInfoList, ToolAuthResult& result);
 };
 } // namespace AccessToken
 } // namespace Security

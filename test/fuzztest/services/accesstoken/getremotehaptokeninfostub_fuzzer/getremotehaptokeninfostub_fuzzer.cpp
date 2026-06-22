@@ -29,6 +29,11 @@ using namespace std;
 using namespace OHOS::Security::AccessToken;
 
 namespace OHOS {
+namespace {
+const std::string TEST_REMOTE_DEVICE_ID = "fuzz_remote_device";
+constexpr AccessTokenID TEST_REMOTE_TOKEN_ID = 0x20100000;
+}
+
     bool GetRemoteHapTokenInfoStubFuzzTest(const uint8_t* data, size_t size)
     {
         if ((data == nullptr) || (size == 0)) {
@@ -36,8 +41,8 @@ namespace OHOS {
         }
 
         FuzzedDataProvider provider(data, size);
-        std::string deviceID = provider.ConsumeRandomLengthString();
-        AccessTokenID tokenId = ConsumeTokenId(provider);
+        std::string deviceID = provider.ConsumeBool() ? TEST_REMOTE_DEVICE_ID : provider.ConsumeRandomLengthString();
+        AccessTokenID tokenId = provider.ConsumeBool() ? TEST_REMOTE_TOKEN_ID : ConsumeTokenId(provider);
         
         MessageParcel datas;
         datas.WriteInterfaceToken(ITokenSyncManager::GetDescriptor());

@@ -17,6 +17,7 @@
 
 #include <algorithm>
 #include <cerrno>
+#include <climits>
 #include <cstdlib>
 #include <cstring>
 #include <fcntl.h>
@@ -28,6 +29,7 @@
 #include "accesstoken_common_log.h"
 #include "hap_sign_verify_helper.h"
 #include "hap_token_info_inner.h"
+#include "parameter.h"
 #include "permission_manager.h"
 #include "provision/provision_info.h"
 #include "provision/provision_verify.h"
@@ -45,6 +47,64 @@ constexpr const char* ENTERPRISE_CERT_PATH =
     "/data/service/el1/public/bms/bundle_manager_service/certificates/enterprise/";
 
 constexpr int32_t API_VERSION_MASK = 1000;
+constexpr size_t MAX_PARAM_SIZE = 4096;
+
+// Cached allowed HAP path prefixes, initialized lazily.
+std::vector<std::string> g_allowedHapPathPrefixes;
+std::once_flag g_allowedHapPathInitFlag;
+
+static void InitAllowedHapPaths()
+{
+    g_allowedHapPathPrefixes.emplace_back("/data/app/el1/bundle/public");
+    g_allowedHapPathPrefixes.emplace_back("/data/service/el1/public/bms/bundle_manager_service");
+    g_allowedHapPathPrefixes.emplace_back("/data/preload/app");
+
+    char paramValue[MAX_PARAM_SIZE] = {0};
+    int ret = GetParameter("const.cust.config_dir_layer", "", paramValue, sizeof(paramValue) - 1);
+    if (ret > 0) {
+        std::string dirs(paramValue);
+        size_t pos = 0;
+        size_t next = 0;
+        while ((next = dirs.find(':', pos)) != std::string::npos) {
+            std::string dir = dirs.substr(pos, next - pos);
+            if (!dir.empty()) {
+                g_allowedHapPathPrefixes.emplace_back(std::move(dir));
+            }
+            pos = next + 1;
+        }
+        std::string lastDir = dirs.substr(pos);
+        if (!lastDir.empty()) {
+            g_allowedHapPathPrefixes.emplace_back(std::move(lastDir));
+        }
+    } else {
+        g_allowedHapPathPrefixes.emplace_back("/system");
+    }
+    LOGD(ATM_DOMAIN, ATM_TAG, "Allowed HAP path prefixes:");
+    for (const auto& prefix : g_allowedHapPathPrefixes) {
+        LOGD(ATM_DOMAIN, ATM_TAG, "  %s", prefix.c_str());
+    }
+}
+
+static bool IsHapPathAllowed(const std::string& path)
+{
+    std::call_once(g_allowedHapPathInitFlag, InitAllowedHapPaths);
+
+    char resolvedPath[PATH_MAX] = {0};
+    if (realpath(path.c_str(), resolvedPath) == nullptr) {
+        LOGC(ATM_DOMAIN, ATM_TAG, "Failed to resolve path %{public}s: %{public}s", path.c_str(), strerror(errno));
+        return false;
+    }
+
+    std::string absPath(resolvedPath);
+    for (const auto& prefix : g_allowedHapPathPrefixes) {
+        if (absPath.size() > prefix.size() && absPath.compare(0, prefix.size(), prefix) == 0) {
+            if (absPath[prefix.size()] == '/') {
+                return true;
+            }
+        }
+    }
+    return false;
+}
 
 #ifdef X86_EMULATOR_MODE
 bool IsIgnoredTrustedBundleInfo(const TrustedBundleInfoInner& info)
@@ -174,7 +234,7 @@ int32_t HapSignVerifyManager::BuildTrustedBundleInfo(
     int32_t ret = adapter_->ParseHapModuleInfo(bootstrapInfo->moduleRaw, moduleInfo);
     if (ret != RET_SUCCESS) {
         LOGE(ATM_DOMAIN, ATM_TAG, "ParseHapModuleInfo failed, ret=%{public}d.", ret);
-        return AccessTokenError::ERR_HAP_MODULE_INVALID;
+        return ret;
     }
     moduleInfo.apiTargetVersion %= API_VERSION_MASK;
     info.moduleData = moduleInfo;
@@ -280,17 +340,26 @@ HapSignVerifyManager::HapSignVerifyManager(const IAppVerifyAdapter& adapter) : a
     }
 }
 
-int32_t HapSignVerifyManager::CheckHapsSignInfo(const std::string path,
-    const Security::Verify::VerifyType type, int32_t userId,
-    TrustedBundleInfoInner& info, bool& isChanged) const
+Security::Verify::VerifyParams HapSignVerifyManager::MakeVerifyParams(
+    const std::string& path, Security::Verify::VerifyType type, int32_t userId)
 {
-    if (info.bootstrapInfo == nullptr) {
-        info.bootstrapInfo = std::make_shared<Security::Verify::BootstrapInfo>();
-    }
     Security::Verify::VerifyParams params;
     params.filePath = path;
     params.certPath = GetEnterpriseCertPath(userId);
     params.type = type;
+    return params;
+}
+
+int32_t HapSignVerifyManager::CheckHapsSignInfo(Security::Verify::VerifyParams params, bool booting,
+    TrustedBundleInfoInner& info, bool& isChanged) const
+{
+    if (!IsHapPathAllowed(params.filePath)) {
+        LOGC(ATM_DOMAIN, ATM_TAG, "Hap path is not in allowed directories, path=%{public}s.",
+            params.filePath.c_str());
+    }
+    if (info.bootstrapInfo == nullptr) {
+        info.bootstrapInfo = std::make_shared<Security::Verify::BootstrapInfo>();
+    }
     Security::Verify::ProvisionInfo provisionInfo;
     int32_t ret = adapter_->VerifyHap(params, *info.bootstrapInfo, provisionInfo, isChanged);
     if (ret != RET_SUCCESS) {
@@ -302,11 +371,15 @@ int32_t HapSignVerifyManager::CheckHapsSignInfo(const std::string path,
         return RET_SUCCESS;
 #else
         LOGE(ATM_DOMAIN, ATM_TAG, "Verify hap failed, ret=%{public}d.", ret);
-        return ERR_HAP_VERIFY_FAILED;
+        return ret;
 #endif
     }
     if (!isChanged) {
-        ret = adapter_->ParseProvision(info.bootstrapInfo->profileJsonRaw, provisionInfo);
+        if (booting) {
+            ret = adapter_->ParseProfile(info.bootstrapInfo->profileJsonRaw, provisionInfo);
+        } else {
+            ret = adapter_->ParseProvision(info.bootstrapInfo->profileJsonRaw, provisionInfo);
+        }
         if (ret != RET_SUCCESS) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Parse provision failed, ret=%{public}d.", ret);
             return ERR_HAP_PROVISION_INVALID;

@@ -32,6 +32,9 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+
+struct HapTokenInfoItem;
+
 /**
  * @brief Declares hap Init info class
  */
@@ -52,6 +55,7 @@ public:
     HapTokenInfoInner(AccessTokenID id, const HapTokenInfo &info,
         const std::vector<PermissionStatus>& permStateList);
     HapTokenInfoInner(AccessTokenID id, const HapTokenInfoForSync& info);
+    explicit HapTokenInfoInner(const HapTokenInfoItem& item);
     virtual ~HapTokenInfoInner();
 
     void Update(const UpdateHapInfoParams& info, const std::vector<PermissionStatus>& permStateList,

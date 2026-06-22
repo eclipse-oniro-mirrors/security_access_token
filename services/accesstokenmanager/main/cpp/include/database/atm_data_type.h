@@ -22,7 +22,7 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 enum AtmDataType {
-    ACCESSTOKEN_HAP_INFO,
+    ACCESSTOKEN_HAP_TOKEN_INFO,
     ACCESSTOKEN_NATIVE_INFO,
     ACCESSTOKEN_PERMISSION_DEF,
     ACCESSTOKEN_PERMISSION_STATE,

@@ -128,6 +128,14 @@ const std::map<std::string, int32_t> Constant::PERMISSION_OPCODE_MAP = {
         Constant::OP_CLI_WRITE_ACCESSIBILITY_CONFIG_HEARING),
     std::map<std::string, int32_t>::value_type("ohos.permission.cli.WRITE_ACCESSIBILITY_CONFIG_ACTION",
         Constant::OP_CLI_WRITE_ACCESSIBILITY_CONFIG_ACTION),
+    std::map<std::string, int32_t>::value_type("ohos.permission.cli.UNINSTALL_BUNDLE",
+        Constant::OP_CLI_UNINSTALL_BUNDLE),
+    std::map<std::string, int32_t>::value_type("ohos.permission.cli.GET_BUNDLE_INFO_PRIVILEGED",
+        Constant::OP_CLI_GET_BUNDLE_INFO_PRIVILEGED),
+    std::map<std::string, int32_t>::value_type("ohos.permission.cli.REMOVE_BUNDLE_DATA_AND_CACHE_FILES",
+        Constant::OP_CLI_REMOVE_BUNDLE_DATA_AND_CACHE_FILES),
+    std::map<std::string, int32_t>::value_type("ohos.permission.cli.MANAGE_DISPOSED_APP_STATUS",
+        Constant::OP_CLI_MANAGE_DISPOSED_APP_STATUS),
 };
 
 bool Constant::TransferPermissionToOpcode(const std::string& permissionName, int32_t& opCode)
