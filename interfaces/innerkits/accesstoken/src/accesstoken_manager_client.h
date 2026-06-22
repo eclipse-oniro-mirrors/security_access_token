@@ -35,6 +35,9 @@
 #include "permission_state_full.h"
 #include "perm_state_change_callback_customize.h"
 #include "proxy_death_callback.h"
+#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
+#include "sec_comp_enhance_data.h"
+#endif
 #ifdef TOKEN_SYNC_ENABLE
 #include "token_sync_kit_interface.h"
 #endif // TOKEN_SYNC_ENABLE
@@ -136,6 +139,8 @@ public:
     int32_t RegisterSecCompEnhance(const SecCompEnhanceData& enhance);
     int32_t UpdateSecCompEnhance(int32_t pid, uint32_t seqNum);
     int32_t GetSecCompEnhance(int32_t pid, SecCompEnhanceData& enhance);
+    int32_t StoreSecCompEnhanceKey(const SecCompEnhanceKey& enhanceKey);
+    int32_t GetSecCompEnhanceKey(SecCompEnhanceKey& enhanceKey);
 #endif // SECURITY_COMPONENT_ENHANCE_ENABLE
     int32_t QueryStatusByPermission(const std::vector<uint32_t>& permCodeList,
         std::vector<PermissionStatus>& permissionInfoList, bool onlyHap);

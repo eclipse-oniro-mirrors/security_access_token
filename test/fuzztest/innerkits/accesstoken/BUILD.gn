@@ -72,7 +72,9 @@ group("fuzztest") {
   if (security_component_enhance_enable) {
     deps += [
       "getseccompenhance_fuzzer:GetSecCompEnhanceFuzzTest",
+      "getseccompenhancekey_fuzzer:GetSecCompEnhanceKeyFuzzTest",
       "registerseccompenhance_fuzzer:RegisterSecCompEnhanceFuzzTest",
+      "storeseccompenhancekey_fuzzer:StoreSecCompEnhanceKeyFuzzTest",
       "updateseccompenhance_fuzzer:UpdateSecCompEnhanceFuzzTest",
     ]
   }

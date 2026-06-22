@@ -101,7 +101,9 @@ group("fuzztest") {
   if (security_component_enhance_enable) {
     deps += [
       "getseccompenhancestub_fuzzer:GetSecCompEnhanceStubFuzzTest",
+      "getseccompenhancekeystub_fuzzer:GetSecCompEnhanceKeyStubFuzzTest",
       "registerseccompenhancestub_fuzzer:RegisterSecCompEnhanceStubFuzzTest",
+      "storeseccompenhancekeystub_fuzzer:StoreSecCompEnhanceKeyStubFuzzTest",
       "updateseccompenhancestub_fuzzer:UpdateSecCompEnhanceStubFuzzTest",
     ]
   }

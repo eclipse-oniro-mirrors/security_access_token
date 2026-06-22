@@ -2618,6 +2618,22 @@ int32_t AccessTokenManagerService::GetSecCompEnhance(int32_t pid, SecCompEnhance
     enhanceParcel.enhanceData = enhanceData;
     return RET_SUCCESS;
 }
+
+int32_t AccessTokenManagerService::StoreSecCompEnhanceKey(const SecCompEnhanceKeyParcel& enhanceKeyParcel)
+{
+    if (!IsSecCompServiceCalling()) {
+        return AccessTokenError::ERR_PERMISSION_DENIED;
+    }
+    return SecCompEnhanceAgent::GetInstance().StoreSecCompEnhanceKey(enhanceKeyParcel.enhanceKey);
+}
+
+int32_t AccessTokenManagerService::GetSecCompEnhanceKey(SecCompEnhanceKeyParcel& enhanceKeyParcel)
+{
+    if (!IsSecCompServiceCalling()) {
+        return AccessTokenError::ERR_PERMISSION_DENIED;
+    }
+    return SecCompEnhanceAgent::GetInstance().GetSecCompEnhanceKey(enhanceKeyParcel.enhanceKey);
+}
 #endif
 
 ErrCode AccessTokenManagerService::QueryStatusByPermission(const std::vector<uint32_t>& permCodeList,

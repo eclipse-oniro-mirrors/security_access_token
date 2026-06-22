@@ -16,6 +16,7 @@
 #include "accesstoken_manager_service_test.h"
 #include "gtest/gtest.h"
 #include <gtest/hwext/gtest-multithread.h>
+#include <cstring>
 
 #define private public
 #include "accesstoken_callbacks.h"
@@ -35,6 +36,11 @@
 #include "permission_map.h"
 #include "permission_manager.h"
 #include "perm_state_change_callback_customize.h"
+#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
+#include "sec_comp_enhance_agent.h"
+#include "sec_comp_enhance_key_parcel.h"
+#endif
+#include "securec.h"
 #include "test_common.h"
 #include "token_field_const.h"
 #include "token_setproc.h"
@@ -67,6 +73,27 @@ static const std::string GRANT_SENSITIVE_PERMISSIONS = "ohos.permission.GRANT_SE
 static const std::string REVOKE_SENSITIVE_PERMISSIONS = "ohos.permission.REVOKE_SENSITIVE_PERMISSIONS";
 static const unsigned int DEBUG_APP_FLAG = 0x0008;
 static uint64_t g_selfShellTokenId = 0;
+
+#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
+void ResetSecCompEnhanceKey()
+{
+    auto& agent = SecCompEnhanceAgent::GetInstance();
+    std::lock_guard<std::mutex> lock(agent.secCompEnhanceKeyMutex_);
+    (void)memset_s(agent.secCompEnhanceKey_.key.data, MAX_HMAC_SIZE, 0, MAX_HMAC_SIZE);
+    agent.secCompEnhanceKey_.key.size = 0;
+    agent.secCompEnhanceKey_.epoch = 0;
+    agent.hasSecCompEnhanceKey_ = false;
+}
+
+SecCompEnhanceKeyParcel BuildSecCompEnhanceKeyParcel(uint64_t epoch, uint8_t value)
+{
+    SecCompEnhanceKeyParcel parcel;
+    parcel.enhanceKey.epoch = epoch;
+    parcel.enhanceKey.key.size = MAX_HMAC_SIZE;
+    (void)memset_s(parcel.enhanceKey.key.data, MAX_HMAC_SIZE, value, MAX_HMAC_SIZE);
+    return parcel;
+}
+#endif
 
 std::vector<VariantValue> BuildPermissionStatePermissionQueryValues()
 {
@@ -3566,6 +3593,44 @@ HWTEST_F(AccessTokenManagerServiceTest, ClearUserGrantedPermStateByBundleFuncTes
     AssertCameraMicrophoneCanShowDialog(atManagerService_, tokenIdEx);
     DeleteBundleClearToken(tokenID);
 }
+
+#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
+/**
+ * @tc.name: SecCompEnhanceKeyService001
+ * @tc.desc: Reject Store and Get from a caller other than security_component_service
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, SecCompEnhanceKeyService001, TestSize.Level1)
+{
+    ResetSecCompEnhanceKey();
+    MockNativeToken mock("foundation");
+    SecCompEnhanceKeyParcel input = BuildSecCompEnhanceKeyParcel(1, 0x11);
+    SecCompEnhanceKeyParcel output;
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, atManagerService_->StoreSecCompEnhanceKey(input));
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, atManagerService_->GetSecCompEnhanceKey(output));
+}
+
+/**
+ * @tc.name: SecCompEnhanceKeyService002
+ * @tc.desc: Allow security_component_service to Store and Get an enhance key
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, SecCompEnhanceKeyService002, TestSize.Level1)
+{
+    ResetSecCompEnhanceKey();
+    MockNativeToken mock("security_component_service");
+    SecCompEnhanceKeyParcel input = BuildSecCompEnhanceKeyParcel(1, 0x22);
+    SecCompEnhanceKeyParcel output;
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->StoreSecCompEnhanceKey(input));
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->GetSecCompEnhanceKey(output));
+    EXPECT_EQ(input.enhanceKey.epoch, output.enhanceKey.epoch);
+    EXPECT_EQ(input.enhanceKey.key.size, output.enhanceKey.key.size);
+    EXPECT_EQ(0, memcmp(input.enhanceKey.key.data, output.enhanceKey.key.data, input.enhanceKey.key.size));
+    ResetSecCompEnhanceKey();
+}
+#endif
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

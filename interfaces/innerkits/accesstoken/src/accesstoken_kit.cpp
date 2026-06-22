@@ -1070,6 +1070,20 @@ int32_t AccessTokenKit::GetSecCompEnhance(int32_t pid, SecCompEnhanceData& enhan
 {
     return AccessTokenManagerClient::GetInstance().GetSecCompEnhance(pid, enhance);
 }
+
+int32_t AccessTokenKit::StoreSecCompEnhanceKey(const SecCompEnhanceKey& enhanceKey)
+{
+    if ((enhanceKey.key.size == 0) || (enhanceKey.key.size > MAX_HMAC_SIZE)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Enhance key size %{public}u is invalid.", enhanceKey.key.size);
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    return AccessTokenManagerClient::GetInstance().StoreSecCompEnhanceKey(enhanceKey);
+}
+
+int32_t AccessTokenKit::GetSecCompEnhanceKey(SecCompEnhanceKey& enhanceKey)
+{
+    return AccessTokenManagerClient::GetInstance().GetSecCompEnhanceKey(enhanceKey);
+}
 #endif
 
 bool AccessTokenKit::IsAtomicServiceByFullTokenID(uint64_t tokenId)

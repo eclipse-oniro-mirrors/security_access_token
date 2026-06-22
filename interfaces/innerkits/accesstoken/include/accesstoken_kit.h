@@ -712,6 +712,20 @@ public:
      * @return error code, see access_token_error.h
      */
     static int32_t GetSecCompEnhance(int32_t pid, SecCompEnhanceData& enhance);
+
+    /**
+     * @brief Store the latest stable security component enhance key.
+     * @param enhanceKey enhance key with epoch
+     * @return error code, see access_token_error.h
+     */
+    static int32_t StoreSecCompEnhanceKey(const SecCompEnhanceKey& enhanceKey);
+
+    /**
+     * @brief Get the latest stable security component enhance key.
+     * @param enhanceKey enhance key with epoch
+     * @return error code, see access_token_error.h
+     */
+    static int32_t GetSecCompEnhanceKey(SecCompEnhanceKey& enhanceKey);
 #endif
     /**
      * Whether it is a atomic service
