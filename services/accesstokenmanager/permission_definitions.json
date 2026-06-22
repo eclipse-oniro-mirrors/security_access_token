@@ -9062,7 +9062,7 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
-            "deviceTypes": ["general"]
+            "deviceTypes": ["2in1", "car", "phone", "tablet", "tv", "wearable"]
         },
         {
             "name": "ohos.permission.START_ABILITY_TO_PAGE",
