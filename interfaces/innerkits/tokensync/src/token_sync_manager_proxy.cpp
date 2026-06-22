@@ -56,7 +56,11 @@ int TokenSyncManagerProxy::GetRemoteHapTokenInfo(const std::string& deviceID, Ac
         return TOKEN_SYNC_IPC_ERROR;
     }
 
-    int32_t result = reply.ReadInt32();
+    int32_t result;
+    if (!reply.ReadInt32(result)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "ReadInt32 failed.");
+        return TOKEN_SYNC_IPC_ERROR;
+    }
     LOGD(ATM_DOMAIN, ATM_TAG, "Get result from server data = %{public}d", result);
     return result;
 }
@@ -84,7 +88,11 @@ int TokenSyncManagerProxy::DeleteRemoteHapTokenInfo(AccessTokenID tokenID)
         return TOKEN_SYNC_IPC_ERROR;
     }
 
-    int32_t result = reply.ReadInt32();
+    int32_t result;
+    if (!reply.ReadInt32(result)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "ReadInt32 failed.");
+        return TOKEN_SYNC_IPC_ERROR;
+    }
     LOGD(ATM_DOMAIN, ATM_TAG, "Get result from server data = %{public}d", result);
     return result;
 }
@@ -116,7 +124,11 @@ int TokenSyncManagerProxy::UpdateRemoteHapTokenInfo(const HapTokenInfoForSync& t
         return TOKEN_SYNC_IPC_ERROR;
     }
 
-    int32_t result = reply.ReadInt32();
+    int32_t result;
+    if (!reply.ReadInt32(result)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "ReadInt32 failed.");
+        return TOKEN_SYNC_IPC_ERROR;
+    }
     LOGD(ATM_DOMAIN, ATM_TAG, "Get result from server data = %{public}d", result);
     return result;
 }
