@@ -9227,7 +9227,7 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
-            "deviceTypes": ["2in1", "car", "phone", "tablet", "tv", "wearable"]
+            "deviceTypes": ["general"]
         },
 		{
             "name": "ohos.permission.ACCESS_SUPPORT_FEEDBACK",
