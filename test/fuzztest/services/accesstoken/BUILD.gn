@@ -92,8 +92,10 @@ group("fuzztest") {
       "checkhapsigninfostub_fuzzer:CheckHapSignInfoStubFuzzTest",
       "checkhappermissioninfostub_fuzzer:CheckHapPermissionInfoStubFuzzTest",
       "finishinstallstub_fuzzer:FinishInstallStubFuzzTest",
+      "getcachepolicybysessionidstub_fuzzer:GetCachePolicyBySessionIdStubFuzzTest",
       "getcachesigninfobysessionidstub_fuzzer:GetCacheSignInfoBySessionIdStubFuzzTest",
       "gethapsigninfostub_fuzzer:GetHapSignInfoStubFuzzTest",
+      "installsessionmanagermockstub_fuzzer:InstallSessionManagerMockStubFuzzTest",
       "preparehapidentitystub_fuzzer:PrepareHapIdentityStubFuzzTest",
       "updatehappolicystub_fuzzer:UpdateHapPolicyStubFuzzTest",
     ]
