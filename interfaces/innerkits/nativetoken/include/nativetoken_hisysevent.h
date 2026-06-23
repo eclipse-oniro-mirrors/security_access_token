@@ -31,7 +31,9 @@ typedef enum AccessTokenExceptionSceneCode {
     NATIVE_TOKEN_INIT = 0x1000,
     CHECK_PROCESS_INFO,
     ADD_NODE,
-    UPDATE_NODE
+    UPDATE_NODE,
+    ADD_PERM_TO_KERNEL,
+    ADD_SPM_DATA_TO_KERNEL
 } AccessTokenExceptionSceneCode;
 
 typedef enum AccessTokenExceptionErrorCode {

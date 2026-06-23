@@ -486,7 +486,7 @@ AccessTokenInfoManager::~AccessTokenInfoManager()
     this->tokenMonitor_ = nullptr;
 }
 
-void AccessTokenInfoManager::Init(uint32_t& hapSize, uint32_t& nativeSize, uint32_t& pefDefSize, uint32_t& dlpSize)
+void AccessTokenInfoManager::Init(uint32_t& nativeSize, uint32_t& pefDefSize, uint32_t& dlpSize)
 {
     std::unique_lock<std::shared_mutex> lk(this->managerLock_);
     if (hasInited_) {
@@ -530,8 +530,8 @@ void AccessTokenInfoManager::Init(uint32_t& hapSize, uint32_t& nativeSize, uint3
     pefDefSize = GetDefPermissionsSize();
 
     LOGI(ATM_DOMAIN, ATM_TAG,
-        "Init success, hapSize %{public}u, nativeSize %{public}u, pefDefSize %{public}u, dlpSize %{public}u.",
-        hapSize, nativeSize, pefDefSize, dlpSize);
+        "Init success, nativeSize %{public}u, pefDefSize %{public}u, dlpSize %{public}u.",
+        nativeSize, pefDefSize, dlpSize);
 
     hasInited_ = true;
     {

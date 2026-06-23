@@ -60,7 +60,7 @@ public:
 
     static AccessTokenInfoManager& GetInstance();
     ~AccessTokenInfoManager();
-    void Init(uint32_t& hapSize, uint32_t& nativeSize, uint32_t& pefDefSize, uint32_t& dlpSize);
+    void Init(uint32_t& nativeSize, uint32_t& pefDefSize, uint32_t& dlpSize);
     void InitNativeTokenInfos(const std::vector<NativeTokenInfoBase>& tokenInfos);
     void GetTokenIDByUserID(int32_t userID, std::unordered_set<AccessTokenID>& tokenIdList);
     void GetAllNativeTokenPerms(const std::vector<uint32_t>& permCodeList,

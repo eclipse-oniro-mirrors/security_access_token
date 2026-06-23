@@ -866,6 +866,20 @@ static uint32_t UpdateNewTokenToListAndFile(NativeTokenInfoParams *tokenInfo, Na
     return ret;
 }
 
+static bool IsKernelSupportSpm()
+{
+    static bool isSupportSpm = false;
+    static bool hasChecked = false;
+    if (hasChecked) {
+        return isSupportSpm;
+    }
+    uint32_t version = 0;
+    int32_t ret = SpmGetVersion(&version);
+    isSupportSpm = (ret != ENOTSUP) ? true : false;
+    hasChecked = true;
+    return isSupportSpm;
+}
+
 static void BuildSpmPerms(const NativeTokenInfoParams *tokenInfo, uint32_t perms[SPM_PERM_ARRAY_SIZE])
 {
     for (int32_t i = 0; i < tokenInfo->permsNum; ++i) {
@@ -956,6 +970,9 @@ static uint32_t PrepareAccessTokenId(NativeTokenInfoParams *tokenInfo, NativeAtI
 
 static int32_t TrySpmAddEntries(SpmData *spmData)
 {
+    if (!IsKernelSupportSpm()) {
+        return ATRET_SUCCESS;
+    }
     SpmData *entries[] = { spmData };
     uint8_t idxErr = 0;
     int32_t ret = ATRET_SUCCESS;
@@ -966,8 +983,10 @@ static int32_t TrySpmAddEntries(SpmData *spmData)
             return ATRET_SUCCESS;
         }
     }
-    LOGE("Failed to add native SPM entry to kernel, tokenId=%u, ret=%d, idxErr=%u.",
-        spmData->tokenid, ret, idxErr);
+    LOGC("Failed to add native SPM entry to kernel, process name=%s, tokenId=%u, ret=%d, idxErr=%u.",
+        spmData->name.buf, spmData->tokenid, ret, idxErr);
+    ReportNativeTokenExceptionEvent(ADD_SPM_DATA_TO_KERNEL, ret, GetThreadErrorMsg());
+    ClearThreadErrorMsg();
     return ATRET_FAILED;
 }
 
@@ -980,7 +999,10 @@ static int32_t TryAddPermissionToKernel(const SpmData *spmData)
             return ret;
         }
     }
-    LOGC("Failed to add native permission list to kernel, tokenId=%u, ret=%d.", spmData->tokenid, ret);
+    LOGC("Failed to add native permission list to kernel, process name=%s, tokenId=%u, ret=%d.",
+        spmData->name.buf, spmData->tokenid, ret);
+    ReportNativeTokenExceptionEvent(ADD_PERM_TO_KERNEL, ret, GetThreadErrorMsg());
+    ClearThreadErrorMsg();
     return ATRET_FAILED;
 }
 

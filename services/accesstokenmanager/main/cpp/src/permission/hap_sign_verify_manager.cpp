@@ -415,7 +415,7 @@ int32_t HapSignVerifyManager::CheckMultipleHaps(const std::vector<TrustedBundleI
 {
     LOGD(ATM_DOMAIN, ATM_TAG, "Check multiple trusted haps.");
     if (infos.empty()) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Check multiple haps failed, infos is empty.");
+        LOGC(ATM_DOMAIN, ATM_TAG, "Check multiple haps failed, infos is empty.");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
 
@@ -431,23 +431,23 @@ int32_t HapSignVerifyManager::CheckMultipleHaps(const std::vector<TrustedBundleI
     const TrustedBundleInfoInner& baseline = infos.front();
     bool isInvalid = std::any_of(infos.begin(), infos.end(), [&baseline, this](const auto& info) {
         if (baseline.GetBundleName() != info.GetBundleName()) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "Check multiple haps failed, hap files have different bundleName.");
+            LOGC(ATM_DOMAIN, ATM_TAG, "Check multiple haps failed, hap files have different bundleName.");
             return true;
         }
         if (!CheckAppIdentifier(baseline, info)) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "Check multiple haps failed, hap files have different appId and appIdentifier.");
+            LOGC(ATM_DOMAIN, ATM_TAG, "Check multiple haps failed, hap files have different appId and appIdentifier.");
             return true;
         }
         if (baseline.GetApl() != info.GetApl()) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "Check multiple haps failed, hap files have different apl.");
+            LOGC(ATM_DOMAIN, ATM_TAG, "Check multiple haps failed, hap files have different apl.");
             return true;
         }
         if (baseline.GetAppDistributionType() != info.GetAppDistributionType()) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "Check multiple haps failed, hap files have different appDistributionType.");
+            LOGC(ATM_DOMAIN, ATM_TAG, "Check multiple haps failed, hap files have different appDistributionType.");
             return true;
         }
         if (baseline.GetAppProvisionType() != info.GetAppProvisionType()) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "Check multiple haps failed, hap files have different appProvisionType.");
+            LOGC(ATM_DOMAIN, ATM_TAG, "Check multiple haps failed, hap files have different appProvisionType.");
             return true;
         }
         return false;
@@ -462,7 +462,7 @@ int32_t HapSignVerifyManager::BuildHapPolicy(
     const std::vector<TrustedBundleInfoInner>& infos, HapPolicy& policy, BundleParam& param) const
 {
     if (infos.empty()) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Build hap policy failed, sortedInfos is empty.");
+        LOGC(ATM_DOMAIN, ATM_TAG, "Build hap policy failed, sortedInfos is empty.");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
 

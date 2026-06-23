@@ -30,16 +30,22 @@ bool ValuesBucket::IsEmpty()
 void ValuesBucket::PutString(std::string a, std::string b)
 {
     isEmpty_ = false;
+    stringColumn_ = a;
+    stringValue_ = b;
 }
 
 void ValuesBucket::PutInt(std::string a, int32_t b)
 {
     isEmpty_ = false;
+    intColumn_ = a;
+    intValue_ = b;
 }
 
 void ValuesBucket::PutLong(std::string a, int64_t b)
 {
     isEmpty_ = false;
+    longColumn_ = a;
+    longValue_ = b;
 }
 
 void ValuesBucket::PutBlob(std::string a, std::vector<uint8_t> b)
@@ -108,19 +114,34 @@ std::string RdbPredicates::GetTableName() const
 }
 
 void RdbPredicates::EqualTo(std::string a, std::string b)
-{}
+{
+    equalToStringColumn_ = a;
+    equalToStringValue_ = b;
+}
 
 void RdbPredicates::EqualTo(std::string a, int32_t b)
-{}
+{
+    equalToIntColumn_ = a;
+    equalToIntValue_ = b;
+}
 
 void RdbPredicates::In(std::string a, const std::vector<std::string>& b)
-{}
+{
+    inStringColumn_ = a;
+    inStringValues_ = b;
+}
 
 void RdbPredicates::In(std::string a, const std::vector<ValueObject>& b)
-{}
+{
+    inValueObjectColumn_ = a;
+    inValueObjectSize_ = b.size();
+}
 
 void RdbPredicates::In(std::string a, const std::vector<int32_t>& b)
-{}
+{
+    inIntColumn_ = a;
+    inIntValues_ = b;
+}
 
 void RdbPredicates::And()
 {}

@@ -84,8 +84,8 @@ void PermissionManagerCoverageTest::SetUpTestCase()
     uint32_t nativeSize = 0;
     uint32_t pefDefSize = 0;
     uint32_t dlpSize = 0;
-    AccessTokenInfoManager::GetInstance().Init(hapSize, nativeSize, pefDefSize, dlpSize);
-    (void)BootVerifyScheduler::GetInstance().VerifyBundleSignInfoWhenStart();
+    AccessTokenInfoManager::GetInstance().Init(nativeSize, pefDefSize, dlpSize);
+    (void)BootVerifyScheduler::GetInstance().VerifyBundleSignInfoWhenStart(hapSize);
     BootVerifyScheduler::GetInstance().StartVerifyNormalBundleListAsync();
     sleep(SLEEP_TIME_SECONDS);
 }
