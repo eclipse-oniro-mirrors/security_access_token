@@ -63,6 +63,7 @@ group("fuzztest") {
     "setpermissionstatuswithpolicy_fuzzer:SetPermissionStatusWithPolicyFuzzTest",
     "setuserpolicy_fuzzer:SetUserPolicyFuzzTest",
     "tooltokenlifecycle_fuzzer:ToolTokenLifecycleFuzzTest",
+    "tokensetproc_fuzzer:TokenSetprocFuzzTest",
     "unregisterpermstatechangecallback_fuzzer:UnRegisterPermStateChangeCallbackFuzzTest",
     "updatehaptoken_fuzzer:UpdateHapTokenFuzzTest",
     "verifyaccesstoken001_fuzzer:VerifyAccessToken001FuzzTest",
@@ -85,6 +86,7 @@ group("fuzztest") {
       "finishinstall_fuzzer:FinishInstallFuzzTest",
       "getcachesigninfobysessionid_fuzzer:GetCacheSignInfoBySessionIdFuzzTest",
       "gethapsigninfo_fuzzer:GetHapSignInfoFuzzTest",
+      "migrateinstalledbundlesclient_fuzzer:MigrateInstalledBundlesClientFuzzTest",
       "preparehapidentity_fuzzer:PrepareHapIdentityFuzzTest",
       "updatehappolicy_fuzzer:UpdateHapPolicyFuzzTest",
     ]
