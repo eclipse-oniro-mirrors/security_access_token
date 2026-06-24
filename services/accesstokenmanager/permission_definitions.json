@@ -8746,6 +8746,17 @@
             "deviceTypes": ["car"]
         },
         {
+            "name": "ohos.permission.vehicle.CAR_LOG_SERVICE",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["car"]
+        },
+        {
             "name": "ohos.permission.ACCESS_CAR_AUDIO",
             "grantMode": "system_grant",
             "availableLevel": "normal",
