@@ -89,6 +89,8 @@ group("fuzztest") {
   }
   if (access_token_enable_spm && access_token_manager_hapverify_enable) {
     deps += [
+      "accesstokenmigrationmanager_fuzzer:AccessTokenMigrationManagerFuzzTest",
+      "bootverifyscheduler_fuzzer:BootVerifySchedulerFuzzTest",
       "checkhapsigninfostub_fuzzer:CheckHapSignInfoStubFuzzTest",
       "checkhappermissioninfostub_fuzzer:CheckHapPermissionInfoStubFuzzTest",
       "finishinstallstub_fuzzer:FinishInstallStubFuzzTest",
