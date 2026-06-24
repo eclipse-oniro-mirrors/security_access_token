@@ -116,6 +116,10 @@ AccessTokenID EnsureValidTokenId()
         if (!datas.WriteUint32(tokenId)) {
             return false;
         }
+
+        if (!datas.WriteInt32(1)) {
+            return false;
+        }
         if (!datas.WriteParcelable(&permParcel)) {
             return false;
         }
