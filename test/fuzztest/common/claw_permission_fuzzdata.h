@@ -31,6 +31,11 @@ namespace {
 constexpr size_t MAX_CLAW_FUZZ_LIST_SIZE = 4;
 constexpr size_t MAX_CLAW_FUZZ_PERMISSION_SIZE = 4;
 constexpr size_t MAX_CLAW_FUZZ_STRING_LENGTH = 64;
+const std::string DEFAULT_CLI_NAME = "ohos-queryTime";
+const std::string DEFAULT_SUB_CLI_NAME = "get-wall-time";
+const std::string DEFAULT_CLI_PERMISSION = "ohos.permission.APPROXIMATELY_LOCATION";
+const std::string POWER_MANAGER_CLI_PERMISSION = "ohos.permission.cli.POWER_MANAGER";
+const std::string CAMERA_PERMISSION = "ohos.permission.CAMERA";
 }
 
 inline std::string ConsumeClawString(FuzzedDataProvider& provider)
@@ -103,6 +108,93 @@ inline std::vector<CliAuthInfo> ConsumeCliAuthInfoList(FuzzedDataProvider& provi
         infos.emplace_back(ConsumeCliAuthInfo(provider));
     }
     return infos;
+}
+
+inline std::vector<CliInfo> BuildKnownCliInfoList()
+{
+    return {
+        { DEFAULT_CLI_NAME, DEFAULT_SUB_CLI_NAME },
+        { "tooltokenstub", "stubsubtool" },
+        { "camera", "capture" },
+        { "resolved", "run" },
+    };
+}
+
+inline CliAuthInfo BuildKnownQueryTimeCliAuthInfo()
+{
+    return {
+        .cliInfo = { DEFAULT_CLI_NAME, DEFAULT_SUB_CLI_NAME },
+        .permissionNames = { DEFAULT_CLI_PERMISSION, POWER_MANAGER_CLI_PERMISSION },
+        .authorizationResults = { true, false },
+    };
+}
+
+inline CliAuthInfo BuildKnownToolTokenCliAuthInfo()
+{
+    return {
+        .cliInfo = { "tooltokenstub", "stubsubtool" },
+        .permissionNames = { DEFAULT_CLI_PERMISSION, POWER_MANAGER_CLI_PERMISSION },
+        .authorizationResults = { true, true },
+    };
+}
+
+inline CliAuthInfo BuildKnownCameraCliAuthInfo()
+{
+    return {
+        .cliInfo = { "camera", "capture" },
+        .permissionNames = { CAMERA_PERMISSION, POWER_MANAGER_CLI_PERMISSION },
+        .authorizationResults = { true, true },
+    };
+}
+
+inline std::vector<CliAuthInfo> BuildKnownCliAuthInfoList()
+{
+    return {
+        BuildKnownQueryTimeCliAuthInfo(),
+        BuildKnownToolTokenCliAuthInfo(),
+        BuildKnownCameraCliAuthInfo(),
+    };
+}
+
+inline bool CanAppendKnownValue(size_t currentSize)
+{
+    return currentSize < MAX_CLAW_FUZZ_LIST_SIZE;
+}
+
+inline bool ShouldAppendKnownValue(FuzzedDataProvider& provider, size_t currentSize)
+{
+    return (currentSize == 0) || provider.ConsumeBool();
+}
+
+template <typename T>
+inline void AppendOneKnownValue(FuzzedDataProvider& provider, std::vector<T>& values, const std::vector<T>& defaults)
+{
+    size_t index = provider.ConsumeIntegralInRange<size_t>(0, defaults.size() - 1);
+    values.emplace_back(defaults[index]);
+}
+
+inline void AppendKnownCliInfos(FuzzedDataProvider& provider, std::vector<CliInfo>& infos)
+{
+    if (!CanAppendKnownValue(infos.size())) {
+        return;
+    }
+    const auto defaults = BuildKnownCliInfoList();
+    if (!ShouldAppendKnownValue(provider, infos.size())) {
+        return;
+    }
+    AppendOneKnownValue(provider, infos, defaults);
+}
+
+inline void AppendKnownCliAuthInfos(FuzzedDataProvider& provider, std::vector<CliAuthInfo>& infos)
+{
+    if (!CanAppendKnownValue(infos.size())) {
+        return;
+    }
+    const auto defaults = BuildKnownCliAuthInfoList();
+    if (!ShouldAppendKnownValue(provider, infos.size())) {
+        return;
+    }
+    AppendOneKnownValue(provider, infos, defaults);
 }
 
 } // namespace AccessToken

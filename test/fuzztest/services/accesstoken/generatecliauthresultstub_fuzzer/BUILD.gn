@@ -19,11 +19,18 @@ ohos_fuzztest("GenerateCliAuthResultStubFuzzTest") {
   module_out_path = module_output_path_service_access_token
   fuzz_config_file = "."
   sources = [ "generatecliauthresultstub_fuzzer.cpp" ]
+  include_dirs = []
+  external_deps = access_token_stub_fuzz_external_deps
+  if (saf_agent_fence_enable) {
+    sources += [ "../tooltoken_mock/saf_agent_fence.cpp" ]
+    include_dirs +=
+        [ "${access_token_path}/test/fuzztest/services/accesstoken/tooltoken_mock" ]
+    external_deps -= [ "asset:saf_agent_fence" ]
+  }
   sources += access_token_stub_fuzz_sources
-  include_dirs = access_token_stub_fuzz_include_dirs
+  include_dirs += access_token_stub_fuzz_include_dirs
   deps = access_token_stub_fuzz_deps
   configs = access_token_stub_fuzz_configs
-  external_deps = access_token_stub_fuzz_external_deps
   cflags_cc = access_token_stub_fuzz_cflags_cc
   cflags = access_token_stub_fuzz_cflags
 }

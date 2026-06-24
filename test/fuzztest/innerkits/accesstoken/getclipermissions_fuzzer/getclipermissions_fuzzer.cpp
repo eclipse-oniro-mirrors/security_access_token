@@ -35,6 +35,9 @@ bool GetCliPermissionsFuzzTest(const uint8_t* data, size_t size)
     AccessTokenID hostTokenID = ConsumeTokenId(provider);
     std::string agentID = ConsumeAgentID(provider);
     std::vector<CliInfo> cliInfoList = ConsumeCliInfoList(provider);
+    if (provider.ConsumeBool() || cliInfoList.empty()) {
+        AppendKnownCliInfos(provider, cliInfoList);
+    }
     CliPermissionsResult result;
     return AccessTokenKit::GetCliPermissions(hostTokenID, agentID, cliInfoList, result) == RET_SUCCESS;
 }
