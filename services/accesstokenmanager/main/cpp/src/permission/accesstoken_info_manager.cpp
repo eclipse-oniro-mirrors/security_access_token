@@ -789,7 +789,7 @@ std::shared_ptr<HapTokenInfoInner> AccessTokenInfoManager::GetInactiveTokenInfoI
     }
 
     auto hapInfoInner = GetHapTokenInfoInnerFromDb(id);
-    std::shared_lock<std::shared_mutex> infoGuard(this->hapTokenInfoLock_);
+    std::unique_lock<std::shared_mutex> infoGuard(this->hapTokenInfoLock_);
     inactiveTokenInfoMap_[id] = hapInfoInner;
     return hapInfoInner;
 }
@@ -974,7 +974,7 @@ int32_t AccessTokenInfoManager::DeleteIdentityInner(std::shared_ptr<HapTokenInfo
     }
 
     // 6. trigger change callback
-    if (permissionList.size() != 0) {
+    if (!permissionList.empty()) {
         PermissionChangeNotifier::GetInstance().ParamUpdate(permissionList[0], 0, true);
     }
     for (const auto& perm : permissionList) {
@@ -2317,7 +2317,6 @@ bool AccessTokenInfoManager::GetApiVersionByTokenId(AccessTokenID tokenID, int32
     apiVersion = hapInfo.apiVersion;
     return true;
 }
-
 
 int32_t AccessTokenInfoManager::GetKernelPermissions(
     AccessTokenID tokenId, std::vector<PermissionWithValue>& kernelPermList)

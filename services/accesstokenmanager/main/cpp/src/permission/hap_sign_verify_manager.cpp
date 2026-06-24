@@ -301,18 +301,6 @@ bool TrustedBundleInfoInner::IsAtomicService() const
     return moduleData.bundleType == AppExecFwk::Spm::BundleType::ATOMIC_SERVICE;
 }
 
-#ifdef X86_EMULATOR_MODE
-TrustedBundleInfoInner HapSignVerifyManager::BuildIgnoredTrustedBundleInfo()
-{
-    TrustedBundleInfoInner info;
-    info.bootstrapInfo = std::make_shared<Security::Verify::BootstrapInfo>();
-    info.provisionInfo.appId.clear();
-    info.shareFilesRaw.clear();
-    info.ignoreVerificationFailure = true;
-    return info;
-}
-#endif
-
 std::string TrustedBundleInfoInner::GetAppDistributionType() const
 {
 #ifdef IS_SUPPORT_HAP_RUNNING
@@ -364,11 +352,16 @@ int32_t HapSignVerifyManager::CheckHapsSignInfo(Security::Verify::VerifyParams p
     int32_t ret = adapter_->VerifyHap(params, *info.bootstrapInfo, provisionInfo, isChanged);
     if (ret != RET_SUCCESS) {
 #ifdef X86_EMULATOR_MODE
-        LOGW(ATM_DOMAIN, ATM_TAG, "Verify hap failed in X86_EMULATOR_MODE, ignore verification result, ret=%{public}d.",
+        LOGI(ATM_DOMAIN, ATM_TAG, "Verify hap failed in X86_EMULATOR_MODE, ignore verification result, ret=%{public}d.",
             ret);
-        info = BuildIgnoredTrustedBundleInfo();
         isChanged = false;
-        return RET_SUCCESS;
+        ret = BuildTrustedBundleInfo(info.bootstrapInfo, provisionInfo, info);
+        info.provisionInfo.appId.clear();
+        info.ignoreVerificationFailure = true;
+        if (ret != RET_SUCCESS) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Build trusted bundle info failed, ret=%{public}d.", ret);
+        }
+        return ret;
 #else
         LOGE(ATM_DOMAIN, ATM_TAG, "Verify hap failed, ret=%{public}d.", ret);
         return ret;
@@ -493,6 +486,11 @@ int32_t HapSignVerifyManager::BuildHapPolicy(
 
     param.bundleName = baseline.GetBundleName();
     param.appId = param.bundleName + "_" + baseline.provisionInfo.appId;
+#ifdef X86_EMULATOR_MODE
+    if (policy.checkIgnore == HapPolicyCheckIgnore::ACL_IGNORE_CHECK) {
+        param.appId.clear();
+    }
+#endif
     param.apiVersion = baseline.moduleData.apiTargetVersion;
     param.distributionType = baseline.provisionInfo.distributionType;
     param.isSystem = baseline.IsSystemApp();
