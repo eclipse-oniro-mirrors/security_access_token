@@ -83,6 +83,7 @@ group("fuzztest") {
       "checkhapsigninfo_fuzzer:CheckHapSignInfoFuzzTest",
       "checkhappermissioninfo_fuzzer:CheckHapPermissionInfoFuzzTest",
       "finishinstall_fuzzer:FinishInstallFuzzTest",
+      "getcachepolicybysessionid_fuzzer:GetCachePolicyBySessionIdFuzzTest",
       "getcachesigninfobysessionid_fuzzer:GetCacheSignInfoBySessionIdFuzzTest",
       "gethapsigninfo_fuzzer:GetHapSignInfoFuzzTest",
       "preparehapidentity_fuzzer:PrepareHapIdentityFuzzTest",
