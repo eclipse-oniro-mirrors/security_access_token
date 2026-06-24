@@ -8724,6 +8724,17 @@
             "deviceTypes": ["car"]
         },
         {
+            "name": "ohos.permission.vehicle.ACCESS_DFT_LOG",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["car"]
+        },
+        {
             "name": "ohos.permission.vehicle.AUTO_UPDATER",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
