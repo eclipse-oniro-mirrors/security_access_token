@@ -223,14 +223,6 @@ int32_t HapSignVerifyManager::BuildTrustedBundleInfo(
     return 0;
 }
 
-#ifdef X86_EMULATOR_MODE
-TrustedBundleInfoInner HapSignVerifyManager::BuildIgnoredTrustedBundleInfo()
-{
-    TrustedBundleInfoInner info;
-    return info;
-}
-#endif
-
 std::string TrustedBundleInfoInner::GetAppDistributionType() const
 {
     return "undefined";
