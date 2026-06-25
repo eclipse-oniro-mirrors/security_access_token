@@ -186,6 +186,32 @@ static bool* VectorToCArrBool(const std::vector<bool>& vec)
     return result;
 }
 
+static void FreeCArrString(char** head, int64_t size)
+{
+    if (head == nullptr) {
+        return;
+    }
+    for (int64_t i = 0; i < size; i++) {
+        free(head[i]);
+    }
+    free(head);
+}
+
+static void ResetPermissionRequestResult(CPermissionRequestResult& retData)
+{
+    FreeCArrString(retData.permissions.head, retData.permissions.size);
+    retData.permissions.head = nullptr;
+    retData.permissions.size = 0;
+
+    free(retData.authResults.head);
+    retData.authResults.head = nullptr;
+    retData.authResults.size = 0;
+
+    free(retData.dialogShownResults.head);
+    retData.dialogShownResults.head = nullptr;
+    retData.dialogShownResults.size = 0;
+}
+
 int32_t AtManagerImpl::VerifyAccessTokenSync(unsigned int tokenID, const char* cPermissionName)
 {
     static AccessTokenID selgTokenId = GetSelfTokenID();
@@ -371,13 +397,20 @@ static void fillRequestResult(CPermissionRequestResult& retData, std::vector<std
     retData.permissions.size = static_cast<int64_t>(permissionList.size());
     retData.permissions.head = VectorToCArrString(permissionList);
     if (retData.permissions.head == nullptr) {
+        ResetPermissionRequestResult(retData);
         return;
     }
     retData.authResults.size = static_cast<int64_t>(permissionsState.size());
     retData.authResults.head = VectorToCArrInt32(permissionsState);
-
+    if (retData.authResults.head == nullptr) {
+        ResetPermissionRequestResult(retData);
+        return;
+    }
     retData.dialogShownResults.size = static_cast<int64_t>(dialogShownResults.size());
     retData.dialogShownResults.head = VectorToCArrBool(dialogShownResults);
+    if (retData.dialogShownResults.head == nullptr) {
+        ResetPermissionRequestResult(retData);
+    }
 }
 
 static void UpdateGrantPermissionResultOnly(const std::vector<std::string>& permissions,
