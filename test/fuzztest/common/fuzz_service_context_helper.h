@@ -45,6 +45,16 @@ inline PermissionStatus BuildGrantedPermissionStatus(const std::string& permissi
     };
 }
 
+inline PermissionStatus BuildPermissionStatus(
+    const std::string& permissionName, int32_t grantStatus, uint32_t grantFlag)
+{
+    return {
+        .permissionName = permissionName,
+        .grantStatus = grantStatus,
+        .grantFlag = grantFlag,
+    };
+}
+
 inline void FillSystemHapInfoTail(HapInfoParams& hapInfo, const std::string& bundleName);
 
 inline HapInfoParams BuildSystemHapInfo(const std::string& bundleName)
@@ -74,6 +84,15 @@ inline HapPolicy BuildSystemHapPolicy(const std::string& permissionName)
     return hapPolicy;
 }
 
+inline HapPolicy BuildSystemHapPolicy(const std::vector<PermissionStatus>& permissionStates)
+{
+    HapPolicy hapPolicy;
+    hapPolicy.apl = APL_SYSTEM_BASIC;
+    hapPolicy.domain = "fuzz_service_context_domain";
+    hapPolicy.permStateList = permissionStates;
+    return hapPolicy;
+}
+
 inline uint64_t GetSystemFullTokenId(const AccessTokenIDEx& tokenIdEx)
 {
     return tokenIdEx.tokenIDEx | SYSTEM_APP_MASK;
@@ -92,11 +111,34 @@ inline uint64_t CreateSystemHapCaller(const std::string& bundleName, const std::
     return 0;
 }
 
+inline uint64_t CreateSystemHapCaller(
+    const std::string& bundleName, const std::vector<PermissionStatus>& permissionStates)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+    HapInfoParams hapInfo = BuildSystemHapInfo(bundleName);
+    HapPolicy hapPolicy = BuildSystemHapPolicy(permissionStates);
+    std::vector<GenericValues> undefValues;
+    if (AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(
+        hapInfo, hapPolicy, tokenIdEx, undefValues) == RET_SUCCESS) {
+        return GetSystemFullTokenId(tokenIdEx);
+    }
+    return 0;
+}
+
 inline void InitializeServiceCallerContext(uint64_t& callerFullTokenId, const std::string& bundleName,
     const std::string& permissionName)
 {
     if (callerFullTokenId == 0) {
         callerFullTokenId = CreateSystemHapCaller(bundleName, permissionName);
+    }
+    DelayedSingleton<AccessTokenManagerService>::GetInstance()->Initialize();
+}
+
+inline void InitializeServiceCallerContext(uint64_t& callerFullTokenId, const std::string& bundleName,
+    const std::vector<PermissionStatus>& permissionStates)
+{
+    if (callerFullTokenId == 0) {
+        callerFullTokenId = CreateSystemHapCaller(bundleName, permissionStates);
     }
     DelayedSingleton<AccessTokenManagerService>::GetInstance()->Initialize();
 }

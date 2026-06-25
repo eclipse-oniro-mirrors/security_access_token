@@ -24,20 +24,22 @@
 #define private public
 #include "accesstoken_manager_service.h"
 #undef private
-#include "accesstoken_kit.h"
 #include "claw_permission_fuzzdata.h"
 #include "fuzzer/FuzzedDataProvider.h"
+#include "fuzz_service_context_helper.h"
 #include "idl_common.h"
 #include "iaccess_token_manager.h"
 #include "message_parcel.h"
 #include "mock_permission.h"
+#ifdef SAF_AGENT_FENCE_ENABLE
+#include "saf_agent_fence.h"
+#endif
 #include "token_setproc.h"
 
 using namespace OHOS::Security::AccessToken;
 
 namespace OHOS {
 namespace {
-constexpr int32_t AIMGR_UID = 3092;
 constexpr int32_t ROOT_UID = 0;
 constexpr int32_t MAX_PID_OFFSET = 4096;
 constexpr int32_t MAX_STUB_ROUND = 4;
@@ -46,6 +48,9 @@ const std::string MANAGE_TOOL_RUNTIME_PERMISSIONS = "ohos.permission.MANAGE_TOOL
 const std::string DEFAULT_AGENT_ID = "1001";
 const std::string DEFAULT_CLI_NAME = "tooltokenstub";
 const std::string DEFAULT_SUB_CLI_NAME = "stubsubtool";
+const std::string DEFAULT_HOST_BUNDLE = "tooltokenstub.fuzzer.host";
+uint64_t g_hostFullTokenId = 0;
+AccessTokenID g_hostTokenId = INVALID_TOKENID;
 enum class StubCommandChoice : uint8_t {
     INIT_CLI_TOKEN,
     DELETE_TOOL_TOKEN_BY_PID,
@@ -92,9 +97,53 @@ void SwitchToUid(uid_t uid)
     (void)setuid(uid);
 }
 
+bool WriteCommonHeader(MessageParcel& data);
+void SendStubRequest(uint32_t code, MessageParcel& data);
+void SendStubRequest(uint32_t code, MessageParcel& data, MessageParcel& reply);
+
 void InitializeToolTokenStubFuzz()
 {
     DelayedSingleton<AccessTokenManagerService>::GetInstance()->Initialize();
+    if (g_hostFullTokenId == 0) {
+        std::vector<PermissionStatus> permissionStates = {
+            FuzzServiceContext::BuildPermissionStatus(MANAGE_TOOL_RUNTIME_PERMISSIONS,
+                PermissionState::PERMISSION_GRANTED, PermissionFlag::PERMISSION_SYSTEM_FIXED),
+            FuzzServiceContext::BuildPermissionStatus("ohos.permission.APPROXIMATELY_LOCATION",
+                PermissionState::PERMISSION_GRANTED, PermissionFlag::PERMISSION_ALLOW_THIS_TIME),
+            FuzzServiceContext::BuildPermissionStatus("ohos.permission.CAMERA", PermissionState::PERMISSION_GRANTED,
+                PermissionFlag::PERMISSION_SYSTEM_FIXED),
+            FuzzServiceContext::BuildPermissionStatus(
+                "ohos.permission.LOCATION", PermissionState::PERMISSION_DENIED, PermissionFlag::PERMISSION_USER_FIXED),
+        };
+        FuzzServiceContext::InitializeServiceCallerContext(g_hostFullTokenId, DEFAULT_HOST_BUNDLE, permissionStates);
+        g_hostTokenId = FuzzServiceContext::GetCallerTokenId(g_hostFullTokenId);
+    }
+}
+
+void ConfigureMockSafBehavior(FuzzedDataProvider& provider)
+{
+#ifdef SAF_AGENT_FENCE_ENABLE
+    OHOS::Security::SAF::MockSafBehavior behavior;
+    behavior.queryMode = static_cast<OHOS::Security::SAF::MockQueryMode>(provider.ConsumeIntegralInRange<uint8_t>(
+        0, static_cast<uint8_t>(OHOS::Security::SAF::MockQueryMode::DUPLICATE_PERMISSIONS)));
+    behavior.generateMode = static_cast<OHOS::Security::SAF::MockGenerateMode>(
+        provider.ConsumeIntegralInRange<uint8_t>(
+            0, static_cast<uint8_t>(OHOS::Security::SAF::MockGenerateMode::EMPTY_CHALLENGE)));
+    behavior.verifyMode = static_cast<OHOS::Security::SAF::MockVerifyMode>(
+        provider.ConsumeIntegralInRange<uint8_t>(
+            0, static_cast<uint8_t>(OHOS::Security::SAF::MockVerifyMode::EMPTY_PERMISSION_LIST)));
+    OHOS::Security::SAF::SetMockSafBehavior(behavior);
+#else
+    (void)provider;
+#endif
+}
+
+void SetStableMockSafBehavior()
+{
+#ifdef SAF_AGENT_FENCE_ENABLE
+    OHOS::Security::SAF::MockSafBehavior behavior;
+    OHOS::Security::SAF::SetMockSafBehavior(behavior);
+#endif
 }
 
 CliInfo BuildDefaultCliInfo()
@@ -103,6 +152,15 @@ CliInfo BuildDefaultCliInfo()
     info.cliName = DEFAULT_CLI_NAME;
     info.subCliName = DEFAULT_SUB_CLI_NAME;
     return info;
+}
+
+std::vector<CliAuthInfo> BuildDefaultCliAuthInfos()
+{
+    CliAuthInfo info;
+    info.cliInfo = BuildDefaultCliInfo();
+    info.permissionNames = { "ohos.permission.APPROXIMATELY_LOCATION", "ohos.permission.cli.POWER_MANAGER" };
+    info.authorizationResults = { true, true };
+    return { info };
 }
 
 std::string ConsumeValidOrDefault(FuzzedDataProvider& provider, const std::string& defaultValue)
@@ -119,14 +177,50 @@ CliInfo ConsumeStubCliInfo(FuzzedDataProvider& provider)
     return info;
 }
 
-std::string GenerateCliChallenge(AccessTokenID hostTokenId)
+bool ReadReplyErrCode(MessageParcel& reply, int32_t& errCode)
 {
-    MockToken runtimeCaller({ MANAGE_TOOL_RUNTIME_PERMISSIONS }, true, true);
-    CliAuthInfo authInfo;
-    authInfo.cliInfo = BuildDefaultCliInfo();
-    ToolAuthResult result;
-    (void)AccessTokenKit::GenerateCliAuthResult(hostTokenId, DEFAULT_AGENT_ID, { authInfo }, result);
-    return result.authResults.empty() ? "" : result.authResults[0];
+    errCode = reply.ReadInt32();
+    return true;
+}
+
+bool GenerateCliChallengeByStub(AccessTokenID hostTokenId, std::string& challenge)
+{
+    CallingContextGuard guard;
+    MockToken caller({ MANAGE_TOOL_RUNTIME_PERMISSIONS }, true, true);
+    MessageParcel data;
+    if (!WriteCommonHeader(data) || !data.WriteUint32(hostTokenId) || !data.WriteString(DEFAULT_AGENT_ID)) {
+        return false;
+    }
+    const auto authInfos = BuildDefaultCliAuthInfos();
+    if (!data.WriteInt32(static_cast<int32_t>(authInfos.size()))) {
+        return false;
+    }
+    for (const auto& info : authInfos) {
+        CliAuthInfoIdl infoIdl;
+        infoIdl.cliInfo = {
+            .cliName = info.cliInfo.cliName,
+            .subCliName = info.cliInfo.subCliName,
+        };
+        infoIdl.permissionNames = info.permissionNames;
+        infoIdl.authorizationResults.assign(info.authorizationResults.begin(), info.authorizationResults.end());
+        if (CliAuthInfoIdlBlockMarshalling(data, infoIdl) != ERR_NONE) {
+            return false;
+        }
+    }
+    MessageParcel reply;
+    MessageOption option;
+    DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(
+        static_cast<uint32_t>(IAccessTokenManagerIpcCode::COMMAND_GENERATE_CLI_AUTH_RESULT), data, reply, option);
+    int32_t errCode = RET_FAILED;
+    if (!ReadReplyErrCode(reply, errCode) || errCode != RET_SUCCESS) {
+        return false;
+    }
+    std::vector<std::string> authResults;
+    if (!reply.ReadStringVector(&authResults) || authResults.empty()) {
+        return false;
+    }
+    challenge = authResults[0];
+    return true;
 }
 
 bool WriteCommonHeader(MessageParcel& data)
@@ -137,6 +231,12 @@ bool WriteCommonHeader(MessageParcel& data)
 void SendStubRequest(uint32_t code, MessageParcel& data)
 {
     MessageParcel reply;
+    MessageOption option;
+    DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, data, reply, option);
+}
+
+void SendStubRequest(uint32_t code, MessageParcel& data, MessageParcel& reply)
+{
     MessageOption option;
     DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, data, reply, option);
 }
@@ -197,29 +297,29 @@ void SendInitCliToken(const CliInitInfo& initInfo, uid_t uid)
     SendStubRequest(static_cast<uint32_t>(IAccessTokenManagerIpcCode::COMMAND_INIT_CLI_TOKEN), data);
 }
 
-void CleanupCurrentToolToken()
+void CleanupCurrentToolTokenByStub()
 {
     CallingContextGuard guard;
-    SwitchToUid(AIMGR_UID);
     MockToken caller({ MANAGE_TOOL_TOKENID }, false);
-    (void)AccessTokenKit::DeleteToolTokenByPid(getpid());
-}
-
-AccessTokenID InitCliTokenByKit(const CliInitInfo& initInfo)
-{
-    CallingContextGuard guard;
-    SwitchToUid(ROOT_UID);
-    AccessTokenIDEx tokenIdEx = {0};
-    std::vector<PermissionWithValue> kernelPermList;
-    (void)AccessTokenKit::InitCliToken(initInfo, tokenIdEx, kernelPermList);
-    return tokenIdEx.tokenIdExStruct.tokenID;
+    MessageParcel data;
+    if (!WriteCommonHeader(data) || !data.WriteInt32(getpid())) {
+        return;
+    }
+    SendStubRequest(static_cast<uint32_t>(IAccessTokenManagerIpcCode::COMMAND_DELETE_TOOL_TOKEN_BY_PID), data);
 }
 
 CliInitInfo BuildCliInitInfo(FuzzedDataProvider& provider, AccessTokenID hostTokenId)
 {
     CliInitInfo initInfo;
     initInfo.hostTokenId = provider.ConsumeBool() ? hostTokenId : ConsumeTokenId(provider);
-    initInfo.challenge = provider.ConsumeBool() ? GenerateCliChallenge(hostTokenId) : ConsumeClawString(provider);
+    if (provider.ConsumeBool()) {
+        std::string challenge;
+        initInfo.challenge = GenerateCliChallengeByStub(hostTokenId, challenge) ? challenge : "";
+    } else if (provider.ConsumeBool()) {
+        initInfo.challenge = "";
+    } else {
+        initInfo.challenge = ConsumeClawString(provider);
+    }
     initInfo.cliInfo = provider.ConsumeBool() ? BuildDefaultCliInfo() : ConsumeStubCliInfo(provider);
     return initInfo;
 }
@@ -239,6 +339,36 @@ AccessTokenID ConsumeQueryTokenId(
         default:
             return INVALID_TOKENID;
     }
+}
+
+AccessTokenID SendInitCliTokenAndReadTokenId(const CliInitInfo& initInfo, uid_t uid)
+{
+    CallingContextGuard guard;
+    SwitchToUid(uid);
+    MessageParcel data;
+    if (!WriteCommonHeader(data)) {
+        return INVALID_TOKENID;
+    }
+    CliInitInfoIdl initInfoIdl = {
+        .hostTokenId = initInfo.hostTokenId,
+        .challenge = initInfo.challenge,
+        .cliInfo = {
+            .cliName = initInfo.cliInfo.cliName,
+            .subCliName = initInfo.cliInfo.subCliName,
+        },
+    };
+    if (CliInitInfoIdlBlockMarshalling(data, initInfoIdl) != ERR_NONE) {
+        return INVALID_TOKENID;
+    }
+    MessageParcel reply;
+    SendStubRequest(static_cast<uint32_t>(IAccessTokenManagerIpcCode::COMMAND_INIT_CLI_TOKEN), data, reply);
+    int32_t errCode = RET_FAILED;
+    if (!ReadReplyErrCode(reply, errCode) || errCode != RET_SUCCESS) {
+        return INVALID_TOKENID;
+    }
+    uint64_t fullTokenId = reply.ReadUint64();
+    AccessTokenIDEx tokenIdEx = { .tokenIDEx = fullTokenId };
+    return tokenIdEx.tokenIdExStruct.tokenID;
 }
 
 int32_t ConsumeDeletePid(FuzzedDataProvider& provider)
@@ -271,15 +401,31 @@ void SendDeleteToolTokenByPid(FuzzedDataProvider& provider, int32_t pid)
 
 void ExerciseSpecificStubCases(FuzzedDataProvider& provider, AccessTokenID hostTokenId)
 {
-    CliInitInfo cliInitInfo = BuildCliInitInfo(provider, hostTokenId);
+    SetStableMockSafBehavior();
+    CliInitInfo cliInitInfo;
+    cliInitInfo.hostTokenId = hostTokenId;
+    std::string challenge;
+    cliInitInfo.challenge = GenerateCliChallengeByStub(hostTokenId, challenge) ? challenge : "";
+    cliInitInfo.cliInfo = BuildDefaultCliInfo();
     SendInitCliToken(cliInitInfo, ROOT_UID);
-    CleanupCurrentToolToken();
-    AccessTokenID cliTokenId = InitCliTokenByKit(cliInitInfo);
+    CleanupCurrentToolTokenByStub();
+    AccessTokenID cliTokenId = SendInitCliTokenAndReadTokenId(cliInitInfo, ROOT_UID);
 
     SendTokenQuery(provider, static_cast<uint32_t>(IAccessTokenManagerIpcCode::COMMAND_GET_HOST_TOKEN_ID),
         ConsumeQueryTokenId(provider, hostTokenId, cliTokenId));
+    SendTokenQuery(provider, static_cast<uint32_t>(IAccessTokenManagerIpcCode::COMMAND_GET_HOST_TOKEN_ID), cliTokenId);
+    if (provider.ConsumeBool()) {
+        SendInitCliToken(cliInitInfo, ROOT_UID);
+    }
+    if (provider.ConsumeBool()) {
+        (void)SendInitCliTokenAndReadTokenId(cliInitInfo, ROOT_UID);
+    }
     SendDeleteToolTokenByPid(provider, ConsumeDeletePid(provider));
     SendDeleteToolTokenByPid(provider, getpid());
+    SendTokenQuery(provider, static_cast<uint32_t>(IAccessTokenManagerIpcCode::COMMAND_GET_HOST_TOKEN_ID), cliTokenId);
+    if (provider.ConsumeBool()) {
+        SendDeleteToolTokenByPid(provider, getpid());
+    }
 }
 
 void ExerciseConsumedStubCase(FuzzedDataProvider& provider, AccessTokenID hostTokenId)
@@ -310,9 +456,9 @@ bool ToolTokenStubFuzzTest(const uint8_t* data, size_t size)
     }
 
     FuzzedDataProvider provider(data, size);
-    MockToken hostMock({}, true, true);
-    AccessTokenID hostTokenId = hostMock.GetTokenId();
+    AccessTokenID hostTokenId = provider.ConsumeBool() ? g_hostTokenId : ConsumeTokenId(provider);
     ExerciseSpecificStubCases(provider, hostTokenId);
+    ConfigureMockSafBehavior(provider);
     int32_t rounds = provider.ConsumeIntegralInRange<int32_t>(1, MAX_STUB_ROUND);
     for (int32_t i = 0; i < rounds; ++i) {
         ExerciseConsumedStubCase(provider, hostTokenId);
