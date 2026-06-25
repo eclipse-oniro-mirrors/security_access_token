@@ -381,7 +381,7 @@ int32_t SoftBusManager::BindService(const std::string &deviceId)
 
     ISocketListener listener;
     int32_t socketFd = InitSocketAndListener(networkId, listener);
-    if (socketFd_ <= Constant::INVALID_SOCKET_FD) {
+    if (socketFd <= Constant::INVALID_SOCKET_FD) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Create client socket faild.");
         return ERROR_CREATE_SOCKET_FAIL;
     }
