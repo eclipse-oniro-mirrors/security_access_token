@@ -1809,7 +1809,7 @@ int32_t AccessTokenManagerClient::PrepareHapIdentity(int32_t& sessionId, const H
         identity.tokenId = identityIdl.tokenId;
     }
 
-    LOGI(ATM_DOMAIN, ATM_TAG, "Result=%{public}d, sessionId=%{public}d, uid=%{public}d"
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result=%{public}d, sessionId=%{public}d, uid=%{public}d, "
         "fulltokenId=%{public}" PRIu64 ", tokenId=%{public}u",
         res, sessionId, identity.uid, identity.tokenId, static_cast<uint32_t>(identity.tokenId));
     return res;

@@ -83,10 +83,8 @@ bool InstallSessionManagerMockStubFuzzTest(const uint8_t* data, size_t size)
     std::vector<TrustedBundleInfo> bundleInfo;
     HapVerifyResultInfo resultInfo;
     InstallSessionManager::GetInstance().CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo);
-
     HapInfoCheckResult result;
     InstallSessionManager::GetInstance().CheckHapPermissionInfo(sessionId, TYPE_INSTALL, result);
-    
     HapBaseInfo baseInfo;
     BundlePolicy bundlePolicy;
     Identity identity;
@@ -106,26 +104,21 @@ bool InstallSessionManagerMockStubFuzzTest(const uint8_t* data, size_t size)
     Identity identity2;
     InitPrepareInfo(provider, baseInfo2);
     InstallSessionManager::GetInstance().PrepareHapIdentity(sessionId2, baseInfo2, bundlePolicy, nullptr, identity2);
-
     InstallSessionManager::GetInstance().FinishInstall(sessionId2, true, modulePathMap);
 
     int32_t sessionId3 = 0;
     std::vector<TrustedBundleInfo> bundleInfo3;
     InstallSessionManager::GetInstance().CheckHapSignInfo(hapList, nullptr, sessionId3, bundleInfo3, resultInfo);
-
-    HapInfoCheckResult result3;
-    InstallSessionManager::GetInstance().CheckHapPermissionInfo(sessionId3, TYPE_REPLACE, result3);
-
+    InstallSessionManager::GetInstance().CheckHapPermissionInfo(sessionId3, TYPE_REPLACE, result);
     InstallSessionManager::GetInstance().FinishInstall(sessionId3, false, modulePathMap);
 
     int32_t sessionId4 = 0;
     std::vector<TrustedBundleInfo> bundleInfo4;
     InstallSessionManager::GetInstance().CheckHapSignInfo(hapList, nullptr, sessionId4, bundleInfo4, resultInfo);
-
-    HapInfoCheckResult result4;
-    InstallSessionManager::GetInstance().CheckHapPermissionInfo(sessionId3, TYPE_REPLACE, result4);
-
-    InstallSessionManager::GetInstance().FinishInstall(sessionId4, false, modulePathMap);
+    InstallSessionManager::GetInstance().CheckHapPermissionInfo(sessionId4, TYPE_REPLACE, result);
+    InstallSessionManager::GetInstance().UpdateHapPolicy(
+        sessionId4, static_cast<int32_t>(identity.tokenId & 0xffffffff), bundlePolicy);
+    InstallSessionManager::GetInstance().FinishInstall(sessionId4, true, modulePathMap);
 
     GetHapSignInfoTest("install_session_manager_fuzz_mock_test");
 
