@@ -45,18 +45,18 @@ public:
     };
 };
 
+AccessTokenID g_tokenSyncTokenId = INVALID_TOKENID;
+
 bool NativeTokenGet()
 {
-    AccessTokenID token = INVALID_TOKENID;
-    {
+    if (g_tokenSyncTokenId == INVALID_TOKENID) {
         MockToken mock({}, false);
-        token = AccessTokenKit::GetNativeTokenId("token_sync_service");
+        g_tokenSyncTokenId = AccessTokenKit::GetNativeTokenId("token_sync_service");
     }
-    if (token == 0) {
+    if (g_tokenSyncTokenId == 0) {
         return false;
     }
-    SetSelfTokenID(token);
-    return true;
+    return SetSelfTokenID(g_tokenSyncTokenId) == 0;
 }
 };
 

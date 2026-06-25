@@ -26,14 +26,15 @@
 using namespace OHOS::Security::AccessToken;
 
 namespace {
+AccessTokenID g_secCompTokenId = INVALID_TOKENID;
+
 bool SetSecCompToken()
 {
-    AccessTokenID token = INVALID_TOKENID;
-    {
+    if (g_secCompTokenId == INVALID_TOKENID) {
         MockToken mock({}, false);
-        token = AccessTokenKit::GetNativeTokenId("security_component_service");
+        g_secCompTokenId = AccessTokenKit::GetNativeTokenId("security_component_service");
     }
-    return (token != INVALID_TOKENID) && (SetSelfTokenID(token) == 0);
+    return (g_secCompTokenId != INVALID_TOKENID) && (SetSelfTokenID(g_secCompTokenId) == 0);
 }
 }
 

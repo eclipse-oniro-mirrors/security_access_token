@@ -22,6 +22,7 @@
 #include "accesstoken_fuzzdata.h"
 #include "accesstoken_info_manager.h"
 #include "accesstoken_kit.h"
+#include "device_manager.h"
 #define private public
 #include "accesstoken_manager_service.h"
 #undef private
@@ -34,18 +35,71 @@ using namespace OHOS::Security::AccessToken;
 namespace OHOS {
 namespace {
 #ifdef TOKEN_SYNC_ENABLE
-const std::string TEST_REMOTE_DEVICE_ID = "fuzz_remote_device";
-const std::string TEST_NETWORK_ID = "fuzz_network_id";
+class TestDmInitCallback final : public OHOS::DistributedHardware::DmInitCallback {
+public:
+    void OnRemoteDied() override
+    {}
+};
+
+const std::string TEST_PKG_NAME = "com.softbus.test";
 constexpr AccessTokenID TEST_REMOTE_TOKEN_ID = 0x20100000;
+std::string g_remoteDeviceId;
+std::string g_remoteNetworkId;
+AccessTokenID g_tokenSyncTokenId = INVALID_TOKENID;
+AccessTokenID g_hdcdTokenId = INVALID_TOKENID;
+std::shared_ptr<TestDmInitCallback> g_dmInitCallback = std::make_shared<TestDmInitCallback>();
+
+bool SetTokenSyncToken()
+{
+    if (g_tokenSyncTokenId == INVALID_TOKENID) {
+        MockToken mock({}, false);
+        g_tokenSyncTokenId = AccessTokenKit::GetNativeTokenId("token_sync_service");
+        g_hdcdTokenId = AccessTokenKit::GetNativeTokenId("hdcd");
+    }
+    if (g_tokenSyncTokenId == INVALID_TOKENID) {
+        return false;
+    }
+    return SetSelfTokenID(g_tokenSyncTokenId) == 0;
+}
 #endif
 }
 
 #ifdef TOKEN_SYNC_ENABLE
+bool InitRemoteDeviceInfo()
+{
+    if (!g_remoteDeviceId.empty() && !g_remoteNetworkId.empty()) {
+        return true;
+    }
+    if (DistributedHardware::DeviceManager::GetInstance().InitDeviceManager(
+        TEST_PKG_NAME, g_dmInitCallback) != RET_SUCCESS) {
+        return false;
+    }
+
+    DistributedHardware::DmDeviceInfo deviceInfo;
+    if (DistributedHardware::DeviceManager::GetInstance().GetLocalDeviceInfo(
+        TEST_PKG_NAME, deviceInfo) != RET_SUCCESS) {
+        return false;
+    }
+    g_remoteNetworkId = std::string(deviceInfo.networkId);
+    if (g_remoteNetworkId.empty()) {
+        return false;
+    }
+
+    if (DistributedHardware::DeviceManager::GetInstance().GetUdidByNetworkId(
+        TEST_PKG_NAME, g_remoteNetworkId, g_remoteDeviceId) != RET_SUCCESS) {
+        return false;
+    }
+    return !g_remoteDeviceId.empty();
+}
+
 AccessTokenID EnsureRemoteMapTokenId()
 {
     static AccessTokenID mapTokenId = INVALID_TOKENID;
     if (mapTokenId != INVALID_TOKENID) {
         return mapTokenId;
+    }
+    if (!InitRemoteDeviceInfo()) {
+        return INVALID_TOKENID;
     }
 
     HapTokenInfoForSync remoteTokenInfo = {
@@ -69,13 +123,13 @@ AccessTokenID EnsureRemoteMapTokenId()
     };
 
     int32_t ret = AccessTokenInfoManager::GetInstance().SetRemoteHapTokenInfo(
-        TEST_REMOTE_DEVICE_ID, remoteTokenInfo);
+        g_remoteDeviceId, remoteTokenInfo);
     if (ret != RET_SUCCESS) {
         return INVALID_TOKENID;
     }
 
     uint64_t fullTokenId = AccessTokenInfoManager::GetInstance().AllocLocalTokenID(
-        TEST_NETWORK_ID, TEST_REMOTE_TOKEN_ID);
+        g_remoteNetworkId, TEST_REMOTE_TOKEN_ID);
     if (fullTokenId == 0) {
         return INVALID_TOKENID;
     }
@@ -91,8 +145,10 @@ AccessTokenID EnsureRemoteMapTokenId()
         if ((data == nullptr) || (size == 0)) {
             return false;
         }
+        if (!SetTokenSyncToken()) {
+            return false;
+        }
 
-        MockToken mock({}, false);
         FuzzedDataProvider provider(data, size);
         AccessTokenID validTokenId = EnsureRemoteMapTokenId();
         if (validTokenId == INVALID_TOKENID) {
@@ -112,6 +168,9 @@ AccessTokenID EnsureRemoteMapTokenId()
         MessageParcel reply;
         MessageOption option;
         DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
+        if (g_hdcdTokenId != INVALID_TOKENID) {
+            (void)SetSelfTokenID(g_hdcdTokenId);
+        }
 
         return true;
     #else
