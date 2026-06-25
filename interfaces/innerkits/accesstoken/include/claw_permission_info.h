@@ -51,33 +51,6 @@ struct CliInitInfo final {
     CliInfo cliInfo;
 };
 
-struct CliTokenInfo final {
-    AccessTokenID hostTokenId = INVALID_TOKENID;
-    int32_t userId = INVALID_TOOL_TOKEN_USER_ID;
-    std::string cliName;
-    std::string subCliName;
-};
-
-struct SkillInfo final {
-    std::string skillName;
-    std::string bundleName;
-    std::string moduleName;
-};
-
-struct SkillInitInfo final {
-    AccessTokenID hostTokenId = INVALID_TOKENID;
-    std::string challenge;
-    SkillInfo skillInfo;
-};
-
-struct SkillTokenInfo final {
-    AccessTokenID hostTokenId = INVALID_TOKENID;
-    int32_t userId = INVALID_TOOL_TOKEN_USER_ID;
-    std::string skillName;
-    std::string bundleName;
-    std::string moduleName;
-};
-
 struct PermissionDialogDetail final {
     bool needPermissionDialog = false;
     std::vector<std::string> permissionNameList;
@@ -103,23 +76,8 @@ struct CliPermissionsResult final {
     std::vector<CliCommandPermissionResult> permList;
 };
 
-struct SkillCommandPermissionResult final {
-    std::vector<std::string> usedPermissions;
-    std::vector<PermissionDecisionStatus> statusList;
-};
-
-struct SkillPermissionsResult final {
-    std::vector<SkillCommandPermissionResult> permList;
-};
-
 struct CliAuthInfo final {
     CliInfo cliInfo;
-    std::vector<std::string> permissionNames;
-    std::vector<bool> authorizationResults;
-};
-
-struct SkillAuthInfo final {
-    SkillInfo skillInfo;
     std::vector<std::string> permissionNames;
     std::vector<bool> authorizationResults;
 };

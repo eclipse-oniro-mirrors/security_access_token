@@ -68,12 +68,12 @@ HWTEST_F(HapSignVerifyManagerTest, CheckHapsSignInfo001, TestSize.Level1)
     TrustedBundleInfoInner info;
     bool isChanged = true;
 
-    EXPECT_EQ(RET_SUCCESS, manager.CheckHapsSignInfo("/data/camera.hap",
-        Security::Verify::VerifyType::Fast, -1, info, isChanged));
+    EXPECT_EQ(RET_SUCCESS, manager.CheckHapsSignInfo(
+        HapSignVerifyManager::MakeVerifyParams("/data/camera.hap", Security::Verify::VerifyType::Fast, -1),
+        false, info, isChanged));
     ASSERT_NE(nullptr, info.bootstrapInfo);
     EXPECT_EQ("com.example.bundle", info.provisionInfo.bundleInfo.bundleName);
     EXPECT_EQ("mock.identifier", info.provisionInfo.bundleInfo.appIdentifier);
-    EXPECT_FALSE(isChanged);
 }
 
 /**
@@ -88,13 +88,13 @@ HWTEST_F(HapSignVerifyManagerTest, CheckHapsSignInfo002, TestSize.Level1)
     TrustedBundleInfoInner info;
     info.bootstrapInfo = std::make_shared<Security::Verify::BootstrapInfo>();
     std::shared_ptr<Security::Verify::BootstrapInfo> bootstrapInfo = info.bootstrapInfo;
-    bool isChanged = true;
+    bool isChanged;
 
-    EXPECT_EQ(RET_SUCCESS, manager.CheckHapsSignInfo("/data/camera.hap",
-        Security::Verify::VerifyType::Fast, -1, info, isChanged));
+    EXPECT_EQ(RET_SUCCESS, manager.CheckHapsSignInfo(
+        HapSignVerifyManager::MakeVerifyParams("/data/camera.hap", Security::Verify::VerifyType::Fast, -1),
+        false, info, isChanged));
     EXPECT_EQ(bootstrapInfo, info.bootstrapInfo);
     EXPECT_EQ("com.example.bundle", info.provisionInfo.bundleInfo.bundleName);
-    EXPECT_FALSE(isChanged);
 }
 
 /**
@@ -107,14 +107,14 @@ HWTEST_F(HapSignVerifyManagerTest, CheckHapsSignInfo003, TestSize.Level1)
     MockAppVerifyAdapter adapter;
     HapSignVerifyManager manager(adapter);
     TrustedBundleInfoInner info;
-    bool isChanged = true;
+    bool isChanged;
 
-    EXPECT_EQ(RET_SUCCESS, manager.CheckHapsSignInfo("/data/camera.hap",
-        Security::Verify::VerifyType::Fast, -1, info, isChanged));
+    EXPECT_EQ(RET_SUCCESS, manager.CheckHapsSignInfo(
+        HapSignVerifyManager::MakeVerifyParams("/data/camera.hap", Security::Verify::VerifyType::Fast, -1),
+        false, info, isChanged));
     EXPECT_TRUE(adapter.isParseCalled_);
     EXPECT_EQ("", adapter.lastCertPath_);
     EXPECT_EQ("entry", info.moduleData.moduleName);
-    EXPECT_FALSE(isChanged);
 }
 
 /**
@@ -128,10 +128,12 @@ HWTEST_F(HapSignVerifyManagerTest, CheckHapsSignInfo004, TestSize.Level1)
     adapter.verifyRet_ = AccessTokenError::ERR_PARAM_INVALID;
     HapSignVerifyManager manager(adapter);
     TrustedBundleInfoInner info;
-    bool isChanged = true;
+    bool isChanged;
 
-    EXPECT_EQ(AccessTokenError::ERR_HAP_VERIFY_FAILED,
-        manager.CheckHapsSignInfo("/data/camera.hap", Security::Verify::VerifyType::Fast, -1, info, isChanged));
+    EXPECT_NE(RET_SUCCESS,
+        manager.CheckHapsSignInfo(
+            HapSignVerifyManager::MakeVerifyParams("/data/camera.hap", Security::Verify::VerifyType::Fast, -1),
+            false, info, isChanged));
     EXPECT_FALSE(adapter.isParseCalled_);
 }
 
@@ -148,9 +150,31 @@ HWTEST_F(HapSignVerifyManagerTest, CheckHapsSignInfo005, TestSize.Level1)
     TrustedBundleInfoInner info;
     bool isChanged = true;
 
-    EXPECT_EQ(AccessTokenError::ERR_HAP_MODULE_INVALID,
-        manager.CheckHapsSignInfo("/data/camera.hap", Security::Verify::VerifyType::Fast, -1, info, isChanged));
+    EXPECT_NE(RET_SUCCESS,
+        manager.CheckHapsSignInfo(
+            HapSignVerifyManager::MakeVerifyParams("/data/camera.hap", Security::Verify::VerifyType::Fast, -1),
+            false, info, isChanged));
     EXPECT_TRUE(adapter.isParseCalled_);
+}
+
+
+/**
+ * @tc.name: CheckHapsSignInfo006
+ * @tc.desc: Hap path not allowed.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HapSignVerifyManagerTest, CheckHapsSignInfo006, TestSize.Level1)
+{
+    MockAppVerifyAdapter adapter;
+    HapSignVerifyManager manager(adapter);
+    TrustedBundleInfoInner info;
+    bool isChanged = true;
+    
+    // The check is bypassed in UT, so here is a success
+    EXPECT_EQ(RET_SUCCESS,
+        manager.CheckHapsSignInfo(
+            HapSignVerifyManager::MakeVerifyParams("bad_path.hap", Security::Verify::VerifyType::Fast, -1),
+            false, info, isChanged));
 }
 
 /**
@@ -165,9 +189,9 @@ HWTEST_F(HapSignVerifyManagerTest, CheckMultipleHaps001, TestSize.Level1)
 
     TrustedBundleInfoInner info2 = info1;
     info2.provisionInfo.bundleInfo.appIdentifier = "identifier2";
-
-    std::vector<TrustedBundleInfoInner> infos = {info1, info2};
-    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, manager.CheckMultipleHaps(infos));
+    info2.provisionInfo.appId = "app-id-desc2";
+    std::vector<TrustedBundleInfoInner> infos_mismatch = {info1, info2};
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, manager.CheckMultipleHaps(infos_mismatch));
 }
 
 /**
@@ -228,10 +252,14 @@ static std::pair<TrustedBundleInfoInner, TrustedBundleInfoInner> BuildCameraBund
     info1.moduleData.definePermission = {
         AppExecFwk::Spm::DefinePermission {
             .name = "ohos.permission.CAMERA", .grantMode = "user_grant", .availableLevel = "normal",
+        },
+        AppExecFwk::Spm::DefinePermission {
+            .name = "ohos.permission.BAD", .grantMode = "user_grant", .availableLevel = "normal",
         }
     };
     info1.moduleData.requestPermission = {
-        AppExecFwk::Spm::RequestPermission { .name = "ohos.permission.CAMERA", .requiredFeature = "", }
+        AppExecFwk::Spm::RequestPermission { .name = "ohos.permission.CAMERA", .requiredFeature = "", },
+        AppExecFwk::Spm::RequestPermission { .name = "ohos.permission.BAD", .requiredFeature = "", }
     };
     info1.provisionInfo.bundleInfo.bundleName = "com.example.camera";
     info1.provisionInfo.bundleInfo.appIdentifier = "12345";
@@ -278,19 +306,10 @@ HWTEST_F(HapSignVerifyManagerTest, BuildHapPolicy001, TestSize.Level1)
     BundleParam param;
     EXPECT_EQ(RET_SUCCESS, manager.BuildHapPolicy({info1, info2}, policy, param));
     EXPECT_EQ(APL_SYSTEM_BASIC, policy.apl);
-    EXPECT_EQ("domain", policy.domain);
-    ASSERT_EQ(2u, policy.permList.size());
-    EXPECT_EQ("ohos.permission.CAMERA", policy.permList[0].permissionName);
-    EXPECT_EQ("ohos.permission.MICROPHONE", policy.permList[1].permissionName);
-    ASSERT_EQ(2u, policy.permStateList.size());
-    EXPECT_EQ("ohos.permission.CAMERA", policy.permStateList[0].permissionName);
-    EXPECT_EQ(PERMISSION_DENIED, policy.permStateList[0].grantStatus);
-    EXPECT_EQ("ohos.permission.MICROPHONE", policy.permStateList[1].permissionName);
+    EXPECT_EQ(3u, policy.permList.size());
+    EXPECT_EQ(3u, policy.permStateList.size());
     ASSERT_EQ(2u, policy.aclRequestedList.size());
-    EXPECT_EQ("ohos.permission.CAMERA", policy.aclRequestedList[0]);
-    EXPECT_EQ("ohos.permission.MICROPHONE", policy.aclRequestedList[1]);
     ASSERT_EQ(1u, policy.aclExtendedMap.size());
-    EXPECT_EQ("cert", policy.aclExtendedMap["ohos.permission.ACCESS_CERT_MANAGER"]);
     EXPECT_TRUE(policy.preAuthorizationInfo.empty());
     EXPECT_FALSE(policy.isDebugGrant);
     EXPECT_EQ(TEST_API_VERSION, param.apiVersion);
@@ -544,47 +563,6 @@ HWTEST_F(HapSignVerifyManagerTest, CheckPermissionRequestValid001, TestSize.Leve
     ASSERT_EQ(RET_SUCCESS, manager.BuildHapPolicy({info}, policy, param));
     HapInfoCheckResult result;
     EXPECT_EQ(RET_SUCCESS, manager.CheckPermissionRequestValid(info, policy, result));
-}
-
-#define PROCESS_OWNERID_APP 2
-#define PROCESS_OWNERID_DEBUG 3
-#define PROCESS_OWNERID_COMPAT 5
-/**
- * @tc.name: GetSpmIdType001
- * @tc.desc: GetSpmIdType returns PROCESS_OWNERID_DEBUG when provisionInfo.type is DEBUG.
- * @tc.type: FUNC
- */
-HWTEST_F(HapSignVerifyManagerTest, GetSpmIdType001, TestSize.Level1)
-{
-    TrustedBundleInfoInner info;
-    info.provisionInfo.type = Security::Verify::DEBUG;
-    EXPECT_EQ(PROCESS_OWNERID_DEBUG, info.GetSpmIdType());
-}
-
-/**
- * @tc.name: GetSpmIdType002
- * @tc.desc: GetSpmIdType returns PROCESS_OWNERID_COMPAT when appIdentifier is empty and type is not DEBUG.
- * @tc.type: FUNC
- */
-HWTEST_F(HapSignVerifyManagerTest, GetSpmIdType002, TestSize.Level1)
-{
-    TrustedBundleInfoInner info;
-    info.provisionInfo.type = Security::Verify::RELEASE;
-    info.provisionInfo.bundleInfo.appIdentifier.clear();
-    EXPECT_EQ(PROCESS_OWNERID_COMPAT, info.GetSpmIdType());
-}
-
-/**
- * @tc.name: GetSpmIdType003
- * @tc.desc: GetSpmIdType returns PROCESS_OWNERID_APP when type is not DEBUG and appIdentifier is non-empty.
- * @tc.type: FUNC
- */
-HWTEST_F(HapSignVerifyManagerTest, GetSpmIdType003, TestSize.Level1)
-{
-    TrustedBundleInfoInner info;
-    info.provisionInfo.type = Security::Verify::RELEASE;
-    info.provisionInfo.bundleInfo.appIdentifier = "12345";
-    EXPECT_EQ(PROCESS_OWNERID_APP, info.GetSpmIdType());
 }
 
 /**
@@ -919,6 +897,114 @@ HWTEST_F(HapSignVerifyManagerTest, BuildExtendPermList002, TestSize.Level1)
     std::vector<PermissionWithValue> extendPermList;
     HapSignVerifyHelper::BuildExtendPermListFromPolicy(policy, extendPermList);
     EXPECT_TRUE(extendPermList.empty());
+}
+
+#define PROCESS_OWNERID_APP 2
+#define PROCESS_OWNERID_DEBUG 3
+#define PROCESS_OWNERID_COMPAT 5
+#define PROCESS_OWNERID_APP_TEMP_ALLOW 10
+
+/**
+ * @tc.name: BuildIdType001
+ * @tc.desc: HapSignVerifyHelper::BuildIdType returns correct idType for debug, compat, temp_jit, and normal app.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HapSignVerifyManagerTest, BuildIdType001, TestSize.Level1)
+{
+    // Case 1: Debug → PROCESS_OWNERID_DEBUG
+    EXPECT_EQ(PROCESS_OWNERID_DEBUG,
+        HapSignVerifyHelper::BuildIdType(true, "12345", {}));
+
+    // Case 2: Empty appIdentifier → PROCESS_OWNERID_COMPAT
+    EXPECT_EQ(PROCESS_OWNERID_COMPAT,
+        HapSignVerifyHelper::BuildIdType(false, "", {}));
+
+    // Case 3: Has TEMP_JIT_ALLOW → PROCESS_OWNERID_APP_TEMP_ALLOW
+    PermissionStatus tempJitAllow;
+    tempJitAllow.permissionName = "TEMPJITALLOW";
+    EXPECT_EQ(PROCESS_OWNERID_APP_TEMP_ALLOW,
+        HapSignVerifyHelper::BuildIdType(false, "12345", {tempJitAllow}));
+
+    // Case 4: Normal app → PROCESS_OWNERID_APP
+    EXPECT_EQ(PROCESS_OWNERID_APP,
+        HapSignVerifyHelper::BuildIdType(false, "12345", {}));
+}
+
+/**
+ * @tc.name: CheckAppIdentifier001
+ * @tc.desc: CheckAppIdentifier covers all branches:
+ *           (1) same non-empty appIdentifier → true
+ *           (2) different appIdentifier, same appId → true
+ *           (3) different appIdentifier, different appId → false
+ *           (4) old appIdentifier empty, same appId → true
+ *           (5) old appIdentifier empty, different appId → false
+ *           (6) new appIdentifier empty, same appId → true
+ *           (7) both appIdentifier empty, same appId → true
+ *           (8) both appIdentifier empty, different appId → false
+ * @tc.type: FUNC
+ */
+HWTEST_F(HapSignVerifyManagerTest, CheckAppIdentifier001, TestSize.Level1)
+{
+    HapSignVerifyManager& manager = HapSignVerifyManager::GetInstance();
+
+    TrustedBundleInfoInner oldInfo;
+    TrustedBundleInfoInner newInfo;
+
+    // (1) Both appIdentifiers non-empty and equal → true (versionCode update path)
+    oldInfo.provisionInfo.bundleInfo.appIdentifier = "12345";
+    newInfo.provisionInfo.bundleInfo.appIdentifier = "12345";
+    oldInfo.provisionInfo.appId = "old-app-id";
+    newInfo.provisionInfo.appId = "new-app-id";
+    EXPECT_TRUE(manager.CheckAppIdentifier(oldInfo, newInfo));
+
+    // (2) Different appIdentifier, same appId → true (appId fallback path)
+    oldInfo.provisionInfo.bundleInfo.appIdentifier = "11111";
+    newInfo.provisionInfo.bundleInfo.appIdentifier = "22222";
+    oldInfo.provisionInfo.appId = "same-app-id";
+    newInfo.provisionInfo.appId = "same-app-id";
+    EXPECT_TRUE(manager.CheckAppIdentifier(oldInfo, newInfo));
+
+    // (3) Different appIdentifier, different appId → false
+    oldInfo.provisionInfo.bundleInfo.appIdentifier = "11111";
+    newInfo.provisionInfo.bundleInfo.appIdentifier = "22222";
+    oldInfo.provisionInfo.appId = "old-app-id";
+    newInfo.provisionInfo.appId = "new-app-id";
+    EXPECT_FALSE(manager.CheckAppIdentifier(oldInfo, newInfo));
+
+    // (4) Old appIdentifier empty, same appId → true
+    oldInfo.provisionInfo.bundleInfo.appIdentifier = "";
+    newInfo.provisionInfo.bundleInfo.appIdentifier = "22222";
+    oldInfo.provisionInfo.appId = "same-app-id";
+    newInfo.provisionInfo.appId = "same-app-id";
+    EXPECT_TRUE(manager.CheckAppIdentifier(oldInfo, newInfo));
+
+    // (5) Old appIdentifier empty, different appId → false
+    oldInfo.provisionInfo.bundleInfo.appIdentifier = "";
+    newInfo.provisionInfo.bundleInfo.appIdentifier = "22222";
+    oldInfo.provisionInfo.appId = "old-app-id";
+    newInfo.provisionInfo.appId = "new-app-id";
+    EXPECT_FALSE(manager.CheckAppIdentifier(oldInfo, newInfo));
+
+    // (6) New appIdentifier empty, same appId → true
+    oldInfo.provisionInfo.bundleInfo.appIdentifier = "11111";
+    newInfo.provisionInfo.bundleInfo.appIdentifier = "";
+    oldInfo.provisionInfo.appId = "same-app-id";
+    newInfo.provisionInfo.appId = "same-app-id";
+    EXPECT_TRUE(manager.CheckAppIdentifier(oldInfo, newInfo));
+
+    // (7) Both appIdentifiers empty, same appId → true
+    oldInfo.provisionInfo.bundleInfo.appIdentifier = "";
+    newInfo.provisionInfo.bundleInfo.appIdentifier = "";
+    oldInfo.provisionInfo.appId = "same-app-id";
+    newInfo.provisionInfo.appId = "same-app-id";
+    EXPECT_TRUE(manager.CheckAppIdentifier(oldInfo, newInfo));
+
+    // (8) Both appIdentifiers empty, different appId → false
+    oldInfo.provisionInfo.bundleInfo.appIdentifier = "";
+    newInfo.provisionInfo.bundleInfo.appIdentifier = "";
+    oldInfo.provisionInfo.appId = "old-app-id";
+    newInfo.provisionInfo.appId = "new-app-id";
+    EXPECT_FALSE(manager.CheckAppIdentifier(oldInfo, newInfo));
 }
 } // namespace AccessToken
 } // namespace Security

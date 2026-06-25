@@ -57,14 +57,30 @@ int32_t FormStateObserverStub::OnRemoteRequest(
 
 int32_t FormStateObserverStub::HandleNotifyWhetherFormsVisible(MessageParcel &data, MessageParcel &reply)
 {
-    FormVisibilityType visibleType = static_cast<FormVisibilityType>(data.ReadInt32());
-    std::string bundleName = data.ReadString();
-    std::vector<FormInstance> formInstances;
-    int32_t infoSize = data.ReadInt32();
+    int32_t visibleTypeValue;
+    if (!data.ReadInt32(visibleTypeValue)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Read visibleType failed!");
+        return ERR_READ_PARCEL_FAILED;
+    }
+    FormVisibilityType visibleType = static_cast<FormVisibilityType>(visibleTypeValue);
+
+    std::string bundleName;
+    if (!data.ReadString(bundleName)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Read bundleName failed!");
+        return ERR_READ_PARCEL_FAILED;
+    }
+
+    int32_t infoSize;
+    if (!data.ReadInt32(infoSize)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Read infoSize failed!");
+        return ERR_READ_PARCEL_FAILED;
+    }
     if (infoSize < 0 || infoSize > MAX_ALLOW_SIZE) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Invalid size: %{public}d.", infoSize);
         return ERR_OVERSIZE;
     }
+
+    std::vector<FormInstance> formInstances;
     for (int32_t i = 0; i < infoSize; i++) {
         std::unique_ptr<FormInstance> info(data.ReadParcelable<FormInstance>());
         if (info == nullptr) {

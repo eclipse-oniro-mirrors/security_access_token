@@ -15,6 +15,7 @@
 
 #include "accesstoken_manager_service.h"
 
+#include <memory>
 #include <mutex>
 #include <stack>
 #include <unordered_set>
@@ -23,6 +24,8 @@
 #include "access_token.h"
 #include "access_token_db_operator.h"
 #include "access_token_error.h"
+#include "bundle_infos_rawdata_helper.h"
+#include "check_hap_sign_result_rawdata_helper.h"
 #include "claw_permission_info.h"
 #include "accesstoken_common_log.h"
 #include "accesstoken_dfx_define.h"
@@ -39,6 +42,7 @@
 #include "claw_token_info_manager.h"
 #include "data_usage_dfx.h"
 #include "data_validator.h"
+#include "delete_bundle_manager.h"
 #include "hap_token_info.h"
 #include "hap_token_info_inner.h"
 #include "hisysevent_adapter.h"
@@ -51,6 +55,9 @@
 #endif
 #include "ipc_skeleton.h"
 #include "libraryloader.h"
+#if defined(SPM_DATA_ENABLE) && defined(IS_SUPPORT_HAP_RUNNING)
+#include "install_session_manager.h"
+#endif
 #include "memory_guard.h"
 #include "parameter.h"
 #include "parameters.h"
@@ -101,6 +108,7 @@ static constexpr int MAX_PERMISSION_SIZE = 1024;
 #ifdef SUPPORT_MANAGE_USER_POLICY
 static constexpr int MAX_SET_USER_POLICY_SIZE = 200;
 #endif
+const std::string GET_TRUSTED_BUNDLE_INFO = "ohos.permission.GET_TRUSTED_BUNDLE_INFO";
 const std::string GRANT_SENSITIVE_PERMISSIONS = "ohos.permission.GRANT_SENSITIVE_PERMISSIONS";
 const std::string REVOKE_SENSITIVE_PERMISSIONS = "ohos.permission.REVOKE_SENSITIVE_PERMISSIONS";
 const std::string GET_SENSITIVE_PERMISSIONS = "ohos.permission.GET_SENSITIVE_PERMISSIONS";
@@ -197,10 +205,14 @@ bool IsCliInfoValid(const CliInfo& info)
         (info.subCliName.empty() || info.subCliName.length() <= MAX_CLAW_SUB_CLI_NAME_LEN);
 }
 
-bool AreCliInfosValid(const std::vector<CliInfoParcel>& cliInfoList)
+bool AreCliInfosValid(const std::vector<CliInfoIdl>& cliInfoList)
 {
     for (const auto& info : cliInfoList) {
-        if (!IsCliInfoValid(info.cliInfo)) {
+        CliInfo cliInfo = {
+            .cliName = info.cliName,
+            .subCliName = info.subCliName,
+        };
+        if (!IsCliInfoValid(cliInfo)) {
             return false;
         }
     }
@@ -250,14 +262,77 @@ PermissionOper HandlePermissionDialogCap(AccessTokenID tokenID, std::vector<Perm
     return PASS_OPER;
 }
 
-bool AreCliAuthInfosValid(const std::vector<CliAuthInfoParcel>& authInfoList)
+PermissionDecisionStatusIdl ConvertPermissionDecisionStatus(PermissionDecisionStatus status)
+{
+    return static_cast<PermissionDecisionStatusIdl>(status);
+}
+
+CliAuthInfo ConvertCliAuthInfoIdl(const CliAuthInfoIdl& authInfoIdl)
+{
+    CliAuthInfo authInfo;
+    authInfo.cliInfo = {
+        .cliName = authInfoIdl.cliInfo.cliName,
+        .subCliName = authInfoIdl.cliInfo.subCliName,
+    };
+    authInfo.permissionNames = authInfoIdl.permissionNames;
+    authInfo.authorizationResults.assign(
+        authInfoIdl.authorizationResults.begin(), authInfoIdl.authorizationResults.end());
+    return authInfo;
+}
+
+CliPermissionsResultIdl ConvertCliPermissionsResult(const CliPermissionsResult& result)
+{
+    CliPermissionsResultIdl resultIdl;
+    resultIdl.permList.reserve(result.permList.size());
+    for (const auto& permResult : result.permList) {
+        CliCommandPermissionResultIdl permResultIdl;
+        permResultIdl.requiredCliPermissions.reserve(permResult.requiredCliPermissions.size());
+        for (const auto& cliPermDetail : permResult.requiredCliPermissions) {
+            permResultIdl.requiredCliPermissions.emplace_back(CliPermissionDetailIdl {
+                .requiredCliPermission = cliPermDetail.requiredCliPermission,
+                .cliPermissionStatus = ConvertPermissionDecisionStatus(cliPermDetail.cliPermissionStatus),
+                .usedPermissions = cliPermDetail.usedPermissions,
+            });
+        }
+        resultIdl.permList.emplace_back(std::move(permResultIdl));
+    }
+    return resultIdl;
+}
+
+PermissionDialogResultIdl ConvertPermissionDialogResult(const PermissionDialogResult& result)
+{
+    PermissionDialogResultIdl resultIdl;
+    resultIdl.detailList.reserve(result.detailList.size());
+    for (const auto& detail : result.detailList) {
+        PermissionDialogDetailIdl detailIdl;
+        detailIdl.needPermissionDialog = detail.needPermissionDialog;
+        detailIdl.permissionNameList = detail.permissionNameList;
+        detailIdl.authResult = detail.authResult;
+        detailIdl.statusList.reserve(detail.statusList.size());
+        for (const auto& status : detail.statusList) {
+            detailIdl.statusList.emplace_back(ConvertPermissionDecisionStatus(status));
+        }
+        resultIdl.detailList.emplace_back(std::move(detailIdl));
+    }
+    return resultIdl;
+}
+
+ToolAuthResultIdl ConvertToolAuthResult(const ToolAuthResult& result)
+{
+    return { .authResults = result.authResults };
+}
+
+bool AreCliAuthInfosValid(const std::vector<CliAuthInfoIdl>& authInfoList)
 {
     for (const auto& info : authInfoList) {
-        if (!IsCliInfoValid(info.info.cliInfo) ||
-            (info.info.permissionNames.size() != info.info.authorizationResults.size())) {
+        CliInfo cliInfo = {
+            .cliName = info.cliInfo.cliName,
+            .subCliName = info.cliInfo.subCliName,
+        };
+        if (!IsCliInfoValid(cliInfo) || (info.permissionNames.size() != info.authorizationResults.size())) {
             return false;
         }
-        for (const auto& permissionName : info.info.permissionNames) {
+        for (const auto& permissionName : info.permissionNames) {
             if (permissionName.empty() || permissionName.length() > MAX_CLAW_CLI_NAME_LEN) {
                 return false;
             }
@@ -367,39 +442,6 @@ int32_t FillCliDialogAuthResultsIfNoDialog(AccessTokenID hostTokenID, const std:
     return RET_SUCCESS;
 }
 
-int32_t FillSkillDialogAuthResultsIfNoDialog(AccessTokenID hostTokenID, const std::string& agentID,
-    const std::vector<SkillInfo>& skillInfos, PermissionDialogResult& result)
-{
-    (void)agentID;
-    if (!HasDetailWithoutDialog(result.detailList)) {
-        return RET_SUCCESS;
-    }
-    std::vector<size_t> detailIndexes;
-    std::vector<SkillAuthInfo> authInfoList;
-    for (size_t i = 0; i < result.detailList.size() && i < skillInfos.size(); ++i) {
-        if (result.detailList[i].needPermissionDialog) {
-            continue;
-        }
-        SkillAuthInfo authInfo;
-        authInfo.skillInfo = skillInfos[i];
-        authInfo.permissionNames = result.detailList[i].permissionNameList;
-        authInfo.authorizationResults = BuildCliAuthorizationResults(authInfo.permissionNames, result.detailList[i]);
-        detailIndexes.emplace_back(i);
-        authInfoList.emplace_back(authInfo);
-    }
-    std::vector<std::string> authResults;
-    int32_t ret = ClawTicketManager::GetInstance().GenerateSkillTicket(hostTokenID, authInfoList, authResults);
-    if (ret != RET_SUCCESS) {
-        LOGE(ATM_DOMAIN, ATM_TAG,
-            "Generate skill dialog auth result failed, tokenId=%{public}u, ret=%{public}d.", hostTokenID, ret);
-        return ret;
-    }
-    for (size_t i = 0; i < detailIndexes.size() && i < authResults.size(); ++i) {
-        result.detailList[detailIndexes[i]].authResult = authResults[i];
-    }
-    return RET_SUCCESS;
-}
-
 int32_t ValidateHostTokenId(AccessTokenID hostTokenID)
 {
     if (hostTokenID == INVALID_TOKENID) {
@@ -418,12 +460,27 @@ int32_t ValidateClawCliAccess(AccessTokenID hostTokenID, const std::vector<CliIn
     return ClawPermissionDecisionEngine::GetInstance().ValidateClawCliAccess(hostTokenID, cliInfos);
 }
 
-std::vector<CliInfo> ConvertCliInfoParcels(const std::vector<CliInfoParcel>& cliInfoList)
+CliInitInfo ConvertCliInitInfoIdl(const CliInitInfoIdl& initInfoIdl)
+{
+    return {
+        .hostTokenId = initInfoIdl.hostTokenId,
+        .challenge = initInfoIdl.challenge,
+        .cliInfo = {
+            .cliName = initInfoIdl.cliInfo.cliName,
+            .subCliName = initInfoIdl.cliInfo.subCliName,
+        },
+    };
+}
+
+std::vector<CliInfo> ConvertCliInfoIdls(const std::vector<CliInfoIdl>& cliInfoList)
 {
     std::vector<CliInfo> cliInfos;
     cliInfos.reserve(cliInfoList.size());
-    for (const auto& cliInfoParcel : cliInfoList) {
-        cliInfos.emplace_back(cliInfoParcel.cliInfo);
+    for (const auto& cliInfoIdl : cliInfoList) {
+        cliInfos.emplace_back(CliInfo {
+            .cliName = cliInfoIdl.cliName,
+            .subCliName = cliInfoIdl.subCliName,
+        });
     }
     return cliInfos;
 }
@@ -442,18 +499,13 @@ bool IsCliAuthInfoValid(const CliAuthInfo& info)
     return info.permissionNames.size() == info.authorizationResults.size();
 }
 
-bool IsSkillAuthInfoValid(const SkillAuthInfo& info)
-{
-    return info.permissionNames.size() == info.authorizationResults.size();
-}
-
-int32_t BuildCliTicketAuthInfos(AccessTokenID hostTokenID, const std::vector<CliAuthInfoParcel>& authInfoList,
+int32_t BuildCliTicketAuthInfos(AccessTokenID hostTokenID, const std::vector<CliAuthInfoIdl>& authInfoList,
     std::vector<CliAuthInfo>& authInfos)
 {
     std::vector<CliAuthInfo> rawAuthInfoList;
     rawAuthInfoList.reserve(authInfoList.size());
-    for (const auto& authInfoParcel : authInfoList) {
-        rawAuthInfoList.emplace_back(authInfoParcel.info);
+    for (const auto& authInfoIdl : authInfoList) {
+        rawAuthInfoList.emplace_back(ConvertCliAuthInfoIdl(authInfoIdl));
     }
     return BuildCliTicketAuthInfos(hostTokenID, rawAuthInfoList, authInfos);
 }
@@ -605,7 +657,7 @@ int AccessTokenManagerService::VerifyAccessToken(AccessTokenID tokenID, const st
     return res;
 }
 
-int32_t AccessTokenManagerService::InitCliToken(const CliInitInfoParcel& initInfoParcel, uint64_t& fullTokenId,
+int32_t AccessTokenManagerService::InitCliToken(const CliInitInfoIdl& initInfoIdl, uint64_t& fullTokenId,
     std::vector<PermissionWithValueIdl>& kernelPermIdlList)
 {
     std::lock_guard<std::mutex> userPolicyUpdateGuard(g_userPolicyUpdateMutex);
@@ -617,31 +669,7 @@ int32_t AccessTokenManagerService::InitCliToken(const CliInitInfoParcel& initInf
     AccessTokenIDEx tokenIdEx = {0};
     std::vector<std::string> kernelPermList;
     int32_t ret = ToolTokenInfoManager::GetInstance().InitCliToken(
-        initInfoParcel.cliInitInfo, IPCSkeleton::GetCallingPid(), tokenIdEx, kernelPermList);
-    if (ret != RET_SUCCESS) {
-        return ret;
-    }
-    fullTokenId = tokenIdEx.tokenIDEx;
-    for (const auto& permissionName : kernelPermList) {
-        PermissionWithValueIdl item;
-        item.permissionName = permissionName;
-        kernelPermIdlList.emplace_back(item);
-    }
-    return RET_SUCCESS;
-}
-
-int32_t AccessTokenManagerService::InitSkillToken(const SkillInitInfoParcel& initInfoParcel, uint64_t& fullTokenId,
-    std::vector<PermissionWithValueIdl>& kernelPermIdlList)
-{
-    std::lock_guard<std::mutex> userPolicyUpdateGuard(g_userPolicyUpdateMutex);
-    kernelPermIdlList.clear();
-    if (IPCSkeleton::GetCallingUid() != AIMGR_UID) {
-        return AccessTokenError::ERR_PERMISSION_DENIED;
-    }
-    AccessTokenIDEx tokenIdEx = {0};
-    std::vector<std::string> kernelPermList;
-    int32_t ret = ToolTokenInfoManager::GetInstance().InitSkillToken(
-        initInfoParcel.skillInitInfo, IPCSkeleton::GetCallingPid(), tokenIdEx, kernelPermList);
+        ConvertCliInitInfoIdl(initInfoIdl), IPCSkeleton::GetCallingPid(), tokenIdEx, kernelPermList);
     if (ret != RET_SUCCESS) {
         return ret;
     }
@@ -661,22 +689,6 @@ int32_t AccessTokenManagerService::DeleteToolTokenByPid(int32_t pid)
         return AccessTokenError::ERR_PERMISSION_DENIED;
     }
     return ToolTokenInfoManager::GetInstance().DeleteToolTokenByPid(pid);
-}
-
-int32_t AccessTokenManagerService::GetCliTokenInfo(AccessTokenID tokenId, CliInfoResultParcel& infoParcel)
-{
-    if (!IsNativeProcessCalling()) {
-        return AccessTokenError::ERR_PERMISSION_DENIED;
-    }
-    return ToolTokenInfoManager::GetInstance().GetCliTokenInfo(tokenId, infoParcel.cliTokenInfo);
-}
-
-int32_t AccessTokenManagerService::GetSkillTokenInfo(AccessTokenID tokenId, SkillInfoResultParcel& infoParcel)
-{
-    if (!IsNativeProcessCalling()) {
-        return AccessTokenError::ERR_PERMISSION_DENIED;
-    }
-    return ToolTokenInfoManager::GetInstance().GetSkillTokenInfo(tokenId, infoParcel.skillTokenInfo);
 }
 
 int32_t AccessTokenManagerService::GetHostTokenId(AccessTokenID toolTokenId, AccessTokenID& hostTokenId)
@@ -1013,7 +1025,8 @@ int AccessTokenManagerService::GrantPermission(
     }
     
     if (!IsPrivilegedCalling() &&
-        VerifyAccessToken(callingTokenID, GRANT_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {
+        VerifyAccessToken(callingTokenID, GRANT_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED &&
+        !IsShellCallingForDebugHap(tokenID)) {
         ReportPermissionVerifyEvent(callingTokenID, permissionName);
         LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", callingTokenID);
         return AccessTokenError::ERR_PERMISSION_DENIED;
@@ -1039,7 +1052,8 @@ int AccessTokenManagerService::RevokePermission(
     }
 
     if (!IsPrivilegedCalling() &&
-        VerifyAccessToken(callingTokenID, REVOKE_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {
+        VerifyAccessToken(callingTokenID, REVOKE_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED &&
+        !IsShellCallingForDebugHap(tokenID)) {
         ReportPermissionVerifyEvent(callingTokenID, permissionName);
         LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", callingTokenID);
         return AccessTokenError::ERR_PERMISSION_DENIED;
@@ -1079,14 +1093,57 @@ int AccessTokenManagerService::ClearUserGrantedPermissionState(AccessTokenID tok
     LOGI(ATM_DOMAIN, ATM_TAG, "TokenID: %{public}d, callerPid %{public}d.", tokenID, IPCSkeleton::GetCallingPid());
     uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
     if (!IsPrivilegedCalling() &&
-        VerifyAccessToken(callingTokenID, REVOKE_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {
+        VerifyAccessToken(callingTokenID, REVOKE_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED &&
+        !IsShellCallingForDebugHap(tokenID)) {
         ReportPermissionVerifyEvent(callingTokenID, "");
         LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", callingTokenID);
         return AccessTokenError::ERR_PERMISSION_DENIED;
     }
-
+    if (!AccessTokenInfoManager::GetInstance().IsHapTokenIdExist(tokenID)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "TokenID %{public}u does not exist or is not a valid hap token.", tokenID);
+        return AccessTokenError::ERR_TOKENID_NOT_EXIST;
+    }
     AccessTokenInfoManager::GetInstance().ClearUserGrantedPermissionState(tokenID);
     AccessTokenInfoManager::GetInstance().SetPermDialogCap(tokenID, false);
+    return RET_SUCCESS;
+}
+
+int32_t AccessTokenManagerService::ClearUserGrantedPermStateByBundle(const std::string& bundleName)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "Bundle %{public}s, callerPid %{public}d.", bundleName.c_str(),
+        IPCSkeleton::GetCallingPid());
+    AccessTokenID callingTokenID = IPCSkeleton::GetCallingTokenID();
+    if (!IsShellProcessCalling()) {
+        ReportPermissionVerifyEvent(callingTokenID, "");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Caller is not shell, callerTokenID=%{public}d.", callingTokenID);
+        return AccessTokenError::ERR_PERMISSION_DENIED;
+    }
+    if (!DataValidator::IsBundleNameValid(bundleName)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Bundle name is invalid.");
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    std::vector<AccessTokenID> tokenIdList;
+    int32_t ret = AccessTokenInfoManager::GetInstance().GetHapTokenIdListByBundleName(bundleName, tokenIdList);
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
+
+    bool isCleared = false;
+    for (const auto tokenID : tokenIdList) {
+#ifdef ATM_BUILD_VARIANT_USER_ENABLE
+        if (!IsDebugHapToken(tokenID)) {
+            continue;
+        }
+#endif
+        AccessTokenInfoManager::GetInstance().ClearUserGrantedPermissionState(tokenID);
+        AccessTokenInfoManager::GetInstance().SetPermDialogCap(tokenID, false);
+        isCleared = true;
+    }
+    if (!isCleared) {
+        ReportPermissionVerifyEvent(callingTokenID, "");
+        LOGE(ATM_DOMAIN, ATM_TAG, "No debug hap can be cleared, bundle=%{public}s.", bundleName.c_str());
+        return AccessTokenError::ERR_PERMISSION_DENIED;
+    }
     return RET_SUCCESS;
 }
 
@@ -1281,6 +1338,7 @@ void AccessTokenManagerService::ReportUpdateHap(AccessTokenIDEx fullTokenId, con
     dfxInfo.bundleName = info.bundleName;
     dfxInfo.instIndex = info.instIndex;
     dfxInfo.duration = TimeUtil::GetCurrentTimestamp() - beginTime;
+    dfxInfo.sceneCode = CommonSceneCode::AT_COMMON_FINISH;
 
     DumpEventInfo(policy, dfxInfo);
     ReportSysEventUpdateHap(errorCode, dfxInfo);
@@ -1397,6 +1455,94 @@ int AccessTokenManagerService::DeleteToken(AccessTokenID tokenID, bool isTokenRe
     return errorCode;
 }
 
+int32_t AccessTokenManagerService::DeleteIdentityCore(AccessTokenID tokenID, const std::string& bundleName,
+    ReservedType reservedType, int32_t& sceneCode)
+{
+    // Case 1: tokenID is INVALID_TOKENID
+    if (tokenID == INVALID_TOKENID) {
+        sceneCode = static_cast<int32_t>(AT_DELETE_ALL_BUNDLE);
+        if (reservedType != ReservedType::NONE) {
+            LOGE(ATM_DOMAIN, ATM_TAG,
+                "Invalid param: reservedType must be NONE when tokenID is INVALID.");
+            return AccessTokenError::ERR_PARAM_INVALID;
+        }
+        // Delete all reserved tokens for this bundle and package info
+        std::vector<AccessTokenID> activeTokens;
+        int32_t ret = DeleteBundleManager::GetInstance().DeleteBundleAndAllTokens(bundleName, activeTokens);
+        if (ret != RET_SUCCESS) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to delete bundle %{public}s, err %{public}d.",
+                bundleName.c_str(), ret);
+            return ret;
+        }
+
+        // Clean up cache for active tokens
+        for (const auto& tokenId : activeTokens) {
+            AccessTokenInfoManager::GetInstance().CommitDeleteHapCache(tokenId, bundleName);
+            // Release TokenId for active tokens
+            AccessTokenIDManager::GetInstance().ReleaseTokenId(tokenId);
+        }
+        return RET_SUCCESS;
+    }
+
+    // Case 2: tokenID is valid
+    // Check if it's a HAP token
+    if (TokenIDAttributes::GetTokenIdTypeEnum(tokenID) != TOKEN_HAP) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Token %{public}u is not a HAP token.", tokenID);
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+
+    // Case 2.1: tokenID is a ReservedTokenId
+    if (AccessTokenIDManager::GetInstance().IsReservedTokenId(tokenID)) {
+        sceneCode = static_cast<int32_t>(AT_DELETE_RESERVED_TOKEN);
+        if (reservedType != ReservedType::NONE) {
+            LOGE(ATM_DOMAIN, ATM_TAG,
+                "Invalid param: reservedType must be NONE for reserved tokenID.");
+            return AccessTokenError::ERR_PARAM_INVALID;
+        }
+        // Delete this reserved token completely
+        return DeleteBundleManager::GetInstance().DeleteReservedToken(tokenID, bundleName);
+    }
+
+    if (reservedType == ReservedType::RESERVED_IDENTITY) {
+        sceneCode = static_cast<int32_t>(AT_DELETE_KEEP_TOKEN_FINISH);
+    } else if (reservedType == ReservedType::RESERVED_DATA) {
+        sceneCode = static_cast<int32_t>(AT_DELETE_KEEP_DATA);
+    } else {
+        sceneCode = static_cast<int32_t>(AT_DELETE_NORMAL);
+    }
+    // Case 2.2: tokenID is a normal (non-reserved) token
+    // Match bundleName and call DeleteIdentity
+    return AccessTokenInfoManager::GetInstance().DeleteIdentity(tokenID, bundleName, reservedType);
+}
+
+int32_t AccessTokenManagerService::DeleteIdentity(
+    AccessTokenID tokenID, const std::string& bundleName, ReservedTypeIdl type)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "Id %{public}d, bundle %{public}s, type %{public}d, callerPid %{public}d.",
+        tokenID, bundleName.c_str(), type, IPCSkeleton::GetCallingPid());
+    AccessTokenID callingTokenID = IPCSkeleton::GetCallingTokenID();
+    if (VerifyAccessToken(callingTokenID, MANAGE_HAP_TOKENID_PERMISSION) == PERMISSION_DENIED) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", callingTokenID);
+        return AccessTokenError::ERR_PERMISSION_DENIED;
+    }
+
+    if (bundleName.empty()) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Invalid param: bundle empty.");
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+
+    HapDfxInfo dfxInfo = {};
+    dfxInfo.tokenId = tokenID;
+    dfxInfo.ipcCode = static_cast<int32_t>(IAccessTokenManagerIpcCode::COMMAND_DELETE_IDENTITY);
+    ReservedType reservedType = static_cast<ReservedType>(type);
+    int32_t sceneCode = static_cast<int32_t>(AT_DELETE_COMMON_FINISH);
+    int64_t beginTime = TimeUtil::GetCurrentTimestamp();
+    int32_t ret = DeleteIdentityCore(tokenID, bundleName, reservedType, sceneCode);
+    dfxInfo.duration = TimeUtil::GetCurrentTimestamp() - beginTime;
+    ReportSysEventDelHap(ret, static_cast<int32_t>(sceneCode), dfxInfo);
+    return ret;
+}
+
 int AccessTokenManagerService::GetTokenType(AccessTokenID tokenID)
 {
     LOGD(ATM_DOMAIN, ATM_TAG, "Id %{public}d.", tokenID);
@@ -1431,7 +1577,7 @@ int32_t AccessTokenManagerService::GetHapTokenID(
     if (res != RET_SUCCESS) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Pre verify bundle failed, res %{public}d.", res);
         fullTokenId = 0;
-        return res;
+        return ERR_OK;
     }
     AccessTokenIDEx tokenIdEx = AccessTokenInfoManager::GetInstance().GetHapTokenID(userID, bundleName, instIndex);
     fullTokenId = tokenIdEx.tokenIDEx;
@@ -1580,12 +1726,26 @@ int AccessTokenManagerService::GetHapTokenInfo(AccessTokenID tokenID, HapTokenIn
 {
     LOGD(ATM_DOMAIN, ATM_TAG, "Id %{public}d.", tokenID);
 
-    if (!IsNativeProcessCalling() && !IsPrivilegedCalling()) {
+    if (IsNativeProcessCalling() || IsPrivilegedCalling()) {
+        return AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenID, infoParcel.hapTokenInfoParams);
+    }
+
+    if (!IsShellProcessCalling()) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", IPCSkeleton::GetCallingTokenID());
         return AccessTokenError::ERR_PERMISSION_DENIED;
     }
 
-    return AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenID, infoParcel.hapTokenInfoParams);
+    std::shared_ptr<HapTokenInfoInner> infoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenID);
+    if (infoPtr == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Token %{public}u is not exist.", tokenID);
+        return AccessTokenError::ERR_TOKENID_NOT_EXIST;
+    }
+    if (!TokenIDAttributes::IsDebugAppAttr(infoPtr->GetAttr())) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", IPCSkeleton::GetCallingTokenID());
+        return AccessTokenError::ERR_PERMISSION_DENIED;
+    }
+    infoPtr->TranslateToHapTokenInfo(infoParcel.hapTokenInfoParams);
+    return RET_SUCCESS;
 }
 
 int32_t AccessTokenManagerService::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfoCompatIdl& infoIdl)
@@ -1927,13 +2087,18 @@ int32_t AccessTokenManagerService::RefreshUserPolicyPermState(const std::vector<
         return RET_SUCCESS;
     }
 
-    int32_t ret = AccessTokenInfoManager::GetInstance().RefreshUserPolicyFlag(changedPolicyList);
+    std::vector<UserPolicyRefreshSnapshot> hapSnapshots;
+    int32_t ret = AccessTokenInfoManager::GetInstance().RefreshUserPolicyFlag(changedPolicyList, hapSnapshots);
     if (ret != RET_SUCCESS) {
+        AccessTokenInfoManager::GetInstance().RollbackUserPolicyFlag(hapSnapshots);
         return ret;
     }
 
-    ret = ToolTokenInfoManager::GetInstance().RefreshUserPolicyFlag(changedPolicyList);
+    std::vector<UserPolicyRefreshSnapshot> toolSnapshots;
+    ret = ToolTokenInfoManager::GetInstance().RefreshUserPolicyFlag(changedPolicyList, toolSnapshots);
     if (ret != RET_SUCCESS) {
+        ToolTokenInfoManager::GetInstance().RollbackUserPolicyFlag(toolSnapshots);
+        AccessTokenInfoManager::GetInstance().RollbackUserPolicyFlag(hapSnapshots);
         return ret;
     }
     return RET_SUCCESS;
@@ -1975,11 +2140,7 @@ int32_t AccessTokenManagerService::SetUserPolicy(const std::vector<UserPermissio
     if (ret != RET_SUCCESS) {
         return ret;
     }
-    ret = RefreshUserPolicyPermState(changedPolicyList);
-    if (ret != RET_SUCCESS) {
-        return ret;
-    }
-    return RET_SUCCESS;
+    return RefreshUserPolicyPermState(changedPolicyList);
 }
 
 int32_t AccessTokenManagerService::ClearUserPolicy(const std::vector<std::string>& permissionList)
@@ -2209,15 +2370,6 @@ int32_t AccessTokenManagerService::MigrateInstalledBundles(const std::vector<Mig
     return AccessTokenMigrationManager::GetInstance().MigrateInstalledBundles(migratedInfoList, results);
 }
 
-int32_t AccessTokenManagerService::PreMigrateUIDList(const std::vector<int32_t>& uidList)
-{
-    int32_t ret = CheckHapManagerPermission();
-    if (ret != RET_SUCCESS) {
-        return ret;
-    }
-    return AccessTokenMigrationManager::GetInstance().PreMigrateUIDList(uidList);
-}
-
 int32_t AccessTokenManagerService::FinishMigration()
 {
     int32_t ret = CheckHapManagerPermission();
@@ -2320,6 +2472,31 @@ bool AccessTokenManagerService::IsShellProcessCalling()
     return this->GetTokenType(tokenCaller) == TOKEN_SHELL;
 }
 
+bool AccessTokenManagerService::IsShellCallingForDebugHap(AccessTokenID tokenID)
+{
+    if (!IsShellProcessCalling()) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Caller is not shell, callerTokenID=%{public}d.",
+            IPCSkeleton::GetCallingTokenID());
+        return false;
+    }
+
+    return IsDebugHapToken(tokenID);
+}
+
+bool AccessTokenManagerService::IsDebugHapToken(AccessTokenID tokenID)
+{
+    std::shared_ptr<HapTokenInfoInner> infoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenID);
+    if (infoPtr == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "TokenID %{public}d is not a valid hap token.", tokenID);
+        return false;
+    }
+    if (!TokenIDAttributes::IsDebugAppAttr(infoPtr->GetAttr())) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "TokenID %{public}d is not a debug hap token.", tokenID);
+        return false;
+    }
+    return true;
+}
+
 bool AccessTokenManagerService::IsSystemAppCalling() const
 {
     uint64_t fullTokenId = IPCSkeleton::GetCallingFullTokenID();
@@ -2327,7 +2504,7 @@ bool AccessTokenManagerService::IsSystemAppCalling() const
 }
 
 int32_t AccessTokenManagerService::ValidateGetCliPermissionRequestInfoCaller(
-    AccessTokenID callingTokenId, const std::string& agentID, const std::vector<CliInfoParcel>& cliInfoList)
+    AccessTokenID callingTokenId, const std::string& agentID, const std::vector<CliInfoIdl>& cliInfoList)
 {
     if (!IsAgentIdValid(agentID) || !IsCliInfoListSizeValid(cliInfoList.size()) ||
         !AreCliInfosValid(cliInfoList)) {
@@ -2351,7 +2528,7 @@ int32_t AccessTokenManagerService::ValidateGetCliPermissionRequestInfoCaller(
 }
 
 int32_t AccessTokenManagerService::ValidateGetCliPermissionsCaller(AccessTokenID callingTokenId,
-    AccessTokenID hostTokenID, const std::string& agentID, const std::vector<CliInfoParcel>& cliInfoList)
+    AccessTokenID hostTokenID, const std::string& agentID, const std::vector<CliInfoIdl>& cliInfoList)
 {
     int32_t ret = ValidateHostTokenId(hostTokenID);
     if ((ret != RET_SUCCESS) || !IsAgentIdValid(agentID) || !IsCliInfoListSizeValid(cliInfoList.size()) ||
@@ -2441,6 +2618,22 @@ int32_t AccessTokenManagerService::GetSecCompEnhance(int32_t pid, SecCompEnhance
     enhanceParcel.enhanceData = enhanceData;
     return RET_SUCCESS;
 }
+
+int32_t AccessTokenManagerService::StoreSecCompEnhanceKey(const SecCompEnhanceKeyParcel& enhanceKeyParcel)
+{
+    if (!IsSecCompServiceCalling()) {
+        return AccessTokenError::ERR_PERMISSION_DENIED;
+    }
+    return SecCompEnhanceAgent::GetInstance().StoreSecCompEnhanceKey(enhanceKeyParcel.enhanceKey);
+}
+
+int32_t AccessTokenManagerService::GetSecCompEnhanceKey(SecCompEnhanceKeyParcel& enhanceKeyParcel)
+{
+    if (!IsSecCompServiceCalling()) {
+        return AccessTokenError::ERR_PERMISSION_DENIED;
+    }
+    return SecCompEnhanceAgent::GetInstance().GetSecCompEnhanceKey(enhanceKeyParcel.enhanceKey);
+}
 #endif
 
 ErrCode AccessTokenManagerService::QueryStatusByPermission(const std::vector<uint32_t>& permCodeList,
@@ -2523,16 +2716,252 @@ ErrCode AccessTokenManagerService::QueryStatusByTokenID(const std::vector<uint32
     return RET_SUCCESS;
 }
 
+#if defined(SPM_DATA_ENABLE) && defined(IS_SUPPORT_HAP_RUNNING)
+void TransferBundleHapListFromIdl(const BundleHapListIdl& listIdl, BundleHapList& list)
+{
+    list.hapPaths = listIdl.hapPaths;
+    list.isPreInstalled = listIdl.isPreInstalled;
+    list.userId = listIdl.userId;
+}
+
+void TransferHapBaseInfoFromIdl(const HapBaseInfoIdl& infoIdl, HapBaseInfo& info)
+{
+    info.userID = infoIdl.userID;
+    info.bundleName = infoIdl.bundleName;
+    info.instIndex = infoIdl.instIndex;
+}
+
+void TransferIdentityToIdl(const Identity& identity, IdentityIdl& identityIdl)
+{
+    identityIdl.uid = identity.uid;
+    identityIdl.tokenId = identity.tokenId;
+}
+
+void TransferPreAuthorizationInfoFromIdl(const PreAuthorizationInfoIdl& infoIdl, PreAuthorizationInfo& info)
+{
+    info.permissionName = infoIdl.permissionName;
+    info.userCancelable = infoIdl.userCancelable;
+}
+
+void TransferBundlePolicyFromIdl(const BundlePolicyIdl& policyIdl, BundlePolicy& policy)
+{
+    for (const auto& infoIdl : policyIdl.preAuthorizationInfo) {
+        PreAuthorizationInfo info;
+        TransferPreAuthorizationInfoFromIdl(infoIdl, info);
+        policy.preAuthorizationInfo.emplace_back(info);
+    }
+    policy.dlpType = static_cast<DlpType>(policyIdl.dlpType);
+    policy.isDebugGrant = policyIdl.isDebugGrant;
+}
+
+int32_t AccessTokenManagerService::CheckHapSignInfo(const BundleHapListIdl& list, const sptr<IRemoteObject>& cb,
+    CheckHapSignResultRawdata& result)
+{
+    AccessTokenID tokenID = IPCSkeleton::GetCallingTokenID();
+    if (!IsPrivilegedCalling() &&
+        (VerifyAccessToken(tokenID, MANAGE_HAP_TOKENID_PERMISSION) == PERMISSION_DENIED)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", tokenID);
+        return AccessTokenError::ERR_PERMISSION_DENIED;
+    }
+
+    BundleHapList bundleHapList;
+    TransferBundleHapListFromIdl(list, bundleHapList);
+    int32_t sessionId = 0;
+    std::vector<TrustedBundleInfo> bundleInfoList;
+    HapVerifyResultInfo resultInfo;
+    int32_t ret = InstallSessionManager::GetInstance().CheckHapSignInfo(
+        bundleHapList, cb, sessionId, bundleInfoList, resultInfo);
+    if (!CheckHapSignResultRawdataHelper::WriteToRawData(ret, sessionId, bundleInfoList, resultInfo, result)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteToRawData failed.");
+        return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
+    }
+    
+    return ERR_OK;
+}
+
+int32_t AccessTokenManagerService::CheckHapPermissionInfo(int32_t sessionId, InstallTypeEnumIdl type,
+    HapInfoCheckResultIdl& resultInfoIdl)
+{
+    AccessTokenID tokenID = IPCSkeleton::GetCallingTokenID();
+    if (!IsPrivilegedCalling() &&
+        (VerifyAccessToken(tokenID, MANAGE_HAP_TOKENID_PERMISSION) == PERMISSION_DENIED)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", tokenID);
+        return AccessTokenError::ERR_PERMISSION_DENIED;
+    }
+
+    HapInfoCheckResult checkResult;
+    int32_t ret = InstallSessionManager::GetInstance().CheckHapPermissionInfo(
+        sessionId, static_cast<InstallTypeEnum>(type), checkResult);
+    resultInfoIdl.realResult = ret;
+    if (ret != ERR_OK) {
+        resultInfoIdl.permissionName = checkResult.permCheckResult.permissionName;
+        resultInfoIdl.rule = static_cast<PermissionRulesEnumIdl>(checkResult.permCheckResult.rule);
+    }
+
+    return ERR_OK;
+}
+
+int32_t AccessTokenManagerService::PrepareHapIdentity(int32_t& sessionId, const HapBaseInfoIdl& info,
+    const BundlePolicyIdl& policy, const sptr<IRemoteObject>& cb, IdentityIdl& identity)
+{
+    AccessTokenID tokenID = IPCSkeleton::GetCallingTokenID();
+    if (!IsPrivilegedCalling() &&
+        (VerifyAccessToken(tokenID, MANAGE_HAP_TOKENID_PERMISSION) == PERMISSION_DENIED)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", tokenID);
+        return AccessTokenError::ERR_PERMISSION_DENIED;
+    }
+    HapBaseInfo hapBaseInfo;
+    TransferHapBaseInfoFromIdl(info, hapBaseInfo);
+    BundlePolicy bundlePolicy;
+    TransferBundlePolicyFromIdl(policy, bundlePolicy);
+    Identity ident;
+    int32_t ret = InstallSessionManager::GetInstance().PrepareHapIdentity(
+        sessionId, hapBaseInfo, bundlePolicy, cb, ident);
+    TransferIdentityToIdl(ident, identity);
+    return ret;
+}
+
+int32_t AccessTokenManagerService::UpdateHapPolicy(int32_t sessionId, AccessTokenID tokenId,
+    const BundlePolicyIdl& policy)
+{
+    AccessTokenID tokenID = IPCSkeleton::GetCallingTokenID();
+    if (!IsPrivilegedCalling() &&
+        (VerifyAccessToken(tokenID, MANAGE_HAP_TOKENID_PERMISSION) == PERMISSION_DENIED)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", tokenID);
+        return AccessTokenError::ERR_PERMISSION_DENIED;
+    }
+    BundlePolicy bundlePolicy;
+    TransferBundlePolicyFromIdl(policy, bundlePolicy);
+    return InstallSessionManager::GetInstance().UpdateHapPolicy(sessionId, tokenId, bundlePolicy);
+}
+
+int32_t AccessTokenManagerService::FinishInstall(int32_t sessionId, bool isSuccess,
+    const std::map<std::string, std::string>& modulePathMap)
+{
+    AccessTokenID tokenID = IPCSkeleton::GetCallingTokenID();
+    if (!IsPrivilegedCalling() &&
+        (VerifyAccessToken(tokenID, MANAGE_HAP_TOKENID_PERMISSION) == PERMISSION_DENIED)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", tokenID);
+        return AccessTokenError::ERR_PERMISSION_DENIED;
+    }
+    int32_t ret = InstallSessionManager::GetInstance().FinishInstall(sessionId, isSuccess, modulePathMap);
+    return ret;
+}
+
+int32_t AccessTokenManagerService::GetCacheSignInfoBySessionId(int32_t sessionId,
+    BundleInfosRawdata& bundleInfos)
+{
+    AccessTokenID tokenID = IPCSkeleton::GetCallingTokenID();
+    if (!IsPrivilegedCalling() && (VerifyAccessToken(tokenID, GET_TRUSTED_BUNDLE_INFO) == PERMISSION_DENIED)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", tokenID);
+        return AccessTokenError::ERR_PERMISSION_DENIED;
+    }
+    std::vector<TrustedBundleInfo> bundleInfoList;
+    int32_t ret = InstallSessionManager::GetInstance().GetCacheSignInfoBySessionId(sessionId, bundleInfoList);
+    
+    if (!BundleInfosRawdataHelper::WriteToRawData(bundleInfoList, bundleInfos)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteToRawData failed.");
+        return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
+    }
+    
+    return ret;
+}
+
+int32_t AccessTokenManagerService::GetHapSignInfo(const std::string& bundleName,
+    BundleInfosRawdata& bundleInfos)
+{
+    AccessTokenID tokenID = IPCSkeleton::GetCallingTokenID();
+    if (!IsPrivilegedCalling() && (VerifyAccessToken(tokenID, GET_TRUSTED_BUNDLE_INFO) == PERMISSION_DENIED)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", tokenID);
+        return AccessTokenError::ERR_PERMISSION_DENIED;
+    }
+    std::vector<TrustedBundleInfo> bundleInfoList;
+    int32_t ret = InstallSessionManager::GetInstance().GetHapSignInfo(bundleName, bundleInfoList);
+    
+    if (!BundleInfosRawdataHelper::WriteToRawData(bundleInfoList, bundleInfos)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "WriteToRawData failed.");
+        return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
+    }
+    
+    return ret;
+}
+
+int32_t AccessTokenManagerService::GetCachePolicyBySessionId(int32_t sessionId, const std::string& bundleName,
+    BundlePolicyInfoIdl& bundlePolicyInfoIdl)
+{
+    AccessTokenID tokenID = IPCSkeleton::GetCallingTokenID();
+    if (!IsPrivilegedCalling() && (VerifyAccessToken(tokenID, GET_TRUSTED_BUNDLE_INFO) == PERMISSION_DENIED)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", tokenID);
+        return AccessTokenError::ERR_PERMISSION_DENIED;
+    }
+
+    BundlePolicyInfo bundlePolicyInfo;
+    int32_t ret = InstallSessionManager::GetInstance().GetCachePolicyBySessionId(
+        sessionId, bundleName, bundlePolicyInfo);
+    bundlePolicyInfoIdl.reqPermissions = bundlePolicyInfo.reqPermissions;
+
+    return ret;
+}
+#else
+int32_t AccessTokenManagerService::CheckHapSignInfo(const BundleHapListIdl& list, const sptr<IRemoteObject>& cb,
+    CheckHapSignResultRawdata& result)
+{
+    return RET_SUCCESS;
+}
+
+int32_t AccessTokenManagerService::CheckHapPermissionInfo(int32_t sessionId, InstallTypeEnumIdl type,
+    HapInfoCheckResultIdl& resultInfoIdl)
+{
+    return RET_SUCCESS;
+}
+
+int32_t AccessTokenManagerService::PrepareHapIdentity(int32_t& sessionId, const HapBaseInfoIdl& info,
+    const BundlePolicyIdl& policy, const sptr<IRemoteObject>& cb, IdentityIdl& identity)
+{
+    return RET_SUCCESS;
+}
+
+int32_t AccessTokenManagerService::UpdateHapPolicy(int32_t sessionId, AccessTokenID tokenId,
+    const BundlePolicyIdl& policy)
+{
+    return RET_SUCCESS;
+}
+
+int32_t AccessTokenManagerService::FinishInstall(int32_t sessionId, bool isSuccess,
+    const std::map<std::string, std::string>& modulePathMap)
+{
+    return RET_SUCCESS;
+}
+
+int32_t AccessTokenManagerService::GetCacheSignInfoBySessionId(int32_t sessionId,
+    BundleInfosRawdata& bundleInfos)
+{
+    return RET_SUCCESS;
+}
+
+int32_t AccessTokenManagerService::GetHapSignInfo(const std::string& bundleName,
+    BundleInfosRawdata& bundleInfos)
+{
+    return RET_SUCCESS;
+}
+
+int32_t AccessTokenManagerService::GetCachePolicyBySessionId(int32_t sessionId, const std::string& bundleName,
+    BundlePolicyInfoIdl& bundlePolicyInfoIdl)
+{
+    return RET_SUCCESS;
+}
+#endif
+
 int32_t AccessTokenManagerService::GetCliPermissionRequestInfo(
-    const std::string& agentID, const std::vector<CliInfoParcel>& cliInfoList,
-    PermissionDialogResultParcel& resultParcel)
+    const std::string& agentID, const std::vector<CliInfoIdl>& cliInfoList,
+    PermissionDialogResultIdl& resultIdl)
 {
     AccessTokenID callingTokenId = IPCSkeleton::GetCallingTokenID();
     int32_t ret = ValidateGetCliPermissionRequestInfoCaller(callingTokenId, agentID, cliInfoList);
     if (ret != RET_SUCCESS) {
         return ret;
     }
-    std::vector<CliInfo> cliInfos = ConvertCliInfoParcels(cliInfoList);
+    std::vector<CliInfo> cliInfos = ConvertCliInfoIdls(cliInfoList);
 
     ret = ValidateClawCliAccess(callingTokenId, cliInfos);
     if (ret != RET_SUCCESS) {
@@ -2557,7 +2986,7 @@ int32_t AccessTokenManagerService::GetCliPermissionRequestInfo(
     if (ret != RET_SUCCESS) {
         return ret;
     }
-    resultParcel.result = result;
+    resultIdl = ConvertPermissionDialogResult(result);
     LOGI(ATM_DOMAIN, ATM_TAG,
         "GetCliPermissionRequestInfo done, callerToken=%{public}u, agentID=%{public}s, "
         "cliSize=%{public}zu, detailSize=%{public}zu, dialogDetails=%{public}zu.",
@@ -2566,67 +2995,15 @@ int32_t AccessTokenManagerService::GetCliPermissionRequestInfo(
     return RET_SUCCESS;
 }
 
-int32_t AccessTokenManagerService::GetSkillPermissionRequestInfo(
-    const std::string& agentID, const std::vector<SkillInfoParcel>& skillInfoList,
-    PermissionDialogResultParcel& resultParcel)
-{
-    AccessTokenID callingTokenId = IPCSkeleton::GetCallingTokenID();
-    if (!IsAgentIdValid(agentID) || !DataValidator::IsListSizeValid(skillInfoList.size())) {
-        LOGE(ATM_DOMAIN, ATM_TAG,
-            "GetSkillPermissionRequestInfo invalid param, callerToken=%{public}u, agentID=%{public}s, "
-            "skillSize=%{public}zu.", callingTokenId, agentID.c_str(), skillInfoList.size());
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-    if (!IsSystemAppCalling()) {
-        LOGE(ATM_DOMAIN, ATM_TAG,
-            "GetSkillPermissionRequestInfo non-system caller, callerToken=%{public}u, "
-            "agentID=%{public}s, skillSize=%{public}zu.",
-            callingTokenId, agentID.c_str(), skillInfoList.size());
-        return AccessTokenError::ERR_NOT_SYSTEM_APP;
-    }
-    if (VerifyAccessToken(callingTokenId, QUERY_TOOL_PERMISSIONS) == PERMISSION_DENIED) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Caller does not have QUERY_TOOL_PERMISSIONS permission.");
-        return AccessTokenError::ERR_PERMISSION_DENIED;
-    }
-
-    std::vector<SkillInfo> skillInfos;
-    skillInfos.reserve(skillInfoList.size());
-    for (const auto& skillInfoParcel : skillInfoList) {
-        skillInfos.emplace_back(skillInfoParcel.skillInfo);
-    }
-
-    PermissionDialogResult result;
-    int32_t ret = ClawPermissionDecisionEngine::GetInstance().BuildSkillPermissionDialogInfo(
-        callingTokenId, skillInfos, result);
-    if (ret != RET_SUCCESS) {
-        LOGE(ATM_DOMAIN, ATM_TAG,
-            "GetSkillPermissionRequestInfo build failed, callerToken=%{public}u, agentID=%{public}s, "
-            "skillSize=%{public}zu, ret=%{public}d.",
-            callingTokenId, agentID.c_str(), skillInfos.size(), ret);
-        return ret;
-    }
-    ret = FillSkillDialogAuthResultsIfNoDialog(callingTokenId, agentID, skillInfos, result);
-    if (ret != RET_SUCCESS) {
-        return ret;
-    }
-    resultParcel.result = result;
-    LOGI(ATM_DOMAIN, ATM_TAG,
-        "GetSkillPermissionRequestInfo done, callerToken=%{public}u, agentID=%{public}s, "
-        "skillSize=%{public}zu, detailSize=%{public}zu, dialogDetails=%{public}zu.",
-        callingTokenId, agentID.c_str(), skillInfos.size(), result.detailList.size(),
-        CountDialogDetails(result.detailList));
-    return RET_SUCCESS;
-}
-
 int32_t AccessTokenManagerService::GetCliPermissions(AccessTokenID hostTokenID, const std::string& agentID,
-    const std::vector<CliInfoParcel>& cliInfoList, CliPermissionsResultParcel& resultParcel)
+    const std::vector<CliInfoIdl>& cliInfoList, CliPermissionsResultIdl& resultIdl)
 {
     AccessTokenID callingTokenId = IPCSkeleton::GetCallingTokenID();
     int32_t ret = ValidateGetCliPermissionsCaller(callingTokenId, hostTokenID, agentID, cliInfoList);
     if (ret != RET_SUCCESS) {
         return ret;
     }
-    std::vector<CliInfo> cliInfos = ConvertCliInfoParcels(cliInfoList);
+    std::vector<CliInfo> cliInfos = ConvertCliInfoIdls(cliInfoList);
 
     ret = ValidateClawCliAccess(hostTokenID, cliInfos);
     if (ret != RET_SUCCESS) {
@@ -2646,7 +3023,7 @@ int32_t AccessTokenManagerService::GetCliPermissions(AccessTokenID hostTokenID, 
             hostTokenID, agentID.c_str(), cliInfos.size(), ret);
         return ret;
     }
-    resultParcel.result = result;
+    resultIdl = ConvertCliPermissionsResult(result);
     size_t requiredPermCount = CountRequiredCliPermissions(result);
     LOGI(ATM_DOMAIN, ATM_TAG,
         "GetCliPermissions done, callerToken=%{public}u, targetToken=%{public}u, agentID=%{public}s, "
@@ -2656,60 +3033,9 @@ int32_t AccessTokenManagerService::GetCliPermissions(AccessTokenID hostTokenID, 
     return RET_SUCCESS;
 }
 
-int32_t AccessTokenManagerService::GetSkillPermissions(AccessTokenID hostTokenID, const std::string& agentID,
-    const std::vector<SkillInfoParcel>& skillInfoList, SkillPermissionsResultParcel& resultParcel)
-{
-    AccessTokenID callingTokenId = IPCSkeleton::GetCallingTokenID();
-    int32_t ret = ValidateHostTokenId(hostTokenID);
-    if ((ret != RET_SUCCESS) || !IsAgentIdValid(agentID) || !DataValidator::IsListSizeValid(skillInfoList.size())) {
-        LOGE(ATM_DOMAIN, ATM_TAG,
-            "GetSkillPermissions invalid param, callerToken=%{public}u, targetToken=%{public}u, "
-            "agentID=%{public}s, skillSize=%{public}zu, ret=%{public}d.",
-            callingTokenId, hostTokenID, agentID.c_str(), skillInfoList.size(), ret);
-        return (ret == RET_SUCCESS) ? AccessTokenError::ERR_PARAM_INVALID : ret;
-    }
-    if (!IsSystemAppCalling()) {
-        LOGE(ATM_DOMAIN, ATM_TAG,
-            "GetSkillPermissions non-system caller, callerToken=%{public}u, targetToken=%{public}u, "
-            "agentID=%{public}s.", callingTokenId, hostTokenID, agentID.c_str());
-        return AccessTokenError::ERR_NOT_SYSTEM_APP;
-    }
-    if (VerifyAccessToken(callingTokenId, MANAGE_TOOL_RUNTIME_PERMISSIONS) == PERMISSION_DENIED) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Caller does not have MANAGE_TOOL_RUNTIME_PERMISSIONS permission.");
-        return AccessTokenError::ERR_PERMISSION_DENIED;
-    }
-
-    std::vector<SkillInfo> skillInfos;
-    skillInfos.reserve(skillInfoList.size());
-    for (const auto& skillInfoParcel : skillInfoList) {
-        skillInfos.emplace_back(skillInfoParcel.skillInfo);
-    }
-
-    SkillPermissionsResult result;
-    ret = ClawPermissionDecisionEngine::GetInstance().BuildSkillPermissions(hostTokenID, skillInfos, result);
-    if (ret != RET_SUCCESS) {
-        LOGE(ATM_DOMAIN, ATM_TAG,
-            "GetSkillPermissions build failed, targetToken=%{public}u, agentID=%{public}s, "
-            "skillSize=%{public}zu, ret=%{public}d.",
-            hostTokenID, agentID.c_str(), skillInfos.size(), ret);
-        return ret;
-    }
-    resultParcel.result = result;
-    size_t usedPermCount = 0;
-    for (const auto& perm : result.permList) {
-        usedPermCount += perm.usedPermissions.size();
-    }
-    LOGI(ATM_DOMAIN, ATM_TAG,
-        "GetSkillPermissions done, callerToken=%{public}u, targetToken=%{public}u, agentID=%{public}s, "
-        "skillSize=%{public}zu, resultSize=%{public}zu, usedPerms=%{public}zu.",
-        callingTokenId, hostTokenID, agentID.c_str(), skillInfos.size(), result.permList.size(),
-        usedPermCount);
-    return RET_SUCCESS;
-}
-
 int32_t AccessTokenManagerService::GenerateCliAuthResult(
     AccessTokenID hostTokenID, const std::string& agentID,
-    const std::vector<CliAuthInfoParcel>& authInfoList, ToolAuthResultParcel& resultParcel)
+    const std::vector<CliAuthInfoIdl>& authInfoList, ToolAuthResultIdl& resultIdl)
 {
     AccessTokenID callingTokenId = IPCSkeleton::GetCallingTokenID();
     int32_t ret = ValidateHostTokenId(hostTokenID);
@@ -2722,12 +3048,12 @@ int32_t AccessTokenManagerService::GenerateCliAuthResult(
         return (ret == RET_SUCCESS) ? AccessTokenError::ERR_PARAM_INVALID : ret;
     }
     for (size_t i = 0; i < authInfoList.size(); ++i) {
-        if (!IsCliAuthInfoValid(authInfoList[i].info)) {
+        CliAuthInfo authInfo = ConvertCliAuthInfoIdl(authInfoList[i]);
+        if (!IsCliAuthInfoValid(authInfo)) {
             LOGE(ATM_DOMAIN, ATM_TAG,
                 "GenerateCliAuthResult invalid auth info, targetToken=%{public}u, index=%{public}zu, "
                 "permissionSize=%{public}zu, resultSize=%{public}zu.",
-                hostTokenID, i, authInfoList[i].info.permissionNames.size(),
-                authInfoList[i].info.authorizationResults.size());
+                hostTokenID, i, authInfo.permissionNames.size(), authInfo.authorizationResults.size());
             return AccessTokenError::ERR_PARAM_INVALID;
         }
     }
@@ -2741,69 +3067,21 @@ int32_t AccessTokenManagerService::GenerateCliAuthResult(
         LOGE(ATM_DOMAIN, ATM_TAG, "Caller does not have MANAGE_TOOL_RUNTIME_PERMISSIONS permission.");
         return AccessTokenError::ERR_PERMISSION_DENIED;
     }
-    resultParcel.result.authResults.clear();
+    ToolAuthResult result;
     std::vector<CliAuthInfo> authInfos;
     ret = BuildCliTicketAuthInfos(hostTokenID, authInfoList, authInfos);
     if (ret != RET_SUCCESS) {
         return ret;
     }
-    ret = ClawTicketManager::GetInstance().GenerateCliTicket(hostTokenID, authInfos, resultParcel.result.authResults);
+    ret = ClawTicketManager::GetInstance().GenerateCliTicket(hostTokenID, authInfos, result.authResults);
+    resultIdl = ConvertToolAuthResult(result);
     LOGI(ATM_DOMAIN, ATM_TAG,
         "GenerateCliAuthResult done, callerToken=%{public}u, targetToken=%{public}u, agentID=%{public}s, "
         "authSize=%{public}zu, ret=%{public}d, authResultSize=%{public}zu.",
-        callingTokenId, hostTokenID, agentID.c_str(), authInfos.size(), ret,
-        resultParcel.result.authResults.size());
+        callingTokenId, hostTokenID, agentID.c_str(), authInfos.size(), ret, result.authResults.size());
     return ret;
 }
 
-int32_t AccessTokenManagerService::GenerateSkillAuthResult(
-    AccessTokenID hostTokenID, const std::string& agentID,
-    const std::vector<SkillAuthInfoParcel>& authInfoList, ToolAuthResultParcel& resultParcel)
-{
-    AccessTokenID callingTokenId = IPCSkeleton::GetCallingTokenID();
-    int32_t ret = ValidateHostTokenId(hostTokenID);
-    if ((ret != RET_SUCCESS) || !IsAgentIdValid(agentID) || !DataValidator::IsListSizeValid(authInfoList.size())) {
-        LOGE(ATM_DOMAIN, ATM_TAG,
-            "GenerateSkillAuthResult invalid param, callerToken=%{public}u, targetToken=%{public}u, "
-            "agentID=%{public}s, authSize=%{public}zu, ret=%{public}d.",
-            callingTokenId, hostTokenID, agentID.c_str(), authInfoList.size(), ret);
-        return (ret == RET_SUCCESS) ? AccessTokenError::ERR_PARAM_INVALID : ret;
-    }
-    for (size_t i = 0; i < authInfoList.size(); ++i) {
-        if (!IsSkillAuthInfoValid(authInfoList[i].info)) {
-            LOGE(ATM_DOMAIN, ATM_TAG,
-                "GenerateSkillAuthResult invalid auth info, targetToken=%{public}u, index=%{public}zu, "
-                "permissionSize=%{public}zu, resultSize=%{public}zu.",
-                hostTokenID, i, authInfoList[i].info.permissionNames.size(),
-                authInfoList[i].info.authorizationResults.size());
-            return AccessTokenError::ERR_PARAM_INVALID;
-        }
-    }
-    if (!IsSystemAppCalling()) {
-        LOGE(ATM_DOMAIN, ATM_TAG,
-            "GenerateSkillAuthResult non-system caller, callerToken=%{public}u, targetToken=%{public}u, "
-            "agentID=%{public}s.", callingTokenId, hostTokenID, agentID.c_str());
-        return AccessTokenError::ERR_NOT_SYSTEM_APP;
-    }
-    if (VerifyAccessToken(callingTokenId, MANAGE_TOOL_RUNTIME_PERMISSIONS) == PERMISSION_DENIED) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Caller does not have MANAGE_TOOL_RUNTIME_PERMISSIONS permission.");
-        return AccessTokenError::ERR_PERMISSION_DENIED;
-    }
-    resultParcel.result.authResults.clear();
-    std::vector<SkillAuthInfo> authInfos;
-    authInfos.reserve(authInfoList.size());
-    for (size_t i = 0; i < authInfoList.size(); ++i) {
-        authInfos.emplace_back(authInfoList[i].info);
-    }
-    ret = ClawTicketManager::GetInstance().GenerateSkillTicket(
-        hostTokenID, authInfos, resultParcel.result.authResults);
-    LOGI(ATM_DOMAIN, ATM_TAG,
-        "GenerateSkillAuthResult done, callerToken=%{public}u, targetToken=%{public}u, agentID=%{public}s, "
-        "authSize=%{public}zu, ret=%{public}d, authResultSize=%{public}zu.",
-        callingTokenId, hostTokenID, agentID.c_str(), authInfos.size(), ret,
-        resultParcel.result.authResults.size());
-    return ret;
-}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

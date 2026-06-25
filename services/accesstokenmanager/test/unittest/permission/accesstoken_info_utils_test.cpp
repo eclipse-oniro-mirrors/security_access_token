@@ -18,6 +18,7 @@
 
 #include "access_token.h"
 #include "accesstoken_info_utils.h"
+#include "parameter.h"
 #include "permission_feature_manager.h"
 #include "permission_map.h"
 #include "provision/provision_info.h"
@@ -32,6 +33,9 @@ constexpr uint32_t SYSTEM_APP_FLAG = 0x0001;
 constexpr uint32_t ATOMIC_SERVICE_FLAG = 0x0002;
 constexpr uint32_t DEBUG_APP_FLAG = 0x0008;
 constexpr int32_t BASE_USER_RANGE = 200000;
+constexpr uint32_t PARAM_VALUE_MAX_LEN = 32;
+std::string g_appVerifyParamBackup;
+std::string g_spmEnforcingParamBackup;
 PermissionStatus BuildStatus(const std::string& permissionName, const std::string& feature = "")
 {
     PermissionStatus status;
@@ -45,9 +49,34 @@ PermissionStatus BuildStatus(const std::string& permissionName, const std::strin
 
 class AccessTokenInfoUtilsTest : public testing::Test {
 public:
+    static void SetUpTestCase()
+    {
+        char value[PARAM_VALUE_MAX_LEN] = {0};
+        if (GetParameter(ACCESS_TOKEN_SERVICE_APP_VERIFY_KEY, "", value, PARAM_VALUE_MAX_LEN - 1) >= 0) {
+            g_appVerifyParamBackup = value;
+        } else {
+            g_appVerifyParamBackup.clear();
+        }
+        if (GetParameter(ACCESS_TOKEN_SERVICE_SPM_ENFORCING_KEY, "", value, PARAM_VALUE_MAX_LEN - 1) >= 0) {
+            g_spmEnforcingParamBackup = value;
+        } else {
+            g_spmEnforcingParamBackup.clear();
+        }
+    }
+
+    static void TearDownTestCase()
+    {
+        SetParameter(ACCESS_TOKEN_SERVICE_APP_VERIFY_KEY,
+            g_appVerifyParamBackup.empty() ? "" : g_appVerifyParamBackup.c_str());
+        SetParameter(ACCESS_TOKEN_SERVICE_SPM_ENFORCING_KEY,
+            g_spmEnforcingParamBackup.empty() ? "" : g_spmEnforcingParamBackup.c_str());
+    }
+
     void TearDown() override
     {
         PermissionFeatureManager::GetInstance().SetFeatures({});
+        SetParameter(ACCESS_TOKEN_SERVICE_APP_VERIFY_KEY, "0");
+        SetParameter(ACCESS_TOKEN_SERVICE_SPM_ENFORCING_KEY, "0");
     }
 };
 
@@ -63,6 +92,7 @@ HWTEST_F(AccessTokenInfoUtilsTest, BuildBundleFullInfo001, TestSize.Level0)
     param.appIdentifier = 123456;
     param.distributionType = static_cast<int32_t>(Verify::AppDistType::NONE_TYPE);
     param.isDebug = true;
+    param.idType = 3;
 
     HapPolicy policy;
     policy.apl = APL_NORMAL;
@@ -272,6 +302,32 @@ HWTEST_F(AccessTokenInfoUtilsTest, BuildBundleFullInfo005, TestSize.Level0)
 
     ASSERT_NE(nullptr, innerInfo);
     EXPECT_TRUE(innerInfo->permCodeList.empty());
+}
+
+/**
+ * @tc.name: AccessTokenServiceAppVerifyParamSet001
+ * @tc.desc: Verify AccessTokenServiceAppVerifyParamSet makes IsSystemAppVerified return true.
+ * @tc.type: FUNC
+ */
+HWTEST_F(AccessTokenInfoUtilsTest, AccessTokenServiceAppVerifyParamSet001, TestSize.Level0)
+{
+    SetParameter(ACCESS_TOKEN_SERVICE_APP_VERIFY_KEY, "0");
+    EXPECT_FALSE(AccessTokenInfoUtils::IsSystemAppVerified());
+
+    AccessTokenInfoUtils::AccessTokenServiceAppVerifyParamSet();
+
+    EXPECT_TRUE(AccessTokenInfoUtils::IsSystemAppVerified());
+}
+
+/**
+ * @tc.name: IsSystemSpmEnforcing001
+ * @tc.desc: Verify IsSystemSpmEnforcing follows parameter value changes.
+ * @tc.type: FUNC
+ */
+HWTEST_F(AccessTokenInfoUtilsTest, IsSystemSpmEnforcing001, TestSize.Level0)
+{
+    SetParameter(ACCESS_TOKEN_SERVICE_SPM_ENFORCING_KEY, "0");
+    EXPECT_FALSE(AccessTokenInfoUtils::IsSystemSpmEnforcing());
 }
 } // namespace AccessToken
 } // namespace Security

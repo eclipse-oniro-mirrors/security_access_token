@@ -42,6 +42,9 @@ public:
         std::vector<GenericValues>& results);
     std::shared_ptr<NativeRdb::RdbStore> GetRdb();
     int32_t DeleteAndInsertValues(const std::vector<DelInfo>& delInfoVec, const std::vector<AddInfo>& addInfoVec);
+    int32_t Modify(const AtmDataType type,
+        const std::vector<GenericValues>& modifyValues,
+        const std::vector<GenericValues>& conditions);
 
 private:
     DISALLOW_COPY_AND_MOVE(AccessTokenDb);
@@ -56,6 +59,9 @@ private:
         std::vector<GenericValues>& results);
 
     int32_t DeleteAndInsertValuesInner(const std::vector<DelInfo>& delInfoVec, const std::vector<AddInfo>& addInfoVec);
+    int32_t ModifyInner(const AtmDataType type,
+        const std::vector<GenericValues>& modifyValues,
+        const std::vector<GenericValues>& conditions);
     void RestoreDatabase(int32_t errCode);
     int32_t RemoveValues(const std::vector<DelInfo>& delInfoVec,
         const std::shared_ptr<OHOS::NativeRdb::Transaction>& transaction);

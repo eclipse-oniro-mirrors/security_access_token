@@ -18,16 +18,6 @@ sequenceable OHOS.Security.AccessToken.PermissionDefParcel;
 sequenceable OHOS.Security.AccessToken.PermissionStatusParcel;
 sequenceable OHOS.Security.AccessToken.PermissionListStateParcel;
 sequenceable OHOS.Security.AccessToken.PermissionGrantInfoParcel;
-sequenceable OHOS.Security.AccessToken.CliInitInfoParcel;
-sequenceable OHOS.Security.AccessToken.CliInfoParcel;
-sequenceable OHOS.Security.AccessToken.SkillInfoParcel;
-sequenceable OHOS.Security.AccessToken.SkillInitInfoParcel;
-sequenceable OHOS.Security.AccessToken.PermissionDialogResultParcel;
-sequenceable OHOS.Security.AccessToken.CliPermissionsResultParcel;
-sequenceable OHOS.Security.AccessToken.SkillPermissionsResultParcel;
-sequenceable OHOS.Security.AccessToken.CliAuthInfoParcel;
-sequenceable OHOS.Security.AccessToken.SkillAuthInfoParcel;
-sequenceable OHOS.Security.AccessToken.ToolAuthResultParcel;
 sequenceable OHOS.Security.AccessToken.HapInfoParcel;
 sequenceable OHOS.Security.AccessToken.HapPolicyParcel;
 sequenceable OHOS.Security.AccessToken.NativeTokenInfoParcel;
@@ -37,9 +27,11 @@ sequenceable OHOS.IRemoteObject;
 sequenceable OHOS.Security.AccessToken.HapTokenInfoForSyncParcel;
 sequenceable OHOS.Security.AccessToken.HapBaseInfoParcel;
 sequenceable OHOS.Security.AccessToken.AtmToolsParamInfoParcel;
-sequenceable OHOS.Security.AccessToken.CliInfoResultParcel;
 sequenceable OHOS.Security.AccessToken.SecCompEnhanceDataParcel;
-sequenceable OHOS.Security.AccessToken.SkillInfoResultParcel;
+sequenceable OHOS.Security.AccessToken.SecCompEnhanceKeyParcel;
+
+rawdata OHOS.Security.AccessToken.BundleInfosRawdata;
+rawdata OHOS.Security.AccessToken.CheckHapSignResultRawdata;
 
 import IdlCommon;
 
@@ -61,6 +53,7 @@ interface OHOS.Security.AccessToken.IAccessTokenManager{
     [ipccode 12] void GetPermissionRequestToggleStatus([in] String permissionName, [out] unsigned int status, [in] int userID);
     [ipccode 13] void GrantPermissionForSpecifiedTime([in] unsigned int tokenID, [in] String permissionName, [in] unsigned int onceTime);
     [ipccode 14] void RequestAppPermOnSetting([in] unsigned int tokenID);
+    [ipccode 15] void ClearUserGrantedPermStateByBundle([in] String bundleName);
     [ipccode 16] void GetTokenType([in] unsigned int tokenID, [out] int tokenType);
 
     [ipccode 18] void GetHapTokenID(
@@ -105,31 +98,37 @@ interface OHOS.Security.AccessToken.IAccessTokenManager{
     [ipccode 66] void UnRegisterSelfPermStateChangeCallback([in] IRemoteObject cb);
     [ipccode 67] void GetKernelPermissions([in] unsigned int tokenId, [out] List<PermissionWithValueIdl> kernelPermIdlList);
     [ipccode 68] void GetReqPermissionByName([in] unsigned int tokenId, [in] String permissionName, [out] String value);
-    [ipccode 69] void InitCliToken([in] CliInitInfoParcel initInfoParcel, [out] unsigned long fullTokenId, [out] List<PermissionWithValueIdl> kernelPermIdlList);
-    [ipccode 70] void InitSkillToken([in] SkillInitInfoParcel initInfoParcel, [out] unsigned long fullTokenId, [out] List<PermissionWithValueIdl> kernelPermIdlList);
+    [ipccode 69] void InitCliToken([in] CliInitInfoIdl initInfoIdl, [out] unsigned long fullTokenId, [out] List<PermissionWithValueIdl> kernelPermIdlList);
     [ipccode 71] void DeleteToolTokenByPid([in] int pid);
-    [ipccode 72] void GetCliTokenInfo([in] unsigned int tokenId, [out] CliInfoResultParcel infoParcel);
-    [ipccode 73] void GetSkillTokenInfo([in] unsigned int tokenId, [out] SkillInfoResultParcel infoParcel);
     [ipccode 74] void GetHostTokenId([in] unsigned int toolTokenId, [out] unsigned int hostTokenId);
-    [ipccode 75] void PreMigrateUIDList([in] List<int> uidList);
     [ipccode 76] void MigrateInstalledBundles([in] List<MigratedInfoIdl> migratedInfoList, [out] List<BundleMigrateResultIdl> results);
     [ipccode 77] void FinishMigration();
     [ipccode 80] void VerifyAccessToken([in] unsigned int tokenID, [in] List<String> permissionList, [out] List<int> permStateList);  
     [ipccode 81] void GetSelfPermissionStatus([in] String permissionName, [out] int status);
+
+    [ipccode 82] void CheckHapSignInfo([in] BundleHapListIdl list, [in] IRemoteObject cb, [out] CheckHapSignResultRawdata checkResult);
+    [ipccode 83] void PrepareHapIdentity([inout] int sessionId, [in] HapBaseInfoIdl info, [in] BundlePolicyIdl policy, [in] IRemoteObject cb, [out] IdentityIdl identity);
+    [ipccode 84] void UpdateHapPolicy([in] int sessionId, [in] unsigned int tokenId, [in] BundlePolicyIdl policy);
+    [ipccode 85] void FinishInstall([in] int sessionId, [in] boolean isSuccess, [in] OrderedMap<String, String> modulePathMap);
+    [ipccode 86] void GetCacheSignInfoBySessionId([in] int sessionId, [out] BundleInfosRawdata bundleInfos);
+    [ipccode 87] void GetHapSignInfo([in] String bundleName, [out] BundleInfosRawdata bundleInfos);
+    [ipccode 88] void CheckHapPermissionInfo([in] int sessionId, [in] InstallTypeEnumIdl type, [out] HapInfoCheckResultIdl resultInfoIdl);
+    [ipccode 89] void GetCachePolicyBySessionId([in] int sessionId, [in] String bundleName, [out] BundlePolicyInfoIdl bundlePolicyInfoIdl);
+
     [ipccode 101, macrodef SECURITY_COMPONENT_ENHANCE_ENABLE, oneway] void RegisterSecCompEnhance([in] SecCompEnhanceDataParcel enhanceParcel);
     [ipccode 102, macrodef SECURITY_COMPONENT_ENHANCE_ENABLE] void UpdateSecCompEnhance([in] int pid, [in] unsigned int seqNum);
     [ipccode 103, macrodef SECURITY_COMPONENT_ENHANCE_ENABLE] void GetSecCompEnhance([in] int pid, [out] SecCompEnhanceDataParcel enhanceParcel);
+    [ipccode 104, macrodef SECURITY_COMPONENT_ENHANCE_ENABLE] void StoreSecCompEnhanceKey([in] SecCompEnhanceKeyParcel enhanceKeyParcel);
     [ipccode 105] void SetPermissionStatusWithPolicy([in] unsigned int tokenID, [in] List<String> permissionList, [in] int status, [in] unsigned int flag);
+    [ipccode 106] void DeleteIdentity([in] unsigned int tokenID, [in] String bundleName, [in] ReservedTypeIdl type);
+    [ipccode 107, macrodef SECURITY_COMPONENT_ENHANCE_ENABLE] void GetSecCompEnhanceKey([out] SecCompEnhanceKeyParcel enhanceKeyParcel);
 
     [ipccode 200] void GetHapTokenInfo([in] unsigned int tokenID, [out] HapTokenInfoCompatIdl hapTokenInfoIdl);
     [ipccode 201] void GetPermissionCode([in] String permission, [out] unsigned int permCode);
     [ipccode 202, ipcoutcapacity 122880] void QueryStatusByPermission([in] List<unsigned int> permCodeList, [out] List<PermissionStatusIdl> permissionInfoList, [in] boolean onlyHap);
     [ipccode 203, ipcoutcapacity 122880] void QueryStatusByTokenID([in] List<unsigned int> tokenIDList, [out] List<PermissionStatusIdl> permissionInfoList);
-    [ipccode 204] void GetCliPermissionRequestInfo([in] String agentID, [in] List<CliInfoParcel> cliInfoList, [out] PermissionDialogResultParcel resultParcel);
-    [ipccode 205] void GetSkillPermissionRequestInfo([in] String agentID, [in] List<SkillInfoParcel> skillInfoList, [out] PermissionDialogResultParcel resultParcel);
-    [ipccode 206] void GetCliPermissions([in] unsigned int hostTokenID, [in] String agentID, [in] List<CliInfoParcel> cliInfoList, [out] CliPermissionsResultParcel resultParcel);
-    [ipccode 207] void GetSkillPermissions([in] unsigned int hostTokenID, [in] String agentID, [in] List<SkillInfoParcel> skillInfoList, [out] SkillPermissionsResultParcel resultParcel);
-    [ipccode 208] void GenerateCliAuthResult([in] unsigned int hostTokenID, [in] String agentID, [in] List<CliAuthInfoParcel> authInfoList, [out] ToolAuthResultParcel resultParcel);
-    [ipccode 209] void GenerateSkillAuthResult([in] unsigned int hostTokenID, [in] String agentID, [in] List<SkillAuthInfoParcel> authInfoList, [out] ToolAuthResultParcel resultParcel);
+    [ipccode 204] void GetCliPermissionRequestInfo([in] String agentID, [in] List<CliInfoIdl> cliInfoList, [out] PermissionDialogResultIdl resultIdl);
+    [ipccode 206] void GetCliPermissions([in] unsigned int hostTokenID, [in] String agentID, [in] List<CliInfoIdl> cliInfoList, [out] CliPermissionsResultIdl resultIdl);
+    [ipccode 208] void GenerateCliAuthResult([in] unsigned int hostTokenID, [in] String agentID, [in] List<CliAuthInfoIdl> authInfoList, [out] ToolAuthResultIdl resultIdl);
     [ipccode 210] void IsSupportPermission([in] String permission, [out] boolean isSupported);
 }

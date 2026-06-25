@@ -90,8 +90,11 @@ namespace OHOS {
         }
 
         FuzzedDataProvider provider(data, size);
-        AccessTokenID tokenId = ConsumeTokenId(provider);
-        std::string permissionName = ConsumePermissionName(provider);
+        GetHapToken();
+        AccessTokenID tokenId = provider.ConsumeBool() ? static_cast<AccessTokenID>(g_mockTokenId) :
+            ConsumeTokenId(provider);
+        std::string permissionName = provider.ConsumeBool() ? "ohos.permission.INTERNET" :
+            ConsumePermissionName(provider);
 
         PermStateChangeScope scopeInfo;
         scopeInfo.permList = { permissionName };

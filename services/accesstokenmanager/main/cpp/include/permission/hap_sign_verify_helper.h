@@ -31,6 +31,8 @@ class HapSignVerifyHelper final {
 public:
     static std::map<std::string, std::string> ParseAclExtendedMap(const std::string& appServiceCapabilities);
     static uint64_t BuildOwnerId(const std::string& appIdentifier);
+    static uint32_t BuildIdType(bool isDebug, const std::string& appIdentifier,
+        const std::vector<PermissionStatus>& permStateList);
     static AccessTokenID GetTokenId(uint64_t tokenIdEx);
 
     static ATokenAplEnum ConvertApl(const std::string& apl);

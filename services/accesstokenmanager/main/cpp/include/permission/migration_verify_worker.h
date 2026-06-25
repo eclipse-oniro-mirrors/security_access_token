@@ -53,7 +53,7 @@ private:
     void WorkerLoop();
     void EnsureThreadRunning();
 
-    static constexpr std::chrono::seconds IDLE_TIMEOUT = std::chrono::seconds(30);
+    std::chrono::seconds IDLE_TIMEOUT = std::chrono::seconds(30);
 
     std::mutex mutex_;
     std::condition_variable cv_;

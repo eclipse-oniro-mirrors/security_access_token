@@ -26,6 +26,7 @@
 
 #include "access_token.h"
 #include "access_token_db_operator.h"
+#include "accesstoken_id_manager.h"
 
 #ifdef IS_SUPPORT_HAP_RUNNING
 #include "app_verify_adapter.h"
@@ -48,7 +49,6 @@ struct VerifiedBundleState final {
     bool needUpdateSignInfo = false;
     bool needPersistHapInfo = false;
     bool needPersistPermState = false;
-    bool needPersistExtendPerm = false;
 };
 
 class AddSpmDataTask;
@@ -96,13 +96,11 @@ private:
     int32_t RefreshBundleSignInfoMap();
     void StartNormalBundleVerifyThread();
     void VerifyNormalBundleListAsync();
-    void AccessTokenServiceAppVerifyParamSet() const;
-    bool IsSystemAppVerified() const;
     bool IsAllBundlesVerified() const;
     int32_t BuildVerifyBundleData(const std::string& bundleName, BundleSignInfo& signInfo);
     int32_t VerifyBundleWithState(const std::string& bundleName);
-    int32_t VerifyBundleList(
-        const std::vector<std::string>& bundleNameList, std::vector<VerifiedBundleState>& stateList);
+    void VerifyBundleList(std::atomic_size_t& nextBundleIndex,
+        std::map<std::string, VerifiedBundleState>& stateMap);
     int32_t VerifySingleBundle(const std::string& bundleName, BundleSignInfo& updatedInfo,
         VerifiedBundleState& state);
     void UpdateVerifiedSignInfo(const std::string& bundleName, BundleSignInfo& updatedInfo,
@@ -114,13 +112,10 @@ private:
         std::vector<HapTokenInfo>& hapInfoCache, std::vector<std::vector<BriefPermData>>& permBriefDataListCache,
         std::vector<std::vector<PermissionWithValue>>& extendPermListCache, std::vector<SpmDataParam>& params);
     bool IsInvalidUid(AccessTokenID tokenId) const;
-    bool IsInvalidUidUnmigratedTokenLocked(AccessTokenID tokenId) const;
     bool ShouldSkipVerifyLocked(const std::string& bundleName) const;
     void FinishSkippedBundleVerifyLocked(const std::string& bundleName);
     int32_t AddSpmDataAndCommitCache(
-        const std::string& bundleName, const std::vector<VerifiedBundleState>& stateList);
-    const VerifiedBundleState* FindVerifiedBundleState(
-        const std::string& bundleName, const std::vector<VerifiedBundleState>& stateList) const;
+        const std::string& bundleName, const VerifiedBundleState& state);
     int32_t GetBundleTokenIds(const std::string& bundleName, std::vector<AccessTokenID>& tokenIds);
     void BuildBundlePersistInfos(AccessTokenID tokenId, const VerifiedBundleState& state,
         std::vector<DelInfo>& delInfoVec, std::vector<AddInfo>& addInfoVec);
@@ -132,6 +127,7 @@ private:
     bool PrepareBundleForBatchVerifyLocked(const std::string& bundleName, BundleSignInfo& updatedInfo);
     void HandleVerifyBundleFailure(const std::string& bundleName, int32_t ret);
     void CommitBundleCacheLocked(const std::string& bundleName);
+    void ChangeTokenIdToUntrustedStatus(const std::string& bundleName);
     static bool IsPermissionValid(int32_t hapApl, const PermissionBriefDef& data,
         const std::string& value, bool isAcl);
     static void UpdateBundleSignInfoByTrustedInfos(BundleSignInfo& signInfo,
@@ -139,13 +135,10 @@ private:
         const std::vector<TrustedBundleInfoInner>& trustedInfos);
     static std::vector<std::vector<std::string>> SplitBundleList(
         const std::vector<std::string>& bundleNameList, uint32_t size);
-    int32_t VerifyHighPrivilegeBundleList(std::vector<VerifiedBundleState>& stateList);
-    int32_t RunHighPrivilegeBundleVerifyTasks(std::vector<std::vector<VerifiedBundleState>>& stateGroups);
-    static int32_t GetVerifyTaskResult(const std::vector<int32_t>& verifyResults);
-    static void MergeVerifiedStateList(
-        const std::vector<std::vector<VerifiedBundleState>>& stateGroups, std::vector<VerifiedBundleState>& stateList);
-    bool ShouldSkipAddSpmData(const std::string& bundleName);
-    int32_t HandleHighPrivilegeBundleSpmData(const std::vector<VerifiedBundleState>& stateList);
+    void VerifyHighPrivilegeBundleList(std::map<std::string, VerifiedBundleState>& stateMap);
+    void RunHighPrivilegeBundleVerifyTasks(std::vector<std::map<std::string, VerifiedBundleState>>& stateGroups);
+    void HandleHighPrivilegeBundleSpmData(const std::map<std::string, VerifiedBundleState>& stateMap);
+    bool HandleHapInfoUid(AccessTokenID tokenId, int32_t uid);
     BootVerifyScheduler() = default;
     ~BootVerifyScheduler() = default;
     DISALLOW_COPY_AND_MOVE(BootVerifyScheduler);
@@ -157,7 +150,6 @@ private:
     std::map<std::string, BundleNoCachedInfo> bundleNoCachedInfoMap_;
     std::map<uint32_t, std::vector<BriefPermData>> requestedPermData_;
     std::map<AccessTokenID, std::vector<PermissionWithValue>> extendedPermMap_;
-    std::map<int32_t, BootTokenIdInfo> tokenIdAplMap_;
     std::map<std::string, BundleSignInfo> bundleSignInfoMap_;
     std::map<std::string, bool> isVerifiedMap_;
     std::map<std::string, bool> isVerifyingMap_;

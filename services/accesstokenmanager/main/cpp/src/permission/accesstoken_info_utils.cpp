@@ -17,6 +17,8 @@
 
 #include <unordered_set>
 
+#include "accesstoken_common_log.h"
+#include "parameter.h"
 #include "permission_constraint_check.h"
 #include "permission_feature_manager.h"
 #include "permission_map.h"
@@ -27,10 +29,11 @@ namespace Security {
 namespace AccessToken {
 namespace {
 static const char* SYSTEM_RESOURCE_BUNDLE_NAME = "ohos.global.systemres";
-static const unsigned int SYSTEM_APP_FLAG = 0x0001;
-static const unsigned int ATOMIC_SERVICE_FLAG = 0x0002;
-static const unsigned int DEBUG_APP_FLAG = 0x0008;
+static const uint32_t SYSTEM_APP_FLAG = 0x0001;
+static const uint32_t ATOMIC_SERVICE_FLAG = 0x0002;
+static const uint32_t DEBUG_APP_FLAG = 0x0008;
 static constexpr int32_t BASE_USER_RANGE = 200000;
+static constexpr int32_t VALUE_MAX_LEN = 32;
 }
 
 bool AccessTokenInfoUtils::IsSystemResource(const std::string& bundleName)
@@ -119,7 +122,7 @@ void AccessTokenInfoUtils::BuildBundleFullInfo(const BundleParam& param, const H
     innerInfo->tokenIds.clear();
     noCached.apl = policy.apl;
     noCached.distributionType = param.distributionType;
-    noCached.idType = static_cast<uint32_t>(PermissionConstraintCheck::BuildIdType(param, policy));
+    noCached.idType = param.idType;
     noCached.ownerid = param.appIdentifier;
 
     std::unordered_set<uint32_t> permCodeSet;
@@ -149,6 +152,60 @@ void AccessTokenInfoUtils::BuildBundleFullInfo(const BundleParam& param, const H
             innerInfo->permCodeList.emplace_back(shortPermCode);
         }
     }
+}
+
+void AccessTokenInfoUtils::AccessTokenServiceAppVerifyParamSet()
+{
+    int32_t res = SetParameter(ACCESS_TOKEN_SERVICE_APP_VERIFY_KEY, "1");
+    if (res != 0) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "SetParameter ACCESS_TOKEN_SERVICE_APP_VERIFY_KEY failed %{public}d.", res);
+    }
+}
+
+bool AccessTokenInfoUtils::IsSystemAppVerified()
+{
+    char value[VALUE_MAX_LEN] = {0};
+    int32_t ret = GetParameter(ACCESS_TOKEN_SERVICE_APP_VERIFY_KEY, "", value, VALUE_MAX_LEN - 1);
+    if (ret < 0) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "GetParameter ACCESS_TOKEN_SERVICE_APP_VERIFY_KEY failed, ret=%{public}d.", ret);
+        return false;
+    }
+    return std::atoi(value) > 0;
+}
+
+bool AccessTokenInfoUtils::IsSystemSpmEnforcing()
+{
+    static bool isEnforcing = false;
+#ifndef ATM_TEST_ENABLE
+    static bool hasInit = false;
+    if (!hasInit) {
+#endif
+        char value[VALUE_MAX_LEN] = {0};
+        int32_t ret = GetParameter(ACCESS_TOKEN_SERVICE_SPM_ENFORCING_KEY, "", value, VALUE_MAX_LEN - 1);
+        if (ret < 0) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "GetParameter ACCESS_TOKEN_SERVICE_SPM_ENFORCING_KEY failed, ret=%{public}d.",
+                ret);
+            return false;
+        }
+        isEnforcing = std::atoi(value) > 0;
+#ifndef ATM_TEST_ENABLE
+        hasInit = true;
+    }
+#endif
+    return isEnforcing;
+}
+
+ReservedType AccessTokenInfoUtils::GetReservedTokenTypeDBValue(const GenericValues& values)
+{
+#ifdef SPM_DATA_ENABLE
+    return static_cast<ReservedType>(values.GetInt(TokenFiledConst::FIELD_RESERVED));
+#else
+    if (AccessTokenInfoUtils::CheckSpecifiedFlag(
+        values.GetInt(TokenFiledConst::FIELD_TOKEN_ATTR), 0x0004)) { // 0x0004: reserved
+        return ReservedType::RESERVED_IDENTITY;
+    }
+    return ReservedType::NONE;
+#endif
 }
 } // namespace AccessToken
 } // namespace Security

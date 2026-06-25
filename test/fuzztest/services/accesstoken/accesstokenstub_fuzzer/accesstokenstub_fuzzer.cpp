@@ -35,6 +35,7 @@ static const uint64_t FUZZ_SYSTEM_APP_MASK = (static_cast<uint64_t>(1) << 32);
 static AccessTokenID g_selfTokenId = 0;
 static uint64_t g_syncTokenId = 0;
 static AccessTokenID g_hdcdTokenID = 0;
+static AccessTokenID g_manageUserPolicyTokenId = INVALID_TOKENID;
 const static int32_t FLAG_SIZE = 16;
 const int CONSTANTS_NUMBER_TWO = 2;
 const int32_t SLEEP_TIME_SECONDS = 3;
@@ -49,6 +50,8 @@ static const vector<PermissionFlag> FLAG_LIST = {
     PERMISSION_ALLOW_THIS_TIME
 };
 static const uint32_t FLAG_LIST_SIZE = 8;
+static const std::string VALID_USER_POLICY_PERMISSION = "ohos.permission.INTERNET";
+static constexpr int32_t VALID_USER_POLICY_USER_ID = 0;
 
 namespace OHOS {
 class TokenSyncCallbackImpl : public TokenSyncCallbackStub {
@@ -151,6 +154,50 @@ void InitHapInfoParams(const std::string& bundleName, FuzzedDataProvider& provid
     param.isRestore = provider.ConsumeBool();
     param.tokenID = ConsumeTokenId(provider);
     param.isAtomicService = provider.ConsumeBool();
+}
+
+void InitValidHapInfoParams(HapInfoParams& param)
+{
+    param.userID = VALID_USER_POLICY_USER_ID;
+    param.bundleName = "accesstokenstub.fuzzer";
+    param.instIndex = 0;
+    param.dlpType = static_cast<int32_t>(HapDlpType::DLP_COMMON);
+    param.appIDDesc = "fuzzer";
+    param.apiVersion = 8; // 8: api version
+    param.isSystemApp = false;
+    param.appDistributionType = "";
+    param.isRestore = false;
+    param.tokenID = 0;
+    param.isAtomicService = false;
+}
+
+void InitValidHapPolicy(HapPolicy& policy)
+{
+    policy.apl = APL_SYSTEM_CORE;
+    policy.domain = "test_domain";
+}
+
+AccessTokenID EnsureManageUserPolicyTestToken()
+{
+    if (g_manageUserPolicyTokenId != INVALID_TOKENID) {
+        return g_manageUserPolicyTokenId;
+    }
+
+    HapInfoParcel hapInfoParcel;
+    InitValidHapInfoParams(hapInfoParcel.hapInfoParameter);
+    HapPolicyParcel hapPolicyParcel;
+    InitValidHapPolicy(hapPolicyParcel.hapPolicy);
+
+    uint64_t fullTokenIdValue = 0;
+    int32_t ret = DelayedSingleton<AccessTokenManagerService>::GetInstance()->AllocHapToken(
+        hapInfoParcel, hapPolicyParcel, fullTokenIdValue);
+    if (ret != RET_SUCCESS) {
+        return INVALID_TOKENID;
+    }
+
+    AccessTokenIDEx fullTokenId = { .tokenIDEx = fullTokenIdValue };
+    g_manageUserPolicyTokenId = fullTokenId.tokenIdExStruct.tokenID;
+    return g_manageUserPolicyTokenId;
 }
 
 void InitHapPolicy(const std::string& permissionName, const std::string& bundleName, FuzzedDataProvider& provider,
@@ -531,13 +578,18 @@ static void ClearUserPolicy(const string& permission)
 
 bool SetUserPolicyStubFuzzTest(FuzzedDataProvider &provider)
 {
-    std::string permission = ConsumePermissionName(provider);
-    std::vector<std::string> permList = { permission };
+    AccessTokenID tokenId = EnsureManageUserPolicyTestToken();
+    if (tokenId == INVALID_TOKENID) {
+        return false;
+    }
+
+    std::string permission = provider.ConsumeBool() ? VALID_USER_POLICY_PERMISSION : ConsumePermissionName(provider);
 
     UserPermissionPolicyIdl dataBlock;
     dataBlock.permissionName = permission;
     UserPolicyIdl userPolicyIdl;
-    userPolicyIdl.userId = provider.ConsumeIntegralInRange<int32_t>(-1, INT_MAX),
+    userPolicyIdl.userId = provider.ConsumeBool() ? VALID_USER_POLICY_USER_ID :
+        provider.ConsumeIntegralInRange<int32_t>(-1, INT_MAX),
     userPolicyIdl.isRestricted = provider.ConsumeBool();
     dataBlock.userPolicyList.emplace_back(userPolicyIdl);
 
@@ -559,7 +611,7 @@ bool SetUserPolicyStubFuzzTest(FuzzedDataProvider &provider)
     MessageOption option;
     MockToken mock({ "ohos.permission.MANAGE_USER_POLICY" });
     (void)DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
-    ClearUserPolicy(permission);
+    ClearUserPolicy(VALID_USER_POLICY_PERMISSION);
 
     return true;
 }

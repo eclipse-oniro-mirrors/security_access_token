@@ -28,6 +28,7 @@ access_token_stub_fuzz_include_dirs += [
   "${access_token_path}/frameworks/tokensync/include",
   "${access_token_path}/services/tokensyncmanager/include/service",
   "${access_token_path}/interfaces/innerkits/accesstoken/src",
+  "${access_token_path}/interfaces/innerkits/proxy_death/include",
   "${access_token_path}/interfaces/innerkits/token_setproc/include",
 ]
 
@@ -38,6 +39,7 @@ access_token_stub_fuzz_deps = [
   "${access_token_path}/interfaces/innerkits/nativetoken:libnativetoken_shared",
   "${access_token_path}/interfaces/innerkits/token_setproc:libperm_setproc",
   "${access_token_path}/interfaces/innerkits/token_setproc:libtoken_setproc",
+  "${access_token_path}/services/common/proxy_death:proxy_death_stub",
 ]
 access_token_stub_fuzz_deps += accesstoken_manager_base_config.deps
 

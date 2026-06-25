@@ -33,6 +33,7 @@ struct BundleParam final {
     std::string bundleName;
     std::string appId;
     uint64_t appIdentifier = 0;
+    uint32_t idType = 0;
     int32_t apiVersion = 0;
     int32_t distributionType = 0;
     bool isSystem = false;

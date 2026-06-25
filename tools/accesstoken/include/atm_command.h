@@ -69,6 +69,17 @@ typedef enum TypeToggleOperateType {
     TOGGLE_GET,
 } ToggleOperateType;
 
+typedef enum TypePermOperateType {
+    /** invalid operate */
+    PERM_OPERATE_INVALID = 0,
+    /** grant permission */
+    PERM_OPERATE_GRANT,
+    /** revoke permission */
+    PERM_OPERATE_REVOKE,
+    /** clear user granted permission state */
+    PERM_OPERATE_RESET,
+} PermOperateType;
+
 class AtmToggleParamInfo final {
 public:
     ToggleModeType toggleMode = TOGGLE_REQUEST;
@@ -93,10 +104,13 @@ struct DumpOptionsContext {
 };
 
 struct PermOptionsContext {
-    bool isGranted = false;
+    PermOperateType type = PERM_OPERATE_INVALID;
     AccessTokenID tokenID = 0;
+    std::string bundleName;
     std::string permission;
+    uint32_t operateCount = 0;
     bool hasTokenIdOption = false;
+    bool hasBundleOption = false;
     bool hasPermissionOption = false;
 };
 
@@ -116,12 +130,11 @@ private:
     std::string DumpPermissionApps(const std::string& permissionName);
     int32_t RunCommandByOperationType(const AtmToolsParamInfo& info, OptType type, std::string& permissionName);
 
-#ifndef ATM_BUILD_VARIANT_USER_ENABLE
     void RunAsCommandExistentOptionForPerm(int32_t option, PermOptionsContext& context);
+#ifndef ATM_BUILD_VARIANT_USER_ENABLE
     void RunAsCommandExistentOptionForToggle(int32_t option, AtmToggleParamInfo& info);
     std::string DumpRecordInfo(uint32_t tokenId, const std::string& permissionName);
     std::string DumpUsedTypeInfo(uint32_t tokenId, const std::string& permissionName);
-    int32_t ModifyPermission(bool isGranted, AccessTokenID tokenId, const std::string& permissionName);
     int32_t SetToggleStatus(int32_t userID, const std::string& permissionName, const uint32_t& status);
     int32_t GetToggleStatus(int32_t userID, const std::string& permissionName, std::string& statusInfo);
     int32_t RunToggleCommandByOperationType(const AtmToggleParamInfo& info);
@@ -130,8 +143,13 @@ private:
     int32_t SetRecordToggleStatus(int32_t userID, const uint32_t& recordStatus, std::string& statusInfo);
     int32_t GetRecordToggleStatus(int32_t userID, std::string& statusInfo);
     bool IsNumericString(const char* string);
+#endif
+    int32_t ModifyPermission(const PermOptionsContext& context);
+    int32_t CheckPermCommandToken(AccessTokenID tokenId);
+    void AppendPermResult(int32_t result, const std::string& permission);
     int32_t RunAsCommonCommandForPerm();
     int32_t ValidatePermParams(const PermOptionsContext& context);
+#ifndef ATM_BUILD_VARIANT_USER_ENABLE
     int32_t RunAsCommonCommandForToggle();
 #endif
     int32_t RunAsHelpCommand();

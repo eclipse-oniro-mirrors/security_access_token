@@ -19,17 +19,18 @@ group("fuzztest") {
     "accesstokenstub_fuzzer:AccessTokenStubFuzzTest",
     "allochaptokenstub_fuzzer:AllocHapTokenStubFuzzTest",
     "alloclocaltokenidstub_fuzzer:AllocLocalTokenIDStubFuzzTest",
+    "clearusergrantedpermstatebybundlestub_fuzzer:ClearUserGrantedPermStateByBundleStubFuzzTest",
     "clearusergrantedpermissionstatestub_fuzzer:ClearUserGrantedPermissionStateStubFuzzTest",
     "deleteremotedevicetokensstub_fuzzer:DeleteRemoteDeviceTokensStubFuzzTest",
     "deleteremotetokenstub_fuzzer:DeleteRemoteTokenStubFuzzTest",
+    "deleteidentitystub_fuzzer:DeleteIdentityStubFuzzTest",
     "deletetokenstub_fuzzer:DeleteTokenStubFuzzTest",
     "dumptokeninfostub_fuzzer:DumpTokenInfoStubFuzzTest",
     "generatecliauthresultstub_fuzzer:GenerateCliAuthResultStubFuzzTest",
-    "generateskillauthresultstub_fuzzer:GenerateSkillAuthResultStubFuzzTest",
     "getclipermissionrequestinfostub_fuzzer:GetCliPermissionRequestInfoStubFuzzTest",
     "getclipermissionsstub_fuzzer:GetCliPermissionsStubFuzzTest",
     "getdefpermissionstub_fuzzer:GetDefPermissionStubFuzzTest",
-    "gethapbaseinfobyuistub_fuzzer:GetHapBaseInfoByUidStubFuzzTest",
+    "gethapbaseinfobyuidstub_fuzzer:GetHapBaseInfoByUidStubFuzzTest",
     "gethapidentitystub_fuzzer:GetHapIdentityStubFuzzTest",
     "gethaptokenidstub_fuzzer:GetHapTokenIDStubFuzzTest",
     "gethaptokeninfocompatstub_fuzzer:GetHapTokenInfoCompatStubFuzzTest",
@@ -48,8 +49,6 @@ group("fuzztest") {
     "getreqpermissionsstub_fuzzer:GetReqPermissionsStubFuzzTest",
     "getselfpermissionsstatestub_fuzzer:GetSelfPermissionsStateStubFuzzTest",
     "getselfpermissionstatusstub_fuzzer:GetSelfPermissionStatusStubFuzzTest",
-    "getskillpermissionrequestinfostub_fuzzer:GetSkillPermissionRequestInfoStubFuzzTest",
-    "getskillpermissionsstub_fuzzer:GetSkillPermissionsStubFuzzTest",
     "gettokenidbyuseridstub_fuzzer:GetTokenIDByUserIDStubFuzzTest",
     "gettokentypestub_fuzzer:GetTokenTypeStubFuzzTest",
     "grantpermissionforspecifiedtimestub_fuzzer:GrantPermissionForSpecifiedTimeStubFuzzTest",
@@ -70,7 +69,6 @@ group("fuzztest") {
     "verifyaccesstokenstub_fuzzer:VerifyAccessTokenStubFuzzTest",
     "verifyaccesstokenwithliststub_fuzzer:VerifyAccessTokenWithListStubFuzzTest",
     "migrateinstalledbundlesstub_fuzzer:MigrateInstalledBundlesStubFuzzTest",
-    "premigrateuidliststub_fuzzer:PreMigrateUIDListStubFuzzTest",
     "finishmigrationstub_fuzzer:FinishMigrationStubFuzzTest",
   ]
 
@@ -89,10 +87,27 @@ group("fuzztest") {
       "setfirstcallertokenid_fuzzer:SetFirstCallerTokenIDFuzzTest",
     ]
   }
+  if (access_token_enable_spm && access_token_manager_hapverify_enable) {
+    deps += [
+      "accesstokenmigrationmanager_fuzzer:AccessTokenMigrationManagerFuzzTest",
+      "bootverifyscheduler_fuzzer:BootVerifySchedulerFuzzTest",
+      "checkhapsigninfostub_fuzzer:CheckHapSignInfoStubFuzzTest",
+      "checkhappermissioninfostub_fuzzer:CheckHapPermissionInfoStubFuzzTest",
+      "finishinstallstub_fuzzer:FinishInstallStubFuzzTest",
+      "getcachepolicybysessionidstub_fuzzer:GetCachePolicyBySessionIdStubFuzzTest",
+      "getcachesigninfobysessionidstub_fuzzer:GetCacheSignInfoBySessionIdStubFuzzTest",
+      "gethapsigninfostub_fuzzer:GetHapSignInfoStubFuzzTest",
+      "installsessionmanagermockstub_fuzzer:InstallSessionManagerMockStubFuzzTest",
+      "preparehapidentitystub_fuzzer:PrepareHapIdentityStubFuzzTest",
+      "updatehappolicystub_fuzzer:UpdateHapPolicyStubFuzzTest",
+    ]
+  }
   if (security_component_enhance_enable) {
     deps += [
       "getseccompenhancestub_fuzzer:GetSecCompEnhanceStubFuzzTest",
+      "getseccompenhancekeystub_fuzzer:GetSecCompEnhanceKeyStubFuzzTest",
       "registerseccompenhancestub_fuzzer:RegisterSecCompEnhanceStubFuzzTest",
+      "storeseccompenhancekeystub_fuzzer:StoreSecCompEnhanceKeyStubFuzzTest",
       "updateseccompenhancestub_fuzzer:UpdateSecCompEnhanceStubFuzzTest",
     ]
   }

@@ -39,19 +39,13 @@ void ResetFakeSpmKernelState()
 {
     g_fakeSpmKernelState = {};
 }
-} // namespace AccessToken
-} // namespace Security
-} // namespace OHOS
 
-using OHOS::Security::AccessToken::AccessTokenID;
-using OHOS::Security::AccessToken::GetFakeSpmKernelState;
-constexpr int32_t RET_FAILED = -1;
-
-extern "C" {
+// C++ wrapper functions for permission kernel operations
+// These functions are in AccessToken namespace to match the calling convention
 int32_t AddPermissionToKernel(uint32_t tokenID, const std::vector<uint32_t>& opCodeList)
 {
     (void)opCodeList;
-    auto& state = GetFakeSpmKernelState();
+    auto& state = g_fakeSpmKernelState;
     state.addPermCallCount++;
     state.addPermTokenIds.emplace_back(tokenID);
     if (static_cast<size_t>(state.addPermCallCount) <= state.addPermRetSequence.size()) {
@@ -62,7 +56,7 @@ int32_t AddPermissionToKernel(uint32_t tokenID, const std::vector<uint32_t>& opC
 
 int32_t RemovePermissionFromKernel(uint32_t tokenID)
 {
-    auto& state = GetFakeSpmKernelState();
+    auto& state = g_fakeSpmKernelState;
     state.removePermCallCount++;
     state.removePermTokenIds.emplace_back(tokenID);
     return state.removePermRet;
@@ -84,6 +78,22 @@ int32_t GetPermissionFromKernel(uint32_t tokenID, int32_t opCode, bool& isGrante
     return 0;
 }
 
+int32_t GetPermissionsFromKernel(uint32_t tokenID, std::vector<uint32_t>& opCodeList)
+{
+    (void)tokenID;
+    opCodeList.clear();
+    return 0;
+}
+
+} // namespace AccessToken
+} // namespace Security
+} // namespace OHOS
+
+using OHOS::Security::AccessToken::AccessTokenID;
+using OHOS::Security::AccessToken::GetFakeSpmKernelState;
+constexpr int32_t RET_FAILED = -1;
+
+extern "C" {
 uint64_t GetSelfTokenID(void)
 {
     return 0;

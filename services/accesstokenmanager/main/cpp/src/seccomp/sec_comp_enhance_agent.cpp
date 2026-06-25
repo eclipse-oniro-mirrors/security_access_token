@@ -14,6 +14,8 @@
  */
 #include "sec_comp_enhance_agent.h"
 
+#include <cinttypes>
+#include <cstring>
 #include <dlfcn.h>
 
 #include "access_token.h"
@@ -32,6 +34,41 @@ namespace {
 std::recursive_mutex g_instanceMutex;
 static const std::string SET_ENHANCE_KEY_LIB = "libsecurity_component_set_enhance_key.z.so";
 typedef int32_t (*FUNC_CREATE) (uint32_t, uint8_t*, uint32_t*);
+
+bool IsEnhanceKeySizeValid(uint32_t size)
+{
+    return (size > 0) && (size <= MAX_HMAC_SIZE);
+}
+
+void ClearSecCompEnhanceKey(SecCompEnhanceKey& enhanceKey)
+{
+    if (memset_s(enhanceKey.key.data, MAX_HMAC_SIZE, 0, MAX_HMAC_SIZE) != EOK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Clear enhance key failed.");
+    }
+    enhanceKey.key.size = 0;
+    enhanceKey.epoch = 0;
+}
+
+bool CopySecCompEnhanceKey(const SecCompEnhanceKey& source, SecCompEnhanceKey& destination)
+{
+    if (!IsEnhanceKeySizeValid(source.key.size)) {
+        return false;
+    }
+    ClearSecCompEnhanceKey(destination);
+    destination.key.size = source.key.size;
+    destination.epoch = source.epoch;
+    if (memcpy_s(destination.key.data, MAX_HMAC_SIZE, source.key.data, source.key.size) != EOK) {
+        ClearSecCompEnhanceKey(destination);
+        return false;
+    }
+    return true;
+}
+
+bool IsSameSecCompEnhanceKey(const SecCompEnhanceKey& first, const SecCompEnhanceKey& second)
+{
+    return (first.key.size == second.key.size) &&
+        (memcmp(first.key.data, second.key.data, first.key.size) == 0);
+}
 }
 
 void SecCompUsageObserver::OnProcessDied(const ProcessData &processData)
@@ -92,6 +129,9 @@ SecCompEnhanceAgent::~SecCompEnhanceAgent()
         AppManagerAccessClient::GetInstance().UnregisterApplicationStateObserver(observer_);
         observer_ = nullptr;
     }
+    std::lock_guard<std::mutex> lock(secCompEnhanceKeyMutex_);
+    ClearSecCompEnhanceKey(secCompEnhanceKey_);
+    hasSecCompEnhanceKey_ = false;
 }
 
 void SecCompEnhanceAgent::OnAppMgrRemoteDiedHandle()
@@ -176,6 +216,60 @@ int32_t SecCompEnhanceAgent::GetSecCompEnhance(int32_t pid, SecCompEnhanceData& 
         }
     }
     return ERR_PARAM_INVALID;
+}
+
+int32_t SecCompEnhanceAgent::StoreSecCompEnhanceKey(const SecCompEnhanceKey& enhanceKey)
+{
+    if (!IsEnhanceKeySizeValid(enhanceKey.key.size)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Enhance key size %{public}u is invalid.", enhanceKey.key.size);
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+
+    SecCompEnhanceKey newKey;
+    if (!CopySecCompEnhanceKey(enhanceKey, newKey)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Copy enhance key failed.");
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+
+    int32_t result = RET_SUCCESS;
+    {
+        std::lock_guard<std::mutex> lock(secCompEnhanceKeyMutex_);
+        if (hasSecCompEnhanceKey_ && (newKey.epoch < secCompEnhanceKey_.epoch)) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Enhance key epoch rollback, current=%{public}" PRIu64
+                ", new=%{public}" PRIu64 ".", secCompEnhanceKey_.epoch, newKey.epoch);
+            result = AccessTokenError::ERR_PARAM_INVALID;
+        } else if (hasSecCompEnhanceKey_ && (newKey.epoch == secCompEnhanceKey_.epoch)) {
+            if (!IsSameSecCompEnhanceKey(newKey, secCompEnhanceKey_)) {
+                LOGE(ATM_DOMAIN, ATM_TAG, "Different enhance key for epoch %{public}" PRIu64
+                    ", size=%{public}u.", newKey.epoch, newKey.key.size);
+                result = AccessTokenError::ERR_PARAM_INVALID;
+            }
+        } else {
+            ClearSecCompEnhanceKey(secCompEnhanceKey_);
+            secCompEnhanceKey_ = newKey;
+            hasSecCompEnhanceKey_ = true;
+            LOGI(ATM_DOMAIN, ATM_TAG, "Store enhance key, epoch=%{public}" PRIu64
+                ", size=%{public}u.", secCompEnhanceKey_.epoch, secCompEnhanceKey_.key.size);
+        }
+    }
+    ClearSecCompEnhanceKey(newKey);
+    return result;
+}
+
+int32_t SecCompEnhanceAgent::GetSecCompEnhanceKey(SecCompEnhanceKey& enhanceKey)
+{
+    std::lock_guard<std::mutex> lock(secCompEnhanceKeyMutex_);
+    if (!hasSecCompEnhanceKey_) {
+        LOGW(ATM_DOMAIN, ATM_TAG, "Enhance key is not ready.");
+        return AccessTokenError::ERR_RESOURCE_IS_NOT_READY;
+    }
+    if (!CopySecCompEnhanceKey(secCompEnhanceKey_, enhanceKey)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Copy stored enhance key failed.");
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    LOGI(ATM_DOMAIN, ATM_TAG, "Get enhance key, epoch=%{public}" PRIu64
+        ", size=%{public}u.", enhanceKey.epoch, enhanceKey.key.size);
+    return RET_SUCCESS;
 }
 
 } // namespace AccessToken

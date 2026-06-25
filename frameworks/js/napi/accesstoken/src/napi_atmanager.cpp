@@ -279,11 +279,8 @@ napi_value NapiAtManager::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("queryStatusByPermission", NapiQueryPermissionStatus::QueryStatusByPermission),
         DECLARE_NAPI_FUNCTION("queryStatusByTokenID", NapiQueryPermissionStatus::QueryStatusByTokenID),
         DECLARE_NAPI_FUNCTION("getCliPermissionRequestInfo", NapiClawPermission::GetCliPermissionRequestInfo),
-        DECLARE_NAPI_FUNCTION("getSkillPermissionRequestInfo", NapiClawPermission::GetSkillPermissionRequestInfo),
         DECLARE_NAPI_FUNCTION("getCliPermissions", NapiClawPermission::GetCliPermissions),
-        DECLARE_NAPI_FUNCTION("getSkillPermissions", NapiClawPermission::GetSkillPermissions),
         DECLARE_NAPI_FUNCTION("generateCliAuthResult", NapiClawPermission::GenerateCliAuthResult),
-        DECLARE_NAPI_FUNCTION("generateSkillAuthResult", NapiClawPermission::GenerateSkillAuthResult),
     };
 
     napi_value cons = nullptr;
@@ -871,7 +868,7 @@ void NapiAtManager::GetVersionExecute(napi_env env, void* data)
     if (asyncContext == nullptr) {
         return;
     }
-    uint32_t version;
+    uint32_t version = 0;
     int32_t result = AccessTokenKit::GetVersion(version);
     if (result != RET_SUCCESS) {
         asyncContext->errorCode = result;

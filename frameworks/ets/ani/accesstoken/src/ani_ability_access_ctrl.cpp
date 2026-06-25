@@ -453,7 +453,7 @@ static void RevokePermissionExecute([[maybe_unused]] ani_env* env,
 static ani_int GetVersionExecute([[maybe_unused]] ani_env* env, [[maybe_unused]] ani_object object)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "GetVersionExecute begin.");
-    uint32_t version = -1;
+    uint32_t version = 0;
     if (env == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Env is null.");
         return static_cast<ani_int>(version);
@@ -1152,13 +1152,6 @@ static bool ParseCliInfoArray(ani_env* env, ani_array arrayObject, std::vector<C
     return ParseObjectArray(env, arrayObject, result, ParseCliInfo);
 }
 
-static bool ParseSkillInfo(ani_env* env, ani_object object, SkillInfo& info)
-{
-    return GetStringProperty(env, object, "skillName", info.skillName) &&
-        GetStringProperty(env, object, "bundleName", info.bundleName) &&
-        GetStringProperty(env, object, "moduleName", info.moduleName);
-}
-
 static bool GetObjectProperty(ani_env* env, ani_object object, const std::string& property, ani_object& value)
 {
     ani_ref ref = nullptr;
@@ -1243,15 +1236,6 @@ static bool IsCliAuthInfoListValueValid(const std::vector<CliAuthInfo>& authInfo
         }
     }
     return true;
-}
-
-static bool ParseSkillAuthInfo(ani_env* env, ani_object object, SkillAuthInfo& info)
-{
-    ani_object skillObject = nullptr;
-    return GetObjectProperty(env, object, "skillInfo", skillObject) &&
-        ParseSkillInfo(env, skillObject, info.skillInfo) &&
-        GetStringVecProperty(env, object, "permissionNames", info.permissionNames) &&
-        GetBoolVecProperty(env, object, "authorizationResults", info.authorizationResults);
 }
 
 static std::vector<int32_t> ConvertStatusList(const std::vector<PermissionDecisionStatus>& statusList)
@@ -1343,36 +1327,6 @@ static ani_ref CreateCliPermissionsResultObject(ani_env* env, const CliPermissio
     return aniObject;
 }
 
-static ani_object CreateSkillCommandPermissionResultObject(ani_env* env,
-    const SkillCommandPermissionResult& result)
-{
-    ani_object aniObject = CreateClassObject(env,
-        "@ohos.abilityAccessCtrl.abilityAccessCtrl.SkillCommandPermissionResultInner");
-    if (aniObject == nullptr) {
-        return nullptr;
-    }
-    SetRefProperty(env, aniObject, "usedPermissions", CreateAniArrayString(env, result.usedPermissions));
-    SetRefProperty(env, aniObject, "statusList", CreateAniArrayInt(env, ConvertStatusList(result.statusList)));
-    return aniObject;
-}
-
-static ani_ref CreateSkillCommandPermissionResultArray(ani_env* env,
-    const std::vector<SkillCommandPermissionResult>& permList)
-{
-    return CreateAniObjectArray(env, permList, CreateSkillCommandPermissionResultObject);
-}
-
-static ani_ref CreateSkillPermissionsResultObject(ani_env* env, const SkillPermissionsResult& result)
-{
-    ani_object aniObject = CreateClassObject(env,
-        "@ohos.abilityAccessCtrl.abilityAccessCtrl.SkillPermissionsResultInner");
-    if (aniObject == nullptr) {
-        return nullptr;
-    }
-    SetRefProperty(env, aniObject, "permList", CreateSkillCommandPermissionResultArray(env, result.permList));
-    return aniObject;
-}
-
 static ani_ref CreateToolAuthResultObject(ani_env* env, const ToolAuthResult& result)
 {
     ani_object aniObject = CreateClassObject(env,
@@ -1443,32 +1397,6 @@ static ani_ref GetCliPermissionRequestInfoExecute([[maybe_unused]] ani_env* env,
     return CreatePermissionDialogResultObject(env, result);
 }
 
-static ani_ref GetSkillPermissionRequestInfoExecute([[maybe_unused]] ani_env* env,
-    [[maybe_unused]] ani_object object, ani_string aniAgentID, ani_array aniSkillInfoList)
-{
-    std::string agentID;
-    if (!ParseAgentID(env, aniAgentID, agentID)) {
-        BusinessErrorAni::ThrowError(env, STS_ERROR_PARAM_ILLEGAL, GetParamErrorMsg("agentID", "string"));
-        return nullptr;
-    }
-    if (!IsAgentIDValid(agentID)) {
-        ThrowParamInvalidError(env, "The agentID exceeds 48 characters.");
-        return nullptr;
-    }
-    std::vector<SkillInfo> skillInfoList;
-    if (!ParseObjectArray(env, aniSkillInfoList, skillInfoList, ParseSkillInfo)) {
-        BusinessErrorAni::ThrowError(env, STS_ERROR_PARAM_ILLEGAL,
-            GetParamErrorMsg("skillList", "Array<SkillInfo>"));
-        return nullptr;
-    }
-    PermissionDialogResult result;
-    int32_t ret = AccessTokenKit::GetSkillPermissionRequestInfo(agentID, skillInfoList, result);
-    if (!CheckKitResultAndThrow(env, ret)) {
-        return nullptr;
-    }
-    return CreatePermissionDialogResultObject(env, result);
-}
-
 static ani_ref GetCliPermissionsExecute([[maybe_unused]] ani_env* env,
     [[maybe_unused]] ani_object object, ani_int aniHostTokenID, ani_string aniAgentID, ani_array aniCliInfoList)
 {
@@ -1504,37 +1432,6 @@ static ani_ref GetCliPermissionsExecute([[maybe_unused]] ani_env* env,
     return CreateCliPermissionsResultObject(env, result);
 }
 
-static ani_ref GetSkillPermissionsExecute([[maybe_unused]] ani_env* env,
-    [[maybe_unused]] ani_object object, ani_int aniHostTokenID, ani_string aniAgentID, ani_array aniSkillInfoList)
-{
-    AccessTokenID hostTokenID = static_cast<AccessTokenID>(aniHostTokenID);
-    if (!IsTokenIDValid(hostTokenID)) {
-        ThrowParamInvalidError(env, "The hostTokenID is 0.");
-        return nullptr;
-    }
-    std::string agentID;
-    if (!ParseAgentID(env, aniAgentID, agentID)) {
-        BusinessErrorAni::ThrowError(env, STS_ERROR_PARAM_ILLEGAL, GetParamErrorMsg("agentID", "string"));
-        return nullptr;
-    }
-    if (!IsAgentIDValid(agentID)) {
-        ThrowParamInvalidError(env, "The agentID exceeds 48 characters.");
-        return nullptr;
-    }
-    std::vector<SkillInfo> skillInfoList;
-    if (!ParseObjectArray(env, aniSkillInfoList, skillInfoList, ParseSkillInfo)) {
-        BusinessErrorAni::ThrowError(env, STS_ERROR_PARAM_ILLEGAL,
-            GetParamErrorMsg("skillInfoList", "Array<SkillInfo>"));
-        return nullptr;
-    }
-    SkillPermissionsResult result;
-    int32_t ret = AccessTokenKit::GetSkillPermissions(hostTokenID, agentID, skillInfoList, result);
-    if (!CheckKitResultAndThrow(env, ret)) {
-        return nullptr;
-    }
-    return CreateSkillPermissionsResultObject(env, result);
-}
-
 static ani_ref GenerateCliAuthResultExecute([[maybe_unused]] ani_env* env,
     [[maybe_unused]] ani_object object, ani_int aniHostTokenID, ani_string aniAgentID, ani_array aniAuthInfoList)
 {
@@ -1564,37 +1461,6 @@ static ani_ref GenerateCliAuthResultExecute([[maybe_unused]] ani_env* env,
     }
     ToolAuthResult result;
     int32_t ret = AccessTokenKit::GenerateCliAuthResult(hostTokenID, agentID, authInfoList, result);
-    if (!CheckKitResultAndThrow(env, ret)) {
-        return nullptr;
-    }
-    return CreateToolAuthResultObject(env, result);
-}
-
-static ani_ref GenerateSkillAuthResultExecute([[maybe_unused]] ani_env* env,
-    [[maybe_unused]] ani_object object, ani_int aniHostTokenID, ani_string aniAgentID, ani_array aniAuthInfoList)
-{
-    AccessTokenID hostTokenID = static_cast<AccessTokenID>(aniHostTokenID);
-    if (!IsTokenIDValid(hostTokenID)) {
-        ThrowParamInvalidError(env, "The hostTokenID is 0.");
-        return nullptr;
-    }
-    std::string agentID;
-    if (!ParseAgentID(env, aniAgentID, agentID)) {
-        BusinessErrorAni::ThrowError(env, STS_ERROR_PARAM_ILLEGAL, GetParamErrorMsg("agentID", "string"));
-        return nullptr;
-    }
-    if (!IsAgentIDValid(agentID)) {
-        ThrowParamInvalidError(env, "The agentID exceeds 48 characters.");
-        return nullptr;
-    }
-    std::vector<SkillAuthInfo> authInfoList;
-    if (!ParseObjectArray(env, aniAuthInfoList, authInfoList, ParseSkillAuthInfo)) {
-        BusinessErrorAni::ThrowError(env, STS_ERROR_PARAM_ILLEGAL,
-            GetParamErrorMsg("authInfoList", "Array<SkillAuthInfo>"));
-        return nullptr;
-    }
-    ToolAuthResult result;
-    int32_t ret = AccessTokenKit::GenerateSkillAuthResult(hostTokenID, agentID, authInfoList, result);
     if (!CheckKitResultAndThrow(env, ret)) {
         return nullptr;
     }
@@ -1666,16 +1532,10 @@ static void AppendClawNativeFunctions(std::vector<ani_native_function>& methods)
     methods.insert(methods.end(), {
         ani_native_function { "getCliPermissionRequestInfoExecute",
             nullptr, reinterpret_cast<void*>(GetCliPermissionRequestInfoExecute) },
-        ani_native_function { "getSkillPermissionRequestInfoExecute",
-            nullptr, reinterpret_cast<void*>(GetSkillPermissionRequestInfoExecute) },
         ani_native_function { "getCliPermissionsExecute",
             nullptr, reinterpret_cast<void*>(GetCliPermissionsExecute) },
-        ani_native_function { "getSkillPermissionsExecute",
-            nullptr, reinterpret_cast<void*>(GetSkillPermissionsExecute) },
         ani_native_function { "generateCliAuthResultExecute",
             nullptr, reinterpret_cast<void*>(GenerateCliAuthResultExecute) },
-        ani_native_function { "generateSkillAuthResultExecute",
-            nullptr, reinterpret_cast<void*>(GenerateSkillAuthResultExecute) },
     });
 }
 

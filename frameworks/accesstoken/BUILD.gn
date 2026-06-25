@@ -49,12 +49,8 @@ ohos_shared_library("accesstoken_communication_adapter_cxx") {
 
   sources = [
     "src/atm_tools_param_info_parcel.cpp",
-    "src/claw_auth_info_parcel.cpp",
-    "src/claw_token_challenge_parcel.cpp",
-    "src/cli_info_parcel.cpp",
-    "src/cli_info_result_parcel.cpp",
-    "src/cli_init_info_parcel.cpp",
-    "src/cli_permissions_result_parcel.cpp",
+    "src/bundle_infos_rawdata_helper.cpp",
+    "src/check_hap_sign_result_rawdata_helper.cpp",
     "src/hap_base_info_parcel.cpp",
     "src/hap_info_parcel.cpp",
     "src/hap_policy_parcel.cpp",
@@ -63,24 +59,23 @@ ohos_shared_library("accesstoken_communication_adapter_cxx") {
     "src/native_token_info_parcel.cpp",
     "src/perm_state_change_scope_parcel.cpp",
     "src/permission_def_parcel.cpp",
-    "src/permission_dialog_result_parcel.cpp",
     "src/permission_grant_info_parcel.cpp",
     "src/permission_list_state_parcel.cpp",
     "src/permission_state_change_info_parcel.cpp",
     "src/permission_status_parcel.cpp",
-    "src/skill_info_parcel.cpp",
-    "src/skill_info_result_parcel.cpp",
-    "src/skill_init_info_parcel.cpp",
-    "src/skill_permissions_result_parcel.cpp",
   ]
 
   external_deps = [
     "bounds_checking_function:libsec_shared",
     "c_utils:utils",
+    "ipc:ipc_single",
+    "hilog:libhilog"
   ]
 
   if (security_component_enhance_enable) {
-    sources += [ "src/sec_comp_enhance_data_parcel.cpp" ]
-    external_deps += [ "ipc:ipc_single" ]
+    sources += [
+      "src/sec_comp_enhance_data_parcel.cpp",
+      "src/sec_comp_enhance_key_parcel.cpp",
+    ]
   }
 }

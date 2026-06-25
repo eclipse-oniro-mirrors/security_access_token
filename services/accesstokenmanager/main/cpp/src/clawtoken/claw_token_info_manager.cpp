@@ -33,7 +33,6 @@
 #include "permission_data_brief.h"
 #include "permission_state_change_info.h"
 #include "permission_validator.h"
-#include "skill_token_info_inner.h"
 #include "tokenid_attributes.h"
 #include "user_policy_manager.h"
 
@@ -91,6 +90,35 @@ void BuildPermStatusList(ToolTokenType toolType, const std::vector<PermissionSta
     }
 }
 
+int32_t RestoreRestrictedFlagForToolToken(AccessTokenID tokenId, uint32_t permCode, uint32_t originalFlag)
+{
+    int32_t currentStatus = PERMISSION_DENIED;
+    uint32_t currentFlag = 0;
+    int32_t ret = PermissionDataBrief::GetInstance().QueryStoredPermissionStatusAndFlag(
+        tokenId, permCode, currentStatus, currentFlag);
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
+    bool currentRestricted = (currentFlag & PERMISSION_RESTRICTED_BY_ADMIN) != 0;
+    bool originalRestricted = (originalFlag & PERMISSION_RESTRICTED_BY_ADMIN) != 0;
+    if (currentRestricted == originalRestricted) {
+        return RET_SUCCESS;
+    }
+
+    PermissionDataBrief::PermissionStatusChangeType rollbackChangeType =
+        PermissionDataBrief::PermissionStatusChangeType::NO_CHANGE;
+    return PermissionDataBrief::GetInstance().UpdatePermissionFlag(
+        tokenId, permCode, PERMISSION_RESTRICTED_BY_ADMIN, originalRestricted, rollbackChangeType);
+}
+
+void RestoreToolKernelPermissionState(
+    AccessTokenID tokenId, uint32_t permCode, int32_t originalStatus, uint32_t originalFlag)
+{
+    std::string permissionName = TransferOpcodeToPermission(permCode);
+    bool kernelStatus = ((originalFlag & PERMISSION_RESTRICTED_BY_ADMIN) == 0) &&
+        (originalStatus == PERMISSION_GRANTED);
+    PermissionKernelUtils::SetPermToKernel(tokenId, permissionName, kernelStatus);
+}
 }
 
 ToolTokenInfoManager& ToolTokenInfoManager::GetInstance()
@@ -109,19 +137,6 @@ bool ToolTokenInfoManager::CheckCliInfo(const CliInfo& info) const
         LOGE(ATM_DOMAIN, ATM_TAG,
             "Invalid subCliName, cliName=%{public}s, subCliName=%{public}s, info.subCliName.length()=%{public}zu.",
             info.cliName.c_str(), info.subCliName.c_str(), info.subCliName.length());
-        return false;
-    }
-    return true;
-}
-
-bool ToolTokenInfoManager::CheckSkillInfo(const SkillInfo& info) const
-{
-    if (!DataValidator::IsBundleNameValid(info.bundleName) ||
-        !DataValidator::IsBundleNameValid(info.moduleName) ||
-        !DataValidator::IsBundleNameValid(info.skillName)) {
-        LOGE(ATM_DOMAIN, ATM_TAG,
-            "Invalid skill info, bundleName=%{public}s, moduleName=%{public}s, skillName=%{public}s.",
-            info.bundleName.c_str(), info.moduleName.c_str(), info.skillName.c_str());
         return false;
     }
     return true;
@@ -261,36 +276,6 @@ int32_t ToolTokenInfoManager::InitCliToken(const CliInitInfo& info, int32_t call
     return FinalizeToolTokenInit(inner, baseInfo, permStateList, kernelPermList);
 }
 
-int32_t ToolTokenInfoManager::InitSkillToken(const SkillInitInfo& info, int32_t callerPid,
-    AccessTokenIDEx& tokenIdEx, std::vector<std::string>& kernelPermList)
-{
-    std::vector<PermissionStatus> permStateList;
-    int32_t ret = VerifySkillInitInputAndTicket(info, callerPid, permStateList);
-    if (ret != RET_SUCCESS) {
-        return ret;
-    }
-
-    ClawTokenBaseInfo baseInfo;
-    ret = BuildToolTokenBaseInfo(
-        info.hostTokenId, callerPid, ToolTokenType::SKILL, info.challenge, tokenIdEx, baseInfo);
-    if (ret != RET_SUCCESS) {
-        return ret;
-    }
-    UserPolicyManager::GetInstance().UpdatePermissionStatusListForUserPolicy(
-        baseInfo.tokenId, baseInfo.userId, permStateList);
-
-    auto inner = std::make_shared<SkillTokenInfoInner>();
-    ret = inner->Init(baseInfo, info.skillInfo, permStateList);
-    if (ret != RET_SUCCESS) {
-        LOGE(ATM_DOMAIN, ATM_TAG,
-            "SkillTokenInfoInner init failed, hostTokenId=%{public}u, callerPid=%{public}d, tokenId=%{public}u.",
-            info.hostTokenId, callerPid, baseInfo.tokenId);
-        AccessTokenIDManager::GetInstance().ReleaseTokenId(baseInfo.tokenId);
-        return ret;
-    }
-    return FinalizeToolTokenInit(inner, baseInfo, permStateList, kernelPermList);
-}
-
 int32_t ToolTokenInfoManager::VerifyCliInitInputAndTicket(const CliInitInfo& info, int32_t callerPid,
     std::vector<PermissionStatus>& permStateList) const
 {
@@ -311,30 +296,6 @@ int32_t ToolTokenInfoManager::VerifyCliInitInputAndTicket(const CliInitInfo& inf
             "cliName=%{public}s, subCliName=%{public}s, ret=%{public}d.",
             info.hostTokenId, callerPid, info.challenge.c_str(), info.cliInfo.cliName.c_str(),
             info.cliInfo.subCliName.c_str(), ret);
-    }
-    return ret;
-}
-
-int32_t ToolTokenInfoManager::VerifySkillInitInputAndTicket(const SkillInitInfo& info, int32_t callerPid,
-    std::vector<PermissionStatus>& permStateList) const
-{
-    if (!CheckSkillInfo(info.skillInfo) || !CheckToolInitCommonInput(info.hostTokenId, info.challenge)) {
-        LOGE(ATM_DOMAIN, ATM_TAG,
-            "InitSkillToken input invalid, hostTokenId=%{public}u, callerPid=%{public}d, challenge=%{public}s, "
-            "bundleName=%{public}s, moduleName=%{public}s, skillName=%{public}s.",
-            info.hostTokenId, callerPid, info.challenge.c_str(), info.skillInfo.bundleName.c_str(),
-            info.skillInfo.moduleName.c_str(), info.skillInfo.skillName.c_str());
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-
-    int32_t ret = ClawTicketManager::GetInstance().VerifySkillClawTicket(
-        info.hostTokenId, info.challenge, info.skillInfo, permStateList);
-    if (ret != RET_SUCCESS) {
-        LOGE(ATM_DOMAIN, ATM_TAG,
-            "VerifySkillClawTicket failed, hostTokenId=%{public}u, callerPid=%{public}d, challenge=%{public}s, "
-            "bundleName=%{public}s, moduleName=%{public}s, skillName=%{public}s, ret=%{public}d.",
-            info.hostTokenId, callerPid, info.challenge.c_str(), info.skillInfo.bundleName.c_str(),
-            info.skillInfo.moduleName.c_str(), info.skillInfo.skillName.c_str(), ret);
     }
     return ret;
 }
@@ -507,48 +468,77 @@ int32_t ToolTokenInfoManager::UpdateRestrictedFlag(
     return inner->UpdateRestrictedFlag(permCode, isRestricted, hasFlagChanged);
 }
 
-int32_t ToolTokenInfoManager::RefreshTokenPermStateToKernel(
-    AccessTokenID tokenId, uint32_t permCode, bool isAllowed, const char* source, bool hasFlagChanged) const
-{
-    std::map<std::string, bool> refreshedPermList;
-    int32_t ret = PermissionDataBrief::GetInstance().RefreshPermStateToKernel(
-        tokenId, permCode, isAllowed, refreshedPermList);
-    if (hasFlagChanged || !refreshedPermList.empty()) {
-        PermissionChangeNotifier::GetInstance().ParamFlagUpdate();
-    }
-    for (const auto& perm : refreshedPermList) {
-        LOGI(ATM_DOMAIN, ATM_TAG, "Perm %{public}s refreshed by %{public}s, isAllowed %{public}d.",
-            perm.first.c_str(), source, perm.second);
-        int32_t changeType = perm.second ? STATE_CHANGE_GRANTED : STATE_CHANGE_REVOKED;
-        CallbackManager::GetInstance().ExecuteCallbackAsync(tokenId, perm.first, changeType);
-    }
-    return ret;
-}
-
-int32_t ToolTokenInfoManager::RefreshUserPolicyFlagForUser(int32_t userId, const UserPolicyChange& policy) const
+int32_t ToolTokenInfoManager::RefreshUserPolicyFlagForUser(int32_t userId, const UserPolicyChange& policy,
+    std::vector<UserPolicyRefreshSnapshot>& appliedSnapshots) const
 {
     std::unordered_set<AccessTokenID> toolTokenIdSet;
     GetToolTokenIDByUserID(userId, toolTokenIdSet);
     for (const auto tokenId : toolTokenIdSet) {
         bool isRestricted = UserPolicyManager::GetInstance().IsPermissionRestricted(tokenId, userId, policy.permCode);
-        bool isFlagChanged = false;
-        int32_t ret = UpdateRestrictedFlag(tokenId, policy.permCode, isRestricted, isFlagChanged);
-        if (ret == AccessTokenError::ERR_PERMISSION_NOT_EXIST) {
-            continue;
+        int32_t originalStatus = PERMISSION_DENIED;
+        uint32_t originalFlag = 0;
+        int32_t ret = PermissionDataBrief::GetInstance().QueryStoredPermissionStatusAndFlag(
+            tokenId, policy.permCode, originalStatus, originalFlag);
+        if (ret != RET_SUCCESS) {
+            if (ret == AccessTokenError::ERR_PERMISSION_NOT_EXIST) {
+                continue;
+            }
+            return ret;
         }
+
+        bool isFlagChanged = false;
+        ret = UpdateRestrictedFlag(tokenId, policy.permCode, isRestricted, isFlagChanged);
         if (ret != RET_SUCCESS) {
             return ret;
         }
-        (void)RefreshTokenPermStateToKernel(tokenId, policy.permCode, !isRestricted, "user policy", isFlagChanged);
+        std::string permissionName = TransferOpcodeToPermission(policy.permCode);
+        bool kernelStatusBefore =
+            ((originalFlag & PERMISSION_RESTRICTED_BY_ADMIN) == 0) && (originalStatus == PERMISSION_GRANTED);
+        bool kernelStatusAfter = !isRestricted && (originalStatus == PERMISSION_GRANTED);
+        if (isFlagChanged) {
+            PermissionChangeNotifier::GetInstance().ParamFlagUpdate();
+        }
+        if (kernelStatusBefore != kernelStatusAfter) {
+            PermissionKernelUtils::SetPermToKernel(tokenId, permissionName, kernelStatusAfter);
+            int32_t changeType = kernelStatusAfter ? STATE_CHANGE_GRANTED : STATE_CHANGE_REVOKED;
+            CallbackManager::GetInstance().ExecuteCallbackAsync(tokenId, permissionName, changeType);
+        }
+        LOGI(ATM_DOMAIN, ATM_TAG, "Perm %{public}s refreshed by user policy, isAllowed %{public}d.",
+            permissionName.c_str(), kernelStatusAfter);
+        appliedSnapshots.emplace_back(UserPolicyRefreshSnapshot {
+            .target = UserPolicyRefreshTarget::TOOL,
+            .tokenId = tokenId,
+            .permCode = policy.permCode,
+            .originalStatus = originalStatus,
+            .originalFlag = originalFlag
+        });
     }
     return RET_SUCCESS;
 }
 
-int32_t ToolTokenInfoManager::RefreshUserPolicyFlag(const std::vector<UserPolicyChange>& changedPolicyList) const
+void ToolTokenInfoManager::RollbackUserPolicyFlag(
+    const std::vector<UserPolicyRefreshSnapshot>& appliedSnapshots) const
+{
+    for (auto iter = appliedSnapshots.rbegin(); iter != appliedSnapshots.rend(); ++iter) {
+        if (iter->target != UserPolicyRefreshTarget::TOOL) {
+            continue;
+        }
+        int32_t ret = RestoreRestrictedFlagForToolToken(iter->tokenId, iter->permCode, iter->originalFlag);
+        if (ret != RET_SUCCESS) {
+            LOGE(ATM_DOMAIN, ATM_TAG,
+                "Rollback restricted flag failed, tokenId=%{public}u, permCode=%{public}u, ret=%{public}d.",
+                iter->tokenId, iter->permCode, ret);
+        }
+        RestoreToolKernelPermissionState(iter->tokenId, iter->permCode, iter->originalStatus, iter->originalFlag);
+    }
+}
+
+int32_t ToolTokenInfoManager::RefreshUserPolicyFlag(const std::vector<UserPolicyChange>& changedPolicyList,
+    std::vector<UserPolicyRefreshSnapshot>& appliedSnapshots) const
 {
     for (const auto& policy : changedPolicyList) {
         for (const auto& userId : policy.changedUserList) {
-            int32_t ret = RefreshUserPolicyFlagForUser(userId, policy);
+            int32_t ret = RefreshUserPolicyFlagForUser(userId, policy, appliedSnapshots);
             if (ret != RET_SUCCESS) {
                 return ret;
             }
@@ -557,31 +547,6 @@ int32_t ToolTokenInfoManager::RefreshUserPolicyFlag(const std::vector<UserPolicy
     return RET_SUCCESS;
 }
 
-int32_t ToolTokenInfoManager::GetCliTokenInfo(AccessTokenID tokenId, CliTokenInfo& info) const
-{
-    std::shared_lock<std::shared_mutex> lock(lock_);
-    auto iter = toolTokenInfoMap_.find(tokenId);
-    if (iter == toolTokenInfoMap_.end() || iter->second == nullptr ||
-        iter->second->GetType() != ToolTokenType::CLI) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Cli tool token info not found, tokenId=%{public}u.", tokenId);
-        return AccessTokenError::ERR_TOKENID_NOT_EXIST;
-    }
-    std::static_pointer_cast<CliTokenInfoInner>(iter->second)->GetTokenInfo(info);
-    return RET_SUCCESS;
-}
-
-int32_t ToolTokenInfoManager::GetSkillTokenInfo(AccessTokenID tokenId, SkillTokenInfo& info) const
-{
-    std::shared_lock<std::shared_mutex> lock(lock_);
-    auto iter = toolTokenInfoMap_.find(tokenId);
-    if (iter == toolTokenInfoMap_.end() || iter->second == nullptr ||
-        iter->second->GetType() != ToolTokenType::SKILL) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Skill tool token info not found, tokenId=%{public}u.", tokenId);
-        return AccessTokenError::ERR_TOKENID_NOT_EXIST;
-    }
-    std::static_pointer_cast<SkillTokenInfoInner>(iter->second)->GetTokenInfo(info);
-    return RET_SUCCESS;
-}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

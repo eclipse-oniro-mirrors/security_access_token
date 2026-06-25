@@ -32,6 +32,9 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+
+struct HapTokenInfoItem;
+
 /**
  * @brief Declares hap Init info class
  */
@@ -52,6 +55,7 @@ public:
     HapTokenInfoInner(AccessTokenID id, const HapTokenInfo &info,
         const std::vector<PermissionStatus>& permStateList);
     HapTokenInfoInner(AccessTokenID id, const HapTokenInfoForSync& info);
+    explicit HapTokenInfoInner(const HapTokenInfoItem& item);
     virtual ~HapTokenInfoInner();
 
     void Update(const UpdateHapInfoParams& info, const std::vector<PermissionStatus>& permStateList,
@@ -89,9 +93,6 @@ public:
     int32_t ResetUserGrantPermissionStatus(void);
     void UpdateRemoteHapTokenInfo(AccessTokenID mapID,
         const HapTokenInfo& baseInfo, std::vector<PermissionStatus>& permStateList);
-
-    static void RefreshPermStateToKernel(AccessTokenID tokenId, uint32_t permCode, bool hapUserIsActive,
-        std::map<std::string, bool>& refreshedPermList);
     static int32_t VerifyPermissionStatus(AccessTokenID tokenID, const std::string& permissionName);
     static PermUsedTypeEnum GetPermissionUsedType(AccessTokenID tokenID, const std::string& permissionName);
     static int32_t QueryPermissionStatusAndFlag(

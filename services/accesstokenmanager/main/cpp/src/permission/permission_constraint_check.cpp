@@ -32,11 +32,6 @@ namespace Security {
 namespace AccessToken {
 namespace {
 constexpr const char* ENTERPRISE_NORMAL_CHECK = "accesstoken.enterprise_normal_check";
-constexpr const char* TEMP_JIT_ALLOW_PERMISSION = "TEMPJITALLOW";
-constexpr uint32_t PROCESS_OWNERID_APP = 2;
-constexpr uint32_t PROCESS_OWNERID_DEBUG = 3;
-constexpr uint32_t PROCESS_OWNERID_COMPAT = 5;
-constexpr uint32_t PROCESS_OWNERID_APP_TEMP_ALLOW = 10;
 constexpr uint32_t SYSTEM_APP_FLAG = 0x0001;
 constexpr uint32_t ATOMIC_SERVICE_FLAG = 0x0002;
 constexpr uint32_t DEBUG_APP_FLAG = 0x0008;
@@ -135,22 +130,6 @@ bool PermissionConstraintCheck::AclAndEdmCheck(const BundleParam& param, const P
     LOGC(ATM_DOMAIN, ATM_TAG, "Available range of %{public}s is invalid, bundle: %{public}s.",
         briefDef.permissionName, param.bundleName.c_str());
     return false;
-}
-
-int PermissionConstraintCheck::BuildIdType(const BundleParam& param, const HapPolicy& policy)
-{
-    int idType = PROCESS_OWNERID_APP;
-    if (param.isDebug) {
-        idType = PROCESS_OWNERID_DEBUG;
-    } else if (param.appIdentifier == 0) {
-        idType = PROCESS_OWNERID_COMPAT;
-    } else if (std::any_of(policy.permStateList.begin(), policy.permStateList.end(),
-        [](const PermissionStatus& status) {
-            return status.permissionName == TEMP_JIT_ALLOW_PERMISSION;
-        })) {
-        idType = PROCESS_OWNERID_APP_TEMP_ALLOW;
-    }
-    return idType;
 }
 
 void PermissionConstraintCheck::FixPersistentHapInfo(

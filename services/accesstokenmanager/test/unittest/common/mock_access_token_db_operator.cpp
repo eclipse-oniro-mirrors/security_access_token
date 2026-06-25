@@ -47,6 +47,16 @@ int32_t AccessTokenDbOperator::Modify(const AtmDataType type, const GenericValue
     return RET_SUCCESS;
 }
 
+int32_t AccessTokenDbOperator::Modify(const AtmDataType type,
+    const std::vector<GenericValues>& modifyValues,
+    const std::vector<GenericValues>& conditions)
+{
+    (void)type;
+    (void)modifyValues;
+    (void)conditions;
+    return RET_SUCCESS;
+}
+
 int32_t AccessTokenDbOperator::Find(AtmDataType type, const GenericValues& conditionValue,
     std::vector<GenericValues>& results)
 {

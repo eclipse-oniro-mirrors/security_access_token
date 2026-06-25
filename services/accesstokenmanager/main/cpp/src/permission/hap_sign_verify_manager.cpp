@@ -17,6 +17,7 @@
 
 #include <algorithm>
 #include <cerrno>
+#include <climits>
 #include <cstdlib>
 #include <cstring>
 #include <fcntl.h>
@@ -28,6 +29,7 @@
 #include "accesstoken_common_log.h"
 #include "hap_sign_verify_helper.h"
 #include "hap_token_info_inner.h"
+#include "parameter.h"
 #include "permission_manager.h"
 #include "provision/provision_info.h"
 #include "provision/provision_verify.h"
@@ -45,10 +47,64 @@ constexpr const char* ENTERPRISE_CERT_PATH =
     "/data/service/el1/public/bms/bundle_manager_service/certificates/enterprise/";
 
 constexpr int32_t API_VERSION_MASK = 1000;
+constexpr size_t MAX_PARAM_SIZE = 4096;
 
-constexpr uint32_t PROCESS_OWNERID_APP = 2;
-constexpr uint32_t PROCESS_OWNERID_DEBUG = 3;
-constexpr uint32_t PROCESS_OWNERID_COMPAT = 5;
+// Cached allowed HAP path prefixes, initialized lazily.
+std::vector<std::string> g_allowedHapPathPrefixes;
+std::once_flag g_allowedHapPathInitFlag;
+
+static void InitAllowedHapPaths()
+{
+    g_allowedHapPathPrefixes.emplace_back("/data/app/el1/bundle/public");
+    g_allowedHapPathPrefixes.emplace_back("/data/service/el1/public/bms/bundle_manager_service");
+    g_allowedHapPathPrefixes.emplace_back("/data/preload/app");
+
+    char paramValue[MAX_PARAM_SIZE] = {0};
+    int ret = GetParameter("const.cust.config_dir_layer", "", paramValue, sizeof(paramValue) - 1);
+    if (ret > 0) {
+        std::string dirs(paramValue);
+        size_t pos = 0;
+        size_t next = 0;
+        while ((next = dirs.find(':', pos)) != std::string::npos) {
+            std::string dir = dirs.substr(pos, next - pos);
+            if (!dir.empty()) {
+                g_allowedHapPathPrefixes.emplace_back(std::move(dir));
+            }
+            pos = next + 1;
+        }
+        std::string lastDir = dirs.substr(pos);
+        if (!lastDir.empty()) {
+            g_allowedHapPathPrefixes.emplace_back(std::move(lastDir));
+        }
+    } else {
+        g_allowedHapPathPrefixes.emplace_back("/system");
+    }
+    LOGD(ATM_DOMAIN, ATM_TAG, "Allowed HAP path prefixes:");
+    for (const auto& prefix : g_allowedHapPathPrefixes) {
+        LOGD(ATM_DOMAIN, ATM_TAG, "  %s", prefix.c_str());
+    }
+}
+
+static bool IsHapPathAllowed(const std::string& path)
+{
+    std::call_once(g_allowedHapPathInitFlag, InitAllowedHapPaths);
+
+    char resolvedPath[PATH_MAX] = {0};
+    if (realpath(path.c_str(), resolvedPath) == nullptr) {
+        LOGC(ATM_DOMAIN, ATM_TAG, "Failed to resolve path %{public}s: %{public}s", path.c_str(), strerror(errno));
+        return false;
+    }
+
+    std::string absPath(resolvedPath);
+    for (const auto& prefix : g_allowedHapPathPrefixes) {
+        if (absPath.size() > prefix.size() && absPath.compare(0, prefix.size(), prefix) == 0) {
+            if (absPath[prefix.size()] == '/') {
+                return true;
+            }
+        }
+    }
+    return false;
+}
 
 #ifdef X86_EMULATOR_MODE
 bool IsIgnoredTrustedBundleInfo(const TrustedBundleInfoInner& info)
@@ -178,7 +234,7 @@ int32_t HapSignVerifyManager::BuildTrustedBundleInfo(
     int32_t ret = adapter_->ParseHapModuleInfo(bootstrapInfo->moduleRaw, moduleInfo);
     if (ret != RET_SUCCESS) {
         LOGE(ATM_DOMAIN, ATM_TAG, "ParseHapModuleInfo failed, ret=%{public}d.", ret);
-        return AccessTokenError::ERR_HAP_MODULE_INVALID;
+        return ret;
     }
     moduleInfo.apiTargetVersion %= API_VERSION_MASK;
     info.moduleData = moduleInfo;
@@ -245,19 +301,6 @@ bool TrustedBundleInfoInner::IsAtomicService() const
     return moduleData.bundleType == AppExecFwk::Spm::BundleType::ATOMIC_SERVICE;
 }
 
-uint32_t TrustedBundleInfoInner::GetSpmIdType() const
-{
-    if (provisionInfo.type == Security::Verify::DEBUG) {
-        return PROCESS_OWNERID_DEBUG;
-    }
-    if (provisionInfo.bundleInfo.appIdentifier.empty()) {
-        return PROCESS_OWNERID_COMPAT;
-    }
-    // access_token does not currently receive the APP_FLAGS_TEMP_JIT signal used by
-    // appspawn SetXpmConfig(), so PROCESS_OWNERID_APP_TEMP_ALLOW cannot be derived here yet.
-    return PROCESS_OWNERID_APP;
-}
-
 #ifdef X86_EMULATOR_MODE
 TrustedBundleInfoInner HapSignVerifyManager::BuildIgnoredTrustedBundleInfo()
 {
@@ -297,17 +340,26 @@ HapSignVerifyManager::HapSignVerifyManager(const IAppVerifyAdapter& adapter) : a
     }
 }
 
-int32_t HapSignVerifyManager::CheckHapsSignInfo(const std::string path,
-    const Security::Verify::VerifyType type, int32_t userId,
-    TrustedBundleInfoInner& info, bool& isChanged) const
+Security::Verify::VerifyParams HapSignVerifyManager::MakeVerifyParams(
+    const std::string& path, Security::Verify::VerifyType type, int32_t userId)
 {
-    if (info.bootstrapInfo == nullptr) {
-        info.bootstrapInfo = std::make_shared<Security::Verify::BootstrapInfo>();
-    }
     Security::Verify::VerifyParams params;
     params.filePath = path;
     params.certPath = GetEnterpriseCertPath(userId);
     params.type = type;
+    return params;
+}
+
+int32_t HapSignVerifyManager::CheckHapsSignInfo(Security::Verify::VerifyParams params, bool booting,
+    TrustedBundleInfoInner& info, bool& isChanged) const
+{
+    if (!IsHapPathAllowed(params.filePath)) {
+        LOGC(ATM_DOMAIN, ATM_TAG, "Hap path is not in allowed directories, path=%{public}s.",
+            params.filePath.c_str());
+    }
+    if (info.bootstrapInfo == nullptr) {
+        info.bootstrapInfo = std::make_shared<Security::Verify::BootstrapInfo>();
+    }
     Security::Verify::ProvisionInfo provisionInfo;
     int32_t ret = adapter_->VerifyHap(params, *info.bootstrapInfo, provisionInfo, isChanged);
     if (ret != RET_SUCCESS) {
@@ -318,11 +370,16 @@ int32_t HapSignVerifyManager::CheckHapsSignInfo(const std::string path,
         isChanged = false;
         return RET_SUCCESS;
 #else
-        return ERR_HAP_VERIFY_FAILED;
+        LOGE(ATM_DOMAIN, ATM_TAG, "Verify hap failed, ret=%{public}d.", ret);
+        return ret;
 #endif
     }
     if (!isChanged) {
-        ret = adapter_->ParseProvision(info.bootstrapInfo->profileJsonRaw, provisionInfo);
+        if (booting) {
+            ret = adapter_->ParseProfile(info.bootstrapInfo->profileJsonRaw, provisionInfo);
+        } else {
+            ret = adapter_->ParseProvision(info.bootstrapInfo->profileJsonRaw, provisionInfo);
+        }
         if (ret != RET_SUCCESS) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Parse provision failed, ret=%{public}d.", ret);
             return ERR_HAP_PROVISION_INVALID;
@@ -334,6 +391,26 @@ int32_t HapSignVerifyManager::CheckHapsSignInfo(const std::string path,
         LOGE(ATM_DOMAIN, ATM_TAG, "Build trusted bundle info failed, ret=%{public}d.", ret);
     }
     return ret;
+}
+
+bool HapSignVerifyManager::CheckAppIdentifier(const TrustedBundleInfoInner &oldInfo,
+    const TrustedBundleInfoInner &newInfo) const
+{
+    const auto &oldAppIdentifier = oldInfo.GetAppIdentifier();
+    const auto &newAppIdentifier = newInfo.GetAppIdentifier();
+    const auto &oldAppId = oldInfo.GetAppId();
+    const auto &newAppId = newInfo.GetAppId();
+
+    // for versionCode update
+    if (!oldAppIdentifier.empty() &&
+        !newAppIdentifier.empty() &&
+        oldAppIdentifier == newAppIdentifier) {
+        return true;
+    }
+    if (oldAppId == newAppId) {
+        return true;
+    }
+    return false;
 }
 
 int32_t HapSignVerifyManager::CheckMultipleHaps(const std::vector<TrustedBundleInfoInner>& infos) const
@@ -354,17 +431,13 @@ int32_t HapSignVerifyManager::CheckMultipleHaps(const std::vector<TrustedBundleI
 #endif
 
     const TrustedBundleInfoInner& baseline = infos.front();
-    bool isInvalid = std::any_of(infos.begin(), infos.end(), [&baseline](const auto& info) {
+    bool isInvalid = std::any_of(infos.begin(), infos.end(), [&baseline, this](const auto& info) {
         if (baseline.GetBundleName() != info.GetBundleName()) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Check multiple haps failed, hap files have different bundleName.");
             return true;
         }
-        if (baseline.GetAppId() != info.GetAppId()) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "Check multiple haps failed, hap files have different appId.");
-            return true;
-        }
-        if (baseline.GetAppIdentifier() != info.GetAppIdentifier()) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "Check multiple haps failed, hap files have different appIdentifier.");
+        if (!CheckAppIdentifier(baseline, info)) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Check multiple haps failed, hap files have different appId and appIdentifier.");
             return true;
         }
         if (baseline.GetApl() != info.GetApl()) {
@@ -427,6 +500,10 @@ int32_t HapSignVerifyManager::BuildHapPolicy(
     param.isDebug = (baseline.GetAppProvisionType() == "debug");
     param.appIdentifier = HapSignVerifyHelper::BuildOwnerId(
         baseline.GetAppIdentifier());
+
+    param.idType = HapSignVerifyHelper::BuildIdType(
+        param.isDebug, baseline.GetAppIdentifier(), policy.permStateList);
+
     return RET_SUCCESS;
 }
 
@@ -446,6 +523,30 @@ int32_t HapSignVerifyManager::CheckPermissionRequestValid(
         return AccessTokenError::ERR_PERM_REQUEST_CFG_FAILED;
     }
     return RET_SUCCESS;
+}
+
+void HapSignVerifyManager::ConvertTrustedBundleInfo(
+    const std::vector<TrustedBundleInfoInner>& bundleInfos, std::vector<TrustedBundleInfo>& bundleInfo) const
+{
+    for (const auto& infoInner : bundleInfos) {
+        if (infoInner.bootstrapInfo != nullptr) {
+            TrustedBundleInfo info;
+            info.profileData.provisionRaw = infoInner.bootstrapInfo->profileJsonRaw;
+            info.profileData.profileBlockLength = infoInner.provisionInfo.profileBlockLength;
+            if (infoInner.provisionInfo.profileBlock != nullptr && infoInner.provisionInfo.profileBlockLength > 0) {
+                info.profileData.profileBlock.assign(infoInner.provisionInfo.profileBlock.get(),
+                    infoInner.provisionInfo.profileBlock.get() + infoInner.provisionInfo.profileBlockLength);
+            }
+            info.profileData.appId = infoInner.provisionInfo.appId;
+            info.profileData.fingerprint = infoInner.provisionInfo.fingerprint;
+            info.profileData.organization = infoInner.provisionInfo.organization;
+            info.profileData.isOpenHarmony = infoInner.provisionInfo.isOpenHarmony;
+            info.profileData.isEnterpriseResigned = infoInner.provisionInfo.isEnterpriseResigned;
+            info.moduleInfo = infoInner.bootstrapInfo->moduleRaw;
+            info.sharedFiles = infoInner.bootstrapInfo->shareFilesRaw;
+            bundleInfo.emplace_back(info);
+        }
+    }
 }
 } // namespace AccessToken
 } // namespace Security

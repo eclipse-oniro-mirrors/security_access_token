@@ -21,6 +21,7 @@
 #include "access_token_error.h"
 #include "accesstoken_kit.h"
 #include "accesstoken_info_manager.h"
+#include "accesstoken_info_utils.h"
 
 #define private public
 #ifdef IS_SUPPORT_HAP_RUNNING
@@ -28,6 +29,7 @@
 #include "hap_sign_verify_manager.h"
 #endif
 #include "accesstoken_id_manager.h"
+#include "accesstoken_migration_manager.h"
 #undef private
 
 #include "accesstoken_manager_service.h"
@@ -36,12 +38,15 @@
 #include "mock_app_verify_adapter.h"
 #endif
 #include "data_validator.h"
+#include "parameter.h"
+#include "permission_kernel_utils.h"
 #include "spm_setproc.h"
 #include "table_item.h"
 #include "test_common.h"
 #include "token_setproc.h"
 #include "token_field_const.h"
 #include <unistd.h>
+#include "spm_common.h"
 
 using namespace testing::ext;
 
@@ -88,6 +93,12 @@ void ClearMigrationCompletedRecord()
         std::unique_lock<std::mutex> lock(AccessTokenIDManager::GetInstance().migrationLock_);
         AccessTokenIDManager::GetInstance().migrationDone_ = false;
     }
+
+    // Reset lazy caches so each test starts fresh
+    auto& manager = AccessTokenMigrationManager::GetInstance();
+    manager.dbRowCache_.clear();
+    manager.existingUids_.clear();
+    manager.cacheLoaded_ = false;
 }
 
 void CleanupTestDbArtifacts()
@@ -95,7 +106,7 @@ void CleanupTestDbArtifacts()
     // Find all hap info rows — empty condition returns all rows from the table
     GenericValues emptyCondition;
     std::vector<GenericValues> hapResults;
-    int32_t ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_INFO, emptyCondition, hapResults);
+    int32_t ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, emptyCondition, hapResults);
     if (ret != RET_SUCCESS) {
         return;
     }
@@ -107,7 +118,7 @@ void CleanupTestDbArtifacts()
             GenericValues delValue;
             delValue.Put(TokenFiledConst::FIELD_TOKEN_ID, row.GetInt(TokenFiledConst::FIELD_TOKEN_ID));
             DelInfo delInfo;
-            delInfo.delType = AtmDataType::ACCESSTOKEN_HAP_INFO;
+            delInfo.delType = AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO;
             delInfo.delValue = delValue;
             delInfoVec.emplace_back(delInfo);
 
@@ -126,9 +137,24 @@ void CleanupTestDbArtifacts()
         }
     }
 
-    if (!delInfoVec.empty()) {
-        std::vector<AddInfo> addInfoVec;
-        (void)AccessTokenDbOperator::DeleteAndInsertValues(delInfoVec, addInfoVec);
+    // Also scan HAP_PACKAGE_INFO directly for orphaned sign info rows
+    // (e.g. placeholder rows written by PersistMigratedBundles for new tokens).
+    std::vector<GenericValues> signResults;
+    ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO, emptyCondition, signResults);
+    if (ret == RET_SUCCESS) {
+        for (const auto& row : signResults) {
+            std::string bundleName = row.GetString(TokenFiledConst::FIELD_BUNDLE_NAME);
+            if (bundleName.find("com.example.") == 0) {
+                GenericValues signDelValue;
+                signDelValue.Put(TokenFiledConst::FIELD_BUNDLE_NAME, bundleName);
+                DelInfo signDelInfo;
+                signDelInfo.delType = AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO;
+                signDelInfo.delValue = signDelValue;
+                delInfoVec.emplace_back(signDelInfo);
+            }
+        }
+        std::vector<AddInfo> emptyAdd;
+        (void)AccessTokenDbOperator::DeleteAndInsertValues(delInfoVec, emptyAdd);
     }
 }
 
@@ -170,24 +196,32 @@ void ExpectMigratedDbState(AccessTokenID tokenId, const std::string& bundleName,
     ReservedType reserved = ReservedType::NONE, bool checkSignInfo = false)
 {
     // Ensure all pending verify tasks are completed before checking DB
+#ifdef IS_SUPPORT_HAP_RUNNING
     MigrationVerifyWorker::GetInstance().Shutdown();
+#endif
     GenericValues hapCondition;
     hapCondition.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
     std::vector<GenericValues> hapResults;
     ASSERT_EQ(RET_SUCCESS, AccessTokenDbOperator::Find(
-        AtmDataType::ACCESSTOKEN_HAP_INFO, hapCondition, hapResults));
+        AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, hapCondition, hapResults));
     ASSERT_EQ(1u, hapResults.size());
     EXPECT_EQ(uid, hapResults[0].GetInt(TokenFiledConst::FIELD_UID));
     EXPECT_EQ(static_cast<int32_t>(reserved), hapResults[0].GetInt(TokenFiledConst::FIELD_RESERVED));
 
+#ifdef IS_SUPPORT_HAP_RUNNING
     if (checkSignInfo) {
         GenericValues signCondition;
         signCondition.Put(TokenFiledConst::FIELD_BUNDLE_NAME, bundleName);
         std::vector<GenericValues> signResults;
         ASSERT_EQ(RET_SUCCESS, AccessTokenDbOperator::Find(
             AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO, signCondition, signResults));
-        EXPECT_FALSE(signResults.empty());
+        ASSERT_FALSE(signResults.empty());
+        for (const auto& row : signResults) {
+            std::string moduleName = row.GetString(TokenFiledConst::FIELD_MODULE_NAME);
+            EXPECT_EQ(moduleName, mockAdapter_.moduleName_);
+        }
     }
+#endif
 }
 } // namespace
 
@@ -211,6 +245,7 @@ public:
 #endif
         CleanupTestDbArtifacts();
         ClearMigrationCompletedRecord();
+        TestCommon::ResetTestEvironment();
     }
 
     void SetUp() override
@@ -227,77 +262,6 @@ public:
         ClearMigrationCompletedRecord();
     }
 };
-
-// =============================================================================
-// PreMigrateUIDList — one spec per test
-// =============================================================================
-
-/**
- * @tc.name: PreMigrateUIDList_EmptyList
- * @tc.desc: Empty uidList returns ERR_PARAM_INVALID.
- * @tc.type: FUNC
- */
-HWTEST_F(MigrateInstalledBundlesServiceTest, PreMigrateUIDList_EmptyList, TestSize.Level1)
-{
-    MockNativeToken mock("foundation");
-    auto service = DelayedSingleton<AccessTokenManagerService>::GetInstance();
-    ASSERT_NE(nullptr, service);
-    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, service->PreMigrateUIDList({}));
-}
-
-/**
- * @tc.name: PreMigrateUIDList_DuplicateUids
- * @tc.desc: Duplicate UIDs in a single PreMigrateUIDList call return ERR_MIGRATION_UID_DUPLICATED.
- * @tc.type: FUNC
- */
-HWTEST_F(MigrateInstalledBundlesServiceTest, PreMigrateUIDList_DuplicateUids, TestSize.Level1)
-{
-    MockNativeToken mock("foundation");
-    auto service = DelayedSingleton<AccessTokenManagerService>::GetInstance();
-    ASSERT_NE(nullptr, service);
-    EXPECT_EQ(AccessTokenError::ERR_MIGRATION_UID_DUPLICATED, service->PreMigrateUIDList({ 200100, 200100 }));
-}
-
-/**
- * @tc.name: PreMigrateUIDList_DbUidConflict
- * @tc.desc: PreMigrateUIDList returns ERR_MIGRATION_UID_DUPLICATED when a UID already exists in the DB.
- * @tc.type: FUNC
- */
-HWTEST_F(MigrateInstalledBundlesServiceTest, PreMigrateUIDList_DbUidConflict, TestSize.Level1)
-{
-    MockNativeToken mock("foundation");
-
-    // Insert a row with UID 0 into ACCESSTOKEN_HAP_INFO to trigger DB conflict
-    HapTokenInfoItem item;
-    item.tokenId = 99999;
-    item.bundleName = "com.example.uidconflict";
-    item.uid = 0;
-    std::vector<GenericValues> hapValues;
-    item.BuildAddValue(hapValues);
-    AddInfo addInfo;
-    addInfo.addType = AtmDataType::ACCESSTOKEN_HAP_INFO;
-    addInfo.addValues = hapValues;
-    ASSERT_EQ(RET_SUCCESS, AccessTokenDbOperator::DeleteAndInsertValues({}, { addInfo }));
-
-    auto service = DelayedSingleton<AccessTokenManagerService>::GetInstance();
-    ASSERT_NE(nullptr, service);
-    EXPECT_EQ(AccessTokenError::ERR_MIGRATION_UID_DUPLICATED,
-        service->PreMigrateUIDList({ 0 }));
-}
-
-/**
- * @tc.name: PreMigrateUIDList_AfterFinishMigration
- * @tc.desc: PreMigrateUIDList returns ERR_MIGRATION_COMPLETED after FinishMigration.
- * @tc.type: FUNC
- */
-HWTEST_F(MigrateInstalledBundlesServiceTest, PreMigrateUIDList_AfterFinishMigration, TestSize.Level1)
-{
-    MockNativeToken mock("foundation");
-    auto service = DelayedSingleton<AccessTokenManagerService>::GetInstance();
-    ASSERT_NE(nullptr, service);
-    ASSERT_EQ(RET_SUCCESS, service->FinishMigration());
-    EXPECT_EQ(AccessTokenError::ERR_MIGRATION_COMPLETED, service->PreMigrateUIDList({ 200101 }));
-}
 
 // =============================================================================
 // MigrateInstalledBundles — top-level checks (return value)
@@ -343,40 +307,6 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, MigrateInstalledBundles_AfterFinish
     EXPECT_TRUE(results.empty());
 }
 
-/**
- * @tc.name: MigrateInstalledBundles_UidNotPreRegistered
- * @tc.desc: MigrateInstalledBundles returns ERR_PARAM_INVALID per-item when UID was not registered
- *           via PreMigrateUIDList.
- * @tc.type: FUNC
- */
-HWTEST_F(MigrateInstalledBundlesServiceTest, MigrateInstalledBundles_UidNotPreRegistered, TestSize.Level1)
-{
-    MockNativeToken mock("foundation");
-
-    HapInfoParams info = TestCommon::GetInfoManagerTestSystemInfoParms();
-    info.bundleName = "com.example.noreg";
-    info.appIDDesc = info.bundleName;
-
-    HapBaseInfoIdl baseInfo;
-    baseInfo.bundleName = info.bundleName;
-    baseInfo.userID = info.userID;
-    baseInfo.instIndex = 0;
-
-    MigratedInfoIdl migratedInfo;
-    migratedInfo.bundleName = info.bundleName;
-    migratedInfo.pathList.hapPaths = { info.bundleName };
-    migratedInfo.hapBaseInfoList = { baseInfo };
-    migratedInfo.uidList = { 203001 };
-    migratedInfo.reservedTypeList = { ReservedTypeIdl::NONE };
-
-    auto service = DelayedSingleton<AccessTokenManagerService>::GetInstance();
-    ASSERT_NE(nullptr, service);
-    // NOTE: PreMigrateUIDList is NOT called — UID 203001 is not in the cached set.
-    std::vector<BundleMigrateResultIdl> results;
-    EXPECT_EQ(RET_SUCCESS, service->MigrateInstalledBundles({ migratedInfo }, results));
-    ASSERT_EQ(1u, results.size());
-    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, results[0].errcode);
-}
 
 // =============================================================================
 // MigrateInstalledBundles — per-item validation: invalid shape (errParamInvalid)
@@ -458,39 +388,6 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, MigrateInstalledBundles_ReservedTyp
     migratedInfo.hapBaseInfoList = { baseInfo, baseInfo }; // size 2
     migratedInfo.uidList = { 200301, 200302 };             // size 2
     migratedInfo.reservedTypeList = { ReservedTypeIdl::NONE }; // size 1 — mismatch
-
-    auto service = DelayedSingleton<AccessTokenManagerService>::GetInstance();
-    ASSERT_NE(nullptr, service);
-    std::vector<BundleMigrateResultIdl> results;
-    EXPECT_EQ(RET_SUCCESS, service->MigrateInstalledBundles({ migratedInfo }, results));
-    ASSERT_EQ(1u, results.size());
-    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, results[0].errcode);
-}
-
-/**
- * @tc.name: MigrateInstalledBundles_InvalidReservedType
- * @tc.desc: A reserved type value not in {NONE, RESERVED_IDENTITY, RESERVED_DATA} fails validation.
- * @tc.type: FUNC
- */
-HWTEST_F(MigrateInstalledBundlesServiceTest, MigrateInstalledBundles_InvalidReservedType, TestSize.Level1)
-{
-    MockNativeToken mock("foundation");
-
-    HapInfoParams info = TestCommon::GetInfoManagerTestSystemInfoParms();
-    info.bundleName = "com.example.badreserved";
-    info.appIDDesc = info.bundleName;
-
-    HapBaseInfoIdl baseInfo;
-    baseInfo.bundleName = info.bundleName;
-    baseInfo.userID = info.userID;
-    baseInfo.instIndex = 0;
-
-    MigratedInfoIdl migratedInfo;
-    migratedInfo.bundleName = info.bundleName;
-    migratedInfo.pathList.hapPaths = { info.bundleName };
-    migratedInfo.hapBaseInfoList = { baseInfo };
-    migratedInfo.uidList = { 200401 };
-    migratedInfo.reservedTypeList = { static_cast<ReservedTypeIdl>(999) };
 
     auto service = DelayedSingleton<AccessTokenManagerService>::GetInstance();
     ASSERT_NE(nullptr, service);
@@ -643,7 +540,8 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, MigrateInstalledBundles_HapBundleNa
 
 /**
  * @tc.name: MigrateInstalledBundles_DuplicateUidInBundle
- * @tc.desc: Duplicate UID within a single bundle request returns ERR_MIGRATION_UID_DUPLICATED per-item.
+ * @tc.desc: Duplicate UID within a single bundle request is caught by the migrated-set
+ *           mechanism: first occurrence passes the check, second occurrence conflicts.
  * @tc.type: FUNC
  */
 HWTEST_F(MigrateInstalledBundlesServiceTest, MigrateInstalledBundles_DuplicateUidInBundle, TestSize.Level1)
@@ -673,7 +571,6 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, MigrateInstalledBundles_DuplicateUi
 
     auto service = DelayedSingleton<AccessTokenManagerService>::GetInstance();
     ASSERT_NE(nullptr, service);
-    ASSERT_EQ(RET_SUCCESS, service->PreMigrateUIDList({ 200901 }));
     std::vector<BundleMigrateResultIdl> results;
     EXPECT_EQ(RET_SUCCESS, service->MigrateInstalledBundles({ migratedInfo }, results));
     ASSERT_EQ(1u, results.size());
@@ -706,7 +603,6 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, MigrateInstalledBundles_CachedUidDi
 
     auto service = DelayedSingleton<AccessTokenManagerService>::GetInstance();
     ASSERT_NE(nullptr, service);
-    EXPECT_EQ(RET_SUCCESS, service->PreMigrateUIDList({ migratedInfo.uidList[0] }));
     std::vector<BundleMigrateResultIdl> results;
     EXPECT_EQ(RET_SUCCESS, service->MigrateInstalledBundles({ migratedInfo }, results));
     ASSERT_EQ(1u, results.size());
@@ -743,7 +639,6 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, MigrateInstalledBundles_BasicSucces
 
     auto service = DelayedSingleton<AccessTokenManagerService>::GetInstance();
     ASSERT_NE(nullptr, service);
-    EXPECT_EQ(RET_SUCCESS, service->PreMigrateUIDList({ migratedInfo.uidList[0] }));
     std::vector<BundleMigrateResultIdl> results;
     EXPECT_EQ(RET_SUCCESS, service->MigrateInstalledBundles({ migratedInfo }, results));
     ASSERT_EQ(1u, results.size());
@@ -788,7 +683,6 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, MigrateInstalledBundles_PreInstalle
 
     auto service = DelayedSingleton<AccessTokenManagerService>::GetInstance();
     ASSERT_NE(nullptr, service);
-    EXPECT_EQ(RET_SUCCESS, service->PreMigrateUIDList({ migratedInfo.uidList[0] }));
     std::vector<BundleMigrateResultIdl> results;
     EXPECT_EQ(RET_SUCCESS, service->MigrateInstalledBundles({ migratedInfo }, results));
     ASSERT_EQ(1u, results.size());
@@ -830,7 +724,6 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, MigrateInstalledBundles_NewToken, T
 
     auto service = DelayedSingleton<AccessTokenManagerService>::GetInstance();
     ASSERT_NE(nullptr, service);
-    EXPECT_EQ(RET_SUCCESS, service->PreMigrateUIDList({ migratedInfo.uidList[0] }));
     std::vector<BundleMigrateResultIdl> results;
     EXPECT_EQ(RET_SUCCESS, service->MigrateInstalledBundles({ migratedInfo }, results));
     ASSERT_EQ(1u, results.size());
@@ -846,7 +739,7 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, MigrateInstalledBundles_NewToken, T
         static_cast<int32_t>(results[0].tokenIdList[0]));
     std::vector<GenericValues> hapResults;
     ASSERT_EQ(RET_SUCCESS, AccessTokenDbOperator::Find(
-        AtmDataType::ACCESSTOKEN_HAP_INFO, hapCondition, hapResults));
+        AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, hapCondition, hapResults));
     ASSERT_EQ(1u, hapResults.size());
     EXPECT_EQ(migratedInfo.uidList[0], hapResults[0].GetInt(TokenFiledConst::FIELD_UID));
 
@@ -857,7 +750,7 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, MigrateInstalledBundles_NewToken, T
     delValue.Put(TokenFiledConst::FIELD_TOKEN_ID,
         static_cast<int32_t>(results[0].tokenIdList[0]));
     DelInfo delInfo;
-    delInfo.delType = AtmDataType::ACCESSTOKEN_HAP_INFO;
+    delInfo.delType = AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO;
     delInfo.delValue = delValue;
     (void)AccessTokenDbOperator::DeleteAndInsertValues({delInfo}, {});
     (void)AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(results[0].tokenIdList[0]);
@@ -888,7 +781,6 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, MigrateInstalledBundles_BatchMixedV
 
     auto service = DelayedSingleton<AccessTokenManagerService>::GetInstance();
     ASSERT_NE(nullptr, service);
-    EXPECT_EQ(RET_SUCCESS, service->PreMigrateUIDList({ validInfo.uidList[0] }));
 
     std::vector<BundleMigrateResultIdl> results;
     EXPECT_EQ(RET_SUCCESS, service->MigrateInstalledBundles({ invalidInfo, validInfo }, results));
@@ -909,16 +801,16 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, MigrateInstalledBundles_BatchMixedV
 }
 
 // =============================================================================
-// MigrateInstalledBundles — UID cache lifecycle (PreMigrateUIDList ↔ MigrateInstalledBundles)
+// MigrateInstalledBundles — UID conflict after DB commit
 // =============================================================================
 
 /**
- * @tc.name: MigrateInstalledBundles_UidConsumedAfterSuccess
- * @tc.desc: After a successful migration, the UID is removed from the PreMigrateUIDList cache.
- *          A second migration attempt with the same UID without re-registration fails.
+ * @tc.name: MigrateInstalledBundles_UidConflictAfterSuccess
+ * @tc.desc: After a successful migration, the UID is committed to DB.
+ *           A second migration attempt with the same UID fails with ERR_MIGRATION_UID_DUPLICATED.
  * @tc.type: FUNC
  */
-HWTEST_F(MigrateInstalledBundlesServiceTest, MigrateInstalledBundles_UidConsumedAfterSuccess, TestSize.Level1)
+HWTEST_F(MigrateInstalledBundlesServiceTest, MigrateInstalledBundles_UidConflictAfterSuccess, TestSize.Level1)
 {
     MockNativeToken mock("foundation");
 
@@ -935,31 +827,30 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, MigrateInstalledBundles_UidConsumed
 
     auto service = DelayedSingleton<AccessTokenManagerService>::GetInstance();
     ASSERT_NE(nullptr, service);
-    EXPECT_EQ(RET_SUCCESS, service->PreMigrateUIDList({ migratedInfo.uidList[0] }));
 
-    // First migration succeeds — UID is consumed
+    // First migration succeeds — UID is committed to DB
     std::vector<BundleMigrateResultIdl> results;
     EXPECT_EQ(RET_SUCCESS, service->MigrateInstalledBundles({ migratedInfo }, results));
     ASSERT_EQ(1u, results.size());
     EXPECT_EQ(RET_SUCCESS, results[0].errcode);
 
-    // Second migration with same UID must fail — UID no longer in cache
+    // Second migration with same UID must fail — UID already exists in DB
     std::vector<BundleMigrateResultIdl> results2;
     EXPECT_EQ(RET_SUCCESS, service->MigrateInstalledBundles({ migratedInfo }, results2));
     ASSERT_EQ(1u, results2.size());
-    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, results2[0].errcode);
+    EXPECT_EQ(AccessTokenError::ERR_MIGRATION_UID_DUPLICATED, results2[0].errcode);
 
     (void)SpmRemoveEntry(tokenIdEx.tokenIdExStruct.tokenID);
     EXPECT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenIdEx.tokenIdExStruct.tokenID));
 }
 
 /**
- * @tc.name: MigrateInstalledBundles_UidRetainedAfterFailure
- * @tc.desc: After a failed migration, the UID remains in the PreMigrateUIDList cache.
- *          A retry without re-registration succeeds.
+ * @tc.name: MigrateInstalledBundles_RetryAfterFailure
+ * @tc.desc: After a failed migration, the UID is not committed to DB.
+ *           A retry succeeds once the conflict is resolved.
  * @tc.type: FUNC
  */
-HWTEST_F(MigrateInstalledBundlesServiceTest, MigrateInstalledBundles_UidRetainedAfterFailure, TestSize.Level1)
+HWTEST_F(MigrateInstalledBundlesServiceTest, MigrateInstalledBundles_RetryAfterFailure, TestSize.Level1)
 {
     MockNativeToken mock("foundation");
 
@@ -981,7 +872,6 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, MigrateInstalledBundles_UidRetained
 
     auto service = DelayedSingleton<AccessTokenManagerService>::GetInstance();
     ASSERT_NE(nullptr, service);
-    EXPECT_EQ(RET_SUCCESS, service->PreMigrateUIDList({ migratedInfo.uidList[0] }));
 
     // First migration fails due to cached UID conflict
     std::vector<BundleMigrateResultIdl> results;
@@ -989,7 +879,7 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, MigrateInstalledBundles_UidRetained
     ASSERT_EQ(1u, results.size());
     EXPECT_EQ(AccessTokenError::ERR_MIGRATION_UID_EXISTED, results[0].errcode);
 
-    // UID must still be in cache — retry without re-registration should succeed after fixing the conflict
+    // UID is not in cache — retry should succeed after fixing the conflict
     infoPtr->SetUid(static_cast<uint32_t>(-1)); // INVALID_HAP_UID
     std::vector<BundleMigrateResultIdl> results2;
     EXPECT_EQ(RET_SUCCESS, service->MigrateInstalledBundles({ migratedInfo }, results2));
@@ -1075,7 +965,6 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, VerifyMigratedBundle_WorkerHapSignV
 
     auto service = DelayedSingleton<AccessTokenManagerService>::GetInstance();
     ASSERT_NE(nullptr, service);
-    EXPECT_EQ(RET_SUCCESS, service->PreMigrateUIDList({ migratedInfo.uidList[0] }));
     std::vector<BundleMigrateResultIdl> results;
     EXPECT_EQ(RET_SUCCESS, service->MigrateInstalledBundles({ migratedInfo }, results));
     ASSERT_EQ(1u, results.size());
@@ -1115,7 +1004,6 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, VerifyMigratedBundle_WorkerBundleNa
 
     auto service = DelayedSingleton<AccessTokenManagerService>::GetInstance();
     ASSERT_NE(nullptr, service);
-    EXPECT_EQ(RET_SUCCESS, service->PreMigrateUIDList({ migratedInfo.uidList[0] }));
     std::vector<BundleMigrateResultIdl> results;
     EXPECT_EQ(RET_SUCCESS, service->MigrateInstalledBundles({ migratedInfo }, results));
     ASSERT_EQ(1u, results.size());
@@ -1149,9 +1037,11 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, VerifyMigratedBundle_WorkerSuccess,
     MigratedInfoIdl migratedInfo;
     BuildMigratedInfo(info, tokenIdEx.tokenIDEx, 202201, migratedInfo);
 
+    // Configure mock adapter to return a verified bundle name matching migratedInfo.bundleName
+    mockAdapter_.bundleName_ = info.bundleName;
+
     auto service = DelayedSingleton<AccessTokenManagerService>::GetInstance();
     ASSERT_NE(nullptr, service);
-    EXPECT_EQ(RET_SUCCESS, service->PreMigrateUIDList({ migratedInfo.uidList[0] }));
     std::vector<BundleMigrateResultIdl> results;
     EXPECT_EQ(RET_SUCCESS, service->MigrateInstalledBundles({ migratedInfo }, results));
     ASSERT_EQ(1u, results.size());
@@ -1188,17 +1078,6 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, IsStringListValid_ExceedsMaxLength,
 }
 
 /**
- * @tc.name: PreMigrateUIDList_KitNormal
- * @tc.desc: PreMigrateUIDList through AccessTokenKit with valid UIDs returns RET_SUCCESS.
- * @tc.type: FUNC
- */
-HWTEST_F(MigrateInstalledBundlesServiceTest, PreMigrateUIDList_KitNormal, TestSize.Level1)
-{
-    MockNativeToken mock("foundation");
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::PreMigrateUIDList({ 202501, 202502 }));
-}
-
-/**
  * @tc.name: MigrateInstalledBundles_KitHapBaseInfoNotEmpty
  * @tc.desc: MigrateInstalledBundles through AccessTokenKit with non-empty hapBaseInfoList migrates successfully.
  * @tc.type: FUNC
@@ -1226,7 +1105,6 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, MigrateInstalledBundles_KitHapBaseI
 
     auto service = DelayedSingleton<AccessTokenManagerService>::GetInstance();
     ASSERT_NE(nullptr, service);
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::PreMigrateUIDList({ migratedInfo.uidList[0] }));
     std::vector<BundleMigrateResult> results;
     EXPECT_EQ(RET_SUCCESS, AccessTokenKit::MigrateInstalledBundles({ migratedInfo }, results));
     ASSERT_EQ(1u, results.size());
@@ -1238,20 +1116,6 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, MigrateInstalledBundles_KitHapBaseI
 
     (void)SpmRemoveEntry(results[0].tokenIdList[0].tokenIDEx);
     (void)AccessTokenKit::DeleteToken(results[0].tokenIdList[0].tokenIDEx);
-}
-
-/**
- * @tc.name: PreMigrateUIDList_NoPermission
- * @tc.desc: PreMigrateUIDList returns ERR_PERMISSION_DENIED when caller lacks MANAGE_HAP_TOKENID_PERMISSION.
- * @tc.type: FUNC
- */
-HWTEST_F(MigrateInstalledBundlesServiceTest, PreMigrateUIDList_NoPermission, TestSize.Level1)
-{
-    MockHapToken mock("com.example.noperm", {}, false);
-    UidGuard guard(2000);
-    auto service = DelayedSingleton<AccessTokenManagerService>::GetInstance();
-    ASSERT_NE(nullptr, service);
-    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, service->PreMigrateUIDList({ 202701 }));
 }
 
 /**
@@ -1284,6 +1148,302 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, FinishMigration_NoPermission, TestS
     auto service = DelayedSingleton<AccessTokenManagerService>::GetInstance();
     ASSERT_NE(nullptr, service);
     EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, service->FinishMigration());
+}
+
+/**
+ * @tc.name: MigrateInstalledBundles_BothListSizeMismatch
+ * @tc.desc: uidList and reservedTypeList both mismatch hapBaseInfoList size
+ * @tc.type: FUNC
+ */
+HWTEST_F(MigrateInstalledBundlesServiceTest, MigrateInstalledBundles_BothListSizeMismatch, TestSize.Level1)
+{
+    MockNativeToken mock("foundation");
+
+    HapInfoParams info = TestCommon::GetInfoManagerTestSystemInfoParms();
+    info.bundleName = "com.example.bothmismatch";
+
+    HapBaseInfoIdl baseInfo;
+    baseInfo.bundleName = info.bundleName;
+    baseInfo.userID = info.userID;
+    baseInfo.instIndex = 0;
+
+    MigratedInfoIdl migratedInfo;
+    migratedInfo.bundleName = info.bundleName;
+    migratedInfo.pathList.hapPaths = { info.bundleName };
+    migratedInfo.hapBaseInfoList = { baseInfo, baseInfo }; // size 2
+    migratedInfo.uidList = { 200901 };                     // size 1
+    migratedInfo.reservedTypeList = {};                     // size 0
+
+    auto service = DelayedSingleton<AccessTokenManagerService>::GetInstance();
+    ASSERT_NE(nullptr, service);
+    std::vector<BundleMigrateResultIdl> results;
+    EXPECT_EQ(RET_SUCCESS, service->MigrateInstalledBundles({ migratedInfo }, results));
+    ASSERT_EQ(1u, results.size());
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, results[0].errcode);
+}
+
+/**
+ * @tc.name: MigrateInstalledBundles_DuplicateUidSeparateTokens
+ * @tc.desc: Two haps with same UID in one bundle — intra-bundle duplicate caught
+ *           by the migrated-set mechanism.
+ * @tc.type: FUNC
+ */
+HWTEST_F(MigrateInstalledBundlesServiceTest, MigrateInstalledBundles_DuplicateUidSeparateTokens, TestSize.Level1)
+{
+    MockNativeToken mock("foundation");
+
+    HapInfoParams info = TestCommon::GetInfoManagerTestSystemInfoParms();
+    info.bundleName = "com.example.dupuidsep";
+
+    HapBaseInfoIdl baseInfo;
+    baseInfo.bundleName = info.bundleName;
+    baseInfo.userID = info.userID;
+    baseInfo.instIndex = 0;
+
+    MigratedInfoIdl migratedInfo;
+    migratedInfo.bundleName = info.bundleName;
+    migratedInfo.pathList.hapPaths = { info.bundleName };
+    migratedInfo.hapBaseInfoList = { baseInfo, baseInfo };
+    migratedInfo.uidList = { 201001, 201001 }; // same UID
+    migratedInfo.reservedTypeList = { ReservedTypeIdl::NONE, ReservedTypeIdl::NONE };
+
+    auto service = DelayedSingleton<AccessTokenManagerService>::GetInstance();
+    ASSERT_NE(nullptr, service);
+    std::vector<BundleMigrateResultIdl> results;
+    EXPECT_EQ(RET_SUCCESS, service->MigrateInstalledBundles({ migratedInfo }, results));
+    ASSERT_EQ(1u, results.size());
+    EXPECT_EQ(AccessTokenError::ERR_MIGRATION_UID_DUPLICATED, results[0].errcode);
+}
+
+/**
+ * @tc.name: MigrateInstalledBundles_SecondHapBundleNameMismatch
+ * @tc.desc: First hap validates ok, second hap has mismatched bundleName (line 103).
+ * @tc.type: FUNC
+ */
+HWTEST_F(MigrateInstalledBundlesServiceTest, MigrateInstalledBundles_SecondHapBundleNameMismatch, TestSize.Level1)
+{
+    MockNativeToken mock("foundation");
+
+    HapInfoParams info = TestCommon::GetInfoManagerTestSystemInfoParms();
+    info.bundleName = "com.example.sechmm";
+
+    HapBaseInfoIdl baseInfoOk;
+    baseInfoOk.bundleName = info.bundleName;
+    baseInfoOk.userID = info.userID;
+    baseInfoOk.instIndex = 0;
+
+    HapBaseInfoIdl baseInfoBad;
+    baseInfoBad.bundleName = "com.example.different";
+    baseInfoBad.userID = info.userID;
+    baseInfoBad.instIndex = 1;
+
+    MigratedInfoIdl migratedInfo;
+    migratedInfo.bundleName = info.bundleName;
+    migratedInfo.pathList.hapPaths = { info.bundleName };
+    migratedInfo.hapBaseInfoList = { baseInfoOk, baseInfoBad };
+    migratedInfo.uidList = { 201101, 201102 };
+    migratedInfo.reservedTypeList = { ReservedTypeIdl::NONE, ReservedTypeIdl::NONE };
+
+    auto service = DelayedSingleton<AccessTokenManagerService>::GetInstance();
+    ASSERT_NE(nullptr, service);
+    std::vector<BundleMigrateResultIdl> results;
+    EXPECT_EQ(RET_SUCCESS, service->MigrateInstalledBundles({ migratedInfo }, results));
+    ASSERT_EQ(1u, results.size());
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, results[0].errcode);
+}
+
+/**
+ * @tc.name: GetCachedTokenInfo_TokenNotInCache
+ * @tc.desc: GetCachedTokenInfo returns ERR_PARAM_INVALID when infoPtr is nullptr (line 125).
+ * @tc.type: FUNC
+ */
+HWTEST_F(MigrateInstalledBundlesServiceTest, GetCachedTokenInfo_TokenNotInCache, TestSize.Level1)
+{
+    MockNativeToken mock("foundation");
+
+    std::shared_ptr<HapTokenInfoInner> infoPtr;
+    int32_t ret = AccessTokenMigrationManager::GetInstance().GetCachedTokenInfo(
+        999999, "com.example.nonexist", infoPtr);
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
+}
+
+/**
+ * @tc.name: GetCachedTokenInfo_BundleNameMismatch
+ * @tc.desc: GetCachedTokenInfo returns ERR_PARAM_INVALID when bundleName doesn't match (line 130).
+ * @tc.type: FUNC
+ */
+HWTEST_F(MigrateInstalledBundlesServiceTest, GetCachedTokenInfo_BundleNameMismatch, TestSize.Level1)
+{
+    MockNativeToken mock("foundation");
+
+    HapInfoParams info = TestCommon::GetInfoManagerTestSystemInfoParms();
+    info.bundleName = "com.example.gtcachebmm";
+    info.appIDDesc = info.bundleName;
+    HapPolicyParams policy = TestCommon::GetTestPolicyParams();
+
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS, AllocHapTokenLocally(info, policy, tokenIdEx));
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+
+    std::shared_ptr<HapTokenInfoInner> infoPtr;
+    int32_t ret = AccessTokenMigrationManager::GetInstance().GetCachedTokenInfo(
+        tokenId, "com.example.wrongname", infoPtr);
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
+
+    EXPECT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId));
+}
+
+/**
+ * @tc.name: AppendHapTokenDbInfo_TokenNotInDbCache
+ * @tc.desc: When dbRowCache_ doesn't contain the token, AppendHapTokenDbInfo
+ *           returns ERR_DATABASE_OPERATE_FAILED (line 367).
+ *           This triggers PersistMigratedBundles failure at line 241.
+ * @tc.type: FUNC
+ */
+HWTEST_F(MigrateInstalledBundlesServiceTest, AppendHapTokenDbInfo_TokenNotInDbCache, TestSize.Level1)
+{
+    MockNativeToken mock("foundation");
+
+    HapInfoParams info = TestCommon::GetInfoManagerTestSystemInfoParms();
+    info.bundleName = "com.example.nodbcache";
+    info.appIDDesc = info.bundleName;
+    HapPolicyParams policy = TestCommon::GetTestPolicyParams();
+
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS, AllocHapTokenLocally(info, policy, tokenIdEx));
+
+    MigratedInfoIdl migratedInfo;
+    BuildMigratedInfo(info, tokenIdEx.tokenIDEx, 201201, migratedInfo);
+
+    auto& manager = AccessTokenMigrationManager::GetInstance();
+    auto service = DelayedSingleton<AccessTokenManagerService>::GetInstance();
+    ASSERT_NE(nullptr, service);
+    // Clear dbRowCache_ to simulate the cache not having our token
+    manager.dbRowCache_.clear();
+
+    // Call MigrateSingleBundle directly to test internal path
+    MigratedInfoIdl migratedInfoCopy = migratedInfo;
+    BundleMigrateResultIdl result;
+    int32_t ret = manager.MigrateSingleBundle(migratedInfoCopy, result);
+    // An existing token (not new) requires dbRowCache_ lookup which will fail
+    EXPECT_NE(RET_SUCCESS, ret);
+
+    EXPECT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(
+        tokenIdEx.tokenIdExStruct.tokenID));
+}
+
+/**
+ * @tc.name: FinishMigration_CleanupInvalidUid001
+ * @tc.desc: FinishMigration with spm.enforce=false does not clean up tokens with invalid UID.
+ * @tc.type: FUNC
+ */
+HWTEST_F(MigrateInstalledBundlesServiceTest, FinishMigration_CleanupInvalidUid001, TestSize.Level1)
+{
+    MockNativeToken mock("foundation");
+
+    // Ensure spm.enforce is false
+    SetParameter(ACCESS_TOKEN_SERVICE_SPM_ENFORCING_KEY, "0");
+
+    // Create a real token in cache + DB + kernel
+    HapInfoParams info = TestCommon::GetInfoManagerTestSystemInfoParms();
+    info.bundleName = "com.example.invaliduid.noenforce";
+    info.appIDDesc = info.bundleName;
+    HapPolicyParams policyParams = TestCommon::GetTestPolicyParams();
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS, AllocHapTokenLocally(info, policyParams, tokenIdEx));
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+
+    // Verify token is in cache before test
+    auto infoBefore = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId);
+    ASSERT_NE(nullptr, infoBefore);
+
+    // Manually set the UID to -1 (INVALID_HAP_UID) in the DB
+    GenericValues modifyValue;
+    modifyValue.Put(TokenFiledConst::FIELD_UID, -1);
+    GenericValues modifyCondition;
+    modifyCondition.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
+    ASSERT_EQ(RET_SUCCESS, AccessTokenDbOperator::Modify(
+        AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, modifyValue, modifyCondition));
+
+    auto service = DelayedSingleton<AccessTokenManagerService>::GetInstance();
+    ASSERT_NE(nullptr, service);
+    ASSERT_EQ(RET_SUCCESS, service->FinishMigration());
+
+    // Token should still be in cache — no cleanup when enforce is false
+    auto infoAfter = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId);
+    EXPECT_NE(nullptr, infoAfter);
+
+    (void)SpmRemoveEntry(tokenId);
+    EXPECT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId));
+}
+
+/**
+ * @tc.name: FinishMigration_CleanupInvalidUid002
+ * @tc.desc: FinishMigration with spm.enforce=true cleans up cache and kernel for tokens with invalid UID in DB.
+ * @tc.type: FUNC
+ */
+HWTEST_F(MigrateInstalledBundlesServiceTest, FinishMigration_CleanupInvalidUid002, TestSize.Level1)
+{
+    MockNativeToken mock("foundation");
+
+    // Create a real token in cache + DB + kernel
+    HapInfoParams info = TestCommon::GetInfoManagerTestSystemInfoParms();
+    info.bundleName = "com.example.invaliduid.enforce";
+    info.appIDDesc = info.bundleName;
+    HapPolicyParams policyParams = TestCommon::GetTestPolicyParams();
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS, AllocHapTokenLocally(info, policyParams, tokenIdEx));
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+
+    // Verify token is in cache before test
+    auto infoBefore = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId);
+    ASSERT_NE(nullptr, infoBefore);
+
+    // Manually set the UID to -1 (INVALID_HAP_UID) in the DB
+    GenericValues modifyValue;
+    modifyValue.Put(TokenFiledConst::FIELD_UID, -1);
+    GenericValues modifyCondition;
+    modifyCondition.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
+    ASSERT_EQ(RET_SUCCESS, AccessTokenDbOperator::Modify(
+        AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, modifyValue, modifyCondition));
+
+    // Set spm.enforce to true
+    SetParameter(ACCESS_TOKEN_SERVICE_SPM_ENFORCING_KEY, "1");
+
+    auto service = DelayedSingleton<AccessTokenManagerService>::GetInstance();
+    ASSERT_NE(nullptr, service);
+    ASSERT_EQ(RET_SUCCESS, service->FinishMigration());
+
+    // Token should be removed from cache after cleanup
+    auto infoAfter = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId);
+    EXPECT_EQ(nullptr, infoAfter);
+
+    // Clean up
+    SetParameter(ACCESS_TOKEN_SERVICE_SPM_ENFORCING_KEY, "0");
+    (void)SpmRemoveEntry(tokenId);
+}
+
+/**
+ * @tc.name: Initialize_AfterMigrationCompleted
+ * @tc.desc: Initialize() detects migration is completed and sets migrationDone_ flag (line 397).
+ * @tc.type: FUNC
+ */
+HWTEST_F(MigrateInstalledBundlesServiceTest, Initialize_AfterMigrationCompleted, TestSize.Level1)
+{
+    MockNativeToken mock("foundation");
+
+    // Complete migration first
+    auto service = DelayedSingleton<AccessTokenManagerService>::GetInstance();
+    ASSERT_NE(nullptr, service);
+    ASSERT_EQ(RET_SUCCESS, service->FinishMigration());
+
+    // Initialize should detect migration completed and set the flag (line 397)
+    AccessTokenMigrationManager::GetInstance().Initialize();
+
+    {
+        std::unique_lock<std::mutex> lock(AccessTokenIDManager::GetInstance().migrationLock_);
+        EXPECT_TRUE(AccessTokenIDManager::GetInstance().migrationDone_);
+    }
 }
 } // namespace AccessToken
 } // namespace Security

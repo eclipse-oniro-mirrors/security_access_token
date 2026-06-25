@@ -69,7 +69,6 @@ public:
     std::string GetAppProvisionType() const;
     bool IsSystemApp() const;
     bool IsAtomicService() const;
-    uint32_t GetSpmIdType() const;
 
 private:
     AppExecFwk::Spm::InnerModuleInfoForSpm moduleData;
@@ -81,13 +80,18 @@ public:
     static HapSignVerifyManager& GetInstance();
     explicit HapSignVerifyManager(const IAppVerifyAdapter& adapter);
 
-    int32_t CheckHapsSignInfo(const std::string path, const Security::Verify::VerifyType type, int32_t userId,
+    int32_t CheckHapsSignInfo(Security::Verify::VerifyParams params, bool booting,
         TrustedBundleInfoInner& info, bool& isChanged) const;
+
+    static Security::Verify::VerifyParams MakeVerifyParams(
+        const std::string& path, Security::Verify::VerifyType type, int32_t userId);
     int32_t CheckMultipleHaps(const std::vector<TrustedBundleInfoInner>& infos) const;
     int32_t BuildHapPolicy(const std::vector<TrustedBundleInfoInner>& infos, HapPolicy& policy,
         BundleParam& param) const;
     int32_t CheckPermissionRequestValid(const TrustedBundleInfoInner& info, const HapPolicy& policy,
         HapInfoCheckResult& result) const;
+    void ConvertTrustedBundleInfo(
+        const std::vector<TrustedBundleInfoInner>& bundleInfos, std::vector<TrustedBundleInfo>& bundleInfo) const;
 
 private:
     HapSignVerifyManager();
@@ -100,6 +104,7 @@ private:
 #ifdef X86_EMULATOR_MODE
     static TrustedBundleInfoInner BuildIgnoredTrustedBundleInfo();
 #endif
+    bool CheckAppIdentifier(const TrustedBundleInfoInner &oldInfo, const TrustedBundleInfoInner &newInfo) const;
 };
 
 class RdDeviceChecker final {

@@ -26,6 +26,7 @@
 #include "native_token_info.h"
 #include "permission_status.h"
 #include "privacy_kit.h"
+#include "tokenid_attributes.h"
 #include "to_string.h"
 
 namespace OHOS {
@@ -48,8 +49,8 @@ static const std::string HELP_MSG =
     "usage: atm <command> <option>\n"
     "These are common atm commands list:\n"
     "  help    list available commands\n"
-#ifndef ATM_BUILD_VARIANT_USER_ENABLE
     "  perm    grant/cancel permission\n"
+#ifndef ATM_BUILD_VARIANT_USER_ENABLE
     "  toggle  set/get toggle request/record status\n"
 #endif
     "  dump    dump system command\n";
@@ -77,12 +78,15 @@ static const std::string HELP_MSG_DUMP =
 #endif
 
 static const std::string HELP_MSG_PERM =
-#ifndef ATM_BUILD_VARIANT_USER_ENABLE
     "usage: atm perm <option>.\n"
     "options list:\n"
-    "  -h, --help                                       list available options\n"
-    "  -g, --grant -i <token-id> -p <permission-name>   grant a permission by a specified token-id\n"
-    "  -c, --cancel -i <token-id> -p <permission-name>  cancel a permission by a specified token-id\n";
+    "  -h, --help                                        list available options\n"
+    "  -g, --grant -i <token-id> -p <permission-name>    grant a permission by a specified token-id\n"
+    "  -c, --cancel -i <token-id> -p <permission-name>   cancel a permission by a specified token-id\n"
+    "  -r, --reset -i <token-id>                         reset user granted permission state\n"
+    "  -r, --reset -b <bundle-name>                      reset user granted permission state by bundle name\n"
+#ifdef ATM_BUILD_VARIANT_USER_ENABLE
+    "  Note: only debug hap tokens can be modified.\n";
 #else
     "";
 #endif
@@ -141,20 +145,24 @@ static const struct option LONG_OPTIONS_DUMP[] = {
 };
 // required option
 static const std::vector<char> REQUIRED_OPTIONS_DUMP = {'b', 'i', 'n', 'p'};
+static const std::vector<char> REQUIRED_OPTIONS_PERM = {'b', 'i', 'p'};
 #ifndef ATM_BUILD_VARIANT_USER_ENABLE
-static const std::vector<char> REQUIRED_OPTIONS_PERM = {'g', 'c', 'i', 'p'};
 static const std::vector<char> REQUIRED_OPTIONS_TOGGLE = {'i', 'k', 'p'};
+#endif
 
-static const std::string SHORT_OPTIONS_PERM = "hg::c::i:p:";
+static const std::string SHORT_OPTIONS_PERM = "hgcri:p:b:";
 static const struct option LONG_OPTIONS_PERM[] = {
     {"help", no_argument, nullptr, 'h'},
     {"grant", no_argument, nullptr, 'g'},
     {"cancel", no_argument, nullptr, 'c'},
+    {"reset", no_argument, nullptr, 'r'},
     {"token-id", required_argument, nullptr, 'i'},
     {"permission-name", required_argument, nullptr, 'p'},
+    {"bundle-name", required_argument, nullptr, 'b'},
     {nullptr, 0, nullptr, 0}
 };
 
+#ifndef ATM_BUILD_VARIANT_USER_ENABLE
 static const std::string SHORT_OPTIONS_TOGGLE = "hr::u::s::o::i:p:k:";
 static const struct option LONG_OPTIONS_TOGGLE[] = {
     {"help", no_argument, nullptr, 'h'},
@@ -199,8 +207,8 @@ AtmCommand::AtmCommand(int32_t argc, char* argv[]) : argc_(argc), argv_(argv), n
     commandMap_ = {
         {"help", [this](){return RunAsHelpCommand();}},
         {"dump", [this]() {return RunAsCommonCommandForDump();}},
-#ifndef ATM_BUILD_VARIANT_USER_ENABLE
         {"perm", [this]() {return RunAsCommonCommandForPerm();}},
+#ifndef ATM_BUILD_VARIANT_USER_ENABLE
         {"toggle", [this]() {return RunAsCommonCommandForToggle();}},
 #endif
     };
@@ -331,15 +339,20 @@ void AtmCommand::RunAsCommandExistentOptionForDump(int32_t option, DumpOptionsCo
     }
 }
 
-#ifndef ATM_BUILD_VARIANT_USER_ENABLE
 void AtmCommand::RunAsCommandExistentOptionForPerm(int32_t option, PermOptionsContext& context)
 {
     switch (option) {
         case 'g':
-            context.isGranted = true;
+            context.type = PERM_OPERATE_GRANT;
+            context.operateCount++;
             break;
         case 'c':
-            context.isGranted = false;
+            context.type = PERM_OPERATE_REVOKE;
+            context.operateCount++;
+            break;
+        case 'r':
+            context.type = PERM_OPERATE_RESET;
+            context.operateCount++;
             break;
         case 'i':
             context.hasTokenIdOption = true;
@@ -349,11 +362,16 @@ void AtmCommand::RunAsCommandExistentOptionForPerm(int32_t option, PermOptionsCo
             context.hasPermissionOption = true;
             context.permission = (optarg != nullptr && optarg[0] != '\0') ? optarg : "";
             break;
+        case 'b':
+            context.hasBundleOption = true;
+            context.bundleName = (optarg != nullptr && optarg[0] != '\0') ? optarg : "";
+            break;
         default:
             break;
         }
 }
 
+#ifndef ATM_BUILD_VARIANT_USER_ENABLE
 void AtmCommand::RunAsCommandExistentOptionForToggle(int32_t option, AtmToggleParamInfo& info)
 {
     switch (option) {
@@ -499,18 +517,81 @@ std::string AtmCommand::DumpPermissionApps(const std::string& permissionName)
     return ss.str();
 }
 
-#ifndef ATM_BUILD_VARIANT_USER_ENABLE
-int32_t AtmCommand::ModifyPermission(bool isGranted, AccessTokenID tokenId, const std::string& permissionName)
+int32_t AtmCommand::CheckPermCommandToken(AccessTokenID tokenId)
 {
-    int32_t result = 0;
-    if (isGranted) {
-        result = AccessTokenKit::GrantPermission(tokenId, permissionName, PERMISSION_USER_FIXED);
-    } else {
-        result = AccessTokenKit::RevokePermission(tokenId, permissionName, PERMISSION_USER_FIXED);
+#ifndef ATM_BUILD_VARIANT_USER_ENABLE
+    return RET_SUCCESS;
+#endif
+    HapTokenInfo hapInfo;
+    int32_t ret = AccessTokenKit::GetHapTokenInfo(tokenId, hapInfo);
+    if (ret != RET_SUCCESS) {
+        if (ret == AccessTokenError::ERR_PERMISSION_DENIED) {
+            resultReceiver_.append("Error: Only debug hap token can be modified.\n");
+            return ERR_INVALID_VALUE;
+        }
+        if (ret == AccessTokenError::ERR_PARAM_INVALID) {
+            return AccessTokenError::ERR_TOKENID_NOT_EXIST;
+        }
+        return ret;
     }
-    return result;
+    if (!TokenIDAttributes::IsDebugAppAttr(hapInfo.tokenAttr)) {
+        resultReceiver_.append("Error: Only debug hap token can be modified.\n");
+        return ERR_INVALID_VALUE;
+    }
+    return RET_SUCCESS;
 }
 
+int32_t AtmCommand::ModifyPermission(const PermOptionsContext& context)
+{
+    if (context.type == PERM_OPERATE_RESET && context.hasBundleOption) {
+        int32_t ret = AccessTokenKit::ClearUserGrantedPermStateByBundle(context.bundleName);
+#ifdef ATM_BUILD_VARIANT_USER_ENABLE
+        if (ret == AccessTokenError::ERR_PERMISSION_DENIED) {
+            resultReceiver_.append("Error: Only debug hap token can be modified.\n");
+            return ERR_INVALID_VALUE;
+        }
+#endif
+        return ret;
+    }
+
+    int32_t result = CheckPermCommandToken(context.tokenID);
+    if (result != RET_SUCCESS) {
+        return result;
+    }
+
+    if (context.type == PERM_OPERATE_GRANT) {
+        return AccessTokenKit::GrantPermission(context.tokenID, context.permission, PERMISSION_USER_FIXED);
+    }
+    if (context.type == PERM_OPERATE_REVOKE) {
+        return AccessTokenKit::RevokePermission(context.tokenID, context.permission, PERMISSION_USER_FIXED);
+    }
+    if (context.type == PERM_OPERATE_RESET) {
+        return AccessTokenKit::ClearUserGrantedPermissionState(context.tokenID);
+    }
+    return ERR_INVALID_VALUE;
+}
+
+void AtmCommand::AppendPermResult(int32_t result, const std::string& permission)
+{
+    if (result != RET_SUCCESS && !resultReceiver_.empty()) {
+        return;
+    }
+    if (result == RET_SUCCESS) {
+        resultReceiver_.append("Success\n");
+    } else if (result == AccessTokenError::ERR_TOKENID_NOT_EXIST) {
+        resultReceiver_.append("Error: TokenID does not exist or is not a valid application TokenID.\n");
+    } else if (result == AccessTokenError::ERR_PARAM_INVALID) {
+        resultReceiver_.append("Error: Permission '" + permission + "' is not requested by the application.\n");
+    } else if (result == AccessTokenError::ERR_PERMISSION_NOT_EXIST) {
+        resultReceiver_.append("Error: Permission '" + permission + "' does not exist.\n");
+    } else if (result == AccessTokenError::ERR_BUNDLE_NOT_EXIST) {
+        resultReceiver_.append("Error: BundleName does not exist.\n");
+    } else {
+        resultReceiver_.append("Failure\n");
+    }
+}
+
+#ifndef ATM_BUILD_VARIANT_USER_ENABLE
 int32_t AtmCommand::SetToggleStatus(int32_t userID, const std::string& permissionName, const uint32_t& status)
 {
     if ((userID < 0) || (permissionName.empty()) ||
@@ -568,6 +649,7 @@ int32_t AtmCommand::RunCommandByOperationType(const AtmToolsParamInfo& info, Opt
 #endif
         default:
             resultReceiver_.append("Error: Missing option.\n");
+            resultReceiver_.append(HELP_MSG_DUMP + "\n");
             return ERR_INVALID_VALUE;
     }
     resultReceiver_.append(dumpInfo + "\n");
@@ -764,6 +846,7 @@ int32_t AtmCommand::RunAsCommonCommandForDump()
     result = ValidateDumpExclusiveOptions(context, errorMsg);
     if (result != RET_SUCCESS) {
         resultReceiver_.append(errorMsg);
+        resultReceiver_.append(HELP_MSG_DUMP + "\n");
         return result;
     }
 
@@ -771,7 +854,6 @@ int32_t AtmCommand::RunAsCommonCommandForDump()
     return RunCommandByOperationType(context.info, context.type, context.permissionName);
 }
 
-#ifndef ATM_BUILD_VARIANT_USER_ENABLE
 int32_t AtmCommand::RunAsCommonCommandForPerm()
 {
     int32_t result = RET_SUCCESS;
@@ -792,6 +874,10 @@ int32_t AtmCommand::RunAsCommonCommandForPerm()
         }
 
         if (option == '?') {
+            if (context.type == PERM_OPERATE_RESET && optopt == 'p') {
+                context.hasPermissionOption = true;
+                break;
+            }
             result = RunAsCommandMissingOptionArgument(REQUIRED_OPTIONS_PERM);
             break;
         }
@@ -812,43 +898,62 @@ int32_t AtmCommand::RunAsCommonCommandForPerm()
         return result;
     }
 
-    result = ModifyPermission(context.isGranted, context.tokenID, context.permission);
-    if (result == RET_SUCCESS) {
-        resultReceiver_.append("Success\n");
-    } else if (result == AccessTokenError::ERR_TOKENID_NOT_EXIST) {
-        // TokenID does not exist or is not a valid application TokenID
-        resultReceiver_.append("Error: TokenID does not exist or is not a valid application TokenID.\n");
-    } else if (result == AccessTokenError::ERR_PERMISSION_NOT_EXIST) {
-        // Permission does not exist
-        resultReceiver_.append("Error: Permission '" + context.permission + "' does not exist.\n");
-    } else {
-        resultReceiver_.append("Failure\n");
-    }
+    result = ModifyPermission(context);
+    AppendPermResult(result, context.permission);
     return result;
 }
 
 int32_t AtmCommand::ValidatePermParams(const PermOptionsContext& context)
 {
-    if (!context.hasTokenIdOption) {
+    if (context.operateCount == 0) {
+        resultReceiver_.append("Error: Missing required operation: -g, -c or -r\n");
+        resultReceiver_.append(HELP_MSG_PERM + "\n");
+        return ERR_INVALID_VALUE;
+    }
+    if (context.operateCount > 1) {
+        resultReceiver_.append("Error: Only one of -g, -c or -r can be specified.\n");
+        resultReceiver_.append(HELP_MSG_PERM + "\n");
+        return ERR_INVALID_VALUE;
+    }
+    if (context.type == PERM_OPERATE_RESET && context.hasPermissionOption) {
+        resultReceiver_.append("Error: -p <permission-name> is not supported with -r.\n");
+        resultReceiver_.append(HELP_MSG_PERM + "\n");
+        return ERR_INVALID_VALUE;
+    }
+    if (context.type == PERM_OPERATE_RESET && context.hasTokenIdOption == context.hasBundleOption) {
+        resultReceiver_.append("Error: Specify exactly one of -i <token-id> or -b <bundle-name> with -r.\n");
+        resultReceiver_.append(HELP_MSG_PERM + "\n");
+        return ERR_INVALID_VALUE;
+    }
+    if (context.hasBundleOption && context.type != PERM_OPERATE_RESET) {
+        resultReceiver_.append("Error: -b <bundle-name> is only supported with -r.\n");
+        resultReceiver_.append(HELP_MSG_PERM + "\n");
+        return ERR_INVALID_VALUE;
+    }
+    if (context.type != PERM_OPERATE_RESET && !context.hasTokenIdOption) {
         resultReceiver_.append("Error: Missing required parameter: -i <token-id>\n");
         resultReceiver_.append(HELP_MSG_PERM + "\n");
         return ERR_INVALID_VALUE;
     }
-
-    if (!context.hasPermissionOption) {
+    if (context.type != PERM_OPERATE_RESET && !context.hasPermissionOption) {
         resultReceiver_.append("Error: Missing required parameter: -p <permission-name>\n");
         resultReceiver_.append(HELP_MSG_PERM + "\n");
         return ERR_INVALID_VALUE;
     }
 
-    if (context.tokenID == 0) {
+    if (context.hasTokenIdOption && context.tokenID == 0) {
         resultReceiver_.append("Error: TokenID is invalid.\n");
+        return ERR_INVALID_VALUE;
+    }
+    if (context.hasBundleOption && context.bundleName.empty()) {
+        resultReceiver_.append("Error: Bundle name is invalid.\n");
         return ERR_INVALID_VALUE;
     }
 
     return RET_SUCCESS;
 }
 
+#ifndef ATM_BUILD_VARIANT_USER_ENABLE
 static int32_t ValidateToggleSetParams(const AtmToggleParamInfo& info, std::string& errorMsg)
 {
     if (info.toggleMode == TOGGLE_REQUEST) {

@@ -62,8 +62,31 @@ typedef enum AddHapSceneCode {
     INSTALL_FINISH,
 } AddHapSceneCode;
 
+typedef enum SessionFinishSceneCode {
+    SESSION_FINISH = 500,
+    GET_HAP_PATH,
+    CHECK_TYPE,
+    REBUILD_HAP_POLICY,
+    BUILD_HAP_POLICY,
+    CHECK_PERMISSION_LIST,
+    FILL_INSTALL_POLICY,
+    PREPARE_IDENTITY,
+    UPDATE_HAP_POLICY,
+    FINISH_INSTALL,
+    FINISH_NOT_SUCCESS,
+    FILL_FINISH_CONTEXT,
+    EXECUTE_KERNEL_TASK,
+    FINISH_DB_OPRATION,
+    PROXY_DEATH,
+} SessionFinishSceneCode;
+
 typedef enum DeleteHapSceneCode {
+    AT_DELETE_COMMON_FINISH = 1,
     AT_DELETE_KEEP_TOKEN_FINISH = 2,
+    AT_DELETE_KEEP_DATA = 3,
+    AT_DELETE_NORMAL = 4,
+    AT_DELETE_ALL_BUNDLE = 5,
+    AT_DELETE_RESERVED_TOKEN = 6
 } DeleteHapSceneCode;
 
 typedef enum AccessTokenDbSceneCode {

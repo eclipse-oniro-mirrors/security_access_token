@@ -97,7 +97,7 @@ public:
     void NotifyPermGrantStoreResult(bool result, uint64_t timestamp);
     void NotifyUpdatedPermList(const std::vector<std::string>& grantedPermListBefore,
         const std::vector<std::string>& grantedPermListAfter, AccessTokenID tokenID);
-    void NotifyWhenPermissionStateUpdated(AccessTokenID tokenID, const std::string& permissionName,
+    void NotifyWhenPermissionStateUpdated(const std::string& permissionName,
         bool isGranted, uint32_t flag, const std::shared_ptr<HapTokenInfoInner>& infoPtr);
     void InitPermState(const HapPolicy& policy,
         const PermissionBriefDef& briefDef, bool needGrantForDebug, PermissionStatus& state);

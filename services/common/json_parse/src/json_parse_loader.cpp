@@ -381,7 +381,12 @@ static int32_t NativeReqPermsGet(const CJson* j, std::vector<PermissionStatus>& 
     }
     std::set<std::string> permRes;
     for (int32_t i = 0; i < len; i++) {
-        std::string permReq = cJSON_GetStringValue(cJSON_GetArrayItem(permJson, i));
+        const char* perm = cJSON_GetStringValue(cJSON_GetArrayItem(permJson, i));
+        if (perm == nullptr) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Permission is invalid.");
+            return ERR_PARAM_INVALID;
+        }
+        std::string permReq = perm;
         PermissionStatus permState;
         if (permRes.count(permReq) != 0) {
             continue;
@@ -436,10 +441,20 @@ static bool ParseNativeTokenArrays(const CJson* j, NativeTokenInfoBase& info)
         return false;
     }
     for (int32_t i = 0; i < dcapLen; i++) {
-        info.dcap.emplace_back(cJSON_GetStringValue(cJSON_GetArrayItem(dcapsJson, i)));
+        const char* dcap = cJSON_GetStringValue(cJSON_GetArrayItem(dcapsJson, i));
+        if (dcap == nullptr) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Dcap is invalid.");
+            return false;
+        }
+        info.dcap.emplace_back(dcap);
     }
     for (int32_t i = 0; i < aclLen; i++) {
-        info.nativeAcls.emplace_back(cJSON_GetStringValue(cJSON_GetArrayItem(aclsJson, i)));
+        const char* acl = cJSON_GetStringValue(cJSON_GetArrayItem(aclsJson, i));
+        if (acl == nullptr) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Acl is invalid.");
+            return false;
+        }
+        info.nativeAcls.emplace_back(acl);
     }
     return true;
 }

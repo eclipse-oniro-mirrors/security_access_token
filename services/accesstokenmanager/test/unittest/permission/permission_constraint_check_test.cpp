@@ -32,6 +32,8 @@ namespace AccessToken {
 constexpr uint32_t SYSTEM_APP_FLAG = 0x0001;
 constexpr uint32_t ATOMIC_SERVICE_FLAG = 0x0002;
 constexpr uint32_t DEBUG_APP_FLAG = 0x0008;
+constexpr int32_t TEST_API_VERSION = 12;
+constexpr int32_t OLD_API_VERSION = 9;
 
 class PermissionConstraintCheckTest : public testing::Test {};
 
@@ -101,7 +103,7 @@ HWTEST_F(PermissionConstraintCheckTest, IsPermAvailableRangeSatisfied001, TestSi
 {
     BundleParam param = {};
     param.bundleName = "com.example.test";
-    param.apiVersion = 12;
+    param.apiVersion = TEST_API_VERSION;
     param.distributionType = static_cast<int32_t>(Verify::AppDistType::ENTERPRISE_NORMAL);
 
     PermissionBriefDef briefDef = {};
@@ -122,7 +124,7 @@ HWTEST_F(PermissionConstraintCheckTest, IsPermAvailableRangeSatisfied002, TestSi
 {
     BundleParam param = {};
     param.bundleName = "com.example.test";
-    param.apiVersion = 12;
+    param.apiVersion = TEST_API_VERSION;
     param.isDebug = true;
 
     PermissionBriefDef briefDef = {};
@@ -143,7 +145,7 @@ HWTEST_F(PermissionConstraintCheckTest, IsPermAvailableRangeSatisfied003, TestSi
 {
     BundleParam param = {};
     param.bundleName = "com.example.test";
-    param.apiVersion = 12;
+    param.apiVersion = TEST_API_VERSION;
     param.distributionType = static_cast<int32_t>(Verify::AppDistType::NONE_TYPE);
     param.isDebug = true;
 
@@ -165,7 +167,7 @@ HWTEST_F(PermissionConstraintCheckTest, AclAndEdmCheck001, TestSize.Level0)
 {
     BundleParam param = {};
     param.bundleName = "com.example.test";
-    param.apiVersion = 12;
+    param.apiVersion = TEST_API_VERSION;
     param.distributionType = static_cast<int32_t>(Verify::AppDistType::ENTERPRISE_NORMAL);
 
     PermissionBriefDef briefDef = {};
@@ -191,7 +193,7 @@ HWTEST_F(PermissionConstraintCheckTest, AclAndEdmCheck002, TestSize.Level0)
 {
     BundleParam param = {};
     param.bundleName = "com.example.test";
-    param.apiVersion = 12;
+    param.apiVersion = TEST_API_VERSION;
     param.distributionType = static_cast<int32_t>(Verify::AppDistType::APP_GALLERY);
 
     PermissionBriefDef briefDef = {};
@@ -217,7 +219,7 @@ HWTEST_F(PermissionConstraintCheckTest, IsPermAvailableRangeSatisfied004, TestSi
 {
     BundleParam param = {};
     param.bundleName = "com.example.test";
-    param.apiVersion = 12;
+    param.apiVersion = TEST_API_VERSION;
     param.isSystem = true;
 
     PermissionBriefDef briefDef = {};
@@ -238,7 +240,7 @@ HWTEST_F(PermissionConstraintCheckTest, IsPermAvailableRangeSatisfied005, TestSi
 {
     BundleParam param = {};
     param.bundleName = "com.example.test";
-    param.apiVersion = 12;
+    param.apiVersion = TEST_API_VERSION;
     param.isDebug = true;
 
     PermissionBriefDef briefDef = {};
@@ -259,7 +261,7 @@ HWTEST_F(PermissionConstraintCheckTest, IsPermAvailableRangeSatisfied006, TestSi
 {
     BundleParam param = {};
     param.bundleName = "com.example.test";
-    param.apiVersion = 12;
+    param.apiVersion = TEST_API_VERSION;
     param.distributionType = static_cast<int32_t>(Verify::AppDistType::APP_GALLERY);
 
     PermissionBriefDef briefDef = {};
@@ -386,8 +388,7 @@ HWTEST_F(PermissionConstraintCheckTest, FixPersistentHapInfo001, TestSize.Level0
 {
     BundleParam param;
     param.bundleName = "com.example.test";
-    param.appId = "com.example.test.app";
-    param.apiVersion = 12;
+    param.apiVersion = TEST_API_VERSION;
     param.isSystem = true;
     param.isAtomicService = false;
     param.isDebug = false;
@@ -397,8 +398,7 @@ HWTEST_F(PermissionConstraintCheckTest, FixPersistentHapInfo001, TestSize.Level0
 
     HapTokenInfoItem hapTokenInfoItem;
     hapTokenInfoItem.bundleName = "com.example.old";
-    hapTokenInfoItem.appId = "com.example.old.app";
-    hapTokenInfoItem.apiVersion = 9;
+    hapTokenInfoItem.apiVersion = OLD_API_VERSION;
     hapTokenInfoItem.apl = APL_NORMAL;
     hapTokenInfoItem.tokenAttr = 0;
 
@@ -407,8 +407,7 @@ HWTEST_F(PermissionConstraintCheckTest, FixPersistentHapInfo001, TestSize.Level0
 
     EXPECT_TRUE(isFixed);
     EXPECT_EQ("com.example.test", hapTokenInfoItem.bundleName);
-    EXPECT_EQ("com.example.test.app", hapTokenInfoItem.appId);
-    EXPECT_EQ(12, hapTokenInfoItem.apiVersion);
+    EXPECT_EQ(TEST_API_VERSION, hapTokenInfoItem.apiVersion);
     EXPECT_EQ(APL_SYSTEM_CORE, hapTokenInfoItem.apl);
     EXPECT_TRUE((hapTokenInfoItem.tokenAttr & SYSTEM_APP_FLAG) != 0);
 }
@@ -452,7 +451,7 @@ HWTEST_F(PermissionConstraintCheckTest, FixPersistentHapInfo003, TestSize.Level0
     BundleParam param;
     param.bundleName = "com.example.test";
     param.appId = "com.example.test.app";
-    param.apiVersion = 12;
+    param.apiVersion = TEST_API_VERSION;
     param.isSystem = true;
     param.isAtomicService = false;
     param.isDebug = false;
@@ -463,7 +462,7 @@ HWTEST_F(PermissionConstraintCheckTest, FixPersistentHapInfo003, TestSize.Level0
     HapTokenInfoItem hapTokenInfoItem;
     hapTokenInfoItem.bundleName = "com.example.test";
     hapTokenInfoItem.appId = "com.example.test.app";
-    hapTokenInfoItem.apiVersion = 12;
+    hapTokenInfoItem.apiVersion = TEST_API_VERSION;
     hapTokenInfoItem.apl = APL_SYSTEM_BASIC;
     hapTokenInfoItem.tokenAttr = SYSTEM_APP_FLAG;
 
@@ -473,36 +472,9 @@ HWTEST_F(PermissionConstraintCheckTest, FixPersistentHapInfo003, TestSize.Level0
     EXPECT_FALSE(isFixed);
     EXPECT_EQ("com.example.test", hapTokenInfoItem.bundleName);
     EXPECT_EQ("com.example.test.app", hapTokenInfoItem.appId);
-    EXPECT_EQ(12, hapTokenInfoItem.apiVersion);
+    EXPECT_EQ(TEST_API_VERSION, hapTokenInfoItem.apiVersion);
     EXPECT_EQ(APL_SYSTEM_BASIC, hapTokenInfoItem.apl);
     EXPECT_TRUE((hapTokenInfoItem.tokenAttr & SYSTEM_APP_FLAG) != 0);
-}
-
-/**
- * @tc.name: BuildIdType001
- * @tc.desc: PermissionConstraintCheck::BuildIdType function test.
- * @tc.type: FUNC
- */
-HWTEST_F(PermissionConstraintCheckTest, BuildIdType001, TestSize.Level0)
-{
-    BundleParam param;
-    HapPolicy policy;
-
-    param.isDebug = true;
-    EXPECT_EQ(3, PermissionConstraintCheck::BuildIdType(param, policy));
-
-    param.isDebug = false;
-    param.appIdentifier = 0;
-    EXPECT_EQ(5, PermissionConstraintCheck::BuildIdType(param, policy));
-
-    param.appIdentifier = 1;
-    PermissionStatus tempJitAllow;
-    tempJitAllow.permissionName = "TEMPJITALLOW";
-    policy.permStateList = { tempJitAllow };
-    EXPECT_EQ(10, PermissionConstraintCheck::BuildIdType(param, policy));
-
-    policy.permStateList.clear();
-    EXPECT_EQ(2, PermissionConstraintCheck::BuildIdType(param, policy));
 }
 } // namespace AccessToken
 } // namespace Security

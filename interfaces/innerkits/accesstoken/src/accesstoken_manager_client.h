@@ -34,6 +34,10 @@
 #include "accesstoken_callbacks.h"
 #include "permission_state_full.h"
 #include "perm_state_change_callback_customize.h"
+#include "proxy_death_callback.h"
+#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
+#include "sec_comp_enhance_data.h"
+#endif
 #ifdef TOKEN_SYNC_ENABLE
 #include "token_sync_kit_interface.h"
 #endif // TOKEN_SYNC_ENABLE
@@ -70,17 +74,18 @@ public:
     int GrantPermissionForSpecifiedTime(
         AccessTokenID tokenID, const std::string& permissionName, uint32_t onceTime);
     int ClearUserGrantedPermissionState(AccessTokenID tokenID);
+    int32_t ClearUserGrantedPermStateByBundle(const std::string& bundleName);
     int32_t SetPermissionStatusWithPolicy(
         AccessTokenID tokenID, const std::vector<std::string>& permissionList, int32_t status, uint32_t flag);
     AccessTokenIDEx AllocHapToken(const HapInfoParams& info, const HapPolicy& policy);
     int32_t InitHapToken(const HapInfoParams& info, HapPolicy& policy,
         AccessTokenIDEx& fullTokenId, HapInfoCheckResult& result);
-    int32_t PreMigrateUIDList(const std::vector<int32_t>& uidList);
     int32_t MigrateInstalledBundles(const std::vector<MigratedInfo>& migratedInfoList,
         std::vector<BundleMigrateResult>& results);
     int32_t FinishMigration();
     int DeleteToken(AccessTokenID tokenID, bool isTokenReserved);
     int32_t DeleteToolTokenByPid(int32_t pid);
+    int32_t DeleteIdentity(AccessTokenID tokenID, const std::string& bundleName, ReservedType type);
     ATokenTypeEnum GetTokenType(AccessTokenID tokenID);
     AccessTokenIDEx GetHapTokenID(int32_t userID, const std::string& bundleName, int32_t instIndex);
     int32_t GetHapIdentity(const HapBaseInfo& info, Identity& identity);
@@ -117,10 +122,6 @@ public:
         AccessTokenID tokenId, const std::string& permissionName, std::string& value);
     int32_t InitCliToken(const CliInitInfo& info,
         AccessTokenIDEx& tokenIdEx, std::vector<PermissionWithValue>& kernelPermList);
-    int32_t InitSkillToken(const SkillInitInfo& info,
-        AccessTokenIDEx& tokenIdEx, std::vector<PermissionWithValue>& kernelPermList);
-    int32_t GetCliTokenInfo(AccessTokenID tokenId, CliTokenInfo& info);
-    int32_t GetSkillTokenInfo(AccessTokenID tokenId, SkillTokenInfo& info);
     int32_t GetHostTokenId(AccessTokenID toolTokenId, AccessTokenID& hostTokenId);
     void DumpTokenInfo(const AtmToolsParamInfo& info, std::string& dumpInfo);
     int32_t GetVersion(uint32_t& version);
@@ -138,23 +139,30 @@ public:
     int32_t RegisterSecCompEnhance(const SecCompEnhanceData& enhance);
     int32_t UpdateSecCompEnhance(int32_t pid, uint32_t seqNum);
     int32_t GetSecCompEnhance(int32_t pid, SecCompEnhanceData& enhance);
+    int32_t StoreSecCompEnhanceKey(const SecCompEnhanceKey& enhanceKey);
+    int32_t GetSecCompEnhanceKey(SecCompEnhanceKey& enhanceKey);
 #endif // SECURITY_COMPONENT_ENHANCE_ENABLE
     int32_t QueryStatusByPermission(const std::vector<uint32_t>& permCodeList,
         std::vector<PermissionStatus>& permissionInfoList, bool onlyHap);
     int32_t QueryStatusByTokenID(const std::vector<AccessTokenID>& tokenIDList,
         std::vector<PermissionStatus>& permissionInfoList);
+    int32_t CheckHapSignInfo(const BundleHapList& list, int32_t& sessionId,
+        std::vector<TrustedBundleInfo>& bundleInfo, HapVerifyResultInfo& resultInfo);
+    int32_t CheckHapPermissionInfo(int32_t sessionId, InstallTypeEnum type, HapInfoCheckResult& result);
+    int32_t PrepareHapIdentity(int32_t& sessionId, const HapBaseInfo& info,
+        const BundlePolicy& policy, Identity& identity);
+    int32_t UpdateHapPolicy(int32_t sessionId, int32_t tokenId, const BundlePolicy& policy);
+    int32_t FinishInstall(int32_t sessionId, bool isSuccess, const std::map<std::string, std::string>& modulePathMap);
+    int32_t GetCacheSignInfoBySessionId(int32_t sessionId, std::vector<TrustedBundleInfo>& bundleInfo);
+    int32_t GetHapSignInfo(const std::string& bundleName, std::vector<TrustedBundleInfo>& bundleInfo);
+    int32_t GetCachePolicyBySessionId(int32_t sessionId, const std::string& bundleName,
+        BundlePolicyInfo& bundlePolicyInfo);
     int32_t GetCliPermissionRequestInfo(
         const std::string& agentID, const std::vector<CliInfo>& cliInfoList, PermissionDialogResult& result);
-    int32_t GetSkillPermissionRequestInfo(
-        const std::string& agentID, const std::vector<SkillInfo>& skillInfoList, PermissionDialogResult& result);
     int32_t GetCliPermissions(AccessTokenID hostTokenID, const std::string& agentID,
         const std::vector<CliInfo>& cliInfoList, CliPermissionsResult& result);
-    int32_t GetSkillPermissions(AccessTokenID hostTokenID, const std::string& agentID,
-        const std::vector<SkillInfo>& skillInfoList, SkillPermissionsResult& result);
     int32_t GenerateCliAuthResult(AccessTokenID hostTokenID, const std::string& agentID,
         const std::vector<CliAuthInfo>& authInfoList, ToolAuthResult& result);
-    int32_t GenerateSkillAuthResult(AccessTokenID hostTokenID, const std::string& agentID,
-        const std::vector<SkillAuthInfo>& authInfoList, ToolAuthResult& result);
 
 private:
     AccessTokenManagerClient();
@@ -162,6 +170,7 @@ private:
         const std::shared_ptr<PermStateChangeCallbackCustomize>& customizedCb,
         sptr<PermissionStateChangeCallback>& callback);
     void ReregisterTokenSyncCallback();
+    sptr<ProxyDeathCallBack> GetAnonyStub();
 
     DISALLOW_COPY_AND_MOVE(AccessTokenManagerClient);
     std::mutex proxyMutex_;
@@ -178,6 +187,9 @@ private:
     std::shared_ptr<TokenSyncKitInterface> syncCallbackImpl_ = nullptr;
     sptr<TokenSyncCallback> tokenSyncCallback_ = nullptr;
 #endif // TOKEN_SYNC_ENABLE
+
+    sptr<ProxyDeathCallBack> anonyStub_ = nullptr;
+    std::mutex stubMutex_;
 };
 } // namespace AccessToken
 } // namespace Security

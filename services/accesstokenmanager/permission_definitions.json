@@ -290,6 +290,17 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.ALLOW_USE_BM",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "NORMAL",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1"]
+        },
+        {
             "name": "ohos.permission.cli.INSTALL_BUNDLE",
             "grantMode": "user_grant",
             "availableLevel": "system_core",
@@ -5199,7 +5210,8 @@
             "provisionEnable": true,
             "distributedSceneEnable": false,
             "label": "$string:ohos_lab_custom_screen_capture",
-            "description": "$string:ohos_desc_custom_screen_capture"
+            "description": "$string:ohos_desc_custom_screen_capture",
+            "deviceTypes": ["phone", "2in1", "tablet"]
         },
         {
             "name": "ohos.permission.READ_HEALTH_DATA",
@@ -5354,8 +5366,9 @@
             "availableType": "NORMAL",
             "since": 8,
             "deprecated": "",
-            "provisionEnable": true,
+            "provisionEnable": false,
             "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "tv", "wearable", "2in1", "tablet", "car"],
             "label": "$string:ohos_lab_microphone",
             "description": "$string:ohos_desc_microphone"
         },
@@ -6510,7 +6523,7 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
-            "deviceTypes": ["2in1"]
+            "deviceTypes": ["2in1", "tablet"]
         },
         {
             "name": "ohos.permission.ACCESS_SUPER_HUB",
@@ -6782,7 +6795,7 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
-            "deviceTypes": ["2in1"]
+            "deviceTypes": ["2in1", "tablet", "phone"]
         },
         {
             "name": "ohos.permission.kernel.ALLOW_USE_JITFORT_INTERFACE",
@@ -6944,7 +6957,8 @@
             "since": 15,
             "deprecated": "",
             "provisionEnable": true,
-            "distributedSceneEnable": false
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1"]
         },
         {
             "name": "ohos.permission.MANAGE_EDM_POLICY",
@@ -8137,6 +8151,17 @@
             "deviceTypes": ["phone", "2in1", "tablet"]
         },
         {
+            "name": "ohos.permission.ENTERPRISE_REQUEST_PUBLISH_FORM",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "MDM",
+            "since": "26.1.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "2in1", "tablet"]
+        },
+        {
             "name": "ohos.permission.GET_NPU_LARGEMEM_PRIVILEGED",
             "grantMode": "system_grant",
             "availableLevel": "system_core",
@@ -8167,7 +8192,7 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
-            "deviceTypes": ["phone", "2in1", "tablet"]
+            "deviceTypes": ["phone", "2in1", "tablet", "tv"]
         },
         {
             "name": "ohos.permission.HOOK_KEY_EVENT",
@@ -8699,7 +8724,29 @@
             "deviceTypes": ["car"]
         },
         {
+            "name": "ohos.permission.vehicle.ACCESS_DFT_LOG",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["car"]
+        },
+        {
             "name": "ohos.permission.vehicle.AUTO_UPDATER",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["car"]
+        },
+        {
+            "name": "ohos.permission.vehicle.CAR_LOG_SERVICE",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
@@ -8974,6 +9021,17 @@
             "deviceTypes": ["phone", "tv", "tablet"]
         },
         {
+            "name": "ohos.permission.CLI_MANAGE_WEB_SANDBOX",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1"]
+        },
+        {
             "name": "ohos.permission.QUERY_CLI_TOOL",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
@@ -8985,6 +9043,17 @@
             "deviceTypes": ["phone", "2in1", "tablet"]
         },
         {
+            "name": "ohos.permission.QUERY_PUBLIC_CLI_TOOL",
+            "grantMode": "system_grant",
+            "availableLevel": "normal",
+            "availableType": "NORMAL",
+            "since": "26.1.0",
+            "deprecated": "",
+            "provisionEnable": false,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1"]
+        },
+        {
             "name": "ohos.permission.EXEC_CLI_TOOL",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
@@ -8994,6 +9063,17 @@
             "provisionEnable": true,
             "distributedSceneEnable": false,
             "deviceTypes": ["phone", "2in1", "tablet"]
+        },
+        {
+            "name": "ohos.permission.EXEC_PUBLIC_CLI_TOOL",
+            "grantMode": "system_grant",
+            "availableLevel": "normal",
+            "availableType": "NORMAL",
+            "since": "26.1.0",
+            "deprecated": "",
+            "provisionEnable": false,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1"]
         },
         {
             "name": "ohos.permission.REGISTER_CLI_TOOL",
@@ -9018,6 +9098,17 @@
             "deviceTypes": ["general"]
         },
         {
+            "name": "ohos.permission.ACCESS_FUNCTION",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.1.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1", "car", "phone", "tablet", "tv", "wearable"]
+        },
+        {
             "name": "ohos.permission.START_ABILITY_TO_PAGE",
             "grantMode": "system_grant",
             "availableLevel": "system_core",
@@ -9027,6 +9118,17 @@
             "provisionEnable": true,
             "distributedSceneEnable": false,
             "deviceTypes": ["tablet", "phone"]
+        },
+        {
+            "name": "ohos.permission.CROSS_OS_INTERCONNECT",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": true,
+            "deviceTypes": ["phone"]
         },
         {
             "name": "ohos.permission.EXEMPT_MOTION_SENSORS_RESTRICTION",
@@ -9117,6 +9219,17 @@
             "deviceTypes": ["general"]
         },
         {
+            "name": "ohos.permission.DCAS_RUN_MODEL",
+            "grantMode": "system_grant",
+            "availableLevel": "normal",
+            "availableType": "NORMAL",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": false,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "2in1", "tablet"]
+        },
+        {
             "name": "ohos.permission.EXECUTE_DISTRIBUTED_INTENT",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
@@ -9126,6 +9239,17 @@
             "provisionEnable": true,
             "distributedSceneEnable": true,
             "deviceTypes": ["car", "phone", "tv", "wearable", "2in1", "tablet"]
+        },
+        {
+            "name": "ohos.permission.CAMERA_SHARED",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["car"]
         },
         {
             "name": "ohos.permission.ENTERPRISE_GET_INSTALLED_BUNDLE_LIST",
@@ -9147,7 +9271,7 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
-            "deviceTypes": ["2in1", "car", "phone", "tablet", "tv", "wearable"]
+            "deviceTypes": ["general"]
         },
 		{
             "name": "ohos.permission.ACCESS_SUPPORT_FEEDBACK",
@@ -9361,6 +9485,17 @@
             "deviceTypes": ["phone", "2in1", "tablet"]
         },
         {
+            "name": "ohos.permission.kernel.TRAFFIC_FILTER",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "ENTERPRISE_NORMAL",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1"]
+        },
+        {
             "name": "ohos.permission.QUERY_SPACE_OPTIMIZATION",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
@@ -9515,48 +9650,147 @@
             "deviceTypes": ["tv"]
         },
         {
-          "name": "ohos.permission.vehicle.ACCESS_HUD_SERVICE",
-          "grantMode": "system_grant",
-          "availableLevel": "system_basic",
-          "availableType": "SYSTEM",
-          "since": "26.0.0",
-          "deprecated": "",
-          "provisionEnable": true,
-          "distributedSceneEnable": false,
-          "deviceTypes": ["car"]
+            "name": "ohos.permission.MANAGE_AUDIO_ACCESSORY",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "NORMAL",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "2in1", "tablet", "car", "tv"]
         },
         {
-          "name": "ohos.permission.vehicle.MDCS_SEAMLESS_SHOW",
-          "grantMode": "system_grant",
-          "availableLevel": "system_basic",
-          "availableType": "NORMAL",
-          "since": "26.0.0",
-          "deprecated": "",
-          "provisionEnable": true,
-          "distributedSceneEnable": false,
-          "deviceTypes": ["car"]
+            "name": "ohos.permission.automotive.SET_ADAS_CMD",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["car"]
         },
         {
-          "name": "ohos.permission.vehicle.DISTRACTION_STRATEGY",
-          "grantMode": "system_grant",
-          "availableLevel": "system_basic",
-          "availableType": "SYSTEM",
-          "since": "26.0.0",
-          "deprecated": "",
-          "provisionEnable": true,
-          "distributedSceneEnable": false,
-          "deviceTypes": ["car"]
+            "name": "ohos.permission.automotive.GET_ADAS_INFO",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["car"]
         },
         {
-          "name": "ohos.permission.vehicle.VEHICLE_CONTROL_STRATEGY",
-          "grantMode": "system_grant",
-          "availableLevel": "system_basic",
-          "availableType": "SYSTEM",
-          "since": "26.0.0",
-          "deprecated": "",
-          "provisionEnable": true,
-          "distributedSceneEnable": false,
-          "deviceTypes": ["car"]
+            "name": "ohos.permission.automotive.GET_CLUSTER_INFO",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["car"]
+        },
+        {
+            "name": "ohos.permission.automotive.SET_CLUSTER_CMD",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["car"]
+        },
+        {
+            "name": "ohos.permission.automotive.SET_MMS_CMD",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["car"]
+        },
+        {
+            "name": "ohos.permission.automotive.GET_MMS_INFO",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["car"]
+        },
+        {
+            "name": "ohos.permission.automotive.GET_XCALL_INFO",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["car"]
+        },
+        {
+            "name": "ohos.permission.automotive.SET_XCALL_CMD",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["car"]
+        },
+        {
+            "name": "ohos.permission.automotive.SET_SECBOX_CMD",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["car"]
+        },
+        {
+            "name": "ohos.permission.automotive.GET_SECBOX_INFO",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["car"]
+        },
+        {
+            "name": "ohos.permission.automotive.RECV_HUAP_INFO",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["car"]
+        },
+        {
+            "name": "ohos.permission.automotive.SEND_HUAP_MSG",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["car"]
         },
         {
             "name": "ohos.permission.CAPTURE_PLAYBACK_PRIVATE",
@@ -9570,6 +9804,94 @@
             "deviceTypes": ["phone", "2in1", "tablet", "car", "tv"]
         },
         {
+            "name": "ohos.permission.vehicle.VEHICLE_THERMAL",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["car"]
+        },
+        {
+            "name": "ohos.permission.vehicle.ACCESS_CAR_SECURITY_PRIVACY",
+            "grantMode": "system_grant",
+            "availableLevel": "normal",
+            "availableType": "NORMAL",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": false,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["car"]
+        },
+        {
+            "name": "ohos.permission.vehicle.CAR_SECURITY_PRIVACY_SET_PRIVACY_CONSENT",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["car"]
+        },
+        {
+            "name": "ohos.permission.vehicle.CAR_SECURITY_PRIVACY_SET_DRIVER_SEAT_PRIVACY",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["car"]
+        },
+        {
+            "name": "ohos.permission.vehicle.CAR_SECURITY_PRIVACY_SET_CLEAR_TRACE",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["car"]
+        },
+        {
+            "name": "ohos.permission.vehicle.CAR_SECURITY_PRIVACY_SET_SENSORTYPE_STATE",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["car"]
+        },
+        {
+            "name": "ohos.permission.vehicle.CAR_SECURITY_PRIVACY_SET_REMOTELOCATION",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["car"]
+        },
+        {
+            "name": "ohos.permission.vehicle.CAR_SECURITY_PRIVACY_ANONYMIZE_VOICE",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["car"]
+        },
+        {
             "name": "ohos.permission.kernel.SUPPORT_LOCAL_PLUGIN",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
@@ -9581,6 +9903,129 @@
             "deviceTypes": ["2in1"],
             "isKernelEffect": true,
             "hasValue": false
+        },
+        {
+            "name": "ohos.permission.ARKWEBCORE_SYS_CAP",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "2in1", "tablet", "car", "tv", "wearable"]
+        },
+        {
+            "name": "ohos.permission.HDC_REPORT_INFO",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "2in1", "tablet"]
+        },
+        {
+            "name": "ohos.permission.ACCESS_DIGITAL_IDENTITY",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "NORMAL",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "tablet"]
+        },
+        {
+            "name": "ohos.permission.FORM_CUSTOM_CONFIG",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SERVICE",
+            "since": 20,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "isKernelEffect": false,
+            "hasValue": false,
+            "deviceTypes": ["phone"]
+        },
+        {
+            "name": "ohos.permission.ACCESS_GAME_BUDDY_SERVICE",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "NORMAL",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone"]
+        },
+        {
+            "name": "ohos.permission.ENTERPRISE_SPACE_FILE_TRANSFER_DATA_ACCESS",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1"]
+        },
+        {
+            "name": "ohos.permission.vehicle.ACCESS_HUD_SERVICE",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["car"]
+        },
+        {
+            "name": "ohos.permission.vehicle.MDCS_SEAMLESS_SHOW",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "NORMAL",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["car"]
+        },
+        {
+            "name": "ohos.permission.vehicle.DISTRACTION_STRATEGY",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["car"]
+        },
+        {
+            "name": "ohos.permission.vehicle.VEHICLE_CONTROL_STRATEGY",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["car"]
+        },
+        {
+            "name": "ohos.permission.CAPTURE_PLAYBACK_DOWNLINK",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "NORMAL",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "tablet"]
         }
     ]
 }

@@ -226,6 +226,44 @@ public:
 };
 
 /**
+ * @brief Declares the result of signed profile data
+ */
+struct ProfileData {
+    std::string provisionRaw;
+    int32_t profileBlockLength = 0;
+    std::vector<uint8_t> profileBlock;
+    std::string appId;
+    std::string fingerprint;
+    std::string organization;
+    bool isOpenHarmony = false;
+    bool isEnterpriseResigned = false;
+};
+
+/**
+ * @brief Declares the result of trusted bundle info
+ */
+struct TrustedBundleInfo {
+    ProfileData profileData;
+    std::string moduleInfo;
+    std::string sharedFiles;
+};
+
+/**
+ * @brief Declares the result of bundle policy info
+ */
+struct BundlePolicyInfo {
+    std::vector<std::string> reqPermissions;
+};
+
+/**
+ * @brief Declares the result of hap verify result info
+ */
+struct HapVerifyResultInfo {
+    uint32_t index = 0;
+    int32_t errorCode = 0;
+};
+
+/**
  * @brief Declares hap policy params class
  */
 class HapPolicy final {
@@ -242,9 +280,13 @@ public:
     std::vector<PreAuthorizationInfo> preAuthorizationInfo;
     HapPolicyCheckIgnore checkIgnore = HapPolicyCheckIgnore::NONE;
     std::map<std::string, std::string> aclExtendedMap;
+    DlpType dlpType = DlpType::DLP_COMMON;
     bool isDebugGrant = false;
 };
 
+/**
+ * @brief Declares bundle hap list
+ */
 struct BundleHapList final {
     std::vector<std::string> hapPaths;
     bool isPreInstalled = false;
@@ -270,8 +312,8 @@ struct BundleMigrateResult final {
  */
 struct BundlePolicy {
     std::vector<PreAuthorizationInfo> preAuthorizationInfo;
-    DlpType dlpType;
-    bool isDebugGrant;
+    DlpType dlpType = DlpType::DLP_COMMON;
+    bool isDebugGrant = false;
 };
 
 /**

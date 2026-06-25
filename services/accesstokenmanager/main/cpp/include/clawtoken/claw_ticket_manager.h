@@ -22,6 +22,10 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+
+#ifdef SAF_AGENT_FENCE_ENABLE
+#include "saf_agent_fence.h"
+#endif
 #include "access_token.h"
 #include "app_manager_access_client.h"
 #include "app_manager_death_callback.h"
@@ -67,14 +71,8 @@ public:
     int32_t GenerateCliTicket(AccessTokenID callerTokenId,
         const std::vector<CliAuthInfo>& cliAuthInfos, std::vector<std::string>& authResults);
 
-    int32_t GenerateSkillTicket(AccessTokenID callerTokenId,
-        const std::vector<SkillAuthInfo>& skillAuthInfos, std::vector<std::string>& authResults);
-
     int32_t VerifyCliClawTicket(AccessTokenID hostTokenId, const std::string& challenge,
         const CliInfo& cliInfo, std::vector<PermissionStatus>& permList);
-
-    int32_t VerifySkillClawTicket(AccessTokenID hostTokenId, const std::string& challenge,
-        const SkillInfo& skillInfo, std::vector<PermissionStatus>& permList);
 
     int32_t DeleteClawTicket(const std::string& challenge);
 
@@ -86,9 +84,13 @@ private:
     ~ClawTicketManager();
     DISALLOW_COPY_AND_MOVE(ClawTicketManager);
 
+    int32_t QueryCommandPermissions(const CliInfo& cliInfo, std::vector<PermissionStatus>& permList);
     void RegisterAppStateObserver();
     void UnregisterAppStateObserver();
-
+#ifdef SAF_AGENT_FENCE_ENABLE
+    int32_t PrepareVerifiedTicketInfo(AccessTokenID hostTokenId, const std::string& challenge,
+        ClawTicket& ticket, std::vector<SAF::VerifyTicketInfo>& verifyInfos, std::vector<int32_t>& verifyRes);
+#endif
     std::shared_mutex multiLock_;
     std::unordered_map<std::string, ClawTicket> ticketMap_;
 

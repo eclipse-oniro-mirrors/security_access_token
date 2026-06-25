@@ -22,6 +22,7 @@
 #include <unordered_set>
 #include <vector>
 
+#include "claw_permission_info.h"
 #include "claw_token_info_inner_base.h"
 #include "nocopyable.h"
 #include "user_policy_types.h"
@@ -36,8 +37,6 @@ public:
 
     int32_t InitCliToken(const CliInitInfo& info,
         int32_t callerPid, AccessTokenIDEx& tokenIdEx, std::vector<std::string>& kernelPermList);
-    int32_t InitSkillToken(const SkillInitInfo& info,
-        int32_t callerPid, AccessTokenIDEx& tokenIdEx, std::vector<std::string>& kernelPermList);
     int32_t DeleteToolTokenByPid(int32_t pid);
 
     bool IsToolToken(AccessTokenID tokenId) const;
@@ -47,22 +46,17 @@ public:
     int32_t VerifyToolAccessToken(AccessTokenID tokenId, const std::string& permissionName) const;
     int32_t UpdateRestrictedFlag(
         AccessTokenID toolTokenId, uint32_t permCode, bool isRestricted, bool& hasFlagChanged) const;
-    int32_t RefreshTokenPermStateToKernel(
-        AccessTokenID tokenId, uint32_t permCode, bool isAllowed, const char* source, bool hasFlagChanged) const;
-    int32_t RefreshUserPolicyFlag(const std::vector<UserPolicyChange>& changedPolicyList) const;
-    int32_t GetCliTokenInfo(AccessTokenID tokenId, CliTokenInfo& info) const;
-    int32_t GetSkillTokenInfo(AccessTokenID tokenId, SkillTokenInfo& info) const;
+    int32_t RefreshUserPolicyFlag(const std::vector<UserPolicyChange>& changedPolicyList,
+        std::vector<UserPolicyRefreshSnapshot>& appliedSnapshots) const;
+    void RollbackUserPolicyFlag(const std::vector<UserPolicyRefreshSnapshot>& appliedSnapshots) const;
 
 private:
     ToolTokenInfoManager() = default;
     DISALLOW_COPY_AND_MOVE(ToolTokenInfoManager);
 
     bool CheckCliInfo(const CliInfo& info) const;
-    bool CheckSkillInfo(const SkillInfo& info) const;
     int32_t GetUserIdByHostTokenId(AccessTokenID hostTokenId, int32_t& userId) const;
     int32_t VerifyCliInitInputAndTicket(const CliInitInfo& info, int32_t callerPid,
-        std::vector<PermissionStatus>& permStateList) const;
-    int32_t VerifySkillInitInputAndTicket(const SkillInitInfo& info, int32_t callerPid,
         std::vector<PermissionStatus>& permStateList) const;
     AccessTokenIDEx CreateToolTokenId(ToolTokenType type) const;
     int32_t BuildToolTokenBaseInfo(AccessTokenID hostTokenId, int32_t callerPid, ToolTokenType type,
@@ -70,7 +64,8 @@ private:
     int32_t FinalizeToolTokenInit(const std::shared_ptr<ClawTokenInfoInnerBase>& inner,
         const ClawTokenBaseInfo& baseInfo, const std::vector<PermissionStatus>& permStateList,
         std::vector<std::string>& kernelPermList);
-    int32_t RefreshUserPolicyFlagForUser(int32_t userId, const UserPolicyChange& policy) const;
+    int32_t RefreshUserPolicyFlagForUser(int32_t userId, const UserPolicyChange& policy,
+        std::vector<UserPolicyRefreshSnapshot>& appliedSnapshots) const;
     int32_t AddToolTokenInfoLocked(const std::shared_ptr<ClawTokenInfoInnerBase>& inner);
     std::shared_ptr<ClawTokenInfoInnerBase> RemoveToolTokenInfoLocked(AccessTokenID tokenId);
     std::shared_ptr<ClawTokenInfoInnerBase> RemoveToolTokenInfoByPidLocked(int32_t pid);

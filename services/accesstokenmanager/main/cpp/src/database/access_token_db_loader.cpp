@@ -68,6 +68,13 @@ int32_t AccessTokenDbLoader::DeleteAndInsertValues(const std::vector<DelInfo>& d
     return AccessTokenDb::GetInstance()->DeleteAndInsertValues(delInfoVec, addInfoVec);
 }
 
+int32_t AccessTokenDbLoader::Modify(const AtmDataType type,
+    const std::vector<GenericValues>& modifyValues,
+    const std::vector<GenericValues>& conditions)
+{
+    return AccessTokenDb::GetInstance()->Modify(type, modifyValues, conditions);
+}
+
 bool AccessTokenDbLoader::DestroyRdbHelper()
 {
     AccessTokenDb::DestroyInstance();

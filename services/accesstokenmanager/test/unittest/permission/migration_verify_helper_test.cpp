@@ -22,6 +22,7 @@
 #include "access_token_db_operator.h"
 #include "access_token_error.h"
 #include "accesstoken_common_log.h"
+#include "accesstoken_info_utils.h"
 #include "hap_token_info_inner.h"
 #include "idl_common.h"
 #include "permission_data_brief.h"
@@ -31,12 +32,15 @@
 #include "migration_verify_worker.h"
 #include "hap_sign_verify_manager.h"
 #include "hap_sign_verify_helper.h"
-#undef private
-
 #include "migration_verify_helper.h"
+#undef private
+#include "accesstoken_info_manager.h"
 #include "mock_app_verify_adapter.h"
+#include "parameter.h"
+#include "permission_kernel_utils.h"
 #include "test_common.h"
 #include "token_setproc.h"
+#include "spm_common.h"
 
 using namespace testing::ext;
 
@@ -86,6 +90,26 @@ std::shared_ptr<HapTokenInfoInner> BuildCachedInfo(AccessTokenID tokenId, int32_
     infoPtr->SetTokenBaseInfo(hapTokenInfo);
     return infoPtr;
 }
+
+int32_t AllocHapTokenLocally(const HapInfoParams& info, HapPolicyParams& policyParams, AccessTokenIDEx& tokenIdEx)
+{
+    HapPolicy policy;
+    policy.apl = policyParams.apl;
+    policy.domain = policyParams.domain;
+    policy.permList.assign(policyParams.permList.begin(), policyParams.permList.end());
+    policy.aclRequestedList.assign(policyParams.aclRequestedList.begin(), policyParams.aclRequestedList.end());
+    for (const auto& perm : policyParams.permStateList) {
+        PermissionStatus tmp;
+        tmp.permissionName = perm.permissionName;
+        tmp.grantStatus = perm.grantStatus.empty() ? PERMISSION_DENIED : perm.grantStatus[0];
+        tmp.grantFlag = perm.grantFlags.empty() ? PERMISSION_DEFAULT_FLAG : perm.grantFlags[0];
+        tmp.feature = perm.feature;
+        policy.permStateList.emplace_back(tmp);
+    }
+    policy.aclExtendedMap = policyParams.aclExtendedMap;
+    std::vector<GenericValues> undefValues;
+    return AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(info, policy, tokenIdEx, undefValues);
+}
 } // namespace
 
 class MigrationVerifyHelperTest : public testing::Test {
@@ -125,17 +149,41 @@ HWTEST_F(MigrationVerifyHelperTest, VerifyMigratedBundle001, TestSize.Level1)
     auto cachedInfo = BuildCachedInfo(tokenId, info.userID, info.bundleName, 0);
     std::vector<std::shared_ptr<HapTokenInfoInner>> cachedInfos = { cachedInfo };
 
+    // Configure mock adapter to return a verified bundle name matching migratedInfo.bundleName
+    mockAdapter_.bundleName_ = info.bundleName;
     MigratedInfoIdl migratedInfo = BuildBasicMigratedInfo(info.bundleName, info.bundleName);
+    // Insert a placeholder sign info row so DoBundleInfoOperations can Modify (UPDATE) it;
+    // without a placeholder, Modify affects zero rows and sign info is never persisted.
+    {
+        GenericValues placeholder;
+        placeholder.Put(TokenFiledConst::FIELD_BUNDLE_NAME, migratedInfo.bundleName);
+        placeholder.Put(TokenFiledConst::FIELD_MODULE_NAME, "#0");
+        placeholder.Put(TokenFiledConst::FIELD_PATH, migratedInfo.pathList.hapPaths[0]);
+        placeholder.Put(TokenFiledConst::FIELD_IS_PREINSTALLED, false);
+        placeholder.Put(TokenFiledConst::FIELD_BUNDLE_TYPE, 0);
+        std::vector<uint8_t> emptyBlob {1};
+        placeholder.PutBlob(TokenFiledConst::FIELD_PERSIST_DATA, emptyBlob);
+        AddInfo addInfo;
+        addInfo.addType = AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO;
+        addInfo.addValues = { placeholder };
+        ASSERT_EQ(RET_SUCCESS, AccessTokenDbOperator::DeleteAndInsertValues({}, { addInfo }));
+    }
+
+
     int32_t ret = MigrationVerifyHelper::GetInstance().VerifyMigratedBundle(migratedInfo, cachedInfos);
     EXPECT_EQ(RET_SUCCESS, ret);
 
-    // Verify DB: sign info persisted for the bundle
+    // Verify DB: sign info persisted for the bundle with valid fields
     GenericValues signCondition;
     signCondition.Put(TokenFiledConst::FIELD_BUNDLE_NAME, info.bundleName);
     std::vector<GenericValues> signResults;
     ASSERT_EQ(RET_SUCCESS, AccessTokenDbOperator::Find(
         AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO, signCondition, signResults));
-    EXPECT_FALSE(signResults.empty());
+    ASSERT_FALSE(signResults.empty());
+    for (const auto& row : signResults) {
+        std::string moduleName = row.GetString(TokenFiledConst::FIELD_MODULE_NAME);
+        EXPECT_EQ(moduleName, mockAdapter_.moduleName_);
+    }
 
     // Verify cache: permission data populated for the token
     std::vector<BriefPermData> briefDataList;
@@ -224,10 +272,196 @@ HWTEST_F(MigrationVerifyHelperTest, VerifyMigratedBundle004, TestSize.Level1)
     int32_t ret = MigrationVerifyHelper::GetInstance().VerifyMigratedBundle(migratedInfo, cachedInfos);
     mockAdapter_.verifyRet_ = RET_SUCCESS;
     // DoVerifyMigratedBundle failure propagates the error
-    EXPECT_EQ(AccessTokenError::ERR_HAP_VERIFY_FAILED, ret);
+    EXPECT_EQ(AccessTokenError::ERR_HAP_SIGN_VERIFY_FAILED, ret);
 
     (void)SpmRemoveEntry(tokenId);
     EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenId));
+}
+
+/**
+ * @tc.name: VerifyMigratedBundle006
+ * @tc.desc: Same as 001 but the database value is not updated since the value is not a placeholder
+ * @tc.type: FUNC
+ */
+HWTEST_F(MigrationVerifyHelperTest, VerifyMigratedBundle006, TestSize.Level1)
+{
+    MockNativeToken mock("foundation");
+
+    HapInfoParams info = TestCommon::GetInfoManagerTestSystemInfoParms();
+    info.bundleName = "com.example.verify.updated";
+    info.appIDDesc = info.bundleName;
+    HapPolicyParams policy = TestCommon::GetTestPolicyParams();
+
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS, TestCommon::AllocTestHapToken(info, policy, tokenIdEx));
+
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    auto cachedInfo = BuildCachedInfo(tokenId, info.userID, info.bundleName, 0);
+    std::vector<std::shared_ptr<HapTokenInfoInner>> cachedInfos = { cachedInfo };
+
+    // Configure mock adapter to return a verified bundle name matching migratedInfo.bundleName
+    mockAdapter_.bundleName_ = info.bundleName;
+    MigratedInfoIdl migratedInfo = BuildBasicMigratedInfo(info.bundleName, info.bundleName);
+    // Insert a placeholder sign info row so DoBundleInfoOperations can Modify (UPDATE) it;
+    // without a placeholder, Modify affects zero rows and sign info is never persisted.
+    {
+        GenericValues placeholder;
+        placeholder.Put(TokenFiledConst::FIELD_BUNDLE_NAME, migratedInfo.bundleName);
+        placeholder.Put(TokenFiledConst::FIELD_MODULE_NAME, "valid_module_name");
+        placeholder.Put(TokenFiledConst::FIELD_PATH, migratedInfo.pathList.hapPaths[0]);
+        placeholder.Put(TokenFiledConst::FIELD_IS_PREINSTALLED, false);
+        placeholder.Put(TokenFiledConst::FIELD_BUNDLE_TYPE, 0);
+        std::vector<uint8_t> emptyBlob {1};
+        placeholder.PutBlob(TokenFiledConst::FIELD_PERSIST_DATA, emptyBlob);
+        AddInfo addInfo;
+        addInfo.addType = AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO;
+        addInfo.addValues = { placeholder };
+        ASSERT_EQ(RET_SUCCESS, AccessTokenDbOperator::DeleteAndInsertValues({}, { addInfo }));
+    }
+
+    int32_t ret = MigrationVerifyHelper::GetInstance().VerifyMigratedBundle(migratedInfo, cachedInfos);
+    EXPECT_EQ(RET_SUCCESS, ret);
+
+    // Verify DB: sign info persisted for the bundle with valid fields
+    GenericValues signCondition;
+    signCondition.Put(TokenFiledConst::FIELD_BUNDLE_NAME, info.bundleName);
+    std::vector<GenericValues> signResults;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenDbOperator::Find(
+        AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO, signCondition, signResults));
+    ASSERT_FALSE(signResults.empty());
+    for (const auto& row : signResults) {
+        std::string moduleName = row.GetString(TokenFiledConst::FIELD_MODULE_NAME);
+        EXPECT_EQ(moduleName, "valid_module_name");
+    }
+
+    // Verify cache: permission data populated for the token
+    std::vector<BriefPermData> briefDataList;
+    EXPECT_EQ(RET_SUCCESS, PermissionDataBrief::GetInstance().GetBriefPermDataByTokenId(
+        tokenId, briefDataList));
+    EXPECT_FALSE(briefDataList.empty());
+
+    (void)SpmRemoveEntry(tokenId);
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenId));
+}
+
+/**
+ * @tc.name: VerifyMigratedBundle007
+ * @tc.desc: CheckMultipleHaps fails due to mismatched appIdentifier
+ * @tc.type: FUNC
+ */
+HWTEST_F(MigrationVerifyHelperTest, VerifyMigratedBundle007, TestSize.Level1)
+{
+    MockNativeToken mock("foundation");
+
+    HapInfoParams info = TestCommon::GetInfoManagerTestSystemInfoParms();
+    info.bundleName = "com.example.verify.multifail";
+    info.appIDDesc = info.bundleName;
+    HapPolicyParams policy = TestCommon::GetTestPolicyParams();
+
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS, TestCommon::AllocTestHapToken(info, policy, tokenIdEx));
+
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    auto cachedInfo = BuildCachedInfo(tokenId, info.userID, info.bundleName, 0);
+    std::vector<std::shared_ptr<HapTokenInfoInner>> cachedInfos = { cachedInfo };
+
+    // Build migratedInfo with 2 different hapPaths
+    MigratedInfoIdl migratedInfo;
+    migratedInfo.bundleName = info.bundleName;
+    migratedInfo.pathList.hapPaths = { info.bundleName + "_a", info.bundleName + "_b" };
+    migratedInfo.pathList.isPreInstalled = false;
+    migratedInfo.uidList = { 200100, 200101 };
+    migratedInfo.reservedTypeList = { ReservedTypeIdl::NONE, ReservedTypeIdl::NONE };
+    HapBaseInfoIdl baseInfo;
+    baseInfo.bundleName = info.bundleName;
+    baseInfo.userID = 100;
+    baseInfo.instIndex = 0;
+    migratedInfo.hapBaseInfoList = { baseInfo, baseInfo };
+
+    mockAdapter_.bundleName_ = info.bundleName;
+    // Clear appIdentifier_: each VerifyHap call uses params.filePath (hapPath) as appIdentifier
+    // → two hapPaths produce different appIdentifiers → CheckMultipleHaps detects mismatch
+    mockAdapter_.appIdentifier_ = "";
+    mockAdapter_.appId_ = "";
+
+    int32_t ret = MigrationVerifyHelper::GetInstance().VerifyMigratedBundle(migratedInfo, cachedInfos);
+    // CheckMultipleHaps fails with ERR_PARAM_INVALID → line 70 → DoVerifyMigratedBundle returns error
+    EXPECT_NE(RET_SUCCESS, ret);
+
+    mockAdapter_.appIdentifier_ = "mock.identifier";
+    mockAdapter_.appId_ = "mock.appid";
+
+    (void)SpmRemoveEntry(tokenId);
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenId));
+}
+
+/**
+ * @tc.name: VerifyMigratedBundle008
+ * @tc.desc: ToGenericValues fails due to mismatched list sizes
+ * @tc.type: FUNC
+ */
+HWTEST_F(MigrationVerifyHelperTest, VerifyMigratedBundle008, TestSize.Level1)
+{
+    MockNativeToken mock("foundation");
+
+    // Construct a BundleSignInfo with mismatched list sizes
+    BundleSignInfo bundleSignInfo;
+    bundleSignInfo.bundleName = "com.example.badsign";
+    bundleSignInfo.moduleNameList = { "entry" };
+    bundleSignInfo.pathList = {};  // empty, size 0 != moduleNameList size 1
+    bundleSignInfo.bundleType = { 0 };
+    bundleSignInfo.persistDataList = { {} };
+
+    int32_t ret = MigrationVerifyHelper::GetInstance().DoBundleInfoOperations(bundleSignInfo);
+    // ToGenericValues detects size mismatch → returns ERR_PARAM_INVALID → line 131
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
+}
+
+/**
+ * @tc.name: VerifyMigratedBundle009
+ * @tc.desc: BuildBundleSignInfo fails with mismatched sizes
+ * @tc.type: FUNC
+ */
+HWTEST_F(MigrationVerifyHelperTest, VerifyMigratedBundle009, TestSize.Level1)
+{
+    MockNativeToken mock("foundation");
+
+    // Construct mismatched MigratedInfoIdl and VerifiedMigrationBundle
+    MigratedInfoIdl migratedInfo;
+    migratedInfo.bundleName = "com.example.badsize";
+    migratedInfo.pathList.hapPaths = { "hap_a", "hap_b" };  // 2 hapPaths
+    VerifiedMigrationBundle verifiedBundle;
+    // Only 1 verifiedInfo → verifiedSize=1 != hapPaths.size()=2 → line 99
+    auto info1 = std::make_shared<TrustedBundleInfoInner>();
+    verifiedBundle.verifiedInfos = { *info1 };
+
+    BundleSignInfo bundleSignInfo;
+    int32_t ret = MigrationVerifyHelper::GetInstance().BuildBundleSignInfo(
+        migratedInfo, verifiedBundle, bundleSignInfo);
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
+}
+
+/**
+ * @tc.name: VerifyMigratedBundle010
+ * @tc.desc: BuildPermStateValues with unknown permCode
+ * @tc.type: FUNC
+ */
+HWTEST_F(MigrationVerifyHelperTest, VerifyMigratedBundle010, TestSize.Level1)
+{
+    MockNativeToken mock("foundation");
+
+    // Construct BriefPermData with an unknown permCode (0xFFFF)
+    std::vector<BriefPermData> data;
+    BriefPermData badPerm;
+    badPerm.permCode = 0xFFFF;  // non-existent permCode → TransferOpcodeToPermission returns empty
+    badPerm.status = PERMISSION_GRANTED;
+    badPerm.flag = PERMISSION_SYSTEM_FIXED;
+    data.emplace_back(badPerm);
+
+    AccessTokenID testTokenId = 1;
+    std::vector<GenericValues> result =
+        MigrationVerifyHelper::GetInstance().BuildPermStateValues(testTokenId, data);
+    ASSERT_EQ(0U, result.size());
 }
 
 /**
@@ -276,8 +510,155 @@ HWTEST_F(MigrationVerifyHelperTest, BuildPermBriefDataFromPolicy002, TestSize.Le
     EXPECT_TRUE(extendList.empty());
 }
 
+/**
+ * @tc.name: HandleMigratedBundleTask001
+ * @tc.desc: HandleMigratedBundleTask success path — verification succeeds, reports and returns RET_SUCCESS.
+ * @tc.type: FUNC
+ */
+HWTEST_F(MigrationVerifyHelperTest, HandleMigratedBundleTask001, TestSize.Level1)
+{
+    MockNativeToken mock("foundation");
+    SetUpVerifyEnvironment();
+
+    HapInfoParams info = TestCommon::GetInfoManagerTestSystemInfoParms();
+    info.bundleName = "com.example.handle.success";
+    info.appIDDesc = info.bundleName;
+    HapPolicyParams policy = TestCommon::GetTestPolicyParams();
+
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS, TestCommon::AllocTestHapToken(info, policy, tokenIdEx));
+
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    auto cachedInfo = BuildCachedInfo(tokenId, info.userID, info.bundleName, 0);
+    std::vector<std::shared_ptr<HapTokenInfoInner>> cachedInfos = { cachedInfo };
+
+    mockAdapter_.bundleName_ = info.bundleName;
+    MigratedInfoIdl migratedInfo = BuildBasicMigratedInfo(info.bundleName, info.bundleName);
+    // Insert placeholder sign info so DoBundleInfoOperations can Modify it
+    {
+        GenericValues placeholder;
+        placeholder.Put(TokenFiledConst::FIELD_BUNDLE_NAME, migratedInfo.bundleName);
+        placeholder.Put(TokenFiledConst::FIELD_MODULE_NAME, "#0");
+        placeholder.Put(TokenFiledConst::FIELD_PATH, migratedInfo.pathList.hapPaths[0]);
+        placeholder.Put(TokenFiledConst::FIELD_IS_PREINSTALLED, false);
+        placeholder.Put(TokenFiledConst::FIELD_BUNDLE_TYPE, 0);
+        std::vector<uint8_t> emptyBlob {1};
+        placeholder.PutBlob(TokenFiledConst::FIELD_PERSIST_DATA, emptyBlob);
+        AddInfo addInfo;
+        addInfo.addType = AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO;
+        addInfo.addValues = { placeholder };
+        ASSERT_EQ(RET_SUCCESS, AccessTokenDbOperator::DeleteAndInsertValues({}, { addInfo }));
+    }
+
+    int32_t ret = MigrationVerifyHelper::GetInstance().HandleMigratedBundleTask(migratedInfo, cachedInfos);
+    EXPECT_EQ(RET_SUCCESS, ret);
+
+    (void)SpmRemoveEntry(tokenId);
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenId));
+    TearDownVerifyEnvironment();
+}
+
+/**
+ * @tc.name: HandleMigratedBundleTask002
+ * @tc.desc: HandleMigratedBundleTask failure with spm.enforce=false — no cleanup performed.
+ * @tc.type: FUNC
+ */
+HWTEST_F(MigrationVerifyHelperTest, HandleMigratedBundleTask002, TestSize.Level1)
+{
+    MockNativeToken mock("foundation");
+    SetUpVerifyEnvironment();
+
+    HapInfoParams info = TestCommon::GetInfoManagerTestSystemInfoParms();
+    info.bundleName = "com.example.handle.noenforce";
+    info.appIDDesc = info.bundleName;
+    HapPolicyParams policy = TestCommon::GetTestPolicyParams();
+
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS, AllocHapTokenLocally(info, policy, tokenIdEx));
+
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    auto cachedInfo = BuildCachedInfo(tokenId, info.userID, info.bundleName, 0);
+    std::vector<std::shared_ptr<HapTokenInfoInner>> cachedInfos = { cachedInfo };
+
+    MigratedInfoIdl migratedInfo = BuildBasicMigratedInfo(info.bundleName, info.bundleName);
+
+    // Ensure spm.enforce is false (default in mock)
+
+    SetParameter(ACCESS_TOKEN_SERVICE_SPM_ENFORCING_KEY, "0");
+
+    auto infoBefore = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId);
+    ASSERT_NE(nullptr, infoBefore);
+    // Force CheckHapsSignInfo to fail via mock adapter
+    mockAdapter_.verifyRet_ = AccessTokenError::ERR_PARAM_INVALID;
+    int32_t ret = MigrationVerifyHelper::GetInstance().HandleMigratedBundleTask(migratedInfo, cachedInfos);
+    mockAdapter_.verifyRet_ = RET_SUCCESS;
+    EXPECT_NE(RET_SUCCESS, ret);
+
+    // Token should still be in cache — no cleanup when enforce is false
+    auto infoAfter = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId);
+    EXPECT_NE(nullptr, infoAfter);
+
+    (void)SpmRemoveEntry(tokenId);
+    EXPECT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId));
+    TearDownVerifyEnvironment();
+}
+
+/**
+ * @tc.name: HandleMigratedBundleTask003
+ * @tc.desc: HandleMigratedBundleTask failure with spm.enforce=true — cleanup is performed.
+ * @tc.type: FUNC
+ */
+HWTEST_F(MigrationVerifyHelperTest, HandleMigratedBundleTask003, TestSize.Level1)
+{
+    MockNativeToken mock("foundation");
+    SetUpVerifyEnvironment();
+
+    HapInfoParams info = TestCommon::GetInfoManagerTestSystemInfoParms();
+    info.bundleName = "com.example.handle.enforce";
+    info.appIDDesc = info.bundleName;
+    HapPolicyParams policy = TestCommon::GetTestPolicyParams();
+
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS, AllocHapTokenLocally(info, policy, tokenIdEx));
+
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    auto cachedInfo = BuildCachedInfo(tokenId, info.userID, info.bundleName, 0);
+    std::vector<std::shared_ptr<HapTokenInfoInner>> cachedInfos = { cachedInfo };
+
+    MigratedInfoIdl migratedInfo = BuildBasicMigratedInfo(info.bundleName, info.bundleName);
+
+    // Set spm.enforce to true
+    SetParameter(ACCESS_TOKEN_SERVICE_SPM_ENFORCING_KEY, "1");
+    auto infoBefore = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId);
+    // Force CheckHapsSignInfo to fail via mock adapter
+    mockAdapter_.verifyRet_ = AccessTokenError::ERR_PARAM_INVALID;
+    int32_t ret = MigrationVerifyHelper::GetInstance().HandleMigratedBundleTask(migratedInfo, cachedInfos);
+    mockAdapter_.verifyRet_ = RET_SUCCESS;
+    EXPECT_NE(RET_SUCCESS, ret);
+
+    // Token should NOT be in cache — cleanup happened when enforce is true
+    auto infoAfter = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId);
+    EXPECT_EQ(nullptr, infoAfter);
+
+    // Clean up: reset spm.enforce and remove token (may have been cleaned already)
+    SetParameter(ACCESS_TOKEN_SERVICE_SPM_ENFORCING_KEY, "0");
+    (void)SpmRemoveEntry(tokenId);
+    (void)AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId);
+    TearDownVerifyEnvironment();
+}
+
 class MigrationVerifyWorkerTest : public testing::Test {
 public:
+    static void SetUpTestCase()
+    {
+        TestCommon::SetTestEvironment(GetSelfTokenID());
+    }
+
+    static void TearDownTestCase()
+    {
+        TestCommon::ResetTestEvironment();
+    }
+
     void SetUp() override
     {
         // Ensure worker is in a clean state
@@ -421,8 +802,27 @@ HWTEST_F(MigrationVerifyWorkerTest, WorkerShutdownDuringProcessing005, TestSize.
     // Immediately shutdown while worker may still be processing
     MigrationVerifyWorker::GetInstance().Shutdown();
 
+    EXPECT_EQ(true, MigrationVerifyWorker::GetInstance().taskQueue_.empty());
+
     // Double shutdown should be safe
     MigrationVerifyWorker::GetInstance().Shutdown();
+}
+
+/**
+ * @tc.name: ThreadAutoShutdown001
+ * @tc.desc: Ensure thread shutdown automatically after idle timeout
+ * @tc.type: FUNC
+ */
+HWTEST_F(MigrationVerifyWorkerTest, ThreadAutoShutdown001, TestSize.Level1)
+{
+    MigrationVerifyWorker::GetInstance().IDLE_TIMEOUT = std::chrono::seconds(1);
+    MigrationVerifyWorker::GetInstance().EnsureThreadRunning();
+    MigrationVerifyWorker::GetInstance().EnsureThreadRunning();
+
+    std::this_thread::sleep_for(std::chrono::seconds(2));
+    
+    EXPECT_EQ(false, MigrationVerifyWorker::GetInstance().running_);
+    MigrationVerifyWorker::GetInstance().IDLE_TIMEOUT = std::chrono::seconds(30);
 }
 } // namespace AccessToken
 } // namespace Security

@@ -21,11 +21,12 @@ group("fuzztest") {
     "accesstokenkitcoverage_fuzzer:AccessTokenKitCoverageFuzzTest",
     "allochaptoken_fuzzer:AllocHapTokenFuzzTest",
     "alloclocaltokenid_fuzzer:AllocLocalTokenIDFuzzTest",
+    "clearusergrantedpermstatebybundle_fuzzer:ClearUserGrantedPermStateByBundleFuzzTest",
     "clearusergrantedpermissionstate_fuzzer:ClearUserGrantedPermissionStateFuzzTest",
+    "deleteidentity_fuzzer:DeleteIdentityFuzzTest",
     "deletetoken_fuzzer:DeleteTokenFuzzTest",
     "dumptokeninfo_fuzzer:DumpTokenInfoFuzzTest",
     "generatecliauthresult_fuzzer:GenerateCliAuthResultFuzzTest",
-    "generateskillauthresult_fuzzer:GenerateSkillAuthResultFuzzTest",
     "getclipermissionrequestinfo_fuzzer:GetCliPermissionRequestInfoFuzzTest",
     "getclipermissions_fuzzer:GetCliPermissionsFuzzTest",
     "getdefpermission_fuzzer:GetDefPermissionFuzzTest",
@@ -44,8 +45,6 @@ group("fuzztest") {
     "getreqpermissions_fuzzer:GetReqPermissionsFuzzTest",
     "getselfpermissionsstate_fuzzer:GetSelfPermissionsStateFuzzTest",
     "getselfpermissionstatus_fuzzer:GetSelfPermissionStatusFuzzTest",
-    "getskillpermissionrequestinfo_fuzzer:GetSkillPermissionRequestInfoFuzzTest",
-    "getskillpermissions_fuzzer:GetSkillPermissionsFuzzTest",
     "gettokenidbyuserid_fuzzer:GetTokenIDByUserIDFuzzTest",
     "gettokentype_fuzzer:GetTokenTypeFuzzTest",
     "gettokentypeflag_fuzzer:GetTokenTypeFlagFuzzTest",
@@ -64,6 +63,7 @@ group("fuzztest") {
     "setpermissionstatuswithpolicy_fuzzer:SetPermissionStatusWithPolicyFuzzTest",
     "setuserpolicy_fuzzer:SetUserPolicyFuzzTest",
     "tooltokenlifecycle_fuzzer:ToolTokenLifecycleFuzzTest",
+    "tokensetproc_fuzzer:TokenSetprocFuzzTest",
     "unregisterpermstatechangecallback_fuzzer:UnRegisterPermStateChangeCallbackFuzzTest",
     "updatehaptoken_fuzzer:UpdateHapTokenFuzzTest",
     "verifyaccesstoken001_fuzzer:VerifyAccessToken001FuzzTest",
@@ -73,8 +73,23 @@ group("fuzztest") {
   if (security_component_enhance_enable) {
     deps += [
       "getseccompenhance_fuzzer:GetSecCompEnhanceFuzzTest",
+      "getseccompenhancekey_fuzzer:GetSecCompEnhanceKeyFuzzTest",
       "registerseccompenhance_fuzzer:RegisterSecCompEnhanceFuzzTest",
+      "storeseccompenhancekey_fuzzer:StoreSecCompEnhanceKeyFuzzTest",
       "updateseccompenhance_fuzzer:UpdateSecCompEnhanceFuzzTest",
+    ]
+  }
+  if (access_token_enable_spm && access_token_manager_hapverify_enable) {
+    deps += [
+      "checkhapsigninfo_fuzzer:CheckHapSignInfoFuzzTest",
+      "checkhappermissioninfo_fuzzer:CheckHapPermissionInfoFuzzTest",
+      "finishinstall_fuzzer:FinishInstallFuzzTest",
+      "getcachepolicybysessionid_fuzzer:GetCachePolicyBySessionIdFuzzTest",
+      "getcachesigninfobysessionid_fuzzer:GetCacheSignInfoBySessionIdFuzzTest",
+      "gethapsigninfo_fuzzer:GetHapSignInfoFuzzTest",
+      "migrateinstalledbundlesclient_fuzzer:MigrateInstalledBundlesClientFuzzTest",
+      "preparehapidentity_fuzzer:PrepareHapIdentityFuzzTest",
+      "updatehappolicy_fuzzer:UpdateHapPolicyFuzzTest",
     ]
   }
   if (is_standard_system && token_sync_enable) {

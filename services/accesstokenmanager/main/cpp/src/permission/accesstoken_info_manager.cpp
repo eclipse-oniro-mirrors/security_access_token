@@ -15,6 +15,8 @@
 
 #include "accesstoken_info_manager.h"
 
+#include "delete_bundle_manager.h"
+
 #include <cinttypes>
 #include <cstdint>
 #include <cstdio>
@@ -180,6 +182,36 @@ void AddNativePermissionsFromKernel(const std::vector<uint32_t>& permCodeList, A
         }
     }
 }
+
+int32_t RestoreRestrictedFlag(AccessTokenID tokenId, uint32_t permCode, uint32_t originalFlag)
+{
+    int32_t currentStatus = PERMISSION_DENIED;
+    uint32_t currentFlag = 0;
+    int32_t ret = PermissionDataBrief::GetInstance().QueryStoredPermissionStatusAndFlag(
+        tokenId, permCode, currentStatus, currentFlag);
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
+    bool currentRestricted = (currentFlag & PERMISSION_RESTRICTED_BY_ADMIN) != 0;
+    bool originalRestricted = (originalFlag & PERMISSION_RESTRICTED_BY_ADMIN) != 0;
+    if (currentRestricted == originalRestricted) {
+        return RET_SUCCESS;
+    }
+
+    PermissionDataBrief::PermissionStatusChangeType rollbackChangeType =
+        PermissionDataBrief::PermissionStatusChangeType::NO_CHANGE;
+    return PermissionDataBrief::GetInstance().UpdatePermissionFlag(
+        tokenId, permCode, PERMISSION_RESTRICTED_BY_ADMIN, originalRestricted, rollbackChangeType);
+}
+
+void RestoreKernelPermissionState(
+    AccessTokenID tokenId, uint32_t permCode, int32_t originalStatus, uint32_t originalFlag)
+{
+    std::string permissionName = TransferOpcodeToPermission(permCode);
+    bool kernelStatus = ((originalFlag & PERMISSION_RESTRICTED_BY_ADMIN) == 0) &&
+        (originalStatus == PERMISSION_GRANTED);
+    PermissionKernelUtils::SetPermToKernel(tokenId, permissionName, kernelStatus);
+}
 }
 
 int32_t AccessTokenInfoManager::FindPermissionByNameFromDb(const std::vector<uint32_t>& permCodeList,
@@ -320,8 +352,28 @@ void AccessTokenInfoManager::RemoveTokenIdFromBundleInfoInner(
         bundleInfo->tokenIds.end());
 }
 
+void AccessTokenInfoManager::RestoreHapCache(const std::string& bundleName,
+    const std::shared_ptr<BundleInfoInner>& bundleInfo,
+    const std::vector<HapTokenRestoreData>& tokenRestoreDataList)
+{
+    std::unique_lock<std::shared_mutex> infoGuard(this->hapTokenInfoLock_);
+    for (const auto& tokenRestoreData : tokenRestoreDataList) {
+        AccessTokenID tokenID = tokenRestoreData.hapTokenInfoItem.tokenId;
+        std::shared_ptr<HapTokenInfoInner> hapInfoInner =
+            std::make_shared<HapTokenInfoInner>(tokenRestoreData.hapTokenInfoItem);
+        hapTokenInfoMap_[tokenID] = hapInfoInner;
+        hapTokenIdMap_[AccessTokenInfoUtils::GetHapUniqueStr(hapInfoInner)] = tokenID;
+        PermissionDataBrief::GetInstance().ReplaceBriefPermDataByTokenId(
+            tokenID, tokenRestoreData.requestedPermData, tokenRestoreData.extendedPermList);
+    }
+    if (bundleInfo != nullptr) {
+        UpsertBundleInfoInnerCacheWithoutLock(bundleName, bundleInfo);
+    }
+}
+
 void AccessTokenInfoManager::CommitCreateHapCache(const HapTokenInfo& hapInfo,
     const std::vector<BriefPermData>& briefPermData,
+    const std::vector<PermissionWithValue>& aclExtendedList,
     const std::shared_ptr<BundleInfoInner>& bundleInfo)
 {
     AccessTokenID tokenID = hapInfo.tokenID;
@@ -329,10 +381,8 @@ void AccessTokenInfoManager::CommitCreateHapCache(const HapTokenInfo& hapInfo,
         std::make_shared<HapTokenInfoInner>(tokenID, hapInfo, std::vector<PermissionStatus>{});
     std::unique_lock<std::shared_mutex> infoGuard(this->hapTokenInfoLock_);
     hapTokenInfoMap_[tokenID] = hapInfoInner;
-    if (!hapInfoInner->IsRemote()) {
-        hapTokenIdMap_[AccessTokenInfoUtils::GetHapUniqueStr(hapInfoInner)] = tokenID;
-    }
-    PermissionDataBrief::GetInstance().ReplaceBriefPermDataByTokenId(tokenID, briefPermData);
+    hapTokenIdMap_[AccessTokenInfoUtils::GetHapUniqueStr(hapInfoInner)] = tokenID;
+    PermissionDataBrief::GetInstance().ReplaceBriefPermDataByTokenId(tokenID, briefPermData, aclExtendedList);
     if (bundleInfo != nullptr) {
         auto bundleIter = bundleInfoMap_.find(hapInfo.bundleName);
         if (bundleIter != bundleInfoMap_.end() && bundleIter->second != nullptr && bundleIter->second != bundleInfo) {
@@ -345,26 +395,9 @@ void AccessTokenInfoManager::CommitCreateHapCache(const HapTokenInfo& hapInfo,
     }
 }
 
-void AccessTokenInfoManager::CommitCreateBundleCache(
-    const std::string& bundleName, const std::shared_ptr<BundleInfoInner>& bundleInfo, AccessTokenID tokenID)
-{
-    std::unique_lock<std::shared_mutex> infoGuard(this->hapTokenInfoLock_);
-    if (bundleInfo != nullptr) {
-        auto bundleIter = bundleInfoMap_.find(bundleName);
-        if (bundleIter != bundleInfoMap_.end() && bundleIter->second != nullptr && bundleIter->second != bundleInfo) {
-            for (const auto oldTokenId : bundleIter->second->tokenIds) {
-                AddTokenIdToBundleInfoInner(bundleInfo, oldTokenId);
-            }
-        }
-        if (tokenID != 0) {
-            AddTokenIdToBundleInfoInner(bundleInfo, tokenID);
-        }
-        UpsertBundleInfoInnerCacheWithoutLock(bundleName, bundleInfo);
-    }
-}
-
 void AccessTokenInfoManager::CommitUpdateHapCache(const HapTokenInfo& hapInfo,
     const std::vector<BriefPermData>& briefPermData,
+    const std::vector<PermissionWithValue>& aclExtendedList,
     const std::shared_ptr<BundleInfoInner>& bundleInfo)
 {
     AccessTokenID tokenID = hapInfo.tokenID;
@@ -385,7 +418,7 @@ void AccessTokenInfoManager::CommitUpdateHapCache(const HapTokenInfo& hapInfo,
     if (!oldHapInfo->IsRemote()) {
         hapTokenIdMap_[AccessTokenInfoUtils::GetHapUniqueStr(oldHapInfo)] = tokenID;
     }
-    PermissionDataBrief::GetInstance().ReplaceBriefPermDataByTokenId(tokenID, briefPermData);
+    PermissionDataBrief::GetInstance().ReplaceBriefPermDataByTokenId(tokenID, briefPermData, aclExtendedList);
     if (bundleInfo != nullptr) {
         auto bundleIter = bundleInfoMap_.find(hapInfo.bundleName);
         if (bundleIter != bundleInfoMap_.end() && bundleIter->second != nullptr && bundleIter->second != bundleInfo) {
@@ -396,15 +429,23 @@ void AccessTokenInfoManager::CommitUpdateHapCache(const HapTokenInfo& hapInfo,
     }
 }
 
-void AccessTokenInfoManager::CommitDeleteHapCache(AccessTokenID tokenID, const std::string& bundleName)
+int32_t AccessTokenInfoManager::CommitDeleteHapCache(AccessTokenID tokenID, const std::string& bundleName)
 {
     std::unique_lock<std::shared_mutex> infoGuard(this->hapTokenInfoLock_);
+
     std::shared_ptr<HapTokenInfoInner> oldHapInfo = nullptr;
     auto oldHapIter = hapTokenInfoMap_.find(tokenID);
     if (oldHapIter != hapTokenInfoMap_.end()) {
         oldHapInfo = oldHapIter->second;
     }
-    if (oldHapInfo != nullptr && !oldHapInfo->IsRemote()) {
+
+    // Check if remote token can not be deleted
+    if (oldHapInfo != nullptr && oldHapInfo->IsRemote()) {
+        LOGC(ATM_DOMAIN, ATM_TAG, "Remote hap token %{public}u can not delete.", tokenID);
+        return ERR_IDENTITY_CHECK_FAILED;
+    }
+
+    if (oldHapInfo != nullptr) {
         std::string uniqueKey = AccessTokenInfoUtils::GetHapUniqueStr(oldHapInfo);
         auto iter = hapTokenIdMap_.find(uniqueKey);
         if (iter != hapTokenIdMap_.end() && iter->second == tokenID) {
@@ -422,6 +463,8 @@ void AccessTokenInfoManager::CommitDeleteHapCache(AccessTokenID tokenID, const s
     } else {
         UpsertBundleInfoInnerCacheWithoutLock(bundleName, bundleInfo);
     }
+
+    return RET_SUCCESS;
 }
 
 AccessTokenInfoManager::~AccessTokenInfoManager()
@@ -534,28 +577,18 @@ void AccessTokenInfoManager::InitDmCallback(void)
 }
 #endif
 
-bool AccessTokenInfoManager::AddReservedHapInfoFromDb(const GenericValues& tokenValue)
+bool AccessTokenInfoManager::AddReservedHapInfoFromDbValues(const GenericValues& tokenValue)
 {
     AccessTokenID tokenId = static_cast<AccessTokenID>(tokenValue.GetInt(TokenFiledConst::FIELD_TOKEN_ID));
     std::string bundle = tokenValue.GetString(TokenFiledConst::FIELD_BUNDLE_NAME);
-#ifdef SPM_DATA_ENABLE
-    ReservedType type = static_cast<ReservedType>(tokenValue.GetInt(TokenFiledConst::FIELD_RESERVED));
-#else
-    ReservedType type = ReservedType::NONE;
-#endif
-    if (type == ReservedType::RESERVED_IDENTITY || AccessTokenInfoUtils::CheckSpecifiedFlag(
-        tokenValue.GetInt(TokenFiledConst::FIELD_TOKEN_ATTR), TOKEN_RESERVED_FLAG)) {
-        int32_t instIndex = tokenValue.GetInt(TokenFiledConst::FIELD_INST_INDEX);
-        int32_t userId = tokenValue.GetInt(TokenFiledConst::FIELD_USER_ID);
-        AddReservedHapTokenId(userId, bundle, instIndex, tokenId);
-        LOGI(ATM_DOMAIN, ATM_TAG, "Restore reserved hap token %{public}u bundle name %{public}s user %{public}d,"
-            "inst %{public}d ok!", tokenId, bundle.c_str(), userId, instIndex);
+    ReservedType type = AccessTokenInfoUtils::GetReservedTokenTypeDBValue(tokenValue);
+    if (type != ReservedType::NONE) {
+        AccessTokenIDManager::GetInstance().AddReservedTokenId(tokenId);
+        LOGI(ATM_DOMAIN, ATM_TAG, "Restore reserved hap token %{public}u bundle name %{public}s ",
+            tokenId, bundle.c_str());
         return true;
     }
-    if (type == ReservedType::RESERVED_DATA) {
-        (void)AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, TOKEN_HAP);
-        return true;
-    }
+
     return false;
 }
 
@@ -568,7 +601,7 @@ int32_t AccessTokenInfoManager::AddHapInfoToCache(const GenericValues& tokenValu
         tokenValue.GetInt(TokenFiledConst::FIELD_TOKEN_ATTR), TOKEN_RESERVED_FLAG)) {
         int32_t instIndex = tokenValue.GetInt(TokenFiledConst::FIELD_INST_INDEX);
         int32_t userId = tokenValue.GetInt(TokenFiledConst::FIELD_USER_ID);
-        AddReservedHapTokenId(userId, bundle, instIndex, tokenId);
+        AccessTokenIDManager::GetInstance().AddReservedTokenId(tokenId);
         LOGI(ATM_DOMAIN, ATM_TAG, "Restore reserved hap token %{public}u bundle name %{public}s user %{public}d,"
             "inst %{public}d ok!", tokenId, bundle.c_str(), userId, instIndex);
         return RET_SUCCESS;
@@ -646,7 +679,7 @@ int AccessTokenInfoManager::AddHapTokenInfo(const std::shared_ptr<HapTokenInfoIn
     }
     if (idRemoved != INVALID_TOKENID) {
         oriTokenId = idRemoved;
-        (void)RemoveHapTokenInfo(idRemoved);
+        (void)DeleteIdentity(idRemoved, info->GetBundleName(), ReservedType::NONE);
     }
     // add hap to kernel
     std::vector<uint32_t> opCodeList;
@@ -661,20 +694,18 @@ std::shared_ptr<HapTokenInfoInner> AccessTokenInfoManager::GetHapTokenInfoInnerF
     conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(id));
 
     std::vector<GenericValues> hapTokenResults;
-    int32_t ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_INFO, conditionValue, hapTokenResults);
+    int32_t ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, conditionValue, hapTokenResults);
     if (ret != RET_SUCCESS || hapTokenResults.empty()) {
         LOGC(ATM_DOMAIN, ATM_TAG, "Failed to find Id(%{public}u) from hap_token_table, err: %{public}d, "
             "hapSize: %{public}zu, mapSize: %{public}zu.", id, ret, hapTokenResults.size(), hapTokenInfoMap_.size());
         return nullptr;
     }
 
-    if (AccessTokenInfoUtils::CheckSpecifiedFlag(
-        hapTokenResults[0].GetInt(TokenFiledConst::FIELD_TOKEN_ATTR), TOKEN_RESERVED_FLAG)) {
-        AddReservedHapTokenId(hapTokenResults[0].GetInt(TokenFiledConst::FIELD_USER_ID),
-            hapTokenResults[0].GetString(TokenFiledConst::FIELD_BUNDLE_NAME),
-            hapTokenResults[0].GetInt(TokenFiledConst::FIELD_INST_INDEX), id);
-        LOGC(ATM_DOMAIN, ATM_TAG, "Id(%{public}u) is reserved in db, hapSize: %{public}zu, mapSize: %{public}zu.",
-            id, hapTokenResults.size(), hapTokenInfoMap_.size());
+    if (AddReservedHapInfoFromDbValues(hapTokenResults[0])) {
+#ifdef SPM_DATA_ENABLE
+        int32_t uid = hapTokenResults[0].GetInt(TokenFiledConst::FIELD_UID);
+        AccessTokenIDManager::GetInstance().InitSingleBundleIdCache(uid);
+#endif
         return nullptr;
     }
 
@@ -703,6 +734,15 @@ std::shared_ptr<HapTokenInfoInner> AccessTokenInfoManager::GetHapTokenInfoInnerF
         return nullptr;
     }
 
+    return hap;
+}
+
+std::shared_ptr<HapTokenInfoInner> AccessTokenInfoManager::GetActiveTokenInfoFromDb(AccessTokenID id)
+{
+    std::shared_ptr<HapTokenInfoInner> hap = GetHapTokenInfoInnerFromDb(id);
+    if (hap == nullptr) {
+        return nullptr;
+    }
     std::unique_lock<std::shared_mutex> infoGuard(this->hapTokenInfoLock_);
     (void)AccessTokenIDManager::GetInstance().RegisterTokenId(id, TOKEN_HAP);
     hapTokenIdMap_[AccessTokenInfoUtils::GetHapUniqueStr(hap)] = id;
@@ -716,7 +756,7 @@ std::shared_ptr<HapTokenInfoInner> AccessTokenInfoManager::GetHapTokenInfoInnerF
     return hap;
 }
 
-std::shared_ptr<HapTokenInfoInner> AccessTokenInfoManager::GetHapTokenInfoInner(AccessTokenID id)
+std::shared_ptr<HapTokenInfoInner> AccessTokenInfoManager::GetHapTokenInfoInner(AccessTokenID id, bool isActive)
 {
     {
         std::shared_lock<std::shared_mutex> infoGuard(this->hapTokenInfoLock_);
@@ -726,11 +766,38 @@ std::shared_ptr<HapTokenInfoInner> AccessTokenInfoManager::GetHapTokenInfoInner(
         }
     }
     // if found in reserved set, return nullptr;
-    if (AccessTokenIDManager::GetInstance().IsReservedTokenId(id)) {
+    TokenIdStatus status;
+    if (AccessTokenIDManager::GetInstance().GetTokenIdStatus(id, status) != RET_SUCCESS) {
         return nullptr;
     }
+    if (status == TokenIdStatus::ACTIVE) {
+        return GetActiveTokenInfoFromDb(id);
+    } else if (!isActive) {
+        return GetInactiveTokenInfoInner(id);
+    }
+    return nullptr;
+}
 
-    return GetHapTokenInfoInnerFromDb(id);
+std::shared_ptr<HapTokenInfoInner> AccessTokenInfoManager::GetInactiveTokenInfoInner(AccessTokenID id)
+{
+    {
+        std::shared_lock<std::shared_mutex> infoGuard(this->hapTokenInfoLock_);
+        auto iter = inactiveTokenInfoMap_.find(id);
+        if (iter != inactiveTokenInfoMap_.end()) {
+            return iter->second;
+        }
+    }
+
+    auto hapInfoInner = GetHapTokenInfoInnerFromDb(id);
+    std::shared_lock<std::shared_mutex> infoGuard(this->hapTokenInfoLock_);
+    inactiveTokenInfoMap_[id] = hapInfoInner;
+    return hapInfoInner;
+}
+
+void AccessTokenInfoManager::ReleaseInactiveTokenInfoInner(AccessTokenID id)
+{
+    std::unique_lock<std::shared_mutex> infoGuard(this->hapTokenInfoLock_);
+    inactiveTokenInfoMap_.erase(id);
 }
 
 int32_t AccessTokenInfoManager::GetHapTokenDlpType(AccessTokenID id)
@@ -759,6 +826,12 @@ bool AccessTokenInfoManager::IsTokenIdExist(AccessTokenID id)
         }
     }
     return false;
+}
+
+bool AccessTokenInfoManager::IsHapTokenIdExist(AccessTokenID id)
+{
+    std::shared_lock<std::shared_mutex> infoGuard(this->hapTokenInfoLock_);
+    return hapTokenInfoMap_.count(id) != 0;
 }
 
 void AccessTokenInfoManager::GetTokenIDByUserID(int32_t userID, std::unordered_set<AccessTokenID>& tokenIdList)
@@ -795,6 +868,25 @@ void AccessTokenInfoManager::GetAllHapTokenId(std::unordered_set<AccessTokenID>&
     }
 }
 
+int32_t AccessTokenInfoManager::GetHapTokenIdListByBundleName(
+    const std::string& bundleName, std::vector<AccessTokenID>& tokenIdList)
+{
+    tokenIdList.clear();
+    std::shared_lock<std::shared_mutex> infoGuard(hapTokenInfoLock_);
+    for (const auto& item : hapTokenInfoMap_) {
+        const auto& tokenInfoPtr = item.second;
+        if (tokenInfoPtr != nullptr && !tokenInfoPtr->IsRemote() &&
+            tokenInfoPtr->GetBundleName() == bundleName) {
+            tokenIdList.emplace_back(tokenInfoPtr->GetTokenID());
+        }
+    }
+    if (tokenIdList.empty()) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Bundle %{public}s does not exist.", bundleName.c_str());
+        return ERR_BUNDLE_NOT_EXIST;
+    }
+    return RET_SUCCESS;
+}
+
 void AccessTokenInfoManager::GetAllNativeTokenId(std::unordered_set<AccessTokenID>& tokenIdList)
 {
     std::shared_lock<std::shared_mutex> infoGuard(nativeTokenInfoLock_);
@@ -827,59 +919,61 @@ int AccessTokenInfoManager::GetNativeTokenInfo(AccessTokenID tokenID, NativeToke
     return RET_SUCCESS;
 }
 
-int32_t AccessTokenInfoManager::RemoveHapTokenInfoInner(std::shared_ptr<HapTokenInfoInner>& info,
-    AccessTokenID id, bool isTokenReserved)
-{
-    std::unique_lock<std::shared_mutex> infoGuard(this->hapTokenInfoLock_);
-    PermissionKernelUtils::RemovePermFromKernel(id); // remove hap to kernel
-    AccessTokenIDManager::GetInstance().ReleaseTokenId(id);
-
-    if (hapTokenInfoMap_.count(id) == 0) {
-        LOGC(ATM_DOMAIN, ATM_TAG, "Hap token %{public}u no exist.", id);
-        return ERR_TOKENID_NOT_EXIST;
-    }
-
-    info = hapTokenInfoMap_[id];
-    if (info == nullptr) {
-        LOGC(ATM_DOMAIN, ATM_TAG, "Hap token %{public}u is null.", id);
-        return ERR_TOKEN_INVALID;
-    }
-    if (info->IsRemote()) {
-        LOGC(ATM_DOMAIN, ATM_TAG, "Remote hap token %{public}u can not delete.", id);
-        return ERR_IDENTITY_CHECK_FAILED;
-    }
-    std::string hapUniqueKey = AccessTokenInfoUtils::GetHapUniqueStr(info);
-    auto iter = hapTokenIdMap_.find(hapUniqueKey);
-    if ((iter != hapTokenIdMap_.end()) && (iter->second == id)) {
-        hapTokenIdMap_.erase(hapUniqueKey);
-    }
-    if (isTokenReserved) {
-        AddReservedHapTokenId(info->GetUserID(), info->GetBundleName(), info->GetInstIndex(), id);
-    }
-    hapTokenInfoMap_.erase(id);
-    return RET_SUCCESS;
-}
-
 int AccessTokenInfoManager::RemoveHapTokenInfo(AccessTokenID id, bool isTokenReserved)
 {
+    ReservedType deleteType = isTokenReserved ? ReservedType::RESERVED_IDENTITY : ReservedType::NONE;
     ATokenTypeEnum type = AccessTokenIDManager::GetInstance().GetTokenIdType(id);
     if (type != TOKEN_HAP) {
         LOGC(ATM_DOMAIN, ATM_TAG, "Token %{public}u is not hap.", id);
         return ERR_PARAM_INVALID;
     }
-    std::shared_ptr<HapTokenInfoInner> info;
-    int32_t ret = RemoveHapTokenInfoInner(info, id, isTokenReserved);
+    std::shared_ptr<HapTokenInfoInner> info = GetHapTokenInfoInner(id);
+    if (info == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Token %{public}u is not exist.", id);
+        return AccessTokenError::ERR_TOKENID_NOT_EXIST;
+    }
+    return DeleteIdentityInner(info, deleteType);
+}
+
+int32_t AccessTokenInfoManager::DeleteIdentityInner(std::shared_ptr<HapTokenInfoInner> info, ReservedType delType)
+{
+    AccessTokenID id = info->GetTokenID();
+    // 1. remove from kernel
+    PermissionKernelUtils::RemovePermFromKernel(id); // remove permission from kernel
+    PermissionKernelUtils::RemoveSpmEntryFromKernel(id); // remove spm entry from kernel
+
+    // 2. remove from db
+    int32_t dbRet = DeleteBundleManager::RemoveHapTokenInfoFromDb(info, delType, id);
+    if (dbRet != RET_SUCCESS) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Remove info from db failed, ret is %{public}d", dbRet);
+    }
+    int32_t ret = DeleteBundleManager::TryCleanBundleInfo(info);
+    if (ret != RET_SUCCESS) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Try clean bundle info failed, ret is %{public}d", ret);
+    }
+
+    // 3. get data to invoke notifier
+    std::vector<std::string> permissionList;
+    HapTokenInfoInner::GetGrantedPermList(id, permissionList);
+
+    // 4. Remove from cache (includes hapTokenInfoMap_, hapTokenIdMap_, and bundleInfoMap_)
+    ret = CommitDeleteHapCache(id, info->GetBundleName());
     if (ret != RET_SUCCESS) {
         return ret;
     }
-    ret = RemoveHapTokenInfoFromDb(info, isTokenReserved, id);
-    if (ret != RET_SUCCESS) {
-        LOGC(ATM_DOMAIN, ATM_TAG, "Remove info from db failed, ret is %{public}d", ret);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Remove hap token %{public}u ok!", id);
+
+    // 5. Release or Reserve TokenID
+    if (dbRet == RET_SUCCESS) {
+        if (delType != ReservedType::NONE) {
+            (void)AccessTokenIDManager::GetInstance().ChangeTokenIdStatus(
+                id, TokenIdStatus::RESERVED);
+        } else {
+            AccessTokenIDManager::GetInstance().ReleaseTokenId(id);
+        }
     }
 
-    LOGI(ATM_DOMAIN, ATM_TAG, "Remove hap token %{public}u ok!", id);
-    std::vector<std::string> permissionList;
-    HapTokenInfoInner::GetGrantedPermList(id, permissionList);
+    // 6. trigger change callback
     if (permissionList.size() != 0) {
         PermissionChangeNotifier::GetInstance().ParamUpdate(permissionList[0], 0, true);
     }
@@ -892,6 +986,29 @@ int AccessTokenInfoManager::RemoveHapTokenInfo(AccessTokenID id, bool isTokenRes
 #endif
 
     return RET_SUCCESS;
+}
+
+int32_t AccessTokenInfoManager::DeleteIdentity(AccessTokenID id, const std::string &bundleName, ReservedType type)
+{
+    // 0. Check Token Type
+    ATokenTypeEnum tokenType = TokenIDAttributes::GetTokenIdTypeEnum(id);
+    if (tokenType != TOKEN_HAP) {
+        LOGC(ATM_DOMAIN, ATM_TAG, "Token %{public}u is not hap.", id);
+        return ERR_PARAM_INVALID;
+    }
+    // 1. Look up the token in the active map.
+    std::shared_ptr<HapTokenInfoInner> info = GetHapTokenInfoInner(id);
+    if (info == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Token %{public}u is not exist.", id);
+        return AccessTokenError::ERR_TOKENID_NOT_EXIST;
+    }
+
+    // 2. Validate bundleName match.
+    if (info->GetBundleName() != bundleName) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Token %{public}u does not belong to bundle %{public}s.", id, bundleName.c_str());
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    return DeleteIdentityInner(info, type);
 }
 
 int AccessTokenInfoManager::RemoveNativeTokenInfo(AccessTokenID id)
@@ -940,6 +1057,44 @@ int32_t AccessTokenInfoManager::CheckHapInfoParam(const HapInfoParams& info, con
         }
     }
     return ERR_OK;
+}
+
+void AccessTokenInfoManager::RemoveReservedTokenForBundle(const HapInfoParams& info,
+    std::vector<AccessTokenID>& tokenIds)
+{
+    GenericValues condition;
+    condition.Put(TokenFiledConst::FIELD_BUNDLE_NAME, info.bundleName);
+    condition.Put(TokenFiledConst::FIELD_USER_ID, static_cast<int32_t>(info.userID));
+    condition.Put(TokenFiledConst::FIELD_INST_INDEX, static_cast<int32_t>(info.instIndex));
+
+    std::vector<GenericValues> tokenValues;
+    int32_t ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, condition, tokenValues);
+    if (ret == RET_SUCCESS && !tokenValues.empty()) {
+        for (auto value: tokenValues) {
+            AccessTokenID reservedTokenId = static_cast<AccessTokenID>(value.GetInt(TokenFiledConst::FIELD_TOKEN_ID));
+            tokenIds.emplace_back(reservedTokenId);
+            LOGI(ATM_DOMAIN, ATM_TAG, "Found reserved token %{public}u in db for bundle %{public}s.",
+                reservedTokenId, info.bundleName.c_str());
+        }
+    }
+}
+
+void AccessTokenInfoManager::DeleteOldReservedTokens(const std::vector<AccessTokenID>& reservedTokenIds,
+    const std::string& bundleName)
+{
+    for (auto curTokenId : reservedTokenIds) {
+        LOGI(ATM_DOMAIN, ATM_TAG, "Deleting old token %{public}u after new token created.", curTokenId);
+        if (AccessTokenIDManager::GetInstance().IsReservedTokenId(curTokenId)) {
+            DeleteBundleManager::GetInstance().DeleteReservedToken(curTokenId, bundleName);
+        } else if (AccessTokenIDManager::GetInstance().RegisterTokenId(curTokenId, TOKEN_HAP) == RET_SUCCESS) {
+            DeleteBundleManager::GetInstance().DeleteDataByTokenId(curTokenId, bundleName);
+            AccessTokenIDManager::GetInstance().ReleaseTokenId(curTokenId);
+        } else {
+            // Use DeleteIdentity to delete both DB data and memory maps
+            (void)DeleteIdentity(curTokenId, bundleName, ReservedType::NONE);
+            AccessTokenIDManager::GetInstance().ReleaseTokenId(curTokenId);
+        }
+    }
 }
 
 void AccessTokenInfoManager::ReportAddHapIdChange(const std::shared_ptr<HapTokenInfoInner>& hapInfo,
@@ -1002,44 +1157,6 @@ AccessTokenInfoManager::HapTokenDbContext::HapTokenDbContext(const std::string& 
       oldPermStateValues(oldPermStateValuesValue), isUpdate(isUpdateValue)
 {
 }
-void AccessTokenInfoManager::RemoveReservedHapTokenId(int32_t userID,
-    const std::string& bundleName, int32_t instIndex)
-{
-    std::unique_lock<std::shared_mutex> infoGuard(this->reservedHapTokenInfoLock_);
-    std::string hapUniqueKey = AccessTokenInfoUtils::GetHapUniqueStr(userID, bundleName, instIndex);
-    auto it = reservedHapTokenIdMap_.find(hapUniqueKey);
-    if (it == reservedHapTokenIdMap_.end()) {
-        return;
-    }
-    AccessTokenIDManager::GetInstance().RemoveReservedTokenId(it->second);
-    reservedHapTokenIdMap_.erase(it);
-    return;
-}
-
-AccessTokenID AccessTokenInfoManager::GetReservedHapTokenId(int32_t userID,
-    const std::string& bundleName, int32_t instIndex)
-{
-    std::shared_lock<std::shared_mutex> infoGuard(this->reservedHapTokenInfoLock_);
-    std::string hapUniqueKey = AccessTokenInfoUtils::GetHapUniqueStr(userID, bundleName, instIndex);
-    auto it = reservedHapTokenIdMap_.find(hapUniqueKey);
-    if (it == reservedHapTokenIdMap_.end()) {
-        return 0;
-    }
-    return it->second;
-}
-
-void AccessTokenInfoManager::AddReservedHapTokenId(int32_t userID,
-    const std::string& bundleName, int32_t instIndex, AccessTokenID tokenID)
-{
-    std::unique_lock<std::shared_mutex> infoGuard(this->reservedHapTokenInfoLock_);
-    std::string hapUniqueKey = AccessTokenInfoUtils::GetHapUniqueStr(userID, bundleName, instIndex);
-    auto it = reservedHapTokenIdMap_.find(hapUniqueKey);
-    if (it != reservedHapTokenIdMap_.end()) {
-        return;
-    }
-    reservedHapTokenIdMap_[hapUniqueKey] = tokenID;
-    AccessTokenIDManager::GetInstance().AddReservedTokenId(tokenID);
-}
 
 int AccessTokenInfoManager::CreateHapTokenInfo(const HapInfoParams& info, const HapPolicy& policy,
     AccessTokenIDEx& tokenIdEx, std::vector<GenericValues>& undefValues)
@@ -1060,6 +1177,11 @@ int AccessTokenInfoManager::CreateHapTokenInfo(const HapInfoParams& info, const 
 #endif
     UserPolicyManager::GetInstance().UpdatePermissionStatusListForUserPolicy(
         tokenId, info.userID, policyNew.permStateList);
+
+    // Check if there are any reserved tokens for the same bundle
+    std::vector<AccessTokenID> reservedTokenIds;
+    RemoveReservedTokenForBundle(info, reservedTokenIds);
+
     std::shared_ptr<HapTokenInfoInner> tokenInfo = std::make_shared<HapTokenInfoInner>(tokenId, info, policyNew);
     HapTokenDbContext context(info.appIDDesc, policyNew, undefValues);
     ret = AddHapTokenInfoToDb(tokenInfo, context);
@@ -1074,11 +1196,10 @@ int AccessTokenInfoManager::CreateHapTokenInfo(const HapInfoParams& info, const 
     if (ret != RET_SUCCESS) {
         LOGC(ATM_DOMAIN, ATM_TAG, "%{public}s add token info failed", info.bundleName.c_str());
         AccessTokenIDManager::GetInstance().ReleaseTokenId(tokenId);
-        AccessTokenID reservedTokenId = GetReservedHapTokenId(info.userID, info.bundleName, info.instIndex);
-        (void)RemoveHapTokenInfoFromDb(tokenInfo, true, reservedTokenId);
         return ret;
     }
-    RemoveReservedHapTokenId(info.userID, info.bundleName, info.instIndex);
+
+    DeleteOldReservedTokens(reservedTokenIds, info.bundleName);
 
     if (oriTokenID != 0) {
         ReportAddHapIdChange(tokenInfo, oriTokenID);
@@ -1630,7 +1751,7 @@ int AccessTokenInfoManager::AddHapTokenInfoToDb(
 
     std::vector<GenericValues> hapInfoValues;
     hapInfo->GenerateHapInfoValues(context.appId, context.policy.apl, hapInfoValues);
-    GenerateAddInfoToVec(AtmDataType::ACCESSTOKEN_HAP_INFO, hapInfoValues, addInfoVec);
+    GenerateAddInfoToVec(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, hapInfoValues, addInfoVec);
 
     std::vector<GenericValues> permStateValues;
     hapInfo->GeneratePermStateValues(context.oldPermStateValues, permStateValues);
@@ -1652,14 +1773,6 @@ int AccessTokenInfoManager::AddHapTokenInfoToDb(
 
     std::vector<DelInfo> delInfoVec;
     GenericValues delValue;
-    HapTokenInfo info = hapInfo->GetHapInfoBasic();
-    AccessTokenID reservedTokenId = GetReservedHapTokenId(info.userID, info.bundleName, info.instIndex);
-    if (reservedTokenId != INVALID_TOKENID) {
-        GenericValues delValueReserved;
-        delValueReserved.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(reservedTokenId));
-        AccessTokenInfoUtils::GenerateDelInfoToVec(AtmDataType::ACCESSTOKEN_HAP_INFO, delValueReserved, delInfoVec);
-    }
-
     delValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenID));
     if (context.isUpdate) {
         for (auto const& addInfo : addInfoVec) {
@@ -1670,53 +1783,12 @@ int AccessTokenInfoManager::AddHapTokenInfoToDb(
     return AccessTokenDbOperator::DeleteAndInsertValues(delInfoVec, addInfoVec);
 }
 
-int AccessTokenInfoManager::RemoveHapTokenInfoFromDb(
-    const std::shared_ptr<HapTokenInfoInner>& info, bool isTokenReserved, AccessTokenID reservedTokenId)
-{
-    AccessTokenID tokenID = info->GetTokenID();
-    GenericValues condition;
-    condition.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenID));
-
-    std::vector<DelInfo> delInfoVec;
-    AccessTokenInfoUtils::GenerateDelInfoToVec(AtmDataType::ACCESSTOKEN_HAP_INFO, condition, delInfoVec);
-    AccessTokenInfoUtils::GenerateDelInfoToVec(AtmDataType::ACCESSTOKEN_PERMISSION_STATE, condition, delInfoVec);
-    AccessTokenInfoUtils::GenerateDelInfoToVec(
-        AtmDataType::ACCESSTOKEN_PERMISSION_EXTEND_VALUE, condition, delInfoVec);
-    AccessTokenInfoUtils::GenerateDelInfoToVec(AtmDataType::ACCESSTOKEN_HAP_UNDEFINE_INFO, condition, delInfoVec);
-
-    if (AccessTokenInfoUtils::IsSystemResource(info->GetBundleName())) {
-        AccessTokenInfoUtils::GenerateDelInfoToVec(AtmDataType::ACCESSTOKEN_PERMISSION_DEF, condition, delInfoVec);
-    }
-
-    std::vector<AddInfo> addInfoVec;
-    if (isTokenReserved) {
-        std::vector<GenericValues> addValues;
-        info->GenerateHapInfoValues("", APL_INVALID, addValues);
-        if (!addValues.empty()) {
-            addValues[0].Remove(TokenFiledConst::FIELD_TOKEN_ATTR);
-            addValues[0].Put(TokenFiledConst::FIELD_TOKEN_ATTR,
-                static_cast<int32_t>(info->GetAttr() | TOKEN_RESERVED_FLAG));
-            if (reservedTokenId != tokenID) {
-                addValues[0].Remove(TokenFiledConst::FIELD_TOKEN_ID);
-                addValues[0].Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(reservedTokenId));
-            }
-            GenerateAddInfoToVec(AtmDataType::ACCESSTOKEN_HAP_INFO, addValues, addInfoVec);
-        }
-    }
-    int32_t ret = AccessTokenDbOperator::DeleteAndInsertValues(delInfoVec, addInfoVec);
-    if (ret != RET_SUCCESS) {
-        LOGC(ATM_DOMAIN, ATM_TAG, "Id %{public}d DeleteAndInsertHap failed, ret %{public}d.", tokenID, ret);
-        return ret;
-    }
-    return RET_SUCCESS;
-}
-
 int32_t AccessTokenInfoManager::GetHapAppIdByTokenId(AccessTokenID tokenID, std::string& appId)
 {
     GenericValues conditionValue;
     conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenID));
     std::vector<GenericValues> hapTokenResults;
-    int32_t ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_INFO, conditionValue, hapTokenResults);
+    int32_t ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, conditionValue, hapTokenResults);
     if (ret != RET_SUCCESS) {
         LOGE(ATM_DOMAIN, ATM_TAG,
             "Failed to find Id(%{public}u) from hap_token_table, err: %{public}d.", tokenID, ret);
@@ -1796,6 +1868,7 @@ int32_t AccessTokenInfoManager::FillInstallPolicyWithoutHaps(
     param.isSystem = AccessTokenInfoUtils::CheckSpecifiedFlag(hapInfo.tokenAttr, SYSTEM_APP_FLAG);
     param.isAtomicService = AccessTokenInfoUtils::CheckSpecifiedFlag(hapInfo.tokenAttr, ATOMIC_SERVICE_FLAG);
     param.isDebug = AccessTokenInfoUtils::CheckSpecifiedFlag(hapInfo.tokenAttr, DEBUG_APP_FLAG);
+    param.idType = noCached.idType;
 
     policy.permStateList.reserve(briefPermDataList.size());
     for (const auto& briefPermData : briefPermDataList) {
@@ -1884,13 +1957,21 @@ int32_t AccessTokenInfoManager::UpdateRestrictedFlag(
         return RET_SUCCESS;
     }
 
+    ret = UpdateRestrictedFlagToDb(tokenId, permCode);
+    if (ret != RET_SUCCESS) {
+        RollbackRestrictedFlag(tokenId, permCode, isRestricted);
+    }
+    return ret;
+}
+
+int32_t AccessTokenInfoManager::UpdateRestrictedFlagToDb(AccessTokenID tokenId, uint32_t permCode)
+{
     std::string permissionName = TransferOpcodeToPermission(permCode);
     std::vector<GenericValues> permStateValues;
-    ret = PermissionDataBrief::GetInstance().BuildPermissionStateValues(tokenId, {}, permStateValues);
+    int32_t ret = PermissionDataBrief::GetInstance().BuildPermissionStateValues(tokenId, {}, permStateValues);
     if (ret != RET_SUCCESS) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Build permission state failed, id=%{public}u, permCode=%{public}u, ret=%{public}d.",
             tokenId, permCode, ret);
-        RollbackRestrictedFlag(tokenId, permCode, isRestricted);
         return ret;
     }
     bool hasUpdatedTargetPermState = false;
@@ -1906,7 +1987,6 @@ int32_t AccessTokenInfoManager::UpdateRestrictedFlag(
             LOGE(ATM_DOMAIN, ATM_TAG,
                 "Modify permission state failed, tokenId=%{public}u, permission=%{public}s, ret=%{public}d.",
                 tokenId, permissionName.c_str(), ret);
-            RollbackRestrictedFlag(tokenId, permCode, isRestricted);
             return AccessTokenError::ERR_DATABASE_OPERATE_FAILED;
         }
         hasUpdatedTargetPermState = true;
@@ -1915,48 +1995,62 @@ int32_t AccessTokenInfoManager::UpdateRestrictedFlag(
     if (!hasUpdatedTargetPermState) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Permission %{public}s not found when update restricted flag db, tokenId=%{public}u.",
             permissionName.c_str(), tokenId);
-        RollbackRestrictedFlag(tokenId, permCode, isRestricted);
         return AccessTokenError::ERR_PERMISSION_NOT_EXIST;
     }
     return RET_SUCCESS;
 }
 
-int32_t AccessTokenInfoManager::RefreshTokenPermStateToKernel(
-    AccessTokenID tokenId, uint32_t permCode, bool isAllowed, const char* source, bool hasFlagChanged)
-{
-    std::map<std::string, bool> refreshedPermList;
-    int32_t ret = PermissionDataBrief::GetInstance().RefreshPermStateToKernel(
-        tokenId, permCode, isAllowed, refreshedPermList);
-    if (hasFlagChanged || !refreshedPermList.empty()) {
-        PermissionChangeNotifier::GetInstance().ParamFlagUpdate();
-    }
-    for (const auto& perm : refreshedPermList) {
-        LOGI(ATM_DOMAIN, ATM_TAG, "Perm %{public}s refreshed by %{public}s, isAllowed %{public}d.",
-            perm.first.c_str(), source, perm.second);
-        int32_t changeType = perm.second ? STATE_CHANGE_GRANTED : STATE_CHANGE_REVOKED;
-        CallbackManager::GetInstance().ExecuteCallbackAsync(tokenId, perm.first, changeType);
-    }
-    return ret;
-}
-
 int32_t AccessTokenInfoManager::UpdateRestrictedFlagAndRefreshKernel(
     AccessTokenID tokenId, uint32_t permCode, bool isRestricted, bool isPersist, const char* source)
 {
-    bool isFlagChanged = false;
-    int32_t ret = UpdateRestrictedFlag(tokenId, permCode, isRestricted, isPersist, isFlagChanged);
+    int32_t originalStatus = PERMISSION_DENIED;
+    uint32_t originalFlag = 0;
+    int32_t ret = PermissionDataBrief::GetInstance().QueryStoredPermissionStatusAndFlag(
+        tokenId, permCode, originalStatus, originalFlag);
     if (ret != RET_SUCCESS) {
         return ret;
     }
-    return RefreshTokenPermStateToKernel(tokenId, permCode, !isRestricted, source, isFlagChanged);
+
+    bool isFlagChanged = false;
+    ret = UpdateRestrictedFlag(tokenId, permCode, isRestricted, isPersist, isFlagChanged);
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
+    std::string permissionName = TransferOpcodeToPermission(permCode);
+    bool kernelStatusBefore =
+        ((originalFlag & PERMISSION_RESTRICTED_BY_ADMIN) == 0) && (originalStatus == PERMISSION_GRANTED);
+    bool kernelStatusAfter = !isRestricted && (originalStatus == PERMISSION_GRANTED);
+    if (isFlagChanged) {
+        PermissionChangeNotifier::GetInstance().ParamFlagUpdate();
+    }
+    if (kernelStatusBefore != kernelStatusAfter) {
+        PermissionKernelUtils::SetPermToKernel(tokenId, permissionName, kernelStatusAfter);
+        int32_t changeType = kernelStatusAfter ? STATE_CHANGE_GRANTED : STATE_CHANGE_REVOKED;
+        CallbackManager::GetInstance().ExecuteCallbackAsync(tokenId, permissionName, changeType);
+    }
+    LOGI(ATM_DOMAIN, ATM_TAG, "Perm %{public}s refreshed by %{public}s, isAllowed %{public}d.",
+        permissionName.c_str(), source, kernelStatusAfter);
+    return RET_SUCCESS;
 }
 
-int32_t AccessTokenInfoManager::RefreshUserPolicyFlagForUser(int32_t userId, const UserPolicyChange& policy)
+int32_t AccessTokenInfoManager::RefreshUserPolicyFlagForUser(int32_t userId, const UserPolicyChange& policy,
+    std::vector<UserPolicyRefreshSnapshot>& appliedSnapshots)
 {
     std::unordered_set<AccessTokenID> hapTokenIdSet;
     GetTokenIDByUserID(userId, hapTokenIdSet);
     for (const auto tokenId : hapTokenIdSet) {
         bool isRestricted = UserPolicyManager::GetInstance().IsPermissionRestricted(tokenId, userId, policy.permCode);
-        int32_t ret = UpdateRestrictedFlagAndRefreshKernel(
+        int32_t originalStatus = PERMISSION_DENIED;
+        uint32_t originalFlag = 0;
+        int32_t ret = PermissionDataBrief::GetInstance().QueryStoredPermissionStatusAndFlag(
+            tokenId, policy.permCode, originalStatus, originalFlag);
+        if (ret == AccessTokenError::ERR_PERMISSION_NOT_EXIST) {
+            continue;
+        }
+        if (ret != RET_SUCCESS) {
+            return ret;
+        }
+        ret = UpdateRestrictedFlagAndRefreshKernel(
             tokenId, policy.permCode, isRestricted, policy.isPersist, "user policy");
         if (ret == AccessTokenError::ERR_PERMISSION_NOT_EXIST) {
             continue;
@@ -1964,15 +2058,46 @@ int32_t AccessTokenInfoManager::RefreshUserPolicyFlagForUser(int32_t userId, con
         if (ret != RET_SUCCESS) {
             return ret;
         }
+        appliedSnapshots.emplace_back(UserPolicyRefreshSnapshot {
+            .target = UserPolicyRefreshTarget::HAP,
+            .tokenId = tokenId,
+            .permCode = policy.permCode,
+            .originalStatus = originalStatus,
+            .originalFlag = originalFlag
+        });
     }
     return RET_SUCCESS;
 }
 
-int32_t AccessTokenInfoManager::RefreshUserPolicyFlag(const std::vector<UserPolicyChange>& changedPolicyList)
+void AccessTokenInfoManager::RollbackUserPolicyFlag(const std::vector<UserPolicyRefreshSnapshot>& appliedSnapshots)
+{
+    for (auto iter = appliedSnapshots.rbegin(); iter != appliedSnapshots.rend(); ++iter) {
+        if (iter->target != UserPolicyRefreshTarget::HAP) {
+            continue;
+        }
+        int32_t ret = RestoreRestrictedFlag(iter->tokenId, iter->permCode, iter->originalFlag);
+        if (ret != RET_SUCCESS) {
+            LOGE(ATM_DOMAIN, ATM_TAG,
+                "Rollback restricted flag failed, tokenId=%{public}u, permCode=%{public}u, ret=%{public}d.",
+                iter->tokenId, iter->permCode, ret);
+            continue;
+        }
+        ret = UpdateRestrictedFlagToDb(iter->tokenId, iter->permCode);
+        if (ret != RET_SUCCESS && ret != AccessTokenError::ERR_PERMISSION_NOT_EXIST) {
+            LOGE(ATM_DOMAIN, ATM_TAG,
+                "Rollback restricted flag db failed, tokenId=%{public}u, permCode=%{public}u, ret=%{public}d.",
+                iter->tokenId, iter->permCode, ret);
+        }
+        RestoreKernelPermissionState(iter->tokenId, iter->permCode, iter->originalStatus, iter->originalFlag);
+    }
+}
+
+int32_t AccessTokenInfoManager::RefreshUserPolicyFlag(const std::vector<UserPolicyChange>& changedPolicyList,
+    std::vector<UserPolicyRefreshSnapshot>& appliedSnapshots)
 {
     for (const auto& policy : changedPolicyList) {
         for (const auto& userId : policy.changedUserList) {
-            int32_t ret = RefreshUserPolicyFlagForUser(userId, policy);
+            int32_t ret = RefreshUserPolicyFlagForUser(userId, policy, appliedSnapshots);
             if (ret != RET_SUCCESS) {
                 return ret;
             }
@@ -2057,7 +2182,7 @@ bool AccessTokenInfoManager::UpdateCapStateToDatabase(AccessTokenID tokenID, boo
     GenericValues conditionValue;
     conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenID));
 
-    int32_t res = AccessTokenDbOperator::Modify(AtmDataType::ACCESSTOKEN_HAP_INFO, modifyValue, conditionValue);
+    int32_t res = AccessTokenDbOperator::Modify(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, modifyValue, conditionValue);
     if (res != 0) {
         LOGE(ATM_DOMAIN, ATM_TAG,
             "Update tokenID %{public}u permissionDialogForbidden %{public}d to database failed", tokenID, enable);
@@ -2220,7 +2345,8 @@ int32_t AccessTokenInfoManager::QueryStatusByPermission(const std::vector<uint32
 
         int32_t status = PERMISSION_DENIED;
         uint32_t flag = 0;
-        (void)PermissionDataBrief::GetInstance().QueryPermissionStatusAndFlag(tokenID, permIter->second, status, flag);
+        (void)PermissionDataBrief::GetInstance().QueryEffectivePermissionStatusAndFlag(
+            tokenID, permIter->second, status, flag);
 
         PermissionStatusIdl idl;
         idl.tokenID = tokenID;
@@ -2259,7 +2385,8 @@ int32_t AccessTokenInfoManager::QueryStatusByTokenID(const std::vector<AccessTok
 
         int32_t status = PERMISSION_DENIED;
         uint32_t flag = 0;
-        (void)PermissionDataBrief::GetInstance().QueryPermissionStatusAndFlag(tokenID, permCode, status, flag);
+        (void)PermissionDataBrief::GetInstance().QueryEffectivePermissionStatusAndFlag(
+            tokenID, permCode, status, flag);
 
         PermissionStatusIdl idl;
         idl.tokenID = tokenID;

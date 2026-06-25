@@ -41,12 +41,14 @@ struct VerifiedMigrationBundle final {
 class MigrationVerifyHelper final {
 public:
     static MigrationVerifyHelper& GetInstance();
-    int32_t VerifyMigratedBundle(const MigratedInfoIdl& migratedInfo,
+    int32_t HandleMigratedBundleTask(const MigratedInfoIdl& migratedInfo,
         const std::vector<std::shared_ptr<HapTokenInfoInner>>& cachedInfos);
 
 private:
     MigrationVerifyHelper() = default;
 
+    int32_t VerifyMigratedBundle(const MigratedInfoIdl& migratedInfo,
+        const std::vector<std::shared_ptr<HapTokenInfoInner>>& cachedInfos);
     int32_t PersistDbInfo(const MigratedInfoIdl& migratedInfo,
         const VerifiedMigrationBundle& verifiedBundle,
         const std::vector<std::shared_ptr<HapTokenInfoInner>>& cachedInfos);
@@ -66,7 +68,7 @@ private:
         AccessTokenID tokenId, const std::vector<BriefPermData>& data);
     int32_t BuildBundleSignInfo(const MigratedInfoIdl& migratedInfo,
         const VerifiedMigrationBundle& verifiedBundle, BundleSignInfo& bundleSignInfo);
-    int32_t PrepareBundleInfoOperations(const BundleSignInfo& bundleSignInfo);
+    int32_t DoBundleInfoOperations(const BundleSignInfo& bundleSignInfo);
     void PrepareHapInfoOperations(const BundleParam& param, const HapPolicy& policy,
         const std::vector<std::shared_ptr<HapTokenInfoInner>>& cachedInfos);
 

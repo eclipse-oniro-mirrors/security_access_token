@@ -82,6 +82,11 @@ int32_t PermissionKernelUtils::GetBundleInfoFromKernel(AccessTokenID tokenId, Bu
     return KernelDetail::ParseExtendedPermissionBuffer(spmData->extendPerms, permList);
 }
 
+int32_t PermissionKernelUtils::GetPermFromKernel(AccessTokenID tokenID, uint32_t permCode, bool& isGranted)
+{
+    return GetPermissionFromKernel(tokenID, static_cast<int32_t>(permCode), isGranted);
+}
+
 void PermissionKernelUtils::RemovePermFromKernel(AccessTokenID tokenID)
 {
     int32_t ret = RemovePermissionFromKernel(tokenID);
@@ -105,8 +110,8 @@ void PermissionKernelUtils::SetPermToKernel(AccessTokenID tokenID, const std::st
     }
     int32_t ret = SetPermissionToKernel(tokenID, code, isGranted);
     LOGI(ATM_DOMAIN, ATM_TAG,
-        "SetPermissionToKernel(token=%{public}d, permission=(%{public}s), err=%{public}d",
-        tokenID, permissionName.c_str(), ret);
+        "SetPermissionToKernel(token=%{public}d, permission=(%{public}s), isGranted=%{public}d, err=%{public}d)",
+        tokenID, permissionName.c_str(), isGranted, ret);
 }
 
 bool PermissionKernelUtils::IsKernelSupportSpm()

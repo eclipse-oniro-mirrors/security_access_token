@@ -103,6 +103,22 @@ HapTokenInfoInner::HapTokenInfoInner(AccessTokenID id,
     PermissionDataBrief::GetInstance().AddPermToBriefPermission(id, permStateList, true);
 }
 
+HapTokenInfoInner::HapTokenInfoInner(const HapTokenInfoItem& item) : permUpdateTimestamp_(0), isRemote_(false)
+{
+    std::unique_lock<std::shared_mutex> infoGuard(this->policySetLock_);
+    tokenInfoBasic_.ver = DEFAULT_TOKEN_VERSION;
+    tokenInfoBasic_.tokenID = item.tokenId;
+    tokenInfoBasic_.tokenAttr = item.tokenAttr;
+    tokenInfoBasic_.userID = item.userId;
+    tokenInfoBasic_.apiVersion = item.apiVersion;
+    tokenInfoBasic_.instIndex = item.instIndex;
+    tokenInfoBasic_.dlpType = item.dlpType;
+    tokenInfoBasic_.uid = item.uid;
+    tokenInfoBasic_.bundleName = item.bundleName;
+    isPermDialogForbidden_ = item.permDialogCapState;
+    isMigrated_ = item.migrated;
+}
+
 HapTokenInfoInner::HapTokenInfoInner(AccessTokenID id,
     const HapTokenInfoForSync& info) : isRemote_(true)
 {
@@ -507,13 +523,6 @@ int32_t HapTokenInfoInner::ResetUserGrantPermissionStatus(void)
     return RET_SUCCESS;
 }
 
-void HapTokenInfoInner::RefreshPermStateToKernel(AccessTokenID tokenId, uint32_t permCode, bool hapUserIsActive,
-    std::map<std::string, bool>& refreshedPermList)
-{
-    (void)PermissionDataBrief::GetInstance().RefreshPermStateToKernel(
-        tokenId, permCode, hapUserIsActive, refreshedPermList);
-}
-
 int32_t HapTokenInfoInner::VerifyPermissionStatus(AccessTokenID tokenID, const std::string& permissionName)
 {
     return PermissionDataBrief::GetInstance().VerifyPermissionStatus(tokenID, permissionName);
@@ -532,7 +541,7 @@ PermUsedTypeEnum HapTokenInfoInner::GetPermissionUsedType(AccessTokenID tokenID,
 int32_t HapTokenInfoInner::QueryPermissionStatusAndFlag(
     AccessTokenID tokenID, uint32_t permCode, int32_t& status, uint32_t& flag)
 {
-    return PermissionDataBrief::GetInstance().QueryPermissionStatusAndFlag(tokenID, permCode, status, flag);
+    return PermissionDataBrief::GetInstance().QueryEffectivePermissionStatusAndFlag(tokenID, permCode, status, flag);
 }
 
 void HapTokenInfoInner::GetGrantedPermCodeList(AccessTokenID tokenID,

@@ -48,6 +48,63 @@ static const vector<PermissionFlag> FLAG_LIST = {
 static const uint32_t FLAG_LIST_SIZE = 8;
 
 namespace OHOS {
+namespace {
+constexpr int32_t TEST_USER_ID = 0;
+constexpr int32_t DEFAULT_API_VERSION = 8;
+const std::string TEST_BUNDLE_NAME = "grantpermissionstub.fuzzer";
+const std::string VALID_PERMISSION_NAME = "ohos.permission.MICROPHONE";
+}
+
+void InitValidHapInfoParams(HapInfoParams& param)
+{
+    param.userID = TEST_USER_ID;
+    param.bundleName = TEST_BUNDLE_NAME;
+    param.instIndex = 0;
+    param.dlpType = static_cast<int32_t>(HapDlpType::DLP_COMMON);
+    param.appIDDesc = "fuzzer";
+    param.apiVersion = DEFAULT_API_VERSION;
+    param.isSystemApp = false;
+    param.appDistributionType = "";
+    param.isRestore = false;
+    param.tokenID = 0;
+    param.isAtomicService = false;
+}
+
+void InitValidHapPolicy(HapPolicy& policy)
+{
+    PermissionStatus state = {
+        .permissionName = VALID_PERMISSION_NAME,
+        .grantStatus = PermissionState::PERMISSION_DENIED,
+        .grantFlag = PermissionFlag::PERMISSION_DEFAULT_FLAG
+    };
+    policy.apl = APL_SYSTEM_CORE;
+    policy.domain = "test_domain";
+    policy.permStateList = { state };
+}
+
+AccessTokenID EnsureValidTokenId()
+{
+    static AccessTokenID tokenIdValue = INVALID_TOKENID;
+    if (tokenIdValue != INVALID_TOKENID) {
+        return tokenIdValue;
+    }
+
+    HapInfoParcel hapInfoParcel;
+    InitValidHapInfoParams(hapInfoParcel.hapInfoParameter);
+    HapPolicyParcel hapPolicyParcel;
+    InitValidHapPolicy(hapPolicyParcel.hapPolicy);
+
+    uint64_t fullTokenIdValue = 0;
+    int32_t ret = DelayedSingleton<AccessTokenManagerService>::GetInstance()->AllocHapToken(
+        hapInfoParcel, hapPolicyParcel, fullTokenIdValue);
+    if (ret != RET_SUCCESS) {
+        return INVALID_TOKENID;
+    }
+    AccessTokenIDEx fullTokenId = { .tokenIDEx = fullTokenIdValue };
+    tokenIdValue = fullTokenId.tokenIdExStruct.tokenID;
+    return tokenIdValue;
+}
+
     bool GrantPermissionStubFuzzTest(const uint8_t* data, size_t size)
     {
         if ((data == nullptr) || (size == 0)) {
@@ -55,8 +112,12 @@ namespace OHOS {
         }
 
         FuzzedDataProvider provider(data, size);
-        AccessTokenID tokenId = ConsumeTokenId(provider);
-        std::string permissionName = ConsumePermissionName(provider);
+        AccessTokenID validTokenId = EnsureValidTokenId();
+        if (validTokenId == INVALID_TOKENID) {
+            return false;
+        }
+        AccessTokenID tokenId = provider.ConsumeBool() ? validTokenId : ConsumeTokenId(provider);
+        std::string permissionName = provider.ConsumeBool() ? VALID_PERMISSION_NAME : ConsumePermissionName(provider);
         uint32_t flagIndex = provider.ConsumeIntegral<uint32_t>() % FLAG_LIST_SIZE;
         uint32_t flag = FLAG_LIST[flagIndex];
         int32_t grantMode = static_cast<int32_t>(provider.ConsumeIntegralInRange<int32_t>(0, 1));

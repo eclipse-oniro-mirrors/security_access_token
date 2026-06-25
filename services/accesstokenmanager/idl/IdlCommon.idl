@@ -31,6 +31,61 @@ struct PermissionWithValueIdl {
     String value;
 };
 
+struct CliInfoIdl {
+    String cliName;
+    String subCliName;
+};
+
+struct CliInitInfoIdl {
+    unsigned int hostTokenId;
+    String challenge;
+    CliInfoIdl cliInfo;
+};
+
+enum PermissionDecisionStatusIdl {
+    NEED_PERMISSION_DIALOG = 0,
+    NO_DIALOG_DENIED = 1,
+    NO_DIALOG_RESTRICTED = 2,
+    NO_DIALOG_GRANTED = 3,
+    NO_DIALOG_NOT_DECLARED = 4,
+    NO_DIALOG_CLI_PERMISSION_RESOLVED = 5
+};
+
+struct CliPermissionDetailIdl {
+    String requiredCliPermission;
+    PermissionDecisionStatusIdl cliPermissionStatus;
+    List<String> usedPermissions;
+};
+
+struct CliCommandPermissionResultIdl {
+    List<CliPermissionDetailIdl> requiredCliPermissions;
+};
+
+struct CliPermissionsResultIdl {
+    List<CliCommandPermissionResultIdl> permList;
+};
+
+struct PermissionDialogDetailIdl {
+    boolean needPermissionDialog;
+    List<String> permissionNameList;
+    List<PermissionDecisionStatusIdl> statusList;
+    String authResult;
+};
+
+struct PermissionDialogResultIdl {
+    List<PermissionDialogDetailIdl> detailList;
+};
+
+struct CliAuthInfoIdl {
+    CliInfoIdl cliInfo;
+    List<String> permissionNames;
+    List<boolean> authorizationResults;
+};
+
+struct ToolAuthResultIdl {
+    List<String> authResults;
+};
+
 struct UpdateHapInfoParamsIdl {
     String appIDDesc;
     /** which version of the SDK is used to develop the hap */
@@ -53,6 +108,29 @@ enum PermissionRulesEnumIdl {
     PERMISSION_EDM_RULE = 0,
     PERMISSION_ACL_RULE,
     PERMISSION_ENTERPRISE_NORMAL_RULE
+};
+
+enum InstallTypeEnumIdl {
+    TYPE_INSTALL = 0,
+    TYPE_REPLACE,
+    TYPE_MERGE
+};
+
+enum DlpTypeIdl {
+    DLP_COMMON = 0,
+    DLP_READ = 1,
+    DLP_FULL_CONTROL = 2
+};
+
+struct PreAuthorizationInfoIdl {
+    String permissionName;
+    boolean userCancelable;
+};
+
+struct BundlePolicyIdl {
+    List<PreAuthorizationInfoIdl> preAuthorizationInfo;
+    DlpTypeIdl dlpType;
+    boolean isDebugGrant;
 };
 
 struct HapInfoCheckResultIdl {
@@ -80,6 +158,10 @@ struct BundleHapListIdl {
     List<String> hapPaths;
     boolean isPreInstalled;
     int userId;
+};
+
+struct BundlePolicyInfoIdl {
+    List<String> reqPermissions;
 };
 
 struct IdentityIdl {

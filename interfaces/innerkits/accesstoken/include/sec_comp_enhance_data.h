@@ -46,6 +46,18 @@ namespace AccessToken {
  */
 
 static constexpr int32_t AES_KEY_STORAGE_LEN = 64;
+static constexpr uint32_t MAX_HMAC_SIZE = 160;
+
+struct EnhanceKey {
+    uint8_t data[MAX_HMAC_SIZE] = { 0 };
+    uint32_t size = 0;
+};
+
+struct SecCompEnhanceKey {
+    EnhanceKey key;
+    uint64_t epoch = 0;
+};
+
 struct SecCompEnhanceData {
     /**
      * callback remote object for checking security component valid.
@@ -85,4 +97,3 @@ struct SecCompEnhanceData {
 } // namespace Security
 } // namespace OHOS
 #endif // INTERFACE_INNER_KITS_PRIVACY_SEC_COMP_ENHANCE_DATA_H
-

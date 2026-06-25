@@ -40,8 +40,14 @@ int32_t AppVerifyAdapter::ParseHapModuleInfo(const std::string& moduleRaw,
 
 int32_t AppVerifyAdapter::ParseProvision(const std::string& appProvision, Security::Verify::ProvisionInfo& info) const
 {
-    return Security::Verify::ParseProvision(appProvision, info) == Security::Verify::PROVISION_OK ?
-        RET_SUCCESS : AccessTokenError::ERR_PARAM_INVALID;
+    int32_t ret = Security::Verify::ParseProvisionJson(appProvision, info);
+    return ret == Security::Verify::HapVerifyResultCode::VERIFY_SUCCESS ? RET_SUCCESS : ret;
+}
+
+int32_t AppVerifyAdapter::ParseProfile(const std::string& appProvision, Security::Verify::ProvisionInfo& info) const
+{
+    int32_t ret = Security::Verify::ParseProfile(appProvision, info);
+    return ret == Security::Verify::AppProvisionVerifyResult::PROVISION_OK ? RET_SUCCESS : ret;
 }
 
 } // namespace AccessToken

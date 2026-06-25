@@ -31,13 +31,17 @@ declare_args() {
   access_token_with_distributed_capability = true
   access_token_enhance_capability = true
   access_token_enable_manual_test = false
-  access_token_enable_spm = false
+  access_token_enable_spm = true
 }
 
 # External dependencies for each feature flag
 access_token_external_deps = []
 
 access_token_cflags_cc = [ "-DHILOG_ENABLE" ]
+
+# TEMP_PERMISSION_BACKGROUND_REVOKE_CAMERA_MIC_ENABLE is intentionally not enabled by default.
+# Define it only when camera/microphone PERMISSION_ALLOW_THIS_TIME should be revoked
+# on background transition and continuous-task state changes.
 
 if (defined(product_name) &&
     (product_name == "rk3568" || product_name == "standard")) {

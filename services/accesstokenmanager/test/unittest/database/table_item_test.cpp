@@ -53,9 +53,11 @@ HWTEST_F(TableItemTest, HapTokenInfoItemBuildAddValue001, TestSize.Level0)
     item.tokenAttr = SYSTEM_APP_FLAG;
     item.apiVersion = 12;
     item.permDialogCapState = true;
+#ifdef SPM_DATA_ENABLE
     item.uid = 20100000;
     item.migrated = true;
     item.reserved = ReservedType::NONE;
+#endif
 
     std::vector<GenericValues> addValues;
     item.BuildAddValue(addValues);
@@ -75,9 +77,11 @@ HWTEST_F(TableItemTest, HapTokenInfoItemBuildAddValue001, TestSize.Level0)
     EXPECT_EQ(static_cast<int32_t>(SYSTEM_APP_FLAG), value.GetInt(TokenFiledConst::FIELD_TOKEN_ATTR));
     EXPECT_EQ(12, value.GetInt(TokenFiledConst::FIELD_API_VERSION));
     EXPECT_NE(0, value.GetInt(TokenFiledConst::FIELD_FORBID_PERM_DIALOG));
+#ifdef SPM_DATA_ENABLE
     EXPECT_EQ(20100000, value.GetInt(TokenFiledConst::FIELD_UID));
     EXPECT_NE(0, value.GetInt(TokenFiledConst::FIELD_MIGRATED));
     EXPECT_EQ(static_cast<int32_t>(ReservedType::NONE), value.GetInt(TokenFiledConst::FIELD_RESERVED));
+#endif
 }
 
 /**
@@ -88,7 +92,7 @@ HWTEST_F(TableItemTest, HapTokenInfoItemBuildAddValue001, TestSize.Level0)
 HWTEST_F(TableItemTest, HapTokenInfoItemBuildDeleteValues001, TestSize.Level0)
 {
     HapTokenInfoItem item;
-    item.tokenId = 0x87654321;
+    item.tokenId = 0x87654321; // 0x87654321: tokenid
 
     GenericValues deleteValue;
     item.BuildDeleteValues(deleteValue);
@@ -153,9 +157,11 @@ HWTEST_F(TableItemTest, HapTokenInfoItemLoadFromDB001, TestSize.Level0)
     value1.Put(TokenFiledConst::FIELD_TOKEN_ATTR, static_cast<int32_t>(SYSTEM_APP_FLAG));
     value1.Put(TokenFiledConst::FIELD_API_VERSION, 11);
     value1.Put(TokenFiledConst::FIELD_FORBID_PERM_DIALOG, static_cast<int32_t>(0));
+#ifdef SPM_DATA_ENABLE
     value1.Put(TokenFiledConst::FIELD_UID, static_cast<int32_t>(20100100));
     value1.Put(TokenFiledConst::FIELD_MIGRATED, static_cast<int32_t>(1));
     value1.Put(TokenFiledConst::FIELD_RESERVED, static_cast<int32_t>(ReservedType::NONE));
+#endif
     values.emplace_back(value1);
 
     std::vector<HapTokenInfoItem> items;
@@ -174,9 +180,11 @@ HWTEST_F(TableItemTest, HapTokenInfoItemLoadFromDB001, TestSize.Level0)
     EXPECT_EQ(SYSTEM_APP_FLAG, items[0].tokenAttr);
     EXPECT_EQ(11, items[0].apiVersion);
     EXPECT_FALSE(items[0].permDialogCapState);
+#ifdef SPM_DATA_ENABLE
     EXPECT_EQ(20100100u, items[0].uid);
     EXPECT_TRUE(items[0].migrated);
     EXPECT_EQ(ReservedType::NONE, items[0].reserved);
+#endif
 }
 
 /**
@@ -201,9 +209,11 @@ HWTEST_F(TableItemTest, HapTokenInfoItemLoadFromDB002, TestSize.Level0)
     value1.Put(TokenFiledConst::FIELD_TOKEN_ATTR, static_cast<int32_t>(0));
     value1.Put(TokenFiledConst::FIELD_API_VERSION, 9);
     value1.Put(TokenFiledConst::FIELD_FORBID_PERM_DIALOG, static_cast<int32_t>(0));
+#ifdef SPM_DATA_ENABLE
     value1.Put(TokenFiledConst::FIELD_UID, static_cast<int32_t>(20100100));
     value1.Put(TokenFiledConst::FIELD_MIGRATED, static_cast<int32_t>(0));
     value1.Put(TokenFiledConst::FIELD_RESERVED, static_cast<int32_t>(ReservedType::NONE));
+#endif
     values.emplace_back(value1);
 
     GenericValues value2;
@@ -219,9 +229,11 @@ HWTEST_F(TableItemTest, HapTokenInfoItemLoadFromDB002, TestSize.Level0)
     value2.Put(TokenFiledConst::FIELD_TOKEN_ATTR, static_cast<int32_t>(DEBUG_APP_FLAG));
     value2.Put(TokenFiledConst::FIELD_API_VERSION, 12);
     value2.Put(TokenFiledConst::FIELD_FORBID_PERM_DIALOG, static_cast<int32_t>(1));
+#ifdef SPM_DATA_ENABLE
     value2.Put(TokenFiledConst::FIELD_UID, static_cast<int32_t>(20100200));
     value2.Put(TokenFiledConst::FIELD_MIGRATED, static_cast<int32_t>(1));
     value2.Put(TokenFiledConst::FIELD_RESERVED, static_cast<int32_t>(ReservedType::RESERVED_DATA));
+#endif
     values.emplace_back(value2);
 
     std::vector<HapTokenInfoItem> items;
@@ -234,12 +246,22 @@ HWTEST_F(TableItemTest, HapTokenInfoItemLoadFromDB002, TestSize.Level0)
     EXPECT_EQ(100u, items[0].userId);
     EXPECT_EQ(APL_NORMAL, items[0].apl);
     EXPECT_EQ(0, items[0].tokenAttr);
+#ifdef SPM_DATA_ENABLE
+    EXPECT_EQ(20100100u, items[0].uid);
+    EXPECT_FALSE(items[0].migrated);
+    EXPECT_EQ(ReservedType::NONE, items[0].reserved);
+#endif
 
     EXPECT_EQ(static_cast<AccessTokenID>(0x22222222), items[1].tokenId);
     EXPECT_EQ("com.example.two", items[1].bundleName);
     EXPECT_EQ(101u, items[1].userId);
     EXPECT_EQ(APL_SYSTEM_CORE, items[1].apl);
     EXPECT_EQ(DEBUG_APP_FLAG, items[1].tokenAttr);
+#ifdef SPM_DATA_ENABLE
+    EXPECT_EQ(20100200u, items[1].uid);
+    EXPECT_TRUE(items[1].migrated);
+    EXPECT_EQ(ReservedType::RESERVED_DATA, items[1].reserved);
+#endif
 }
 
 /**

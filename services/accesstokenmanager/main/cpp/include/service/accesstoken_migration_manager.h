@@ -36,6 +36,7 @@ struct PreparedMigrationBundle final {
     MigratedInfoIdl migratedInfo;
     std::vector<std::shared_ptr<HapTokenInfoInner>> cachedInfos;
     std::vector<bool> newTokenFlags;
+    bool needVerification = false;
 };
 
 class AccessTokenMigrationManager final {
@@ -44,7 +45,6 @@ public:
 
     int32_t MigrateInstalledBundles(const std::vector<MigratedInfoIdl>& migratedInfoList,
         std::vector<BundleMigrateResultIdl>& results);
-    int32_t PreMigrateUIDList(const std::vector<int32_t>& uidList);
     int32_t FinishMigration();
     bool IsMigrationCompleted() const;
     void Initialize();
@@ -67,9 +67,12 @@ private:
     int32_t ExecutePreparedMigration(PreparedMigrationBundle& preparedBundles);
     int32_t MigrateSingleBundle(const MigratedInfoIdl& migratedInfo,
         BundleMigrateResultIdl& result);
+    int32_t LoadDbCacheIfNeeded();
+    BundleMigrateResultIdl ProcessBundleMigration(const MigratedInfoIdl& migratedInfo);
 
-    std::unordered_set<int32_t> preMigratedUidSet_;
     std::unordered_map<int32_t, GenericValues> dbRowCache_;
+    std::unordered_set<int32_t> existingUids_;
+    bool cacheLoaded_ = false;
 };
 } // namespace AccessToken
 } // namespace Security

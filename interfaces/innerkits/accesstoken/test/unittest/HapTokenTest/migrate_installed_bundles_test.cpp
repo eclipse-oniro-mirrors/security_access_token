@@ -38,6 +38,7 @@ public:
     static void SetUpTestCase()
     {
         g_selfTokenId = GetSelfTokenID();
+        TestCommon::SetTestEvironment(g_selfTokenId);
         g_mock = new (std::nothrow) MockNativeToken("foundation");
     }
 
@@ -48,26 +49,9 @@ public:
             g_mock = nullptr;
         }
         SetSelfTokenID(g_selfTokenId);
+        TestCommon::ResetTestEvironment();
     }
 };
-
-HWTEST_F(MigrateInstalledBundlesTest, PreMigrateUIDList001, TestSize.Level1)
-{
-    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, AccessTokenKit::PreMigrateUIDList({}));
-}
-
-static constexpr size_t MAX_LIST_SIZE = 1024;
-/**
- * @tc.name: PreMigrateUIDList002
- * @tc.desc: PreMigrateUIDList with list size exceeding MAX_LIST_SIZE (1024) returns ERR_PARAM_INVALID.
- *           Validated at kit layer before IPC.
- * @tc.type: FUNC
- */
-HWTEST_F(MigrateInstalledBundlesTest, PreMigrateUIDList002, TestSize.Level1)
-{
-    std::vector<int32_t> largeList(MAX_LIST_SIZE + 1, 200001);
-    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, AccessTokenKit::PreMigrateUIDList(largeList));
-}
 
 static constexpr size_t MAX_MIGRATED_INFO_SIZE = 50;
 /**
@@ -98,8 +82,10 @@ HWTEST_F(MigrateInstalledBundlesTest, MigrateInstalledBundles002, TestSize.Level
 {
     std::vector<MigratedInfo> emptyList;
     std::vector<BundleMigrateResult> results;
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::MigrateInstalledBundles(emptyList, results));
-    EXPECT_TRUE(results.empty());
+    int32_t ret = AccessTokenKit::MigrateInstalledBundles(emptyList, results);
+    // Depending on whether migration has been finished in the test environment
+    bool pass = ret == RET_SUCCESS || ret == ERR_MIGRATION_COMPLETED;
+    EXPECT_TRUE(pass);
 }
 
 /**
@@ -118,19 +104,40 @@ HWTEST_F(MigrateInstalledBundlesTest, MigrateInstalledBundles003, TestSize.Level
     migratedInfo.reservedTypeList = {ReservedType::RESERVED_IDENTITY};
 
     std::vector<BundleMigrateResult> results;
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::MigrateInstalledBundles({migratedInfo}, results));
-    ASSERT_EQ(1u, results.size());
-    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, results[0].errcode);
+    int32_t ret = AccessTokenKit::MigrateInstalledBundles({ migratedInfo }, results);
+    bool pass = ret == RET_SUCCESS || ret == ERR_MIGRATION_COMPLETED;
+    EXPECT_TRUE(pass);
+    if (ret == RET_SUCCESS) {
+        ASSERT_EQ(1u, results.size());
+        EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, results[0].errcode);
+    }
 }
 
 /**
- * @tc.name: FinishMigration001
- * @tc.desc: FinishMigration returns RET_SUCCESS on first call via IPC to service.
+ * @tc.name: MigrateInstalledBundles004
+ * @tc.desc: MigrateInstalledBundles after FinishMigration returns ERR_MIGRATION_COMPLETED with empty results.
  * @tc.type: FUNC
  */
+HWTEST_F(MigrateInstalledBundlesTest, MigrateInstalledBundles004, TestSize.Level1)
+{
+    std::vector<MigratedInfo> emptyList;
+    std::vector<BundleMigrateResult> results;
+    (void)AccessTokenKit::FinishMigration();
+    int32_t ret = AccessTokenKit::MigrateInstalledBundles(emptyList, results);
+    EXPECT_EQ(ret, ERR_MIGRATION_COMPLETED);
+}
+
+/**
+* @tc.name: FinishMigration001
+* @tc.desc: FinishMigration returns RET_SUCCESS or ERR_MIGRATION_COMPLETED on first call via IPC to service.
+* @tc.type: FUNC
+*/
 HWTEST_F(MigrateInstalledBundlesTest, FinishMigration001, TestSize.Level1)
 {
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::FinishMigration());
+    int32_t ret = AccessTokenKit::FinishMigration();
+    bool pass = ret == RET_SUCCESS || ret == ERR_MIGRATION_COMPLETED;
+    EXPECT_TRUE(pass);
+    EXPECT_EQ(AccessTokenKit::FinishMigration(), ERR_MIGRATION_COMPLETED);
 }
 } // namespace AccessToken
 } // namespace Security

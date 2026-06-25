@@ -64,6 +64,7 @@ void AccessTokenDatabaseCoverageTest::SetUp()
         db->transaction_->commitFlag_ = 0;
         db->transaction_->insertFlag_ = 0;
         db->transaction_->deleteFlag_ = 0;
+        db->transaction_->updateFlag_ = 0;
         db->transaction_->insertRows_ = 1;
     }
 }
@@ -244,7 +245,7 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, Modify001, TestSize.Level4)
     ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID,
         AccessTokenDb::GetInstance()->Modify(type, modifyValue, conditionValue));
 
-    type = AtmDataType::ACCESSTOKEN_HAP_INFO;
+    type = AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO;
     ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID,
         AccessTokenDb::GetInstance()->Modify(type, modifyValue, conditionValue));
 
@@ -293,6 +294,132 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, Modify002, TestSize.Level4)
 }
 
 /*
+ * @tc.name: Modify003
+ * @tc.desc: AccessTokenDb::Modify (vector) with size mismatch
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenDatabaseCoverageTest, Modify003, TestSize.Level4)
+{
+    AtmDataType type = AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO;
+    std::vector<GenericValues> modifyValues;
+    GenericValues modifyValue;
+    modifyValue.Put(TokenFiledConst::FIELD_PROCESS_NAME, "hdcd");
+    modifyValues.emplace_back(modifyValue);
+    std::vector<GenericValues> conditions;
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID,
+        AccessTokenDb::GetInstance()->Modify(type, modifyValues, conditions));
+}
+
+/*
+ * @tc.name: Modify004
+ * @tc.desc: AccessTokenDb::Modify (vector) with invalid table type triggers retry without restore
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenDatabaseCoverageTest, Modify004, TestSize.Level4)
+{
+    AtmDataType type = static_cast<AtmDataType>(NOT_EXSIT_ATM_TYPE);
+    std::vector<GenericValues> modifyValues(1);
+    std::vector<GenericValues> conditions(1);
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID,
+        AccessTokenDb::GetInstance()->Modify(type, modifyValues, conditions));
+}
+
+/*
+ * @tc.name: Modify005
+ * @tc.desc: AccessTokenDb::Modify (vector) with CreateTransaction returning error
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenDatabaseCoverageTest, Modify005, TestSize.Level4)
+{
+    AtmDataType type = AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO;
+    std::vector<GenericValues> modifyValues(1);
+    std::vector<GenericValues> conditions(1);
+    std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance()->GetRdb();
+    db->createTransFlag_ = NativeRdb::RdbStore::RdbStoreOperationResult::RESULT_FAIL;
+    ASSERT_EQ(AccessTokenError::ERR_DATABASE_OPERATE_FAILED,
+        AccessTokenDb::GetInstance()->Modify(type, modifyValues, conditions));
+    db->createTransFlag_ = 0;
+}
+
+/*
+ * @tc.name: Modify006
+ * @tc.desc: AccessTokenDb::Modify (vector) with CreateTransaction returning nullptr transaction
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenDatabaseCoverageTest, Modify006, TestSize.Level4)
+{
+    AtmDataType type = AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO;
+    std::vector<GenericValues> modifyValues(1);
+    std::vector<GenericValues> conditions(1);
+    std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance()->GetRdb();
+    db->createTransFlag_ = NativeRdb::RdbStore::RdbStoreOperationResult::TRANSACTION_NULL;
+    ASSERT_EQ(AccessTokenError::ERR_DATABASE_OPERATE_FAILED,
+        AccessTokenDb::GetInstance()->Modify(type, modifyValues, conditions));
+    db->createTransFlag_ = 0;
+}
+
+/*
+ * @tc.name: Modify007
+ * @tc.desc: AccessTokenDb::Modify (vector) with Update failure triggers RestoreDatabase and retry
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenDatabaseCoverageTest, Modify007, TestSize.Level4)
+{
+    AtmDataType type = AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO;
+    std::vector<GenericValues> modifyValues(1);
+    std::vector<GenericValues> conditions(1);
+    std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance()->GetRdb();
+    ASSERT_NE(nullptr, db->transaction_);
+    db->transaction_->updateFlag_ = NativeRdb::Transaction::TransactionOperationResult::OPERATION_FAIL;
+    ASSERT_EQ(NativeRdb::E_SQLITE_CORRUPT,
+        AccessTokenDb::GetInstance()->Modify(type, modifyValues, conditions));
+    db->transaction_->updateFlag_ = 0;
+}
+
+/*
+ * @tc.name: Modify008
+ * @tc.desc: AccessTokenDb::Modify (vector) with Commit failure
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenDatabaseCoverageTest, Modify008, TestSize.Level4)
+{
+    AtmDataType type = AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO;
+    std::vector<GenericValues> modifyValues(1);
+    std::vector<GenericValues> conditions(1);
+    std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance()->GetRdb();
+    ASSERT_NE(nullptr, db->transaction_);
+    db->transaction_->commitFlag_ = NativeRdb::Transaction::TransactionOperationResult::OPERATION_FAIL;
+    ASSERT_EQ(NativeRdb::E_SQLITE_CORRUPT,
+        AccessTokenDb::GetInstance()->Modify(type, modifyValues, conditions));
+    db->transaction_->commitFlag_ = 0;
+}
+
+/*
+ * @tc.name: Modify009
+ * @tc.desc: AccessTokenDb::Modify (vector) success path with multiple values
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenDatabaseCoverageTest, Modify009, TestSize.Level4)
+{
+    AtmDataType type = AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO;
+    std::vector<GenericValues> modifyValues(2);
+    modifyValues[0].Put(TokenFiledConst::FIELD_PROCESS_NAME, "hdcd");
+    modifyValues[1].Put(TokenFiledConst::FIELD_PROCESS_NAME, "foundation");
+    std::vector<GenericValues> conditions(2);
+    conditions[0].Put(TokenFiledConst::FIELD_TOKEN_ID, 1);
+    conditions[1].Put(TokenFiledConst::FIELD_TOKEN_ID, 2);
+    ASSERT_EQ(NativeRdb::E_OK,
+        AccessTokenDb::GetInstance()->Modify(type, modifyValues, conditions));
+}
+
+/*
  * @tc.name: Find001
  * @tc.desc: AccessTokenDb::Find
  * @tc.type: FUNC
@@ -306,7 +433,7 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, Find001, TestSize.Level4)
     ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID,
         AccessTokenDb::GetInstance()->Find(type, conditionValue, results));
 
-    type = AtmDataType::ACCESSTOKEN_HAP_INFO;
+    type = AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO;
     ASSERT_EQ(NativeRdb::E_OK, AccessTokenDb::GetInstance()->Find(type, conditionValue, results));
 
     conditionValue.Put(TokenFiledConst::FIELD_PROCESS_NAME, "hdcd");
