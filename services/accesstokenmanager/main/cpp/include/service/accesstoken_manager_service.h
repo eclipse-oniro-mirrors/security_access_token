@@ -177,6 +177,8 @@ public:
     int32_t GetCliPermissionRequestInfo(
         const std::string& agentID, const std::vector<CliInfoIdl>& cliInfoList,
         PermissionDialogResultIdl& resultIdl) override;
+    int32_t GetPermissionStatusDetails(AccessTokenID tokenID, const std::vector<std::string>& permissionList,
+        std::vector<PermissionStatusDetailIdl>& resultList) override;
     int32_t GetCliPermissions(AccessTokenID hostTokenID, const std::string& agentID,
         const std::vector<CliInfoIdl>& cliInfoList, CliPermissionsResultIdl& resultIdl) override;
     int32_t GenerateCliAuthResult(AccessTokenID hostTokenID, const std::string& agentID,
@@ -200,6 +202,8 @@ private:
     void ReportUpdateHap(AccessTokenIDEx fullTokenId, const HapTokenInfo& info,
         const HapPolicy& policy, int64_t beginTime, int32_t errorCode);
     int32_t PreVerifyHapTokenIfNeeded(AccessTokenID tokenID);
+    int32_t PreCheckPermissionStatusDetails(
+        AccessTokenID tokenID, const std::vector<std::string>& permissionList);
     int32_t PreVerifyBundleIfNeeded(const std::string& bundleName);
     int32_t PreVerifyHapTokenListIfNeeded(const std::vector<uint32_t>& tokenIDList);
     bool IsPermissionValid(int32_t hapApl, const PermissionBriefDef& data, const std::string& value, bool isAcl);

@@ -24,6 +24,7 @@
 namespace OHOS {
 namespace Security {
 namespace SAF {
+#ifndef ACCESS_TOKEN_SAF_AGENT_FENCE_H
 struct CommandInfo {
     std::string cmdName;
     std::string subCmd;
@@ -41,6 +42,13 @@ struct VerifyTicketInfo {
     std::string ticket;
 };
 
+struct CliInfo {
+    std::string callerTokenId;
+    std::string cliCmdName;
+    std::string subCliCmdName;
+    std::vector<std::string> permissionList;
+};
+
 class SafAgentFence {
 public:
     SafAgentFence() = default;
@@ -54,7 +62,11 @@ public:
 
     int32_t BatchVerifyTicket(int32_t userId, const std::string& callerId,
         const std::vector<VerifyTicketInfo>& verifyInfos, std::vector<int32_t>& verifyRes);
+
+    int32_t VerifyTicket(int32_t osAccountId, const std::string& callerId,
+        const std::string& verifyInfo, std::vector<CliInfo>& cliInfos);
 };
+#endif
 } // namespace SAF
 
 namespace AccessToken {
@@ -64,6 +76,7 @@ void ClearMockCommandPermissionsForTest();
 void SetMockGenerateTicketResult(const std::vector<SAF::VerifyTicketInfo>& tickets, int32_t ret);
 void ClearMockGenerateTicketResult();
 void SetMockVerifyTicketResult(std::vector<int32_t> verifyRes, int32_t ret);
+void SetMockVerifyTicketV2Result(const std::vector<SAF::CliInfo>& cliInfos, int32_t ret);
 void ClearMockVerifyTicketResult();
 void ResetMockCounter();
 } // namespace AccessToken

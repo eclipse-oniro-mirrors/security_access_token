@@ -31,6 +31,9 @@
 #include "hap_info_parcel.h"
 #include "hap_policy_parcel.h"
 #include "mock_permission.h"
+#ifdef IS_SUPPORT_HAP_RUNNING
+#include "mock_app_verify_adapter.h"
+#endif
 #include "parameters.h"
 #include "permission_feature_manager.h"
 #include "permission_map.h"
@@ -73,6 +76,28 @@ static const std::string GRANT_SENSITIVE_PERMISSIONS = "ohos.permission.GRANT_SE
 static const std::string REVOKE_SENSITIVE_PERMISSIONS = "ohos.permission.REVOKE_SENSITIVE_PERMISSIONS";
 static const unsigned int DEBUG_APP_FLAG = 0x0008;
 static uint64_t g_selfShellTokenId = 0;
+
+#ifdef IS_SUPPORT_HAP_RUNNING
+class AdapterRestoreGuard final {
+public:
+    explicit AdapterRestoreGuard(const IAppVerifyAdapter* originAdapter) : originAdapter_(originAdapter) {}
+    ~AdapterRestoreGuard()
+    {
+        HapSignVerifyManager::GetInstance().adapter_ = originAdapter_;
+    }
+
+private:
+    const IAppVerifyAdapter* originAdapter_ = nullptr;
+};
+
+class BundleVerifyContextGuard final {
+public:
+    ~BundleVerifyContextGuard()
+    {
+        BootVerifyScheduler::GetInstance().ClearBundleVerifyContext();
+    }
+};
+#endif
 
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
 void ResetSecCompEnhanceKey()
@@ -374,6 +399,44 @@ void DeleteBundleClearToken(AccessTokenID tokenID)
         (void)AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID);
     }
 }
+
+#ifdef IS_SUPPORT_HAP_RUNNING
+void PreparePreVerifyBundleContextForTest(AccessTokenID tokenId, const std::string& bundleName)
+{
+    auto& scheduler = BootVerifyScheduler::GetInstance();
+    scheduler.ClearBundleVerifyContext();
+    scheduler.highPrivilegeBundleList_.clear();
+    scheduler.normalBundleList_.clear();
+    scheduler.hapTokenInfoMap_.clear();
+    scheduler.bundleInfoMap_.clear();
+    scheduler.bundleNoCachedInfoMap_.clear();
+    scheduler.requestedPermData_.clear();
+    scheduler.extendedPermMap_.clear();
+    scheduler.bundleSignInfoMap_.clear();
+    scheduler.isVerifiedMap_.clear();
+    scheduler.isVerifyingMap_.clear();
+    scheduler.isAllHapBundlesVerified_.store(false);
+
+    HapTokenInfoItem hapItem;
+    hapItem.tokenId = tokenId;
+    hapItem.bundleName = bundleName;
+    scheduler.hapTokenInfoMap_[tokenId] = hapItem;
+
+    auto bundleInfo = std::make_shared<BundleInfoInner>();
+    bundleInfo->tokenIds = {tokenId};
+    scheduler.bundleInfoMap_[bundleName] = bundleInfo;
+
+    BundleSignInfo signInfo;
+    signInfo.bundleName = bundleName;
+    signInfo.moduleNameList = {"entry"};
+    signInfo.pathList = {"/data/test/" + bundleName + ".hap"};
+    signInfo.bundleType = {0};
+    signInfo.persistDataList = {{}};
+    scheduler.bundleSignInfoMap_[bundleName] = signInfo;
+    scheduler.isVerifiedMap_[bundleName] = false;
+    scheduler.isVerifyingMap_[bundleName] = false;
+}
+#endif
 }
 
 void AccessTokenManagerServiceTest::SetUpTestCase()
@@ -2072,6 +2135,126 @@ HWTEST_F(AccessTokenManagerServiceTest, AccessTokenServiceCoverageTest001, TestS
     std::vector<PermissionListStateParcel> reqPermList(MAX_PERMISSION_SIZE + 1, parcel);
     ret = atManagerService_->GetPermissionsStatus(RANDOM_TOKENID, reqPermList);
     EXPECT_NE(RET_SUCCESS, ret);
+}
+
+/**
+ * @tc.name: GetPermissionStatusDetailsServiceTest001
+ * @tc.desc: Test GetPermissionStatusDetails returns param invalid for invalid tokenId and oversize list.
+ * @tc.require:
+ * @tc.type: FUNC
+ */
+HWTEST_F(AccessTokenManagerServiceTest, GetPermissionStatusDetailsServiceTest001, TestSize.Level1)
+{
+    std::vector<PermissionStatusDetailIdl> resultList;
+    EXPECT_EQ(ERR_PARAM_INVALID,
+        atManagerService_->GetPermissionStatusDetails(INVALID_TOKENID, {"ohos.permission.LOCATION"}, resultList));
+    EXPECT_TRUE(resultList.empty());
+
+    std::vector<std::string> permissionList(MAX_PERMISSION_SIZE + 1, "ohos.permission.LOCATION");
+    EXPECT_EQ(ERR_PARAM_INVALID,
+        atManagerService_->GetPermissionStatusDetails(RANDOM_TOKENID, permissionList, resultList));
+    EXPECT_TRUE(resultList.empty());
+}
+
+/**
+ * @tc.name: GetPermissionStatusDetailsServiceTest002
+ * @tc.desc: Test GetPermissionStatusDetails checks invalid param before caller permission.
+ * @tc.require:
+ * @tc.type: FUNC
+ */
+HWTEST_F(AccessTokenManagerServiceTest, GetPermissionStatusDetailsServiceTest002, TestSize.Level1)
+{
+    AccessTokenID tokenId = INVALID_TOKENID;
+    uint64_t fullTokenId = CreateServiceTestHapToken("permission_detail_non_system_test", false, {}, tokenId);
+    ASSERT_NE(0, fullTokenId);
+    SetSelfTokenID(fullTokenId);
+
+    std::vector<PermissionStatusDetailIdl> resultList;
+    EXPECT_EQ(ERR_PARAM_INVALID, atManagerService_->GetPermissionStatusDetails(tokenId, {}, resultList));
+    EXPECT_TRUE(resultList.empty());
+
+    SetSelfTokenID(g_selfShellTokenId);
+    (void)AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId);
+}
+
+/**
+ * @tc.name: GetPermissionStatusDetailsServiceTest003
+ * @tc.desc: Test GetPermissionStatusDetails returns token not exist for render token.
+ * @tc.require:
+ * @tc.type: FUNC
+ */
+HWTEST_F(AccessTokenManagerServiceTest, GetPermissionStatusDetailsServiceTest003, TestSize.Level1)
+{
+    MockNativeToken mock("foundation");
+    AccessTokenID tokenId = INVALID_TOKENID;
+    uint64_t fullTokenId = CreateServiceTestHapToken("permission_detail_render_token_test", true, {}, tokenId);
+    ASSERT_NE(0, fullTokenId);
+    AccessTokenID renderTokenId = static_cast<AccessTokenID>(AccessTokenKit::GetRenderTokenID(tokenId));
+    ASSERT_NE(INVALID_TOKENID, renderTokenId);
+
+    std::vector<PermissionStatusDetailIdl> resultList;
+    EXPECT_EQ(ERR_TOKENID_NOT_EXIST,
+        atManagerService_->GetPermissionStatusDetails(renderTokenId, {"ohos.permission.LOCATION"}, resultList));
+    EXPECT_TRUE(resultList.empty());
+
+    (void)AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId);
+}
+
+/**
+ * @tc.name: GetPermissionStatusDetailsServiceTest004
+ * @tc.desc: Test GetPermissionStatusDetails returns pre verify error when hap pre verification fails.
+ * @tc.require:
+ * @tc.type: FUNC
+ */
+#ifdef IS_SUPPORT_HAP_RUNNING
+HWTEST_F(AccessTokenManagerServiceTest, GetPermissionStatusDetailsServiceTest004, TestSize.Level1)
+{
+    MockNativeToken mock("foundation");
+    AccessTokenID tokenId = INVALID_TOKENID;
+    uint64_t fullTokenId = CreateServiceTestHapToken("permission_detail_preverify_fail_test", true, {}, tokenId);
+    ASSERT_NE(0, fullTokenId);
+
+    PreparePreVerifyBundleContextForTest(tokenId, "permission_detail_preverify_fail_test");
+    BundleVerifyContextGuard verifyContextGuard;
+
+    auto originAdapter = HapSignVerifyManager::GetInstance().adapter_;
+    AdapterRestoreGuard adapterRestoreGuard(originAdapter);
+    MockAppVerifyAdapter adapter;
+    adapter.bundleName_ = "permission_detail_preverify_fail_test";
+    adapter.verifyRet_ = ERR_PARAM_INVALID;
+    HapSignVerifyManager::GetInstance().adapter_ = &adapter;
+
+    std::vector<PermissionStatusDetailIdl> resultList;
+    int32_t ret = atManagerService_->GetPermissionStatusDetails(tokenId, {"ohos.permission.LOCATION"}, resultList);
+    EXPECT_EQ(ERR_HAP_SIGN_VERIFY_FAILED, ret);
+    EXPECT_TRUE(resultList.empty());
+
+    (void)AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId);
+}
+#endif
+
+/**
+ * @tc.name: GetPermissionStatusDetailsServiceTest005
+ * @tc.desc: Test GetPermissionStatusDetails returns ERR_SERVICE_ABNORMAL when requested permission cache is missing.
+ * @tc.require:
+ * @tc.type: FUNC
+ */
+HWTEST_F(AccessTokenManagerServiceTest, GetPermissionStatusDetailsServiceTest005, TestSize.Level1)
+{
+    MockNativeToken mock("foundation");
+    AccessTokenID tokenId = INVALID_TOKENID;
+    uint64_t fullTokenId = CreateServiceTestHapToken("permission_detail_missing_brief_test", true,
+        {BuildGrantedPermissionStatus("ohos.permission.LOCATION")}, tokenId);
+    ASSERT_NE(0, fullTokenId);
+
+    ASSERT_EQ(RET_SUCCESS, PermissionDataBrief::GetInstance().DeleteBriefPermDataByTokenId(tokenId));
+
+    std::vector<PermissionStatusDetailIdl> resultList;
+    int32_t ret = atManagerService_->GetPermissionStatusDetails(tokenId, {"ohos.permission.LOCATION"}, resultList);
+    EXPECT_EQ(ERR_SERVICE_ABNORMAL, ret);
+    EXPECT_TRUE(resultList.empty());
+
+    (void)AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId);
 }
 
 /**

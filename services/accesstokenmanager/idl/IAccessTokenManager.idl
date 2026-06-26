@@ -128,6 +128,7 @@ interface OHOS.Security.AccessToken.IAccessTokenManager{
     [ipccode 202, ipcoutcapacity 122880] void QueryStatusByPermission([in] List<unsigned int> permCodeList, [out] List<PermissionStatusIdl> permissionInfoList, [in] boolean onlyHap);
     [ipccode 203, ipcoutcapacity 122880] void QueryStatusByTokenID([in] List<unsigned int> tokenIDList, [out] List<PermissionStatusIdl> permissionInfoList);
     [ipccode 204] void GetCliPermissionRequestInfo([in] String agentID, [in] List<CliInfoIdl> cliInfoList, [out] PermissionDialogResultIdl resultIdl);
+    [ipccode 205, ipcoutcapacity 122880] void GetPermissionStatusDetails([in] unsigned int tokenID, [in] List<String> permissionList, [out] List<PermissionStatusDetailIdl> resultList);
     [ipccode 206] void GetCliPermissions([in] unsigned int hostTokenID, [in] String agentID, [in] List<CliInfoIdl> cliInfoList, [out] CliPermissionsResultIdl resultIdl);
     [ipccode 208] void GenerateCliAuthResult([in] unsigned int hostTokenID, [in] String agentID, [in] List<CliAuthInfoIdl> authInfoList, [out] ToolAuthResultIdl resultIdl);
     [ipccode 210] void IsSupportPermission([in] String permission, [out] boolean isSupported);

@@ -509,6 +509,23 @@ int32_t AccessTokenKit::GetPermissionsStatus(AccessTokenID tokenID, std::vector<
     return AccessTokenManagerClient::GetInstance().GetPermissionsStatus(tokenID, permList);
 }
 
+int32_t AccessTokenKit::GetPermissionStatusDetails(AccessTokenID tokenID,
+    const std::vector<std::string>& permissionList, std::vector<PermissionStatusDetail>& resultList)
+{
+    if (!DataValidator::IsTokenIDValid(tokenID)) {
+        return ERR_PARAM_INVALID;
+    }
+    if (!DataValidator::IsListSizeValid(permissionList.size())) {
+        return ERR_PARAM_INVALID;
+    }
+    for (const auto& permissionName : permissionList) {
+        if (!DataValidator::IsPermissionNameValid(permissionName)) {
+            return ERR_PARAM_INVALID;
+        }
+    }
+    return AccessTokenManagerClient::GetInstance().GetPermissionStatusDetails(tokenID, permissionList, resultList);
+}
+
 int AccessTokenKit::VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName, bool crossIpc)
 {
     LOGD(ATM_DOMAIN, ATM_TAG, "TokenID=%{public}d, permissionName=%{public}s, crossIpc=%{public}d.",
