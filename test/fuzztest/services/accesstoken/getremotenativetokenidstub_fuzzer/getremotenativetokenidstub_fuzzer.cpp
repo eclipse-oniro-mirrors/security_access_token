@@ -29,18 +29,41 @@
 #include "mock_permission.h"
 #include "fuzzer/FuzzedDataProvider.h"
 #include "iaccess_token_manager.h"
+#include "token_setproc.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
 namespace OHOS {
+#ifdef TOKEN_SYNC_ENABLE
+namespace {
+    AccessTokenID g_tokenSyncTokenId = INVALID_TOKENID;
+    AccessTokenID g_hdcdTokenId = INVALID_TOKENID;
+
+    bool SetTokenSyncToken()
+    {
+        if (g_tokenSyncTokenId == INVALID_TOKENID) {
+            MockToken mock({}, false);
+            g_tokenSyncTokenId = AccessTokenKit::GetNativeTokenId("token_sync_service");
+            g_hdcdTokenId = AccessTokenKit::GetNativeTokenId("hdcd");
+        }
+        if (g_tokenSyncTokenId == INVALID_TOKENID) {
+            return false;
+        }
+        return SetSelfTokenID(g_tokenSyncTokenId) == 0;
+    }
+}
+#endif
+
     bool GetRemoteNativeTokenIDStubFuzzTest(const uint8_t* data, size_t size)
     {
-    #ifdef TOKEN_SYNC_ENABLE
+#ifdef TOKEN_SYNC_ENABLE
         if ((data == nullptr) || (size == 0)) {
             return false;
         }
 
-        MockToken mock({}, false);
+        if (!SetTokenSyncToken()) {
+            return false;
+        }
         FuzzedDataProvider provider(data, size);
         std::string deviceID = provider.ConsumeRandomLengthString();
         AccessTokenID tokenId = ConsumeTokenId(provider);
@@ -60,11 +83,11 @@ namespace OHOS {
         MessageParcel reply;
         MessageOption option;
         DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
-
+        if (g_hdcdTokenId != INVALID_TOKENID) {
+            (void)SetSelfTokenID(g_hdcdTokenId);
+        }
+#endif
         return true;
-    #else
-        return true;
-    #endif
     }
 
 void Initialize()

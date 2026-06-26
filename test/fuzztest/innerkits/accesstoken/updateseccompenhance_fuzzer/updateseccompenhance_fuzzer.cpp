@@ -30,17 +30,18 @@ using namespace std;
 using namespace OHOS::Security::AccessToken;
 
 namespace {
+AccessTokenID g_secCompTokenId = INVALID_TOKENID;
+
 bool SetSecCompToken()
 {
-    AccessTokenID token = INVALID_TOKENID;
-    {
+    if (g_secCompTokenId == INVALID_TOKENID) {
         MockToken mock({}, false);
-        token = AccessTokenKit::GetNativeTokenId("security_component_service");
+        g_secCompTokenId = AccessTokenKit::GetNativeTokenId("security_component_service");
     }
-    if (token == INVALID_TOKENID) {
+    if (g_secCompTokenId == INVALID_TOKENID) {
         return false;
     }
-    return SetSelfTokenID(token) == 0;
+    return SetSelfTokenID(g_secCompTokenId) == 0;
 }
 }
 

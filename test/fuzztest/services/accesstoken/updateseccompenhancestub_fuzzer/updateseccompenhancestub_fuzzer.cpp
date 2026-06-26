@@ -33,17 +33,20 @@ using namespace std;
 using namespace OHOS::Security::AccessToken;
 
 namespace {
+AccessTokenID g_secCompTokenId = INVALID_TOKENID;
+AccessTokenID g_hdcdTokenId = INVALID_TOKENID;
+
 bool SetSecCompToken()
 {
-    AccessTokenID token = INVALID_TOKENID;
-    {
+    if (g_secCompTokenId == INVALID_TOKENID) {
         MockToken mock({}, false);
-        token = AccessTokenKit::GetNativeTokenId("security_component_service");
+        g_secCompTokenId = AccessTokenKit::GetNativeTokenId("security_component_service");
+        g_hdcdTokenId = AccessTokenKit::GetNativeTokenId("hdcd");
     }
-    if (token == INVALID_TOKENID) {
+    if (g_secCompTokenId == INVALID_TOKENID) {
         return false;
     }
-    return SetSelfTokenID(token) == 0;
+    return SetSelfTokenID(g_secCompTokenId) == 0;
 }
 }
 
@@ -74,6 +77,9 @@ namespace OHOS {
         MessageParcel reply;
         MessageOption option;
         DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
+        if (g_hdcdTokenId != INVALID_TOKENID) {
+            (void)SetSelfTokenID(g_hdcdTokenId);
+        }
 
         return true;
     }

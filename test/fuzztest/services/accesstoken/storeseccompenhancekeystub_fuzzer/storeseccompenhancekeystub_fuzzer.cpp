@@ -29,14 +29,17 @@
 using namespace OHOS::Security::AccessToken;
 
 namespace {
+AccessTokenID g_secCompTokenId = INVALID_TOKENID;
+AccessTokenID g_hdcdTokenId = INVALID_TOKENID;
+
 bool SetSecCompToken()
 {
-    AccessTokenID token = INVALID_TOKENID;
-    {
+    if (g_secCompTokenId == INVALID_TOKENID) {
         MockToken mock({}, false);
-        token = AccessTokenKit::GetNativeTokenId("security_component_service");
+        g_secCompTokenId = AccessTokenKit::GetNativeTokenId("security_component_service");
+        g_hdcdTokenId = AccessTokenKit::GetNativeTokenId("hdcd");
     }
-    return (token != INVALID_TOKENID) && (SetSelfTokenID(token) == 0);
+    return (g_secCompTokenId != INVALID_TOKENID) && (SetSelfTokenID(g_secCompTokenId) == 0);
 }
 }
 
@@ -68,6 +71,9 @@ bool StoreSecCompEnhanceKeyStubFuzzTest(const uint8_t* data, size_t size)
     MessageOption option;
     uint32_t code = static_cast<uint32_t>(IAccessTokenManagerIpcCode::COMMAND_STORE_SEC_COMP_ENHANCE_KEY);
     DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, sendData, reply, option);
+    if (g_hdcdTokenId != INVALID_TOKENID) {
+        (void)SetSelfTokenID(g_hdcdTokenId);
+    }
     return true;
 }
 
