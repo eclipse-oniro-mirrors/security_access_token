@@ -103,6 +103,7 @@ public:
     int32_t GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfoCompatIdl& infoIdl) override;
     int32_t GetPermissionCode(const std::string& permission, uint32_t& opCode) override;
     int32_t IsSupportPermission(const std::string& permission, bool& isSupported) override;
+    int32_t RefreshTokenStatus(const IdentityIdl& identity, ReservedTypeIdl reserved) override;
     int32_t UpdateHapToken(uint64_t& fullTokenId, const UpdateHapInfoParamsIdl& infoIdl,
         const HapPolicyParcel& policyParcel, HapInfoCheckResultIdl& resultInfoIdl) override;
     int32_t RegisterPermStateChangeCallback(

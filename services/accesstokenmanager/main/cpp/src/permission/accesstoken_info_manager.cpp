@@ -75,6 +75,7 @@ static const uint32_t ATOMIC_SERVICE_FLAG = 0x0002;
 static const uint32_t TOKEN_RESERVED_FLAG = 0x0004;
 static const uint32_t DEBUG_APP_FLAG = 0x0008;
 static constexpr int32_t BASE_USER_RANGE = 200000;
+static constexpr int32_t INVALID_HAP_UID = -1;
 #ifdef TOKEN_SYNC_ENABLE
 static const int MAX_PTHREAD_NAME_LEN = 15; // pthread name max length
 static const char* ACCESS_TOKEN_PACKAGE_NAME = "ohos.security.distributed_token_sync";
@@ -1009,6 +1010,96 @@ int32_t AccessTokenInfoManager::DeleteIdentity(AccessTokenID id, const std::stri
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     return DeleteIdentityInner(info, type);
+}
+
+int32_t AccessTokenInfoManager::RefreshTokenStatus(const Identity& identity, ReservedType reserved)
+{
+    AccessTokenID id = static_cast<AccessTokenID>(identity.tokenId);
+    int32_t newUid = identity.uid;
+    LOGI(ATM_DOMAIN, ATM_TAG, "RefreshTokenStatus tokenId=%{public}u, uid=%{public}d.", id, newUid);
+
+    std::shared_ptr<HapTokenInfoInner> info = GetHapTokenInfoInner(id, false);
+    if (info == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Token %{public}u not exist.", id);
+        return AccessTokenError::ERR_TOKENID_NOT_EXIST;
+    }
+
+    int32_t originalUid = info->GetUid();
+    if (originalUid == newUid) {
+        return RET_SUCCESS;
+    }
+
+    if (originalUid != INVALID_HAP_UID) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Token %{public}u already has UID %{public}d.", id, originalUid);
+        return AccessTokenError::ERR_MIGRATION_COMPLETED;
+    }
+
+    int32_t ret = CheckUidConflictInDb(id, newUid);
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
+
+    ret = UpdateTokenUidToDb(id, newUid, originalUid, reserved);
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
+    AccessTokenIDManager::GetInstance().InitSingleBundleIdCache(newUid);
+    AccessTokenInfoManager::GetInstance().ReleaseInactiveTokenInfoInner(id);
+    return RET_SUCCESS;
+}
+
+int32_t AccessTokenInfoManager::CheckUidConflictInDb(AccessTokenID id, int32_t newUid)
+{
+    GenericValues uidCondition;
+    uidCondition.Put(TokenFiledConst::FIELD_UID, newUid);
+    std::vector<GenericValues> uidResults;
+    if (AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, uidCondition, uidResults)
+        == RET_SUCCESS) {
+        for (const auto& row : uidResults) {
+            AccessTokenID existingTokenId = static_cast<AccessTokenID>(row.GetInt(TokenFiledConst::FIELD_TOKEN_ID));
+            if (existingTokenId != id) {
+                LOGE(ATM_DOMAIN, ATM_TAG, "UID %{public}d exists for token %{public}u.", newUid, existingTokenId);
+                return AccessTokenError::ERR_MIGRATION_UID_DUPLICATED;
+            }
+        }
+    }
+    return RET_SUCCESS;
+}
+
+int32_t AccessTokenInfoManager::UpdateTokenUidToDb(
+    AccessTokenID id, int32_t newUid, int32_t originalUid, ReservedType reserved)
+{
+    std::shared_ptr<HapTokenInfoInner> info = GetHapTokenInfoInner(id, false);
+    if (info == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Token %{public}u not exist.", id);
+        return AccessTokenError::ERR_TOKENID_NOT_EXIST;
+    }
+
+    info->SetUid(newUid);
+    info->SetMigrated(true);
+
+    GenericValues modifyValue;
+    modifyValue.Put(TokenFiledConst::FIELD_UID, newUid);
+    modifyValue.Put(TokenFiledConst::FIELD_MIGRATED, 1);
+    if (reserved != ReservedType::NONE) {
+        modifyValue.Put(TokenFiledConst::FIELD_RESERVED, static_cast<int32_t>(reserved));
+        modifyValue.Put(TokenFiledConst::FIELD_TOKEN_ATTR,
+            static_cast<int32_t>(info->GetAttr() | TOKEN_RESERVED_FLAG));
+        AccessTokenIDManager::GetInstance().ChangeTokenIdStatus(id, TokenIdStatus::RESERVED);
+    }
+
+    GenericValues conditionValue;
+    conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(id));
+    int32_t dbRet = AccessTokenDbOperator::Modify(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO,
+        modifyValue, conditionValue);
+    if (dbRet != RET_SUCCESS) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Update database failed, ret=%{public}d.", dbRet);
+        info->SetUid(originalUid);
+        info->SetMigrated(false);
+        return ERR_DATABASE_OPERATE_FAILED;
+    }
+
+    return RET_SUCCESS;
 }
 
 int AccessTokenInfoManager::RemoveNativeTokenInfo(AccessTokenID id)

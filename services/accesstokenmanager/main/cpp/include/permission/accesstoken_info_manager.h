@@ -74,6 +74,7 @@ public:
     int AllocAccessTokenIDEx(const HapInfoParams& info, AccessTokenID tokenId, AccessTokenIDEx& tokenIdEx);
     int RemoveHapTokenInfo(AccessTokenID id, bool isTokenReserved = false);
     int32_t DeleteIdentity(AccessTokenID id, const std::string& bundleName, ReservedType type);
+    int32_t RefreshTokenStatus(const Identity& identity, ReservedType reserved);
     int RemoveNativeTokenInfo(AccessTokenID id);
     int32_t GetHapAppIdByTokenId(AccessTokenID tokenID, std::string& appId);
     int32_t FillInstallPolicyWithoutHaps(
@@ -212,6 +213,8 @@ private:
     std::shared_ptr<HapTokenInfoInner> GetInactiveTokenInfoInner(AccessTokenID id);
     void UpdateTokenAttr(const UpdateHapInfoParams& info, AccessTokenIDEx& tokenIdEx);
     int32_t DeleteIdentityInner(std::shared_ptr<HapTokenInfoInner> info, ReservedType delType);
+    int32_t CheckUidConflictInDb(AccessTokenID id, int32_t newUid);
+    int32_t UpdateTokenUidToDb(AccessTokenID id, int32_t newUid, int32_t originalUid, ReservedType reserved);
     void UpsertBundleInfoInnerCacheWithoutLock(const std::string& bundleName,
         const std::shared_ptr<BundleInfoInner>& bundleInfo);
     void AddTokenIdToBundleInfoInner(const std::shared_ptr<BundleInfoInner>& bundleInfo, AccessTokenID tokenId);

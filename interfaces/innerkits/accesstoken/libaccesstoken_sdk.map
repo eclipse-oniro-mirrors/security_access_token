@@ -122,6 +122,7 @@
         "OHOS::Security::AccessToken::AccessTokenKit::GetCacheSignInfoBySessionId(int, std::__h::vector<OHOS::Security::AccessToken::TrustedBundleInfo, std::__h::allocator<OHOS::Security::AccessToken::TrustedBundleInfo>>&)";
         "OHOS::Security::AccessToken::AccessTokenKit::GetHapSignInfo(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, std::__h::vector<OHOS::Security::AccessToken::TrustedBundleInfo, std::__h::allocator<OHOS::Security::AccessToken::TrustedBundleInfo>>&)";
         "OHOS::Security::AccessToken::AccessTokenKit::GetCachePolicyBySessionId(int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, OHOS::Security::AccessToken::BundlePolicyInfo&)";
+        "OHOS::Security::AccessToken::AccessTokenKit::RefreshTokenStatus(OHOS::Security::AccessToken::Identity const&, OHOS::Security::AccessToken::ReservedType)";
     };
   local:
     *;

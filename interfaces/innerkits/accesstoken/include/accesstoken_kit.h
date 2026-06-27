@@ -833,6 +833,14 @@ public:
      */
     static int32_t GenerateCliAuthResult(AccessTokenID hostTokenID, const std::string& agentID,
         const std::vector<CliAuthInfo>& authInfoList, ToolAuthResult& result);
+
+    /**
+     * @brief Refresh token ID status with UID and reserved type.
+     * @param identity Identity containing tokenId and uid to be refreshed
+     * @param reserved Reserved type for the token
+     * @return Returns RET_SUCCESS(0) on success, returns corresponding error code on failure
+     */
+    static int32_t RefreshTokenStatus(const Identity& identity, ReservedType reserved);
 };
 } // namespace AccessToken
 } // namespace Security

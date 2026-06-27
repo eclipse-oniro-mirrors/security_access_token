@@ -920,8 +920,7 @@ int32_t InstallSessionManager::CheckType(std::vector<std::string>& additionalPat
 
     if (additionalPaths.empty() &&
         (type == InstallTypeEnum::TYPE_MERGE || type == InstallTypeEnum::TYPE_REPLACE)) {
-        LOGC(ATM_DOMAIN, ATM_TAG, "No data, type:%{public}d", static_cast<int32_t>(type));
-        return ERR_BUNDLE_NOT_EXIST;
+        LOGW(ATM_DOMAIN, ATM_TAG, "No data, type:%{public}d", static_cast<int32_t>(type));
     }
 
     return RET_SUCCESS;
@@ -1159,6 +1158,13 @@ int32_t InstallSessionManager::UpdateHapPolicy(int32_t sessionId, int32_t tokenI
             RollbackAll(sessionId,
                 SessionFinishSceneCode::UPDATE_HAP_POLICY, AccessTokenError::ERR_PARAM_INVALID, tokenId);
             return AccessTokenError::ERR_PARAM_INVALID;
+        }
+        if (infoPtr->GetUid() == -1) {
+            LOGC(ATM_DOMAIN, ATM_TAG, "Uid is invalid, bundleName: %{public}s.",
+                infoPtr->GetBundleName().c_str());
+            RollbackAll(sessionId,
+                SessionFinishSceneCode::UPDATE_HAP_POLICY, AccessTokenError::ERR_INVALID_UID, tokenId);
+            return AccessTokenError::ERR_INVALID_UID;
         }
         it->second.tokenIDToBundlePolicy[static_cast<int32_t>(tokenId)] = policy;
     }
