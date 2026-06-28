@@ -1926,6 +1926,27 @@ int32_t AccessTokenManagerClient::GetCachePolicyBySessionId(int32_t sessionId, c
     return res;
 }
 
+int32_t AccessTokenManagerClient::RefreshTokenStatus(const Identity& identity, ReservedType reserved)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+
+    IdentityIdl identityIdl;
+    identityIdl.tokenId = identity.tokenId;
+    identityIdl.uid = identity.uid;
+    ReservedTypeIdl reservedIdl = static_cast<ReservedTypeIdl>(reserved);
+
+    int32_t res = proxy->RefreshTokenStatus(identityIdl, reservedIdl);
+    if (res != RET_SUCCESS) {
+        res = ConvertResult(res);
+    }
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result=%{public}d", res);
+    return res;
+}
+
 sptr<ProxyDeathCallBack> AccessTokenManagerClient::GetAnonyStub()
 {
     std::lock_guard<std::mutex> lock(stubMutex_);

@@ -1055,6 +1055,17 @@ int32_t AccessTokenKit::GetReqPermissionByName(
     return AccessTokenManagerClient::GetInstance().GetReqPermissionByName(tokenID, permissionName, value);
 }
 
+int32_t AccessTokenKit::RefreshTokenStatus(const Identity& identity, ReservedType reserved)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "RefreshTokenStatus tokenId=%{public}u, uid=%{public}d, reserved=%{public}d.",
+        static_cast<AccessTokenID>(identity.tokenId), identity.uid, static_cast<int32_t>(reserved));
+    if (identity.tokenId == INVALID_TOKENID) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "TokenId is invalid.");
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    return AccessTokenManagerClient::GetInstance().RefreshTokenStatus(identity, reserved);
+}
+
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
 int32_t AccessTokenKit::RegisterSecCompEnhance(const SecCompEnhanceData& enhance)
 {

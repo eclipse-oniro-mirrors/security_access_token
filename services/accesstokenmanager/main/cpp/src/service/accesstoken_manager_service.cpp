@@ -1784,6 +1784,27 @@ int32_t AccessTokenManagerService::IsSupportPermission(const std::string& permis
     return RET_SUCCESS;
 }
 
+int32_t AccessTokenManagerService::RefreshTokenStatus(const IdentityIdl& identity, ReservedTypeIdl reserved)
+{
+    if (identity.tokenId == INVALID_TOKENID) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Invalid param: tokenId is invalid.");
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+
+    // Permission check
+    int32_t ret = CheckHapManagerPermission();
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
+
+    Identity identityInner;
+    identityInner.tokenId = identity.tokenId;
+    identityInner.uid = identity.uid;
+    ReservedType reservedType = static_cast<ReservedType>(reserved);
+
+    return AccessTokenInfoManager::GetInstance().RefreshTokenStatus(identityInner, reservedType);
+}
+
 int AccessTokenManagerService::GetHapTokenInfoExtension(AccessTokenID tokenID,
     HapTokenInfoParcel& hapTokenInfoRes, std::string& appID)
 {
