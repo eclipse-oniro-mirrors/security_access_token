@@ -3594,6 +3594,283 @@ HWTEST_F(AccessTokenManagerServiceTest, ClearUserGrantedPermStateByBundleFuncTes
     DeleteBundleClearToken(tokenID);
 }
 
+/**
+ * @tc.name: RefreshTokenIdStatusService001
+ * @tc.desc: RefreshTokenStatus updates uid, migrated flag, reserved flag and token status.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, RefreshTokenIdStatusService001, TestSize.Level0)
+{
+    static constexpr int32_t INVALID_UID = -1;
+    static constexpr int32_t MIGRATED_UID = 202601;
+    AccessTokenID tokenId = INVALID_TOKENID;
+    uint64_t fullTokenId = CreateServiceTestHapToken("refresh_token_status_service_test", true, {}, tokenId);
+    ASSERT_NE(0, fullTokenId);
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+
+    auto infoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId);
+    ASSERT_NE(nullptr, infoPtr);
+    infoPtr->SetUid(INVALID_UID);
+    infoPtr->SetMigrated(false);
+
+    GenericValues modifyValue;
+    modifyValue.Put(TokenFiledConst::FIELD_UID, INVALID_UID);
+    modifyValue.Put(TokenFiledConst::FIELD_MIGRATED, 0);
+    modifyValue.Put(TokenFiledConst::FIELD_RESERVED, static_cast<int32_t>(ReservedType::NONE));
+    GenericValues modifyCondition;
+    modifyCondition.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
+    ASSERT_EQ(RET_SUCCESS,
+        AccessTokenDbOperator::Modify(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, modifyValue, modifyCondition));
+
+    IdentityIdl identity = {
+        .uid = MIGRATED_UID,
+        .tokenId = tokenId,
+    };
+    SetSelfTokenID(g_selfShellTokenId);
+    ASSERT_EQ(RET_SUCCESS,
+        atManagerService_->RefreshTokenStatus(identity, ReservedTypeIdl::RESERVED_IDENTITY));
+
+    infoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId);
+    ASSERT_NE(nullptr, infoPtr);
+    EXPECT_EQ(MIGRATED_UID, infoPtr->GetUid());
+    EXPECT_TRUE(infoPtr->IsMigrated());
+
+    TokenIdStatus status = TokenIdStatus::ACTIVE;
+    EXPECT_EQ(RET_SUCCESS, AccessTokenIDManager::GetInstance().GetTokenIdStatus(tokenId, status));
+    EXPECT_EQ(TokenIdStatus::RESERVED, status);
+
+    std::vector<GenericValues> results;
+    GenericValues conditionValue;
+    conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
+    ASSERT_EQ(RET_SUCCESS,
+        AccessTokenDb::GetInstance()->Find(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, conditionValue, results));
+    ASSERT_EQ(1u, results.size());
+    EXPECT_EQ(MIGRATED_UID, results[0].GetInt(TokenFiledConst::FIELD_UID));
+    EXPECT_EQ(1, results[0].GetInt(TokenFiledConst::FIELD_MIGRATED));
+    EXPECT_EQ(static_cast<int32_t>(ReservedType::RESERVED_IDENTITY),
+        results[0].GetInt(TokenFiledConst::FIELD_RESERVED));
+
+    (void)AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId);
+}
+
+/**
+ * @tc.name: RefreshTokenIdStatusService002
+ * @tc.desc: RefreshTokenStatus returns ERR_TOKENID_NOT_EXIST when token does not exist.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, RefreshTokenIdStatusService002, TestSize.Level0)
+{
+    IdentityIdl identity = {
+        .uid = 202602,
+        .tokenId = RANDOM_TOKENID,
+    };
+    SetSelfTokenID(g_selfShellTokenId);
+    EXPECT_EQ(AccessTokenError::ERR_TOKENID_NOT_EXIST,
+        atManagerService_->RefreshTokenStatus(identity, ReservedTypeIdl::NONE));
+}
+
+/**
+ * @tc.name: RefreshTokenIdStatusService003
+ * @tc.desc: RefreshTokenStatus returns ERR_MIGRATION_COMPLETED when token already has a valid uid.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, RefreshTokenIdStatusService003, TestSize.Level0)
+{
+    constexpr int32_t EXISTING_UID = 202600;
+    constexpr int32_t NEW_UID = 202603;
+    AccessTokenID tokenId = INVALID_TOKENID;
+    uint64_t fullTokenId = CreateServiceTestHapToken("refresh_token_status_completed_test", true, {}, tokenId);
+    ASSERT_NE(0, fullTokenId);
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+
+    auto infoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId);
+    ASSERT_NE(nullptr, infoPtr);
+    infoPtr->SetUid(EXISTING_UID);
+
+    IdentityIdl identity = {
+        .uid = NEW_UID,
+        .tokenId = tokenId,
+    };
+    SetSelfTokenID(g_selfShellTokenId);
+    EXPECT_EQ(AccessTokenError::ERR_MIGRATION_COMPLETED,
+        atManagerService_->RefreshTokenStatus(identity, ReservedTypeIdl::NONE));
+
+    (void)AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId);
+}
+
+/**
+ * @tc.name: RefreshTokenIdStatusService004
+ * @tc.desc: RefreshTokenStatus returns ERR_MIGRATION_UID_DUPLICATED when new uid is already used by another token.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, RefreshTokenIdStatusService004, TestSize.Level0)
+{
+    static constexpr int32_t INVALID_UID = -1;
+    static constexpr int32_t DUPLICATED_UID = 202604;
+    AccessTokenID targetTokenId = INVALID_TOKENID;
+    uint64_t targetFullTokenId = CreateServiceTestHapToken("refresh_token_status_dup_target", true, {}, targetTokenId);
+    ASSERT_NE(0, targetFullTokenId);
+    ASSERT_NE(INVALID_TOKENID, targetTokenId);
+
+    auto targetInfoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(targetTokenId);
+    ASSERT_NE(nullptr, targetInfoPtr);
+    targetInfoPtr->SetUid(INVALID_UID);
+    targetInfoPtr->SetMigrated(false);
+
+    GenericValues targetModifyValue;
+    targetModifyValue.Put(TokenFiledConst::FIELD_UID, INVALID_UID);
+    targetModifyValue.Put(TokenFiledConst::FIELD_MIGRATED, 0);
+    GenericValues targetCondition;
+    targetCondition.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(targetTokenId));
+    ASSERT_EQ(RET_SUCCESS,
+        AccessTokenDbOperator::Modify(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, targetModifyValue, targetCondition));
+
+    AccessTokenID existingTokenId = INVALID_TOKENID;
+    uint64_t existingFullTokenId = CreateServiceTestHapToken("refresh_token_status_dup_existing", true, {},
+        existingTokenId);
+    ASSERT_NE(0, existingFullTokenId);
+    ASSERT_NE(INVALID_TOKENID, existingTokenId);
+
+    auto existingInfoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(existingTokenId);
+    ASSERT_NE(nullptr, existingInfoPtr);
+    existingInfoPtr->SetUid(DUPLICATED_UID);
+    existingInfoPtr->SetMigrated(true);
+
+    GenericValues existingModifyValue;
+    existingModifyValue.Put(TokenFiledConst::FIELD_UID, DUPLICATED_UID);
+    existingModifyValue.Put(TokenFiledConst::FIELD_MIGRATED, 1);
+    GenericValues existingCondition;
+    existingCondition.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(existingTokenId));
+    ASSERT_EQ(RET_SUCCESS,
+        AccessTokenDbOperator::Modify(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, existingModifyValue, existingCondition));
+
+    IdentityIdl identity = {
+        .uid = DUPLICATED_UID,
+        .tokenId = targetTokenId,
+    };
+    SetSelfTokenID(g_selfShellTokenId);
+    EXPECT_EQ(AccessTokenError::ERR_MIGRATION_UID_DUPLICATED,
+        atManagerService_->RefreshTokenStatus(identity, ReservedTypeIdl::NONE));
+
+    (void)AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(targetTokenId);
+    (void)AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(existingTokenId);
+}
+
+/**
+ * @tc.name: RefreshTokenIdStatusService005
+ * @tc.desc: RefreshTokenStatus returns ERR_PARAM_INVALID when service receives INVALID_TOKENID directly.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, RefreshTokenIdStatusService005, TestSize.Level0)
+{
+    IdentityIdl identity = {
+        .uid = 202605,
+        .tokenId = INVALID_TOKENID,
+    };
+    SetSelfTokenID(g_selfShellTokenId);
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
+        atManagerService_->RefreshTokenStatus(identity, ReservedTypeIdl::NONE));
+}
+
+/**
+ * @tc.name: RefreshTokenIdStatusService006
+ * @tc.desc: RefreshTokenStatus returns RET_SUCCESS when uid is unchanged.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, RefreshTokenIdStatusService006, TestSize.Level0)
+{
+    AccessTokenID tokenId = INVALID_TOKENID;
+    uint64_t fullTokenId = CreateServiceTestHapToken("refresh_token_status_same_uid_test", true, {}, tokenId);
+    ASSERT_NE(0, fullTokenId);
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+
+    auto infoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId);
+    ASSERT_NE(nullptr, infoPtr);
+    int32_t originalUid = infoPtr->GetUid();
+
+    IdentityIdl identity = {
+        .uid = originalUid,
+        .tokenId = tokenId,
+    };
+    SetSelfTokenID(g_selfShellTokenId);
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->RefreshTokenStatus(identity, ReservedTypeIdl::RESERVED_IDENTITY));
+
+    infoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId);
+    ASSERT_NE(nullptr, infoPtr);
+    EXPECT_EQ(originalUid, infoPtr->GetUid());
+    EXPECT_FALSE(infoPtr->IsMigrated());
+
+    TokenIdStatus status = TokenIdStatus::ACTIVE;
+    EXPECT_EQ(RET_SUCCESS, AccessTokenIDManager::GetInstance().GetTokenIdStatus(tokenId, status));
+    EXPECT_NE(TokenIdStatus::RESERVED, status);
+
+    (void)AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId);
+}
+
+/**
+ * @tc.name: RefreshTokenIdStatusService007
+ * @tc.desc: RefreshTokenStatus updates uid and migrated flag without changing reserved status when reserved is NONE.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, RefreshTokenIdStatusService007, TestSize.Level0)
+{
+    static constexpr int32_t INVALID_UID = -1;
+    static constexpr int32_t MIGRATED_UID = 202607;
+    AccessTokenID tokenId = INVALID_TOKENID;
+    uint64_t fullTokenId = CreateServiceTestHapToken("refresh_token_status_none_reserved_test", true, {}, tokenId);
+    ASSERT_NE(0, fullTokenId);
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+
+    auto infoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId);
+    ASSERT_NE(nullptr, infoPtr);
+    infoPtr->SetUid(INVALID_UID);
+    infoPtr->SetMigrated(false);
+
+    GenericValues modifyValue;
+    modifyValue.Put(TokenFiledConst::FIELD_UID, INVALID_UID);
+    modifyValue.Put(TokenFiledConst::FIELD_MIGRATED, 0);
+    modifyValue.Put(TokenFiledConst::FIELD_RESERVED, static_cast<int32_t>(ReservedType::NONE));
+    GenericValues modifyCondition;
+    modifyCondition.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
+    ASSERT_EQ(RET_SUCCESS,
+        AccessTokenDbOperator::Modify(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, modifyValue, modifyCondition));
+
+    IdentityIdl identity = {
+        .uid = MIGRATED_UID,
+        .tokenId = tokenId,
+    };
+    SetSelfTokenID(g_selfShellTokenId);
+    ASSERT_EQ(RET_SUCCESS, atManagerService_->RefreshTokenStatus(identity, ReservedTypeIdl::NONE));
+
+    infoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId);
+    ASSERT_NE(nullptr, infoPtr);
+    EXPECT_EQ(MIGRATED_UID, infoPtr->GetUid());
+    EXPECT_TRUE(infoPtr->IsMigrated());
+
+    TokenIdStatus status = TokenIdStatus::ACTIVE;
+    EXPECT_EQ(RET_SUCCESS, AccessTokenIDManager::GetInstance().GetTokenIdStatus(tokenId, status));
+    EXPECT_NE(TokenIdStatus::RESERVED, status);
+
+    std::vector<GenericValues> results;
+    GenericValues conditionValue;
+    conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
+    ASSERT_EQ(RET_SUCCESS,
+        AccessTokenDb::GetInstance()->Find(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, conditionValue, results));
+    ASSERT_EQ(1u, results.size());
+    EXPECT_EQ(MIGRATED_UID, results[0].GetInt(TokenFiledConst::FIELD_UID));
+    EXPECT_EQ(1, results[0].GetInt(TokenFiledConst::FIELD_MIGRATED));
+    EXPECT_EQ(static_cast<int32_t>(ReservedType::NONE), results[0].GetInt(TokenFiledConst::FIELD_RESERVED));
+
+    (void)AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId);
+}
+
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
 /**
  * @tc.name: SecCompEnhanceKeyService001

@@ -44,7 +44,8 @@ int32_t AccessTokenDbOperator::Modify(const AtmDataType type, const GenericValue
     (void)type;
     (void)modifyValue;
     (void)conditionValue;
-    return RET_SUCCESS;
+    ++g_mockDbState.modifyCallCount;
+    return g_mockDbState.modifyRet;
 }
 
 int32_t AccessTokenDbOperator::Modify(const AtmDataType type,
@@ -54,7 +55,8 @@ int32_t AccessTokenDbOperator::Modify(const AtmDataType type,
     (void)type;
     (void)modifyValues;
     (void)conditions;
-    return RET_SUCCESS;
+    ++g_mockDbState.modifyCallCount;
+    return g_mockDbState.modifyRet;
 }
 
 int32_t AccessTokenDbOperator::Find(AtmDataType type, const GenericValues& conditionValue,

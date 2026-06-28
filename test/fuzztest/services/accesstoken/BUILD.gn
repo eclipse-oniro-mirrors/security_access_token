@@ -59,6 +59,7 @@ group("fuzztest") {
     "registerpermstatechangecallbackstub_fuzzer:RegisterPermStateChangeCallbackStubFuzzTest",
     "registerselfpermstatechangecallbackstub_fuzzer:RegisterSelfPermStateChangeCallbackStubFuzzTest",
     "requestapppermonsettingstub_fuzzer:RequestAppPermOnSettingStubFuzzTest",
+    "refreshtokenidstatusstub_fuzzer:RefreshTokenIdStatusStubFuzzTest",
     "revokepermissionstub_fuzzer:RevokePermissionStubFuzzTest",
     "setpermdialogcapstub_fuzzer:SetPermDialogCapStubFuzzTest",
     "setpermissionrequesttogglestatusstub_fuzzer:SetPermissionRequestToggleStatusStubFuzzTest",

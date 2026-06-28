@@ -33,10 +33,12 @@ struct MockDbFindResult final {
 
 struct MockDbState final {
     std::map<AtmDataType, MockDbFindResult> findResults;
+    int32_t modifyRet = RET_SUCCESS;
     int32_t deleteAndInsertRet = RET_SUCCESS;
     std::vector<DelInfo> lastDeleteInfos;
     std::vector<AddInfo> lastAddInfos;
     uint32_t findCallCount = 0;
+    uint32_t modifyCallCount = 0;
     uint32_t deleteAndInsertCallCount = 0;
 };
 

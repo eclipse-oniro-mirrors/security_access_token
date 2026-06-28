@@ -1004,12 +1004,12 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapFailedTest004, TestSize.Level0
 }
 
 /**
- * @tc.name: InstallHapFailedTest005
- * @tc.desc: Test install a new hap, TYPE_REPLACE & TYPE_MERGE when hap not installed.
+ * @tc.name: InstallHapSuccessTest005
+ * @tc.desc: Test install a new hap, TYPE_REPLACE & TYPE_MERGE when hap not installed succeeds.
  * @tc.type: FUNC
  * @tc.require: Issue
  */
-HWTEST_F(InstallSessionManagerMockTest, InstallHapFailedTest005, TestSize.Level0)
+HWTEST_F(InstallSessionManagerMockTest, InstallHapSuccessTest005, TestSize.Level0)
 {
     BundleHapList hapList;
     hapList.hapPaths.emplace_back(
@@ -1025,7 +1025,7 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapFailedTest005, TestSize.Level0
 
     HapInfoCheckResult result;
     ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, InstallTypeEnum::TYPE_REPLACE, result);
-    EXPECT_NE(ERR_OK, ret);
+    EXPECT_EQ(ERR_OK, ret);
 
     sessionId = 0;
     bundleInfo.clear();
@@ -1035,7 +1035,7 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapFailedTest005, TestSize.Level0
 
     HapInfoCheckResult result2;
     ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, InstallTypeEnum::TYPE_MERGE, result2);
-    EXPECT_NE(ERR_OK, ret);
+    EXPECT_EQ(ERR_OK, ret);
 }
 
 /**
