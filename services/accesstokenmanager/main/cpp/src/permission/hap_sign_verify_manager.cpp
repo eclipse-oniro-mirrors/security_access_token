@@ -91,7 +91,11 @@ static bool IsHapPathAllowed(const std::string& path)
 
     char resolvedPath[PATH_MAX] = {0};
     if (realpath(path.c_str(), resolvedPath) == nullptr) {
-        LOGC(ATM_DOMAIN, ATM_TAG, "Failed to resolve path %{public}s: %{public}s", path.c_str(), strerror(errno));
+        if (errno != ENOENT) {
+            LOGC(ATM_DOMAIN, ATM_TAG, "Failed to resolve path %{public}s: %{public}s", path.c_str(), strerror(errno));
+        } else {
+            LOGW(ATM_DOMAIN, ATM_TAG, "Failed to resolve path %{public}s: %{public}s", path.c_str(), strerror(errno));
+        }
         return false;
     }
 
@@ -103,6 +107,7 @@ static bool IsHapPathAllowed(const std::string& path)
             }
         }
     }
+    LOGC(ATM_DOMAIN, ATM_TAG, "Hap path is not in allowed directories, path=%{public}s.", path.c_str());
     return false;
 }
 
@@ -342,7 +347,7 @@ int32_t HapSignVerifyManager::CheckHapsSignInfo(Security::Verify::VerifyParams p
     TrustedBundleInfoInner& info, bool& isChanged) const
 {
     if (!IsHapPathAllowed(params.filePath)) {
-        LOGC(ATM_DOMAIN, ATM_TAG, "Hap path is not in allowed directories, path=%{public}s.",
+        LOGW(ATM_DOMAIN, ATM_TAG, "Hap path is not allowed, path=%{public}s.",
             params.filePath.c_str());
     }
     if (info.bootstrapInfo == nullptr) {
