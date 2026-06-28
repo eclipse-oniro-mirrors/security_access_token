@@ -355,9 +355,14 @@ int32_t MigrationVerifyHelper::VerifyMigratedBundle(const MigratedInfoIdl& migra
     std::unique_ptr<AddSpmDataTask> kernelTask;
     ret = AddKernelData(noCached, extendPermList, cachedInfos, fixedPermBriefPerToken, kernelTask);
     if (ret != RET_SUCCESS) {
-        LOGC(ATM_DOMAIN, ATM_TAG, "AddKernelData failed for %{public}s, ret=%{public}d.",
-            migratedInfo.bundleName.c_str(), ret);
-        return ret;
+        if (ret == ERR_DATA_CONFLICT_WITH_KERNEL) {
+            LOGW(ATM_DOMAIN, ATM_TAG, "Data conflict with kernel for %{public}s, ret=%{public}d.",
+                migratedInfo.bundleName.c_str(), ret);
+        } else {
+            LOGC(ATM_DOMAIN, ATM_TAG, "AddKernelData failed for %{public}s, ret=%{public}d.",
+                migratedInfo.bundleName.c_str(), ret);
+                return ret;
+        }
     }
 
     // 4. Build signing info and persist all info to DB
