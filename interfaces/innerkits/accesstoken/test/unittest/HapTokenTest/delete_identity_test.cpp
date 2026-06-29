@@ -532,6 +532,24 @@ HWTEST_F(DeleteIdentityTest, DeleteIdentityAbnormalTest009, TestSize.Level0)
     EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteIdentity(tokenIdEx2.tokenIdExStruct.tokenID,
         TEST_BUNDLE_NAME, ReservedType::NONE));
 }
+
+/**
+ * @tc.name: RefreshTokenIdStatusFuncTest001
+ * @tc.desc: RefreshTokenIdStatus returns ERR_PARAM_INVALID when tokenId is INVALID_TOKENID.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DeleteIdentityTest, RefreshTokenIdStatusFuncTest001, TestSize.Level0)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "RefreshTokenIdStatusFuncTest001");
+
+    Identity identity = {
+        .uid = TEST_USER_ID,
+        .tokenId = INVALID_TOKENID,
+    };
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
+        AccessTokenKit::RefreshTokenStatus(identity, ReservedType::NONE));
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

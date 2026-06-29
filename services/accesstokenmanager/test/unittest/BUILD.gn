@@ -389,6 +389,7 @@ if (access_token_manager_hapverify_enable) {
       "common/mock_access_token_db_operator.cpp",
       "common/parameter.cpp",
       "permission/boot_verify_scheduler_test.cpp",
+      "permission/token_info_manager_rollback_test.cpp",
     ]
 
     sources += accesstoken_manager_base_config.sources
