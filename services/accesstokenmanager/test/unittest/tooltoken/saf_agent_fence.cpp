@@ -37,6 +37,9 @@ bool g_generateConfigured = false;
 std::vector<int32_t> g_verifyRes;
 int32_t g_verifyRet = 0;
 bool g_verifyConfigured = false;
+std::vector<SAF::CliInfo> g_verifyV2CliInfos;
+int32_t g_verifyV2Ret = 0;
+bool g_verifyV2Configured = false;
 
 constexpr int32_t MOCK_ABNORMAL_QUERY_RET = -20260426;
 
@@ -122,6 +125,7 @@ int32_t SafAgentFence::BatchGenerateTicket(int32_t userId, const std::string& ca
 int32_t SafAgentFence::BatchVerifyTicket(int32_t userId, const std::string& callerId,
     const std::vector<VerifyTicketInfo>& verifyInfos, std::vector<int32_t>& verifyRes)
 {
+    verifyRes.clear();
     if (g_verifyConfigured) {
         verifyRes = g_verifyRes;
         g_verifyConfigured = false;
@@ -135,6 +139,22 @@ int32_t SafAgentFence::BatchVerifyTicket(int32_t userId, const std::string& call
 
     return 0;
 }
+
+int32_t SafAgentFence::VerifyTicket(int32_t osAccountId, const std::string& callerId,
+    const std::string& verifyInfo, std::vector<CliInfo>& cliInfos)
+{
+    cliInfos.clear();
+    if (g_verifyV2Configured) {
+        cliInfos = g_verifyV2CliInfos;
+        g_verifyV2Configured = false;
+        return g_verifyV2Ret;
+    }
+
+    (void)osAccountId;
+    (void)callerId;
+    (void)verifyInfo;
+    return 0;
+}
 } // namespace SAF
 
 namespace AccessToken {
@@ -143,6 +163,13 @@ void SetMockVerifyTicketResult(std::vector<int32_t> verifyRes, int32_t ret)
     g_verifyRes = verifyRes;
     g_verifyRet = ret;
     g_verifyConfigured = true;
+}
+
+void SetMockVerifyTicketV2Result(const std::vector<SAF::CliInfo>& cliInfos, int32_t ret)
+{
+    g_verifyV2CliInfos = cliInfos;
+    g_verifyV2Ret = ret;
+    g_verifyV2Configured = true;
 }
 
 void SetMockCommandPermissionsForTest(
@@ -177,6 +204,9 @@ void ClearMockVerifyTicketResult()
     g_verifyRes.clear();
     g_verifyRet = 0;
     g_verifyConfigured = false;
+    g_verifyV2CliInfos.clear();
+    g_verifyV2Ret = 0;
+    g_verifyV2Configured = false;
 }
 
 void ResetMockCounter()

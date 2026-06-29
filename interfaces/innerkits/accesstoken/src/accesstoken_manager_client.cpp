@@ -138,6 +138,21 @@ ToolAuthResult ConvertToolAuthResult(const ToolAuthResultIdl& resultIdl)
     result.authResults = resultIdl.authResults;
     return result;
 }
+
+PermissionResultType ConvertPermissionResultType(PermissionResultTypeIdl status)
+{
+    return static_cast<PermissionResultType>(status);
+}
+
+PermissionStatusDetail ConvertPermissionStatusDetail(const PermissionStatusDetailIdl& resultIdl)
+{
+    PermissionStatusDetail result;
+    result.permissionName = resultIdl.permissionName;
+    result.grantStatus = resultIdl.grantStatus;
+    result.grantFlag = resultIdl.grantFlag;
+    result.resultType = ConvertPermissionResultType(resultIdl.resultType);
+    return result;
+}
 } // namespace
 
 AccessTokenManagerClient& AccessTokenManagerClient::GetInstance()
@@ -1544,6 +1559,31 @@ int32_t AccessTokenManagerClient::InitCliToken(const CliInitInfo& info, AccessTo
         kernelPermList.emplace_back(tmp);
     }
     tokenIdEx.tokenIDEx = fullToken;
+    return RET_SUCCESS;
+}
+
+int32_t AccessTokenManagerClient::GetPermissionStatusDetails(AccessTokenID tokenID,
+    const std::vector<std::string>& permissionList, std::vector<PermissionStatusDetail>& resultList)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+
+    std::vector<PermissionStatusDetailIdl> resultIdlList;
+    int32_t errCode = proxy->GetPermissionStatusDetails(tokenID, permissionList, resultIdlList);
+    if (errCode != RET_SUCCESS) {
+        errCode = ConvertResult(errCode);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Request fail, result: %{public}d", errCode);
+        return errCode;
+    }
+
+    resultList.clear();
+    resultList.reserve(resultIdlList.size());
+    for (const auto& resultIdl : resultIdlList) {
+        resultList.emplace_back(ConvertPermissionStatusDetail(resultIdl));
+    }
     return RET_SUCCESS;
 }
 

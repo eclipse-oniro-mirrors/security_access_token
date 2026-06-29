@@ -41,6 +41,7 @@ group("fuzztest") {
     "getnativetokenidstub_fuzzer:GetNativeTokenIdStubFuzzTest",
     "getnativetokeninfostub_fuzzer:GetNativeTokenInfoStubFuzzTest",
     "getpermissionflagstub_fuzzer:GetPermissionFlagStubFuzzTest",
+    "getpermissionstatusdetailsstub_fuzzer:GetPermissionStatusDetailsStubFuzzTest",
     "getpermissionrequesttogglestatusstub_fuzzer:GetPermissionRequestToggleStatusStubFuzzTest",
     "getpermissionsstatusstub_fuzzer:GetPermissionsStatusStubFuzzTest",
     "getpermissionusedtypestub_fuzzer:GetPermissionUsedTypeStubFuzzTest",

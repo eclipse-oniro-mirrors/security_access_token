@@ -86,6 +86,19 @@ struct ToolAuthResultIdl {
     List<String> authResults;
 };
 
+enum PermissionResultTypeIdl {
+    PERMISSION_VALID = 0,
+    PERMISSION_NOT_EXIST = 1,
+    PERMISSION_NOT_DECLARED = 2
+};
+
+struct PermissionStatusDetailIdl {
+    String permissionName;
+    int grantStatus;
+    unsigned int grantFlag;
+    PermissionResultTypeIdl resultType;
+};
+
 struct UpdateHapInfoParamsIdl {
     String appIDDesc;
     /** which version of the SDK is used to develop the hap */

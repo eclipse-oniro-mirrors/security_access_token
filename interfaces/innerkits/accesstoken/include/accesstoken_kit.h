@@ -447,6 +447,15 @@ public:
      */
     static int32_t GetPermissionsStatus(AccessTokenID tokenID, std::vector<PermissionListState>& permList);
     /**
+     * @brief Query detailed effective permission status on input hap tokenID.
+     * @param tokenID hap token id
+     * @param permissionList input permission list
+     * @param resultList permission status detail list
+     * @return error code, see access_token_error.h
+     */
+    static int32_t GetPermissionStatusDetails(AccessTokenID tokenID,
+        const std::vector<std::string>& permissionList, std::vector<PermissionStatusDetail>& resultList);
+    /**
      * @brief Grant input permission to input tokenID with input flag.
      * @param tokenID token id
      * @param permissionName permission name quote

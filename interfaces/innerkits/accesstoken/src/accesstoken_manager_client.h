@@ -31,6 +31,7 @@
 #include "nocopyable.h"
 #include "permission_def.h"
 #include "permission_grant_info.h"
+#include "permission_list_state.h"
 #include "accesstoken_callbacks.h"
 #include "permission_state_full.h"
 #include "perm_state_change_callback_customize.h"
@@ -122,6 +123,8 @@ public:
         AccessTokenID tokenId, const std::string& permissionName, std::string& value);
     int32_t InitCliToken(const CliInitInfo& info,
         AccessTokenIDEx& tokenIdEx, std::vector<PermissionWithValue>& kernelPermList);
+    int32_t GetPermissionStatusDetails(AccessTokenID tokenID,
+        const std::vector<std::string>& permissionList, std::vector<PermissionStatusDetail>& resultList);
     int32_t GetHostTokenId(AccessTokenID toolTokenId, AccessTokenID& hostTokenId);
     void DumpTokenInfo(const AtmToolsParamInfo& info, std::string& dumpInfo);
     int32_t GetVersion(uint32_t& version);
