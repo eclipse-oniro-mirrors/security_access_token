@@ -167,8 +167,9 @@ public:
         HapInfoCheckResultIdl& resultInfoIdl) override;
     int32_t PrepareHapIdentity(int32_t& sessionId, const HapBaseInfoIdl& info, const BundlePolicyIdl& policy,
         const sptr<IRemoteObject>& cb, IdentityIdl& identity) override;
-    int32_t UpdateHapPolicy(int32_t sessionId, AccessTokenID tokenId, const BundlePolicyIdl& policy) override;
-    int32_t FinishInstall(int32_t sessionId, bool isSuccess,
+    int32_t UpdateHapPolicy(
+        int32_t sessionId, AccessTokenID tokenId, const BundlePolicyIdl& policy, int32_t& uid) override;
+    int32_t FinishInstall(int32_t sessionId, bool isPersistent,
         const std::map<std::string, std::string>& modulePathMap) override;
     int32_t GetCacheSignInfoBySessionId(int32_t sessionId, BundleInfosRawdata& bundleInfos) override;
     int32_t GetHapSignInfo(const std::string& bundleName, BundleInfosRawdata& bundleInfos) override;

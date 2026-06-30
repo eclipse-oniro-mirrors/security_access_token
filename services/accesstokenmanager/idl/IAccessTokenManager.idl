@@ -108,8 +108,8 @@ interface OHOS.Security.AccessToken.IAccessTokenManager{
 
     [ipccode 82] void CheckHapSignInfo([in] BundleHapListIdl list, [in] IRemoteObject cb, [out] CheckHapSignResultRawdata checkResult);
     [ipccode 83] void PrepareHapIdentity([inout] int sessionId, [in] HapBaseInfoIdl info, [in] BundlePolicyIdl policy, [in] IRemoteObject cb, [out] IdentityIdl identity);
-    [ipccode 84] void UpdateHapPolicy([in] int sessionId, [in] unsigned int tokenId, [in] BundlePolicyIdl policy);
-    [ipccode 85] void FinishInstall([in] int sessionId, [in] boolean isSuccess, [in] OrderedMap<String, String> modulePathMap);
+    [ipccode 84] void UpdateHapPolicy([in] int sessionId, [in] unsigned int tokenId, [in] BundlePolicyIdl policy, [inout] int uid);
+    [ipccode 85] void FinishInstall([in] int sessionId, [in] boolean isPersistent, [in] OrderedMap<String, String> modulePathMap);
     [ipccode 86] void GetCacheSignInfoBySessionId([in] int sessionId, [out] BundleInfosRawdata bundleInfos);
     [ipccode 87] void GetHapSignInfo([in] String bundleName, [out] BundleInfosRawdata bundleInfos);
     [ipccode 88] void CheckHapPermissionInfo([in] int sessionId, [in] InstallTypeEnumIdl type, [out] HapInfoCheckResultIdl resultInfoIdl);

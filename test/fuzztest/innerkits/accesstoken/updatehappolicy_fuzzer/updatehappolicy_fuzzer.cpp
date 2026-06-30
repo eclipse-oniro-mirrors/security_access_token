@@ -60,8 +60,9 @@ bool UpdateHapPolicyFuzzTest(const uint8_t* data, size_t size)
     
     BundlePolicy policy;
     InitBundlePolicy(provider, policy);
-    
+    int32_t uid = 0;
     AccessTokenKit::UpdateHapPolicy(sessionId, tokenId, policy);
+    AccessTokenKit::UpdateHapPolicy(sessionId, tokenId, policy, uid);
     
     return true;
 }

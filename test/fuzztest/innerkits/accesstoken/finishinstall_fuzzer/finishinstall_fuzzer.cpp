@@ -54,12 +54,12 @@ bool FinishInstallFuzzTest(const uint8_t* data, size_t size)
     FuzzedDataProvider provider(data, size);
     
     int32_t sessionId = provider.ConsumeIntegral<int32_t>();
-    bool isSuccess = provider.ConsumeBool();
+    bool isPersistent = provider.ConsumeBool();
     
     std::map<std::string, std::string> modulePathMap;
     InitModulePathMap(provider, modulePathMap);
     
-    AccessTokenKit::FinishInstall(sessionId, isSuccess, modulePathMap);
+    AccessTokenKit::FinishInstall(sessionId, isPersistent, modulePathMap);
     
     return true;
 }

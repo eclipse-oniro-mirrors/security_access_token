@@ -26,10 +26,14 @@
 #include "access_token_db.h"
 #include "access_token_error.h"
 #include "accesstoken_id_manager.h"
+#include "accesstoken_info_utils.h"
 #include "atm_tools_param_info_parcel.h"
 #include "claw_ticket_manager.h"
 #include "hap_info_parcel.h"
 #include "hap_policy_parcel.h"
+#if defined(SPM_DATA_ENABLE) && defined(IS_SUPPORT_HAP_RUNNING)
+#include "install_session_manager.h"
+#endif
 #include "mock_permission.h"
 #ifdef IS_SUPPORT_HAP_RUNNING
 #include "mock_app_verify_adapter.h"
@@ -2110,6 +2114,72 @@ HWTEST_F(AccessTokenManagerServiceTest, FilterPermFeatureTest009, TestSize.Level
     EXPECT_EQ(RET_SUCCESS, atManagerService_->DeleteToken(tokenIdEx.tokenIdExStruct.tokenID, false));
     PermissionFeatureManager::GetInstance().SetFeatures({});
 }
+
+#if defined(SPM_DATA_ENABLE) && defined(IS_SUPPORT_HAP_RUNNING)
+/**
+ * @tc.name: CheckHapPermissionTest001
+ * @tc.desc: Test CheckHapPermission, with invalid path in db
+ * @tc.require:
+ * @tc.type: FUNC
+ */
+HWTEST_F(AccessTokenManagerServiceTest, CheckHapPermissionTest001, TestSize.Level0)
+{
+    InstallSessionManager::GetInstance().SetMigrationDone();
+
+    GenericValues conditionValue;
+    conditionValue.Put(TokenFiledConst::FIELD_BUNDLE_NAME, "com.ohos.dlpmanager");
+    std::vector<GenericValues> hapPathResults;
+    ASSERT_EQ(ERR_OK,
+        AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO, conditionValue, hapPathResults));
+    ASSERT_GE(hapPathResults.size(), 1);
+
+    std::vector<std::string> paths;
+    for (auto value : hapPathResults) {
+        paths.emplace_back(value.GetString(TokenFiledConst::FIELD_PATH));
+    }
+    
+    GenericValues addValue;
+    addValue.Put(TokenFiledConst::FIELD_BUNDLE_NAME, "com.ohos.dlpmanager");
+    addValue.Put(TokenFiledConst::FIELD_MODULE_NAME, "CheckHapPermissionTest001");
+    addValue.Put(TokenFiledConst::FIELD_PATH, "/aaaaa/bbbbb/ccccc/ddddd.hsp");
+    addValue.Put(TokenFiledConst::FIELD_BUNDLE_TYPE, static_cast<int32_t>(AppExecFwk::Spm::BundleType::APP));
+    addValue.Put(TokenFiledConst::FIELD_IS_PREINSTALLED, 0);
+    std::vector<uint8_t> blobData = {0x01, 0x02, 0x03};
+    addValue.PutBlob(TokenFiledConst::FIELD_PERSIST_DATA, blobData);
+    
+    hapPathResults.emplace_back(addValue);
+
+    std::vector<AddInfo> addInfoVec;
+    AccessTokenInfoUtils::GenerateAddInfoToVec(AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO, hapPathResults, addInfoVec);
+    std::vector<DelInfo> delInfoVec;
+    AccessTokenInfoUtils::GenerateDelInfoToVec(AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO, conditionValue, delInfoVec);
+    ASSERT_EQ(ERR_OK, AccessTokenDbOperator::DeleteAndInsertValues(delInfoVec, addInfoVec));
+
+    BundleHapList hapList;
+    hapList.hapPaths = paths;
+    hapList.isPreInstalled = true;
+    hapList.userId = 100;
+    int32_t sessionId = 0;
+    std::vector<TrustedBundleInfo> bundleInfo;
+    HapVerifyResultInfo resultInfo;
+    EXPECT_EQ(ERR_OK,
+        InstallSessionManager::GetInstance().CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo));
+    
+    HapInfoCheckResult result;
+    EXPECT_EQ(ERR_OK, InstallSessionManager::GetInstance().CheckHapPermissionInfo(sessionId, TYPE_MERGE, result));
+
+    std::map<std::string, std::string> modulePathMap;
+    for (auto str : paths) {
+        modulePathMap[str] = str;
+    }
+    EXPECT_EQ(ERR_OK, InstallSessionManager::GetInstance().FinishInstall(sessionId, true, modulePathMap));
+
+    std::vector<GenericValues> hapPathResults2;
+    ASSERT_EQ(ERR_OK,
+        AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO, conditionValue, hapPathResults2));
+    EXPECT_EQ(hapPathResults2.size(), hapPathResults.size() - 1);
+}
+#endif
 
 /**
  * @tc.name: AccessTokenServiceCoverageTest001

@@ -17,6 +17,8 @@
 #include <gtest/hwext/gtest-tag.h>
 
 #include <algorithm>
+#include <fstream>
+#include <filesystem>
 #include <memory>
 #include <vector>
 
@@ -56,7 +58,10 @@ constexpr char DEFAULT_TOKEN_VERSION_VALUE = 1;
 const std::string TEST_BUNDLE_NAME = "com.example.camera";
 const std::string TEST_BUNDLE_NAME_2 = "com.example.music";
 const std::string TEST_BUNDLE_NAME_3 = "com.example.notes";
-const std::string TEST_PATH = "/data/app/el1/bundle/public/camera.hap";
+const std::string TEST_DIR = "/data/test_temp";
+const std::string TEST_PATH = "/data/test_temp/camera.hap";
+const std::string TEST_PATH2 = "/data/test_temp/music.hap";
+const std::string TEST_PATH3 = "/data/test_temp/camera3.hap";
 std::string g_appVerifyParamBackup;
 std::string g_spmEnforcingParamBackup;
 }
@@ -76,6 +81,17 @@ public:
         } else {
             g_spmEnforcingParamBackup.clear();
         }
+
+        std::filesystem::create_directory(TEST_DIR);
+        std::ofstream file(TEST_PATH);
+        file << "This is test data.";
+        file.close();
+        std::ofstream file2(TEST_PATH2);
+        file2 << "This is test data2.";
+        file2.close();
+        std::ofstream file3(TEST_PATH3);
+        file3 << "This is test data3.";
+        file3.close();
     }
 
     static void TearDownTestCase()
@@ -84,6 +100,8 @@ public:
             g_appVerifyParamBackup.empty() ? "" : g_appVerifyParamBackup.c_str());
         SetParameter(ACCESS_TOKEN_SERVICE_SPM_ENFORCING_KEY,
             g_spmEnforcingParamBackup.empty() ? "" : g_spmEnforcingParamBackup.c_str());
+        
+        std::filesystem::remove_all(TEST_DIR);
     }
 
     void SetUp() override
@@ -337,7 +355,7 @@ HWTEST_F(BootVerifySchedulerTest, VerifyBundleSignInfoWhenStart003, TestSize.Lev
 HWTEST_F(BootVerifySchedulerTest, VerifyBundleSignInfoWhenStart004, TestSize.Level1)
 {
     uint32_t hapSize = 0;
-    const std::string secondPath = "/data/test/music.hap";
+    const std::string secondPath = TEST_PATH2;
     // Prepare two preinstalled high-privilege bundles in mock DB so startup verification handles them in sequence.
     SetMockDbFindResult(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, RET_SUCCESS, {
         BuildHapInfoValue(TEST_TOKEN_ID, TEST_BUNDLE_NAME_2, TEST_UID),
@@ -455,7 +473,7 @@ HWTEST_F(BootVerifySchedulerTest, BuildPriorityBundleList001, TestSize.Level1)
 {
     auto& scheduler = BootVerifyScheduler::GetInstance();
     scheduler.bundleSignInfoMap_[TEST_BUNDLE_NAME] = BuildSignInfo(TEST_BUNDLE_NAME);
-    scheduler.bundleSignInfoMap_[TEST_BUNDLE_NAME].pathList.emplace_back("/data/test/camera2.hap");
+    scheduler.bundleSignInfoMap_[TEST_BUNDLE_NAME].pathList.emplace_back(TEST_PATH3);
     scheduler.bundleSignInfoMap_[TEST_BUNDLE_NAME].moduleNameList.emplace_back("feature1");
     scheduler.bundleSignInfoMap_[TEST_BUNDLE_NAME].bundleType.emplace_back(
         static_cast<uint32_t>(AppExecFwk::Spm::BundleType::APP));
@@ -949,7 +967,7 @@ HWTEST_F(BootVerifySchedulerTest, VerifySingleBundle002, TestSize.Level1)
 
     BundleSignInfo updatedInfo = BuildSignInfo();
     updatedInfo.moduleNameList.emplace_back("feature");
-    updatedInfo.pathList.emplace_back(TEST_PATH + ".2");
+    updatedInfo.pathList.emplace_back(TEST_PATH2);
     updatedInfo.bundleType.emplace_back(static_cast<uint32_t>(AppExecFwk::Spm::BundleType::APP));
     updatedInfo.persistDataList.emplace_back(BuildPersistData(TEST_BUNDLE_NAME, TEST_BUNDLE_NAME));
 

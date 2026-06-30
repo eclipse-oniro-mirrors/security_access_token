@@ -98,6 +98,8 @@ private:
 
     const IAppVerifyAdapter* adapter_;
 
+    int32_t VerifyFailed(int32_t ret, bool& isChanged, TrustedBundleInfoInner& info,
+        Security::Verify::ProvisionInfo& provisionInfo) const;
     int32_t BuildTrustedBundleInfo(
         const std::shared_ptr<Security::Verify::BootstrapInfo>& bootstrapInfo,
         const Security::Verify::ProvisionInfo& provisionInfo, TrustedBundleInfoInner& info) const;

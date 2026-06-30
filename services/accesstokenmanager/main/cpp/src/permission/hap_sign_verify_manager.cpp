@@ -85,19 +85,9 @@ static void InitAllowedHapPaths()
     }
 }
 
-static bool IsHapPathAllowed(const std::string& path)
+static bool IsHapPathAllowed(const char* resolvedPath)
 {
     std::call_once(g_allowedHapPathInitFlag, InitAllowedHapPaths);
-
-    char resolvedPath[PATH_MAX] = {0};
-    if (realpath(path.c_str(), resolvedPath) == nullptr) {
-        if (errno != ENOENT) {
-            LOGC(ATM_DOMAIN, ATM_TAG, "Failed to resolve path %{public}s: %{public}s", path.c_str(), strerror(errno));
-        } else {
-            LOGW(ATM_DOMAIN, ATM_TAG, "Failed to resolve path %{public}s: %{public}s", path.c_str(), strerror(errno));
-        }
-        return false;
-    }
 
     std::string absPath(resolvedPath);
     for (const auto& prefix : g_allowedHapPathPrefixes) {
@@ -107,7 +97,7 @@ static bool IsHapPathAllowed(const std::string& path)
             }
         }
     }
-    LOGC(ATM_DOMAIN, ATM_TAG, "Hap path is not in allowed directories, path=%{public}s.", path.c_str());
+    LOGC(ATM_DOMAIN, ATM_TAG, "Hap path is not in allowed directories, path=%{public}s.", resolvedPath);
     return false;
 }
 
@@ -343,10 +333,42 @@ Security::Verify::VerifyParams HapSignVerifyManager::MakeVerifyParams(
     return params;
 }
 
+int32_t HapSignVerifyManager::VerifyFailed(int32_t ret, bool& isChanged, TrustedBundleInfoInner& info,
+    Security::Verify::ProvisionInfo& provisionInfo) const
+{
+#ifdef X86_EMULATOR_MODE
+    LOGI(ATM_DOMAIN, ATM_TAG, "Verify hap failed in X86_EMULATOR_MODE, ignore verification result, ret=%{public}d.",
+        ret);
+    isChanged = false;
+    ret = BuildTrustedBundleInfo(info.bootstrapInfo, provisionInfo, info);
+    info.provisionInfo.appId.clear();
+    info.ignoreVerificationFailure = true;
+    if (ret != RET_SUCCESS) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Build trusted bundle info failed, ret=%{public}d.", ret);
+    }
+    return ret;
+#else
+    LOGE(ATM_DOMAIN, ATM_TAG, "Verify hap failed, ret=%{public}d.", ret);
+    return ret;
+#endif
+}
+
 int32_t HapSignVerifyManager::CheckHapsSignInfo(Security::Verify::VerifyParams params, bool booting,
     TrustedBundleInfoInner& info, bool& isChanged) const
 {
-    if (!IsHapPathAllowed(params.filePath)) {
+    char resolvedPath[PATH_MAX] = {0};
+    std::string path = params.filePath;
+    if (realpath(path.c_str(), resolvedPath) == nullptr) {
+        if (errno != ENOENT) {
+            LOGC(ATM_DOMAIN, ATM_TAG, "Failed to resolve path %{public}s: %{public}s", path.c_str(), strerror(errno));
+            return ERR_VERIFY_CANT_OPEN;
+        } else {
+            LOGW(ATM_DOMAIN, ATM_TAG, "Failed to resolve path %{public}s: %{public}s", path.c_str(), strerror(errno));
+            return ERR_VERIFY_FILE_NOT_EXIST;
+        }
+    }
+
+    if (!IsHapPathAllowed(resolvedPath)) {
         LOGW(ATM_DOMAIN, ATM_TAG, "Hap path is not allowed, path=%{public}s.",
             params.filePath.c_str());
     }
@@ -356,21 +378,7 @@ int32_t HapSignVerifyManager::CheckHapsSignInfo(Security::Verify::VerifyParams p
     Security::Verify::ProvisionInfo provisionInfo;
     int32_t ret = adapter_->VerifyHap(params, *info.bootstrapInfo, provisionInfo, isChanged);
     if (ret != RET_SUCCESS) {
-#ifdef X86_EMULATOR_MODE
-        LOGI(ATM_DOMAIN, ATM_TAG, "Verify hap failed in X86_EMULATOR_MODE, ignore verification result, ret=%{public}d.",
-            ret);
-        isChanged = false;
-        ret = BuildTrustedBundleInfo(info.bootstrapInfo, provisionInfo, info);
-        info.provisionInfo.appId.clear();
-        info.ignoreVerificationFailure = true;
-        if (ret != RET_SUCCESS) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "Build trusted bundle info failed, ret=%{public}d.", ret);
-        }
-        return ret;
-#else
-        LOGE(ATM_DOMAIN, ATM_TAG, "Verify hap failed, ret=%{public}d.", ret);
-        return ret;
-#endif
+        return VerifyFailed(ret, isChanged, info, provisionInfo);
     }
     if (!isChanged) {
         if (booting) {

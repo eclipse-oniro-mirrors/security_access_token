@@ -618,8 +618,9 @@ HWTEST_F(AccessTokenDenyTest, UpdateHapPolicyTest001, TestSize.Level0)
     bundlePolicy.dlpType = DLP_COMMON;
     bundlePolicy.isDebugGrant = false;
 
+    int32_t uid = 0;
     EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
-        AccessTokenKit::UpdateHapPolicy(sessionId, tokenId, bundlePolicy));
+        AccessTokenKit::UpdateHapPolicy(sessionId, tokenId, bundlePolicy, uid));
 }
 
 /**

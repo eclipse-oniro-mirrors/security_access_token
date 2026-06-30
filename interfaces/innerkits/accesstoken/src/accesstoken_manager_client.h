@@ -155,8 +155,9 @@ public:
     int32_t CheckHapPermissionInfo(int32_t sessionId, InstallTypeEnum type, HapInfoCheckResult& result);
     int32_t PrepareHapIdentity(int32_t& sessionId, const HapBaseInfo& info,
         const BundlePolicy& policy, Identity& identity);
-    int32_t UpdateHapPolicy(int32_t sessionId, int32_t tokenId, const BundlePolicy& policy);
-    int32_t FinishInstall(int32_t sessionId, bool isSuccess, const std::map<std::string, std::string>& modulePathMap);
+    int32_t UpdateHapPolicy(int32_t sessionId, int32_t tokenId, const BundlePolicy& policy, int32_t& uid);
+    int32_t FinishInstall(
+        int32_t sessionId, bool isPersistent, const std::map<std::string, std::string>& modulePathMap);
     int32_t GetCacheSignInfoBySessionId(int32_t sessionId, std::vector<TrustedBundleInfo>& bundleInfo);
     int32_t GetHapSignInfo(const std::string& bundleName, std::vector<TrustedBundleInfo>& bundleInfo);
     int32_t GetCachePolicyBySessionId(int32_t sessionId, const std::string& bundleName,
