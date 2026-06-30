@@ -79,7 +79,7 @@ AccessTokenID AccessTokenCompatClient::GetNativeTokenId(const std::string& proce
     }
     AccessTokenID tokenID;
     int32_t errCode = proxy->GetNativeTokenId(processName, tokenID);
-    LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d, process=%{public}s, Id=%{public}u).",
+    LOGD(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d, process=%{public}s, Id=%{public}u).",
         errCode, processName.c_str(), tokenID);
     return tokenID;
 }
