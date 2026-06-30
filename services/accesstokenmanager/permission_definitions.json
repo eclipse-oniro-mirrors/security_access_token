@@ -10089,7 +10089,7 @@
             "availableType": "NORMAL",
             "since": "26.0.0",
             "deprecated": "",
-            "provisionEnable": false,
+            "provisionEnable": true,
             "distributedSceneEnable": false,
             "isKernelEffect": false,
             "hasValue": false,
