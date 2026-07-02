@@ -10150,6 +10150,17 @@
             "isKernelEffect": false,
             "hasValue": false,
             "deviceTypes": ["2in1", "tablet", "phone"]
+        },
+        {
+            "name": "ohos.permission.ACCESS_ASSOCIATE_ASSISTANT",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": true,
+            "deviceTypes": ["2in1", "phone", "tablet", "car"]
         }
     ]
 }
