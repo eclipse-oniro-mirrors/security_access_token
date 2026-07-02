@@ -112,11 +112,10 @@ namespace OHOS {
             AccessTokenIDEx tokenIdEx = AccessTokenKit::AllocHapToken(g_InfoParms, g_PolicyPrams);
             tokenIdHap = tokenIdEx.tokenIDEx;
             SetSelfTokenID(tokenIdHap);
-            uint32_t hapSize = 0;
             uint32_t nativeSize = 0;
             uint32_t pefDefSize = 0;
             uint32_t dlpSize = 0;
-            AccessTokenInfoManager::GetInstance().Init(hapSize, nativeSize, pefDefSize, dlpSize);
+            AccessTokenInfoManager::GetInstance().Init(nativeSize, pefDefSize, dlpSize);
         }
 
         // Occasionally drop to non-root uid to exercise permission denial path

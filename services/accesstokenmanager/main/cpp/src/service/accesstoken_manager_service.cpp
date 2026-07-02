@@ -1560,7 +1560,8 @@ int AccessTokenManagerService::DeleteToken(AccessTokenID tokenID, bool isTokenRe
         LOGC(ATM_DOMAIN, ATM_TAG, "Failed to get hap info of %{public}u, err %{public}d.", tokenID, errorCode);
         dfxInfo.duration = TimeUtil::GetCurrentTimestamp() - beginTime;
         ReportSysEventDelHap(errorCode, sceneCode, dfxInfo);
-        return errorCode;
+        // return success if token id not exsits;
+        return RET_SUCCESS;
     }
 
     // only support hap token deletion
@@ -2547,8 +2548,8 @@ bool AccessTokenManagerService::Initialize()
     uint32_t pefDefSize = 0;
     uint32_t dlpSize = 0;
     int32_t ret = RET_SUCCESS;
-    AccessTokenInfoManager::GetInstance().Init(hapSize, nativeSize, pefDefSize, dlpSize);
-    ret = BootVerifyScheduler::GetInstance().VerifyBundleSignInfoWhenStart();
+    AccessTokenInfoManager::GetInstance().Init(nativeSize, pefDefSize, dlpSize);
+    ret = BootVerifyScheduler::GetInstance().VerifyBundleSignInfoWhenStart(hapSize);
     if (ret != RET_SUCCESS) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Verify bundle sign info when start failed, ret=%{public}d.", ret);
         return false;

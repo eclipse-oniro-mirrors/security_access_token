@@ -88,6 +88,39 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, ToRdbValueBuckets001, TestSize.Level4)
 }
 
 /*
+ * @tc.name: WhiteListColumnStringType001
+ * @tc.desc: FIELD_WHITELIST should always be handled as string column in DB util.
+ * @tc.type: FUNC
+ * @tc.require: TDD
+ */
+HWTEST_F(AccessTokenDatabaseCoverageTest, WhiteListColumnStringType001, TestSize.Level4)
+{
+    GenericValues modifyValue;
+    modifyValue.Put(TokenFiledConst::FIELD_WHITELIST, VariantValue(123));
+    NativeRdb::ValuesBucket bucket;
+    AccessTokenDbUtil::ToRdbValueBucket(modifyValue, bucket);
+    EXPECT_EQ(TokenFiledConst::FIELD_WHITELIST, bucket.stringColumn_);
+    EXPECT_EQ("", bucket.stringValue_);
+    EXPECT_EQ("", bucket.intColumn_);
+
+    GenericValues conditionValue;
+    conditionValue.Put(TokenFiledConst::FIELD_WHITELIST, VariantValue(123));
+    NativeRdb::RdbPredicates predicates("user_policy_table");
+    AccessTokenDbUtil::ToRdbPredicates(conditionValue, predicates);
+    EXPECT_EQ(TokenFiledConst::FIELD_WHITELIST, predicates.equalToStringColumn_);
+    EXPECT_EQ("", predicates.equalToStringValue_);
+    EXPECT_EQ("", predicates.equalToIntColumn_);
+
+    std::vector<VariantValue> values = { VariantValue("123"), VariantValue(456) };
+    NativeRdb::RdbPredicates inPredicates("user_policy_table");
+    AccessTokenDbUtil::ToRdbPredicates(TokenFiledConst::FIELD_WHITELIST, values, inPredicates);
+    EXPECT_EQ(TokenFiledConst::FIELD_WHITELIST, inPredicates.inStringColumn_);
+    ASSERT_EQ(2u, inPredicates.inStringValues_.size());
+    EXPECT_EQ("123", inPredicates.inStringValues_[0]);
+    EXPECT_EQ("", inPredicates.inStringValues_[1]);
+}
+
+/*
  * @tc.name: TranslationIntoPermissionStatus001
  * @tc.desc: DataTranslator::TranslationIntoPermissionStatus
  * @tc.type: FUNC

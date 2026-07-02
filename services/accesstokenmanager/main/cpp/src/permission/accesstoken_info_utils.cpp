@@ -131,7 +131,7 @@ void AccessTokenInfoUtils::BuildBundleFullInfo(const BundleParam& param, const H
             continue;
         }
         PermissionBriefDef briefDef;
-        if (!GetPermissionBriefDef(status.permissionName, briefDef)) {
+        if (!GetPermissionBriefDef(status.permissionName, briefDef) || !briefDef.isEnable) {
             continue;
         }
         if (!PermissionConstraintCheck::IsAclSatisfied(briefDef, policy)) {

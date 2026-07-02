@@ -53,11 +53,10 @@ void InstallSessionManagerMockTest::SetUpTestCase()
     atManagerService_ = DelayedSingleton<AccessTokenManagerService>::GetInstance();
     g_installSessionManager = &InstallSessionManager::GetInstance();
 
-    uint32_t hapSize = 0;
     uint32_t nativeSize = 0;
     uint32_t pefDefSize = 0;
     uint32_t dlpSize = 0;
-    AccessTokenInfoManager::GetInstance().Init(hapSize, nativeSize, pefDefSize, dlpSize);
+    AccessTokenInfoManager::GetInstance().Init(nativeSize, pefDefSize, dlpSize);
 
     AccessTokenMigrationManager::GetInstance().Initialize();
     AccessTokenMigrationManager::GetInstance().FinishMigration();

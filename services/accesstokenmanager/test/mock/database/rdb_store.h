@@ -66,6 +66,13 @@ public:
     void PutLong(std::string a, int64_t b);
     void PutBlob(std::string a, std::vector<uint8_t> b);
 
+    std::string stringColumn_;
+    std::string stringValue_;
+    std::string intColumn_;
+    int32_t intValue_ = 0;
+    std::string longColumn_;
+    int64_t longValue_ = 0;
+
 private:
     bool isEmpty_ = true;
 };
@@ -106,6 +113,17 @@ public:
     void Or();
     void BeginWrap();
     void EndWrap();
+
+    std::string equalToStringColumn_;
+    std::string equalToStringValue_;
+    std::string equalToIntColumn_;
+    int32_t equalToIntValue_ = 0;
+    std::string inStringColumn_;
+    std::vector<std::string> inStringValues_;
+    std::string inValueObjectColumn_;
+    size_t inValueObjectSize_ = 0;
+    std::string inIntColumn_;
+    std::vector<int32_t> inIntValues_;
 };
 
 class Transaction {

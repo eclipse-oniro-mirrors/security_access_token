@@ -60,7 +60,25 @@ typedef enum AddHapSceneCode {
     INIT,
     MAP,
     INSTALL_FINISH,
+    PRE_VERIFY,
 } AddHapSceneCode;
+
+typedef enum AccessTokenServiceStartSceneCode {
+    // 0~0xFFF reserved for ipc code of access token manager
+
+    // 0x1000~0x1FFF reserved for native token
+
+    // 0x2000~0x2FFF reserved for service start scene code
+    REGISTER_TOKEN_ID = 0x2000, // 8192
+    REGISTER_UID = 0x2001,
+    VERIFY_HAP = 0x2002,
+    PERSIST_BUNDLE_DATA = 0x2003,
+} AccessTokenServiceStartSceneCode;
+
+typedef enum AccessTokenServiceStartErrorCode {
+    REGISTER_TOKEN_ID_FAILED = 1,
+    UID_CONFLICT = 2
+} AccessTokenServiceStartErrorCode;
 
 typedef enum SessionFinishSceneCode {
     SESSION_FINISH = 500,

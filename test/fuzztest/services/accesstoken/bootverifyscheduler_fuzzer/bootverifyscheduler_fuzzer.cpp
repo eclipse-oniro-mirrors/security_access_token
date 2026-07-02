@@ -155,7 +155,8 @@ bool BootVerifySchedulerFuzzTest(const uint8_t* data, size_t size)
     scheduler.bundleSignInfoMap_.clear();
     scheduler.isAllHapBundlesVerified_.store(false);
     scheduler.uidSet_.clear();
-    if (scheduler.VerifyBundleSignInfoWhenStart() == RET_SUCCESS) {
+    uint32_t hapSize = 0;
+    if (scheduler.VerifyBundleSignInfoWhenStart(hapSize) == RET_SUCCESS) {
         (void)scheduler.VerifyBundleWithState(TEST_BUNDLE_NAME);
     }
 

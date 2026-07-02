@@ -345,8 +345,8 @@ void TokenInfoManagerTest::SetUpTestCase()
     uint32_t nativeSize = 0;
     uint32_t pefDefSize = 0;
     uint32_t dlpSize = 0;
-    AccessTokenInfoManager::GetInstance().Init(hapSize, nativeSize, pefDefSize, dlpSize);
-    (void)BootVerifyScheduler::GetInstance().VerifyBundleSignInfoWhenStart();
+    AccessTokenInfoManager::GetInstance().Init(nativeSize, pefDefSize, dlpSize);
+    (void)BootVerifyScheduler::GetInstance().VerifyBundleSignInfoWhenStart(hapSize);
     BootVerifyScheduler::GetInstance().StartVerifyNormalBundleListAsync();
     sleep(SLEEP_TIME_SECONDS);
 }
@@ -1820,11 +1820,10 @@ HWTEST_F(TokenInfoManagerTest, AllocLocalTokenID001, TestSize.Level0)
 HWTEST_F(TokenInfoManagerTest, AccessTokenInfoManager001, TestSize.Level0)
 {
     AccessTokenInfoManager::GetInstance().hasInited_ = true;
-    uint32_t hapSize = 0;
     uint32_t nativeSize = 0;
     uint32_t pefDefSize = 0;
     uint32_t dlpSize = 0;
-    AccessTokenInfoManager::GetInstance().Init(hapSize, nativeSize, pefDefSize, dlpSize);
+    AccessTokenInfoManager::GetInstance().Init(nativeSize, pefDefSize, dlpSize);
     AccessTokenInfoManager::GetInstance().hasInited_ = false;
     ASSERT_EQ(false, AccessTokenInfoManager::GetInstance().hasInited_);
 }
@@ -3979,8 +3978,8 @@ HWTEST_F(TokenInfoManagerTest, ReservedHapInfo002, TestSize.Level0)
     uint32_t pefDefSize = 0;
     uint32_t dlpSize = 0;
 
-    AccessTokenInfoManager::GetInstance().Init(hapSize, nativeSize, pefDefSize, dlpSize);
-    (void)BootVerifyScheduler::GetInstance().VerifyBundleSignInfoWhenStart();
+    AccessTokenInfoManager::GetInstance().Init(nativeSize, pefDefSize, dlpSize);
+    (void)BootVerifyScheduler::GetInstance().VerifyBundleSignInfoWhenStart(hapSize);
     BootVerifyScheduler::GetInstance().StartVerifyNormalBundleListAsync();
     sleep(3);
     EXPECT_TRUE(AccessTokenIDManager::GetInstance().IsReservedTokenId(123));
