@@ -150,7 +150,7 @@ char* MallocCString(const std::string& stdString)
 static char** VectorToCArrString(const std::vector<std::string>& vec)
 {
     if (vec.empty()) {
-        LOGW("VectorToCArrString: input vector is empty.");
+        LOGE("VectorToCArrString: input vector is empty.");
         return nullptr;
     }
     char** result = static_cast<char**>(malloc(sizeof(char*) * vec.size()));
@@ -167,7 +167,7 @@ static char** VectorToCArrString(const std::vector<std::string>& vec)
 static int32_t* VectorToCArrInt32(const std::vector<int32_t>& vec)
 {
     if (vec.empty()) {
-        LOGW("VectorToCArrInt32: input vector is empty.");
+        LOGE("VectorToCArrInt32: input vector is empty.");
         return nullptr;
     }
     int32_t* result = static_cast<int32_t*>(malloc(sizeof(int32_t) * vec.size()));
@@ -184,7 +184,7 @@ static int32_t* VectorToCArrInt32(const std::vector<int32_t>& vec)
 static bool* VectorToCArrBool(const std::vector<bool>& vec)
 {
     if (vec.empty()) {
-        LOGW("VectorToCArrBool: input vector is empty.");
+        LOGE("VectorToCArrBool: input vector is empty.");
         return nullptr;
     }
     bool* result = static_cast<bool*>(malloc(sizeof(bool) * vec.size()));
