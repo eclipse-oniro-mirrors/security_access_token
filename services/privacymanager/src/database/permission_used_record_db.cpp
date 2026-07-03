@@ -259,6 +259,10 @@ int32_t PermissionUsedRecordDb::FindByConditions(DataType type, const std::set<i
     auto statement = Prepare(prepareSql);
 
     for (const auto& columnName : andColumns) {
+        // security access usedType is hard coded, so do not bind it.
+        if (columnName == PrivacyFiledConst::FIELD_USED_TYPE) {
+            continue;
+        }
         statement.Bind(columnName, andConditions.Get(columnName));
     }
 
@@ -559,6 +563,14 @@ std::string PermissionUsedRecordDb::CreateSelectByConditionPrepareSqlCmd(const i
                 sql.append(PrivacyFiledConst::FIELD_TOKEN_ID);
                 sql.append(" =:" + andColName);
             }
+        } else if (andColName == PrivacyFiledConst::FIELD_USED_TYPE) {
+            sql.append(" and ");
+            sql.append(PrivacyFiledConst::FIELD_USED_TYPE);
+            sql.append(" in (");
+            sql.append(std::to_string(static_cast<int32_t>(PermissionUsedType::PICKER_TYPE)));
+            sql.append(", ");
+            sql.append(std::to_string(static_cast<int32_t>(PermissionUsedType::SECURITY_COMPONENT_TYPE)));
+            sql.append(")");
         } else {
             sql.append(" and ");
             sql.append(andColName + "=:" + andColName);
