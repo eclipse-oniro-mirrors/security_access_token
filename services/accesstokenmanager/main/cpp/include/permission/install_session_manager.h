@@ -49,6 +49,11 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 
+struct UidStruct {
+    int32_t uid = 0;
+    bool isNewBundleId = false;
+};
+
 struct InstallCache {
     // Basic info:
     // Input hap list containing hap paths and user ID
@@ -88,6 +93,8 @@ struct InstallCache {
     // Update info:
     // Map of tokenId to bundlePolicy for multi-token scenarios
     std::unordered_map<int32_t, BundlePolicy> tokenIDToBundlePolicy;
+    // Map of tokenId to uid for multi-token scenarios
+    std::unordered_map<int32_t, UidStruct> tokenIDToUid;
 };
 
 struct FinishContext {
@@ -117,8 +124,9 @@ public:
     int32_t CheckHapPermissionInfo(int32_t sessionId, InstallTypeEnum type, HapInfoCheckResult& result);
     int32_t PrepareHapIdentity(int32_t& sessionId, const HapBaseInfo& info, const BundlePolicy& policy,
         const sptr<IRemoteObject>& cb, Identity& identity);
-    int32_t UpdateHapPolicy(int32_t sessionId, int32_t tokenId, const BundlePolicy& policy);
-    int32_t FinishInstall(int32_t sessionId, bool isSuccess, const std::map<std::string, std::string>& modulePathMap);
+    int32_t UpdateHapPolicy(int32_t sessionId, int32_t tokenId, const BundlePolicy& policy, int32_t& uid);
+    int32_t FinishInstall(
+        int32_t sessionId, bool isPersistent, const std::map<std::string, std::string>& modulePathMap);
     int32_t GetCacheSignInfoBySessionId(int32_t sessionId, std::vector<TrustedBundleInfo>& bundleInfo);
     int32_t GetHapSignInfo(const std::string& bundleName, std::vector<TrustedBundleInfo>& bundleInfo);
     void ClearSessionByPid(int32_t pid);
@@ -131,7 +139,7 @@ private:
     int32_t CheckPermissionList(InstallCache& cache, HapInfoCheckResult& result);
     int32_t GetHapPathFromDb(std::string bundleName, std::vector<std::string>& paths,
         std::vector<std::vector<uint8_t>>& persistDatas);
-    int32_t RebuildHapPolicy(InstallCache& cache, const std::vector<std::string>& paths,
+    int32_t RebuildHapPolicy(InstallCache& cache, std::vector<std::string>& paths,
         std::vector<std::vector<uint8_t>>& persistDatas);
     void ClearTimeoutData();
     int32_t CreateInstallSession(const HapBaseInfo& info, const BundlePolicy& policy,
@@ -144,9 +152,11 @@ private:
     int32_t GetTokenIdAndUid(InstallCache& cache, const BundlePolicy& bundlePolicy);
     int32_t MatchBaseInfo(InstallCache& cache, int32_t reserved, AccessTokenID tokenId, int32_t uid, int32_t oldAttr);
     int32_t CreateTokenIdAndUid(InstallCache& cache, const BundlePolicy& bundlePolicy, int32_t bundleId);
-    int32_t HandleReservedToken(InstallCache& cache, AccessTokenID tokenId, int32_t uid, int32_t oldAttr);
-    int32_t FastVerify(const std::vector<std::string>& paths, std::vector<std::vector<uint8_t>>& persistDatas,
+    int32_t HandleReservedTokenWithData(InstallCache& cache, AccessTokenID tokenId, int32_t uid, int32_t oldAttr);
+    int32_t FastVerify(std::vector<std::string>& paths, std::vector<std::vector<uint8_t>>& persistDatas,
         std::vector<TrustedBundleInfoInner>& bundleInfos, int32_t userId = -1);
+    int32_t CheckUid(
+        InstallCache& cache, int32_t& uid, std::shared_ptr<HapTokenInfoInner> infoPtr, bool& isNewBundleId);
 
     void InitPermissionList(const BundleParam& bundleParam, HapPolicy& policy);
     bool NoNeedPermissionInheritance(const BundleParam& bundleParam, const HapPolicy& policy, AccessTokenAttr oldAttr);

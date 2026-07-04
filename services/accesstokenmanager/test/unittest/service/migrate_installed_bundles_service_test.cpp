@@ -15,6 +15,8 @@
 
 #include "gtest/gtest.h"
 #include <gtest/hwext/gtest-tag.h>
+#include <fstream>
+#include <filesystem>
 
 #include "access_token_db.h"
 #include "access_token_db_operator.h"
@@ -72,6 +74,8 @@ struct UidGuard {
 };
 
 constexpr const char* BMS_MIGRATE_COMPLETED = "bms_migrate_completed";
+const std::string TEST_DIR = "/data/test_temp";
+const std::string TEST_PATH = "/data/test_temp/camera.hap";
 #ifdef IS_SUPPORT_HAP_RUNNING
 MockAppVerifyAdapter mockAdapter_;
 AppVerifyAdapter resetAdapter_;
@@ -181,7 +185,7 @@ int32_t AllocHapTokenLocally(const HapInfoParams& info, HapPolicyParams& policyP
 void BuildMigratedInfo(const HapInfoParams& info, uint64_t tokenIdEx, int32_t uid, MigratedInfoIdl& migratedInfo)
 {
     migratedInfo.bundleName = info.bundleName;
-    migratedInfo.pathList.hapPaths = { info.bundleName };
+    migratedInfo.pathList.hapPaths = { TEST_PATH };
     migratedInfo.pathList.isPreInstalled = false;
     HapBaseInfoIdl baseInfo;
     baseInfo.bundleName = info.bundleName;
@@ -229,6 +233,11 @@ class MigrateInstalledBundlesServiceTest : public testing::Test {
 public:
     static void SetUpTestCase()
     {
+        std::filesystem::create_directory(TEST_DIR);
+        std::ofstream file(TEST_PATH);
+        file << "This is test data.";
+        file.close();
+
         TestCommon::SetTestEvironment(GetSelfTokenID());
         CleanupTestDbArtifacts();
         ClearMigrationCompletedRecord();
@@ -246,6 +255,8 @@ public:
         CleanupTestDbArtifacts();
         ClearMigrationCompletedRecord();
         TestCommon::ResetTestEvironment();
+
+        std::filesystem::remove_all(TEST_DIR);
     }
 
     void SetUp() override
@@ -1093,7 +1104,7 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, MigrateInstalledBundles_KitHapBaseI
 
     MigratedInfo migratedInfo;
     migratedInfo.bundleName = info.bundleName;
-    migratedInfo.pathList.hapPaths = { info.bundleName };
+    migratedInfo.pathList.hapPaths = { TEST_PATH };
     migratedInfo.pathList.isPreInstalled = false;
     HapBaseInfo baseInfo;
     baseInfo.userID = info.userID;

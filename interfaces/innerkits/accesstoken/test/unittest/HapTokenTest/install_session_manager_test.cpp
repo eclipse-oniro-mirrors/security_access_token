@@ -244,8 +244,8 @@ HWTEST_F(InstallSessionManagerTest, UpdateHapPolicyTest001, TestSize.Level0)
     BundlePolicy bundlePolicy;
     bundlePolicy.dlpType = DLP_COMMON;
     bundlePolicy.isDebugGrant = false;
-
-    EXPECT_NE(RET_SUCCESS, AccessTokenKit::UpdateHapPolicy(sessionId, tokenId, bundlePolicy));
+    int32_t uid = 0;
+    EXPECT_NE(RET_SUCCESS, AccessTokenKit::UpdateHapPolicy(sessionId, tokenId, bundlePolicy, uid));
 }
 #if defined(SPM_DATA_ENABLE) && defined(IS_SUPPORT_HAP_RUNNING)
 /**
@@ -265,7 +265,8 @@ HWTEST_F(InstallSessionManagerTest, UpdateHapPolicyTest002, TestSize.Level0)
     bundlePolicy.dlpType = DLP_COMMON;
     bundlePolicy.isDebugGrant = false;
 
-    EXPECT_NE(RET_SUCCESS, AccessTokenKit::UpdateHapPolicy(sessionId, tokenId, bundlePolicy));
+    int32_t uid = 0;
+    EXPECT_NE(RET_SUCCESS, AccessTokenKit::UpdateHapPolicy(sessionId, tokenId, bundlePolicy, uid));
 
     sessionId = 0;
     HapBaseInfo baseInfo;
@@ -276,7 +277,7 @@ HWTEST_F(InstallSessionManagerTest, UpdateHapPolicyTest002, TestSize.Level0)
     Identity identity;
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::PrepareHapIdentity(sessionId, baseInfo, bundlePolicy, identity));
 
-    EXPECT_NE(RET_SUCCESS, AccessTokenKit::UpdateHapPolicy(sessionId, tokenId, bundlePolicy));
+    EXPECT_NE(RET_SUCCESS, AccessTokenKit::UpdateHapPolicy(sessionId, tokenId, bundlePolicy, uid));
 }
 #endif
 
@@ -519,7 +520,8 @@ HWTEST_F(InstallSessionManagerTest, UpdateHapPolicyTest101, TestSize.Level0)
     bundlePolicy.dlpType = DLP_COMMON;
     bundlePolicy.isDebugGrant = false;
 
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::UpdateHapPolicy(sessionId, tokenId, bundlePolicy));
+    int32_t uid = 0;
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::UpdateHapPolicy(sessionId, tokenId, bundlePolicy, uid));
 }
 
 /**

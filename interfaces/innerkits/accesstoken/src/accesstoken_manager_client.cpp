@@ -1855,7 +1855,8 @@ int32_t AccessTokenManagerClient::PrepareHapIdentity(int32_t& sessionId, const H
     return res;
 }
 
-int32_t AccessTokenManagerClient::UpdateHapPolicy(int32_t sessionId, int32_t tokenId, const BundlePolicy& policy)
+int32_t AccessTokenManagerClient::UpdateHapPolicy(
+    int32_t sessionId, int32_t tokenId, const BundlePolicy& policy, int32_t& uid)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
@@ -1873,16 +1874,16 @@ int32_t AccessTokenManagerClient::UpdateHapPolicy(int32_t sessionId, int32_t tok
     policyIdl.dlpType = static_cast<DlpTypeIdl>(policy.dlpType);
     policyIdl.isDebugGrant = policy.isDebugGrant;
 
-    int32_t res = proxy->UpdateHapPolicy(sessionId, tokenId, policyIdl);
+    int32_t res = proxy->UpdateHapPolicy(sessionId, tokenId, policyIdl, uid);
     if (res != RET_SUCCESS) {
         res = ConvertResult(res);
     }
 
-    LOGI(ATM_DOMAIN, ATM_TAG, "Result=%{public}d", res);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result=%{public}d, uid=%{public}d", res, uid);
     return res;
 }
 
-int32_t AccessTokenManagerClient::FinishInstall(int32_t sessionId, bool isSuccess,
+int32_t AccessTokenManagerClient::FinishInstall(int32_t sessionId, bool isPersistent,
     const std::map<std::string, std::string>& modulePathMap)
 {
     auto proxy = GetProxy();
@@ -1891,7 +1892,7 @@ int32_t AccessTokenManagerClient::FinishInstall(int32_t sessionId, bool isSucces
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
 
-    int32_t res = proxy->FinishInstall(sessionId, isSuccess, modulePathMap);
+    int32_t res = proxy->FinishInstall(sessionId, isPersistent, modulePathMap);
     if (res != RET_SUCCESS) {
         res = ConvertResult(res);
     }

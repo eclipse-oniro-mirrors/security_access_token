@@ -59,6 +59,8 @@ public:
     int32_t AllocUid(int32_t localId, int32_t& outUid);
     int32_t RemoveBundleId(int32_t uid);
     int32_t TranslateUid(int32_t srcUid, int32_t dstLocalId, int32_t& outUid);
+    int32_t GetBundleIdMin();
+    bool IsBundleIdInUse(int32_t bundleId);
 
     // Migration control
     void SetMigrationDone();

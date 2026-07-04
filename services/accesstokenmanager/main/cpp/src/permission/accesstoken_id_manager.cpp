@@ -37,7 +37,7 @@ constexpr int32_t UID_TRANSFORM_DIVISOR = 200000;
 static std::atomic<int32_t> g_bundleIdMin = -1;
 }
 
-static int32_t GetBundleIdMin()
+int32_t AccessTokenIDManager::GetBundleIdMin()
 {
     int32_t expectedValue = g_bundleIdMin.load();
     if (expectedValue != -1) {
@@ -275,6 +275,12 @@ bool AccessTokenIDManager::ExtractBundleId(int32_t uid, int32_t& bundleId) const
     }
     bundleId = extracted;
     return true;
+}
+
+bool AccessTokenIDManager::IsBundleIdInUse(int32_t bundleId)
+{
+    std::unique_lock<std::mutex> lock(bundleIdLock_);
+    return bundleIdSet_.count(bundleId) > 0;
 }
 
 void AccessTokenIDManager::InitSingleBundleIdCache(int32_t uid)

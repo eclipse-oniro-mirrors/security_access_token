@@ -17,6 +17,8 @@
 #include <gtest/hwext/gtest-tag.h>
 
 #include <chrono>
+#include <fstream>
+#include <filesystem>
 #include <thread>
 
 #include "access_token_db_operator.h"
@@ -50,6 +52,9 @@ namespace AccessToken {
 namespace {
 MockAppVerifyAdapter mockAdapter_;
 AppVerifyAdapter resetAdapter_;
+const std::string TEST_DIR = "/data/test_temp";
+const std::string TEST_PATH = "/data/test_temp/camera.hap";
+const std::string TEST_PATH2 = "/data/test_temp/camera2.hap";
 
 void SetUpVerifyEnvironment()
 {
@@ -116,6 +121,14 @@ class MigrationVerifyHelperTest : public testing::Test {
 public:
     static void SetUpTestCase()
     {
+        std::filesystem::create_directory(TEST_DIR);
+        std::ofstream file(TEST_PATH);
+        file << "This is test data.";
+        file.close();
+        std::ofstream file2(TEST_PATH2);
+        file2 << "This is test data2.";
+        file2.close();
+
         SetUpVerifyEnvironment();
         TestCommon::SetTestEvironment(GetSelfTokenID());
     }
@@ -124,6 +137,8 @@ public:
     {
         TearDownVerifyEnvironment();
         TestCommon::ResetTestEvironment();
+
+        std::filesystem::remove_all(TEST_DIR);
     }
 };
 
@@ -151,7 +166,7 @@ HWTEST_F(MigrationVerifyHelperTest, VerifyMigratedBundle001, TestSize.Level1)
 
     // Configure mock adapter to return a verified bundle name matching migratedInfo.bundleName
     mockAdapter_.bundleName_ = info.bundleName;
-    MigratedInfoIdl migratedInfo = BuildBasicMigratedInfo(info.bundleName, info.bundleName);
+    MigratedInfoIdl migratedInfo = BuildBasicMigratedInfo(info.bundleName, TEST_PATH);
     // Insert a placeholder sign info row so DoBundleInfoOperations can Modify (UPDATE) it;
     // without a placeholder, Modify affects zero rows and sign info is never persisted.
     {
@@ -204,7 +219,7 @@ HWTEST_F(MigrationVerifyHelperTest, VerifyMigratedBundle002, TestSize.Level1)
 {
     MockNativeToken mock("foundation");
 
-    MigratedInfoIdl migratedInfo = BuildBasicMigratedInfo("com.example.verify.empty", "com.example.verify.empty");
+    MigratedInfoIdl migratedInfo = BuildBasicMigratedInfo("com.example.verify.empty", TEST_PATH);
     std::vector<std::shared_ptr<HapTokenInfoInner>> cachedInfos;
 
     int32_t ret = MigrationVerifyHelper::GetInstance().VerifyMigratedBundle(migratedInfo, cachedInfos);
@@ -234,7 +249,7 @@ HWTEST_F(MigrationVerifyHelperTest, VerifyMigratedBundle003, TestSize.Level1)
 
     // Use a different bundleName from hapPath — mock adapter derives verified
     // bundle name from hapPath, so mismatch triggers ERR_PARAM_INVALID
-    MigratedInfoIdl migratedInfo = BuildBasicMigratedInfo("com.example.mismatched", "com.example.different");
+    MigratedInfoIdl migratedInfo = BuildBasicMigratedInfo("com.example.mismatched", TEST_PATH);
 
     int32_t ret = MigrationVerifyHelper::GetInstance().VerifyMigratedBundle(migratedInfo, cachedInfos);
     // Bundle name mismatch causes DoVerifyMigratedBundle failure → error propagated
@@ -265,7 +280,7 @@ HWTEST_F(MigrationVerifyHelperTest, VerifyMigratedBundle004, TestSize.Level1)
     auto cachedInfo = BuildCachedInfo(tokenId, info.userID, info.bundleName, 0);
     std::vector<std::shared_ptr<HapTokenInfoInner>> cachedInfos = { cachedInfo };
 
-    MigratedInfoIdl migratedInfo = BuildBasicMigratedInfo(info.bundleName, info.bundleName);
+    MigratedInfoIdl migratedInfo = BuildBasicMigratedInfo(info.bundleName, TEST_PATH);
 
     // Force CheckHapsSignInfo to fail via mock adapter
     mockAdapter_.verifyRet_ = AccessTokenError::ERR_PARAM_INVALID;
@@ -301,7 +316,7 @@ HWTEST_F(MigrationVerifyHelperTest, VerifyMigratedBundle006, TestSize.Level1)
 
     // Configure mock adapter to return a verified bundle name matching migratedInfo.bundleName
     mockAdapter_.bundleName_ = info.bundleName;
-    MigratedInfoIdl migratedInfo = BuildBasicMigratedInfo(info.bundleName, info.bundleName);
+    MigratedInfoIdl migratedInfo = BuildBasicMigratedInfo(info.bundleName, TEST_PATH);
     // Insert a placeholder sign info row so DoBundleInfoOperations can Modify (UPDATE) it;
     // without a placeholder, Modify affects zero rows and sign info is never persisted.
     {
@@ -368,7 +383,7 @@ HWTEST_F(MigrationVerifyHelperTest, VerifyMigratedBundle007, TestSize.Level1)
     // Build migratedInfo with 2 different hapPaths
     MigratedInfoIdl migratedInfo;
     migratedInfo.bundleName = info.bundleName;
-    migratedInfo.pathList.hapPaths = { info.bundleName + "_a", info.bundleName + "_b" };
+    migratedInfo.pathList.hapPaths = { TEST_PATH, TEST_PATH2 };
     migratedInfo.pathList.isPreInstalled = false;
     migratedInfo.uidList = { 200100, 200101 };
     migratedInfo.reservedTypeList = { ReservedTypeIdl::NONE, ReservedTypeIdl::NONE };
@@ -429,7 +444,7 @@ HWTEST_F(MigrationVerifyHelperTest, VerifyMigratedBundle009, TestSize.Level1)
     // Construct mismatched MigratedInfoIdl and VerifiedMigrationBundle
     MigratedInfoIdl migratedInfo;
     migratedInfo.bundleName = "com.example.badsize";
-    migratedInfo.pathList.hapPaths = { "hap_a", "hap_b" };  // 2 hapPaths
+    migratedInfo.pathList.hapPaths = { TEST_PATH, TEST_PATH2 };  // 2 hapPaths
     VerifiedMigrationBundle verifiedBundle;
     // Only 1 verifiedInfo → verifiedSize=1 != hapPaths.size()=2 → line 99
     auto info1 = std::make_shared<TrustedBundleInfoInner>();
@@ -533,7 +548,7 @@ HWTEST_F(MigrationVerifyHelperTest, HandleMigratedBundleTask001, TestSize.Level1
     std::vector<std::shared_ptr<HapTokenInfoInner>> cachedInfos = { cachedInfo };
 
     mockAdapter_.bundleName_ = info.bundleName;
-    MigratedInfoIdl migratedInfo = BuildBasicMigratedInfo(info.bundleName, info.bundleName);
+    MigratedInfoIdl migratedInfo = BuildBasicMigratedInfo(info.bundleName, TEST_PATH);
     // Insert placeholder sign info so DoBundleInfoOperations can Modify it
     {
         GenericValues placeholder;
@@ -580,7 +595,7 @@ HWTEST_F(MigrationVerifyHelperTest, HandleMigratedBundleTask002, TestSize.Level1
     auto cachedInfo = BuildCachedInfo(tokenId, info.userID, info.bundleName, 0);
     std::vector<std::shared_ptr<HapTokenInfoInner>> cachedInfos = { cachedInfo };
 
-    MigratedInfoIdl migratedInfo = BuildBasicMigratedInfo(info.bundleName, info.bundleName);
+    MigratedInfoIdl migratedInfo = BuildBasicMigratedInfo(info.bundleName, TEST_PATH);
 
     // Ensure spm.enforce is false (default in mock)
 
@@ -625,7 +640,7 @@ HWTEST_F(MigrationVerifyHelperTest, HandleMigratedBundleTask003, TestSize.Level1
     auto cachedInfo = BuildCachedInfo(tokenId, info.userID, info.bundleName, 0);
     std::vector<std::shared_ptr<HapTokenInfoInner>> cachedInfos = { cachedInfo };
 
-    MigratedInfoIdl migratedInfo = BuildBasicMigratedInfo(info.bundleName, info.bundleName);
+    MigratedInfoIdl migratedInfo = BuildBasicMigratedInfo(info.bundleName, TEST_PATH);
 
     // Set spm.enforce to true
     SetParameter(ACCESS_TOKEN_SERVICE_SPM_ENFORCING_KEY, "1");
@@ -681,7 +696,7 @@ HWTEST_F(MigrationVerifyWorkerTest, WorkerSubmitAndShutdown001, TestSize.Level1)
     MockNativeToken mock("foundation");
     SetUpVerifyEnvironment();
 
-    MigratedInfoIdl migratedInfo = BuildBasicMigratedInfo("com.example.worker.basic", "com.example.worker.basic");
+    MigratedInfoIdl migratedInfo = BuildBasicMigratedInfo("com.example.worker.basic", TEST_PATH);
     std::vector<std::shared_ptr<HapTokenInfoInner>> cachedInfos;
 
     // Submit should not crash even with empty cachedInfos
@@ -708,7 +723,7 @@ HWTEST_F(MigrationVerifyWorkerTest, WorkerIdleTimeout002, TestSize.Level1)
 {
     MockNativeToken mock("foundation");
 
-    MigratedInfoIdl migratedInfo = BuildBasicMigratedInfo("com.example.worker.idle", "com.example.worker.idle");
+    MigratedInfoIdl migratedInfo = BuildBasicMigratedInfo("com.example.worker.idle", TEST_PATH);
     std::vector<std::shared_ptr<HapTokenInfoInner>> cachedInfos;
 
     // First submit starts the worker
@@ -736,7 +751,7 @@ HWTEST_F(MigrationVerifyWorkerTest, WorkerMultipleSubmit003, TestSize.Level1)
     for (int i = 0; i < 5; ++i) {
         MigratedInfoIdl migratedInfo = BuildBasicMigratedInfo(
             "com.example.worker.multi" + std::to_string(i),
-            "com.example.worker.multi" + std::to_string(i));
+            TEST_PATH);
         std::vector<std::shared_ptr<HapTokenInfoInner>> cachedInfos;
         MigrationVerifyWorker::GetInstance().Submit(migratedInfo, cachedInfos);
     }
@@ -768,7 +783,7 @@ HWTEST_F(MigrationVerifyWorkerTest, WorkerProcessRealTask004, TestSize.Level1)
     auto cachedInfo = BuildCachedInfo(tokenId, info.userID, info.bundleName, 0);
     std::vector<std::shared_ptr<HapTokenInfoInner>> cachedInfos = { cachedInfo };
 
-    MigratedInfoIdl migratedInfo = BuildBasicMigratedInfo(info.bundleName, info.bundleName);
+    MigratedInfoIdl migratedInfo = BuildBasicMigratedInfo(info.bundleName, TEST_PATH);
     MigrationVerifyWorker::GetInstance().Submit(migratedInfo, cachedInfos);
 
     // Give worker time to process the real verification task
@@ -794,7 +809,7 @@ HWTEST_F(MigrationVerifyWorkerTest, WorkerShutdownDuringProcessing005, TestSize.
     for (int i = 0; i < 3; ++i) {
         MigratedInfoIdl migratedInfo = BuildBasicMigratedInfo(
             "com.example.worker.shutdown" + std::to_string(i),
-            "com.example.worker.shutdown" + std::to_string(i));
+            TEST_PATH);
         std::vector<std::shared_ptr<HapTokenInfoInner>> cachedInfos;
         MigrationVerifyWorker::GetInstance().Submit(migratedInfo, cachedInfos);
     }

@@ -216,6 +216,12 @@ bool TrustedBundleInfoInner::IsAtomicService() const
     return moduleData.bundleType == AppExecFwk::Spm::BundleType::ATOMIC_SERVICE;
 }
 
+int32_t HapSignVerifyManager::VerifyFailed(int32_t ret, bool& isChanged, TrustedBundleInfoInner& info,
+    Security::Verify::ProvisionInfo& provisionInfo) const
+{
+    return 0;
+}
+
 int32_t HapSignVerifyManager::BuildTrustedBundleInfo(
     const std::shared_ptr<Security::Verify::BootstrapInfo>& bootstrapInfo,
     const Security::Verify::ProvisionInfo& provisionInfo, TrustedBundleInfoInner& info) const

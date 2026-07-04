@@ -155,13 +155,22 @@ public:
      */
     static int32_t UpdateHapPolicy(int32_t sessionId, int32_t tokenId, const BundlePolicy& policy);
     /**
+     * @brief Update hap policy.
+     * @param sessionId session id
+     * @param tokenId token id
+     * @param policy bundle policy
+     * @param uid uid
+     * @return error code, see access_token_error.h
+     */
+    static int32_t UpdateHapPolicy(int32_t sessionId, int32_t tokenId, const BundlePolicy& policy, int32_t& uid);
+    /**
      * @brief Finish install.
      * @param sessionId session id
-     * @param isSuccess is install success
+     * @param isPersistent is need persistent
      * @param modulePathMap module path map
      * @return error code, see access_token_error.h
      */
-    static int32_t FinishInstall(int32_t sessionId, bool isSuccess,
+    static int32_t FinishInstall(int32_t sessionId, bool isPersistent,
         const std::map<std::string, std::string>& modulePathMap);
     /**
      * @brief Get cache sign info by session id.

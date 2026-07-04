@@ -2970,7 +2970,7 @@ int32_t AccessTokenManagerService::PrepareHapIdentity(int32_t& sessionId, const 
 }
 
 int32_t AccessTokenManagerService::UpdateHapPolicy(int32_t sessionId, AccessTokenID tokenId,
-    const BundlePolicyIdl& policy)
+    const BundlePolicyIdl& policy, int32_t& uid)
 {
     AccessTokenID tokenID = IPCSkeleton::GetCallingTokenID();
     if (!IsPrivilegedCalling() &&
@@ -2980,10 +2980,10 @@ int32_t AccessTokenManagerService::UpdateHapPolicy(int32_t sessionId, AccessToke
     }
     BundlePolicy bundlePolicy;
     TransferBundlePolicyFromIdl(policy, bundlePolicy);
-    return InstallSessionManager::GetInstance().UpdateHapPolicy(sessionId, tokenId, bundlePolicy);
+    return InstallSessionManager::GetInstance().UpdateHapPolicy(sessionId, tokenId, bundlePolicy, uid);
 }
 
-int32_t AccessTokenManagerService::FinishInstall(int32_t sessionId, bool isSuccess,
+int32_t AccessTokenManagerService::FinishInstall(int32_t sessionId, bool isPersistent,
     const std::map<std::string, std::string>& modulePathMap)
 {
     AccessTokenID tokenID = IPCSkeleton::GetCallingTokenID();
@@ -2992,7 +2992,7 @@ int32_t AccessTokenManagerService::FinishInstall(int32_t sessionId, bool isSucce
         LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", tokenID);
         return AccessTokenError::ERR_PERMISSION_DENIED;
     }
-    int32_t ret = InstallSessionManager::GetInstance().FinishInstall(sessionId, isSuccess, modulePathMap);
+    int32_t ret = InstallSessionManager::GetInstance().FinishInstall(sessionId, isPersistent, modulePathMap);
     return ret;
 }
 
@@ -3070,12 +3070,12 @@ int32_t AccessTokenManagerService::PrepareHapIdentity(int32_t& sessionId, const 
 }
 
 int32_t AccessTokenManagerService::UpdateHapPolicy(int32_t sessionId, AccessTokenID tokenId,
-    const BundlePolicyIdl& policy)
+    const BundlePolicyIdl& policy, int32_t& uid)
 {
     return RET_SUCCESS;
 }
 
-int32_t AccessTokenManagerService::FinishInstall(int32_t sessionId, bool isSuccess,
+int32_t AccessTokenManagerService::FinishInstall(int32_t sessionId, bool isPersistent,
     const std::map<std::string, std::string>& modulePathMap)
 {
     return RET_SUCCESS;

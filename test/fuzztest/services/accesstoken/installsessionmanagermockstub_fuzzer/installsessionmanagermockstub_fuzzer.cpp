@@ -117,7 +117,7 @@ bool InstallSessionManagerMockStubFuzzTest(const uint8_t* data, size_t size)
     InstallSessionManager::GetInstance().CheckHapSignInfo(hapList, nullptr, sessionId4, bundleInfo4, resultInfo);
     InstallSessionManager::GetInstance().CheckHapPermissionInfo(sessionId4, TYPE_REPLACE, result);
     InstallSessionManager::GetInstance().UpdateHapPolicy(
-        sessionId4, static_cast<int32_t>(identity.tokenId & 0xffffffff), bundlePolicy);
+        sessionId4, static_cast<int32_t>(identity.tokenId & 0xffffffff), bundlePolicy, identity.uid);
     InstallSessionManager::GetInstance().FinishInstall(sessionId4, true, modulePathMap);
 
     GetHapSignInfoTest("install_session_manager_fuzz_mock_test");

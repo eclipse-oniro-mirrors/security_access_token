@@ -26,6 +26,7 @@
 #include "accesstoken_migration_manager.h"
 #include "boot_verify_scheduler.h"
 #include "install_session_manager.h"
+#include "permission_kernel_utils.h"
 #undef private
 #include "access_token.h"
 #include "access_token_error.h"
@@ -45,6 +46,11 @@ std::shared_ptr<AccessTokenManagerService> atManagerService_;
 static InstallSessionManager* g_installSessionManager = nullptr;
 static constexpr int32_t INVALID_SESSION = 999;
 static constexpr int32_t UID_MASK = 200000;
+static constexpr int32_t TEST_API_VERSION_10 = 10;
+static constexpr int32_t TEST_API_VERSION_234 = 234;
+static constexpr int32_t TEST_UID = 20045678;
+static constexpr int32_t TEST_UID2 = 20033333;
+static constexpr int32_t TEST_INVALID_UID = 20099999;
 static std::map<std::string, std::string> g_modulePathMap;
 }
 
@@ -1599,7 +1605,7 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest001, TestSize.Level0)
     ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, result);
     EXPECT_EQ(ERR_OK, ret);
 
-    ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenId, bundlePolicy);
+    ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenId, bundlePolicy, identity.uid);
     EXPECT_EQ(ERR_OK, ret);
 
     std::map<std::string, std::string> modulePathMap;
@@ -1653,7 +1659,7 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest002, TestSize.Level0)
     EXPECT_EQ(ERR_OK, ret);
 
     bundlePolicy.preAuthorizationInfo.emplace_back(PreAuthorizationInfo{"ohos.permission.CAMERA", true});
-    ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenId, bundlePolicy);
+    ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenId, bundlePolicy, identity.uid);
     EXPECT_EQ(ERR_OK, ret);
 
     std::map<std::string, std::string> modulePathMap;
@@ -1709,7 +1715,7 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest003, TestSize.Level0)
     ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, result);
     EXPECT_EQ(ERR_OK, ret);
 
-    ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenId, bundlePolicy);
+    ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenId, bundlePolicy, identity.uid);
     EXPECT_EQ(ERR_OK, ret);
 
     std::map<std::string, std::string> modulePathMap;
@@ -1774,7 +1780,7 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest004, TestSize.Level0)
     ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, result);
     EXPECT_EQ(ERR_OK, ret);
 
-    ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenId, bundlePolicy);
+    ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenId, bundlePolicy, identity.uid);
     EXPECT_EQ(ERR_OK, ret);
 
     std::map<std::string, std::string> modulePathMap;
@@ -1838,7 +1844,7 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest005, TestSize.Level0)
     ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, result);
     EXPECT_EQ(ERR_OK, ret);
 
-    ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenId, bundlePolicy);
+    ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenId, bundlePolicy, identity.uid);
     EXPECT_EQ(ERR_OK, ret);
 
     std::map<std::string, std::string> modulePathMap;
@@ -1988,6 +1994,535 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest007, TestSize.Level0)
 }
 
 /**
+ * @tc.name: UpdateHapTest008
+ * @tc.desc: Test update a new hap, update apiVersion.
+ * @tc.type: FUNC
+ * @tc.require: Issue
+ */
+HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest008, TestSize.Level0)
+{
+    std::string path =
+        "/SYSTEM/system_basic/state:[cam,mic,syswin,getwifi]/acl:[getwifi]/Module001/UpdateHapTest008";
+    std::vector<std::string> hapPaths = {path};
+    HapBaseInfo baseInfo;
+    baseInfo.userID = 100;
+    baseInfo.bundleName = "UpdateHapTest008";
+    baseInfo.instIndex = 0;
+    BundlePolicy bundlePolicy;
+    bundlePolicy.dlpType = DLP_COMMON;
+    bundlePolicy.isDebugGrant = false;
+    Identity identity;
+    InstallHap(hapPaths, baseInfo, bundlePolicy, identity);
+    AccessTokenID tokenId = static_cast<AccessTokenID>(identity.tokenId);
+
+    std::shared_ptr<HapTokenInfoInner> infoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId);
+    EXPECT_NE(infoPtr, nullptr);
+    if (infoPtr != nullptr) {
+        HapTokenInfo tokenInfo = infoPtr->GetHapInfoBasic();
+        EXPECT_EQ(TEST_API_VERSION_10, tokenInfo.apiVersion);
+    }
+
+    path = "/SYSTEM/system_basic/VER1234/state:[cam,mic,syswin,getwifi]/acl:[getwifi]/Module001/UpdateHapTest008";
+    BundleHapList hapList;
+    hapList.hapPaths.emplace_back(path);
+    hapList.isPreInstalled = false;
+    hapList.userId = 100;
+
+    int32_t sessionId = 0;
+    std::vector<TrustedBundleInfo> bundleInfo;
+    HapVerifyResultInfo resultInfo;
+    int32_t ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo);
+    EXPECT_EQ(ERR_OK, ret);
+    HapInfoCheckResult result;
+    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, result);
+    EXPECT_EQ(ERR_OK, ret);
+
+    ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenId, bundlePolicy, identity.uid);
+    EXPECT_EQ(ERR_OK, ret);
+
+    std::map<std::string, std::string> modulePathMap;
+    modulePathMap[path] = path;
+    ret = g_installSessionManager->FinishInstall(sessionId, true, modulePathMap);
+    EXPECT_EQ(ERR_OK, ret);
+
+    std::shared_ptr<HapTokenInfoInner> infoPtr2 = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId);
+    EXPECT_NE(infoPtr2, nullptr);
+    if (infoPtr2 != nullptr) {
+        HapTokenInfo tokenInfo = infoPtr2->GetHapInfoBasic();
+        EXPECT_EQ(TEST_API_VERSION_234, tokenInfo.apiVersion);
+    }
+
+    int32_t sceneCode = 0;
+    ret = atManagerService_->DeleteIdentityCore(tokenId, "UpdateHapTest008", ReservedType::NONE, sceneCode);
+    EXPECT_EQ(ERR_OK, ret);
+}
+
+/**
+ * @tc.name: UpdateHapTest009
+ * @tc.desc: Test update a new hap, update with wrong uid.
+ * @tc.type: FUNC
+ * @tc.require: Issue
+ */
+HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest009, TestSize.Level0)
+{
+    std::string path =
+        "/SYSTEM/system_basic/state:[cam,mic,syswin,getwifi]/acl:[getwifi]/Module001/UpdateHapTest009";
+    std::vector<std::string> hapPaths = {path};
+    HapBaseInfo baseInfo;
+    baseInfo.userID = 100;
+    baseInfo.bundleName = "UpdateHapTest009";
+    baseInfo.instIndex = 0;
+    BundlePolicy bundlePolicy;
+    bundlePolicy.dlpType = DLP_COMMON;
+    bundlePolicy.isDebugGrant = false;
+    Identity identity;
+    InstallHap(hapPaths, baseInfo, bundlePolicy, identity);
+    AccessTokenID tokenId = static_cast<AccessTokenID>(identity.tokenId);
+
+    BundleHapList hapList;
+    hapList.hapPaths.emplace_back(path);
+    hapList.isPreInstalled = false;
+    hapList.userId = 100;
+
+    int32_t sessionId = 0;
+    std::vector<TrustedBundleInfo> bundleInfo;
+    HapVerifyResultInfo resultInfo;
+    int32_t ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo);
+    EXPECT_EQ(ERR_OK, ret);
+    HapInfoCheckResult result;
+    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, result);
+    EXPECT_EQ(ERR_OK, ret);
+
+    int32_t uid = TEST_UID;
+    ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenId, bundlePolicy, uid);
+    EXPECT_EQ(ERR_OK, ret);
+    EXPECT_EQ(uid, identity.uid);
+
+    std::map<std::string, std::string> modulePathMap;
+    modulePathMap[path] = path;
+    ret = g_installSessionManager->FinishInstall(sessionId, true, modulePathMap);
+    EXPECT_EQ(ERR_OK, ret);
+
+    int32_t sceneCode = 0;
+    ret = atManagerService_->DeleteIdentityCore(tokenId, "UpdateHapTest009", ReservedType::NONE, sceneCode);
+    EXPECT_EQ(ERR_OK, ret);
+}
+
+/**
+ * @tc.name: UpdateHapTest010
+ * @tc.desc: Test update a new hap, update when uid is -1, with using bundleId.
+ * @tc.type: FUNC
+ * @tc.require: Issue
+ */
+HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest010, TestSize.Level0)
+{
+    std::string path = "/SYSTEM/system_basic/state:[cam,mic,syswin,getwifi]/acl:[getwifi]/Module001/UpdateHapTest010";
+    std::vector<std::string> hapPaths = {path};
+    HapBaseInfo baseInfo{100, "UpdateHapTest010", 0};
+    BundlePolicy bundlePolicy{std::vector<PreAuthorizationInfo>(), DLP_COMMON, false};
+
+    Identity identity;
+    InstallHap(hapPaths, baseInfo, bundlePolicy, identity);
+    AccessTokenID tokenId = static_cast<AccessTokenID>(identity.tokenId);
+
+    int32_t sessionId = 0;
+    baseInfo.userID = 101;
+    Identity iden2;
+    EXPECT_EQ(ERR_OK, g_installSessionManager->PrepareHapIdentity(sessionId, baseInfo, bundlePolicy, nullptr, iden2));
+
+    std::map<std::string, std::string> modulePathMap;
+    modulePathMap[path] = path;
+    EXPECT_EQ(ERR_OK, g_installSessionManager->FinishInstall(sessionId, true, modulePathMap));
+
+    GenericValues conditionValue;
+    conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
+    std::vector<GenericValues> hapTokenResults;
+    int32_t ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, conditionValue, hapTokenResults);
+    EXPECT_EQ(ERR_OK, ret);
+    EXPECT_EQ(hapTokenResults.size(), 1);
+    int32_t sCode = 0;
+    if (hapTokenResults.size() != 1) {
+        atManagerService_->DeleteIdentityCore(0, "UpdateHapTest010", ReservedType::NONE, sCode);
+        return;
+    }
+
+    hapTokenResults.front().Remove(TokenFiledConst::FIELD_UID);
+    hapTokenResults.front().Put(TokenFiledConst::FIELD_UID, -1);
+    std::vector<AddInfo> addInfoVec;
+    AccessTokenInfoUtils::GenerateAddInfoToVec(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, hapTokenResults, addInfoVec);
+    std::vector<DelInfo> delInfoVec;
+    AccessTokenInfoUtils::GenerateDelInfoToVec(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, conditionValue, delInfoVec);
+    EXPECT_EQ(ERR_OK, AccessTokenDbOperator::DeleteAndInsertValues(delInfoVec, addInfoVec));
+
+    {
+        std::shared_ptr<HapTokenInfoInner> infoPtr =
+            AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId);
+        EXPECT_NE(infoPtr, nullptr);
+        if (infoPtr == nullptr) {
+            atManagerService_->DeleteIdentityCore(0, "UpdateHapTest010", ReservedType::NONE, sCode);
+            return;
+        }
+        infoPtr->tokenInfoBasic_.uid = -1;
+    }
+
+    PermissionKernelUtils::RemoveSpmEntryFromKernel(tokenId);
+
+    BundleHapList hapList{std::vector<std::string>{path}, false, 100};
+    sessionId = 0;
+    std::vector<TrustedBundleInfo> bundleInfo;
+    HapVerifyResultInfo resultInfo;
+    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo));
+
+    HapInfoCheckResult result;
+    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, result));
+
+    int32_t uid = TEST_UID;
+    EXPECT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenId, bundlePolicy, uid));
+    EXPECT_EQ(uid, identity.uid);
+
+    EXPECT_EQ(ERR_OK, g_installSessionManager->FinishInstall(sessionId, true, modulePathMap));
+
+    {
+        std::shared_ptr<HapTokenInfoInner> infoPtr =
+            AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId);
+        EXPECT_NE(infoPtr, nullptr);
+        if (infoPtr == nullptr) {
+            atManagerService_->DeleteIdentityCore(0, "UpdateHapTest010", ReservedType::NONE, sCode);
+            return;
+        }
+        EXPECT_EQ(identity.uid, infoPtr->GetUid());
+    }
+
+    EXPECT_EQ(ERR_OK, atManagerService_->DeleteIdentityCore(0, "UpdateHapTest010", ReservedType::NONE, sCode));
+}
+
+/**
+ * @tc.name: UpdateHapTest011
+ * @tc.desc: Test update a new hap, update when uid is -1, with valid uid.
+ * @tc.type: FUNC
+ * @tc.require: Issue
+ */
+HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest011, TestSize.Level0)
+{
+    std::string path = "/SYSTEM/system_basic/state:[cam,mic,syswin,getwifi]/acl:[getwifi]/Module001/UpdateHapTest011";
+    std::vector<std::string> hapPaths = {path};
+    HapBaseInfo baseInfo{100, "UpdateHapTest011", 0};
+    BundlePolicy bundlePolicy{std::vector<PreAuthorizationInfo>(), DLP_COMMON, false};
+
+    Identity identity;
+    InstallHap(hapPaths, baseInfo, bundlePolicy, identity);
+    AccessTokenID tokenId = static_cast<AccessTokenID>(identity.tokenId);
+
+    GenericValues conditionValue;
+    conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
+    std::vector<GenericValues> hapTokenResults;
+    int32_t ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, conditionValue, hapTokenResults);
+    EXPECT_EQ(ERR_OK, ret);
+    EXPECT_EQ(hapTokenResults.size(), 1);
+    int32_t sCode = 0;
+    if (hapTokenResults.size() != 1) {
+        atManagerService_->DeleteIdentityCore(0, "UpdateHapTest011", ReservedType::NONE, sCode);
+        return;
+    }
+
+    hapTokenResults.front().Remove(TokenFiledConst::FIELD_UID);
+    hapTokenResults.front().Put(TokenFiledConst::FIELD_UID, -1);
+    std::vector<AddInfo> addInfoVec;
+    AccessTokenInfoUtils::GenerateAddInfoToVec(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, hapTokenResults, addInfoVec);
+    std::vector<DelInfo> delInfoVec;
+    AccessTokenInfoUtils::GenerateDelInfoToVec(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, conditionValue, delInfoVec);
+    EXPECT_EQ(ERR_OK, AccessTokenDbOperator::DeleteAndInsertValues(delInfoVec, addInfoVec));
+
+    {
+        std::shared_ptr<HapTokenInfoInner> infoPtr =
+            AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId);
+        EXPECT_NE(infoPtr, nullptr);
+        if (infoPtr == nullptr) {
+            atManagerService_->DeleteIdentityCore(0, "UpdateHapTest011", ReservedType::NONE, sCode);
+            return;
+        }
+        infoPtr->tokenInfoBasic_.uid = -1;
+    }
+
+    PermissionKernelUtils::RemoveSpmEntryFromKernel(tokenId);
+
+    BundleHapList hapList{std::vector<std::string>{path}, false, 100};
+    int32_t sessionId = 0;
+    std::vector<TrustedBundleInfo> bundleInfo;
+    HapVerifyResultInfo resultInfo;
+    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo));
+
+    HapInfoCheckResult result;
+    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, result));
+
+    int32_t uid = TEST_UID;
+    EXPECT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenId, bundlePolicy, uid));
+    EXPECT_EQ(uid, TEST_UID);
+
+    std::map<std::string, std::string> modulePathMap;
+    modulePathMap[path] = path;
+    EXPECT_EQ(ERR_OK, g_installSessionManager->FinishInstall(sessionId, true, modulePathMap));
+
+    {
+        std::shared_ptr<HapTokenInfoInner> infoPtr =
+            AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId);
+        EXPECT_NE(infoPtr, nullptr);
+        if (infoPtr == nullptr) {
+            atManagerService_->DeleteIdentityCore(0, "UpdateHapTest011", ReservedType::NONE, sCode);
+            return;
+        }
+        EXPECT_EQ(uid, infoPtr->GetUid());
+    }
+
+    EXPECT_EQ(ERR_OK, atManagerService_->DeleteIdentityCore(0, "UpdateHapTest011", ReservedType::NONE, sCode));
+}
+
+/**
+ * @tc.name: UpdateHapTest012
+ * @tc.desc: Test update a new hap, update when uid is -1, with invalid uid.
+ * @tc.type: FUNC
+ * @tc.require: Issue
+ */
+HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest012, TestSize.Level0)
+{
+    std::string path = "/SYSTEM/system_basic/state:[cam,mic,syswin,getwifi]/acl:[getwifi]/Module001/UpdateHapTest012";
+    std::vector<std::string> hapPaths = {path};
+    HapBaseInfo baseInfo{100, "UpdateHapTest012", 0};
+    BundlePolicy bundlePolicy{std::vector<PreAuthorizationInfo>(), DLP_COMMON, false};
+
+    Identity identity;
+    InstallHap(hapPaths, baseInfo, bundlePolicy, identity);
+    AccessTokenID tokenId = static_cast<AccessTokenID>(identity.tokenId);
+
+    GenericValues conditionValue;
+    conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
+    std::vector<GenericValues> hapTokenResults;
+    int32_t ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, conditionValue, hapTokenResults);
+    EXPECT_EQ(ERR_OK, ret);
+    EXPECT_EQ(hapTokenResults.size(), 1);
+    int32_t sCode = 0;
+    if (hapTokenResults.size() != 1) {
+        atManagerService_->DeleteIdentityCore(0, "UpdateHapTest012", ReservedType::NONE, sCode);
+        return;
+    }
+
+    hapTokenResults.front().Remove(TokenFiledConst::FIELD_UID);
+    hapTokenResults.front().Put(TokenFiledConst::FIELD_UID, -1);
+    std::vector<AddInfo> addInfoVec;
+    AccessTokenInfoUtils::GenerateAddInfoToVec(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, hapTokenResults, addInfoVec);
+    std::vector<DelInfo> delInfoVec;
+    AccessTokenInfoUtils::GenerateDelInfoToVec(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, conditionValue, delInfoVec);
+    EXPECT_EQ(ERR_OK, AccessTokenDbOperator::DeleteAndInsertValues(delInfoVec, addInfoVec));
+
+    {
+        std::shared_ptr<HapTokenInfoInner> infoPtr =
+            AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId);
+        EXPECT_NE(infoPtr, nullptr);
+        if (infoPtr == nullptr) {
+            atManagerService_->DeleteIdentityCore(0, "UpdateHapTest012", ReservedType::NONE, sCode);
+            return;
+        }
+        infoPtr->tokenInfoBasic_.uid = -1;
+    }
+
+    PermissionKernelUtils::RemoveSpmEntryFromKernel(tokenId);
+
+    BundleHapList hapList{std::vector<std::string>{path}, false, 100};
+    int32_t sessionId = 0;
+    std::vector<TrustedBundleInfo> bundleInfo;
+    HapVerifyResultInfo resultInfo;
+    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo));
+
+    HapInfoCheckResult result;
+    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, result));
+
+    int32_t uid = TEST_INVALID_UID;
+    EXPECT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenId, bundlePolicy, uid));
+    EXPECT_NE(uid, TEST_INVALID_UID);
+
+    std::map<std::string, std::string> modulePathMap;
+    modulePathMap[path] = path;
+    EXPECT_EQ(ERR_OK, g_installSessionManager->FinishInstall(sessionId, true, modulePathMap));
+
+    {
+        std::shared_ptr<HapTokenInfoInner> infoPtr =
+            AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId);
+        EXPECT_NE(infoPtr, nullptr);
+        if (infoPtr == nullptr) {
+            atManagerService_->DeleteIdentityCore(0, "UpdateHapTest012", ReservedType::NONE, sCode);
+            return;
+        }
+        EXPECT_EQ(uid, infoPtr->GetUid());
+    }
+
+    EXPECT_EQ(ERR_OK, atManagerService_->DeleteIdentityCore(0, "UpdateHapTest012", ReservedType::NONE, sCode));
+}
+
+/**
+ * @tc.name: UpdateHapTest013
+ * @tc.desc: Test update a new hap, update when uid is -1, but bundleId is been used.
+ * @tc.type: FUNC
+ * @tc.require: Issue
+ */
+HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest013, TestSize.Level0)
+{
+    std::string path = "/SYSTEM/system_basic/state:[cam,mic,syswin,getwifi]/acl:[getwifi]/Module001/UpdateHapTest013";
+    std::vector<std::string> hapPaths = {path};
+    HapBaseInfo baseInfo{100, "UpdateHapTest013", 0};
+    BundlePolicy bundlePolicy{std::vector<PreAuthorizationInfo>(), DLP_COMMON, false};
+
+    Identity identity;
+    InstallHap(hapPaths, baseInfo, bundlePolicy, identity);
+    AccessTokenID tokenId = static_cast<AccessTokenID>(identity.tokenId);
+
+    std::string path2 = "/SYSTEM/system_basic/state:[cam,mic,getwifi]/acl:[getwifi]/Module001/UpdateHapTest013-2";
+    std::vector<std::string> hapPaths2 = {path2};
+    HapBaseInfo baseInfo2{100, "UpdateHapTest013-2", 0};
+
+    Identity identity2;
+    InstallHap(hapPaths2, baseInfo2, bundlePolicy, identity2);
+
+    GenericValues conditionValue;
+    conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
+    std::vector<GenericValues> hapTokenResults;
+    int32_t ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, conditionValue, hapTokenResults);
+    EXPECT_EQ(ERR_OK, ret);
+    EXPECT_EQ(hapTokenResults.size(), 1);
+    int32_t sCode = 0;
+    if (hapTokenResults.size() != 1) {
+        atManagerService_->DeleteIdentityCore(0, "UpdateHapTest013", ReservedType::NONE, sCode);
+        return;
+    }
+
+    hapTokenResults.front().Remove(TokenFiledConst::FIELD_UID);
+    hapTokenResults.front().Put(TokenFiledConst::FIELD_UID, -1);
+    std::vector<AddInfo> addInfoVec;
+    AccessTokenInfoUtils::GenerateAddInfoToVec(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, hapTokenResults, addInfoVec);
+    std::vector<DelInfo> delInfoVec;
+    AccessTokenInfoUtils::GenerateDelInfoToVec(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, conditionValue, delInfoVec);
+    EXPECT_EQ(ERR_OK, AccessTokenDbOperator::DeleteAndInsertValues(delInfoVec, addInfoVec));
+
+    {
+        std::shared_ptr<HapTokenInfoInner> infoPtr =
+            AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId);
+        EXPECT_NE(infoPtr, nullptr);
+        if (infoPtr == nullptr) {
+            atManagerService_->DeleteIdentityCore(0, "UpdateHapTest013", ReservedType::NONE, sCode);
+            return;
+        }
+        infoPtr->tokenInfoBasic_.uid = -1;
+    }
+
+    PermissionKernelUtils::RemoveSpmEntryFromKernel(tokenId);
+
+    BundleHapList hapList{std::vector<std::string>{path}, false, 100};
+    int32_t sessionId = 0;
+    std::vector<TrustedBundleInfo> bundleInfo;
+    HapVerifyResultInfo resultInfo;
+    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo));
+
+    HapInfoCheckResult result;
+    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, result));
+
+    int32_t uid = identity2.uid;
+    EXPECT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenId, bundlePolicy, uid));
+    EXPECT_NE(uid, identity2.uid);
+
+    std::map<std::string, std::string> modulePathMap;
+    modulePathMap[path] = path;
+    EXPECT_EQ(ERR_OK, g_installSessionManager->FinishInstall(sessionId, true, modulePathMap));
+
+    {
+        std::shared_ptr<HapTokenInfoInner> infoPtr =
+            AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId);
+        EXPECT_NE(infoPtr, nullptr);
+        if (infoPtr == nullptr) {
+            atManagerService_->DeleteIdentityCore(0, "UpdateHapTest013", ReservedType::NONE, sCode);
+            return;
+        }
+        EXPECT_EQ(uid, infoPtr->GetUid());
+    }
+
+    EXPECT_EQ(ERR_OK, atManagerService_->DeleteIdentityCore(0, "UpdateHapTest013", ReservedType::NONE, sCode));
+    EXPECT_EQ(ERR_OK, atManagerService_->DeleteIdentityCore(0, "UpdateHapTest013-2", ReservedType::NONE, sCode));
+}
+
+/**
+ * @tc.name: UpdateHapTest014
+ * @tc.desc: Test update a new hap, update when uid is -1, with valid uid and finish false.
+ * @tc.type: FUNC
+ * @tc.require: Issue
+ */
+HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest014, TestSize.Level4)
+{
+    std::string path = "/SYSTEM/system_basic/state:[cam,mic,syswin,getwifi]/acl:[getwifi]/Module001/UpdateHapTest014";
+    std::vector<std::string> hapPaths = {path};
+    HapBaseInfo baseInfo{100, "UpdateHapTest014", 0};
+    BundlePolicy bundlePolicy{std::vector<PreAuthorizationInfo>(), DLP_COMMON, false};
+
+    Identity identity;
+    InstallHap(hapPaths, baseInfo, bundlePolicy, identity);
+    AccessTokenID tokenId = static_cast<AccessTokenID>(identity.tokenId);
+
+    GenericValues conditionValue;
+    conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
+    std::vector<GenericValues> hapTokenResults;
+    int32_t ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, conditionValue, hapTokenResults);
+    EXPECT_EQ(ERR_OK, ret);
+    EXPECT_EQ(hapTokenResults.size(), 1);
+    int32_t sCode = 0;
+    if (hapTokenResults.size() != 1) {
+        atManagerService_->DeleteIdentityCore(0, "UpdateHapTest014", ReservedType::NONE, sCode);
+        return;
+    }
+
+    hapTokenResults.front().Remove(TokenFiledConst::FIELD_UID);
+    hapTokenResults.front().Put(TokenFiledConst::FIELD_UID, -1);
+    std::vector<AddInfo> addInfoVec;
+    AccessTokenInfoUtils::GenerateAddInfoToVec(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, hapTokenResults, addInfoVec);
+    std::vector<DelInfo> delInfoVec;
+    AccessTokenInfoUtils::GenerateDelInfoToVec(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, conditionValue, delInfoVec);
+    EXPECT_EQ(ERR_OK, AccessTokenDbOperator::DeleteAndInsertValues(delInfoVec, addInfoVec));
+
+    {
+        std::shared_ptr<HapTokenInfoInner> infoPtr =
+            AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId);
+        EXPECT_NE(infoPtr, nullptr);
+        if (infoPtr == nullptr) {
+            atManagerService_->DeleteIdentityCore(0, "UpdateHapTest014", ReservedType::NONE, sCode);
+            return;
+        }
+        infoPtr->tokenInfoBasic_.uid = -1;
+    }
+
+    PermissionKernelUtils::RemoveSpmEntryFromKernel(tokenId);
+
+    BundleHapList hapList{std::vector<std::string>{path}, false, 100};
+    int32_t sessionId = 0;
+    std::vector<TrustedBundleInfo> bundleInfo;
+    HapVerifyResultInfo resultInfo;
+    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo));
+
+    HapInfoCheckResult result;
+    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, result));
+
+    int32_t uid = TEST_UID2;
+    EXPECT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenId, bundlePolicy, uid));
+    EXPECT_EQ(uid, TEST_UID2);
+
+    std::map<std::string, std::string> modulePathMap;
+    modulePathMap[path] = path;
+    EXPECT_EQ(ERR_OK, g_installSessionManager->FinishInstall(sessionId, false, modulePathMap));
+
+    InstallCache cache;
+    std::shared_ptr<HapTokenInfoInner> infoPtr = nullptr;
+    bool isNewBundleId = false;
+    EXPECT_NE(ERR_OK, g_installSessionManager->CheckUid(cache, uid, infoPtr, isNewBundleId));
+
+    EXPECT_EQ(ERR_OK, atManagerService_->DeleteIdentityCore(0, "UpdateHapTest014", ReservedType::NONE, sCode));
+}
+
+/**
  * @tc.name: UpdateHapFailedTest001
  * @tc.desc: Test update a new hap, without migrationDone.
  * @tc.type: FUNC
@@ -2024,7 +2559,7 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapFailedTest001, TestSize.Level0)
 
 
     g_installSessionManager->migrationDone_ = false;
-    ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenId, bundlePolicy);
+    ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenId, bundlePolicy, identity.uid);
     EXPECT_NE(ERR_OK, ret);
     g_installSessionManager->migrationDone_ = true;
 
@@ -2082,10 +2617,10 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapFailedTest002, TestSize.Level0)
     ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, result);
     EXPECT_EQ(ERR_OK, ret);
 
-    ret = g_installSessionManager->UpdateHapPolicy(INVALID_SESSION, tokenId, bundlePolicy);
+    ret = g_installSessionManager->UpdateHapPolicy(INVALID_SESSION, tokenId, bundlePolicy, identity.uid);
     EXPECT_NE(ERR_OK, ret);
 
-    ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenId2, bundlePolicy);
+    ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenId2, bundlePolicy, identity2.uid);
     EXPECT_NE(ERR_OK, ret);
 
     int32_t sceneCode = 0;
@@ -2130,7 +2665,7 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapFailedTest003, TestSize.Level0)
     ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, result);
     EXPECT_EQ(ERR_OK, ret);
 
-    ret = g_installSessionManager->UpdateHapPolicy(sessionId, 123456789, bundlePolicy);
+    ret = g_installSessionManager->UpdateHapPolicy(sessionId, 123456789, bundlePolicy, identity.uid);
     EXPECT_NE(ERR_OK, ret);
 
     int32_t sceneCode = 0;
@@ -2177,7 +2712,7 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapFailedTest004, TestSize.Level0)
     ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, result);
     EXPECT_EQ(ERR_OK, ret);
 
-    ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenId, bundlePolicy);
+    ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenId, bundlePolicy, identity.uid);
     EXPECT_NE(ERR_OK, ret);
 
     ret = atManagerService_->DeleteIdentityCore(0, "UpdateHapFailedTest004", ReservedType::NONE, sceneCode);
@@ -2880,6 +3415,71 @@ HWTEST_F(InstallSessionManagerMockTest, InstallReservedHapTest006, TestSize.Leve
 }
 
 /**
+ * @tc.name: InstallReservedHapTest007
+ * @tc.desc: Test install a new hap, with reserved 2 and uid -1.
+ * @tc.type: FUNC
+ * @tc.require: Issue
+ */
+HWTEST_F(InstallSessionManagerMockTest, InstallReservedHapTest007, TestSize.Level0)
+{
+    std::string path =
+        "/SYSTEM/system_basic/state:[cam,mic,syswin,getwifi]/acl:[getwifi]/Module001/InstallReservedHapTest007";
+    std::vector<std::string> hapPaths = {path};
+    HapBaseInfo baseInfo{100, "InstallReservedHapTest007", 0};
+    BundlePolicy bundlePolicy{std::vector<PreAuthorizationInfo>(), DLP_COMMON, false};
+
+    Identity identity;
+    InstallHap(hapPaths, baseInfo, bundlePolicy, identity);
+    AccessTokenID tokenId = static_cast<AccessTokenID>(identity.tokenId);
+
+    int32_t sCode = 0;
+    EXPECT_EQ(ERR_OK, atManagerService_->DeleteIdentityCore(
+        tokenId, "InstallReservedHapTest007", ReservedType::RESERVED_DATA, sCode));
+    
+    GenericValues conditionValue;
+    conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
+    std::vector<GenericValues> hapTokenResults;
+    int32_t ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, conditionValue, hapTokenResults);
+    EXPECT_EQ(ERR_OK, ret);
+    EXPECT_EQ(hapTokenResults.size(), 1);
+    if (hapTokenResults.size() != 1) {
+        atManagerService_->DeleteIdentityCore(tokenId, "InstallReservedHapTest007", ReservedType::NONE, sCode);
+        return;
+    }
+
+    hapTokenResults.front().Remove(TokenFiledConst::FIELD_UID);
+    hapTokenResults.front().Put(TokenFiledConst::FIELD_UID, -1);
+    std::vector<AddInfo> addInfoVec;
+    AccessTokenInfoUtils::GenerateAddInfoToVec(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, hapTokenResults, addInfoVec);
+    std::vector<DelInfo> delInfoVec;
+    AccessTokenInfoUtils::GenerateDelInfoToVec(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, conditionValue, delInfoVec);
+    EXPECT_EQ(ERR_OK, AccessTokenDbOperator::DeleteAndInsertValues(delInfoVec, addInfoVec));
+
+    BundleHapList hapList{std::vector<std::string>{path}, false, 100};
+    
+    int32_t sessionId = 0;
+    std::vector<TrustedBundleInfo> bundleInfo;
+    HapVerifyResultInfo resultInfo;
+    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo));
+
+    HapInfoCheckResult result;
+    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, result));
+
+    Identity iden2;
+    EXPECT_EQ(ERR_OK, g_installSessionManager->PrepareHapIdentity(sessionId, baseInfo, bundlePolicy, nullptr, iden2));
+    EXPECT_NE(0, iden2.uid);
+    EXPECT_NE(-1, iden2.uid);
+    AccessTokenID tokenId2 = static_cast<AccessTokenID>(iden2.tokenId);
+    EXPECT_NE(tokenId, tokenId2);
+
+    std::map<std::string, std::string> modulePathMap;
+    modulePathMap[path] = path;
+    EXPECT_EQ(ERR_OK, g_installSessionManager->FinishInstall(sessionId, true, modulePathMap));
+
+    EXPECT_EQ(ERR_OK, atManagerService_->DeleteIdentityCore(0, "InstallReservedHapTest007", ReservedType::NONE, sCode));
+}
+
+/**
  * @tc.name: IsCheckPermTest001
  * @tc.desc: Test IsCheckPerm mark.
  * @tc.type: FUNC
@@ -2916,7 +3516,7 @@ HWTEST_F(InstallSessionManagerMockTest, IsCheckPermTest001, TestSize.Level0)
     HapVerifyResultInfo resultInfo2;
     ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo2);
     EXPECT_EQ(ERR_OK, ret);
-    ret = g_installSessionManager->UpdateHapPolicy(sessionId, INVALID_SESSION, bundlePolicy);
+    ret = g_installSessionManager->UpdateHapPolicy(sessionId, INVALID_SESSION, bundlePolicy, identity.uid);
     EXPECT_NE(ERR_OK, ret);
 
     HapVerifyResultInfo resultInfo3;

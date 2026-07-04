@@ -207,25 +207,31 @@ int32_t AccessTokenKit::PrepareHapIdentity(int32_t& sessionId, const HapBaseInfo
 
 int32_t AccessTokenKit::UpdateHapPolicy(int32_t sessionId, int32_t tokenId, const BundlePolicy& policy)
 {
-    LOGI(ATM_DOMAIN, ATM_TAG, "UpdateHapPolicy called, sessionId=%{public}d, tokenId=%{public}d.",
-        sessionId, tokenId);
-    if (sessionId <= 0) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "SessionId is invalid.");
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-    return AccessTokenManagerClient::GetInstance().UpdateHapPolicy(sessionId, tokenId, policy);
+    int32_t uid = -1;
+    return UpdateHapPolicy(sessionId, tokenId, policy, uid);
 }
 
-int32_t AccessTokenKit::FinishInstall(int32_t sessionId, bool isSuccess,
-    const std::map<std::string, std::string>& modulePathMap)
+int32_t AccessTokenKit::UpdateHapPolicy(int32_t sessionId, int32_t tokenId, const BundlePolicy& policy, int32_t& uid)
 {
-    LOGI(ATM_DOMAIN, ATM_TAG, "FinishInstall called, sessionId=%{public}d, isSuccess=%{public}d.",
-        sessionId, isSuccess);
+    LOGI(ATM_DOMAIN, ATM_TAG, "UpdateHapPolicy called, sessionId=%{public}d, tokenId=%{public}d, uid=%{public}d.",
+        sessionId, tokenId, uid);
     if (sessionId <= 0) {
         LOGE(ATM_DOMAIN, ATM_TAG, "SessionId is invalid.");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
-    return AccessTokenManagerClient::GetInstance().FinishInstall(sessionId, isSuccess, modulePathMap);
+    return AccessTokenManagerClient::GetInstance().UpdateHapPolicy(sessionId, tokenId, policy, uid);
+}
+
+int32_t AccessTokenKit::FinishInstall(int32_t sessionId, bool isPersistent,
+    const std::map<std::string, std::string>& modulePathMap)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "FinishInstall called, sessionId=%{public}d, isPersistent=%{public}d.",
+        sessionId, isPersistent);
+    if (sessionId <= 0) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "SessionId is invalid.");
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    return AccessTokenManagerClient::GetInstance().FinishInstall(sessionId, isPersistent, modulePathMap);
 }
 
 int32_t AccessTokenKit::GetCacheSignInfoBySessionId(int32_t sessionId,

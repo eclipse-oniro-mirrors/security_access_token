@@ -26,7 +26,8 @@ namespace AccessToken {
 namespace {
 constexpr char APP_PROVISION_TYPE_DEBUG[] = "debug";
 constexpr char APP_PROVISION_TYPE_RELEASE[] = "release";
-constexpr int32_t TEST_API_VERSION = 10;
+constexpr int32_t TEST_API_VERSION_10 = 10;
+constexpr int32_t TEST_API_VERSION_1234 = 1234;
 }
 
 HapSignVerifyManager& HapSignVerifyManager::GetInstance()
@@ -153,14 +154,17 @@ Security::Verify::VerifyParams HapSignVerifyManager::MakeVerifyParams(
     return params;
 }
 
-
 void FillBundleParam(const TrustedBundleInfoInner& info, BundleParam& param)
 {
     param.bundleName = info.moduleData.bundleName;
     param.appId = info.moduleData.bundleName + "aaaaa";
     param.appIdentifier = 0;
-    param.apiVersion = TEST_API_VERSION;
+    param.apiVersion = TEST_API_VERSION_10;
     param.distributionType = 0;
+
+    if (info.shareFilesRaw.find("VER1234") != std::string::npos) {
+        param.apiVersion = TEST_API_VERSION_1234;
+    }
 
     if (info.shareFilesRaw.find("SYSTEM") != std::string::npos) {
         param.isSystem = true;
@@ -359,6 +363,12 @@ bool TrustedBundleInfoInner::IsSystemApp() const
 bool TrustedBundleInfoInner::IsAtomicService() const
 {
     return moduleData.bundleType == AppExecFwk::Spm::BundleType::ATOMIC_SERVICE;
+}
+
+int32_t HapSignVerifyManager::VerifyFailed(int32_t ret, bool& isChanged, TrustedBundleInfoInner& info,
+    Security::Verify::ProvisionInfo& provisionInfo) const
+{
+    return 0;
 }
 
 int32_t HapSignVerifyManager::BuildTrustedBundleInfo(
