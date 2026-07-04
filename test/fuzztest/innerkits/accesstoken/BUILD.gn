@@ -21,6 +21,7 @@ group("fuzztest") {
     "accesstokenkitcoverage_fuzzer:AccessTokenKitCoverageFuzzTest",
     "allochaptoken_fuzzer:AllocHapTokenFuzzTest",
     "alloclocaltokenid_fuzzer:AllocLocalTokenIDFuzzTest",
+    "clearusergrantedpermstatebybundle_fuzzer:ClearUserGrantedPermStateByBundleFuzzTest",
     "clearusergrantedpermissionstate_fuzzer:ClearUserGrantedPermissionStateFuzzTest",
     "deleteidentity_fuzzer:DeleteIdentityFuzzTest",
     "deletetoken_fuzzer:DeleteTokenFuzzTest",
@@ -37,6 +38,7 @@ group("fuzztest") {
     "getnativetokenid_fuzzer:GetNativeTokenIdFuzzTest",
     "getnativetokeninfo_fuzzer:GetNativeTokenInfoFuzzTest",
     "getpermissionflags_fuzzer:GetPermissionFlagsFuzzTest",
+    "getpermissionstatusdetails_fuzzer:GetPermissionStatusDetailsFuzzTest",
     "getpermissionrequesttogglestatus_fuzzer:GetPermissionRequestToggleStatusFuzzTest",
     "getpermissionsstatus_fuzzer:GetPermissionsStatusFuzzTest",
     "getpermissionusedtype_fuzzer:GetPermissionUsedTypeFuzzTest",
@@ -56,12 +58,14 @@ group("fuzztest") {
     "registerpermstatechangecallback_fuzzer:RegisterPermStateChangeCallbackFuzzTest",
     "registertokensynccallback_fuzzer:RegisterTokenSyncCallbackFuzzTest",
     "requestapppermonsetting_fuzzer:RequestAppPermOnSettingFuzzTest",
+    "refreshtokenidstatus_fuzzer:RefreshTokenIdStatusFuzzTest",
     "revokeusergrantedpermission_fuzzer:RevokeUserGrantedPermissionFuzzTest",
     "setpermdialogcap_fuzzer:SetPermDialogCapFuzzTest",
     "setpermissionrequesttogglestatus_fuzzer:SetPermissionRequestToggleStatusFuzzTest",
     "setpermissionstatuswithpolicy_fuzzer:SetPermissionStatusWithPolicyFuzzTest",
     "setuserpolicy_fuzzer:SetUserPolicyFuzzTest",
     "tooltokenlifecycle_fuzzer:ToolTokenLifecycleFuzzTest",
+    "tokensetproc_fuzzer:TokenSetprocFuzzTest",
     "unregisterpermstatechangecallback_fuzzer:UnRegisterPermStateChangeCallbackFuzzTest",
     "updatehaptoken_fuzzer:UpdateHapTokenFuzzTest",
     "verifyaccesstoken001_fuzzer:VerifyAccessToken001FuzzTest",
@@ -71,7 +75,9 @@ group("fuzztest") {
   if (security_component_enhance_enable) {
     deps += [
       "getseccompenhance_fuzzer:GetSecCompEnhanceFuzzTest",
+      "getseccompenhancekey_fuzzer:GetSecCompEnhanceKeyFuzzTest",
       "registerseccompenhance_fuzzer:RegisterSecCompEnhanceFuzzTest",
+      "storeseccompenhancekey_fuzzer:StoreSecCompEnhanceKeyFuzzTest",
       "updateseccompenhance_fuzzer:UpdateSecCompEnhanceFuzzTest",
     ]
   }
@@ -80,8 +86,10 @@ group("fuzztest") {
       "checkhapsigninfo_fuzzer:CheckHapSignInfoFuzzTest",
       "checkhappermissioninfo_fuzzer:CheckHapPermissionInfoFuzzTest",
       "finishinstall_fuzzer:FinishInstallFuzzTest",
+      "getcachepolicybysessionid_fuzzer:GetCachePolicyBySessionIdFuzzTest",
       "getcachesigninfobysessionid_fuzzer:GetCacheSignInfoBySessionIdFuzzTest",
       "gethapsigninfo_fuzzer:GetHapSignInfoFuzzTest",
+      "migrateinstalledbundlesclient_fuzzer:MigrateInstalledBundlesClientFuzzTest",
       "preparehapidentity_fuzzer:PrepareHapIdentityFuzzTest",
       "updatehappolicy_fuzzer:UpdateHapPolicyFuzzTest",
     ]

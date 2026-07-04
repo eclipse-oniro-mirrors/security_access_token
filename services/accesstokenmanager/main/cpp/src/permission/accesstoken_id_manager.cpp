@@ -155,6 +155,11 @@ bool AccessTokenIDManager::IsReservedTokenId(AccessTokenID id)
 void AccessTokenIDManager::AddReservedTokenId(AccessTokenID id)
 {
     std::unique_lock<std::shared_mutex> idGuard(this->tokenIdLock_);
+    TokenIdStatus status;
+    if (GetTokenIdStatusLocked(id, status) == RET_SUCCESS) {
+        LOGW(ATM_DOMAIN, ATM_TAG, "Id %{public}u already exist as %{public}d", id, static_cast<int32_t>(status));
+        return;
+    }
     reservedTokenIdSet_.insert(id);
 }
 
@@ -357,19 +362,6 @@ int32_t AccessTokenIDManager::TranslateUid(int32_t srcUid, int32_t dstLocalId, i
     return RET_SUCCESS;
 }
 
-int32_t AccessTokenIDManager::ImportInitialUids(const std::vector<int32_t>& uids)
-{
-    std::unique_lock<std::mutex> lock(bundleIdLock_);
-    for (int32_t uid : uids) {
-        int32_t bundleId = 0;
-        if (ExtractBundleId(uid, bundleId)) {
-            bundleIdSet_.insert(bundleId);
-        } else {
-            LOGW(ATM_DOMAIN, ATM_TAG, "Invalid uid=%{public}d, skip.", uid);
-        }
-    }
-    return RET_SUCCESS;
-}
 
 void AccessTokenIDManager::SetMigrationDone()
 {

@@ -311,6 +311,23 @@ HWTEST_F(AccessTokenDenyTest, GetNativeTokenInfo001, TestSize.Level0)
 }
 
 /**
+ * @tc.name: GetHapIdentity001
+ * @tc.desc: GetHapIdentity with no permission
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenDenyTest, GetHapIdentity001, TestSize.Level0)
+{
+    HapBaseInfo baseInfo;
+    baseInfo.userID = 0;
+    baseInfo.bundleName = "test";
+    baseInfo.instIndex = 0;
+    Identity identity = {0};
+
+    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::GetHapIdentity(baseInfo, identity));
+}
+
+/**
  * @tc.name: GetReqPermissions001
  * @tc.desc: GetReqPermissions with no permission
  * @tc.type: FUNC
@@ -956,6 +973,22 @@ HWTEST_F(AccessTokenDenyTest, DeleteIdentityAbnormalTest001, TestSize.Level0)
     mock.Grant("ohos.permission.MANAGE_HAP_TOKENID");
     ASSERT_EQ(RET_SUCCESS,
         AccessTokenKit::DeleteIdentity(tokenID, info.bundleName, ReservedType::NONE));
+}
+
+/**
+ * @tc.name: RefreshTokenIdStatus001
+ * @tc.desc: RefreshTokenStatus without ohos.permission.MANAGE_HAP_TOKENID returns ERR_PERMISSION_DENIED.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenDenyTest, RefreshTokenIdStatus001, TestSize.Level0)
+{
+    Identity identity = {
+        .uid = RANDOM_USERID,
+        .tokenId = RANDOM_TOKENID,
+    };
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
+        AccessTokenKit::RefreshTokenStatus(identity, ReservedType::RESERVED_IDENTITY));
 }
 } // namespace AccessToken
 } // namespace Security

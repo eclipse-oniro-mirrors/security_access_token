@@ -26,6 +26,7 @@
 #include "accesstoken_info_manager.h"
 #include "add_spm_data_task.h"
 #include "data_translator.h"
+#include "hisysevent_adapter.h"
 #ifdef IS_SUPPORT_HAP_RUNNING
 #include "hap_sign_verify_helper.h"
 #include "permission_map.h"
@@ -48,8 +49,9 @@ BootVerifyScheduler& BootVerifyScheduler::GetInstance()
     return instance;
 }
 
-int32_t BootVerifyScheduler::VerifyBundleSignInfoWhenStart()
+int32_t BootVerifyScheduler::VerifyBundleSignInfoWhenStart(uint32_t& hapSize)
 {
+    (void)hapSize;
     return RET_SUCCESS;
 }
 
@@ -70,7 +72,6 @@ int32_t BootVerifyScheduler::PreVerifyBundle(uint32_t tokenID)
 #else
 namespace {
 constexpr uint32_t VERIFY_THREAD_COUNT = 4;
-constexpr int32_t INVALID_UID = -1;
 constexpr AccessTokenID INVALID_TOKEN_ID = 0;
 constexpr uint32_t IS_KERNEL_EFFECT = (0x1 << 0);
 constexpr uint32_t HAS_VALUE = (0x1 << 1);
@@ -78,8 +79,6 @@ constexpr uint32_t API_VERSION_SUFFIX_LEN = 3;
 const std::string APP_DISTRIBUTION_TYPE_ENTERPRISE_MDM = "enterprise_mdm";
 const std::string APP_DISTRIBUTION_TYPE_ENTERPRISE_NORMAL = "enterprise_normal";
 const std::string APP_DISTRIBUTION_TYPE_NONE = "none";
-static const char* ACCESS_TOKEN_SERVICE_APP_VERIFY_KEY = "accesstoken.permission.appverify";
-static constexpr int32_t VALUE_MAX_LEN = 32;
 
 int32_t GetStoredApiVersion(int32_t apiVersion)
 {
@@ -88,6 +87,44 @@ int32_t GetStoredApiVersion(int32_t apiVersion)
         return apiVersion;
     }
     return std::atoi(apiStr.substr(apiStr.length() - API_VERSION_SUFFIX_LEN).c_str());
+}
+
+void ReportNormalBundleVerifyFinish(uint32_t hapSize)
+{
+    InitDfxInfo dfxInfo = {};
+    dfxInfo.hapSize = hapSize;
+    ReportSysEventServiceStart(dfxInfo);
+}
+
+void ReportPreVerifyAddHapEvent(const std::string& bundleName,
+    const std::map<std::string, std::shared_ptr<BundleInfoInner>>& bundleInfoMap,
+    const std::map<int, HapTokenInfoItem>& hapTokenInfoMap)
+{
+    AccessTokenID tokenId = INVALID_TOKEN_ID;
+    const HapTokenInfoItem* hapInfo = nullptr;
+    auto bundleIter = bundleInfoMap.find(bundleName);
+    if (bundleIter != bundleInfoMap.end() && bundleIter->second != nullptr &&
+        !bundleIter->second->tokenIds.empty()) {
+        tokenId = bundleIter->second->tokenIds[0];
+        auto hapIter = hapTokenInfoMap.find(tokenId);
+        if (hapIter != hapTokenInfoMap.end()) {
+            hapInfo = &(hapIter->second);
+        }
+    }
+
+    HapDfxInfo dfxInfo = {};
+    dfxInfo.sceneCode = AddHapSceneCode::PRE_VERIFY;
+    dfxInfo.bundleName = bundleName;
+    dfxInfo.tokenId = tokenId;
+    dfxInfo.oriTokenId = tokenId;
+    dfxInfo.tokenIdEx.tokenIdExStruct.tokenID = tokenId;
+    if (hapInfo != nullptr) {
+        dfxInfo.userID = static_cast<int32_t>(hapInfo->uid);
+        dfxInfo.instIndex = hapInfo->instIndex;
+        dfxInfo.dlpType = static_cast<HapDlpType>(hapInfo->dlpType);
+        dfxInfo.tokenIdEx.tokenIdExStruct.tokenAttr = hapInfo->tokenAttr;
+    }
+    ReportSysEventAddHap(RET_SUCCESS, dfxInfo, false);
 }
 
 void MergeBriefPermData(std::vector<BriefPermData>& permBriefDataList, const BriefPermData& data)
@@ -162,29 +199,6 @@ BootVerifyScheduler& BootVerifyScheduler::GetInstance()
     return instance;
 }
 
-void BootVerifyScheduler::AccessTokenServiceAppVerifyParamSet() const
-{
-    int32_t res = SetParameter(ACCESS_TOKEN_SERVICE_APP_VERIFY_KEY, std::to_string(1).c_str());
-    if (res != 0) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "SetParameter ACCESS_TOKEN_SERVICE_APP_VERIFY_KEY 1 failed %{public}d.", res);
-        return;
-    }
-}
-
-bool BootVerifyScheduler::IsSystemAppVerified() const
-{
-    char value[VALUE_MAX_LEN] = {0};
-    int32_t ret = GetParameter(ACCESS_TOKEN_SERVICE_APP_VERIFY_KEY, "", value, VALUE_MAX_LEN - 1);
-    if (ret < 0) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "At service has been started, ret=%{public}d.", ret);
-        return false;
-    }
-    if (static_cast<uint64_t>(std::atoll(value)) != 0) {
-        return true;
-    }
-    return false;
-}
-
 int32_t BootVerifyScheduler::LoadVerifyDataFromDb()
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "LoadVerifyDataFromDb Entry!");
@@ -192,7 +206,7 @@ int32_t BootVerifyScheduler::LoadVerifyDataFromDb()
     std::vector<GenericValues> hapTokenRes;
     std::vector<GenericValues> permStateRes;
     std::vector<GenericValues> extendedPermRes;
-    int32_t ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_INFO, conditionValue, hapTokenRes);
+    int32_t ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, conditionValue, hapTokenRes);
     if (ret != RET_SUCCESS) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Load hap token info failed, ret=%{public}d.", ret);
         return ret;
@@ -290,7 +304,7 @@ void BootVerifyScheduler::InitHapTokenContext(const std::vector<GenericValues>& 
     }
 }
 
-bool BootVerifyScheduler::HandleHapInfoUid(AccessTokenID tokenId, int32_t uid)
+bool BootVerifyScheduler::HandleHapInfoUid(const std::string& bundleName, AccessTokenID tokenId, int32_t uid)
 {
     if (uid <= 0) {
         return true;
@@ -301,7 +315,9 @@ bool BootVerifyScheduler::HandleHapInfoUid(AccessTokenID tokenId, int32_t uid)
         AccessTokenIDManager::GetInstance().InitSingleBundleIdCache(uid);
         return true;
     }
-    LOGW(ATM_DOMAIN, ATM_TAG, "Duplicate uid found for tokenId=%{public}u, uid=%{public}d.", tokenId, uid);
+    LOGC(ATM_DOMAIN, ATM_TAG, "Duplicate uid found for tokenId=%{public}u, uid=%{public}d.", tokenId, uid);
+    ReportSysCommonEventError(AccessTokenServiceStartSceneCode::REGISTER_UID,
+        AccessTokenServiceStartErrorCode::UID_CONFLICT);
     return false;
 }
 
@@ -319,7 +335,7 @@ bool BootVerifyScheduler::InitSingleHapTokenContext(const GenericValues& tokenVa
     if (AccessTokenInfoManager::GetInstance().AddReservedHapInfoFromDbValues(tokenValue)) {
 #ifdef SPM_DATA_ENABLE
         int32_t uid = tokenValue.GetInt(TokenFiledConst::FIELD_UID);
-        (void)HandleHapInfoUid(tokenId, uid);
+        (void)HandleHapInfoUid(bundleName, tokenId, uid);
 #endif
         return false;
     }
@@ -338,11 +354,13 @@ bool BootVerifyScheduler::InitSingleHapTokenContext(const GenericValues& tokenVa
 
     int32_t ret = AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, TOKEN_HAP);
     if (ret != RET_SUCCESS) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "RegisterTokenId failed, tokenId=%{public}u, ret=%{public}d.", tokenId, ret);
+        LOGC(ATM_DOMAIN, ATM_TAG, "RegisterTokenId failed, tokenId=%{public}u, ret=%{public}d.", tokenId, ret);
+        ReportSysCommonEventError(AccessTokenServiceStartSceneCode::REGISTER_TOKEN_ID,
+            AccessTokenServiceStartErrorCode::REGISTER_TOKEN_ID_FAILED);
         return false;
     }
 #if SPM_DATA_ENABLE
-    if (!HandleHapInfoUid(tokenId, static_cast<int32_t>(hapTokenInfoItem.uid))) {
+    if (!HandleHapInfoUid(bundleName, tokenId, static_cast<int32_t>(hapTokenInfoItem.uid))) {
         return false;
     }
 #endif
@@ -374,14 +392,9 @@ bool BootVerifyScheduler::BuildHapTokenInfoItemFromDb(AccessTokenID tokenId, con
 #ifdef SPM_DATA_ENABLE
     hapTokenInfoItem.reserved = static_cast<ReservedType>(tokenValue.GetInt(TokenFiledConst::FIELD_RESERVED));
     hapTokenInfoItem.migrated = tokenValue.GetInt(TokenFiledConst::FIELD_MIGRATED) != 0;
-    hapTokenInfoItem.uid = static_cast<uint32_t>(tokenValue.GetInt(TokenFiledConst::FIELD_UID));
+    hapTokenInfoItem.uid = tokenValue.GetInt(TokenFiledConst::FIELD_UID);
 #endif
 
-    if (static_cast<char>(hapTokenInfoItem.version) != DEFAULT_TOKEN_VERSION) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Invalid token version, tokenId=%{public}u, version=%{public}d.",
-            tokenId, hapTokenInfoItem.version);
-        return false;
-    }
     return true;
 }
 
@@ -395,12 +408,8 @@ void BootVerifyScheduler::BuildBriefPermDataFromDb(const std::vector<GenericValu
             continue;
         }
         uint32_t permCode = 0;
-        if (!TransferPermissionToOpcode(state.permissionName, permCode)) {
-            continue;
-        }
         PermissionBriefDef briefDef;
-        GetPermissionBriefDef(permCode, briefDef);
-        if (!briefDef.isEnable) {
+        if (!GetPermissionBriefDef(state.permissionName, briefDef, permCode) || !briefDef.isEnable) {
             LOGW(ATM_DOMAIN, ATM_TAG, "Permission %{public}s is invalid or disabled, skip.",
                 state.permissionName.c_str());
             continue;
@@ -468,6 +477,25 @@ void BootVerifyScheduler::BuildPriorityBundleList()
             normalBundleList_.emplace_back(bundleName);
         }
     }
+
+    auto bundleComparator = [this](const std::string& left, const std::string& right) {
+        size_t leftCount = 0;
+        auto leftIter = bundleSignInfoMap_.find(left);
+        if (leftIter != bundleSignInfoMap_.end()) {
+            leftCount = leftIter->second.pathList.size();
+        }
+        size_t rightCount = 0;
+        auto rightIter = bundleSignInfoMap_.find(right);
+        if (rightIter != bundleSignInfoMap_.end()) {
+            rightCount = rightIter->second.pathList.size();
+        }
+        if (leftCount != rightCount) {
+            return leftCount > rightCount;
+        }
+        return left < right;
+    };
+    std::sort(highPrivilegeBundleList_.begin(), highPrivilegeBundleList_.end(), bundleComparator);
+    std::sort(normalBundleList_.begin(), normalBundleList_.end(), bundleComparator);
 }
 
 int32_t BootVerifyScheduler::RefreshBundleSignInfoMap()
@@ -488,7 +516,8 @@ int32_t BootVerifyScheduler::RefreshBundleSignInfoMap()
         if (bundleType != static_cast<int32_t>(AppExecFwk::Spm::BundleType::APP) &&
             bundleType != static_cast<int32_t>(AppExecFwk::Spm::BundleType::ATOMIC_SERVICE) &&
             bundleType != static_cast<int32_t>(AppExecFwk::Spm::BundleType::APP_SERVICE_FWK)) {
-            LOGW(ATM_DOMAIN, ATM_TAG, "Invalid bundle type in db, bundleName=%{public}s, bundleType=%{public}d.",
+            LOGI(ATM_DOMAIN, ATM_TAG,
+                "bundleName=%{public}s, bundleType=%{public}d is not necessary to load into cache.",
                 bundleName.c_str(), bundleType);
             continue;
         }
@@ -551,6 +580,7 @@ void BootVerifyScheduler::UpdateBundleSignInfoByTrustedInfos(BundleSignInfo& sig
     const size_t infoSize = trustedInfos.size();
     if (infoSize != signInfo.persistDataList.size() || infoSize != signInfo.moduleNameList.size() ||
         infoSize != signInfo.bundleType.size()) {
+        return;
     }
 
     for (const auto& index : changedIndexList) {
@@ -571,19 +601,6 @@ void BootVerifyScheduler::UpdateBundleSignInfoByTrustedInfos(BundleSignInfo& sig
     }
 }
 
-std::vector<std::vector<std::string>> BootVerifyScheduler::SplitBundleList(
-    const std::vector<std::string>& bundleNameList, uint32_t size)
-{
-    std::vector<std::vector<std::string>> splitList(size);
-    if (size == 0) {
-        return splitList;
-    }
-    for (size_t i = 0; i < bundleNameList.size(); ++i) {
-        splitList[i % size].emplace_back(bundleNameList[i]);
-    }
-    return splitList;
-}
-
 int32_t BootVerifyScheduler::VerifySingleBundle(const std::string& bundleName, BundleSignInfo& updatedInfo,
     VerifiedBundleState& state)
 {
@@ -600,9 +617,10 @@ int32_t BootVerifyScheduler::VerifySingleBundle(const std::string& bundleName, B
         trustedInfo.bootstrapInfo->Load(
             updatedInfo.persistDataList[i].data(), updatedInfo.persistDataList[i].size());
         ret = verifyManager.CheckHapsSignInfo(
-            updatedInfo.pathList[i], Verify::VerifyType::Fast, -1, trustedInfo, isChanged);
+            HapSignVerifyManager::MakeVerifyParams(updatedInfo.pathList[i], Verify::VerifyType::Fast, -1),
+            true, trustedInfo, isChanged);
         if (ret != RET_SUCCESS) {
-            LOGE(ATM_DOMAIN, ATM_TAG,
+            LOGC(ATM_DOMAIN, ATM_TAG,
                 "Check hap sign info failed, bundleName=%{public}s, path=%{public}s, ret=%{public}d.",
                 bundleName.c_str(), updatedInfo.pathList[i].c_str(), ret);
             return ERR_HAP_SIGN_VERIFY_FAILED;
@@ -615,12 +633,12 @@ int32_t BootVerifyScheduler::VerifySingleBundle(const std::string& bundleName, B
 
     ret = verifyManager.CheckMultipleHaps(trustedInfos);
     if (ret != RET_SUCCESS) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Check multiple haps failed, bundleName=%{public}s, ret=%{public}d.",
+        LOGC(ATM_DOMAIN, ATM_TAG, "Check multiple haps failed, bundleName=%{public}s, ret=%{public}d.",
             bundleName.c_str(), ret);
         return ret;
     }
     if (!trustedInfos.empty() && bundleName != trustedInfos[0].GetBundleName()) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Bundle name mismatch, bundleName=%{public}s, trustedBundleName=%{public}s.",
+        LOGC(ATM_DOMAIN, ATM_TAG, "Bundle name mismatch, bundleName=%{public}s, trustedBundleName=%{public}s.",
             bundleName.c_str(), trustedInfos[0].GetBundleName().c_str());
         return ERR_HAP_SIGN_VERIFY_FAILED;
     }
@@ -631,7 +649,7 @@ int32_t BootVerifyScheduler::VerifySingleBundle(const std::string& bundleName, B
     BundleParam param;
     ret = verifyManager.BuildHapPolicy(trustedInfos, policy, param);
     if (ret != RET_SUCCESS) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "BuildHapPolicy failed, bundleName=%{public}s, ret=%{public}d.",
+        LOGC(ATM_DOMAIN, ATM_TAG, "BuildHapPolicy failed, bundleName=%{public}s, ret=%{public}d.",
             bundleName.c_str(), ret);
         return ret;
     }
@@ -664,14 +682,14 @@ int32_t BootVerifyScheduler::ReconcileVerifiedBundleCache(
     std::lock_guard<std::mutex> lock(verifyMutex_);
     auto bundleIter = bundleInfoMap_.find(bundleName);
     if (bundleIter == bundleInfoMap_.end() || bundleIter->second == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Bundle info not exist, bundleName=%{public}s.", bundleName.c_str());
+        LOGC(ATM_DOMAIN, ATM_TAG, "Bundle info not exist, bundleName=%{public}s.", bundleName.c_str());
         return ERR_BUNDLE_NOT_EXIST;
     }
     const auto tokenIds = bundleIter->second->tokenIds;
     for (const auto tokenId : tokenIds) {
         auto hapIter = hapTokenInfoMap_.find(tokenId);
         if (hapIter == hapTokenInfoMap_.end()) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "Hap token info not exist, tokenId=%{public}u.", tokenId);
+            LOGC(ATM_DOMAIN, ATM_TAG, "Hap token info not exist, tokenId=%{public}u.", tokenId);
             return ERR_TOKENID_NOT_EXIST;
         }
         HapTokenInfoItem fixedItem = hapIter->second;
@@ -737,7 +755,7 @@ int32_t BootVerifyScheduler::BuildVerifyBundleData(const std::string& bundleName
     return RET_SUCCESS;
 }
 
-int32_t BootVerifyScheduler::VerifyBundleWithState(const std::string& bundleName)
+int32_t BootVerifyScheduler::VerifyBundleWithState(const std::string& bundleName, bool isPreVerify)
 {
     if (IsAllBundlesVerified()) {
         return RET_SUCCESS;
@@ -766,21 +784,34 @@ int32_t BootVerifyScheduler::VerifyBundleWithState(const std::string& bundleName
 
     ret = VerifySingleBundle(bundleName, updatedInfo, state);
     if (ret != RET_SUCCESS) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Verify single bundle failed, bundleName=%{public}s, ret=%{public}d.",
+        LOGC(ATM_DOMAIN, ATM_TAG, "Verify single bundle failed, bundleName=%{public}s, ret=%{public}d.",
             bundleName.c_str(), ret);
-        ChangeTokenIdStatus(bundleName, TokenIdStatus::UNTRUSTED);
-        HandleVerifyBundleFailure(bundleName, ret);
+        ChangeTokenIdToUntrustedStatus(bundleName);
+        if (!AccessTokenInfoUtils::IsSystemSpmEnforcing()) {
+            std::lock_guard<std::mutex> lock(verifyMutex_);
+            FinishCommitBundleVerifyLocked(bundleName);
+            verifyCondition_.notify_all();
+        } else {
+            HandleVerifyBundleFailure(bundleName, ret);
+        }
+        ReportSysCommonEventError(AccessTokenServiceStartSceneCode::VERIFY_HAP, ret);
     }
 
     if (ret == RET_SUCCESS) {
         ret = AddSpmDataAndCommitCache(bundleName, { state });
+        if (ret == RET_SUCCESS && isPreVerify) {
+            ReportPreVerifyAddHapEvent(bundleName, bundleInfoMap_, hapTokenInfoMap_);
+        }
     }
     verifyCondition_.notify_all();
     return ret;
 }
 
-void BootVerifyScheduler::ChangeTokenIdStatus(const std::string& bundleName, TokenIdStatus status)
+void BootVerifyScheduler::ChangeTokenIdToUntrustedStatus(const std::string& bundleName)
 {
+    if (!AccessTokenInfoUtils::IsSystemSpmEnforcing()) {
+        return;
+    }
     auto bundleIter = bundleInfoMap_.find(bundleName);
     if (bundleIter == bundleInfoMap_.end() || bundleIter->second == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Change tokenId status failed, bundle info not exist, bundleName=%{public}s.",
@@ -789,52 +820,27 @@ void BootVerifyScheduler::ChangeTokenIdStatus(const std::string& bundleName, Tok
     }
     const auto tokenIds = bundleIter->second->tokenIds;
     for (const auto tokenId : tokenIds) {
-        int32_t ret = AccessTokenIDManager::GetInstance().ChangeTokenIdStatus(tokenId, status);
+        int32_t ret = AccessTokenIDManager::GetInstance().ChangeTokenIdStatus(tokenId, TokenIdStatus::UNTRUSTED);
         if (ret != RET_SUCCESS) {
             LOGE(ATM_DOMAIN, ATM_TAG, "ChangeTokenIdStatus failed, tokenId=%{public}u, ret=%{public}d.", tokenId, ret);
         }
     }
 }
 
-int32_t BootVerifyScheduler::VerifyBundleList(const std::vector<std::string>& bundleNameList,
-    std::map<std::string, VerifiedBundleState>& stateList)
+void BootVerifyScheduler::StartVerifyNormalBundleListAsync()
 {
-    for (const auto& bundleName : bundleNameList) {
-        BundleSignInfo updatedInfo;
-        VerifiedBundleState state;
-        {
-            std::lock_guard<std::mutex> lock(verifyMutex_);
-            if (!PrepareBundleForBatchVerifyLocked(bundleName, updatedInfo)) {
-                continue;
-            }
-        }
-        int32_t ret = VerifySingleBundle(bundleName, updatedInfo, state);
-        if (ret != RET_SUCCESS) {
-            ChangeTokenIdStatus(bundleName, TokenIdStatus::UNTRUSTED);
-            HandleVerifyBundleFailure(bundleName, ret);
-            continue;
-        }
-        stateList.emplace(bundleName, state);
-    }
-    return RET_SUCCESS;
-}
-
-void BootVerifyScheduler::StartNormalBundleVerifyThread()
-{
+    const uint32_t hapSize = static_cast<uint32_t>(normalBundleList_.size());
     if (normalBundleList_.empty()) {
         isAllHapBundlesVerified_.store(true);
         ClearBundleVerifyContext();
-        AccessTokenServiceAppVerifyParamSet();
+        AccessTokenInfoUtils::AccessTokenServiceAppVerifyParamSet();
+        ReportNormalBundleVerifyFinish(hapSize);
         return;
     }
-    std::thread([this]() {
+    std::thread([this, hapSize]() {
         VerifyNormalBundleListAsync();
+        ReportNormalBundleVerifyFinish(hapSize);
     }).detach();
-}
-
-void BootVerifyScheduler::StartVerifyNormalBundleListAsync()
-{
-    StartNormalBundleVerifyThread();
 }
 
 void BootVerifyScheduler::VerifyNormalBundleListAsync()
@@ -860,10 +866,10 @@ void BootVerifyScheduler::VerifyNormalBundleListAsync()
     isAllHapBundlesVerified_.store(true);
     ClearBundleVerifyContext();
     verifyCondition_.notify_all();
-    AccessTokenServiceAppVerifyParamSet();
+    AccessTokenInfoUtils::AccessTokenServiceAppVerifyParamSet();
 }
 
-int32_t BootVerifyScheduler::VerifyBundleSignInfoWhenStart()
+int32_t BootVerifyScheduler::VerifyBundleSignInfoWhenStart(uint32_t& hapSize)
 {
     ClearBundleVerifyContext();
     isAllHapBundlesVerified_.store(false);
@@ -874,42 +880,63 @@ int32_t BootVerifyScheduler::VerifyBundleSignInfoWhenStart()
     }
 
     BuildPriorityBundleList();
+    hapSize = static_cast<uint32_t>(highPrivilegeBundleList_.size());
     std::map<std::string, VerifiedBundleState> stateList;
-    ret = VerifyHighPrivilegeBundleList(stateList);
-    if (ret != RET_SUCCESS) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Verify high privilege bundle list failed, ret=%{public}d.", ret);
-        return ret;
-    }
+    VerifyHighPrivilegeBundleList(stateList);
     HandleHighPrivilegeBundleSpmData(stateList);
     return RET_SUCCESS;
 }
 
-int32_t BootVerifyScheduler::VerifyHighPrivilegeBundleList(std::map<std::string, VerifiedBundleState>& stateList)
+void BootVerifyScheduler::VerifyHighPrivilegeBundleList(std::map<std::string, VerifiedBundleState>& stateList)
 {
     std::vector<std::map<std::string, VerifiedBundleState>> stateGroups;
-    int32_t ret = RunHighPrivilegeBundleVerifyTasks(stateGroups);
-    if (ret != RET_SUCCESS) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Run high privilege bundle verify tasks failed, ret=%{public}d.", ret);
-        return ret;
-    }
+    RunHighPrivilegeBundleVerifyTasks(stateGroups);
     stateList.clear();
     for (const auto& infoGroup : stateGroups) {
         stateList.insert(infoGroup.begin(), infoGroup.end());
     }
-    return RET_SUCCESS;
 }
 
-int32_t BootVerifyScheduler::RunHighPrivilegeBundleVerifyTasks(
+void BootVerifyScheduler::VerifyBundleList(std::atomic_size_t& nextBundleIndex,
+    std::map<std::string, VerifiedBundleState>& stateList)
+{
+    while (true) {
+        const size_t bundleIndex = nextBundleIndex.fetch_add(1);
+        if (bundleIndex >= highPrivilegeBundleList_.size()) {
+            break;
+        }
+
+        const std::string& bundleName = highPrivilegeBundleList_[bundleIndex];
+        BundleSignInfo updatedInfo;
+        VerifiedBundleState state;
+        {
+            std::lock_guard<std::mutex> lock(verifyMutex_);
+            if (!PrepareBundleForBatchVerifyLocked(bundleName, updatedInfo)) {
+                continue;
+            }
+        }
+        int32_t ret = VerifySingleBundle(bundleName, updatedInfo, state);
+        if (ret != RET_SUCCESS) {
+            ChangeTokenIdToUntrustedStatus(bundleName);
+            HandleVerifyBundleFailure(bundleName, ret);
+            ReportSysCommonEventError(AccessTokenServiceStartSceneCode::VERIFY_HAP, ret);
+            continue;
+        }
+        stateList.emplace(bundleName, state);
+    }
+}
+
+void BootVerifyScheduler::RunHighPrivilegeBundleVerifyTasks(
     std::vector<std::map<std::string, VerifiedBundleState>>& stateGroups)
 {
-    auto splitLists = SplitBundleList(highPrivilegeBundleList_, VERIFY_THREAD_COUNT);
     std::vector<std::thread> threads;
-    std::vector<int32_t> verifyResults(splitLists.size(), RET_SUCCESS);
-    stateGroups.assign(splitLists.size(), {});
-    threads.reserve(splitLists.size());
-    for (size_t i = 0; i < splitLists.size(); ++i) {
-        threads.emplace_back([this, &splitLists, &verifyResults, &stateGroups, i]() {
-            verifyResults[i] = VerifyBundleList(splitLists[i], stateGroups[i]);
+    const size_t threadCount = std::min(highPrivilegeBundleList_.size(), static_cast<size_t>(VERIFY_THREAD_COUNT));
+    stateGroups.assign(threadCount, {});
+    threads.reserve(threadCount);
+    std::atomic_size_t nextBundleIndex = 0;
+    for (size_t i = 0; i < threadCount; ++i) {
+        threads.emplace_back([this, &stateGroups, &nextBundleIndex, i]() {
+            VerifyBundleList(nextBundleIndex, stateGroups[i]);
         });
     }
     for (auto& thread : threads) {
@@ -917,78 +944,62 @@ int32_t BootVerifyScheduler::RunHighPrivilegeBundleVerifyTasks(
             thread.join();
         }
     }
-    int32_t ret = GetVerifyTaskResult(verifyResults);
-    if (ret != RET_SUCCESS) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Get verify task result failed, ret=%{public}d.", ret);
-    }
-    return ret;
-}
-
-int32_t BootVerifyScheduler::GetVerifyTaskResult(const std::vector<int32_t>& verifyResults)
-{
-    for (const auto& result : verifyResults) {
-        if (result != RET_SUCCESS) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "Verify task failed, ret=%{public}d.", result);
-            return result;
-        }
-    }
-    return RET_SUCCESS;
-}
-
-bool BootVerifyScheduler::ShouldSkipAddSpmData(const std::string& bundleName)
-{
-    std::lock_guard<std::mutex> lock(verifyMutex_);
-    auto bundleIter = bundleInfoMap_.find(bundleName);
-    if (bundleIter == bundleInfoMap_.end()) {
-        return true;
-    }
-    if (bundleIter->second == nullptr || bundleIter->second->tokenIds.empty()) {
-        return false;
-    }
-    return std::all_of(bundleIter->second->tokenIds.begin(), bundleIter->second->tokenIds.end(),
-        [this](AccessTokenID tokenId) {
-            auto hapIter = hapTokenInfoMap_.find(tokenId);
-            return hapIter != hapTokenInfoMap_.end() &&
-                static_cast<int32_t>(hapIter->second.uid) == INVALID_UID && !hapIter->second.migrated;
-        });
 }
 
 void BootVerifyScheduler::HandleHighPrivilegeBundleSpmData(const std::map<std::string, VerifiedBundleState>& stateMap)
 {
+    std::vector<std::pair<std::string, VerifiedBundleState>> bundleStatesToPersist;
     for (const auto& bundleName : highPrivilegeBundleList_) {
         auto stateIter = stateMap.find(bundleName);
-        if (ShouldSkipAddSpmData(bundleName) || (stateIter == stateMap.end())) {
+        if (stateIter == stateMap.end()) {
             std::lock_guard<std::mutex> lock(verifyMutex_);
-            FinishCommitBundleVerifyLocked(bundleName);
+            if (!AccessTokenInfoUtils::IsSystemSpmEnforcing()) {
+                FinishCommitBundleVerifyLocked(bundleName);
+            }
             verifyCondition_.notify_all();
             continue;
         }
-        int32_t ret = AddSpmDataAndCommitCache(bundleName, stateIter->second);
+        {
+            std::lock_guard<std::mutex> lock(verifyMutex_);
+            if (ShouldSkipVerifyLocked(bundleName)) {
+                FinishCommitBundleVerifyLocked(bundleName);
+                verifyCondition_.notify_all();
+                continue;
+            }
+        }
+        int32_t ret = AddSpmDataForBundle(bundleName);
         if (ret != RET_SUCCESS) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Add spm data failed, bundleName=%{public}s, ret=%{public}d.",
                 bundleName.c_str(), ret);
             continue;
         }
+        bundleStatesToPersist.emplace_back(bundleName, stateIter->second);
     }
-}
 
-bool BootVerifyScheduler::IsInvalidUid(AccessTokenID tokenId) const
-{
-    auto hapIter = hapTokenInfoMap_.find(tokenId);
-    return hapIter != hapTokenInfoMap_.end() && static_cast<int32_t>(hapIter->second.uid) == INVALID_UID;
+    int32_t ret = PersistVerifiedBundleStates(bundleStatesToPersist);
+    if (ret != RET_SUCCESS) {
+        LOGC(ATM_DOMAIN, ATM_TAG, "Persist verified bundle states failed, ret=%{public}d.", ret);
+        ReportSysCommonEventError(AccessTokenServiceStartSceneCode::PERSIST_BUNDLE_DATA, ret);
+    }
+
+    for (const auto& [bundleName, state] : bundleStatesToPersist) {
+        (void)state;
+        {
+            std::lock_guard<std::mutex> lock(verifyMutex_);
+            FinishCommitBundleVerifyLocked(bundleName);
+            LOGI(ATM_DOMAIN, ATM_TAG, "Fast verify finished, bundleName=%{public}s.", bundleName.c_str());
+        }
+        verifyCondition_.notify_all();
+    }
 }
 
 bool BootVerifyScheduler::ShouldSkipVerifyLocked(const std::string& bundleName) const
 {
     auto bundleIter = bundleInfoMap_.find(bundleName);
-    if (bundleIter == bundleInfoMap_.end() || bundleIter->second == nullptr) {
-        return false;
+    if (bundleIter == bundleInfoMap_.end() || bundleIter->second == nullptr || bundleIter->second->tokenIds.empty()) {
+        return true;
     }
-    return bundleSignInfoMap_.find(bundleName) == bundleSignInfoMap_.end() ||
-        std::all_of(bundleIter->second->tokenIds.begin(), bundleIter->second->tokenIds.end(),
-        [this](AccessTokenID tokenId) {
-            return IsInvalidUid(tokenId);
-        });
+    return bundleSignInfoMap_.find(bundleName) == bundleSignInfoMap_.end();
 }
 
 void BootVerifyScheduler::FinishSkippedBundleVerifyLocked(const std::string& bundleName)
@@ -1057,14 +1068,14 @@ void BootVerifyScheduler::BuildBundlePersistInfos(AccessTokenID tokenId, const V
     GenericValues condition;
     condition.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
     if (state.needPersistHapInfo) {
-        delInfoVec.emplace_back(DelInfo { AtmDataType::ACCESSTOKEN_HAP_INFO, condition });
+        delInfoVec.emplace_back(DelInfo { AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, condition });
         std::vector<GenericValues> hapInfoValues;
         {
             std::lock_guard<std::mutex> lock(verifyMutex_);
             hapTokenInfoMap_[tokenId].BuildAddValue(hapInfoValues);
         }
         if (!hapInfoValues.empty()) {
-            addInfoVec.emplace_back(AddInfo { AtmDataType::ACCESSTOKEN_HAP_INFO, hapInfoValues });
+            addInfoVec.emplace_back(AddInfo { AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, hapInfoValues });
         }
     }
     if (state.needPersistPermState) {
@@ -1098,33 +1109,82 @@ void BootVerifyScheduler::BuildSignInfoPersistInfo(
 }
 
 int32_t BootVerifyScheduler::PersistVerifiedBundleState(
-    const std::string& bundleName, const VerifiedBundleState& state, AddSpmDataTask& addSpmDataTask)
+    const std::string& bundleName, const VerifiedBundleState& state)
 {
     if (!state.needUpdateSignInfo && !state.needPersistHapInfo &&
         !state.needPersistPermState) {
         return RET_SUCCESS;
     }
-    std::vector<AccessTokenID> tokenIds;
-    int32_t ret = GetBundleTokenIds(bundleName, tokenIds);
+    std::vector<DelInfo> delInfoVec;
+    std::vector<AddInfo> addInfoVec;
+    int32_t ret = BuildVerifiedBundlePersistInfo(bundleName, state, delInfoVec, addInfoVec);
     if (ret != RET_SUCCESS) {
-        (void)addSpmDataTask.Rollback();
         HandleVerifyBundleFailure(bundleName, ret);
         return ret;
     }
 
-    std::vector<DelInfo> delInfoVec;
-    std::vector<AddInfo> addInfoVec;
+    ret = AccessTokenDbOperator::DeleteAndInsertValues(delInfoVec, addInfoVec);
+    if (ret != RET_SUCCESS) {
+        HandleVerifyBundleFailure(bundleName, ret);
+        return ret;
+    }
+    return ret;
+}
+
+int32_t BootVerifyScheduler::BuildVerifiedBundlePersistInfo(const std::string& bundleName,
+    const VerifiedBundleState& state, std::vector<DelInfo>& delInfoVec, std::vector<AddInfo>& addInfoVec)
+{
+    delInfoVec.clear();
+    addInfoVec.clear();
+    std::vector<AccessTokenID> tokenIds;
+    int32_t ret = GetBundleTokenIds(bundleName, tokenIds);
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
+
     for (const auto tokenId : tokenIds) {
         BuildBundlePersistInfos(tokenId, state, delInfoVec, addInfoVec);
     }
     if (state.needUpdateSignInfo) {
         BuildSignInfoPersistInfo(bundleName, delInfoVec, addInfoVec);
     }
+    return RET_SUCCESS;
+}
 
-    ret = AccessTokenDbOperator::DeleteAndInsertValues(delInfoVec, addInfoVec);
+int32_t BootVerifyScheduler::PersistVerifiedBundleStates(
+    const std::vector<std::pair<std::string, VerifiedBundleState>>& bundleStates)
+{
+    if (bundleStates.empty()) {
+        return RET_SUCCESS;
+    }
+    std::vector<DelInfo> delInfoVec;
+    std::vector<AddInfo> addInfoVec;
+    for (const auto& [bundleName, state] : bundleStates) {
+        std::vector<DelInfo> currentDelInfoVec;
+        std::vector<AddInfo> currentAddInfoVec;
+        int32_t ret = BuildVerifiedBundlePersistInfo(bundleName, state, currentDelInfoVec, currentAddInfoVec);
+        if (ret != RET_SUCCESS) {
+            HandleVerifyBundleFailure(bundleName, ret);
+            LOGC(ATM_DOMAIN, ATM_TAG, "Failed to build persist info %{public}s", bundleName.c_str());
+            continue;
+        }
+        delInfoVec.insert(delInfoVec.end(), currentDelInfoVec.begin(), currentDelInfoVec.end());
+        addInfoVec.insert(addInfoVec.end(), currentAddInfoVec.begin(), currentAddInfoVec.end());
+    }
+    int tryTime = 2;
+    int32_t ret = RET_SUCCESS;
+    for (int i = 0; i < tryTime; ++i) {
+        ret = AccessTokenDbOperator::DeleteAndInsertValues(delInfoVec, addInfoVec);
+        if (ret == RET_SUCCESS) {
+            break;
+        }
+    }
     if (ret != RET_SUCCESS) {
-        (void)addSpmDataTask.Rollback();
-        HandleVerifyBundleFailure(bundleName, ret);
+        LOGC(ATM_DOMAIN, ATM_TAG, "Failed to persist verified bundle states, ret=%{public}d.", ret);
+        for (const auto& [bundleName, state] : bundleStates) {
+            (void)state;
+            HandleVerifyBundleFailure(bundleName, ret);
+        }
     }
     return ret;
 }
@@ -1142,32 +1202,16 @@ void BootVerifyScheduler::FinishCommitBundleVerifyLocked(const std::string& bund
 int32_t BootVerifyScheduler::AddSpmDataAndCommitCache(
     const std::string& bundleName, const VerifiedBundleState& state)
 {
-    if (!IsSystemAppVerified()) {
-        BundleNoCachedInfo noCachedInfo;
-        std::vector<HapTokenInfo> hapInfoCache;
-        std::vector<std::vector<BriefPermData>> permBriefDataListCache;
-        std::vector<std::vector<PermissionWithValue>> extendPermListCache;
-        std::vector<SpmDataParam> params;
-        int32_t ret = BuildSpmParams(
-            bundleName, noCachedInfo, hapInfoCache, permBriefDataListCache, extendPermListCache, params);
-        if (ret != RET_SUCCESS) {
-            HandleVerifyBundleFailure(bundleName, ret);
-            return ret;
-        }
+    int32_t ret = AddSpmDataForBundle(bundleName);
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
 
-        AddSpmDataTask addSpmDataTask(params);
-        uint32_t errIndex = 0;
-        ret = addSpmDataTask.Add(errIndex);
-        if (ret != RET_SUCCESS && ret != ERR_DATA_CONFLICT_WITH_KERNEL) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "Add spm data failed, bundleName=%{public}s, ret=%{public}d.",
-                bundleName.c_str(), ret);
-            HandleVerifyBundleFailure(bundleName, ret);
-            return ret;
-        }
-        ret = PersistVerifiedBundleState(bundleName, state, addSpmDataTask);
-        if (ret != RET_SUCCESS) {
-            return ret;
-        }
+    int32_t result = PersistVerifiedBundleState(bundleName, state);
+    if (result != RET_SUCCESS) {
+        LOGC(ATM_DOMAIN, ATM_TAG, "Failed to modify database, bundleName=%{public}s.", bundleName.c_str());
+        ReportSysCommonEventError(AccessTokenServiceStartSceneCode::PERSIST_BUNDLE_DATA, ret);
+        return result;
     }
 
     {
@@ -1177,6 +1221,36 @@ int32_t BootVerifyScheduler::AddSpmDataAndCommitCache(
     verifyCondition_.notify_all();
 
     LOGI(ATM_DOMAIN, ATM_TAG, "Fast verify finished, bundleName=%{public}s.", bundleName.c_str());
+    return RET_SUCCESS;
+}
+
+int32_t BootVerifyScheduler::AddSpmDataForBundle(const std::string& bundleName)
+{
+    if (!PermissionKernelUtils::IsKernelSupportSpm() || AccessTokenInfoUtils::IsSystemAppVerified()) {
+        return RET_SUCCESS;
+    }
+
+    BundleNoCachedInfo noCachedInfo;
+    std::vector<HapTokenInfo> hapInfoCache;
+    std::vector<std::vector<BriefPermData>> permBriefDataListCache;
+    std::vector<std::vector<PermissionWithValue>> extendPermListCache;
+    std::vector<SpmDataParam> params;
+    int32_t ret = BuildSpmParams(
+        bundleName, noCachedInfo, hapInfoCache, permBriefDataListCache, extendPermListCache, params);
+    if (ret != RET_SUCCESS) {
+        HandleVerifyBundleFailure(bundleName, ret);
+        return ret;
+    }
+
+    AddSpmDataTask addSpmDataTask(params);
+    uint32_t errIndex = 0;
+    ret = addSpmDataTask.Add(errIndex);
+    if (ret != RET_SUCCESS && ret != ERR_DATA_CONFLICT_WITH_KERNEL) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Add spm data failed, bundleName=%{public}s, ret=%{public}d.",
+            bundleName.c_str(), ret);
+        HandleVerifyBundleFailure(bundleName, ret);
+        return ret;
+    }
     return RET_SUCCESS;
 }
 
@@ -1212,7 +1286,25 @@ void BootVerifyScheduler::HandleVerifyBundleFailure(const std::string& bundleNam
 
 int32_t BootVerifyScheduler::PreVerifyBundle(const std::string& bundleName)
 {
-    return VerifyBundleWithState(bundleName);
+    if (IsAllBundlesVerified() || bundleInfoMap_.empty()) {
+        return RET_SUCCESS;
+    }
+
+    {
+        std::lock_guard<std::mutex> lock(verifyMutex_);
+        auto bundleInfoIter = bundleInfoMap_.find(bundleName);
+        if (bundleInfoIter == bundleInfoMap_.end()) {
+            LOGW(ATM_DOMAIN, ATM_TAG,
+                "Pre verify skipped, bundle not exist, bundleName=%{public}s.", bundleName.c_str());
+            return RET_SUCCESS;
+        }
+    }
+    return PreVerifyBundleInner(bundleName);
+}
+
+int32_t BootVerifyScheduler::PreVerifyBundleInner(const std::string& bundleName)
+{
+    return VerifyBundleWithState(bundleName, true);
 }
 
 int32_t BootVerifyScheduler::PreVerifyBundle(uint32_t tokenID)
@@ -1235,7 +1327,7 @@ int32_t BootVerifyScheduler::PreVerifyBundle(uint32_t tokenID)
         LOGW(ATM_DOMAIN, ATM_TAG, "Pre verify skipped, bundle name empty, tokenId=%{public}u.", tokenID);
         return RET_SUCCESS;
     }
-    return PreVerifyBundle(bundleName);
+    return PreVerifyBundleInner(bundleName);
 }
 #endif
 } // namespace AccessToken

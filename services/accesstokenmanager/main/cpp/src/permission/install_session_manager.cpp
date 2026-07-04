@@ -62,7 +62,7 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-constexpr uint64_t ONE_HOUR_MS = 3600000;
+constexpr int64_t ONE_HOUR_MS = 3600000;
 const uint32_t IS_KERNEL_EFFECT = (0x1 << 0);
 const uint32_t HAS_VALUE = (0x1 << 1);
 static const uint32_t SYSTEM_APP_FLAG = 0x0001;
@@ -94,14 +94,6 @@ int32_t InstallSessionManager::CheckPermissionList(InstallCache& cache, HapInfoC
     if (cache.bundleInfos.empty()) {
         LOGE(ATM_DOMAIN, ATM_TAG, "bundleInfos is empty");
         return AccessTokenError::ERR_PARAM_INVALID;
-    }
-
-    for (auto it = cache.policy.aclExtendedMap.begin(); it != cache.policy.aclExtendedMap.end();) {
-        if (!IsDefinedPermissionInner(it->first)) {
-            it = cache.policy.aclExtendedMap.erase(it);
-        } else {
-            ++it;
-        }
     }
 
     std::vector<PermissionStatus> initializedList;
@@ -138,7 +130,9 @@ void InstallSessionManager::MergePermission(std::vector<BriefPermData>& permBrie
                 return newPerm.permCode == oldPermData.permCode;
             });
         if (iter != oldPermBriefDataList.end()) {
-            if (noNeedPermissionInheritance && ((iter->flag & PERMISSION_FIXED_BY_ADMIN_POLICY) == 0)) {
+            if (noNeedPermissionInheritance &&
+                (iter->flag & PERMISSION_FIXED_BY_ADMIN_POLICY) == 0 &&
+                (iter->flag & PERMISSION_RESTRICTED_BY_ADMIN) == 0) {
                 continue;
             }
             PermissionDataBrief::GetInstance().UpdatePermStatus(*iter, newPerm);
@@ -211,7 +205,7 @@ void InstallSessionManager::ClearTimeoutData()
 {
     {
         std::lock_guard<std::mutex> lock(cacheMutex_);
-        uint64_t timeStamp = static_cast<uint64_t>(TimeUtil::GetCurrentTimestamp());
+        int64_t timeStamp = TimeUtil::GetCurrentTimestamp();
         for (auto it = sessionToTimestamp.begin(); it != sessionToTimestamp.end();) {
             if (timeStamp - it->second > ONE_HOUR_MS) {
                 LOGE(ATM_DOMAIN, ATM_TAG, "Install session %{public}d overtime", it->first);
@@ -247,7 +241,7 @@ int32_t InstallSessionManager::CreateTokenIdAndUid(InstallCache& cache, const Bu
     AccessTokenID tokenId = AccessTokenIDManager::GetInstance().CreateAndRegisterTokenId(
         TOKEN_HAP, dlpFlag, cloneFlag, 0);
     if (tokenId == 0) {
-        LOGC(ATM_DOMAIN, ATM_TAG, "Token Id create failed");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Token Id create failed");
         return ERR_TOKENID_CREATE_FAILED;
     }
 
@@ -262,7 +256,7 @@ int32_t InstallSessionManager::CreateTokenIdAndUid(InstallCache& cache, const Bu
     } else {
         int32_t ret = AccessTokenIDManager::GetInstance().AllocUid(cache.baseInfo.userID, cache.identity.uid);
         if (ret != RET_SUCCESS) {
-            LOGC(ATM_DOMAIN, ATM_TAG, "Uid create failed, ret=%{public}d", ret);
+            LOGE(ATM_DOMAIN, ATM_TAG, "Uid create failed, ret=%{public}d", ret);
             AccessTokenIDManager::GetInstance().ReleaseTokenId(tokenId);
             return ERR_UID_CREATE_FAILED;
         }
@@ -283,7 +277,6 @@ int32_t InstallSessionManager::HandleReservedToken(
     cache.reserved = static_cast<int32_t>(ReservedType::RESERVED_DATA);
     cache.oldTokenId = tokenId;
     cache.oldAttr = oldAttr;
-    (void)AccessTokenIDManager::GetInstance().ChangeTokenIdStatus(tokenId, TokenIdStatus::ACTIVE);
     return RET_SUCCESS;
 }
 
@@ -294,7 +287,7 @@ int32_t InstallSessionManager::DeleteFromDbByTokenId(AccessTokenID tokenID)
     condition.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenID));
 
     std::vector<DelInfo> delInfoVec;
-    AccessTokenInfoUtils::GenerateDelInfoToVec(AtmDataType::ACCESSTOKEN_HAP_INFO, condition, delInfoVec);
+    AccessTokenInfoUtils::GenerateDelInfoToVec(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, condition, delInfoVec);
     AccessTokenInfoUtils::GenerateDelInfoToVec(AtmDataType::ACCESSTOKEN_PERMISSION_STATE, condition, delInfoVec);
     AccessTokenInfoUtils::GenerateDelInfoToVec(
         AtmDataType::ACCESSTOKEN_PERMISSION_EXTEND_VALUE, condition, delInfoVec);
@@ -336,7 +329,7 @@ int32_t InstallSessionManager::GetTokenIdAndUid(InstallCache& cache, const Bundl
     conditionValue.Put(TokenFiledConst::FIELD_BUNDLE_NAME, cache.baseInfo.bundleName);
     conditionValue.Put(TokenFiledConst::FIELD_INST_INDEX, cache.baseInfo.instIndex);
     std::vector<GenericValues> hapTokenResults;
-    int32_t ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_INFO, conditionValue, hapTokenResults);
+    int32_t ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, conditionValue, hapTokenResults);
     if (ret != RET_SUCCESS) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Query failed, ret: %{public}d", ret);
         return ERR_DATABASE_OPERATE_FAILED;
@@ -370,7 +363,8 @@ void InstallSessionManager::SupplementUpdateInfo(InstallCache& cache)
     if (infoInner == nullptr) {
         return;
     }
-    for (auto tokenId : infoInner->tokenIds) {
+    std::vector<AccessTokenID> tokenIds = infoInner->tokenIds;
+    for (auto tokenId : tokenIds) {
         if (cache.tokenIDToBundlePolicy.find(tokenId) == cache.tokenIDToBundlePolicy.end()) {
             BundlePolicy bundlePolicy;
             bundlePolicy.isDebugGrant = false;
@@ -399,8 +393,7 @@ bool InstallSessionManager::GetPermissionBriefData(const PermissionStatus &permS
 {
     uint32_t code;
     PermissionBriefDef briefDef;
-    if (IsDefinedPermissionInner(permState.permissionName) &&
-        GetPermissionBriefDef(permState.permissionName, briefDef, code)) {
+    if (GetPermissionBriefDef(permState.permissionName, briefDef, code) && briefDef.isEnable) {
         briefPermData.status = static_cast<int8_t>(permState.grantStatus);
         briefPermData.permCode = code;
         briefPermData.flag = permState.grantFlag;
@@ -545,6 +538,7 @@ int32_t InstallSessionManager::AllocHapInfo(const InstallCache& cache, FinishCon
     context.permBriefDataLists.emplace_back(permBriefDataList);
     context.extendPermLists.emplace_back(extPerms);
     context.oldPermList.emplace_back(std::make_shared<std::vector<BriefPermData>>());
+    context.innerInfo->tokenIds.emplace_back(static_cast<AccessTokenID>(cache.identity.tokenId & 0xffffffff));
 
     return RET_SUCCESS;
 }
@@ -554,7 +548,7 @@ void InstallSessionManager::CreateUpdateHapInfo(const InstallCache& cache, Finis
     for (const auto& [tokenIdInt, bundlePolicy] : cache.tokenIDToBundlePolicy) {
         AccessTokenID tokenId = static_cast<AccessTokenID>(tokenIdInt);
         std::shared_ptr<HapTokenInfoInner> infoPtr =
-            AccessTokenInfoManager::GetInstance().GetHapTokenInfoInnerFromCache(tokenId);
+            AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId, false);
         if (infoPtr == nullptr) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Token %{public}u is invalid.", tokenId);
             continue;
@@ -591,6 +585,7 @@ void InstallSessionManager::CreateUpdateHapInfo(const InstallCache& cache, Finis
         context.permBriefDataLists.emplace_back(permBriefDataList);
         context.extendPermLists.emplace_back(extPerms);
         context.oldPermList.emplace_back(vectorPtr);
+        context.innerInfo->tokenIds.emplace_back(tokenId);
     }
 }
 
@@ -599,8 +594,10 @@ void InstallSessionManager::GenerateHapTokenInfoItem(const InstallCache& cache, 
 {
     HapTokenInfoItem item;
     std::shared_ptr<HapTokenInfoInner> infoPtr =
-        AccessTokenInfoManager::GetInstance().GetHapTokenInfoInnerFromCache(hapInfo.tokenID);
-    if (infoPtr != nullptr) {
+        AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(hapInfo.tokenID, false);
+    // update or reserved is 2
+    if (infoPtr != nullptr && (hapInfo.tokenID != static_cast<uint32_t>(cache.identity.tokenId) ||
+        cache.reserved == static_cast<int32_t>(ReservedType::RESERVED_DATA))) {
         item.permDialogCapState = infoPtr->IsPermDialogForbidden();
         item.migrated = infoPtr->IsMigrated();
     } else {
@@ -657,8 +654,8 @@ void InstallSessionManager::ConvertBriefPermDataToGenericValues(AccessTokenID to
         genericValues.Put(TokenFiledConst::FIELD_GRANT_FLAG, static_cast<int32_t>(data.flag));
 
         auto iter = std::find_if(existingPermList.begin(), existingPermList.end(),
-            [permissionName](const PermissionStatus& oldPerm) {
-                return permissionName == oldPerm.permissionName;
+            [permissionName, data](const PermissionStatus& oldPerm) {
+                return permissionName == oldPerm.permissionName && data.status == oldPerm.grantStatus;
             });
         if (iter != existingPermList.end()) {
             genericValues.Put(TokenFiledConst::FIELD_TIMESTAMP, static_cast<int64_t>(iter->timestamp));
@@ -704,7 +701,7 @@ int32_t InstallSessionManager::ConvertInstallCacheToBundleInfoItems(const Instal
         if (i < bundleSize) {
             auto it = modulePathMap.find(cache.list.hapPaths[i]);
             if (it == modulePathMap.end()) {
-                LOGE(ATM_DOMAIN, ATM_TAG, "Map find failed");
+                LOGC(ATM_DOMAIN, ATM_TAG, "HAP path not found in map on FinishInstall");
                 return AccessTokenError::ERR_PARAM_INVALID;
             }
             moduleItem.path = it->second;
@@ -740,12 +737,12 @@ void InstallSessionManager::GenerateOneDbInfo(const InstallCache& cache, const H
     std::vector<GenericValues> permDefValues;
     GeneratePermDefFromHapPolicy(tokenId, cache.policy, hapInfo.bundleName, permDefValues);
 
-    AccessTokenInfoUtils::GenerateAddInfoToVec(AtmDataType::ACCESSTOKEN_HAP_INFO, hapTokenInfoValues, addInfoVec);
+    AccessTokenInfoUtils::GenerateAddInfoToVec(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, hapTokenInfoValues, addInfoVec);
     AccessTokenInfoUtils::GenerateAddInfoToVec(AtmDataType::ACCESSTOKEN_PERMISSION_STATE, permStateValues, addInfoVec);
 
     GenericValues condition;
     condition.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
-    AccessTokenInfoUtils::GenerateDelInfoToVec(AtmDataType::ACCESSTOKEN_HAP_INFO, condition, delInfoVec);
+    AccessTokenInfoUtils::GenerateDelInfoToVec(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, condition, delInfoVec);
     AccessTokenInfoUtils::GenerateDelInfoToVec(AtmDataType::ACCESSTOKEN_PERMISSION_STATE, condition, delInfoVec);
 
     if (!permDefValues.empty()) {
@@ -789,7 +786,7 @@ int32_t InstallSessionManager::DeleteAndInsertValueToDb(const InstallCache& cach
         GenericValues condition;
         condition.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(cache.oldTokenId));
         DelInfo delInfo;
-        delInfo.delType = AtmDataType::ACCESSTOKEN_HAP_INFO;
+        delInfo.delType = AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO;
         delInfo.delValue = condition;
         delInfoVec.emplace_back(delInfo);
     }
@@ -802,46 +799,45 @@ int32_t InstallSessionManager::DeleteAndInsertValueToDb(const InstallCache& cach
     return ret;
 }
 
-void InstallSessionManager::RefreshCache(const InstallCache& cache, const FinishContext& context,
-    std::shared_ptr<BundleInfoInner>& innerInfo)
+void InstallSessionManager::RefreshCache(int32_t sessionId, const InstallCache& cache, const FinishContext& context)
 {
-    bool hasNewInstall = false;
-    if (cache.identity.tokenId != 0) {
-        hasNewInstall = true;
-        innerInfo->tokenIds.emplace_back(static_cast<AccessTokenID>(cache.identity.tokenId));
-    }
-    for (auto it : cache.tokenIDToBundlePolicy) {
-        innerInfo->tokenIds.emplace_back(it.first);
-    }
+    bool hasNewInstall = (cache.identity.tokenId != 0);
     if (hasNewInstall) {
         AccessTokenInfoManager::GetInstance().CommitCreateHapCache(
             context.hapInfos.front(), context.permBriefDataLists.front(), context.extendPermLists.front(),
-            innerInfo);
+            context.innerInfo);
     }
 
     for (size_t i = hasNewInstall ? 1 : 0; i < context.hapInfos.size(); ++i) {
         AccessTokenInfoManager::GetInstance().CommitUpdateHapCache(
-            context.hapInfos[i], context.permBriefDataLists[i], context.extendPermLists[i], innerInfo);
+            context.hapInfos[i], context.permBriefDataLists[i], context.extendPermLists[i], context.innerInfo);
 #ifdef TOKEN_SYNC_ENABLE
         TokenModifyNotifier::GetInstance().NotifyTokenModify(context.hapInfos[i].tokenID);
 #endif
+        AccessTokenInfoManager::GetInstance().ReleaseInactiveTokenInfoInner(context.hapInfos[i].tokenID);
+        AccessTokenIDManager::GetInstance().ChangeTokenIdStatus(context.hapInfos[i].tokenID, TokenIdStatus::ACTIVE);
     }
     if (cache.reserved == static_cast<int32_t>(ReservedType::RESERVED_IDENTITY)) {
+        AccessTokenInfoManager::GetInstance().ReleaseInactiveTokenInfoInner(cache.oldTokenId);
         AccessTokenIDManager::GetInstance().RemoveReservedTokenId(cache.oldTokenId);
     }
+    if (cache.reserved == static_cast<int32_t>(ReservedType::RESERVED_DATA)) {
+        AccessTokenInfoManager::GetInstance().ReleaseInactiveTokenInfoInner(cache.identity.tokenId);
+        (void)AccessTokenIDManager::GetInstance().ChangeTokenIdStatus(cache.identity.tokenId, TokenIdStatus::ACTIVE);
+    }
+    ReportSessionFinish(sessionId, cache, SessionFinishSceneCode::SESSION_FINISH, 0);
 }
 
-void InstallSessionManager::RollbackAll(int32_t sessionId, bool eraseCache)
+void InstallSessionManager::RollbackAll(int32_t sessionId, int32_t sceneCode, int32_t errorCode, AccessTokenID tokenId,
+    bool eraseCache)
 {
     auto it = sessionToInstallCache.find(sessionId);
     if (it == sessionToInstallCache.end()) {
         return;
     }
+    ReportSessionError(it->second, sceneCode, errorCode, tokenId);
     if (it->second.identity.tokenId != 0) {
-        if (it->second.reserved == static_cast<int32_t>(ReservedType::RESERVED_DATA)) {
-            (void)AccessTokenIDManager::GetInstance().ChangeTokenIdStatus(
-                static_cast<AccessTokenID>(it->second.identity.tokenId), TokenIdStatus::RESERVED);
-        } else {
+        if (it->second.reserved != static_cast<int32_t>(ReservedType::RESERVED_DATA)) {
             AccessTokenIDManager::GetInstance().ReleaseTokenId(
                 static_cast<AccessTokenID>(it->second.identity.tokenId));
         }
@@ -849,6 +845,13 @@ void InstallSessionManager::RollbackAll(int32_t sessionId, bool eraseCache)
         if (it->second.isNewBundleId) {
             AccessTokenIDManager::GetInstance().RemoveBundleId(it->second.identity.uid);
         }
+    }
+    for (auto it: it->second.tokenIDToBundlePolicy) {
+        TokenIdStatus status;
+        if (AccessTokenIDManager::GetInstance().GetTokenIdStatus(it.first, status) != RET_SUCCESS) {
+            continue;
+        }
+        AccessTokenInfoManager::GetInstance().ReleaseInactiveTokenInfoInner(it.first);
     }
     int32_t callerPid = it->second.callerPid;
     if (eraseCache) {
@@ -875,9 +878,12 @@ int32_t InstallSessionManager::CheckHapSignInfo(const BundleHapList& list, const
         TrustedBundleInfoInner infoInner;
         bool isChanged = false;
         int32_t ret = HapSignVerifyManager::GetInstance().CheckHapsSignInfo(
-            cache.list.hapPaths[i], Security::Verify::VerifyType::All, list.userId, infoInner, isChanged);
+            HapSignVerifyManager::MakeVerifyParams(cache.list.hapPaths[i],
+                Security::Verify::VerifyType::All, list.userId),
+            false, infoInner, isChanged);
         if (ret != RET_SUCCESS) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "CheckHapsSignInfo failed ret=%{public}d", ret);
+            LOGE(ATM_DOMAIN, ATM_TAG, "CheckHapsSignInfo failed ret=%{public}d, path=%{public}s",
+                ret, cache.list.hapPaths[i].c_str());
             resultInfo.index = i;
             resultInfo.errorCode = ret;
             return ERR_HAP_SIGN_VERIFY_FAILED;
@@ -901,7 +907,9 @@ int32_t InstallSessionManager::CheckHapSignInfo(const BundleHapList& list, const
         std::lock_guard<std::mutex> lock(cacheMutex_);
         sessionId = ++sessionCnt;
         sessionToInstallCache[sessionId] = cache;
-        sessionToTimestamp[sessionId] = static_cast<uint64_t>(TimeUtil::GetCurrentTimestamp());
+        sessionToTimestamp[sessionId] = TimeUtil::GetCurrentTimestamp();
+        LOGI(ATM_DOMAIN, ATM_TAG, "sessionId=%{public}d, bundle=%{public}s",
+            sessionId, cache.bundleInfos.front().GetBundleName().c_str());
     }
     return RET_SUCCESS;
 }
@@ -909,14 +917,13 @@ int32_t InstallSessionManager::CheckHapSignInfo(const BundleHapList& list, const
 int32_t InstallSessionManager::CheckType(std::vector<std::string>& additionalPaths, InstallTypeEnum type)
 {
     if (!additionalPaths.empty() && type == InstallTypeEnum::TYPE_INSTALL) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Already has data, type:0");
+        LOGC(ATM_DOMAIN, ATM_TAG, "Already has data, type:0");
         return ERR_BUNDLE_ALREADY_EXIST;
     }
 
     if (additionalPaths.empty() &&
         (type == InstallTypeEnum::TYPE_MERGE || type == InstallTypeEnum::TYPE_REPLACE)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "No data, type:%{public}d", static_cast<int32_t>(type));
-        return ERR_BUNDLE_NOT_EXIST;
+        LOGW(ATM_DOMAIN, ATM_TAG, "No data, type:%{public}d", static_cast<int32_t>(type));
     }
 
     return RET_SUCCESS;
@@ -944,12 +951,13 @@ int32_t InstallSessionManager::CheckHapPermissionInfo(
         cache.bundleInfos.front().GetBundleName(), additionalPaths, persistDatas);
     if (ret != RET_SUCCESS) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Get hap info failed ret=%{public}d", ret);
-        RollbackAll(sessionId);
+        RollbackAll(sessionId, SessionFinishSceneCode::GET_HAP_PATH, ret, 0);
         return ret;
     }
 
     ret = CheckType(additionalPaths, type);
     if (ret != RET_SUCCESS) {
+        RollbackAll(sessionId, SessionFinishSceneCode::CHECK_TYPE, ret, 0);
         return ret;
     }
 
@@ -957,13 +965,14 @@ int32_t InstallSessionManager::CheckHapPermissionInfo(
         ret = RebuildHapPolicy(cache, additionalPaths, persistDatas);
         if (ret != RET_SUCCESS) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Rebuild hap policy failed ret=%{public}d", ret);
-            RollbackAll(sessionId);
+            RollbackAll(sessionId, SessionFinishSceneCode::REBUILD_HAP_POLICY, ret, 0);
             return ret;
         }
     } else {
         ret = HapSignVerifyManager::GetInstance().BuildHapPolicy(cache.bundleInfos, cache.policy, cache.bundleParam);
         if (ret != RET_SUCCESS) {
             LOGE(ATM_DOMAIN, ATM_TAG, "BuildHapPolicy failed ret=%{public}d", ret);
+            RollbackAll(sessionId, SessionFinishSceneCode::BUILD_HAP_POLICY, ret, 0);
             return ERR_BUILD_POLICY_FAILED;
         }
     }
@@ -971,7 +980,7 @@ int32_t InstallSessionManager::CheckHapPermissionInfo(
     ret = CheckPermissionList(cache, result);
     if (ret != RET_SUCCESS) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Check permission failed ret=%{public}d", ret);
-        RollbackAll(sessionId);
+        RollbackAll(sessionId, SessionFinishSceneCode::CHECK_PERMISSION_LIST, ret, 0);
         return ret;
     }
     cache.isCheckPerm = true;
@@ -983,7 +992,7 @@ int32_t InstallSessionManager::GetAppIdFromDb(const std::string& bundleName, std
     GenericValues conditionValue;
     conditionValue.Put(TokenFiledConst::FIELD_BUNDLE_NAME, bundleName);
     std::vector<GenericValues> hapTokenResults;
-    int32_t ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_INFO, conditionValue, hapTokenResults);
+    int32_t ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, conditionValue, hapTokenResults);
     if (ret != RET_SUCCESS) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Query failed, ret: %{public}d", ret);
         return ERR_DATABASE_OPERATE_FAILED;
@@ -1044,6 +1053,7 @@ int32_t InstallSessionManager::CreateInstallSession(const HapBaseInfo& info, con
     int32_t ret = FillInstallPolicy(info.bundleName, policy, cache);
     if (ret != RET_SUCCESS) {
         LOGE(ATM_DOMAIN, ATM_TAG, "FillInstallPolicy failed ret=%{public}d", ret);
+        RollbackAll(sessionId, SessionFinishSceneCode::FILL_INSTALL_POLICY, ret, 0);
         return ret;
     }
     cache.isCheckPerm = true;
@@ -1055,7 +1065,8 @@ int32_t InstallSessionManager::CreateInstallSession(const HapBaseInfo& info, con
     std::lock_guard<std::mutex> lock(cacheMutex_);
     sessionId = ++sessionCnt;
     sessionToInstallCache[sessionId] = cache;
-    sessionToTimestamp[sessionId] = static_cast<uint64_t>(TimeUtil::GetCurrentTimestamp());
+    sessionToTimestamp[sessionId] = TimeUtil::GetCurrentTimestamp();
+    LOGI(ATM_DOMAIN, ATM_TAG, "sessionId=%{public}d, bundle=%{public}s", sessionId, info.bundleName.c_str());
     return RET_SUCCESS;
 }
 
@@ -1070,12 +1081,12 @@ int32_t InstallSessionManager::PrepareSessionIdentity(int32_t sessionId, const H
     InstallCache& cache = sessionToInstallCache[sessionId];
     if (cache.identity.tokenId != 0) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Already prepare");
-        RollbackAll(sessionId);
+        RollbackAll(sessionId, SessionFinishSceneCode::PREPARE_IDENTITY, AccessTokenError::ERR_ALREADY_PREPARE, 0);
         return AccessTokenError::ERR_ALREADY_PREPARE;
     }
     if (!cache.isCheckPerm) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Not check permission!");
-        RollbackAll(sessionId);
+        RollbackAll(sessionId, SessionFinishSceneCode::PREPARE_IDENTITY, AccessTokenError::ERR_NOT_CHECK_PERMISSION, 0);
         return AccessTokenError::ERR_NOT_CHECK_PERMISSION;
     }
     if (!cache.bundleInfos.empty()) {
@@ -1083,9 +1094,9 @@ int32_t InstallSessionManager::PrepareSessionIdentity(int32_t sessionId, const H
         if (bundleType != static_cast<int32_t>(AppExecFwk::Spm::BundleType::APP) &&
             bundleType != static_cast<int32_t>(AppExecFwk::Spm::BundleType::ATOMIC_SERVICE) &&
             bundleType != static_cast<int32_t>(AppExecFwk::Spm::BundleType::APP_SERVICE_FWK)) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "BundleType %{public}d not allow create tokenID",
+            LOGC(ATM_DOMAIN, ATM_TAG, "BundleType %{public}d not allow create tokenID",
                 static_cast<int32_t>(bundleType));
-            RollbackAll(sessionId);
+            RollbackAll(sessionId, SessionFinishSceneCode::PREPARE_IDENTITY, AccessTokenError::ERR_PARAM_INVALID, 0);
             return AccessTokenError::ERR_PARAM_INVALID;
         }
     }
@@ -1093,7 +1104,7 @@ int32_t InstallSessionManager::PrepareSessionIdentity(int32_t sessionId, const H
     int32_t ret = GetTokenIdAndUid(cache, policy);
     if (ret != RET_SUCCESS) {
         LOGE(ATM_DOMAIN, ATM_TAG, "GetTokenIdAndUid failed ret=%{public}d", ret);
-        RollbackAll(sessionId);
+        RollbackAll(sessionId, SessionFinishSceneCode::PREPARE_IDENTITY, ret, 0);
         return ret;
     }
     identity.tokenId = cache.identity.tokenId;
@@ -1123,7 +1134,8 @@ int32_t InstallSessionManager::UpdateHapPolicy(int32_t sessionId, int32_t tokenI
         std::lock_guard<std::mutex> lock(cacheMutex_);
         if (!migrationDone_.load()) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Migration not completed");
-            RollbackAll(sessionId);
+            RollbackAll(sessionId,
+                SessionFinishSceneCode::UPDATE_HAP_POLICY, AccessTokenError::ERR_MIGRATION_COMPLETED, tokenId);
             return AccessTokenError::ERR_MIGRATION_COMPLETED;
         }
         auto it = sessionToInstallCache.find(sessionId);
@@ -1133,16 +1145,30 @@ int32_t InstallSessionManager::UpdateHapPolicy(int32_t sessionId, int32_t tokenI
         }
         if (!it->second.isCheckPerm) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Not check permission!");
-            RollbackAll(sessionId);
+            RollbackAll(sessionId,
+                SessionFinishSceneCode::UPDATE_HAP_POLICY, AccessTokenError::ERR_NOT_CHECK_PERMISSION, tokenId);
             return AccessTokenError::ERR_NOT_CHECK_PERMISSION;
         }
-        
-        std::shared_ptr<HapTokenInfoInner> infoPtr =
-            AccessTokenInfoManager::GetInstance().GetHapTokenInfoInnerFromCache(tokenId);
-        if (infoPtr == nullptr || infoPtr->GetBundleName() != it->second.bundleParam.bundleName) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "Token %{public}u is invalid or not match bundleName.", tokenId);
-            RollbackAll(sessionId);
+        if (AccessTokenIDManager::GetInstance().IsReservedTokenId(tokenId)) {
+            LOGC(ATM_DOMAIN, ATM_TAG, "Token %{public}u in reserved list", tokenId);
+            RollbackAll(sessionId,
+                SessionFinishSceneCode::UPDATE_HAP_POLICY, AccessTokenError::ERR_PARAM_INVALID, tokenId);
             return AccessTokenError::ERR_PARAM_INVALID;
+        }
+        std::shared_ptr<HapTokenInfoInner> infoPtr =
+            AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId, false);
+        if (infoPtr == nullptr || infoPtr->GetBundleName() != it->second.bundleParam.bundleName) {
+            LOGC(ATM_DOMAIN, ATM_TAG, "Token %{public}u is invalid or not match bundleName.", tokenId);
+            RollbackAll(sessionId,
+                SessionFinishSceneCode::UPDATE_HAP_POLICY, AccessTokenError::ERR_PARAM_INVALID, tokenId);
+            return AccessTokenError::ERR_PARAM_INVALID;
+        }
+        if (infoPtr->GetUid() == -1) {
+            LOGC(ATM_DOMAIN, ATM_TAG, "Uid is invalid, bundleName: %{public}s.",
+                infoPtr->GetBundleName().c_str());
+            RollbackAll(sessionId,
+                SessionFinishSceneCode::UPDATE_HAP_POLICY, AccessTokenError::ERR_INVALID_UID, tokenId);
+            return AccessTokenError::ERR_INVALID_UID;
         }
         it->second.tokenIDToBundlePolicy[static_cast<int32_t>(tokenId)] = policy;
     }
@@ -1155,7 +1181,7 @@ int32_t InstallSessionManager::FillFinishContext(int32_t sessionId, const Instal
     if (cache.identity.tokenId != 0) {
         if (isInstallInfoHasCache(cache.baseInfo)) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Get cache by install info");
-            return AccessTokenError::ERR_PARAM_INVALID;
+            return AccessTokenError::ERR_ALREADY_FINISH_INSTALL;
         }
         
         int32_t ret = AllocHapInfo(cache, context);
@@ -1177,7 +1203,21 @@ int32_t InstallSessionManager::ExecuteSpmKernelTasks(int32_t sessionId, const In
         startIndex = 1;
         spmContext.addParams.emplace_back(SpmDataParam{context.hapInfos.front(), context.noCachedInfo,
             context.permBriefDataLists.front(), context.extendPermLists.front(), nullptr, true});
+    }
 
+    for (size_t i = startIndex; i < context.hapInfos.size(); ++i) {
+        if (KernelDetail::IsSpmDataExists(context.hapInfos[i].tokenID)) {
+            std::vector<BriefPermData>* oldPermPtr = (i < context.oldPermList.size()) ?
+                context.oldPermList[i].get() : nullptr;
+            spmContext.updateParams.emplace_back(SpmDataParam{context.hapInfos[i], context.noCachedInfo,
+                context.permBriefDataLists[i], context.extendPermLists[i], oldPermPtr, true});
+        } else {
+            spmContext.addParams.emplace_back(SpmDataParam{context.hapInfos[i], context.noCachedInfo,
+                context.permBriefDataLists[i], context.extendPermLists[i], nullptr, true});
+        }
+    }
+
+    if (!spmContext.addParams.empty()) {
         spmContext.addTask = std::make_shared<AddSpmDataTask>(spmContext.addParams);
         uint32_t errIndex = 0;
         int32_t ret = spmContext.addTask->Add(errIndex);
@@ -1185,13 +1225,6 @@ int32_t InstallSessionManager::ExecuteSpmKernelTasks(int32_t sessionId, const In
             LOGE(ATM_DOMAIN, ATM_TAG, "Add cache failed, ret=%{public}d", ret);
             return ERR_KERNEL_OPERATION_FAILED;
         }
-    }
-
-    for (size_t i = startIndex; i < context.hapInfos.size(); ++i) {
-        std::vector<BriefPermData>* oldPermPtr = (i < context.oldPermList.size()) ?
-            context.oldPermList[i].get() : nullptr;
-        spmContext.updateParams.emplace_back(SpmDataParam{context.hapInfos[i], context.noCachedInfo,
-            context.permBriefDataLists[i], context.extendPermLists[i], oldPermPtr, true});
     }
 
     if (spmContext.updateParams.empty()) {
@@ -1215,23 +1248,19 @@ int32_t InstallSessionManager::ExecuteSpmKernelTasks(int32_t sessionId, const In
 int32_t InstallSessionManager::FinishInstallInner(int32_t sessionId, InstallCache& cache,
     const std::map<std::string, std::string>& modulePathMap)
 {
-    std::shared_ptr<BundleInfoInner> innerInfo;
-    BundleNoCachedInfo noCached;
-    AccessTokenInfoUtils::BuildBundleFullInfo(cache.bundleParam, cache.policy, innerInfo, noCached);
-
     FinishContext context;
-    context.noCachedInfo = noCached;
+    AccessTokenInfoUtils::BuildBundleFullInfo(cache.bundleParam, cache.policy, context.innerInfo, context.noCachedInfo);
 
     int32_t ret = FillFinishContext(sessionId, cache, context);
     if (ret != RET_SUCCESS) {
-        RollbackAll(sessionId);
+        RollbackAll(sessionId, SessionFinishSceneCode::FILL_FINISH_CONTEXT, ret, 0);
         return ret;
     }
 
     SpmTaskContext spmContext;
     ret = ExecuteSpmKernelTasks(sessionId, cache, context, spmContext);
     if (ret != RET_SUCCESS) {
-        RollbackAll(sessionId);
+        RollbackAll(sessionId, SessionFinishSceneCode::EXECUTE_KERNEL_TASK, ret, 0);
         return ret;
     }
 
@@ -1243,11 +1272,11 @@ int32_t InstallSessionManager::FinishInstallInner(int32_t sessionId, InstallCach
         if (spmContext.updateTask) {
             spmContext.updateTask->Rollback();
         }
-        RollbackAll(sessionId);
+        RollbackAll(sessionId, SessionFinishSceneCode::FINISH_DB_OPRATION, ret, 0);
         return ret;
     }
 
-    RefreshCache(cache, context, innerInfo);
+    RefreshCache(sessionId, cache, context);
     int32_t callerPid = cache.callerPid;
     sessionToInstallCache.erase(sessionId);
     sessionToTimestamp.erase(sessionId);
@@ -1260,7 +1289,7 @@ int32_t InstallSessionManager::FinishInstall(int32_t sessionId, bool isSuccess,
 {
     std::lock_guard<std::mutex> lock(cacheMutex_);
     if (!isSuccess) {
-        RollbackAll(sessionId);
+        RollbackAll(sessionId, SessionFinishSceneCode::FINISH_NOT_SUCCESS, 0, 0);
         return RET_SUCCESS;
     }
 
@@ -1270,9 +1299,17 @@ int32_t InstallSessionManager::FinishInstall(int32_t sessionId, bool isSuccess,
         return AccessTokenError::ERR_SESSION_NOT_EXIST;
     }
 
+    std::string bundleName;
+    if (!it->second.bundleInfos.empty()) {
+        bundleName = it->second.bundleInfos.front().GetBundleName();
+    } else {
+        bundleName = it->second.baseInfo.bundleName;
+    }
+    LOGI(ATM_DOMAIN, ATM_TAG, "Start finish, sessionId=%{public}d, bundle=%{public}s", sessionId, bundleName.c_str());
+
     if (!it->second.isCheckPerm) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Not check permission!");
-        RollbackAll(sessionId);
+        RollbackAll(sessionId, SessionFinishSceneCode::FINISH_INSTALL, AccessTokenError::ERR_NOT_CHECK_PERMISSION, 0);
         return AccessTokenError::ERR_NOT_CHECK_PERMISSION;
     }
 
@@ -1293,7 +1330,7 @@ int32_t InstallSessionManager::FinishInstall(int32_t sessionId, bool isSuccess,
 
     if (!migrationDone_.load()) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Migration not completed");
-        RollbackAll(sessionId);
+        RollbackAll(sessionId, SessionFinishSceneCode::FINISH_INSTALL, AccessTokenError::ERR_MIGRATION_COMPLETED, 0);
         return AccessTokenError::ERR_MIGRATION_COMPLETED;
     }
 
@@ -1332,9 +1369,11 @@ int32_t InstallSessionManager::FastVerify(const std::vector<std::string>& paths,
         infoInner.bootstrapInfo->Load(persistDatas[i].data(), persistDatas[i].size());
         bool isChanged = false;
         int32_t ret = HapSignVerifyManager::GetInstance().CheckHapsSignInfo(
-            paths[i], Security::Verify::VerifyType::Fast, userId, infoInner, isChanged);
+            HapSignVerifyManager::MakeVerifyParams(paths[i], Security::Verify::VerifyType::Fast, userId),
+            false, infoInner, isChanged);
         if (ret != RET_SUCCESS) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "CheckHapsSignInfo failed ret=%{public}d", ret);
+            LOGE(ATM_DOMAIN, ATM_TAG, "CheckHapsSignInfo failed ret=%{public}d, path=%{public}s",
+                ret, paths[i].c_str());
             return ERR_HAP_SIGN_VERIFY_FAILED;
         }
         bundleInfos.emplace_back(infoInner);
@@ -1397,6 +1436,136 @@ int32_t InstallSessionManager::GetCachePolicyBySessionId(int32_t sessionId, cons
         }
     }
     return RET_SUCCESS;
+}
+
+static void DumpPolicyEventInfo(const HapPolicy& policy, HapDfxInfo& dfxInfo)
+{
+    dfxInfo.permInfo = std::to_string(policy.permStateList.size()) + " : [";
+    for (const auto& permState : policy.permStateList) {
+        dfxInfo.permInfo.append(permState.permissionName + ", ");
+    }
+    dfxInfo.permInfo.append("]");
+
+    dfxInfo.aclInfo = std::to_string(policy.aclRequestedList.size()) + " : [";
+    for (const auto& perm : policy.aclRequestedList) {
+        dfxInfo.aclInfo.append(perm + ", ");
+    }
+    dfxInfo.aclInfo.append("]");
+
+    dfxInfo.extendInfo = std::to_string(policy.aclExtendedMap.size()) + " : {";
+    for (const auto& aclExtend : policy.aclExtendedMap) {
+        dfxInfo.extendInfo.append(aclExtend.first + ": " + aclExtend.second + ", ");
+    }
+    dfxInfo.extendInfo.append("}");
+}
+
+static void DumpPreAuthInfo(const std::vector<PreAuthorizationInfo>& preAuthorizationInfo, HapDfxInfo& dfxInfo)
+{
+    dfxInfo.preauthInfo = std::to_string(preAuthorizationInfo.size()) + " : [";
+    for (const auto& preAuthInfo : preAuthorizationInfo) {
+        dfxInfo.preauthInfo.append(preAuthInfo.permissionName + ", ");
+    }
+    dfxInfo.preauthInfo.append("]");
+}
+
+void InstallSessionManager::ReportAddHap(const InstallCache& cache, int32_t sceneCode,
+    int32_t errorCode, const HapDfxInfo& dfxInfoRaw)
+{
+    HapDfxInfo dfxInfo = dfxInfoRaw;
+
+    AccessTokenIDEx idEx;
+    idEx.tokenIDEx = cache.identity.tokenId;
+
+    dfxInfo.tokenId = idEx.tokenIdExStruct.tokenID;
+    dfxInfo.tokenIdEx = idEx;
+    dfxInfo.userID = cache.baseInfo.userID;
+    dfxInfo.bundleName = cache.baseInfo.bundleName;
+    dfxInfo.instIndex = cache.baseInfo.instIndex;
+
+    dfxInfo.sceneCode = sceneCode;
+    dfxInfo.dlpType = static_cast<HapDlpType>(cache.bundlePolicy.dlpType);
+    dfxInfo.isRestore = (cache.reserved != 0);
+    dfxInfo.oriTokenId = cache.oldTokenId;
+
+    DumpPreAuthInfo(cache.bundlePolicy.preAuthorizationInfo, dfxInfo);
+    ReportSysEventAddHap(errorCode, dfxInfo, true);
+}
+
+void InstallSessionManager::ReportUpdateHap(AccessTokenID tokenID, const BundlePolicy& bundlePolicy,
+    int32_t sceneCode, int32_t errorCode, const HapDfxInfo& dfxInfoRaw)
+{
+    HapDfxInfo dfxInfo = dfxInfoRaw;
+    dfxInfo.sceneCode = sceneCode;
+
+    std::shared_ptr<HapTokenInfoInner> infoPtr =
+        AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenID);
+    if (infoPtr == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Token %{public}u is invalid.", tokenID);
+        return;
+    }
+
+    HapTokenInfo tokenInfo = infoPtr->GetHapInfoBasic();
+    AccessTokenIDEx idEx;
+    idEx.tokenIdExStruct.tokenID = tokenID;
+    idEx.tokenIdExStruct.tokenAttr = tokenInfo.tokenAttr;
+
+    dfxInfo.tokenId = tokenID;
+    dfxInfo.tokenIdEx = idEx;
+    dfxInfo.userID = tokenInfo.userID;
+    dfxInfo.bundleName = tokenInfo.bundleName;
+    dfxInfo.instIndex = tokenInfo.instIndex;
+
+    DumpPreAuthInfo(bundlePolicy.preAuthorizationInfo, dfxInfo);
+    ReportSysEventUpdateHap(errorCode, dfxInfo);
+}
+
+void InstallSessionManager::ReportSessionFinish(
+    int32_t sessionId, const InstallCache& cache, int32_t sceneCode, int32_t errorCode)
+{
+    HapDfxInfo dfxInfoRaw;
+    DumpPolicyEventInfo(cache.policy, dfxInfoRaw);
+    dfxInfoRaw.duration = TimeUtil::GetCurrentTimestamp() - sessionToTimestamp[sessionId];
+
+    if (cache.identity.tokenId != 0) {
+        ReportAddHap(cache, sceneCode, errorCode, dfxInfoRaw);
+    }
+    
+    for (auto it : cache.tokenIDToBundlePolicy) {
+        ReportUpdateHap(it.first, it.second, sceneCode, errorCode, dfxInfoRaw);
+    }
+
+    if (cache.identity.tokenId == 0 && cache.tokenIDToBundlePolicy.empty()) {
+        HapDfxInfo dfxInfo = dfxInfoRaw;
+        dfxInfo.bundleName = cache.bundleParam.bundleName;
+        dfxInfo.sceneCode = sceneCode;
+
+        dfxInfo.tokenId = 0;
+        dfxInfo.tokenIdEx.tokenIDEx = 0;
+        dfxInfo.userID = 0;
+        dfxInfo.instIndex = 0;
+        dfxInfo.dlpType = HapDlpType::DLP_COMMON;
+        dfxInfo.isRestore = false;
+        dfxInfo.oriTokenId = 0;
+
+        ReportSysEventAddHap(errorCode, dfxInfo, false);
+    }
+}
+
+void InstallSessionManager::ReportSessionError(
+    const InstallCache& cache, int32_t sceneCode, int32_t errorCode, AccessTokenID tokenId)
+{
+    HapDfxInfo dfxInfo;
+    dfxInfo.bundleName = cache.bundleParam.bundleName;
+    dfxInfo.sceneCode = sceneCode;
+    dfxInfo.tokenId = tokenId;
+
+    dfxInfo.tokenIdEx.tokenIDEx = 0;
+    dfxInfo.userID = 0;
+    dfxInfo.instIndex = 0;
+    dfxInfo.dlpType = HapDlpType::DLP_COMMON;
+    dfxInfo.isRestore = false;
+    dfxInfo.oriTokenId = 0;
+    ReportSysEventAddHap(errorCode, dfxInfo, true);
 }
 
 void InstallSessionManager::SetMigrationDone()
@@ -1471,7 +1640,7 @@ void InstallSessionManager::ClearSessionByPid(int32_t pid)
     for (auto it = sessionToInstallCache.begin(); it != sessionToInstallCache.end();) {
         if (it->second.callerPid == pid) {
             LOGI(ATM_DOMAIN, ATM_TAG, "Clear sessionId=%{public}d for pid=%{public}d", it->first, pid);
-            RollbackAll(it->first, false);
+            RollbackAll(it->first, SessionFinishSceneCode::PROXY_DEATH, RET_FAILED, 0, false);
             sessionToTimestamp.erase(it->first);
             // death handler will release proxy
             it = sessionToInstallCache.erase(it);

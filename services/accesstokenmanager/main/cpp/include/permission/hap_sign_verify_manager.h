@@ -80,8 +80,11 @@ public:
     static HapSignVerifyManager& GetInstance();
     explicit HapSignVerifyManager(const IAppVerifyAdapter& adapter);
 
-    int32_t CheckHapsSignInfo(const std::string path, const Security::Verify::VerifyType type, int32_t userId,
+    int32_t CheckHapsSignInfo(Security::Verify::VerifyParams params, bool booting,
         TrustedBundleInfoInner& info, bool& isChanged) const;
+
+    static Security::Verify::VerifyParams MakeVerifyParams(
+        const std::string& path, Security::Verify::VerifyType type, int32_t userId);
     int32_t CheckMultipleHaps(const std::vector<TrustedBundleInfoInner>& infos) const;
     int32_t BuildHapPolicy(const std::vector<TrustedBundleInfoInner>& infos, HapPolicy& policy,
         BundleParam& param) const;
@@ -98,9 +101,6 @@ private:
     int32_t BuildTrustedBundleInfo(
         const std::shared_ptr<Security::Verify::BootstrapInfo>& bootstrapInfo,
         const Security::Verify::ProvisionInfo& provisionInfo, TrustedBundleInfoInner& info) const;
-#ifdef X86_EMULATOR_MODE
-    static TrustedBundleInfoInner BuildIgnoredTrustedBundleInfo();
-#endif
     bool CheckAppIdentifier(const TrustedBundleInfoInner &oldInfo, const TrustedBundleInfoInner &newInfo) const;
 };
 

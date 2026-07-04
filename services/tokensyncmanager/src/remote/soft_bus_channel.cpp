@@ -14,6 +14,7 @@
  */
 #include "soft_bus_channel.h"
 
+#include <climits>
 #include <securec.h>
 
 #include "constant_common.h"
@@ -174,6 +175,15 @@ void SoftBusChannel::InsertCallback(int result, std::string &uuid)
     lock.unlock();
 }
 
+static bool CheckPayloadLengthOverflow(size_t payloadLength)
+{
+    if (payloadLength > static_cast<size_t>(INT_MAX - RPC_TRANSFER_HEAD_BYTES_LENGTH)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Payload length overflow: %{public}zu", payloadLength);
+        return true;
+    }
+    return false;
+}
+
 std::string SoftBusChannel::ExecuteCommand(const std::string &commandName, const std::string &jsonPayload)
 {
     if (commandName.empty() || jsonPayload.empty()) {
@@ -183,6 +193,9 @@ std::string SoftBusChannel::ExecuteCommand(const std::string &commandName, const
 
     std::string uuid = GetUuid();
 
+    if (CheckPayloadLengthOverflow(jsonPayload.length())) {
+        return "";
+    }
     int len = static_cast<int32_t>(RPC_TRANSFER_HEAD_BYTES_LENGTH + jsonPayload.length());
     unsigned char* buf = new (std::nothrow) unsigned char[len + 1];
     if (buf == nullptr) {
@@ -385,6 +398,32 @@ void SoftBusChannel::CancelCloseConnectionIfNeeded()
     isDelayClosing_ = false;
 }
 
+void SoftBusChannel::HandleRequestInvalidCommand(int socket, const std::string &id, const std::string &commandName,
+    const std::string &jsonPayload)
+{
+    if (CheckPayloadLengthOverflow(jsonPayload.length())) {
+        return;
+    }
+    int sendlen = static_cast<int32_t>(RPC_TRANSFER_HEAD_BYTES_LENGTH + jsonPayload.length());
+    unsigned char* sendbuf = new (std::nothrow) unsigned char[sendlen + 1];
+    if (sendbuf == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "No enough memory: %{public}d", sendlen);
+        return;
+    }
+    (void)memset_s(sendbuf, sendlen + 1, 0, sendlen + 1);
+    BytesInfo info;
+    info.bytes = sendbuf;
+    info.bytesLength = sendlen;
+    int sendResult = PrepareBytes(RESPONSE_TYPE, id, commandName, jsonPayload, info);
+    if (sendResult != Constant::SUCCESS) {
+        delete[] sendbuf;
+        return;
+    }
+    int sendResultCode = SendResponseBytes(socket, sendbuf, info.bytesLength);
+    delete[] sendbuf;
+    LOGD(ATM_DOMAIN, ATM_TAG, "Send response result= %{public}d ", sendResultCode);
+}
+
 void SoftBusChannel::HandleRequest(int socket, const std::string &id, const std::string &commandName,
     const std::string &jsonPayload)
 {
@@ -394,24 +433,7 @@ void SoftBusChannel::HandleRequest(int socket, const std::string &id, const std:
         // send result back directly
         LOGW(ATM_DOMAIN, ATM_TAG, "Command %{public}s cannot get from json", commandName.c_str());
 
-        int sendlen = static_cast<int32_t>(RPC_TRANSFER_HEAD_BYTES_LENGTH + jsonPayload.length());
-        unsigned char* sendbuf = new (std::nothrow) unsigned char[sendlen + 1];
-        if (sendbuf == nullptr) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "No enough memory: %{public}d", sendlen);
-            return;
-        }
-        (void)memset_s(sendbuf, sendlen + 1, 0, sendlen + 1);
-        BytesInfo info;
-        info.bytes = sendbuf;
-        info.bytesLength = sendlen;
-        int sendResult = PrepareBytes(RESPONSE_TYPE, id, commandName, jsonPayload, info);
-        if (sendResult != Constant::SUCCESS) {
-            delete[] sendbuf;
-            return;
-        }
-        int sendResultCode = SendResponseBytes(socket, sendbuf, info.bytesLength);
-        delete[] sendbuf;
-        LOGD(ATM_DOMAIN, ATM_TAG, "Send response result= %{public}d ", sendResultCode);
+        HandleRequestInvalidCommand(socket, id, commandName, jsonPayload);
         return;
     }
 
@@ -423,6 +445,9 @@ void SoftBusChannel::HandleRequest(int socket, const std::string &id, const std:
 
     // send result back
     std::string resultJsonPayload = command->ToJsonPayload();
+    if (CheckPayloadLengthOverflow(resultJsonPayload.length())) {
+        return;
+    }
     int len = static_cast<int32_t>(RPC_TRANSFER_HEAD_BYTES_LENGTH + resultJsonPayload.length());
     unsigned char* buf = new (std::nothrow) unsigned char[len + 1];
     if (buf == nullptr) {

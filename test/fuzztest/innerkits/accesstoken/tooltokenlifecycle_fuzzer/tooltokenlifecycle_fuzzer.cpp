@@ -38,8 +38,8 @@ constexpr int32_t MAX_DELETE_ROUND = 4;
 const std::string MANAGE_TOOL_TOKENID = "ohos.permission.MANAGE_TOOL_TOKENID";
 const std::string MANAGE_TOOL_RUNTIME_PERMISSIONS = "ohos.permission.MANAGE_TOOL_RUNTIME_PERMISSIONS";
 const std::string DEFAULT_AGENT_ID = "1001";
-const std::string DEFAULT_CLI_NAME = "tooltoken";
-const std::string DEFAULT_SUB_CLI_NAME = "subtool";
+const std::string DEFAULT_CLI_NAME = "tooltokenstub";
+const std::string DEFAULT_SUB_CLI_NAME = "stubsubtool";
 enum class QueryTokenChoice : uint8_t {
     TOOL_TOKEN,
     HOST_TOKEN,
@@ -146,6 +146,8 @@ std::vector<CliAuthInfo> BuildDefaultCliAuthInfos()
 {
     CliAuthInfo authInfo;
     authInfo.cliInfo = BuildDefaultCliInfo();
+    authInfo.permissionNames = { "ohos.permission.APPROXIMATELY_LOCATION", "ohos.permission.cli.POWER_MANAGER" };
+    authInfo.authorizationResults = { true, true };
     return { authInfo };
 }
 
@@ -168,14 +170,22 @@ void ExerciseAuthResultApi(FuzzedDataProvider& provider, AccessTokenID hostToken
     {
         MockToken caller(
             ConsumePermissionList(provider, MANAGE_TOOL_RUNTIME_PERMISSIONS), true, provider.ConsumeBool());
+        std::vector<CliAuthInfo> authInfos = ConsumeCliAuthInfoList(provider);
+        if (provider.ConsumeBool() || authInfos.empty()) {
+            AppendKnownCliAuthInfos(provider, authInfos);
+        }
         (void)AccessTokenKit::GenerateCliAuthResult(ConsumeHostTokenId(provider, hostTokenId),
-            ConsumeAgentId(provider), ConsumeCliAuthInfoList(provider), result);
+            ConsumeAgentId(provider), authInfos, result);
     }
     {
         MockToken runtimeCaller({ MANAGE_TOOL_RUNTIME_PERMISSIONS }, true, true);
         (void)AccessTokenKit::GenerateCliAuthResult(hostTokenId, DEFAULT_AGENT_ID, BuildDefaultCliAuthInfos(), result);
+        std::vector<CliAuthInfo> authInfos = ConsumeCliAuthInfoList(provider);
+        if (provider.ConsumeBool() || authInfos.empty()) {
+            AppendKnownCliAuthInfos(provider, authInfos);
+        }
         (void)AccessTokenKit::GenerateCliAuthResult(ConsumeHostTokenId(provider, hostTokenId),
-            ConsumeAgentId(provider), ConsumeCliAuthInfoList(provider), result);
+            ConsumeAgentId(provider), authInfos, result);
     }
 }
 

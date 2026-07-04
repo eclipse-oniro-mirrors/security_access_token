@@ -36,6 +36,7 @@
 #include "proxy_death_callback_stub.h"
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
 #include "sec_comp_enhance_data_parcel.h"
+#include "sec_comp_enhance_key_parcel.h"
 #endif
 
 namespace OHOS {
@@ -135,6 +136,21 @@ ToolAuthResult ConvertToolAuthResult(const ToolAuthResultIdl& resultIdl)
 {
     ToolAuthResult result;
     result.authResults = resultIdl.authResults;
+    return result;
+}
+
+PermissionResultType ConvertPermissionResultType(PermissionResultTypeIdl status)
+{
+    return static_cast<PermissionResultType>(status);
+}
+
+PermissionStatusDetail ConvertPermissionStatusDetail(const PermissionStatusDetailIdl& resultIdl)
+{
+    PermissionStatusDetail result;
+    result.permissionName = resultIdl.permissionName;
+    result.grantStatus = resultIdl.grantStatus;
+    result.grantFlag = resultIdl.grantFlag;
+    result.resultType = ConvertPermissionResultType(resultIdl.resultType);
     return result;
 }
 } // namespace
@@ -732,21 +748,6 @@ int32_t AccessTokenManagerClient::InitHapToken(const HapInfoParams& info, HapPol
     }
     LOGI(ATM_DOMAIN, ATM_TAG, "Result is %{public}d, id is %{public}llu.", res, fullTokenId.tokenIDEx);
     return res;
-}
-
-int32_t AccessTokenManagerClient::PreMigrateUIDList(const std::vector<int32_t>& uidList)
-{
-    auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
-        return AccessTokenError::ERR_SERVICE_ABNORMAL;
-    }
-
-    int32_t result = proxy->PreMigrateUIDList(uidList);
-    if (result != RET_SUCCESS) {
-        result = ConvertResult(result);
-    }
-    return result;
 }
 
 int32_t AccessTokenManagerClient::MigrateInstalledBundles(const std::vector<MigratedInfo>& migratedInfoList,
@@ -1561,6 +1562,31 @@ int32_t AccessTokenManagerClient::InitCliToken(const CliInitInfo& info, AccessTo
     return RET_SUCCESS;
 }
 
+int32_t AccessTokenManagerClient::GetPermissionStatusDetails(AccessTokenID tokenID,
+    const std::vector<std::string>& permissionList, std::vector<PermissionStatusDetail>& resultList)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+
+    std::vector<PermissionStatusDetailIdl> resultIdlList;
+    int32_t errCode = proxy->GetPermissionStatusDetails(tokenID, permissionList, resultIdlList);
+    if (errCode != RET_SUCCESS) {
+        errCode = ConvertResult(errCode);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Request fail, result: %{public}d", errCode);
+        return errCode;
+    }
+
+    resultList.clear();
+    resultList.reserve(resultIdlList.size());
+    for (const auto& resultIdl : resultIdlList) {
+        resultList.emplace_back(ConvertPermissionStatusDetail(resultIdl));
+    }
+    return RET_SUCCESS;
+}
+
 int32_t AccessTokenManagerClient::GetHostTokenId(AccessTokenID toolTokenId, AccessTokenID& hostTokenId)
 {
     auto proxy = GetProxy();
@@ -1631,6 +1657,34 @@ int32_t AccessTokenManagerClient::GetSecCompEnhance(int32_t pid, SecCompEnhanceD
         return ConvertResult(res);
     }
     enhance = parcel.enhanceData;
+    return RET_SUCCESS;
+}
+
+int32_t AccessTokenManagerClient::StoreSecCompEnhanceKey(const SecCompEnhanceKey& enhanceKey)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+    SecCompEnhanceKeyParcel parcel;
+    parcel.enhanceKey = enhanceKey;
+    return ConvertResult(proxy->StoreSecCompEnhanceKey(parcel));
+}
+
+int32_t AccessTokenManagerClient::GetSecCompEnhanceKey(SecCompEnhanceKey& enhanceKey)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+    SecCompEnhanceKeyParcel parcel;
+    int32_t res = proxy->GetSecCompEnhanceKey(parcel);
+    if (res != RET_SUCCESS) {
+        return ConvertResult(res);
+    }
+    enhanceKey = parcel.enhanceKey;
     return RET_SUCCESS;
 }
 #endif // SECURITY_COMPONENT_ENHANCE_ENABLE
@@ -1795,7 +1849,7 @@ int32_t AccessTokenManagerClient::PrepareHapIdentity(int32_t& sessionId, const H
         identity.tokenId = identityIdl.tokenId;
     }
 
-    LOGI(ATM_DOMAIN, ATM_TAG, "Result=%{public}d, sessionId=%{public}d, uid=%{public}d"
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result=%{public}d, sessionId=%{public}d, uid=%{public}d, "
         "fulltokenId=%{public}" PRIu64 ", tokenId=%{public}u",
         res, sessionId, identity.uid, identity.tokenId, static_cast<uint32_t>(identity.tokenId));
     return res;
@@ -1907,6 +1961,27 @@ int32_t AccessTokenManagerClient::GetCachePolicyBySessionId(int32_t sessionId, c
         res = ConvertResult(res);
     } else {
         bundlePolicyInfo.reqPermissions = bundlePolicyInfoIdl.reqPermissions;
+    }
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result=%{public}d", res);
+    return res;
+}
+
+int32_t AccessTokenManagerClient::RefreshTokenStatus(const Identity& identity, ReservedType reserved)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+
+    IdentityIdl identityIdl;
+    identityIdl.tokenId = identity.tokenId;
+    identityIdl.uid = identity.uid;
+    ReservedTypeIdl reservedIdl = static_cast<ReservedTypeIdl>(reserved);
+
+    int32_t res = proxy->RefreshTokenStatus(identityIdl, reservedIdl);
+    if (res != RET_SUCCESS) {
+        res = ConvertResult(res);
     }
     LOGI(ATM_DOMAIN, ATM_TAG, "Result=%{public}d", res);
     return res;

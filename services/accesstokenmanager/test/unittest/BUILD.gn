@@ -99,6 +99,7 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
     "permission/permission_request_toggle_manager_test.cpp",
     "permission/short_grant_manager_test.cpp",
     "permission/token_info_manager_test.cpp",
+    "permission/token_state_management_test.cpp",
     "permission/delete_identity_test.cpp",
     "service/accesstoken_manager_service_test.cpp",
     "service/multi_thread_test.cpp",
@@ -229,6 +230,10 @@ ohos_unittest("libspm_data_task_test") {
     "${access_token_path}/interfaces/innerkits/nativetoken/src/nativetoken_json_oper.c",
   ]
 
+  if (access_token_enable_spm && access_token_manager_hapverify_enable) {
+    sources += [ "permission/install_session_spm_task_test.cpp" ]
+  }
+
   sources += accesstoken_manager_base_config.sources
 
   cflags_cc = accesstoken_manager_base_config.cflags_cc
@@ -343,6 +348,7 @@ if (access_token_manager_hapverify_enable) {
     sources += accesstoken_manager_base_config.sources
 
     cflags_cc = accesstoken_manager_base_config.cflags_cc
+    cflags_cc += [ "-DATM_TEST_ENABLE" ]
 
     configs = accesstoken_manager_base_config.configs
 
@@ -372,17 +378,24 @@ if (access_token_manager_hapverify_enable) {
     }
     branch_protector_ret = "pac_ret"
 
-    include_dirs = accesstoken_manager_base_config.include_dirs
-    include_dirs += [
-      "${access_token_path}/services/accesstokenmanager/test/unittest/permission",
-      "${access_token_path}/services/accesstokenmanager/test/unittest/database",
-      "${access_token_path}/services/accesstokenmanager/test/unittest/common",
-    ]
+  include_dirs = accesstoken_manager_base_config.include_dirs
+  include_dirs += [
+    "${access_token_path}/services/accesstokenmanager/test/unittest/permission",
+    "${access_token_path}/services/accesstokenmanager/test/unittest/database",
+    "${access_token_path}/services/accesstokenmanager/test/unittest/common",
+    "${access_token_path}/interfaces/innerkits/nativetoken/include",
+    "${access_token_path}/interfaces/innerkits/nativetoken/src",
+  ]
 
-    sources = [
+  sources = [
+      "common/fake_token_setproc.cpp",
       "common/mock_access_token_db_operator.cpp",
       "common/parameter.cpp",
       "permission/boot_verify_scheduler_test.cpp",
+      "permission/token_info_manager_rollback_test.cpp",
+      "${access_token_path}/interfaces/innerkits/nativetoken/src/nativetoken.c",
+      "${access_token_path}/interfaces/innerkits/nativetoken/src/nativetoken_hisysevent.c",
+      "${access_token_path}/interfaces/innerkits/nativetoken/src/nativetoken_json_oper.c",
     ]
 
     sources += accesstoken_manager_base_config.sources
@@ -396,9 +409,8 @@ if (access_token_manager_hapverify_enable) {
     configs = accesstoken_manager_base_config.configs
 
     deps = [
-      "${access_token_path}/interfaces/innerkits/nativetoken:libnativetoken_shared",
-      "${access_token_path}/interfaces/innerkits/token_setproc:libpermsetproc_shared",
-      "${access_token_path}/interfaces/innerkits/token_setproc:libtokensetproc_shared",
+      "${access_token_path}/frameworks/common:accesstoken_common_cxx",
+      "${access_token_path}/frameworks/common:accesstoken_permission_map_static",
     ]
     deps += accesstoken_manager_base_config.deps
 

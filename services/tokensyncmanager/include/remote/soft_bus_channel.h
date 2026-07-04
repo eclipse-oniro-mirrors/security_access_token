@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -199,6 +199,19 @@ private:
         int socket, const std::string &id, const std::string &commandName, const std::string &jsonPayload);
 
     /**
+     * @brief handle invalid command request
+     *
+     * @param socket response socket id
+     * @param id unique message id
+     * @param commandName command name
+     * @param jsonPayload command notated by json string
+     * @since 1.0
+     * @version 1.0
+     */
+    void HandleRequestInvalidCommand(
+        int socket, const std::string &id, const std::string &commandName, const std::string &jsonPayload);
+
+    /**
      * @brief response callback for HandleDataReceived
      *
      * @param id unique message id
@@ -265,7 +278,7 @@ private:
             p += blen;
             if (n == index3 || n == index5 || n == index7 || n == index9) {
                 *p++ = '-';
-                break;
+                continue;
             }
         }
         *p = 0;

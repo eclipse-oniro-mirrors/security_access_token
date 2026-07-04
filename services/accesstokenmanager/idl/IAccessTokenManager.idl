@@ -28,6 +28,7 @@ sequenceable OHOS.Security.AccessToken.HapTokenInfoForSyncParcel;
 sequenceable OHOS.Security.AccessToken.HapBaseInfoParcel;
 sequenceable OHOS.Security.AccessToken.AtmToolsParamInfoParcel;
 sequenceable OHOS.Security.AccessToken.SecCompEnhanceDataParcel;
+sequenceable OHOS.Security.AccessToken.SecCompEnhanceKeyParcel;
 
 rawdata OHOS.Security.AccessToken.BundleInfosRawdata;
 rawdata OHOS.Security.AccessToken.CheckHapSignResultRawdata;
@@ -100,7 +101,6 @@ interface OHOS.Security.AccessToken.IAccessTokenManager{
     [ipccode 69] void InitCliToken([in] CliInitInfoIdl initInfoIdl, [out] unsigned long fullTokenId, [out] List<PermissionWithValueIdl> kernelPermIdlList);
     [ipccode 71] void DeleteToolTokenByPid([in] int pid);
     [ipccode 74] void GetHostTokenId([in] unsigned int toolTokenId, [out] unsigned int hostTokenId);
-    [ipccode 75] void PreMigrateUIDList([in] List<int> uidList);
     [ipccode 76] void MigrateInstalledBundles([in] List<MigratedInfoIdl> migratedInfoList, [out] List<BundleMigrateResultIdl> results);
     [ipccode 77] void FinishMigration();
     [ipccode 80] void VerifyAccessToken([in] unsigned int tokenID, [in] List<String> permissionList, [out] List<int> permStateList);  
@@ -114,18 +114,22 @@ interface OHOS.Security.AccessToken.IAccessTokenManager{
     [ipccode 87] void GetHapSignInfo([in] String bundleName, [out] BundleInfosRawdata bundleInfos);
     [ipccode 88] void CheckHapPermissionInfo([in] int sessionId, [in] InstallTypeEnumIdl type, [out] HapInfoCheckResultIdl resultInfoIdl);
     [ipccode 89] void GetCachePolicyBySessionId([in] int sessionId, [in] String bundleName, [out] BundlePolicyInfoIdl bundlePolicyInfoIdl);
+    [ipccode 90] void RefreshTokenStatus([in] IdentityIdl identity, [in] ReservedTypeIdl reserved);
 
     [ipccode 101, macrodef SECURITY_COMPONENT_ENHANCE_ENABLE, oneway] void RegisterSecCompEnhance([in] SecCompEnhanceDataParcel enhanceParcel);
     [ipccode 102, macrodef SECURITY_COMPONENT_ENHANCE_ENABLE] void UpdateSecCompEnhance([in] int pid, [in] unsigned int seqNum);
     [ipccode 103, macrodef SECURITY_COMPONENT_ENHANCE_ENABLE] void GetSecCompEnhance([in] int pid, [out] SecCompEnhanceDataParcel enhanceParcel);
+    [ipccode 104, macrodef SECURITY_COMPONENT_ENHANCE_ENABLE] void StoreSecCompEnhanceKey([in] SecCompEnhanceKeyParcel enhanceKeyParcel);
     [ipccode 105] void SetPermissionStatusWithPolicy([in] unsigned int tokenID, [in] List<String> permissionList, [in] int status, [in] unsigned int flag);
     [ipccode 106] void DeleteIdentity([in] unsigned int tokenID, [in] String bundleName, [in] ReservedTypeIdl type);
+    [ipccode 107, macrodef SECURITY_COMPONENT_ENHANCE_ENABLE] void GetSecCompEnhanceKey([out] SecCompEnhanceKeyParcel enhanceKeyParcel);
 
     [ipccode 200] void GetHapTokenInfo([in] unsigned int tokenID, [out] HapTokenInfoCompatIdl hapTokenInfoIdl);
     [ipccode 201] void GetPermissionCode([in] String permission, [out] unsigned int permCode);
     [ipccode 202, ipcoutcapacity 122880] void QueryStatusByPermission([in] List<unsigned int> permCodeList, [out] List<PermissionStatusIdl> permissionInfoList, [in] boolean onlyHap);
     [ipccode 203, ipcoutcapacity 122880] void QueryStatusByTokenID([in] List<unsigned int> tokenIDList, [out] List<PermissionStatusIdl> permissionInfoList);
     [ipccode 204] void GetCliPermissionRequestInfo([in] String agentID, [in] List<CliInfoIdl> cliInfoList, [out] PermissionDialogResultIdl resultIdl);
+    [ipccode 205, ipcoutcapacity 122880] void GetPermissionStatusDetails([in] unsigned int tokenID, [in] List<String> permissionList, [out] List<PermissionStatusDetailIdl> resultList);
     [ipccode 206] void GetCliPermissions([in] unsigned int hostTokenID, [in] String agentID, [in] List<CliInfoIdl> cliInfoList, [out] CliPermissionsResultIdl resultIdl);
     [ipccode 208] void GenerateCliAuthResult([in] unsigned int hostTokenID, [in] String agentID, [in] List<CliAuthInfoIdl> authInfoList, [out] ToolAuthResultIdl resultIdl);
     [ipccode 210] void IsSupportPermission([in] String permission, [out] boolean isSupported);

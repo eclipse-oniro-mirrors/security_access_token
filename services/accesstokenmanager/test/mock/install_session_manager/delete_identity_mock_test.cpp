@@ -49,6 +49,7 @@ namespace {
 static std::shared_ptr<AccessTokenManagerService> atManagerService_;
 static InstallSessionManager* g_installSessionManager = nullptr;
 static constexpr int32_t UID_MASK = 200000;
+static std::map<std::string, std::string> g_modulePathMap;
 }
 
 void DeleteIdentityMockTest::SetUpTestCase()
@@ -56,11 +57,10 @@ void DeleteIdentityMockTest::SetUpTestCase()
     atManagerService_ = DelayedSingleton<AccessTokenManagerService>::GetInstance();
     g_installSessionManager = &InstallSessionManager::GetInstance();
 
-    uint32_t hapSize = 0;
     uint32_t nativeSize = 0;
     uint32_t pefDefSize = 0;
     uint32_t dlpSize = 0;
-    AccessTokenInfoManager::GetInstance().Init(hapSize, nativeSize, pefDefSize, dlpSize);
+    AccessTokenInfoManager::GetInstance().Init(nativeSize, pefDefSize, dlpSize);
 
     AccessTokenMigrationManager::GetInstance().Initialize();
     AccessTokenMigrationManager::GetInstance().FinishMigration();
@@ -86,7 +86,7 @@ void DeleteIdentityMockTest::TearDown()
         sessionList.emplace_back(it.first);
     }
     for (auto session : sessionList) {
-        g_installSessionManager->RollbackAll(session);
+        g_installSessionManager->FinishInstall(session, false, g_modulePathMap);
     }
 }
 
@@ -142,7 +142,7 @@ bool DeleteIdentityMockTest::VerifyTokenDeletedFromDatabase(AccessTokenID tokenI
     GenericValues conditionValue;
     conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
     std::vector<GenericValues> results;
-    int32_t ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_INFO, conditionValue, results);
+    int32_t ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, conditionValue, results);
     if (ret != ERR_OK || results.size() != 0) {
         return false;
     }
@@ -159,7 +159,7 @@ bool DeleteIdentityMockTest::VerifyTokenExistsInDatabase(AccessTokenID tokenId, 
     GenericValues conditionValue;
     conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
     std::vector<GenericValues> results;
-    int32_t ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_INFO, conditionValue, results);
+    int32_t ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, conditionValue, results);
     if (ret != ERR_OK || results.size() != 1) {
         return false;
     }
@@ -190,7 +190,7 @@ bool DeleteIdentityMockTest::VerifyPermissionDeletedFromDatabase(AccessTokenID t
 
 bool DeleteIdentityMockTest::VerifyTokenInCache(AccessTokenID tokenId)
 {
-    auto tokenInfo = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInnerFromCache(tokenId);
+    auto tokenInfo = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId);
     return tokenInfo != nullptr;
 }
 

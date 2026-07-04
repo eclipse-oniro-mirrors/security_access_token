@@ -40,6 +40,7 @@ namespace {
 std::unique_ptr<MockToken> g_mockToken;
 constexpr int32_t TEST_USER_ID = 0;
 constexpr int32_t DEFAULT_API_VERSION = 8;
+constexpr int32_t PERMISSION_LIST_STATE_COUNT = 1;
 const std::string TEST_BUNDLE_NAME = "getpermissionsstatusstub.fuzzer";
 }
 
@@ -114,6 +115,10 @@ AccessTokenID EnsureValidTokenId()
         MessageParcel datas;
         datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
         if (!datas.WriteUint32(tokenId)) {
+            return false;
+        }
+
+        if (!datas.WriteInt32(PERMISSION_LIST_STATE_COUNT)) {
             return false;
         }
         if (!datas.WriteParcelable(&permParcel)) {

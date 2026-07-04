@@ -18,35 +18,66 @@
 #include <new>
 #include <vector>
 
-#include "accesstoken_kit.h"
 #include "claw_permission_fuzzdata.h"
 #include "fuzzer/FuzzedDataProvider.h"
+#include "fuzz_service_context_helper.h"
 #define private public
 #include "accesstoken_manager_service.h"
 #undef private
 #include "iaccess_token_manager.h"
 #include "message_parcel.h"
-#include "mock_permission.h"
+#ifdef SAF_AGENT_FENCE_ENABLE
+#include "saf_agent_fence.h"
+#endif
 
 using namespace OHOS::Security::AccessToken;
 
 namespace OHOS {
 namespace {
 const std::string DEFAULT_AGENT_ID = "1001";
-const std::string DEFAULT_CLI_NAME = "ohos-queryTime";
-const std::string DEFAULT_SUB_CLI_NAME = "get-wall-time";
+const std::string DEFAULT_CALLER_BUNDLE = "getclipermissionrequestinfo.fuzzer";
 const std::string QUERY_TOOL_PERMISSIONS = "ohos.permission.QUERY_TOOL_PERMISSIONS";
+uint64_t g_callerFullTokenId = 0;
+
+std::vector<PermissionStatus> BuildDefaultPermissionStates()
+{
+    return {
+        FuzzServiceContext::BuildPermissionStatus(
+            QUERY_TOOL_PERMISSIONS, PermissionState::PERMISSION_GRANTED, PermissionFlag::PERMISSION_SYSTEM_FIXED),
+        FuzzServiceContext::BuildPermissionStatus("ohos.permission.APPROXIMATELY_LOCATION",
+            PermissionState::PERMISSION_GRANTED, PermissionFlag::PERMISSION_ALLOW_THIS_TIME),
+        FuzzServiceContext::BuildPermissionStatus(
+            "ohos.permission.CAMERA", PermissionState::PERMISSION_GRANTED, PermissionFlag::PERMISSION_SYSTEM_FIXED),
+        FuzzServiceContext::BuildPermissionStatus(
+            "ohos.permission.LOCATION", PermissionState::PERMISSION_DENIED, PermissionFlag::PERMISSION_USER_FIXED),
+    };
+}
 
 void InitializeClawPermissionStubFuzz()
 {
-    DelayedSingleton<AccessTokenManagerService>::GetInstance()->Initialize();
+    FuzzServiceContext::InitializeServiceCallerContext(
+        g_callerFullTokenId, DEFAULT_CALLER_BUNDLE, BuildDefaultPermissionStates());
+}
+
+void ConfigureMockSafBehavior(FuzzedDataProvider& provider)
+{
+#ifdef SAF_AGENT_FENCE_ENABLE
+    OHOS::Security::SAF::MockSafBehavior behavior;
+    behavior.queryMode = static_cast<OHOS::Security::SAF::MockQueryMode>(provider.ConsumeIntegralInRange<uint8_t>(
+        0, static_cast<uint8_t>(OHOS::Security::SAF::MockQueryMode::DUPLICATE_PERMISSIONS)));
+    behavior.generateMode = OHOS::Security::SAF::MockGenerateMode::NORMAL;
+    behavior.verifyMode = OHOS::Security::SAF::MockVerifyMode::NORMAL;
+    OHOS::Security::SAF::SetMockSafBehavior(behavior);
+#else
+    (void)provider;
+#endif
 }
 
 bool WriteCliInfoIdlsToParcel(MessageParcel& data, FuzzedDataProvider& provider)
 {
     std::vector<CliInfo> infos = ConsumeCliInfoList(provider);
-    if (provider.ConsumeBool() && infos.empty()) {
-        infos.push_back({ DEFAULT_CLI_NAME, DEFAULT_SUB_CLI_NAME });
+    if (provider.ConsumeBool() || infos.empty()) {
+        AppendKnownCliInfos(provider, infos);
     }
     if (!data.WriteInt32(static_cast<int32_t>(infos.size()))) {
         return false;
@@ -70,8 +101,9 @@ bool GetCliPermissionRequestInfoStubFuzzTest(const uint8_t* data, size_t size)
         return false;
     }
 
-    MockToken caller({ QUERY_TOOL_PERMISSIONS }, true, true);
+    FuzzServiceContext::CallingContextGuard guard(g_callerFullTokenId);
     FuzzedDataProvider provider(data, size);
+    ConfigureMockSafBehavior(provider);
     MessageParcel datas;
     datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
     std::string agentId = provider.ConsumeBool() ? DEFAULT_AGENT_ID : ConsumeAgentID(provider);

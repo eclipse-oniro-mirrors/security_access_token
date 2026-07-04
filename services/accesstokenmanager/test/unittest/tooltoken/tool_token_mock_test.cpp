@@ -47,6 +47,7 @@ constexpr int32_t USER_ID = 100;
 constexpr int32_t INST_INDEX = 0;
 constexpr int32_t API_VERSION_9 = 9;
 constexpr int32_t ROOT_UID = 0;
+constexpr size_t MAX_CHALLENGE_LENGTH = 40960;
 const std::string DEFAULT_AGENT_ID = "1001";
 const std::string CUSTOM_SCREEN_CAPTURE = "ohos.permission.CUSTOM_SCREEN_CAPTURE";
 const std::string ACCESS_SYSTEM_SETTINGS = "ohos.permission.ACCESS_SYSTEM_SETTINGS";
@@ -1572,7 +1573,7 @@ HWTEST_F(ToolTokenMockTest, GenerateCliAuthResult_011, TestSize.Level1)
 
     auto result = GenerateCliAuthResult(hostTokenId, { authInfo }, cleaner);
     ASSERT_EQ(1, static_cast<int32_t>(result.authResults.size()));
-    EXPECT_EQ("auth_010_challenge", result.authResults[0]);
+    EXPECT_EQ("legacy:auth_010_challenge", result.authResults[0]);
 }
 
 /**
@@ -1901,6 +1902,69 @@ HWTEST_F(ToolTokenMockTest, InitCliToken_007, TestSize.Level1)
     EXPECT_TRUE(kernelPermIdlList.empty());
     EXPECT_EQ(PERMISSION_DENIED, VerifyRuntimePermission(tokenId, LOCATION_PERMISSION));
     EXPECT_EQ(RET_SUCCESS, ToolTokenInfoManager::GetInstance().DeleteToolTokenByPid(getpid()));
+}
+
+/**
+ * @tc.name: InitCliToken_008
+ * @tc.desc: Test max-length legacy challenge passes input validation.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ToolTokenMockTest, InitCliToken_008, TestSize.Level1)
+{
+    AccessTokenID hostTokenId = INVALID_TOKENID;
+    TokenCleaner cleaner;
+    uint64_t hostFullTokenId = CreateServiceTestToken("tooltoken_init_008_host", true,
+        { BuildGrantedStatus(ACCESS_SYSTEM_SETTINGS) });
+    ASSERT_NE(0, hostFullTokenId);
+    hostTokenId = GetTokenIdFromFullTokenId(hostFullTokenId);
+    cleaner.Add(hostTokenId);
+
+    PrepareMockEnvironment();
+    auto authInfo = BuildCliAuthInfo(BuildCliInfo("settings", "set"), { ACCESS_SYSTEM_SETTINGS }, { true });
+    MockSingleCliAuthChallenge(authInfo, std::string(MAX_CHALLENGE_LENGTH, 'a'), "init_008_ticket");
+    std::string challenge = GenerateSingleCliAuthChallenge(hostTokenId, authInfo, cleaner);
+
+    CliInitInfo initInfo = {
+        .hostTokenId = hostTokenId,
+        .challenge = challenge,
+        .cliInfo = BuildCliInfo("settings", "set"),
+    };
+    uint64_t fullTokenId = 0;
+    std::vector<PermissionWithValueIdl> kernelPermIdlList;
+    ASSERT_EQ(RET_SUCCESS, InitCliToolTokenRet(initInfo, fullTokenId, kernelPermIdlList));
+    EXPECT_NE(INVALID_TOKENID, GetTokenIdFromFullTokenId(fullTokenId));
+    EXPECT_EQ(RET_SUCCESS, ToolTokenInfoManager::GetInstance().DeleteToolTokenByPid(getpid()));
+}
+
+/**
+ * @tc.name: InitCliToken_009
+ * @tc.desc: Test overlong legacy challenge is rejected by input validation.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ToolTokenMockTest, InitCliToken_009, TestSize.Level1)
+{
+    AccessTokenID hostTokenId = INVALID_TOKENID;
+    TokenCleaner cleaner;
+    uint64_t hostFullTokenId = CreateServiceTestToken("tooltoken_init_009_host", true,
+        { BuildGrantedStatus(ACCESS_SYSTEM_SETTINGS) });
+    ASSERT_NE(0, hostFullTokenId);
+    hostTokenId = GetTokenIdFromFullTokenId(hostFullTokenId);
+    cleaner.Add(hostTokenId);
+
+    PrepareMockEnvironment();
+    auto authInfo = BuildCliAuthInfo(BuildCliInfo("settings", "set"), { ACCESS_SYSTEM_SETTINGS }, { true });
+    MockSingleCliAuthChallenge(authInfo, std::string(MAX_CHALLENGE_LENGTH + 1, 'b'), "init_009_ticket");
+    std::string challenge = GenerateSingleCliAuthChallenge(hostTokenId, authInfo, cleaner);
+
+    CliInitInfo initInfo = {
+        .hostTokenId = hostTokenId,
+        .challenge = challenge,
+        .cliInfo = BuildCliInfo("settings", "set"),
+    };
+    uint64_t fullTokenId = 0;
+    std::vector<PermissionWithValueIdl> kernelPermIdlList;
+    EXPECT_EQ(ERR_PARAM_INVALID, InitCliToolTokenRet(initInfo, fullTokenId, kernelPermIdlList));
+    EXPECT_EQ(0u, fullTokenId);
 }
 
 /**

@@ -35,6 +35,9 @@ bool GenerateCliAuthResultFuzzTest(const uint8_t* data, size_t size)
     AccessTokenID hostTokenID = ConsumeTokenId(provider);
     std::string agentID = ConsumeAgentID(provider);
     std::vector<CliAuthInfo> authInfoList = ConsumeCliAuthInfoList(provider);
+    if (provider.ConsumeBool() || authInfoList.empty()) {
+        AppendKnownCliAuthInfos(provider, authInfoList);
+    }
     ToolAuthResult result;
     return AccessTokenKit::GenerateCliAuthResult(hostTokenID, agentID, authInfoList, result) == RET_SUCCESS;
 }

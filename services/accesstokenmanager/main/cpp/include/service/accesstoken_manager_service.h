@@ -103,6 +103,7 @@ public:
     int32_t GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfoCompatIdl& infoIdl) override;
     int32_t GetPermissionCode(const std::string& permission, uint32_t& opCode) override;
     int32_t IsSupportPermission(const std::string& permission, bool& isSupported) override;
+    int32_t RefreshTokenStatus(const IdentityIdl& identity, ReservedTypeIdl reserved) override;
     int32_t UpdateHapToken(uint64_t& fullTokenId, const UpdateHapInfoParamsIdl& infoIdl,
         const HapPolicyParcel& policyParcel, HapInfoCheckResultIdl& resultInfoIdl) override;
     int32_t RegisterPermStateChangeCallback(
@@ -121,6 +122,8 @@ public:
     int32_t RegisterSecCompEnhance(const SecCompEnhanceDataParcel& enhanceParcel) override;
     int32_t UpdateSecCompEnhance(int32_t pid, uint32_t seqNum) override;
     int32_t GetSecCompEnhance(int32_t pid, SecCompEnhanceDataParcel& enhanceParcel) override;
+    int32_t StoreSecCompEnhanceKey(const SecCompEnhanceKeyParcel& enhanceKeyParcel) override;
+    int32_t GetSecCompEnhanceKey(SecCompEnhanceKeyParcel& enhanceKeyParcel) override;
 #endif
 
 #ifdef TOKEN_SYNC_ENABLE
@@ -140,7 +143,6 @@ public:
         uint64_t& fullTokenId, std::vector<PermissionWithValueIdl>& kernelPermIdlList) override;
     int32_t DeleteToolTokenByPid(int32_t pid) override;
     int32_t GetHostTokenId(AccessTokenID toolTokenId, AccessTokenID& hostTokenId) override;
-    int32_t PreMigrateUIDList(const std::vector<int32_t>& uidList) override;
     int32_t MigrateInstalledBundles(const std::vector<MigratedInfoIdl>& migratedInfoList,
         std::vector<BundleMigrateResultIdl>& results) override;
     int32_t FinishMigration() override;
@@ -176,6 +178,8 @@ public:
     int32_t GetCliPermissionRequestInfo(
         const std::string& agentID, const std::vector<CliInfoIdl>& cliInfoList,
         PermissionDialogResultIdl& resultIdl) override;
+    int32_t GetPermissionStatusDetails(AccessTokenID tokenID, const std::vector<std::string>& permissionList,
+        std::vector<PermissionStatusDetailIdl>& resultList) override;
     int32_t GetCliPermissions(AccessTokenID hostTokenID, const std::string& agentID,
         const std::vector<CliInfoIdl>& cliInfoList, CliPermissionsResultIdl& resultIdl) override;
     int32_t GenerateCliAuthResult(AccessTokenID hostTokenID, const std::string& agentID,
@@ -199,6 +203,8 @@ private:
     void ReportUpdateHap(AccessTokenIDEx fullTokenId, const HapTokenInfo& info,
         const HapPolicy& policy, int64_t beginTime, int32_t errorCode);
     int32_t PreVerifyHapTokenIfNeeded(AccessTokenID tokenID);
+    int32_t PreCheckPermissionStatusDetails(
+        AccessTokenID tokenID, const std::vector<std::string>& permissionList);
     int32_t PreVerifyBundleIfNeeded(const std::string& bundleName);
     int32_t PreVerifyHapTokenListIfNeeded(const std::vector<uint32_t>& tokenIDList);
     bool IsPermissionValid(int32_t hapApl, const PermissionBriefDef& data, const std::string& value, bool isAcl);

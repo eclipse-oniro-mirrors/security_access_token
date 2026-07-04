@@ -31,10 +31,14 @@
 #include "nocopyable.h"
 #include "permission_def.h"
 #include "permission_grant_info.h"
+#include "permission_list_state.h"
 #include "accesstoken_callbacks.h"
 #include "permission_state_full.h"
 #include "perm_state_change_callback_customize.h"
 #include "proxy_death_callback.h"
+#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
+#include "sec_comp_enhance_data.h"
+#endif
 #ifdef TOKEN_SYNC_ENABLE
 #include "token_sync_kit_interface.h"
 #endif // TOKEN_SYNC_ENABLE
@@ -77,7 +81,6 @@ public:
     AccessTokenIDEx AllocHapToken(const HapInfoParams& info, const HapPolicy& policy);
     int32_t InitHapToken(const HapInfoParams& info, HapPolicy& policy,
         AccessTokenIDEx& fullTokenId, HapInfoCheckResult& result);
-    int32_t PreMigrateUIDList(const std::vector<int32_t>& uidList);
     int32_t MigrateInstalledBundles(const std::vector<MigratedInfo>& migratedInfoList,
         std::vector<BundleMigrateResult>& results);
     int32_t FinishMigration();
@@ -120,6 +123,8 @@ public:
         AccessTokenID tokenId, const std::string& permissionName, std::string& value);
     int32_t InitCliToken(const CliInitInfo& info,
         AccessTokenIDEx& tokenIdEx, std::vector<PermissionWithValue>& kernelPermList);
+    int32_t GetPermissionStatusDetails(AccessTokenID tokenID,
+        const std::vector<std::string>& permissionList, std::vector<PermissionStatusDetail>& resultList);
     int32_t GetHostTokenId(AccessTokenID toolTokenId, AccessTokenID& hostTokenId);
     void DumpTokenInfo(const AtmToolsParamInfo& info, std::string& dumpInfo);
     int32_t GetVersion(uint32_t& version);
@@ -137,6 +142,8 @@ public:
     int32_t RegisterSecCompEnhance(const SecCompEnhanceData& enhance);
     int32_t UpdateSecCompEnhance(int32_t pid, uint32_t seqNum);
     int32_t GetSecCompEnhance(int32_t pid, SecCompEnhanceData& enhance);
+    int32_t StoreSecCompEnhanceKey(const SecCompEnhanceKey& enhanceKey);
+    int32_t GetSecCompEnhanceKey(SecCompEnhanceKey& enhanceKey);
 #endif // SECURITY_COMPONENT_ENHANCE_ENABLE
     int32_t QueryStatusByPermission(const std::vector<uint32_t>& permCodeList,
         std::vector<PermissionStatus>& permissionInfoList, bool onlyHap);
@@ -144,6 +151,7 @@ public:
         std::vector<PermissionStatus>& permissionInfoList);
     int32_t CheckHapSignInfo(const BundleHapList& list, int32_t& sessionId,
         std::vector<TrustedBundleInfo>& bundleInfo, HapVerifyResultInfo& resultInfo);
+    int32_t RefreshTokenStatus(const Identity& identity, ReservedType reserved);
     int32_t CheckHapPermissionInfo(int32_t sessionId, InstallTypeEnum type, HapInfoCheckResult& result);
     int32_t PrepareHapIdentity(int32_t& sessionId, const HapBaseInfo& info,
         const BundlePolicy& policy, Identity& identity);

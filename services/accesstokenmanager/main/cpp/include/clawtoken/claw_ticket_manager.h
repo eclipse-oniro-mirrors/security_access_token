@@ -84,9 +84,14 @@ private:
     ~ClawTicketManager();
     DISALLOW_COPY_AND_MOVE(ClawTicketManager);
 
+    int32_t QueryCommandPermissions(const CliInfo& cliInfo, std::vector<PermissionStatus>& permList);
     void RegisterAppStateObserver();
     void UnregisterAppStateObserver();
 #ifdef SAF_AGENT_FENCE_ENABLE
+    int32_t VerifyCliClawTicketLegacy(AccessTokenID hostTokenId, const std::string& challenge,
+        const CliInfo& cliInfo, std::vector<PermissionStatus>& permList);
+    int32_t VerifyCliClawTicketByVerifyInfo(AccessTokenID hostTokenId, const std::string& challenge,
+        const CliInfo& cliInfo, std::vector<PermissionStatus>& permList);
     int32_t PrepareVerifiedTicketInfo(AccessTokenID hostTokenId, const std::string& challenge,
         ClawTicket& ticket, std::vector<SAF::VerifyTicketInfo>& verifyInfos, std::vector<int32_t>& verifyRes);
 #endif

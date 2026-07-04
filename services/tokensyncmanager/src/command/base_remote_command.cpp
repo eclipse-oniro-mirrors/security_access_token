@@ -231,44 +231,6 @@ void BaseRemoteCommand::FromHapTokenInfoJson(const CJson* hapTokenJson,
     FromPermStateListJson(hapTokenJson, hapTokenInfo.permStateList);
 }
 
-void BaseRemoteCommand::FromNativeTokenInfoJson(const CJson* nativeTokenJson,
-    NativeTokenInfoBase& nativeTokenInfo)
-{
-    GetStringFromJson(nativeTokenJson, "processName", nativeTokenInfo.processName);
-    int32_t apl;
-    GetIntFromJson(nativeTokenJson, "apl", apl);
-    if (DataValidator::IsAplNumValid(apl)) {
-        nativeTokenInfo.apl = static_cast<ATokenAplEnum>(apl);
-    }
-    int32_t ver;
-    GetIntFromJson(nativeTokenJson, JSON_VERSION, ver);
-    nativeTokenInfo.ver = (char)ver;
-    GetUnsignedIntFromJson(nativeTokenJson, "tokenId", nativeTokenInfo.tokenID);
-    GetUnsignedIntFromJson(nativeTokenJson, "tokenAttr", nativeTokenInfo.tokenAttr);
-
-    CJson* dcapsJson = GetArrayFromJson(nativeTokenJson, "dcaps");
-    if (dcapsJson != nullptr) {
-        CJson* dcap = nullptr;
-        std::vector<std::string> dcaps;
-        cJSON_ArrayForEach(dcap, dcapsJson) {
-            std::string item = cJSON_GetStringValue(dcap);
-            dcaps.push_back(item);
-        }
-        nativeTokenInfo.dcap = dcaps;
-    }
-    CJson* nativeAclsJson = GetArrayFromJson(nativeTokenJson, "nativeAcls");
-    if (nativeAclsJson != nullptr) {
-        CJson* acl = nullptr;
-        std::vector<std::string> nativeAcls;
-        cJSON_ArrayForEach(acl, nativeAclsJson) {
-            std::string item = cJSON_GetStringValue(acl);
-            nativeAcls.push_back(item);
-        }
-        nativeTokenInfo.nativeAcls = nativeAcls;
-    }
-    FromPermStateListJson(nativeTokenJson, nativeTokenInfo.permStateList);
-}
-
 bool BaseRemoteCommand::CheckDeviceIdValid(const std::string& deviceId)
 {
     DeviceInfo devInfo;

@@ -35,6 +35,7 @@ public:
     virtual int32_t ParseHapModuleInfo(const std::string& moduleRaw,
         AppExecFwk::Spm::InnerModuleInfoForSpm& moduleInfo) const = 0;
     virtual int32_t ParseProvision(const std::string& appProvision, Security::Verify::ProvisionInfo& info) const = 0;
+    virtual int32_t ParseProfile(const std::string& appProvision, Security::Verify::ProvisionInfo& info) const = 0;
 };
 
 class AppVerifyAdapter final : public IAppVerifyAdapter {
@@ -46,6 +47,7 @@ public:
     int32_t ParseHapModuleInfo(const std::string& moduleRaw,
         AppExecFwk::Spm::InnerModuleInfoForSpm& moduleInfo) const override;
     int32_t ParseProvision(const std::string& appProvision, Security::Verify::ProvisionInfo& info) const override;
+    int32_t ParseProfile(const std::string& appProvision, Security::Verify::ProvisionInfo& info) const override;
 };
 } // namespace AccessToken
 } // namespace Security

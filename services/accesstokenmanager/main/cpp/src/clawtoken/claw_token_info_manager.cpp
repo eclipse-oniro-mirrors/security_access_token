@@ -41,10 +41,19 @@ namespace Security {
 namespace AccessToken {
 namespace {
 const static int MAX_CHALLENGE_LENGTH = 40960;
+constexpr const char* LEGACY_CHALLENGE_PREFIX = "legacy:";
 
 bool IsPermissionRestrictedByAdminFlag(uint32_t flag)
 {
     return (flag & PERMISSION_RESTRICTED_BY_ADMIN) != 0;
+}
+
+std::string NormalizeChallengeForValidation(const std::string& challenge)
+{
+    if (challenge.rfind(LEGACY_CHALLENGE_PREFIX, 0) != 0) {
+        return challenge;
+    }
+    return challenge.substr(std::char_traits<char>::length(LEGACY_CHALLENGE_PREFIX));
 }
 
 ATokenTypeEnum GetTokenTypeByToolType(ToolTokenType toolType)
@@ -148,9 +157,11 @@ bool CheckToolInitCommonInput(AccessTokenID hostTokenId, const std::string& chal
         LOGE(ATM_DOMAIN, ATM_TAG, "Invalid hostTokenId, hostTokenId=%{public}u.", hostTokenId);
         return false;
     }
-    if (!challenge.empty() && !DataValidator::IsProcessNameValid(challenge)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Invalid challenge, hostTokenId=%{public}u, challenge=%{public}s.",
-            hostTokenId, challenge.c_str());
+    const std::string rawChallenge = NormalizeChallengeForValidation(challenge);
+    if (!rawChallenge.empty() && rawChallenge.length() > MAX_CHALLENGE_LENGTH) {
+        LOGE(ATM_DOMAIN, ATM_TAG,
+            "Invalid challenge, hostTokenId=%{public}u, challenge.length()=%{public}zu.",
+            hostTokenId, rawChallenge.length());
         return false;
     }
     return true;

@@ -18,6 +18,7 @@
 #include <memory>
 #include <mutex>
 #include <stack>
+#include <unordered_map>
 #include <unordered_set>
 #include <unistd.h>
 
@@ -65,6 +66,7 @@
 #include "permission_list_state.h"
 #include "permission_manager.h"
 #include "permission_constraint_check.h"
+#include "permission_data_brief.h"
 #include "permission_feature_manager.h"
 #include "permission_kernel_utils.h"
 #include "permission_map.h"
@@ -322,6 +324,59 @@ ToolAuthResultIdl ConvertToolAuthResult(const ToolAuthResult& result)
     return { .authResults = result.authResults };
 }
 
+using DeclaredPermissionNameSet = std::unordered_set<std::string>;
+
+bool ArePermissionNamesValid(const std::vector<std::string>& permissionList)
+{
+    for (const auto& permissionName : permissionList) {
+        if (!DataValidator::IsPermissionNameValid(permissionName)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+int32_t ResolvePermissionDetailBase(const std::string& permissionName,
+    const DeclaredPermissionNameSet& declaredPermissions, PermissionResultTypeIdl& resultType, uint32_t& permCode)
+{
+    PermissionBriefDef briefDef;
+    if (!GetPermissionBriefDef(permissionName, briefDef) || !briefDef.isEnable) {
+        resultType = PermissionResultTypeIdl::PERMISSION_NOT_EXIST;
+        return RET_SUCCESS;
+    }
+    if (declaredPermissions.find(permissionName) == declaredPermissions.end()) {
+        resultType = PermissionResultTypeIdl::PERMISSION_NOT_DECLARED;
+        return RET_SUCCESS;
+    }
+
+    if (!TransferPermissionToOpcode(permissionName, permCode)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Permission transfer to opcode failed, permission=%{public}s.",
+            permissionName.c_str());
+        return ERR_PERMISSION_NOT_EXIST;
+    }
+    resultType = PermissionResultTypeIdl::PERMISSION_VALID;
+    return RET_SUCCESS;
+}
+
+int32_t BuildPermissionStatusDetail(AccessTokenID tokenID, const std::string& permissionName,
+    const DeclaredPermissionNameSet& declaredPermissions, PermissionStatusDetailIdl& result)
+{
+    result.permissionName = permissionName;
+    result.grantStatus = PermissionState::PERMISSION_DENIED;
+    result.grantFlag = PermissionFlag::PERMISSION_DEFAULT_FLAG;
+    uint32_t permCode = 0;
+    int32_t ret = ResolvePermissionDetailBase(permissionName, declaredPermissions, result.resultType, permCode);
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
+    if (result.resultType != PermissionResultTypeIdl::PERMISSION_VALID) {
+        return RET_SUCCESS;
+    }
+
+    return PermissionDataBrief::GetInstance().QueryEffectivePermissionStatusAndFlag(
+        tokenID, permCode, result.grantStatus, result.grantFlag);
+}
+
 bool AreCliAuthInfosValid(const std::vector<CliAuthInfoIdl>& authInfoList)
 {
     for (const auto& info : authInfoList) {
@@ -514,6 +569,38 @@ const bool REGISTER_RESULT =
     SystemAbility::MakeAndRegisterAbility(DelayedSingleton<AccessTokenManagerService>::GetInstance().get());
 
 } // namespace
+
+int32_t AccessTokenManagerService::PreCheckPermissionStatusDetails(
+    AccessTokenID tokenID, const std::vector<std::string>& permissionList)
+{
+    if (!DataValidator::IsTokenIDValid(tokenID) ||
+        !DataValidator::IsListSizeValid(permissionList.size()) || !ArePermissionNamesValid(permissionList)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "GetPermissionStatusDetails invalid input, tokenId=%{public}u, size=%{public}zu.",
+            tokenID, permissionList.size());
+        return ERR_PARAM_INVALID;
+    }
+    if (!IsNativeProcessCalling()) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "GetPermissionStatusDetails permission denied, callingTokenId=%{public}u.",
+            IPCSkeleton::GetCallingTokenID());
+        return ERR_PERMISSION_DENIED;
+    }
+    int32_t tokenType = GetTokenType(tokenID);
+    if (tokenType == TOKEN_INVALID) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "GetPermissionStatusDetails token does not exist, tokenId=%{public}u.", tokenID);
+        return ERR_TOKENID_NOT_EXIST;
+    }
+    if (tokenType != TOKEN_HAP) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "GetPermissionStatusDetails only supports hap tokenId, tokenId=%{public}u.",
+            tokenID);
+        return ERR_PARAM_INVALID;
+    }
+    int32_t ret = PreVerifyHapTokenIfNeeded(tokenID);
+    if (ret != RET_SUCCESS) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Pre verify bundle by token failed, tokenId=%{public}u, ret=%{public}d.",
+            tokenID, ret);
+    }
+    return ret;
+}
 
 AccessTokenManagerService::AccessTokenManagerService()
     : SystemAbility(SA_ID_ACCESSTOKEN_MANAGER_SERVICE, true), state_(ServiceRunningState::STATE_NOT_START)
@@ -879,6 +966,45 @@ bool GetAppReqPermissions(AccessTokenID tokenID, std::vector<PermissionStatus>& 
     return true;
 }
 
+bool IsRenderToken(AccessTokenID tokenID)
+{
+    AccessTokenIDInner* idInner = reinterpret_cast<AccessTokenIDInner*>(&tokenID);
+    return idInner->renderFlag;
+}
+
+int32_t AccessTokenManagerService::GetPermissionStatusDetails(AccessTokenID tokenID,
+    const std::vector<std::string>& permissionList, std::vector<PermissionStatusDetailIdl>& resultList)
+{
+    int32_t ret = PreCheckPermissionStatusDetails(tokenID, permissionList);
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
+    std::vector<PermissionStatus> permsList;
+    if (!GetAppReqPermissions(tokenID, permsList)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "GetPermissionStatusDetails get requested permissions failed, tokenId=%{public}u.",
+            tokenID);
+        return ERR_SERVICE_ABNORMAL;
+    }
+    DeclaredPermissionNameSet declaredPermissions;
+    for (const auto& perm : permsList) {
+        declaredPermissions.emplace(perm.permissionName);
+    }
+    resultList.clear();
+    resultList.reserve(permissionList.size());
+    for (const auto& permissionName : permissionList) {
+        PermissionStatusDetailIdl result = {};
+        ret = BuildPermissionStatusDetail(tokenID, permissionName, declaredPermissions, result);
+        if (ret != RET_SUCCESS) {
+            LOGE(ATM_DOMAIN, ATM_TAG,
+                "Build permission status detail failed, tokenId=%{public}u, permission=%{public}s, ret=%{public}d.",
+                tokenID, permissionName.c_str(), ret);
+            return ret;
+        }
+        resultList.emplace_back(result);
+    }
+    return RET_SUCCESS;
+}
+
 bool AccessTokenManagerService::IsLocationPermSpecialHandle(std::string permissionName, int32_t apiVersion)
 {
     return ((permissionName == VAGUE_LOCATION_PERMISSION_NAME) ||
@@ -1122,15 +1248,8 @@ int32_t AccessTokenManagerService::ClearUserGrantedPermStateByBundle(const std::
         LOGE(ATM_DOMAIN, ATM_TAG, "Bundle name is invalid.");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
-    int32_t ret = PreVerifyBundleIfNeeded(bundleName);
-    if (ret != RET_SUCCESS) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Pre verify bundle failed, bundle=%{public}s, ret=%{public}d.",
-            bundleName.c_str(), ret);
-        return ret;
-    }
-
     std::vector<AccessTokenID> tokenIdList;
-    ret = AccessTokenInfoManager::GetInstance().GetHapTokenIdListByBundleName(bundleName, tokenIdList);
+    int32_t ret = AccessTokenInfoManager::GetInstance().GetHapTokenIdListByBundleName(bundleName, tokenIdList);
     if (ret != RET_SUCCESS) {
         return ret;
     }
@@ -1345,6 +1464,7 @@ void AccessTokenManagerService::ReportUpdateHap(AccessTokenIDEx fullTokenId, con
     dfxInfo.bundleName = info.bundleName;
     dfxInfo.instIndex = info.instIndex;
     dfxInfo.duration = TimeUtil::GetCurrentTimestamp() - beginTime;
+    dfxInfo.sceneCode = CommonSceneCode::AT_COMMON_FINISH;
 
     DumpEventInfo(policy, dfxInfo);
     ReportSysEventUpdateHap(errorCode, dfxInfo);
@@ -1440,7 +1560,8 @@ int AccessTokenManagerService::DeleteToken(AccessTokenID tokenID, bool isTokenRe
         LOGC(ATM_DOMAIN, ATM_TAG, "Failed to get hap info of %{public}u, err %{public}d.", tokenID, errorCode);
         dfxInfo.duration = TimeUtil::GetCurrentTimestamp() - beginTime;
         ReportSysEventDelHap(errorCode, sceneCode, dfxInfo);
-        return errorCode;
+        // return success if token id not exsits;
+        return RET_SUCCESS;
     }
 
     // only support hap token deletion
@@ -1788,6 +1909,27 @@ int32_t AccessTokenManagerService::IsSupportPermission(const std::string& permis
 {
     isSupported = IsDefinedPermissionInner(permission);
     return RET_SUCCESS;
+}
+
+int32_t AccessTokenManagerService::RefreshTokenStatus(const IdentityIdl& identity, ReservedTypeIdl reserved)
+{
+    if (identity.tokenId == INVALID_TOKENID) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Invalid param: tokenId is invalid.");
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+
+    // Permission check
+    int32_t ret = CheckHapManagerPermission();
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
+
+    Identity identityInner;
+    identityInner.tokenId = identity.tokenId;
+    identityInner.uid = identity.uid;
+    ReservedType reservedType = static_cast<ReservedType>(reserved);
+
+    return AccessTokenInfoManager::GetInstance().RefreshTokenStatus(identityInner, reservedType);
 }
 
 int AccessTokenManagerService::GetHapTokenInfoExtension(AccessTokenID tokenID,
@@ -2376,15 +2518,6 @@ int32_t AccessTokenManagerService::MigrateInstalledBundles(const std::vector<Mig
     return AccessTokenMigrationManager::GetInstance().MigrateInstalledBundles(migratedInfoList, results);
 }
 
-int32_t AccessTokenManagerService::PreMigrateUIDList(const std::vector<int32_t>& uidList)
-{
-    int32_t ret = CheckHapManagerPermission();
-    if (ret != RET_SUCCESS) {
-        return ret;
-    }
-    return AccessTokenMigrationManager::GetInstance().PreMigrateUIDList(uidList);
-}
-
 int32_t AccessTokenManagerService::FinishMigration()
 {
     int32_t ret = CheckHapManagerPermission();
@@ -2415,8 +2548,8 @@ bool AccessTokenManagerService::Initialize()
     uint32_t pefDefSize = 0;
     uint32_t dlpSize = 0;
     int32_t ret = RET_SUCCESS;
-    AccessTokenInfoManager::GetInstance().Init(hapSize, nativeSize, pefDefSize, dlpSize);
-    ret = BootVerifyScheduler::GetInstance().VerifyBundleSignInfoWhenStart();
+    AccessTokenInfoManager::GetInstance().Init(nativeSize, pefDefSize, dlpSize);
+    ret = BootVerifyScheduler::GetInstance().VerifyBundleSignInfoWhenStart(hapSize);
     if (ret != RET_SUCCESS) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Verify bundle sign info when start failed, ret=%{public}d.", ret);
         return false;
@@ -2632,6 +2765,22 @@ int32_t AccessTokenManagerService::GetSecCompEnhance(int32_t pid, SecCompEnhance
 
     enhanceParcel.enhanceData = enhanceData;
     return RET_SUCCESS;
+}
+
+int32_t AccessTokenManagerService::StoreSecCompEnhanceKey(const SecCompEnhanceKeyParcel& enhanceKeyParcel)
+{
+    if (!IsSecCompServiceCalling()) {
+        return AccessTokenError::ERR_PERMISSION_DENIED;
+    }
+    return SecCompEnhanceAgent::GetInstance().StoreSecCompEnhanceKey(enhanceKeyParcel.enhanceKey);
+}
+
+int32_t AccessTokenManagerService::GetSecCompEnhanceKey(SecCompEnhanceKeyParcel& enhanceKeyParcel)
+{
+    if (!IsSecCompServiceCalling()) {
+        return AccessTokenError::ERR_PERMISSION_DENIED;
+    }
+    return SecCompEnhanceAgent::GetInstance().GetSecCompEnhanceKey(enhanceKeyParcel.enhanceKey);
 }
 #endif
 

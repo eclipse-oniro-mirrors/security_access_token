@@ -65,6 +65,20 @@ public:
      */
     PermissionErrorReason errorReason;
 };
+
+enum class PermissionResultType : int32_t {
+    PERMISSION_VALID = 0,
+    PERMISSION_NOT_EXIST = 1,
+    PERMISSION_NOT_DECLARED = 2,
+};
+
+class PermissionStatusDetail final {
+public:
+    std::string permissionName;
+    int32_t grantStatus = PermissionState::PERMISSION_DENIED;
+    uint32_t grantFlag = PermissionFlag::PERMISSION_DEFAULT_FLAG;
+    PermissionResultType resultType = PermissionResultType::PERMISSION_VALID;
+};
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

@@ -31,17 +31,18 @@ using namespace std;
 using namespace OHOS::Security::AccessToken;
 
 namespace {
+AccessTokenID g_tokenSyncTokenId = INVALID_TOKENID;
+
 bool SetTokenSyncToken()
 {
-    AccessTokenID token = INVALID_TOKENID;
-    {
+    if (g_tokenSyncTokenId == INVALID_TOKENID) {
         MockToken mock({}, false);
-        token = AccessTokenKit::GetNativeTokenId("token_sync_service");
+        g_tokenSyncTokenId = AccessTokenKit::GetNativeTokenId("token_sync_service");
     }
-    if (token == INVALID_TOKENID) {
+    if (g_tokenSyncTokenId == INVALID_TOKENID) {
         return false;
     }
-    return SetSelfTokenID(token) == 0;
+    return SetSelfTokenID(g_tokenSyncTokenId) == 0;
 }
 }
 

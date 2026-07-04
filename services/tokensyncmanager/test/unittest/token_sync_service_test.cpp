@@ -522,41 +522,6 @@ HWTEST_F(TokenSyncServiceTest, FromPermStateListJson001, TestSize.Level0)
 }
 
 /**
- * @tc.name: FromNativeTokenInfoJson001
- * @tc.desc: FromNativeTokenInfoJson function test
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(TokenSyncServiceTest, FromNativeTokenInfoJson001, TestSize.Level0)
-{
-    auto cmd = std::make_shared<TestBaseRemoteCommand>();
-
-    CJsonUnique nativeTokenListJsonNull = CreateJson();
-    NativeTokenInfoBase tokenNull;
-    cmd->FromNativeTokenInfoJson(nativeTokenListJsonNull.get(), tokenNull);
-
-    CJsonUnique hapTokenJsonNull = CreateJson();
-    HapTokenInfo hapTokenBasicInfoNull;
-    cmd->FromHapTokenBasicInfoJson(hapTokenJsonNull.get(), hapTokenBasicInfoNull);
-
-    NativeTokenInfoBase native1 = {
-        .apl = APL_NORMAL,
-        .ver = 2,
-        .processName = "token_sync_test",
-        .dcap = {"AT_CAP"},
-        .tokenID = 1,
-        .tokenAttr = 0,
-        .nativeAcls = {},
-    };
-
-    CJsonUnique nativeTokenListJson = cmd->ToNativeTokenInfoJson(native1);
-    NativeTokenInfoBase token;
-    cmd->FromNativeTokenInfoJson(nativeTokenListJson.get(), token);
-    EXPECT_EQ(token.processName, "token_sync_test");
-    EXPECT_EQ(token.apl, ATokenAplEnum::APL_NORMAL);
-}
-
-/**
  * @tc.name: FromPermStateListJson002
  * @tc.desc: FromPermStateListJson function test
  * @tc.type: FUNC

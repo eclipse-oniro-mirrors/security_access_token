@@ -16,10 +16,12 @@
 #include "claw_ticket_manager.h"
 
 #include <mutex>
+#include <unordered_set>
 
 #include "access_token_error.h"
 #include "accesstoken_common_log.h"
 #include "accesstoken_info_manager.h"
+#include "claw_permission_metadata_provider.h"
 #include "claw_permission_status_helper.h"
 #include "cjson_utils.h"
 #ifdef SAF_AGENT_FENCE_ENABLE
@@ -31,6 +33,7 @@ namespace Security {
 namespace AccessToken {
 namespace {
 std::recursive_mutex g_instanceMutex;
+constexpr const char* LEGACY_CHALLENGE_PREFIX = "legacy:";
 
 int32_t GetUserIdByTokenId(AccessTokenID callerTokenId)
 {
@@ -81,6 +84,77 @@ std::string SerializeCliAuthInfo(const CliAuthInfo& cliAuth)
 }
 
 #ifdef SAF_AGENT_FENCE_ENABLE
+void StableUnique(std::vector<std::string>& values)
+{
+    std::unordered_set<std::string> seen;
+    std::vector<std::string> uniqueValues;
+    uniqueValues.reserve(values.size());
+    for (const auto& value : values) {
+        if (seen.insert(value).second) {
+            uniqueValues.emplace_back(value);
+        }
+    }
+    values = std::move(uniqueValues);
+}
+
+bool IsReturnedCliInfoMatched(
+    const SAF::CliInfo& verifyCliInfo, AccessTokenID hostTokenId, const CliInfo& cliInfo)
+{
+    if (verifyCliInfo.callerTokenId != std::to_string(hostTokenId)) {
+        return false;
+    }
+    return verifyCliInfo.cliCmdName == cliInfo.cliName && verifyCliInfo.subCliCmdName == cliInfo.subCliName;
+}
+
+int32_t AppendGrantedPermissionsByCliPermission(
+    const std::string& requiredCliPermission, std::unordered_set<std::string>& grantedPermissionSet,
+    std::vector<PermissionStatus>& permList)
+{
+    std::vector<std::string> usedPermissions;
+    int32_t ret = ClawPermissionMetadataProvider::GetInstance().GetUsedPermissionsByCliPermission(
+        requiredCliPermission, usedPermissions);
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
+    for (const auto& permissionName : usedPermissions) {
+        if (!grantedPermissionSet.insert(permissionName).second) {
+            continue;
+        }
+        PermissionStatus status = {};
+        status.permissionName = permissionName;
+        status.grantStatus = PERMISSION_GRANTED;
+        status.grantFlag = PERMISSION_DEFAULT_FLAG;
+        permList.emplace_back(status);
+    }
+    return RET_SUCCESS;
+}
+
+#endif
+
+bool IsLegacyChallenge(const std::string& challenge)
+{
+    return challenge.rfind(LEGACY_CHALLENGE_PREFIX, 0) == 0;
+}
+
+std::string NormalizeLegacyChallenge(const std::string& challenge)
+{
+    if (!IsLegacyChallenge(challenge)) {
+        return challenge;
+    }
+    return challenge.substr(std::char_traits<char>::length(LEGACY_CHALLENGE_PREFIX));
+}
+
+#ifdef SAF_AGENT_FENCE_ENABLE
+std::string WrapLegacyChallenge(const std::string& challenge)
+{
+    return std::string(LEGACY_CHALLENGE_PREFIX) + challenge;
+}
+
+bool IsLegacyChallengeStored(const std::string& challenge, const std::unordered_map<std::string, ClawTicket>& ticketMap)
+{
+    return ticketMap.find(challenge) != ticketMap.end();
+}
+
 bool IsCliInfoMatched(const CliInfo& expectedCliInfo, const CliInfo& actualCliInfo)
 {
     return (expectedCliInfo.cliName == actualCliInfo.cliName) &&
@@ -129,7 +203,6 @@ CliAuthInfo DeserializeCliAuthInfo(const std::string& json)
     }
     return cliAuth;
 }
-
 #endif
 }
 
@@ -240,7 +313,7 @@ int32_t ClawTicketManager::GenerateCliTicket(AccessTokenID callerTokenId,
     std::unique_lock<std::shared_mutex> lock(multiLock_);
 
     for (size_t i = 0; i < tickets.size(); ++i) {
-        authResults.emplace_back(tickets[i].challenge);
+        authResults.emplace_back(tickets[i].challenge.empty() ? "" : WrapLegacyChallenge(tickets[i].challenge));
         if (tickets[i].challenge.empty()) {
             continue;
         }
@@ -258,15 +331,28 @@ int32_t ClawTicketManager::GenerateCliTicket(AccessTokenID callerTokenId,
 int32_t ClawTicketManager::VerifyCliClawTicket(AccessTokenID hostTokenId, const std::string& challenge,
     const CliInfo& cliInfo, std::vector<PermissionStatus>& permList)
 {
-    std::shared_lock<std::shared_mutex> lock(multiLock_);
-
+    const std::string rawChallenge = NormalizeLegacyChallenge(challenge);
 #ifndef ENHANCE_CAPABILITY
-    if (challenge.empty()) {
-        return RET_SUCCESS;
+    if (rawChallenge.empty()) {
+        return QueryCommandPermissions(cliInfo, permList);
     }
 #endif
 
 #ifdef SAF_AGENT_FENCE_ENABLE
+    std::shared_lock<std::shared_mutex> lock(multiLock_);
+    if (IsLegacyChallenge(challenge) || IsLegacyChallengeStored(rawChallenge, ticketMap_)) {
+        return VerifyCliClawTicketLegacy(hostTokenId, rawChallenge, cliInfo, permList);
+    }
+    return VerifyCliClawTicketByVerifyInfo(hostTokenId, challenge, cliInfo, permList);
+#else
+    return RET_SUCCESS;
+#endif
+}
+
+#ifdef SAF_AGENT_FENCE_ENABLE
+int32_t ClawTicketManager::VerifyCliClawTicketLegacy(AccessTokenID hostTokenId, const std::string& challenge,
+    const CliInfo& cliInfo, std::vector<PermissionStatus>& permList)
+{
     ClawTicket ticket;
     std::vector<SAF::VerifyTicketInfo> verifyInfos;
     std::vector<int32_t> verifyRes;
@@ -297,12 +383,58 @@ int32_t ClawTicketManager::VerifyCliClawTicket(AccessTokenID hostTokenId, const 
             permList.emplace_back(status);
         }
     }
-#endif
 
     return RET_SUCCESS;
 }
 
-#ifdef SAF_AGENT_FENCE_ENABLE
+int32_t ClawTicketManager::VerifyCliClawTicketByVerifyInfo(AccessTokenID hostTokenId,
+    const std::string& challenge, const CliInfo& cliInfo, std::vector<PermissionStatus>& permList)
+{
+    int32_t userId = GetUserIdByTokenId(hostTokenId);
+    if (userId < 0) {
+        return AccessTokenError::ERR_TOKENID_NOT_EXIST;
+    }
+
+    SAF::SafAgentFence safAgentFence;
+    std::vector<SAF::CliInfo> verifiedCliInfos;
+    int32_t ret = safAgentFence.VerifyTicket(userId, std::to_string(hostTokenId), challenge, verifiedCliInfos);
+    if (ret != RET_SUCCESS) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Verify cli ticket by verifyInfo failed, ret=%{public}d", ret);
+        return TransferErrorCode(ret);
+    }
+
+    std::vector<std::string> grantedCliPermissions;
+    bool hasMatchedCliInfo = false;
+    for (const auto& verifyCliInfo : verifiedCliInfos) {
+        if (!IsReturnedCliInfoMatched(verifyCliInfo, hostTokenId, cliInfo)) {
+            continue;
+        }
+        hasMatchedCliInfo = true;
+        grantedCliPermissions.insert(grantedCliPermissions.end(),
+            verifyCliInfo.permissionList.begin(), verifyCliInfo.permissionList.end());
+    }
+    if (!hasMatchedCliInfo) {
+        LOGE(ATM_DOMAIN, ATM_TAG,
+            "Verify cli ticket by verifyInfo failed, no matched cli info, hostTokenId=%{public}u, "
+            "cliName=%{public}s, subCliName=%{public}s.", hostTokenId, cliInfo.cliName.c_str(),
+            cliInfo.subCliName.c_str());
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+
+    StableUnique(grantedCliPermissions);
+    std::unordered_set<std::string> grantedPermissionSet;
+    for (const auto& requiredCliPermission : grantedCliPermissions) {
+        ret = AppendGrantedPermissionsByCliPermission(requiredCliPermission, grantedPermissionSet, permList);
+        if (ret != RET_SUCCESS) {
+            LOGE(ATM_DOMAIN, ATM_TAG,
+                "Resolve cli permission mapping failed, cliPermission=%{public}s, ret=%{public}d.",
+                requiredCliPermission.c_str(), ret);
+            return ret;
+        }
+    }
+    return RET_SUCCESS;
+}
+
 int32_t ClawTicketManager::PrepareVerifiedTicketInfo(AccessTokenID hostTokenId, const std::string& challenge,
     ClawTicket& ticket, std::vector<SAF::VerifyTicketInfo>& verifyInfos, std::vector<int32_t>& verifyRes)
 {
@@ -331,20 +463,22 @@ int32_t ClawTicketManager::PrepareVerifiedTicketInfo(AccessTokenID hostTokenId, 
 
 int32_t ClawTicketManager::DeleteClawTicket(const std::string& challenge)
 {
-    if (challenge.empty()) {
+    const std::string rawChallenge = NormalizeLegacyChallenge(challenge);
+    if (rawChallenge.empty()) {
         return AccessTokenError::ERR_PARAM_INVALID;
     }
 
     std::unique_lock<std::shared_mutex> lock(multiLock_);
 
-    auto it = ticketMap_.find(challenge);
+    auto it = ticketMap_.find(rawChallenge);
     if (it == ticketMap_.end()) {
         return AccessTokenError::ERR_PARAM_INVALID;
     }
 
     ticketMap_.erase(it);
 
-    LOGI(ATM_DOMAIN, ATM_TAG, "Tickets deleted, challenge=%s", challenge.c_str());
+    LOGI(ATM_DOMAIN, ATM_TAG, "Tickets deleted, legacyPrefix=%{public}d, challengeLength=%{public}zu.",
+        IsLegacyChallenge(challenge), rawChallenge.length());
     return RET_SUCCESS;
 }
 
@@ -365,6 +499,41 @@ void ClawTicketManager::DeleteClawTicketByCallerTokenId(AccessTokenID callerToke
 
     LOGI(ATM_DOMAIN, ATM_TAG, "Deleted %{public}zu tickets for callerTokenId=%{public}u", challengesToDelete.size(),
         callerTokenId);
+}
+
+int32_t ClawTicketManager::QueryCommandPermissions(const CliInfo& cliInfo, std::vector<PermissionStatus>& permList)
+{
+#ifdef SAF_AGENT_FENCE_ENABLE
+    std::vector<SAF::CommandInfo> cmds;
+    SAF::CommandInfo cmd;
+    cmd.cmdName = cliInfo.cliName;
+    cmd.subCmd = cliInfo.subCliName;
+    cmds.emplace_back(cmd);
+
+    std::vector<SAF::CommandPermissionInfo> permissionInfos;
+    SAF::SafAgentFence safAgentFence;
+    int32_t ret = safAgentFence.BatchQueryCommandPermission(cmds, permissionInfos);
+    if (ret != RET_SUCCESS) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Query cli callable permissions failed, ret=%{public}d.", ret);
+        return ret;
+    }
+    if (permissionInfos.size() != cmds.size()) {
+        LOGE(ATM_DOMAIN, ATM_TAG,
+            "Query cli callable permissions size mismatch, input=%{public}zu, output=%{public}zu.",
+            cmds.size(), permissionInfos.size());
+        return AccessTokenError::ERR_PERMISSION_NOT_EXIST;
+    }
+
+    for (size_t i = 0; i < permissionInfos.size(); ++i) {
+        for (const auto& perm : permissionInfos[i].permissions) {
+            PermissionStatus status;
+            status.permissionName = perm;
+            status.grantStatus = PERMISSION_GRANTED;
+            permList.emplace_back(status);
+        }
+    }
+#endif
+    return RET_SUCCESS;
 }
 } // namespace AccessToken
 } // namespace Security

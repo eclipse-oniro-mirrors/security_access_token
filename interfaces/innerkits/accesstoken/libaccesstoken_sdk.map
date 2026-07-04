@@ -90,6 +90,7 @@
         "OHOS::Security::AccessToken::AccessTokenKit::VerifyAccessToken(unsigned int, std::__h::vector<std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>>, std::__h::allocator<std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>>>> const&, std::__h::vector<int, std::__h::allocator<int>>&, bool)";
         "OHOS::Security::AccessToken::AccessTokenKit::QueryStatusByPermission(std::__h::vector<std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>>, std::__h::allocator<std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>>>> const&, std::__h::vector<OHOS::Security::AccessToken::PermissionStatus, std::__h::allocator<OHOS::Security::AccessToken::PermissionStatus>>&, bool)";
         "OHOS::Security::AccessToken::AccessTokenKit::QueryStatusByTokenID(std::__h::vector<unsigned int, std::__h::allocator<unsigned int>> const&, std::__h::vector<OHOS::Security::AccessToken::PermissionStatus, std::__h::allocator<OHOS::Security::AccessToken::PermissionStatus>>&)";
+        "OHOS::Security::AccessToken::AccessTokenKit::GetPermissionStatusDetails(unsigned int, std::__h::vector<std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>>, std::__h::allocator<std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>>>> const&, std::__h::vector<OHOS::Security::AccessToken::PermissionStatusDetail, std::__h::allocator<OHOS::Security::AccessToken::PermissionStatusDetail>>&)";
         "OHOS::Security::AccessToken::AccessTokenKit::GrantPermissionForSpecifiedTime(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, unsigned int)";
         "OHOS::Security::AccessToken::AccessTokenKit::GetHapTokenInfoExtension(unsigned int, OHOS::Security::AccessToken::HapTokenInfoExt&)";
         "OHOS::Security::AccessToken::AccessTokenKit::RequestAppPermOnSetting(unsigned int)";
@@ -97,6 +98,8 @@
         "OHOS::Security::AccessToken::AccessTokenKit::RegisterSecCompEnhance(OHOS::Security::AccessToken::SecCompEnhanceData const&)";
         "OHOS::Security::AccessToken::AccessTokenKit::UpdateSecCompEnhance(int, unsigned int)";
         "OHOS::Security::AccessToken::AccessTokenKit::GetSecCompEnhance(int, OHOS::Security::AccessToken::SecCompEnhanceData&)";
+        "OHOS::Security::AccessToken::AccessTokenKit::StoreSecCompEnhanceKey(OHOS::Security::AccessToken::SecCompEnhanceKey const&)";
+        "OHOS::Security::AccessToken::AccessTokenKit::GetSecCompEnhanceKey(OHOS::Security::AccessToken::SecCompEnhanceKey&)";
         "OHOS::Security::AccessToken::AccessTokenKit::GetKernelPermissions(unsigned int, std::__h::vector<OHOS::Security::AccessToken::PermissionWithValue, std::__h::allocator<OHOS::Security::AccessToken::PermissionWithValue>>&)";
         "OHOS::Security::AccessToken::AccessTokenKit::InitCliToken(OHOS::Security::AccessToken::CliInitInfo const&, OHOS::Security::AccessToken::AccessTokenIDEx&, std::__h::vector<OHOS::Security::AccessToken::PermissionWithValue, std::__h::allocator<OHOS::Security::AccessToken::PermissionWithValue>>&)";
         "OHOS::Security::AccessToken::AccessTokenKit::GetHostTokenId(unsigned int, unsigned int&)";
@@ -120,6 +123,7 @@
         "OHOS::Security::AccessToken::AccessTokenKit::GetCacheSignInfoBySessionId(int, std::__h::vector<OHOS::Security::AccessToken::TrustedBundleInfo, std::__h::allocator<OHOS::Security::AccessToken::TrustedBundleInfo>>&)";
         "OHOS::Security::AccessToken::AccessTokenKit::GetHapSignInfo(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, std::__h::vector<OHOS::Security::AccessToken::TrustedBundleInfo, std::__h::allocator<OHOS::Security::AccessToken::TrustedBundleInfo>>&)";
         "OHOS::Security::AccessToken::AccessTokenKit::GetCachePolicyBySessionId(int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, OHOS::Security::AccessToken::BundlePolicyInfo&)";
+        "OHOS::Security::AccessToken::AccessTokenKit::RefreshTokenStatus(OHOS::Security::AccessToken::Identity const&, OHOS::Security::AccessToken::ReservedType)";
     };
   local:
     *;

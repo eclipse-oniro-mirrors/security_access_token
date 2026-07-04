@@ -34,6 +34,9 @@ bool GetCliPermissionRequestInfoFuzzTest(const uint8_t* data, size_t size)
     FuzzedDataProvider provider(data, size);
     std::string agentID = ConsumeAgentID(provider);
     std::vector<CliInfo> cliInfoList = ConsumeCliInfoList(provider);
+    if (provider.ConsumeBool() || cliInfoList.empty()) {
+        AppendKnownCliInfos(provider, cliInfoList);
+    }
     PermissionDialogResult result;
     return AccessTokenKit::GetCliPermissionRequestInfo(agentID, cliInfoList, result) == RET_SUCCESS;
 }

@@ -210,12 +210,6 @@ public:
     static int32_t UpdateHapToken(AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info,
         const HapPolicyParams& policy, HapInfoCheckResult& result);
     /**
-     * @brief Stage the UID list for installed-bundle migration.
-     * @param uidList UID list that should be accepted by the later migration step.
-     * @return error code, see access_token_error.h
-     */
-    static int32_t PreMigrateUIDList(const std::vector<int32_t>& uidList);
-    /**
      * @brief Migrate installed bundles.
      * @param migratedInfoList migrated bundle information list.
      * @param results migration result for each migrated bundle.
@@ -452,6 +446,15 @@ public:
      * @return error code, see access_token_error.h
      */
     static int32_t GetPermissionsStatus(AccessTokenID tokenID, std::vector<PermissionListState>& permList);
+    /**
+     * @brief Query detailed effective permission status on input hap tokenID.
+     * @param tokenID hap token id
+     * @param permissionList input permission list
+     * @param resultList permission status detail list
+     * @return error code, see access_token_error.h
+     */
+    static int32_t GetPermissionStatusDetails(AccessTokenID tokenID,
+        const std::vector<std::string>& permissionList, std::vector<PermissionStatusDetail>& resultList);
     /**
      * @brief Grant input permission to input tokenID with input flag.
      * @param tokenID token id
@@ -718,6 +721,20 @@ public:
      * @return error code, see access_token_error.h
      */
     static int32_t GetSecCompEnhance(int32_t pid, SecCompEnhanceData& enhance);
+
+    /**
+     * @brief Store the latest stable security component enhance key.
+     * @param enhanceKey enhance key with epoch
+     * @return error code, see access_token_error.h
+     */
+    static int32_t StoreSecCompEnhanceKey(const SecCompEnhanceKey& enhanceKey);
+
+    /**
+     * @brief Get the latest stable security component enhance key.
+     * @param enhanceKey enhance key with epoch
+     * @return error code, see access_token_error.h
+     */
+    static int32_t GetSecCompEnhanceKey(SecCompEnhanceKey& enhanceKey);
 #endif
     /**
      * Whether it is a atomic service
@@ -825,6 +842,14 @@ public:
      */
     static int32_t GenerateCliAuthResult(AccessTokenID hostTokenID, const std::string& agentID,
         const std::vector<CliAuthInfo>& authInfoList, ToolAuthResult& result);
+
+    /**
+     * @brief Refresh token ID status with UID and reserved type.
+     * @param identity Identity containing tokenId and uid to be refreshed
+     * @param reserved Reserved type for the token
+     * @return Returns RET_SUCCESS(0) on success, returns corresponding error code on failure
+     */
+    static int32_t RefreshTokenStatus(const Identity& identity, ReservedType reserved);
 };
 } // namespace AccessToken
 } // namespace Security

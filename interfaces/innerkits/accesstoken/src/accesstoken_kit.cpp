@@ -288,16 +288,6 @@ isAtomicService: %{public}d",
     return AccessTokenManagerClient::GetInstance().UpdateHapToken(tokenIdEx, info, newPolicy, result);
 }
 
-int32_t AccessTokenKit::PreMigrateUIDList(const std::vector<int32_t>& uidList)
-{
-    LOGI(ATM_DOMAIN, ATM_TAG, "PreMigrateUIDList size=%{public}zu.", uidList.size());
-    if (!DataValidator::IsListSizeValid(static_cast<uint32_t>(uidList.size()))) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Uid list size %{public}zu is invalid.", uidList.size());
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-    return AccessTokenManagerClient::GetInstance().PreMigrateUIDList(uidList);
-}
-
 int32_t AccessTokenKit::MigrateInstalledBundles(const std::vector<MigratedInfo>& migratedInfoList,
     std::vector<BundleMigrateResult>& results)
 {
@@ -517,6 +507,23 @@ int32_t AccessTokenKit::GetPermissionsStatus(AccessTokenID tokenID, std::vector<
         return ERR_PARAM_INVALID;
     }
     return AccessTokenManagerClient::GetInstance().GetPermissionsStatus(tokenID, permList);
+}
+
+int32_t AccessTokenKit::GetPermissionStatusDetails(AccessTokenID tokenID,
+    const std::vector<std::string>& permissionList, std::vector<PermissionStatusDetail>& resultList)
+{
+    if (!DataValidator::IsTokenIDValid(tokenID)) {
+        return ERR_PARAM_INVALID;
+    }
+    if (!DataValidator::IsListSizeValid(permissionList.size())) {
+        return ERR_PARAM_INVALID;
+    }
+    for (const auto& permissionName : permissionList) {
+        if (!DataValidator::IsPermissionNameValid(permissionName)) {
+            return ERR_PARAM_INVALID;
+        }
+    }
+    return AccessTokenManagerClient::GetInstance().GetPermissionStatusDetails(tokenID, permissionList, resultList);
 }
 
 int AccessTokenKit::VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName, bool crossIpc)
@@ -1065,6 +1072,17 @@ int32_t AccessTokenKit::GetReqPermissionByName(
     return AccessTokenManagerClient::GetInstance().GetReqPermissionByName(tokenID, permissionName, value);
 }
 
+int32_t AccessTokenKit::RefreshTokenStatus(const Identity& identity, ReservedType reserved)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "RefreshTokenStatus tokenId=%{public}u, uid=%{public}d, reserved=%{public}d.",
+        static_cast<AccessTokenID>(identity.tokenId), identity.uid, static_cast<int32_t>(reserved));
+    if (identity.tokenId == INVALID_TOKENID) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "TokenId is invalid.");
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    return AccessTokenManagerClient::GetInstance().RefreshTokenStatus(identity, reserved);
+}
+
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
 int32_t AccessTokenKit::RegisterSecCompEnhance(const SecCompEnhanceData& enhance)
 {
@@ -1079,6 +1097,20 @@ int32_t AccessTokenKit::UpdateSecCompEnhance(int32_t pid, uint32_t seqNum)
 int32_t AccessTokenKit::GetSecCompEnhance(int32_t pid, SecCompEnhanceData& enhance)
 {
     return AccessTokenManagerClient::GetInstance().GetSecCompEnhance(pid, enhance);
+}
+
+int32_t AccessTokenKit::StoreSecCompEnhanceKey(const SecCompEnhanceKey& enhanceKey)
+{
+    if ((enhanceKey.key.size == 0) || (enhanceKey.key.size > MAX_HMAC_SIZE)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Enhance key size %{public}u is invalid.", enhanceKey.key.size);
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    return AccessTokenManagerClient::GetInstance().StoreSecCompEnhanceKey(enhanceKey);
+}
+
+int32_t AccessTokenKit::GetSecCompEnhanceKey(SecCompEnhanceKey& enhanceKey)
+{
+    return AccessTokenManagerClient::GetInstance().GetSecCompEnhanceKey(enhanceKey);
 }
 #endif
 

@@ -59,7 +59,6 @@ public:
     CJsonUnique ToHapTokenInfosJson(const HapTokenInfoForSync &tokenInfo);
     void FromHapTokenInfoJson(const CJson* hapTokenJson, HapTokenInfoForSync& hapTokenInfo);
     CJsonUnique ToNativeTokenInfoJson(const NativeTokenInfoBase& tokenInfo);
-    void FromNativeTokenInfoJson(const CJson* nativeTokenJson, NativeTokenInfoBase& nativeTokenInfo);
     bool CheckDeviceIdValid(const std::string& deviceId);
     RemoteProtocol remoteProtocol_;
     std::string rawDeviceId_;

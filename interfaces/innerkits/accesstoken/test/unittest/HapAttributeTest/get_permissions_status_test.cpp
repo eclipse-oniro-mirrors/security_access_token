@@ -15,6 +15,7 @@
 
 #include "get_permissions_status_test.h"
 #include "gtest/gtest.h"
+#include <algorithm>
 #include <thread>
 #include <unistd.h>
 
@@ -40,6 +41,16 @@ static const int TEST_USER_ID = 0;
 static constexpr int32_t DEFAULT_API_VERSION = 8;
 static constexpr int32_t TOKENID_NOT_EXIST = 123;
 static MockHapToken* g_mock = nullptr;
+
+const PermissionStatus* FindPermissionStatusByName(
+    const std::vector<PermissionStatus>& permissionInfoList, const std::string& permissionName)
+{
+    auto iter = std::find_if(permissionInfoList.begin(), permissionInfoList.end(),
+        [&permissionName](const PermissionStatus& status) {
+            return status.permissionName == permissionName;
+        });
+    return (iter == permissionInfoList.end()) ? nullptr : &(*iter);
+}
 };
 
 void GetPermissionsStatusTest::SetUpTestCase()
@@ -367,6 +378,258 @@ HWTEST_F(GetPermissionsStatusTest, GetPermissionsStatusSpecTest002, TestSize.Lev
 
     EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetPermissionsStatus(tokenID, permsList));
     EXPECT_EQ(DYNAMIC_OPER, permsList[0].state);
+}
+
+/**
+ * @tc.name: GetPermissionStatusDetailsFuncTest001
+ * @tc.desc: query declared, not declared, and non-existing permissions
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(GetPermissionsStatusTest, GetPermissionStatusDetailsFuncTest001, TestSize.Level0)
+{
+    MockNativeToken mockNative("privacy_service");
+    AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+
+    std::vector<std::string> permissionList = {
+        "ohos.permission.LOCATION",
+        "ohos.permission.WRITE_CALENDAR",
+        "ohos.permission.CAMERA",
+        "ohos.permission.BETA",
+    };
+    std::vector<PermissionStatusDetail> resultList;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetPermissionStatusDetails(tokenID, permissionList, resultList));
+    ASSERT_EQ(permissionList.size(), resultList.size());
+    EXPECT_EQ(PermissionResultType::PERMISSION_VALID, resultList[0].resultType);
+    EXPECT_EQ(PERMISSION_DENIED, resultList[0].grantStatus);
+    EXPECT_EQ(PERMISSION_DEFAULT_FLAG, resultList[0].grantFlag);
+    EXPECT_EQ(PermissionResultType::PERMISSION_VALID, resultList[1].resultType);
+    EXPECT_EQ(PERMISSION_DENIED, resultList[1].grantStatus);
+    EXPECT_EQ(PERMISSION_DEFAULT_FLAG, resultList[1].grantFlag);
+    EXPECT_EQ(PermissionResultType::PERMISSION_NOT_DECLARED, resultList[2].resultType);
+    EXPECT_EQ(PERMISSION_DENIED, resultList[2].grantStatus);
+    EXPECT_EQ(PERMISSION_DEFAULT_FLAG, resultList[2].grantFlag);
+    EXPECT_EQ(PermissionResultType::PERMISSION_NOT_EXIST, resultList[3].resultType);
+    EXPECT_EQ(PERMISSION_DENIED, resultList[3].grantStatus);
+    EXPECT_EQ(PERMISSION_DEFAULT_FLAG, resultList[3].grantFlag);
+}
+
+/**
+ * @tc.name: GetPermissionStatusDetailsFuncTest002
+ * @tc.desc: return invalid when permission name format is invalid
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(GetPermissionsStatusTest, GetPermissionStatusDetailsFuncTest002, TestSize.Level0)
+{
+    MockNativeToken mockNative("privacy_service");
+    AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+
+    std::vector<PermissionStatusDetail> resultList;
+    EXPECT_EQ(ERR_PARAM_INVALID, AccessTokenKit::GetPermissionStatusDetails(tokenID, { "" }, resultList));
+}
+
+/**
+ * @tc.name: GetPermissionStatusDetailsFuncTest003
+ * @tc.desc: query result should align with effective permission status query
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(GetPermissionsStatusTest, GetPermissionStatusDetailsFuncTest003, TestSize.Level0)
+{
+    MockNativeToken mockNative("privacy_service");
+    AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+
+    std::vector<std::string> permissionList = {
+        "ohos.permission.LOCATION",
+        "ohos.permission.WRITE_CALENDAR",
+    };
+    std::vector<PermissionStatusDetail> resultList;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetPermissionStatusDetails(tokenID, permissionList, resultList));
+    ASSERT_EQ(permissionList.size(), resultList.size());
+
+    std::vector<PermissionStatus> permissionInfoList;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::QueryStatusByTokenID({tokenID}, permissionInfoList));
+
+    for (size_t i = 0; i < resultList.size(); ++i) {
+        const PermissionStatus* permissionStatus = FindPermissionStatusByName(permissionInfoList, permissionList[i]);
+        ASSERT_NE(nullptr, permissionStatus);
+        EXPECT_EQ(PermissionResultType::PERMISSION_VALID, resultList[i].resultType);
+        EXPECT_EQ(permissionStatus->grantStatus, resultList[i].grantStatus);
+        EXPECT_EQ(permissionStatus->grantFlag, resultList[i].grantFlag);
+    }
+}
+
+/**
+ * @tc.name: GetPermissionStatusDetailsAbnormalTest001
+ * @tc.desc: calling without permission
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(GetPermissionsStatusTest, GetPermissionStatusDetailsAbnormalTest001, TestSize.Level0)
+{
+    std::vector<std::string> reqPerm;
+    MockHapToken mock("GetPermissionStatusDetailsAbnormalTest001", reqPerm, true);
+
+    AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+
+    std::vector<PermissionStatusDetail> resultList;
+    uid_t selfEuid = geteuid();
+    ASSERT_EQ(0, seteuid(10001)); // 10001: UID
+
+    EXPECT_EQ(ERR_PERMISSION_DENIED,
+        AccessTokenKit::GetPermissionStatusDetails(tokenID, {"ohos.permission.LOCATION"}, resultList));
+    EXPECT_TRUE(resultList.empty());
+    ASSERT_EQ(0, seteuid(selfEuid));
+}
+
+/**
+ * @tc.name: GetPermissionStatusDetailsAbnormalTest0011
+ * @tc.desc: invalid param should be checked before permission
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(GetPermissionsStatusTest, GetPermissionStatusDetailsAbnormalTest0011, TestSize.Level0)
+{
+    std::vector<std::string> reqPerm;
+    MockHapToken mock("GetPermissionStatusDetailsAbnormalTest0011", reqPerm, true);
+
+    AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+
+    std::vector<PermissionStatusDetail> resultList;
+    uid_t selfEuid = geteuid();
+    ASSERT_EQ(0, seteuid(10001)); // 10001: UID
+
+    EXPECT_EQ(ERR_PARAM_INVALID, AccessTokenKit::GetPermissionStatusDetails(tokenID, {}, resultList));
+    EXPECT_TRUE(resultList.empty());
+    ASSERT_EQ(0, seteuid(selfEuid));
+}
+
+/**
+ * @tc.name: GetPermissionStatusDetailsAbnormalTest002
+ * @tc.desc: tokenID not exist
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(GetPermissionsStatusTest, GetPermissionStatusDetailsAbnormalTest002, TestSize.Level0)
+{
+    MockNativeToken mockNative("privacy_service");
+    std::vector<PermissionStatusDetail> resultList;
+    EXPECT_EQ(ERR_TOKENID_NOT_EXIST,
+        AccessTokenKit::GetPermissionStatusDetails(TOKENID_NOT_EXIST, {"ohos.permission.LOCATION"}, resultList));
+    EXPECT_TRUE(resultList.empty());
+}
+
+/**
+ * @tc.name: GetPermissionStatusDetailsAbnormalTest0021
+ * @tc.desc: non-existent token with non-HAP type bits returns token not exist
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(GetPermissionsStatusTest, GetPermissionStatusDetailsAbnormalTest0021, TestSize.Level0)
+{
+    MockNativeToken mockNative("privacy_service");
+    AccessTokenIDInner innerId = {0};
+    innerId.version = DEFAULT_TOKEN_VERSION;
+    innerId.type = TOKEN_NATIVE;
+    innerId.tokenUniqueID = 1;
+    AccessTokenID tokenID = *reinterpret_cast<AccessTokenID*>(&innerId);
+
+    std::vector<PermissionStatusDetail> resultList;
+    EXPECT_EQ(ERR_TOKENID_NOT_EXIST,
+        AccessTokenKit::GetPermissionStatusDetails(tokenID, {"ohos.permission.LOCATION"}, resultList));
+    EXPECT_TRUE(resultList.empty());
+}
+
+/**
+ * @tc.name: GetPermissionStatusDetailsAbnormalTest003
+ * @tc.desc: non-HAP token is invalid
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(GetPermissionsStatusTest, GetPermissionStatusDetailsAbnormalTest003, TestSize.Level0)
+{
+    MockNativeToken mockNative("privacy_service");
+    AccessTokenID nativeTokenID = GetSelfTokenID();
+    std::vector<PermissionStatusDetail> resultList;
+    EXPECT_EQ(ERR_PARAM_INVALID,
+        AccessTokenKit::GetPermissionStatusDetails(nativeTokenID, {"ohos.permission.LOCATION"}, resultList));
+    EXPECT_TRUE(resultList.empty());
+}
+
+/**
+ * @tc.name: GetPermissionStatusDetailsFuncTest004
+ * @tc.desc: pre-authorized cancelable flag should be filtered in detail query result
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(GetPermissionsStatusTest, GetPermissionStatusDetailsFuncTest004, TestSize.Level0)
+{
+    MockNativeToken mockNative("privacy_service");
+    AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+
+    ASSERT_EQ(RET_SUCCESS, TestCommon::GrantPermissionByTest(
+        tokenID, "ohos.permission.LOCATION", PERMISSION_PRE_AUTHORIZED_CANCELABLE));
+
+    std::vector<PermissionStatusDetail> resultList;
+    ASSERT_EQ(RET_SUCCESS,
+        AccessTokenKit::GetPermissionStatusDetails(tokenID, {"ohos.permission.LOCATION"}, resultList));
+    ASSERT_EQ(1u, resultList.size());
+    EXPECT_EQ(PermissionResultType::PERMISSION_VALID, resultList[0].resultType);
+    EXPECT_EQ(0u, resultList[0].grantFlag & PERMISSION_PRE_AUTHORIZED_CANCELABLE);
+
+    std::vector<PermissionStatus> permissionInfoList;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::QueryStatusByTokenID({tokenID}, permissionInfoList));
+    const PermissionStatus* permissionStatus = FindPermissionStatusByName(permissionInfoList,
+        "ohos.permission.LOCATION");
+    ASSERT_NE(nullptr, permissionStatus);
+    EXPECT_EQ(permissionStatus->grantStatus, resultList[0].grantStatus);
+    EXPECT_EQ(permissionStatus->grantFlag, resultList[0].grantFlag);
+}
+
+/**
+ * @tc.name: GetPermissionStatusDetailsFuncTest005
+ * @tc.desc: component granted permission should align with effective query result
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(GetPermissionsStatusTest, GetPermissionStatusDetailsFuncTest005, TestSize.Level0)
+{
+    MockNativeToken mockNative("privacy_service");
+    AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+
+    ASSERT_EQ(RET_SUCCESS, TestCommon::GrantPermissionByTest(
+        tokenID, "ohos.permission.LOCATION", PERMISSION_COMPONENT_SET));
+
+    std::vector<PermissionStatusDetail> resultList;
+    ASSERT_EQ(RET_SUCCESS,
+        AccessTokenKit::GetPermissionStatusDetails(tokenID, {"ohos.permission.LOCATION"}, resultList));
+    ASSERT_EQ(1u, resultList.size());
+    EXPECT_EQ(PermissionResultType::PERMISSION_VALID, resultList[0].resultType);
+    EXPECT_EQ(PERMISSION_GRANTED, resultList[0].grantStatus);
+    EXPECT_NE(0u, resultList[0].grantFlag & PERMISSION_COMPONENT_SET);
+
+    std::vector<PermissionStatus> permissionInfoList;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::QueryStatusByTokenID({tokenID}, permissionInfoList));
+    const PermissionStatus* permissionStatus = FindPermissionStatusByName(permissionInfoList,
+        "ohos.permission.LOCATION");
+    ASSERT_NE(nullptr, permissionStatus);
+    EXPECT_EQ(permissionStatus->grantStatus, resultList[0].grantStatus);
+    EXPECT_EQ(permissionStatus->grantFlag, resultList[0].grantFlag);
 }
 } // namespace AccessToken
 } // namespace Security

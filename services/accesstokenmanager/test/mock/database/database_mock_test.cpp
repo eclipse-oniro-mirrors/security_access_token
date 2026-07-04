@@ -67,7 +67,7 @@ HWTEST_F(AccessTokenDatabaseMockTest, AddValuesTest001, TestSize.Level4)
 
     std::vector<AddInfo> addInfoVec;
     addInfoVec.push_back(addInfo);
-    addInfo.addType = ACCESSTOKEN_HAP_INFO;
+    addInfo.addType = ACCESSTOKEN_HAP_TOKEN_INFO;
     std::vector<AddInfo> addInfoVec2;
     addInfoVec2.push_back(addInfo);
     // empty addValues
@@ -126,7 +126,7 @@ HWTEST_F(AccessTokenDatabaseMockTest, RemoveValuesTest001, TestSize.Level4)
 
     GenericValues value;
     value.Put(TokenFiledConst::FIELD_PROCESS_NAME, "hdcd");
-    delInfo.delType = ACCESSTOKEN_HAP_INFO;
+    delInfo.delType = ACCESSTOKEN_HAP_TOKEN_INFO;
     delInfo.delValue = value;
     std::vector<DelInfo> delInfoVec2;
     delInfoVec2.push_back(delInfo);
