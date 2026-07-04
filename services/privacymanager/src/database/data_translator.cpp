@@ -68,6 +68,9 @@ int32_t DataTranslator::TranslationIntoGenericValues(const PermissionUsedRequest
         andGenericValues.Put(PrivacyFiledConst::FIELD_STATUS, static_cast<int32_t>(PERM_ACTIVE_IN_BACKGROUND));
     } else if (flag == FLAG_PERMISSION_USAGE_SUMMARY_IN_APP_FOREGROUND) {
         andGenericValues.Put(PrivacyFiledConst::FIELD_STATUS, static_cast<int32_t>(PERM_ACTIVE_IN_FOREGROUND));
+    } else if (flag == FLAG_PERMISSION_SECURITY_ACCESS_DETAIL) {
+        // The NORMAL_TYPE value here serves no functional purpose; it is only used to add a key.
+        andGenericValues.Put(PrivacyFiledConst::FIELD_USED_TYPE, static_cast<int32_t>(PermissionUsedType::NORMAL_TYPE));
     }
 
     return Constant::SUCCESS;

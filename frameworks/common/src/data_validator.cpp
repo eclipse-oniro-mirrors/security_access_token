@@ -198,7 +198,8 @@ bool DataValidator::IsPermissionUsedFlagValid(uint32_t flag)
             (flag == FLAG_PERMISSION_USAGE_SUMMARY_IN_SCREEN_LOCKED) ||
             (flag == FLAG_PERMISSION_USAGE_SUMMARY_IN_SCREEN_UNLOCKED) ||
             (flag == FLAG_PERMISSION_USAGE_SUMMARY_IN_APP_BACKGROUND) ||
-            (flag == FLAG_PERMISSION_USAGE_SUMMARY_IN_APP_FOREGROUND));
+            (flag == FLAG_PERMISSION_USAGE_SUMMARY_IN_APP_FOREGROUND) ||
+ 	        (flag == FLAG_PERMISSION_SECURITY_ACCESS_DETAIL));
 }
 
 bool DataValidator::IsPermissionUsedTypeValid(uint32_t type)

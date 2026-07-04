@@ -1500,7 +1500,9 @@ int32_t PermissionRecordManager::GetRecordsFromLocalDB(const PermissionUsedReque
         return PrivacyError::ERR_PARAM_INVALID;
     }
 
-    int32_t dataLimitNum = request.flag == FLAG_PERMISSION_USAGE_DETAIL ? MAX_ACCESS_RECORD_SIZE : recordSizeMaximum_;
+    int32_t dataLimitNum = (request.flag == FLAG_PERMISSION_USAGE_DETAIL ||
+ 	    request.flag == FLAG_PERMISSION_SECURITY_ACCESS_DETAIL) ? MAX_ACCESS_RECORD_SIZE : recordSizeMaximum_;
+
     int32_t totalSuccCount = 0;
     int32_t totalFailCount = 0;
     std::vector<GenericValues> findRecordsValues; // summary don't limit querry data num, detail do

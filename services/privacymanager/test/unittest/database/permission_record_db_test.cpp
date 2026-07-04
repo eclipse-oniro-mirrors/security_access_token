@@ -276,6 +276,29 @@ HWTEST_F(PermissionRecordDBTest, CreateSelectByConditionPrepareSqlCmd002, TestSi
 }
 
 /*
+ * @tc.name: CreateSelectByConditionPrepareSqlCmd003
+ * @tc.desc: PermissionUsedRecordDb::CreateSelectByConditionPrepareSqlCmd function test for FIELD_USED_TYPE
+ * @tc.type: FUNC
+ * @tc.require:
+*/
+HWTEST_F(PermissionRecordDBTest, CreateSelectByConditionPrepareSqlCmd003, TestSize.Level0)
+{
+    PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
+    std::set<int32_t> opCodeList;
+    std::vector<std::string> andColumns;
+    andColumns.emplace_back(PrivacyFiledConst::FIELD_USED_TYPE);
+
+    std::string sql = PermissionUsedRecordDb::GetInstance().CreateSelectByConditionPrepareSqlCmd(
+        0, type, opCodeList, andColumns, 10);
+    ASSERT_NE("", sql);
+
+    ASSERT_TRUE(sql.find("in (") != std::string::npos);
+    ASSERT_TRUE(sql.find(std::to_string(static_cast<int32_t>(PermissionUsedType::PICKER_TYPE))) != std::string::npos);
+    ASSERT_TRUE(sql.find(std::to_string(static_cast<int32_t>(PermissionUsedType::SECURITY_COMPONENT_TYPE))) !=
+        std::string::npos);
+}
+
+/*
  * @tc.name: CreateCountPrepareSqlCmd001
  * @tc.desc: PermissionUsedRecordDb::CreateCountPrepareSqlCmd function test type not found
  * @tc.type: FUNC
@@ -460,6 +483,28 @@ HWTEST_F(PermissionRecordDBTest, TranslationIntoGenericValues001, TestSize.Level
     // begin > 0 + end > 0 + begin < end + flag = 1 + TransferPermissionToOpcode true
     ASSERT_EQ(Constant::SUCCESS,
         DataTranslator::TranslationIntoGenericValues(request, andGenericValues));
+}
+
+/*
+ * @tc.name: TranslationIntoGenericValues002
+ * @tc.desc: DataTranslator::TranslationIntoGenericValues function test for FLAG_PERMISSION_SECURITY_ACCESS_DETAIL
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordDBTest, TranslationIntoGenericValues002, TestSize.Level0)
+{
+    PermissionUsedRequest request;
+    GenericValues andGenericValues;
+
+    request.beginTimeMillis = 10;
+    request.endTimeMillis = 20;
+    request.flag = PermissionUsageFlag::FLAG_PERMISSION_SECURITY_ACCESS_DETAIL;
+
+    ASSERT_EQ(Constant::SUCCESS,
+        DataTranslator::TranslationIntoGenericValues(request, andGenericValues));
+
+    int32_t usedType = andGenericValues.GetInt(PrivacyFiledConst::FIELD_USED_TYPE);
+    ASSERT_EQ(usedType, static_cast<int32_t>(PermissionUsedType::NORMAL_TYPE));
 }
 
 /*
