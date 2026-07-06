@@ -10183,6 +10183,17 @@
             "provisionEnable": true,
             "distributedSceneEnable": true,
             "deviceTypes": ["2in1", "phone", "tablet", "car"]
+        },
+        {
+            "name": "ohos.permission.vehicle.AUTO_OTA_PROXY",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["car"]
         }
     ]
 }
