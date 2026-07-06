@@ -472,7 +472,7 @@
             "name": "ohos.permission.RUNNING_LOCK",
             "grantMode": "system_grant",
             "availableLevel": "normal",
-            "availableType": "SYSTEM",
+            "availableType": "NORMAL",
             "since": 7,
             "deprecated": "",
             "provisionEnable": true,
