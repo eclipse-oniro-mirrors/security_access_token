@@ -15,6 +15,8 @@
 
 #include "migration_verify_helper.h"
 
+#include <algorithm>
+#include <cctype>
 #include <memory>
 #include <unordered_map>
 
@@ -45,6 +47,17 @@ namespace Security {
 namespace AccessToken {
 namespace {
 constexpr int INVALID_USERID = -1;
+
+bool IsPlaceholderModuleName(const std::string& moduleName)
+{
+    size_t moduleNameMinSize = 2; // placeholder module name should be at least 2 characters, e.g. "#0"
+    if (moduleName.size() < moduleNameMinSize || moduleName[0] != '#') {
+        return false;
+    }
+    return std::all_of(moduleName.begin() + 1, moduleName.end(), [](unsigned char ch) {
+        return std::isdigit(ch) != 0;
+    });
+}
 }
 
 const TrustedBundleInfoInner& GetBaselineVerifiedInfo(const VerifiedMigrationBundle& verifiedBundle)
@@ -52,23 +65,32 @@ const TrustedBundleInfoInner& GetBaselineVerifiedInfo(const VerifiedMigrationBun
     return verifiedBundle.verifiedInfos.front();
 }
 
-int32_t MigrationVerifyHelper::DoVerifyMigratedBundle(const MigratedInfoIdl& migratedInfo,
+int32_t MigrationVerifyHelper::DoVerifyMigratedBundle(const BundleInfoItems& bundleInfo,
     VerifiedMigrationBundle& verifiedBundle)
 {
     HapSignVerifyManager& verifyManager = HapSignVerifyManager::GetInstance();
     std::vector<TrustedBundleInfoInner> verifiedInfos;
     int32_t ret = RET_SUCCESS;
-    for (const auto& hapPath : migratedInfo.pathList.hapPaths) {
+    for (const auto& moduleInfo : bundleInfo.moduleInfoItems) {
+        if (moduleInfo.path.empty()) {
+            continue;
+        }
         TrustedBundleInfoInner trustedBundleInfo;
         bool isChanged = false;
         ret = verifyManager.CheckHapsSignInfo(
-            HapSignVerifyManager::MakeVerifyParams(hapPath, Security::Verify::VerifyType::Fast, INVALID_USERID),
+            HapSignVerifyManager::MakeVerifyParams(
+                moduleInfo.path, Security::Verify::VerifyType::Fast, INVALID_USERID),
             false, trustedBundleInfo, isChanged);
         if (ret != RET_SUCCESS) {
             LOGE(ATM_DOMAIN, ATM_TAG, "CheckHapsSignInfo failed, ret=%{public}d.", ret);
             return ERR_HAP_SIGN_VERIFY_FAILED;
         }
         verifiedInfos.emplace_back(trustedBundleInfo);
+    }
+    if (verifiedInfos.empty()) {
+        LOGW(ATM_DOMAIN, ATM_TAG, "No valid hap path found for %{public}s during post verify.",
+            bundleInfo.bundleName.c_str());
+        return ERR_PARAM_INVALID;
     }
 
     ret = verifyManager.CheckMultipleHaps(verifiedInfos);
@@ -77,7 +99,7 @@ int32_t MigrationVerifyHelper::DoVerifyMigratedBundle(const MigratedInfoIdl& mig
         return ret;
     }
     std::string verifiedBundleName = verifiedInfos.front().GetBundleName();
-    if (verifiedBundleName != migratedInfo.bundleName) {
+    if (verifiedBundleName != bundleInfo.bundleName) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Migrate installed bundles failed, verified bundleName mismatch.");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
@@ -97,20 +119,20 @@ int32_t MigrationVerifyHelper::DoVerifyMigratedBundle(const MigratedInfoIdl& mig
     return ret;
 }
 
-int32_t MigrationVerifyHelper::BuildBundleSignInfo(const MigratedInfoIdl& migratedInfo,
+int32_t MigrationVerifyHelper::BuildBundleSignInfo(const BundleInfoItems& bundleInfo,
     const VerifiedMigrationBundle& verifiedBundle, BundleSignInfo& bundleSignInfo)
 {
     size_t verifiedSize = verifiedBundle.verifiedInfos.size();
-    if (migratedInfo.pathList.hapPaths.size() != verifiedSize) {
+    if (bundleInfo.moduleInfoItems.size() != verifiedSize) {
         return AccessTokenError::ERR_PARAM_INVALID;
     }
 
-    bundleSignInfo.bundleName = migratedInfo.bundleName;
-    bundleSignInfo.isPreInstalled = migratedInfo.pathList.isPreInstalled;
+    bundleSignInfo.bundleName = bundleInfo.bundleName;
+    bundleSignInfo.isPreInstalled = bundleInfo.isPreInstalled;
     for (size_t i = 0; i < verifiedSize; ++i) {
         const auto& verifiedInfo = verifiedBundle.verifiedInfos[i];
         bundleSignInfo.moduleNameList.emplace_back(verifiedInfo.GetModuleName());
-        bundleSignInfo.pathList.emplace_back(migratedInfo.pathList.hapPaths[i]);
+        bundleSignInfo.pathList.emplace_back(bundleInfo.moduleInfoItems[i].path);
         bundleSignInfo.bundleType.emplace_back(static_cast<uint32_t>(verifiedInfo.GetBundleType()));
 
         std::vector<uint8_t> persistData;
@@ -130,7 +152,8 @@ int32_t MigrationVerifyHelper::BuildBundleSignInfo(const MigratedInfoIdl& migrat
     return RET_SUCCESS;
 }
 
-int32_t MigrationVerifyHelper::DoBundleInfoOperations(const BundleSignInfo& bundleSignInfo)
+int32_t MigrationVerifyHelper::DoBundleInfoOperations(const BundleInfoItems& bundleInfo,
+    const BundleSignInfo& bundleSignInfo)
 {
     std::vector<GenericValues> addValues;
     int32_t ret = bundleSignInfo.ToGenericValues(addValues);
@@ -139,14 +162,19 @@ int32_t MigrationVerifyHelper::DoBundleInfoOperations(const BundleSignInfo& bund
             bundleSignInfo.bundleName.c_str(), ret);
         return ret;
     }
+    if (bundleInfo.moduleInfoItems.size() != addValues.size()) {
+        LOGW(ATM_DOMAIN, ATM_TAG, "Bundle module count mismatch for %{public}s, db=%{public}zu, verified=%{public}zu.",
+            bundleSignInfo.bundleName.c_str(), bundleInfo.moduleInfoItems.size(), addValues.size());
+        return ERR_PARAM_INVALID;
+    }
     std::vector<GenericValues> conditions;
     conditions.reserve(addValues.size());
-    for (size_t i = 0;i < addValues.size(); ++i) {
+    for (size_t i = 0; i < addValues.size(); ++i) {
         const auto& value = addValues[i];
         GenericValues cond;
         cond.Put(TokenFiledConst::FIELD_BUNDLE_NAME, bundleSignInfo.bundleName);
         cond.Put(TokenFiledConst::FIELD_PATH, value.GetString(TokenFiledConst::FIELD_PATH));
-        cond.Put(TokenFiledConst::FIELD_MODULE_NAME, GetPlaceholderModuleName(i));
+        cond.Put(TokenFiledConst::FIELD_MODULE_NAME, bundleInfo.moduleInfoItems[i].moduleName);
         conditions.emplace_back(cond);
     }
     ret = AccessTokenDbOperator::Modify(
@@ -211,29 +239,92 @@ MigrationVerifyHelper& MigrationVerifyHelper::GetInstance()
     return instance;
 }
 
-int32_t MigrationVerifyHelper::PersistDbInfo(const MigratedInfoIdl& migratedInfo,
+void MigrationVerifyHelper::PostVerifyMigratedBundlesTask()
+{
+    GenericValues conditionValue;
+    std::vector<GenericValues> dbResults;
+    int32_t ret = AccessTokenDbOperator::Find(
+        AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO, conditionValue, dbResults);
+    if (ret != RET_SUCCESS) {
+        LOGW(ATM_DOMAIN, ATM_TAG, "Query hap_info_table failed, ret=%{public}d.", ret);
+        return;
+    }
+
+    std::vector<BundleInfoItems> bundleInfoItems;
+    BundleInfoItems::LoadFromDB(dbResults, bundleInfoItems);
+    for (const auto& bundleInfo : bundleInfoItems) {
+        if (!NeedPostVerify(bundleInfo)) {
+            continue;
+        }
+
+        std::vector<std::shared_ptr<HapTokenInfoInner>> cachedInfos;
+        if (!BuildCachedInfos(bundleInfo.bundleName, cachedInfos)) {
+            continue;
+        }
+        (void)HandleMigratedBundleTask(bundleInfo, cachedInfos);
+    }
+}
+
+bool MigrationVerifyHelper::NeedPostVerify(const BundleInfoItems& bundleInfo) const
+{
+    if (bundleInfo.moduleInfoItems.empty()) {
+        return false;
+    }
+    for (const auto& moduleInfo : bundleInfo.moduleInfoItems) {
+        if (!IsPlaceholderModuleName(moduleInfo.moduleName)) {
+            LOGI(ATM_DOMAIN, ATM_TAG, "Bundle %{public}s has non-placeholder module %{public}s, skip post verify.",
+                bundleInfo.bundleName.c_str(), moduleInfo.moduleName.c_str());
+            return false;
+        }
+    }
+    return true;
+}
+
+bool MigrationVerifyHelper::BuildCachedInfos(const std::string& bundleName,
+    std::vector<std::shared_ptr<HapTokenInfoInner>>& cachedInfos)
+{
+    std::vector<AccessTokenID> tokenIdList;
+    int32_t ret = AccessTokenInfoManager::GetInstance().GetHapTokenIdListByBundleName(bundleName, tokenIdList);
+    if (ret != RET_SUCCESS) {
+        LOGW(ATM_DOMAIN, ATM_TAG, "GetHapTokenIdListByBundleName failed for %{public}s, ret=%{public}d.",
+            bundleName.c_str(), ret);
+        return false;
+    }
+
+    cachedInfos.reserve(tokenIdList.size());
+    for (auto tokenId : tokenIdList) {
+        auto infoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId);
+        if (infoPtr == nullptr) {
+            LOGW(ATM_DOMAIN, ATM_TAG, "GetHapTokenInfoInner failed for tokenId=%{public}u, bundle=%{public}s.",
+                tokenId, bundleName.c_str());
+            continue;
+        }
+        cachedInfos.emplace_back(infoPtr);
+    }
+    return !cachedInfos.empty();
+}
+
+int32_t MigrationVerifyHelper::PersistDbInfo(const BundleInfoItems& bundleInfo,
     const VerifiedMigrationBundle& verifiedBundle,
     const std::vector<std::shared_ptr<HapTokenInfoInner>>& cachedInfos)
 {
     BundleSignInfo bundleSignInfo;
-    int32_t ret = BuildBundleSignInfo(migratedInfo, verifiedBundle, bundleSignInfo);
+    int32_t ret = BuildBundleSignInfo(bundleInfo, verifiedBundle, bundleSignInfo);
     if (ret != RET_SUCCESS) {
         LOGW(ATM_DOMAIN, ATM_TAG, "BuildBundleSignInfo failed for %{public}s, ret=%{public}d.",
-            migratedInfo.bundleName.c_str(), ret);
+            bundleInfo.bundleName.c_str(), ret);
         return ret;
     }
     
-    ret = DoBundleInfoOperations(bundleSignInfo);
+    ret = DoBundleInfoOperations(bundleInfo, bundleSignInfo);
     if (ret != RET_SUCCESS) {
         return ret;
     }
-
-    PrepareHapInfoOperations(verifiedBundle.installParam, verifiedBundle.policy, cachedInfos);
 
     ret = AccessTokenDbOperator::DeleteAndInsertValues(delInfoVec_, addInfoVec_);
     if (ret != RET_SUCCESS) {
         LOGW(ATM_DOMAIN, ATM_TAG, "Hap info DB persist failed for %{public}s, ret=%{public}d.",
-            migratedInfo.bundleName.c_str(), ret);
+            bundleInfo.bundleName.c_str(), ret);
     }
     return ret;
 }
@@ -256,7 +347,7 @@ int32_t MigrationVerifyHelper::AddKernelData(const BundleNoCachedInfo& noCachedI
     for (size_t i = 0; i < cachedInfos.size(); ++i) {
         hapInfoCache.emplace_back(cachedInfos[i]->GetHapInfoBasic());
         params.emplace_back(SpmDataParam { hapInfoCache.back(), noCachedInfo,
-            permBriefDataPerToken[i], extendPermList, nullptr, true });
+            permBriefDataPerToken[i], extendPermList, nullptr, false }); // false means not updateWithPerm
     }
 
     kernelTask = std::make_unique<AddSpmDataTask>(params);
@@ -328,19 +419,19 @@ std::vector<GenericValues> MigrationVerifyHelper::BuildPermStateValues(
     return result;
 }
 
-int32_t MigrationVerifyHelper::VerifyMigratedBundle(const MigratedInfoIdl& migratedInfo,
+int32_t MigrationVerifyHelper::VerifyMigratedBundle(const BundleInfoItems& bundleInfo,
     const std::vector<std::shared_ptr<HapTokenInfoInner>>& cachedInfos)
 {
-    LOGI(ATM_DOMAIN, ATM_TAG, "Verification begin for %{public}s.", migratedInfo.bundleName.c_str());
+    LOGI(ATM_DOMAIN, ATM_TAG, "Verification begin for %{public}s.", bundleInfo.bundleName.c_str());
     delInfoVec_.clear();
     addInfoVec_.clear();
 
     // 1. Verify the bundle
     VerifiedMigrationBundle verifiedBundle;
-    int32_t ret = DoVerifyMigratedBundle(migratedInfo, verifiedBundle);
+    int32_t ret = DoVerifyMigratedBundle(bundleInfo, verifiedBundle);
     if (ret != RET_SUCCESS) {
         LOGC(ATM_DOMAIN, ATM_TAG, "VerifyMigratedBundle failed for %{public}s, ret=%{public}d.",
-            migratedInfo.bundleName.c_str(), ret);
+            bundleInfo.bundleName.c_str(), ret);
         return ret;
     }
         
@@ -356,40 +447,35 @@ int32_t MigrationVerifyHelper::VerifyMigratedBundle(const MigratedInfoIdl& migra
     ret = AddKernelData(noCached, extendPermList, cachedInfos, fixedPermBriefPerToken, kernelTask);
     if (ret != RET_SUCCESS) {
         if (ret == ERR_DATA_CONFLICT_WITH_KERNEL) {
-            LOGW(ATM_DOMAIN, ATM_TAG, "Data conflict with kernel for %{public}s, ret=%{public}d.",
-                migratedInfo.bundleName.c_str(), ret);
+            LOGI(ATM_DOMAIN, ATM_TAG, "Data has loaded in kernel for %{public}s, ret=%{public}d.",
+                bundleInfo.bundleName.c_str(), ret);
+            return RET_SUCCESS;
         } else {
             LOGC(ATM_DOMAIN, ATM_TAG, "AddKernelData failed for %{public}s, ret=%{public}d.",
-                migratedInfo.bundleName.c_str(), ret);
+                bundleInfo.bundleName.c_str(), ret);
                 return ret;
         }
     }
 
     // 4. Build signing info and persist all info to DB
-    ret = PersistDbInfo(migratedInfo, verifiedBundle, cachedInfos);
+    ret = PersistDbInfo(bundleInfo, verifiedBundle, cachedInfos);
     if (ret != RET_SUCCESS) {
         LOGC(ATM_DOMAIN, ATM_TAG, "PersistSignDbInfo failed for %{public}s, rolling back kernel data, ret=%{public}d.",
-            migratedInfo.bundleName.c_str(), ret);
+            bundleInfo.bundleName.c_str(), ret);
         if (kernelTask != nullptr) {
             kernelTask->Rollback();
         }
         return ret;
     }
 
-    // 5. Update permission cache with per-token fixed briefPermData.
-    for (size_t i = 0; i < cachedInfos.size() && i < fixedPermBriefPerToken.size(); ++i) {
-        HapTokenInfo hapInfo = cachedInfos[i]->GetHapInfoBasic();
-        PermissionDataBrief::GetInstance().ReplaceBriefPermDataByTokenId(
-            hapInfo.tokenID, fixedPermBriefPerToken[i], extendPermList);
-    }
-    LOGI(ATM_DOMAIN, ATM_TAG, "Verification finished for %{public}s.", migratedInfo.bundleName.c_str());
+    LOGI(ATM_DOMAIN, ATM_TAG, "Verification finished for %{public}s.", bundleInfo.bundleName.c_str());
     return RET_SUCCESS;
 }
 
-int32_t MigrationVerifyHelper::HandleMigratedBundleTask(const MigratedInfoIdl& migratedInfo,
+int32_t MigrationVerifyHelper::HandleMigratedBundleTask(const BundleInfoItems& bundleInfo,
     const std::vector<std::shared_ptr<HapTokenInfoInner>>& cachedInfos)
 {
-    int32_t ret = VerifyMigratedBundle(migratedInfo, cachedInfos);
+    int32_t ret = VerifyMigratedBundle(bundleInfo, cachedInfos);
     if (ret != RET_SUCCESS) {
 #ifndef ATM_TEST_ENABLE
         static bool isSpmEnforce = AccessTokenInfoUtils::IsSystemSpmEnforcing();
@@ -398,12 +484,12 @@ int32_t MigrationVerifyHelper::HandleMigratedBundleTask(const MigratedInfoIdl& m
         bool isSpmEnforce = AccessTokenInfoUtils::IsSystemSpmEnforcing();
 #endif
         LOGC(ATM_DOMAIN, ATM_TAG, "Verification failed for %{public}s, ret=%{public}d, spmEnforce=%{public}d.",
-            migratedInfo.bundleName.c_str(), ret, static_cast<int>(isSpmEnforce));
+            bundleInfo.bundleName.c_str(), ret, static_cast<int>(isSpmEnforce));
         if (isSpmEnforce) {
             for (const auto& infoPtr : cachedInfos) {
                 HapTokenInfo hapInfo = infoPtr->GetHapInfoBasic();
                 AccessTokenInfoManager::GetInstance().CommitDeleteHapCache(
-                    hapInfo.tokenID, migratedInfo.bundleName);
+                    hapInfo.tokenID, bundleInfo.bundleName);
                 PermissionKernelUtils::RemovePermFromKernel(hapInfo.tokenID);
                 AccessTokenIDManager::GetInstance().ChangeTokenIdStatus(hapInfo.tokenID, TokenIdStatus::UNTRUSTED);
             }

@@ -895,6 +895,27 @@ HWTEST_F(BootVerifySchedulerTest, AddSpmDataForBundle001, TestSize.Level1)
 }
 
 /**
+ * @tc.name: AddSpmDataForBundle002
+ * @tc.desc: Verify AddSpmDataForBundle returns RET_SUCCESS when all hap uid values are INVALID_UID and
+ *           BuildSpmParams leaves hapInfoCache empty.
+ * @tc.type: FUNC
+ */
+HWTEST_F(BootVerifySchedulerTest, AddSpmDataForBundle002, TestSize.Level1)
+{
+    auto& scheduler = BootVerifyScheduler::GetInstance();
+    scheduler.bundleInfoMap_[TEST_BUNDLE_NAME] = std::make_shared<BundleInfoInner>();
+    scheduler.bundleInfoMap_[TEST_BUNDLE_NAME]->tokenIds = { TEST_TOKEN_ID };
+    scheduler.bundleNoCachedInfoMap_[TEST_BUNDLE_NAME] = BundleNoCachedInfo {};
+    scheduler.hapTokenInfoMap_[TEST_TOKEN_ID] = BuildHapTokenInfoItem(
+        TEST_TOKEN_ID, TEST_BUNDLE_NAME, static_cast<uint32_t>(INVALID_UID));
+    scheduler.requestedPermData_[TEST_TOKEN_ID] = {};
+    scheduler.extendedPermMap_[TEST_TOKEN_ID] = {};
+
+    EXPECT_EQ(RET_SUCCESS, scheduler.AddSpmDataForBundle(TEST_BUNDLE_NAME));
+    EXPECT_EQ(0, GetFakeSpmKernelState().addCallCount);
+}
+
+/**
  * @tc.name: AddSpmDataAndCommitCache003
  * @tc.desc: Verify AddSpmDataAndCommitCache returns AddSpmDataForBundle failure and persist failure.
  * @tc.type: FUNC

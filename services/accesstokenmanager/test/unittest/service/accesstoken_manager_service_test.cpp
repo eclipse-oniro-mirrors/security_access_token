@@ -3908,6 +3908,32 @@ HWTEST_F(AccessTokenManagerServiceTest, RefreshTokenIdStatusService001, TestSize
 }
 
 /**
+ * @tc.name: DeleteIdentityService001
+ * @tc.desc: DeleteIdentity continues to DeleteIdentityCore when GetHapTokenInfo fails.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, DeleteIdentityService001, TestSize.Level1)
+{
+    MockToken mock(g_selfShellTokenId, "accesstoken_service", false);
+    mock.Grant("ohos.permission.MANAGE_HAP_TOKENID");
+    AccessTokenID tokenId = INVALID_TOKENID;
+    ASSERT_NE(0u, CreateServiceTestHapToken("delete_identity_service_test", true, {}, tokenId));
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+
+    auto infoPtr = AccessTokenInfoManager::GetInstance().hapTokenInfoMap_[tokenId];
+    ASSERT_NE(nullptr, infoPtr);
+    AccessTokenInfoManager::GetInstance().hapTokenInfoMap_.erase(tokenId);
+
+    EXPECT_EQ(RET_SUCCESS,
+        atManagerService_->DeleteIdentity(tokenId, "delete_identity_service_test", ReservedTypeIdl::NONE));
+
+    AccessTokenInfoManager::GetInstance().hapTokenInfoMap_[tokenId] = infoPtr;
+    (void)atManagerService_->DeleteToken(tokenId, false);
+    AccessTokenInfoManager::GetInstance().hapTokenInfoMap_.erase(tokenId);
+}
+
+/**
  * @tc.name: RefreshTokenIdStatusService002
  * @tc.desc: RefreshTokenStatus returns ERR_TOKENID_NOT_EXIST when token does not exist.
  * @tc.type: FUNC

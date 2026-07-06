@@ -56,7 +56,8 @@ void ClearMigrationCompletedRecord()
     AccessTokenIDManager::GetInstance().migrationDone_ = false;
     auto& manager = AccessTokenMigrationManager::GetInstance();
     manager.dbRowCache_.clear();
-    manager.existingUids_.clear();
+    manager.uidOwnerBundles_.clear();
+    manager.bundleIdOwnerBundles_.clear();
     manager.cacheLoaded_ = false;
 }
 
@@ -105,7 +106,7 @@ int32_t FindAvailableUid(AccessTokenMigrationManager& manager, int32_t preferred
 {
     for (int32_t offset = 0; offset < MAX_UID_SPAN; ++offset) {
         int32_t candidate = preferredUid + offset;
-        if (manager.existingUids_.count(candidate) == 0) {
+        if (manager.uidOwnerBundles_.count(candidate) == 0) {
             return candidate;
         }
     }
