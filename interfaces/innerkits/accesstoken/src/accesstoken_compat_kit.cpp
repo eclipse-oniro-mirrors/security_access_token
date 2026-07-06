@@ -130,6 +130,11 @@ AccessTokenID AccessTokenCompatKit::GetNativeTokenId(const std::string& processN
     }
     return AccessTokenCompatClient::GetInstance().GetNativeTokenId(processName);
 }
+
+bool AccessTokenCompatKit::IsSystemAppByFullTokenID(FullTokenID tokenId)
+{
+    return (tokenId & SYSTEM_APP_MASK) == SYSTEM_APP_MASK;
+}
 }  // namespace AccessToken
 }  // namespace Security
 }  // namespace OHOS

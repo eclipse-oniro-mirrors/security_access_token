@@ -94,6 +94,12 @@ public:
      * @return token id of native process
      */
     static AccessTokenID GetNativeTokenId(const std::string& processName);
+    /**
+     * @brief Whether it is a system application.
+     * @param tokenId full token id.
+     * @return bool
+     */
+    static bool IsSystemAppByFullTokenID(FullTokenID tokenId);
 };
 } // namespace AccessToken
 } // namespace Security
