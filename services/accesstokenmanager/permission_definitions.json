@@ -10139,6 +10139,17 @@
             "deviceTypes": ["car"]
         },
         {
+            "name": "ohos.permission.vehicle.CAMERA_EVS",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["car"]
+        },
+        {
             "name": "ohos.permission.CAPTURE_PLAYBACK_DOWNLINK",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
