@@ -43,7 +43,7 @@
 #include <string>
 #include <vector>
 
-#include "access_token.h"
+#include "access_token_basic_type.h"
 
 namespace OHOS {
 namespace Security {

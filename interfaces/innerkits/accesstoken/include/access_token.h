@@ -40,17 +40,14 @@
 #ifndef ACCESS_TOKEN_H
 #define ACCESS_TOKEN_H
 
+#include <cstdint>
 #include <string>
+
+#include "access_token_basic_type.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-typedef unsigned int AccessTokenID;
-typedef uint64_t FullTokenID;
-typedef unsigned int AccessTokenAttr;
-constexpr const int DEFAULT_TOKEN_VERSION = 1;
-constexpr const AccessTokenID INVALID_TOKENID = 0;
-
 /**
  * @brief visit type
  */
@@ -74,39 +71,6 @@ enum AccessTokenKitRet {
     RET_FAILED = -1,
     RET_SUCCESS = 0,
 };
-
-/**
- * @brief AccessTokenID 32 bits map
- */
-typedef struct {
-    unsigned int tokenUniqueID : 20;
-    unsigned int toolFlag : 1;
-    /** reserved, default 00 */
-    unsigned int res : 2;
-    unsigned int type_ext : 1;
-    unsigned int cloneFlag : 1;
-    /** renderflag, default 0 */
-    unsigned int renderFlag : 1;
-    unsigned int dlpFlag : 1;
-    /**
-     * token type, for details about the valid values,
-     * see the definition of ATokenTypeEnum in the access_token.h file.
-     */
-    unsigned int type : 2;
-    /** version, default 001 */
-    unsigned int version : 3;
-} AccessTokenIDInner;
-
-/**
- * @brief Token id type
- */
-typedef enum TypeATokenTypeEnum {
-    TOKEN_INVALID = -1,
-    TOKEN_HAP = 0,
-    TOKEN_NATIVE,
-    TOKEN_SHELL,
-    TOKEN_TYPE_BUTT,
-} ATokenTypeEnum;
 
 /**
  * @brief Apl level
@@ -152,14 +116,6 @@ typedef enum TypePermissionRequestToggleStatus {
     CLOSED = 0,
     OPEN = 1,
 } PermissionRequestToggleStatus;
-
-/**
- * @brief Permission states
- */
-typedef enum TypePermissionState {
-    PERMISSION_DENIED = -1,
-    PERMISSION_GRANTED = 0,
-} PermissionState;
 
 /**
  * @brief Permission grant mode

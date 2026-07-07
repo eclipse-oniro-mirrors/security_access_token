@@ -120,6 +120,7 @@
               "permission_state_full.h",
               "permission_status.h",
               "sec_comp_enhance_data.h",
+              "access_token_basic_type.h",
               "token_sync_kit_interface.h",
               "tokenid_kit.h",
               "tokensync_callback_ipc_interface_code.h"
@@ -132,8 +133,8 @@
           "header": {
             "header_files": [
               "access_token_error.h",
-              "access_token.h",
-              "accesstoken_compat_kit.h"
+              "accesstoken_compat_kit.h",
+              "access_token_basic_type.h"
             ],
             "header_base": "//base/security/access_token/interfaces/innerkits/accesstoken/include"
           }
