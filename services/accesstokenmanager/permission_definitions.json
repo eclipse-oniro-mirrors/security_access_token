@@ -476,7 +476,8 @@
             "since": 7,
             "deprecated": "",
             "provisionEnable": true,
-            "distributedSceneEnable": false
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1", "tablet", "car", "phone", "tv", "wearable"]
         },
         {
             "name": "ohos.permission.SET_TIME",
