@@ -195,7 +195,6 @@ ohos_shared_library("accesstoken_common_cxx") {
   subsystem_name = "security"
   innerapi_tags = [
     "platformsdk_indirect",
-    "chipsetsdk_indirect",
   ]
   part_name = "access_token"
   sanitize = {
