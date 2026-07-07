@@ -76,6 +76,7 @@ constexpr AccessTokenID INVALID_TOKEN_ID = 0;
 constexpr uint32_t IS_KERNEL_EFFECT = (0x1 << 0);
 constexpr uint32_t HAS_VALUE = (0x1 << 1);
 constexpr uint32_t API_VERSION_SUFFIX_LEN = 3;
+constexpr int32_t INVALID_UID = -1;
 const std::string APP_DISTRIBUTION_TYPE_ENTERPRISE_MDM = "enterprise_mdm";
 const std::string APP_DISTRIBUTION_TYPE_ENTERPRISE_NORMAL = "enterprise_normal";
 const std::string APP_DISTRIBUTION_TYPE_NONE = "none";
@@ -1042,6 +1043,13 @@ int32_t BootVerifyScheduler::BuildSpmParams(const std::string& bundleName, Bundl
             LOGE(ATM_DOMAIN, ATM_TAG, "Build spm params failed, tokenId=%{public}u.", tokenId);
             return ERR_TOKENID_NOT_EXIST;
         }
+        if (hapIter->second.uid == INVALID_UID) {
+            LOGC(ATM_DOMAIN, ATM_TAG,
+                "bundleName=%{public}s, tokenId=%{public}u skip load to kernel.", bundleName.c_str(), tokenId);
+            ReportSysCommonEventError(AccessTokenServiceStartSceneCode::LOAD_SPM_DATA_TO_KERNEL,
+                AccessTokenServiceStartErrorCode::UID_INVALID);
+            continue;
+        }
         hapInfoCache.emplace_back(ConvertToHapTokenInfo(hapIter->second));
         permBriefDataListCache.emplace_back(permIter->second);
         extendPermListCache.emplace_back(extendedPermMap_[tokenId]);
@@ -1240,6 +1248,10 @@ int32_t BootVerifyScheduler::AddSpmDataForBundle(const std::string& bundleName)
     if (ret != RET_SUCCESS) {
         HandleVerifyBundleFailure(bundleName, ret);
         return ret;
+    }
+    if (hapInfoCache.empty()) {
+        LOGW(ATM_DOMAIN, ATM_TAG, "No valid hap info found, bundleName=%{public}s.", bundleName.c_str());
+        return RET_SUCCESS;
     }
 
     AddSpmDataTask addSpmDataTask(params);

@@ -20,8 +20,10 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
+#include <mutex>
 
 #include "access_token.h"
+#include "access_event_handler.h"
 #include "generic_values.h"
 #include "idl_common.h"
 #include "hap_token_info_inner.h"
@@ -62,6 +64,17 @@ private:
     static int32_t CheckCachedUid(const std::shared_ptr<HapTokenInfoInner>& infoPtr, int32_t uid);
     static int32_t CreateNewTokenInfoForHap(PreparedMigrationBundle& preparedBundle, size_t index,
         std::shared_ptr<HapTokenInfoInner>& infoPtr);
+    static int32_t CheckDuplicateHapBaseInfo(const HapBaseInfoIdl& hapBaseInfo,
+        std::unordered_set<std::string>& seenHapBaseInfos);
+    static int32_t QueryAllHapTokenRows(std::vector<GenericValues>& dbResults);
+    static std::unordered_map<int32_t, GenericValues> BuildDbRowCache(std::vector<GenericValues>& dbResults);
+    int32_t BuildUidBundleCaches();
+    int32_t CheckUidConflict(const MigratedInfoIdl& migratedInfo, int32_t uid,
+        std::unordered_set<int32_t>& seenInBundle) const;
+    int32_t CheckBundleIdConflict(const MigratedInfoIdl& migratedInfo, const HapBaseInfoIdl& hapBaseInfo, int32_t uid,
+        std::unordered_map<int32_t, int32_t>& bundleIdByInstIndex) const;
+    int32_t CheckMigrationConflicts(const MigratedInfoIdl& migratedInfo) const;
+    static void FillFailedMigrationResult(const MigratedInfoIdl& migratedInfo, BundleMigrateResultIdl& migrateResult);
     int32_t PrepareIdentityInfos(PreparedMigrationBundle& preparedBundle);
     int32_t PersistMigratedBundles(const PreparedMigrationBundle& preparedBundles);
     int32_t ExecutePreparedMigration(PreparedMigrationBundle& preparedBundles);
@@ -69,10 +82,18 @@ private:
         BundleMigrateResultIdl& result);
     int32_t LoadDbCacheIfNeeded();
     BundleMigrateResultIdl ProcessBundleMigration(const MigratedInfoIdl& migratedInfo);
+    void SchedulePostVerifyTask();
+    void ResetMigrationCache();
+    void ReportInvalidUidsIfNeeded();
+    std::shared_ptr<AccessEventHandler> GetEventHandler();
 
     std::unordered_map<int32_t, GenericValues> dbRowCache_;
-    std::unordered_set<int32_t> existingUids_;
+    std::unordered_map<int32_t, std::string> uidOwnerBundles_;
+    std::unordered_map<int32_t, std::string> bundleIdOwnerBundles_;
     bool cacheLoaded_ = false;
+    std::mutex migrationMutex_;
+    std::shared_ptr<AccessEventHandler> eventHandler_ = nullptr;
+    std::mutex eventHandlerLock_;
 };
 } // namespace AccessToken
 } // namespace Security

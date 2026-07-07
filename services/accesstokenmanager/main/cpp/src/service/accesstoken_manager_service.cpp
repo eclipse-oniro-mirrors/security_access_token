@@ -1661,9 +1661,15 @@ int32_t AccessTokenManagerService::DeleteIdentity(
     HapDfxInfo dfxInfo = {};
     dfxInfo.tokenId = tokenID;
     dfxInfo.ipcCode = static_cast<int32_t>(IAccessTokenManagerIpcCode::COMMAND_DELETE_IDENTITY);
+    dfxInfo.bundleName = bundleName;
     ReservedType reservedType = static_cast<ReservedType>(type);
     int32_t sceneCode = static_cast<int32_t>(AT_DELETE_COMMON_FINISH);
     int64_t beginTime = TimeUtil::GetCurrentTimestamp();
+    HapTokenInfo hapInfo;
+    if (AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenID, hapInfo) == RET_SUCCESS) {
+        dfxInfo.userID = hapInfo.uid;
+        dfxInfo.instIndex = hapInfo.instIndex;
+    }
     int32_t ret = DeleteIdentityCore(tokenID, bundleName, reservedType, sceneCode);
     dfxInfo.duration = TimeUtil::GetCurrentTimestamp() - beginTime;
     ReportSysEventDelHap(ret, static_cast<int32_t>(sceneCode), dfxInfo);

@@ -73,11 +73,13 @@ typedef enum AccessTokenServiceStartSceneCode {
     REGISTER_UID = 0x2001,
     VERIFY_HAP = 0x2002,
     PERSIST_BUNDLE_DATA = 0x2003,
+    LOAD_SPM_DATA_TO_KERNEL = 0x2004,
 } AccessTokenServiceStartSceneCode;
 
 typedef enum AccessTokenServiceStartErrorCode {
     REGISTER_TOKEN_ID_FAILED = 1,
-    UID_CONFLICT = 2
+    UID_CONFLICT = 2,
+    UID_INVALID = 3,
 } AccessTokenServiceStartErrorCode;
 
 typedef enum SessionFinishSceneCode {

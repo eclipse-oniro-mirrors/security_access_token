@@ -85,7 +85,6 @@ accesstoken_manager_base_config = {
       "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/hap_sign_verify_helper.cpp",
       "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/hap_sign_verify_manager.cpp",
       "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/migration_verify_helper.cpp",
-      "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/migration_verify_worker.cpp",
     ]
   }
 

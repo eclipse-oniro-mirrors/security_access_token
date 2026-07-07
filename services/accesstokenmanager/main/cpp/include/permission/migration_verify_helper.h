@@ -27,6 +27,7 @@
 #include "idl_common.h"
 #include "add_spm_data_task.h"
 #include "atm_data_type.h"
+#include "table_item.h"
 
 namespace OHOS {
 namespace Security {
@@ -41,15 +42,16 @@ struct VerifiedMigrationBundle final {
 class MigrationVerifyHelper final {
 public:
     static MigrationVerifyHelper& GetInstance();
-    int32_t HandleMigratedBundleTask(const MigratedInfoIdl& migratedInfo,
+    int32_t HandleMigratedBundleTask(const BundleInfoItems& bundleInfo,
         const std::vector<std::shared_ptr<HapTokenInfoInner>>& cachedInfos);
+    void PostVerifyMigratedBundlesTask();
 
 private:
     MigrationVerifyHelper() = default;
 
-    int32_t VerifyMigratedBundle(const MigratedInfoIdl& migratedInfo,
+    int32_t VerifyMigratedBundle(const BundleInfoItems& bundleInfo,
         const std::vector<std::shared_ptr<HapTokenInfoInner>>& cachedInfos);
-    int32_t PersistDbInfo(const MigratedInfoIdl& migratedInfo,
+    int32_t PersistDbInfo(const BundleInfoItems& bundleInfo,
         const VerifiedMigrationBundle& verifiedBundle,
         const std::vector<std::shared_ptr<HapTokenInfoInner>>& cachedInfos);
     int32_t AddKernelData(const BundleNoCachedInfo& noCachedInfo,
@@ -58,7 +60,7 @@ private:
         const std::vector<std::vector<BriefPermData>>& permBriefDataPerToken,
         std::unique_ptr<AddSpmDataTask>& kernelTask);
 
-    int32_t DoVerifyMigratedBundle(const MigratedInfoIdl& migratedInfo,
+    int32_t DoVerifyMigratedBundle(const BundleInfoItems& bundleInfo,
         VerifiedMigrationBundle& verifiedBundle);
     void FixBriefPermDataPerToken(const VerifiedMigrationBundle& verifiedBundle,
         const std::vector<std::shared_ptr<HapTokenInfoInner>>& cachedInfos,
@@ -66,11 +68,13 @@ private:
         std::vector<std::vector<BriefPermData>>& fixedPermBriefPerToken);
     std::vector<GenericValues> BuildPermStateValues(
         AccessTokenID tokenId, const std::vector<BriefPermData>& data);
-    int32_t BuildBundleSignInfo(const MigratedInfoIdl& migratedInfo,
+    int32_t BuildBundleSignInfo(const BundleInfoItems& bundleInfo,
         const VerifiedMigrationBundle& verifiedBundle, BundleSignInfo& bundleSignInfo);
-    int32_t DoBundleInfoOperations(const BundleSignInfo& bundleSignInfo);
+    int32_t DoBundleInfoOperations(const BundleInfoItems& bundleInfo, const BundleSignInfo& bundleSignInfo);
     void PrepareHapInfoOperations(const BundleParam& param, const HapPolicy& policy,
         const std::vector<std::shared_ptr<HapTokenInfoInner>>& cachedInfos);
+    bool NeedPostVerify(const BundleInfoItems& bundleInfo) const;
+    bool BuildCachedInfos(const std::string& bundleName, std::vector<std::shared_ptr<HapTokenInfoInner>>& cachedInfos);
 
     std::vector<DelInfo> delInfoVec_;
     std::vector<AddInfo> addInfoVec_;

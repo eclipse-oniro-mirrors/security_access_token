@@ -368,7 +368,6 @@ int32_t AccessTokenIDManager::TranslateUid(int32_t srcUid, int32_t dstLocalId, i
     return RET_SUCCESS;
 }
 
-
 void AccessTokenIDManager::SetMigrationDone()
 {
     std::unique_lock<std::mutex> lock(migrationLock_);
