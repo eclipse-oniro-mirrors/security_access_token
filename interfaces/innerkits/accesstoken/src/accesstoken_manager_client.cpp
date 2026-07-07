@@ -36,7 +36,7 @@
 #include "proxy_death_callback_stub.h"
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
 #include "sec_comp_enhance_data_parcel.h"
-#include "sec_comp_enhance_key_parcel.h"
+#include "securec.h"
 #endif
 
 namespace OHOS {
@@ -53,6 +53,49 @@ static constexpr int32_t MAX_USER_POLICY_SIZE = 200;
 #endif
 static constexpr int32_t MAX_EXTENDED_VALUE_LIST_SIZE = 512;
 static constexpr uint32_t MAX_CALLBACK_MAP_SIZE = 200;
+
+#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
+bool IsEnhanceKeySizeValid(size_t size)
+{
+    return (size > 0) && (size <= MAX_HMAC_SIZE);
+}
+
+void ClearSecCompEnhanceKey(SecCompEnhanceKey& enhanceKey)
+{
+    if (memset_s(enhanceKey.key.data, MAX_HMAC_SIZE, 0, MAX_HMAC_SIZE) != EOK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Clear enhance key failed.");
+    }
+    enhanceKey.key.size = 0;
+    enhanceKey.epoch = 0;
+}
+
+SecCompEnhanceKeyIdl ConvertSecCompEnhanceKey(const SecCompEnhanceKey& enhanceKey)
+{
+    SecCompEnhanceKeyIdl enhanceKeyIdl;
+    enhanceKeyIdl.epoch = enhanceKey.epoch;
+    if (IsEnhanceKeySizeValid(enhanceKey.key.size)) {
+        enhanceKeyIdl.key.assign(enhanceKey.key.data, enhanceKey.key.data + enhanceKey.key.size);
+    }
+    return enhanceKeyIdl;
+}
+
+bool ConvertSecCompEnhanceKey(const SecCompEnhanceKeyIdl& enhanceKeyIdl, SecCompEnhanceKey& enhanceKey)
+{
+    ClearSecCompEnhanceKey(enhanceKey);
+    if (!IsEnhanceKeySizeValid(enhanceKeyIdl.key.size())) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Enhance key size %{public}zu is invalid.", enhanceKeyIdl.key.size());
+        return false;
+    }
+    enhanceKey.epoch = enhanceKeyIdl.epoch;
+    enhanceKey.key.size = static_cast<uint32_t>(enhanceKeyIdl.key.size());
+    if (memcpy_s(enhanceKey.key.data, MAX_HMAC_SIZE, enhanceKeyIdl.key.data(), enhanceKeyIdl.key.size()) != EOK) {
+        ClearSecCompEnhanceKey(enhanceKey);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Copy enhance key failed.");
+        return false;
+    }
+    return true;
+}
+#endif
 
 ReservedTypeIdl ConvertReservedType(ReservedType reserved)
 {
@@ -1667,9 +1710,11 @@ int32_t AccessTokenManagerClient::StoreSecCompEnhanceKey(const SecCompEnhanceKey
         LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
-    SecCompEnhanceKeyParcel parcel;
-    parcel.enhanceKey = enhanceKey;
-    return ConvertResult(proxy->StoreSecCompEnhanceKey(parcel));
+    if (!IsEnhanceKeySizeValid(enhanceKey.key.size)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Enhance key size %{public}u is invalid.", enhanceKey.key.size);
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    return ConvertResult(proxy->StoreSecCompEnhanceKey(ConvertSecCompEnhanceKey(enhanceKey)));
 }
 
 int32_t AccessTokenManagerClient::GetSecCompEnhanceKey(SecCompEnhanceKey& enhanceKey)
@@ -1679,12 +1724,14 @@ int32_t AccessTokenManagerClient::GetSecCompEnhanceKey(SecCompEnhanceKey& enhanc
         LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
-    SecCompEnhanceKeyParcel parcel;
-    int32_t res = proxy->GetSecCompEnhanceKey(parcel);
+    SecCompEnhanceKeyIdl enhanceKeyIdl;
+    int32_t res = proxy->GetSecCompEnhanceKey(enhanceKeyIdl);
     if (res != RET_SUCCESS) {
         return ConvertResult(res);
     }
-    enhanceKey = parcel.enhanceKey;
+    if (!ConvertSecCompEnhanceKey(enhanceKeyIdl, enhanceKey)) {
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
     return RET_SUCCESS;
 }
 #endif // SECURITY_COMPONENT_ENHANCE_ENABLE

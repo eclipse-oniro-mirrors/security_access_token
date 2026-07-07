@@ -207,3 +207,8 @@ struct BundleMigrateResultIdl {
     List<ReservedTypeIdl> reservedTypeList;
     int errcode;
 };
+
+struct SecCompEnhanceKeyIdl {
+    unsigned long epoch;
+    List<unsigned char> key;
+};

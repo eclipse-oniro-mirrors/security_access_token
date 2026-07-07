@@ -16,13 +16,9 @@
 
 #include <cinttypes>
 #include <cstring>
-#include <dlfcn.h>
 
-#include "access_token.h"
 #include "access_token_error.h"
-#include "accesstoken_kit.h"
 #include "accesstoken_common_log.h"
-#include "accesstoken_info_manager.h"
 #include "app_manager_access_client.h"
 #include "ipc_skeleton.h"
 #include "securec.h"
@@ -32,8 +28,6 @@ namespace Security {
 namespace AccessToken {
 namespace {
 std::recursive_mutex g_instanceMutex;
-static const std::string SET_ENHANCE_KEY_LIB = "libsecurity_component_set_enhance_key.z.so";
-typedef int32_t (*FUNC_CREATE) (uint32_t, uint8_t*, uint32_t*);
 
 bool IsEnhanceKeySizeValid(uint32_t size)
 {
@@ -225,35 +219,34 @@ int32_t SecCompEnhanceAgent::StoreSecCompEnhanceKey(const SecCompEnhanceKey& enh
         return AccessTokenError::ERR_PARAM_INVALID;
     }
 
-    SecCompEnhanceKey newKey;
-    if (!CopySecCompEnhanceKey(enhanceKey, newKey)) {
+    std::lock_guard<std::mutex> lock(secCompEnhanceKeyMutex_);
+    if (hasSecCompEnhanceKey_ && (enhanceKey.epoch < secCompEnhanceKey_.epoch)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Enhance key epoch rollback, current=%{public}" PRIu64
+            ", new=%{public}" PRIu64 ".", secCompEnhanceKey_.epoch, enhanceKey.epoch);
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    if (hasSecCompEnhanceKey_ && (enhanceKey.epoch == secCompEnhanceKey_.epoch)) {
+        if (!IsSameSecCompEnhanceKey(enhanceKey, secCompEnhanceKey_)) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Different enhance key for epoch %{public}" PRIu64
+                ", size=%{public}u.", enhanceKey.epoch, enhanceKey.key.size);
+            return AccessTokenError::ERR_PARAM_INVALID;
+        }
+        LOGI(ATM_DOMAIN, ATM_TAG, "Store same enhance key, epoch=%{public}" PRIu64
+            ", size=%{public}u.", enhanceKey.epoch, enhanceKey.key.size);
+        return RET_SUCCESS;
+    }
+    SecCompEnhanceKey storedKey;
+    if (!CopySecCompEnhanceKey(enhanceKey, storedKey)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Copy enhance key failed.");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
-
-    int32_t result = RET_SUCCESS;
-    {
-        std::lock_guard<std::mutex> lock(secCompEnhanceKeyMutex_);
-        if (hasSecCompEnhanceKey_ && (newKey.epoch < secCompEnhanceKey_.epoch)) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "Enhance key epoch rollback, current=%{public}" PRIu64
-                ", new=%{public}" PRIu64 ".", secCompEnhanceKey_.epoch, newKey.epoch);
-            result = AccessTokenError::ERR_PARAM_INVALID;
-        } else if (hasSecCompEnhanceKey_ && (newKey.epoch == secCompEnhanceKey_.epoch)) {
-            if (!IsSameSecCompEnhanceKey(newKey, secCompEnhanceKey_)) {
-                LOGE(ATM_DOMAIN, ATM_TAG, "Different enhance key for epoch %{public}" PRIu64
-                    ", size=%{public}u.", newKey.epoch, newKey.key.size);
-                result = AccessTokenError::ERR_PARAM_INVALID;
-            }
-        } else {
-            ClearSecCompEnhanceKey(secCompEnhanceKey_);
-            secCompEnhanceKey_ = newKey;
-            hasSecCompEnhanceKey_ = true;
-            LOGI(ATM_DOMAIN, ATM_TAG, "Store enhance key, epoch=%{public}" PRIu64
-                ", size=%{public}u.", secCompEnhanceKey_.epoch, secCompEnhanceKey_.key.size);
-        }
-    }
-    ClearSecCompEnhanceKey(newKey);
-    return result;
+    ClearSecCompEnhanceKey(secCompEnhanceKey_);
+    secCompEnhanceKey_ = storedKey;
+    ClearSecCompEnhanceKey(storedKey);
+    hasSecCompEnhanceKey_ = true;
+    LOGI(ATM_DOMAIN, ATM_TAG, "Store enhance key, epoch=%{public}" PRIu64
+        ", size=%{public}u.", secCompEnhanceKey_.epoch, secCompEnhanceKey_.key.size);
+    return RET_SUCCESS;
 }
 
 int32_t SecCompEnhanceAgent::GetSecCompEnhanceKey(SecCompEnhanceKey& enhanceKey)
