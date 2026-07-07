@@ -472,11 +472,12 @@
             "name": "ohos.permission.RUNNING_LOCK",
             "grantMode": "system_grant",
             "availableLevel": "normal",
-            "availableType": "SYSTEM",
+            "availableType": "NORMAL",
             "since": 7,
             "deprecated": "",
             "provisionEnable": true,
-            "distributedSceneEnable": false
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1", "tablet", "car", "phone", "tv", "wearable"]
         },
         {
             "name": "ohos.permission.SET_TIME",
