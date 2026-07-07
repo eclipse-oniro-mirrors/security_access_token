@@ -38,6 +38,11 @@ ATTRS_ONLY_IN_RESOURCE = [
 ]
 
 
+ATTRS_NEED_CONSISTENT = [
+    "useInstead"
+]
+
+
 def parse_definition_json(path):
     permission_maps = {}
     with open(path, "r", encoding="utf-8") as f:
@@ -68,8 +73,14 @@ def check_required_param(defs, filename):
 def check_consistency(def_in_module, full_def):
     for attr, value in full_def.items():
         if not attr in def_in_module:
+            if attr in ATTRS_NEED_CONSISTENT:
+                raise Exception("{} of {} should be defined in module.json".format(attr,
+                    def_in_module["name"]))
             continue
         if not value == def_in_module[attr]:
+            if (isinstance(value, list) and isinstance(def_in_module[attr], list) and
+                sorted(value) == sorted(def_in_module[attr])):
+                continue
             raise Exception("{} of {} is inconsistent in module.json and permission_definition.json".format(
                 attr, def_in_module["name"]))
 
@@ -77,8 +88,20 @@ def check_consistency(def_in_module, full_def):
         if attr in ATTRS_ONLY_IN_RESOURCE:
             continue
         elif not attr in full_def:
-            raise Exception("{} of {} should be define in permission_definition.json".format(attr,
+            raise Exception("{} of {} should be defined in permission_definition.json".format(attr,
                 def_in_module["name"]))
+
+
+def check_use_instead_validity(perm_def, definition_map):
+    if "useInstead" not in perm_def:
+        return
+    use_instead_list = perm_def["useInstead"]
+    if not isinstance(use_instead_list, list):
+        raise Exception("useInstead of {} must be a list".format(perm_def["name"]))
+    for use_instead_name in use_instead_list:
+        if use_instead_name not in definition_map:
+            raise Exception("useInstead value {} of {} is not a valid permission name".format(
+                use_instead_name, perm_def["name"]))
 
 
 def check_maps(module_map, definition_map):
@@ -95,6 +118,7 @@ def check_maps(module_map, definition_map):
         check_required_param(module_map[name], "module.json")
         check_required_param(definition_map[name], "permission_definition.json")
         check_consistency(module_map[name], definition_map[name])
+        check_use_instead_validity(perm_def, definition_map)
 
 
 def parse_args():
