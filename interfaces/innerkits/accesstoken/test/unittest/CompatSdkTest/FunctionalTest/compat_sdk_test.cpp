@@ -207,6 +207,24 @@ HWTEST_F(ATCompatSdkTest, GetNativeTokenIdTest003, TestSize.Level0)
 }
 
 /**
+ * @tc.name: IsSystemAppByFullTokenIDTest001
+ * @tc.desc: Check whether full token id belongs to system application.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(ATCompatSdkTest, IsSystemAppByFullTokenIDTest001, TestSize.Level0)
+{
+    EXPECT_EQ(AccessTokenKit::IsSystemAppByFullTokenID(g_selfShellTokenId),
+        AccessTokenCompatKit::IsSystemAppByFullTokenID(g_selfShellTokenId));
+    EXPECT_EQ(AccessTokenKit::IsSystemAppByFullTokenID(g_nativeTokenId),
+        AccessTokenCompatKit::IsSystemAppByFullTokenID(g_nativeTokenId));
+    EXPECT_EQ(AccessTokenKit::IsSystemAppByFullTokenID(g_hapTokenId),
+        AccessTokenCompatKit::IsSystemAppByFullTokenID(g_hapTokenId));
+    EXPECT_EQ(AccessTokenKit::IsSystemAppByFullTokenID(g_renderTokenId),
+        AccessTokenCompatKit::IsSystemAppByFullTokenID(g_renderTokenId));
+}
+
+/**
  * @tc.name: GetHapTokenInfoTest001
  * @tc.desc: GetHapTokenInfo with invalid token id
  * @tc.type: FUNC
