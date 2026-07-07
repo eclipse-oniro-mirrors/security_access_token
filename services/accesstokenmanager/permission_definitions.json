@@ -1584,8 +1584,9 @@
             "availableType": "NORMAL",
             "since": 9,
             "deprecated": "",
-            "provisionEnable": true,
-            "distributedSceneEnable": false
+            "provisionEnable": false,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "tv", "wearable", "2in1", "tablet", "car"]
         },
         {
             "name": "ohos.permission.MANAGE_ENTERPRISE_DEVICE_ADMIN",
