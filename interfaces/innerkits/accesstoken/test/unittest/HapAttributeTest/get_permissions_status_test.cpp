@@ -16,6 +16,7 @@
 #include "get_permissions_status_test.h"
 #include "gtest/gtest.h"
 #include <algorithm>
+#include <chrono>
 #include <thread>
 #include <unistd.h>
 
@@ -40,6 +41,13 @@ static const std::string TEST_BUNDLE_NAME = "ohos";
 static const int TEST_USER_ID = 0;
 static constexpr int32_t DEFAULT_API_VERSION = 8;
 static constexpr int32_t TOKENID_NOT_EXIST = 123;
+static constexpr int32_t PERF_PERMISSION_COUNT = 50;
+static constexpr int32_t PERF_PERMISSION_PATTERN_SIZE = 4;
+static constexpr int32_t PERF_WARMUP_COUNT = 10;
+static constexpr int32_t PERF_MEASURE_COUNT = 1000;
+static constexpr int64_t PERF_THRESHOLD_MS = 10;
+static constexpr int64_t MICROSECONDS_PER_MILLISECOND = 1000;
+static constexpr int32_t MAX_PERMISSION_NAME_LENGTH = 256;
 static MockHapToken* g_mock = nullptr;
 
 const PermissionStatus* FindPermissionStatusByName(
@@ -630,6 +638,103 @@ HWTEST_F(GetPermissionsStatusTest, GetPermissionStatusDetailsFuncTest005, TestSi
     ASSERT_NE(nullptr, permissionStatus);
     EXPECT_EQ(permissionStatus->grantStatus, resultList[0].grantStatus);
     EXPECT_EQ(permissionStatus->grantFlag, resultList[0].grantFlag);
+}
+
+/**
+ * @tc.name: GetPermissionStatusDetailsFuncTest006
+ * @tc.desc: duplicate permissions should keep one-to-one correspondence in query result
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(GetPermissionsStatusTest, GetPermissionStatusDetailsFuncTest006, TestSize.Level0)
+{
+    MockNativeToken mockNative("privacy_service");
+    AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+
+    std::vector<std::string> permissionList = {
+        "ohos.permission.LOCATION",
+        "ohos.permission.LOCATION",
+    };
+    std::vector<PermissionStatusDetail> resultList;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetPermissionStatusDetails(tokenID, permissionList, resultList));
+    ASSERT_EQ(permissionList.size(), resultList.size());
+    EXPECT_EQ(permissionList[0], resultList[0].permissionName);
+    EXPECT_EQ(permissionList[1], resultList[1].permissionName);
+    EXPECT_EQ(resultList[0].resultType, resultList[1].resultType);
+    EXPECT_EQ(resultList[0].grantStatus, resultList[1].grantStatus);
+    EXPECT_EQ(resultList[0].grantFlag, resultList[1].grantFlag);
+}
+
+/**
+ * @tc.name: GetPermissionStatusDetailsFuncTest007
+ * @tc.desc: return invalid when permission name length exceeds maximum length
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(GetPermissionsStatusTest, GetPermissionStatusDetailsFuncTest007, TestSize.Level0)
+{
+    MockNativeToken mockNative("privacy_service");
+    AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+
+    std::string invalidPermissionName(MAX_PERMISSION_NAME_LENGTH + 1, 'A');
+    std::vector<PermissionStatusDetail> resultList;
+    EXPECT_EQ(ERR_PARAM_INVALID,
+        AccessTokenKit::GetPermissionStatusDetails(tokenID, {invalidPermissionName}, resultList));
+    EXPECT_TRUE(resultList.empty());
+}
+
+/**
+ * @tc.name: GetPermissionStatusDetailsPerfTest001
+ * @tc.desc: query single hap token with 50 permission items, performance < 100ms
+ * @tc.type: PERF
+ * @tc.require:
+ */
+HWTEST_F(GetPermissionsStatusTest, GetPermissionStatusDetailsPerfTest001, TestSize.Level2)
+{
+    MockNativeToken mockNative("privacy_service");
+    AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+
+    std::vector<std::string> permissionList;
+    permissionList.reserve(PERF_PERMISSION_COUNT);
+    for (int32_t i = 0; i < (PERF_PERMISSION_COUNT / PERF_PERMISSION_PATTERN_SIZE); ++i) {
+        permissionList.emplace_back("ohos.permission.LOCATION");
+        permissionList.emplace_back("ohos.permission.WRITE_CALENDAR");
+        permissionList.emplace_back("ohos.permission.CAMERA");
+        permissionList.emplace_back("ohos.permission.BETA");
+    }
+    while (static_cast<int32_t>(permissionList.size()) < PERF_PERMISSION_COUNT) {
+        permissionList.emplace_back("ohos.permission.LOCATION");
+    }
+
+    for (int32_t i = 0; i < PERF_WARMUP_COUNT; ++i) {
+        std::vector<PermissionStatusDetail> warmupResultList;
+        ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetPermissionStatusDetails(tokenID, permissionList, warmupResultList));
+        ASSERT_EQ(permissionList.size(), warmupResultList.size());
+    }
+
+    int64_t totalDurationUs = 0;
+    for (int32_t i = 0; i < PERF_MEASURE_COUNT; ++i) {
+        std::vector<PermissionStatusDetail> resultList;
+        auto startTime = std::chrono::high_resolution_clock::now();
+        int32_t ret = AccessTokenKit::GetPermissionStatusDetails(tokenID, permissionList, resultList);
+        auto endTime = std::chrono::high_resolution_clock::now();
+        totalDurationUs += std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime).count();
+
+        ASSERT_EQ(RET_SUCCESS, ret);
+        ASSERT_EQ(permissionList.size(), resultList.size());
+    }
+
+    int64_t averageDurationUs = totalDurationUs / PERF_MEASURE_COUNT;
+    GTEST_LOG_(INFO) << "GetPermissionStatusDetailsPerfTest001 average duration: " << averageDurationUs
+                     << "us, warmup count: " << PERF_WARMUP_COUNT
+                     << ", measure count: " << PERF_MEASURE_COUNT;
+    EXPECT_LT(averageDurationUs, PERF_THRESHOLD_MS * MICROSECONDS_PER_MILLISECOND);
 }
 } // namespace AccessToken
 } // namespace Security
