@@ -10220,6 +10220,17 @@
             "deviceTypes": ["phone", "2in1", "tablet"]
         },
         {
+            "name": "ohos.permission.ACCESS_SE_KEY",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "NORMAL",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "2in1", "car", "tablet", "wearable", "tv"]
+        },
+        {
             "name": "ohos.permission.FILE_MANAGER_SERVICE_ACCESS",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
