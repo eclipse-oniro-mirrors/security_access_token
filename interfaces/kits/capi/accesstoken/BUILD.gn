@@ -31,6 +31,7 @@ ohos_shared_library("libability_access_control") {
     boundary_sanitize = true
     ubsan = true
   }
+  branch_protector_ret = "pac_ret"
 
   sources = [ "src/ability_access_control.cpp" ]
 
