@@ -21,11 +21,8 @@
 #include <cstdint>
 #include <cstring>
 #include <functional>
-#include <memory>
 #include <thread>
 
-#include "message_parcel.h"
-#include "sec_comp_enhance_key_parcel.h"
 #include "securec.h"
 
 using namespace testing::ext;
@@ -265,58 +262,6 @@ HWTEST_F(SecCompEnhanceAgentTest, SecCompEnhanceKey004, TestSize.Level1)
     EXPECT_TRUE(valid.load());
 }
 
-/**
- * @tc.name: SecCompEnhanceKeyParcel001
- * @tc.desc: Marshall and unmarshall a valid enhance key
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(SecCompEnhanceAgentTest, SecCompEnhanceKeyParcel001, TestSize.Level1)
-{
-    SecCompEnhanceKeyParcel input;
-    input.enhanceKey = CreateEnhanceKey(7, 32, 0x7A);
-    MessageParcel parcel;
-    ASSERT_TRUE(input.Marshalling(parcel));
-
-    std::unique_ptr<SecCompEnhanceKeyParcel> output(SecCompEnhanceKeyParcel::Unmarshalling(parcel));
-    ASSERT_NE(nullptr, output);
-    EXPECT_EQ(input.enhanceKey.epoch, output->enhanceKey.epoch);
-    EXPECT_EQ(input.enhanceKey.key.size, output->enhanceKey.key.size);
-    EXPECT_EQ(0, memcmp(input.enhanceKey.key.data, output->enhanceKey.key.data, input.enhanceKey.key.size));
-    for (uint32_t index = output->enhanceKey.key.size; index < MAX_HMAC_SIZE; ++index) {
-        EXPECT_EQ(0, output->enhanceKey.key.data[index]);
-    }
-}
-
-/**
- * @tc.name: SecCompEnhanceKeyParcel002
- * @tc.desc: Reject invalid and incomplete enhance key parcels
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(SecCompEnhanceAgentTest, SecCompEnhanceKeyParcel002, TestSize.Level1)
-{
-    SecCompEnhanceKeyParcel invalid;
-    MessageParcel output;
-    EXPECT_FALSE(invalid.Marshalling(output));
-
-    MessageParcel empty;
-    EXPECT_EQ(nullptr, SecCompEnhanceKeyParcel::Unmarshalling(empty));
-
-    MessageParcel noSize;
-    ASSERT_TRUE(noSize.WriteUint64(1));
-    EXPECT_EQ(nullptr, SecCompEnhanceKeyParcel::Unmarshalling(noSize));
-
-    MessageParcel invalidSize;
-    ASSERT_TRUE(invalidSize.WriteUint64(1));
-    ASSERT_TRUE(invalidSize.WriteUint32(MAX_HMAC_SIZE + 1));
-    EXPECT_EQ(nullptr, SecCompEnhanceKeyParcel::Unmarshalling(invalidSize));
-
-    MessageParcel noData;
-    ASSERT_TRUE(noData.WriteUint64(1));
-    ASSERT_TRUE(noData.WriteUint32(MAX_HMAC_SIZE));
-    EXPECT_EQ(nullptr, SecCompEnhanceKeyParcel::Unmarshalling(noData));
-}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

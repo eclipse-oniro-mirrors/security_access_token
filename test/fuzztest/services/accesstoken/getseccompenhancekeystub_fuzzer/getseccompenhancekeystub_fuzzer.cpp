@@ -20,7 +20,6 @@
 #include "fuzz_service_context_helper.h"
 #include "iaccess_token_manager.h"
 #include "mock_permission.h"
-#include "sec_comp_enhance_key_parcel.h"
 #include "token_setproc.h"
 
 using namespace OHOS::Security::AccessToken;
@@ -48,11 +47,10 @@ bool GetSecCompEnhanceKeyStubFuzzTest(const uint8_t* data, size_t size)
     }
 
     FuzzedDataProvider provider(data, size);
-    SecCompEnhanceKeyParcel enhanceKeyParcel;
-    enhanceKeyParcel.enhanceKey.epoch = provider.ConsumeIntegral<uint64_t>();
-    enhanceKeyParcel.enhanceKey.key.size = 1;
-    enhanceKeyParcel.enhanceKey.key.data[0] = provider.ConsumeIntegral<uint8_t>();
-    (void)DelayedSingleton<AccessTokenManagerService>::GetInstance()->StoreSecCompEnhanceKey(enhanceKeyParcel);
+    SecCompEnhanceKeyIdl enhanceKey;
+    enhanceKey.epoch = provider.ConsumeIntegral<uint64_t>();
+    enhanceKey.key.emplace_back(provider.ConsumeIntegral<uint8_t>());
+    (void)DelayedSingleton<AccessTokenManagerService>::GetInstance()->StoreSecCompEnhanceKey(enhanceKey);
 
     MessageParcel sendData;
     sendData.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());

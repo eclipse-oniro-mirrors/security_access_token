@@ -191,7 +191,7 @@ accesstoken_manager_base_config = {
   # Add global external_deps from access_token.gni
   external_deps += access_token_external_deps
 
-  if (ohos_indep_compiler_enable) {
+  if (ohos_indep_compiler_enable || security_component_enhance_enable) {
     external_deps += [ "bounds_checking_function:libsec_shared" ]
   }
 

@@ -76,6 +76,7 @@
 #include "random.h"
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
 #include "sec_comp_enhance_agent.h"
+#include "securec.h"
 #endif
 #include "short_grant_manager.h"
 #include "string_ex.h"
@@ -129,6 +130,43 @@ std::mutex g_userPolicyUpdateMutex;
 constexpr uint32_t TIMEOUT = 40; // 40s
 thread_local std::stack<int32_t> g_timerIdStack;
 #endif // HICOLLIE_ENABLE
+
+#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
+bool IsEnhanceKeySizeValid(size_t size)
+{
+    return (size > 0) && (size <= MAX_HMAC_SIZE);
+}
+
+bool ConvertSecCompEnhanceKey(const SecCompEnhanceKeyIdl& enhanceKeyIdl, SecCompEnhanceKey& enhanceKey)
+{
+    enhanceKey = {};
+    if (!IsEnhanceKeySizeValid(enhanceKeyIdl.key.size())) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Enhance key size %{public}zu is invalid.", enhanceKeyIdl.key.size());
+        return false;
+    }
+    enhanceKey.epoch = enhanceKeyIdl.epoch;
+    enhanceKey.key.size = static_cast<uint32_t>(enhanceKeyIdl.key.size());
+    if (memcpy_s(enhanceKey.key.data, MAX_HMAC_SIZE, enhanceKeyIdl.key.data(), enhanceKeyIdl.key.size()) != EOK) {
+        enhanceKey = {};
+        LOGE(ATM_DOMAIN, ATM_TAG, "Copy enhance key failed.");
+        return false;
+    }
+    return true;
+}
+
+bool ConvertSecCompEnhanceKey(const SecCompEnhanceKey& enhanceKey, SecCompEnhanceKeyIdl& enhanceKeyIdl)
+{
+    enhanceKeyIdl.epoch = 0;
+    enhanceKeyIdl.key.clear();
+    if (!IsEnhanceKeySizeValid(enhanceKey.key.size)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Enhance key size %{public}u is invalid.", enhanceKey.key.size);
+        return false;
+    }
+    enhanceKeyIdl.epoch = enhanceKey.epoch;
+    enhanceKeyIdl.key.assign(enhanceKey.key.data, enhanceKey.key.data + enhanceKey.key.size);
+    return true;
+}
+#endif
 
 constexpr uint32_t BITMAP_INDEX_1 = 1;
 constexpr uint32_t BITMAP_INDEX_2 = 2;
@@ -2773,20 +2811,32 @@ int32_t AccessTokenManagerService::GetSecCompEnhance(int32_t pid, SecCompEnhance
     return RET_SUCCESS;
 }
 
-int32_t AccessTokenManagerService::StoreSecCompEnhanceKey(const SecCompEnhanceKeyParcel& enhanceKeyParcel)
+int32_t AccessTokenManagerService::StoreSecCompEnhanceKey(const SecCompEnhanceKeyIdl& enhanceKeyIdl)
 {
     if (!IsSecCompServiceCalling()) {
         return AccessTokenError::ERR_PERMISSION_DENIED;
     }
-    return SecCompEnhanceAgent::GetInstance().StoreSecCompEnhanceKey(enhanceKeyParcel.enhanceKey);
+    SecCompEnhanceKey enhanceKey;
+    if (!ConvertSecCompEnhanceKey(enhanceKeyIdl, enhanceKey)) {
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    return SecCompEnhanceAgent::GetInstance().StoreSecCompEnhanceKey(enhanceKey);
 }
 
-int32_t AccessTokenManagerService::GetSecCompEnhanceKey(SecCompEnhanceKeyParcel& enhanceKeyParcel)
+int32_t AccessTokenManagerService::GetSecCompEnhanceKey(SecCompEnhanceKeyIdl& enhanceKeyIdl)
 {
     if (!IsSecCompServiceCalling()) {
         return AccessTokenError::ERR_PERMISSION_DENIED;
     }
-    return SecCompEnhanceAgent::GetInstance().GetSecCompEnhanceKey(enhanceKeyParcel.enhanceKey);
+    SecCompEnhanceKey enhanceKey;
+    int32_t res = SecCompEnhanceAgent::GetInstance().GetSecCompEnhanceKey(enhanceKey);
+    if (res != RET_SUCCESS) {
+        return res;
+    }
+    if (!ConvertSecCompEnhanceKey(enhanceKey, enhanceKeyIdl)) {
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    return RET_SUCCESS;
 }
 #endif
 

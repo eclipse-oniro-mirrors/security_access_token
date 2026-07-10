@@ -45,7 +45,6 @@
 #include "perm_state_change_callback_customize.h"
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
 #include "sec_comp_enhance_agent.h"
-#include "sec_comp_enhance_key_parcel.h"
 #endif
 #include "securec.h"
 #include "test_common.h"
@@ -114,13 +113,12 @@ void ResetSecCompEnhanceKey()
     agent.hasSecCompEnhanceKey_ = false;
 }
 
-SecCompEnhanceKeyParcel BuildSecCompEnhanceKeyParcel(uint64_t epoch, uint8_t value)
+SecCompEnhanceKeyIdl BuildSecCompEnhanceKeyIdl(uint64_t epoch, uint8_t value)
 {
-    SecCompEnhanceKeyParcel parcel;
-    parcel.enhanceKey.epoch = epoch;
-    parcel.enhanceKey.key.size = MAX_HMAC_SIZE;
-    (void)memset_s(parcel.enhanceKey.key.data, MAX_HMAC_SIZE, value, MAX_HMAC_SIZE);
-    return parcel;
+    SecCompEnhanceKeyIdl enhanceKey;
+    enhanceKey.epoch = epoch;
+    enhanceKey.key.assign(MAX_HMAC_SIZE, value);
+    return enhanceKey;
 }
 #endif
 
@@ -4161,8 +4159,8 @@ HWTEST_F(AccessTokenManagerServiceTest, SecCompEnhanceKeyService001, TestSize.Le
 {
     ResetSecCompEnhanceKey();
     MockNativeToken mock("foundation");
-    SecCompEnhanceKeyParcel input = BuildSecCompEnhanceKeyParcel(1, 0x11);
-    SecCompEnhanceKeyParcel output;
+    SecCompEnhanceKeyIdl input = BuildSecCompEnhanceKeyIdl(1, 0x11);
+    SecCompEnhanceKeyIdl output;
     EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, atManagerService_->StoreSecCompEnhanceKey(input));
     EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, atManagerService_->GetSecCompEnhanceKey(output));
 }
@@ -4177,13 +4175,12 @@ HWTEST_F(AccessTokenManagerServiceTest, SecCompEnhanceKeyService002, TestSize.Le
 {
     ResetSecCompEnhanceKey();
     MockNativeToken mock("security_component_service");
-    SecCompEnhanceKeyParcel input = BuildSecCompEnhanceKeyParcel(1, 0x22);
-    SecCompEnhanceKeyParcel output;
+    SecCompEnhanceKeyIdl input = BuildSecCompEnhanceKeyIdl(1, 0x22);
+    SecCompEnhanceKeyIdl output;
     EXPECT_EQ(RET_SUCCESS, atManagerService_->StoreSecCompEnhanceKey(input));
     EXPECT_EQ(RET_SUCCESS, atManagerService_->GetSecCompEnhanceKey(output));
-    EXPECT_EQ(input.enhanceKey.epoch, output.enhanceKey.epoch);
-    EXPECT_EQ(input.enhanceKey.key.size, output.enhanceKey.key.size);
-    EXPECT_EQ(0, memcmp(input.enhanceKey.key.data, output.enhanceKey.key.data, input.enhanceKey.key.size));
+    EXPECT_EQ(input.epoch, output.epoch);
+    EXPECT_EQ(input.key, output.key);
     ResetSecCompEnhanceKey();
 }
 #endif

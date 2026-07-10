@@ -22,8 +22,6 @@
 #include "fuzz_service_context_helper.h"
 #include "iaccess_token_manager.h"
 #include "mock_permission.h"
-#include "sec_comp_enhance_key_parcel.h"
-#include "securec.h"
 #include "token_setproc.h"
 
 using namespace OHOS::Security::AccessToken;
@@ -54,14 +52,12 @@ bool StoreSecCompEnhanceKeyStubFuzzTest(const uint8_t* data, size_t size)
     MessageParcel sendData;
     sendData.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
     if (provider.ConsumeBool()) {
-        SecCompEnhanceKeyParcel parcel;
-        parcel.enhanceKey.epoch = provider.ConsumeIntegral<uint64_t>();
-        parcel.enhanceKey.key.size = provider.ConsumeIntegralInRange<uint32_t>(1, MAX_HMAC_SIZE);
-        std::vector<uint8_t> keyData = provider.ConsumeBytes<uint8_t>(parcel.enhanceKey.key.size);
-        if (!keyData.empty()) {
-            (void)memcpy_s(parcel.enhanceKey.key.data, MAX_HMAC_SIZE, keyData.data(), keyData.size());
+        (void)sendData.WriteUint64(provider.ConsumeIntegral<uint64_t>());
+        std::vector<uint8_t> keyData = provider.ConsumeBytes<uint8_t>(MAX_HMAC_SIZE);
+        if (keyData.empty()) {
+            keyData.emplace_back(provider.ConsumeIntegral<uint8_t>());
         }
-        (void)sendData.WriteParcelable(&parcel);
+        (void)sendData.WriteUInt8Vector(keyData);
     } else {
         (void)sendData.WriteUint64(provider.ConsumeIntegral<uint64_t>());
         (void)sendData.WriteUint32(provider.ConsumeIntegral<uint32_t>());
