@@ -44,6 +44,29 @@ services/privacymanager/
     └── coverage/
 ```
 
+## Where To Look
+
+Use this table before editing service code in this directory.
+
+| Task type | First paths to inspect | What else to read |
+| --- | --- | --- |
+| Usage record add/query/delete logic | `include/record`, `src/record`, `include/database`, `src/database` | Trace both cache and DB update paths before changing behavior. |
+| Active status start/stop flow | `include/record/permission_record_manager.h`, `include/active`, `src/active` | Check callback notification path and lock-screen or mute-policy checks together. |
+| Disable policy or mute policy behavior | `include/disable_policy`, `include/sensitive`, `src/disable_policy`, `src/sensitive` | Check policy priority rules and callback behavior before editing. |
+| IPC interface or callback contract | `include/service`, service stub/proxy files, framework Parcel types | Trace client -> stub -> service -> callback path before changing fields or method behavior. |
+| Database schema or retention logic | `include/database`, DB init or migration code, record cleanup code | Check startup loading, cleanup, and record aging or size-limit logic together. |
+| Common permission-to-opCode behavior | `include/common/constant.h`, `src/common/constant.cpp`, `PermissionRecordManager` call sites | Keep enum and map updates synchronized. |
+
+## When To Read More
+
+Apply these routing rules before editing:
+
+- For high-risk changes involving IPC, persistence, active status semantics, toggle semantics, or callback behavior, state the task category, documents read, and key constraints you found before editing.
+- If the task changes usage record persistence, read the database and cache paths together before editing either side alone.
+- If the task changes `StartUsingPermission`, `StopUsingPermission`, or `IsAllowedUsingPermission`, inspect mute policy, disable policy, lock-screen status, and callback notification flow before changing logic.
+- If the task changes permission names or adds a new `user_grant` permission, inspect `constant.h` and `constant.cpp` mapping rules before editing.
+- If the task description or code mentions `active status`, `usage record`, `mute policy`, `disable policy`, `toggle status`, or `opCode`, read the corresponding manager and common constant definitions first.
+
 ## Core Components
 
 ### 1. PrivacyManagerService
@@ -430,6 +453,39 @@ When camera is used by background apps, show float window to notify user:
 | Temporary Mute Policy | Temporary mute (e.g., during call) | Lowest |
 
 When multiple policies conflict, the most restrictive (muted) takes effect.
+
+## Constraints And Boundaries
+
+### Do Not Change Without Explicit Review
+
+- Do not change the semantics of `AddPermissionUsedRecord`, `StartUsingPermission`, `StopUsingPermission`, `IsAllowedUsingPermission`, or callback registration interfaces without compatibility review.
+- Do not change callback trigger timing, callback filtering rules, or callback payload meaning without checking all registration and notification paths.
+- Do not change mute policy priority, disable policy enforcement order, or lock-screen checks without confirming the existing policy precedence is preserved.
+- Do not update only the permission name list for a new `user_grant` permission; update both the `OpCode` enum and `PERMISSION_OPCODE_MAP`.
+
+### Ask Before High-Risk Changes
+
+- Ask before changing active status semantics or when a permission is considered "in use".
+- Ask before changing per-user toggle behavior, cleanup policy, or historical record retention limits.
+- Ask before introducing blocking work into `AddPermissionUsedRecord`, `StartUsingPermission`, or `IsAllowedUsingPermission`.
+
+### Common Agent Failure Modes
+
+- Do not change only the database write path without checking in-memory cache, dirty flag handling, and cleanup tasks.
+- Do not change only callback manager code without checking the service registration/unregistration path and active-status trigger path.
+- Do not change only permission names without updating `opCode` mapping and verification paths.
+
+## Minimum Validation By Change Type
+
+- Record persistence, cleanup, Active status, mute policy, or disable policy changes, or DB schema changes: follow the common validation rules in `../../AGENTS.md`.
+- New `user_grant` permission mapping changes: verify both record creation and record query behavior for the new permission.
+- IPC or callback contract changes: confirm both service-side and client-side targets still compile and link, and report which callback or IPC path was validated.
+
+## Done Definition
+
+- The affected service targets build, or the final response clearly states what could not be built.
+- The final response states whether usage record semantics, active status semantics, callback behavior, or retention behavior changed.
+- If validation could not cover runtime callback behavior, the final response names that gap and the remaining risk.
 
 ## Related Modules
 

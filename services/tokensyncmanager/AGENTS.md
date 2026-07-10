@@ -43,6 +43,27 @@ services/tokensyncmanager/
     └── coverage/
 ```
 
+## Where To Look
+
+Use this table before editing service code in this directory.
+
+| Task type | First paths to inspect | What else to read |
+| --- | --- | --- |
+| Protocol field or version change | `include/protocol`, `include/command`, `include/remote`, serialization helpers in command implementations | Trace requestor `Prepare()`, responder `Execute()`, and requestor `Finish()` together. |
+| Remote command behavior change | `include/command`, `src/command`, `include/remote/remote_command_factory.h` | Check command creation, serialization, execution, and response handling as one chain. |
+| Device online/offline or channel lifecycle | `include/remote/soft_bus_manager.h`, `include/remote/soft_bus_channel.h`, `include/device`, `RemoteCommandManager` | Inspect buffering, reconnection, and cleanup flow before editing. |
+| Device ID conversion or identity handling | `include/device`, `include/remote/soft_bus_manager.h` | Keep `networkId`, `UUID`, and `UDID` conversion rules aligned. |
+| IPC or service entry behavior | `include/service`, service stub files, remote access-token call sites | Trace local service call -> remote command -> remote service behavior before changing the contract. |
+
+## When To Read More
+
+Apply these routing rules before editing:
+
+- For high-risk changes involving protocol fields, versioning, distributed semantics, or device identity handling, state the task category, documents read, and key constraints you found before editing.
+- If the task changes `RemoteProtocol`, JSON payload structure, or command serialization helpers, inspect compatibility rules and all `Prepare/Execute/Finish` stages before editing.
+- If the task changes `SoftBus`, channel lifecycle, or device online/offline handling, inspect buffering and retry behavior before editing.
+- If the task description or code mentions `requestVersion`, `responseVersion`, `UUID`, `UDID`, `networkId`, `SoftBus`, or `RemoteProtocol`, load the protocol and device-management sections first.
+
 ## Core Components
 
 ### 1. TokenSyncManagerService
@@ -344,6 +365,40 @@ const static int32_t DISTRIBUTED_ACCESS_TOKEN_SERVICE_VERSION = 2;
 2. **Never Remove Fields**: Deprecated fields MUST be preserved for compatibility
    - Mark as deprecated but keep in structure
    - May add replacement field alongside
+
+## Constraints And Boundaries
+
+### Do Not Change Without Explicit Review
+
+- Do not change protocol field meaning, version negotiation meaning, or command payload structure without compatibility review.
+- Do not remove protocol fields that may still be required by older devices; keep deprecated fields readable until compatibility retirement is explicitly planned.
+- Do not change device identity conversion rules between `networkId`, `UUID`, and `UDID` without tracing all call sites that depend on those identities.
+- Do not change command ordering, buffering, or online/offline retry assumptions without checking sequential execution guarantees.
+
+### Ask Before High-Risk Changes
+
+- Ask before changing distributed permission semantics, remote error handling policy, or retry behavior.
+- Ask before changing SoftBus binding lifecycle, socket ownership, or thread model in ways that may affect reconnect behavior.
+- Ask before changing remote-to-local trust assumptions or which device identifiers are persisted or exposed.
+
+### Common Agent Failure Modes
+
+- Do not change only JSON serialization without checking deserialization and command factory creation logic.
+- Do not change only the local requestor path without checking the remote responder path and response processing path.
+- Do not change only protocol version constants without defining how mixed-version peers behave.
+
+## Minimum Validation By Change Type
+
+- Remote command, device lifecycle, or protocol changes: follow the common validation rules in `../../AGENTS.md`.
+- Protocol field or version changes: in the final response explicitly cover `Old -> New`, `New -> Old`, optional-field-absent, and deprecated-field-preserved scenarios.
+- SoftBus or buffering changes: report which online/offline, reconnect, or buffered-command paths were validated by build, tests, or reasoning.
+- IPC or remote command contract changes: confirm both command-side and service-side targets still compile and link.
+
+## Done Definition
+
+- The affected service targets build, or the final response clearly states what could not be built.
+- The final response states whether protocol compatibility, version behavior, or device identity handling changed.
+- If mixed-version or runtime device scenarios could not be executed, the final response states the unverified scenario and remaining compatibility risk.
 
 ## Related Modules
 

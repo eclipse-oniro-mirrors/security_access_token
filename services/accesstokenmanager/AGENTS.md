@@ -39,6 +39,31 @@ services/accesstokenmanager/
     └── coverage/
 ```
 
+## Where To Look
+
+Use this table before editing service code in this directory.
+
+| Task type | First paths to inspect | What else to read |
+| --- | --- | --- |
+| Four-phase install or update flow | `InstallSessionManager`, `AccessTokenManagerService`, `PermissionManager`, `AccessTokenInfoManager` | Trace all four phases together before changing one phase in isolation. |
+| Permission verification hot path | `PermissionDataBrief`, `PermissionManager`, `VerifyAccessToken` call path | Check kernel, DB, and cache interactions before editing. |
+| TokenID or UID allocation | `AccessTokenIDManager`, `AccessTokenInfoManager`, related migration or reserved-token logic | Check set membership invariants, cache ownership, and persistence updates together. |
+| permission-state persistence | `database/`, `DataTranslator`, `PermissionManager`, `AccessTokenInfoManager` | Keep kernel -> DB -> cache update order and rollback rules intact. |
+| permission definition | `frameworks/common/*/permission_map.*`, `frameworks/common/*.py`, `PermissionManager` | trace definition source, generated constants, runtime lookup. |
+| IPC, IDL, or Parcel contract | `main/cpp/include/service`, `idl`, framework Parcel classes, client/proxy/stub call paths | Trace client -> proxy/stub -> service -> callback path before changing contract fields or semantics. |
+| Migration or reserved token behavior | `AccessTokenMigrationManager`, `InstallSessionManager`, `AccessTokenIDManager` | Check startup recovery, reserved/untrusted transitions, and persisted state together. |
+
+## When To Read More
+
+Apply these routing rules before editing:
+
+- For high-risk changes involving API, IDL, IPC, install flow, persistence, token lifecycle, or permission semantics, state the task category, documents read, and key constraints you found before editing.
+- If the task changes any install or update phase, inspect the full four-phase flow before editing one phase alone.
+- If the task changes `VerifyAccessToken`, `PermissionDataBrief`, or permission grant/revoke behavior, inspect kernel, DB, and cache order before editing.
+- If the task changes TokenID/UID allocation or migration behavior, inspect reserved, untrusted, and active-state transitions before editing.
+- If the task changes permission definitions, permission-name/opCode mapping, `permission_definitions.json`, or `permission_map.*`, read `frameworks/common/AGENTS.md` and the permission-definition sections first.
+- If the task description or code mentions `reserved`, `untrusted`, `SPM`, `permission_map.h`, `PermissionDataBrief`, `ACL`, or `EDM`, load the corresponding cache, permission-definition, and validation sections first.
+
 ## Core Components
 
 ### 1. AccessTokenManagerService
@@ -804,6 +829,19 @@ Debug version upgrades to release version, or release version upgrades to debug 
 - Use transactions for atomic multi-step operations
 - Implement proper rollback on operation failures
 
+## Minimum Validation By Change Type
+
+- For service logic, install flow, permission-state, database, IDL, IPC, or Parcel changes, follow the common validation rules in `../../AGENTS.md`.
+- TokenID/UID allocation, migration, or reserved-token changes: report how cache-set invariants and persistence behavior were validated.
+- `VerifyAccessToken`, or SA startup flow changes: explain why the change does not add blocking work, extra DB queries, or heavy-path cost.
+- If startup flow was changed, report which exception or failure path could cause abnormal service startup.
+
+## Done Definition
+
+- The affected service targets build, or the final response clearly states what could not be built.
+- The final response states whether permission semantics, install-flow semantics, token lifecycle behavior, or persistence behavior changed.
+- If runtime kernel, migration, or install-session scenarios could not be executed, the final response states the unverified scenario and remaining risk.
+
 ### SA (System Ability) Initialization
 
 - Must complete quickly
@@ -822,6 +860,7 @@ Debug version upgrades to release version, or release version upgrades to debug 
 ## References
 
 - [AGENTS.md](../../AGENTS.md) - Project overview and coding guide
+- [frameworks/common/AGENTS.md](../../frameworks/common/AGENTS.md) - Common permission map, validators, and shared guidance
 - [access_token.h](../../../interfaces/innerkits/accesstoken/include/access_token.h) - Core data structures and permission flag definitions
 - [permission_def.h](../../../interfaces/innerkits/accesstoken/include/permission_def.h) - Permission definitions
 - [hap_token_info.h](../../../interfaces/innerkits/accesstoken/include/hap_token_info.h) - HAP token structures (HapPolicy, BundlePolicy, PermissionStatus)

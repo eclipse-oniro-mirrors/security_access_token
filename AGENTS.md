@@ -64,6 +64,7 @@ This is the **AccessTokenManager (ATM)** module for OpenHarmony. It provides uni
   - Provide the capability to add and persist permission usage records.
   - Provide the switch of permissions records. When the switch is turned off permission records of the user will be deleted.
   - Manage the usage status of sensitive permissions and provides the capability to subscribe to active status change notifications.
+- **Details**: @services/privacymanager/AGENTS.md
 
 ### Token Sync Manager
 - **Location**: `frameworks/tokensync`, `interfaces/innerkits/tokensync`, `services/tokensyncmanager`
@@ -77,6 +78,22 @@ This is the **AccessTokenManager (ATM)** module for OpenHarmony. It provides uni
 - **Purpose**: 
   - Provides key management services for lock screen file encryption, supporting application and data group key generation and deletion, data access control.
 
+## Where To Look
+
+Use this table before editing. If a directory has its own `AGENTS.md`, read that file before changing code under that scope.
+
+| Task type | First paths to inspect | Required deeper guidance |
+| --- | --- | --- |
+| Public C++ SDK or system API change | `interfaces/innerkits`, `interfaces/kits`, `frameworks/accesstoken`, `services/accesstokenmanager/idl` | Read the matching API reference and the subsystem `AGENTS.md` for the service you are changing. |
+| Permission grant state or token lifecycle logic | `services/accesstokenmanager`, `frameworks/accesstoken`, `interfaces/innerkits/accesstoken` | Read `services/accesstokenmanager/AGENTS.md` before editing service logic or IPC contracts. |
+| Privacy usage record or active status logic | `services/privacymanager`, `frameworks/privacy`, `interfaces/innerkits/privacy` | Read `services/privacymanager/AGENTS.md` before editing persistence, callbacks, or IPC. |
+| Token sync or distributed permission behavior | `services/tokensyncmanager`, `frameworks/tokensync`, `interfaces/innerkits/tokensync` | Read `services/tokensyncmanager/AGENTS.md` before editing protocol, device sync, or distributed verification. |
+| El5 file key service or screen-lock file encryption logic | `services/el5filekeymanager`, `interfaces/inner_api/el5filekeymanager`, `frameworks/js/napi/el5filekeymanager`, `frameworks/ets/ani/el5filekeymanager` | Read `services/el5filekeymanager/AGENTS.md` before editing service lifecycle, memory management, or IPC behavior. |
+| IPC/Parcel/IDL serialization | `frameworks/accesstoken`, `frameworks/privacy`, `services/*/idl`, `interfaces/innerkits/*/include` | Inspect generated or mirrored types, transaction codes, and service/client call paths before editing fields or order. |
+| Database or persistence change | `services/accesstokenmanager/main/cpp/src/database`, `services/common/database`, service managers that read or write DB | Read the owning service `AGENTS.md` and trace in-memory cache update paths before changing schema or stored values. |
+| JS/ETS/NAPI binding change | `frameworks/js`, `frameworks/ets`, `interfaces/kits/js` | Read the matching API reference first, then verify native and JS/ETS behavior stay aligned. |
+| Common validators, permission mapping, utilities | `frameworks/common`, `services/common` | Check all service and SDK call sites before changing shared helpers. |
+
 ## Core Concepts
 
 ### AccessTokenID
@@ -89,6 +106,20 @@ Classifies applications into privilege levels that determine the permission scop
 - `APL_SYSTEM_CORE` - System core applications (highest level)
 
 Details for core concepts: [Application Permission Management Overview](../../../docs/en/application-dev/security/AccessToken/app-permission-mgmt-overview.md)
+
+## When To Read More
+
+Apply these routing rules before editing:
+
+- For high-risk changes involving API, IDL, IPC, persistence, permission semantics, or distributed behavior, state the task category, documents read, and key constraints you found before editing.
+- If the task changes `services/accesstokenmanager`, read `services/accesstokenmanager/AGENTS.md` first.
+- If the task changes `services/privacymanager`, read `services/privacymanager/AGENTS.md` first.
+- If the task changes `services/tokensyncmanager`, read `services/tokensyncmanager/AGENTS.md` first.
+- If the task changes `frameworks/js`, `frameworks/ets`, or `interfaces/kits/js`, read the relevant API reference first because external behavior must stay compatible.
+- If the task changes `services/*/idl`, `frameworks/*` Parcel classes, or IPC transaction handlers, trace the full client -> proxy/stub -> service path before editing.
+- If the task changes database reads, writes, or cache refresh logic, inspect both persistence code and in-memory ownership code before editing.
+- If the task description or code mentions `AccessTokenID`, `APL`, `grant state`, `grant flag`, `token sync`, `distributed permission`, `permission active status`, or `usage record`, read the core concept doc and the owning subsystem guidance before editing.
+- If the task touches `VerifyAccessToken`, `AddPermissionUsedRecord`, or `StartUsingPermission`, treat it as a performance-sensitive path and inspect existing hot-path behavior before changing logic.
 
 
 ## Build System
@@ -181,6 +212,8 @@ run -t FUZZ -tp access_token
 ### Additional Coding Rules
 - Do not mix signed and unsigned types. Keep integer types consistent in declarations, comparisons, arithmetic, and loop/index logic to avoid implicit conversions and unexpected behavior.
 - Do not introduce circular dependencies. Keep dependencies acyclic across modules, directories, and files, and avoid mutual inclusion or call chains that create circular references between files within the same directory.
+- Keep source line width within 120 characters. If a line exceeds that limit, refactor it to comply.
+- Keep functions within 50 lines where practical. If logic would exceed that size, split it into smaller helpers while preserving readability and behavior.
 
 ## API Reference
 [Public API for Access Token Manager ](../../../docs/en/application-dev/reference/apis-ability-kit/js-apis-abilityAccessCtrl.md)
@@ -190,6 +223,32 @@ run -t FUZZ -tp access_token
 [System API for Privacy Manager ](../../../docs/en/application-dev/reference/apis-ability-kit/js-apis-privacyManager-sys.md)
 
 [API for El5 Filekey Manager](../../../docs/en/application-dev/reference/apis-ability-kit/js-apis-screenLockFileManager.md)
+
+## Constraints And Boundaries
+
+### Do Not Change Without Explicit Review
+- Do not change public API signatures, argument meaning, return codes, callback contracts, or lifecycle semantics in `interfaces/kits`, `interfaces/innerkits`, `frameworks/js`, or `frameworks/ets` without compatibility review.
+- Do not change permission grant semantics, permission usage semantics, `APL` meaning, token type meaning, or verification result interpretation without subsystem-level confirmation.
+- Do not change IPC transaction codes, Parcel field order, IDL field meaning, or serialized data layout without checking all client, stub, proxy, and service call sites for compatibility.
+- Do not change database schema, persisted key names, stored value formats, or cross-version migration behavior without tracing rollback and startup recovery logic.
+- Do not bypass permission checks, trust checks, authentication checks, device trust assumptions, or cross-user isolation rules for convenience.
+- Do not edit generated outputs as the source of truth when the change should be made in the corresponding `.idl`, template, or handwritten source file.
+
+### Ask Before High-Risk Changes
+- Ask before changing `VerifyAccessToken`, `AddPermissionUsedRecord`, `StartUsingPermission`, or other hot paths in a way that may add blocking I/O, new DB access, or heavy iteration.
+- Ask before introducing new third-party dependencies, changing feature flags, or changing whether a capability is gated by a build flag.
+
+### Project-Specific Invariants
+- Keep permission grant state logic in AccessTokenManager distinct from permission usage status logic in PrivacyManager.
+- Keep in-memory cache and database state synchronized; when persistence fails, preserve or restore a consistent state instead of partially updating one side.
+- Keep dependency direction acyclic across `interfaces`, `frameworks`, and `services`; avoid adding service-only knowledge into public SDK layers.
+- Preserve DFX behavior when changing fault paths, logs, or observability points; do not silently remove useful diagnostics from high-risk flows.
+
+### Common Agent Failure Modes
+- Do not change only `.idl` or Parcel definitions without checking the matching proxy, stub, service, client, tests, and any manually converted containers.
+- Do not change only database persistence logic without checking cache initialization, refresh, rollback, and startup recovery paths.
+- Do not change SDK or JS/ETS API exposure without checking the corresponding native implementation and reference documentation stay aligned.
+- Do not optimize hot paths by skipping validation, permission checks, or state synchronization that the existing design depends on.
 
 ## Common Issue
 ### SA Initialization
@@ -205,8 +264,28 @@ run -t FUZZ -tp access_token
 - **Memory-data consistency**: When performing database operations, ensure in-memory data structures stay synchronized with persistent storage.
 - **Transaction rollback**: On operation failures, implement proper rollback mechanisms to restore data to a consistent state; use database transactions for atomic multi-step operations.
 
+## Minimum Validation By Change Type
+
+- Compile the affected business code and test targets by following the commands in the `Build System` section.
+- Run the corresponding unit tests for the changed scope.
+- Run the corresponding fuzz tests for the changed scope when fuzz targets exist.
+- Hot-path changes: in addition to building, explain why the change does not add blocking work or extra heavy-path cost.
+
+## Done Definition
+
+- The changed code builds for the affected target set, or the final response clearly states what could not be built.
+- The changed code preserves API, IPC, persistence, and permission semantics unless the task explicitly requires changing them.
+- The final response reports the commands run, the result, any skipped validation, and the remaining risks or compatibility concerns.
+
+## If Validation Cannot Run
+
+- State exactly which command could not be run.
+- State why it could not be run, such as missing environment, excessive runtime, or unrelated build breakage.
+- State the best partial validation that was completed and the remaining risk.
+
 ## History Record
 | version | date | modify content | writer |
 |------|------|---------|--------|
 | v1.0 | 2026-01-31 | primary version | xiacong |
 | v1.1 | 2026-02-05 | clarify distinction between Permission Grant State (AccessTokenManager) and Permission Usage Status (PrivacyManager) | hehehe-li |
+| v1.2 | 2026-07-10 | add task routing, high-risk boundaries, and validation loop guidance for coding agents | xiacong, AI |
