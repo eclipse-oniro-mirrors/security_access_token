@@ -207,7 +207,6 @@ void TestCommon::TestPreparePermDefList(HapPolicyParams &policy)
     policy.permList.emplace_back(permissionDefAlpha);
 }
 
-
 void TestCommon::TestPrepareKernelPermissionStatus(HapPolicyParams& policyParams)
 {
     PermissionStateFull permissionStatusBasic = {

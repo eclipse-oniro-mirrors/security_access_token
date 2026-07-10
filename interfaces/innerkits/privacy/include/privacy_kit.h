@@ -82,14 +82,14 @@ public:
      * @param status permission used record toggle status, true means record, false means not record
      * @return error code, see privacy_error.h
      */
-    static int32_t SetPermissionUsedRecordToggleStatus(int32_t userID, bool status);
+    static int32_t SetPermissionUsedRecordToggleStatus(int32_t userID, bool status, int32_t subProfileId = -1);
     /**
      * @brief Get permission used record toggle status.
      * @param userID the userID
      * @param status permission used record toggle status, true means record, false means not record
      * @return error code, see privacy_error.h
      */
-    static int32_t GetPermissionUsedRecordToggleStatus(int32_t userID, bool& status);
+    static int32_t GetPermissionUsedRecordToggleStatus(int32_t userID, bool& status, int32_t subProfileId = -1);
     /**
      * @brief Input tokenID start using input permission.
      * @param tokenID token id

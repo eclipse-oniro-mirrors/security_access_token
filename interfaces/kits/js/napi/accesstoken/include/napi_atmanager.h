@@ -82,6 +82,7 @@ struct AtManagerAsyncContext : public AtManagerAsyncWorkData {
     explicit AtManagerAsyncContext(napi_env env) : AtManagerAsyncWorkData(env) {}
 
     AccessTokenID tokenId = 0;
+    int32_t subProfileId = PARAM_DEFAULT_VALUE;
     std::string permissionName;
     union {
         uint32_t flag = 0;

@@ -41,8 +41,10 @@ interface OHOS.Security.AccessToken.IPrivacyManager {
     [ipccode 12] void GetPermissionUsedTypeInfos([in] unsigned int tokenId, [in] String permissionName, [out] List<PermissionUsedTypeInfoParcel> resultsParcel);
     [ipccode 13] void SetMutePolicy([in] unsigned int policyType, [in] unsigned int callerType, [in] boolean isMute, [in] unsigned int tokenID);
     [ipccode 14] void SetHapWithFGReminder([in] unsigned int tokenId, [in] boolean isAllowed);
-    [ipccode 15] void SetPermissionUsedRecordToggleStatus([in] int userID, [in] boolean status);
-    [ipccode 16] void GetPermissionUsedRecordToggleStatus([in] int userID, [out] boolean status);
+    [ipccode 15] void SetPermissionUsedRecordToggleStatus(
+        [in] int userID, [in] boolean status, [in] int subProfileId);
+    [ipccode 16] void GetPermissionUsedRecordToggleStatus(
+        [in] int userID, [out] boolean status, [in] int subProfileId);
     [ipccode 17] void SetDisablePolicy([in] String permissionName, [in] boolean isDisable);
     [ipccode 18] void GetDisablePolicy([in] String permissionName, [out] boolean isDisable);
     [ipccode 19] void RegisterPermDisablePolicyCallback([in] List<String> permList, [in] IRemoteObject cb);

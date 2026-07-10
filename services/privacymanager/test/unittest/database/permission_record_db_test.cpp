@@ -715,6 +715,72 @@ HWTEST_F(PermissionRecordDBTest, RemotePermUsedRecordDbManagerTest003, TestSize.
     std::string sql4 = db.CreateSelectByConditionPrepareSqlCmd(opCodeList, andColumns, databaseQueryCount);
     EXPECT_FALSE(sql4.empty());
 }
+
+/*
+ * @tc.name: RemotePermUsedRecordDbOnUpdate001
+ * @tc.desc: Verify remote permission db 1->2 migration adds sub_profile_id column.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordDBTest, RemotePermUsedRecordDbOnUpdate001, TestSize.Level0)
+{
+    RemotePermissionUsedRecordDb db(DB_PATH, DB_NAME);
+    ASSERT_EQ(0, db.ExecuteSql("drop table if exists remote_permission_record"));
+    ASSERT_EQ(0, db.ExecuteSql("create table remote_permission_record ("
+        "device_id text not null,"
+        "device_name text not null,"
+        "op_code integer not null,"
+        "timestamp integer not null,"
+        "access_count integer not null,"
+        "reject_count integer not null,"
+        "primary key(device_id, device_name, op_code, timestamp))"));
+
+    db.OnUpdate(1);
+
+    auto stmt = db.Prepare("pragma table_info(remote_permission_record)");
+    bool foundSubProfileId = false;
+    while (stmt.Step() == Statement::State::ROW) {
+        if (stmt.GetColumnString(1) == PrivacyFiledConst::FIELD_SUB_PROFILE_ID) {
+            foundSubProfileId = true;
+            EXPECT_EQ("-1", stmt.GetColumnString(4));
+        }
+    }
+    EXPECT_TRUE(foundSubProfileId);
+}
+
+/*
+ * @tc.name: RemotePermUsedRecordDbOnUpdate002
+ * @tc.desc: Verify remote permission db legacy records remain queryable after 1->2 migration.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordDBTest, RemotePermUsedRecordDbOnUpdate002, TestSize.Level0)
+{
+    RemotePermissionUsedRecordDb db(DB_PATH, DB_NAME);
+    ASSERT_EQ(0, db.ExecuteSql("drop table if exists remote_permission_record"));
+    ASSERT_EQ(0, db.ExecuteSql("create table remote_permission_record ("
+        "device_id text not null,"
+        "device_name text not null,"
+        "op_code integer not null,"
+        "timestamp integer not null,"
+        "access_count integer not null,"
+        "reject_count integer not null,"
+        "primary key(device_id, device_name, op_code, timestamp))"));
+    ASSERT_EQ(0, db.ExecuteSql("insert into remote_permission_record values("
+        "'deviceA', 'deviceNameA', 1, 1000, 1, 0)"));
+
+    db.OnUpdate(1);
+
+    std::set<int32_t> opCodeList;
+    GenericValues andConditions;
+    std::vector<GenericValues> results;
+    int32_t databaseQueryCount = 10;
+    ASSERT_EQ(0, db.FindByConditions(opCodeList, andConditions, results, databaseQueryCount));
+    ASSERT_EQ(1, static_cast<int32_t>(results.size()));
+    EXPECT_EQ("deviceA", results[0].GetString(PrivacyFiledConst::FIELD_DEVICE_ID));
+    EXPECT_EQ("deviceNameA", results[0].GetString(PrivacyFiledConst::FIELD_DEVICE_NAME));
+    EXPECT_EQ(-1, results[0].GetInt(PrivacyFiledConst::FIELD_SUB_PROFILE_ID));
+}
 #endif
 
 /*
@@ -987,6 +1053,64 @@ HWTEST_F(PermissionRecordDBTest, OnUpdate007, TestSize.Level0)
         results, 10));
     ASSERT_EQ(1, static_cast<int32_t>(results.size()));
     EXPECT_EQ("", results[0].GetString(PrivacyFiledConst::FIELD_ENHANCED_IDENTITY));
+}
+
+/*
+ * @tc.name: OnUpdate008
+ * @tc.desc: Verify 7->8 migration adds sub_profile_id to permission used record toggle status table.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordDBTest, OnUpdate008, TestSize.Level0)
+{
+    auto& db = PermissionUsedRecordDb::GetInstance();
+    ASSERT_EQ(0, db.ExecuteSql("drop table if exists permission_used_record_toggle_status_table"));
+    ASSERT_EQ(0, db.ExecuteSql("create table permission_used_record_toggle_status_table ("
+        "user_id integer not null,"
+        "status integer not null,"
+        "primary key(user_id))"));
+
+    db.OnUpdate(7);
+
+    auto stmt = db.Prepare("pragma table_info(permission_used_record_toggle_status_table)");
+    bool foundSubProfileId = false;
+    while (stmt.Step() == Statement::State::ROW) {
+        if (stmt.GetColumnString(1) == PrivacyFiledConst::FIELD_SUB_PROFILE_ID) {
+            foundSubProfileId = true;
+            EXPECT_EQ("-1", stmt.GetColumnString(4));
+        }
+    }
+    EXPECT_TRUE(foundSubProfileId);
+}
+
+/*
+ * @tc.name: OnUpdate009
+ * @tc.desc: Verify 7->8 migration keeps legacy toggle records queryable with default sub_profile_id.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordDBTest, OnUpdate009, TestSize.Level0)
+{
+    constexpr int32_t USER_ID = 33;
+    auto& db = PermissionUsedRecordDb::GetInstance();
+    ASSERT_EQ(0, db.ExecuteSql("drop table if exists permission_used_record_toggle_status_table"));
+    ASSERT_EQ(0, db.ExecuteSql("create table permission_used_record_toggle_status_table ("
+        "user_id integer not null,"
+        "status integer not null,"
+        "primary key(user_id))"));
+    ASSERT_EQ(0, db.ExecuteSql("insert into permission_used_record_toggle_status_table values(33, 0)"));
+
+    db.OnUpdate(7);
+
+    GenericValues conditionValue;
+    conditionValue.Put(PrivacyFiledConst::FIELD_USER_ID, USER_ID);
+    std::vector<GenericValues> results;
+    ASSERT_EQ(PermissionUsedRecordDb::ExecuteResult::SUCCESS,
+        db.Query(PermissionUsedRecordDb::PERMISSION_USED_RECORD_TOGGLE_STATUS, conditionValue, results));
+    ASSERT_EQ(1, static_cast<int32_t>(results.size()));
+    EXPECT_EQ(USER_ID, results[0].GetInt(PrivacyFiledConst::FIELD_USER_ID));
+    EXPECT_EQ(0, results[0].GetInt(PrivacyFiledConst::FIELD_STATUS));
+    EXPECT_EQ(-1, results[0].GetInt(PrivacyFiledConst::FIELD_SUB_PROFILE_ID));
 }
 
 /*

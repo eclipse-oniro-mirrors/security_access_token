@@ -93,7 +93,7 @@ int32_t PrivacyManagerClient::AddPermissionUsedRecord(const AddPermParamInfo& in
     return ret;
 }
 
-int32_t PrivacyManagerClient::SetPermissionUsedRecordToggleStatus(int32_t userID, bool status)
+int32_t PrivacyManagerClient::SetPermissionUsedRecordToggleStatus(int32_t userID, bool status, int32_t subProfileId)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
@@ -101,13 +101,13 @@ int32_t PrivacyManagerClient::SetPermissionUsedRecordToggleStatus(int32_t userID
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
 
-    int32_t ret = proxy->SetPermissionUsedRecordToggleStatus(userID, status);
+    int32_t ret = proxy->SetPermissionUsedRecordToggleStatus(userID, status, subProfileId);
     ret = ConvertResult(ret);
     LOGI(PRI_DOMAIN, PRI_TAG, "Result is %{public}d.", ret);
     return ret;
 }
 
-int32_t PrivacyManagerClient::GetPermissionUsedRecordToggleStatus(int32_t userID, bool& status)
+int32_t PrivacyManagerClient::GetPermissionUsedRecordToggleStatus(int32_t userID, bool& status, int32_t subProfileId)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
@@ -115,7 +115,7 @@ int32_t PrivacyManagerClient::GetPermissionUsedRecordToggleStatus(int32_t userID
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
 
-    int32_t ret = proxy->GetPermissionUsedRecordToggleStatus(userID, status);
+    int32_t ret = proxy->GetPermissionUsedRecordToggleStatus(userID, status, subProfileId);
     ret = ConvertResult(ret);
     LOGI(PRI_DOMAIN, PRI_TAG, "Result is %{public}d.", ret);
     return ret;

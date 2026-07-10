@@ -34,14 +34,17 @@
 #if defined(SPM_DATA_ENABLE) && defined(IS_SUPPORT_HAP_RUNNING)
 #include "install_session_manager.h"
 #endif
+#include "ipc_skeleton.h"
 #include "mock_permission.h"
 #ifdef IS_SUPPORT_HAP_RUNNING
 #include "mock_app_verify_adapter.h"
 #endif
 #include "parameters.h"
+#include "os_account_manager_lite.h"
 #include "permission_feature_manager.h"
 #include "permission_map.h"
 #include "permission_manager.h"
+#include "permission_request_toggle_manager.h"
 #include "perm_state_change_callback_customize.h"
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
 #include "sec_comp_enhance_agent.h"
@@ -49,6 +52,7 @@
 #include "securec.h"
 #include "test_common.h"
 #include "token_field_const.h"
+#include "tokenid_attributes.h"
 #include "token_setproc.h"
 #include "user_policy_manager.h"
 #undef private
@@ -64,6 +68,23 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
+struct UidGuard {
+    explicit UidGuard(uid_t newUid) : origUid(getuid())
+    {
+        (void)setuid(newUid);
+    }
+
+    ~UidGuard()
+    {
+        (void)setuid(origUid);
+    }
+
+    UidGuard(const UidGuard&) = delete;
+    UidGuard& operator=(const UidGuard&) = delete;
+
+    uid_t origUid;
+};
+
 static constexpr int32_t USER_ID = 100;
 static constexpr int32_t INST_INDEX = 0;
 static constexpr int32_t INDEX_ONE = 1;
@@ -4183,7 +4204,55 @@ HWTEST_F(AccessTokenManagerServiceTest, SecCompEnhanceKeyService002, TestSize.Le
     EXPECT_EQ(input.key, output.key);
     ResetSecCompEnhanceKey();
 }
+
+/**
+ * @tc.name: ToggleRequestService001
+ * @tc.desc: Verify request toggle succeeds for root caller.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, ToggleRequestService001, TestSize.Level0)
+{
+    MockNativeToken mock("foundation");
+    uint32_t status = PermissionRequestToggleStatus::OPEN;
+    ASSERT_EQ(RET_SUCCESS, atManagerService_->SetPermissionRequestToggleStatus(
+        "ohos.permission.CAMERA", status, USER_ID, 0));
+    status = PermissionRequestToggleStatus::CLOSED;
+    ASSERT_EQ(RET_SUCCESS, atManagerService_->GetPermissionRequestToggleStatus(
+        "ohos.permission.CAMERA", status, USER_ID, 0));
+    EXPECT_EQ(PermissionRequestToggleStatus::OPEN, status);
+}
+
+/**
+ * @tc.name: ToggleRequestService002
+ * @tc.desc: Verify request toggle succeeds for non-root caller.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, ToggleRequestService002, TestSize.Level0)
+{
+    std::vector<std::string> reqPerm = {
+        "ohos.permission.DISABLE_PERMISSION_DIALOG",
+        "ohos.permission.GET_SENSITIVE_PERMISSIONS",
+    };
+    MockHapToken mock("ToggleRequestService002", reqPerm, true, USER_ID);
+    UidGuard guard(NON_ROOT_UID);
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GrantPermission(
+        mock.GetTokenID(), "ohos.permission.DISABLE_PERMISSION_DIALOG", PERMISSION_USER_SET));
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GrantPermission(
+        mock.GetTokenID(), "ohos.permission.GET_SENSITIVE_PERMISSIONS", PERMISSION_USER_SET));
+
+    uint32_t status = PermissionRequestToggleStatus::OPEN;
+    ASSERT_EQ(RET_SUCCESS, atManagerService_->SetPermissionRequestToggleStatus(
+        "ohos.permission.CAMERA", status, 0, 0));
+    status = PermissionRequestToggleStatus::CLOSED;
+    ASSERT_EQ(RET_SUCCESS, atManagerService_->GetPermissionRequestToggleStatus(
+        "ohos.permission.CAMERA", status, 0, 0));
+    EXPECT_EQ(PermissionRequestToggleStatus::OPEN, status);
+}
 #endif
+
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

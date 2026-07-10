@@ -452,6 +452,28 @@ HWTEST_F(GetPermissionTest, GetTokenIDByUserID001, TestSize.Level0)
     EXPECT_NE(static_cast<uint32_t>(0), tokenIdList.size());
 }
 
+#ifndef ACCESS_TOKEN_SUPPORT_SUBPROFILE
+/**
+ * @tc.name: GetTokenIDByUserIDWithoutSubProfileFeature001
+ * @tc.desc: GetTokenIDByUserID with subProfileId keeps legacy userId semantics when subProfile feature is not supported.
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(GetPermissionTest, GetTokenIDByUserIDWithoutSubProfileFeature001, TestSize.Level0)
+{
+    MockNativeToken mock("accesstoken_service");
+    constexpr int32_t userId = 100;
+    constexpr int32_t unsupportedSubProfileId = 10;
+    std::unordered_set<AccessTokenID> legacyTokenIdList;
+    std::unordered_set<AccessTokenID> subProfileTokenIdList;
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetTokenIDByUserID(userId, legacyTokenIdList));
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetTokenIDByUserID(
+        userId, subProfileTokenIdList, unsupportedSubProfileId));
+    EXPECT_EQ(legacyTokenIdList, subProfileTokenIdList);
+}
+#endif
+
 /**
  * @tc.name: ReloadNativeTokenInfo001
  * @tc.desc: test ReloadNativeTokenInfo.

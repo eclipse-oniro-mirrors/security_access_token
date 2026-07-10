@@ -58,7 +58,7 @@ void AccessTokenDb::InitRdb()
     int32_t res = NativeRdb::E_OK;
     // pragma user_version will done by rdb, they store path and db_ as pair in RdbStoreManager
 #ifdef SPM_DATA_ENABLE
-    db_ = NativeRdb::RdbHelper::GetRdbStore(config, DATABASE_VERSION_9, callback, res);
+    db_ = NativeRdb::RdbHelper::GetRdbStore(config, DATABASE_VERSION_10, callback, res);
 #else
     db_ = NativeRdb::RdbHelper::GetRdbStore(config, DATABASE_VERSION_8, callback, res);
 #endif

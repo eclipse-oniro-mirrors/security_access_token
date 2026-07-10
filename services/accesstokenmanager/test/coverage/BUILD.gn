@@ -14,6 +14,15 @@
 import("//build/test.gni")
 import("../../accesstoken_manager.gni")
 
+account_mock_include_dirs =
+    [ "${access_token_path}/services/test/mock/account" ]
+account_mock_sources = [
+  "${access_token_path}/services/test/mock/account/os_account_manager_lite.cpp",
+]
+account_mock_base_external_deps =
+    filter_exclude(accesstoken_manager_base_config.external_deps,
+                   [ "os_account:os_account_innerkits_lite" ])
+
 ohos_unittest("libaccesstoken_manager_service_coverage_test") {
   subsystem_name = "accesscontrol"
   module_out_path = module_output_path_unittest_accesstoken
@@ -25,7 +34,8 @@ ohos_unittest("libaccesstoken_manager_service_coverage_test") {
   }
   branch_protector_ret = "pac_ret"
 
-  include_dirs =
+  include_dirs = account_mock_include_dirs
+  include_dirs +=
       [ "${access_token_path}/services/accesstokenmanager/test/mock/database" ]
   include_dirs += accesstoken_manager_base_config.include_dirs
   include_dirs += [
@@ -38,11 +48,10 @@ ohos_unittest("libaccesstoken_manager_service_coverage_test") {
     "../unittest/common/parameters.cpp",
     "accesstoken_database_coverage_test.cpp",
     "accesstoken_id_manager_coverage_test.cpp",
+    "permission_manager_coverage_test.cpp"
   ]
-  if (support_jsapi) {
-    sources += [ "permission_manager_coverage_test.cpp" ]
-  }
   sources += accesstoken_manager_base_config.sources
+  sources += account_mock_sources
 
   cflags_cc = accesstoken_manager_base_config.cflags_cc
 
@@ -55,7 +64,7 @@ ohos_unittest("libaccesstoken_manager_service_coverage_test") {
     "googletest:gmock",
     "googletest:gtest_main",
   ]
-  external_deps += accesstoken_manager_base_config.external_deps
+  external_deps += account_mock_base_external_deps
   external_deps -= [ "relational_store:native_rdb" ]
 }
 

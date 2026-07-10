@@ -47,6 +47,8 @@ typedef enum {
     JS_ERROR_GLOBAL_SWITCH_IS_ALREADY_OPEN = 12100013,
     JS_ERROR_EXPECTED_PERMISSION_TYPE = 12100014,
     JS_ERROR_OVERSIZE = 12100015,
+    JS_ERROR_SUBPROFILE_NOT_EXIST = 12100016,
+    JS_ERROR_STORAGE_MODE_CONFLICT = 12100017,
 } JsErrorCode;
 
 struct AtmResult {
@@ -62,4 +64,3 @@ napi_value GetNapiNull(napi_env env);
 }  // namespace Security
 }  // namespace OHOS
 #endif /* INTERFACES_PRIVACY_KITS_NAPI_ERROR_H */
-

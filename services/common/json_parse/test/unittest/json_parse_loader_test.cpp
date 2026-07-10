@@ -592,7 +592,7 @@ HWTEST_F(JsonParseLoaderTest, GetPermissionDefinitionExt001, TestSize.Level4)
     int32_t res = loader.GetPermissionDefinitionExt(permissions);
     EXPECT_EQ(RET_SUCCESS, res);
 }
- 
+
 /*
  * @tc.name: GetPermissionDefinitionExt002
  * @tc.desc: GetPermissionDefinitionExt is only enabled to generate permissionName under isolation condition.

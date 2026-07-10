@@ -55,6 +55,7 @@ constexpr const char* SET_FOREGROUND_HAP_REMINDER = "ohos.permission.SET_FOREGRO
 constexpr const char* SET_MUTE_POLICY = "ohos.permission.SET_MUTE_POLICY";
 constexpr const char* MANAGE_EDM_POLICY = "ohos.permission.MANAGE_EDM_POLICY";
 constexpr const char* GET_PERMISSION_POLICY = "ohos.permission.GET_PERMISSION_POLICY";
+static constexpr int32_t BASE_USER_RANGE = 200000;
 static const int32_t SA_ID_PRIVACY_MANAGER_SERVICE = 3505;
 static constexpr int32_t MAX_PERMISSION_NAME_LENGTH = 256;
 static const uint32_t PERM_LIST_SIZE_MAX = 1024;
@@ -80,6 +81,13 @@ bool IsCliTokenSelfRecordCalling(AccessTokenID callingTokenID, AccessTokenID inf
     }
     LOGI(PRI_DOMAIN, PRI_TAG, "callingTokenID is %{public}d, infoTokenId is %{public}d", callingTokenID, infoTokenId);
     return callingTokenID == infoTokenId;
+}
+
+int32_t ResolveToggleUserId(int32_t userID)
+{
+    int32_t callingUid = IPCSkeleton::GetCallingUid();
+    int32_t callingUserId = callingUid / BASE_USER_RANGE;
+    return (callingUid == 0) ? userID : callingUserId;
 }
 }
 
@@ -148,7 +156,7 @@ int32_t PrivacyManagerService::AddPermissionUsedRecordAsync(const AddPermParamIn
     return AddPermissionUsedRecord(infoParcel);
 }
 
-int32_t PrivacyManagerService::SetPermissionUsedRecordToggleStatus(int32_t userID, bool status)
+int32_t PrivacyManagerService::SetPermissionUsedRecordToggleStatus(int32_t userID, bool status, int32_t subProfileId)
 {
     uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
     if ((AccessTokenKit::GetTokenTypeFlag(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
@@ -157,12 +165,15 @@ int32_t PrivacyManagerService::SetPermissionUsedRecordToggleStatus(int32_t userI
     if (!IsPrivilegedCalling() && !VerifyPermission(PERMISSION_RECORD_TOGGLE)) {
         return PrivacyError::ERR_PERMISSION_DENIED;
     }
+    int32_t resolvedUserId = ResolveToggleUserId(userID);
 
-    LOGI(PRI_DOMAIN, PRI_TAG, "UserID: %{public}d, status: %{public}d", userID, status ? 1 : 0);
-    return PermissionRecordManager::GetInstance().SetPermissionUsedRecordToggleStatus(userID, status);
+    LOGI(PRI_DOMAIN, PRI_TAG, "UserID: %{public}d, subProfileId: %{public}d, status: %{public}d",
+        resolvedUserId, subProfileId, status ? 1 : 0);
+    return PermissionRecordManager::GetInstance().SetPermissionUsedRecordToggleStatus(
+        resolvedUserId, status, subProfileId);
 }
 
-int32_t PrivacyManagerService::GetPermissionUsedRecordToggleStatus(int32_t userID, bool& status)
+int32_t PrivacyManagerService::GetPermissionUsedRecordToggleStatus(int32_t userID, bool& status, int32_t subProfileId)
 {
     uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
     if ((AccessTokenKit::GetTokenTypeFlag(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
@@ -171,9 +182,11 @@ int32_t PrivacyManagerService::GetPermissionUsedRecordToggleStatus(int32_t userI
     if (!IsPrivilegedCalling() && !VerifyPermission(PERMISSION_USED_STATS)) {
         return PrivacyError::ERR_PERMISSION_DENIED;
     }
+    int32_t resolvedUserId = ResolveToggleUserId(userID);
 
-    LOGD(PRI_DOMAIN, PRI_TAG, "UserID: %{public}d, status: %{public}d", userID, status ? 1 : 0);
-    return PermissionRecordManager::GetInstance().GetPermissionUsedRecordToggleStatus(userID, status);
+    LOGD(PRI_DOMAIN, PRI_TAG, "UserID: %{public}d, subProfileId: %{public}d", resolvedUserId, subProfileId);
+    return PermissionRecordManager::GetInstance().GetPermissionUsedRecordToggleStatus(
+        resolvedUserId, status, subProfileId);
 }
 
 std::shared_ptr<ProxyDeathHandler> PrivacyManagerService::GetProxyDeathHandler()

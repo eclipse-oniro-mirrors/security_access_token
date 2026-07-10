@@ -21,7 +21,7 @@ namespace AccessToken {
 static const std::map<uint32_t, std::string> g_errorStringMap = {
     {JS_ERROR_PERMISSION_DENIED, "Permission denied."},
     {JS_ERROR_NOT_SYSTEM_APP, "Not System App. Interface caller is not a system app."},
-    {JS_ERROR_SYSTEM_CAPABILITY_NOT_SUPPORT, "Not support system capability."},
+    {JS_ERROR_SYSTEM_CAPABILITY_NOT_SUPPORT, "Capability not supported."},
     {JS_ERROR_START_ABILITY_FAIL, "Start grant ability failed."},
     {JS_ERROR_BACKGROUND_FAIL, "Ui extension turn background failed."},
     {JS_ERROR_TERMINATE_FAIL, "Ui extension terminate failed."},
@@ -31,7 +31,7 @@ static const std::map<uint32_t, std::string> g_errorStringMap = {
     {JS_ERROR_NOT_USE_TOGETHER, "The API is not used in pair with others."},
     {JS_ERROR_REGISTERS_EXCEED_LIMITATION, "The number of registered listeners exceeds limitation."},
     {JS_ERROR_PERMISSION_OPERATION_NOT_ALLOWED, "The operation of specified permission is not allowed."},
-    {JS_ERROR_SERVICE_NOT_RUNNING, "The service is abnormal."},
+    {JS_ERROR_SERVICE_NOT_RUNNING, "Service exception."},
     {JS_ERROR_OUT_OF_MEMORY, "Out of memory."},
     {JS_ERROR_INNER, "Common inner error."},
     {JS_ERROR_REQUEST_IS_ALREADY_EXIST, "The request already exists."},
@@ -41,6 +41,8 @@ static const std::map<uint32_t, std::string> g_errorStringMap = {
     {JS_ERROR_GLOBAL_SWITCH_IS_ALREADY_OPEN, "The specific global switch is already open."},
     {JS_ERROR_EXPECTED_PERMISSION_TYPE, "Unexpected permission."},
     {JS_ERROR_OVERSIZE, "The queried data exceeds the upper limit."},
+    {JS_ERROR_SUBPROFILE_NOT_EXIST, "The specified subProfileId does not exist under current user."},
+    {JS_ERROR_STORAGE_MODE_CONFLICT, "The storage mode conflicts."},
 };
 
 std::string GetParamErrorMsg(const std::string& param, const std::string& type)

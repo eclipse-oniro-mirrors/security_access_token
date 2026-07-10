@@ -79,8 +79,8 @@ public:
     int32_t AddPermissionUsedRecord(const AddPermParamInfo& info);
     int32_t RemovePermissionUsedRecords(AccessTokenID tokenId, const std::string& enhancedIdentity = "");
     bool IsUserIdValid(int32_t userID) const;
-    int32_t SetPermissionUsedRecordToggleStatus(int32_t userID, bool status);
-    int32_t GetPermissionUsedRecordToggleStatus(int32_t userID, bool& status);
+    int32_t SetPermissionUsedRecordToggleStatus(int32_t userID, bool status, int32_t subProfileId);
+    int32_t GetPermissionUsedRecordToggleStatus(int32_t userID, bool& status, int32_t subProfileId);
     void RemoveHistoryPermissionUsedRecords(std::unordered_set<AccessTokenID> tokenIDList);
     int32_t GetPermissionUsedRecords(const PermissionUsedRequest& request, PermissionUsedResult& result);
     int32_t GetPermissionUsedRecordsAsync(
@@ -149,14 +149,14 @@ private:
     bool IsAllowedUsingCamera(AccessTokenID tokenId, int32_t pid);
     bool IsAllowedUsingMicrophone(AccessTokenID tokenId, int32_t pid);
 
-    bool CheckPermissionUsedRecordToggleStatus(int32_t userID);
+    bool CheckPermissionUsedRecordToggleStatus(int32_t userID, int32_t subProfileId) const;
     bool VerifyNativeRecordPermission(const std::string& permissionName, const AccessTokenID& tokenId);
     int32_t NormalizeRecordTokenId(AccessTokenID inputTokenId, AccessTokenID& outputTokenId);
-    bool UpdatePermUsedRecToggleStatusMap(int32_t userID, bool status);
+    bool UpdatePermUsedRecToggleStatusMap(int32_t userID, int32_t subProfileId, bool status);
     void UpdatePermUsedRecToggleStatusMapFromDb();
     int32_t AddPermissionUsedRecordInner(
         const AddPermParamInfo& info, AccessTokenID callingTokenID, int32_t callingPid);
-    int32_t AddOrUpdateUsedStatusIfNeeded(int32_t userID, bool status);
+    int32_t AddOrUpdateUsedStatusIfNeeded(int32_t userID, int32_t subProfileId, bool status);
     void AddRecToCacheAndValueVec(const PermissionRecord& record, std::vector<GenericValues>& values);
     int32_t MergeOrInsertRecord(const PermissionRecord& record);
     int32_t UpdatePermissionUsedRecordToDb(const PermissionRecord& record);
@@ -242,14 +242,14 @@ private:
     bool ToRemoveRemoteRecord(const RemoteContinuousPermissionRecord& targetRecord,
         const IsRemoteEqualFunc& isEqualFunc, bool removeAll = false);
     int32_t GetRemotePermissionRecord(const RemoteAddPermParamInfo& info, RemotePermissionRecord& record,
-        const int32_t userId);
+        const int32_t userId, int32_t subProfileId);
     int32_t AddRemoteRecord(const RemotePermissionRecord& record);
     int32_t MergeOrInsertRemoteRecord(const RemotePermissionRecord& record);
     void AddRemoteRecToCacheAndValueVec(const RemotePermissionRecord& record, std::vector<GenericValues>& values);
-    void InsteadMergedRemoteRecIfNecessary(GenericValues& queryValue,
-        std::vector<RemotePermissionRecord>& mergedRecords);
+    void InsteadMergedRemoteRecIfNecessary(
+        GenericValues& queryValue, int32_t userId, std::vector<RemotePermissionRecord>& mergedRecords);
     void BuildBundleUsedRecordsFromRemoteResults(std::vector<GenericValues>& findRecordsValues,
-        std::vector<RemotePermissionRecord>& mergedRecords,
+        int32_t userId, std::vector<RemotePermissionRecord>& mergedRecords,
         std::map<std::string, BundleUsedRecord>& deviceIdToBundleMap, PermissionUsedResult& result,
         const PermissionUsageFlag& flag);
     int32_t UpdateRemotePermissionUsedRecordToDb(const RemotePermissionRecord& record);
@@ -307,8 +307,8 @@ private:
     std::mutex permUsedRecMutex_;
     std::vector<PermissionRecordCache> permUsedRecList_;
 
-    std::mutex permUsedRecToggleStatusMutex_;
-    std::map<int32_t, bool> permUsedRecToggleStatusMap_;
+    mutable std::mutex permUsedRecToggleStatusMutex_;
+    std::map<std::string, bool> permUsedRecToggleStatusMap_;
 
     std::shared_mutex diablePolicyMutex_;
     std::unordered_map<int32_t, bool> disablePolicyMap_;

@@ -376,7 +376,7 @@ HWTEST_F(AccessTokenMockTest, GetPermissionFlag001, TestSize.Level4)
  */
 HWTEST_F(AccessTokenMockTest, SetPermissionRequestToggleStatus001, TestSize.Level4)
 {
-    int32_t userID = 123;
+    int32_t userID = 0;
     std::string permission = "ohos.permission.CAMERA";
     uint32_t status = PermissionRequestToggleStatus::CLOSED;
     ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::SetPermissionRequestToggleStatus(permission,
@@ -391,7 +391,7 @@ HWTEST_F(AccessTokenMockTest, SetPermissionRequestToggleStatus001, TestSize.Leve
  */
 HWTEST_F(AccessTokenMockTest, GetPermissionRequestToggleStatus001, TestSize.Level4)
 {
-    int32_t userID = 123;
+    int32_t userID = 0;
     std::string permission = "ohos.permission.CAMERA";
     uint32_t status;
     ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::GetPermissionRequestToggleStatus(permission,

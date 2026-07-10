@@ -30,7 +30,6 @@ namespace AccessToken {
 class PrivacyKitTest : public testing::Test {
 public:
     static void SetUpTestCase();
-
     static void TearDownTestCase();
 
     void SetUp();

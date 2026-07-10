@@ -54,8 +54,13 @@
 #include "system_ability_definition.h"
 #include "time_util.h"
 #include "tokenid_attributes.h"
+#ifdef ACCESS_TOKEN_SUPPORT_SUBPROFILE
+#include "os_account_manager_lite.h"
+#endif
 #ifdef REMOTE_PRIVACY_ENABLE
 #include "os_account_manager_lite.h"
+#endif
+#ifdef REMOTE_PRIVACY_ENABLE
 #include "remote_permission_used_record_db.h"
 #endif
 
@@ -86,6 +91,7 @@ static const uint32_t SEC_COMPONENT_TYPE_ADD_VALUE = 4;
 static constexpr int64_t ONE_MINUTE_MILLISECONDS = 60 * 1000; // 1 min = 60 * 1000 ms
 static constexpr int32_t MAX_USER_ID = 10736;
 static constexpr int32_t BASE_USER_RANGE = 200000;
+static constexpr int32_t LEGACY_SUBPROFILE_ID = -1;
 #ifndef MAX_COUNT_TEST
 static const uint32_t MAX_PERMISSION_USED_TYPE_SIZE = 2000;
 #else
@@ -97,6 +103,85 @@ std::recursive_mutex g_instanceMutex;
 std::string BuildBundleMapKey(AccessTokenID tokenId, const std::string& enhancedIdentity)
 {
     return std::to_string(tokenId) + "_" + enhancedIdentity;
+}
+
+std::string BuildToggleStatusKey(int32_t userID, int32_t subProfileId)
+{
+#ifdef ACCESS_TOKEN_SUPPORT_SUBPROFILE
+    if (subProfileId < 0) {
+        return std::to_string(userID);
+    }
+    return std::to_string(userID) + "_" + std::to_string(subProfileId);
+#else
+    (void)subProfileId;
+    return std::to_string(userID);
+#endif
+}
+
+#ifdef ACCESS_TOKEN_SUPPORT_SUBPROFILE
+int32_t ValidateSubProfileIdForToggle(int32_t userID, int32_t subProfileId)
+{
+    if (subProfileId < 0) {
+        return RET_SUCCESS;
+    }
+    int32_t localUserId = LEGACY_SUBPROFILE_ID;
+    int32_t ret = OHOS::AccountSA::OsAccountManagerLite::GetOsAccountLocalIdForSubProfile(
+        subProfileId, localUserId);
+    if (ret != ERR_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Get userid failed, subProfileId=%{public}d, err=%{public}d.", subProfileId, ret);
+        return PrivacyError::ERR_SERVICE_ABNORMAL;
+    }
+    return (localUserId == userID) ? RET_SUCCESS : PrivacyError::ERR_PERMISSION_USED_RECORD_SUBPROFILE_NOT_EXIST;
+}
+
+bool ValidateUsedRecordToggleStorageModeConflict(
+    const std::map<std::string, bool>& permUsedRecToggleStatusMap, int32_t userID, int32_t subProfileId)
+{
+    const std::string legacyKey = BuildToggleStatusKey(userID, LEGACY_SUBPROFILE_ID);
+    if (subProfileId >= 0) {
+        return (permUsedRecToggleStatusMap.find(legacyKey) != permUsedRecToggleStatusMap.end());
+    }
+
+    const std::string prefix = std::to_string(userID) + "_";
+    return std::any_of(permUsedRecToggleStatusMap.begin(), permUsedRecToggleStatusMap.end(),
+        [&legacyKey, &prefix](const auto& item) {
+            return (item.first != legacyKey) && (item.first.rfind(prefix, 0) == 0);
+        });
+}
+
+bool IsSubProfileToggleKey(const std::string& key, int32_t userID)
+{
+    const std::string legacyKey = BuildToggleStatusKey(userID, LEGACY_SUBPROFILE_ID);
+    const std::string prefix = std::to_string(userID) + "_";
+    return (key != legacyKey) && (key.rfind(prefix, 0) == 0);
+}
+
+bool HasSubProfileToggleStatus(const std::map<std::string, bool>& permUsedRecToggleStatusMap, int32_t userID)
+{
+    return std::any_of(permUsedRecToggleStatusMap.begin(), permUsedRecToggleStatusMap.end(),
+        [userID](const auto& item) {
+            return IsSubProfileToggleKey(item.first, userID);
+        });
+}
+#endif
+
+bool GetCachedToggleStatus(const std::map<std::string, bool>& permUsedRecToggleStatusMap, int32_t userID,
+    int32_t subProfileId)
+{
+    auto it = permUsedRecToggleStatusMap.find(BuildToggleStatusKey(userID, subProfileId));
+    if (it != permUsedRecToggleStatusMap.end()) {
+        return it->second;
+    }
+#ifdef ACCESS_TOKEN_SUPPORT_SUBPROFILE
+    if ((subProfileId >= 0) && HasSubProfileToggleStatus(permUsedRecToggleStatusMap, userID)) {
+        return true;
+    }
+    if (subProfileId >= 0) {
+        auto legacyIt = permUsedRecToggleStatusMap.find(BuildToggleStatusKey(userID, LEGACY_SUBPROFILE_ID));
+        return (legacyIt == permUsedRecToggleStatusMap.end()) ? true : legacyIt->second;
+    }
+#endif
+    return true;
 }
 }
 
@@ -447,16 +532,13 @@ int32_t PermissionRecordManager::AddOrUpdateUsedTypeIfNeeded(const AccessTokenID
         PermissionUsedRecordDb::DataType::PERMISSION_USED_TYPE, newValue, results[0]);
 }
 
-bool PermissionRecordManager::CheckPermissionUsedRecordToggleStatus(int32_t userID)
+bool PermissionRecordManager::CheckPermissionUsedRecordToggleStatus(int32_t userID, int32_t subProfileId) const
 {
     std::lock_guard<std::mutex> lock(permUsedRecToggleStatusMutex_);
-    auto it = permUsedRecToggleStatusMap_.find(userID);
-    if (it != permUsedRecToggleStatusMap_.end()) {
-        LOGD(PRI_DOMAIN, PRI_TAG, "UserID: %{public}d, status: %{public}d.", it->first, it->second ? 1 : 0);
-        return it->second;
-    }
-    LOGD(PRI_DOMAIN, PRI_TAG, "UserID: %{public}d not exist record, return true.", userID);
-    return true;
+    bool status = GetCachedToggleStatus(permUsedRecToggleStatusMap_, userID, subProfileId);
+    LOGD(PRI_DOMAIN, PRI_TAG, "UserID: %{public}d, subProfileId: %{public}d, status: %{public}d.",
+        userID, subProfileId, status ? 1 : 0);
+    return status;
 }
 
 bool PermissionRecordManager::VerifyNativeRecordPermission(
@@ -549,8 +631,18 @@ int32_t PermissionRecordManager::AddPermissionUsedRecordInner(
         LOGE(PRI_DOMAIN, PRI_TAG, "Invalid tokenId(%{public}d).", info.tokenId);
         return PrivacyError::ERR_TOKENID_NOT_EXIST;
     }
-
-    if (!CheckPermissionUsedRecordToggleStatus(tokenInfo.userID)) {
+    int32_t subProfileId = LEGACY_SUBPROFILE_ID;
+#ifdef ACCESS_TOKEN_SUPPORT_SUBPROFILE
+    int32_t ret = OHOS::AccountSA::OsAccountManagerLite::GetOsAccountSubProfileId(
+        tokenInfo.userID, tokenInfo.instIndex, subProfileId);
+    if (ret != ERR_OK) {
+        LOGE(PRI_DOMAIN, PRI_TAG,
+            "Get subProfileId failed, userID=%{public}d, index=%{public}d, ret=%{public}d.",
+            tokenInfo.userID, tokenInfo.instIndex, ret);
+        return PrivacyError::ERR_SERVICE_ABNORMAL;
+    }
+#endif
+    if (!CheckPermissionUsedRecordToggleStatus(tokenInfo.userID, subProfileId)) {
         LOGI(PRI_DOMAIN, PRI_TAG, "The permission used record toggle status is false.");
         return PrivacyError::ERR_PRIVACY_TOGGELE_RESTRICTED;
     }
@@ -614,9 +706,13 @@ static bool RemoteRecordMergeCheck(const RemotePermissionRecord& record1, const 
         return false;
     }
 
-    // the same deviceId + deviceName + opCode + userId
     if ((record1.deviceId != record2.deviceId) || (record1.deviceName != record2.deviceName) ||
-        (record1.opCode != record2.opCode) || (record1.userId != record2.userId)) {
+        (record1.opCode != record2.opCode)) {
+        return false;
+    }
+
+    if (BuildToggleStatusKey(record1.userId, record1.subProfileId) !=
+        BuildToggleStatusKey(record2.userId, record2.subProfileId)) {
         return false;
     }
 
@@ -714,7 +810,8 @@ int32_t PermissionRecordManager::AddRemoteRecord(const RemotePermissionRecord& r
     auto it = remotePermUsedRecList_.begin();
     while (it != remotePermUsedRecList_.end()) {
         if ((it->record.timestamp > updateStamp) || (it->record.opCode != record.opCode) ||
-            (it->record.userId != record.userId)) {
+            (BuildToggleStatusKey(it->record.userId, it->record.subProfileId) !=
+                BuildToggleStatusKey(record.userId, record.subProfileId))) {
             // record from cache less than updateStamp may merge, ignore them
             ++it;
             continue;
@@ -732,7 +829,7 @@ int32_t PermissionRecordManager::AddRemoteRecord(const RemotePermissionRecord& r
 }
 
 int32_t PermissionRecordManager::GetRemotePermissionRecord(
-    const RemoteAddPermParamInfo& info, RemotePermissionRecord& record, const int32_t userId)
+    const RemoteAddPermParamInfo& info, RemotePermissionRecord& record, const int32_t userId, int32_t subProfileId)
 {
     int32_t opCode;
     if (!Constant::TransferPermissionToOpcode(info.permissionName, opCode)) {
@@ -747,6 +844,7 @@ int32_t PermissionRecordManager::GetRemotePermissionRecord(
     record.opCode = opCode;
     record.timestamp = AccessToken::TimeUtil::GetCurrentTimestamp();
     record.userId = userId;
+    record.subProfileId = subProfileId;
 
     return Constant::SUCCESS;
 }
@@ -763,17 +861,25 @@ int32_t PermissionRecordManager::AddRemotePermissionUsedRecord(const RemoteAddPe
     int32_t userId = 0;
     int32_t res = OHOS::AccountSA::OsAccountManagerLite::GetForegroundOsAccountLocalId(userId);
     if (res != ERR_OK) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Get userId failed, err=%{public}d", res);
+        LOGE(PRI_DOMAIN, PRI_TAG, "Get userId failed, err=%{public}d.", res);
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
+    int32_t subProfileId = LEGACY_SUBPROFILE_ID;
+#ifdef ACCESS_TOKEN_SUPPORT_SUBPROFILE
+    res = OHOS::AccountSA::OsAccountManagerLite::GetOsAccountForegroundSubProfileId(userId, subProfileId);
+    if (res != ERR_OK) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Get subProfileId failed, err=%{public}d.", res);
+        return PrivacyError::ERR_SERVICE_ABNORMAL;
+    }
+#endif
     // Check privacy toggle status: if switch is closed, return error, error while exchange to OK in client
-    if (!CheckPermissionUsedRecordToggleStatus(userId)) {
+    if (!CheckPermissionUsedRecordToggleStatus(userId, subProfileId)) {
         LOGI(PRI_DOMAIN, PRI_TAG, "The permission used record toggle status is false for user %{public}d.", userId);
         return PrivacyError::ERR_PRIVACY_TOGGELE_RESTRICTED;
     }
     
     RemotePermissionRecord record;
-    int32_t result = GetRemotePermissionRecord(info, record, userId);
+    int32_t result = GetRemotePermissionRecord(info, record, userId, subProfileId);
     if (result != Constant::SUCCESS || (!GetGlobalSwitchStatus(info.permissionName))) {
         return result;
     }
@@ -787,16 +893,19 @@ int32_t PermissionRecordManager::AddRemotePermissionUsedRecord(const RemoteAddPe
 }
 
 void PermissionRecordManager::InsteadMergedRemoteRecIfNecessary(
-    GenericValues& queryValue, std::vector<RemotePermissionRecord>& mergedRecords)
+    GenericValues& queryValue, int32_t userId, std::vector<RemotePermissionRecord>& mergedRecords)
 {
     std::string deviceId = queryValue.GetString(PrivacyFiledConst::FIELD_DEVICE_ID);
     std::string deviceName = queryValue.GetString(PrivacyFiledConst::FIELD_DEVICE_NAME);
     int32_t opCode = queryValue.GetInt(PrivacyFiledConst::FIELD_OP_CODE);
     int64_t timestamp = queryValue.GetInt64(PrivacyFiledConst::FIELD_TIMESTAMP);
+    // Remote records are stored in a per-user database, so the queried row does not carry user_id.
+    std::string toggleKey = BuildToggleStatusKey(userId, queryValue.GetInt(PrivacyFiledConst::FIELD_SUB_PROFILE_ID));
 
     for (const auto& record : mergedRecords) {
         if (deviceId == record.deviceId && deviceName == record.deviceName &&
-            opCode == record.opCode && timestamp == record.timestamp) {
+            opCode == record.opCode && timestamp == record.timestamp &&
+            toggleKey == BuildToggleStatusKey(record.userId, record.subProfileId)) {
             queryValue.Remove(PrivacyFiledConst::FIELD_ACCESS_COUNT);
             queryValue.Put(PrivacyFiledConst::FIELD_ACCESS_COUNT, record.accessCount);
             queryValue.Remove(PrivacyFiledConst::FIELD_REJECT_COUNT);
@@ -837,6 +946,18 @@ int32_t PermissionRecordManager::GetRemotePermissionUsedRecords(
         return PrivacyError::ERR_PARAM_INVALID;
     }
 
+    int32_t subProfileId = LEGACY_SUBPROFILE_ID;
+#ifdef ACCESS_TOKEN_SUPPORT_SUBPROFILE
+    int32_t ret = OHOS::AccountSA::OsAccountManagerLite::GetOsAccountForegroundSubProfileId(
+        userId, subProfileId);
+    if (ret != ERR_OK) {
+        LOGE(PRI_DOMAIN, PRI_TAG,
+            "Get foreground subProfileId failed, userId=%{public}d, ret=%{public}d.", userId, ret);
+        return PrivacyError::ERR_SERVICE_ABNORMAL;
+    }
+    andConditionValues.Put(PrivacyFiledConst::FIELD_SUB_PROFILE_ID, subProfileId);
+#endif
+
     int32_t dataLimitNum = request.flag == FLAG_PERMISSION_USAGE_DETAIL ? MAX_ACCESS_RECORD_SIZE : recordSizeMaximum_;
     std::vector<GenericValues> findRecordsValues;
 
@@ -852,10 +973,12 @@ int32_t PermissionRecordManager::GetRemotePermissionUsedRecords(
     }
 
     std::vector<RemotePermissionRecord> mergedRecords;
+    const std::string targetToggleKey = BuildToggleStatusKey(userId, subProfileId);
     {
         std::lock_guard<std::mutex> lock(remotePermUsedRecMutex_);
         for (const auto& cache : remotePermUsedRecList_) {
-            if (cache.needUpdateToDb && cache.record.userId == userId) { // need userId check
+            if (cache.needUpdateToDb &&
+                (BuildToggleStatusKey(cache.record.userId, cache.record.subProfileId) == targetToggleKey)) {
                 mergedRecords.emplace_back(cache.record);
             }
         }
@@ -863,7 +986,7 @@ int32_t PermissionRecordManager::GetRemotePermissionUsedRecords(
 
     std::map<std::string, BundleUsedRecord> deviceIdToBundleMap;
     BuildBundleUsedRecordsFromRemoteResults(
-        findRecordsValues, mergedRecords, deviceIdToBundleMap, result, request.flag);
+        findRecordsValues, userId, mergedRecords, deviceIdToBundleMap, result, request.flag);
 
     int32_t totalSuccCount = 0;
     int32_t totalFailCount = 0;
@@ -881,13 +1004,13 @@ int32_t PermissionRecordManager::GetRemotePermissionUsedRecords(
 }
 
 void PermissionRecordManager::BuildBundleUsedRecordsFromRemoteResults(
-    std::vector<GenericValues>& findRecordsValues, std::vector<RemotePermissionRecord>& mergedRecords,
+    std::vector<GenericValues>& findRecordsValues, int32_t userId, std::vector<RemotePermissionRecord>& mergedRecords,
     std::map<std::string, BundleUsedRecord>& deviceIdToBundleMap, PermissionUsedResult& result,
     const PermissionUsageFlag& flag)
 {
     std::map<std::string, int64_t> deviceIdToMaxTimestamp;
     for (auto& recordValue : findRecordsValues) {
-        InsteadMergedRemoteRecIfNecessary(recordValue, mergedRecords);
+        InsteadMergedRemoteRecIfNecessary(recordValue, userId, mergedRecords);
 
         // update beginTimeMillis and endTimeMillis if necessary
         int64_t timestamp = recordValue.GetInt64(PrivacyFiledConst::FIELD_TIMESTAMP);
@@ -1114,23 +1237,33 @@ bool PermissionRecordManager::ToRemoveRemoteRecord(
     }
     return res;
 }
-
 #endif
 
-int32_t PermissionRecordManager::SetPermissionUsedRecordToggleStatus(int32_t userID, bool status)
+int32_t PermissionRecordManager::SetPermissionUsedRecordToggleStatus(int32_t userID, bool status, int32_t subProfileId)
 {
-    if (userID == 0) {
-        userID = IPCSkeleton::GetCallingUid() / BASE_USER_RANGE;
-    }
-
     if (!PermissionRecordManager::IsUserIdValid(userID)) {
         LOGE(PRI_DOMAIN, PRI_TAG, "UserID is invalid.");
         return PrivacyError::ERR_PARAM_INVALID;
     }
+#ifdef ACCESS_TOKEN_SUPPORT_SUBPROFILE
+    subProfileId = (subProfileId < 0) ? LEGACY_SUBPROFILE_ID : subProfileId;
+    int32_t ret = ValidateSubProfileIdForToggle(userID, subProfileId);
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
+    {
+        std::lock_guard<std::mutex> lock(permUsedRecToggleStatusMutex_);
+        if (ValidateUsedRecordToggleStorageModeConflict(permUsedRecToggleStatusMap_, userID, subProfileId)) {
+            return PrivacyError::ERR_PERMISSION_USED_RECORD_STORAGE_MODE_CONFLICT;
+        }
+    }
+#else
+    subProfileId = LEGACY_SUBPROFILE_ID;
+#endif
 
     if (!status) {
         std::unordered_set<AccessTokenID> tokenIDList;
-        int32_t ret = AccessTokenKit::GetTokenIDByUserID(userID, tokenIDList);
+        int32_t ret = AccessTokenKit::GetTokenIDByUserID(userID, tokenIDList, subProfileId);
         if (ret != RET_SUCCESS) {
             return Constant::FAILURE;
         }
@@ -1139,10 +1272,11 @@ int32_t PermissionRecordManager::SetPermissionUsedRecordToggleStatus(int32_t use
         }
 #ifdef REMOTE_PRIVACY_ENABLE
         // Remove remote permission records
+        const std::string toggleKey = BuildToggleStatusKey(userID, subProfileId);
         {
             std::lock_guard<std::mutex> lock(remotePermUsedRecMutex_);
             for (auto it = remotePermUsedRecList_.begin(); it != remotePermUsedRecList_.end();) {
-                if (it->record.userId == userID) {
+                if (BuildToggleStatusKey(it->record.userId, it->record.subProfileId) == toggleKey) {
                     it = remotePermUsedRecList_.erase(it);
                 } else {
                     it++;
@@ -1151,26 +1285,28 @@ int32_t PermissionRecordManager::SetPermissionUsedRecordToggleStatus(int32_t use
         }
 
         GenericValues conditions;
+        conditions.Put(PrivacyFiledConst::FIELD_SUB_PROFILE_ID, subProfileId);
         std::unique_lock<std::shared_mutex> lk(this->rwLock_);
         RemotePermUsedRecordDbManager::GetInstance().Remove(userID, conditions);
         LOGI(PRI_DOMAIN, PRI_TAG, "Remove remote permission records when toggle status is false.");
 #endif
     }
 
-    if (!UpdatePermUsedRecToggleStatusMap(userID, status)) {
+    if (!UpdatePermUsedRecToggleStatusMap(userID, subProfileId, status)) {
         LOGD(PRI_DOMAIN, PRI_TAG, "The status is the same as that set last time, not need to update database.");
         return Constant::SUCCESS;
     }
 
-    return AddOrUpdateUsedStatusIfNeeded(userID, status);
+    return AddOrUpdateUsedStatusIfNeeded(userID, subProfileId, status);
 }
 
-bool PermissionRecordManager::UpdatePermUsedRecToggleStatusMap(int32_t userID, bool status)
+bool PermissionRecordManager::UpdatePermUsedRecToggleStatusMap(int32_t userID, int32_t subProfileId, bool status)
 {
     std::lock_guard<std::mutex> lock(permUsedRecToggleStatusMutex_);
-    auto it = permUsedRecToggleStatusMap_.find(userID);
+    std::string key = BuildToggleStatusKey(userID, subProfileId);
+    auto it = permUsedRecToggleStatusMap_.find(key);
     if (it == permUsedRecToggleStatusMap_.end()) {
-        permUsedRecToggleStatusMap_.insert(std::make_pair(userID, status));
+        permUsedRecToggleStatusMap_.insert(std::make_pair(key, status));
         return true;
     } else {
         if (it->second != status) {
@@ -1182,10 +1318,11 @@ bool PermissionRecordManager::UpdatePermUsedRecToggleStatusMap(int32_t userID, b
     return false;
 }
 
-int32_t PermissionRecordManager::AddOrUpdateUsedStatusIfNeeded(int32_t userID, bool status)
+int32_t PermissionRecordManager::AddOrUpdateUsedStatusIfNeeded(int32_t userID, int32_t subProfileId, bool status)
 {
     GenericValues conditionValue;
     conditionValue.Put(PrivacyFiledConst::FIELD_USER_ID, userID);
+    conditionValue.Put(PrivacyFiledConst::FIELD_SUB_PROFILE_ID, subProfileId);
 
     std::vector<GenericValues> results;
     int32_t res = PermissionUsedRecordDb::GetInstance().Query(
@@ -1200,6 +1337,7 @@ int32_t PermissionRecordManager::AddOrUpdateUsedStatusIfNeeded(int32_t userID, b
 
         GenericValues recordValue;
         recordValue.Put(PrivacyFiledConst::FIELD_USER_ID, userID);
+        recordValue.Put(PrivacyFiledConst::FIELD_SUB_PROFILE_ID, subProfileId);
         recordValue.Put(PrivacyFiledConst::FIELD_STATUS, status);
 
         std::vector<GenericValues> recordValues;
@@ -1215,25 +1353,30 @@ int32_t PermissionRecordManager::AddOrUpdateUsedStatusIfNeeded(int32_t userID, b
         PermissionUsedRecordDb::DataType::PERMISSION_USED_RECORD_TOGGLE_STATUS, newValue, conditionValue);
 }
 
-int32_t PermissionRecordManager::GetPermissionUsedRecordToggleStatus(int32_t userID, bool& status)
+int32_t PermissionRecordManager::GetPermissionUsedRecordToggleStatus(int32_t userID, bool& status, int32_t subProfileId)
 {
-    if (userID == 0) {
-        userID = IPCSkeleton::GetCallingUid() / BASE_USER_RANGE;
-    }
-
     if (!PermissionRecordManager::IsUserIdValid(userID)) {
         LOGE(PRI_DOMAIN, PRI_TAG, "UserID is invalid.");
         return PrivacyError::ERR_PARAM_INVALID;
     }
+#ifdef ACCESS_TOKEN_SUPPORT_SUBPROFILE
+    subProfileId = (subProfileId < 0) ? LEGACY_SUBPROFILE_ID : subProfileId;
+    int32_t ret = ValidateSubProfileIdForToggle(userID, subProfileId);
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
+#else
+    subProfileId = LEGACY_SUBPROFILE_ID;
+#endif
 
     std::lock_guard<std::mutex> lock(permUsedRecToggleStatusMutex_);
-    auto it = permUsedRecToggleStatusMap_.find(userID);
-    if (it == permUsedRecToggleStatusMap_.end()) {
-        status = true;
-    } else {
-        status = it->second;
+#ifdef ACCESS_TOKEN_SUPPORT_SUBPROFILE
+    if ((subProfileId < 0) &&
+        ValidateUsedRecordToggleStorageModeConflict(permUsedRecToggleStatusMap_, userID, subProfileId)) {
+        return PrivacyError::ERR_PERMISSION_USED_RECORD_STORAGE_MODE_CONFLICT;
     }
-
+#endif
+    status = GetCachedToggleStatus(permUsedRecToggleStatusMap_, userID, subProfileId);
     return Constant::SUCCESS;
 }
 
@@ -1255,8 +1398,9 @@ void PermissionRecordManager::UpdatePermUsedRecToggleStatusMapFromDb()
     auto it = permUsedRecordToggleStatusRes.begin();
     while (it != permUsedRecordToggleStatusRes.end()) {
         userID = it->GetInt(PrivacyFiledConst::FIELD_USER_ID);
+        int32_t subProfileId = it->GetInt(PrivacyFiledConst::FIELD_SUB_PROFILE_ID);
         status = static_cast<bool>(it->GetInt(PrivacyFiledConst::FIELD_STATUS));
-        (void)UpdatePermUsedRecToggleStatusMap(userID, status);
+        (void)UpdatePermUsedRecToggleStatusMap(userID, subProfileId, status);
         ++it;
     }
 
@@ -1319,6 +1463,9 @@ int32_t PermissionRecordManager::RemovePermissionUsedRecords(
 int32_t PermissionRecordManager::GetPermissionUsedRecords(
     const PermissionUsedRequest& request, PermissionUsedResult& result)
 {
+    result.beginTimeMillis = 0;
+    result.endTimeMillis = 0;
+    result.bundleRecords.clear();
     if (!request.isRemote) {
         int32_t res = GetRecordsFromLocalDB(request, result);
         if (res != Constant::SUCCESS) {

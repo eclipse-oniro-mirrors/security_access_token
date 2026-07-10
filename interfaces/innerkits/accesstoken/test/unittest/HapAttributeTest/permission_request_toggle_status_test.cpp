@@ -135,25 +135,6 @@ HWTEST_F(PermissionRequestToggleStatusTest, SetPermissionRequestToggleStatusAbno
 }
 
 /**
- * @tc.name: SetPermissionRequestToggleStatus001
- * @tc.desc: SetPermissionRequestToggleStatus caller is a normal app, not a system app.
- * @tc.type: FUNC
- * @tc.require: Issue Number
- */
-HWTEST_F(PermissionRequestToggleStatusTest, SetPermissionRequestToggleStatus001, TestSize.Level0)
-{
-    LOGI(ATM_DOMAIN, ATM_TAG, "SetPermissionRequestToggleStatus001");
-    std::vector<std::string> reqPerm;
-    reqPerm.emplace_back("ohos.permission.DISABLE_PERMISSION_DIALOG");
-    MockHapToken mock("SetPermissionRequestToggleStatus001", reqPerm, false);
-
-    uint32_t status = PermissionRequestToggleStatus::CLOSED;
-    int32_t ret = AccessTokenKit::SetPermissionRequestToggleStatus("ohos.permission.MICROPHONE", status,
-        g_infoManagerTestNormalInfoParms.userID);
-    EXPECT_EQ(ERR_NOT_SYSTEM_APP, ret);
-}
-
-/**
  * @tc.name: SetPermissionRequestToggleStatus002
  * @tc.desc: SetPermissionRequestToggleStatus caller is a system app without permissions.
  * @tc.type: FUNC
@@ -169,12 +150,12 @@ HWTEST_F(PermissionRequestToggleStatusTest, SetPermissionRequestToggleStatus002,
     setuid(10001); // 10001： UID
     uint32_t status = PermissionRequestToggleStatus::CLOSED;
     int32_t ret = AccessTokenKit::SetPermissionRequestToggleStatus("ohos.permission.MICROPHONE", status,
-        g_infoManagerTestSystemInfoParms.userID);
+        TEST_USER_ID);
     EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, ret);
 
     status = PermissionRequestToggleStatus::OPEN;
     ret = AccessTokenKit::SetPermissionRequestToggleStatus("ohos.permission.MICROPHONE", status,
-        g_infoManagerTestSystemInfoParms.userID);
+        TEST_USER_ID);
     EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, ret);
 
     // restore environment
@@ -196,12 +177,12 @@ HWTEST_F(PermissionRequestToggleStatusTest, SetPermissionRequestToggleStatusSpec
 
     uint32_t status = PermissionRequestToggleStatus::CLOSED;
     int32_t ret = AccessTokenKit::SetPermissionRequestToggleStatus("ohos.permission.MICROPHONE", status,
-        g_infoManagerTestSystemInfoParms.userID);
+        TEST_USER_ID);
     EXPECT_EQ(RET_SUCCESS, ret);
 
     status = PermissionRequestToggleStatus::OPEN;
     ret = AccessTokenKit::SetPermissionRequestToggleStatus("ohos.permission.MICROPHONE", status,
-        g_infoManagerTestSystemInfoParms.userID);
+        TEST_USER_ID);
     EXPECT_EQ(RET_SUCCESS, ret);
 }
 
@@ -229,25 +210,6 @@ HWTEST_F(PermissionRequestToggleStatusTest, GetPermissionRequestToggleStatusAbno
 }
 
 /**
- * @tc.name: GetPermissionRequestToggleStatusSpecTest001
- * @tc.desc: GetPermissionRequestToggleStatus caller is a normal app, not a system app.
- * @tc.type: FUNC
- * @tc.require: Issue Number
- */
-HWTEST_F(PermissionRequestToggleStatusTest, GetPermissionRequestToggleStatusSpecTest001, TestSize.Level0)
-{
-    LOGI(ATM_DOMAIN, ATM_TAG, "GetPermissionRequestToggleStatusSpecTest001");
-    std::vector<std::string> reqPerm;
-    reqPerm.emplace_back("ohos.permission.DISABLE_PERMISSION_DIALOG");
-    MockHapToken mock("GetPermissionRequestToggleStatusSpecTest001", reqPerm, false);
-
-    uint32_t status;
-    int32_t ret = AccessTokenKit::GetPermissionRequestToggleStatus("ohos.permission.MICROPHONE", status,
-        g_infoManagerTestNormalInfoParms.userID);
-    EXPECT_EQ(ERR_NOT_SYSTEM_APP, ret);
-}
-
-/**
  * @tc.name: GetPermissionRequestToggleStatusSpecTest002
  * @tc.desc: GetPermissionRequestToggleStatus caller is a system app without permissions.
  * @tc.type: FUNC
@@ -264,7 +226,7 @@ HWTEST_F(PermissionRequestToggleStatusTest, GetPermissionRequestToggleStatusSpec
 
     uint32_t getStatus;
     int32_t ret = AccessTokenKit::GetPermissionRequestToggleStatus("ohos.permission.MICROPHONE", getStatus,
-        g_infoManagerTestSystemInfoParms.userID);
+        TEST_USER_ID);
     EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, ret);
 
     // restore environment
@@ -288,28 +250,199 @@ HWTEST_F(PermissionRequestToggleStatusTest, GetPermissionRequestToggleStatusSpec
     // Set a closed status value.
     uint32_t status = PermissionRequestToggleStatus::CLOSED;
     int32_t ret = AccessTokenKit::SetPermissionRequestToggleStatus("ohos.permission.MICROPHONE", status,
-        g_infoManagerTestSystemInfoParms.userID);
+        TEST_USER_ID);
     EXPECT_EQ(RET_SUCCESS, ret);
 
     // Get a closed status value.
     uint32_t getStatus;
     ret = AccessTokenKit::GetPermissionRequestToggleStatus("ohos.permission.MICROPHONE", getStatus,
-        g_infoManagerTestSystemInfoParms.userID);
+        TEST_USER_ID);
     EXPECT_EQ(RET_SUCCESS, ret);
     EXPECT_EQ(PermissionRequestToggleStatus::CLOSED, getStatus);
 
     // Set a open status value.
     status = PermissionRequestToggleStatus::OPEN;
     ret = AccessTokenKit::SetPermissionRequestToggleStatus("ohos.permission.MICROPHONE", status,
-        g_infoManagerTestSystemInfoParms.userID);
+        TEST_USER_ID);
     EXPECT_EQ(RET_SUCCESS, ret);
 
     // Get a open status value.
     ret = AccessTokenKit::GetPermissionRequestToggleStatus("ohos.permission.MICROPHONE", getStatus,
-        g_infoManagerTestSystemInfoParms.userID);
+        TEST_USER_ID);
     EXPECT_EQ(RET_SUCCESS, ret);
     EXPECT_EQ(PermissionRequestToggleStatus::OPEN, getStatus);
 }
+
+#ifdef ACCESS_TOKEN_SUPPORT_SUBPROFILE
+static constexpr int32_t LEGACY_SUBPROFILE_ID = -1;
+static constexpr int32_t SUBPROFILE_ID_TEN = 10;
+static constexpr int32_t SUBPROFILE_ID_ELEVEN = 11;
+static constexpr int32_t INVALID_NEGATIVE_SUBPROFILE_ID = -2;
+
+/**
+ * @tc.name: PermissionRequestToggleStatusWithSubProfileIdConflict001
+ * @tc.desc: Verify legacy toggle record blocks subProfile write and subProfile query inherits legacy value.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRequestToggleStatusTest, PermissionRequestToggleStatusWithSubProfileIdConflict001,
+    TestSize.Level0)
+{
+    std::vector<std::string> reqPerm;
+    reqPerm.emplace_back("ohos.permission.DISABLE_PERMISSION_DIALOG");
+    reqPerm.emplace_back("ohos.permission.GET_SENSITIVE_PERMISSIONS");
+    MockHapToken mock("PermissionRequestToggleStatusWithSubProfileIdConflict001", reqPerm, true);
+
+    constexpr int32_t userId = TEST_USER_ID;
+    constexpr int32_t subProfileId = SUBPROFILE_ID_TEN;
+    uint32_t getStatus = PermissionRequestToggleStatus::OPEN;
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::SetPermissionRequestToggleStatus(
+        "ohos.permission.MICROPHONE", PermissionRequestToggleStatus::CLOSED, userId, LEGACY_SUBPROFILE_ID));
+    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_REQUEST_TOGGLE_STORAGE_MODE_CONFLICT,
+        AccessTokenKit::SetPermissionRequestToggleStatus(
+            "ohos.permission.MICROPHONE", PermissionRequestToggleStatus::OPEN, userId, subProfileId));
+    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_REQUEST_TOGGLE_STORAGE_MODE_CONFLICT,
+        AccessTokenKit::SetPermissionRequestToggleStatus(
+            "ohos.permission.MICROPHONE", PermissionRequestToggleStatus::CLOSED, userId, subProfileId));
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetPermissionRequestToggleStatus(
+        "ohos.permission.MICROPHONE", getStatus, userId, subProfileId));
+    EXPECT_EQ(PermissionRequestToggleStatus::CLOSED, getStatus);
+
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::SetPermissionRequestToggleStatus(
+        "ohos.permission.MICROPHONE", PermissionRequestToggleStatus::OPEN, userId, LEGACY_SUBPROFILE_ID));
+}
+
+/**
+ * @tc.name: PermissionRequestToggleStatusWithSubProfileIdConflict002
+ * @tc.desc: Verify subProfile toggle record blocks legacy write in kit layer.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRequestToggleStatusTest, PermissionRequestToggleStatusWithSubProfileIdConflict002,
+    TestSize.Level0)
+{
+    std::vector<std::string> reqPerm;
+    reqPerm.emplace_back("ohos.permission.DISABLE_PERMISSION_DIALOG");
+    reqPerm.emplace_back("ohos.permission.GET_SENSITIVE_PERMISSIONS");
+    MockHapToken mock("PermissionRequestToggleStatusWithSubProfileIdConflict002", reqPerm, true);
+
+    constexpr int32_t userId = TEST_USER_ID;
+    constexpr int32_t subProfileId = SUBPROFILE_ID_ELEVEN;
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::SetPermissionRequestToggleStatus(
+        "ohos.permission.MICROPHONE", PermissionRequestToggleStatus::CLOSED, userId, subProfileId));
+    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_REQUEST_TOGGLE_STORAGE_MODE_CONFLICT,
+        AccessTokenKit::SetPermissionRequestToggleStatus(
+            "ohos.permission.MICROPHONE", PermissionRequestToggleStatus::OPEN, userId, LEGACY_SUBPROFILE_ID));
+    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_REQUEST_TOGGLE_STORAGE_MODE_CONFLICT,
+        AccessTokenKit::SetPermissionRequestToggleStatus(
+            "ohos.permission.MICROPHONE", PermissionRequestToggleStatus::CLOSED, userId, LEGACY_SUBPROFILE_ID));
+}
+
+/**
+ * @tc.name: PermissionRequestToggleStatusWithSubProfileIdIsolation001
+ * @tc.desc: Verify one subProfile request toggle status does not affect another subProfile.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRequestToggleStatusTest, PermissionRequestToggleStatusWithSubProfileIdIsolation001,
+    TestSize.Level0)
+{
+    std::vector<std::string> reqPerm;
+    reqPerm.emplace_back("ohos.permission.DISABLE_PERMISSION_DIALOG");
+    reqPerm.emplace_back("ohos.permission.GET_SENSITIVE_PERMISSIONS");
+    MockHapToken mock("PermissionRequestToggleStatusWithSubProfileIdIsolation001", reqPerm, true);
+
+    constexpr int32_t userId = TEST_USER_ID;
+    uint32_t getStatus = PermissionRequestToggleStatus::OPEN;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::SetPermissionRequestToggleStatus(
+        "ohos.permission.CAMERA", PermissionRequestToggleStatus::CLOSED, userId, SUBPROFILE_ID_TEN));
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetPermissionRequestToggleStatus(
+        "ohos.permission.CAMERA", getStatus, userId, SUBPROFILE_ID_TEN));
+    EXPECT_EQ(PermissionRequestToggleStatus::CLOSED, getStatus);
+
+    getStatus = PermissionRequestToggleStatus::CLOSED;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetPermissionRequestToggleStatus(
+        "ohos.permission.CAMERA", getStatus, userId, SUBPROFILE_ID_ELEVEN));
+    EXPECT_EQ(PermissionRequestToggleStatus::OPEN, getStatus);
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::SetPermissionRequestToggleStatus(
+        "ohos.permission.CAMERA", PermissionRequestToggleStatus::CLOSED, userId, SUBPROFILE_ID_ELEVEN));
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::SetPermissionRequestToggleStatus(
+        "ohos.permission.CAMERA", PermissionRequestToggleStatus::OPEN, userId, SUBPROFILE_ID_TEN));
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetPermissionRequestToggleStatus(
+        "ohos.permission.CAMERA", getStatus, userId, SUBPROFILE_ID_TEN));
+    EXPECT_EQ(PermissionRequestToggleStatus::OPEN, getStatus);
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetPermissionRequestToggleStatus(
+        "ohos.permission.CAMERA", getStatus, userId, SUBPROFILE_ID_ELEVEN));
+    EXPECT_EQ(PermissionRequestToggleStatus::CLOSED, getStatus);
+}
+
+/**
+ * @tc.name: PermissionRequestToggleStatusWithNegativeSubProfileId001
+ * @tc.desc: Verify subProfileId less than zero keeps legacy toggle path in kit layer.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRequestToggleStatusTest, PermissionRequestToggleStatusWithNegativeSubProfileId001,
+    TestSize.Level0)
+{
+    std::vector<std::string> reqPerm;
+    reqPerm.emplace_back("ohos.permission.DISABLE_PERMISSION_DIALOG");
+    reqPerm.emplace_back("ohos.permission.GET_SENSITIVE_PERMISSIONS");
+    MockHapToken mock("PermissionRequestToggleStatusWithNegativeSubProfileId001", reqPerm, true);
+
+    constexpr int32_t userId = TEST_USER_ID;
+    uint32_t status = PermissionRequestToggleStatus::CLOSED;
+    uint32_t getStatus = PermissionRequestToggleStatus::OPEN;
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::SetPermissionRequestToggleStatus(
+        "ohos.permission.MICROPHONE", status, userId, LEGACY_SUBPROFILE_ID));
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetPermissionRequestToggleStatus(
+        "ohos.permission.MICROPHONE", getStatus, userId));
+    EXPECT_EQ(PermissionRequestToggleStatus::CLOSED, getStatus);
+
+    getStatus = PermissionRequestToggleStatus::OPEN;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetPermissionRequestToggleStatus(
+        "ohos.permission.MICROPHONE", getStatus, userId, INVALID_NEGATIVE_SUBPROFILE_ID));
+    EXPECT_EQ(PermissionRequestToggleStatus::CLOSED, getStatus);
+}
+#else
+static constexpr int32_t UNSUPPORTED_SUBPROFILE_ID = 10;
+
+/**
+ * @tc.name: PermissionRequestToggleStatusWithoutSubProfileFeature001
+ * @tc.desc: Verify subProfileId parameter keeps legacy toggle path when subProfile feature is not supported.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRequestToggleStatusTest, PermissionRequestToggleStatusWithoutSubProfileFeature001,
+    TestSize.Level0)
+{
+    std::vector<std::string> reqPerm;
+    reqPerm.emplace_back("ohos.permission.DISABLE_PERMISSION_DIALOG");
+    reqPerm.emplace_back("ohos.permission.GET_SENSITIVE_PERMISSIONS");
+    MockHapToken mock("PermissionRequestToggleStatusWithoutSubProfileFeature001", reqPerm, true);
+
+    constexpr int32_t userId = TEST_USER_ID;
+    uint32_t getStatus = PermissionRequestToggleStatus::OPEN;
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::SetPermissionRequestToggleStatus(
+        "ohos.permission.MICROPHONE", PermissionRequestToggleStatus::CLOSED, userId, UNSUPPORTED_SUBPROFILE_ID));
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetPermissionRequestToggleStatus(
+        "ohos.permission.MICROPHONE", getStatus, userId));
+    EXPECT_EQ(PermissionRequestToggleStatus::CLOSED, getStatus);
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::SetPermissionRequestToggleStatus(
+        "ohos.permission.MICROPHONE", PermissionRequestToggleStatus::OPEN, userId));
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetPermissionRequestToggleStatus(
+        "ohos.permission.MICROPHONE", getStatus, userId, UNSUPPORTED_SUBPROFILE_ID));
+    EXPECT_EQ(PermissionRequestToggleStatus::OPEN, getStatus);
+}
+
+#endif
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

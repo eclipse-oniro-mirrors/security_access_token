@@ -27,7 +27,7 @@ constexpr const char* BUSINESS_ERROR_CLASS = "@ohos.base.BusinessError";
 static const std::unordered_map<uint32_t, const char*> g_errorStringMap = {
     { STS_ERROR_PERMISSION_DENIED, "Permission denied." },
     { STS_ERROR_NOT_SYSTEM_APP, "Not System App. Interface caller is not a system app." },
-    { STS_ERROR_SYSTEM_CAPABILITY_NOT_SUPPORT, "Not support system capability." },
+    { STS_ERROR_SYSTEM_CAPABILITY_NOT_SUPPORT, "Capability not supported." },
     { STS_ERROR_START_ABILITY_FAIL, "Start grant ability failed." },
     { STS_ERROR_BACKGROUND_FAIL, "UI extension turn background failed." },
     { STS_ERROR_TERMINATE_FAIL, "UI extension terminate failed." },
@@ -37,7 +37,7 @@ static const std::unordered_map<uint32_t, const char*> g_errorStringMap = {
     { STS_ERROR_NOT_USE_TOGETHER, "The API is not used in pair with others." },
     { STS_ERROR_REGISTERS_EXCEED_LIMITATION, "The number of registered listeners exceeds limitation." },
     { STS_ERROR_PERMISSION_OPERATION_NOT_ALLOWED, "The operation of specified permission is not allowed." },
-    { STS_ERROR_SERVICE_NOT_RUNNING, "The service is abnormal." },
+    { STS_ERROR_SERVICE_NOT_RUNNING, "Service exception." },
     { STS_ERROR_OUT_OF_MEMORY, "Out of memory." },
     { STS_ERROR_INNER, "Common inner error." },
     { STS_ERROR_REQUEST_IS_ALREADY_EXIST, "The request already exists." },
@@ -47,6 +47,8 @@ static const std::unordered_map<uint32_t, const char*> g_errorStringMap = {
     { STS_ERROR_GLOBAL_SWITCH_IS_ALREADY_OPEN, "The specific global switch is already open." },
     { STS_ERROR_EXPECTED_PERMISSION_TYPE, "Unexpected permission."},
     { STS_ERROR_OVERSIZE, "The queried data exceeds the upper limit."},
+    { STS_ERROR_SUBPROFILE_NOT_EXIST, "The specified subProfileId does not exist under current user." },
+    { STS_ERROR_STORAGE_MODE_CONFLICT, "The storage mode conflicts." },
 };
 
 void BusinessErrorAni::ThrowError(ani_env* env, int32_t err, const std::string& errMsg)
@@ -146,6 +148,9 @@ int32_t BusinessErrorAni::GetStsErrorCode(int32_t errCode)
         case ERR_NOT_SYSTEM_APP:
             stsCode = STS_ERROR_NOT_SYSTEM_APP;
             break;
+        case ERR_CAPABILITY_NOT_SUPPORT:
+            stsCode = STS_ERROR_SYSTEM_CAPABILITY_NOT_SUPPORT;
+            break;
         case ERR_PARAM_INVALID:
             stsCode = STS_ERROR_PARAM_INVALID;
             break;
@@ -154,6 +159,12 @@ int32_t BusinessErrorAni::GetStsErrorCode(int32_t errCode)
             break;
         case ERR_PERMISSION_NOT_EXIST:
             stsCode = STS_ERROR_PERMISSION_NOT_EXIST;
+            break;
+        case ERR_PERMISSION_REQUEST_TOGGLE_SUBPROFILE_NOT_EXIST:
+            stsCode = STS_ERROR_SUBPROFILE_NOT_EXIST;
+            break;
+        case ERR_PERMISSION_REQUEST_TOGGLE_STORAGE_MODE_CONFLICT:
+            stsCode = STS_ERROR_STORAGE_MODE_CONFLICT;
             break;
         case ERR_INTERFACE_NOT_USED_TOGETHER:
         case ERR_CALLBACK_ALREADY_EXIST:

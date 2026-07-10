@@ -26,7 +26,6 @@
 
 #include "access_token_db.h"
 #include "access_token.h"
-#include "atm_tools_param_info.h"
 #include "iaccess_token_manager.h"
 #ifdef TOKEN_SYNC_ENABLE
 #include "device_manager.h"
@@ -62,7 +61,8 @@ public:
     ~AccessTokenInfoManager();
     void Init(uint32_t& nativeSize, uint32_t& pefDefSize, uint32_t& dlpSize);
     void InitNativeTokenInfos(const std::vector<NativeTokenInfoBase>& tokenInfos);
-    void GetTokenIDByUserID(int32_t userID, std::unordered_set<AccessTokenID>& tokenIdList);
+    void GetTokenIDByUserID(
+        int32_t userID, int32_t subProfileId, std::unordered_set<AccessTokenID>& tokenIdList);
     void GetAllNativeTokenPerms(const std::vector<uint32_t>& permCodeList,
         std::vector<PermissionStatusIdl>& permissionInfoList);
     void GetAllHapTokenId(std::unordered_set<AccessTokenID>& tokenIdList);

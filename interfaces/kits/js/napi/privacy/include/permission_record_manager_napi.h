@@ -34,6 +34,7 @@ struct RecordManagerAsyncContext : public PrivacyAsyncWorkData {
     explicit RecordManagerAsyncContext(napi_env env) : PrivacyAsyncWorkData(env) {}
 
     AccessTokenID   tokenId = 0;
+    int32_t         subProfileId = -1;
     std::string     permissionName;
     int32_t         successCount = 0;
     int32_t         failCount = 0;

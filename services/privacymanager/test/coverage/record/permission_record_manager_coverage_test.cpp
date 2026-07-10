@@ -1111,16 +1111,16 @@ HWTEST_F(PermissionRecordManagerTest, InsteadMergedRemoteRecIfNecessaryTest001, 
     mergedRecords.push_back(record);
 
     mergedRecords[0].deviceId = "id666";
-    PermissionRecordManager::GetInstance().InsteadMergedRemoteRecIfNecessary(queryValue, mergedRecords);
+    PermissionRecordManager::GetInstance().InsteadMergedRemoteRecIfNecessary(queryValue, USER_ID_100, mergedRecords);
 
     mergedRecords[0].deviceName = "name666";
-    PermissionRecordManager::GetInstance().InsteadMergedRemoteRecIfNecessary(queryValue, mergedRecords);
+    PermissionRecordManager::GetInstance().InsteadMergedRemoteRecIfNecessary(queryValue, USER_ID_100, mergedRecords);
 
     mergedRecords[0].opCode = 1;
-    PermissionRecordManager::GetInstance().InsteadMergedRemoteRecIfNecessary(queryValue, mergedRecords);
+    PermissionRecordManager::GetInstance().InsteadMergedRemoteRecIfNecessary(queryValue, USER_ID_100, mergedRecords);
 
     mergedRecords[0].timestamp = 1;
-    PermissionRecordManager::GetInstance().InsteadMergedRemoteRecIfNecessary(queryValue, mergedRecords);
+    PermissionRecordManager::GetInstance().InsteadMergedRemoteRecIfNecessary(queryValue, USER_ID_100, mergedRecords);
 
     PermissionRecordManager::GetInstance().remotePermUsedRecList_.clear();
     GenericValues conditions;
@@ -1158,7 +1158,7 @@ HWTEST_F(PermissionRecordManagerTest, BuildBundleUsedRecordsFromRemoteResultsTes
     PermissionUsageFlag flag = FLAG_PERMISSION_USAGE_SUMMARY;
 
     PermissionRecordManager::GetInstance().BuildBundleUsedRecordsFromRemoteResults(
-        findRecordsValues, mergedRecords, deviceIdToBundleMap, result, flag);
+        findRecordsValues, USER_ID_100, mergedRecords, deviceIdToBundleMap, result, flag);
 
     PermissionRecordManager::GetInstance().remotePermUsedRecList_.clear();
     GenericValues conditions;
@@ -1202,9 +1202,12 @@ HWTEST_F(PermissionRecordManagerTest, SetPermissionUsedRecordToggleStatus001, Te
 {
     MockNativeToken mock("privacy_service");
 
-    EXPECT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().SetPermissionUsedRecordToggleStatus(0, false));
-    EXPECT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().SetPermissionUsedRecordToggleStatus(0, true));
-    EXPECT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().SetPermissionUsedRecordToggleStatus(0, true));
+    EXPECT_EQ(Constant::SUCCESS,
+        PermissionRecordManager::GetInstance().SetPermissionUsedRecordToggleStatus(0, false, -1));
+    EXPECT_EQ(Constant::SUCCESS,
+        PermissionRecordManager::GetInstance().SetPermissionUsedRecordToggleStatus(0, true, -1));
+    EXPECT_EQ(Constant::SUCCESS,
+        PermissionRecordManager::GetInstance().SetPermissionUsedRecordToggleStatus(0, true, -1));
 
     AccessTokenIDEx tokenIdEx = PrivacyTestCommon::GetHapTokenIdFromBundle(
         g_InfoParms1.userID, g_InfoParms1.bundleName, g_InfoParms1.instIndex);
@@ -1213,11 +1216,14 @@ HWTEST_F(PermissionRecordManagerTest, SetPermissionUsedRecordToggleStatus001, Te
 
     GeneratePermissionRecord(tokenID);
 
-    EXPECT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().SetPermissionUsedRecordToggleStatus(1, false));
-    EXPECT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().SetPermissionUsedRecordToggleStatus(1, true));
     EXPECT_EQ(Constant::SUCCESS,
-        PermissionRecordManager::GetInstance().SetPermissionUsedRecordToggleStatus(105, false));
-    EXPECT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().SetPermissionUsedRecordToggleStatus(105, true));
+        PermissionRecordManager::GetInstance().SetPermissionUsedRecordToggleStatus(1, false, -1));
+    EXPECT_EQ(Constant::SUCCESS,
+        PermissionRecordManager::GetInstance().SetPermissionUsedRecordToggleStatus(1, true, -1));
+    EXPECT_EQ(Constant::SUCCESS,
+        PermissionRecordManager::GetInstance().SetPermissionUsedRecordToggleStatus(105, false, -1));
+    EXPECT_EQ(Constant::SUCCESS,
+        PermissionRecordManager::GetInstance().SetPermissionUsedRecordToggleStatus(105, true, -1));
 }
 
 /**
@@ -1229,10 +1235,14 @@ HWTEST_F(PermissionRecordManagerTest, SetPermissionUsedRecordToggleStatus001, Te
 HWTEST_F(PermissionRecordManagerTest, GetPermissionUsedRecordToggleStatus001, TestSize.Level4)
 {
     bool res = true;
-    EXPECT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().GetPermissionUsedRecordToggleStatus(0, res));
-    EXPECT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().GetPermissionUsedRecordToggleStatus(0, res));
-    EXPECT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().SetPermissionUsedRecordToggleStatus(106, res));
-    EXPECT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().SetPermissionUsedRecordToggleStatus(106, res));
+    EXPECT_EQ(Constant::SUCCESS,
+        PermissionRecordManager::GetInstance().GetPermissionUsedRecordToggleStatus(0, res, -1));
+    EXPECT_EQ(Constant::SUCCESS,
+        PermissionRecordManager::GetInstance().GetPermissionUsedRecordToggleStatus(0, res, -1));
+    EXPECT_EQ(Constant::SUCCESS,
+        PermissionRecordManager::GetInstance().SetPermissionUsedRecordToggleStatus(106, res, -1));
+    EXPECT_EQ(Constant::SUCCESS,
+        PermissionRecordManager::GetInstance().SetPermissionUsedRecordToggleStatus(106, res, -1));
 
     PermissionRecordManager::GetInstance().UpdatePermUsedRecToggleStatusMapFromDb();
 }
@@ -1359,7 +1369,7 @@ HWTEST_F(PermissionRecordManagerTest, GetRecordsFromLocalDBTest003, TestSize.Lev
 HWTEST_F(PermissionRecordManagerTest, AddOrUpdateUsedStatusIfNeeded001, TestSize.Level4)
 {
     PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::DataType::PERMISSION_USED_RECORD_TOGGLE_STATUS;
-    int32_t ret = PermissionRecordManager::GetInstance().AddOrUpdateUsedStatusIfNeeded(TEST_USER_ID_11, false);
+    int32_t ret = PermissionRecordManager::GetInstance().AddOrUpdateUsedStatusIfNeeded(TEST_USER_ID_11, -1, false);
     EXPECT_EQ(Constant::SUCCESS, ret);
 
     GenericValues conditionValue;
@@ -1375,7 +1385,7 @@ HWTEST_F(PermissionRecordManagerTest, AddOrUpdateUsedStatusIfNeeded001, TestSize
     }
     results.clear();
 
-    ret = PermissionRecordManager::GetInstance().AddOrUpdateUsedStatusIfNeeded(TEST_USER_ID_11, true);
+    ret = PermissionRecordManager::GetInstance().AddOrUpdateUsedStatusIfNeeded(TEST_USER_ID_11, -1, true);
     EXPECT_EQ(Constant::SUCCESS, ret);
     ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().Query(type, conditionValue, results));
     ASSERT_FALSE(results.empty());

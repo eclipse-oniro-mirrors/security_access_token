@@ -35,6 +35,7 @@ namespace Security {
 namespace AccessToken {
 namespace {
 static uint64_t g_selfTokenId = 0;
+static uid_t g_selfUid = 0;
 static const std::string TEST_BUNDLE_NAME = "ohos";
 static const unsigned int TEST_TOKENID_INVALID = 0;
 static const int TEST_USER_ID = 0;
@@ -49,6 +50,7 @@ static MockHapToken* g_mock = nullptr;
 void GetPermissionFlagTest::SetUpTestCase()
 {
     g_selfTokenId = GetSelfTokenID();
+    g_selfUid = getuid();
     TestCommon::SetTestEvironment(g_selfTokenId);
 
     // clean up test cases
@@ -119,6 +121,7 @@ void GetPermissionFlagTest::TearDown()
     if (tokenID != INVALID_TOKENID) {
         TestCommon::DeleteTestHapToken(tokenIdEx.tokenIdExStruct.tokenID);
     }
+    setuid(g_selfUid);
 }
 
 /**
