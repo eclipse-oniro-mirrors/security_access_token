@@ -90,7 +90,6 @@ static const uint32_t PICKER_TYPE_ADD_VALUE = 2;
 static const uint32_t SEC_COMPONENT_TYPE_ADD_VALUE = 4;
 static constexpr int64_t ONE_MINUTE_MILLISECONDS = 60 * 1000; // 1 min = 60 * 1000 ms
 static constexpr int32_t MAX_USER_ID = 10736;
-static constexpr int32_t BASE_USER_RANGE = 200000;
 static constexpr int32_t LEGACY_SUBPROFILE_ID = -1;
 #ifndef MAX_COUNT_TEST
 static const uint32_t MAX_PERMISSION_USED_TYPE_SIZE = 2000;
@@ -931,9 +930,8 @@ static void AddRemoteDebugLog(const std::string& deviceId, const BundleUsedRecor
 }
 
 int32_t PermissionRecordManager::GetRemotePermissionUsedRecords(
-    const PermissionUsedRequest& request, PermissionUsedResult& result)
+    const PermissionUsedRequest& request, int32_t userId, PermissionUsedResult& result)
 {
-    int32_t userId = IPCSkeleton::GetCallingUid() / BASE_USER_RANGE;
     if (!request.isRemote || !PermissionRecordManager::IsUserIdValid(userId) ||
         !DataValidator::IsRemotePermissionUsedFlagValid(request.flag)) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Invalid param");
@@ -1261,6 +1259,10 @@ int32_t PermissionRecordManager::SetPermissionUsedRecordToggleStatus(int32_t use
     subProfileId = LEGACY_SUBPROFILE_ID;
 #endif
 
+    if (status) {
+        return DeletePermUsedRecToggleStatus(userID, subProfileId);
+    }
+
     if (!status) {
         std::unordered_set<AccessTokenID> tokenIDList;
         int32_t ret = AccessTokenKit::GetTokenIDByUserID(userID, tokenIDList, subProfileId);
@@ -1316,6 +1318,20 @@ bool PermissionRecordManager::UpdatePermUsedRecToggleStatusMap(int32_t userID, i
     }
 
     return false;
+}
+
+int32_t PermissionRecordManager::DeletePermUsedRecToggleStatus(int32_t userID, int32_t subProfileId)
+{
+    {
+        std::lock_guard<std::mutex> lock(permUsedRecToggleStatusMutex_);
+        permUsedRecToggleStatusMap_.erase(BuildToggleStatusKey(userID, subProfileId));
+    }
+
+    GenericValues conditionValue;
+    conditionValue.Put(PrivacyFiledConst::FIELD_USER_ID, userID);
+    conditionValue.Put(PrivacyFiledConst::FIELD_SUB_PROFILE_ID, subProfileId);
+    return PermissionUsedRecordDb::GetInstance().Remove(
+        PermissionUsedRecordDb::DataType::PERMISSION_USED_RECORD_TOGGLE_STATUS, conditionValue);
 }
 
 int32_t PermissionRecordManager::AddOrUpdateUsedStatusIfNeeded(int32_t userID, int32_t subProfileId, bool status)

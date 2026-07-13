@@ -101,7 +101,7 @@
 | 2026-06-11 | 用户、Codex | 产品范围与 feature 策略 | 仅车机生效；新增 feature 隔离；其他平台不定义该 feature 时，旧接口默认走原行为，同名新增 `subProfileId` 签名返回 `801` | 继续确认旧 JS API 兼容规则、发行版本和 owner |
 | 2026-06-11 | 用户、Codex | 旧 JS API 兼容规则 | 旧 JS API 默认保持原行为；但一旦某 `userId` 已存在基于 `subProfileId` 的新数据，再调用不传 `subProfileId` 的旧接口执行设置时返回错误码 | 继续确认发行版本和 owner |
 | 2026-06-11 | 用户、Codex | 版本与 Owner 占位 | 目标版本为 `master`；Owner 暂记 `TBD` | 等待需求方对 Define 基线做最终确认 |
-| 2026-06-11 | 用户、Codex | `userId/subProfileId` 前置校验约束 | 1) InnerKit 新路径传入 `userId=0` 时获取 `callingUid` 计算当前 `userId`；2) InnerKit 新路径传入 `userId!=0` 时直接返回 `201`；3) 传入 `subProfileId>=0` 时需校验当前 `userId` 下是否存在对应 `subProfileId`，不存在则返回新增错误码；4) `subProfileId` 默认值为 `-1`，任何 `<0` 的场景统一按旧路径存取处理 | 纳入 API 约束、AC 和错误码设计 |
+| 2026-06-11 | 用户、Codex | `userId/subProfileId` 前置校验约束 | 1) InnerKit 新路径传入 `userId=0` 时获取 `callingUid` 计算当前 `userId`；2) InnerKit 新路径传入 `userId!=0` 时直接返回 `201`；3) 传入 `subProfileId>=0` 时需校验当前 `userId` 下是否存在对应 `subProfileId`，不存在时 InnerKit 返回对应模块专用错误码，JS/ANI 映射为 `12100001`；4) `subProfileId` 默认值为 `-1`，任何 `<0` 的场景统一按旧路径存取处理 | 纳入 API 约束、AC 和错误码设计 |
 
 ### 功能范围确认
 
@@ -143,7 +143,7 @@
 | 兼容性 | 旧 `userId` 维度调用和存量数据如何兼容 | 旧 `userId` 存量数据先对该 `userId` 下各 `subProfileId` 继承读取；仅车机定义 feature 时启用新行为，其他平台维持原行为；非车机调用同名新增 `subProfileId` 签名时直接返回 `801`；旧 JS API 默认保持原行为，但若某 `userId` 已存在基于 `subProfileId` 的新数据，则调用不传 `subProfileId` 的旧接口执行设置也返回错误码，此行为属于旧接口兼容性变更；若某 `userId` 仍存在旧数据，则按 `subProfileId` 执行 `status=true` 或 `status=false` 时都返回错误码，必须通过旧路径完成老数据清理后，才能基于 `subProfileId` 再设置；InnerKit 新路径保留 `userId` 参数并新增 `subProfileId` 入参，但 `userId` 仅支持传 `0`，服务端通过 `callingUid` 计算当前 `userId`，`subProfileId` 默认值为 `-1`，任何 `<0` 均按旧路径存取处理 | 需求方 | 已确认 |
 | 性能 | 开关查询/设置不能明显增加热路径成本 | feature 未开启平台保持原路径；车机新增 `subProfileId` 维度不应引入明显性能回退 | 需求方 | 已确认 |
 | 安全 | 子档案间必须隔离开关状态，避免串读串写 | 启用 feature 后必须按 `subProfileId` 隔离读写，旧 API 不可误入新语义 | 需求方 | 已确认 |
-| 可靠性 | 持久化与内存态需保持一致 | 旧数据清理必须通过旧 `userId` 路径完成，并同步删除数据库和缓存中的旧记录；只有确认清理完成后，后续按 `subProfileId` 的新写入才允许生效；新增路径在 `subProfileId>=0` 时必须先校验该 `userId` 下是否存在对应 `subProfileId`，不存在则返回新增错误码；`subProfileId<0` 时统一按旧路径存取处理，不进入 profile 校验分支 | 需求方 | 已确认 |
+| 可靠性 | 持久化与内存态需保持一致 | 旧数据清理必须通过旧 `userId` 路径完成，并同步删除数据库和缓存中的旧记录；只有确认清理完成后，后续按 `subProfileId` 的新写入才允许生效；新增路径在 `subProfileId>=0` 时必须先校验该 `userId` 下是否存在对应 `subProfileId`，不存在时 InnerKit 返回对应模块专用错误码，JS/ANI 映射为 `12100001`；`subProfileId<0` 时统一按旧路径存取处理，不进入 profile 校验分支 | 需求方 | 已确认 |
 
 ### 依赖与风险
 
@@ -155,7 +155,7 @@
 |------|------|------|----------|------|
 | feature 开关定义不清导致车机/非车机行为分叉错误 | 技术 | 高 | 在 design/spec 中明确 feature 名称、默认值和未定义时回退原行为 | 已识别 |
 | 旧数据未清理就按 `subProfileId` 访问新接口导致新旧语义并存 | 技术 | 高 | 在 spec/design 中定义明确错误码、旧路径清理顺序以及 DB/缓存一致性校验 | 已识别 |
-| `userId` / `subProfileId` 前置校验不一致导致调用方行为混乱 | 技术 | 高 | 在 spec/design 中明确 `userId=0` 的 `callingUid` 解析、`userId!=0` 返回 `201`、以及 `subProfileId` 不存在时的新增错误码 | 已识别 |
+| `userId` / `subProfileId` 前置校验不一致导致调用方行为混乱 | 技术 | 高 | 在 spec/design 中明确 `userId=0` 的 `callingUid` 解析、`userId!=0` 返回 `201`、以及 `subProfileId` 不存在时 InnerKit/JS/ANI 的错误码映射 | 已识别 |
 | 已有 `subProfileId` 新数据后继续调用旧接口写入导致双写冲突 | 技术 | 高 | 在 spec/design 中明确旧接口写入阻塞规则和对应错误码 | 已识别 |
 
 ### AC 完整性
@@ -205,9 +205,9 @@
 | 目标 | 成功指标 | 验证方式 |
 |------|----------|----------|
 | 支持 `subProfileId` 维度开关隔离 | 车机同一 `userId` 下不同 `subProfileId` 的开关状态可独立读写 | 单元测试 + 服务侧回归测试 |
-| 保持非车机场景兼容 | 非车机平台未定义 feature 时旧接口保持原行为不变；同名新增 `subProfileId` 签名返回 `801`；车机已切入 `subProfileId` 新数据后，旧接口新增错误码属于兼容性变更，需单独回归验证 | feature 关闭路径回归测试 |
+| 保持非车机场景兼容 | 非车机平台未定义 feature 时旧接口保持原行为不变；同名新增 `subProfileId` 签名返回 `801`；车机已切入 `subProfileId` 新数据后，旧接口新增错误返回属于兼容性变更，需单独回归验证 | feature 关闭路径回归测试 |
 | 保持存量数据兼容 | 车机启用 feature 后，旧 `userId` 存量开关数据可被该 `userId` 下各 `subProfileId` 继承读取；当存在旧数据时，按 `subProfileId` 执行 `true` 或 `false` 都返回错误码，只有旧路径完成老数据 DB/缓存清理后才允许新的 `subProfileId` 写入 | 迁移/继承场景测试 |
-| 保持新增路径入参约束一致 | InnerKit 新路径保留 `userId` 参数但仅允许传 `0`；JS 新签名不暴露 `userId`；`subProfileId` 默认 `-1` 且 `<0` 按旧路径存取；`subProfileId` 不存在时返回新增错误码 | 参数校验场景测试 |
+| 保持新增路径入参约束一致 | InnerKit 新路径保留 `userId` 参数但仅允许传 `0`；JS 新签名不暴露 `userId`；`subProfileId` 默认 `-1` 且 `<0` 按旧路径存取；`subProfileId` 不存在时 InnerKit 返回对应模块专用错误码，JS/ANI 映射为 `12100001` | 参数校验场景测试 |
 
 ### 用户故事与 AC
 
@@ -224,7 +224,7 @@
 | AC-4 | WHEN 车机产品定义新 feature 且某 `userId` 的旧数据已通过旧 `userId` 路径完成数据库和缓存清理 THEN 系统允许后续按 `subProfileId` 执行新的设置和读取 | 边界 | US-1,US-2 |
 | AC-5 | WHEN 调用新增路径时传入 `userId=0` THEN 系统使用 `callingUid` 解析当前 `userId` 再继续后续 `subProfileId` 逻辑 | 正常 | US-1,US-2 |
 | AC-6 | WHEN 调用新增路径时传入 `userId!=0` THEN 系统直接返回 `201` 错误码 | 异常 | US-1,US-2 |
-| AC-7 | WHEN 调用新增路径且传入 `subProfileId>=0` 但当前 `userId` 下不存在该 `subProfileId` THEN 系统返回新增错误码 | 异常 | US-1,US-2 |
+| AC-7 | WHEN 调用新增路径且传入 `subProfileId>=0` 但当前 `userId` 下不存在该 `subProfileId` THEN InnerKit 返回对应模块专用错误码，JS/ANI 映射为 `12100001` | 异常 | US-1,US-2 |
 | AC-8 | WHEN 某 `userId` 已存在基于 `subProfileId` 的新数据 AND 调用不传 `subProfileId` 的旧接口执行设置 THEN 系统返回约定错误码 | 兼容性 | US-1,US-2 |
 | AC-9 | WHEN 非车机平台未定义该 feature 且调用同名新增 `subProfileId` 签名 THEN 系统返回 `801` 错误码 | 兼容性 | US-1,US-2 |
 | AC-10 | WHEN 非车机平台未定义该 feature 或调用旧 JS API 且当前 `userId` 尚不存在任何 `subProfileId` 新数据 THEN 系统保持原有 `userId` / 旧行为，不引入 `subProfileId` 语义变化 | 兼容性 | US-1,US-2 |
@@ -262,7 +262,7 @@
 | 构建与部件 | 是 | 需增加车机专属 feature 隔离与默认回退行为 | design.md |
 | 国际化/无障碍 | 否 | 无 UI 文案变更 | N/A |
 | 数据迁移 | 是 | 旧 `userId` 存量开关数据需支持继承读取、旧路径触发的 DB/缓存清理、清理后的 `subProfileId` 新写入，以及已有 `subProfileId` 新数据时对旧接口写入的阻塞 | design.md / spec.md |
-| 错误码 | 是 | 需明确复用 `201` 的场景，以及 `subProfileId` 不存在时的新增错误码 | design.md / spec.md |
+| 错误码 | 是 | 需明确复用 `201` 的场景，以及 `subProfileId` 不存在时 InnerKit/JS/ANI 的错误码映射 | design.md / spec.md |
 
 ### 基线结论
 

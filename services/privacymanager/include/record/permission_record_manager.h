@@ -97,7 +97,8 @@ public:
     void CallbackRemoteExecute(const RemoteContinuousPermissionRecord& record, const std::string& remoteDeviceId,
         const std::string& remoteDeviceName, const std::string& permissionName, ActiveChangeType type);
     int32_t AddRemotePermissionUsedRecord(const RemoteAddPermParamInfo& info);
-    int32_t GetRemotePermissionUsedRecords(const PermissionUsedRequest& request, PermissionUsedResult& result);
+    int32_t GetRemotePermissionUsedRecords(
+        const PermissionUsedRequest& request, int32_t userId, PermissionUsedResult& result);
 #endif
 #ifdef PRIVACY_BUNDLE_START_STOP_ENABLE
     int32_t StartUsingPermission(const std::string& bundleName, const std::string& permissionName, int32_t callerPid);
@@ -153,6 +154,7 @@ private:
     bool VerifyNativeRecordPermission(const std::string& permissionName, const AccessTokenID& tokenId);
     int32_t NormalizeRecordTokenId(AccessTokenID inputTokenId, AccessTokenID& outputTokenId);
     bool UpdatePermUsedRecToggleStatusMap(int32_t userID, int32_t subProfileId, bool status);
+    int32_t DeletePermUsedRecToggleStatus(int32_t userID, int32_t subProfileId);
     void UpdatePermUsedRecToggleStatusMapFromDb();
     int32_t AddPermissionUsedRecordInner(
         const AddPermParamInfo& info, AccessTokenID callingTokenID, int32_t callingPid);

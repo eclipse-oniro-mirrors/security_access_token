@@ -48,6 +48,8 @@ private:
 
     int32_t AddPermRequestToggleStatusToDb(
         int32_t userID, const std::string& permissionName, int32_t subProfileId, uint32_t status);
+    int32_t DeletePermRequestToggleStatusFromDb(
+        int32_t userID, const std::string& permissionName, int32_t subProfileId);
     int32_t FindPermRequestToggleStatusFromDb(
         int32_t userID, const std::string& permissionName, int32_t subProfileId, uint32_t& status);
     int32_t ValidatePermissionForToggle(const std::string& permissionName, int32_t userID) const;

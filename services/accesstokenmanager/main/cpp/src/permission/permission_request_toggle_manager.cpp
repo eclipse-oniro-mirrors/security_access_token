@@ -69,6 +69,12 @@ int32_t ValidateStorageModeConflict(int32_t userID, const std::string& permissio
     }) ? AccessTokenError::ERR_PERMISSION_REQUEST_TOGGLE_STORAGE_MODE_CONFLICT : RET_SUCCESS;
 }
 #endif
+
+uint32_t GetDefaultToggleStatus(const std::string& permissionName)
+{
+    return (permissionName == APP_TRACKING_CONSENT) ? PermissionRequestToggleStatus::CLOSED :
+        PermissionRequestToggleStatus::OPEN;
+}
 }
 
 PermissionRequestToggleManager& PermissionRequestToggleManager::GetInstance()
@@ -123,6 +129,24 @@ int32_t PermissionRequestToggleManager::AddPermRequestToggleStatusToDb(
     return RET_SUCCESS;
 }
 
+int32_t PermissionRequestToggleManager::DeletePermRequestToggleStatusFromDb(
+    int32_t userID, const std::string& permissionName, int32_t subProfileId)
+{
+    GenericValues condition;
+    condition.Put(TokenFiledConst::FIELD_USER_ID, userID);
+    condition.Put(TokenFiledConst::FIELD_PERMISSION_NAME, permissionName);
+    condition.Put(TokenFiledConst::FIELD_SUB_PROFILE_ID, subProfileId);
+
+    std::vector<DelInfo> delInfoVec;
+    AccessTokenInfoUtils::GenerateDelInfoToVec(
+        AtmDataType::ACCESSTOKEN_PERMISSION_REQUEST_TOGGLE_STATUS, condition, delInfoVec);
+    int32_t ret = AccessTokenDbOperator::DeleteAndInsertValues(delInfoVec, {});
+    if (ret != RET_SUCCESS) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Delete request toggle status failed, ret=%{public}d.", ret);
+    }
+    return ret;
+}
+
 int32_t PermissionRequestToggleManager::FindPermRequestToggleStatusRecordsFromDb(
     int32_t userID, const std::string& permissionName, int32_t subProfileId, std::vector<GenericValues>& result,
     bool queryAllSubProfileRecords) const
@@ -166,7 +190,9 @@ int32_t PermissionRequestToggleManager::SetPermissionRequestToggleStatus(
     subProfileId = LEGACY_SUBPROFILE_ID;
 #endif
 
-    ret = AddPermRequestToggleStatusToDb(userID, permissionName, subProfileId, status);
+    const uint32_t defaultStatus = GetDefaultToggleStatus(permissionName);
+    ret = (status == defaultStatus) ? DeletePermRequestToggleStatusFromDb(userID, permissionName, subProfileId) :
+        AddPermRequestToggleStatusToDb(userID, permissionName, subProfileId, status);
     if (ret != RET_SUCCESS) {
         return ret;
     }
@@ -179,8 +205,7 @@ int32_t PermissionRequestToggleManager::SetPermissionRequestToggleStatus(
 int32_t PermissionRequestToggleManager::FindPermRequestToggleStatusFromDb(
     int32_t userID, const std::string& permissionName, int32_t subProfileId, uint32_t& status)
 {
-    const uint32_t defaultStatus = (permissionName == APP_TRACKING_CONSENT) ?
-        PermissionRequestToggleStatus::CLOSED : PermissionRequestToggleStatus::OPEN;
+    const uint32_t defaultStatus = GetDefaultToggleStatus(permissionName);
     std::vector<GenericValues> records;
     int32_t ret = FindPermRequestToggleStatusRecordsFromDb(
         userID, permissionName, subProfileId, records, subProfileId != LEGACY_SUBPROFILE_ID);

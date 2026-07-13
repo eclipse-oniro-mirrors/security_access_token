@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -26,11 +26,11 @@ static const std::map<uint32_t, std::string> g_errorStringMap = {
     {JS_ERROR_BACKGROUND_FAIL, "Ui extension turn background failed."},
     {JS_ERROR_TERMINATE_FAIL, "Ui extension terminate failed."},
     {JS_ERROR_PARAM_INVALID, "Invalid parameter."},
-    {JS_ERROR_TOKENID_NOT_EXIST, "The specified tokenID does not exist."},
-    {JS_ERROR_PERMISSION_NOT_EXIST, "The specified permission does not exist."},
+    {JS_ERROR_TOKENID_NOT_EXIST, "TokenId does not exist."},
+    {JS_ERROR_PERMISSION_NOT_EXIST, "Permission does not exist."},
     {JS_ERROR_NOT_USE_TOGETHER, "The API is not used in pair with others."},
-    {JS_ERROR_REGISTERS_EXCEED_LIMITATION, "The number of registered listeners exceeds limitation."},
-    {JS_ERROR_PERMISSION_OPERATION_NOT_ALLOWED, "The operation of specified permission is not allowed."},
+    {JS_ERROR_REGISTERS_EXCEED_LIMITATION, "The number of listeners exceeds the limit."},
+    {JS_ERROR_PERMISSION_OPERATION_NOT_ALLOWED, "The operation is not allowed."},
     {JS_ERROR_SERVICE_NOT_RUNNING, "Service exception."},
     {JS_ERROR_OUT_OF_MEMORY, "Out of memory."},
     {JS_ERROR_INNER, "Common inner error."},
@@ -41,8 +41,6 @@ static const std::map<uint32_t, std::string> g_errorStringMap = {
     {JS_ERROR_GLOBAL_SWITCH_IS_ALREADY_OPEN, "The specific global switch is already open."},
     {JS_ERROR_EXPECTED_PERMISSION_TYPE, "Unexpected permission."},
     {JS_ERROR_OVERSIZE, "The queried data exceeds the upper limit."},
-    {JS_ERROR_SUBPROFILE_NOT_EXIST, "The specified subProfileId does not exist under current user."},
-    {JS_ERROR_STORAGE_MODE_CONFLICT, "The storage mode conflicts."},
 };
 
 std::string GetParamErrorMsg(const std::string& param, const std::string& type)

@@ -17,7 +17,7 @@
 
 | 类型 | 内容 | 说明 |
 |------|------|------|
-| ADDED | JS/ETS 原函数名新增带 `subProfileId` 入参的新签名 | 仅 `ACCESS_TOKEN_SUPPORT_SUBPROFILE` 定义时可用；未定义时调用新增签名返回 `801` |
+| ADDED | JS/ETS 新增带 `subProfileId` 入参的 System API | 仅 `ACCESS_TOKEN_SUPPORT_SUBPROFILE` 定义时可用；未定义时调用新增接口返回 `801`；旧接口保留 |
 | MODIFIED | InnerKit 开关接口签名 | 保留原 `userId` 参数位，新增 `subProfileId` 入参，默认值为 `-1`；`userId` 仅允许传 `0`；`subProfileId<0` 按旧路径存取；未定义 feature 时服务端统一按 `-1` 处理 |
 | MODIFIED | 开关兼容规则 | 老数据存在时，新路径写入一律报错；新数据存在时，旧接口写入也报错，且该错误返回属于旧接口兼容性变更 |
 | MODIFIED | 新路径参数约束 | JS 新接口不暴露 `userId`，服务端使用 `callingUid`；非 JS 新路径若传 `userId!=0` 返回 `201` |
@@ -41,8 +41,8 @@
 
 - **AC-1.1:** WHEN 车机产品定义新 feature 且调用新增权限弹框开关 API 传入合法 `subProfileId` THEN 系统应当按当前 `userId + subProfileId + permissionName` 维度独立设置和读取开关
 - **AC-1.2:** WHEN 调用新增权限弹框开关 JS 接口 THEN 系统应当从 `callingUid` 解析当前 `userId`
-- **AC-1.3:** WHEN 新路径传入的 `subProfileId>=0` 且 `callingUid` 解析出的当前 `userId` 下不存在对应 `subProfileId` THEN 系统应当返回新增错误码
-- **AC-1.4:** WHEN 该 `userId` 仍存在旧 `userId` 维度存量弹框开关数据 THEN 新路径对该 `subProfileId` 执行 `status=true` 或 `status=false` 都应返回兼容错误码
+- **AC-1.3:** WHEN 新路径传入的 `subProfileId>=0` 且 `callingUid` 解析出的当前 `userId` 下不存在对应 `subProfileId` THEN InnerKit 返回对应模块的 subProfile 不存在错误码，JS/ANI 映射为 `12100001`
+- **AC-1.4:** WHEN 该 `userId` 仍存在旧 `userId` 维度存量弹框开关数据 THEN 新路径对该 `subProfileId` 执行 `OPEN` 或 `CLOSED` 都应返回兼容错误码
 - **AC-1.5:** WHEN InnerKit 新路径传入 `subProfileId<0` THEN 系统应当按旧路径执行弹框开关存取
 
 ### US-2: 车机 `subProfileId` 权限使用记录开关
@@ -55,7 +55,7 @@
 
 - **AC-2.1:** WHEN 车机产品定义新 feature 且调用新增权限使用记录开关 API 传入合法 `subProfileId` THEN 系统应当按当前 `userId + subProfileId` 维度独立设置和读取开关
 - **AC-2.2:** WHEN 调用新增权限使用记录开关 JS 接口 THEN 系统应当从 `callingUid` 解析当前 `userId`
-- **AC-2.3:** WHEN 新路径传入的 `subProfileId>=0` 且 `callingUid` 解析出的当前 `userId` 下不存在对应 `subProfileId` THEN 系统应当返回新增错误码
+- **AC-2.3:** WHEN 新路径传入的 `subProfileId>=0` 且 `callingUid` 解析出的当前 `userId` 下不存在对应 `subProfileId` THEN InnerKit 返回对应模块的 subProfile 不存在错误码，JS/ANI 映射为 `12100001`
 - **AC-2.4:** WHEN 该 `userId` 仍存在旧 `userId` 维度存量记录开关数据 THEN 新路径对该 `subProfileId` 执行 `status=true` 或 `status=false` 都应返回兼容错误码
 - **AC-2.5:** WHEN InnerKit 新路径传入 `subProfileId<0` THEN 系统应当按旧路径执行使用记录开关存取
 
@@ -70,7 +70,7 @@
 - **AC-3.1:** WHEN 车机产品定义新 feature 且某 `userId` 仍存在旧 `userId` 维度存量开关数据 THEN 该 `userId` 下各 `subProfileId` 的读取结果应继承该旧数据
 - **AC-3.2:** WHEN 该 `userId` 的旧数据已通过旧路径完成数据库和缓存清理 THEN 系统应当允许后续按 `subProfileId` 执行新的设置和读取
 - **AC-3.3:** WHEN 某 `userId` 已存在基于 `subProfileId` 的新数据 AND 调用不传 `subProfileId` 的旧接口执行设置 THEN 系统应当返回兼容错误码
-- **AC-3.4:** WHEN `ACCESS_TOKEN_SUPPORT_SUBPROFILE` 未定义且调用同名新增 `subProfileId` 签名 THEN 系统应当返回 `801`
+- **AC-3.4:** WHEN `ACCESS_TOKEN_SUPPORT_SUBPROFILE` 未定义且调用新增 `subProfileId` JS/ETS 接口 THEN 系统应当返回 `801`
 - **AC-3.5:** WHEN `ACCESS_TOKEN_SUPPORT_SUBPROFILE` 未定义或调用旧 JS API 且当前 `userId` 尚不存在任何 `subProfileId` 新数据 THEN 系统应当保持原有 `userId` / 旧行为，不引入 `subProfileId` 语义变化
 
 ## 验收追溯
@@ -97,15 +97,16 @@
 
 | 编号 | 规则描述 | 约束条件 | 关联 AC |
 |------|----------|----------|---------|
-| BR-1 | 新路径仅在 `ACCESS_TOKEN_SUPPORT_SUBPROFILE` 开启时使用 `subProfileId` 语义 | feature 未定义时，同名新增 `subProfileId` 签名返回 `801` | AC-1.1, AC-2.1, AC-3.5 |
+| BR-1 | 新路径仅在 `ACCESS_TOKEN_SUPPORT_SUBPROFILE` 开启时使用 `subProfileId` 语义 | feature 未定义时，新增 `subProfileId` JS/ETS 接口返回 `801` | AC-1.1, AC-2.1, AC-3.5 |
 | BR-2 | JS 新路径不暴露 `userId`，服务端统一通过 `callingUid` 解析 | 非 JS 新路径若传 `userId!=0` 直接返回 `201` | AC-1.2, AC-2.2 |
-| BR-3 | 新路径中的 `subProfileId` 必须属于 `callingUid` 解析出的当前 `userId` | 不存在返回新增错误码 | AC-1.3, AC-2.3 |
-| BR-4 | 老 `userId` 数据存在时，新路径只允许继承读取，不允许写入 | `status=true/false` 都返回兼容错误码 | AC-1.4, AC-2.4, AC-3.1 |
+| BR-3 | 新路径中的 `subProfileId` 必须属于 `callingUid` 解析出的当前 `userId` | 不存在时 InnerKit 返回对应模块专用错误码，JS/ANI 映射为 `12100001` | AC-1.3, AC-2.3 |
+| BR-4 | 老 `userId` 数据存在时，新路径只允许继承读取，不允许写入 | 权限弹框 `OPEN/CLOSED` 和 Privacy `true/false` 都返回兼容错误码 | AC-1.4, AC-2.4, AC-3.1 |
 | BR-5 | 已存在 `subProfileId` 新数据时，旧接口不允许再执行设置 | 调用不传 `subProfileId` 的旧接口设置时返回兼容错误码 | AC-3.3 |
 | BR-6 | `subProfileId<0` 按旧路径处理 | 不进入 `subProfileId` 维度校验和新路径存储 | AC-1.5, AC-2.5 |
-| BR-9 | 未定义 feature 时服务端统一将任意 InnerKit `subProfileId` 归一化为 `-1` | 仅 feature 开启场景保留 `subProfileId>=0` 语义；JS/ETS 新签名在 feature 未定义时返回 `801` | AC-3.4, AC-3.5 |
+| BR-9 | 未定义 feature 时服务端统一将任意 InnerKit `subProfileId` 归一化为 `-1` | 仅 feature 开启场景保留 `subProfileId>=0` 语义；JS/ETS 新增接口在 feature 未定义时返回 `801` | AC-3.4, AC-3.5 |
 | BR-7 | 数据库通过 `sub_profile_id` 列区分旧路径与新路径数据 | `sub_profile_id = -1` 表示旧路径，`sub_profile_id >= 0` 表示新路径 | AC-3.1, AC-3.2, AC-3.3 |
 | BR-8 | 数据库升级新增 `sub_profile_id` 列时历史记录按旧路径处理 | 升级后历史数据统一视为 `sub_profile_id = -1` | AC-3.1, AC-3.2 |
+| BR-10 | toggle 状态表只保存偏离默认值的显式状态 | 设置为默认状态时删除目标维度 DB/缓存状态记录；设置为非默认状态时写入状态记录 | AC-1.1, AC-2.1, AC-3.2 |
 
 ## 功能规则
 
@@ -120,15 +121,16 @@
 | FR-7 | 新路径查询在仅存在旧记录时继承旧记录值 | `sub_profile_id = -1` 旧记录存在且无新记录 | ATM/Privacy 查询 | AC-3.1 |
 | FR-8 | `subProfileId >= 0` 时必须校验其属于当前 `userId` | feature 开启且 `subProfileId >= 0` | ATM/Privacy 新路径入口 | AC-1.3, AC-2.3 |
 | FR-9 | 数据库升级后历史记录默认走旧路径语义 | 历史记录 `sub_profile_id` 缺省或初始化为 `-1` | ATM/Privacy 读写 | AC-3.1, AC-3.2 |
+| FR-10 | 权限弹框按权限定义默认状态，Privacy 统一默认开启 | `APP_TRACKING_CONSENT` 默认 `CLOSED`；其他权限弹框默认 `OPEN`；Privacy record toggle 默认 `true` | ATM/Privacy 查询和设置 | AC-1.1, AC-2.1 |
 
 ## 异常/豁免规则
 
 | 编号 | 异常码/枚举 | 规则描述 | 触发条件 | 超时阈值 | 处理结果 | 关联 AC |
 |------|------------|----------|----------|----------|----------|---------|
-| EX-0 | `801` | feature 未定义时不支持新签名 | `ACCESS_TOKEN_SUPPORT_SUBPROFILE` 未定义时调用同名新增 `subProfileId` 签名 | N/A | 直接返回错误码 | AC-3.4 |
+| EX-0 | `801` | feature 未定义时不支持新增接口 | `ACCESS_TOKEN_SUPPORT_SUBPROFILE` 未定义时调用新增 `subProfileId` JS/ETS 接口 | N/A | 直接返回错误码 | AC-3.4 |
 | EX-1 | `201` | 非法内部 `userId` | 非 JS 新路径传入 `userId!=0` | N/A | 直接返回错误码 | 内部路径约束 |
 | EX-2 | `ERR_PERMISSION_REQUEST_TOGGLE_SUBPROFILE_NOT_EXIST` / `ERR_PERMISSION_USED_RECORD_SUBPROFILE_NOT_EXIST` | `subProfileId` 不存在 | `subProfileId>=0` 且不属于 `callingUid` 解析出的当前 `userId` | N/A | ATM/Privacy 分别返回对应的 subProfile 不存在错误码 | AC-1.3, AC-2.3 |
-| EX-3 | `ERR_PERMISSION_REQUEST_TOGGLE_STORAGE_MODE_CONFLICT` / `ERR_PERMISSION_USED_RECORD_STORAGE_MODE_CONFLICT` | 存储模式冲突阻塞新路径写入 | 旧 `userId` 数据存在且新路径 set `true/false` | N/A | ATM/Privacy 分别返回对应冲突错误码 | AC-1.4, AC-2.4 |
+| EX-3 | `ERR_PERMISSION_REQUEST_TOGGLE_STORAGE_MODE_CONFLICT` / `ERR_PERMISSION_USED_RECORD_STORAGE_MODE_CONFLICT` | 存储模式冲突阻塞新路径写入 | 旧 `userId` 数据存在，且新路径 set 权限弹框 `OPEN/CLOSED` 或 Privacy `true/false` | N/A | ATM/Privacy 分别返回对应冲突错误码 | AC-1.4, AC-2.4 |
 | EX-4 | `ERR_PERMISSION_REQUEST_TOGGLE_STORAGE_MODE_CONFLICT` / `ERR_PERMISSION_USED_RECORD_STORAGE_MODE_CONFLICT` | 存储模式冲突阻塞旧接口写入 | 已存在 `subProfileId` 新数据且旧接口执行设置 | N/A | ATM/Privacy 分别返回对应冲突错误码 | AC-3.3 |
 
 ## 恢复契约
@@ -143,23 +145,23 @@
 |------|------------|----------|----------|
 | VM-1 | BR-2 | 单测 | JS 新接口 `callingUid` 解析分支 |
 | VM-2 | BR-3 / EX-2 | 单测 | `subProfileId` 存在性校验和对应子系统的 subProfile 不存在错误码 |
-| VM-3 | BR-4 / EX-3 | 单测/集成 | 老数据阻塞 `true/false` 写入 |
+| VM-3 | BR-4 / EX-3 | 单测/集成 | 老数据阻塞权限弹框 `OPEN/CLOSED` 和 Privacy `true/false` 写入 |
 | VM-4 | BR-5 / EX-4 | 单测/集成 | 新数据存在时旧接口写入被阻塞 |
 | VM-5 | BR-6 / FR-6 | 单测 | `subProfileId<0` 按旧路径存取 |
 | VM-6 | RC-1 | 集成 | 旧路径清理后切换成功 |
-| VM-7 | BR-1 / EX-0 | 回归 | feature 未定义时调用新签名返回 `801` |
+| VM-7 | BR-1 / EX-0 | 回归 | feature 未定义时调用新增接口返回 `801` |
 | VM-8 | BR-1 / AC-3.5 | 回归 | feature 未定义时旧 API 保持原行为 |
 
 ## API 变更分析
 
 ### 新增 API
 
-| API 名称 | 开放范围 | 入参概要 | 返回值 | 错误码范围 | 功能描述 | 关联 AC |
-|----------|----------|----------|--------|------------|----------|---------|
-| `setPermissionRequestToggleStatus`（新增带 `subProfileId` 入参签名） | System | `subProfileId`, `permissionName`, `status` | Promise<void> / retCode | 成功码、`801`、`ERR_PERMISSION_REQUEST_TOGGLE_SUBPROFILE_NOT_EXIST`、`ERR_PERMISSION_REQUEST_TOGGLE_STORAGE_MODE_CONFLICT` | 按 `subProfileId` 设置弹框开关 | AC-1.1~AC-1.4, AC-3.4 |
-| `getPermissionRequestToggleStatus`（新增带 `subProfileId` 入参签名） | System | `subProfileId`, `permissionName` | Promise<status> / retCode | 成功码、`801`、`ERR_PERMISSION_REQUEST_TOGGLE_SUBPROFILE_NOT_EXIST` | 按 `subProfileId` 查询弹框开关 | AC-1.1~AC-1.3, AC-3.4 |
-| `setPermissionUsedRecordToggleStatus`（新增带 `subProfileId` 入参签名） | System | `subProfileId`, `status` | Promise<void> / retCode | 成功码、`801`、`ERR_PERMISSION_USED_RECORD_SUBPROFILE_NOT_EXIST`、`ERR_PERMISSION_USED_RECORD_STORAGE_MODE_CONFLICT` | 按 `subProfileId` 设置使用记录开关 | AC-2.1~AC-2.4, AC-3.4 |
-| `getPermissionUsedRecordToggleStatus`（新增带 `subProfileId` 入参签名） | System | `subProfileId` | Promise<boolean> / retCode | 成功码、`801`、`ERR_PERMISSION_USED_RECORD_SUBPROFILE_NOT_EXIST` | 按 `subProfileId` 查询使用记录开关 | AC-2.1~AC-2.3, AC-3.4 |
+| API 名称 | 开放范围 | 入参概要 | 返回值 | 变化点 | 错误码范围 | 功能描述 | 关联 AC |
+|----------|----------|----------|--------|--------|------------|----------|---------|
+| `setPermissionRequestToggleStatus`（新增接口） | System | `permissionName`, `status`, `subProfileId` | Promise<void> / retCode | 新增 JS/ETS System API，旧接口保留；`subProfileId` 位于最后。 | 成功码、`801`、`ERR_PERMISSION_REQUEST_TOGGLE_SUBPROFILE_NOT_EXIST`、`ERR_PERMISSION_REQUEST_TOGGLE_STORAGE_MODE_CONFLICT` | 按 `subProfileId` 设置弹框开关 | AC-1.1~AC-1.4, AC-3.4 |
+| `getPermissionRequestToggleStatus`（新增接口） | System | `permissionName`, `subProfileId` | Promise<status> / retCode | 新增 JS/ETS System API，旧接口保留；`subProfileId` 位于最后。 | 成功码、`801`、`ERR_PERMISSION_REQUEST_TOGGLE_SUBPROFILE_NOT_EXIST` | 按 `subProfileId` 查询弹框开关 | AC-1.1~AC-1.3, AC-3.4 |
+| `setPermissionUsedRecordToggleStatus`（新增接口） | System | `status`, `subProfileId` | Promise<void> / retCode | 新增 JS/ETS System API，旧接口保留；`subProfileId` 位于最后。 | 成功码、`801`、`ERR_PERMISSION_USED_RECORD_SUBPROFILE_NOT_EXIST`、`ERR_PERMISSION_USED_RECORD_STORAGE_MODE_CONFLICT` | 按 `subProfileId` 设置使用记录开关 | AC-2.1~AC-2.4, AC-3.4 |
+| `getPermissionUsedRecordToggleStatus`（新增接口） | System | `subProfileId` | Promise<boolean> / retCode | 新增 JS/ETS System API，旧接口保留。 | 成功码、`801`、`ERR_PERMISSION_USED_RECORD_SUBPROFILE_NOT_EXIST` | 按 `subProfileId` 查询使用记录开关 | AC-2.1~AC-2.3, AC-3.4 |
 
 ### 变更/废弃 API
 
@@ -168,7 +170,7 @@
 | `AccessTokenKit::Set/GetPermissionRequestToggleStatus` | 变更 | InnerKit 调用方新增可选 `subProfileId` 入参，且 `userId` 仅允许传 `0` | 旧调用方若使用新路径需改为传 `userId=0`；`subProfileId<0` 时按旧路径处理；新调用方可显式传 `subProfileId>=0` | AC-1.1, AC-1.5 |
 | `PrivacyKit::Set/GetPermissionUsedRecordToggleStatus` | 变更 | InnerKit 调用方新增可选 `subProfileId` 入参，且 `userId` 仅允许传 `0` | 旧调用方若使用新路径需改为传 `userId=0`；`subProfileId<0` 时按旧路径处理；新调用方可显式传 `subProfileId>=0` | AC-2.1, AC-2.5 |
 | `AccessTokenKit::GetTokenIDByUserID` | 变更 | SDK kit 新增可选 `subProfileId` 入参；client/service/IDL 显式透传 | 仅 `AccessTokenKit` 保留默认值 `-1`；未定义 feature 时服务端统一按 `-1` 处理 | AC-1.1, AC-3.5 |
-| 旧 JS API | 兼容性变更 | 现有系统调用方 | 无需迁移；但若已存在 `subProfileId` 新数据，旧接口设置返回对应子系统的 storage mode conflict 错误码 | AC-3.3, AC-3.5 |
+| 旧 JS API | 兼容性变更 | 现有系统调用方 | 无需迁移；但若已存在 `subProfileId` 新数据，旧接口设置和旧接口查询返回对应子系统的 storage mode conflict，并映射为 operation-not-allowed；该返回属于本特性新增兼容错误，新增查询接口不返回 `12100006` | AC-3.3, AC-3.5 |
 
 ## 兼容性声明
 
@@ -185,8 +187,8 @@
 |----------|----------|---------|
 | 仅车机 feature 开启时生效 | 未开启 feature 时，同名新增 `subProfileId` 签名返回 `801` | AC-1.1, AC-2.1, AC-3.4 |
 | JS 新路径不暴露 `userId` | 系统通过 `callingUid` 解析当前 `userId` | AC-1.2, AC-2.2 |
-| `subProfileId` 必须属于当前 `userId` | 不存在返回新增错误码 | AC-1.3, AC-2.3 |
-| 老数据阻塞新路径写入 | `status=true/false` 都报错 | AC-1.4, AC-2.4, AC-3.1 |
+| `subProfileId` 必须属于当前 `userId` | 不存在时 InnerKit 返回对应模块专用错误码，JS/ANI 映射为 `12100001` | AC-1.3, AC-2.3 |
+| 老数据阻塞新路径写入 | 权限弹框 `OPEN/CLOSED` 和 Privacy `true/false` 都报错 | AC-1.4, AC-2.4, AC-3.1 |
 | 新数据阻塞旧接口写入 | 不传 `subProfileId` 的旧接口设置报错 | AC-3.3 |
 | `subProfileId<0` 按旧路径存取 | 不进入 `subProfileId` 维度新逻辑 | AC-1.5, AC-2.5 |
 
@@ -197,7 +199,7 @@
 | 性能 | feature 关闭时无可感知行为回退 | 宏分支回归测试 | `tests/test-design.md` TC-21/TC-22/TC-28；feature off `#else` 用例 |
 | 安全 | 新路径必须校验 `subProfileId` 归属，禁止跨 profile 读写 | 单测/审查 | `tests/test-design.md` TC-29/TC-30；`tests/test-cases.md` CASE-ATM-SVC-014/CASE-PRI-SVC-027 |
 | 可靠性 | 旧路径清理完成前，新路径持续稳定返回兼容错误码；新数据存在时旧接口稳定返回兼容错误码 | 单测/集成 | `tests/test-design.md` TC-07~TC-18；`tests/test-cases.md` 冲突与切换用例 |
-| 问题定位 | `801`、`JS_ERROR_STORAGE_MODE_CONFLICT`、`JS_ERROR_SUBPROFILE_NOT_EXIST` 以及对应 native 错误码可区分问题原因；内部非法 `userId` 路径仍可定位 `201` | 单测/hilog | `tests/test-design.md` TC-36；`tests/test-cases.md` CASE-ERROR-033 |
+| 问题定位 | JS/ANI 不新增 `12100016/12100017`；subProfile 不存在映射为 `12100001`；新增设置接口、老设置接口和老查询接口 storage conflict 映射为 operation-not-allowed，其中老接口返回属于本特性新增兼容错误；新增查询接口不返回 `12100006`；InnerKit 保留对应模块 native 错误码；内部非法 `userId` 路径仍可定位 `201` | 单测/hilog | `tests/test-design.md` TC-36；`tests/test-cases.md` CASE-ERROR-033 |
 
 ## 多设备适配声明
 
@@ -228,12 +230,12 @@ Feature: Vehicle subProfileId toggle status
 
   Scenario: JS 新接口通过 callingUid 取当前 userId
     Given 车机产品开启新 feature
-    When 调用新增 API 且以第一个入参传入 subProfileId
+    When 调用新增 API 且以最后一个入参传入 subProfileId
     Then 系统使用 callingUid 解析当前 userId
 
   Scenario: 老数据阻塞新写入
     Given 当前 userId 仍存在旧 userId 维度存量开关数据
-    When 调用新增 API 对任一 subProfileId 执行 status=true 或 status=false
+    When 调用新增 API 对任一 subProfileId 执行权限弹框 OPEN/CLOSED 或 Privacy true/false
     Then 系统返回兼容错误码
 
   Scenario: 新数据阻塞旧接口写入
@@ -244,7 +246,7 @@ Feature: Vehicle subProfileId toggle status
   Scenario: subProfileId 不存在
     Given 车机产品开启新 feature
     When 调用新增 API 且 subProfileId 不属于当前 userId
-    Then 系统返回新增错误码
+    Then InnerKit 返回对应模块的 subProfile 不存在错误码，JS/ANI 映射为 12100001
 
   Scenario: feature 未定义时调用新签名
     Given 产品未定义 ACCESS_TOKEN_SUPPORT_SUBPROFILE

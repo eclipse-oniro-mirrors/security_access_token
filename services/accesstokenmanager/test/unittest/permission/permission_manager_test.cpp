@@ -272,9 +272,19 @@ void PermissionManagerTest::SetUp()
 
 void PermissionManagerTest::TearDown()
 {
+    auto& observer = TempPermissionObserver::GetInstance();
+    observer.OnAppMgrRemoteDiedHandle();
+    {
+        std::lock_guard<std::mutex> lock(observer.formTokenMutex_);
+        observer.formTokenMap_.clear();
+    }
     DelayedSingleton<AccessTokenManagerService>::DestroyInstance();
     accessTokenService_ = nullptr;
     appStateObserver_ = nullptr;
+#ifdef BGTASKMGR_CONTINUOUS_TASK_ENABLE
+    backgroundTaskObserver_ = nullptr;
+#endif
+    formStateObserver_ = nullptr;
 }
 
 static AccessTokenID CreateTempHapTokenInfo()

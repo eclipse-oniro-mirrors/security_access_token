@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2025-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -32,11 +32,11 @@ static const std::unordered_map<uint32_t, const char*> g_errorStringMap = {
     { STS_ERROR_BACKGROUND_FAIL, "UI extension turn background failed." },
     { STS_ERROR_TERMINATE_FAIL, "UI extension terminate failed." },
     { STS_ERROR_PARAM_INVALID, "Invalid parameter." },
-    { STS_ERROR_TOKENID_NOT_EXIST, "The specified tokenID does not exist." },
-    { STS_ERROR_PERMISSION_NOT_EXIST, "The specified permission does not exist." },
+    { STS_ERROR_TOKENID_NOT_EXIST, "TokenID does not exist." },
+    { STS_ERROR_PERMISSION_NOT_EXIST, "Permission does not exist." },
     { STS_ERROR_NOT_USE_TOGETHER, "The API is not used in pair with others." },
-    { STS_ERROR_REGISTERS_EXCEED_LIMITATION, "The number of registered listeners exceeds limitation." },
-    { STS_ERROR_PERMISSION_OPERATION_NOT_ALLOWED, "The operation of specified permission is not allowed." },
+    { STS_ERROR_REGISTERS_EXCEED_LIMITATION, "The number of listeners exceeds the limit." },
+    { STS_ERROR_PERMISSION_OPERATION_NOT_ALLOWED, "The operation is not allowed." },
     { STS_ERROR_SERVICE_NOT_RUNNING, "Service exception." },
     { STS_ERROR_OUT_OF_MEMORY, "Out of memory." },
     { STS_ERROR_INNER, "Common inner error." },
@@ -47,8 +47,6 @@ static const std::unordered_map<uint32_t, const char*> g_errorStringMap = {
     { STS_ERROR_GLOBAL_SWITCH_IS_ALREADY_OPEN, "The specific global switch is already open." },
     { STS_ERROR_EXPECTED_PERMISSION_TYPE, "Unexpected permission."},
     { STS_ERROR_OVERSIZE, "The queried data exceeds the upper limit."},
-    { STS_ERROR_SUBPROFILE_NOT_EXIST, "The specified subProfileId does not exist under current user." },
-    { STS_ERROR_STORAGE_MODE_CONFLICT, "The storage mode conflicts." },
 };
 
 void BusinessErrorAni::ThrowError(ani_env* env, int32_t err, const std::string& errMsg)
@@ -160,12 +158,6 @@ int32_t BusinessErrorAni::GetStsErrorCode(int32_t errCode)
         case ERR_PERMISSION_NOT_EXIST:
             stsCode = STS_ERROR_PERMISSION_NOT_EXIST;
             break;
-        case ERR_PERMISSION_REQUEST_TOGGLE_SUBPROFILE_NOT_EXIST:
-            stsCode = STS_ERROR_SUBPROFILE_NOT_EXIST;
-            break;
-        case ERR_PERMISSION_REQUEST_TOGGLE_STORAGE_MODE_CONFLICT:
-            stsCode = STS_ERROR_STORAGE_MODE_CONFLICT;
-            break;
         case ERR_INTERFACE_NOT_USED_TOGETHER:
         case ERR_CALLBACK_ALREADY_EXIST:
             stsCode = STS_ERROR_NOT_USE_TOGETHER;
@@ -174,6 +166,7 @@ int32_t BusinessErrorAni::GetStsErrorCode(int32_t errCode)
             stsCode = STS_ERROR_REGISTERS_EXCEED_LIMITATION;
             break;
         case ERR_IDENTITY_CHECK_FAILED:
+        case ERR_PERMISSION_REQUEST_TOGGLE_STORAGE_MODE_CONFLICT:
             stsCode = STS_ERROR_PERMISSION_OPERATION_NOT_ALLOWED;
             break;
         case ERR_SERVICE_ABNORMAL:
