@@ -1134,7 +1134,6 @@ HWTEST_F(RegisterPermStateChangeCallbackTest, RegisterSelfPermStateChangeCallbac
     int32_t res = AccessTokenKit::RegisterSelfPermStateChangeCallback(nullptr);
     ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, res);
 }
-
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

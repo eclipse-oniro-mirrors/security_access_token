@@ -48,6 +48,9 @@
 #include "state_change_callback.h"
 #include "time_util.h"
 #include "token_setproc.h"
+#ifdef ACCESS_TOKEN_SUPPORT_SUBPROFILE
+#include "os_account_manager_lite.h"
+#endif
 
 using namespace testing;
 using namespace testing::ext;
@@ -73,9 +76,6 @@ static AccessTokenID g_nativeToken = 0;
 static bool g_isMicEdmMute = false;
 static bool g_isMicMixMute = false;
 static bool g_isMicMute = false;
-static constexpr int32_t TEST_USER_ID_10 = 10;
-static constexpr int32_t TEST_INVALID_USER_ID = -1;
-static constexpr int32_t TEST_INVALID_USER_ID_20000 = 20000;
 static constexpr uint32_t MAX_CALLBACK_SIZE = 1024;
 static constexpr uint32_t MAX_CALLBACK_SIZE_TEST = 20;
 static constexpr uint32_t RANDOM_TOKENID = 123;
@@ -83,6 +83,11 @@ static constexpr int32_t FIRST_INDEX = 0;
 static const int32_t NORMAL_TYPE_ADD_VALUE = 1;
 static const int32_t PICKER_TYPE_ADD_VALUE = 2;
 static const int32_t SEC_COMPONENT_TYPE_ADD_VALUE = 4;
+static const std::string EMPTY_DEVICE_ID;
+#ifdef ACCESS_TOKEN_SUPPORT_SUBPROFILE
+static constexpr int32_t SUBPROFILE_TEST_ID = 10;
+static constexpr int32_t SUBPROFILE_TEST_ID_2 = 11;
+#endif
 static const int32_t VALUE_MAX_LEN = 32;
 const static uint32_t TEST_MAX_PERMISSION_USED_TYPE_SIZE = 20;
 static const char* EDM_MIC_MUTE_KEY = "persist.edm.mic_disable";
@@ -1075,6 +1080,67 @@ HWTEST_F(PermissionRecordManagerTest, GetRemotePermissionUsedRecordsTest001, Tes
 
     setuid(selfUid);
 }
+
+#ifdef ACCESS_TOKEN_SUPPORT_SUBPROFILE
+/*
+ * @tc.name: GetRemotePermissionUsedRecordsWithSubProfile001
+ * @tc.desc: GetRemotePermissionUsedRecords queries records with foreground subProfileId of the calling user.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, GetRemotePermissionUsedRecordsWithSubProfile001, TestSize.Level0)
+{
+    PermissionRecordManager::GetInstance().remotePermUsedRecList_.clear();
+    GenericValues conditions;
+    RemotePermUsedRecordDbManager::GetInstance().Remove(USER_ID_100, conditions);
+
+    RemotePermissionRecord targetRecord;
+    targetRecord.deviceId = "ididid";
+    targetRecord.deviceName = "namename";
+    targetRecord.opCode = Constant::OP_CAMERA;
+    targetRecord.timestamp = AccessToken::TimeUtil::GetCurrentTimestamp();
+    targetRecord.accessCount = 1;
+    targetRecord.rejectCount = 0;
+    targetRecord.userId = USER_ID_100;
+    targetRecord.subProfileId = SUBPROFILE_TEST_ID;
+
+    RemotePermissionRecord otherRecord = targetRecord;
+    otherRecord.deviceId = "ididid2";
+    otherRecord.deviceName = "namename2";
+    otherRecord.subProfileId = SUBPROFILE_TEST_ID_2;
+
+    GenericValues targetValue;
+    GenericValues otherValue;
+    RemotePermissionRecord::TranslationIntoGenericValues(targetRecord, targetValue);
+    RemotePermissionRecord::TranslationIntoGenericValues(otherRecord, otherValue);
+    std::vector<GenericValues> values = { targetValue, otherValue };
+    ASSERT_EQ(Constant::SUCCESS, RemotePermUsedRecordDbManager::GetInstance().Add(USER_ID_100, values));
+
+    SetMockForegroundOsAccountLocalId(USER_ID_100, ERR_OK);
+    SetMockOsAccountForegroundSubProfileId(SUBPROFILE_TEST_ID, ERR_OK);
+    uint32_t selfUid = getuid();
+    setuid(USER_100_UID);
+
+    PermissionUsedRequest request;
+    PermissionUsedResult result;
+    request.isRemote = true;
+    request.flag = FLAG_PERMISSION_USAGE_DETAIL;
+    int32_t ret = PermissionRecordManager::GetInstance().GetRemotePermissionUsedRecords(request, result);
+    int32_t accountUserId = GetMockForegroundOsAccountLocalId();
+    size_t bundleRecordSize = result.bundleRecords.size();
+    std::string deviceId = bundleRecordSize > 0 ? result.bundleRecords[0].deviceId : EMPTY_DEVICE_ID;
+
+    setuid(selfUid);
+    RemotePermUsedRecordDbManager::GetInstance().Remove(USER_ID_100, conditions);
+    PermissionRecordManager::GetInstance().remotePermUsedRecList_.clear();
+    ResetMockOsAccountManagerLite();
+
+    EXPECT_EQ(Constant::SUCCESS, ret);
+    EXPECT_EQ(USER_ID_100, accountUserId);
+    ASSERT_EQ(1U, bundleRecordSize);
+    EXPECT_EQ(targetRecord.deviceId, deviceId);
+}
+#endif
 #endif
 
 #ifndef APP_SECURITY_PRIVACY_SERVICE
@@ -1198,65 +1264,64 @@ HWTEST_F(PermissionRecordManagerTest, AddPermissionUsedRecord002, TestSize.Level
     ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, PermissionRecordManager::GetInstance().AddPermissionUsedRecord(info));
 }
 
+#ifdef ACCESS_TOKEN_SUPPORT_SUBPROFILE
 /*
- * @tc.name:SetPermissionUsedRecordToggleStatus001
- * @tc.desc: PermissionRecordManager::SetPermissionUsedRecordToggleStatus function test
+ * @tc.name: AddPermissionUsedRecordWithSubProfile001
+ * @tc.desc: AddPermissionUsedRecord uses account lite subProfileId resolved by userId and appIndex.
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, SetPermissionUsedRecordToggleStatus001, TestSize.Level0)
+HWTEST_F(PermissionRecordManagerTest, AddPermissionUsedRecordWithSubProfile001, TestSize.Level0)
 {
-    int32_t ret = PermissionRecordManager::GetInstance().SetPermissionUsedRecordToggleStatus(
-        TEST_INVALID_USER_ID, true);
-    EXPECT_EQ(ret, PrivacyError::ERR_PARAM_INVALID);
+    MockNativeToken mock("audio_server");
+    AccessTokenIDEx tokenIdEx = PrivacyTestCommon::GetHapTokenIdFromBundle(g_InfoParms1.userID, g_InfoParms1.bundleName,
+        g_InfoParms1.instIndex);
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenId);
 
-    ret = PermissionRecordManager::GetInstance().SetPermissionUsedRecordToggleStatus(
-        TEST_INVALID_USER_ID_20000, true);
-    EXPECT_EQ(ret, PrivacyError::ERR_PARAM_INVALID);
+    SetMockOsAccountSubProfileId(SUBPROFILE_TEST_ID, ERR_OK);
+    const std::string toggleKey = std::to_string(g_InfoParms1.userID) + "_" + std::to_string(SUBPROFILE_TEST_ID);
+    PermissionRecordManager::GetInstance().permUsedRecToggleStatusMap_[toggleKey] = false;
+
+    AddPermParamInfo info;
+    info.tokenId = tokenId;
+    info.permissionName = "ohos.permission.CAMERA";
+    info.successCount = 1;
+    info.failCount = 0;
+    EXPECT_EQ(PrivacyError::ERR_PRIVACY_TOGGELE_RESTRICTED,
+        PermissionRecordManager::GetInstance().AddPermissionUsedRecord(info));
+
+    PermissionRecordManager::GetInstance().permUsedRecToggleStatusMap_.erase(toggleKey);
+    ResetMockOsAccountManagerLite();
 }
 
 /*
- * @tc.name:GetPermissionUsedRecordToggleStatus001
- * @tc.desc: PermissionRecordManager::GetPermissionUsedRecordToggleStatus function test
+ * @tc.name: AddPermissionUsedRecordWithSubProfile002
+ * @tc.desc: AddPermissionUsedRecord returns service abnormal when account lite fails to resolve subProfileId.
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, GetPermissionUsedRecordToggleStatus001, TestSize.Level0)
+HWTEST_F(PermissionRecordManagerTest, AddPermissionUsedRecordWithSubProfile002, TestSize.Level0)
 {
-    bool status = true;
-    int32_t ret = PermissionRecordManager::GetInstance().GetPermissionUsedRecordToggleStatus(
-        TEST_INVALID_USER_ID, status);
-    EXPECT_EQ(ret, PrivacyError::ERR_PARAM_INVALID);
+    MockNativeToken mock("audio_server");
+    AccessTokenIDEx tokenIdEx = PrivacyTestCommon::GetHapTokenIdFromBundle(g_InfoParms1.userID, g_InfoParms1.bundleName,
+        g_InfoParms1.instIndex);
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenId);
 
-    ret = PermissionRecordManager::GetInstance().GetPermissionUsedRecordToggleStatus(
-        TEST_INVALID_USER_ID_20000, status);
-    EXPECT_EQ(ret, PrivacyError::ERR_PARAM_INVALID);
+    SetMockOsAccountSubProfileId(SUBPROFILE_TEST_ID, ERR_INVALID_VALUE);
+
+    AddPermParamInfo info;
+    info.tokenId = tokenId;
+    info.permissionName = "ohos.permission.CAMERA";
+    info.successCount = 1;
+    info.failCount = 0;
+    EXPECT_EQ(PrivacyError::ERR_SERVICE_ABNORMAL,
+        PermissionRecordManager::GetInstance().AddPermissionUsedRecord(info));
+
+    ResetMockOsAccountManagerLite();
 }
-
-/*
- * @tc.name:UpdatePermUsedRecToggleStatusMap001
- * @tc.desc: PermissionRecordManager::test UpdatePermUsedRecToggleStatusMap and CheckPermissionUsedRecordToggleStatus
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(PermissionRecordManagerTest, UpdatePermUsedRecToggleStatusMap001, TestSize.Level0)
-{
-    bool checkStatus = PermissionRecordManager::GetInstance().CheckPermissionUsedRecordToggleStatus(TEST_USER_ID_10);
-    EXPECT_TRUE(checkStatus);
-
-    bool ret = PermissionRecordManager::GetInstance().UpdatePermUsedRecToggleStatusMap(TEST_USER_ID_10, false);
-    checkStatus = PermissionRecordManager::GetInstance().CheckPermissionUsedRecordToggleStatus(TEST_USER_ID_10);
-    EXPECT_TRUE(ret);
-    EXPECT_FALSE(checkStatus);
-
-    ret = PermissionRecordManager::GetInstance().UpdatePermUsedRecToggleStatusMap(TEST_USER_ID_10, false);
-    EXPECT_FALSE(ret);
-
-    ret = PermissionRecordManager::GetInstance().UpdatePermUsedRecToggleStatusMap(TEST_USER_ID_10, true);
-    checkStatus = PermissionRecordManager::GetInstance().CheckPermissionUsedRecordToggleStatus(TEST_USER_ID_10);
-    EXPECT_TRUE(ret);
-    EXPECT_TRUE(checkStatus);
-}
+#endif
 
 /*
  * @tc.name: StopUsingPermission001

@@ -43,8 +43,28 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
+struct UidGuard {
+    explicit UidGuard(uid_t newUid) : origUid(getuid())
+    {
+        (void)setuid(newUid);
+    }
+
+    ~UidGuard()
+    {
+        (void)setuid(origUid);
+    }
+
+    UidGuard(const UidGuard&) = delete;
+    UidGuard& operator=(const UidGuard&) = delete;
+
+    uid_t origUid;
+};
+
 static AccessTokenID g_selfTokenId = 0;
+static uid_t g_selfUid = 0;
 static constexpr int32_t PERMISSION_USAGE_RECORDS_MAX_NUM = 10;
+static constexpr uid_t NON_ROOT_UID = 2000;
+static constexpr int32_t LEGACY_SUBPROFILE_ID = -1;
 constexpr const char* CAMERA_PERMISSION_NAME = "ohos.permission.CAMERA";
 constexpr const char* MICROPHONE_PERMISSION_NAME = "ohos.permission.MICROPHONE";
 constexpr const char* LOCATION_PERMISSION_NAME = "ohos.permission.LOCATION";
@@ -102,6 +122,7 @@ public:
 void PrivacyManagerServiceTest::SetUpTestCase()
 {
     g_selfTokenId = GetSelfTokenID();
+    g_selfUid = getuid();
     PrivacyTestCommon::SetTestEvironment(g_selfTokenId);
 }
 
@@ -121,6 +142,9 @@ void PrivacyManagerServiceTest::SetUp()
 
 void PrivacyManagerServiceTest::TearDown()
 {
+    (void)setuid(g_selfUid);
+    EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));
+
     AccessTokenIDEx tokenIdEx = PrivacyTestCommon::GetHapTokenIdFromBundle(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
     PrivacyTestCommon::DeleteTestHapToken(tokenIdEx.tokenIdExStruct.tokenID);
@@ -729,108 +753,6 @@ HWTEST_F(PrivacyManagerServiceTest, GetRemotePermissionUsedRecordsInner003, Test
     EXPECT_EQ(PrivacyError::ERR_PERMISSION_DENIED, ret);
 }
 #endif
-
-/**
- * @tc.name: SetPermissionUsedRecordToggleStatusInner001
- * @tc.desc: SetPermissionUsedRecordToggleStatusInner test.
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(PrivacyManagerServiceTest, SetPermissionUsedRecordToggleStatusInner001, TestSize.Level0)
-{
-    int32_t userID = 1;
-    bool status = true;
-
-    int32_t ret = privacyManagerService_->SetPermissionUsedRecordToggleStatus(userID, status);
-    ASSERT_EQ(RET_SUCCESS, ret);
-}
-
-/**
- * @tc.name: SetPermissionUsedRecordToggleStatusInner002
- * @tc.desc: SetPermissionUsedRecordToggleStatusInner test.
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(PrivacyManagerServiceTest, SetPermissionUsedRecordToggleStatusInner002, TestSize.Level0)
-{
-    int32_t userID = 1;
-    bool status = true;
-
-    std::vector<std::string> reqPerm;
-    MockHapToken mock("SetPermissionUsedRecordToggleStatusInner002", reqPerm, false); // set self tokenID to normal app
-
-    int32_t ret = privacyManagerService_->SetPermissionUsedRecordToggleStatus(userID, status);
-    ASSERT_EQ(PrivacyError::ERR_NOT_SYSTEM_APP, ret);
-}
-
-/**
- * @tc.name: SetPermissionUsedRecordToggleStatusInner003
- * @tc.desc: SetPermissionUsedRecordToggleStatusInner test.
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(PrivacyManagerServiceTest, SetPermissionUsedRecordToggleStatusInner003, TestSize.Level0)
-{
-    int32_t userID = 1;
-    bool status = true;
-
-    std::vector<std::string> reqPerm;
-    MockHapToken mock("SetPermissionUsedRecordToggleStatusInner003", reqPerm, true); // set self tokenID to system app
-
-    int32_t ret = privacyManagerService_->SetPermissionUsedRecordToggleStatus(userID, status);
-    ASSERT_EQ(RET_SUCCESS, ret);
-}
-
-/**
- * @tc.name: GetPermissionUsedRecordToggleStatusInner001
- * @tc.desc: GetPermissionUsedRecordToggleStatusInner test.
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(PrivacyManagerServiceTest, GetPermissionUsedRecordToggleStatusInner001, TestSize.Level0)
-{
-    int32_t userID = 1;
-    bool status = true;
-
-    int32_t ret = privacyManagerService_->GetPermissionUsedRecordToggleStatus(userID, status);
-    ASSERT_EQ(RET_SUCCESS, ret);
-}
-
-/**
- * @tc.name: GetPermissionUsedRecordToggleStatusInner002
- * @tc.desc: GetPermissionUsedRecordToggleStatusInner test.
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(PrivacyManagerServiceTest, GetPermissionUsedRecordToggleStatusInner002, TestSize.Level0)
-{
-    int32_t userID = 1;
-    bool status = true;
-
-    std::vector<std::string> reqPerm;
-    MockHapToken mock("GetPermissionUsedRecordToggleStatusInner002", reqPerm, false); // set self tokenID to normal app
-
-    int32_t ret = privacyManagerService_->GetPermissionUsedRecordToggleStatus(userID, status);
-    ASSERT_EQ(PrivacyError::ERR_NOT_SYSTEM_APP, ret);
-}
-
-/**
- * @tc.name: GetPermissionUsedRecordToggleStatusInner003
- * @tc.desc: GetPermissionUsedRecordToggleStatusInner test.
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(PrivacyManagerServiceTest, GetPermissionUsedRecordToggleStatusInner003, TestSize.Level0)
-{
-    int32_t userID = 1;
-    bool status = true;
-
-    std::vector<std::string> reqPerm;
-    MockHapToken mock("GetPermissionUsedRecordToggleStatusInner003", reqPerm, true); // set self tokenID to system app
-
-    int32_t ret = privacyManagerService_->GetPermissionUsedRecordToggleStatus(userID, status);
-    ASSERT_EQ(RET_SUCCESS, ret);
-}
 
 /**
  * @tc.name: StartUsingPermissionInner001
@@ -2025,6 +1947,48 @@ HWTEST_F(PrivacyManagerServiceTest, CheckPermissionInUse008, TestSize.Level0)
     ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED,
         privacyManagerService_->CheckPermissionInUse(CAMERA_PERMISSION_NAME, isUsing));
 }
+
+/**
+ * @tc.name: ToggleStatusService001
+ * @tc.desc: Verify record toggle succeeds for root caller.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyManagerServiceTest, ToggleStatusService001, TestSize.Level0)
+{
+    MockNativeToken mock("privacy_service");
+
+    bool status = false;
+    ASSERT_EQ(RET_SUCCESS,
+        privacyManagerService_->SetPermissionUsedRecordToggleStatus(1, true, LEGACY_SUBPROFILE_ID));
+    ASSERT_EQ(RET_SUCCESS,
+        privacyManagerService_->GetPermissionUsedRecordToggleStatus(1, status, LEGACY_SUBPROFILE_ID));
+    EXPECT_TRUE(status);
+}
+
+/**
+ * @tc.name: ToggleStatusService002
+ * @tc.desc: Verify record toggle succeeds for non-root caller.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyManagerServiceTest, ToggleStatusService002, TestSize.Level0)
+{
+    std::vector<std::string> reqPerm = {
+        "ohos.permission.PERMISSION_USED_STATS",
+        "ohos.permission.PERMISSION_RECORD_TOGGLE",
+    };
+    MockHapToken mock("ToggleStatusService002", reqPerm, true, 1);
+    UidGuard guard(NON_ROOT_UID);
+
+    bool status = false;
+    ASSERT_EQ(RET_SUCCESS,
+        privacyManagerService_->SetPermissionUsedRecordToggleStatus(0, true, LEGACY_SUBPROFILE_ID));
+    ASSERT_EQ(RET_SUCCESS,
+        privacyManagerService_->GetPermissionUsedRecordToggleStatus(0, status, LEGACY_SUBPROFILE_ID));
+    EXPECT_TRUE(status);
+}
+
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

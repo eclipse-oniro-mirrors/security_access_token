@@ -31,7 +31,7 @@
         "OHOS::Security::AccessToken::AccessTokenKit::GetHapIdentity(OHOS::Security::AccessToken::HapBaseInfo const&, OHOS::Security::AccessToken::Identity&)";
         "OHOS::Security::AccessToken::AccessTokenKit::GetHapBaseInfoByUid(int, OHOS::Security::AccessToken::HapBaseInfo&)";
         "OHOS::Security::AccessToken::AccessTokenKit::GetHapTokenInfo(unsigned int, OHOS::Security::AccessToken::HapTokenInfo&)";
-        "OHOS::Security::AccessToken::AccessTokenKit::GetTokenIDByUserID(int, std::__h::unordered_set<unsigned int, std::__h::hash<unsigned int>, std::__h::equal_to<unsigned int>, std::__h::allocator<unsigned int>>&)";
+        "OHOS::Security::AccessToken::AccessTokenKit::GetTokenIDByUserID(int, std::__h::unordered_set<unsigned int, std::__h::hash<unsigned int>, std::__h::equal_to<unsigned int>, std::__h::allocator<unsigned int>>&, int)";
         "OHOS::Security::AccessToken::AccessTokenKit::GetNativeTokenInfo(unsigned int, OHOS::Security::AccessToken::NativeTokenInfo&)";
         "OHOS::Security::AccessToken::AccessTokenKit::GetPermissionFlag(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, unsigned int&)";
         "OHOS::Security::AccessToken::AccessTokenKit::GrantPermission(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, unsigned int, OHOS::Security::AccessToken::TypeUpdatePermissionFlag)";
@@ -57,8 +57,8 @@
         "OHOS::Security::AccessToken::AccessTokenKit::GetReqPermissions(unsigned int, std::__h::vector<OHOS::Security::AccessToken::PermissionStateFull, std::__h::allocator<OHOS::Security::AccessToken::PermissionStateFull>>&, bool)";
         "OHOS::Security::AccessToken::AccessTokenKit::VerifyAccessToken(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&)";
         "OHOS::Security::AccessToken::AccessTokenKit::VerifyAccessToken(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, bool)";
-        "OHOS::Security::AccessToken::AccessTokenKit::SetPermissionRequestToggleStatus(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, unsigned int, int)";
-        "OHOS::Security::AccessToken::AccessTokenKit::GetPermissionRequestToggleStatus(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, unsigned int&, int)";
+        "OHOS::Security::AccessToken::AccessTokenKit::SetPermissionRequestToggleStatus(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, unsigned int, int, int)";
+        "OHOS::Security::AccessToken::AccessTokenKit::GetPermissionRequestToggleStatus(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, unsigned int&, int, int)";
         "OHOS::Security::AccessToken::AccessTokenKit::GetTokenType(unsigned int)";
         "OHOS::Security::AccessToken::AccessTokenKit::GetHapDlpFlag(unsigned int)";
         "OHOS::Security::AccessToken::AccessTokenKit::GetTokenTypeFlag(unsigned int)";

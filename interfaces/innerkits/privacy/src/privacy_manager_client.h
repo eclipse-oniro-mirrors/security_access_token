@@ -59,8 +59,8 @@ public:
     virtual ~PrivacyManagerClient();
 
     int32_t AddPermissionUsedRecord(const AddPermParamInfo& info, bool asyncMode = false);
-    int32_t SetPermissionUsedRecordToggleStatus(int32_t userID, bool status);
-    int32_t GetPermissionUsedRecordToggleStatus(int32_t userID, bool& status);
+    int32_t SetPermissionUsedRecordToggleStatus(int32_t userID, bool status, int32_t subProfileId);
+    int32_t GetPermissionUsedRecordToggleStatus(int32_t userID, bool& status, int32_t subProfileId);
     int32_t StartUsingPermission(AccessTokenID tokenID, int32_t pid, const std::string& permissionName,
         PermissionUsedType type, const std::string& enhancedIdentity = "");
     int32_t CreateStateChangeCbk(uint64_t id, const std::shared_ptr<StateCustomizedCbk>& callback,

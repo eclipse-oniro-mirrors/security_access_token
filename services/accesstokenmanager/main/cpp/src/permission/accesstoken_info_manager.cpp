@@ -48,6 +48,9 @@
 #include "libraryloader.h"
 #include "permission_change_notifier.h"
 #include "permission_constraint_check.h"
+#ifdef ACCESS_TOKEN_SUPPORT_SUBPROFILE
+#include "os_account_manager_lite.h"
+#endif
 #include "permission_feature_manager.h"
 #include "permission_kernel_utils.h"
 #include "permission_map.h"
@@ -82,6 +85,7 @@ static const char* ACCESS_TOKEN_PACKAGE_NAME = "ohos.security.distributed_token_
 #endif
 static constexpr uint32_t TOKEN_ID_LOWMASK = 0xffffffff;
 static constexpr int32_t DEFAULT_MAX_QUERY_RESULT_SIZE = ACCESS_TOKEN_DEFAULT_MAX_QUERY_RESULT_SIZE;
+static constexpr int32_t DEFAULT_SUBPROFILE_INDEX = -1;
 
 void ClearNonPersistedUserPolicyFlags(std::vector<GenericValues>& permStateValues)
 {
@@ -223,7 +227,7 @@ int32_t AccessTokenInfoManager::FindPermissionByNameFromDb(const std::vector<uin
     if (userId == 0) {
         GetAllHapTokenId(hapTokenIdSet);
     } else {
-        GetTokenIDByUserID(userId, hapTokenIdSet);
+        GetTokenIDByUserID(userId, -1, hapTokenIdSet);
     }
 
     if (hapTokenIdSet.empty()) {
@@ -835,13 +839,32 @@ bool AccessTokenInfoManager::IsHapTokenIdExist(AccessTokenID id)
     return hapTokenInfoMap_.count(id) != 0;
 }
 
-void AccessTokenInfoManager::GetTokenIDByUserID(int32_t userID, std::unordered_set<AccessTokenID>& tokenIdList)
+void AccessTokenInfoManager::GetTokenIDByUserID(
+    int32_t userID, int32_t subProfileId, std::unordered_set<AccessTokenID>& tokenIdList)
 {
+    int32_t resolvedIndex = DEFAULT_SUBPROFILE_INDEX;
+#ifdef ACCESS_TOKEN_SUPPORT_SUBPROFILE
+    if (subProfileId >= 0) {
+        int32_t ret = OHOS::AccountSA::OsAccountManagerLite::GetOsAccountSubProfileIndex(
+            userID, subProfileId, resolvedIndex);
+        if ((ret != ERR_OK) || (resolvedIndex < 0)) {
+            LOGE(ATM_DOMAIN, ATM_TAG,
+                "Get subProfile index failed, userID=%{public}d, subProfileId=%{public}d, ret=%{public}d, "
+                "index=%{public}d.",
+                userID, subProfileId, ret, resolvedIndex);
+            return;
+        }
+    }
+#endif
     std::shared_lock<std::shared_mutex> infoGuard(hapTokenInfoLock_);
     for (const auto& [key, tokenInfoPtr] : hapTokenInfoMap_) {
-        if (tokenInfoPtr != nullptr &&(tokenInfoPtr->GetUserID() == userID)) {
-            tokenIdList.emplace(tokenInfoPtr->GetTokenID());
+        if ((tokenInfoPtr == nullptr) || (tokenInfoPtr->GetUserID() != userID)) {
+            continue;
         }
+        if ((resolvedIndex != DEFAULT_SUBPROFILE_INDEX) && (tokenInfoPtr->GetInstIndex() != resolvedIndex)) {
+            continue;
+        }
+        tokenIdList.emplace(tokenInfoPtr->GetTokenID());
     }
 }
 
@@ -2128,7 +2151,7 @@ int32_t AccessTokenInfoManager::RefreshUserPolicyFlagForUser(int32_t userId, con
     std::vector<UserPolicyRefreshSnapshot>& appliedSnapshots)
 {
     std::unordered_set<AccessTokenID> hapTokenIdSet;
-    GetTokenIDByUserID(userId, hapTokenIdSet);
+    GetTokenIDByUserID(userId, -1, hapTokenIdSet);
     for (const auto tokenId : hapTokenIdSet) {
         bool isRestricted = UserPolicyManager::GetInstance().IsPermissionRestricted(tokenId, userId, policy.permCode);
         int32_t originalStatus = PERMISSION_DENIED;

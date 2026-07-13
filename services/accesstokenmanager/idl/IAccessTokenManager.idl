@@ -48,8 +48,10 @@ interface OHOS.Security.AccessToken.IAccessTokenManager{
     [ipccode 8] void AllocHapToken([in] HapInfoParcel hapInfo, [in] HapPolicyParcel policyParcel, [out] unsigned long fullTokenId);
     [ipccode 9] void DeleteToken([in] unsigned int tokenID, [in] boolean isTokenReserved);
     [ipccode 10] void InitHapToken([in] HapInfoParcel info, [in] HapPolicyParcel policy, [out] unsigned long fullTokenId, [out] HapInfoCheckResultIdl resultInfoIdl);
-    [ipccode 11] void SetPermissionRequestToggleStatus([in] String permissionName, [in] unsigned int status, [in] int userID);
-    [ipccode 12] void GetPermissionRequestToggleStatus([in] String permissionName, [out] unsigned int status, [in] int userID);
+    [ipccode 11] void SetPermissionRequestToggleStatus(
+        [in] String permissionName, [in] unsigned int status, [in] int userID, [in] int subProfileId);
+    [ipccode 12] void GetPermissionRequestToggleStatus(
+        [in] String permissionName, [out] unsigned int status, [in] int userID, [in] int subProfileId);
     [ipccode 13] void GrantPermissionForSpecifiedTime([in] unsigned int tokenID, [in] String permissionName, [in] unsigned int onceTime);
     [ipccode 14] void RequestAppPermOnSetting([in] unsigned int tokenID);
     [ipccode 15] void ClearUserGrantedPermStateByBundle([in] String bundleName);
@@ -63,7 +65,8 @@ interface OHOS.Security.AccessToken.IAccessTokenManager{
     [ipccode 20] void GetNativeTokenInfo([in] unsigned int tokenID, [out] NativeTokenInfoParcel nativeTokenInfoRes);
     [ipccode 21] void GetHapTokenInfo([in] unsigned int tokenID, [out] HapTokenInfoParcel hapTokenInfoRes);
     [ipccode 22] void UpdateHapToken([inout] unsigned long fullTokenId, [in] UpdateHapInfoParamsIdl infoIdl, [in] HapPolicyParcel policyParcel, [out] HapInfoCheckResultIdl resultInfoIdl);
-    [ipccode 23] void GetTokenIDByUserID([in] int userID, [out] List<unsigned int> tokenIdList);
+    [ipccode 23] void GetTokenIDByUserID([in] int userID, [out] List<unsigned int> tokenIdList,
+        [in] int subProfileId);
     [macrodef TOKEN_SYNC_ENABLE, ipccode 32] void GetHapTokenInfoFromRemote([in] unsigned int tokenID, [out] HapTokenInfoForSyncParcel hapSyncParcel);
 
     [macrodef TOKEN_SYNC_ENABLE, ipccode 34] void SetRemoteHapTokenInfo([in] String deviceID, [in] HapTokenInfoForSyncParcel hapSyncParcel);

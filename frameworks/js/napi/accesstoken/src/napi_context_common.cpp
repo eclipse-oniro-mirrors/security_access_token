@@ -32,6 +32,9 @@ int32_t GetJsErrorCode(int32_t errCode)
         case ERR_NOT_SYSTEM_APP:
             jsCode = JS_ERROR_NOT_SYSTEM_APP;
             break;
+        case ERR_CAPABILITY_NOT_SUPPORT:
+            jsCode = JS_ERROR_SYSTEM_CAPABILITY_NOT_SUPPORT;
+            break;
         case ERR_PARAM_INVALID:
             jsCode = JS_ERROR_PARAM_INVALID;
             break;
@@ -40,6 +43,12 @@ int32_t GetJsErrorCode(int32_t errCode)
             break;
         case ERR_PERMISSION_NOT_EXIST:
             jsCode = JS_ERROR_PERMISSION_NOT_EXIST;
+            break;
+        case ERR_PERMISSION_REQUEST_TOGGLE_SUBPROFILE_NOT_EXIST:
+            jsCode = JS_ERROR_SUBPROFILE_NOT_EXIST;
+            break;
+        case ERR_PERMISSION_REQUEST_TOGGLE_STORAGE_MODE_CONFLICT:
+            jsCode = JS_ERROR_STORAGE_MODE_CONFLICT;
             break;
         case ERR_INTERFACE_NOT_USED_TOGETHER:
         case ERR_CALLBACK_ALREADY_EXIST:

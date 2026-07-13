@@ -29,6 +29,7 @@ constexpr const char*  INTEGER_STR = " integer not null,";
 constexpr const char*  TEXT_STR = " text not null,";
 // back up name is xxx_slave fixed, can not be changed
 constexpr const char* DATABASE_NAME_BACK = "access_token_slave.db";
+constexpr int32_t LEGACY_SUBPROFILE_ID = -1;
 }
 
 static int32_t GetTableColumnList(NativeRdb::RdbStore& rdbStore, const std::string& tableName,
@@ -238,12 +239,18 @@ int32_t AccessTokenOpenCallback::CreatePermissionRequestToggleStatusTable(Native
         .append(INTEGER_STR)
         .append(TokenFiledConst::FIELD_PERMISSION_NAME)
         .append(TEXT_STR)
+        .append(TokenFiledConst::FIELD_SUB_PROFILE_ID)
+        .append(" integer default ")
+        .append(std::to_string(LEGACY_SUBPROFILE_ID))
+        .append(",")
         .append(TokenFiledConst::FIELD_REQUEST_TOGGLE_STATUS)
         .append(INTEGER_STR)
         .append("primary key(")
         .append(TokenFiledConst::FIELD_USER_ID)
         .append(",")
         .append(TokenFiledConst::FIELD_PERMISSION_NAME)
+        .append(",")
+        .append(TokenFiledConst::FIELD_SUB_PROFILE_ID)
         .append("))");
 
     return rdbStore.ExecuteSql(sql);
@@ -760,6 +767,20 @@ int32_t AccessTokenOpenCallback::UpgradeFromVersion8(NativeRdb::RdbStore& rdbSto
     return NativeRdb::E_OK;
 }
 
+int32_t AccessTokenOpenCallback::UpgradeFromVersion9(NativeRdb::RdbStore& rdbStore)
+{
+    std::string tableName;
+    AccessTokenDbUtil::GetTableNameByType(AtmDataType::ACCESSTOKEN_PERMISSION_REQUEST_TOGGLE_STATUS, tableName);
+
+    std::vector<std::string> columnList;
+    int32_t res = GetTableColumnList(rdbStore, tableName, columnList);
+    if (res != NativeRdb::E_OK) {
+        return res;
+    }
+    return AddColumn(columnList, rdbStore, tableName, TokenFiledConst::FIELD_SUB_PROFILE_ID,
+        "integer default " + std::to_string(LEGACY_SUBPROFILE_ID));
+}
+
 int32_t AccessTokenOpenCallback::OnUpgrade(NativeRdb::RdbStore& rdbStore, int32_t currentVersion, int32_t targetVersion)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "DB OnUpgrade from Ver %{public}d to Ver %{public}d.", currentVersion, targetVersion);
@@ -809,6 +830,12 @@ int32_t AccessTokenOpenCallback::OnUpgrade(NativeRdb::RdbStore& rdbStore, int32_
             [[fallthrough]];
         case DATABASE_VERSION_8: // 8->9
             res = UpgradeFromVersion8(rdbStore);
+            if (res != NativeRdb::E_OK) {
+                return res;
+            }
+            [[fallthrough]];
+        case DATABASE_VERSION_9: // 9->10
+            res = UpgradeFromVersion9(rdbStore);
             if (res != NativeRdb::E_OK) {
                 return res;
             }

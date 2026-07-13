@@ -19,6 +19,10 @@
 #include "access_token_error.h"
 #include "accesstoken_common_log.h"
 #include "accesstoken_info_utils.h"
+#ifdef ACCESS_TOKEN_SUPPORT_SUBPROFILE
+#include "errors.h"
+#include "os_account_manager_lite.h"
+#endif
 #include "hisysevent_adapter.h"
 #include "ipc_skeleton.h"
 #include "permission_map.h"
@@ -29,8 +33,42 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static constexpr int32_t BASE_USER_RANGE = 200000;
 static const char* APP_TRACKING_CONSENT = "ohos.permission.APP_TRACKING_CONSENT";
+constexpr int32_t LEGACY_SUBPROFILE_ID = -1;
+
+#ifdef ACCESS_TOKEN_SUPPORT_SUBPROFILE
+int32_t ValidateSubProfileIdForToggle(int32_t userID, int32_t subProfileId)
+{
+    if (subProfileId < 0) {
+        return RET_SUCCESS;
+    }
+    int32_t localUserId = LEGACY_SUBPROFILE_ID;
+    int32_t ret = OHOS::AccountSA::OsAccountManagerLite::GetOsAccountLocalIdForSubProfile(
+        subProfileId, localUserId);
+    if (ret != ERR_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Get userid failed, err=%{public}d.", ret);
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+    return (localUserId == userID) ? RET_SUCCESS : AccessTokenError::ERR_PERMISSION_REQUEST_TOGGLE_SUBPROFILE_NOT_EXIST;
+}
+
+int32_t ValidateStorageModeConflict(int32_t userID, const std::string& permissionName, int32_t subProfileId)
+{
+    std::vector<GenericValues> records;
+    int32_t ret = PermissionRequestToggleManager::GetInstance().FindPermRequestToggleStatusRecordsFromDb(
+        userID, permissionName, LEGACY_SUBPROFILE_ID, records);
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
+
+    const int32_t targetSubProfileId = (subProfileId >= 0) ? LEGACY_SUBPROFILE_ID : 0;
+    return std::any_of(records.begin(), records.end(), [targetSubProfileId, subProfileId](const auto& item) {
+        const int32_t recordSubProfileId = item.GetInt(TokenFiledConst::FIELD_SUB_PROFILE_ID);
+        return (subProfileId >= 0) ? (recordSubProfileId == targetSubProfileId) :
+            (recordSubProfileId >= targetSubProfileId);
+    }) ? AccessTokenError::ERR_PERMISSION_REQUEST_TOGGLE_STORAGE_MODE_CONFLICT : RET_SUCCESS;
+}
+#endif
 }
 
 PermissionRequestToggleManager& PermissionRequestToggleManager::GetInstance()
@@ -39,24 +77,15 @@ PermissionRequestToggleManager& PermissionRequestToggleManager::GetInstance()
     return instance;
 }
 
-int32_t PermissionRequestToggleManager::ResolveUserId(int32_t userID) const
-{
-    if (userID != 0) {
-        return userID;
-    }
-    return IPCSkeleton::GetCallingUid() / BASE_USER_RANGE;
-}
-
 int32_t PermissionRequestToggleManager::ValidatePermissionForToggle(
     const std::string& permissionName, int32_t userID) const
 {
     if (!PermissionValidator::IsUserIdValid(userID) || !PermissionValidator::IsPermissionNameValid(permissionName)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Invalid parameter(userId=%{public}d, perm=%{public}s).",
-            userID, permissionName.c_str());
+        LOGE(ATM_DOMAIN, ATM_TAG, "Invalid parameter.");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     if (!IsDefinedPermissionInner(permissionName)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Permission=%{public}s is not defined.", permissionName.c_str());
+        LOGE(ATM_DOMAIN, ATM_TAG, "Permission is not defined.");
         return AccessTokenError::ERR_PERMISSION_NOT_EXIST;
     }
     if (!IsUserGrantPermission(permissionName)) {
@@ -67,18 +96,19 @@ int32_t PermissionRequestToggleManager::ValidatePermissionForToggle(
 }
 
 int32_t PermissionRequestToggleManager::AddPermRequestToggleStatusToDb(
-    int32_t userID, const std::string& permissionName, int32_t status)
+    int32_t userID, const std::string& permissionName, int32_t subProfileId, uint32_t status)
 {
     GenericValues condition;
     condition.Put(TokenFiledConst::FIELD_USER_ID, userID);
     condition.Put(TokenFiledConst::FIELD_PERMISSION_NAME, permissionName);
+    condition.Put(TokenFiledConst::FIELD_SUB_PROFILE_ID, subProfileId);
 
     std::vector<DelInfo> delInfoVec;
     AccessTokenInfoUtils::GenerateDelInfoToVec(
         AtmDataType::ACCESSTOKEN_PERMISSION_REQUEST_TOGGLE_STATUS, condition, delInfoVec);
 
     std::vector<GenericValues> values;
-    condition.Put(TokenFiledConst::FIELD_REQUEST_TOGGLE_STATUS, status);
+    condition.Put(TokenFiledConst::FIELD_REQUEST_TOGGLE_STATUS, static_cast<int32_t>(status));
     values.emplace_back(condition);
 
     std::vector<AddInfo> addInfoVec;
@@ -93,24 +123,50 @@ int32_t PermissionRequestToggleManager::AddPermRequestToggleStatusToDb(
     return RET_SUCCESS;
 }
 
-int32_t PermissionRequestToggleManager::SetPermissionRequestToggleStatus(
-    const std::string& permissionName, uint32_t status, int32_t userID)
+int32_t PermissionRequestToggleManager::FindPermRequestToggleStatusRecordsFromDb(
+    int32_t userID, const std::string& permissionName, int32_t subProfileId, std::vector<GenericValues>& result,
+    bool queryAllSubProfileRecords) const
 {
-    userID = ResolveUserId(userID);
+    GenericValues conditionValue;
+    conditionValue.Put(TokenFiledConst::FIELD_USER_ID, userID);
+    conditionValue.Put(TokenFiledConst::FIELD_PERMISSION_NAME, permissionName);
+    if (!queryAllSubProfileRecords && subProfileId > LEGACY_SUBPROFILE_ID) {
+        conditionValue.Put(TokenFiledConst::FIELD_SUB_PROFILE_ID, subProfileId);
+    }
+    return AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_PERMISSION_REQUEST_TOGGLE_STATUS, conditionValue,
+        result);
+}
 
-    LOGI(ATM_DOMAIN, ATM_TAG, "UserID=%{public}u, permission=%{public}s, status=%{public}d", userID,
-        permissionName.c_str(), status);
+int32_t PermissionRequestToggleManager::SetPermissionRequestToggleStatus(
+    const std::string& permissionName, uint32_t status, int32_t userID, int32_t subProfileId)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "UserID=%{public}u, permission=%{public}s, status=%{public}d, "
+        "subProfileId=%{public}d", userID, permissionName.c_str(), status, subProfileId);
     int32_t ret = ValidatePermissionForToggle(permissionName, userID);
     if (ret != RET_SUCCESS) {
         return ret;
     }
     if (!PermissionValidator::IsToggleStatusValid(status)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Invalid status(userId=%{public}d, perm=%{public}s, status=%{public}d).",
-            userID, permissionName.c_str(), status);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Invalid status.");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
 
-    ret = AddPermRequestToggleStatusToDb(userID, permissionName, status);
+#ifdef ACCESS_TOKEN_SUPPORT_SUBPROFILE
+    subProfileId = (subProfileId < 0) ? LEGACY_SUBPROFILE_ID : subProfileId;
+    ret = ValidateSubProfileIdForToggle(userID, subProfileId);
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
+    ret = ValidateStorageModeConflict(userID, permissionName, subProfileId);
+    if (ret != RET_SUCCESS) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Validate storage mode conflict failed, err=%{public}d.", ret);
+        return ret;
+    }
+#else
+    subProfileId = LEGACY_SUBPROFILE_ID;
+#endif
+
+    ret = AddPermRequestToggleStatusToDb(userID, permissionName, subProfileId, status);
     if (ret != RET_SUCCESS) {
         return ret;
     }
@@ -121,35 +177,67 @@ int32_t PermissionRequestToggleManager::SetPermissionRequestToggleStatus(
 }
 
 int32_t PermissionRequestToggleManager::FindPermRequestToggleStatusFromDb(
-    int32_t userID, const std::string& permissionName)
+    int32_t userID, const std::string& permissionName, int32_t subProfileId, uint32_t& status)
 {
-    std::vector<GenericValues> result;
-    GenericValues conditionValue;
-    conditionValue.Put(TokenFiledConst::FIELD_USER_ID, userID);
-    conditionValue.Put(TokenFiledConst::FIELD_PERMISSION_NAME, permissionName);
-
-    (void)AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_PERMISSION_REQUEST_TOGGLE_STATUS, conditionValue,
-        result);
-    if (result.empty()) {
-        return (permissionName == APP_TRACKING_CONSENT) ?
-            PermissionRequestToggleStatus::CLOSED : PermissionRequestToggleStatus::OPEN;
+    const uint32_t defaultStatus = (permissionName == APP_TRACKING_CONSENT) ?
+        PermissionRequestToggleStatus::CLOSED : PermissionRequestToggleStatus::OPEN;
+    std::vector<GenericValues> records;
+    int32_t ret = FindPermRequestToggleStatusRecordsFromDb(
+        userID, permissionName, subProfileId, records, subProfileId != LEGACY_SUBPROFILE_ID);
+    if (ret != RET_SUCCESS) {
+        return ret;
     }
-    return result[0].GetInt(TokenFiledConst::FIELD_REQUEST_TOGGLE_STATUS);
+    if (records.empty()) {
+        status = defaultStatus;
+        return RET_SUCCESS;
+    }
+
+    if (subProfileId == LEGACY_SUBPROFILE_ID) {
+        if ((records.size() > 1) ||
+            (records[0].GetInt(TokenFiledConst::FIELD_SUB_PROFILE_ID) != LEGACY_SUBPROFILE_ID)) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Storage mode conflict, subProfile record exists.");
+            return AccessTokenError::ERR_PERMISSION_REQUEST_TOGGLE_STORAGE_MODE_CONFLICT;
+        }
+        status = static_cast<uint32_t>(records[0].GetInt(TokenFiledConst::FIELD_REQUEST_TOGGLE_STATUS));
+        return RET_SUCCESS;
+    }
+
+    uint32_t legacyStatus = defaultStatus;
+    for (const auto& item : records) {
+        const int32_t currentSubProfileId = item.GetInt(TokenFiledConst::FIELD_SUB_PROFILE_ID);
+        const uint32_t currentStatus = static_cast<uint32_t>(item.GetInt(TokenFiledConst::FIELD_REQUEST_TOGGLE_STATUS));
+        if (currentSubProfileId == subProfileId) {
+            status = currentStatus;
+            return RET_SUCCESS;
+        }
+        if (currentSubProfileId == LEGACY_SUBPROFILE_ID) {
+            legacyStatus = currentStatus;
+        }
+    }
+    status = legacyStatus;
+    return RET_SUCCESS;
 }
 
 int32_t PermissionRequestToggleManager::GetPermissionRequestToggleStatus(
-    const std::string& permissionName, uint32_t& status, int32_t userID)
+    const std::string& permissionName, uint32_t& status, int32_t userID, int32_t subProfileId)
 {
-    userID = ResolveUserId(userID);
-
-    LOGI(ATM_DOMAIN, ATM_TAG, "UserID=%{public}u, permissionName=%{public}s", userID, permissionName.c_str());
+    LOGI(ATM_DOMAIN, ATM_TAG, "UserID=%{public}u, permissionName=%{public}s, subProfileId=%{public}d",
+        userID, permissionName.c_str(), subProfileId);
     int32_t ret = ValidatePermissionForToggle(permissionName, userID);
     if (ret != RET_SUCCESS) {
         return ret;
     }
+#ifdef ACCESS_TOKEN_SUPPORT_SUBPROFILE
+    subProfileId = (subProfileId < 0) ? LEGACY_SUBPROFILE_ID : subProfileId;
+    ret = ValidateSubProfileIdForToggle(userID, subProfileId);
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
+#else
+    subProfileId = LEGACY_SUBPROFILE_ID;
+#endif
 
-    status = static_cast<uint32_t>(FindPermRequestToggleStatusFromDb(userID, permissionName));
-    return RET_SUCCESS;
+    return FindPermRequestToggleStatusFromDb(userID, permissionName, subProfileId, status);
 }
 } // namespace AccessToken
 } // namespace Security

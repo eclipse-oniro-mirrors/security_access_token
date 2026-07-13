@@ -106,10 +106,15 @@ void AccessTokenDenyTest::SetUpTestCase()
     g_selfTokenId = GetSelfTokenID();
     g_selfUid = getuid();
     TestCommon::SetTestEvironment(g_selfTokenId);
+    ASSERT_EQ(RET_SUCCESS, TestCommon::AllocTestHapToken(g_InfoParms, g_PolicyPrams, g_testTokenIDEx));
+    ASSERT_NE(INVALID_TOKENID, g_testTokenIDEx.tokenIdExStruct.tokenID);
 }
 
 void AccessTokenDenyTest::TearDownTestCase()
 {
+    if (g_testTokenIDEx.tokenIdExStruct.tokenID != INVALID_TOKENID) {
+        (void)TestCommon::DeleteTestHapToken(g_testTokenIDEx.tokenIdExStruct.tokenID);
+    }
     setuid(g_selfUid);
     EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));
     TestCommon::ResetTestEvironment();
@@ -365,11 +370,29 @@ HWTEST_F(AccessTokenDenyTest, GetPermissionFlag001, TestSize.Level0)
  */
 HWTEST_F(AccessTokenDenyTest, SetPermissionRequestToggleStatus001, TestSize.Level0)
 {
-    int32_t userID = RANDOM_USERID;
+    int32_t userID = 0;
     uint32_t status = PermissionRequestToggleStatus::CLOSED;
     std::string permission = "ohos.permission.CAMERA";
 
     ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::SetPermissionRequestToggleStatus(
+        permission, status, userID));
+}
+
+/**
+ * @tc.name: SetPermissionRequestToggleStatus002
+ * @tc.desc: SetPermissionRequestToggleStatus with not system app
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenDenyTest, SetPermissionRequestToggleStatus002, TestSize.Level0)
+{
+    RestoreSelfCaller();
+    MockToken caller(g_selfTokenId, "com.ohos.permissionmanager", false);
+    int32_t userID = 0;
+    uint32_t status = PermissionRequestToggleStatus::CLOSED;
+    std::string permission = "ohos.permission.CAMERA";
+
+    ASSERT_EQ(AccessTokenError::ERR_NOT_SYSTEM_APP, AccessTokenKit::SetPermissionRequestToggleStatus(
         permission, status, userID));
 }
 
@@ -381,11 +404,29 @@ HWTEST_F(AccessTokenDenyTest, SetPermissionRequestToggleStatus001, TestSize.Leve
  */
 HWTEST_F(AccessTokenDenyTest, GetPermissionRequestToggleStatus001, TestSize.Level0)
 {
-    int32_t userID = RANDOM_USERID;
+    int32_t userID = 0;
     uint32_t status;
     std::string permission = "ohos.permission.CAMERA";
 
     ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::GetPermissionRequestToggleStatus(
+        permission, status, userID));
+}
+
+/**
+ * @tc.name: GetPermissionRequestToggleStatus002
+ * @tc.desc: GetPermissionRequestToggleStatus with not system app
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenDenyTest, GetPermissionRequestToggleStatus002, TestSize.Level0)
+{
+    RestoreSelfCaller();
+    MockToken caller(g_selfTokenId, "com.ohos.permissionmanager", false);
+    int32_t userID = 0;
+    uint32_t status;
+    std::string permission = "ohos.permission.CAMERA";
+
+    ASSERT_EQ(AccessTokenError::ERR_NOT_SYSTEM_APP, AccessTokenKit::GetPermissionRequestToggleStatus(
         permission, status, userID));
 }
 

@@ -581,14 +581,14 @@ int32_t AccessTokenManagerClient::SetPermissionStatusWithPolicy(
 }
 
 int32_t AccessTokenManagerClient::SetPermissionRequestToggleStatus(const std::string& permissionName, uint32_t status,
-    int32_t userID = 0)
+    int32_t userID, int32_t subProfileId)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
-    int32_t result = proxy->SetPermissionRequestToggleStatus(permissionName, status, userID);
+    int32_t result = proxy->SetPermissionRequestToggleStatus(permissionName, status, userID, subProfileId);
     if (result != RET_SUCCESS) {
         result = ConvertResult(result);
     }
@@ -597,14 +597,14 @@ int32_t AccessTokenManagerClient::SetPermissionRequestToggleStatus(const std::st
 }
 
 int32_t AccessTokenManagerClient::GetPermissionRequestToggleStatus(const std::string& permissionName, uint32_t& status,
-    int32_t userID = 0)
+    int32_t userID, int32_t subProfileId)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
-    int32_t result = proxy->GetPermissionRequestToggleStatus(permissionName, status, userID);
+    int32_t result = proxy->GetPermissionRequestToggleStatus(permissionName, status, userID, subProfileId);
     if (result != RET_SUCCESS) {
         result = ConvertResult(result);
     }
@@ -1043,7 +1043,8 @@ int32_t AccessTokenManagerClient::UpdateHapToken(AccessTokenIDEx& tokenIdEx, con
     return res;
 }
 
-int32_t AccessTokenManagerClient::GetTokenIDByUserID(int32_t userID, std::unordered_set<AccessTokenID>& tokenIdList)
+int32_t AccessTokenManagerClient::GetTokenIDByUserID(
+    int32_t userID, std::unordered_set<AccessTokenID>& tokenIdList, int32_t subProfileId)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
@@ -1051,7 +1052,7 @@ int32_t AccessTokenManagerClient::GetTokenIDByUserID(int32_t userID, std::unorde
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
     std::vector<uint32_t> tokenIds;
-    auto result = proxy->GetTokenIDByUserID(userID, tokenIds);
+    auto result = proxy->GetTokenIDByUserID(userID, tokenIds, subProfileId);
     if (result != RET_SUCCESS) {
         result = ConvertResult(result);
         LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d).", result);

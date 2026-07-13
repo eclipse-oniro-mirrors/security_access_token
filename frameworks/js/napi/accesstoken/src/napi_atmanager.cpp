@@ -1245,8 +1245,8 @@ napi_value NapiAtManager::GetPermissionFlags(napi_env env, napi_callback_info in
 bool NapiAtManager::ParseInputSetToggleStatus(const napi_env env, const napi_callback_info info,
     AtManagerAsyncContext& asyncContext)
 {
-    size_t argc = MAX_PARAMS_TWO;
-    napi_value argv[MAX_PARAMS_TWO] = { nullptr };
+    size_t argc = MAX_PARAMS_THREE;
+    napi_value argv[MAX_PARAMS_THREE] = { nullptr };
     napi_value thisVar = nullptr;
     void* data = nullptr;
     std::string errMsg;
@@ -1257,32 +1257,42 @@ bool NapiAtManager::ParseInputSetToggleStatus(const napi_env env, const napi_cal
             JsErrorCode::JS_ERROR_PARAM_ILLEGAL, "Parameter is missing.")), false);
         return false;
     }
-    asyncContext.env = env;
-    // 0: the first parameter of argv
     if (!ParseString(env, argv[0], asyncContext.permissionName)) {
         errMsg = GetParamErrorMsg("permissionName", "Permissions");
         NAPI_CALL_BASE(env,
             napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
         return false;
     }
-
-    // 1: the second parameter of argv
     if (!ParseUint32(env, argv[1], asyncContext.status)) {
         errMsg = GetParamErrorMsg("status", "number");
         NAPI_CALL_BASE(env,
             napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
         return false;
     }
-
+    if (argc >= MAX_PARAMS_THREE) {
+#ifndef ACCESS_TOKEN_SUPPORT_SUBPROFILE
+        NAPI_CALL_BASE(env, napi_throw(env, GenerateBusinessError(env,
+            JsErrorCode::JS_ERROR_SYSTEM_CAPABILITY_NOT_SUPPORT,
+            GetErrorMessage(JsErrorCode::JS_ERROR_SYSTEM_CAPABILITY_NOT_SUPPORT))), false);
+        return false;
+#else
+        if (!ParseInt32(env, argv[MAX_PARAMS_THREE - 1], asyncContext.subProfileId)) {
+            errMsg = GetParamErrorMsg("subProfileId", "number");
+            NAPI_CALL_BASE(env,
+                napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
+            return false;
+        }
+#endif
+    }
+    asyncContext.env = env;
     return true;
 }
 
 bool NapiAtManager::ParseInputGetToggleStatus(const napi_env env, const napi_callback_info info,
     AtManagerAsyncContext& asyncContext)
 {
-    size_t argc = MAX_PARAMS_ONE;
-
-    napi_value argv[MAX_PARAMS_ONE] = { nullptr };
+    size_t argc = MAX_PARAMS_TWO;
+    napi_value argv[MAX_PARAMS_TWO] = { nullptr };
     napi_value thisVar = nullptr;
     std::string errMsg;
     void* data = nullptr;
@@ -1293,14 +1303,27 @@ bool NapiAtManager::ParseInputGetToggleStatus(const napi_env env, const napi_cal
         return false;
     }
     asyncContext.env = env;
-    // 0: the first parameter of argv
+    if (argc >= MAX_PARAMS_TWO) {
+#ifndef ACCESS_TOKEN_SUPPORT_SUBPROFILE
+        NAPI_CALL_BASE(env, napi_throw(env, GenerateBusinessError(env,
+            JsErrorCode::JS_ERROR_SYSTEM_CAPABILITY_NOT_SUPPORT,
+            GetErrorMessage(JsErrorCode::JS_ERROR_SYSTEM_CAPABILITY_NOT_SUPPORT))), false);
+        return false;
+#else
+        if (!ParseInt32(env, argv[MAX_PARAMS_TWO - 1], asyncContext.subProfileId)) {
+            errMsg = GetParamErrorMsg("subProfileId", "number");
+            NAPI_CALL_BASE(env,
+                napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
+            return false;
+        }
+#endif
+    }
     if (!ParseString(env, argv[0], asyncContext.permissionName)) {
         errMsg = GetParamErrorMsg("permissionName", "Permissions");
         NAPI_CALL_BASE(env,
             napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
         return false;
     }
-
     return true;
 }
 
@@ -1313,7 +1336,7 @@ void NapiAtManager::SetPermissionRequestToggleStatusExecute(napi_env env, void* 
     }
 
     asyncContext->errorCode = AccessTokenKit::SetPermissionRequestToggleStatus(asyncContext->permissionName,
-        asyncContext->status, 0);
+        asyncContext->status, 0, asyncContext->subProfileId);
 }
 
 void NapiAtManager::SetPermissionRequestToggleStatusComplete(napi_env env, napi_status status, void* data)
@@ -1340,7 +1363,7 @@ void NapiAtManager::GetPermissionRequestToggleStatusExecute(napi_env env, void* 
     }
 
     asyncContext->errorCode = AccessTokenKit::GetPermissionRequestToggleStatus(asyncContext->permissionName,
-        asyncContext->status, 0);
+        asyncContext->status, 0, asyncContext->subProfileId);
 }
 
 void NapiAtManager::GetPermissionRequestToggleStatusComplete(napi_env env, napi_status status, void* data)

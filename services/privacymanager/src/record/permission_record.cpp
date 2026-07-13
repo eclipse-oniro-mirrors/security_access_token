@@ -153,6 +153,7 @@ void RemotePermissionRecord::TranslationIntoGenericValues(const RemotePermission
     values.Put(PrivacyFiledConst::FIELD_TIMESTAMP, record.timestamp);
     values.Put(PrivacyFiledConst::FIELD_ACCESS_COUNT, record.accessCount);
     values.Put(PrivacyFiledConst::FIELD_REJECT_COUNT, record.rejectCount);
+    values.Put(PrivacyFiledConst::FIELD_SUB_PROFILE_ID, record.subProfileId);
 }
 
 void RemotePermissionRecord::TranslationIntoRemotePermissionRecord(const GenericValues& values,
@@ -164,6 +165,7 @@ void RemotePermissionRecord::TranslationIntoRemotePermissionRecord(const Generic
     record.timestamp = values.GetInt64(PrivacyFiledConst::FIELD_TIMESTAMP);
     record.accessCount = values.GetInt(PrivacyFiledConst::FIELD_ACCESS_COUNT);
     record.rejectCount = values.GetInt(PrivacyFiledConst::FIELD_REJECT_COUNT);
+    record.subProfileId = values.GetInt(PrivacyFiledConst::FIELD_SUB_PROFILE_ID);
 }
 #endif
 } // namespace AccessToken

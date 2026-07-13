@@ -22,7 +22,6 @@
 #include "accesstoken_common_log.h"
 #include "iaccess_token_manager.h"
 #include "permission_grant_info.h"
-#include "permission_map.h"
 #include "permission_state_change_info_parcel.h"
 #include "string_ex.h"
 #include "test_common.h"

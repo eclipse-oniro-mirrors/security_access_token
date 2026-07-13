@@ -60,8 +60,10 @@ public:
     int GetReqPermissions(
         AccessTokenID tokenID, std::vector<PermissionStateFull>& reqPermList, bool isSystemGrant);
     int GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName, uint32_t& flag);
-    int32_t SetPermissionRequestToggleStatus(const std::string& permissionName, uint32_t status, int32_t userID);
-    int32_t GetPermissionRequestToggleStatus(const std::string& permissionName, uint32_t& status, int32_t userID);
+    int32_t SetPermissionRequestToggleStatus(const std::string& permissionName, uint32_t status, int32_t userID,
+        int32_t subProfileId);
+    int32_t GetPermissionRequestToggleStatus(const std::string& permissionName, uint32_t& status, int32_t userID,
+        int32_t subProfileId);
     int32_t RequestAppPermOnSetting(AccessTokenID tokenID);
     int32_t GetSelfPermissionStatus(const std::string& permissionName, PermissionOper& status);
     PermissionOper GetSelfPermissionsState(std::vector<PermissionListState>& permList,
@@ -94,7 +96,7 @@ public:
     FullTokenID AllocLocalTokenID(const std::string& remoteDeviceID, AccessTokenID remoteTokenID);
     int32_t UpdateHapToken(AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info,
         const HapPolicy& policy, HapInfoCheckResult& result);
-    int32_t GetTokenIDByUserID(int32_t userID, std::unordered_set<AccessTokenID>& tokenList);
+    int32_t GetTokenIDByUserID(int32_t userID, std::unordered_set<AccessTokenID>& tokenList, int32_t subProfileId);
     int GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo& hapTokenInfoRes);
     int GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfo& nativeTokenInfoRes);
 #ifndef ATM_BUILD_VARIANT_USER_ENABLE

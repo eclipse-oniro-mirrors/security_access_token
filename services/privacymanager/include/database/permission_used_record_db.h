@@ -107,7 +107,7 @@ private:
     inline static constexpr const char* PERMISSION_DISABLE_POLICY_TABLE = "permission_disable_policy_table";
     inline static constexpr const char* DATABASE_NAME = "permission_used_record.db";
     inline static constexpr const char* DATABASE_PATH = "/data/service/el1/public/access_token/";
-    static const int32_t DATABASE_VERSION = 7;
+    static const int32_t DATABASE_VERSION = 8;
 };
 } // namespace AccessToken
 } // namespace Security

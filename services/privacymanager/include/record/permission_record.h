@@ -91,6 +91,7 @@ struct RemotePermissionRecord {
     int32_t accessCount = 0;
     int32_t rejectCount = 0;
     int32_t userId = 0;
+    int32_t subProfileId = -1;
 
     RemotePermissionRecord() = default;
 

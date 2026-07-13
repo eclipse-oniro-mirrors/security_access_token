@@ -47,7 +47,8 @@ static constexpr int32_t THIRD_PARAM = 2;
 static constexpr int32_t MAX_PERMISSION_NAME_LENGTH = 256;
 static constexpr int32_t FOURTH_PARAM = 3;
 static constexpr int32_t FIFTH_PARAM = 4;
-static constexpr int32_t SET_PERMISSION_USED_TOGGLE_STATUS_PARAMS = 1;
+static constexpr int32_t MAX_PARAMS_ONE = 1;
+static constexpr int32_t MAX_PARAMS_TWO = 2;
 
 static int32_t GetJsErrorCode(int32_t errCode)
 {
@@ -62,6 +63,9 @@ static int32_t GetJsErrorCode(int32_t errCode)
         case ERR_NOT_SYSTEM_APP:
             jsCode = JS_ERROR_NOT_SYSTEM_APP;
             break;
+        case ERR_CAPABILITY_NOT_SUPPORT:
+            jsCode = JS_ERROR_SYSTEM_CAPABILITY_NOT_SUPPORT;
+            break;
         case ERR_PARAM_INVALID:
             jsCode = JS_ERROR_PARAM_INVALID;
             break;
@@ -70,6 +74,12 @@ static int32_t GetJsErrorCode(int32_t errCode)
             break;
         case ERR_PERMISSION_NOT_EXIST:
             jsCode = JS_ERROR_PERMISSION_NOT_EXIST;
+            break;
+        case ERR_PERMISSION_USED_RECORD_SUBPROFILE_NOT_EXIST:
+            jsCode = JS_ERROR_SUBPROFILE_NOT_EXIST;
+            break;
+        case ERR_PERMISSION_USED_RECORD_STORAGE_MODE_CONFLICT:
+            jsCode = JS_ERROR_STORAGE_MODE_CONFLICT;
             break;
         case ERR_CALLBACK_ALREADY_EXIST:
         case ERR_CALLBACK_NOT_EXIST:
@@ -229,25 +239,62 @@ static bool ParseAddPermissionRecord(
 static bool ParsePermissionUsedRecordToggleStatus(
     const napi_env& env, const napi_callback_info& info, RecordManagerAsyncContext& asyncContext)
 {
-    size_t argc = SET_PERMISSION_USED_TOGGLE_STATUS_PARAMS;
-    napi_value argv[SET_PERMISSION_USED_TOGGLE_STATUS_PARAMS] = { nullptr };
+    size_t argc = MAX_PARAMS_TWO;
+    napi_value argv[MAX_PARAMS_TWO] = { nullptr };
     napi_value thisVar = nullptr;
     void* data = nullptr;
 
     NAPI_CALL_BASE(env, napi_get_cb_info(env, info, &argc, argv, &thisVar, &data), false);
-    if (argc != SET_PERMISSION_USED_TOGGLE_STATUS_PARAMS) {
+    if (argc < MAX_PARAMS_TWO - 1) {
         NAPI_CALL_BASE(env,
             napi_throw(env, GenerateBusinessError(env, JS_ERROR_PARAM_ILLEGAL, "Parameter error.")), false);
         return false;
     }
 
     asyncContext.env = env;
-    // 0: the first parameter of argv
+    if (argc >= MAX_PARAMS_TWO) {
+#ifndef ACCESS_TOKEN_SUPPORT_SUBPROFILE
+        NAPI_CALL_BASE(env,
+            napi_throw(env, GenerateBusinessError(env, JS_ERROR_SYSTEM_CAPABILITY_NOT_SUPPORT,
+                GetErrorMessage(JS_ERROR_SYSTEM_CAPABILITY_NOT_SUPPORT))), false);
+        return false;
+#else
+        if (!ParseInt32(env, argv[MAX_PARAMS_TWO - 1], asyncContext.subProfileId)) {
+            ParamResolveErrorThrow(env, "subProfileId", "number");
+            return false;
+        }
+#endif
+    }
     if (!ParseBool(env, argv[FIRST_PARAM], asyncContext.status)) {
         ParamResolveErrorThrow(env, "status", "boolean");
         return false;
     }
+    return true;
+}
 
+static bool ParseGetPermissionUsedRecordToggleStatus(
+    const napi_env& env, const napi_callback_info& info, RecordManagerAsyncContext& asyncContext)
+{
+    size_t argc = MAX_PARAMS_ONE;
+    napi_value argv[MAX_PARAMS_ONE] = { nullptr };
+    napi_value thisVar = nullptr;
+    void* data = nullptr;
+
+    NAPI_CALL_BASE(env, napi_get_cb_info(env, info, &argc, argv, &thisVar, &data), false);
+    asyncContext.env = env;
+    if (argc >= MAX_PARAMS_ONE) {
+#ifndef ACCESS_TOKEN_SUPPORT_SUBPROFILE
+        NAPI_CALL_BASE(env,
+            napi_throw(env, GenerateBusinessError(env, JS_ERROR_SYSTEM_CAPABILITY_NOT_SUPPORT,
+                GetErrorMessage(JS_ERROR_SYSTEM_CAPABILITY_NOT_SUPPORT))), false);
+        return false;
+#else
+        if (!ParseInt32(env, argv[FIRST_PARAM], asyncContext.subProfileId)) {
+            ParamResolveErrorThrow(env, "subProfileId", "number");
+            return false;
+        }
+#endif
+    }
     return true;
 }
 
@@ -699,8 +746,8 @@ static void SetPermissionUsedRecordToggleStatusExecute(napi_env env, void* data)
         return;
     }
 
-    int32_t userID = 0;
-    asyncContext->retCode = PrivacyKit::SetPermissionUsedRecordToggleStatus(userID, asyncContext->status);
+    asyncContext->retCode = PrivacyKit::SetPermissionUsedRecordToggleStatus(
+        0, asyncContext->status, asyncContext->subProfileId);
 }
 
 static void SetPermissionUsedRecordToggleStatusComplete(napi_env env, napi_status status, void* data)
@@ -765,8 +812,8 @@ static void GetPermissionUsedRecordToggleStatusExecute(napi_env env, void* data)
         return;
     }
 
-    int32_t userID = 0;
-    asyncContext->retCode = PrivacyKit::GetPermissionUsedRecordToggleStatus(userID, asyncContext->status);
+    asyncContext->retCode = PrivacyKit::GetPermissionUsedRecordToggleStatus(
+        0, asyncContext->status, asyncContext->subProfileId);
 }
 
 static void GetPermissionUsedRecordToggleStatusComplete(napi_env env, napi_status status, void* data)
@@ -797,6 +844,9 @@ napi_value GetPermissionUsedRecordToggleStatus(napi_env env, napi_callback_info 
     }
 
     std::unique_ptr<RecordManagerAsyncContext> callbackPtr {asyncContext};
+    if (!ParseGetPermissionUsedRecordToggleStatus(env, cbinfo, *asyncContext)) {
+        return nullptr;
+    }
 
     napi_value result = nullptr;
     if (asyncContext->callbackRef == nullptr) {

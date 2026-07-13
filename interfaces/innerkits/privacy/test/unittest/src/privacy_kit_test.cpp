@@ -66,12 +66,25 @@ static constexpr int32_t RESULT_NUM_THREE = 3;
 static constexpr int32_t MAX_DISABLE_CALLBACK_TEST_SIZE = 20;
 static constexpr int32_t MAX_PERM_LIST_TEST_SIZE = 1024;
 const static int32_t NOT_EXSIT_PID = 99999999;
-const static int32_t INVALID_USER_ID = -1;
-const static int32_t USER_ID_2 = 2;
 #ifdef REMOTE_PRIVACY_ENABLE
 const static int32_t USER_ID_100 = 100;
-const static uint32_t USER_100_UID = 20000000;
+const static uint32_t ROOT_UID = 20000000;
 const static int64_t MAX_GET_TIME = 4102329600000; // 2099.12.31
+
+static void ResetPermissionUsedRecordToggleStatus(int32_t userId)
+{
+    uint32_t selfUid = getuid();
+    std::vector<std::string> reqPerm;
+    reqPerm.emplace_back("ohos.permission.ERR_PERMISSION_DENIED");
+    reqPerm.emplace_back("ohos.permission.PERMISSION_USED_STATS");
+    reqPerm.emplace_back("ohos.permission.PERMISSION_RECORD_TOGGLE");
+    MockHapToken mock("ResetPermissionUsedRecordToggleStatus", reqPerm, true);
+    (void)setuid(ROOT_UID);
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::SetPermissionUsedRecordToggleStatus(userId, false));
+    usleep(500000); // 500000us = 500ms
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::SetPermissionUsedRecordToggleStatus(userId, true));
+    setuid(selfUid);
+}
 #endif
 
 static PermissionStateFull g_infoManagerTestStateA = {
@@ -1331,8 +1344,8 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord008, TestSize.Level0)
 HWTEST_F(PrivacyKitTest, AddRemotePermissionUsedRecordTest001, TestSize.Level0)
 {
     uint32_t selfUid = getuid();
-    setuid(USER_100_UID);
-    
+    (void)setuid(ROOT_UID);
+
     RemoteCallerInfo info = {"ididid", "namename"};
     std::string permissionName = "ohos.permission.CAMERA";
 
@@ -1379,7 +1392,9 @@ HWTEST_F(PrivacyKitTest, AddRemotePermissionUsedRecordTest001, TestSize.Level0)
 HWTEST_F(PrivacyKitTest, AddRemotePermissionUsedRecordTest002, TestSize.Level0)
 {
     uint32_t selfUid = getuid();
-    setuid(USER_100_UID);
+    MockHapToken mock("AddRemotePermissionUsedRecordTest002",
+        {"ohos.permission.PERMISSION_USED_STATS"}, true);
+    (void)setuid(ROOT_UID);
 
     RemoteCallerInfo info = {"ididid", "namename"};
     std::string permissionName = "ohos.permission.CAMERA";
@@ -1396,14 +1411,7 @@ HWTEST_F(PrivacyKitTest, AddRemotePermissionUsedRecordTest002, TestSize.Level0)
 
     setuid(selfUid);
 
-    std::vector<std::string> reqPerm;
-    reqPerm.emplace_back("ohos.permission.ERR_PERMISSION_DENIED");
-    reqPerm.emplace_back("ohos.permission.PERMISSION_USED_STATS");
-    reqPerm.emplace_back("ohos.permission.PERMISSION_RECORD_TOGGLE");
-    MockHapToken mock("AddRemotePermissionUsedRecordTest002", reqPerm, true);
-    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::SetPermissionUsedRecordToggleStatus(USER_ID_100, false));
-    usleep(500000); // 500000us = 500ms
-    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::SetPermissionUsedRecordToggleStatus(USER_ID_100, true));
+    ResetPermissionUsedRecordToggleStatus(USER_ID_100);
 }
 
 /**
@@ -1419,10 +1427,9 @@ HWTEST_F(PrivacyKitTest, AddRecordWithToggleFalseTest001, TestSize.Level1)
     reqPerm.emplace_back("ohos.permission.PERMISSION_USED_STATS");
     reqPerm.emplace_back("ohos.permission.PERMISSION_RECORD_TOGGLE");
     MockHapToken mock("AddRemotePermissionUsedRecordTest002", reqPerm, true);
-    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::SetPermissionUsedRecordToggleStatus(USER_ID_100, false));
-
     uint32_t selfUid = getuid();
-    setuid(USER_100_UID);
+    (void)setuid(ROOT_UID);
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::SetPermissionUsedRecordToggleStatus(USER_ID_100, false));
 
     RemoteCallerInfo info = {"ididid", "namename"};
     std::string permissionName = "ohos.permission.CAMERA";
@@ -1449,9 +1456,9 @@ HWTEST_F(PrivacyKitTest, AddRecordWithToggleFalseTest001, TestSize.Level1)
     EXPECT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request2, result2));
     EXPECT_TRUE(result2.bundleRecords.empty());
 
-    setuid(selfUid);
     usleep(500000); // 500000us = 500ms
     EXPECT_EQ(RET_NO_ERROR, PrivacyKit::SetPermissionUsedRecordToggleStatus(USER_ID_100, true));
+    setuid(selfUid);
 }
 
 /**
@@ -1463,7 +1470,9 @@ HWTEST_F(PrivacyKitTest, AddRecordWithToggleFalseTest001, TestSize.Level1)
 HWTEST_F(PrivacyKitTest, GetRemotePermissionUsedRecordTest001, TestSize.Level0)
 {
     uint32_t selfUid = getuid();
-    setuid(USER_100_UID);
+    MockHapToken mock("GetRemotePermissionUsedRecordTest001",
+        {"ohos.permission.PERMISSION_USED_STATS"}, true);
+    (void)setuid(ROOT_UID);
 
     RemoteCallerInfo info = {"ididid", "namename"};
     std::string permissionName = "ohos.permission.CAMERA";
@@ -1498,14 +1507,7 @@ HWTEST_F(PrivacyKitTest, GetRemotePermissionUsedRecordTest001, TestSize.Level0)
     EXPECT_EQ(RET_NO_ERROR, PrivacyKit::GetRemotePermissionUsedRecords(request2, result2));
     EXPECT_TRUE(result2.bundleRecords.empty());
 
-    std::vector<std::string> reqPerm;
-    reqPerm.emplace_back("ohos.permission.ERR_PERMISSION_DENIED");
-    reqPerm.emplace_back("ohos.permission.PERMISSION_USED_STATS");
-    reqPerm.emplace_back("ohos.permission.PERMISSION_RECORD_TOGGLE");
-    MockHapToken mock("GetRemotePermissionUsedRecordTest001", reqPerm, true);
-    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::SetPermissionUsedRecordToggleStatus(USER_ID_100, false));
-    usleep(500000); // 500000us = 500ms
-    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::SetPermissionUsedRecordToggleStatus(USER_ID_100, true));
+    ResetPermissionUsedRecordToggleStatus(USER_ID_100);
 }
 
 /**
@@ -1517,7 +1519,9 @@ HWTEST_F(PrivacyKitTest, GetRemotePermissionUsedRecordTest001, TestSize.Level0)
 HWTEST_F(PrivacyKitTest, GetRemotePermissionUsedRecordTest002, TestSize.Level0)
 {
     uint32_t selfUid = getuid();
-    setuid(USER_100_UID);
+    MockHapToken mock("GetRemotePermissionUsedRecordTest002",
+        {"ohos.permission.PERMISSION_USED_STATS"}, true);
+    (void)setuid(ROOT_UID);
 
     RemoteCallerInfo info = {"ididid", "namename"};
     std::string permissionName = "ohos.permission.CAMERA";
@@ -1541,14 +1545,7 @@ HWTEST_F(PrivacyKitTest, GetRemotePermissionUsedRecordTest002, TestSize.Level0)
     EXPECT_EQ(result.bundleRecords[0].deviceName, "namename");
     ASSERT_EQ(result.bundleRecords[0].permissionRecords.size(), RESULT_NUM_TWO);
 
-    std::vector<std::string> reqPerm;
-    reqPerm.emplace_back("ohos.permission.ERR_PERMISSION_DENIED");
-    reqPerm.emplace_back("ohos.permission.PERMISSION_USED_STATS");
-    reqPerm.emplace_back("ohos.permission.PERMISSION_RECORD_TOGGLE");
-    MockHapToken mock("GetRemotePermissionUsedRecordTest002", reqPerm, true);
-    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::SetPermissionUsedRecordToggleStatus(USER_ID_100, false));
-    usleep(500000); // 500000us = 500ms
-    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::SetPermissionUsedRecordToggleStatus(USER_ID_100, true));
+    ResetPermissionUsedRecordToggleStatus(USER_ID_100);
 }
 
 /**
@@ -1560,7 +1557,9 @@ HWTEST_F(PrivacyKitTest, GetRemotePermissionUsedRecordTest002, TestSize.Level0)
 HWTEST_F(PrivacyKitTest, GetRemotePermissionUsedRecordTest003, TestSize.Level0)
 {
     uint32_t selfUid = getuid();
-    setuid(USER_100_UID);
+    MockHapToken mock("GetRemotePermissionUsedRecordTest003",
+        {"ohos.permission.PERMISSION_USED_STATS"}, true);
+    (void)setuid(ROOT_UID);
 
     RemoteCallerInfo info = {"ididid", "namename"};
     std::string permissionName = "ohos.permission.CAMERA";
@@ -1592,14 +1591,7 @@ HWTEST_F(PrivacyKitTest, GetRemotePermissionUsedRecordTest003, TestSize.Level0)
 
     setuid(selfUid);
 
-    std::vector<std::string> reqPerm;
-    reqPerm.emplace_back("ohos.permission.ERR_PERMISSION_DENIED");
-    reqPerm.emplace_back("ohos.permission.PERMISSION_USED_STATS");
-    reqPerm.emplace_back("ohos.permission.PERMISSION_RECORD_TOGGLE");
-    MockHapToken mock("GetRemotePermissionUsedRecordTest002", reqPerm, true);
-    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::SetPermissionUsedRecordToggleStatus(USER_ID_100, false));
-    usleep(500000); // 500000us = 500ms
-    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::SetPermissionUsedRecordToggleStatus(USER_ID_100, true));
+    ResetPermissionUsedRecordToggleStatus(USER_ID_100);
 }
 
 /**
@@ -1611,7 +1603,9 @@ HWTEST_F(PrivacyKitTest, GetRemotePermissionUsedRecordTest003, TestSize.Level0)
 HWTEST_F(PrivacyKitTest, GetRemotePermissionUsedRecordTest004, TestSize.Level0)
 {
     uint32_t selfUid = getuid();
-    setuid(USER_100_UID);
+    MockHapToken mock("GetRemotePermissionUsedRecordTest004",
+        {"ohos.permission.PERMISSION_USED_STATS"}, true);
+    (void)setuid(ROOT_UID);
 
     RemoteCallerInfo info = {"ididid", "namename"};
     std::string permissionName = "ohos.permission.CAMERA";
@@ -1636,14 +1630,7 @@ HWTEST_F(PrivacyKitTest, GetRemotePermissionUsedRecordTest004, TestSize.Level0)
     EXPECT_EQ(result.bundleRecords[1].isRemote, true);
     ASSERT_EQ(result.bundleRecords[1].permissionRecords.size(), RESULT_NUM_ONE);
 
-    std::vector<std::string> reqPerm;
-    reqPerm.emplace_back("ohos.permission.ERR_PERMISSION_DENIED");
-    reqPerm.emplace_back("ohos.permission.PERMISSION_USED_STATS");
-    reqPerm.emplace_back("ohos.permission.PERMISSION_RECORD_TOGGLE");
-    MockHapToken mock("GetRemotePermissionUsedRecordTest004", reqPerm, true);
-    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::SetPermissionUsedRecordToggleStatus(USER_ID_100, false));
-    usleep(500000); // 500000us = 500ms
-    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::SetPermissionUsedRecordToggleStatus(USER_ID_100, true));
+    ResetPermissionUsedRecordToggleStatus(USER_ID_100);
 }
 
 /**
@@ -4403,152 +4390,6 @@ HWTEST_F(PrivacyKitTest, SetHapWithFGReminder03, TestSize.Level0)
 
     uint32_t invalidTokenId = 0;
     EXPECT_EQ(PrivacyKit::SetHapWithFGReminder(invalidTokenId, true), PrivacyError::ERR_PARAM_INVALID);
-}
-
-/**
- * @tc.name: SetPermissionUsedRecordToggleStatus001
- * @tc.desc: SetPermissionUsedRecordToggleStatus and GetPermissionUsedRecordToggleStatus with invalid userID.
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(PrivacyKitTest, SetPermissionUsedRecordToggleStatus001, TestSize.Level0)
-{
-    bool status = true;
-    int32_t resSet = PrivacyKit::SetPermissionUsedRecordToggleStatus(INVALID_USER_ID, status);
-    int32_t resGet = PrivacyKit::GetPermissionUsedRecordToggleStatus(INVALID_USER_ID, status);
-    EXPECT_EQ(resSet, PrivacyError::ERR_PARAM_INVALID);
-    EXPECT_EQ(resGet, PrivacyError::ERR_PARAM_INVALID);
-}
-
-/**
- * @tc.name: SetPermissionUsedRecordToggleStatus002
- * @tc.desc: SetPermissionUsedRecordToggleStatus with true status and false status.
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(PrivacyKitTest, SetPermissionUsedRecordToggleStatus002, TestSize.Level0)
-{
-    std::vector<std::string> reqPerm;
-    reqPerm.emplace_back("ohos.permission.ERR_PERMISSION_DENIED");
-    reqPerm.emplace_back("ohos.permission.PERMISSION_USED_STATS");
-    MockHapToken mock("SetPermissionUsedRecordToggleStatus002", reqPerm, true);
-
-    int32_t permRecordSize = 0;
-    bool status = true;
-
-    EXPECT_EQ(RET_SUCCESS, PrivacyKit::SetPermissionUsedRecordToggleStatus(USER_ID_2, true));
-    EXPECT_EQ(RET_SUCCESS, PrivacyKit::GetPermissionUsedRecordToggleStatus(USER_ID_2, status));
-    EXPECT_TRUE(status);
-
-    AddPermParamInfo info;
-    info.tokenId = g_tokenIdG;
-    info.permissionName = "ohos.permission.READ_CONTACTS";
-    info.successCount = 1;
-    info.failCount = 0;
-    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info));
-    permRecordSize++;
-
-    info.permissionName = "ohos.permission.WRITE_CONTACTS";
-    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info));
-    permRecordSize++;
-
-    PermissionUsedRequest request;
-    PermissionUsedResult result;
-    std::vector<std::string> permissionList;
-    BuildQueryRequest(g_tokenIdG, g_infoParmsG.bundleName, permissionList, request);
-
-    request.flag = FLAG_PERMISSION_USAGE_DETAIL;
-    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
-    EXPECT_EQ(1, static_cast<int32_t>(result.bundleRecords.size()));
-    EXPECT_EQ(permRecordSize, static_cast<int32_t>(result.bundleRecords[0].permissionRecords.size()));
-
-    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::SetPermissionUsedRecordToggleStatus(USER_ID_2, false));
-    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
-    EXPECT_EQ(0, static_cast<int32_t>(result.bundleRecords.size()));
-
-    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info));
-    info.permissionName = "ohos.permission.READ_CONTACTS";
-    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info));
-
-    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
-    EXPECT_EQ(0, static_cast<int32_t>(result.bundleRecords.size()));
-
-    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::SetPermissionUsedRecordToggleStatus(USER_ID_2, true));
-    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::RemovePermissionUsedRecords(info.tokenId));
-}
-
-/**
- * @tc.name: SetPermissionUsedRecordToggleStatus003
- * @tc.desc: SetPermissionUsedRecordToggleStatus with false status and true status.
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(PrivacyKitTest, SetPermissionUsedRecordToggleStatus003, TestSize.Level0)
-{
-    std::vector<std::string> reqPerm;
-    reqPerm.emplace_back("ohos.permission.ERR_PERMISSION_DENIED");
-    reqPerm.emplace_back("ohos.permission.PERMISSION_USED_STATS");
-    MockHapToken mock("SetPermissionUsedRecordToggleStatus003", reqPerm, true);
-
-    int32_t permRecordSize = 0;
-    bool status = true;
-
-    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::SetPermissionUsedRecordToggleStatus(USER_ID_2, false));
-    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecordToggleStatus(USER_ID_2, status));
-    EXPECT_FALSE(status);
-
-    AddPermParamInfo info;
-    info.tokenId = g_tokenIdG;
-    info.permissionName = "ohos.permission.READ_CONTACTS";
-    info.successCount = 1;
-    info.failCount = 0;
-    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info));
-
-    info.permissionName = "ohos.permission.WRITE_CONTACTS";
-    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info));
-
-    PermissionUsedRequest request;
-    PermissionUsedResult result;
-    std::vector<std::string> permissionList;
-    BuildQueryRequest(g_tokenIdG, g_infoParmsG.bundleName, permissionList, request);
-    request.flag = FLAG_PERMISSION_USAGE_DETAIL;
-
-    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
-    EXPECT_TRUE(result.bundleRecords.empty());
-
-    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::SetPermissionUsedRecordToggleStatus(USER_ID_2, true));
-    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecordToggleStatus(USER_ID_2, status));
-    EXPECT_TRUE(status);
-
-    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info));
-    permRecordSize++;
-
-    info.permissionName = "ohos.permission.READ_CONTACTS";
-    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info));
-    permRecordSize++;
-
-    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
-    EXPECT_EQ(1, static_cast<int32_t>(result.bundleRecords.size()));
-    EXPECT_EQ(permRecordSize, static_cast<int32_t>(result.bundleRecords[0].permissionRecords.size()));
-
-    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::RemovePermissionUsedRecords(info.tokenId));
-}
-
-/**
- * @tc.name: SetPermissionUsedRecordToggleStatus004
- * @tc.desc: SetPermissionUsedRecordToggleStatus with not system app.
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(PrivacyKitTest, SetPermissionUsedRecordToggleStatus004, TestSize.Level0)
-{
-    std::vector<std::string> reqPerm;
-    reqPerm.emplace_back("ohos.permission.PERMISSION_USED_STATS");
-    MockHapToken mock("SetPermissionUsedRecordToggleStatus004", reqPerm, false);
-
-    bool status = true;
-    EXPECT_EQ(PrivacyError::ERR_NOT_SYSTEM_APP, PrivacyKit::SetPermissionUsedRecordToggleStatus(USER_ID_2, true));
-    EXPECT_EQ(PrivacyError::ERR_NOT_SYSTEM_APP, PrivacyKit::GetPermissionUsedRecordToggleStatus(USER_ID_2, status));
 }
 
 #ifdef PRIVACY_BUNDLE_START_STOP_ENABLE

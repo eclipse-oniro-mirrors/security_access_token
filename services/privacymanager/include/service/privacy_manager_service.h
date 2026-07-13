@@ -49,8 +49,8 @@ public:
 #endif
     int32_t StartUsingPermissionCallback(const PermissionUsedTypeInfoParcel &infoParcel,
         const sptr<IRemoteObject>& callback, const sptr<IRemoteObject>& anonyStub) override;
-    int32_t SetPermissionUsedRecordToggleStatus(int32_t userID, bool status) override;
-    int32_t GetPermissionUsedRecordToggleStatus(int32_t userID, bool& status) override;
+    int32_t SetPermissionUsedRecordToggleStatus(int32_t userID, bool status, int32_t subProfileId) override;
+    int32_t GetPermissionUsedRecordToggleStatus(int32_t userID, bool& status, int32_t subProfileId) override;
     int32_t StopUsingPermission(AccessTokenID tokenId, int32_t pid, const std::string& permissionName,
         const std::string& enhancedIdentity = "") override;
 #ifdef REMOTE_PRIVACY_ENABLE

@@ -40,6 +40,7 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
+static constexpr int32_t LEGACY_SUBPROFILE_ID = -1;
 constexpr const char* FIELD_COUNT_NUMBER = "count";
 constexpr const char* INTEGER_STR = " integer not null,";
 constexpr const char* TEXT_STR = " text not null,";
@@ -58,7 +59,8 @@ std::vector<std::string> g_tableColumnNames = {
     PrivacyFiledConst::FIELD_OP_CODE,
     PrivacyFiledConst::FIELD_TIMESTAMP,
     PrivacyFiledConst::FIELD_ACCESS_COUNT,
-    PrivacyFiledConst::FIELD_REJECT_COUNT
+    PrivacyFiledConst::FIELD_REJECT_COUNT,
+    PrivacyFiledConst::FIELD_SUB_PROFILE_ID
 };
 
 std::recursive_mutex g_instanceMutex;
@@ -232,6 +234,13 @@ void RemotePermissionUsedRecordDb::OnCreate()
 void RemotePermissionUsedRecordDb::OnUpdate(int32_t version)
 {
     LOGI(PRI_DOMAIN, PRI_TAG, "Entry");
+    switch (version) {
+        case 1: // 1->2
+            (void)AddSubProfileIdColumn();
+            [[fallthrough]];
+        default:
+            return;
+    }
 }
 
 RemotePermissionUsedRecordDb::RemotePermissionUsedRecordDb(const std::string& dbPath, const std::string& dbName)
@@ -275,6 +284,23 @@ int32_t RemotePermissionUsedRecordDb::Add(const std::vector<GenericValues>& valu
     LOGI(PRI_DOMAIN, PRI_TAG, "Add cost %{public}" PRId64 ".", endTime - beginTime);
 
     return SUCCESS;
+}
+
+int32_t RemotePermissionUsedRecordDb::AddSubProfileIdColumn()
+{
+    auto statement = Prepare("pragma table_info(" + REMOTE_PERMISSION_RECORD_TABLE + ")");
+    while (statement.Step() == Statement::State::ROW) {
+        if (statement.GetColumnString(1) == PrivacyFiledConst::FIELD_SUB_PROFILE_ID) {
+            return Constant::SUCCESS;
+        }
+    }
+    std::string sql = "alter table " + REMOTE_PERMISSION_RECORD_TABLE + " add column " +
+        PrivacyFiledConst::FIELD_SUB_PROFILE_ID + " integer default " + std::to_string(LEGACY_SUBPROFILE_ID);
+    int32_t ret = ExecuteSql(sql);
+    if (ret != Constant::SUCCESS) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Add sub profile column failed, ret=%{public}d.", ret);
+    }
+    return ret;
 }
 
 int32_t RemotePermissionUsedRecordDb::Remove(const GenericValues& conditions)
@@ -581,6 +607,8 @@ int32_t RemotePermissionUsedRecordDb::CreateRemotePermissionRecordTable() const
         .append(PrivacyFiledConst::FIELD_ACCESS_COUNT)
         .append(INTEGER_STR)
         .append(PrivacyFiledConst::FIELD_REJECT_COUNT)
+        .append(INTEGER_STR)
+        .append(PrivacyFiledConst::FIELD_SUB_PROFILE_ID)
         .append(INTEGER_STR)
         .append("primary key(")
         .append(PrivacyFiledConst::FIELD_DEVICE_ID)

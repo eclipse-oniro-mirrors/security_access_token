@@ -73,9 +73,9 @@ public:
     int32_t GetPermissionsStatus(AccessTokenID tokenID, std::vector<PermissionListStateParcel>& reqPermList) override;
     int GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName, uint32_t& flag) override;
     int32_t SetPermissionRequestToggleStatus(const std::string& permissionName, uint32_t status,
-        int32_t userID) override;
+        int32_t userID, int32_t subProfileId) override;
     int32_t GetPermissionRequestToggleStatus(const std::string& permissionName, uint32_t& status,
-        int32_t userID) override;
+        int32_t userID, int32_t subProfileId) override;
     int32_t RequestAppPermOnSetting(AccessTokenID tokenID) override;
     int GrantPermission(
         AccessTokenID tokenID, const std::string& permissionName, uint32_t flag, int32_t updateFlag) override;
@@ -98,7 +98,7 @@ public:
     int32_t AllocLocalTokenID(
         const std::string& remoteDeviceID, AccessTokenID remoteTokenID, FullTokenID& tokenId) override;
     int GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfoParcel& infoParcel) override;
-    int32_t GetTokenIDByUserID(int32_t userID, std::vector<AccessTokenID>& tokenIds) override;
+    int32_t GetTokenIDByUserID(int32_t userID, std::vector<AccessTokenID>& tokenIds, int32_t subProfileId) override;
     int GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfoParcel& infoParcel) override;
     int32_t GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfoCompatIdl& infoIdl) override;
     int32_t GetPermissionCode(const std::string& permission, uint32_t& opCode) override;

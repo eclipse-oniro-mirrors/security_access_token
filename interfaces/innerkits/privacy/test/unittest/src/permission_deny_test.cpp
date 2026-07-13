@@ -28,6 +28,7 @@ namespace {
 static uint32_t g_selfTokenId = 0;
 static uint64_t g_FullTokenId = 0;
 static uint32_t g_testTokenId = 0;
+static constexpr int32_t TEST_USER_ID_2 = 2;
 static HapPolicyParams g_PolicyPrams = {
     .apl = APL_NORMAL,
     .domain = "test.domain",
@@ -280,9 +281,28 @@ HWTEST_F(PermDenyTest, SetPermissionUsedRecordToggleStatus001, TestSize.Level0)
     ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED,
         PrivacyKit::SetPermissionUsedRecordToggleStatus(userId, true));
     ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED,
-        PrivacyKit::GetPermissionUsedRecordToggleStatus(100, status)); // 100: userId
+        PrivacyKit::GetPermissionUsedRecordToggleStatus(userId, status));
     ASSERT_FALSE(status);
     setuid(selfUid);
+}
+
+/**
+ * @tc.name: SetPermissionUsedRecordToggleStatus002
+ * @tc.desc: Test SetPermissionUsedRecordToggleStatus with not system app.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermDenyTest, SetPermissionUsedRecordToggleStatus002, TestSize.Level0)
+{
+    std::vector<std::string> reqPerm;
+    reqPerm.emplace_back("ohos.permission.PERMISSION_USED_STATS");
+    MockHapToken mock("SetPermissionUsedRecordToggleStatus002", reqPerm, false);
+
+    bool status = true;
+    EXPECT_EQ(PrivacyError::ERR_NOT_SYSTEM_APP,
+        PrivacyKit::SetPermissionUsedRecordToggleStatus(TEST_USER_ID_2, true));
+    EXPECT_EQ(PrivacyError::ERR_NOT_SYSTEM_APP,
+        PrivacyKit::GetPermissionUsedRecordToggleStatus(TEST_USER_ID_2, status));
 }
 
 /**
@@ -406,4 +426,3 @@ HWTEST_F(PermDenyTest, GetCurrUsingPermInfo002, TestSize.Level0)
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
-

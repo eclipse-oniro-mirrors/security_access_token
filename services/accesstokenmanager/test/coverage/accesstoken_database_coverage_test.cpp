@@ -265,6 +265,58 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, OnUpgrade002, TestSize.Level4)
 }
 
 /*
+ * @tc.name: UpgradeFromVersion9001
+ * @tc.desc: AccessTokenOpenCallback::UpgradeFromVersion9 adds sub_profile_id when the column is missing.
+ * @tc.type: FUNC
+ * @tc.require: TDD
+ */
+HWTEST_F(AccessTokenDatabaseCoverageTest, UpgradeFromVersion9001, TestSize.Level4)
+{
+    std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance()->GetRdb();
+    AccessTokenOpenCallback callback;
+
+    db->querySqlResults_.clear();
+    db->querySqlIndex_ = 0;
+    db->executeSqlResults_.clear();
+    db->executeSqlIndex_ = 0;
+    db->querySqlResults_.push_back({
+        {"0", TokenFiledConst::FIELD_USER_ID},
+        {"1", TokenFiledConst::FIELD_PERMISSION_NAME},
+        {"2", TokenFiledConst::FIELD_REQUEST_TOGGLE_STATUS},
+    });
+
+    ASSERT_EQ(NativeRdb::E_OK, callback.UpgradeFromVersion9(*(db.get())));
+    ASSERT_EQ(1u, db->querySqlIndex_);
+}
+
+/*
+ * @tc.name: UpgradeFromVersion9002
+ * @tc.desc: AccessTokenOpenCallback::UpgradeFromVersion9 skips alter table when sub_profile_id already exists.
+ * @tc.type: FUNC
+ * @tc.require: TDD
+ */
+HWTEST_F(AccessTokenDatabaseCoverageTest, UpgradeFromVersion9002, TestSize.Level4)
+{
+    std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance()->GetRdb();
+    AccessTokenOpenCallback callback;
+
+    db->querySqlResults_.clear();
+    db->querySqlIndex_ = 0;
+    db->executeSqlResults_ = {NativeRdb::E_SQLITE_CORRUPT};
+    db->executeSqlIndex_ = 0;
+    db->querySqlResults_.push_back({
+        {"0", TokenFiledConst::FIELD_USER_ID},
+        {"1", TokenFiledConst::FIELD_PERMISSION_NAME},
+        {"2", TokenFiledConst::FIELD_SUB_PROFILE_ID},
+        {"3", TokenFiledConst::FIELD_REQUEST_TOGGLE_STATUS},
+    });
+
+    ASSERT_EQ(NativeRdb::E_OK, callback.UpgradeFromVersion9(*(db.get())));
+    ASSERT_EQ(1u, db->querySqlIndex_);
+    ASSERT_EQ(0u, db->executeSqlIndex_);
+}
+
+/*
  * @tc.name: Modify001
  * @tc.desc: AccessTokenDb::Modify
  * @tc.type: FUNC
@@ -796,6 +848,60 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, OnUpgrade004, TestSize.Level4)
     ASSERT_EQ(NativeRdb::E_OK, callback.OnUpgrade(*(db.get()), DATABASE_VERSION_8, DATABASE_VERSION_9));
     ASSERT_EQ(NativeRdb::E_OK, callback.OnUpgrade(*(db.get()), DATABASE_VERSION_8, DATABASE_VERSION_9));
     ASSERT_EQ(NativeRdb::E_OK, callback.OnUpgrade(*(db.get()), DATABASE_VERSION_9, DATABASE_VERSION_9));
+}
+
+/*
+ * @tc.name: OnUpgrade005
+ * @tc.desc: AccessTokenOpenCallback::OnUpgrade version 9->10 adds sub_profile_id column.
+ * @tc.type: FUNC
+ * @tc.require: TDD
+ */
+HWTEST_F(AccessTokenDatabaseCoverageTest, OnUpgrade005, TestSize.Level4)
+{
+    std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance()->GetRdb();
+    ASSERT_NE(nullptr, db);
+    ASSERT_EQ(NativeRdb::E_OK, db->ExecuteSql("drop table if exists permission_request_toggle_status_table"));
+    ASSERT_EQ(NativeRdb::E_OK, db->ExecuteSql("create table permission_request_toggle_status_table ("
+        "user_id integer not null,"
+        "permission_name text not null,"
+        "request_toggle_status integer not null,"
+        "primary key(user_id, permission_name))"));
+
+    db->querySqlResults_ = {
+        {{{"0", "user_id", "INTEGER", "1", "", "1"},
+            {"1", "permission_name", "TEXT", "1", "", "2"},
+            {"2", "request_toggle_status", "INTEGER", "1", "", "0"}}},
+        {{{"0", "user_id", "INTEGER", "1", "", "1"},
+            {"1", "permission_name", "TEXT", "1", "", "2"},
+            {"2", "request_toggle_status", "INTEGER", "1", "", "0"},
+            {"3", TokenFiledConst::FIELD_SUB_PROFILE_ID, "INTEGER", "0", "-1", "0"}}},
+        {{{"0", "user_id", "INTEGER", "1", "", "1"},
+            {"1", "permission_name", "TEXT", "1", "", "2"},
+            {"2", "request_toggle_status", "INTEGER", "1", "", "0"},
+            {"3", TokenFiledConst::FIELD_SUB_PROFILE_ID, "INTEGER", "0", "-1", "0"}}}
+    };
+    db->querySqlIndex_ = 0;
+    db->executeSqlResults_ = {NativeRdb::E_OK};
+    db->executeSqlIndex_ = 0;
+
+    AccessTokenOpenCallback callback;
+    ASSERT_EQ(NativeRdb::E_OK, callback.OnUpgrade(*(db.get()), DATABASE_VERSION_9, DATABASE_VERSION_10));
+    ASSERT_EQ(NativeRdb::E_OK, callback.OnUpgrade(*(db.get()), DATABASE_VERSION_9, DATABASE_VERSION_10));
+
+    auto resultSet = db->QuerySql("PRAGMA table_info(permission_request_toggle_status_table)");
+    ASSERT_NE(nullptr, resultSet);
+    bool foundSubProfileId = false;
+    while (resultSet->GoToNextRow() == NativeRdb::E_OK) {
+        std::string columnName;
+        resultSet->GetString(1, columnName);
+        if (columnName == TokenFiledConst::FIELD_SUB_PROFILE_ID) {
+            foundSubProfileId = true;
+            std::string defaultValue;
+            resultSet->GetString(4, defaultValue);
+            EXPECT_EQ("-1", defaultValue);
+        }
+    }
+    EXPECT_TRUE(foundSubProfileId);
 }
 
 } // namespace AccessToken

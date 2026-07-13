@@ -38,6 +38,7 @@ const std::string PrivacyFiledConst::FIELD_PERMISSION_CODE = "permission_code";
 const std::string PrivacyFiledConst::FIELD_USED_TYPE = "used_type";
 const std::string PrivacyFiledConst::FIELD_DISABLE_POLICY = "disable_policy";
 const std::string PrivacyFiledConst::FIELD_ENHANCED_IDENTITY = "enhanced_identity";
+const std::string PrivacyFiledConst::FIELD_SUB_PROFILE_ID = "sub_profile_id";
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
