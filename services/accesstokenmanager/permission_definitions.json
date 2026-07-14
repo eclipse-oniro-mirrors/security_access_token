@@ -10284,6 +10284,17 @@
             "provisionEnable": true,
             "distributedSceneEnable": false,
             "deviceTypes": ["phone", "2in1", "tablet"]
+        },
+        {
+            "name": "ohos.permission.ENABLE_GWPASAN_INNER",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "availableType": "SERVICE",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "tablet"]
         }
     ]
 }
