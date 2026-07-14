@@ -294,9 +294,11 @@ public:
      * @brief Get token id by user id.
      * @param userID user id
      * @param tokenIdList token id list
+     * @param subProfileId sub profile id, default -1 means legacy path
      * @return error code, see access_token_error.h
      */
-    static int32_t GetTokenIDByUserID(int32_t userID, std::unordered_set<AccessTokenID>& tokenIdList);
+    static int32_t GetTokenIDByUserID(int32_t userID, std::unordered_set<AccessTokenID>& tokenIdList,
+        int32_t subProfileId = -1);
     /**
      * @brief Query hap tokenID by input prarms.
      * @param userID user id
@@ -419,7 +421,8 @@ public:
      * @param userID the userID
      * @return error code, see access_token_error.h
      */
-    static int32_t SetPermissionRequestToggleStatus(const std::string& permissionName, uint32_t status, int32_t userID);
+    static int32_t SetPermissionRequestToggleStatus(const std::string& permissionName, uint32_t status,
+        int32_t userID = 0, int32_t subProfileId = -1);
     /**
      * @brief Get permission request toggle status
      * @param permissionName permission name quote
@@ -428,7 +431,7 @@ public:
      * @return error code, see access_token_error.h
      */
     static int32_t GetPermissionRequestToggleStatus(const std::string& permissionName, uint32_t& status,
-        int32_t userID);
+        int32_t userID, int32_t subProfileId = -1);
     /**
      * @brief Starts the permission manager page of an application.
      * @param tokenID token id

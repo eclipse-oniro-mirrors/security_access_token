@@ -37,8 +37,9 @@ export default namespace privacyManager {
     native function getPermissionUsedRecordExecute(request: PermissionUsedRequest): PermissionUsedResponse;
     native function getPermissionUsedTypeInfosExecute(
         tokenId: int, permissionName: Permissions | ""): Array<PermissionUsedTypeInfo>;
-    native function setPermissionUsedRecordToggleStatusExecute(status: boolean): void;
-    native function getPermissionUsedRecordToggleStatusExecute(): boolean;
+    native function setPermissionUsedRecordToggleStatusExecute(
+        status: boolean, subProfileId: int, hasSubProfile: boolean): void;
+    native function getPermissionUsedRecordToggleStatusExecute(subProfileId: int, hasSubProfile: boolean): boolean;
     native function checkPermissionInUseExecute(permissionName: Permissions): boolean;
     native function onActiveStateChangeExecute(
         permissionList: Array<Permissions>, callback: Callback<ActiveChangeResponse>): void;
@@ -281,7 +282,21 @@ export default namespace privacyManager {
         return new Promise<void> (
             (resolve: (v: undefined) => void, reject: (err: BusinessError) => void): void => {
             let p1 = taskpool.execute((): void => {
-                setPermissionUsedRecordToggleStatusExecute(status);
+                setPermissionUsedRecordToggleStatusExecute(status, -1, false);
+            });
+            p1.then((e: Any): void => {
+                resolve(undefined);
+            }).catch((err: Error): void => {
+                reject(err as BusinessError);
+            });
+        });
+    }
+
+    export function setPermissionUsedRecordToggleStatus(status: boolean, subProfileId: int): Promise<void> {
+        return new Promise<void> (
+            (resolve: (v: undefined) => void, reject: (err: BusinessError) => void): void => {
+            let p1 = taskpool.execute((): void => {
+                setPermissionUsedRecordToggleStatusExecute(status, subProfileId, true);
             });
             p1.then((e: Any): void => {
                 resolve(undefined);
@@ -295,7 +310,21 @@ export default namespace privacyManager {
         return new Promise<boolean> (
             (resolve: (v: boolean) => void, reject: (err: BusinessError) => void): void => {
             let p1 = taskpool.execute((): boolean => {
-                return getPermissionUsedRecordToggleStatusExecute();
+                return getPermissionUsedRecordToggleStatusExecute(-1, false);
+            });
+            p1.then((e: Any): void => {
+                resolve(e as boolean);
+            }).catch((err: Error): void =>{
+                reject(err as BusinessError);
+            });
+        });
+    }
+
+    export function getPermissionUsedRecordToggleStatus(subProfileId: int): Promise<boolean>{
+        return new Promise<boolean> (
+            (resolve: (v: boolean) => void, reject: (err: BusinessError) => void): void => {
+            let p1 = taskpool.execute((): boolean => {
+                return getPermissionUsedRecordToggleStatusExecute(subProfileId, true);
             });
             p1.then((e: Any): void => {
                 resolve(e as boolean);

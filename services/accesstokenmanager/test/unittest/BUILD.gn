@@ -13,6 +13,11 @@
 
 import("//build/test.gni")
 import("../../accesstoken_manager.gni")
+import("//base/security/access_token/services/test/mock/account/account_mock.gni")
+
+account_mock_base_external_deps =
+    filter_exclude(accesstoken_manager_base_config.external_deps,
+                   [ "os_account:os_account_innerkits_lite" ])
 
 ohos_unittest("libpermission_monitor_test") {
   subsystem_name = "accesscontrol"
@@ -25,7 +30,8 @@ ohos_unittest("libpermission_monitor_test") {
   }
   branch_protector_ret = "pac_ret"
 
-  include_dirs = accesstoken_manager_base_config.include_dirs
+  include_dirs = account_mock_include_dirs
+  include_dirs += accesstoken_manager_base_config.include_dirs
   include_dirs += [
     "${access_token_path}/interfaces/innerkits/accesstoken/test/unittest/common",
     "${access_token_path}/services/accesstokenmanager/test/unittest/service",
@@ -38,6 +44,7 @@ ohos_unittest("libpermission_monitor_test") {
     "common/parameter.cpp",
     "permission/access_token_monitor_test.cpp",  # need execute firstly
   ]
+  sources += account_mock_sources
 
   sources += accesstoken_manager_base_config.sources
 
@@ -58,7 +65,7 @@ ohos_unittest("libpermission_monitor_test") {
     "googletest:gmock",
     "googletest:gtest_main",
   ]
-  external_deps += accesstoken_manager_base_config.external_deps
+  external_deps += account_mock_base_external_deps
 }
 
 ohos_unittest("libaccesstoken_manager_service_standard_test") {
@@ -72,7 +79,8 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
   }
   branch_protector_ret = "pac_ret"
 
-  include_dirs = accesstoken_manager_base_config.include_dirs
+  include_dirs = account_mock_include_dirs
+  include_dirs += accesstoken_manager_base_config.include_dirs
   include_dirs += [
     "${access_token_path}/interfaces/innerkits/accesstoken/test/unittest/common",
     "${access_token_path}/services/accesstokenmanager/test/unittest/service",
@@ -108,6 +116,7 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
     "tooltoken/saf_agent_fence.cpp",
     "tooltoken/tool_token_mock_test.cpp",
   ]
+  sources += account_mock_sources
   if (access_token_manager_hapverify_enable) {
     sources += [
       "permission/accesstoken_info_utils_test.cpp",
@@ -138,7 +147,7 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
     "googletest:gmock",
     "googletest:gtest_main",
   ]
-  external_deps += accesstoken_manager_base_config.external_deps
+  external_deps += account_mock_base_external_deps
 }
 
 ohos_unittest("libmigrate_installed_bundles_service_test") {
@@ -152,7 +161,8 @@ ohos_unittest("libmigrate_installed_bundles_service_test") {
   }
   branch_protector_ret = "pac_ret"
 
-  include_dirs = accesstoken_manager_base_config.include_dirs
+  include_dirs = account_mock_include_dirs
+  include_dirs += accesstoken_manager_base_config.include_dirs
   include_dirs += [
     "${access_token_path}/interfaces/innerkits/accesstoken/test/unittest/common",
     "${access_token_path}/services/accesstokenmanager/test/unittest/service",
@@ -167,6 +177,7 @@ ohos_unittest("libmigrate_installed_bundles_service_test") {
     "common/parameters.cpp",
     "service/migrate_installed_bundles_service_test.cpp",
   ]
+  sources += account_mock_sources
 
   if (access_token_manager_hapverify_enable) {
     sources += [
@@ -193,7 +204,7 @@ ohos_unittest("libmigrate_installed_bundles_service_test") {
     "googletest:gmock",
     "googletest:gtest_main",
   ]
-  external_deps += accesstoken_manager_base_config.external_deps
+  external_deps += account_mock_base_external_deps
 }
 
 ohos_unittest("libspm_data_task_test") {
@@ -207,7 +218,8 @@ ohos_unittest("libspm_data_task_test") {
   }
   branch_protector_ret = "pac_ret"
 
-  include_dirs = accesstoken_manager_base_config.include_dirs
+  include_dirs = account_mock_include_dirs
+  include_dirs += accesstoken_manager_base_config.include_dirs
   include_dirs += [
     "${access_token_path}/interfaces/innerkits/accesstoken/test/unittest/common",
     "${access_token_path}/services/accesstokenmanager/test/unittest/service",
@@ -229,6 +241,7 @@ ohos_unittest("libspm_data_task_test") {
     "${access_token_path}/interfaces/innerkits/nativetoken/src/nativetoken_hisysevent.c",
     "${access_token_path}/interfaces/innerkits/nativetoken/src/nativetoken_json_oper.c",
   ]
+  sources += account_mock_sources
 
   if (access_token_enable_spm && access_token_manager_hapverify_enable) {
     sources += [ "permission/install_session_spm_task_test.cpp" ]
@@ -255,7 +268,7 @@ ohos_unittest("libspm_data_task_test") {
     "googletest:gmock",
     "googletest:gtest_main",
   ]
-  external_deps += accesstoken_manager_base_config.external_deps
+  external_deps += account_mock_base_external_deps
 }
 
 # Test suite for kernel-dependent tests that use fake_token_setproc
@@ -270,7 +283,8 @@ ohos_unittest("libaccesstoken_manager_kernel_test") {
   }
   branch_protector_ret = "pac_ret"
 
-  include_dirs = accesstoken_manager_base_config.include_dirs
+  include_dirs = account_mock_include_dirs
+  include_dirs += accesstoken_manager_base_config.include_dirs
   include_dirs += [
     "${access_token_path}/interfaces/innerkits/accesstoken/test/unittest/common",
     "${access_token_path}/services/accesstokenmanager/test/unittest/service",
@@ -295,6 +309,7 @@ ohos_unittest("libaccesstoken_manager_kernel_test") {
     "${access_token_path}/interfaces/innerkits/nativetoken/src/nativetoken_hisysevent.c",
     "${access_token_path}/interfaces/innerkits/nativetoken/src/nativetoken_json_oper.c",
   ]
+  sources += account_mock_sources
 
   sources += accesstoken_manager_base_config.sources
 
@@ -317,7 +332,7 @@ ohos_unittest("libaccesstoken_manager_kernel_test") {
     "googletest:gmock",
     "googletest:gtest_main",
   ]
-  external_deps += accesstoken_manager_base_config.external_deps
+  external_deps += account_mock_base_external_deps
 }
 
 if (access_token_manager_hapverify_enable) {
@@ -332,7 +347,8 @@ if (access_token_manager_hapverify_enable) {
     }
     branch_protector_ret = "pac_ret"
 
-    include_dirs = accesstoken_manager_base_config.include_dirs
+    include_dirs = account_mock_include_dirs
+    include_dirs += accesstoken_manager_base_config.include_dirs
     include_dirs += [
       "${access_token_path}/services/accesstokenmanager/test/unittest/service",
       "${access_token_path}/services/accesstokenmanager/test/unittest/permission",
@@ -344,6 +360,7 @@ if (access_token_manager_hapverify_enable) {
       "common/parameter.cpp",
       "permission/hap_sign_verify_manager_test.cpp",
     ]
+    sources += account_mock_sources
 
     sources += accesstoken_manager_base_config.sources
 
@@ -364,7 +381,7 @@ if (access_token_manager_hapverify_enable) {
       "googletest:gmock",
       "googletest:gtest_main",
     ]
-    external_deps += accesstoken_manager_base_config.external_deps
+    external_deps += account_mock_base_external_deps
   }
 
   ohos_unittest("libboot_verify_scheduler_test") {
@@ -378,7 +395,8 @@ if (access_token_manager_hapverify_enable) {
     }
     branch_protector_ret = "pac_ret"
 
-  include_dirs = accesstoken_manager_base_config.include_dirs
+  include_dirs = account_mock_include_dirs
+  include_dirs += accesstoken_manager_base_config.include_dirs
   include_dirs += [
     "${access_token_path}/services/accesstokenmanager/test/unittest/permission",
     "${access_token_path}/services/accesstokenmanager/test/unittest/database",
@@ -397,6 +415,7 @@ if (access_token_manager_hapverify_enable) {
       "${access_token_path}/interfaces/innerkits/nativetoken/src/nativetoken_hisysevent.c",
       "${access_token_path}/interfaces/innerkits/nativetoken/src/nativetoken_json_oper.c",
     ]
+    sources += account_mock_sources
 
     sources += accesstoken_manager_base_config.sources
     sources -= [
@@ -418,7 +437,7 @@ if (access_token_manager_hapverify_enable) {
       "googletest:gmock",
       "googletest:gtest_main",
     ]
-    external_deps += accesstoken_manager_base_config.external_deps
+    external_deps += account_mock_base_external_deps
   }
 }
 

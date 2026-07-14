@@ -13,6 +13,11 @@
 
 import("//build/test.gni")
 import("../../privacy_manager.gni")
+import("${access_token_path}/services/test/mock/account/account_mock.gni")
+
+account_mock_base_external_deps =
+    filter_exclude(privacy_manager_base_config.external_deps,
+                   [ "os_account:os_account_innerkits_lite" ])
 
 if (is_standard_system && ability_base_enable == true) {
   ohos_unittest("libprivacy_manager_service_standard_test") {
@@ -25,7 +30,8 @@ if (is_standard_system && ability_base_enable == true) {
     }
     branch_protector_ret = "pac_ret"
 
-    include_dirs = privacy_manager_base_config.include_dirs
+    include_dirs = account_mock_include_dirs
+    include_dirs += privacy_manager_base_config.include_dirs
     include_dirs += [
       "${access_token_path}/interfaces/innerkits/nativetoken/include",
       "${access_token_path}/interfaces/innerkits/privacy/test/unittest/src",
@@ -34,18 +40,21 @@ if (is_standard_system && ability_base_enable == true) {
     ]
 
     sources = privacy_manager_base_config.sources
+    sources += account_mock_sources
     sources += [
       "${access_token_path}/interfaces/innerkits/privacy/test/unittest/src/privacy_test_common.cpp",
       "active/active_status_callback_manager_test.cpp",
       "database/permission_record_db_test.cpp",
       "proxy/privacy_manager_proxy_death_test.cpp",
       "record/permission_record_manager_test.cpp",
+      "record/privacy_toggle_record_test.cpp",
       "record/permission_record_set_test.cpp",
       "sensitive/sensitive_manager_test.cpp",
       "service/privacy_manager_service_test.cpp",
     ]
 
     cflags_cc = privacy_manager_base_config.cflags_cc
+    cflags_cc += account_mock_cflags_cc
     cflags_cc += [ "-DMAX_COUNT_TEST" ]
 
     configs = privacy_manager_base_config.configs
@@ -56,10 +65,9 @@ if (is_standard_system && ability_base_enable == true) {
       "${access_token_path}/interfaces/innerkits/privacy:libprivacy_sdk",
       "${access_token_path}/interfaces/innerkits/token_setproc:libtokensetproc_shared",
       "${access_token_path}/services/common/proxy_death:proxy_death_stub",
-      "${access_token_path}/services/privacymanager:privacy_manager_service",
     ]
 
-    external_deps = privacy_manager_base_config.external_deps
+    external_deps = account_mock_base_external_deps
     external_deps += [ "googletest:gtest_main" ]
 
     if (ability_runtime_enable) {

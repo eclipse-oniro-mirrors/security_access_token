@@ -123,20 +123,20 @@ int32_t PrivacyKit::AddPermissionUsedRecord(const AddPermParamInfo& info, bool a
     return (res == PrivacyError::ERR_PRIVACY_TOGGELE_RESTRICTED) ? RET_SUCCESS : res;
 }
 
-int32_t PrivacyKit::SetPermissionUsedRecordToggleStatus(int32_t userID, bool status)
+int32_t PrivacyKit::SetPermissionUsedRecordToggleStatus(int32_t userID, bool status, int32_t subProfileId)
 {
     if (!DataValidator::IsUserIdValid(userID)) {
         return PrivacyError::ERR_PARAM_INVALID;
     }
-    return PrivacyManagerClient::GetInstance().SetPermissionUsedRecordToggleStatus(userID, status);
+    return PrivacyManagerClient::GetInstance().SetPermissionUsedRecordToggleStatus(userID, status, subProfileId);
 }
 
-int32_t PrivacyKit::GetPermissionUsedRecordToggleStatus(int32_t userID, bool& status)
+int32_t PrivacyKit::GetPermissionUsedRecordToggleStatus(int32_t userID, bool& status, int32_t subProfileId)
 {
     if (!DataValidator::IsUserIdValid(userID)) {
         return PrivacyError::ERR_PARAM_INVALID;
     }
-    return PrivacyManagerClient::GetInstance().GetPermissionUsedRecordToggleStatus(userID, status);
+    return PrivacyManagerClient::GetInstance().GetPermissionUsedRecordToggleStatus(userID, status, subProfileId);
 }
 
 int32_t PrivacyKit::StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName, int32_t pid,

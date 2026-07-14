@@ -142,10 +142,10 @@ bool ToolTokenInfoManager::CheckCliInfo(const CliInfo& info) const
         LOGE(ATM_DOMAIN, ATM_TAG, "Invalid cliName, cliName=%{public}s.", info.cliName.c_str());
         return false;
     }
-    if (!info.subCliName.empty() && info.subCliName.length() > MAX_CHALLENGE_LENGTH) {
+    if (!info.subCliName.empty() && info.subCliName.size() > MAX_CHALLENGE_LENGTH) {
         LOGE(ATM_DOMAIN, ATM_TAG,
             "Invalid subCliName, cliName=%{public}s, subCliName=%{public}s, info.subCliName.length()=%{public}zu.",
-            info.cliName.c_str(), info.subCliName.c_str(), info.subCliName.length());
+            info.cliName.c_str(), info.subCliName.c_str(), info.subCliName.size());
         return false;
     }
     return true;

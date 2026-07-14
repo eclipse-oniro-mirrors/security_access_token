@@ -43,6 +43,7 @@ public:
     const static std::string FIELD_USED_TYPE;
     const static std::string FIELD_DISABLE_POLICY;
     const static std::string FIELD_ENHANCED_IDENTITY;
+    const static std::string FIELD_SUB_PROFILE_ID;
 };
 } // namespace AccessToken
 } // namespace Security

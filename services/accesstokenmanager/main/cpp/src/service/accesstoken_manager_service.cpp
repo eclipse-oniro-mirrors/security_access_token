@@ -108,6 +108,7 @@ const char* DEVELOPER_MODE_STATE = "const.security.developermode.state";
 
 const std::string MANAGE_HAP_TOKENID_PERMISSION = "ohos.permission.MANAGE_HAP_TOKENID";
 static constexpr int MAX_PERMISSION_SIZE = 1024;
+static constexpr int32_t BASE_USER_RANGE = 200000;
 #ifdef SUPPORT_MANAGE_USER_POLICY
 static constexpr int MAX_SET_USER_POLICY_SIZE = 200;
 #endif
@@ -118,13 +119,19 @@ const std::string GET_SENSITIVE_PERMISSIONS = "ohos.permission.GET_SENSITIVE_PER
 const std::string DISABLE_PERMISSION_DIALOG = "ohos.permission.DISABLE_PERMISSION_DIALOG";
 const std::string GRANT_SHORT_TERM_WRITE_MEDIAVIDEO = "ohos.permission.GRANT_SHORT_TERM_WRITE_MEDIAVIDEO";
 const std::string MANAGE_EDM_POLICY = "ohos.permission.MANAGE_EDM_POLICY";
-const std::string MANAGE_TOOL_TOKENID = "ohos.permission.MANAGE_TOOL_TOKENID";
-const std::string MANAGE_CLAW_TOKEN = "ohos.permission.MANAGE_CLAW_TOKEN";
 const std::string QUERY_TOOL_PERMISSIONS = "ohos.permission.QUERY_TOOL_PERMISSIONS";
 const std::string MANAGE_TOOL_RUNTIME_PERMISSIONS = "ohos.permission.MANAGE_TOOL_RUNTIME_PERMISSIONS";
+const std::string MANAGE_TOOL_TOKENID = "ohos.permission.MANAGE_TOOL_TOKENID";
 
 static constexpr int32_t SA_ID_ACCESSTOKEN_MANAGER_SERVICE = 3503;
 std::mutex g_userPolicyUpdateMutex;
+
+int32_t ResolveRequestToggleUserId(int32_t userID)
+{
+    int32_t callingUid = IPCSkeleton::GetCallingUid();
+    int32_t callingUserId = callingUid / BASE_USER_RANGE;
+    return (callingUid == 0) ? userID : callingUserId;
+}
 
 #ifdef HICOLLIE_ENABLE
 constexpr uint32_t TIMEOUT = 40; // 40s
@@ -1118,38 +1125,37 @@ int AccessTokenManagerService::GetPermissionFlag(
 }
 
 int32_t AccessTokenManagerService::SetPermissionRequestToggleStatus(
-    const std::string& permissionName, uint32_t status, int32_t userID = 0)
+    const std::string& permissionName, uint32_t status, int32_t userID, int32_t subProfileId)
 {
     uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
     if ((this->GetTokenType(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
         return AccessTokenError::ERR_NOT_SYSTEM_APP;
     }
-
     if (!IsPrivilegedCalling() && VerifyAccessToken(callingTokenID, DISABLE_PERMISSION_DIALOG) == PERMISSION_DENIED) {
         ReportPermissionVerifyEvent(callingTokenID, permissionName, "SetToggleStatus");
         LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", callingTokenID);
         return AccessTokenError::ERR_PERMISSION_DENIED;
     }
+    int32_t resolvedUserId = ResolveRequestToggleUserId(userID);
     return PermissionRequestToggleManager::GetInstance().SetPermissionRequestToggleStatus(permissionName, status,
-        userID);
+        resolvedUserId, subProfileId);
 }
 
 int32_t AccessTokenManagerService::GetPermissionRequestToggleStatus(
-    const std::string& permissionName, uint32_t& status, int32_t userID = 0)
+    const std::string& permissionName, uint32_t& status, int32_t userID, int32_t subProfileId)
 {
     uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
     if ((this->GetTokenType(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
         return AccessTokenError::ERR_NOT_SYSTEM_APP;
     }
-
-    if (!IsShellProcessCalling() && !IsPrivilegedCalling() &&
-        VerifyAccessToken(callingTokenID, GET_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {
+    if (!IsPrivilegedCalling() && VerifyAccessToken(callingTokenID, GET_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {
         ReportPermissionVerifyEvent(callingTokenID, permissionName, "GetToggleStatus");
         LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", callingTokenID);
         return AccessTokenError::ERR_PERMISSION_DENIED;
     }
+    int32_t resolvedUserId = ResolveRequestToggleUserId(userID);
     return PermissionRequestToggleManager::GetInstance().GetPermissionRequestToggleStatus(permissionName, status,
-        userID);
+        resolvedUserId, subProfileId);
 }
 
 int32_t AccessTokenManagerService::RequestAppPermOnSetting(AccessTokenID tokenID)
@@ -1878,7 +1884,8 @@ int32_t AccessTokenManagerService::UpdateHapToken(uint64_t& fullTokenId, const U
     return error;
 }
 
-int32_t AccessTokenManagerService::GetTokenIDByUserID(int32_t userID, std::vector<AccessTokenID>& tokenIds)
+int32_t AccessTokenManagerService::GetTokenIDByUserID(
+    int32_t userID, std::vector<AccessTokenID>& tokenIds, int32_t subProfileId)
 {
     LOGD(ATM_DOMAIN, ATM_TAG, "UserID: %{public}d.", userID);
 
@@ -1888,7 +1895,7 @@ int32_t AccessTokenManagerService::GetTokenIDByUserID(int32_t userID, std::vecto
     }
 
     std::unordered_set<AccessTokenID> tokenIdList;
-    AccessTokenInfoManager::GetInstance().GetTokenIDByUserID(userID, tokenIdList);
+    AccessTokenInfoManager::GetInstance().GetTokenIDByUserID(userID, subProfileId, tokenIdList);
     std::copy(tokenIdList.begin(), tokenIdList.end(), std::back_inserter(tokenIds));
     return RET_SUCCESS;
 }

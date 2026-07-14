@@ -22,6 +22,7 @@
 #include <limits>
 #include <thread>
 #include <unordered_set>
+#include <vector>
 
 #include "accesstoken_id_manager.h"
 #include "access_token_error.h"
@@ -46,6 +47,9 @@
 #include "permission_request_toggle_manager.h"
 #include "token_modify_notifier.h"
 #undef private
+#ifdef ACCESS_TOKEN_SUPPORT_SUBPROFILE
+#include "os_account_manager_lite.h"
+#endif
 #include "permission_kernel_utils.h"
 #include "permission_map.h"
 #include "permission_validator.h"
@@ -69,6 +73,31 @@ static constexpr int32_t MAX_EXTENDED_MAP_SIZE = 512;
 static constexpr int32_t MAX_VALUE_LENGTH = 1024;
 #ifdef SUPPORT_MANAGE_USER_POLICY
 static constexpr uint32_t USER_POLICY_MAX_LIST_SIZE = 1024;
+#endif
+#ifdef ACCESS_TOKEN_SUPPORT_SUBPROFILE
+static constexpr int32_t SUBPROFILE_TEST_ID = 10;
+static constexpr int32_t SUBPROFILE_TEST_INDEX = 1;
+
+class SubProfileTestStateGuard {
+public:
+    ~SubProfileTestStateGuard()
+    {
+        ResetMockOsAccountManagerLite();
+        for (const auto tokenId : tokenIdList_) {
+            (void)AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId);
+        }
+    }
+
+    void AddTokenId(AccessTokenID tokenId)
+    {
+        if (tokenId != INVALID_TOKENID) {
+            tokenIdList_.emplace_back(tokenId);
+        }
+    }
+
+private:
+    std::vector<AccessTokenID> tokenIdList_;
+};
 #endif
 static constexpr int32_t INVALID_GRANT_MODE = 1000;
 static const int32_t TOKEN_ATTR_RESERVED = 0x4;
@@ -1189,6 +1218,63 @@ HWTEST_F(TokenInfoManagerTest, GetHapTokenID001, TestSize.Level0)
     ASSERT_EQ(RET_SUCCESS, ret);
     GTEST_LOG_(INFO) << "remove the token info";
 }
+
+#ifdef ACCESS_TOKEN_SUPPORT_SUBPROFILE
+/**
+ * @tc.name: GetTokenIDByUserIDWithSubProfile001
+ * @tc.desc: GetTokenIDByUserID filters token by index resolved from userId and subProfileId.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenInfoManagerTest, GetTokenIDByUserIDWithSubProfile001, TestSize.Level0)
+{
+    SubProfileTestStateGuard guard;
+    std::vector<GenericValues> undefValues;
+    HapInfoParams info1 = g_infoManagerTestInfoParms;
+    HapInfoParams info2 = g_infoManagerTestInfoParms;
+    info1.bundleName = "token_info_subprofile_test1";
+    info2.bundleName = "token_info_subprofile_test2";
+    info1.instIndex = INST_INDEX;
+    info2.instIndex = SUBPROFILE_TEST_INDEX;
+
+    AccessTokenIDEx tokenIdEx1 = {0};
+    AccessTokenIDEx tokenIdEx2 = {0};
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(
+        info1, g_infoManagerTestPolicyPrams1, tokenIdEx1, undefValues));
+    guard.AddTokenId(tokenIdEx1.tokenIdExStruct.tokenID);
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(
+        info2, g_infoManagerTestPolicyPrams1, tokenIdEx2, undefValues));
+    guard.AddTokenId(tokenIdEx2.tokenIdExStruct.tokenID);
+
+    SetMockOsAccountSubProfileIndex(SUBPROFILE_TEST_INDEX, ERR_OK);
+    std::unordered_set<AccessTokenID> tokenIdList;
+    AccessTokenInfoManager::GetInstance().GetTokenIDByUserID(info1.userID, SUBPROFILE_TEST_ID, tokenIdList);
+    EXPECT_EQ(tokenIdList.end(), tokenIdList.find(tokenIdEx1.tokenIdExStruct.tokenID));
+    EXPECT_NE(tokenIdList.end(), tokenIdList.find(tokenIdEx2.tokenIdExStruct.tokenID));
+}
+
+/**
+ * @tc.name: GetTokenIDByUserIDWithSubProfile002
+ * @tc.desc: GetTokenIDByUserID returns empty list when account fails to resolve subProfile index.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenInfoManagerTest, GetTokenIDByUserIDWithSubProfile002, TestSize.Level0)
+{
+    SubProfileTestStateGuard guard;
+    std::vector<GenericValues> undefValues;
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(
+        g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams1, tokenIdEx, undefValues));
+    guard.AddTokenId(tokenIdEx.tokenIdExStruct.tokenID);
+
+    SetMockOsAccountSubProfileIndex(SUBPROFILE_TEST_INDEX, ERR_INVALID_VALUE);
+    std::unordered_set<AccessTokenID> tokenIdList;
+    AccessTokenInfoManager::GetInstance().GetTokenIDByUserID(
+        g_infoManagerTestInfoParms.userID, SUBPROFILE_TEST_ID, tokenIdList);
+    EXPECT_TRUE(tokenIdList.empty());
+}
+#endif
 
 /**
  * @tc.name: UpdateHapToken001

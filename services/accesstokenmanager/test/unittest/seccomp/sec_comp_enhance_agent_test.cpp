@@ -262,6 +262,25 @@ HWTEST_F(SecCompEnhanceAgentTest, SecCompEnhanceKey004, TestSize.Level1)
     EXPECT_TRUE(valid.load());
 }
 
+/**
+ * @tc.name: SecCompEnhanceKey005
+ * @tc.desc: GetSecCompEnhanceKey rejects a corrupted stored enhance key size.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(SecCompEnhanceAgentTest, SecCompEnhanceKey005, TestSize.Level1)
+{
+    auto& agent = SecCompEnhanceAgent::GetInstance();
+    {
+        std::lock_guard<std::mutex> lock(agent.secCompEnhanceKeyMutex_);
+        agent.secCompEnhanceKey_ = CreateEnhanceKey(1, MAX_HMAC_SIZE + 1, 0x55);
+        agent.hasSecCompEnhanceKey_ = true;
+    }
+
+    SecCompEnhanceKey result = CreateEnhanceKey(2, 1, 0x66);
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, agent.GetSecCompEnhanceKey(result));
+}
+
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

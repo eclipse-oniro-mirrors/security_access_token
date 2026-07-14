@@ -54,11 +54,15 @@ void SwitchToManageToolCaller()
     EXPECT_EQ(0, SetSelfTokenID(g_manageToolCallerTokenId));
 }
 
+int32_t DeleteToolTokenByCurrentPid();
+
 int32_t InitCliToolTokenWithEmptyChallenge(AccessTokenID hostTokenId, const CliInfo& cliInfo,
     AccessTokenIDEx& tokenIdEx, std::vector<PermissionWithValue>& kernelPermList)
 {
     AccessTokenID callerTokenId = GetSelfTokenID();
     uint32_t callerUid = getuid();
+    int32_t deleteRet = DeleteToolTokenByCurrentPid();
+    EXPECT_TRUE((deleteRet == RET_SUCCESS) || (deleteRet == AccessTokenError::ERR_TOKENID_NOT_EXIST));
     SwitchToRootCaller();
     EXPECT_EQ(0, setuid(ROOT_UID));
     CliInitInfo initInfo = {

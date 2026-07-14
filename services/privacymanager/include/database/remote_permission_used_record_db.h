@@ -52,6 +52,7 @@ private:
     std::shared_mutex rwLock_;
 
     int32_t CreateRemotePermissionRecordTable() const;
+    int32_t AddSubProfileIdColumn();
 
     std::string CreateInsertPrepareSqlCmd() const;
     std::string CreateDeletePrepareSqlCmd(const std::vector<std::string>& columnNames) const;
@@ -63,7 +64,7 @@ private:
     std::string CreateDeleteExpireRecordsPrepareSqlCmd(const std::vector<std::string>& andColumns) const;
     std::string CreateDeleteExcessiveRecordsPrepareSqlCmd(uint32_t excessiveSize) const;
 
-    static const int32_t DATABASE_VERSION = 1;
+    static const int32_t DATABASE_VERSION = 2;
 };
 
 class RemotePermUsedRecordDbManager {

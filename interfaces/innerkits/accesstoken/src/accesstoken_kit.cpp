@@ -453,14 +453,15 @@ int32_t AccessTokenKit::GetHapBaseInfoByUid(int32_t uid, HapBaseInfo& info)
     return AccessTokenManagerClient::GetInstance().GetHapBaseInfoByUid(uid, info);
 }
 
-int32_t AccessTokenKit::GetTokenIDByUserID(int32_t userID, std::unordered_set<AccessTokenID>& tokenIdList)
+int32_t AccessTokenKit::GetTokenIDByUserID(
+    int32_t userID, std::unordered_set<AccessTokenID>& tokenIdList, int32_t subProfileId)
 {
-    LOGD(ATM_DOMAIN, ATM_TAG, "UserID=%{public}d.", userID);
+    LOGD(ATM_DOMAIN, ATM_TAG, "UserID=%{public}d, subProfileId=%{public}d.", userID, subProfileId);
     if (!DataValidator::IsUserIdValid(userID)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "UserID=%{public}d is invalid", userID);
         return  AccessTokenError::ERR_PARAM_INVALID;
     }
-    return AccessTokenManagerClient::GetInstance().GetTokenIDByUserID(userID, tokenIdList);
+    return AccessTokenManagerClient::GetInstance().GetTokenIDByUserID(userID, tokenIdList, subProfileId);
 }
 
 int AccessTokenKit::GetHapTokenInfo(
@@ -773,10 +774,11 @@ int32_t AccessTokenKit::ClearUserGrantedPermStateByBundle(const std::string& bun
 }
 
 int32_t AccessTokenKit::SetPermissionRequestToggleStatus(const std::string& permissionName, uint32_t status,
-    int32_t userID = 0)
+    int32_t userID, int32_t subProfileId)
 {
-    LOGD(ATM_DOMAIN, ATM_TAG, "PermissionName=%{public}s, status=%{public}d, userID=%{public}d.",
-        permissionName.c_str(), status, userID);
+    LOGD(ATM_DOMAIN, ATM_TAG,
+        "PermissionName=%{public}s, status=%{public}d, userID=%{public}d, subProfileId=%{public}d.",
+        permissionName.c_str(), status, userID, subProfileId);
     if (!DataValidator::IsPermissionNameValid(permissionName)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "PermissionName is invalid.");
         return AccessTokenError::ERR_PARAM_INVALID;
@@ -789,14 +791,15 @@ int32_t AccessTokenKit::SetPermissionRequestToggleStatus(const std::string& perm
         LOGE(ATM_DOMAIN, ATM_TAG, "UserID is invalid.");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
-    return AccessTokenManagerClient::GetInstance().SetPermissionRequestToggleStatus(permissionName, status, userID);
+    return AccessTokenManagerClient::GetInstance().SetPermissionRequestToggleStatus(
+        permissionName, status, userID, subProfileId);
 }
 
 int32_t AccessTokenKit::GetPermissionRequestToggleStatus(const std::string& permissionName, uint32_t& status,
-    int32_t userID = 0)
+    int32_t userID, int32_t subProfileId)
 {
-    LOGD(ATM_DOMAIN, ATM_TAG, "PermissionName=%{public}s, userID=%{public}d.",
-        permissionName.c_str(), userID);
+    LOGD(ATM_DOMAIN, ATM_TAG, "PermissionName=%{public}s, userID=%{public}d, subProfileId=%{public}d.",
+        permissionName.c_str(), userID, subProfileId);
     if (!DataValidator::IsPermissionNameValid(permissionName)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "PermissionName is invalid.");
         return AccessTokenError::ERR_PARAM_INVALID;
@@ -805,7 +808,8 @@ int32_t AccessTokenKit::GetPermissionRequestToggleStatus(const std::string& perm
         LOGE(ATM_DOMAIN, ATM_TAG, "UserID is invalid.");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
-    return AccessTokenManagerClient::GetInstance().GetPermissionRequestToggleStatus(permissionName, status, userID);
+    return AccessTokenManagerClient::GetInstance().GetPermissionRequestToggleStatus(
+        permissionName, status, userID, subProfileId);
 }
 
 int32_t AccessTokenKit::RequestAppPermOnSetting(AccessTokenID tokenID)

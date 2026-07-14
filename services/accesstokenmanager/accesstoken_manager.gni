@@ -195,6 +195,9 @@ accesstoken_manager_base_config = {
     external_deps += [ "bounds_checking_function:libsec_shared" ]
   }
 
+  if (access_token_support_subprofile == true) {
+    external_deps += [ "os_account:os_account_innerkits_lite" ]
+  }
   # ========== lite_device_enable: Complete Configuration ==========
   # Light device: use dlopen database (smaller footprint)
   # Normal device: use full native RDB implementation

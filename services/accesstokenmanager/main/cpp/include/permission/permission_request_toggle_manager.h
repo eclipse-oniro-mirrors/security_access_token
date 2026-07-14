@@ -18,8 +18,10 @@
 
 #include <cstdint>
 #include <string>
+#include <vector>
 
 #include "access_token.h"
+#include "generic_values.h"
 
 namespace OHOS {
 namespace Security {
@@ -28,8 +30,13 @@ class PermissionRequestToggleManager final {
 public:
     static PermissionRequestToggleManager& GetInstance();
 
-    int32_t SetPermissionRequestToggleStatus(const std::string& permissionName, uint32_t status, int32_t userID);
-    int32_t GetPermissionRequestToggleStatus(const std::string& permissionName, uint32_t& status, int32_t userID);
+    int32_t SetPermissionRequestToggleStatus(const std::string& permissionName, uint32_t status, int32_t userID,
+        int32_t subProfileId);
+    int32_t GetPermissionRequestToggleStatus(const std::string& permissionName, uint32_t& status, int32_t userID,
+        int32_t subProfileId);
+    int32_t FindPermRequestToggleStatusRecordsFromDb(
+        int32_t userID, const std::string& permissionName, int32_t subProfileId,
+        std::vector<GenericValues>& result, bool queryAllSubProfileRecords = false) const;
 
 private:
     PermissionRequestToggleManager() = default;
@@ -39,9 +46,10 @@ private:
     PermissionRequestToggleManager(PermissionRequestToggleManager&&) = delete;
     PermissionRequestToggleManager& operator=(PermissionRequestToggleManager&&) = delete;
 
-    int32_t AddPermRequestToggleStatusToDb(int32_t userID, const std::string& permissionName, int32_t status);
-    int32_t FindPermRequestToggleStatusFromDb(int32_t userID, const std::string& permissionName);
-    int32_t ResolveUserId(int32_t userID) const;
+    int32_t AddPermRequestToggleStatusToDb(
+        int32_t userID, const std::string& permissionName, int32_t subProfileId, uint32_t status);
+    int32_t FindPermRequestToggleStatusFromDb(
+        int32_t userID, const std::string& permissionName, int32_t subProfileId, uint32_t& status);
     int32_t ValidatePermissionForToggle(const std::string& permissionName, int32_t userID) const;
 };
 } // namespace AccessToken

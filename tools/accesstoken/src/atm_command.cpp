@@ -988,12 +988,15 @@ int32_t AtmCommand::RunAsCommonCommandForToggle()
 {
     int32_t result = RET_SUCCESS;
     AtmToggleParamInfo info;
+    bool hasToggleMode = false;
 
     if (argc_ >= 3) {
         if (strcmp(argv_[2], "request") == 0) {
             info.toggleMode = TOGGLE_REQUEST;
+            hasToggleMode = true;
         } else if (strcmp(argv_[2], "record") == 0) {
             info.toggleMode = TOGGLE_RECORD;
+            hasToggleMode = true;
         }
     }
 
@@ -1025,8 +1028,8 @@ int32_t AtmCommand::RunAsCommonCommandForToggle()
     }
 
     if (result != RET_SUCCESS) {
-        std::string helpMsg = (info.toggleMode == TOGGLE_REQUEST) ? HELP_MSG_TOGGLE_REQUEST :
-                              (info.toggleMode == TOGGLE_RECORD) ? HELP_MSG_TOGGLE_RECORD : HELP_MSG_TOGGLE;
+        std::string helpMsg = !hasToggleMode ? HELP_MSG_TOGGLE :
+            ((info.toggleMode == TOGGLE_REQUEST) ? HELP_MSG_TOGGLE_REQUEST : HELP_MSG_TOGGLE_RECORD);
         resultReceiver_.append(helpMsg + "\n");
         return result;
     }

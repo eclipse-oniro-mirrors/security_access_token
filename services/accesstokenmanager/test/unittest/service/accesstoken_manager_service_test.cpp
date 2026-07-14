@@ -34,14 +34,17 @@
 #if defined(SPM_DATA_ENABLE) && defined(IS_SUPPORT_HAP_RUNNING)
 #include "install_session_manager.h"
 #endif
+#include "ipc_skeleton.h"
 #include "mock_permission.h"
 #ifdef IS_SUPPORT_HAP_RUNNING
 #include "mock_app_verify_adapter.h"
 #endif
 #include "parameters.h"
+#include "os_account_manager_lite.h"
 #include "permission_feature_manager.h"
 #include "permission_map.h"
 #include "permission_manager.h"
+#include "permission_request_toggle_manager.h"
 #include "perm_state_change_callback_customize.h"
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
 #include "sec_comp_enhance_agent.h"
@@ -49,6 +52,7 @@
 #include "securec.h"
 #include "test_common.h"
 #include "token_field_const.h"
+#include "tokenid_attributes.h"
 #include "token_setproc.h"
 #include "user_policy_manager.h"
 #undef private
@@ -64,6 +68,23 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
+struct UidGuard {
+    explicit UidGuard(uid_t newUid) : origUid(getuid())
+    {
+        (void)setuid(newUid);
+    }
+
+    ~UidGuard()
+    {
+        (void)setuid(origUid);
+    }
+
+    UidGuard(const UidGuard&) = delete;
+    UidGuard& operator=(const UidGuard&) = delete;
+
+    uid_t origUid;
+};
+
 static constexpr int32_t USER_ID = 100;
 static constexpr int32_t INST_INDEX = 0;
 static constexpr int32_t INDEX_ONE = 1;
@@ -118,6 +139,14 @@ SecCompEnhanceKeyIdl BuildSecCompEnhanceKeyIdl(uint64_t epoch, uint8_t value)
     SecCompEnhanceKeyIdl enhanceKey;
     enhanceKey.epoch = epoch;
     enhanceKey.key.assign(MAX_HMAC_SIZE, value);
+    return enhanceKey;
+}
+
+SecCompEnhanceKeyIdl BuildSecCompEnhanceKeyIdl(uint64_t epoch, size_t size, uint8_t value)
+{
+    SecCompEnhanceKeyIdl enhanceKey;
+    enhanceKey.epoch = epoch;
+    enhanceKey.key.assign(size, value);
     return enhanceKey;
 }
 #endif
@@ -3932,6 +3961,29 @@ HWTEST_F(AccessTokenManagerServiceTest, DeleteIdentityService001, TestSize.Level
 }
 
 /**
+ * @tc.name: DeleteIdentityService002
+ * @tc.desc: DeleteIdentity fills DFX info when GetHapTokenInfo succeeds.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, DeleteIdentityService002, TestSize.Level1)
+{
+    MockToken mock(g_selfShellTokenId, "accesstoken_service", false);
+    mock.Grant("ohos.permission.MANAGE_HAP_TOKENID");
+    AccessTokenID tokenId = INVALID_TOKENID;
+    ASSERT_NE(0u, CreateServiceTestHapToken("delete_identity_service_success_test", true, {}, tokenId));
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+
+    HapTokenInfo hapInfo;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenId, hapInfo));
+
+    EXPECT_EQ(RET_SUCCESS,
+        atManagerService_->DeleteIdentity(tokenId, "delete_identity_service_success_test", ReservedTypeIdl::NONE));
+    EXPECT_EQ(AccessTokenError::ERR_TOKENID_NOT_EXIST,
+        AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenId, hapInfo));
+}
+
+/**
  * @tc.name: RefreshTokenIdStatusService002
  * @tc.desc: RefreshTokenStatus returns ERR_TOKENID_NOT_EXIST when token does not exist.
  * @tc.type: FUNC
@@ -4183,7 +4235,118 @@ HWTEST_F(AccessTokenManagerServiceTest, SecCompEnhanceKeyService002, TestSize.Le
     EXPECT_EQ(input.key, output.key);
     ResetSecCompEnhanceKey();
 }
+
+/**
+ * @tc.name: SecCompEnhanceKeyService003
+ * @tc.desc: Reject invalid IDL enhance key size before storing.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, SecCompEnhanceKeyService003, TestSize.Level1)
+{
+    ResetSecCompEnhanceKey();
+    MockNativeToken mock("security_component_service");
+    SecCompEnhanceKeyIdl emptyKey = BuildSecCompEnhanceKeyIdl(1, 0, 0x33);
+    SecCompEnhanceKeyIdl oversizedKey = BuildSecCompEnhanceKeyIdl(1, MAX_HMAC_SIZE + 1, 0x44);
+
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, atManagerService_->StoreSecCompEnhanceKey(emptyKey));
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, atManagerService_->StoreSecCompEnhanceKey(oversizedKey));
+    SecCompEnhanceKeyIdl output;
+    EXPECT_EQ(AccessTokenError::ERR_RESOURCE_IS_NOT_READY, atManagerService_->GetSecCompEnhanceKey(output));
+    EXPECT_TRUE(output.key.empty());
+}
+
+/**
+ * @tc.name: SecCompEnhanceKeyService004
+ * @tc.desc: Propagate agent errors from GetSecCompEnhanceKey.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, SecCompEnhanceKeyService004, TestSize.Level1)
+{
+    ResetSecCompEnhanceKey();
+    MockNativeToken mock("security_component_service");
+    SecCompEnhanceKeyIdl output;
+    EXPECT_EQ(AccessTokenError::ERR_RESOURCE_IS_NOT_READY, atManagerService_->GetSecCompEnhanceKey(output));
+    EXPECT_TRUE(output.key.empty());
+}
+
+/**
+ * @tc.name: SecCompEnhanceKeyService005
+ * @tc.desc: Propagate stable-key epoch validation results from the enhance agent.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, SecCompEnhanceKeyService005, TestSize.Level1)
+{
+    ResetSecCompEnhanceKey();
+    MockNativeToken mock("security_component_service");
+    SecCompEnhanceKeyIdl first = BuildSecCompEnhanceKeyIdl(10, 0x55);
+    SecCompEnhanceKeyIdl older = BuildSecCompEnhanceKeyIdl(9, 0x66);
+    SecCompEnhanceKeyIdl different = BuildSecCompEnhanceKeyIdl(10, 0x77);
+    SecCompEnhanceKeyIdl latest = BuildSecCompEnhanceKeyIdl(11, 0x88);
+
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->StoreSecCompEnhanceKey(first));
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->StoreSecCompEnhanceKey(first));
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, atManagerService_->StoreSecCompEnhanceKey(older));
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, atManagerService_->StoreSecCompEnhanceKey(different));
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->StoreSecCompEnhanceKey(latest));
+
+    SecCompEnhanceKeyIdl output;
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->GetSecCompEnhanceKey(output));
+    EXPECT_EQ(latest.epoch, output.epoch);
+    EXPECT_EQ(latest.key, output.key);
+    ResetSecCompEnhanceKey();
+}
 #endif
+
+/**
+ * @tc.name: ToggleRequestService001
+ * @tc.desc: Verify request toggle succeeds for root caller.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, ToggleRequestService001, TestSize.Level0)
+{
+    MockNativeToken mock("foundation");
+    uint32_t status = PermissionRequestToggleStatus::OPEN;
+    ASSERT_EQ(RET_SUCCESS, atManagerService_->SetPermissionRequestToggleStatus(
+        "ohos.permission.CAMERA", status, USER_ID, 0));
+    status = PermissionRequestToggleStatus::CLOSED;
+    ASSERT_EQ(RET_SUCCESS, atManagerService_->GetPermissionRequestToggleStatus(
+        "ohos.permission.CAMERA", status, USER_ID, 0));
+    EXPECT_EQ(PermissionRequestToggleStatus::OPEN, status);
+}
+
+/**
+ * @tc.name: ToggleRequestService002
+ * @tc.desc: Verify request toggle succeeds for non-root caller.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, ToggleRequestService002, TestSize.Level0)
+{
+    std::vector<std::string> reqPerm = {
+        "ohos.permission.DISABLE_PERMISSION_DIALOG",
+        "ohos.permission.GET_SENSITIVE_PERMISSIONS",
+    };
+    MockHapToken mock("ToggleRequestService002", reqPerm, true, USER_ID);
+    UidGuard guard(NON_ROOT_UID);
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GrantPermission(
+        mock.GetTokenID(), "ohos.permission.DISABLE_PERMISSION_DIALOG", PERMISSION_USER_SET));
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GrantPermission(
+        mock.GetTokenID(), "ohos.permission.GET_SENSITIVE_PERMISSIONS", PERMISSION_USER_SET));
+
+    uint32_t status = PermissionRequestToggleStatus::OPEN;
+    ASSERT_EQ(RET_SUCCESS, atManagerService_->SetPermissionRequestToggleStatus(
+        "ohos.permission.CAMERA", status, 0, 0));
+    status = PermissionRequestToggleStatus::CLOSED;
+    ASSERT_EQ(RET_SUCCESS, atManagerService_->GetPermissionRequestToggleStatus(
+        "ohos.permission.CAMERA", status, 0, 0));
+    EXPECT_EQ(PermissionRequestToggleStatus::OPEN, status);
+}
+
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

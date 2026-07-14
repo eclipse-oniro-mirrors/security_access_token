@@ -91,6 +91,10 @@ void PermissionUsedRecordDb::OnUpdate(int32_t version)
             InsertEnhancedIdentityColumn();
             UpdatePermissionRecordTablePrimaryKey();
             [[fallthrough]];
+        case 7: // 7->8
+            ExecuteSql("alter table " + std::string(PERMISSION_USED_RECORD_TOGGLE_STATUS_TABLE) + " add column " +
+                PrivacyFiledConst::FIELD_SUB_PROFILE_ID + " integer default -1");
+            [[fallthrough]];
         default:
             return;
     }
@@ -138,6 +142,7 @@ void PermissionUsedRecordDb::InitPermUsedRecordToggleStatusTableInfo(SqliteTable
     permissionUsedRecordToggleStatusTable.tableName_ = PERMISSION_USED_RECORD_TOGGLE_STATUS_TABLE;
     permissionUsedRecordToggleStatusTable.tableColumnNames_ = {
         PrivacyFiledConst::FIELD_USER_ID,
+        PrivacyFiledConst::FIELD_SUB_PROFILE_ID,
         PrivacyFiledConst::FIELD_STATUS
     };
 }
@@ -754,10 +759,14 @@ int32_t PermissionUsedRecordDb::CreatePermissionUsedRecordToggleStatusTable() co
     sql.append(it->second.tableName_ + " (")
         .append(PrivacyFiledConst::FIELD_USER_ID)
         .append(INTEGER_STR)
+        .append(PrivacyFiledConst::FIELD_SUB_PROFILE_ID)
+        .append(" integer default -1,")
         .append(PrivacyFiledConst::FIELD_STATUS)
         .append(INTEGER_STR)
         .append("primary key(")
         .append(PrivacyFiledConst::FIELD_USER_ID)
+        .append(",")
+        .append(PrivacyFiledConst::FIELD_SUB_PROFILE_ID)
         .append("))");
     return ExecuteSql(sql);
 }

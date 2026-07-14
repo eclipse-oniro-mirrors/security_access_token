@@ -56,6 +56,9 @@ static int32_t GetStsErrorCode(int32_t errCode)
         case ERR_NOT_SYSTEM_APP:
             stsCode = STS_ERROR_NOT_SYSTEM_APP;
             break;
+        case ERR_CAPABILITY_NOT_SUPPORT:
+            stsCode = STS_ERROR_SYSTEM_CAPABILITY_NOT_SUPPORT;
+            break;
         case ERR_PARAM_INVALID:
             stsCode = STS_ERROR_PARAM_INVALID;
             break;
@@ -64,6 +67,12 @@ static int32_t GetStsErrorCode(int32_t errCode)
             break;
         case ERR_PERMISSION_NOT_EXIST:
             stsCode = STS_ERROR_PERMISSION_NOT_EXIST;
+            break;
+        case ERR_PERMISSION_USED_RECORD_SUBPROFILE_NOT_EXIST:
+            stsCode = STS_ERROR_SUBPROFILE_NOT_EXIST;
+            break;
+        case ERR_PERMISSION_USED_RECORD_STORAGE_MODE_CONFLICT:
+            stsCode = STS_ERROR_STORAGE_MODE_CONFLICT;
             break;
         case ERR_CALLBACK_ALREADY_EXIST:
         case ERR_CALLBACK_NOT_EXIST:
@@ -896,29 +905,43 @@ static ani_ref GetPermissionUsedTypeInfosExecute([[maybe_unused]] ani_env* env,
     return ConvertPermissionUsedTypeInfos(env, typeInfos);
 }
 
-static void SetPermissionUsedRecordToggleStatusExecute([[maybe_unused]] ani_env* env, ani_boolean status)
+static void SetPermissionUsedRecordToggleStatusExecute(
+    [[maybe_unused]] ani_env* env, ani_boolean status, ani_int subProfileId, ani_boolean hasSubProfile)
 {
     if (env == nullptr) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Env is null.");
         return;
     }
-    int32_t userID = 0;
-    int32_t retCode = PrivacyKit::SetPermissionUsedRecordToggleStatus(userID, status);
+#ifndef ACCESS_TOKEN_SUPPORT_SUBPROFILE
+    if (hasSubProfile) {
+        BusinessErrorAni::ThrowError(env, STS_ERROR_SYSTEM_CAPABILITY_NOT_SUPPORT,
+            GetErrorMessage(STS_ERROR_SYSTEM_CAPABILITY_NOT_SUPPORT));
+        return;
+    }
+#endif
+    int32_t retCode = PrivacyKit::SetPermissionUsedRecordToggleStatus(0, status, subProfileId);
     if (retCode != RET_SUCCESS) {
-        int32_t stsCode = BusinessErrorAni::GetStsErrorCode(retCode);
+        int32_t stsCode = GetStsErrorCode(retCode);
         BusinessErrorAni::ThrowError(env, stsCode, GetErrorMessage(stsCode));
     }
 }
 
-static ani_boolean GetPermissionUsedRecordToggleStatusExecute([[maybe_unused]] ani_env* env)
+static ani_boolean GetPermissionUsedRecordToggleStatusExecute(
+    [[maybe_unused]] ani_env* env, ani_int subProfileId, ani_boolean hasSubProfile)
 {
     if (env == nullptr) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Env is null.");
         return false;
     }
-    int32_t userID = 0;
+#ifndef ACCESS_TOKEN_SUPPORT_SUBPROFILE
+    if (hasSubProfile) {
+        BusinessErrorAni::ThrowError(env, STS_ERROR_SYSTEM_CAPABILITY_NOT_SUPPORT,
+            GetErrorMessage(STS_ERROR_SYSTEM_CAPABILITY_NOT_SUPPORT));
+        return false;
+    }
+#endif
     bool isToggleStatus = false;
-    int32_t retCode = PrivacyKit::GetPermissionUsedRecordToggleStatus(userID, isToggleStatus);
+    int32_t retCode = PrivacyKit::GetPermissionUsedRecordToggleStatus(0, isToggleStatus, subProfileId);
     if (retCode != RET_SUCCESS) {
         BusinessErrorAni::ThrowError(env, GetStsErrorCode(retCode), GetErrorMessage(GetStsErrorCode(retCode)));
         return false;
