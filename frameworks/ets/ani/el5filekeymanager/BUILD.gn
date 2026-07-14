@@ -22,6 +22,7 @@ ohos_shared_library("el5filekeymanager_ani") {
     cfi_cross_dso = true
     debug = false
   }
+  branch_protector_ret = "pac_ret"
 
   cflags_cc = access_token_cflags_cc
   include_dirs = [

@@ -24,6 +24,7 @@ if (is_standard_system) {
     subsystem_name = "security"
     part_name = "access_token"
     output_name = "libtoken_setproc"
+    branch_protector_ret = "pac_ret"
 
     public_configs = [ ":setproc_config" ]
 
