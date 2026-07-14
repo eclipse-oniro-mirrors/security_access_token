@@ -54,6 +54,7 @@
         "ipc",
         "json",
         "memmgr",
+        "libuv",
         "napi",
         "openssl",
         "os_account",
