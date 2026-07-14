@@ -238,6 +238,10 @@ run -t FUZZ -tp access_token
 - Ask before changing `VerifyAccessToken`, `AddPermissionUsedRecord`, `StartUsingPermission`, or other hot paths in a way that may add blocking I/O, new DB access, or heavy iteration.
 - Ask before introducing new third-party dependencies, changing feature flags, or changing whether a capability is gated by a build flag.
 
+### Concurrency And Reentrancy Boundaries
+- Do not invoke synchronous callbacks, IPC requests, or cross-module notifications while holding locks if they may re-enter the current module.
+- Limit lock scope to local state updates, capture notification data before unlocking, and perform external callbacks only after the lock is released.
+
 ### Project-Specific Invariants
 - Keep permission grant state logic in AccessTokenManager distinct from permission usage status logic in PrivacyManager.
 - Keep in-memory cache and database state synchronized; when persistence fails, preserve or restore a consistent state instead of partially updating one side.
@@ -263,6 +267,7 @@ run -t FUZZ -tp access_token
 ### Database Operations
 - **Memory-data consistency**: When performing database operations, ensure in-memory data structures stay synchronized with persistent storage.
 - **Transaction rollback**: On operation failures, implement proper rollback mechanisms to restore data to a consistent state; use database transactions for atomic multi-step operations.
+- **No destructive intermediate state during updates**: For token, permission, record, or database update flows, prefer in-place update or atomic replacement over delete-and-recreate patterns. If a rebuild is required, keep the original valid state recoverable until the new state is fully committed, and ensure rollback restores the complete pre-update state.
 
 ## Minimum Validation By Change Type
 
@@ -289,3 +294,4 @@ run -t FUZZ -tp access_token
 | v1.0 | 2026-01-31 | primary version | xiacong |
 | v1.1 | 2026-02-05 | clarify distinction between Permission Grant State (AccessTokenManager) and Permission Usage Status (PrivacyManager) | hehehe-li |
 | v1.2 | 2026-07-10 | add task routing, high-risk boundaries, and validation loop guidance for coding agents | xiacong, AI |
+| v1.3 | 2026-07-14 | add repository-wide lock callback safety and update-state consistency constraints | linshuqing, AI |
