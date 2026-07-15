@@ -10275,6 +10275,17 @@
             "deviceTypes": ["phone", "2in1", "tablet"]
         },
         {
+            "name": "ohos.permission.PUBLISH_ECG_MEASURE_EVENT",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone"]
+        },
+        {
             "name": "ohos.permission.FILE_MANAGER_SERVICE_DATA_ACCESS",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
