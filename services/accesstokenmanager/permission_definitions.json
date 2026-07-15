@@ -10253,6 +10253,17 @@
             "deviceTypes": ["phone", "2in1", "car", "tablet", "wearable", "tv"]
         },
         {
+            "name": "ohos.permission.AGENT_FILE_ACCESS",
+            "grantMode": "user_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "tablet"]
+        },
+        {
             "name": "ohos.permission.FILE_MANAGER_SERVICE_ACCESS",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
