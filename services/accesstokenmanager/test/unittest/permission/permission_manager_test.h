@@ -20,6 +20,7 @@
 #define private public
 #include "accesstoken_manager_service.h"
 #include "permission_manager.h"
+#include "temp_permission_observer.h"
 #undef private
 
 namespace OHOS {

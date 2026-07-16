@@ -382,9 +382,11 @@ int32_t PrivacyManagerService::GetRemotePermissionUsedRecords(
         std::to_string(request.request.beginTimeMillis).c_str(), std::to_string(request.request.endTimeMillis).c_str(),
         request.request.flag, permissionList.c_str());
 
+    int32_t callingUid = IPCSkeleton::GetCallingUid();
+    int32_t callingUserId = callingUid / BASE_USER_RANGE;
     PermissionUsedResult permissionRecord;
     int32_t ret = PermissionRecordManager::GetInstance().GetRemotePermissionUsedRecords(
-        request.request, permissionRecord);
+        request.request, callingUserId, permissionRecord);
     resultParcel.result = permissionRecord;
     return ret;
 }

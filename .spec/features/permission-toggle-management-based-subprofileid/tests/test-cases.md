@@ -252,7 +252,7 @@
 - 预期结果：
   - 步骤 2~4 均返回或抛出 `801`。
   - 不写入 `userId + permissionName` 旧路径，也不写入 `subProfileId` 新路径。
-  - 错误码映射不退化为 `12100001`、`12100017` 或内部错误码。
+  - 错误码映射符合 JS/ANI 约束：subProfile 不存在返回 `12100001`；新增设置接口、老设置接口和老查询接口 storage conflict 返回 operation-not-allowed，其中老接口返回属于新增兼容错误；新增查询接口不返回 `12100006`；不暴露 `12100016/12100017` 或内部错误码。
 
 #### CASE-ATM-KIT-008 feature 未定义时 ATM 旧 API 保持旧行为
 

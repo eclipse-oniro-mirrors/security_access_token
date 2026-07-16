@@ -63,7 +63,6 @@ static constexpr int32_t TEST_USER_ID_11 = 11;
 #ifdef REMOTE_PRIVACY_ENABLE
 static constexpr int32_t USER_ID_100 = 100;
 static constexpr int32_t USER_ID_INVALID = 12345;
-static constexpr uint32_t USER_100_UID = 20000000;
 static constexpr int32_t NOT_SAME_TIME = 10000000;
 static constexpr int32_t CAMERA_OP_CODE = 18;
 #endif
@@ -1067,9 +1066,6 @@ HWTEST_F(PermissionRecordManagerTest, GetRemotePermissionUsedRecordsTest001, Tes
 
     EXPECT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().AddRemoteRecord(record));
 
-    uint32_t selfUid = getuid();
-    setuid(USER_100_UID);
-
     PermissionRecordManager::GetInstance().remotePermUsedRecList_.begin()->needUpdateToDb = true;
     record.deviceId = "ididid2222";
     record.deviceName = "namename2222";
@@ -1078,18 +1074,17 @@ HWTEST_F(PermissionRecordManagerTest, GetRemotePermissionUsedRecordsTest001, Tes
     PermissionUsedRequest request;
     PermissionUsedResult result;
     request.isRemote = true;
-    PermissionRecordManager::GetInstance().GetRemotePermissionUsedRecords(request, result);
+    PermissionRecordManager::GetInstance().GetRemotePermissionUsedRecords(request, USER_ID_100, result);
 
     PermissionRecordManager::GetInstance().remotePermUsedRecList_.begin()->record.userId = USER_ID_INVALID;
-    PermissionRecordManager::GetInstance().GetRemotePermissionUsedRecords(request, result);
+    PermissionRecordManager::GetInstance().GetRemotePermissionUsedRecords(request, USER_ID_100, result);
 
     request.flag = FLAG_PERMISSION_USAGE_DETAIL;
-    PermissionRecordManager::GetInstance().GetRemotePermissionUsedRecords(request, result);
+    PermissionRecordManager::GetInstance().GetRemotePermissionUsedRecords(request, USER_ID_100, result);
 
     PermissionRecordManager::GetInstance().remotePermUsedRecList_.clear();
     GenericValues conditions;
     RemotePermUsedRecordDbManager::GetInstance().Remove(USER_ID_100, conditions);
-    setuid(selfUid);
 }
 
 /*

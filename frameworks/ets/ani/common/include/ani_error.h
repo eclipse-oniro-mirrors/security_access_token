@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2025-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -47,8 +47,6 @@ typedef enum {
     STS_ERROR_GLOBAL_SWITCH_IS_ALREADY_OPEN = 12100013,
     STS_ERROR_EXPECTED_PERMISSION_TYPE = 12100014,
     STS_ERROR_OVERSIZE = 12100015,
-    STS_ERROR_SUBPROFILE_NOT_EXIST = 12100016,
-    STS_ERROR_STORAGE_MODE_CONFLICT = 12100017,
 } STSErrorCode;
 
 struct AtmResult {

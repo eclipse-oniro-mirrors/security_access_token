@@ -18,7 +18,7 @@
 
 ### 做什么
 
-1. 为 JS/ETS 原函数新增 `subProfileId` 位于第一个入参的新签名。
+1. 为 JS/ETS 原函数新增 `subProfileId` 位于最后一个入参的新签名。
 2. 在 NAPI/ANI 层把 `801`、ATM/Privacy `SUBPROFILE_NOT_EXIST`、`STORAGE_MODE_CONFLICT` 错误码正确透传到 JS/ETS。
 
 ### 不做什么

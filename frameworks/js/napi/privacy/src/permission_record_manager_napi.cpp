@@ -67,6 +67,7 @@ static int32_t GetJsErrorCode(int32_t errCode)
             jsCode = JS_ERROR_SYSTEM_CAPABILITY_NOT_SUPPORT;
             break;
         case ERR_PARAM_INVALID:
+        case ERR_PERMISSION_USED_RECORD_SUBPROFILE_NOT_EXIST:
             jsCode = JS_ERROR_PARAM_INVALID;
             break;
         case ERR_TOKENID_NOT_EXIST:
@@ -74,12 +75,6 @@ static int32_t GetJsErrorCode(int32_t errCode)
             break;
         case ERR_PERMISSION_NOT_EXIST:
             jsCode = JS_ERROR_PERMISSION_NOT_EXIST;
-            break;
-        case ERR_PERMISSION_USED_RECORD_SUBPROFILE_NOT_EXIST:
-            jsCode = JS_ERROR_SUBPROFILE_NOT_EXIST;
-            break;
-        case ERR_PERMISSION_USED_RECORD_STORAGE_MODE_CONFLICT:
-            jsCode = JS_ERROR_STORAGE_MODE_CONFLICT;
             break;
         case ERR_CALLBACK_ALREADY_EXIST:
         case ERR_CALLBACK_NOT_EXIST:
@@ -91,6 +86,7 @@ static int32_t GetJsErrorCode(int32_t errCode)
             jsCode = JS_ERROR_REGISTERS_EXCEED_LIMITATION;
             break;
         case ERR_IDENTITY_CHECK_FAILED:
+        case ERR_PERMISSION_USED_RECORD_STORAGE_MODE_CONFLICT:
             jsCode = JS_ERROR_PERMISSION_OPERATION_NOT_ALLOWED;
             break;
         case ERR_SERVICE_ABNORMAL:

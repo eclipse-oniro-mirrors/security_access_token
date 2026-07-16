@@ -239,10 +239,8 @@ export default namespace abilityAccessCtrl {
         getPermissionsStatusExecute(tokenID: int, permissionList: Array<Permissions>): Array<PermissionStatus>;
         getVersionExecute(): int;
         getPermissionFlagsExecute(tokenID: int, permissionName: Permissions): int;
-        setPermissionRequestToggleStatusExecute(
-            permissionName: Permissions, status: int, subProfileId: int, hasSubProfile: boolean): void;
-        getPermissionRequestToggleStatusExecute(
-            permissionName: Permissions, subProfileId: int, hasSubProfile: boolean): int;
+        setPermissionRequestToggleStatusExecute(permissionName: Permissions, status: int): void;
+        getPermissionRequestToggleStatusExecute(permissionName: Permissions): int;
         RequestAppPermOnSettingExecute(tokenID: int): undefined;
         onPermissionStateChangeExecute(type: string, tokenIDList: Array<int>, permissionList: Array<Permissions>,
             callback: Callback<PermissionStateChangeInfo>): void;
@@ -289,11 +287,7 @@ export default namespace abilityAccessCtrl {
         getPermissionFlags(tokenID: int, permissionName: Permissions): Promise<int>;
         setPermissionRequestToggleStatus(
             permissionName: Permissions, status: PermissionRequestToggleStatus): Promise<void>;
-        setPermissionRequestToggleStatus(
-            permissionName: Permissions, status: PermissionRequestToggleStatus, subProfileId: int): Promise<void>;
         getPermissionRequestToggleStatus(permissionName: Permissions): Promise<PermissionRequestToggleStatus>;
-        getPermissionRequestToggleStatus(
-            permissionName: Permissions, subProfileId: int): Promise<PermissionRequestToggleStatus>;
         requestPermissionOnApplicationSetting(tokenID: int): Promise<void>;
         onSelfPermissionStateChange(permissionList: Array<Permissions>,
             callback: Callback<PermissionStateChangeInfo>): void;
@@ -336,10 +330,8 @@ export default namespace abilityAccessCtrl {
         native getPermissionsStatusExecute(tokenID: int, permissionList: Array<Permissions>): Array<PermissionStatus>;
         native getVersionExecute(): int;
         native getPermissionFlagsExecute(tokenID: int, permissionName: Permissions): int;
-        native setPermissionRequestToggleStatusExecute(
-            permissionName: Permissions, status: int, subProfileId: int, hasSubProfile: boolean): void;
-        native getPermissionRequestToggleStatusExecute(
-            permissionName: Permissions, subProfileId: int, hasSubProfile: boolean): int;
+        native setPermissionRequestToggleStatusExecute(permissionName: Permissions, status: int): void;
+        native getPermissionRequestToggleStatusExecute(permissionName: Permissions): int;
         native RequestAppPermOnSettingExecute(tokenID: int): undefined;
         native onPermissionStateChangeExecute(type:string, tokenIDList: Array<int>, permissionList: Array<Permissions>,
             callback: Callback<PermissionStateChangeInfo>): void;
@@ -657,24 +649,7 @@ export default namespace abilityAccessCtrl {
             let p = new Promise<void>(
                 (resolve: (v: undefined) => void, reject: (error: BusinessError) => void): void => {
                 let p = taskpool.execute((): void => {
-                    new AtManagerInner().setPermissionRequestToggleStatusExecute(permissionName, status, -1, false);
-                });
-                p.then((e: Any): void => {
-                    resolve(undefined);
-                }).catch((err: Error): void => {
-                    reject(err as BusinessError);
-                });
-            });
-            return p;
-        }
-
-        setPermissionRequestToggleStatus(permissionName: Permissions,
-            status: PermissionRequestToggleStatus, subProfileId: int): Promise<void> {
-            let p = new Promise<void>(
-                (resolve: (v: undefined) => void, reject: (error: BusinessError) => void): void => {
-                let p = taskpool.execute((): void => {
-                    new AtManagerInner().setPermissionRequestToggleStatusExecute(
-                        permissionName, status, subProfileId, true);
+                    new AtManagerInner().setPermissionRequestToggleStatusExecute(permissionName, status);
                 });
                 p.then((e: Any): void => {
                     resolve(undefined);
@@ -690,26 +665,8 @@ export default namespace abilityAccessCtrl {
                 (resolve: (v: PermissionRequestToggleStatus) => void,
                     reject: (err: Error) => void): void => {
                     let p1 = taskpool.execute((): PermissionRequestToggleStatus => {
-                        return PermissionRequestToggleStatus.fromValue(new AtManagerInner()
-                            .getPermissionRequestToggleStatusExecute(permissionName, -1, false));
-                    });
-                    p1.then((e: Any): void => {
-                        resolve(e as PermissionRequestToggleStatus);
-                    }).catch((err: Error): void => {
-                        reject(err as BusinessError);
-                    });
-                });
-            return p;
-        }
-
-        getPermissionRequestToggleStatus(
-            permissionName: Permissions, subProfileId: int): Promise<PermissionRequestToggleStatus> {
-            let p =  new Promise<PermissionRequestToggleStatus>(
-                (resolve: (v: PermissionRequestToggleStatus) => void,
-                    reject: (err: Error) => void): void => {
-                    let p1 = taskpool.execute((): PermissionRequestToggleStatus => {
-                        return PermissionRequestToggleStatus.fromValue(new AtManagerInner()
-                            .getPermissionRequestToggleStatusExecute(permissionName, subProfileId, true));
+                        return PermissionRequestToggleStatus.fromValue(
+                            new AtManagerInner().getPermissionRequestToggleStatusExecute(permissionName));
                     });
                     p1.then((e: Any): void => {
                         resolve(e as PermissionRequestToggleStatus);

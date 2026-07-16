@@ -38,6 +38,7 @@ static constexpr int32_t INVALID_USER_ID = -1;
 static constexpr int32_t TEST_USER_ID = 123;
 static constexpr int32_t LEGACY_SUBPROFILE_ID = -1;
 static constexpr uint32_t INVALID_TOGGLE_STATUS = static_cast<uint32_t>(-2);
+const std::string APP_TRACKING_CONSENT_PERMISSION = "ohos.permission.APP_TRACKING_CONSENT";
 #ifdef ACCESS_TOKEN_SUPPORT_SUBPROFILE
 static constexpr int32_t INVALID_NEGATIVE_SUBPROFILE_ID = -2;
 static constexpr int32_t SUBPROFILE_ID_TEN = 10;
@@ -49,20 +50,6 @@ static constexpr int32_t SUBPROFILE_TEST_USER_ID_324 = 324;
 static constexpr int32_t ACCOUNT_OWNER_USER_ID = 0;
 #endif
 
-void DeletePermissionRequestToggleStatus(int32_t userID, const std::string& permissionName, int32_t subProfileId)
-{
-    GenericValues condition;
-    condition.Put(TokenFiledConst::FIELD_USER_ID, userID);
-    condition.Put(TokenFiledConst::FIELD_PERMISSION_NAME, permissionName);
-    condition.Put(TokenFiledConst::FIELD_SUB_PROFILE_ID, subProfileId);
-
-    std::vector<DelInfo> delInfoVec;
-    AccessTokenInfoUtils::GenerateDelInfoToVec(
-        AtmDataType::ACCESSTOKEN_PERMISSION_REQUEST_TOGGLE_STATUS, condition, delInfoVec);
-    (void)AccessTokenDbOperator::DeleteAndInsertValues(delInfoVec, {});
-}
-
-#ifdef ACCESS_TOKEN_SUPPORT_SUBPROFILE
 void DeletePermissionRequestToggleStatusRecords(int32_t userID, const std::string& permissionName)
 {
     GenericValues condition;
@@ -107,11 +94,36 @@ private:
     std::string permissionName_;
     std::vector<GenericValues> originalRecords_;
 };
-#endif
+
+void VerifyRequestToggleStatusRecord(int32_t userID, const std::string& permissionName, int32_t subProfileId,
+    uint32_t expectedStatus)
+{
+    std::vector<GenericValues> records;
+    ASSERT_EQ(RET_SUCCESS, PermissionRequestToggleManager::GetInstance().FindPermRequestToggleStatusRecordsFromDb(
+        userID, permissionName, subProfileId, records));
+    ASSERT_EQ(1, static_cast<int32_t>(records.size()));
+    EXPECT_EQ(subProfileId, records[0].GetInt(TokenFiledConst::FIELD_SUB_PROFILE_ID));
+    EXPECT_EQ(expectedStatus, static_cast<uint32_t>(records[0].GetInt(TokenFiledConst::FIELD_REQUEST_TOGGLE_STATUS)));
+}
+
+void VerifyRequestToggleStatusRecordNotExist(int32_t userID, const std::string& permissionName, int32_t subProfileId)
+{
+    std::vector<GenericValues> records;
+    ASSERT_EQ(RET_SUCCESS, PermissionRequestToggleManager::GetInstance().FindPermRequestToggleStatusRecordsFromDb(
+        userID, permissionName, subProfileId, records));
+    EXPECT_TRUE(records.empty());
+}
+
 }
 
 class PermissionRequestToggleManagerTest : public testing::Test {};
 
+/**
+ * @tc.name: SetPermissionRequestToggleStatus001
+ * @tc.desc: Verify that invalid request toggle parameters are rejected.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
 HWTEST_F(PermissionRequestToggleManagerTest, SetPermissionRequestToggleStatus001, TestSize.Level0)
 {
     int32_t userID = INVALID_USER_ID;
@@ -139,11 +151,18 @@ HWTEST_F(PermissionRequestToggleManagerTest, SetPermissionRequestToggleStatus001
         permissionName, status, userID, LEGACY_SUBPROFILE_ID));
 }
 
+/**
+ * @tc.name: SetPermissionRequestToggleStatus002
+ * @tc.desc: Verify that legacy request toggle status can be updated.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
 HWTEST_F(PermissionRequestToggleManagerTest, SetPermissionRequestToggleStatus002, TestSize.Level0)
 {
     int32_t userID = TEST_USER_ID;
     uint32_t status = PermissionRequestToggleStatus::CLOSED;
     std::string permissionName = "ohos.permission.CAMERA";
+    PermissionRequestToggleStatusGuard guard(userID, permissionName);
 
     ASSERT_EQ(RET_SUCCESS, PermissionRequestToggleManager::GetInstance().SetPermissionRequestToggleStatus(
         permissionName, status, userID, LEGACY_SUBPROFILE_ID));
@@ -151,15 +170,21 @@ HWTEST_F(PermissionRequestToggleManagerTest, SetPermissionRequestToggleStatus002
     status = PermissionRequestToggleStatus::OPEN;
     ASSERT_EQ(RET_SUCCESS, PermissionRequestToggleManager::GetInstance().SetPermissionRequestToggleStatus(
         permissionName, status, userID, LEGACY_SUBPROFILE_ID));
-    DeletePermissionRequestToggleStatus(userID, permissionName, LEGACY_SUBPROFILE_ID);
 }
 
+/**
+ * @tc.name: SetPermissionRequestToggleStatus003
+ * @tc.desc: Verify that user ID zero resolves to the calling user's request toggle status.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
 HWTEST_F(PermissionRequestToggleManagerTest, SetPermissionRequestToggleStatus003, TestSize.Level0)
 {
     const int32_t resolvedUser = IPCSkeleton::GetCallingUid() / BASE_USER_RANGE;
     uint32_t status = PermissionRequestToggleStatus::CLOSED;
     std::string permissionName = "ohos.permission.CAMERA";
     uint32_t getStatus = PermissionRequestToggleStatus::OPEN;
+    PermissionRequestToggleStatusGuard guard(resolvedUser, permissionName);
 
     ASSERT_EQ(RET_SUCCESS, PermissionRequestToggleManager::GetInstance().SetPermissionRequestToggleStatus(
         permissionName, status, 0, LEGACY_SUBPROFILE_ID));
@@ -171,6 +196,12 @@ HWTEST_F(PermissionRequestToggleManagerTest, SetPermissionRequestToggleStatus003
         permissionName, PermissionRequestToggleStatus::OPEN, resolvedUser, LEGACY_SUBPROFILE_ID));
 }
 
+/**
+ * @tc.name: GetPermissionRequestToggleStatus001
+ * @tc.desc: Verify that invalid request toggle query parameters are rejected.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
 HWTEST_F(PermissionRequestToggleManagerTest, GetPermissionRequestToggleStatus001, TestSize.Level0)
 {
     int32_t userID = INVALID_USER_ID;
@@ -193,6 +224,12 @@ HWTEST_F(PermissionRequestToggleManagerTest, GetPermissionRequestToggleStatus001
         permissionName, status, userID, LEGACY_SUBPROFILE_ID));
 }
 
+/**
+ * @tc.name: GetPermissionRequestToggleStatus002
+ * @tc.desc: Verify that legacy request toggle status is stored and queried correctly.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
 HWTEST_F(PermissionRequestToggleManagerTest, GetPermissionRequestToggleStatus002, TestSize.Level0)
 {
     int32_t userID = TEST_USER_ID;
@@ -200,6 +237,7 @@ HWTEST_F(PermissionRequestToggleManagerTest, GetPermissionRequestToggleStatus002
     uint32_t setStatusClose = PermissionRequestToggleStatus::CLOSED;
     uint32_t setStatusOpen = PermissionRequestToggleStatus::OPEN;
     uint32_t getStatus;
+    PermissionRequestToggleStatusGuard guard(userID, permissionName);
 
     ASSERT_EQ(RET_SUCCESS, PermissionRequestToggleManager::GetInstance().GetPermissionRequestToggleStatus(
         permissionName, getStatus, userID, LEGACY_SUBPROFILE_ID));
@@ -216,22 +254,67 @@ HWTEST_F(PermissionRequestToggleManagerTest, GetPermissionRequestToggleStatus002
     ASSERT_EQ(RET_SUCCESS, PermissionRequestToggleManager::GetInstance().GetPermissionRequestToggleStatus(
         permissionName, getStatus, userID, LEGACY_SUBPROFILE_ID));
     ASSERT_EQ(setStatusOpen, getStatus);
-    DeletePermissionRequestToggleStatus(userID, permissionName, LEGACY_SUBPROFILE_ID);
 }
 
+/**
+ * @tc.name: GetPermissionRequestToggleStatus003
+ * @tc.desc: Verify that APP_TRACKING_CONSENT uses the closed default toggle status.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
 HWTEST_F(PermissionRequestToggleManagerTest, GetPermissionRequestToggleStatus003, TestSize.Level0)
 {
     uint32_t status = PermissionRequestToggleStatus::OPEN;
+    PermissionRequestToggleStatusGuard guard(TEST_USER_ID, APP_TRACKING_CONSENT_PERMISSION);
     ASSERT_EQ(RET_SUCCESS, PermissionRequestToggleManager::GetInstance().GetPermissionRequestToggleStatus(
-        "ohos.permission.APP_TRACKING_CONSENT", status, TEST_USER_ID, LEGACY_SUBPROFILE_ID));
+        APP_TRACKING_CONSENT_PERMISSION, status, TEST_USER_ID, LEGACY_SUBPROFILE_ID));
     ASSERT_EQ(PermissionRequestToggleStatus::CLOSED, status);
 }
 
+/**
+ * @tc.name: GetPermissionRequestToggleStatus005
+ * @tc.desc: Verify APP_TRACKING_CONSENT query result and database record for both toggle statuses.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRequestToggleManagerTest, GetPermissionRequestToggleStatus005, TestSize.Level0)
+{
+    uint32_t status = PermissionRequestToggleStatus::OPEN;
+    PermissionRequestToggleStatusGuard guard(TEST_USER_ID, APP_TRACKING_CONSENT_PERMISSION);
+
+    ASSERT_EQ(RET_SUCCESS, PermissionRequestToggleManager::GetInstance().GetPermissionRequestToggleStatus(
+        APP_TRACKING_CONSENT_PERMISSION, status, TEST_USER_ID, LEGACY_SUBPROFILE_ID));
+    EXPECT_EQ(PermissionRequestToggleStatus::CLOSED, status);
+    VerifyRequestToggleStatusRecordNotExist(TEST_USER_ID, APP_TRACKING_CONSENT_PERMISSION, LEGACY_SUBPROFILE_ID);
+
+    ASSERT_EQ(RET_SUCCESS, PermissionRequestToggleManager::GetInstance().SetPermissionRequestToggleStatus(
+        APP_TRACKING_CONSENT_PERMISSION, PermissionRequestToggleStatus::OPEN, TEST_USER_ID, LEGACY_SUBPROFILE_ID));
+    ASSERT_EQ(RET_SUCCESS, PermissionRequestToggleManager::GetInstance().GetPermissionRequestToggleStatus(
+        APP_TRACKING_CONSENT_PERMISSION, status, TEST_USER_ID, LEGACY_SUBPROFILE_ID));
+    EXPECT_EQ(PermissionRequestToggleStatus::OPEN, status);
+    VerifyRequestToggleStatusRecord(
+        TEST_USER_ID, APP_TRACKING_CONSENT_PERMISSION, LEGACY_SUBPROFILE_ID, PermissionRequestToggleStatus::OPEN);
+
+    ASSERT_EQ(RET_SUCCESS, PermissionRequestToggleManager::GetInstance().SetPermissionRequestToggleStatus(
+        APP_TRACKING_CONSENT_PERMISSION, PermissionRequestToggleStatus::CLOSED, TEST_USER_ID, LEGACY_SUBPROFILE_ID));
+    ASSERT_EQ(RET_SUCCESS, PermissionRequestToggleManager::GetInstance().GetPermissionRequestToggleStatus(
+        APP_TRACKING_CONSENT_PERMISSION, status, TEST_USER_ID, LEGACY_SUBPROFILE_ID));
+    EXPECT_EQ(PermissionRequestToggleStatus::CLOSED, status);
+    VerifyRequestToggleStatusRecordNotExist(TEST_USER_ID, APP_TRACKING_CONSENT_PERMISSION, LEGACY_SUBPROFILE_ID);
+}
+
+/**
+ * @tc.name: GetPermissionRequestToggleStatus004
+ * @tc.desc: Verify that the account owner request toggle status can be updated and restored.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
 HWTEST_F(PermissionRequestToggleManagerTest, GetPermissionRequestToggleStatus004, TestSize.Level0)
 {
     std::string permissionName = "ohos.permission.CAMERA";
     uint32_t oriStatus = PermissionRequestToggleStatus::OPEN;
     uint32_t status = PermissionRequestToggleStatus::OPEN;
+    PermissionRequestToggleStatusGuard guard(0, permissionName);
 
     ASSERT_EQ(RET_SUCCESS, PermissionRequestToggleManager::GetInstance().GetPermissionRequestToggleStatus(
         permissionName, oriStatus, 0, LEGACY_SUBPROFILE_ID));
@@ -249,7 +332,7 @@ HWTEST_F(PermissionRequestToggleManagerTest, GetPermissionRequestToggleStatus004
 #ifdef ACCESS_TOKEN_SUPPORT_SUBPROFILE
 /**
  * @tc.name: SetPermissionRequestToggleStatusWithSubProfileId001
- * @tc.desc: Verify that legacy record blocks subProfile write.
+ * @tc.desc: Verify that legacy record blocks subProfile write until legacy mode is cleared.
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -267,11 +350,16 @@ HWTEST_F(PermissionRequestToggleManagerTest, SetPermissionRequestToggleStatusWit
     ASSERT_EQ(ERR_PERMISSION_REQUEST_TOGGLE_STORAGE_MODE_CONFLICT,
         PermissionRequestToggleManager::GetInstance().SetPermissionRequestToggleStatus(
             permissionName, PermissionRequestToggleStatus::CLOSED, userID, SUBPROFILE_ID_TEN));
+
+    ASSERT_EQ(RET_SUCCESS, PermissionRequestToggleManager::GetInstance().SetPermissionRequestToggleStatus(
+        permissionName, PermissionRequestToggleStatus::OPEN, userID, LEGACY_SUBPROFILE_ID));
+    ASSERT_EQ(RET_SUCCESS, PermissionRequestToggleManager::GetInstance().SetPermissionRequestToggleStatus(
+        permissionName, PermissionRequestToggleStatus::CLOSED, userID, SUBPROFILE_ID_TEN));
 }
 
 /**
  * @tc.name: SetPermissionRequestToggleStatusWithSubProfileId002
- * @tc.desc: Verify that subProfile record blocks legacy write.
+ * @tc.desc: Verify that subProfile record blocks legacy write until subProfile mode is cleared.
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -289,6 +377,11 @@ HWTEST_F(PermissionRequestToggleManagerTest, SetPermissionRequestToggleStatusWit
     ASSERT_EQ(ERR_PERMISSION_REQUEST_TOGGLE_STORAGE_MODE_CONFLICT,
         PermissionRequestToggleManager::GetInstance().SetPermissionRequestToggleStatus(
             permissionName, PermissionRequestToggleStatus::CLOSED, userID, LEGACY_SUBPROFILE_ID));
+
+    ASSERT_EQ(RET_SUCCESS, PermissionRequestToggleManager::GetInstance().SetPermissionRequestToggleStatus(
+        permissionName, PermissionRequestToggleStatus::OPEN, userID, SUBPROFILE_ID_ELEVEN));
+    ASSERT_EQ(RET_SUCCESS, PermissionRequestToggleManager::GetInstance().SetPermissionRequestToggleStatus(
+        permissionName, PermissionRequestToggleStatus::CLOSED, userID, LEGACY_SUBPROFILE_ID));
 }
 
 /**
@@ -389,7 +482,7 @@ HWTEST_F(PermissionRequestToggleManagerTest, SetPermissionRequestToggleStatusWit
 
 /**
  * @tc.name: SetPermissionRequestToggleStatusWithSubProfileId004
- * @tc.desc: Verify subProfile record can be created after legacy record cleanup.
+ * @tc.desc: Verify subProfile record can be created after legacy record is reset to default.
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -405,13 +498,18 @@ HWTEST_F(PermissionRequestToggleManagerTest, SetPermissionRequestToggleStatusWit
         PermissionRequestToggleManager::GetInstance().SetPermissionRequestToggleStatus(
             permissionName, PermissionRequestToggleStatus::OPEN, ACCOUNT_OWNER_USER_ID, SUBPROFILE_ID_TEN));
 
-    DeletePermissionRequestToggleStatus(ACCOUNT_OWNER_USER_ID, permissionName, LEGACY_SUBPROFILE_ID);
-
-    ASSERT_EQ(RET_SUCCESS, PermissionRequestToggleManager::GetInstance().SetPermissionRequestToggleStatus(
-        permissionName, PermissionRequestToggleStatus::OPEN, ACCOUNT_OWNER_USER_ID, SUBPROFILE_ID_TEN));
     ASSERT_EQ(RET_SUCCESS, PermissionRequestToggleManager::GetInstance().GetPermissionRequestToggleStatus(
         permissionName, status, ACCOUNT_OWNER_USER_ID, SUBPROFILE_ID_TEN));
-    EXPECT_EQ(PermissionRequestToggleStatus::OPEN, status);
+    EXPECT_EQ(PermissionRequestToggleStatus::CLOSED, status);
+
+    ASSERT_EQ(RET_SUCCESS, PermissionRequestToggleManager::GetInstance().SetPermissionRequestToggleStatus(
+        permissionName, PermissionRequestToggleStatus::OPEN, ACCOUNT_OWNER_USER_ID, LEGACY_SUBPROFILE_ID));
+
+    ASSERT_EQ(RET_SUCCESS, PermissionRequestToggleManager::GetInstance().SetPermissionRequestToggleStatus(
+        permissionName, PermissionRequestToggleStatus::CLOSED, ACCOUNT_OWNER_USER_ID, SUBPROFILE_ID_TEN));
+    ASSERT_EQ(RET_SUCCESS, PermissionRequestToggleManager::GetInstance().GetPermissionRequestToggleStatus(
+        permissionName, status, ACCOUNT_OWNER_USER_ID, SUBPROFILE_ID_TEN));
+    EXPECT_EQ(PermissionRequestToggleStatus::CLOSED, status);
 }
 
 /**
@@ -482,6 +580,53 @@ HWTEST_F(PermissionRequestToggleManagerTest, SetPermissionRequestToggleStatusWit
             permissionName, status, userID, SUBPROFILE_ID_TEN));
     EXPECT_EQ(PermissionRequestToggleStatus::OPEN, status);
     ResetMockOsAccountManagerLite();
+}
+
+/**
+ * @tc.name: SetPermissionRequestToggleStatusWithSubProfileId008
+ * @tc.desc: Verify APP_TRACKING_CONSENT mode conflicts preserve query and database status.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRequestToggleManagerTest, SetPermissionRequestToggleStatusWithSubProfileId008, TestSize.Level0)
+{
+    const int32_t userID = ACCOUNT_OWNER_USER_ID;
+    uint32_t status = PermissionRequestToggleStatus::CLOSED;
+    PermissionRequestToggleStatusGuard guard(userID, APP_TRACKING_CONSENT_PERMISSION);
+
+    ASSERT_EQ(RET_SUCCESS, PermissionRequestToggleManager::GetInstance().SetPermissionRequestToggleStatus(
+        APP_TRACKING_CONSENT_PERMISSION, PermissionRequestToggleStatus::OPEN, userID, LEGACY_SUBPROFILE_ID));
+    ASSERT_EQ(RET_SUCCESS, PermissionRequestToggleManager::GetInstance().GetPermissionRequestToggleStatus(
+        APP_TRACKING_CONSENT_PERMISSION, status, userID, LEGACY_SUBPROFILE_ID));
+    EXPECT_EQ(PermissionRequestToggleStatus::OPEN, status);
+    VerifyRequestToggleStatusRecord(
+        userID, APP_TRACKING_CONSENT_PERMISSION, LEGACY_SUBPROFILE_ID, PermissionRequestToggleStatus::OPEN);
+
+    EXPECT_EQ(ERR_PERMISSION_REQUEST_TOGGLE_STORAGE_MODE_CONFLICT,
+        PermissionRequestToggleManager::GetInstance().SetPermissionRequestToggleStatus(
+            APP_TRACKING_CONSENT_PERMISSION, PermissionRequestToggleStatus::CLOSED, userID, SUBPROFILE_ID_TEN));
+    ASSERT_EQ(RET_SUCCESS, PermissionRequestToggleManager::GetInstance().GetPermissionRequestToggleStatus(
+        APP_TRACKING_CONSENT_PERMISSION, status, userID, LEGACY_SUBPROFILE_ID));
+    EXPECT_EQ(PermissionRequestToggleStatus::OPEN, status);
+    VerifyRequestToggleStatusRecord(
+        userID, APP_TRACKING_CONSENT_PERMISSION, LEGACY_SUBPROFILE_ID, PermissionRequestToggleStatus::OPEN);
+
+    ASSERT_EQ(RET_SUCCESS, PermissionRequestToggleManager::GetInstance().SetPermissionRequestToggleStatus(
+        APP_TRACKING_CONSENT_PERMISSION, PermissionRequestToggleStatus::CLOSED, userID, LEGACY_SUBPROFILE_ID));
+    VerifyRequestToggleStatusRecordNotExist(userID, APP_TRACKING_CONSENT_PERMISSION, LEGACY_SUBPROFILE_ID);
+    ASSERT_EQ(RET_SUCCESS, PermissionRequestToggleManager::GetInstance().SetPermissionRequestToggleStatus(
+        APP_TRACKING_CONSENT_PERMISSION, PermissionRequestToggleStatus::OPEN, userID, SUBPROFILE_ID_TEN));
+    ASSERT_EQ(RET_SUCCESS, PermissionRequestToggleManager::GetInstance().GetPermissionRequestToggleStatus(
+        APP_TRACKING_CONSENT_PERMISSION, status, userID, SUBPROFILE_ID_TEN));
+    EXPECT_EQ(PermissionRequestToggleStatus::OPEN, status);
+    VerifyRequestToggleStatusRecord(
+        userID, APP_TRACKING_CONSENT_PERMISSION, SUBPROFILE_ID_TEN, PermissionRequestToggleStatus::OPEN);
+
+    EXPECT_EQ(ERR_PERMISSION_REQUEST_TOGGLE_STORAGE_MODE_CONFLICT,
+        PermissionRequestToggleManager::GetInstance().SetPermissionRequestToggleStatus(
+            APP_TRACKING_CONSENT_PERMISSION, PermissionRequestToggleStatus::CLOSED, userID, LEGACY_SUBPROFILE_ID));
+    VerifyRequestToggleStatusRecord(
+        userID, APP_TRACKING_CONSENT_PERMISSION, SUBPROFILE_ID_TEN, PermissionRequestToggleStatus::OPEN);
 }
 #endif
 } // namespace AccessToken

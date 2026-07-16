@@ -86,6 +86,7 @@ struct UidGuard {
 };
 
 static constexpr int32_t USER_ID = 100;
+static constexpr int32_t LEGACY_SUBPROFILE_ID = -1;
 static constexpr int32_t INST_INDEX = 0;
 static constexpr int32_t INDEX_ONE = 1;
 static constexpr int32_t INDEX_TWO = 2;
@@ -93,13 +94,60 @@ static constexpr int32_t INDEX_THREE = 3;
 static constexpr int32_t MAX_PERMISSION_SIZE = 1024;
 static constexpr int32_t API_VERSION_9 = 9;
 static constexpr int32_t RANDOM_TOKENID = 123;
+static constexpr uid_t NON_ROOT_UID = 2000;
 static const std::string DEFAULT_AGENT_ID = "1001";
 static const std::string MANAGE_USER_POLICY = "ohos.permission.MANAGE_USER_POLICY";
 static const std::string MANAGE_EDM_POLICY = "ohos.permission.MANAGE_EDM_POLICY";
 static const std::string GRANT_SENSITIVE_PERMISSIONS = "ohos.permission.GRANT_SENSITIVE_PERMISSIONS";
 static const std::string REVOKE_SENSITIVE_PERMISSIONS = "ohos.permission.REVOKE_SENSITIVE_PERMISSIONS";
+static const std::string GET_SENSITIVE_PERMISSIONS = "ohos.permission.GET_SENSITIVE_PERMISSIONS";
+static const std::string DISABLE_PERMISSION_DIALOG = "ohos.permission.DISABLE_PERMISSION_DIALOG";
 static const unsigned int DEBUG_APP_FLAG = 0x0008;
 static uint64_t g_selfShellTokenId = 0;
+
+class OsAccountMockGuard final {
+public:
+    ~OsAccountMockGuard()
+    {
+        ResetMockOsAccountManagerLite();
+    }
+};
+
+class PermissionRequestToggleStatusGuard final {
+public:
+    PermissionRequestToggleStatusGuard(int32_t userId, const std::string& permissionName)
+        : userId_(userId), permissionName_(permissionName)
+    {
+        (void)PermissionRequestToggleManager::GetInstance().FindPermRequestToggleStatusRecordsFromDb(
+            userId_, permissionName_, LEGACY_SUBPROFILE_ID, originalRecords_);
+        DeleteRecords({});
+    }
+
+    ~PermissionRequestToggleStatusGuard()
+    {
+        DeleteRecords(originalRecords_);
+    }
+
+private:
+    void DeleteRecords(const std::vector<GenericValues>& records)
+    {
+        GenericValues condition;
+        condition.Put(TokenFiledConst::FIELD_USER_ID, userId_);
+        condition.Put(TokenFiledConst::FIELD_PERMISSION_NAME, permissionName_);
+
+        std::vector<DelInfo> delInfoVec;
+        AccessTokenInfoUtils::GenerateDelInfoToVec(
+            AtmDataType::ACCESSTOKEN_PERMISSION_REQUEST_TOGGLE_STATUS, condition, delInfoVec);
+        std::vector<AddInfo> addInfoVec;
+        AccessTokenInfoUtils::GenerateAddInfoToVec(
+            AtmDataType::ACCESSTOKEN_PERMISSION_REQUEST_TOGGLE_STATUS, records, addInfoVec);
+        (void)AccessTokenDbOperator::DeleteAndInsertValues(delInfoVec, addInfoVec);
+    }
+
+    int32_t userId_;
+    std::string permissionName_;
+    std::vector<GenericValues> originalRecords_;
+};
 
 #ifdef IS_SUPPORT_HAP_RUNNING
 class AdapterRestoreGuard final {
@@ -4204,16 +4252,22 @@ HWTEST_F(AccessTokenManagerServiceTest, SecCompEnhanceKeyService002, TestSize.Le
     EXPECT_EQ(input.key, output.key);
     ResetSecCompEnhanceKey();
 }
+#endif
 
 /**
  * @tc.name: ToggleRequestService001
- * @tc.desc: Verify request toggle succeeds for root caller.
+ * @tc.desc: Verify request toggle succeeds with the specified user ID for root caller.
  * @tc.type: FUNC
  * @tc.require:
  */
 HWTEST_F(AccessTokenManagerServiceTest, ToggleRequestService001, TestSize.Level0)
 {
-    MockNativeToken mock("foundation");
+    PermissionRequestToggleStatusGuard toggleGuard(USER_ID, "ohos.permission.CAMERA");
+    OsAccountMockGuard mockGuard;
+    SetMockOsAccountLocalIdForSubProfile(USER_ID, ERR_OK);
+    MockToken mock(g_selfShellTokenId, "accesstoken_service", false);
+    mock.Grant(DISABLE_PERMISSION_DIALOG);
+    mock.Grant(GET_SENSITIVE_PERMISSIONS);
     uint32_t status = PermissionRequestToggleStatus::OPEN;
     ASSERT_EQ(RET_SUCCESS, atManagerService_->SetPermissionRequestToggleStatus(
         "ohos.permission.CAMERA", status, USER_ID, 0));
@@ -4225,24 +4279,19 @@ HWTEST_F(AccessTokenManagerServiceTest, ToggleRequestService001, TestSize.Level0
 
 /**
  * @tc.name: ToggleRequestService002
- * @tc.desc: Verify request toggle succeeds for non-root caller.
+ * @tc.desc: Verify request toggle succeeds with the caller user ID for non-root caller.
  * @tc.type: FUNC
  * @tc.require:
  */
 HWTEST_F(AccessTokenManagerServiceTest, ToggleRequestService002, TestSize.Level0)
 {
-    std::vector<std::string> reqPerm = {
-        "ohos.permission.DISABLE_PERMISSION_DIALOG",
-        "ohos.permission.GET_SENSITIVE_PERMISSIONS",
-    };
-    MockHapToken mock("ToggleRequestService002", reqPerm, true, USER_ID);
-    UidGuard guard(NON_ROOT_UID);
-
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GrantPermission(
-        mock.GetTokenID(), "ohos.permission.DISABLE_PERMISSION_DIALOG", PERMISSION_USER_SET));
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GrantPermission(
-        mock.GetTokenID(), "ohos.permission.GET_SENSITIVE_PERMISSIONS", PERMISSION_USER_SET));
-
+    PermissionRequestToggleStatusGuard toggleGuard(0, "ohos.permission.CAMERA");
+    OsAccountMockGuard mockGuard;
+    SetMockOsAccountLocalIdForSubProfile(0, ERR_OK);
+    MockToken mock(g_selfShellTokenId, "accesstoken_service", false);
+    mock.Grant(DISABLE_PERMISSION_DIALOG);
+    mock.Grant(GET_SENSITIVE_PERMISSIONS);
+    UidGuard uidGuard(NON_ROOT_UID);
     uint32_t status = PermissionRequestToggleStatus::OPEN;
     ASSERT_EQ(RET_SUCCESS, atManagerService_->SetPermissionRequestToggleStatus(
         "ohos.permission.CAMERA", status, 0, 0));
@@ -4251,8 +4300,6 @@ HWTEST_F(AccessTokenManagerServiceTest, ToggleRequestService002, TestSize.Level0
         "ohos.permission.CAMERA", status, 0, 0));
     EXPECT_EQ(PermissionRequestToggleStatus::OPEN, status);
 }
-#endif
-
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
