@@ -7911,6 +7911,17 @@
             "deviceTypes": ["general"]
         },
         {
+            "name": "ohos.permission.ONSCREEN_AWARENESS",
+            "grantMode": "user_grant",
+            "availableLevel": "system_core",
+            "availableType": "SYSTEM",
+            "since": "26.1.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "tablet", "2in1", "car"]
+        },
+        {
             "name": "ohos.permission.ACCESS_DISTRIBUTED_KEY_STORE",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
