@@ -10278,7 +10278,7 @@
             "name": "ohos.permission.PUBLISH_ECG_MEASURE_EVENT",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
-            "availableType": "SYSTEM",
+            "availableType": "SERVICE",
             "since": "26.0.0",
             "deprecated": "",
             "provisionEnable": true,
