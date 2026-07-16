@@ -42,11 +42,6 @@ public:
         AccessTokenIDManager::GetInstance().reservedTokenIdSet_.clear();
         AccessTokenIDManager::GetInstance().untrustedTokenIdSet_.clear();
         AccessTokenIDManager::GetInstance().bundleIdSet_.clear();
-        // Reset migration done flag for test isolation
-        {
-            std::unique_lock<std::mutex> lock(AccessTokenIDManager::GetInstance().migrationLock_);
-            AccessTokenIDManager::GetInstance().migrationDone_ = false;
-        }
     }
 
     void TearDown()
@@ -55,11 +50,6 @@ public:
         AccessTokenIDManager::GetInstance().reservedTokenIdSet_.clear();
         AccessTokenIDManager::GetInstance().untrustedTokenIdSet_.clear();
         AccessTokenIDManager::GetInstance().bundleIdSet_.clear();
-        // Reset migration done flag after test
-        {
-            std::unique_lock<std::mutex> lock(AccessTokenIDManager::GetInstance().migrationLock_);
-            AccessTokenIDManager::GetInstance().migrationDone_ = false;
-        }
     }
 };
 
@@ -100,6 +90,38 @@ HWTEST_F(AccessTokenIdManagerCoverageTest, InitSingleBundleIdCache003, TestSize.
     // uid=5000, bundleId = 5000 < 10000 → invalid
     AccessTokenIDManager::GetInstance().InitSingleBundleIdCache(5000);
     ASSERT_TRUE(AccessTokenIDManager::GetInstance().bundleIdSet_.empty());
+}
+
+/*
+ * @tc.name: ImportInitialUids001
+ * @tc.desc: Import valid uids into empty cache succeeds and populates bundleIdSet_
+ * @tc.type: FUNC
+ * @tc.require: TDD
+ */
+HWTEST_F(AccessTokenIdManagerCoverageTest, ImportInitialUids001, TestSize.Level4)
+{
+    std::vector<int32_t> uids = {10000, 10001, 10002};
+    ASSERT_EQ(RET_SUCCESS, AccessTokenIDManager::GetInstance().ImportInitialUids(uids));
+    ASSERT_EQ(3U, AccessTokenIDManager::GetInstance().bundleIdSet_.size());
+    ASSERT_EQ(1U, AccessTokenIDManager::GetInstance().bundleIdSet_.count(10000));
+    ASSERT_EQ(1U, AccessTokenIDManager::GetInstance().bundleIdSet_.count(10001));
+    ASSERT_EQ(1U, AccessTokenIDManager::GetInstance().bundleIdSet_.count(10002));
+}
+
+/*
+ * @tc.name: ImportInitialUids002
+ * @tc.desc: Mixed valid/invalid uids: invalid ones are silently skipped
+ * @tc.type: FUNC
+ * @tc.require: TDD
+ */
+HWTEST_F(AccessTokenIdManagerCoverageTest, ImportInitialUids002, TestSize.Level4)
+{
+    // -1: negative; 5000: bundleId < 10000; 10000, 10001: valid
+    std::vector<int32_t> uids = {-1, 5000, 10000, 10001};
+    ASSERT_EQ(RET_SUCCESS, AccessTokenIDManager::GetInstance().ImportInitialUids(uids));
+    ASSERT_EQ(2U, AccessTokenIDManager::GetInstance().bundleIdSet_.size());
+    ASSERT_EQ(1U, AccessTokenIDManager::GetInstance().bundleIdSet_.count(10000));
+    ASSERT_EQ(1U, AccessTokenIDManager::GetInstance().bundleIdSet_.count(10001));
 }
 
 /*
@@ -177,7 +199,6 @@ HWTEST_F(AccessTokenIdManagerCoverageTest, AllocUid001, TestSize.Level4)
         AccessTokenIDManager::GetInstance().bundleIdSet_.insert(bundleId);
     }
     int32_t outUid = 0;
-    AccessTokenIDManager::GetInstance().SetMigrationDone();
     ASSERT_EQ(ERR_OVERSIZE, AccessTokenIDManager::GetInstance().AllocUid(100, outUid));
 }
 
@@ -335,7 +356,6 @@ HWTEST_F(AccessTokenIdManagerCoverageTest, ChangeTokenIdStatus006, TestSize.Leve
     ASSERT_TRUE(manager.reservedTokenIdSet_.empty());
     ASSERT_TRUE(manager.untrustedTokenIdSet_.empty());
 }
-
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

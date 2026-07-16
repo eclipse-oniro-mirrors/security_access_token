@@ -233,26 +233,6 @@ int32_t RdbDlopenManager::DeleteAndInsertValues(const std::vector<DelInfo>& delI
     --taskNum_;
     return res;
 }
-
-int32_t RdbDlopenManager::Modify(const AtmDataType type,
-    const std::vector<GenericValues>& modifyValues,
-    const std::vector<GenericValues>& conditions)
-{
-    if (modifyValues.size() != conditions.size()) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Modify size mismatch: modifyValues=%{public}zu, conditions=%{public}zu.",
-            modifyValues.size(), conditions.size());
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-    auto instance = GetDbInstance();
-    if (instance == nullptr) {
-        return AccessTokenError::ERR_LOAD_SO_FAILED;
-    }
-
-    ++taskNum_;
-    int32_t res = instance->Modify(type, modifyValues, conditions);
-    --taskNum_;
-    return res;
-}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

@@ -31,7 +31,6 @@ declare_args() {
   access_token_with_distributed_capability = true
   access_token_enhance_capability = true
   access_token_enable_manual_test = false
-  access_token_enable_spm = true
 }
 
 # External dependencies for each feature flag
@@ -259,8 +258,4 @@ if (defined(global_parts_info) && defined(global_parts_info.security_asset)) {
   access_token_external_deps += [ "asset:saf_agent_fence" ]
 } else {
   saf_agent_fence_enable = false
-}
-
-if (access_token_enable_spm) {
-  access_token_cflags_cc += [ "-DSPM_DATA_ENABLE" ]
 }

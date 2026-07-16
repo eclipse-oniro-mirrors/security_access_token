@@ -33,8 +33,6 @@ struct SpmDataParam final {
     std::reference_wrapper<const BundleNoCachedInfo> noCachedInfo;
     std::reference_wrapper<const std::vector<BriefPermData>> permBriefDataList;
     std::reference_wrapper<const std::vector<PermissionWithValue>> extendPermList;
-    const std::vector<BriefPermData>* oldPermBriefDataList = nullptr;
-    bool updateWithPerm = false;
 };
 
 class PermissionKernelUtils final {
@@ -42,14 +40,12 @@ public:
     static void AddNativePermToKernel(
         AccessTokenID tokenID, const std::vector<uint32_t>& opCodeList, const std::vector<bool>& statusList);
     static int32_t AddHapPermToKernel(AccessTokenID tokenID, const std::vector<uint32_t>& opCodeList);
-    static int32_t AddHapPermToKernel(AccessTokenID tokenID, const std::vector<BriefPermData>& permBriefDataList);
     static int32_t GetBundleInfoFromKernel(AccessTokenID tokenId, BundleNoCachedInfo& noCachedInfo,
         std::vector<PermissionWithValue>& permList);
     static int32_t GetPermFromKernel(AccessTokenID tokenID, uint32_t permCode, bool& isGranted);
     static void RemovePermFromKernel(AccessTokenID tokenID);
     static void SetPermToKernel(AccessTokenID tokenID, const std::string& permissionName, bool isGranted);
     static bool IsKernelSupportSpm();
-    static void RemoveSpmEntryFromKernel(AccessTokenID tokenId);
 
 private:
     PermissionKernelUtils() = delete;
@@ -57,4 +53,4 @@ private:
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
-#endif // PERMISSION_KERNEL_HELPER_H
+#endif // PERMISSION_KERNEL_UTILS_H

@@ -245,7 +245,6 @@ std::vector<std::string> CollectNormalAndSystemPermissions()
         if (perm.empty()) {
             continue;
         }
-
         if (!AccessTokenKit::IsSupportPermission(perm)) {
             continue;
         }

@@ -37,7 +37,7 @@ constexpr int32_t UID_TRANSFORM_DIVISOR = 200000;
 static std::atomic<int32_t> g_bundleIdMin = -1;
 }
 
-int32_t AccessTokenIDManager::GetBundleIdMin()
+static int32_t GetBundleIdMin()
 {
     int32_t expectedValue = g_bundleIdMin.load();
     if (expectedValue != -1) {
@@ -155,11 +155,6 @@ bool AccessTokenIDManager::IsReservedTokenId(AccessTokenID id)
 void AccessTokenIDManager::AddReservedTokenId(AccessTokenID id)
 {
     std::unique_lock<std::shared_mutex> idGuard(this->tokenIdLock_);
-    TokenIdStatus status;
-    if (GetTokenIdStatusLocked(id, status) == RET_SUCCESS) {
-        LOGW(ATM_DOMAIN, ATM_TAG, "Id %{public}u already exist as %{public}d", id, static_cast<int32_t>(status));
-        return;
-    }
     reservedTokenIdSet_.insert(id);
 }
 
@@ -277,12 +272,6 @@ bool AccessTokenIDManager::ExtractBundleId(int32_t uid, int32_t& bundleId) const
     return true;
 }
 
-bool AccessTokenIDManager::IsBundleIdInUse(int32_t bundleId)
-{
-    std::unique_lock<std::mutex> lock(bundleIdLock_);
-    return bundleIdSet_.count(bundleId) > 0;
-}
-
 void AccessTokenIDManager::InitSingleBundleIdCache(int32_t uid)
 {
     int32_t bundleId = 0;
@@ -368,6 +357,19 @@ int32_t AccessTokenIDManager::TranslateUid(int32_t srcUid, int32_t dstLocalId, i
     return RET_SUCCESS;
 }
 
+int32_t AccessTokenIDManager::ImportInitialUids(const std::vector<int32_t>& uids)
+{
+    std::unique_lock<std::mutex> lock(bundleIdLock_);
+    for (int32_t uid : uids) {
+        int32_t bundleId = 0;
+        if (ExtractBundleId(uid, bundleId)) {
+            bundleIdSet_.insert(bundleId);
+        } else {
+            LOGW(ATM_DOMAIN, ATM_TAG, "Invalid uid=%{public}d, skip.", uid);
+        }
+    }
+    return RET_SUCCESS;
+}
 
 void AccessTokenIDManager::SetMigrationDone()
 {
@@ -375,6 +377,7 @@ void AccessTokenIDManager::SetMigrationDone()
     migrationDone_ = true;
     LOGI(ATM_DOMAIN, ATM_TAG, "Migration done flag set to true.");
 }
+
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

@@ -30,9 +30,6 @@ sequenceable OHOS.Security.AccessToken.AtmToolsParamInfoParcel;
 sequenceable OHOS.Security.AccessToken.SecCompEnhanceDataParcel;
 sequenceable OHOS.Security.AccessToken.SecCompEnhanceKeyParcel;
 
-rawdata OHOS.Security.AccessToken.BundleInfosRawdata;
-rawdata OHOS.Security.AccessToken.CheckHapSignResultRawdata;
-
 import IdlCommon;
 
 option_stub_hooks on;
@@ -56,10 +53,7 @@ interface OHOS.Security.AccessToken.IAccessTokenManager{
     [ipccode 15] void ClearUserGrantedPermStateByBundle([in] String bundleName);
     [ipccode 16] void GetTokenType([in] unsigned int tokenID, [out] int tokenType);
 
-    [ipccode 18] void GetHapTokenID(
-        [in] int userID, [in] String bundleName, [in] int instIndex, [out] unsigned long fullTokenId);
-    [ipccode 24] void GetHapIdentity([in] HapBaseInfoParcel hapBaseInfoParcel, [out] IdentityIdl identityIdl);
-    [ipccode 25] void GetHapBaseInfoByUid([in] int uid, [out] HapBaseInfoParcel hapBaseInfoParcel);
+    [ipccode 18] void GetHapTokenID([in] int userID, [in] String bundleName, [in] int instIndex, [out] unsigned long fullTokenId);
     [ipccode 19] void AllocLocalTokenID([in] String remoteDeviceID, [in] unsigned int remoteTokenID, [out] unsigned long tokenId);
     [ipccode 20] void GetNativeTokenInfo([in] unsigned int tokenID, [out] NativeTokenInfoParcel nativeTokenInfoRes);
     [ipccode 21] void GetHapTokenInfo([in] unsigned int tokenID, [out] HapTokenInfoParcel hapTokenInfoRes);
@@ -101,27 +95,14 @@ interface OHOS.Security.AccessToken.IAccessTokenManager{
     [ipccode 69] void InitCliToken([in] CliInitInfoIdl initInfoIdl, [out] unsigned long fullTokenId, [out] List<PermissionWithValueIdl> kernelPermIdlList);
     [ipccode 71] void DeleteToolTokenByPid([in] int pid);
     [ipccode 74] void GetHostTokenId([in] unsigned int toolTokenId, [out] unsigned int hostTokenId);
-    [ipccode 76] void MigrateInstalledBundles([in] List<MigratedInfoIdl> migratedInfoList, [out] List<BundleMigrateResultIdl> results);
-    [ipccode 77] void FinishMigration();
     [ipccode 80] void VerifyAccessToken([in] unsigned int tokenID, [in] List<String> permissionList, [out] List<int> permStateList);  
     [ipccode 81] void GetSelfPermissionStatus([in] String permissionName, [out] int status);
-
-    [ipccode 82] void CheckHapSignInfo([in] BundleHapListIdl list, [in] IRemoteObject cb, [out] CheckHapSignResultRawdata checkResult);
-    [ipccode 83] void PrepareHapIdentity([inout] int sessionId, [in] HapBaseInfoIdl info, [in] BundlePolicyIdl policy, [in] IRemoteObject cb, [out] IdentityIdl identity);
-    [ipccode 84] void UpdateHapPolicy([in] int sessionId, [in] unsigned int tokenId, [in] BundlePolicyIdl policy, [inout] int uid);
-    [ipccode 85] void FinishInstall([in] int sessionId, [in] boolean isPersistent, [in] OrderedMap<String, String> modulePathMap);
-    [ipccode 86] void GetCacheSignInfoBySessionId([in] int sessionId, [out] BundleInfosRawdata bundleInfos);
-    [ipccode 87] void GetHapSignInfo([in] String bundleName, [out] BundleInfosRawdata bundleInfos);
-    [ipccode 88] void CheckHapPermissionInfo([in] int sessionId, [in] InstallTypeEnumIdl type, [out] HapInfoCheckResultIdl resultInfoIdl);
-    [ipccode 89] void GetCachePolicyBySessionId([in] int sessionId, [in] String bundleName, [out] BundlePolicyInfoIdl bundlePolicyInfoIdl);
-    [ipccode 90] void RefreshTokenStatus([in] IdentityIdl identity, [in] ReservedTypeIdl reserved);
 
     [ipccode 101, macrodef SECURITY_COMPONENT_ENHANCE_ENABLE, oneway] void RegisterSecCompEnhance([in] SecCompEnhanceDataParcel enhanceParcel);
     [ipccode 102, macrodef SECURITY_COMPONENT_ENHANCE_ENABLE] void UpdateSecCompEnhance([in] int pid, [in] unsigned int seqNum);
     [ipccode 103, macrodef SECURITY_COMPONENT_ENHANCE_ENABLE] void GetSecCompEnhance([in] int pid, [out] SecCompEnhanceDataParcel enhanceParcel);
     [ipccode 104, macrodef SECURITY_COMPONENT_ENHANCE_ENABLE] void StoreSecCompEnhanceKey([in] SecCompEnhanceKeyParcel enhanceKeyParcel);
     [ipccode 105] void SetPermissionStatusWithPolicy([in] unsigned int tokenID, [in] List<String> permissionList, [in] int status, [in] unsigned int flag);
-    [ipccode 106] void DeleteIdentity([in] unsigned int tokenID, [in] String bundleName, [in] ReservedTypeIdl type);
     [ipccode 107, macrodef SECURITY_COMPONENT_ENHANCE_ENABLE] void GetSecCompEnhanceKey([out] SecCompEnhanceKeyParcel enhanceKeyParcel);
 
     [ipccode 200] void GetHapTokenInfo([in] unsigned int tokenID, [out] HapTokenInfoCompatIdl hapTokenInfoIdl);

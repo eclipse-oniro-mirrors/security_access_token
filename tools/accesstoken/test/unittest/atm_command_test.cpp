@@ -554,9 +554,6 @@ HWTEST_F(AtmCommandTest, atm_dump_token_test005, TestSize.Level1)
     std::string result = ExecAtmCommand(argc, const_cast<char**>(argv));
     // May or may not find the bundle
     EXPECT_TRUE(result.empty() || IsOutputContain(result, TEST_BUNDLE_NAME) || IsOutputContain(result, "not found"));
-    if (IsOutputContain(result, TEST_BUNDLE_NAME)) {
-        EXPECT_TRUE(IsOutputContain(result, "\"uid\""));
-    }
 }
 
 /**
