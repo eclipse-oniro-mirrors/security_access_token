@@ -17,6 +17,7 @@
 #include <cinttypes>
 #include <cstring>
 
+#include "access_token.h"
 #include "access_token_error.h"
 #include "accesstoken_common_log.h"
 #include "app_manager_access_client.h"

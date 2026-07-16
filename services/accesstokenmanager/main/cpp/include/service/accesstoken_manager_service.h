@@ -24,7 +24,6 @@
 
 #include "accesstoken_info_manager.h"
 #include "access_token_manager_stub.h"
-#include "boot_verify_scheduler.h"
 #ifdef EVENTHANDLER_ENABLE
 #include "access_event_handler.h"
 #endif
@@ -88,13 +87,10 @@ public:
     int32_t SetPermissionStatusWithPolicy(
         AccessTokenID tokenID, const std::vector<std::string>& permissionList, int32_t status, uint32_t flag) override;
     int DeleteToken(AccessTokenID tokenID, bool isTokenReserved) override;
-    int32_t DeleteIdentity(AccessTokenID tokenID, const std::string& bundleName, ReservedTypeIdl type) override;
     int GetTokenType(AccessTokenID tokenID);
     int GetTokenType(AccessTokenID tokenID, int32_t& tokenType) override;
     int32_t GetHapTokenID(
         int32_t userID, const std::string& bundleName, int32_t instIndex, uint64_t& fullTokenId) override;
-    int32_t GetHapIdentity(const HapBaseInfoParcel& hapBaseInfoParcel, IdentityIdl& identityIdl) override;
-    int32_t GetHapBaseInfoByUid(int32_t uid, HapBaseInfoParcel& hapBaseInfoParcel) override;
     int32_t AllocLocalTokenID(
         const std::string& remoteDeviceID, AccessTokenID remoteTokenID, FullTokenID& tokenId) override;
     int GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfoParcel& infoParcel) override;
@@ -103,7 +99,6 @@ public:
     int32_t GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfoCompatIdl& infoIdl) override;
     int32_t GetPermissionCode(const std::string& permission, uint32_t& opCode) override;
     int32_t IsSupportPermission(const std::string& permission, bool& isSupported) override;
-    int32_t RefreshTokenStatus(const IdentityIdl& identity, ReservedTypeIdl reserved) override;
     int32_t UpdateHapToken(uint64_t& fullTokenId, const UpdateHapInfoParamsIdl& infoIdl,
         const HapPolicyParcel& policyParcel, HapInfoCheckResultIdl& resultInfoIdl) override;
     int32_t RegisterPermStateChangeCallback(
@@ -143,9 +138,6 @@ public:
         uint64_t& fullTokenId, std::vector<PermissionWithValueIdl>& kernelPermIdlList) override;
     int32_t DeleteToolTokenByPid(int32_t pid) override;
     int32_t GetHostTokenId(AccessTokenID toolTokenId, AccessTokenID& hostTokenId) override;
-    int32_t MigrateInstalledBundles(const std::vector<MigratedInfoIdl>& migratedInfoList,
-        std::vector<BundleMigrateResultIdl>& results) override;
-    int32_t FinishMigration() override;
     int SetPermDialogCap(const HapBaseInfoParcel& hapBaseInfoParcel, bool enable) override;
     int32_t GetPermissionManagerInfo(PermissionGrantInfoParcel& infoParcel) override;
 #ifdef SUPPORT_MANAGE_USER_POLICY
@@ -160,22 +152,6 @@ public:
         std::vector<PermissionStatusIdl>& permissionInfoList, bool onlyHap) override;
     ErrCode QueryStatusByTokenID(const std::vector<uint32_t>& tokenIDList,
         std::vector<PermissionStatusIdl>& permissionInfoList) override;
-
-    int32_t CheckHapSignInfo(const BundleHapListIdl& list, const sptr<IRemoteObject>& cb,
-        CheckHapSignResultRawdata& result) override;
-    int32_t CheckHapPermissionInfo(int32_t sessionId, InstallTypeEnumIdl type,
-        HapInfoCheckResultIdl& resultInfoIdl) override;
-    int32_t PrepareHapIdentity(int32_t& sessionId, const HapBaseInfoIdl& info, const BundlePolicyIdl& policy,
-        const sptr<IRemoteObject>& cb, IdentityIdl& identity) override;
-    int32_t UpdateHapPolicy(
-        int32_t sessionId, AccessTokenID tokenId, const BundlePolicyIdl& policy, int32_t& uid) override;
-    int32_t FinishInstall(int32_t sessionId, bool isPersistent,
-        const std::map<std::string, std::string>& modulePathMap) override;
-    int32_t GetCacheSignInfoBySessionId(int32_t sessionId, BundleInfosRawdata& bundleInfos) override;
-    int32_t GetHapSignInfo(const std::string& bundleName, BundleInfosRawdata& bundleInfos) override;
-    int32_t GetCachePolicyBySessionId(int32_t sessionId, const std::string& bundleName,
-        BundlePolicyInfoIdl& bundlePolicyInfoIdl) override;
-
     int32_t GetCliPermissionRequestInfo(
         const std::string& agentID, const std::vector<CliInfoIdl>& cliInfoList,
         PermissionDialogResultIdl& resultIdl) override;
@@ -203,20 +179,22 @@ private:
         const HapPolicy& policy, int64_t beginTime, int32_t errorCode);
     void ReportUpdateHap(AccessTokenIDEx fullTokenId, const HapTokenInfo& info,
         const HapPolicy& policy, int64_t beginTime, int32_t errorCode);
-    int32_t PreVerifyHapTokenIfNeeded(AccessTokenID tokenID);
     int32_t PreCheckPermissionStatusDetails(
         AccessTokenID tokenID, const std::vector<std::string>& permissionList);
-    int32_t PreVerifyBundleIfNeeded(const std::string& bundleName);
-    int32_t PreVerifyHapTokenListIfNeeded(const std::vector<uint32_t>& tokenIDList);
     bool IsPermissionValid(int32_t hapApl, const PermissionBriefDef& data, const std::string& value, bool isAcl);
+    void FilterInvalidData(const std::vector<GenericValues>& results,
+        const std::map<int32_t, TokenIdInfo>& tokenIdAplMap, std::vector<GenericValues>& validValueList);
+    void UpdateUndefinedInfoCache(const std::vector<GenericValues>& validValueList,
+        std::vector<GenericValues>& stateValues, std::vector<GenericValues>& extendValues);
+    void HandleHapUndefinedInfo(const std::map<int32_t, TokenIdInfo>& tokenIdAplMap, std::vector<DelInfo>& delInfoVec,
+        std::vector<AddInfo>& addInfoVec);
+    void UpdateDatabaseAsync(const std::vector<DelInfo>& delInfoVec, const std::vector<AddInfo>& addInfoVec);
+    void HandlePermDefUpdate(const std::map<int32_t, TokenIdInfo>& tokenIdAplMap);
 #ifdef SUPPORT_MANAGE_USER_POLICY
     void RollbackPolicyWhiteList(const PolicyWhiteListUpdateInfo& context);
     int32_t HandlePolicyWhiteListUpdate(const PolicyWhiteListUpdateInfo& policyContext);
     int32_t RefreshUserPolicyPermState(const std::vector<UserPolicyChange>& changedPolicyList);
 #endif
-    int32_t CheckHapManagerPermission();
-    int32_t DeleteIdentityCore(AccessTokenID tokenID, const std::string& bundleName,
-        ReservedType reservedType, int32_t& sceneCode);
 
     void FilterPermFeature(bool isSystemApp, HapPolicy& policy);
     bool isInitialize_ = false;

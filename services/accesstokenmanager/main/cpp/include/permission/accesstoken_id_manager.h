@@ -56,11 +56,10 @@ public:
     // Note: Callers are responsible for determining whether to add or remove bundleId based on their own logic.
     // This class only provides the underlying management capabilities.
     void InitSingleBundleIdCache(int32_t uid);
+    int32_t ImportInitialUids(const std::vector<int32_t>& uids);
     int32_t AllocUid(int32_t localId, int32_t& outUid);
     int32_t RemoveBundleId(int32_t uid);
     int32_t TranslateUid(int32_t srcUid, int32_t dstLocalId, int32_t& outUid);
-    int32_t GetBundleIdMin();
-    bool IsBundleIdInUse(int32_t bundleId);
 
     // Migration control
     void SetMigrationDone();

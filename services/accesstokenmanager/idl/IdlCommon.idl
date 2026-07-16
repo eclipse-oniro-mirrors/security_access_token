@@ -123,33 +123,10 @@ enum PermissionRulesEnumIdl {
     PERMISSION_ENTERPRISE_NORMAL_RULE
 };
 
-enum InstallTypeEnumIdl {
-    TYPE_INSTALL = 0,
-    TYPE_REPLACE,
-    TYPE_MERGE
-};
-
-enum DlpTypeIdl {
-    DLP_COMMON = 0,
-    DLP_READ = 1,
-    DLP_FULL_CONTROL = 2
-};
-
-struct PreAuthorizationInfoIdl {
-    String permissionName;
-    boolean userCancelable;
-};
-
-struct BundlePolicyIdl {
-    List<PreAuthorizationInfoIdl> preAuthorizationInfo;
-    DlpTypeIdl dlpType;
-    boolean isDebugGrant;
-};
-
 struct HapInfoCheckResultIdl {
     String permissionName;
     PermissionRulesEnumIdl rule;
-    int realResult;
+    int realResult
 };
 
 struct HapTokenInfoCompatIdl {
@@ -165,47 +142,6 @@ struct PermissionStatusIdl {
     int grantStatus;
     unsigned int grantFlag;
     unsigned long timestamp;
-};
-
-struct BundleHapListIdl {
-    List<String> hapPaths;
-    boolean isPreInstalled;
-    int userId;
-};
-
-struct BundlePolicyInfoIdl {
-    List<String> reqPermissions;
-};
-
-struct IdentityIdl {
-    int uid;
-    unsigned long tokenId;
-};
-
-enum ReservedTypeIdl {
-    NONE = 0,
-    RESERVED_IDENTITY = 1,
-    RESERVED_DATA = 2
-};
-
-struct HapBaseInfoIdl {
-    int userID;
-    String bundleName;
-    int instIndex;
-};
-
-struct MigratedInfoIdl {
-    String bundleName;
-    BundleHapListIdl pathList;
-    List<HapBaseInfoIdl> hapBaseInfoList;
-    List<int> uidList;
-    List<ReservedTypeIdl> reservedTypeList;
-};
-
-struct BundleMigrateResultIdl {
-    List<unsigned long> tokenIdList;
-    List<ReservedTypeIdl> reservedTypeList;
-    int errcode;
 };
 
 struct SecCompEnhanceKeyIdl {

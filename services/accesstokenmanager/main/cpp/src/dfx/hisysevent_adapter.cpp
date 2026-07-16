@@ -119,7 +119,7 @@ void ReportSysEventUpdateHap(int32_t errorCode, const HapDfxInfo& info)
         "USERID", info.userID,
         "BUNDLENAME", info.bundleName,
         "INSTINDEX", info.instIndex,
-        "SCENE_CODE", info.sceneCode,
+        "SCENE_CODE", CommonSceneCode::AT_COMMON_FINISH,
         "ERROR_CODE", errorCode,
         "TOKENIDEX", static_cast<uint64_t>(info.tokenIdEx.tokenIDEx),
         "PERM_INFO", info.permInfo,
