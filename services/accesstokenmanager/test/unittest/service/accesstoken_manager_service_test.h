@@ -18,7 +18,6 @@
 #include <gtest/gtest.h>
 #define private public
 #include "accesstoken_manager_service.h"
-#include "boot_verify_scheduler.h"
 #undef private
 
 namespace OHOS {
@@ -34,9 +33,7 @@ public:
 
     void TearDown();
     void CreateHapToken(const HapInfoParcel& infoParCel, const HapPolicyParcel& policyParcel, AccessTokenID& tokenId,
-        bool hasInit = false);
-    void CreateHapToken(const HapInfoParcel& infoParCel, const HapPolicyParcel& policyParcel, AccessTokenID& tokenId,
-        std::map<int32_t, BootTokenIdInfo>& tokenIdAplMap, bool hasInit = false);
+        std::map<int32_t, TokenIdInfo>& tokenIdAplMap, bool hasInit = false);
     void DelTestDataAndRestoreOri(AccessTokenID tokenId, const std::vector<GenericValues>& oriData);
     void InstallHapWithProvisionType(
         AccessTokenIDEx& tokenIdEx, const std::string& appProvisionType, bool isDebugGrant);

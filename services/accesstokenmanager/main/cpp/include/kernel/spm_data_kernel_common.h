@@ -20,48 +20,36 @@
 #include <vector>
 
 #include "permission_kernel_utils.h"
-#include "spm_setproc.h"
+#include "token_setproc.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+namespace KernelDetail {
 constexpr uint32_t SPM_NAME_BUF_SIZE = 256;
 
 class SpmDataDeleter final {
 public:
-    void operator()(SpmData* data) const
-    {
-        if (data != nullptr) {
-            SpmDataFree(data);
-        }
-    }
+    void operator()(SpmData* data) const;
 };
 
 using SpmDataPtr = std::unique_ptr<SpmData, SpmDataDeleter>;
 
-class SpmDataTaskItem final {
-public:
-    AccessTokenID tokenId = INVALID_TOKENID;
-    std::vector<BriefPermData> permBriefDataList;
-    const std::vector<BriefPermData>* oldPermBriefDataList = nullptr;
-    SpmDataPtr newSpmData = nullptr;
-    SpmDataPtr oldSpmData = nullptr;
-};
-
-namespace KernelDetail {
-void BuildPermissionBitmap(const std::vector<BriefPermData>& permBriefDataList, std::vector<uint32_t>& bitmap,
-    bool needGrant =  false);
-void BuildExtendedPermissionBuffer(const std::vector<PermissionWithValue>& extendedPermList,
+void BuildPermissionBitmap(const std::vector<BriefPermData>& permBriefDataList, std::vector<uint32_t>& bitmap);
+int32_t BuildExtendedPermissionBuffer(const std::vector<PermissionWithValue>& extendedPermList,
     std::vector<uint8_t>& buffer);
 int32_t ParseExtendedPermissionBuffer(const SpmBlob& extendPermBlob, std::vector<PermissionWithValue>& permList);
+int32_t CopyBufferIfNeeded(void* dest, size_t destSize, const void* src, size_t count, const char* name);
 int32_t BuildSpmData(const HapTokenInfo& hapInfo, const BundleNoCachedInfo& noCachedInfo,
     const std::vector<BriefPermData>& permBriefDataList, const std::vector<PermissionWithValue>& extendPermList,
     SpmDataPtr& spmData);
-int32_t AddSpmEntriesToKernel(const std::vector<SpmData*>& entries, uint8_t& idxErr);
-int32_t SetSpmEntriesToKernel(const std::vector<SpmData*>& entries, uint8_t& idxErr);
+int32_t AddSpmEntriesToKernel(const std::vector<SpmData*>& entries, const std::vector<AccessTokenID>& tokenIds,
+    uint8_t& idxErr);
+int32_t SetSpmEntriesToKernel(const std::vector<SpmData*>& entries, const std::vector<AccessTokenID>& tokenIds,
+    uint8_t& idxErr);
+int32_t SetSpmEntryToKernel(const SpmDataPtr& spmData, AccessTokenID tokenId);
 int32_t LoadSpmDataFromKernel(AccessTokenID tokenId, SpmDataPtr& spmData);
-bool IsSpmDataExists(AccessTokenID tokenId);
-void RemoveSpmEntryFromKernel(AccessTokenID tokenId);
+int32_t RemoveSpmEntryFromKernel(AccessTokenID tokenId);
 } // namespace KernelDetail
 } // namespace AccessToken
 } // namespace Security

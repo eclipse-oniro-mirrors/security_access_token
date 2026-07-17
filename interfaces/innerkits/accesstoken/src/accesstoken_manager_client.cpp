@@ -22,8 +22,6 @@
 #include "accesstoken_callbacks.h"
 #include "accesstoken_common_log.h"
 #include "atm_tools_param_info_parcel.h"
-#include "bundle_infos_rawdata_helper.h"
-#include "check_hap_sign_result_rawdata_helper.h"
 #include "hap_token_info.h"
 #include "hap_token_info_for_sync_parcel.h"
 #include "idl_common.h"
@@ -33,7 +31,6 @@
 #include "permission_grant_info_parcel.h"
 #include "permission_map.h"
 #include "permission_status_parcel.h"
-#include "proxy_death_callback_stub.h"
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
 #include "sec_comp_enhance_data_parcel.h"
 #include "securec.h"
@@ -96,16 +93,6 @@ bool ConvertSecCompEnhanceKey(const SecCompEnhanceKeyIdl& enhanceKeyIdl, SecComp
     return true;
 }
 #endif
-
-ReservedTypeIdl ConvertReservedType(ReservedType reserved)
-{
-    return static_cast<ReservedTypeIdl>(reserved);
-}
-
-ReservedType ConvertReservedType(ReservedTypeIdl reserved)
-{
-    return static_cast<ReservedType>(reserved);
-}
 
 CliInfoIdl ConvertCliInfo(const CliInfo& info)
 {
@@ -793,77 +780,6 @@ int32_t AccessTokenManagerClient::InitHapToken(const HapInfoParams& info, HapPol
     return res;
 }
 
-int32_t AccessTokenManagerClient::MigrateInstalledBundles(const std::vector<MigratedInfo>& migratedInfoList,
-    std::vector<BundleMigrateResult>& results)
-{
-    results.clear();
-    auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
-        return AccessTokenError::ERR_SERVICE_ABNORMAL;
-    }
-
-    std::vector<MigratedInfoIdl> migratedInfoIdlList;
-    for (const auto& migratedInfo : migratedInfoList) {
-        MigratedInfoIdl migratedInfoIdl;
-        migratedInfoIdl.bundleName = migratedInfo.bundleName;
-        migratedInfoIdl.pathList.hapPaths = migratedInfo.pathList.hapPaths;
-        migratedInfoIdl.pathList.isPreInstalled = migratedInfo.pathList.isPreInstalled;
-        for (const auto& hapBaseInfo : migratedInfo.hapBaseInfoList) {
-            HapBaseInfoIdl hapBaseInfoIdl;
-            hapBaseInfoIdl.userID = hapBaseInfo.userID;
-            hapBaseInfoIdl.bundleName = hapBaseInfo.bundleName;
-            hapBaseInfoIdl.instIndex = hapBaseInfo.instIndex;
-            migratedInfoIdl.hapBaseInfoList.emplace_back(hapBaseInfoIdl);
-        }
-        migratedInfoIdl.uidList = migratedInfo.uidList;
-        for (const auto& reserved : migratedInfo.reservedTypeList) {
-            migratedInfoIdl.reservedTypeList.emplace_back(ConvertReservedType(reserved));
-        }
-        migratedInfoIdlList.emplace_back(migratedInfoIdl);
-    }
-
-    std::vector<BundleMigrateResultIdl> resultsIdl;
-    int32_t result = proxy->MigrateInstalledBundles(migratedInfoIdlList, resultsIdl);
-    if (result != RET_SUCCESS) {
-        result = ConvertResult(result);
-        return result;
-    }
-
-    results.reserve(resultsIdl.size());
-    for (const auto& resultIdl : resultsIdl) {
-        BundleMigrateResult resultItem;
-        resultItem.errcode = resultIdl.errcode;
-        resultItem.tokenIdList.reserve(resultIdl.tokenIdList.size());
-        for (const auto tokenId : resultIdl.tokenIdList) {
-            AccessTokenIDEx tidEx;
-            tidEx.tokenIDEx = tokenId;
-            resultItem.tokenIdList.emplace_back(tidEx);
-        }
-        resultItem.reservedTypeList.reserve(resultIdl.reservedTypeList.size());
-        for (const auto& reserved : resultIdl.reservedTypeList) {
-            resultItem.reservedTypeList.emplace_back(ConvertReservedType(reserved));
-        }
-        results.emplace_back(std::move(resultItem));
-    }
-    return RET_SUCCESS;
-}
-
-int32_t AccessTokenManagerClient::FinishMigration()
-{
-    auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
-        return AccessTokenError::ERR_SERVICE_ABNORMAL;
-    }
-
-    int32_t result = proxy->FinishMigration();
-    if (result != RET_SUCCESS) {
-        result = ConvertResult(result);
-    }
-    return result;
-}
-
 int AccessTokenManagerClient::DeleteToken(AccessTokenID tokenID, bool isTokenReserved)
 {
     auto proxy = GetProxy();
@@ -891,22 +807,6 @@ int32_t AccessTokenManagerClient::DeleteToolTokenByPid(int32_t pid)
         result = ConvertResult(result);
     }
     LOGI(ATM_DOMAIN, ATM_TAG, "Result is %{public}d, claw pid is %{public}d.", result, pid);
-    return result;
-}
-
-int32_t AccessTokenManagerClient::DeleteIdentity(
-    AccessTokenID tokenID, const std::string& bundleName, ReservedType type)
-{
-    auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
-        return AccessTokenError::ERR_SERVICE_ABNORMAL;
-    }
-    int32_t result = proxy->DeleteIdentity(tokenID, bundleName, static_cast<ReservedTypeIdl>(type));
-    if (result != RET_SUCCESS) {
-        result = ConvertResult(result);
-    }
-    LOGI(ATM_DOMAIN, ATM_TAG, "Result is %{public}d, id is %{public}u.", result, tokenID);
     return result;
 }
 
@@ -944,45 +844,6 @@ AccessTokenIDEx AccessTokenManagerClient::GetHapTokenID(
     }
     result.tokenIDEx = fullTokenId;
     return result;
-}
-
-int32_t AccessTokenManagerClient::GetHapIdentity(const HapBaseInfo& info, Identity& identity)
-{
-    auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
-        return AccessTokenError::ERR_SERVICE_ABNORMAL;
-    }
-    HapBaseInfoParcel infoParcel;
-    infoParcel.hapBaseInfo = info;
-    IdentityIdl identityIdl;
-    int32_t errCode = proxy->GetHapIdentity(infoParcel, identityIdl);
-    if (errCode != RET_SUCCESS) {
-        errCode = ConvertResult(errCode);
-        LOGE(ATM_DOMAIN, ATM_TAG, "Request fail, result: %{public}d", errCode);
-        return errCode;
-    }
-    identity.uid = identityIdl.uid;
-    identity.tokenId = identityIdl.tokenId;
-    return RET_SUCCESS;
-}
-
-int32_t AccessTokenManagerClient::GetHapBaseInfoByUid(int32_t uid, HapBaseInfo& info)
-{
-    auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
-        return AccessTokenError::ERR_SERVICE_ABNORMAL;
-    }
-    HapBaseInfoParcel infoParcel;
-    int32_t errCode = proxy->GetHapBaseInfoByUid(uid, infoParcel);
-    if (errCode != RET_SUCCESS) {
-        errCode = ConvertResult(errCode);
-        LOGE(ATM_DOMAIN, ATM_TAG, "Request fail, result: %{public}d", errCode);
-        return errCode;
-    }
-    info = infoParcel.hapBaseInfo;
-    return RET_SUCCESS;
 }
 
 FullTokenID AccessTokenManagerClient::AllocLocalTokenID(
@@ -1795,254 +1656,6 @@ int32_t AccessTokenManagerClient::QueryStatusByTokenID(const std::vector<AccessT
     }
 
     return RET_SUCCESS;
-}
-
-int32_t AccessTokenManagerClient::CheckHapSignInfo(const BundleHapList& list, int32_t& sessionId,
-    std::vector<TrustedBundleInfo>& bundleInfo, HapVerifyResultInfo& resultInfo)
-{
-    auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
-        return AccessTokenError::ERR_SERVICE_ABNORMAL;
-    }
-    auto anonyStub = GetAnonyStub();
-    if (anonyStub == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "anonyStub is null.");
-        return AccessTokenError::ERR_SERVICE_ABNORMAL;
-    }
-    BundleHapListIdl listIdl;
-    listIdl.hapPaths = list.hapPaths;
-    listIdl.isPreInstalled = list.isPreInstalled;
-    listIdl.userId = list.userId;
-    
-    CheckHapSignResultRawdata resultRawData;
-    int32_t res = proxy->CheckHapSignInfo(listIdl, anonyStub->AsObject(), resultRawData);
-    if (res != RET_SUCCESS) {
-        return ConvertResult(res);
-    }
-    
-    if (!CheckHapSignResultRawdataHelper::ReadFromRawData(
-        resultRawData, res, sessionId, bundleInfo, resultInfo)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "ReadFromRawData failed.");
-        bundleInfo.clear();
-        return AccessTokenError::ERR_READ_PARCEL_FAILED;
-    }
-    
-    LOGI(ATM_DOMAIN, ATM_TAG, "Result %{public}d, sessionId %{public}d", res, sessionId);
-    return res;
-}
-
-int32_t AccessTokenManagerClient::CheckHapPermissionInfo(int32_t sessionId, InstallTypeEnum type,
-    HapInfoCheckResult& result)
-{
-    auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
-        return AccessTokenError::ERR_SERVICE_ABNORMAL;
-    }
-
-    HapInfoCheckResultIdl resultInfoIdl;
-    int32_t res = proxy->CheckHapPermissionInfo(sessionId, static_cast<InstallTypeEnumIdl>(type), resultInfoIdl);
-    if (res != RET_SUCCESS) {
-        return ConvertResult(res);
-    }
-
-    res = resultInfoIdl.realResult;
-    if (res != RET_SUCCESS) {
-        PermissionInfoCheckResult permCheckResult;
-        permCheckResult.permissionName = resultInfoIdl.permissionName;
-        int32_t rule = static_cast<int32_t>(resultInfoIdl.rule);
-        permCheckResult.rule = static_cast<PermissionRulesEnum>(rule);
-        result.permCheckResult = permCheckResult;
-    }
-
-    LOGI(ATM_DOMAIN, ATM_TAG, "Result %{public}d", res);
-    return res;
-}
-
-int32_t AccessTokenManagerClient::PrepareHapIdentity(int32_t& sessionId, const HapBaseInfo& info,
-    const BundlePolicy& policy, Identity& identity)
-{
-    auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
-        return AccessTokenError::ERR_SERVICE_ABNORMAL;
-    }
-    auto anonyStub = GetAnonyStub();
-    if (anonyStub == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "anonyStub is null.");
-        return AccessTokenError::ERR_SERVICE_ABNORMAL;
-    }
-
-    HapBaseInfoIdl infoIdl;
-    infoIdl.userID = info.userID;
-    infoIdl.bundleName = info.bundleName;
-    infoIdl.instIndex = info.instIndex;
-    BundlePolicyIdl policyIdl;
-    for (const auto& preInfo : policy.preAuthorizationInfo) {
-        PreAuthorizationInfoIdl preInfoIdl;
-        preInfoIdl.permissionName = preInfo.permissionName;
-        preInfoIdl.userCancelable = preInfo.userCancelable;
-        policyIdl.preAuthorizationInfo.emplace_back(preInfoIdl);
-    }
-    policyIdl.dlpType = static_cast<DlpTypeIdl>(policy.dlpType);
-    policyIdl.isDebugGrant = policy.isDebugGrant;
-
-    IdentityIdl identityIdl;
-    int32_t res = proxy->PrepareHapIdentity(sessionId, infoIdl, policyIdl, anonyStub->AsObject(), identityIdl);
-    if (res != RET_SUCCESS) {
-        res = ConvertResult(res);
-    } else {
-        identity.uid = identityIdl.uid;
-        identity.tokenId = identityIdl.tokenId;
-    }
-
-    LOGI(ATM_DOMAIN, ATM_TAG, "Result=%{public}d, sessionId=%{public}d, uid=%{public}d, "
-        "fulltokenId=%{public}" PRIu64 ", tokenId=%{public}u",
-        res, sessionId, identity.uid, identity.tokenId, static_cast<uint32_t>(identity.tokenId));
-    return res;
-}
-
-int32_t AccessTokenManagerClient::UpdateHapPolicy(
-    int32_t sessionId, int32_t tokenId, const BundlePolicy& policy, int32_t& uid)
-{
-    auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
-        return AccessTokenError::ERR_SERVICE_ABNORMAL;
-    }
-
-    BundlePolicyIdl policyIdl;
-    for (const auto& preInfo : policy.preAuthorizationInfo) {
-        PreAuthorizationInfoIdl preInfoIdl;
-        preInfoIdl.permissionName = preInfo.permissionName;
-        preInfoIdl.userCancelable = preInfo.userCancelable;
-        policyIdl.preAuthorizationInfo.emplace_back(preInfoIdl);
-    }
-    policyIdl.dlpType = static_cast<DlpTypeIdl>(policy.dlpType);
-    policyIdl.isDebugGrant = policy.isDebugGrant;
-
-    int32_t res = proxy->UpdateHapPolicy(sessionId, tokenId, policyIdl, uid);
-    if (res != RET_SUCCESS) {
-        res = ConvertResult(res);
-    }
-
-    LOGI(ATM_DOMAIN, ATM_TAG, "Result=%{public}d, uid=%{public}d", res, uid);
-    return res;
-}
-
-int32_t AccessTokenManagerClient::FinishInstall(int32_t sessionId, bool isPersistent,
-    const std::map<std::string, std::string>& modulePathMap)
-{
-    auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
-        return AccessTokenError::ERR_SERVICE_ABNORMAL;
-    }
-
-    int32_t res = proxy->FinishInstall(sessionId, isPersistent, modulePathMap);
-    if (res != RET_SUCCESS) {
-        res = ConvertResult(res);
-    }
-
-    LOGI(ATM_DOMAIN, ATM_TAG, "Result=%{public}d", res);
-    return res;
-}
-
-int32_t AccessTokenManagerClient::GetCacheSignInfoBySessionId(int32_t sessionId,
-    std::vector<TrustedBundleInfo>& bundleInfo)
-{
-    auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
-        return AccessTokenError::ERR_SERVICE_ABNORMAL;
-    }
-
-    BundleInfosRawdata BundleInfosRawdata;
-    int32_t res = proxy->GetCacheSignInfoBySessionId(sessionId, BundleInfosRawdata);
-    if (res != RET_SUCCESS) {
-        res = ConvertResult(res);
-    } else if (!BundleInfosRawdataHelper::ReadFromRawData(BundleInfosRawdata, bundleInfo)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "ReadFromRawData failed.");
-        bundleInfo.clear();
-        res = AccessTokenError::ERR_READ_PARCEL_FAILED;
-    }
-
-    LOGI(ATM_DOMAIN, ATM_TAG, "Result=%{public}d", res);
-    return res;
-}
-
-int32_t AccessTokenManagerClient::GetHapSignInfo(const std::string& bundleName,
-    std::vector<TrustedBundleInfo>& bundleInfo)
-{
-    auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
-        return AccessTokenError::ERR_SERVICE_ABNORMAL;
-    }
-
-    BundleInfosRawdata BundleInfosRawdata;
-    int32_t res = proxy->GetHapSignInfo(bundleName, BundleInfosRawdata);
-    if (res != RET_SUCCESS) {
-        res = ConvertResult(res);
-    } else if (!BundleInfosRawdataHelper::ReadFromRawData(BundleInfosRawdata, bundleInfo)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "ReadFromRawData failed.");
-        bundleInfo.clear();
-        res = AccessTokenError::ERR_READ_PARCEL_FAILED;
-    }
-
-    LOGI(ATM_DOMAIN, ATM_TAG, "Result=%{public}d", res);
-    return res;
-}
-
-int32_t AccessTokenManagerClient::GetCachePolicyBySessionId(int32_t sessionId, const std::string& bundleName,
-    BundlePolicyInfo& bundlePolicyInfo)
-{
-    auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
-        return AccessTokenError::ERR_SERVICE_ABNORMAL;
-    }
-
-    BundlePolicyInfoIdl bundlePolicyInfoIdl;
-    int32_t res = proxy->GetCachePolicyBySessionId(sessionId, bundleName, bundlePolicyInfoIdl);
-    if (res != RET_SUCCESS) {
-        res = ConvertResult(res);
-    } else {
-        bundlePolicyInfo.reqPermissions = bundlePolicyInfoIdl.reqPermissions;
-    }
-    LOGI(ATM_DOMAIN, ATM_TAG, "Result=%{public}d", res);
-    return res;
-}
-
-int32_t AccessTokenManagerClient::RefreshTokenStatus(const Identity& identity, ReservedType reserved)
-{
-    auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
-        return AccessTokenError::ERR_SERVICE_ABNORMAL;
-    }
-
-    IdentityIdl identityIdl;
-    identityIdl.tokenId = identity.tokenId;
-    identityIdl.uid = identity.uid;
-    ReservedTypeIdl reservedIdl = static_cast<ReservedTypeIdl>(reserved);
-
-    int32_t res = proxy->RefreshTokenStatus(identityIdl, reservedIdl);
-    if (res != RET_SUCCESS) {
-        res = ConvertResult(res);
-    }
-    LOGI(ATM_DOMAIN, ATM_TAG, "Result=%{public}d", res);
-    return res;
-}
-
-sptr<ProxyDeathCallBack> AccessTokenManagerClient::GetAnonyStub()
-{
-    std::lock_guard<std::mutex> lock(stubMutex_);
-    if (anonyStub_ == nullptr) {
-        anonyStub_ = sptr<ProxyDeathCallBackStub>::MakeSptr();
-    }
-    return anonyStub_;
 }
 
 int32_t AccessTokenManagerClient::GetCliPermissionRequestInfo(

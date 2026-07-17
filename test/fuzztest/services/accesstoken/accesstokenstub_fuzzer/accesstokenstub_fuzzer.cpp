@@ -38,7 +38,6 @@ static AccessTokenID g_hdcdTokenID = 0;
 static AccessTokenID g_manageUserPolicyTokenId = INVALID_TOKENID;
 const static int32_t FLAG_SIZE = 16;
 const int CONSTANTS_NUMBER_TWO = 2;
-const int32_t SLEEP_TIME_SECONDS = 3;
 static const vector<PermissionFlag> FLAG_LIST = {
     PERMISSION_DEFAULT_FLAG,
     PERMISSION_USER_SET,
@@ -450,10 +449,8 @@ bool DeleteRemoteDeviceTokensStubFuzzTest(FuzzedDataProvider &provider)
         uint32_t nativeSize = 0;
         uint32_t pefDefSize = 0;
         uint32_t dlpSize = 0;
-        AccessTokenInfoManager::GetInstance().Init(nativeSize, pefDefSize, dlpSize);
-        (void)BootVerifyScheduler::GetInstance().VerifyBundleSignInfoWhenStart(hapSize);
-        BootVerifyScheduler::GetInstance().StartVerifyNormalBundleListAsync();
-        sleep(SLEEP_TIME_SECONDS);
+        std::map<int32_t, TokenIdInfo> tokenIdAplMap;
+        AccessTokenInfoManager::GetInstance().Init(hapSize, nativeSize, pefDefSize, dlpSize, tokenIdAplMap);
     }
     (void)DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
     (void)SetSelfTokenID(g_hdcdTokenID);

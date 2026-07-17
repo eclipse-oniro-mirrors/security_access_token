@@ -25,9 +25,7 @@ config("accesstoken_communication_adapter_cxx_public_config") {
 
 ohos_shared_library("accesstoken_communication_adapter_cxx") {
   subsystem_name = "security"
-  innerapi_tags = [
-    "platformsdk_indirect",
-  ]
+  innerapi_tags = [ "platformsdk_indirect" ]
   part_name = "access_token"
   sanitize = {
     cfi = true
@@ -48,8 +46,6 @@ ohos_shared_library("accesstoken_communication_adapter_cxx") {
 
   sources = [
     "src/atm_tools_param_info_parcel.cpp",
-    "src/bundle_infos_rawdata_helper.cpp",
-    "src/check_hap_sign_result_rawdata_helper.cpp",
     "src/hap_base_info_parcel.cpp",
     "src/hap_info_parcel.cpp",
     "src/hap_policy_parcel.cpp",

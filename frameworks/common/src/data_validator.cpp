@@ -276,35 +276,11 @@ bool DataValidator::IsHapCaller(AccessTokenID id)
     return true;
 }
 
-bool DataValidator::IsHapListSizeValid(uint32_t size)
-{
-    if (size == 0 || size > MAX_HAP_LIST_SIZE) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Size is invalid(%{public}u).", size);
-        return false;
-    }
-    return true;
-}
-
 bool DataValidator::IsListSizeValid(uint32_t size)
 {
     if (size <= 0 || size > MAX_LIST_SIZE) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Size is invalid(%{public}u).", size);
         return false;
-    }
-    return true;
-}
-
-bool DataValidator::IsStringListValid(const std::vector<std::string>& valueList)
-{
-    if (!IsListSizeValid(static_cast<uint32_t>(valueList.size()))) {
-        return false;
-    }
-    for (const auto& value : valueList) {
-        if (value.empty() || value.length() > MAX_LENGTH) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "String list item %{public}s is invalid.",
-                value.substr(0, MAX_LENGTH).c_str());
-            return false;
-        }
     }
     return true;
 }

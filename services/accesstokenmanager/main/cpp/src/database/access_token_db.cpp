@@ -57,11 +57,7 @@ void AccessTokenDb::InitRdb()
     AccessTokenOpenCallback callback;
     int32_t res = NativeRdb::E_OK;
     // pragma user_version will done by rdb, they store path and db_ as pair in RdbStoreManager
-#ifdef SPM_DATA_ENABLE
     db_ = NativeRdb::RdbHelper::GetRdbStore(config, DATABASE_VERSION_10, callback, res);
-#else
-    db_ = NativeRdb::RdbHelper::GetRdbStore(config, DATABASE_VERSION_8, callback, res);
-#endif
     if ((res != NativeRdb::E_OK) || (db_ == nullptr)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to init rdb, res is %{public}d.", res);
     }
@@ -278,74 +274,6 @@ int32_t AccessTokenDb::DeleteAndInsertValues(const std::vector<DelInfo>& delInfo
     int64_t endTime = TimeUtil::GetCurrentTimestamp();
     LOGI(ATM_DOMAIN, ATM_TAG, "DeleteAndInsertValues cost %{public}" PRId64 ".", endTime - beginTime);
     return res;
-}
-
-int32_t AccessTokenDb::Modify(const AtmDataType type,
-    const std::vector<GenericValues>& modifyValues,
-    const std::vector<GenericValues>& conditions)
-{
-    if (modifyValues.size() != conditions.size()) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Modify size mismatch: modifyValues=%{public}zu, conditions=%{public}zu.",
-            modifyValues.size(), conditions.size());
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-    int64_t beginTime = TimeUtil::GetCurrentTimestamp();
-    int res = 0;
-    {
-        std::unique_lock<std::shared_mutex> lock(this->rwLock_);
-        res = ModifyInner(type, modifyValues, conditions);
-        if (res != NativeRdb::E_OK) {
-            RestoreDatabase(res);
-            res = ModifyInner(type, modifyValues, conditions);
-        }
-    }
-    int64_t endTime = TimeUtil::GetCurrentTimestamp();
-    LOGI(ATM_DOMAIN, ATM_TAG, "Modify cost %{public}" PRId64 ".", endTime - beginTime);
-    return res;
-}
-
-int32_t AccessTokenDb::ModifyInner(const AtmDataType type,
-    const std::vector<GenericValues>& modifyValues,
-    const std::vector<GenericValues>& conditions)
-{
-    std::shared_ptr<NativeRdb::RdbStore> db = GetRdb();
-    if (db == nullptr) {
-        LOGC(ATM_DOMAIN, ATM_TAG, "Db is nullptr.");
-        return AccessTokenError::ERR_DATABASE_OPERATE_FAILED;
-    }
-
-    auto [errcode, transaction] = db->CreateTransaction(OHOS::NativeRdb::Transaction::DEFERRED);
-    if (errcode != NativeRdb::E_OK || transaction == nullptr) {
-        LOGC(ATM_DOMAIN, ATM_TAG, "CreateTransaction failed, error:0x%{public}x", errcode);
-        return AccessTokenError::ERR_DATABASE_OPERATE_FAILED;
-    }
-
-    std::string tableName;
-    AccessTokenDbUtil::GetTableNameByType(type, tableName);
-    if (tableName.empty()) {
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-    for (size_t i = 0; i < modifyValues.size(); ++i) {
-        NativeRdb::RdbPredicates predicates(tableName);
-        AccessTokenDbUtil::ToRdbPredicates(conditions[i], predicates);
-        NativeRdb::ValuesBucket bucket;
-        AccessTokenDbUtil::ToRdbValueBucket(modifyValues[i], bucket);
-        auto [errCode, changedRows] = transaction->Update(bucket, predicates);
-        if (errCode != NativeRdb::E_OK) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "Update failed for table %{public}s, errCode is 0x%{public}x.",
-                tableName.c_str(), errCode);
-            transaction->Rollback();
-            return errCode;
-        }
-    }
-
-    int32_t res = transaction->Commit();
-    if (res != NativeRdb::E_OK) {
-        LOGC(ATM_DOMAIN, ATM_TAG, "Transaction commit failed, res is 0x%{public}x.", res);
-        transaction->Rollback();
-        return res;
-    }
-    return 0;
 }
 
 int32_t AccessTokenDb::DeleteAndInsertValuesInner(const std::vector<DelInfo>& delInfoVec,
