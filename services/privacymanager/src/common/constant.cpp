@@ -154,7 +154,7 @@ const std::map<std::string, int32_t> Constant::PERMISSION_OPCODE_MAP = {
     std::map<std::string, int32_t>::value_type("ohos.permission.AGENT_FILE_ACCESS_READ_AUDIO",
         Constant::OP_AGENT_FILE_ACCESS_READ_AUDIO),
     std::map<std::string, int32_t>::value_type("ohos.permission.AGENT_FILE_ACCESS_WRITE_AUDIO",
-        Constant::OP_AGENT_FILE_ACCESS_WRITE_AUDIO), 
+        Constant::OP_AGENT_FILE_ACCESS_WRITE_AUDIO),
     std::map<std::string, int32_t>::value_type("ohos.permission.AGENT_FILE_ACCESS_READ_MEDIA",
         Constant::OP_AGENT_FILE_ACCESS_READ_MEDIA),
     std::map<std::string, int32_t>::value_type("ohos.permission.AGENT_FILE_ACCESS_WRITE_MEDIA",
