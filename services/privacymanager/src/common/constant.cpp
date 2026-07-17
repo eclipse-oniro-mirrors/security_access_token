@@ -147,6 +147,18 @@ const std::map<std::string, int32_t> Constant::PERMISSION_OPCODE_MAP = {
         Constant::OP_CLI_MANAGE_DISPOSED_APP_STATUS),
     std::map<std::string, int32_t>::value_type("ohos.permission.ONSCREEN_AWARENESS",
         Constant::OP_ONSCREEN_AWARENESS),
+    std::map<std::string, int32_t>::value_type("ohos.permission.AGENT_FILE_ACCESS_READ_IMAGEVIDEO",
+        Constant::OP_AGENT_FILE_ACCESS_READ_IMAGEVIDEO),
+    std::map<std::string, int32_t>::value_type("ohos.permission.AGENT_FILE_ACCESS_WRITE_IMAGEVIDEO",
+        Constant::OP_AGENT_FILE_ACCESS_WRITE_IMAGEVIDEO),
+    std::map<std::string, int32_t>::value_type("ohos.permission.AGENT_FILE_ACCESS_READ_AUDIO",
+        Constant::OP_AGENT_FILE_ACCESS_READ_AUDIO),
+    std::map<std::string, int32_t>::value_type("ohos.permission.AGENT_FILE_ACCESS_WRITE_AUDIO",
+        Constant::OP_AGENT_FILE_ACCESS_WRITE_AUDIO),
+    std::map<std::string, int32_t>::value_type("ohos.permission.AGENT_FILE_ACCESS_READ_MEDIA",
+        Constant::OP_AGENT_FILE_ACCESS_READ_MEDIA),
+    std::map<std::string, int32_t>::value_type("ohos.permission.AGENT_FILE_ACCESS_WRITE_MEDIA",
+        Constant::OP_AGENT_FILE_ACCESS_WRITE_MEDIA),
 };
 
 bool Constant::TransferPermissionToOpcode(const std::string& permissionName, int32_t& opCode)
