@@ -104,6 +104,7 @@ ohos_static_library("accesstoken_static_log") {
   sources = [ "src/accesstoken_common_log.cpp" ]
 
   external_deps = [
+    "bounds_checking_function:libsec_shared",
     "c_utils:utils",
     "hilog:libhilog",
   ]
