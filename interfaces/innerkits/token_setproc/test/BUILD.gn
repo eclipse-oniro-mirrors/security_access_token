@@ -26,15 +26,16 @@ ohos_unittest("libtoken_setproc_test") {
 
   include_dirs = [ "../include" ]
 
-  sources = [ "unittest/src/tokensetproc_kit_test.cpp" ]
+  sources = [
+    "../src/spm_setproc.c",
+    "../src/token_setproc.c",
+    "unittest/src/tokensetproc_kit_test.cpp",
+  ]
   cflags_cc = access_token_cflags_cc
   cflags_cc += [ "-fexceptions" ]
   configs = [ "${access_token_path}/config:coverage_flags" ]
 
-  deps = [
-    "../:libperm_setproc",
-    "../:libtokensetproc_shared",
-  ]
+  deps = [ "../:libperm_setproc" ]
 
   external_deps = [
     "bounds_checking_function:libsec_shared",

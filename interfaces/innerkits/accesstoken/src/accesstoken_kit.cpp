@@ -897,6 +897,53 @@ uint64_t AccessTokenKit::GetRenderTokenID(uint64_t tokenId)
     return static_cast<uint64_t>(id);
 }
 
+bool AccessTokenKit::IsBinTokenId(AccessTokenID tokenId)
+{
+    if (tokenId == INVALID_TOKENID) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "TokenID is invalid.");
+        return false;
+    }
+    AccessTokenIDInner* idInner = reinterpret_cast<AccessTokenIDInner*>(&tokenId);
+    return idInner->type_ext == 1;
+}
+
+int32_t AccessTokenKit::GetUsedPermissionsByCliPermission(
+    const std::vector<std::string>& cliPermissions, std::vector<CliPermissionQueryResult>& queryResults)
+{
+    queryResults.clear();
+    if (cliPermissions.empty()) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "CliPermissions is empty.");
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+
+    queryResults.reserve(cliPermissions.size());
+    for (const auto& cliPermission : cliPermissions) {
+        CliPermissionQueryResult queryResult;
+        if (cliPermission.empty() || !DataValidator::IsPermissionNameValid(cliPermission)) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "CliPermission is invalid, cliPermission=%{public}s.", cliPermission.c_str());
+            queryResult.result = AccessTokenError::ERR_PARAM_INVALID;
+            queryResults.emplace_back(std::move(queryResult));
+            continue;
+        }
+
+        if (QueryMappedPermissionsByCliPermission(cliPermission, queryResult.usedPermissions)) {
+            queryResult.result = RET_SUCCESS;
+            queryResults.emplace_back(std::move(queryResult));
+            continue;
+        }
+
+        if (!IsDefinedPermissionInner(cliPermission)) {
+            LOGE(ATM_DOMAIN, ATM_TAG,
+                "CliPermission=%{public}s has no mapping and no definition.", cliPermission.c_str());
+            queryResult.result = AccessTokenError::ERR_PERMISSION_NOT_EXIST;
+        } else {
+            queryResult.result = RET_SUCCESS;
+        }
+        queryResults.emplace_back(std::move(queryResult));
+    }
+    return RET_SUCCESS;
+}
+
 int32_t AccessTokenKit::GetKernelPermissions(
     AccessTokenID tokenID, std::vector<PermissionWithValue>& kernelPermList)
 {

@@ -563,6 +563,22 @@ public:
     static uint64_t GetRenderTokenID(uint64_t tokenId);
 
     /**
+     * @brief Query whether token id is a bin token by local token bits.
+     * @param tokenId token id.
+     * @return true if token type_ext indicates bin token, otherwise false.
+     */
+    static bool IsBinTokenId(AccessTokenID tokenId);
+
+    /**
+     * @brief Query mapped used permissions by cli permissions without IPC.
+     * @param cliPermissions cli permission list.
+     * @param queryResults output query result for each cli permission.
+     * @return error code, see access_token_error.h
+     */
+    static int32_t GetUsedPermissionsByCliPermission(
+        const std::vector<std::string>& cliPermissions, std::vector<CliPermissionQueryResult>& queryResults);
+
+    /**
      * @brief Get kernel permission and value by token id.
      * @param tokenID token id
      * @param kernelPermList PermissionWithValue quote, as query result

@@ -100,6 +100,7 @@ private:
 static constexpr int32_t INVALID_GRANT_MODE = 1000;
 static const int32_t TOKEN_ATTR_RESERVED = 0x4;
 static AccessTokenID g_selfTokenId = 0;
+
 static PermissionDef g_infoManagerTestPermDef1 = {
     .permissionName = "open the door",
     .bundleName = "accesstoken_test",

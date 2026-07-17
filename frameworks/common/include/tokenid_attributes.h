@@ -26,6 +26,7 @@ public:
     static int GetTokenIdDlpFlag(AccessTokenID id);
     static int GetTokenIdCloneFlag(AccessTokenID id);
     static ATokenTypeEnum GetTokenIdTypeEnum(AccessTokenID id);
+    static bool IsBinTokenId(AccessTokenID id);
     static bool IsToolTokenId(AccessTokenID id);
     static bool IsDebugApp(FullTokenID fullTokenId);
     static bool IsDebugAppAttr(AccessTokenAttr tokenAttr);

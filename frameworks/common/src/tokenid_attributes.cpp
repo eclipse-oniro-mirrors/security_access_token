@@ -43,6 +43,12 @@ ATokenTypeEnum TokenIDAttributes::GetTokenIdTypeEnum(AccessTokenID id)
     return static_cast<ATokenTypeEnum>(idInner->type);
 }
 
+bool TokenIDAttributes::IsBinTokenId(AccessTokenID id)
+{
+    AccessTokenIDInner* idInner = reinterpret_cast<AccessTokenIDInner*>(&id);
+    return idInner->type_ext == 1;
+}
+
 bool TokenIDAttributes::IsToolTokenId(AccessTokenID id)
 {
     AccessTokenIDInner* idInner = reinterpret_cast<AccessTokenIDInner*>(&id);

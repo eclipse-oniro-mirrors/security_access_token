@@ -212,6 +212,7 @@ private:
     int32_t RefreshUserPolicyFlagForUser(int32_t userId, const UserPolicyChange& policy,
         std::vector<UserPolicyRefreshSnapshot>& appliedSnapshots);
     int32_t CheckHapInfoParam(const HapInfoParams& info, const HapPolicy& policy);
+    int32_t ResolveQueryTokenID(AccessTokenID tokenID, AccessTokenID& queryTokenID);
     std::shared_ptr<HapTokenInfoInner> GetHapTokenInfoInnerFromDb(AccessTokenID id);
     void RemoveReservedHapTokenId(int32_t userID, const std::string& bundleName, int32_t instIndex);
     void AddReservedHapTokenId(int32_t userID, const std::string& bundleName,
