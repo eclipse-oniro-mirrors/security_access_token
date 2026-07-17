@@ -104,8 +104,10 @@
         "OHOS::Security::AccessToken::AccessTokenKit::GenerateCliAuthResult(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, std::__h::vector<OHOS::Security::AccessToken::CliAuthInfo, std::__h::allocator<OHOS::Security::AccessToken::CliAuthInfo>> const&, OHOS::Security::AccessToken::ToolAuthResult&)";
         OHOS::Security::AccessToken::AccessTokenKit::IsSystemAppByFullTokenID*;
         OHOS::Security::AccessToken::AccessTokenKit::GetRenderTokenID*;
+        OHOS::Security::AccessToken::AccessTokenKit::IsBinTokenId*;
         OHOS::Security::AccessToken::AccessTokenKit::IsCliToolToken*;
         OHOS::Security::AccessToken::AccessTokenKit::IsAtomicServiceByFullTokenID*;
+        OHOS::Security::AccessToken::AccessTokenKit::GetUsedPermissionsByCliPermission*;
         "OHOS::Security::AccessToken::AccessTokenKit::IsSupportPermission(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&)";
         "OHOS::Security::AccessToken::AccessTokenKit::TransferPermissionToOpcode(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, unsigned int&)";
         "OHOS::Security::AccessToken::AccessTokenKit::TransferOpcodeToPermission(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>>&)";

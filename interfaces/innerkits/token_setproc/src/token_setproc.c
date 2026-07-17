@@ -30,11 +30,45 @@
     _IOR(ACCESS_TOKEN_ID_IOCTL_BASE, GET_FTOKEN_ID, uint64_t)
 #define    ACCESS_TOKENID_SET_FTOKENID \
     _IOW(ACCESS_TOKEN_ID_IOCTL_BASE, SET_FTOKEN_ID, uint64_t)
+#define    ACCESS_TOKENID_GET_HAP_PTOKENID \
+    _IOR(ACCESS_TOKEN_ID_IOCTL_BASE, GET_HAP_PTOKENID, struct access_token_hap_query_op)
 
 #define INVAL_TOKEN_ID    0x0
 #define TOKEN_ID_LOWMASK 0xffffffff
 
+struct access_token_hap_query_op {
+    uint32_t bin;
+    uint64_t parent;
+};
+
 const uint64_t SET_PROC_FD_TAG = 0xD005A01;
+
+int32_t GetParentHapTokenID(uint32_t bin, uint64_t *parent)
+{
+    if (bin == INVAL_TOKEN_ID || parent == NULL) {
+        return ACCESS_TOKEN_PARAM_INVALID;
+    }
+
+    int fd = open(TOKENID_DEVNODE, O_RDWR);
+    if (fd < 0) {
+        return ACCESS_TOKEN_OPEN_ERROR;
+    }
+    fdsan_exchange_owner_tag(fd, 0, SET_PROC_FD_TAG);
+
+    struct access_token_hap_query_op query = {
+        .bin = bin,
+        .parent = INVAL_TOKEN_ID,
+    };
+    int ret = ioctl(fd, ACCESS_TOKENID_GET_HAP_PTOKENID, &query);
+    if (ret) {
+        (void)fdsan_close_with_tag(fd, SET_PROC_FD_TAG);
+        return errno;
+    }
+
+    *parent = query.parent;
+    (void)fdsan_close_with_tag(fd, SET_PROC_FD_TAG);
+    return ACCESS_TOKEN_OK;
+}
 
 uint64_t GetSelfTokenID(void)
 {

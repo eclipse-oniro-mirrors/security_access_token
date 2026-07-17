@@ -38,11 +38,16 @@ namespace Security {
 namespace AccessToken {
 namespace {
 static constexpr int32_t DEFAULT_API_VERSION = 8;
+static constexpr int32_t MAX_LENGTH = 256;
 static constexpr uint64_t CLI_BINARY_MASK = (static_cast<uint64_t>(1) << 36);
 static constexpr uint64_t EXISTING_TOKEN_ATTR_MASK =
     (static_cast<uint64_t>(1) << 32) | (static_cast<uint64_t>(1) << 33) |
     (static_cast<uint64_t>(1) << 34) | (static_cast<uint64_t>(1) << 35);
 static constexpr uint64_t TOKEN_ID_LOWMASK = 0xffffffff;
+static constexpr size_t SINGLE_QUERY_RESULT_COUNT = 1;
+static constexpr size_t DUPLICATE_QUERY_RESULT_COUNT = 2;
+static constexpr size_t PARTIAL_SUCCESS_QUERY_RESULT_COUNT = 3;
+static constexpr size_t MAPPED_USED_PERMISSION_COUNT = 2;
 static const std::string TEST_BUNDLE_NAME = "ohos";
 static const std::string TEST_PERMISSION_NAME_ALPHA = "ohos.permission.ALPHA";
 static const std::string TEST_PERMISSION_NAME_BETA = "ohos.permission.BETA";
@@ -452,6 +457,149 @@ HWTEST_F(AccessTokenCoverageTest, CliBinaryInvokerTokenFlagPreserveAttrTest001, 
     ASSERT_EQ(EXISTING_TOKEN_ATTR_MASK, cliBinaryTokenId & EXISTING_TOKEN_ATTR_MASK);
     ASSERT_EQ(CLI_BINARY_MASK, cliBinaryTokenId & CLI_BINARY_MASK);
     ASSERT_TRUE(TokenIdKit::IsCliBinaryInvokerToken(cliBinaryTokenId));
+}
+
+/**
+ * @tc.name: IsBinTokenIdTest001
+ * @tc.desc: AccessTokenKit::IsBinTokenId function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenCoverageTest, IsBinTokenIdTest001, TestSize.Level4)
+{
+    AccessTokenIDInner innerId = {0};
+    innerId.tokenUniqueID = 1;
+    innerId.type = TOKEN_HAP;
+    innerId.version = DEFAULT_TOKEN_VERSION;
+    innerId.type_ext = 1;
+    AccessTokenID binTokenId = *reinterpret_cast<AccessTokenID*>(&innerId);
+
+    ASSERT_TRUE(AccessTokenKit::IsBinTokenId(binTokenId));
+
+    innerId.type_ext = 0;
+    AccessTokenID normalTokenId = *reinterpret_cast<AccessTokenID*>(&innerId);
+    ASSERT_FALSE(AccessTokenKit::IsBinTokenId(normalTokenId));
+    ASSERT_FALSE(AccessTokenKit::IsBinTokenId(INVALID_TOKENID));
+}
+
+/**
+ * @tc.name: GetUsedPermissionsByCliPermissionTest001
+ * @tc.desc: AccessTokenKit::GetUsedPermissionsByCliPermission mapped permission test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenCoverageTest, GetUsedPermissionsByCliPermissionTest001, TestSize.Level4)
+{
+    std::vector<CliPermissionQueryResult> queryResults;
+    int32_t ret = AccessTokenKit::GetUsedPermissionsByCliPermission(
+        {"ohos.permission.APPROXIMATELY_LOCATION"}, queryResults);
+
+    ASSERT_EQ(RET_SUCCESS, ret);
+    ASSERT_EQ(SINGLE_QUERY_RESULT_COUNT, queryResults.size());
+    ASSERT_EQ(RET_SUCCESS, queryResults[0].result);
+    ASSERT_EQ(MAPPED_USED_PERMISSION_COUNT, queryResults[0].usedPermissions.size());
+    EXPECT_EQ("ohos.permission.LOCATION", queryResults[0].usedPermissions[0]);
+    EXPECT_EQ("ohos.permission.APPROXIMATELY_LOCATION", queryResults[0].usedPermissions[1]);
+}
+
+/**
+ * @tc.name: GetUsedPermissionsByCliPermissionTest002
+ * @tc.desc: AccessTokenKit::GetUsedPermissionsByCliPermission direct permission fallback test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenCoverageTest, GetUsedPermissionsByCliPermissionTest002, TestSize.Level4)
+{
+    std::vector<CliPermissionQueryResult> queryResults;
+    int32_t ret = AccessTokenKit::GetUsedPermissionsByCliPermission({"ohos.permission.CAMERA"}, queryResults);
+
+    ASSERT_EQ(RET_SUCCESS, ret);
+    ASSERT_EQ(SINGLE_QUERY_RESULT_COUNT, queryResults.size());
+    ASSERT_EQ(RET_SUCCESS, queryResults[0].result);
+    EXPECT_TRUE(queryResults[0].usedPermissions.empty());
+}
+
+/**
+ * @tc.name: GetUsedPermissionsByCliPermissionTest003
+ * @tc.desc: AccessTokenKit::GetUsedPermissionsByCliPermission invalid input test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenCoverageTest, GetUsedPermissionsByCliPermissionTest003, TestSize.Level4)
+{
+    std::vector<CliPermissionQueryResult> queryResults;
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
+        AccessTokenKit::GetUsedPermissionsByCliPermission({}, queryResults));
+    ASSERT_EQ(RET_SUCCESS,
+        AccessTokenKit::GetUsedPermissionsByCliPermission({"ohos.permission.cli.not.exist"}, queryResults));
+    ASSERT_EQ(SINGLE_QUERY_RESULT_COUNT, queryResults.size());
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_NOT_EXIST, queryResults[0].result);
+    EXPECT_TRUE(queryResults[0].usedPermissions.empty());
+}
+
+/**
+ * @tc.name: GetUsedPermissionsByCliPermissionTest004
+ * @tc.desc: AccessTokenKit::GetUsedPermissionsByCliPermission invalid permission name format test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenCoverageTest, GetUsedPermissionsByCliPermissionTest004, TestSize.Level4)
+{
+    std::vector<CliPermissionQueryResult> queryResults;
+    std::string invalidCliPermission(MAX_LENGTH + 1, 'a');
+    ASSERT_EQ(RET_SUCCESS,
+        AccessTokenKit::GetUsedPermissionsByCliPermission({invalidCliPermission}, queryResults));
+    ASSERT_EQ(SINGLE_QUERY_RESULT_COUNT, queryResults.size());
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, queryResults[0].result);
+    EXPECT_TRUE(queryResults[0].usedPermissions.empty());
+}
+
+/**
+ * @tc.name: GetUsedPermissionsByCliPermissionTest005
+ * @tc.desc: AccessTokenKit::GetUsedPermissionsByCliPermission keeps output size aligned with input and does not dedup
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenCoverageTest, GetUsedPermissionsByCliPermissionTest005, TestSize.Level4)
+{
+    std::vector<CliPermissionQueryResult> queryResults;
+    int32_t ret = AccessTokenKit::GetUsedPermissionsByCliPermission(
+        {"ohos.permission.APPROXIMATELY_LOCATION", "ohos.permission.APPROXIMATELY_LOCATION"},
+        queryResults);
+
+    ASSERT_EQ(RET_SUCCESS, ret);
+    ASSERT_EQ(DUPLICATE_QUERY_RESULT_COUNT, queryResults.size());
+    ASSERT_EQ(RET_SUCCESS, queryResults[0].result);
+    ASSERT_EQ(RET_SUCCESS, queryResults[1].result);
+    ASSERT_EQ(MAPPED_USED_PERMISSION_COUNT, queryResults[0].usedPermissions.size());
+    ASSERT_EQ(MAPPED_USED_PERMISSION_COUNT, queryResults[1].usedPermissions.size());
+    EXPECT_EQ("ohos.permission.LOCATION", queryResults[0].usedPermissions[0]);
+    EXPECT_EQ("ohos.permission.APPROXIMATELY_LOCATION", queryResults[0].usedPermissions[1]);
+    EXPECT_EQ("ohos.permission.LOCATION", queryResults[1].usedPermissions[0]);
+    EXPECT_EQ("ohos.permission.APPROXIMATELY_LOCATION", queryResults[1].usedPermissions[1]);
+}
+
+/**
+ * @tc.name: GetUsedPermissionsByCliPermissionTest006
+ * @tc.desc: AccessTokenKit::GetUsedPermissionsByCliPermission supports partial success
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenCoverageTest, GetUsedPermissionsByCliPermissionTest006, TestSize.Level4)
+{
+    std::vector<CliPermissionQueryResult> queryResults;
+    int32_t ret = AccessTokenKit::GetUsedPermissionsByCliPermission(
+        {"ohos.permission.APPROXIMATELY_LOCATION", "ohos.permission.cli.not.exist", "ohos.permission.CAMERA"},
+        queryResults);
+
+    ASSERT_EQ(RET_SUCCESS, ret);
+    ASSERT_EQ(PARTIAL_SUCCESS_QUERY_RESULT_COUNT, queryResults.size());
+    ASSERT_EQ(RET_SUCCESS, queryResults[0].result);
+    ASSERT_EQ(MAPPED_USED_PERMISSION_COUNT, queryResults[0].usedPermissions.size());
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_NOT_EXIST, queryResults[1].result);
+    EXPECT_TRUE(queryResults[1].usedPermissions.empty());
+    EXPECT_EQ(RET_SUCCESS, queryResults[2].result);
+    EXPECT_TRUE(queryResults[2].usedPermissions.empty());
 }
 
 #ifdef TOKEN_SYNC_ENABLE
