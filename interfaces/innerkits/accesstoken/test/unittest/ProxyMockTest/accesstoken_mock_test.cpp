@@ -38,6 +38,14 @@ using namespace testing::ext;
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+#if defined(SECURITY_COMPONENT_ENHANCE_ENABLE) && defined(ACCESSTOKEN_MANAGER_CLIENT_TEST_ENABLE)
+bool TestClientIsEnhanceKeySizeValid(size_t size);
+void TestClientClearSecCompEnhanceKey(SecCompEnhanceKey& enhanceKey);
+SecCompEnhanceKeyIdl TestClientConvertSecCompEnhanceKeyToIdl(const SecCompEnhanceKey& enhanceKey);
+bool TestClientConvertSecCompEnhanceKeyFromIdl(const SecCompEnhanceKeyIdl& enhanceKeyIdl,
+    SecCompEnhanceKey& enhanceKey);
+#endif
+
 namespace {
 static AccessTokenID g_testTokenId = 123;  // 123: tokenId
 static constexpr int32_t DEFAULT_API_VERSION = 8;
@@ -1108,6 +1116,57 @@ HWTEST_F(AccessTokenMockTest, GetSecCompEnhanceKey002, TestSize.Level4)
     EXPECT_EQ(remote->outputKey_.key.size(), output.key.size);
     EXPECT_EQ(0, memcmp(remote->outputKey_.key.data(), output.key.data, output.key.size));
 }
+
+#ifdef ACCESSTOKEN_MANAGER_CLIENT_TEST_ENABLE
+/**
+ * @tc.name: SecCompEnhanceKeyConvert001
+ * @tc.desc: Validate client enhance key helper branches.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, SecCompEnhanceKeyConvert001, TestSize.Level4)
+{
+    EXPECT_FALSE(TestClientIsEnhanceKeySizeValid(0));
+    EXPECT_FALSE(TestClientIsEnhanceKeySizeValid(MAX_HMAC_SIZE + 1));
+    EXPECT_TRUE(TestClientIsEnhanceKeySizeValid(1));
+    EXPECT_TRUE(TestClientIsEnhanceKeySizeValid(MAX_HMAC_SIZE));
+
+    SecCompEnhanceKey input = CreateEnhanceKey(5, 4, 0x55);
+    SecCompEnhanceKeyIdl inputIdl = TestClientConvertSecCompEnhanceKeyToIdl(input);
+    EXPECT_EQ(input.epoch, inputIdl.epoch);
+    EXPECT_EQ(input.key.size, inputIdl.key.size());
+    EXPECT_EQ(0, memcmp(input.key.data, inputIdl.key.data(), input.key.size));
+
+    SecCompEnhanceKey invalidInput = CreateEnhanceKey(6, MAX_HMAC_SIZE + 1, 0x66);
+    SecCompEnhanceKeyIdl invalidInputIdl = TestClientConvertSecCompEnhanceKeyToIdl(invalidInput);
+    EXPECT_EQ(invalidInput.epoch, invalidInputIdl.epoch);
+    EXPECT_TRUE(invalidInputIdl.key.empty());
+
+    SecCompEnhanceKey cleared = CreateEnhanceKey(7, MAX_HMAC_SIZE, 0x77);
+    TestClientClearSecCompEnhanceKey(cleared);
+    SecCompEnhanceKey zeroKey = CreateEnhanceKey(0, MAX_HMAC_SIZE, 0);
+    EXPECT_EQ(0u, cleared.epoch);
+    EXPECT_EQ(0u, cleared.key.size);
+    EXPECT_EQ(0, memcmp(cleared.key.data, zeroKey.key.data, MAX_HMAC_SIZE));
+
+    SecCompEnhanceKey output = CreateEnhanceKey(8, MAX_HMAC_SIZE, 0x88);
+    EXPECT_FALSE(TestClientConvertSecCompEnhanceKeyFromIdl(CreateEnhanceKeyIdl(9, 0, 0x99), output));
+    EXPECT_EQ(0u, output.epoch);
+    EXPECT_EQ(0u, output.key.size);
+
+    output = CreateEnhanceKey(10, MAX_HMAC_SIZE, 0xAA);
+    EXPECT_FALSE(TestClientConvertSecCompEnhanceKeyFromIdl(
+        CreateEnhanceKeyIdl(11, MAX_HMAC_SIZE + 1, 0xBB), output));
+    EXPECT_EQ(0u, output.epoch);
+    EXPECT_EQ(0u, output.key.size);
+
+    SecCompEnhanceKeyIdl validInputIdl = CreateEnhanceKeyIdl(12, MAX_HMAC_SIZE, 0xCC);
+    EXPECT_TRUE(TestClientConvertSecCompEnhanceKeyFromIdl(validInputIdl, output));
+    EXPECT_EQ(validInputIdl.epoch, output.epoch);
+    EXPECT_EQ(validInputIdl.key.size(), output.key.size);
+    EXPECT_EQ(0, memcmp(validInputIdl.key.data(), output.key.data, output.key.size));
+}
+#endif
 #endif
 
 /**

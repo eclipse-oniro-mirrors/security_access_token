@@ -93,6 +93,7 @@ static constexpr int32_t INDEX_THREE = 3;
 static constexpr int32_t MAX_PERMISSION_SIZE = 1024;
 static constexpr int32_t API_VERSION_9 = 9;
 static constexpr int32_t RANDOM_TOKENID = 123;
+static constexpr uid_t NON_ROOT_UID = 2000;
 static const std::string DEFAULT_AGENT_ID = "1001";
 static const std::string MANAGE_USER_POLICY = "ohos.permission.MANAGE_USER_POLICY";
 static const std::string MANAGE_EDM_POLICY = "ohos.permission.MANAGE_EDM_POLICY";
