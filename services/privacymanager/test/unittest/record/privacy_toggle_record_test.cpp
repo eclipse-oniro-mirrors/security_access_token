@@ -774,9 +774,21 @@ HWTEST_F(PrivacyToggleRecordTest, SetPermissionUsedRecordToggleStatusWithSubProf
 {
     PrivacyToggleStatusMapGuard toggleGuard(ACCOUNT_OWNER_USER_ID);
     PermissionRecordCacheGuard recordGuard;
-    MockHapToken mock("SetPermissionUsedRecordToggleStatusWithSubProfileId009", { CAMERA_PERMISSION_NAME }, true,
-        ACCOUNT_OWNER_USER_ID);
-    const AccessTokenID tokenId = static_cast<AccessTokenID>(GetSelfTokenID());
+    HapInfoParams hapInfo = {
+        .userID = ACCOUNT_OWNER_USER_ID,
+        .bundleName = "SetPermissionUsedRecordToggleStatusWithSubProfileId009",
+        .instIndex = SUBPROFILE_INDEX_ZERO,
+        .appIDDesc = "privacy_toggle_record_test",
+        .apiVersion = PrivacyTestCommon::DEFAULT_API_VERSION,
+        .isSystemApp = true,
+    };
+    HapPolicyParams hapPolicy = {
+        .apl = APL_NORMAL,
+        .domain = "privacy_toggle_record_test_domain",
+    };
+    AccessTokenIDEx tokenIdEx = PrivacyTestCommon::AllocTestHapToken(hapInfo, hapPolicy);
+    const AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenId);
 
     AddPermParamInfo info;
     info.tokenId = tokenId;
@@ -801,6 +813,7 @@ HWTEST_F(PrivacyToggleRecordTest, SetPermissionUsedRecordToggleStatusWithSubProf
         std::lock_guard<std::mutex> lock(PermissionRecordManager::GetInstance().permUsedRecMutex_);
         EXPECT_TRUE(PermissionRecordManager::GetInstance().permUsedRecList_.empty());
     }
+    EXPECT_EQ(RET_SUCCESS, PrivacyTestCommon::DeleteTestHapToken(tokenId));
     ResetMockOsAccountManagerLite();
 }
 
@@ -869,11 +882,24 @@ HWTEST_F(PrivacyToggleRecordTest, SetPermissionUsedRecordToggleStatusWithSubProf
 HWTEST_F(PrivacyToggleRecordTest, AddPermissionUsedRecordWithSubProfileToggleStatus001, TestSize.Level0)
 {
     PrivacyToggleStatusMapGuard guard(ACCOUNT_OWNER_USER_ID);
-    MockHapToken mock("AddPermissionUsedRecordWithSubProfileToggleStatus001", { CAMERA_PERMISSION_NAME }, true,
-        ACCOUNT_OWNER_USER_ID);
+    HapInfoParams hapInfo = {
+        .userID = ACCOUNT_OWNER_USER_ID,
+        .bundleName = "AddPermissionUsedRecordWithSubProfileToggleStatus001",
+        .instIndex = SUBPROFILE_INDEX_ZERO,
+        .appIDDesc = "privacy_toggle_record_test",
+        .apiVersion = PrivacyTestCommon::DEFAULT_API_VERSION,
+        .isSystemApp = true,
+    };
+    HapPolicyParams hapPolicy = {
+        .apl = APL_NORMAL,
+        .domain = "privacy_toggle_record_test_domain",
+    };
+    AccessTokenIDEx tokenIdEx = PrivacyTestCommon::AllocTestHapToken(hapInfo, hapPolicy);
+    const AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenId);
 
     AddPermParamInfo info;
-    info.tokenId = static_cast<AccessTokenID>(GetSelfTokenID());
+    info.tokenId = tokenId;
     info.permissionName = CAMERA_PERMISSION_NAME;
     info.successCount = 1;
     info.failCount = 0;
@@ -894,6 +920,7 @@ HWTEST_F(PrivacyToggleRecordTest, AddPermissionUsedRecordWithSubProfileToggleSta
             ACCOUNT_OWNER_USER_ID, true, SUBPROFILE_ID_TEN));
     }
     EXPECT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().AddPermissionUsedRecord(info));
+    EXPECT_EQ(RET_SUCCESS, PrivacyTestCommon::DeleteTestHapToken(tokenId));
     ResetMockOsAccountManagerLite();
 }
 
