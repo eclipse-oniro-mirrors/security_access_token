@@ -20,7 +20,7 @@
 #include "accesstoken_common_log.h"
 #include "accesstoken_info_utils.h"
 #ifdef ACCESS_TOKEN_SUPPORT_SUBPROFILE
-#include "errors.h"
+#include "account_error_no.h"
 #include "os_account_manager_lite.h"
 #endif
 #include "hisysevent_adapter.h"
@@ -45,6 +45,10 @@ int32_t ValidateSubProfileIdForToggle(int32_t userID, int32_t subProfileId)
     int32_t localUserId = LEGACY_SUBPROFILE_ID;
     int32_t ret = OHOS::AccountSA::OsAccountManagerLite::GetOsAccountLocalIdForSubProfile(
         subProfileId, localUserId);
+    if (ret == ERR_OS_ACCOUNT_SUBSPACE_NOT_FOUND) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "SubProfile does not exist, subProfileId=%{public}d.", subProfileId);
+        return AccessTokenError::ERR_PERMISSION_REQUEST_TOGGLE_SUBPROFILE_NOT_EXIST;
+    }
     if (ret != ERR_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Get userid failed, err=%{public}d.", ret);
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
@@ -221,7 +225,7 @@ int32_t PermissionRequestToggleManager::FindPermRequestToggleStatusFromDb(
         if ((records.size() > 1) ||
             (records[0].GetInt(TokenFiledConst::FIELD_SUB_PROFILE_ID) != LEGACY_SUBPROFILE_ID)) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Storage mode conflict, subProfile record exists.");
-            return AccessTokenError::ERR_PERMISSION_REQUEST_TOGGLE_STORAGE_MODE_CONFLICT;
+            return AccessTokenError::ERR_PERMISSION_REQUEST_TOGGLE_LEGACY_QUERY_CONFLICT;
         }
         status = static_cast<uint32_t>(records[0].GetInt(TokenFiledConst::FIELD_REQUEST_TOGGLE_STATUS));
         return RET_SUCCESS;

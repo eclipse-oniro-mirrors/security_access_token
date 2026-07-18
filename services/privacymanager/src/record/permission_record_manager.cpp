@@ -55,6 +55,7 @@
 #include "time_util.h"
 #include "tokenid_attributes.h"
 #ifdef ACCESS_TOKEN_SUPPORT_SUBPROFILE
+#include "account_error_no.h"
 #include "os_account_manager_lite.h"
 #endif
 #ifdef REMOTE_PRIVACY_ENABLE
@@ -126,6 +127,10 @@ int32_t ValidateSubProfileIdForToggle(int32_t userID, int32_t subProfileId)
     int32_t localUserId = LEGACY_SUBPROFILE_ID;
     int32_t ret = OHOS::AccountSA::OsAccountManagerLite::GetOsAccountLocalIdForSubProfile(
         subProfileId, localUserId);
+    if (ret == ERR_OS_ACCOUNT_SUBSPACE_NOT_FOUND) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "SubProfile does not exist, subProfileId=%{public}d.", subProfileId);
+        return PrivacyError::ERR_PERMISSION_USED_RECORD_SUBPROFILE_NOT_EXIST;
+    }
     if (ret != ERR_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Get userid failed, subProfileId=%{public}d, err=%{public}d.", subProfileId, ret);
         return PrivacyError::ERR_SERVICE_ABNORMAL;
@@ -1389,7 +1394,7 @@ int32_t PermissionRecordManager::GetPermissionUsedRecordToggleStatus(int32_t use
 #ifdef ACCESS_TOKEN_SUPPORT_SUBPROFILE
     if ((subProfileId < 0) &&
         ValidateUsedRecordToggleStorageModeConflict(permUsedRecToggleStatusMap_, userID, subProfileId)) {
-        return PrivacyError::ERR_PERMISSION_USED_RECORD_STORAGE_MODE_CONFLICT;
+        return PrivacyError::ERR_PERMISSION_USED_RECORD_LEGACY_QUERY_CONFLICT;
     }
 #endif
     status = GetCachedToggleStatus(permUsedRecToggleStatusMap_, userID, subProfileId);

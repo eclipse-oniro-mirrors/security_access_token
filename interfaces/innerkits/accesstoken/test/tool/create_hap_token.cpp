@@ -30,13 +30,17 @@ struct CreateHapTokenOptions final {
     std::vector<std::string> preAuthPerm;
     bool isSystemApp = true;
     int32_t userId = 0;
+    int32_t instIndex = 0;
 };
 
 void PrintCreateHapTokenHelp()
 {
-    std::cout << "Usage: ./CreateHapToken <bundleName> [userId] [--user <userId>] [--system-app <true|false>] "
+    std::cout << "Usage: ./CreateHapToken <bundleName> [userId] [--user <userId>] [--inst-index <index>] "
+        << "[--system-app <true|false>] "
         << "<reqPermission...> [--preauth <permission...>]\n"
-        << "Example: ./CreateHapToken com.example.demo 100 ohos.permission.CAMERA\n"
+        << "Example: ./CreateHapToken com.example.demo --user 100 ohos.permission.CAMERA\n"
+        << "Example: ./CreateHapToken com.example.demo.clone --user 100 --inst-index 1 "
+        << "ohos.permission.CAMERA\n"
         << "Note: --preauth permissions must also appear in req permissions.\n"
         << std::endl;
 }
@@ -115,6 +119,18 @@ bool ParseCreateHapTokenArgs(int argc, char* argv[], CreateHapTokenOptions& opti
             ++i;
             continue;
         }
+        if (arg == "--inst-index") {
+            if ((i + 1) >= argc) {
+                std::cout << "CreateHapToken failed, missing value for --inst-index" << std::endl;
+                return false;
+            }
+            if (!ParseInt32Arg(argv[i + 1], options.instIndex) || options.instIndex < 0) {
+                std::cout << "CreateHapToken failed, invalid --inst-index value: " << argv[i + 1] << std::endl;
+                return false;
+            }
+            ++i;
+            continue;
+        }
         if (!arg.empty() && arg[0] == '-') {
             std::cout << "CreateHapToken failed, unsupported option: " << arg << std::endl;
             return false;
@@ -137,7 +153,8 @@ bool ParseCreateHapTokenArgs(int argc, char* argv[], CreateHapTokenOptions& opti
 int32_t RunCreateHapToken(const CreateHapTokenOptions& options)
 {
     FullTokenID tokenId = GetHapTokenId(
-        options.bundleName, options.reqPerm, options.preAuthPerm, options.isSystemApp, options.userId);
+        options.bundleName, options.reqPerm, options.preAuthPerm, options.isSystemApp, options.userId,
+        options.instIndex);
     if (tokenId == INVALID_TOKENID) {
         std::cout << "CreateHapToken ret=" << RET_FAILED << ", bundleName=" << options.bundleName << std::endl;
         return RET_FAILED;
@@ -145,7 +162,8 @@ int32_t RunCreateHapToken(const CreateHapTokenOptions& options)
     std::cout << "CreateHapToken ret=" << RET_SUCCESS
         << ", tokenId=" << tokenId
         << ", bundleName=" << options.bundleName
-        << ", userId=" << options.userId << std::endl;
+        << ", userId=" << options.userId
+        << ", instIndex=" << options.instIndex << std::endl;
     return RET_SUCCESS;
 }
 }

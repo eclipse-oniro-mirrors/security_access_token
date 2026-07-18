@@ -251,11 +251,11 @@ void PermissionRecordManagerTest::TearDown()
     AccessTokenIDEx tokenIdEx = PrivacyTestCommon::GetHapTokenIdFromBundle(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
     PrivacyTestCommon::DeleteTestHapToken(tokenIdEx.tokenIdExStruct.tokenID);
-    PrivacyKit::RemovePermissionUsedRecords(tokenIdEx.tokenIdExStruct.tokenID);
+    PermissionRecordManager::GetInstance().RemovePermissionUsedRecords(tokenIdEx.tokenIdExStruct.tokenID);
     tokenIdEx = PrivacyTestCommon::GetHapTokenIdFromBundle(g_InfoParms2.userID, g_InfoParms2.bundleName,
         g_InfoParms2.instIndex);
     PrivacyTestCommon::DeleteTestHapToken(tokenIdEx.tokenIdExStruct.tokenID);
-    PrivacyKit::RemovePermissionUsedRecords(tokenIdEx.tokenIdExStruct.tokenID);
+    PermissionRecordManager::GetInstance().RemovePermissionUsedRecords(tokenIdEx.tokenIdExStruct.tokenID);
     appStateObserver_ = nullptr;
 }
 
@@ -1376,13 +1376,13 @@ HWTEST_F(PermissionRecordManagerTest, GetPermissionUsedTypeInfos001, TestSize.Le
     ASSERT_EQ(PrivacyError::ERR_PERMISSION_NOT_EXIST,
         PermissionRecordManager::GetInstance().GetPermissionUsedTypeInfos(tokenId, permissionName, results));
 
-    permissionName = "ohos.permission.CAMERA";
+    permissionName = "ohos.permission.READ_IMAGEVIDEO";
     ASSERT_EQ(0, PermissionRecordManager::GetInstance().GetPermissionUsedTypeInfos(tokenId, permissionName, results));
 }
 
 /*
  * @tc.name: GetPermissionUsedTypeInfos002
- * @tc.desc: PrivacyKit::GetPermissionUsedTypeInfos function test
+ * @tc.desc: GetPermissionUsedTypeInfos function test
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -1406,7 +1406,7 @@ HWTEST_F(PermissionRecordManagerTest, GetPermissionUsedType002, TestSize.Level0)
         info.permissionName = "ohos.permission.READ_MESSAGES";
         info.successCount = 1;
         info.failCount = 0;
-        EXPECT_EQ(RET_SUCCESS, PrivacyKit::AddPermissionUsedRecord(info));
+        EXPECT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().AddPermissionUsedRecord(info));
     }
 
     AccessTokenID tokenId = 0;
@@ -1417,7 +1417,7 @@ HWTEST_F(PermissionRecordManagerTest, GetPermissionUsedType002, TestSize.Level0)
         PermissionRecordManager::GetInstance().GetPermissionUsedTypeInfos(tokenId, permissionName, results));
 
     for (const auto& id : tokenIdList) {
-        EXPECT_EQ(RET_SUCCESS, PrivacyKit::RemovePermissionUsedRecords(id));
+        EXPECT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().RemovePermissionUsedRecords(id));
         EXPECT_EQ(RET_SUCCESS, PrivacyTestCommon::DeleteTestHapToken(id));
     }
 }
@@ -2205,7 +2205,7 @@ HWTEST_F(PermissionRecordManagerTest, AddPermissionUsedRecordTest004, TestSize.L
 
     EXPECT_EQ(RET_SUCCESS,
         PermissionRecordManager::GetInstance().UnRegisterPermActiveStatusCallback(callback->AsObject()));
-    EXPECT_EQ(RET_SUCCESS, PrivacyKit::RemovePermissionUsedRecords(tokenId));
+    EXPECT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().RemovePermissionUsedRecords(tokenId));
     EXPECT_EQ(RET_SUCCESS, PrivacyTestCommon::DeleteTestHapToken(tokenId));
 }
 
@@ -2274,7 +2274,7 @@ HWTEST_F(PermissionRecordManagerTest, AddPermissionUsedRecordTest006, TestSize.L
     info.extra.assign(MAX_PERMISSION_USED_RECORD_EXTRA_LENGTH + 1, 'a');
 
     ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, PermissionRecordManager::GetInstance().AddPermissionUsedRecord(info));
-    ASSERT_EQ(RET_SUCCESS, PrivacyKit::RemovePermissionUsedRecords(info.tokenId));
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().RemovePermissionUsedRecords(info.tokenId));
 }
 
 /**

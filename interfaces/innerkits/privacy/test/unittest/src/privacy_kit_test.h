@@ -52,6 +52,12 @@ public:
     void CheckPermissionUsedResult(const PermissionUsedRequest& request, const PermissionUsedResult& result,
         int32_t permRecordSize, int32_t totalSuccessCount, int32_t totalFailCount);
     int32_t SetDisablePolicy(const std::string& permissionName, bool isDisable);
+    int32_t EnablePermissionUsedRecordToggleStatus(int32_t subProfileId = -1);
+
+private:
+    bool isPermissionUsedRecordToggleStatusSaved_ = false;
+    bool permissionUsedRecordToggleStatus_ = true;
+    int32_t permissionUsedRecordToggleStatusSubProfileId_ = -1;
 };
 } // namespace AccessToken
 } // namespace Security

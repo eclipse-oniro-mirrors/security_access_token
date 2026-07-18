@@ -23,6 +23,7 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
+constexpr int32_t DEFAULT_USER_ID = 100;
 std::mutex g_lockSetToken;
 uint64_t g_shellTokenId = 0;
 }
@@ -150,7 +151,7 @@ MockNativeToken::~MockNativeToken()
 
 MockHapToken::MockHapToken(
     const std::string& bundle, const std::vector<std::string>& reqPerm, bool isSystemApp)
-    : MockHapToken(bundle, reqPerm, isSystemApp, 0)
+    : MockHapToken(bundle, reqPerm, isSystemApp, DEFAULT_USER_ID)
 {}
 
 MockHapToken::MockHapToken(

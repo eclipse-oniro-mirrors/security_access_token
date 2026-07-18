@@ -3742,7 +3742,7 @@ HWTEST_F(AccessTokenManagerServiceTest, PolicyWhiteListServiceTest001, TestSize.
     EXPECT_EQ(ERR_PARAM_INVALID,
         atManagerService_->UpdatePolicyWhiteList(tokenId, UINT32_MAX, static_cast<int32_t>(ADD)));
 
-    AccessTokenID nativeTokenId = AccessTokenKit::GetNativeTokenId("foundation");
+    AccessTokenID nativeTokenId = AccessTokenInfoManager::GetInstance().GetNativeTokenId("foundation");
     EXPECT_EQ(ERR_PARAM_INVALID,
         atManagerService_->UpdatePolicyWhiteList(nativeTokenId, permCode, static_cast<int32_t>(ADD)));
 

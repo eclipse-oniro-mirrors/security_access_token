@@ -47,6 +47,7 @@ int32_t GetJsErrorCode(int32_t errCode)
             break;
         case ERR_INTERFACE_NOT_USED_TOGETHER:
         case ERR_CALLBACK_ALREADY_EXIST:
+        case ERR_PERMISSION_REQUEST_TOGGLE_LEGACY_QUERY_CONFLICT:
             jsCode = JS_ERROR_NOT_USE_TOGETHER;
             break;
         case ERR_CALLBACKS_EXCEED_LIMITATION:

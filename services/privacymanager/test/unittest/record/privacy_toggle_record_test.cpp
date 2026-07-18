@@ -18,6 +18,7 @@
 #include <map>
 #include <mutex>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 #define private public
@@ -25,13 +26,14 @@
 #undef private
 
 #include "constant.h"
+#include "accesstoken_kit.h"
 #include "permission_used_record_db.h"
 #include "privacy_error.h"
 #include "privacy_field_const.h"
 #include "privacy_test_common.h"
 #include "time_util.h"
 #ifdef ACCESS_TOKEN_SUPPORT_SUBPROFILE
-#include "errors.h"
+#include "account_error_no.h"
 #include "os_account_manager_lite.h"
 #endif
 #ifdef REMOTE_PRIVACY_ENABLE
@@ -54,6 +56,21 @@ constexpr const char* CAMERA_PERMISSION_NAME = "ohos.permission.CAMERA";
 constexpr const char* MICROPHONE_PERMISSION_NAME = "ohos.permission.MICROPHONE";
 static AccessTokenID g_selfTokenId = 0;
 static MockNativeToken* g_mock = nullptr;
+static constexpr int32_t HEADLESS_SUBPROFILE_ID = 100000;
+static constexpr int32_t DEFAULT_SUBPROFILE_ID = 100001;
+#ifdef ACCESS_TOKEN_SUPPORT_SUBPROFILE
+static constexpr int32_t ACCOUNT_OWNER_USER_ID = 100;
+static constexpr int32_t TEST_USER_ID_11 = 11;
+static constexpr int32_t TEST_USER_ID_12 = 12;
+static constexpr int32_t TEST_USER_ID_14 = 14;
+static constexpr int32_t TEST_USER_ID_15 = 15;
+static constexpr int32_t TEST_USER_ID_100 = 100;
+static constexpr int32_t INVALID_NEGATIVE_SUBPROFILE_ID = -2;
+static constexpr int32_t SUBPROFILE_ID_TEN = 10;
+static constexpr int32_t SUBPROFILE_ID_ELEVEN = 11;
+static constexpr int32_t SUBPROFILE_INDEX_ZERO = 0;
+static constexpr int32_t REMOTE_RECORD_QUERY_LIMIT = 100;
+#endif
 
 class PrivacyToggleStatusMapGuard final {
 public:
@@ -185,6 +202,9 @@ void PrivacyToggleRecordTest::TearDownTestCase()
 
 void PrivacyToggleRecordTest::SetUp()
 {
+#ifdef ACCESS_TOKEN_SUPPORT_SUBPROFILE
+    SetMockOsAccountLocalIdForSubProfile(ACCOUNT_OWNER_USER_ID, ERR_OK);
+#endif
     PermissionRecordManager::GetInstance().Init();
     PermissionRecordManager::GetInstance().Register();
 }
@@ -315,18 +335,6 @@ HWTEST_F(PrivacyToggleRecordTest, UpdatePermUsedRecToggleStatusMap001, TestSize.
 }
 
 #ifdef ACCESS_TOKEN_SUPPORT_SUBPROFILE
-static constexpr int32_t ACCOUNT_OWNER_USER_ID = 0;
-static constexpr int32_t TEST_USER_ID_11 = 11;
-static constexpr int32_t TEST_USER_ID_12 = 12;
-static constexpr int32_t TEST_USER_ID_14 = 14;
-static constexpr int32_t TEST_USER_ID_15 = 15;
-static constexpr int32_t TEST_USER_ID_100 = 100;
-static constexpr int32_t INVALID_NEGATIVE_SUBPROFILE_ID = -2;
-static constexpr int32_t SUBPROFILE_ID_TEN = 10;
-static constexpr int32_t SUBPROFILE_ID_ELEVEN = 11;
-static constexpr int32_t SUBPROFILE_INDEX_ZERO = 0;
-static constexpr int32_t REMOTE_RECORD_QUERY_LIMIT = 100;
-
 class PermissionRecordCacheGuard final {
 public:
     PermissionRecordCacheGuard()
@@ -583,7 +591,7 @@ HWTEST_F(PrivacyToggleRecordTest, SetPermissionUsedRecordToggleStatusWithSubProf
 
 /*
  * @tc.name: SetPermissionUsedRecordToggleStatusWithSubProfileId004
- * @tc.desc: PermissionRecordManager returns service abnormal when account query fails.
+ * @tc.desc: PermissionRecordManager maps account errors for subProfile toggle APIs.
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -597,6 +605,14 @@ HWTEST_F(PrivacyToggleRecordTest, SetPermissionUsedRecordToggleStatusWithSubProf
         PermissionRecordManager::GetInstance().SetPermissionUsedRecordToggleStatus(
             ACCOUNT_OWNER_USER_ID, false, SUBPROFILE_ID_TEN));
     EXPECT_EQ(PrivacyError::ERR_SERVICE_ABNORMAL,
+        PermissionRecordManager::GetInstance().GetPermissionUsedRecordToggleStatus(
+            ACCOUNT_OWNER_USER_ID, status, SUBPROFILE_ID_TEN));
+
+    SetMockOsAccountLocalIdForSubProfile(ACCOUNT_OWNER_USER_ID, ERR_OS_ACCOUNT_SUBSPACE_NOT_FOUND);
+    EXPECT_EQ(PrivacyError::ERR_PERMISSION_USED_RECORD_SUBPROFILE_NOT_EXIST,
+        PermissionRecordManager::GetInstance().SetPermissionUsedRecordToggleStatus(
+            ACCOUNT_OWNER_USER_ID, false, SUBPROFILE_ID_TEN));
+    EXPECT_EQ(PrivacyError::ERR_PERMISSION_USED_RECORD_SUBPROFILE_NOT_EXIST,
         PermissionRecordManager::GetInstance().GetPermissionUsedRecordToggleStatus(
             ACCOUNT_OWNER_USER_ID, status, SUBPROFILE_ID_TEN));
     ResetMockOsAccountManagerLite();
@@ -644,7 +660,7 @@ HWTEST_F(PrivacyToggleRecordTest, SetPermissionUsedRecordToggleStatusWithSubProf
     EXPECT_EQ(PrivacyError::ERR_PERMISSION_USED_RECORD_STORAGE_MODE_CONFLICT,
         PermissionRecordManager::GetInstance().SetPermissionUsedRecordToggleStatus(
             ACCOUNT_OWNER_USER_ID, true, LEGACY_SUBPROFILE_ID));
-    EXPECT_EQ(PrivacyError::ERR_PERMISSION_USED_RECORD_STORAGE_MODE_CONFLICT,
+    EXPECT_EQ(PrivacyError::ERR_PERMISSION_USED_RECORD_LEGACY_QUERY_CONFLICT,
         PermissionRecordManager::GetInstance().GetPermissionUsedRecordToggleStatus(
             ACCOUNT_OWNER_USER_ID, status, LEGACY_SUBPROFILE_ID));
 
@@ -790,24 +806,46 @@ HWTEST_F(PrivacyToggleRecordTest, SetPermissionUsedRecordToggleStatusWithSubProf
     const AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
     ASSERT_NE(INVALID_TOKENID, tokenId);
 
+    MockNativeToken nativeMock("privacy_service");
+    std::unordered_set<AccessTokenID> tokenIdList;
+    int32_t subProfileId = HEADLESS_SUBPROFILE_ID;
+    GTEST_LOG_(INFO) << "Use tokenId=" << tokenId << ", subProfileId=" << subProfileId;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetTokenIDByUserID(
+        ACCOUNT_OWNER_USER_ID, tokenIdList, subProfileId));
+    GTEST_LOG_(INFO) << "GetTokenIDByUserID, subProfileId=" << subProfileId
+        << ", tokenIdListSize=" << tokenIdList.size();
+    if (tokenIdList.find(tokenId) == tokenIdList.end()) {
+        tokenIdList.clear();
+        subProfileId = DEFAULT_SUBPROFILE_ID;
+        ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetTokenIDByUserID(
+            ACCOUNT_OWNER_USER_ID, tokenIdList, subProfileId));
+        GTEST_LOG_(INFO) << "GetTokenIDByUserID, subProfileId=" << subProfileId
+            << ", tokenIdListSize=" << tokenIdList.size();
+    }
+    ASSERT_NE(tokenIdList.end(), tokenIdList.find(tokenId));
+
     AddPermParamInfo info;
     info.tokenId = tokenId;
     info.permissionName = CAMERA_PERMISSION_NAME;
     info.successCount = 1;
     info.failCount = 0;
 
-    SetMockOsAccountSubProfileId(SUBPROFILE_ID_TEN, ERR_OK);
+    SetMockOsAccountSubProfileId(subProfileId, ERR_OK);
     ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().AddPermissionUsedRecord(info));
     {
         std::lock_guard<std::mutex> lock(PermissionRecordManager::GetInstance().permUsedRecMutex_);
         ASSERT_FALSE(PermissionRecordManager::GetInstance().permUsedRecList_.empty());
     }
 
-    MockNativeToken nativeMock("privacy_service");
     SetMockOsAccountLocalIdForSubProfile(ACCOUNT_OWNER_USER_ID, ERR_OK);
     SetMockOsAccountSubProfileIndex(SUBPROFILE_INDEX_ZERO, ERR_OK);
     EXPECT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().SetPermissionUsedRecordToggleStatus(
-        ACCOUNT_OWNER_USER_ID, false, SUBPROFILE_ID_TEN));
+        ACCOUNT_OWNER_USER_ID, false, subProfileId));
+
+    PermissionUsedRequest request = {.tokenId = tokenId, .flag = FLAG_PERMISSION_USAGE_DETAIL};
+    PermissionUsedResult result;
+    EXPECT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().GetPermissionUsedRecords(request, result));
+    EXPECT_TRUE(result.bundleRecords.empty());
 
     {
         std::lock_guard<std::mutex> lock(PermissionRecordManager::GetInstance().permUsedRecMutex_);
@@ -926,6 +964,37 @@ HWTEST_F(PrivacyToggleRecordTest, AddPermissionUsedRecordWithSubProfileToggleSta
 
 #ifdef REMOTE_PRIVACY_ENABLE
 /*
+ * @tc.name: AddRemotePermissionUsedRecordWithLegacyToggleStatus001
+ * @tc.desc: AddRemotePermissionUsedRecord falls back to the legacy toggle without a subProfile toggle status.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyToggleRecordTest, AddRemotePermissionUsedRecordWithLegacyToggleStatus001, TestSize.Level0)
+{
+    PrivacyToggleStatusMapGuard toggleGuard(TEST_USER_ID_100);
+    RemotePermissionRecordGuard remoteGuard(TEST_USER_ID_100);
+
+    RemoteAddPermParamInfo info;
+    info.deviceId = "remoteLegacyId";
+    info.deviceName = "remoteLegacyName";
+    info.permissionName = CAMERA_PERMISSION_NAME;
+    info.successCount = 1;
+    info.failCount = 0;
+
+    SetMockForegroundOsAccountLocalId(TEST_USER_ID_100, ERR_OK);
+    SetMockOsAccountForegroundSubProfileId(SUBPROFILE_ID_TEN, ERR_OK);
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().SetPermissionUsedRecordToggleStatus(
+        TEST_USER_ID_100, false, LEGACY_SUBPROFILE_ID));
+    EXPECT_EQ(PrivacyError::ERR_PRIVACY_TOGGELE_RESTRICTED,
+        PermissionRecordManager::GetInstance().AddRemotePermissionUsedRecord(info));
+
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().SetPermissionUsedRecordToggleStatus(
+        TEST_USER_ID_100, true, LEGACY_SUBPROFILE_ID));
+    EXPECT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().AddRemotePermissionUsedRecord(info));
+    ResetMockOsAccountManagerLite();
+}
+
+/*
  * @tc.name: AddRemotePermissionUsedRecordWithSubProfileToggleStatus001
  * @tc.desc: AddRemotePermissionUsedRecord respects foreground subProfile toggle status.
  * @tc.type: FUNC
@@ -949,6 +1018,14 @@ HWTEST_F(PrivacyToggleRecordTest, AddRemotePermissionUsedRecordWithSubProfileTog
         TEST_USER_ID_100, SUBPROFILE_ID_TEN, false));
     EXPECT_EQ(PrivacyError::ERR_PRIVACY_TOGGELE_RESTRICTED,
         PermissionRecordManager::GetInstance().AddRemotePermissionUsedRecord(info));
+
+    PermissionUsedRequest request;
+    request.isRemote = true;
+    request.flag = FLAG_PERMISSION_USAGE_DETAIL;
+    PermissionUsedResult result;
+    EXPECT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().GetRemotePermissionUsedRecords(
+        request, TEST_USER_ID_100, result));
+    EXPECT_TRUE(result.bundleRecords.empty());
 
     ASSERT_TRUE(PermissionRecordManager::GetInstance().UpdatePermUsedRecToggleStatusMap(
         TEST_USER_ID_100, SUBPROFILE_ID_TEN, true));

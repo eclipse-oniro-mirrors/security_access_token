@@ -126,6 +126,62 @@ ohos_executable("QueryPermissionStatus") {
   part_name = "access_token"
 }
 
+ohos_executable("PermissionRequestToggleStatus") {
+  subsystem_name = "security"
+  part_name = "access_token"
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+  branch_protector_ret = "pac_ret"
+  sources = [
+    "permission_request_toggle_status.cpp",
+    "test_common.cpp",
+  ]
+
+  include_dirs = [
+    "${access_token_path}/interfaces/innerkits/nativetoken/include",
+    "${access_token_path}/interfaces/innerkits/token_setproc/include",
+  ]
+
+  deps = [
+    "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
+    "${access_token_path}/interfaces/innerkits/nativetoken:libnativetoken",
+    "${access_token_path}/interfaces/innerkits/token_setproc:libtoken_setproc",
+  ]
+}
+
+ohos_executable("QuerySubProfileInfo") {
+  subsystem_name = "security"
+  part_name = "access_token"
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+  branch_protector_ret = "pac_ret"
+  sources = [
+    "query_subprofile_info.cpp",
+    "test_common.cpp",
+  ]
+
+  include_dirs = [
+    "${access_token_path}/interfaces/innerkits/nativetoken/include",
+    "${access_token_path}/interfaces/innerkits/token_setproc/include",
+  ]
+
+  deps = [
+    "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
+    "${access_token_path}/interfaces/innerkits/nativetoken:libnativetoken",
+    "${access_token_path}/interfaces/innerkits/token_setproc:libtoken_setproc",
+  ]
+
+  external_deps = [
+    "os_account:os_account_innerkits_lite",
+  ]
+}
+
 ohos_executable("RevokePermission") {
   subsystem_name = "security"
   part_name = "access_token"
@@ -495,8 +551,10 @@ group("accesstoken_tool") {
     ":GetPolicyWhiteList",
     ":GrantPermission",
     ":GrantShortTermWriteImageVideo",
+    ":PermissionRequestToggleStatus",
     ":Publish",
     ":QueryPermissionStatus",
+    ":QuerySubProfileInfo",
     ":Relabel",
     ":RevokePermission",
     ":SetPermDialogCap",
