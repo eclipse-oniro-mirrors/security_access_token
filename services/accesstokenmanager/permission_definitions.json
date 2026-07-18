@@ -312,7 +312,7 @@
             "deviceTypes": ["car"]
         },
         {
-            "name": "ohos.permission.vehicel.CONTROL_HVAC",
+            "name": "ohos.permission.vehicle.CONTROL_HVAC",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
@@ -334,7 +334,7 @@
             "deviceTypes": ["car"]
         },
         {
-            "name": "ohos.permission.vehicel.CONTROL_FRIDGE",
+            "name": "ohos.permission.vehicle.CONTROL_FRIDGE",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
@@ -356,7 +356,7 @@
             "deviceTypes": ["car"]
         },
         {
-            "name": "ohos.permission.vehicel.CONTROL_SEAT",
+            "name": "ohos.permission.vehicle.CONTROL_SEAT",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
@@ -378,7 +378,7 @@
             "deviceTypes": ["car"]
         },
         {
-            "name": "ohos.permission.vehicel.CONTROL_DOOR",
+            "name": "ohos.permission.vehicle.CONTROL_DOOR",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
@@ -400,7 +400,7 @@
             "deviceTypes": ["car"]
         },
         {
-            "name": "ohos.permission.vehicel.CONTROL_LOCK",
+            "name": "ohos.permission.vehicle.CONTROL_LOCK",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
@@ -422,7 +422,7 @@
             "deviceTypes": ["car"]
         },
         {
-            "name": "ohos.permission.vehicel.CONTROL_WINDOW",
+            "name": "ohos.permission.vehicle.CONTROL_WINDOW",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
@@ -444,7 +444,7 @@
             "deviceTypes": ["car"]
         },
         {
-            "name": "ohos.permission.vehicel.CONTROL_SUNROOF",
+            "name": "ohos.permission.vehicle.CONTROL_SUNROOF",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
@@ -455,7 +455,7 @@
             "deviceTypes": ["car"]
         },
         {
-            "name": "ohos.permission.vehicel.CONTROL_STEERINGWHEEL",
+            "name": "ohos.permission.vehicle.CONTROL_STEERINGWHEEL",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
@@ -477,7 +477,7 @@
             "deviceTypes": ["car"]
         },
         {
-            "name": "ohos.permission.vehicel.CONTROL_ENERGY_PORT_COVER",
+            "name": "ohos.permission.vehicle.CONTROL_ENERGY_PORT_COVER",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
@@ -499,7 +499,7 @@
             "deviceTypes": ["car"]
         },
         {
-            "name": "ohos.permission.vehicel.CONTROL_EXTERIOR_LIGHT",
+            "name": "ohos.permission.vehicle.CONTROL_EXTERIOR_LIGHT",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
@@ -521,7 +521,7 @@
             "deviceTypes": ["car"]
         },
         {
-            "name": "ohos.permission.vehicel.CONTROL_INTERIOR_CAMERA",
+            "name": "ohos.permission.vehicle.CONTROL_INTERIOR_CAMERA",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
@@ -543,7 +543,7 @@
             "deviceTypes": ["car"]
         },
         {
-            "name": "ohos.permission.vehicel.CONTROL_EXTERIOR_CAMERA",
+            "name": "ohos.permission.vehicle.CONTROL_EXTERIOR_CAMERA",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
@@ -565,7 +565,7 @@
             "deviceTypes": ["car"]
         },
         {
-            "name": "ohos.permission.vehicel.CONTROL_INTERIOR_SPEAKER",
+            "name": "ohos.permission.vehicle.CONTROL_INTERIOR_SPEAKER",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
@@ -587,7 +587,7 @@
             "deviceTypes": ["car"]
         },
         {
-            "name": "ohos.permission.vehicel.CONTROL_EXTERIOR_SPEAKER",
+            "name": "ohos.permission.vehicle.CONTROL_EXTERIOR_SPEAKER",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
@@ -609,7 +609,7 @@
             "deviceTypes": ["car"]
         },
         {
-            "name": "ohos.permission.vehicel.CONTROL_WIPER",
+            "name": "ohos.permission.vehicle.CONTROL_WIPER",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
@@ -631,7 +631,7 @@
             "deviceTypes": ["car"]
         },
         {
-            "name": "ohos.permission.vehicel.CONTROL_MIRROR",
+            "name": "ohos.permission.vehicle.CONTROL_MIRROR",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
@@ -653,7 +653,7 @@
             "deviceTypes": ["car"]
         },
         {
-            "name": "ohos.permission.vehicel.CONTROL_HORN",
+            "name": "ohos.permission.vehicle.CONTROL_HORN",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
@@ -675,7 +675,7 @@
             "deviceTypes": ["car"]
         },
         {
-            "name": "ohos.permission.vehicel.CONTROL_CHB",
+            "name": "ohos.permission.vehicle.CONTROL_CHB",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
@@ -697,7 +697,7 @@
             "deviceTypes": ["car"]
         },
         {
-            "name": "ohos.permission.vehicel.CONTROL_CODEBOX",
+            "name": "ohos.permission.vehicle.CONTROL_CODEBOX",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
@@ -719,7 +719,7 @@
             "deviceTypes": ["car"]
         },
         {
-            "name": "ohos.permission.vehicel.CONTROL_STANDEMBLEM",
+            "name": "ohos.permission.vehicle.CONTROL_STANDEMBLEM",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
@@ -741,7 +741,7 @@
             "deviceTypes": ["car"]
         },
         {
-            "name": "ohos.permission.vehicel.CONTROL_GRILLE",
+            "name": "ohos.permission.vehicle.CONTROL_GRILLE",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
@@ -763,7 +763,7 @@
             "deviceTypes": ["car"]
         },
         {
-            "name": "ohos.permission.vehicel.CONTROL_WIRELESSCHARGER",
+            "name": "ohos.permission.vehicle.CONTROL_WIRELESSCHARGER",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
@@ -785,7 +785,7 @@
             "deviceTypes": ["car"]
         },
         {
-            "name": "ohos.permission.vehicel.CONTROL_PROJECTORSCREEN",
+            "name": "ohos.permission.vehicle.CONTROL_PROJECTORSCREEN",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
@@ -796,7 +796,7 @@
             "deviceTypes": ["car"]
         },
         {
-            "name": "ohos.permission.vehicel.CONTROL_DRIVE_INFORMATION",
+            "name": "ohos.permission.vehicle.CONTROL_DRIVE_INFORMATION",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
@@ -818,7 +818,7 @@
             "deviceTypes": ["car"]
         },
         {
-            "name": "ohos.permission.vehicel.CONTROL_BODY_SENSOR",
+            "name": "ohos.permission.vehicle.CONTROL_BODY_SENSOR",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
@@ -840,7 +840,7 @@
             "deviceTypes": ["car"]
         },
         {
-            "name": "ohos.permission.vehicel.CONTROL_VSC_SYSTEM",
+            "name": "ohos.permission.vehicle.CONTROL_VSC_SYSTEM",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
@@ -862,7 +862,7 @@
             "deviceTypes": ["car"]
         },
         {
-            "name": "ohos.permission.vehicel.CONTROL_CHG_DISCHG",
+            "name": "ohos.permission.vehicle.CONTROL_CHG_DISCHG",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
@@ -884,7 +884,7 @@
             "deviceTypes": ["car"]
         },
         {
-            "name": "ohos.permission.vehicel.CONTROL_EPB",
+            "name": "ohos.permission.vehicle.CONTROL_EPB",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
@@ -906,7 +906,7 @@
             "deviceTypes": ["car"]
         },
         {
-            "name": "ohos.permission.vehicel.CONTROL_PBS",
+            "name": "ohos.permission.vehicle.CONTROL_PBS",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
@@ -928,7 +928,7 @@
             "deviceTypes": ["car"]
         },
         {
-            "name": "ohos.permission.vehicel.CONTROL_TIRE_SYSTEM",
+            "name": "ohos.permission.vehicle.CONTROL_TIRE_SYSTEM",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
@@ -950,7 +950,7 @@
             "deviceTypes": ["car"]
         },
         {
-            "name": "ohos.permission.vehicel.CONTROL_TOW_SYSTEM",
+            "name": "ohos.permission.vehicle.CONTROL_TOW_SYSTEM",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
@@ -972,7 +972,7 @@
             "deviceTypes": ["car"]
         },
         {
-            "name": "ohos.permission.vehicel.CONTROL_SUSPENSION_SYSTEM",
+            "name": "ohos.permission.vehicle.CONTROL_SUSPENSION_SYSTEM",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
@@ -983,7 +983,7 @@
             "deviceTypes": ["car"]
         },
         {
-            "name": "ohos.permission.vehicel.CONTROL_ACCELERATOR_PEDAL",
+            "name": "ohos.permission.vehicle.CONTROL_ACCELERATOR_PEDAL",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
@@ -994,7 +994,7 @@
             "deviceTypes": ["car"]
         },
         {
-            "name": "ohos.permission.vehicel.CONTROL_BRAKE_PEDAL",
+            "name": "ohos.permission.vehicle.CONTROL_BRAKE_PEDAL",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
@@ -1016,7 +1016,7 @@
             "deviceTypes": ["car"]
         },
         {
-            "name": "ohos.permission.vehicel.CONTROL_CAR_MODE",
+            "name": "ohos.permission.vehicle.CONTROL_CAR_MODE",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
@@ -1038,7 +1038,7 @@
             "deviceTypes": ["car"]
         },
         {
-            "name": "ohos.permission.vehicel.CONTROL_DRIVING_MODE",
+            "name": "ohos.permission.vehicle.CONTROL_DRIVING_MODE",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
@@ -1060,7 +1060,7 @@
             "deviceTypes": ["car"]
         },
         {
-            "name": "ohos.permission.vehicel.CONTROL_INTERIOR_HEATING_MODULE",
+            "name": "ohos.permission.vehicle.CONTROL_INTERIOR_HEATING_MODULE",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
@@ -1082,7 +1082,7 @@
             "deviceTypes": ["car"]
         },
         {
-            "name": "ohos.permission.vehicel.CONTROL_SPECIAL_MOBILITY_MODE",
+            "name": "ohos.permission.vehicle.CONTROL_SPECIAL_MOBILITY_MODE",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
@@ -1104,7 +1104,7 @@
             "deviceTypes": ["car"]
         },
         {
-            "name": "ohos.permission.vehicel.CONTROL_BUTTON_LEVER",
+            "name": "ohos.permission.vehicle.CONTROL_BUTTON_LEVER",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
@@ -1126,7 +1126,7 @@
             "deviceTypes": ["car"]
         },
         {
-            "name": "ohos.permission.vehicel.CONTROL_WHC",
+            "name": "ohos.permission.vehicle.CONTROL_WHC",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
@@ -1148,7 +1148,7 @@
             "deviceTypes": ["car"]
         },
         {
-            "name": "ohos.permission.vehicel.CONTROL_PRIVACYCURTAIN",
+            "name": "ohos.permission.vehicle.CONTROL_PRIVACYCURTAIN",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
@@ -1170,7 +1170,7 @@
             "deviceTypes": ["car"]
         },
         {
-            "name": "ohos.permission.vehicel.CONTROL_POWER_MANAGEMENT",
+            "name": "ohos.permission.vehicle.CONTROL_POWER_MANAGEMENT",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
@@ -1192,7 +1192,7 @@
             "deviceTypes": ["car"]
         },
         {
-            "name": "ohos.permission.vehicel.CONTROL_SMARTKEY",
+            "name": "ohos.permission.vehicle.CONTROL_SMARTKEY",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
@@ -1214,7 +1214,7 @@
             "deviceTypes": ["car"]
         },
         {
-            "name": "ohos.permission.vehicel.CONTROL_ETC",
+            "name": "ohos.permission.vehicle.CONTROL_ETC",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
@@ -1236,7 +1236,7 @@
             "deviceTypes": ["car"]
         },
         {
-            "name": "ohos.permission.vehicel.CONTROL_HUD",
+            "name": "ohos.permission.vehicle.CONTROL_HUD",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
@@ -1258,7 +1258,7 @@
             "deviceTypes": ["car"]
         },
         {
-            "name": "ohos.permission.vehicel.CONTROL_NAVIGATION",
+            "name": "ohos.permission.vehicle.CONTROL_NAVIGATION",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
@@ -1280,7 +1280,7 @@
             "deviceTypes": ["car"]
         },
         {
-            "name": "ohos.permission.vehicel.CONTROL_OXYGEN_CONCENTRATOR",
+            "name": "ohos.permission.vehicle.CONTROL_OXYGEN_CONCENTRATOR",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
@@ -1302,7 +1302,7 @@
             "deviceTypes": ["car"]
         },
         {
-            "name": "ohos.permission.vehicel.CONTROL_ELECTRIC_SEAT_BELT",
+            "name": "ohos.permission.vehicle.CONTROL_ELECTRIC_SEAT_BELT",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
@@ -1324,7 +1324,7 @@
             "deviceTypes": ["car"]
         },
         {
-            "name": "ohos.permission.vehicel.CONTROL_FRONT_REAR_TRUNK",
+            "name": "ohos.permission.vehicle.CONTROL_FRONT_REAR_TRUNK",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
@@ -1346,7 +1346,7 @@
             "deviceTypes": ["car"]
         },
         {
-            "name": "ohos.permission.vehicel.CONTROL_RANGE_EXTENDER",
+            "name": "ohos.permission.vehicle.CONTROL_RANGE_EXTENDER",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
@@ -1368,7 +1368,7 @@
             "deviceTypes": ["car"]
         },
         {
-            "name": "ohos.permission.vehicel.CONTROL_DIFFERENTIAL_LOCK",
+            "name": "ohos.permission.vehicle.CONTROL_DIFFERENTIAL_LOCK",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
@@ -1390,7 +1390,7 @@
             "deviceTypes": ["car"]
         },
         {
-            "name": "ohos.permission.vehicel.CONTROL_ARMREST_SCREEN",
+            "name": "ohos.permission.vehicle.CONTROL_ARMREST_SCREEN",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
@@ -1412,7 +1412,7 @@
             "deviceTypes": ["car"]
         },
         {
-            "name": "ohos.permission.vehicel.CONTROL_ARMREST_BOX",
+            "name": "ohos.permission.vehicle.CONTROL_ARMREST_BOX",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
@@ -1434,7 +1434,7 @@
             "deviceTypes": ["car"]
         },
         {
-            "name": "ohos.permission.vehicel.CONTROL_ELECTRIC_REAR_SPOILER",
+            "name": "ohos.permission.vehicle.CONTROL_ELECTRIC_REAR_SPOILER",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
@@ -1456,7 +1456,7 @@
             "deviceTypes": ["car"]
         },
         {
-            "name": "ohos.permission.vehicel.CONTROL_ELECTRIC_PEDAL",
+            "name": "ohos.permission.vehicle.CONTROL_ELECTRIC_PEDAL",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
@@ -1478,7 +1478,7 @@
             "deviceTypes": ["car"]
         },
         {
-            "name": "ohos.permission.vehicel.CONTROL_ELECTRIC_DRIVE_SYSTEM",
+            "name": "ohos.permission.vehicle.CONTROL_ELECTRIC_DRIVE_SYSTEM",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
@@ -1500,7 +1500,7 @@
             "deviceTypes": ["car"]
         },
         {
-            "name": "ohos.permission.vehicel.CONTROL_SPACE_PARTITIONING",
+            "name": "ohos.permission.vehicle.CONTROL_SPACE_PARTITIONING",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
@@ -1522,7 +1522,7 @@
             "deviceTypes": ["car"]
         },
         {
-            "name": "ohos.permission.vehicel.CONTROL_USB",
+            "name": "ohos.permission.vehicle.CONTROL_USB",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
