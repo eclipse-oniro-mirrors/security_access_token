@@ -10016,7 +10016,7 @@
             "deviceTypes": ["car"]
         },
         {
-            "name": "ohos.permission.vehicel.CONTROL_INTERIOR_LIGHT",
+            "name": "ohos.permission.vehicle.CONTROL_INTERIOR_LIGHT",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "NORMAL",
