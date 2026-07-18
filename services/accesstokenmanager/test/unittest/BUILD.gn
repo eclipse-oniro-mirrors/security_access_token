@@ -149,9 +149,61 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
   external_deps += account_mock_base_external_deps
 }
 
+ohos_unittest("libaccesstoken_manager_bin_mock_test") {
+  subsystem_name = "accesscontrol"
+  module_out_path = module_output_path_unittest_accesstoken
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+    blocklist = "${access_token_path}/cfi_blocklist.txt"
+  }
+  branch_protector_ret = "pac_ret"
+
+  include_dirs = accesstoken_manager_base_config.include_dirs
+  include_dirs += [
+    "${access_token_path}/services/accesstokenmanager/test/unittest/permission",
+    "${access_token_path}/services/accesstokenmanager/test/unittest/common",
+  ]
+
+  sources = [
+    "common/fake_parent_hap_tokenid.cpp",
+    "common/parameter.cpp",
+    "permission/token_info_manager_bin_mock_test.cpp",
+  ]
+
+  sources += accesstoken_manager_base_config.sources
+
+  cflags_cc = accesstoken_manager_base_config.cflags_cc
+  cflags_cc += [ "-DATM_TEST_ENABLE" ]
+
+  configs = accesstoken_manager_base_config.configs
+
+  deps = [
+    "${access_token_path}/frameworks/accesstoken:accesstoken_communication_adapter_cxx",
+    "${access_token_path}/frameworks/common:accesstoken_common_cxx",
+    "${access_token_path}/frameworks/common:accesstoken_permission_map_static",
+    "${access_token_path}/frameworks/json_adapter:accesstoken_cjson_utils",
+    "${access_token_path}/interfaces/innerkits/token_setproc:libpermsetproc_shared",
+    "${access_token_path}/services/accesstokenmanager:access_token.rc",
+    "${access_token_path}/services/accesstokenmanager:permission_definition_config",
+    "${access_token_path}/services/accesstokenmanager/etc:param_files",
+    "${access_token_path}/services/accesstokenmanager/idl:access_token_manager_stub",
+    "${access_token_path}/services/common:accesstoken_service_common",
+    "${access_token_path}/services/common/proxy_death:proxy_death_handler",
+  ]
+
+  external_deps = [
+    "googletest:gmock",
+    "googletest:gtest_main",
+  ]
+  external_deps += accesstoken_manager_base_config.external_deps
+}
+
 group("functional_tests") {
   testonly = true
   deps = [
+    ":libaccesstoken_manager_bin_mock_test",
     ":libaccesstoken_manager_service_standard_test",
     ":libpermission_monitor_test",
   ]

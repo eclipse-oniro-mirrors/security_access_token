@@ -72,6 +72,11 @@ struct CliCommandPermissionResult final {
     std::vector<CliPermissionDetail> requiredCliPermissions;
 };
 
+struct CliPermissionQueryResult final {
+    int32_t result = RET_FAILED;
+    std::vector<std::string> usedPermissions;
+};
+
 struct CliPermissionsResult final {
     std::vector<CliCommandPermissionResult> permList;
 };

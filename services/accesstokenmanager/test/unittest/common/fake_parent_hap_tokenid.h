@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,10 +13,30 @@
  * limitations under the License.
  */
 
-#ifndef TOKEN_SETPROC_H
-#define TOKEN_SETPROC_H
-#include <stdint.h>
+#ifndef ACCESS_TOKEN_FAKE_PARENT_HAP_TOKENID_H
+#define ACCESS_TOKEN_FAKE_PARENT_HAP_TOKENID_H
+
+#include <cstdint>
+
 #include "setproc_common.h"
+
+namespace OHOS {
+namespace Security {
+namespace AccessToken {
+struct FakeParentHapTokenIdState final {
+    int32_t ret = 0;
+    uint32_t parentHapTokenID = 0;
+    int32_t callCount = 0;
+    uint32_t lastBinTokenID = 0;
+    uint64_t selfTokenID = 0;
+    uint64_t firstCallerTokenID = 0;
+};
+
+FakeParentHapTokenIdState& GetFakeParentHapTokenIdState();
+void ResetFakeParentHapTokenIdState();
+} // namespace AccessToken
+} // namespace Security
+} // namespace OHOS
 
 #ifdef __cplusplus
 extern "C" {
@@ -32,4 +52,4 @@ int32_t GetParentHapTokenID(uint32_t bin, uint64_t *parent);
 }
 #endif
 
-#endif
+#endif // ACCESS_TOKEN_FAKE_PARENT_HAP_TOKENID_H

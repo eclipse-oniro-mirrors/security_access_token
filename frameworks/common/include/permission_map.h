@@ -43,6 +43,8 @@ bool TransferPermissionToOpcode(const std::string& permissionName, uint32_t& opC
 std::string TransferOpcodeToPermission(uint32_t opCode);
 __attribute__((visibility("default"))) bool QueryRequredPermissions(
     const std::string& cliPermission, std::vector<std::string>& requiredPermission);
+__attribute__((visibility("default"))) bool QueryMappedPermissionsByCliPermission(
+    const std::string& cliPermission, std::vector<std::string>& mappedPermissions);
 bool IsUserGrantPermission(const std::string& permission);
 bool IsOperablePermission(const std::string& permission);
 // Only allowed on the server side. Do not use in client-side code.

@@ -14,6 +14,7 @@
  */
 
 #include "tokensetproc_kit_test.h"
+#include <cerrno>
 #include <ctime>
 #include <cstring>
 #include "spm_setproc.h"
@@ -1370,6 +1371,19 @@ HWTEST_F(TokensetprocKitTest, SpmClearSpawnidRefCnt001, TestSize.Level0)
         return;
     }
     EXPECT_EQ(ret, 0);
+}
+
+/**
+ * @tc.name: GetParentHapTokenID001
+ * @tc.desc: Test invalid parameters for querying parent hap token ID.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokensetprocKitTest, GetParentHapTokenID001, TestSize.Level0)
+{
+    uint64_t parentTokenID = 0;
+    EXPECT_EQ(ACCESS_TOKEN_PARAM_INVALID, GetParentHapTokenID(0, &parentTokenID));
+    EXPECT_EQ(ACCESS_TOKEN_PARAM_INVALID, GetParentHapTokenID(1, nullptr));
 }
 
 /**

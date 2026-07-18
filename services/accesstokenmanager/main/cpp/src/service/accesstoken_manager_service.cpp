@@ -1715,7 +1715,8 @@ int AccessTokenManagerService::GetHapTokenInfoExtension(AccessTokenID tokenID,
         return ret;
     }
 
-    return AccessTokenInfoManager::GetInstance().GetHapAppIdByTokenId(tokenID, appID);
+    return AccessTokenInfoManager::GetInstance().GetHapAppIdByTokenId(
+        hapTokenInfoRes.hapTokenInfoParams.tokenID, appID);
 }
 
 int AccessTokenManagerService::GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfoParcel& infoParcel)
