@@ -58,7 +58,7 @@ namespace {
 static const std::vector<std::string> g_notDisplayedPerms = {
     "ohos.permission.ANSWER_CALL",
     "ohos.permission.MANAGE_VOICEMAIL",
-    "ohos.permission.READ_MESSAGES",
+    "ohos.permission.READ_CELL_MESSAGES",
     "ohos.permission.RECEIVE_MMS",
     "ohos.permission.RECEIVE_SMS",
     "ohos.permission.RECEIVE_WAP_MESSAGES",
