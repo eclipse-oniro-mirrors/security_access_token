@@ -68,6 +68,16 @@ The following figure shows the ATM architecture.
 | int ClearUserGrantedPermissionState(AccessTokenID tokenID); | Clears the user_grant permission status of the app with the specified token ID.|
 | uint64_t GetAccessTokenId(const char *processname, const char **dcap, int32_t dacpNum, const char *aplStr); | Obtains the token ID of a native process.|
 
+## JS API
+[Access Token Manager ](https://gitcode.com/openharmony/interface_sdk-js/blob/master/api/%40ohos.abilityAccessCtrl.d.ts)
+[Privacy Manager ](https://gitcode.com/openharmony/interface_sdk-js/blob/master/api/%40ohos.privacyManager.d.ts)
+
+## API Reference
+[Public API for Access Token Manager ](https://gitcode.com/openharmony/docs/blob/master/en/application-dev/reference/apis-ability-kit/js-apis-abilityAccessCtrl.md)
+[System API for Access Token Manager ](https://gitcode.com/openharmony/docs/blob/master/en/application-dev/reference/apis-ability-kit/js-apis-abilityAccessCtrl-sys.md)
+[System API for Privacy Manager ](https://gitcode.com/openharmony/docs/blob/master/en/application-dev/reference/apis-ability-kit/js-apis-privacyManager-sys.md)
+[API for El5 Filekey Manager](https://gitcode.com/openharmony/docs/blob/master/en/application-dev/reference/apis-ability-kit/js-apis-screenLockFileManager.md)
+
 ### How to Use
 ATM provides unified access control for apps and allows apps or service abilities to obtain and verify app permissions and APL. The ATM APIs can be called by a service ability started by a native process or an app HAP.
 
