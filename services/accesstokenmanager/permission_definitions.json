@@ -10328,6 +10328,17 @@
             "provisionEnable": true,
             "distributedSceneEnable": false,
             "deviceTypes": ["phone", "tablet"]
+        },
+        {
+            "name": "ohos.permission.ACCESS_MEDIALIB_SANDBOX",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.1.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["wearable", "tv", "tablet", "phone", "car", "2in1", "liteWearable", "router", "smartlock"]
         }
     ]
 }
