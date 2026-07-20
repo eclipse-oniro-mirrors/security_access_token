@@ -8782,7 +8782,7 @@
             "name": "ohos.permission.vehicle.WRITE_HARDWARE_CONFIG",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
-            "availableType": "SYSTEM_SERVICES",
+            "availableType": "SERVICE",
             "since": "26.1.0",
             "deprecated": "",
             "provisionEnable": true,
