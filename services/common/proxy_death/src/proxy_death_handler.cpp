@@ -30,7 +30,7 @@ void ProxyDeathHandler::AddProxyStub(const sptr<IRemoteObject>& proxyStub,
         return;
     }
     if (proxyStubAndRecipientMap_.find(proxyStub) != proxyStubAndRecipientMap_.end()) {
-        LOGI(ATM_DOMAIN, ATM_TAG, "Proxy is found.");
+        LOGD(ATM_DOMAIN, ATM_TAG, "Proxy is found.");
         return;
     }
     auto proxyDeathRecipient = sptr<ProxyDeathRecipient>::MakeSptr(this);

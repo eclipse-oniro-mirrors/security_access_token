@@ -89,7 +89,7 @@ int32_t PrivacyManagerClient::AddPermissionUsedRecord(const AddPermParamInfo& in
         ret = proxy->AddPermissionUsedRecord(infoParcel);
     }
     ret = ConvertResult(ret);
-    LOGI(PRI_DOMAIN, PRI_TAG, "Result is %{public}d.", ret);
+    LOGD(PRI_DOMAIN, PRI_TAG, "Result is %{public}d.", ret);
     return ret;
 }
 
