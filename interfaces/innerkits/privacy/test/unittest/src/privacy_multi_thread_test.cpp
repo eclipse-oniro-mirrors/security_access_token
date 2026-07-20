@@ -60,6 +60,8 @@ static void CreateHapTokenList(int32_t hapSize, std::vector<AccessTokenID>& toke
         .instIndex = 0,
         .appIDDesc = "PrivacyMultiThreadTest"
     };
+    const std::string baseBundleName = infoParms.bundleName;
+    const std::string baseAppIdDesc = infoParms.appIDDesc;
     for (const auto& permission : g_permList) {
         static PermissionStateFull permState = {
             .permissionName = permission,
@@ -71,11 +73,13 @@ static void CreateHapTokenList(int32_t hapSize, std::vector<AccessTokenID>& toke
         policyPrams.permStateList.emplace_back(permState);
     }
     for (int32_t i = 0; i < hapSize; i++) {
+        const std::string suffix = std::to_string(i);
+        infoParms.bundleName = baseBundleName + suffix;
+        infoParms.appIDDesc = baseAppIdDesc + suffix;
         AccessTokenIDEx tokenIdEx = {0};
         tokenIdEx = PrivacyTestCommon::AllocTestHapToken(infoParms, policyPrams);
         EXPECT_NE(INVALID_TOKENID, tokenIdEx.tokenIdExStruct.tokenID);
         tokenIdList.emplace_back(tokenIdEx.tokenIdExStruct.tokenID);
-        infoParms.userID++;
     }
 }
 

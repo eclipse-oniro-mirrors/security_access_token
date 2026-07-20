@@ -160,6 +160,7 @@ int32_t BusinessErrorAni::GetStsErrorCode(int32_t errCode)
             break;
         case ERR_INTERFACE_NOT_USED_TOGETHER:
         case ERR_CALLBACK_ALREADY_EXIST:
+        case ERR_PERMISSION_REQUEST_TOGGLE_LEGACY_QUERY_CONFLICT:
             stsCode = STS_ERROR_NOT_USE_TOGETHER;
             break;
         case ERR_CALLBACKS_EXCEED_LIMITATION:

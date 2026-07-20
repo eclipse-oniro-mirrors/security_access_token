@@ -122,7 +122,7 @@ int32_t ResolveRequestToggleUserId(int32_t userID)
 {
     int32_t callingUid = IPCSkeleton::GetCallingUid();
     int32_t callingUserId = callingUid / BASE_USER_RANGE;
-    return (callingUid == 0) ? userID : callingUserId;
+    return (callingUserId == 0) ? userID : callingUserId;
 }
 
 #ifdef HICOLLIE_ENABLE

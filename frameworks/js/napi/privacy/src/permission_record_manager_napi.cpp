@@ -80,6 +80,7 @@ static int32_t GetJsErrorCode(int32_t errCode)
         case ERR_CALLBACK_NOT_EXIST:
         case ERR_PERMISSION_ALREADY_START_USING:
         case ERR_PERMISSION_NOT_START_USING:
+        case ERR_PERMISSION_USED_RECORD_LEGACY_QUERY_CONFLICT:
             jsCode = JS_ERROR_NOT_USE_TOGETHER;
             break;
         case ERR_CALLBACKS_EXCEED_LIMITATION:

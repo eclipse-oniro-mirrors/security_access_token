@@ -116,13 +116,13 @@ void BuildHapPolicyParams(const std::vector<std::string>& reqPerm, const std::ve
 }
 
 FullTokenID GetHapTokenId(const std::string& bundle, const std::vector<std::string>& reqPerm,
-    const std::vector<std::string>& preAuthPerm, bool isSystemApp, int32_t userId)
+    const std::vector<std::string>& preAuthPerm, bool isSystemApp, int32_t userId, int32_t instIndex)
 {
     uint64_t selfTokenId = GetSelfTokenID();
     HapInfoParams infoParams = {
         .userID = userId,
         .bundleName = bundle,
-        .instIndex = 0,
+        .instIndex = instIndex,
         .appIDDesc = bundle,
         .apiVersion = 8, // 8: API VERSION
         .isSystemApp = isSystemApp,

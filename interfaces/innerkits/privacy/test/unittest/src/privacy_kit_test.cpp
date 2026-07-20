@@ -65,25 +65,21 @@ static constexpr int32_t RESULT_NUM_TWO = 2;
 static constexpr int32_t RESULT_NUM_THREE = 3;
 static constexpr int32_t MAX_DISABLE_CALLBACK_TEST_SIZE = 20;
 static constexpr int32_t MAX_PERM_LIST_TEST_SIZE = 1024;
+static constexpr int32_t TEST_USER_ID = 100;
 const static int32_t NOT_EXSIT_PID = 99999999;
 #ifdef REMOTE_PRIVACY_ENABLE
 const static int32_t USER_ID_100 = 100;
 const static uint32_t ROOT_UID = 20000000;
 const static int64_t MAX_GET_TIME = 4102329600000; // 2099.12.31
 
-static void ResetPermissionUsedRecordToggleStatus(int32_t userId)
+static void ResetPermissionUsedRecordToggleStatus(int32_t userId, int32_t subProfileId = -1)
 {
     uint32_t selfUid = getuid();
-    std::vector<std::string> reqPerm;
-    reqPerm.emplace_back("ohos.permission.ERR_PERMISSION_DENIED");
-    reqPerm.emplace_back("ohos.permission.PERMISSION_USED_STATS");
-    reqPerm.emplace_back("ohos.permission.PERMISSION_RECORD_TOGGLE");
-    MockHapToken mock("ResetPermissionUsedRecordToggleStatus", reqPerm, true);
-    (void)setuid(ROOT_UID);
-    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::SetPermissionUsedRecordToggleStatus(userId, false));
+    (void)setresuid(ROOT_UID, ROOT_UID, 0);
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::SetPermissionUsedRecordToggleStatus(userId, false, subProfileId));
     usleep(500000); // 500000us = 500ms
-    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::SetPermissionUsedRecordToggleStatus(userId, true));
-    setuid(selfUid);
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::SetPermissionUsedRecordToggleStatus(userId, true, subProfileId));
+    setresuid(selfUid, selfUid, 0);
 }
 #endif
 
@@ -99,7 +95,7 @@ static HapPolicyParams g_policyPramsA = {
     .domain = "test.domain.A",
 };
 static HapInfoParams g_infoParmsA = {
-    .userID = 1,
+    .userID = TEST_USER_ID,
     .bundleName = "ohos.privacy_test.bundleA",
     .instIndex = 0,
     .appIDDesc = "privacy_test.bundleA"
@@ -117,7 +113,7 @@ static HapPolicyParams g_policyPramsB = {
     .domain = "test.domain.B",
 };
 static HapInfoParams g_infoParmsB = {
-    .userID = 1,
+    .userID = TEST_USER_ID,
     .bundleName = "ohos.privacy_test.bundleB",
     .instIndex = 0,
     .appIDDesc = "privacy_test.bundleB"
@@ -131,7 +127,7 @@ static PermissionStateFull g_infoManagerTestStateC = {
     .grantFlags = {1}
 };
 static HapInfoParams g_infoParmsC = {
-    .userID = 1,
+    .userID = TEST_USER_ID,
     .bundleName = "ohos.privacy_test.bundleC",
     .instIndex = 0,
     .appIDDesc = "privacy_test.bundleC",
@@ -145,7 +141,7 @@ static HapPolicyParams g_policyPramsC = {
 };
 
 static HapInfoParams g_infoParmsD = {
-    .userID = 1,
+    .userID = TEST_USER_ID,
     .bundleName = "ohos.privacy_test.bundleD",
     .instIndex = 0,
     .appIDDesc = "privacy_test.bundleD",
@@ -165,7 +161,7 @@ static HapPolicyParams g_policyPramsE = {
     .permStateList = {g_infoManagerTestStateA, g_infoManagerTestStateB}
 };
 static HapInfoParams g_infoParmsE = {
-    .userID = 1,
+    .userID = TEST_USER_ID,
     .bundleName = "ohos.privacy_test.bundleE",
     .instIndex = 0,
     .appIDDesc = "privacy_test.bundleE"
@@ -178,7 +174,7 @@ static HapPolicyParams g_policyPramsF = {
     .permStateList = {g_infoManagerTestStateA, g_infoManagerTestStateB}
 };
 static HapInfoParams g_infoParmsF = {
-    .userID = 1,
+    .userID = TEST_USER_ID,
     .bundleName = "ohos.privacy_test.bundleF",
     .instIndex = 0,
     .appIDDesc = "privacy_test.bundleF"
@@ -189,7 +185,7 @@ static HapPolicyParams g_policyPramsG = {
     .domain = "test.domain.G",
 };
 static HapInfoParams g_infoParmsG = {
-    .userID = 2,
+    .userID = TEST_USER_ID,
     .bundleName = "ohos.privacy_test.bundleG",
     .instIndex = 0,
     .appIDDesc = "privacy_test.bundleG"
@@ -433,6 +429,7 @@ void PrivacyKitTest::SetUpTestCase()
 
     std::vector<std::string> reqPerm;
     reqPerm.emplace_back("ohos.permission.PERMISSION_USED_STATS");
+    reqPerm.emplace_back("ohos.permission.PERMISSION_RECORD_TOGGLE");
     g_mock = new (std::nothrow) MockHapToken("PrivacyKitMockTest", reqPerm, true);
 
     g_nativeToken = PrivacyTestCommon::GetNativeTokenIdFromProcess("privacy_service");
@@ -511,6 +508,23 @@ void PrivacyKitTest::TearDown()
     }
 #endif
     DeleteTestToken();
+    if (isPermissionUsedRecordToggleStatusSaved_) {
+        EXPECT_EQ(RET_SUCCESS,
+            PrivacyKit::SetPermissionUsedRecordToggleStatus(TEST_USER_ID, permissionUsedRecordToggleStatus_,
+                permissionUsedRecordToggleStatusSubProfileId_));
+    }
+}
+
+int32_t PrivacyKitTest::EnablePermissionUsedRecordToggleStatus(int32_t subProfileId)
+{
+    int32_t ret = PrivacyKit::GetPermissionUsedRecordToggleStatus(
+        TEST_USER_ID, permissionUsedRecordToggleStatus_, subProfileId);
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
+    permissionUsedRecordToggleStatusSubProfileId_ = subProfileId;
+    isPermissionUsedRecordToggleStatusSaved_ = true;
+    return PrivacyKit::SetPermissionUsedRecordToggleStatus(TEST_USER_ID, true, subProfileId);
 }
 
 void PrivacyKitTest::BuildQueryRequest(AccessTokenID tokenId,
@@ -529,13 +543,14 @@ void PrivacyKitTest::BuildQueryRequest(AccessTokenID tokenId,
 void PrivacyKitTest::CheckPermissionUsedResult(const PermissionUsedRequest& request, const PermissionUsedResult& result,
     int32_t permRecordSize, int32_t totalSuccessCount, int32_t totalFailCount)
 {
+    ASSERT_FALSE(result.bundleRecords.empty());
     int32_t successCount = 0;
     int32_t failCount = 0;
     EXPECT_EQ(request.tokenId, result.bundleRecords[0].tokenId);
     EXPECT_EQ(request.isRemote, result.bundleRecords[0].isRemote);
     EXPECT_EQ(request.deviceId, result.bundleRecords[0].deviceId);
     EXPECT_EQ(request.bundleName, result.bundleRecords[0].bundleName);
-    EXPECT_EQ(permRecordSize, static_cast<int32_t>(result.bundleRecords[0].permissionRecords.size()));
+    ASSERT_EQ(permRecordSize, static_cast<int32_t>(result.bundleRecords[0].permissionRecords.size()));
     for (int32_t i = 0; i < permRecordSize; i++) {
         successCount += result.bundleRecords[0].permissionRecords[i].accessCount;
         failCount += result.bundleRecords[0].permissionRecords[i].rejectCount;
@@ -560,6 +575,16 @@ static void SleepUtilMinuteEnd()
     GTEST_LOG_(INFO) << "current time is " << timestampMs << ", " << t.tm_hour << ":" << t.tm_min << ":" << t.tm_sec;
     GTEST_LOG_(INFO) << "need to sleep " << sleepSeconds << " seconds";
     sleep(sleepSeconds);
+}
+
+static const BundleUsedRecord* FindRemoteBundleRecord(const PermissionUsedResult& result, const std::string& deviceId)
+{
+    for (const auto& bundleRecord : result.bundleRecords) {
+        if (bundleRecord.deviceId == deviceId) {
+            return &bundleRecord;
+        }
+    }
+    return nullptr;
 }
 
 class CbCustomizeTest7 : public PermActiveStatusCustomizedCbk {
@@ -596,13 +621,14 @@ public:
 HWTEST_F(PrivacyKitTest, PrivacyToolToken001, TestSize.Level1)
 {
     ToolTokenGuard guard;
+    ASSERT_EQ(RET_SUCCESS, EnablePermissionUsedRecordToggleStatus());
     uint64_t callerTokenId = GetSelfTokenID();
     AccessTokenID hostTokenId = INVALID_TOKENID;
     AccessTokenIDEx toolTokenIdEx = {0};
     std::vector<PermissionWithValue> kernelPermList;
     const std::string hostBundle = "ohos.privacy.tool.host.add";
     {
-        MockHapToken hostToken(hostBundle, {}, true);
+        MockHapToken hostToken(hostBundle, {}, true, TEST_USER_ID);
         hostTokenId = GetSelfTokenID();
         ASSERT_NE(INVALID_TOKENID, hostTokenId);
         ASSERT_EQ(RET_SUCCESS, InitCliToolTokenWithEmptyChallengeForPrivacy(
@@ -640,12 +666,13 @@ HWTEST_F(PrivacyKitTest, PrivacyToolToken001, TestSize.Level1)
 HWTEST_F(PrivacyKitTest, PrivacyToolToken007, TestSize.Level1)
 {
     ToolTokenGuard guard;
+    ASSERT_EQ(RET_SUCCESS, EnablePermissionUsedRecordToggleStatus());
     AccessTokenID hostTokenId = INVALID_TOKENID;
     AccessTokenIDEx toolTokenIdEx = {0};
     std::vector<PermissionWithValue> kernelPermList;
     const std::string hostBundle = "ohos.privacy.tool.host.add.self";
     {
-        MockHapToken hostToken(hostBundle, {}, true);
+        MockHapToken hostToken(hostBundle, {}, true, TEST_USER_ID);
         hostTokenId = GetSelfTokenID();
         ASSERT_NE(INVALID_TOKENID, hostTokenId);
         ASSERT_EQ(RET_SUCCESS, InitCliToolTokenWithEmptyChallengeForPrivacy(
@@ -689,7 +716,7 @@ HWTEST_F(PrivacyKitTest, PrivacyToolToken008, TestSize.Level1)
     AccessTokenIDEx toolTokenIdEx = {0};
     std::vector<PermissionWithValue> kernelPermList;
     {
-        MockHapToken hostToken("ohos.privacy.tool.host.owner", {}, true);
+        MockHapToken hostToken("ohos.privacy.tool.host.owner", {}, true, TEST_USER_ID);
         hostTokenId = GetSelfTokenID();
         ASSERT_NE(INVALID_TOKENID, hostTokenId);
         ASSERT_EQ(RET_SUCCESS, InitCliToolTokenWithEmptyChallengeForPrivacy(
@@ -699,7 +726,7 @@ HWTEST_F(PrivacyKitTest, PrivacyToolToken008, TestSize.Level1)
     }
 
     {
-        MockHapToken otherHostToken("ohos.privacy.tool.host.other", {}, true);
+        MockHapToken otherHostToken("ohos.privacy.tool.host.other", {}, true, TEST_USER_ID);
         otherHostTokenId = GetSelfTokenID();
         ASSERT_NE(INVALID_TOKENID, otherHostTokenId);
     }
@@ -729,7 +756,7 @@ HWTEST_F(PrivacyKitTest, PrivacyToolToken002, TestSize.Level1)
     std::vector<PermissionWithValue> kernelPermList;
     const std::string hostBundle = "ohos.privacy.tool.host.start";
     {
-        MockHapToken hostToken(hostBundle, {}, true);
+        MockHapToken hostToken(hostBundle, {}, true, TEST_USER_ID);
         hostTokenId = GetSelfTokenID();
         ASSERT_NE(INVALID_TOKENID, hostTokenId);
         ASSERT_EQ(RET_SUCCESS, InitCliToolTokenWithEmptyChallengeForPrivacy(
@@ -775,7 +802,7 @@ HWTEST_F(PrivacyKitTest, PrivacyToolToken003, TestSize.Level1)
     std::vector<PermissionWithValue> kernelPermList;
     const std::string hostBundle = "ohos.privacy.tool.host.stop";
     {
-        MockHapToken hostToken(hostBundle, {}, true);
+        MockHapToken hostToken(hostBundle, {}, true, TEST_USER_ID);
         hostTokenId = GetSelfTokenID();
         ASSERT_NE(INVALID_TOKENID, hostTokenId);
         ASSERT_EQ(RET_SUCCESS, InitCliToolTokenWithEmptyChallengeForPrivacy(
@@ -1067,6 +1094,8 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord001, TestSize.Level0)
  */
 HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord002, TestSize.Level0)
 {
+    ASSERT_EQ(RET_SUCCESS, EnablePermissionUsedRecordToggleStatus());
+
     AddPermParamInfo info;
     info.tokenId = g_tokenIdA;
     info.permissionName = "ohos.permission.test";
@@ -1127,6 +1156,8 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord003, TestSize.Level0)
  */
 HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord004, TestSize.Level0)
 {
+    ASSERT_EQ(RET_SUCCESS, EnablePermissionUsedRecordToggleStatus());
+
     AddPermParamInfo info;
     info.tokenId = g_tokenIdA;
     info.permissionName = "ohos.permission.READ_CONTACTS";
@@ -1149,7 +1180,7 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord004, TestSize.Level0)
     BuildQueryRequest(g_tokenIdA, g_infoParmsA.bundleName, permissionList, request);
     EXPECT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
 
-    EXPECT_EQ(static_cast<uint32_t>(1), result.bundleRecords.size());
+    ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords.size());
     CheckPermissionUsedResult(request, result, 3, 2, 2);
 }
 
@@ -1161,6 +1192,8 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord004, TestSize.Level0)
  */
 HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord005, TestSize.Level0)
 {
+    ASSERT_EQ(RET_SUCCESS, EnablePermissionUsedRecordToggleStatus());
+
     AddPermParamInfo info;
     info.tokenId = g_tokenIdA;
     info.permissionName = "ohos.permission.READ_CONTACTS";
@@ -1188,13 +1221,13 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord005, TestSize.Level0)
     BuildQueryRequest(g_tokenIdA, g_infoParmsA.bundleName, permissionList, request);
     EXPECT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
 
-    EXPECT_EQ(static_cast<uint32_t>(1), result.bundleRecords.size());
+    ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords.size());
     CheckPermissionUsedResult(request, result, 2, 1, 1);
 
     BuildQueryRequest(g_tokenIdB, g_infoParmsB.bundleName, permissionList, request);
     EXPECT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
 
-    EXPECT_EQ(static_cast<uint32_t>(1), result.bundleRecords.size());
+    ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords.size());
     CheckPermissionUsedResult(request, result, 2, 1, 1);
 
     request.flag = FLAG_PERMISSION_USAGE_SUMMARY_IN_SCREEN_LOCKED;
@@ -1218,6 +1251,8 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord005, TestSize.Level0)
  */
 HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord006, TestSize.Level0)
 {
+    ASSERT_EQ(RET_SUCCESS, EnablePermissionUsedRecordToggleStatus());
+
     AddPermParamInfo info;
     info.tokenId = g_tokenIdA;
     info.permissionName = "ohos.permission.READ_CONTACTS";
@@ -1233,10 +1268,10 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord006, TestSize.Level0)
     BuildQueryRequest(g_tokenIdA, g_infoParmsA.bundleName, permissionList, request);
     request.flag = FLAG_PERMISSION_USAGE_DETAIL;
     EXPECT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result1));
-    EXPECT_EQ(static_cast<uint32_t>(1), result1.bundleRecords.size());
-    EXPECT_EQ(static_cast<uint32_t>(1), result1.bundleRecords[0].permissionRecords.size());
+    ASSERT_EQ(static_cast<uint32_t>(1), result1.bundleRecords.size());
+    ASSERT_EQ(static_cast<uint32_t>(1), result1.bundleRecords[0].permissionRecords.size());
     // record cross minute not combine
-    EXPECT_EQ(static_cast<uint32_t>(2), result1.bundleRecords[0].permissionRecords[0].accessRecords.size());
+    ASSERT_EQ(static_cast<uint32_t>(2), result1.bundleRecords[0].permissionRecords[0].accessRecords.size());
     CheckPermissionUsedResult(request, result1, 1, 2, 0);
 
     // <200ms, record is dropped
@@ -1249,10 +1284,10 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord006, TestSize.Level0)
 
     PermissionUsedResult result2;
     EXPECT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result2));
-    EXPECT_EQ(static_cast<uint32_t>(1), result2.bundleRecords.size());
-    EXPECT_EQ(static_cast<uint32_t>(1), result2.bundleRecords[0].permissionRecords.size());
+    ASSERT_EQ(static_cast<uint32_t>(1), result2.bundleRecords.size());
+    ASSERT_EQ(static_cast<uint32_t>(1), result2.bundleRecords[0].permissionRecords.size());
     // records in the same minute combine to one
-    EXPECT_EQ(static_cast<uint32_t>(2), result2.bundleRecords[0].permissionRecords[0].accessRecords.size());
+    ASSERT_EQ(static_cast<uint32_t>(2), result2.bundleRecords[0].permissionRecords[0].accessRecords.size());
     CheckPermissionUsedResult(request, result2, 1, 4, 0);
 }
 
@@ -1285,6 +1320,8 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord007, TestSize.Level0)
  */
 HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord008, TestSize.Level0)
 {
+    ASSERT_EQ(RET_SUCCESS, EnablePermissionUsedRecordToggleStatus());
+
     int32_t permRecordSize = 0;
 
     AddPermParamInfo info;
@@ -1314,20 +1351,20 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord008, TestSize.Level0)
     request.flag = FLAG_PERMISSION_USAGE_DETAIL;
     EXPECT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
 
-    EXPECT_EQ(static_cast<uint32_t>(1), result.bundleRecords.size());
-    EXPECT_EQ(permRecordSize, static_cast<int32_t>(result.bundleRecords[0].permissionRecords.size()));
+    ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords.size());
+    ASSERT_EQ(permRecordSize, static_cast<int32_t>(result.bundleRecords[0].permissionRecords.size()));
     for (int32_t i = 0; i < permRecordSize; i++) {
         if (result.bundleRecords[0].permissionRecords[i].permissionName == "ohos.permission.READ_CONTACTS") {
-            EXPECT_EQ(static_cast<uint32_t>(1), result.bundleRecords[0].permissionRecords[i].accessRecords.size());
-            EXPECT_EQ(static_cast<uint32_t>(0), result.bundleRecords[0].permissionRecords[i].rejectRecords.size());
+            ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords[0].permissionRecords[i].accessRecords.size());
+            ASSERT_EQ(static_cast<uint32_t>(0), result.bundleRecords[0].permissionRecords[i].rejectRecords.size());
             EXPECT_EQ(1, result.bundleRecords[0].permissionRecords[i].accessRecords[0].count);
         } else if (result.bundleRecords[0].permissionRecords[i].permissionName == "ohos.permission.WRITE_CONTACTS") {
-            EXPECT_EQ(static_cast<uint32_t>(0), result.bundleRecords[0].permissionRecords[i].accessRecords.size());
-            EXPECT_EQ(static_cast<uint32_t>(1), result.bundleRecords[0].permissionRecords[i].rejectRecords.size());
+            ASSERT_EQ(static_cast<uint32_t>(0), result.bundleRecords[0].permissionRecords[i].accessRecords.size());
+            ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords[0].permissionRecords[i].rejectRecords.size());
             EXPECT_EQ(2, result.bundleRecords[0].permissionRecords[i].rejectRecords[0].count);
         } else if (result.bundleRecords[0].permissionRecords[i].permissionName == "ohos.permission.LOCATION") {
-            EXPECT_EQ(static_cast<uint32_t>(1), result.bundleRecords[0].permissionRecords[i].accessRecords.size());
-            EXPECT_EQ(static_cast<uint32_t>(1), result.bundleRecords[0].permissionRecords[i].rejectRecords.size());
+            ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords[0].permissionRecords[i].accessRecords.size());
+            ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords[0].permissionRecords[i].rejectRecords.size());
             EXPECT_EQ(3, result.bundleRecords[0].permissionRecords[i].accessRecords[0].count);
             EXPECT_EQ(3, result.bundleRecords[0].permissionRecords[i].rejectRecords[0].count);
         }
@@ -1344,9 +1381,9 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord008, TestSize.Level0)
 HWTEST_F(PrivacyKitTest, AddRemotePermissionUsedRecordTest001, TestSize.Level0)
 {
     uint32_t selfUid = getuid();
-    (void)setuid(ROOT_UID);
+    (void)setresuid(ROOT_UID, ROOT_UID, 0);
 
-    RemoteCallerInfo info = {"ididid", "namename"};
+    RemoteCallerInfo info = {"toggle_false_device", "toggle_false_name"};
     std::string permissionName = "ohos.permission.CAMERA";
 
     info.remoteDeviceId = "";
@@ -1361,7 +1398,7 @@ HWTEST_F(PrivacyKitTest, AddRemotePermissionUsedRecordTest001, TestSize.Level0)
     EXPECT_EQ(ERR_PARAM_INVALID, PrivacyKit::AddRemotePermissionUsedRecord(info, permissionName, -1, 0));
     EXPECT_EQ(ERR_PARAM_INVALID, PrivacyKit::AddRemotePermissionUsedRecord(info, permissionName, 1, -1));
 
-    setuid(selfUid);
+    setresuid(selfUid, selfUid, 0);
 
     PermissionUsedRequest request;
     request.beginTimeMillis = RESULT_NUM_THREE;
@@ -1393,10 +1430,10 @@ HWTEST_F(PrivacyKitTest, AddRemotePermissionUsedRecordTest002, TestSize.Level0)
 {
     uint32_t selfUid = getuid();
     MockHapToken mock("AddRemotePermissionUsedRecordTest002",
-        {"ohos.permission.PERMISSION_USED_STATS"}, true);
-    (void)setuid(ROOT_UID);
+        {"ohos.permission.PERMISSION_USED_STATS", "ohos.permission.PERMISSION_RECORD_TOGGLE"}, true);
+    (void)setresuid(ROOT_UID, ROOT_UID, 0);
 
-    RemoteCallerInfo info = {"ididid", "namename"};
+    RemoteCallerInfo info = {"toggle_false_device", "toggle_false_name"};
     std::string permissionName = "ohos.permission.CAMERA";
 
     EXPECT_EQ(RET_NO_ERROR, PrivacyKit::AddRemotePermissionUsedRecord(info, permissionName, 1, 0));
@@ -1409,14 +1446,14 @@ HWTEST_F(PrivacyKitTest, AddRemotePermissionUsedRecordTest002, TestSize.Level0)
     EXPECT_EQ(RET_NO_ERROR, PrivacyKit::AddRemotePermissionUsedRecord(info, permissionName, 0, 1));
     EXPECT_EQ(RET_NO_ERROR, PrivacyKit::AddRemotePermissionUsedRecord(info, permissionName, 1, 0));
 
-    setuid(selfUid);
+    setresuid(selfUid, selfUid, 0);
 
     ResetPermissionUsedRecordToggleStatus(USER_ID_100);
 }
 
 /**
  * @tc.name: AddRecordWithToggleFalseTest001
- * @tc.desc: Add record test with toggle false
+ * @tc.desc: Add local record test with toggle false
  * @tc.type: FUNC
  * @tc.require: issues3049
  */
@@ -1428,19 +1465,8 @@ HWTEST_F(PrivacyKitTest, AddRecordWithToggleFalseTest001, TestSize.Level1)
     reqPerm.emplace_back("ohos.permission.PERMISSION_RECORD_TOGGLE");
     MockHapToken mock("AddRemotePermissionUsedRecordTest002", reqPerm, true);
     uint32_t selfUid = getuid();
-    (void)setuid(ROOT_UID);
+    (void)setresuid(ROOT_UID, ROOT_UID, 0);
     EXPECT_EQ(RET_NO_ERROR, PrivacyKit::SetPermissionUsedRecordToggleStatus(USER_ID_100, false));
-
-    RemoteCallerInfo info = {"ididid", "namename"};
-    std::string permissionName = "ohos.permission.CAMERA";
-    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::AddRemotePermissionUsedRecord(info, permissionName, 1, 0));
-
-    PermissionUsedRequest request;
-    request.isRemote = true;
-    request.flag = FLAG_PERMISSION_USAGE_DETAIL;
-    PermissionUsedResult result;
-    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::GetRemotePermissionUsedRecords(request, result));
-    EXPECT_TRUE(result.bundleRecords.empty());
 
     AddPermParamInfo info2;
     info2.tokenId = g_tokenIdH;
@@ -1458,7 +1484,7 @@ HWTEST_F(PrivacyKitTest, AddRecordWithToggleFalseTest001, TestSize.Level1)
 
     usleep(500000); // 500000us = 500ms
     EXPECT_EQ(RET_NO_ERROR, PrivacyKit::SetPermissionUsedRecordToggleStatus(USER_ID_100, true));
-    setuid(selfUid);
+    setresuid(selfUid, selfUid, 0);
 }
 
 /**
@@ -1471,10 +1497,11 @@ HWTEST_F(PrivacyKitTest, GetRemotePermissionUsedRecordTest001, TestSize.Level0)
 {
     uint32_t selfUid = getuid();
     MockHapToken mock("GetRemotePermissionUsedRecordTest001",
-        {"ohos.permission.PERMISSION_USED_STATS"}, true);
-    (void)setuid(ROOT_UID);
+        {"ohos.permission.PERMISSION_USED_STATS", "ohos.permission.PERMISSION_RECORD_TOGGLE"}, true);
+    (void)setresuid(ROOT_UID, ROOT_UID, 0);
+    ResetPermissionUsedRecordToggleStatus(USER_ID_100);
 
-    RemoteCallerInfo info = {"ididid", "namename"};
+    RemoteCallerInfo info = {"remote_query_001", "remote_query_001_name"};
     std::string permissionName = "ohos.permission.CAMERA";
 
     EXPECT_EQ(RET_NO_ERROR, PrivacyKit::AddRemotePermissionUsedRecord(info, permissionName, 1, 0));
@@ -1488,17 +1515,6 @@ HWTEST_F(PrivacyKitTest, GetRemotePermissionUsedRecordTest001, TestSize.Level0)
     PermissionUsedResult result;
     EXPECT_EQ(RET_NO_ERROR, PrivacyKit::GetRemotePermissionUsedRecords(request, result));
 
-    setuid(selfUid);
-
-    ASSERT_EQ(result.bundleRecords.size(), RESULT_NUM_ONE);
-    EXPECT_EQ(result.bundleRecords[0].isRemote, true);
-    EXPECT_EQ(result.bundleRecords[0].deviceId, "ididid");
-    EXPECT_EQ(result.bundleRecords[0].deviceName, "namename");
-    ASSERT_EQ(result.bundleRecords[0].permissionRecords.size(), RESULT_NUM_ONE);
-    EXPECT_EQ(result.bundleRecords[0].permissionRecords[0].permissionName, permissionName);
-    EXPECT_EQ(result.bundleRecords[0].permissionRecords[0].accessCount, RESULT_NUM_TWO);
-    EXPECT_EQ(result.bundleRecords[0].permissionRecords[0].rejectCount, 0);
-
     PermissionUsedRequest request2;
     request2.isRemote = true;
     request2.flag = FLAG_PERMISSION_USAGE_DETAIL;
@@ -1506,6 +1522,18 @@ HWTEST_F(PrivacyKitTest, GetRemotePermissionUsedRecordTest001, TestSize.Level0)
     PermissionUsedResult result2;
     EXPECT_EQ(RET_NO_ERROR, PrivacyKit::GetRemotePermissionUsedRecords(request2, result2));
     EXPECT_TRUE(result2.bundleRecords.empty());
+
+    setresuid(selfUid, selfUid, 0);
+
+    const BundleUsedRecord* bundleRecord = FindRemoteBundleRecord(result, info.remoteDeviceId);
+    ASSERT_NE(nullptr, bundleRecord);
+    EXPECT_TRUE(bundleRecord->isRemote);
+    EXPECT_EQ(info.remoteDeviceId, bundleRecord->deviceId);
+    EXPECT_EQ(info.remoteDeviceName, bundleRecord->deviceName);
+    ASSERT_EQ(RESULT_NUM_ONE, bundleRecord->permissionRecords.size());
+    EXPECT_EQ(permissionName, bundleRecord->permissionRecords[0].permissionName);
+    EXPECT_EQ(RESULT_NUM_TWO, bundleRecord->permissionRecords[0].accessCount);
+    EXPECT_EQ(0, bundleRecord->permissionRecords[0].rejectCount);
 
     ResetPermissionUsedRecordToggleStatus(USER_ID_100);
 }
@@ -1520,10 +1548,11 @@ HWTEST_F(PrivacyKitTest, GetRemotePermissionUsedRecordTest002, TestSize.Level0)
 {
     uint32_t selfUid = getuid();
     MockHapToken mock("GetRemotePermissionUsedRecordTest002",
-        {"ohos.permission.PERMISSION_USED_STATS"}, true);
-    (void)setuid(ROOT_UID);
+        {"ohos.permission.PERMISSION_USED_STATS", "ohos.permission.PERMISSION_RECORD_TOGGLE"}, true);
+    (void)setresuid(ROOT_UID, ROOT_UID, 0);
+    ResetPermissionUsedRecordToggleStatus(USER_ID_100);
 
-    RemoteCallerInfo info = {"ididid", "namename"};
+    RemoteCallerInfo info = {"remote_query_002", "remote_query_002_name"};
     std::string permissionName = "ohos.permission.CAMERA";
 
     EXPECT_EQ(RET_NO_ERROR, PrivacyKit::AddRemotePermissionUsedRecord(info, permissionName, 1, 0));
@@ -1537,13 +1566,13 @@ HWTEST_F(PrivacyKitTest, GetRemotePermissionUsedRecordTest002, TestSize.Level0)
     PermissionUsedResult result;
     EXPECT_EQ(RET_NO_ERROR, PrivacyKit::GetRemotePermissionUsedRecords(request, result));
 
-    setuid(selfUid);
+    setresuid(selfUid, selfUid, 0);
 
-    ASSERT_EQ(result.bundleRecords.size(), RESULT_NUM_ONE);
-    EXPECT_EQ(result.bundleRecords[0].isRemote, true);
-    EXPECT_EQ(result.bundleRecords[0].deviceId, "ididid");
-    EXPECT_EQ(result.bundleRecords[0].deviceName, "namename");
-    ASSERT_EQ(result.bundleRecords[0].permissionRecords.size(), RESULT_NUM_TWO);
+    const BundleUsedRecord* bundleRecord = FindRemoteBundleRecord(result, info.remoteDeviceId);
+    ASSERT_NE(nullptr, bundleRecord);
+    EXPECT_TRUE(bundleRecord->isRemote);
+    EXPECT_EQ(info.remoteDeviceName, bundleRecord->deviceName);
+    ASSERT_EQ(RESULT_NUM_TWO, bundleRecord->permissionRecords.size());
 
     ResetPermissionUsedRecordToggleStatus(USER_ID_100);
 }
@@ -1558,10 +1587,11 @@ HWTEST_F(PrivacyKitTest, GetRemotePermissionUsedRecordTest003, TestSize.Level0)
 {
     uint32_t selfUid = getuid();
     MockHapToken mock("GetRemotePermissionUsedRecordTest003",
-        {"ohos.permission.PERMISSION_USED_STATS"}, true);
-    (void)setuid(ROOT_UID);
+        {"ohos.permission.PERMISSION_USED_STATS", "ohos.permission.PERMISSION_RECORD_TOGGLE"}, true);
+    (void)setresuid(ROOT_UID, ROOT_UID, 0);
+    ResetPermissionUsedRecordToggleStatus(USER_ID_100);
 
-    RemoteCallerInfo info = {"ididid", "namename"};
+    RemoteCallerInfo info = {"remote_query_003", "remote_query_003_name"};
     std::string permissionName = "ohos.permission.CAMERA";
 
     EXPECT_EQ(RET_NO_ERROR, PrivacyKit::AddRemotePermissionUsedRecord(info, permissionName, 1, 0));
@@ -1573,23 +1603,20 @@ HWTEST_F(PrivacyKitTest, GetRemotePermissionUsedRecordTest003, TestSize.Level0)
     request.isRemote = true;
     request.flag = FLAG_PERMISSION_USAGE_SUMMARY;
     request.permissionList = std::vector<std::string>{permissionName};
-    request.beginTimeMillis = 0;
     request.endTimeMillis = MAX_GET_TIME;
     PermissionUsedResult result;
     EXPECT_EQ(RET_NO_ERROR, PrivacyKit::GetRemotePermissionUsedRecords(request, result));
 
-    ASSERT_EQ(result.bundleRecords.size(), RESULT_NUM_ONE);
-    EXPECT_EQ(result.bundleRecords[0].isRemote, true);
-    EXPECT_EQ(result.bundleRecords[0].deviceId, "ididid");
-    EXPECT_EQ(result.bundleRecords[0].deviceName, "namename");
-    ASSERT_EQ(result.bundleRecords[0].permissionRecords.size(), RESULT_NUM_ONE);
-    EXPECT_EQ(result.bundleRecords[0].permissionRecords[0].permissionName, permissionName);
-    EXPECT_EQ(result.bundleRecords[0].permissionRecords[0].accessCount, RESULT_NUM_ONE);
-    EXPECT_EQ(result.bundleRecords[0].permissionRecords[0].rejectCount, RESULT_NUM_ONE);
-    EXPECT_EQ(result.bundleRecords[0].permissionRecords[0].accessRecords.size(), 0);
-    EXPECT_EQ(result.bundleRecords[0].permissionRecords[0].rejectRecords.size(), 0);
+    setresuid(selfUid, selfUid, 0);
 
-    setuid(selfUid);
+    const BundleUsedRecord* bundleRecord = FindRemoteBundleRecord(result, info.remoteDeviceId);
+    ASSERT_NE(nullptr, bundleRecord);
+    ASSERT_EQ(RESULT_NUM_ONE, bundleRecord->permissionRecords.size());
+    EXPECT_EQ(permissionName, bundleRecord->permissionRecords[0].permissionName);
+    EXPECT_EQ(RESULT_NUM_ONE, bundleRecord->permissionRecords[0].accessCount);
+    EXPECT_EQ(RESULT_NUM_ONE, bundleRecord->permissionRecords[0].rejectCount);
+    EXPECT_EQ(0, bundleRecord->permissionRecords[0].accessRecords.size());
+    EXPECT_EQ(0, bundleRecord->permissionRecords[0].rejectRecords.size());
 
     ResetPermissionUsedRecordToggleStatus(USER_ID_100);
 }
@@ -1604,16 +1631,17 @@ HWTEST_F(PrivacyKitTest, GetRemotePermissionUsedRecordTest004, TestSize.Level0)
 {
     uint32_t selfUid = getuid();
     MockHapToken mock("GetRemotePermissionUsedRecordTest004",
-        {"ohos.permission.PERMISSION_USED_STATS"}, true);
-    (void)setuid(ROOT_UID);
+        {"ohos.permission.PERMISSION_USED_STATS", "ohos.permission.PERMISSION_RECORD_TOGGLE"}, true);
+    (void)setresuid(ROOT_UID, ROOT_UID, 0);
+    ResetPermissionUsedRecordToggleStatus(USER_ID_100);
 
-    RemoteCallerInfo info = {"ididid", "namename"};
+    RemoteCallerInfo info = {"remote_query_004a", "remote_query_004a_name"};
     std::string permissionName = "ohos.permission.CAMERA";
 
     EXPECT_EQ(RET_NO_ERROR, PrivacyKit::AddRemotePermissionUsedRecord(info, permissionName, 1, 0));
     
-    info.remoteDeviceId = "ididid222";
-    info.remoteDeviceName = "namename222";
+    info.remoteDeviceId = "remote_query_004b";
+    info.remoteDeviceName = "remote_query_004b_name";
     EXPECT_EQ(RET_NO_ERROR, PrivacyKit::AddRemotePermissionUsedRecord(info, permissionName, 1, 0));
 
     PermissionUsedRequest request;
@@ -1622,13 +1650,14 @@ HWTEST_F(PrivacyKitTest, GetRemotePermissionUsedRecordTest004, TestSize.Level0)
     PermissionUsedResult result;
     EXPECT_EQ(RET_NO_ERROR, PrivacyKit::GetRemotePermissionUsedRecords(request, result));
 
-    setuid(selfUid);
+    setresuid(selfUid, selfUid, 0);
 
-    ASSERT_EQ(result.bundleRecords.size(), RESULT_NUM_TWO);
-    EXPECT_EQ(result.bundleRecords[0].isRemote, true);
-    ASSERT_EQ(result.bundleRecords[0].permissionRecords.size(), RESULT_NUM_ONE);
-    EXPECT_EQ(result.bundleRecords[1].isRemote, true);
-    ASSERT_EQ(result.bundleRecords[1].permissionRecords.size(), RESULT_NUM_ONE);
+    const BundleUsedRecord* firstRecord = FindRemoteBundleRecord(result, "remote_query_004a");
+    const BundleUsedRecord* secondRecord = FindRemoteBundleRecord(result, info.remoteDeviceId);
+    ASSERT_NE(nullptr, firstRecord);
+    ASSERT_NE(nullptr, secondRecord);
+    ASSERT_EQ(RESULT_NUM_ONE, firstRecord->permissionRecords.size());
+    ASSERT_EQ(RESULT_NUM_ONE, secondRecord->permissionRecords.size());
 
     ResetPermissionUsedRecordToggleStatus(USER_ID_100);
 }
@@ -3897,6 +3926,8 @@ HWTEST_F(PrivacyKitTest, AddPermissionRecordCallbackTest001, TestSize.Level1)
  */
 HWTEST_F(PrivacyKitTest, AddPermissionRecordCallbackTest002, TestSize.Level1)
 {
+    ASSERT_EQ(RET_SUCCESS, EnablePermissionUsedRecordToggleStatus());
+
     std::vector<std::string> permList = {"ohos.permission.CAMERA"};
     auto callbackPtr = std::make_shared<CbCustomizeTest7>(permList);
     callbackPtr->type_ = PERM_INACTIVE;

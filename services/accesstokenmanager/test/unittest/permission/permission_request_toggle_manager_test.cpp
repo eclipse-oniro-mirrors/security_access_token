@@ -20,7 +20,7 @@
 #include "access_token_error.h"
 #include "accesstoken_info_utils.h"
 #ifdef ACCESS_TOKEN_SUPPORT_SUBPROFILE
-#include "errors.h"
+#include "account_error_no.h"
 #include "os_account_manager_lite.h"
 #endif
 #include "ipc_skeleton.h"
@@ -439,7 +439,7 @@ HWTEST_F(PermissionRequestToggleManagerTest, GetPermissionRequestToggleStatusWit
 
     ASSERT_EQ(RET_SUCCESS, PermissionRequestToggleManager::GetInstance().SetPermissionRequestToggleStatus(
         permissionName, PermissionRequestToggleStatus::CLOSED, userID, SUBPROFILE_ID_THIRTEEN));
-    ASSERT_EQ(ERR_PERMISSION_REQUEST_TOGGLE_STORAGE_MODE_CONFLICT,
+    ASSERT_EQ(ERR_PERMISSION_REQUEST_TOGGLE_LEGACY_QUERY_CONFLICT,
         PermissionRequestToggleManager::GetInstance().GetPermissionRequestToggleStatus(
             permissionName, status, userID, LEGACY_SUBPROFILE_ID));
 }
@@ -537,7 +537,7 @@ HWTEST_F(PermissionRequestToggleManagerTest, SetPermissionRequestToggleStatusWit
 
 /**
  * @tc.name: SetPermissionRequestToggleStatusWithSubProfileId006
- * @tc.desc: Verify account query failure returns service abnormal for subProfile toggle APIs.
+ * @tc.desc: Verify account errors are mapped correctly for subProfile toggle APIs.
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -553,6 +553,14 @@ HWTEST_F(PermissionRequestToggleManagerTest, SetPermissionRequestToggleStatusWit
         PermissionRequestToggleManager::GetInstance().SetPermissionRequestToggleStatus(
             permissionName, PermissionRequestToggleStatus::OPEN, userID, SUBPROFILE_ID_TEN));
     EXPECT_EQ(ERR_SERVICE_ABNORMAL,
+        PermissionRequestToggleManager::GetInstance().GetPermissionRequestToggleStatus(
+            permissionName, status, userID, SUBPROFILE_ID_TEN));
+
+    SetMockOsAccountLocalIdForSubProfile(userID, ERR_OS_ACCOUNT_SUBSPACE_NOT_FOUND);
+    EXPECT_EQ(ERR_PERMISSION_REQUEST_TOGGLE_SUBPROFILE_NOT_EXIST,
+        PermissionRequestToggleManager::GetInstance().SetPermissionRequestToggleStatus(
+            permissionName, PermissionRequestToggleStatus::OPEN, userID, SUBPROFILE_ID_TEN));
+    EXPECT_EQ(ERR_PERMISSION_REQUEST_TOGGLE_SUBPROFILE_NOT_EXIST,
         PermissionRequestToggleManager::GetInstance().GetPermissionRequestToggleStatus(
             permissionName, status, userID, SUBPROFILE_ID_TEN));
     ResetMockOsAccountManagerLite();

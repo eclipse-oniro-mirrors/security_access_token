@@ -35,7 +35,6 @@
 #include "perm_active_status_change_callback_stub.h"
 #include "privacy_error.h"
 #include "privacy_field_const.h"
-#include "privacy_kit.h"
 #include "privacy_test_common.h"
 #include "state_change_callback.h"
 #include "time_util.h"
@@ -378,20 +377,19 @@ bool PermActiveStatusChangeCallbackTest::AddDeathRecipient(const sptr<IRemoteObj
     return true;
 }
 
-class PermissionRecordManagerCoverTestCb3 : public PermActiveStatusCustomizedCbk {
+class PermissionRecordManagerCoverTestCb3 : public PermActiveStatusChangeCallbackStub {
 public:
-    explicit PermissionRecordManagerCoverTestCb3(const std::vector<std::string> &permList)
-        : PermActiveStatusCustomizedCbk(permList)
-    {
-        GTEST_LOG_(INFO) << "PermissionRecordManagerCoverTestCb3 create";
-    }
+    PermissionRecordManagerCoverTestCb3() = default;
+    ~PermissionRecordManagerCoverTestCb3() override = default;
 
-    ~PermissionRecordManagerCoverTestCb3()
-    {}
-
-    virtual void ActiveStatusChangeCallback(ActiveChangeResponse& result)
+    void ActiveStatusChangeCallback(ActiveChangeResponse& result) override
     {
         type_ = result.type;
+    }
+
+    bool AddDeathRecipient([[maybe_unused]] const sptr<IRemoteObject::DeathRecipient>& deathRecipient) override
+    {
+        return true;
     }
 
     ActiveChangeType type_ = PERM_INACTIVE;
@@ -431,7 +429,7 @@ HWTEST_F(PermissionRecordManagerTest, OnRemoteDied001, TestSize.Level4)
 
 /**
  * @tc.name: OnApplicationStateChanged001
- * @tc.desc: Test app state changed to APP_STATE_TERMINATED.
+ * @tc.desc: Test app stopped with APP_STATE_TERMINATED.
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -445,11 +443,14 @@ HWTEST_F(PermissionRecordManagerTest, OnApplicationStateChanged001, TestSize.Lev
     PrivacyAppStateObserver observer;
     std::vector<std::string> permList = {"ohos.permission.ACTIVITY_MOTION"};
 
-    auto callbackPtr = std::make_shared<PermissionRecordManagerCoverTestCb3>(permList);
+    sptr<PermissionRecordManagerCoverTestCb3> callbackPtr = new (std::nothrow) PermissionRecordManagerCoverTestCb3();
+    ASSERT_NE(nullptr, callbackPtr);
     callbackPtr->type_ = PERM_ACTIVE_IN_FOREGROUND;
 
-    ASSERT_EQ(RET_SUCCESS, PrivacyKit::RegisterPermActiveStatusCallback(callbackPtr));
-    ASSERT_EQ(RET_SUCCESS, PrivacyKit::StartUsingPermission(tokenId, "ohos.permission.ACTIVITY_MOTION"));
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().RegisterPermActiveStatusCallback(
+        GetSelfTokenID(), permList, callbackPtr->AsObject(), static_cast<int32_t>(CallbackRegisterType::TOKEN_ONLY)));
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
+        MakeInfo(tokenId, PID, "ohos.permission.ACTIVITY_MOTION"), CALLER_PID));
     AppStateData appStateData;
     appStateData.state = static_cast<int32_t>(ApplicationState::APP_STATE_TERMINATED);
     appStateData.accessTokenId = tokenId;
@@ -459,9 +460,14 @@ HWTEST_F(PermissionRecordManagerTest, OnApplicationStateChanged001, TestSize.Lev
     observer.OnAppStopped(appStateData);
 
     usleep(500000); // 500000us = 0.5s
-    ASSERT_EQ(PERM_ACTIVE_IN_BACKGROUND, callbackPtr->type_);
+    ASSERT_EQ(PERM_INACTIVE, callbackPtr->type_);
 
-    ASSERT_EQ(RET_SUCCESS, PrivacyKit::StopUsingPermission(tokenId, "ohos.permission.ACTIVITY_MOTION"));
+    // The termination event already removes the continuous permission record.
+    ASSERT_EQ(PrivacyError::ERR_PERMISSION_NOT_START_USING,
+        PermissionRecordManager::GetInstance().StopUsingPermission(
+        tokenId, PID, "ohos.permission.ACTIVITY_MOTION", CALLER_PID));
+    ASSERT_EQ(RET_SUCCESS,
+        PermissionRecordManager::GetInstance().UnRegisterPermActiveStatusCallback(callbackPtr->AsObject()));
 }
 
 /*
