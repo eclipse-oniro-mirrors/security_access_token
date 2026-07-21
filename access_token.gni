@@ -68,7 +68,7 @@ if (access_token_camera_float_window_enable == true) {
   access_token_cflags_cc += [ "-DCAMERA_FLOAT_WINDOW_ENABLE" ]
 }
 
-if (target_platform == "car" &&
+if ("${target_platform}" == "car" &&
     (!defined(global_parts_info) || defined(global_parts_info.os_account))) {
   access_token_support_subprofile = true
   access_token_cflags_cc += [ "-DACCESS_TOKEN_SUPPORT_SUBPROFILE" ]

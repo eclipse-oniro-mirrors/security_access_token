@@ -69,7 +69,6 @@ int AccessTokenKit::GrantPermissionForSpecifiedTime(
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     if (!DataValidator::IsPermissionNameValid(permissionName)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Invalid permissionName");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     return AccessTokenManagerClient::GetInstance().GrantPermissionForSpecifiedTime(tokenID, permissionName, onceTime);
@@ -514,7 +513,6 @@ int AccessTokenKit::GetDefPermission(const std::string& permissionName, Permissi
 {
     LOGD(ATM_DOMAIN, ATM_TAG, "PermissionName=%{public}s.", permissionName.c_str());
     if (!DataValidator::IsPermissionNameValid(permissionName)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "PermissionName is invalid");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     PermissionBriefDef briefDef;
@@ -546,7 +544,6 @@ int AccessTokenKit::GetPermissionFlag(AccessTokenID tokenID, const std::string& 
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     if (!DataValidator::IsPermissionNameValid(permissionName)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "PermissionName is invalid");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     return AccessTokenManagerClient::GetInstance().GetPermissionFlag(tokenID, permissionName, flag);
@@ -566,7 +563,6 @@ int AccessTokenKit::GrantPermission(
         return ERR_TOKENID_NOT_EXIST;
     }
     if (!DataValidator::IsPermissionNameValid(permissionName)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "PermissionName is invalid");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     if (!DataValidator::IsPermissionFlagValid(flag) || DataValidator::IsPermissionFlagValidForAdmin(flag)) {
@@ -592,7 +588,6 @@ int AccessTokenKit::RevokePermission(
         return ERR_TOKENID_NOT_EXIST;
     }
     if (!DataValidator::IsPermissionNameValid(permissionName)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Invalid permissionName");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     if (!DataValidator::IsPermissionFlagValid(flag) || DataValidator::IsPermissionFlagValidForAdmin(flag)) {
@@ -629,7 +624,6 @@ int32_t AccessTokenKit::SetPermissionRequestToggleStatus(const std::string& perm
         "PermissionName=%{public}s, status=%{public}d, userID=%{public}d, subProfileId=%{public}d.",
         permissionName.c_str(), status, userID, subProfileId);
     if (!DataValidator::IsPermissionNameValid(permissionName)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "PermissionName is invalid.");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     if (!DataValidator::IsToggleStatusValid(status)) {
@@ -650,7 +644,6 @@ int32_t AccessTokenKit::GetPermissionRequestToggleStatus(const std::string& perm
     LOGD(ATM_DOMAIN, ATM_TAG, "PermissionName=%{public}s, userID=%{public}d, subProfileId=%{public}d.",
         permissionName.c_str(), userID, subProfileId);
     if (!DataValidator::IsPermissionNameValid(permissionName)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "PermissionName is invalid.");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     if (!DataValidator::IsUserIdValid(userID)) {
@@ -972,7 +965,6 @@ int32_t AccessTokenKit::GetReqPermissionByName(
     LOGI(ATM_DOMAIN, ATM_TAG,
         "TokenID=%{public}d permissionName=%{public}s.", tokenID, permissionName.c_str());
     if (!DataValidator::IsPermissionNameValid(permissionName)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "PermissionName is invalid.");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     return AccessTokenManagerClient::GetInstance().GetReqPermissionByName(tokenID, permissionName, value);
@@ -1030,7 +1022,6 @@ int32_t AccessTokenKit::SetPermissionStatusWithPolicy(
     }
     for (const auto& perm : permissionList) {
         if (!DataValidator::IsPermissionNameValid(perm)) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "PermissionName is invalid: %{public}s.", perm.c_str());
             return AccessTokenError::ERR_PARAM_INVALID;
         }
     }
@@ -1094,7 +1085,6 @@ int32_t AccessTokenKit::QueryStatusByPermission(const std::vector<std::string>& 
     for (const auto& permissionName : permissionList) {
         // Validate permission name format
         if (!DataValidator::IsPermissionNameValid(permissionName)) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "PermissionName format is invalid: %{public}s.", permissionName.c_str());
             return AccessTokenError::ERR_PARAM_INVALID;
         }
 
