@@ -648,6 +648,7 @@ HWTEST_F(AccessTokenMockTest, RegisterSelfPermStateChangeCallback001, TestSize.L
     ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr));
 }
 
+#ifdef ATM_BUILD_VARIANT_USER_ENABLE
 /**
  * @tc.name: ReloadNativeTokenInfo001
  * @tc.desc: ReloadNativeTokenInfo with proxy is null
@@ -658,6 +659,7 @@ HWTEST_F(AccessTokenMockTest, ReloadNativeTokenInfo001, TestSize.Level4)
 {
     ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::ReloadNativeTokenInfo());
 }
+#endif
 
 /**
  * @tc.name: GetNativeTokenId001
