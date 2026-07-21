@@ -1684,11 +1684,9 @@ int32_t AccessTokenManagerService::GetHapTokenInfo(AccessTokenID tokenID, HapTok
 int32_t AccessTokenManagerService::GetPermissionCode(const std::string& permission, uint32_t& opCode)
 {
     if (!IsDefinedPermissionInner(permission)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Perm(%{public}s) is not exist.", permission.c_str());
         return ERR_PERMISSION_NOT_EXIST;
     }
     if (!TransferPermissionToOpcode(permission, opCode)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Perm(%{public}s) is not exist.", permission.c_str());
         return ERR_PERMISSION_NOT_EXIST;
     }
     return RET_SUCCESS;

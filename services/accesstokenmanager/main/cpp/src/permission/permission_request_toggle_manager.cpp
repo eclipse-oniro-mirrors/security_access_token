@@ -91,15 +91,12 @@ int32_t PermissionRequestToggleManager::ValidatePermissionForToggle(
     const std::string& permissionName, int32_t userID) const
 {
     if (!PermissionValidator::IsUserIdValid(userID) || !PermissionValidator::IsPermissionNameValid(permissionName)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Invalid parameter.");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     if (!IsDefinedPermissionInner(permissionName)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Permission is not defined.");
         return AccessTokenError::ERR_PERMISSION_NOT_EXIST;
     }
     if (!IsUserGrantPermission(permissionName)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Only support permissions of user_grant.");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     return RET_SUCCESS;

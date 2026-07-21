@@ -587,8 +587,12 @@ int32_t PermissionRecordManager::AddPermissionUsedRecord(const AddPermParamInfo&
     }
 
     uint32_t flag = TypePermissionFlag::PERMISSION_DEFAULT_FLAG;
-    if (AccessTokenKit::GetPermissionFlag(normalizedInfo.tokenId, normalizedInfo.permissionName, flag) ==
-        Constant::SUCCESS) {
+    ret = AccessTokenKit::GetPermissionFlag(normalizedInfo.tokenId, normalizedInfo.permissionName, flag);
+    if (ret == Constant::SUCCESS) {
+        if ((flag & TypePermissionFlag::PERMISSION_FIXED_BY_ADMIN_POLICY) != 0) {
+            LOGI(PRI_DOMAIN, PRI_TAG, "Fixed by admin policy, don't add used record.");
+            return Constant::SUCCESS;
+        }
         if (flag == TypePermissionFlag::PERMISSION_SYSTEM_FIXED &&
             normalizedInfo.permissionName == CAMERA_PERMISSION_NAME) {
             LOGI(PRI_DOMAIN, PRI_TAG, "CAMERA with system_fixed flag, add used record asynchronously.");
@@ -597,9 +601,6 @@ int32_t PermissionRecordManager::AddPermissionUsedRecord(const AddPermParamInfo&
             };
             std::thread addRecordTask(addRecord);
             addRecordTask.detach();
-            return Constant::SUCCESS;
-        } else if ((flag & TypePermissionFlag::PERMISSION_FIXED_BY_ADMIN_POLICY) != 0) {
-            LOGI(PRI_DOMAIN, PRI_TAG, "Fixed by admin policy, don't add used record.");
             return Constant::SUCCESS;
         }
     }

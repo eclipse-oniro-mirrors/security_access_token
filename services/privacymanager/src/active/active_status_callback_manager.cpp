@@ -106,7 +106,6 @@ int32_t ActiveStatusCallbackManager::AddCallback(
 
 int32_t ActiveStatusCallbackManager::RemoveCallback(const sptr<IRemoteObject>& callback)
 {
-    LOGI(PRI_DOMAIN, PRI_TAG, "Called");
     if (callback == nullptr) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Callback is nullptr.");
         return PrivacyError::ERR_PARAM_INVALID;
@@ -116,7 +115,6 @@ int32_t ActiveStatusCallbackManager::RemoveCallback(const sptr<IRemoteObject>& c
 
     for (auto it = callbackDataList_.begin(); it != callbackDataList_.end(); ++it) {
         if (callback == (*it).callbackObject_) {
-            LOGI(PRI_DOMAIN, PRI_TAG, "Find callback");
             if (callbackDeathRecipient_ != nullptr) {
                 callback->RemoveDeathRecipient(callbackDeathRecipient_);
             }

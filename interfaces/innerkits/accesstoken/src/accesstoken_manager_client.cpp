@@ -350,7 +350,8 @@ int AccessTokenManagerClient::GetPermissionFlag(
     if (result != RET_SUCCESS) {
         result = ConvertResult(result);
     }
-    LOGI(ATM_DOMAIN, ATM_TAG, "Result is %{public}d, flag is %{public}d.", result, flag);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Ret: %{public}d, id: %{public}u, perm: %{public}s, flag: %{public}u.",
+        result, tokenID, permissionName.c_str(), flag);
     return result;
 }
 

@@ -260,13 +260,10 @@ void PermissionManager::GetSelfPermissionState(const std::vector<PermissionStatu
 
 int PermissionManager::GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName, uint32_t& flag)
 {
-    LOGI(ATM_DOMAIN, ATM_TAG, "TokenID: %{public}u, permissionName: %{public}s", tokenID, permissionName.c_str());
     if (!PermissionValidator::IsPermissionNameValid(permissionName)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "%{public}s of %{public}u is invalid!", permissionName.c_str(), tokenID);
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     if (!IsDefinedPermissionInner(permissionName)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "PermissionName is invalid %{public}s.", permissionName.c_str());
         return AccessTokenError::ERR_PERMISSION_NOT_EXIST;
     }
     uint32_t opCode;
@@ -625,11 +622,9 @@ int32_t PermissionManager::CheckAndUpdatePermission(AccessTokenID tokenID, const
     bool isGranted, uint32_t flag, bool killProcess)
 {
     if (!PermissionValidator::IsPermissionNameValid(permissionName)) {
-        LOGC(ATM_DOMAIN, ATM_TAG, "%{public}s of %{public}u is invalid!", permissionName.c_str(), tokenID);
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     if (!IsDefinedPermissionInner(permissionName)) {
-        LOGC(ATM_DOMAIN, ATM_TAG, "No definition for permission: %{public}s!", permissionName.c_str());
         return AccessTokenError::ERR_PERMISSION_NOT_EXIST;
     }
     if (!PermissionValidator::IsPermissionFlagValid(flag) || PermissionValidator::IsPermissionFlagValidForAdmin(flag)) {
@@ -693,11 +688,9 @@ int32_t PermissionManager::CheckMultiPermissionStatus(
             "Id: %{public}d, perm: %{public}s, status: %{public}d, flag: %{public}d.", tokenID,
             permissionName.c_str(), status, flag);
         if (!IsDefinedPermissionInner(permissionName)) {
-            LOGC(ATM_DOMAIN, ATM_TAG, "Perm(%{public}s) is not defined!", permissionName.c_str());
             return AccessTokenError::ERR_PERMISSION_NOT_EXIST;
         }
         if (!IsUserGrantPermission(permissionName)) {
-            LOGC(ATM_DOMAIN, ATM_TAG, "Perm(%{public}s) is not user_grant, cannot be granted.", permissionName.c_str());
             return AccessTokenError::ERR_PARAM_INVALID;
         }
     }
@@ -828,19 +821,16 @@ int32_t PermissionManager::AddPermStateChangeCallback(
 
 int32_t PermissionManager::RemovePermStateChangeCallback(const sptr<IRemoteObject>& callback)
 {
-    LOGI(ATM_DOMAIN, ATM_TAG, "Called");
     return CallbackManager::GetInstance().RemoveCallback(callback);
 }
 
 bool PermissionManager::IsPermissionVaild(const std::string& permissionName)
 {
     if (!PermissionValidator::IsPermissionNameValid(permissionName)) {
-        LOGW(ATM_DOMAIN, ATM_TAG, "Invalid permissionName %{public}s", permissionName.c_str());
         return false;
     }
 
     if (!IsDefinedPermissionInner(permissionName)) {
-        LOGW(ATM_DOMAIN, ATM_TAG, "Permission %{public}s has no definition ", permissionName.c_str());
         return false;
     }
     return true;
