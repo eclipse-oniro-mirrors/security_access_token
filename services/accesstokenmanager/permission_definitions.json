@@ -10037,7 +10037,7 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
-            "deviceTypes": ["general"]
+            "deviceTypes": ["phone", "tv", "wearable", "2in1", "tablet", "car", "liteWearable"]
         },
         {
             "name": "ohos.permission.HDC_REPORT_INFO",
