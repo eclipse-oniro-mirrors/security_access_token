@@ -7911,6 +7911,17 @@
             "deviceTypes": ["general"]
         },
         {
+            "name": "ohos.permission.ONSCREEN_AWARENESS",
+            "grantMode": "user_grant",
+            "availableLevel": "system_core",
+            "availableType": "SYSTEM",
+            "since": "26.1.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "tablet", "2in1", "car"]
+        },
+        {
             "name": "ohos.permission.ACCESS_DISTRIBUTED_KEY_STORE",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
@@ -10253,6 +10264,17 @@
             "deviceTypes": ["phone", "2in1", "car", "tablet", "wearable", "tv"]
         },
         {
+            "name": "ohos.permission.AGENT_FILE_ACCESS",
+            "grantMode": "user_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "tablet"]
+        },
+        {
             "name": "ohos.permission.FILE_MANAGER_SERVICE_ACCESS",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
@@ -10275,6 +10297,17 @@
             "deviceTypes": ["phone", "2in1", "tablet"]
         },
         {
+            "name": "ohos.permission.PUBLISH_ECG_MEASURE_EVENT",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SERVICE",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": false,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone"]
+        },
+        {
             "name": "ohos.permission.FILE_MANAGER_SERVICE_DATA_ACCESS",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
@@ -10284,6 +10317,17 @@
             "provisionEnable": true,
             "distributedSceneEnable": false,
             "deviceTypes": ["phone", "2in1", "tablet"]
+        },
+        {
+            "name": "ohos.permission.ENABLE_GWPASAN_INNER",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "availableType": "SERVICE",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "tablet"]
         }
     ]
 }

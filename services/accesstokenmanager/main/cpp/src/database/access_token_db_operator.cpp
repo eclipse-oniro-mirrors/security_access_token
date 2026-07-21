@@ -62,17 +62,6 @@ int32_t AccessTokenDbOperator::DeleteAndInsertValues(const std::vector<DelInfo>&
     return AccessTokenDb::GetInstance()->DeleteAndInsertValues(delInfoVec, addInfoVec);
 #endif
 }
-
-int32_t AccessTokenDbOperator::Modify(const AtmDataType type,
-    const std::vector<GenericValues>& modifyValues,
-    const std::vector<GenericValues>& conditions)
-{
-#ifdef DYNAMIC_CLOSE_LIBS
-    return RdbDlopenManager::GetInstance()->Modify(type, modifyValues, conditions);
-#else
-    return AccessTokenDb::GetInstance()->Modify(type, modifyValues, conditions);
-#endif
-}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

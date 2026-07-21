@@ -21,15 +21,10 @@
         "OHOS::Security::AccessToken::AccessTokenKit::AllocLocalTokenID(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, unsigned int)";
         "OHOS::Security::AccessToken::AccessTokenKit::UpdateHapToken(OHOS::Security::AccessToken::AccessTokenIDEx&, OHOS::Security::AccessToken::UpdateHapInfoParams const&, OHOS::Security::AccessToken::HapPolicyParams const&)";
         "OHOS::Security::AccessToken::AccessTokenKit::UpdateHapToken(OHOS::Security::AccessToken::AccessTokenIDEx&, OHOS::Security::AccessToken::UpdateHapInfoParams const&, OHOS::Security::AccessToken::HapPolicyParams const&, OHOS::Security::AccessToken::HapInfoCheckResult&)";
-        "OHOS::Security::AccessToken::AccessTokenKit::PreMigrateUIDList(std::__h::vector<int, std::__h::allocator<int>> const&)";
-        "OHOS::Security::AccessToken::AccessTokenKit::MigrateInstalledBundles(std::__h::vector<OHOS::Security::AccessToken::MigratedInfo, std::__h::allocator<OHOS::Security::AccessToken::MigratedInfo>> const&, std::__h::vector<OHOS::Security::AccessToken::BundleMigrateResult, std::__h::allocator<OHOS::Security::AccessToken::BundleMigrateResult>>&)";
-        "OHOS::Security::AccessToken::AccessTokenKit::FinishMigration()";
         "OHOS::Security::AccessToken::AccessTokenKit::DeleteToken(unsigned int)";
         "OHOS::Security::AccessToken::AccessTokenKit::DeleteToken(unsigned int, bool)";
         "OHOS::Security::AccessToken::AccessTokenKit::DeleteToolTokenByPid(int)";
         "OHOS::Security::AccessToken::AccessTokenKit::GetHapTokenID(int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, int)";
-        "OHOS::Security::AccessToken::AccessTokenKit::GetHapIdentity(OHOS::Security::AccessToken::HapBaseInfo const&, OHOS::Security::AccessToken::Identity&)";
-        "OHOS::Security::AccessToken::AccessTokenKit::GetHapBaseInfoByUid(int, OHOS::Security::AccessToken::HapBaseInfo&)";
         "OHOS::Security::AccessToken::AccessTokenKit::GetHapTokenInfo(unsigned int, OHOS::Security::AccessToken::HapTokenInfo&)";
         "OHOS::Security::AccessToken::AccessTokenKit::GetTokenIDByUserID(int, std::__h::unordered_set<unsigned int, std::__h::hash<unsigned int>, std::__h::equal_to<unsigned int>, std::__h::allocator<unsigned int>>&, int)";
         "OHOS::Security::AccessToken::AccessTokenKit::GetNativeTokenInfo(unsigned int, OHOS::Security::AccessToken::NativeTokenInfo&)";
@@ -107,7 +102,6 @@
         "OHOS::Security::AccessToken::AccessTokenKit::GetCliPermissionRequestInfo(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, std::__h::vector<OHOS::Security::AccessToken::CliInfo, std::__h::allocator<OHOS::Security::AccessToken::CliInfo>> const&, OHOS::Security::AccessToken::PermissionDialogResult&)";
         "OHOS::Security::AccessToken::AccessTokenKit::GetCliPermissions(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, std::__h::vector<OHOS::Security::AccessToken::CliInfo, std::__h::allocator<OHOS::Security::AccessToken::CliInfo>> const&, OHOS::Security::AccessToken::CliPermissionsResult&)";
         "OHOS::Security::AccessToken::AccessTokenKit::GenerateCliAuthResult(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, std::__h::vector<OHOS::Security::AccessToken::CliAuthInfo, std::__h::allocator<OHOS::Security::AccessToken::CliAuthInfo>> const&, OHOS::Security::AccessToken::ToolAuthResult&)";
-        "OHOS::Security::AccessToken::AccessTokenKit::DeleteIdentity(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, OHOS::Security::AccessToken::ReservedType)";
         OHOS::Security::AccessToken::AccessTokenKit::IsSystemAppByFullTokenID*;
         OHOS::Security::AccessToken::AccessTokenKit::GetRenderTokenID*;
         OHOS::Security::AccessToken::AccessTokenKit::IsCliToolToken*;
@@ -115,16 +109,6 @@
         "OHOS::Security::AccessToken::AccessTokenKit::IsSupportPermission(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&)";
         "OHOS::Security::AccessToken::AccessTokenKit::TransferPermissionToOpcode(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, unsigned int&)";
         "OHOS::Security::AccessToken::AccessTokenKit::TransferOpcodeToPermission(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>>&)";
-        "OHOS::Security::AccessToken::AccessTokenKit::CheckHapSignInfo(OHOS::Security::AccessToken::BundleHapList const&, int&, std::__h::vector<OHOS::Security::AccessToken::TrustedBundleInfo, std::__h::allocator<OHOS::Security::AccessToken::TrustedBundleInfo>>&, OHOS::Security::AccessToken::HapVerifyResultInfo&)";
-        "OHOS::Security::AccessToken::AccessTokenKit::CheckHapPermissionInfo(int, OHOS::Security::AccessToken::TypeInstallTypeEnum, OHOS::Security::AccessToken::HapInfoCheckResult&)";
-        "OHOS::Security::AccessToken::AccessTokenKit::PrepareHapIdentity(int&, OHOS::Security::AccessToken::HapBaseInfo const&, OHOS::Security::AccessToken::BundlePolicy const&, OHOS::Security::AccessToken::Identity&)";
-        "OHOS::Security::AccessToken::AccessTokenKit::UpdateHapPolicy(int, int, OHOS::Security::AccessToken::BundlePolicy const&)";
-        "OHOS::Security::AccessToken::AccessTokenKit::UpdateHapPolicy(int, int, OHOS::Security::AccessToken::BundlePolicy const&, int&)";
-        "OHOS::Security::AccessToken::AccessTokenKit::FinishInstall(int, bool, std::__h::map<std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>>, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>>, std::__h::less<std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>>>, std::__h::allocator<std::__h::pair<std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>>>>> const&)";
-        "OHOS::Security::AccessToken::AccessTokenKit::GetCacheSignInfoBySessionId(int, std::__h::vector<OHOS::Security::AccessToken::TrustedBundleInfo, std::__h::allocator<OHOS::Security::AccessToken::TrustedBundleInfo>>&)";
-        "OHOS::Security::AccessToken::AccessTokenKit::GetHapSignInfo(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, std::__h::vector<OHOS::Security::AccessToken::TrustedBundleInfo, std::__h::allocator<OHOS::Security::AccessToken::TrustedBundleInfo>>&)";
-        "OHOS::Security::AccessToken::AccessTokenKit::GetCachePolicyBySessionId(int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, OHOS::Security::AccessToken::BundlePolicyInfo&)";
-        "OHOS::Security::AccessToken::AccessTokenKit::RefreshTokenStatus(OHOS::Security::AccessToken::Identity const&, OHOS::Security::AccessToken::ReservedType)";
     };
   local:
     *;

@@ -32,7 +32,6 @@ namespace Security {
 namespace AccessToken {
 namespace {
 static constexpr int32_t RANDOM_TOKENID = 123;
-static constexpr int32_t RANDOM_USERID = 10001;
 static constexpr int32_t INVALID_UID = 1234;
 static constexpr const char* MANAGE_RUNTIME_CALLER_PROCESS = "com.ohos.permissionmanager";
 static const std::string DEFAULT_AGENT_ID = "1001";
@@ -142,7 +141,7 @@ void AccessTokenDenyTest::TearDown()
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(AccessTokenDenyTest, SetUserPolicy001, TestSize.Level0)
+HWTEST_F(AccessTokenDenyTest, SetUserPolicy001, TestSize.Level1)
 {
     UserPermissionPolicy policy;
     policy.permissionName = "ohos.permission.INTERNET";
@@ -161,7 +160,7 @@ HWTEST_F(AccessTokenDenyTest, SetUserPolicy001, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(AccessTokenDenyTest, ClearUserPolicy001, TestSize.Level0)
+HWTEST_F(AccessTokenDenyTest, ClearUserPolicy001, TestSize.Level1)
 {
     int32_t ret = AccessTokenKit::ClearUserPolicy({ "ohos.permission.INTERNET" });
     EXPECT_EQ(ret, AccessTokenError::ERR_PERMISSION_DENIED);
@@ -173,7 +172,7 @@ HWTEST_F(AccessTokenDenyTest, ClearUserPolicy001, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(AccessTokenDenyTest, UpdatePolicyWhiteList001, TestSize.Level0)
+HWTEST_F(AccessTokenDenyTest, UpdatePolicyWhiteList001, TestSize.Level1)
 {
     RestoreSelfCaller();
     MockToken mock(g_selfTokenId, "com.ohos.permissionmanager", true);
@@ -194,7 +193,7 @@ HWTEST_F(AccessTokenDenyTest, UpdatePolicyWhiteList001, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(AccessTokenDenyTest, GetPolicyWhiteList001, TestSize.Level0)
+HWTEST_F(AccessTokenDenyTest, GetPolicyWhiteList001, TestSize.Level1)
 {
     std::vector<AccessTokenID> tokenIdList;
     int32_t ret = AccessTokenKit::GetPolicyWhiteList("ohos.permission.INTERNET", tokenIdList);
@@ -208,7 +207,7 @@ HWTEST_F(AccessTokenDenyTest, GetPolicyWhiteList001, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenDenyTest, AllocHapToken001, TestSize.Level0)
+HWTEST_F(AccessTokenDenyTest, AllocHapToken001, TestSize.Level1)
 {
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx = AccessTokenKit::AllocHapToken(g_InfoParms, g_PolicyPrams);
@@ -221,7 +220,7 @@ HWTEST_F(AccessTokenDenyTest, AllocHapToken001, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenDenyTest, InitHapToken001, TestSize.Level0)
+HWTEST_F(AccessTokenDenyTest, InitHapToken001, TestSize.Level1)
 {
     AccessTokenIDEx tokenIdEx = {0};
     int32_t ret = AccessTokenKit::InitHapToken(g_InfoParms, g_PolicyPrams, tokenIdEx);
@@ -234,7 +233,7 @@ HWTEST_F(AccessTokenDenyTest, InitHapToken001, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenDenyTest, AllocLocalTokenID001, TestSize.Level0)
+HWTEST_F(AccessTokenDenyTest, AllocLocalTokenID001, TestSize.Level1)
 {
     std::string remoteDevice = "remote device";
     AccessTokenID tokenId = RANDOM_TOKENID;
@@ -250,7 +249,7 @@ HWTEST_F(AccessTokenDenyTest, AllocLocalTokenID001, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenDenyTest, UpdateHapToken001, TestSize.Level0)
+HWTEST_F(AccessTokenDenyTest, UpdateHapToken001, TestSize.Level1)
 {
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx.tokenIdExStruct.tokenID = RANDOM_TOKENID;
@@ -268,7 +267,7 @@ HWTEST_F(AccessTokenDenyTest, UpdateHapToken001, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenDenyTest, DeleteToken001, TestSize.Level0)
+HWTEST_F(AccessTokenDenyTest, DeleteToken001, TestSize.Level1)
 {
     AccessTokenID tokenId = RANDOM_TOKENID;
     ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::DeleteToken(tokenId));
@@ -280,7 +279,7 @@ HWTEST_F(AccessTokenDenyTest, DeleteToken001, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenDenyTest, GetHapTokenID001, TestSize.Level0)
+HWTEST_F(AccessTokenDenyTest, GetHapTokenID001, TestSize.Level1)
 {
     int32_t userID = 0;
     std::string bundleName = "test";
@@ -295,7 +294,7 @@ HWTEST_F(AccessTokenDenyTest, GetHapTokenID001, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenDenyTest, GetHapTokenInfo001, TestSize.Level0)
+HWTEST_F(AccessTokenDenyTest, GetHapTokenInfo001, TestSize.Level1)
 {
     AccessTokenID tokenId = RANDOM_TOKENID;
     HapTokenInfo tokenInfo;
@@ -308,28 +307,11 @@ HWTEST_F(AccessTokenDenyTest, GetHapTokenInfo001, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenDenyTest, GetNativeTokenInfo001, TestSize.Level0)
+HWTEST_F(AccessTokenDenyTest, GetNativeTokenInfo001, TestSize.Level1)
 {
     AccessTokenID tokenId = 805920561; //805920561 is a native tokenId.
     NativeTokenInfo tokenInfo;
     ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::GetNativeTokenInfo(tokenId, tokenInfo));
-}
-
-/**
- * @tc.name: GetHapIdentity001
- * @tc.desc: GetHapIdentity with no permission
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenDenyTest, GetHapIdentity001, TestSize.Level0)
-{
-    HapBaseInfo baseInfo;
-    baseInfo.userID = 0;
-    baseInfo.bundleName = "test";
-    baseInfo.instIndex = 0;
-    Identity identity = {0};
-
-    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::GetHapIdentity(baseInfo, identity));
 }
 
 /**
@@ -338,7 +320,7 @@ HWTEST_F(AccessTokenDenyTest, GetHapIdentity001, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenDenyTest, GetReqPermissions001, TestSize.Level0)
+HWTEST_F(AccessTokenDenyTest, GetReqPermissions001, TestSize.Level1)
 {
     std::vector<PermissionStateFull> permStatList;
     AccessTokenID tokenID = RANDOM_TOKENID;
@@ -354,7 +336,7 @@ HWTEST_F(AccessTokenDenyTest, GetReqPermissions001, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenDenyTest, GetPermissionFlag001, TestSize.Level0)
+HWTEST_F(AccessTokenDenyTest, GetPermissionFlag001, TestSize.Level1)
 {
     AccessTokenID tokenId = RANDOM_TOKENID;
     std::string permission = "ohos.permission.CAMERA";
@@ -368,7 +350,7 @@ HWTEST_F(AccessTokenDenyTest, GetPermissionFlag001, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenDenyTest, SetPermissionRequestToggleStatus001, TestSize.Level0)
+HWTEST_F(AccessTokenDenyTest, SetPermissionRequestToggleStatus001, TestSize.Level1)
 {
     int32_t userID = 0;
     uint32_t status = PermissionRequestToggleStatus::CLOSED;
@@ -380,20 +362,48 @@ HWTEST_F(AccessTokenDenyTest, SetPermissionRequestToggleStatus001, TestSize.Leve
 
 /**
  * @tc.name: SetPermissionRequestToggleStatus002
- * @tc.desc: SetPermissionRequestToggleStatus with not system app
+ * @tc.desc: SetPermissionRequestToggleStatus with non-system hap.
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenDenyTest, SetPermissionRequestToggleStatus002, TestSize.Level0)
+HWTEST_F(AccessTokenDenyTest, SetPermissionRequestToggleStatus002, TestSize.Level1)
 {
     RestoreSelfCaller();
-    MockToken caller(g_selfTokenId, "com.ohos.permissionmanager", false);
+    std::vector<std::string> reqPerm;
+    MockHapToken mock("SetPermissionRequestToggleStatus002", reqPerm, false);
+    ASSERT_NE(INVALID_TOKENID, mock.GetTokenID());
+    EXPECT_EQ(0, setuid(INVALID_UID));
+
     int32_t userID = 0;
     uint32_t status = PermissionRequestToggleStatus::CLOSED;
     std::string permission = "ohos.permission.CAMERA";
 
-    ASSERT_EQ(AccessTokenError::ERR_NOT_SYSTEM_APP, AccessTokenKit::SetPermissionRequestToggleStatus(
+    EXPECT_EQ(AccessTokenError::ERR_NOT_SYSTEM_APP, AccessTokenKit::SetPermissionRequestToggleStatus(
         permission, status, userID));
+    RestoreSelfCaller();
+}
+
+/**
+ * @tc.name: SetPermissionRequestToggleStatus003
+ * @tc.desc: SetPermissionRequestToggleStatus with system hap without DISABLE_PERMISSION_DIALOG permission.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenDenyTest, SetPermissionRequestToggleStatus003, TestSize.Level1)
+{
+    RestoreSelfCaller();
+    std::vector<std::string> reqPerm;
+    MockHapToken mock("SetPermissionRequestToggleStatus003", reqPerm, true);
+    ASSERT_NE(INVALID_TOKENID, mock.GetTokenID());
+    EXPECT_EQ(0, setuid(INVALID_UID));
+
+    int32_t userID = 0;
+    uint32_t status = PermissionRequestToggleStatus::CLOSED;
+    std::string permission = "ohos.permission.CAMERA";
+
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::SetPermissionRequestToggleStatus(
+        permission, status, userID));
+    RestoreSelfCaller();
 }
 
 /**
@@ -402,7 +412,7 @@ HWTEST_F(AccessTokenDenyTest, SetPermissionRequestToggleStatus002, TestSize.Leve
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenDenyTest, GetPermissionRequestToggleStatus001, TestSize.Level0)
+HWTEST_F(AccessTokenDenyTest, GetPermissionRequestToggleStatus001, TestSize.Level1)
 {
     int32_t userID = 0;
     uint32_t status;
@@ -418,7 +428,7 @@ HWTEST_F(AccessTokenDenyTest, GetPermissionRequestToggleStatus001, TestSize.Leve
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenDenyTest, GetPermissionRequestToggleStatus002, TestSize.Level0)
+HWTEST_F(AccessTokenDenyTest, GetPermissionRequestToggleStatus002, TestSize.Level1)
 {
     RestoreSelfCaller();
     MockToken caller(g_selfTokenId, "com.ohos.permissionmanager", false);
@@ -436,7 +446,7 @@ HWTEST_F(AccessTokenDenyTest, GetPermissionRequestToggleStatus002, TestSize.Leve
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenDenyTest, GrantPermission001, TestSize.Level0)
+HWTEST_F(AccessTokenDenyTest, GrantPermission001, TestSize.Level1)
 {
     AccessTokenID tokenId = RANDOM_TOKENID;
     std::string permission = "ohos.permission.CAMERA";
@@ -450,7 +460,7 @@ HWTEST_F(AccessTokenDenyTest, GrantPermission001, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenDenyTest, RevokePermission001, TestSize.Level0)
+HWTEST_F(AccessTokenDenyTest, RevokePermission001, TestSize.Level1)
 {
     AccessTokenID tokenId = RANDOM_TOKENID;
     std::string permission = "ohos.permission.CAMERA";
@@ -464,7 +474,7 @@ HWTEST_F(AccessTokenDenyTest, RevokePermission001, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenDenyTest, ClearUserGrantedPermissionState001, TestSize.Level0)
+HWTEST_F(AccessTokenDenyTest, ClearUserGrantedPermissionState001, TestSize.Level1)
 {
     AccessTokenID tokenId = RANDOM_TOKENID;
     ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::ClearUserGrantedPermissionState(tokenId));
@@ -476,7 +486,7 @@ HWTEST_F(AccessTokenDenyTest, ClearUserGrantedPermissionState001, TestSize.Level
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenDenyTest, ClearUserGrantedPermStateByBundle001, TestSize.Level0)
+HWTEST_F(AccessTokenDenyTest, ClearUserGrantedPermStateByBundle001, TestSize.Level1)
 {
     const std::string bundleName = "ClearUserGrantedPermStateByBundleDeny";
     ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
@@ -502,7 +512,7 @@ public:
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenDenyTest, RegisterPermStateChangeCallback001, TestSize.Level0)
+HWTEST_F(AccessTokenDenyTest, RegisterPermStateChangeCallback001, TestSize.Level1)
 {
     PermStateChangeScope scopeInfo;
     scopeInfo.permList = {"ohos.permission.CAMERA"};
@@ -517,7 +527,7 @@ HWTEST_F(AccessTokenDenyTest, RegisterPermStateChangeCallback001, TestSize.Level
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenDenyTest, UnregisterPermStateChangeCallback001, TestSize.Level0)
+HWTEST_F(AccessTokenDenyTest, UnregisterPermStateChangeCallback001, TestSize.Level1)
 {
     setuid(g_selfUid);
 
@@ -562,7 +572,7 @@ HWTEST_F(AccessTokenDenyTest, UnregisterPermStateChangeCallback001, TestSize.Lev
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(AccessTokenDenyTest, GetNativeTokenId001, TestSize.Level0)
+HWTEST_F(AccessTokenDenyTest, GetNativeTokenId001, TestSize.Level1)
 {
     std::string processName = "hdcd";
     AccessTokenID tokenID = AccessTokenKit::GetNativeTokenId(processName);
@@ -575,7 +585,7 @@ HWTEST_F(AccessTokenDenyTest, GetNativeTokenId001, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(AccessTokenDenyTest, DumpTokenInfo001, TestSize.Level0)
+HWTEST_F(AccessTokenDenyTest, DumpTokenInfo001, TestSize.Level1)
 {
     std::string dumpInfo;
     AtmToolsParamInfo info;
@@ -584,147 +594,6 @@ HWTEST_F(AccessTokenDenyTest, DumpTokenInfo001, TestSize.Level0)
     ASSERT_EQ("", dumpInfo);
 }
 
-#if defined(SPM_DATA_ENABLE) && defined(IS_SUPPORT_HAP_RUNNING)
-/**
- * @tc.name: CheckHapSignInfoTest001
- * @tc.desc: CheckHapSignInfo with no permission
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenDenyTest, CheckHapSignInfoTest001, TestSize.Level0)
-{
-    std::string path = "/data/not/exist/test.hap";
-    BundleHapList hapList;
-    hapList.hapPaths.emplace_back(path);
-    hapList.isPreInstalled = false;
-    hapList.userId = 100;
-    int32_t sessionId = 0;
-    std::vector<TrustedBundleInfo> bundleInfo;
-    HapVerifyResultInfo resultInfo;
-    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
-        AccessTokenKit::CheckHapSignInfo(hapList, sessionId, bundleInfo, resultInfo));
-}
-
-/**
- * @tc.name: CheckHapPermissionInfoTest001
- * @tc.desc: CheckHapPermissionInfo with no permission
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenDenyTest, CheckHapPermissionInfoTest001, TestSize.Level0)
-{
-    int32_t sessionId = 123;
-    InstallTypeEnum type = TYPE_INSTALL;
-    HapInfoCheckResult result;
-    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
-        AccessTokenKit::CheckHapPermissionInfo(sessionId, type, result));
-}
-
-/**
- * @tc.name: PrepareHapIdentityTest001
- * @tc.desc: PrepareHapIdentity with no permission
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenDenyTest, PrepareHapIdentityTest001, TestSize.Level0)
-{
-    int32_t sessionId = 0;
-
-    HapBaseInfo baseInfo;
-    baseInfo.userID = 100;
-    baseInfo.bundleName = "PrepareHapIdentityTest001";
-    baseInfo.instIndex = 0;
-
-    BundlePolicy bundlePolicy;
-    bundlePolicy.dlpType = DLP_COMMON;
-    bundlePolicy.isDebugGrant = false;
-
-    Identity identity;
-    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
-        AccessTokenKit::PrepareHapIdentity(sessionId, baseInfo, bundlePolicy, identity));
-}
-
-/**
- * @tc.name: UpdateHapPolicyTest001
- * @tc.desc: UpdateHapPolicy with no permission
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenDenyTest, UpdateHapPolicyTest001, TestSize.Level0)
-{
-    int32_t sessionId = 123;
-    int32_t tokenId = 123;
-
-    BundlePolicy bundlePolicy;
-    bundlePolicy.dlpType = DLP_COMMON;
-    bundlePolicy.isDebugGrant = false;
-
-    int32_t uid = 0;
-    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
-        AccessTokenKit::UpdateHapPolicy(sessionId, tokenId, bundlePolicy, uid));
-}
-
-/**
- * @tc.name: FinishInstallTest001
- * @tc.desc: FinishInstall with no permission
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenDenyTest, FinishInstallTest001, TestSize.Level0)
-{
-    int32_t sessionId = 123;
-    std::map<std::string, std::string> modulePathMap;
-
-    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
-        AccessTokenKit::FinishInstall(sessionId, false, modulePathMap));
-}
-
-/**
- * @tc.name: GetCacheSignInfoBySessionIdTest001
- * @tc.desc: GetCacheSignInfoBySessionId with no permission
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenDenyTest, GetCacheSignInfoBySessionIdTest001, TestSize.Level0)
-{
-    int32_t sessionId = 123;
-    std::vector<TrustedBundleInfo> bundleInfo;
-
-    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
-        AccessTokenKit::GetCacheSignInfoBySessionId(sessionId, bundleInfo));
-}
-
-/**
- * @tc.name: GetHapSignInfoTest001
- * @tc.desc: GetHapSignInfo with no permission
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenDenyTest, GetHapSignInfoTest001, TestSize.Level0)
-{
-    std::string bundleName = "GetHapSignInfoTest001";
-    std::vector<TrustedBundleInfo> bundleInfo;
-
-    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::GetHapSignInfo(bundleName, bundleInfo));
-}
-
-/**
- * @tc.name: GetCachePolicyBySessionIdTest001
- * @tc.desc: GetCachePolicyBySessionId with no permission
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenDenyTest, GetCachePolicyBySessionIdTest001, TestSize.Level0)
-{
-    int32_t sessionId = 123;
-    std::string bundleName = "GetCachePolicyBySessionIdTest001";
-    BundlePolicyInfo bundlePolicyInfo;
-
-    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
-        AccessTokenKit::GetCachePolicyBySessionId(sessionId, bundleName, bundlePolicyInfo));
-}
-#endif
-
 #ifdef TOKEN_SYNC_ENABLE
 /**
  * @tc.name: GetHapTokenInfoFromRemote001
@@ -732,7 +601,7 @@ HWTEST_F(AccessTokenDenyTest, GetCachePolicyBySessionIdTest001, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenDenyTest, GetHapTokenInfoFromRemote001, TestSize.Level0)
+HWTEST_F(AccessTokenDenyTest, GetHapTokenInfoFromRemote001, TestSize.Level1)
 {
     AccessTokenID tokenId = RANDOM_TOKENID;
     HapTokenInfoForSync hapSync;
@@ -745,7 +614,7 @@ HWTEST_F(AccessTokenDenyTest, GetHapTokenInfoFromRemote001, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenDenyTest, SetRemoteHapTokenInfo001, TestSize.Level0)
+HWTEST_F(AccessTokenDenyTest, SetRemoteHapTokenInfo001, TestSize.Level1)
 {
     std::string device = "device";
     HapTokenInfoForSync hapSync;
@@ -758,7 +627,7 @@ HWTEST_F(AccessTokenDenyTest, SetRemoteHapTokenInfo001, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenDenyTest, DeleteRemoteToken001, TestSize.Level0)
+HWTEST_F(AccessTokenDenyTest, DeleteRemoteToken001, TestSize.Level1)
 {
     std::string device = "device";
     AccessTokenID tokenId = RANDOM_TOKENID;
@@ -771,7 +640,7 @@ HWTEST_F(AccessTokenDenyTest, DeleteRemoteToken001, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenDenyTest, GetRemoteNativeTokenID001, TestSize.Level0)
+HWTEST_F(AccessTokenDenyTest, GetRemoteNativeTokenID001, TestSize.Level1)
 {
     std::string device = "device";
     AccessTokenID tokenId = RANDOM_TOKENID;
@@ -784,13 +653,13 @@ HWTEST_F(AccessTokenDenyTest, GetRemoteNativeTokenID001, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenDenyTest, DeleteRemoteDeviceTokens001, TestSize.Level0)
+HWTEST_F(AccessTokenDenyTest, DeleteRemoteDeviceTokens001, TestSize.Level1)
 {
     std::string device = "device";
     ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::DeleteRemoteDeviceTokens(device));
 }
 
-HWTEST_F(AccessTokenDenyTest, RegisterTokenSyncCallback001, TestSize.Level0)
+HWTEST_F(AccessTokenDenyTest, RegisterTokenSyncCallback001, TestSize.Level1)
 {
     std::shared_ptr<TokenSyncKitInterface> callback = std::make_shared<TokenSyncCallbackImpl>();
     EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::RegisterTokenSyncCallback(callback));
@@ -804,7 +673,7 @@ HWTEST_F(AccessTokenDenyTest, RegisterTokenSyncCallback001, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenDenyTest, SetPermDialogCap001, TestSize.Level0)
+HWTEST_F(AccessTokenDenyTest, SetPermDialogCap001, TestSize.Level1)
 {
     HapBaseInfo hapBaseInfo;
     ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::SetPermDialogCap(hapBaseInfo, true));
@@ -816,7 +685,7 @@ HWTEST_F(AccessTokenDenyTest, SetPermDialogCap001, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenDenyTest, GrantPermissionForSpecifiedTime001, TestSize.Level0)
+HWTEST_F(AccessTokenDenyTest, GrantPermissionForSpecifiedTime001, TestSize.Level1)
 {
     AccessTokenID tokenId = RANDOM_TOKENID;
     std::string permission = "permission";
@@ -831,7 +700,7 @@ HWTEST_F(AccessTokenDenyTest, GrantPermissionForSpecifiedTime001, TestSize.Level
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenDenyTest, GetKernelPermissions001, TestSize.Level0)
+HWTEST_F(AccessTokenDenyTest, GetKernelPermissions001, TestSize.Level1)
 {
     AccessTokenID tokenId = RANDOM_TOKENID;
     std::vector<PermissionWithValue> kernelPermList;
@@ -844,7 +713,7 @@ HWTEST_F(AccessTokenDenyTest, GetKernelPermissions001, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenDenyTest, InitCliToken001, TestSize.Level0)
+HWTEST_F(AccessTokenDenyTest, InitCliToken001, TestSize.Level1)
 {
     AccessTokenIDEx tokenIdEx = {0};
     std::vector<PermissionWithValue> kernelPermList;
@@ -865,7 +734,7 @@ HWTEST_F(AccessTokenDenyTest, InitCliToken001, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenDenyTest, DeleteToolTokenByPid001, TestSize.Level0)
+HWTEST_F(AccessTokenDenyTest, DeleteToolTokenByPid001, TestSize.Level1)
 {
     EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::DeleteToolTokenByPid(getpid()));
 
@@ -882,7 +751,7 @@ HWTEST_F(AccessTokenDenyTest, DeleteToolTokenByPid001, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenDenyTest, GetHostTokenId001, TestSize.Level0)
+HWTEST_F(AccessTokenDenyTest, GetHostTokenId001, TestSize.Level1)
 {
     AccessTokenID hostTokenId = INVALID_TOKENID;
     EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
@@ -895,7 +764,7 @@ HWTEST_F(AccessTokenDenyTest, GetHostTokenId001, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenDenyTest, GetCliPermissionRequestInfo001, TestSize.Level0)
+HWTEST_F(AccessTokenDenyTest, GetCliPermissionRequestInfo001, TestSize.Level1)
 {
     RestoreSelfCaller();
     PermissionDialogResult result;
@@ -917,7 +786,7 @@ HWTEST_F(AccessTokenDenyTest, GetCliPermissionRequestInfo001, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenDenyTest, GetCliPermissions001, TestSize.Level0)
+HWTEST_F(AccessTokenDenyTest, GetCliPermissions001, TestSize.Level1)
 {
     RestoreSelfCaller();
     MockToken host(g_selfTokenId, MANAGE_RUNTIME_CALLER_PROCESS, true);
@@ -940,7 +809,7 @@ HWTEST_F(AccessTokenDenyTest, GetCliPermissions001, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenDenyTest, GenerateCliAuthResult001, TestSize.Level0)
+HWTEST_F(AccessTokenDenyTest, GenerateCliAuthResult001, TestSize.Level1)
 {
     RestoreSelfCaller();
     MockToken host(g_selfTokenId, MANAGE_RUNTIME_CALLER_PROCESS, true);
@@ -955,82 +824,6 @@ HWTEST_F(AccessTokenDenyTest, GenerateCliAuthResult001, TestSize.Level0)
     caller.Revoke(MANAGE_TOOL_RUNTIME_PERMISSIONS);
     EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
         AccessTokenKit::GenerateCliAuthResult(host.GetTokenId(), DEFAULT_AGENT_ID, { BuildCliAuthInfo() }, result));
-}
-
-/**
- * @tc.name: DeleteIdentityAbnormalTest001
- * @tc.desc: DeleteIdentity without ohos.permission.MANAGE_HAP_TOKENID returns ERR_PERMISSION_DENIED
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenDenyTest, DeleteIdentityAbnormalTest001, TestSize.Level0)
-{
-    RestoreSelfCaller();
-
-    // Create a HAP token for testing
-    HapInfoParams info = {
-        .userID = 100,
-        .bundleName = "test.delete.identity.bundle",
-        .instIndex = 0,
-        .appIDDesc = "test.delete.identity.appid",
-        .apiVersion = 8,
-    };
-
-    HapPolicyParams policy = {
-        .apl = APL_NORMAL,
-        .domain = "test.delete.identity.domain",
-    };
-
-    MockToken mock(g_selfTokenId, MANAGE_RUNTIME_CALLER_PROCESS, true);
-    mock.Grant("ohos.permission.MANAGE_HAP_TOKENID");
-
-    // Create mock token with MANAGE_HAP_TOKENID permission
-    AccessTokenIDEx tokenIdEx = {0};
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::InitHapToken(info, policy, tokenIdEx));
-    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
-    ASSERT_NE(INVALID_TOKENID, tokenID);
-
-    // With permission, DeleteIdentity should succeed
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteIdentity(tokenID, info.bundleName, ReservedType::NONE));
-
-    // Restore token for next test (re-create it)
-    ASSERT_NE(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::InitHapToken(info, policy, tokenIdEx));
-    tokenID = tokenIdEx.tokenIdExStruct.tokenID;
-    ASSERT_NE(INVALID_TOKENID, tokenID);
-
-    // Set UID to non-zero to enable permission check
-    uid_t uid = getuid();
-    setuid(1000);  // Set to non-zero UID
-    ASSERT_EQ(0, setuid(1000));
-
-    // Revoke the permission
-    mock.Revoke("ohos.permission.MANAGE_HAP_TOKENID");
-
-    // Without permission and with non-zero UID, DeleteIdentity should return ERR_PERMISSION_DENIED
-    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
-        AccessTokenKit::DeleteIdentity(tokenID, info.bundleName, ReservedType::NONE));
-
-    // Restore UID and clean up
-    ASSERT_EQ(0, setuid(uid));
-    mock.Grant("ohos.permission.MANAGE_HAP_TOKENID");
-    ASSERT_EQ(RET_SUCCESS,
-        AccessTokenKit::DeleteIdentity(tokenID, info.bundleName, ReservedType::NONE));
-}
-
-/**
- * @tc.name: RefreshTokenIdStatus001
- * @tc.desc: RefreshTokenStatus without ohos.permission.MANAGE_HAP_TOKENID returns ERR_PERMISSION_DENIED.
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenDenyTest, RefreshTokenIdStatus001, TestSize.Level0)
-{
-    Identity identity = {
-        .uid = RANDOM_USERID,
-        .tokenId = RANDOM_TOKENID,
-    };
-    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
-        AccessTokenKit::RefreshTokenStatus(identity, ReservedType::RESERVED_IDENTITY));
 }
 } // namespace AccessToken
 } // namespace Security

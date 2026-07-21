@@ -17,7 +17,6 @@
 
 #define private public
 #include "accesstoken_info_manager.h"
-#include "boot_verify_scheduler.h"
 #include "permission_manager.h"
 #include "verify_accesstoken_monitor.h"
 #undef private
@@ -33,13 +32,14 @@ namespace AccessToken {
 namespace {
 constexpr const int32_t MAX_RECORD_HAP_NUM_MAX = 512;
 constexpr const int32_t MAX_RECORD_TOKENID_NUM_MAX = 80;
+#ifdef SECURITY_GUARD_ENABLE
 constexpr const int32_t MAX_REPORT_TOKENID_NUM_MAX = 40;
+#endif
 constexpr const int32_t VERIFY_THRESHOLD = 50;
 constexpr const int32_t REPORT_THRESHOLD = 5;
 constexpr const int64_t REPORT_TIME_WINDOW = 5; // 5s
 constexpr const int64_t MONITOR_TIME_WINDOW = 2; // 2s
 constexpr const int64_t DENIED_TIME_WINDOW = 3; // 3s
-constexpr const int32_t SLEEP_TIME_SECONDS = 3;
 static AccessTokenID g_selfTokenId = 0;
 static PermissionDef g_infoManagerTestPermDef1 = {
     .permissionName = "open the door",
@@ -118,10 +118,8 @@ void AccessTokenMonitorTest::SetUpTestCase()
     uint32_t nativeSize = 0;
     uint32_t pefDefSize = 0;
     uint32_t dlpSize = 0;
-    AccessTokenInfoManager::GetInstance().Init(nativeSize, pefDefSize, dlpSize);
-    (void)BootVerifyScheduler::GetInstance().VerifyBundleSignInfoWhenStart(hapSize);
-    BootVerifyScheduler::GetInstance().StartVerifyNormalBundleListAsync();
-    sleep(SLEEP_TIME_SECONDS);
+    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
+    AccessTokenInfoManager::GetInstance().Init(hapSize, nativeSize, pefDefSize, dlpSize, tokenIdAplMap);
 }
 
 void AccessTokenMonitorTest::TearDownTestCase()
@@ -297,6 +295,7 @@ HWTEST_F(AccessTokenMonitorTest, VerifyAccessTokenTest003, TestSize.Level1)
     SetSelfTokenID(shellTokenId);
 }
 
+#ifdef SECURITY_GUARD_ENABLE
 static void ChecReportAmount(AccessTokenID tokenId, int32_t expectReportNum)
 {
     auto& map = AccessTokenInfoManager::GetInstance().tokenMonitor_->monitoredHapTokenMap_;
@@ -315,6 +314,7 @@ static void ChecReportAmount(AccessTokenID tokenId, int32_t expectReportNum)
     int32_t tokenIdSize = cJSON_GetArraySize(tokenIdArray);
     EXPECT_EQ(tokenIdSize, expectReportNum);
 }
+#endif
 
 /**
  * @tc.name: VerifyAccessTokenTest004
@@ -365,6 +365,7 @@ HWTEST_F(AccessTokenMonitorTest, VerifyAccessTokenTest004, TestSize.Level1)
     SetSelfTokenID(shellTokenId);
 }
 
+#ifdef SECURITY_GUARD_ENABLE
 /**
  * @tc.name: VerifyAccessTokenTest005
  * @tc.desc: normal hap verify access token test
@@ -415,6 +416,7 @@ HWTEST_F(AccessTokenMonitorTest, VerifyAccessTokenTest005, TestSize.Level1)
     sleep(REPORT_TIME_WINDOW);
     SetSelfTokenID(shellTokenId);
 }
+#endif
 
 /**
  * @tc.name: VerifyAccessTokenTest006
@@ -513,6 +515,7 @@ HWTEST_F(AccessTokenMonitorTest, VerifyAccessTokenTest007, TestSize.Level1)
     SetSelfTokenID(shellTokenId);
 }
 
+#ifdef SECURITY_GUARD_ENABLE
 /**
  * @tc.name: VerifyAccessTokenTest008
  * @tc.desc: normal hap verify access token test
@@ -574,6 +577,7 @@ HWTEST_F(AccessTokenMonitorTest, VerifyAccessTokenTest008, TestSize.Level1)
 
     SetSelfTokenID(shellTokenId);
 }
+#endif
 
 /**
  * @tc.name: VerifyAccessTokenTest009

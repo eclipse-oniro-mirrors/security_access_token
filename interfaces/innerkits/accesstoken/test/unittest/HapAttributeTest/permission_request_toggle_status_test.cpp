@@ -312,6 +312,8 @@ HWTEST_F(PermissionRequestToggleStatusTest, PermissionRequestToggleStatusWithSub
 
     EXPECT_EQ(RET_SUCCESS, AccessTokenKit::SetPermissionRequestToggleStatus(
         "ohos.permission.MICROPHONE", PermissionRequestToggleStatus::OPEN, userId, LEGACY_SUBPROFILE_ID));
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::SetPermissionRequestToggleStatus(
+        "ohos.permission.MICROPHONE", PermissionRequestToggleStatus::CLOSED, userId, subProfileId));
 }
 
 /**
@@ -335,10 +337,11 @@ HWTEST_F(PermissionRequestToggleStatusTest, PermissionRequestToggleStatusWithSub
         "ohos.permission.MICROPHONE", PermissionRequestToggleStatus::CLOSED, userId, subProfileId));
     ASSERT_EQ(AccessTokenError::ERR_PERMISSION_REQUEST_TOGGLE_STORAGE_MODE_CONFLICT,
         AccessTokenKit::SetPermissionRequestToggleStatus(
-            "ohos.permission.MICROPHONE", PermissionRequestToggleStatus::OPEN, userId, LEGACY_SUBPROFILE_ID));
-    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_REQUEST_TOGGLE_STORAGE_MODE_CONFLICT,
-        AccessTokenKit::SetPermissionRequestToggleStatus(
             "ohos.permission.MICROPHONE", PermissionRequestToggleStatus::CLOSED, userId, LEGACY_SUBPROFILE_ID));
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::SetPermissionRequestToggleStatus(
+        "ohos.permission.MICROPHONE", PermissionRequestToggleStatus::OPEN, userId, subProfileId));
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::SetPermissionRequestToggleStatus(
+        "ohos.permission.MICROPHONE", PermissionRequestToggleStatus::CLOSED, userId, LEGACY_SUBPROFILE_ID));
 }
 
 /**

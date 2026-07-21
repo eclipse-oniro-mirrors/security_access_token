@@ -535,8 +535,7 @@ static ani_int GetPermissionFlagsExecute([[maybe_unused]] ani_env* env,
 }
 
 static void SetPermissionRequestToggleStatusExecute([[maybe_unused]] ani_env* env,
-    [[maybe_unused]] ani_object object, ani_string aniPermissionName,
-    ani_int status, ani_int subProfileId, ani_boolean hasSubProfile)
+    [[maybe_unused]] ani_object object, ani_string aniPermissionName, ani_int status)
 {
     if (env == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Env is null.");
@@ -548,14 +547,7 @@ static void SetPermissionRequestToggleStatusExecute([[maybe_unused]] ani_env* en
         LOGE(ATM_DOMAIN, ATM_TAG, "Invalid Permission(%{public}s).", permissionName.c_str());
         return;
     }
-#ifndef ACCESS_TOKEN_SUPPORT_SUBPROFILE
-    if (hasSubProfile) {
-        BusinessErrorAni::ThrowError(env, STS_ERROR_SYSTEM_CAPABILITY_NOT_SUPPORT,
-            GetErrorMessage(STS_ERROR_SYSTEM_CAPABILITY_NOT_SUPPORT));
-        return;
-    }
-#endif
-    int32_t result = AccessTokenKit::SetPermissionRequestToggleStatus(permissionName, status, 0, subProfileId);
+    int32_t result = AccessTokenKit::SetPermissionRequestToggleStatus(permissionName, status, 0);
     if (result != RET_SUCCESS) {
         BusinessErrorAni::ThrowError(
             env, BusinessErrorAni::GetStsErrorCode(result), GetErrorMessage(BusinessErrorAni::GetStsErrorCode(result)));
@@ -564,7 +556,7 @@ static void SetPermissionRequestToggleStatusExecute([[maybe_unused]] ani_env* en
 }
 
 static ani_int GetPermissionRequestToggleStatusExecute([[maybe_unused]] ani_env* env,
-    [[maybe_unused]] ani_object object, ani_string aniPermissionName, ani_int subProfileId, ani_boolean hasSubProfile)
+    [[maybe_unused]] ani_object object, ani_string aniPermissionName)
 {
     uint32_t flag = CLOSED;
     if (env == nullptr) {
@@ -577,14 +569,8 @@ static ani_int GetPermissionRequestToggleStatusExecute([[maybe_unused]] ani_env*
         LOGE(ATM_DOMAIN, ATM_TAG, "Invalid Permission(%{public}s).", permissionName.c_str());
         return flag;
     }
-#ifndef ACCESS_TOKEN_SUPPORT_SUBPROFILE
-    if (hasSubProfile) {
-        BusinessErrorAni::ThrowError(env, STS_ERROR_SYSTEM_CAPABILITY_NOT_SUPPORT,
-            GetErrorMessage(STS_ERROR_SYSTEM_CAPABILITY_NOT_SUPPORT));
-        return flag;
-    }
-#endif
-    int32_t result = AccessTokenKit::GetPermissionRequestToggleStatus(permissionName, flag, 0, subProfileId);
+
+    int32_t result = AccessTokenKit::GetPermissionRequestToggleStatus(permissionName, flag, 0);
     if (result != RET_SUCCESS) {
         BusinessErrorAni::ThrowError(
             env, BusinessErrorAni::GetStsErrorCode(result), GetErrorMessage(BusinessErrorAni::GetStsErrorCode(result)));

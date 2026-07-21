@@ -23,15 +23,12 @@ group("fuzztest") {
     "clearusergrantedpermissionstatestub_fuzzer:ClearUserGrantedPermissionStateStubFuzzTest",
     "deleteremotedevicetokensstub_fuzzer:DeleteRemoteDeviceTokensStubFuzzTest",
     "deleteremotetokenstub_fuzzer:DeleteRemoteTokenStubFuzzTest",
-    "deleteidentitystub_fuzzer:DeleteIdentityStubFuzzTest",
     "deletetokenstub_fuzzer:DeleteTokenStubFuzzTest",
     "dumptokeninfostub_fuzzer:DumpTokenInfoStubFuzzTest",
     "generatecliauthresultstub_fuzzer:GenerateCliAuthResultStubFuzzTest",
     "getclipermissionrequestinfostub_fuzzer:GetCliPermissionRequestInfoStubFuzzTest",
     "getclipermissionsstub_fuzzer:GetCliPermissionsStubFuzzTest",
     "getdefpermissionstub_fuzzer:GetDefPermissionStubFuzzTest",
-    "gethapbaseinfobyuidstub_fuzzer:GetHapBaseInfoByUidStubFuzzTest",
-    "gethapidentitystub_fuzzer:GetHapIdentityStubFuzzTest",
     "gethaptokenidstub_fuzzer:GetHapTokenIDStubFuzzTest",
     "gethaptokeninfocompatstub_fuzzer:GetHapTokenInfoCompatStubFuzzTest",
     "gethaptokeninfoextstub_fuzzer:GetHapTokenInfoExtStubFuzzTest",
@@ -60,7 +57,6 @@ group("fuzztest") {
     "registerpermstatechangecallbackstub_fuzzer:RegisterPermStateChangeCallbackStubFuzzTest",
     "registerselfpermstatechangecallbackstub_fuzzer:RegisterSelfPermStateChangeCallbackStubFuzzTest",
     "requestapppermonsettingstub_fuzzer:RequestAppPermOnSettingStubFuzzTest",
-    "refreshtokenidstatusstub_fuzzer:RefreshTokenIdStatusStubFuzzTest",
     "revokepermissionstub_fuzzer:RevokePermissionStubFuzzTest",
     "setpermdialogcapstub_fuzzer:SetPermDialogCapStubFuzzTest",
     "setpermissionrequesttogglestatusstub_fuzzer:SetPermissionRequestToggleStatusStubFuzzTest",
@@ -70,8 +66,6 @@ group("fuzztest") {
     "updatehaptokenstub_fuzzer:UpdateHapTokenStubFuzzTest",
     "verifyaccesstokenstub_fuzzer:VerifyAccessTokenStubFuzzTest",
     "verifyaccesstokenwithliststub_fuzzer:VerifyAccessTokenWithListStubFuzzTest",
-    "migrateinstalledbundlesstub_fuzzer:MigrateInstalledBundlesStubFuzzTest",
-    "finishmigrationstub_fuzzer:FinishMigrationStubFuzzTest",
   ]
 
   if (access_token_manage_user_policy_enable) {
@@ -87,21 +81,6 @@ group("fuzztest") {
     deps += [
       "getaccesstokenid_fuzzer:GetAccessTokenIdFuzzTest",
       "setfirstcallertokenid_fuzzer:SetFirstCallerTokenIDFuzzTest",
-    ]
-  }
-  if (access_token_enable_spm && access_token_manager_hapverify_enable) {
-    deps += [
-      "accesstokenmigrationmanager_fuzzer:AccessTokenMigrationManagerFuzzTest",
-      "bootverifyscheduler_fuzzer:BootVerifySchedulerFuzzTest",
-      "checkhapsigninfostub_fuzzer:CheckHapSignInfoStubFuzzTest",
-      "checkhappermissioninfostub_fuzzer:CheckHapPermissionInfoStubFuzzTest",
-      "finishinstallstub_fuzzer:FinishInstallStubFuzzTest",
-      "getcachepolicybysessionidstub_fuzzer:GetCachePolicyBySessionIdStubFuzzTest",
-      "getcachesigninfobysessionidstub_fuzzer:GetCacheSignInfoBySessionIdStubFuzzTest",
-      "gethapsigninfostub_fuzzer:GetHapSignInfoStubFuzzTest",
-      "installsessionmanagermockstub_fuzzer:InstallSessionManagerMockStubFuzzTest",
-      "preparehapidentitystub_fuzzer:PrepareHapIdentityStubFuzzTest",
-      "updatehappolicystub_fuzzer:UpdateHapPolicyStubFuzzTest",
     ]
   }
   if (security_component_enhance_enable) {

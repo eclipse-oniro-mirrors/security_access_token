@@ -135,7 +135,8 @@ HWTEST_F(SecCompEnhanceAgentTest, ProcessFromForegroundList002, TestSize.Level1)
 {
     SecCompEnhanceData data;
     data.callback = nullptr;
-    data.challenge = 0;
+    data.challenge = 1;
+    data.sessionId = 10;
     data.seqNum = 0;
 
     EXPECT_EQ(RET_SUCCESS, SecCompEnhanceAgent::GetInstance().RegisterSecCompEnhance(data));
@@ -144,13 +145,26 @@ HWTEST_F(SecCompEnhanceAgentTest, ProcessFromForegroundList002, TestSize.Level1)
     EXPECT_EQ(RET_SUCCESS, SecCompEnhanceAgent::GetInstance().GetSecCompEnhance(getpid(), data1));
     EXPECT_EQ(1, data1.count);
 
-    EXPECT_EQ(ERR_CALLBACK_ALREADY_EXIST, SecCompEnhanceAgent::GetInstance().RegisterSecCompEnhance(data));
+    data.challenge = 2;
+    data.sessionId = 20;
+    data.seqNum = 3;
+    if (memset_s(data.key, AES_KEY_STORAGE_LEN, 0x5A, AES_KEY_STORAGE_LEN) != EOK) {
+        FAIL();
+    }
+    EXPECT_EQ(RET_SUCCESS, SecCompEnhanceAgent::GetInstance().RegisterSecCompEnhance(data));
     EXPECT_EQ(RET_SUCCESS, SecCompEnhanceAgent::GetInstance().GetSecCompEnhance(getpid(), data1));
     EXPECT_EQ(2, data1.count);
+    EXPECT_EQ(2u, data1.challenge);
+    EXPECT_EQ(20u, data1.sessionId);
+    EXPECT_EQ(3u, data1.seqNum);
+    EXPECT_EQ(0, memcmp(data.key, data1.key, AES_KEY_STORAGE_LEN));
 
     SecCompEnhanceAgent::GetInstance().RemoveSecCompEnhance(data1.pid, data1.token);
     EXPECT_EQ(RET_SUCCESS, SecCompEnhanceAgent::GetInstance().GetSecCompEnhance(getpid(), data1));
     EXPECT_EQ(1, data1.count);
+    EXPECT_EQ(2u, data1.challenge);
+    EXPECT_EQ(20u, data1.sessionId);
+    EXPECT_EQ(3u, data1.seqNum);
 
     SecCompEnhanceAgent::GetInstance().RemoveSecCompEnhance(data1.pid, data1.token);
     EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,

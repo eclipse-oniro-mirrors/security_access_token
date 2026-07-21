@@ -68,8 +68,8 @@ static constexpr int32_t CALLER_PID = 11;
 static constexpr int32_t CALLER_PID2 = 12;
 #ifdef REMOTE_PRIVACY_ENABLE
 static constexpr int32_t USER_ID_100 = 100;
+static constexpr int32_t USER_ID_INVALID = 12345;
 static constexpr uint32_t USER_100_UID = 20000000;
-static constexpr uint32_t USER_INVALID_UID = 2147400000;
 #endif
 static AccessTokenID g_selfTokenId = 0;
 static AccessTokenID g_nativeToken = 0;
@@ -1046,20 +1046,15 @@ HWTEST_F(PermissionRecordManagerTest, GetRemotePermissionUsedRecordsTest001, Tes
     PermissionUsedResult result;
     request.isRemote = false;
     EXPECT_EQ(PrivacyError::ERR_PARAM_INVALID,
-        PermissionRecordManager::GetInstance().GetRemotePermissionUsedRecords(request, result));
+        PermissionRecordManager::GetInstance().GetRemotePermissionUsedRecords(request, USER_ID_100, result));
 
-    uint32_t selfUid = getuid();
-    setuid(USER_INVALID_UID);
-    // userId valid
     request.isRemote = true;
     EXPECT_EQ(PrivacyError::ERR_PARAM_INVALID,
-        PermissionRecordManager::GetInstance().GetRemotePermissionUsedRecords(request, result));
-
-    setuid(USER_100_UID);
+        PermissionRecordManager::GetInstance().GetRemotePermissionUsedRecords(request, USER_ID_INVALID, result));
 
     request.beginTimeMillis = -1;
     EXPECT_EQ(PrivacyError::ERR_PARAM_INVALID,
-        PermissionRecordManager::GetInstance().GetRemotePermissionUsedRecords(request, result));
+        PermissionRecordManager::GetInstance().GetRemotePermissionUsedRecords(request, USER_ID_100, result));
     request.beginTimeMillis = 0;
 
     PermissionRecordManager::GetInstance().remotePermUsedRecList_.clear();
@@ -1068,17 +1063,16 @@ HWTEST_F(PermissionRecordManagerTest, GetRemotePermissionUsedRecordsTest001, Tes
 
     request.flag = FLAG_PERMISSION_USAGE_SUMMARY_IN_SCREEN_LOCKED;
     EXPECT_EQ(PrivacyError::ERR_PARAM_INVALID,
-        PermissionRecordManager::GetInstance().GetRemotePermissionUsedRecords(request, result));
+        PermissionRecordManager::GetInstance().GetRemotePermissionUsedRecords(request, USER_ID_100, result));
 
     request.flag = FLAG_PERMISSION_USAGE_DETAIL;
     EXPECT_EQ(Constant::SUCCESS,
-        PermissionRecordManager::GetInstance().GetRemotePermissionUsedRecords(request, result));
+        PermissionRecordManager::GetInstance().GetRemotePermissionUsedRecords(request, USER_ID_100, result));
 
     request.flag = FLAG_PERMISSION_USAGE_SUMMARY;
     EXPECT_EQ(Constant::SUCCESS,
-        PermissionRecordManager::GetInstance().GetRemotePermissionUsedRecords(request, result));
+        PermissionRecordManager::GetInstance().GetRemotePermissionUsedRecords(request, USER_ID_100, result));
 
-    setuid(selfUid);
 }
 
 #ifdef ACCESS_TOKEN_SUPPORT_SUBPROFILE
@@ -1118,19 +1112,15 @@ HWTEST_F(PermissionRecordManagerTest, GetRemotePermissionUsedRecordsWithSubProfi
 
     SetMockForegroundOsAccountLocalId(USER_ID_100, ERR_OK);
     SetMockOsAccountForegroundSubProfileId(SUBPROFILE_TEST_ID, ERR_OK);
-    uint32_t selfUid = getuid();
-    setuid(USER_100_UID);
-
     PermissionUsedRequest request;
     PermissionUsedResult result;
     request.isRemote = true;
     request.flag = FLAG_PERMISSION_USAGE_DETAIL;
-    int32_t ret = PermissionRecordManager::GetInstance().GetRemotePermissionUsedRecords(request, result);
+    int32_t ret = PermissionRecordManager::GetInstance().GetRemotePermissionUsedRecords(request, USER_ID_100, result);
     int32_t accountUserId = GetMockForegroundOsAccountLocalId();
     size_t bundleRecordSize = result.bundleRecords.size();
     std::string deviceId = bundleRecordSize > 0 ? result.bundleRecords[0].deviceId : EMPTY_DEVICE_ID;
 
-    setuid(selfUid);
     RemotePermUsedRecordDbManager::GetInstance().Remove(USER_ID_100, conditions);
     PermissionRecordManager::GetInstance().remotePermUsedRecList_.clear();
     ResetMockOsAccountManagerLite();

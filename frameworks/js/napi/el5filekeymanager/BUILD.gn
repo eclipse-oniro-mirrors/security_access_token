@@ -37,6 +37,7 @@ ohos_shared_library("screenlockfilemanager") {
     "hilog:libhilog",
     "ipc:ipc_single",
     "napi:ace_napi",
+    "libuv:uv",
   ]
 
   relative_install_dir = "module/ability/"

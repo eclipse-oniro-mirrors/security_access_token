@@ -96,6 +96,7 @@ const std::map<std::string, int32_t> Constant::PERMISSION_OPCODE_MAP = {
     std::map<std::string, int32_t>::value_type("ohos.permission.HOOK_KEY_EVENT", Constant::OP_HOOK_KEY_EVENT),
     std::map<std::string, int32_t>::value_type("ohos.permission.CONTROL_DEVICE", Constant::OP_CONTROL_DEVICE),
     std::map<std::string, int32_t>::value_type("ohos.permission.FLOAT_VIEW", Constant::OP_FLOAT_VIEW),
+    std::map<std::string, int32_t>::value_type("ohos.permission.AGENT_FILE_ACCESS", Constant::OP_AGENT_FILE_ACCESS),
     std::map<std::string, int32_t>::value_type("ohos.permission.READ_WRITE_DOWNLOAD_DIRECTORY_MEDIA_READ",
         Constant::OP_READ_WRITE_DOWNLOAD_DIRECTORY_MEDIA_READ),
     std::map<std::string, int32_t>::value_type("ohos.permission.READ_WRITE_DOWNLOAD_DIRECTORY_MEDIA_WRITE",
@@ -144,6 +145,8 @@ const std::map<std::string, int32_t> Constant::PERMISSION_OPCODE_MAP = {
         Constant::OP_CLI_REMOVE_BUNDLE_DATA_AND_CACHE_FILES),
     std::map<std::string, int32_t>::value_type("ohos.permission.cli.MANAGE_DISPOSED_APP_STATUS",
         Constant::OP_CLI_MANAGE_DISPOSED_APP_STATUS),
+    std::map<std::string, int32_t>::value_type("ohos.permission.ONSCREEN_AWARENESS",
+        Constant::OP_ONSCREEN_AWARENESS),
 };
 
 bool Constant::TransferPermissionToOpcode(const std::string& permissionName, int32_t& opCode)

@@ -17,6 +17,7 @@
 #include <cinttypes>
 #include <cstring>
 
+#include "access_token.h"
 #include "access_token_error.h"
 #include "accesstoken_common_log.h"
 #include "app_manager_access_client.h"
@@ -162,9 +163,17 @@ int32_t SecCompEnhanceAgent::RegisterSecCompEnhance(const SecCompEnhanceData& en
 
     for (auto iter = secCompEnhanceData_.begin(); iter != secCompEnhanceData_.end(); ++iter) {
         if (iter->pid == pid && iter->token == token) {
+            iter->callback = enhanceData.callback;
+            iter->challenge = enhanceData.challenge;
+            iter->sessionId = enhanceData.sessionId;
+            iter->seqNum = enhanceData.seqNum;
             ++iter->count;
-            LOGE(ATM_DOMAIN, ATM_TAG, "Register sec comp enhance exist, pid %{public}d.", pid);
-            return AccessTokenError::ERR_CALLBACK_ALREADY_EXIST;
+            if (memcpy_s(iter->key, AES_KEY_STORAGE_LEN, enhanceData.key, AES_KEY_STORAGE_LEN) != EOK) {
+                return AccessTokenError::ERR_UTIL_OPER_FAILED;
+            }
+            LOGI(ATM_DOMAIN, ATM_TAG, "Refresh sec comp enhance data, pid %{public}d, count %{public}d.",
+                pid, iter->count);
+            return RET_SUCCESS;
         }
     }
     SecCompEnhanceData enhance;
@@ -176,7 +185,7 @@ int32_t SecCompEnhanceAgent::RegisterSecCompEnhance(const SecCompEnhanceData& en
     enhance.seqNum = enhanceData.seqNum;
     enhance.count = 1;
     if (memcpy_s(enhance.key, AES_KEY_STORAGE_LEN, enhanceData.key, AES_KEY_STORAGE_LEN) != EOK) {
-        return AccessTokenError::ERR_CALLBACK_ALREADY_EXIST;
+        return AccessTokenError::ERR_UTIL_OPER_FAILED;
     }
     secCompEnhanceData_.emplace_back(enhance);
     LOGI(ATM_DOMAIN, ATM_TAG, "Register sec comp enhance success, pid %{public}d, total %{public}u.",

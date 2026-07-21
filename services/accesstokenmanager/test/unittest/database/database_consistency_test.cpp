@@ -143,6 +143,7 @@ HWTEST_F(AccessTokenDbConsistencyTest, CreateHapTokenCompareTest001, TestSize.Le
     AccessTokenID tokenId;
     std::map<int32_t, int32_t> tokenIdAplMap;
     CreateHapToken(infoParCel, policyParcel, tokenId, tokenIdAplMap);
+
     // compare after add
     GenericValues conditionValue;
     conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));

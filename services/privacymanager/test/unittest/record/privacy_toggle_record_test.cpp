@@ -108,6 +108,55 @@ private:
     std::map<std::string, bool> originalMap_;
     std::vector<GenericValues> originalRecords_;
 };
+
+std::string GetToggleStatusMapKey(int32_t userID, int32_t subProfileId)
+{
+#ifdef ACCESS_TOKEN_SUPPORT_SUBPROFILE
+    if (subProfileId >= 0) {
+        return std::to_string(userID) + "_" + std::to_string(subProfileId);
+    }
+#endif
+    return std::to_string(userID);
+}
+
+void VerifyToggleStatusRecord(int32_t userID, int32_t subProfileId, bool expectedStatus)
+{
+    GenericValues condition;
+    condition.Put(PrivacyFiledConst::FIELD_USER_ID, userID);
+    condition.Put(PrivacyFiledConst::FIELD_SUB_PROFILE_ID, subProfileId);
+    std::vector<GenericValues> records;
+    ASSERT_EQ(PermissionUsedRecordDb::SUCCESS, PermissionUsedRecordDb::GetInstance().Query(
+        PermissionUsedRecordDb::DataType::PERMISSION_USED_RECORD_TOGGLE_STATUS, condition, records));
+    ASSERT_EQ(1, static_cast<int32_t>(records.size()));
+    EXPECT_EQ(expectedStatus, static_cast<bool>(records[0].GetInt(PrivacyFiledConst::FIELD_STATUS)));
+}
+
+void VerifyToggleStatusRecordNotExist(int32_t userID, int32_t subProfileId)
+{
+    GenericValues condition;
+    condition.Put(PrivacyFiledConst::FIELD_USER_ID, userID);
+    condition.Put(PrivacyFiledConst::FIELD_SUB_PROFILE_ID, subProfileId);
+    std::vector<GenericValues> records;
+    ASSERT_EQ(PermissionUsedRecordDb::SUCCESS, PermissionUsedRecordDb::GetInstance().Query(
+        PermissionUsedRecordDb::DataType::PERMISSION_USED_RECORD_TOGGLE_STATUS, condition, records));
+    EXPECT_TRUE(records.empty());
+}
+
+void VerifyToggleStatusMapValue(int32_t userID, int32_t subProfileId, bool expectedStatus)
+{
+    std::lock_guard<std::mutex> lock(PermissionRecordManager::GetInstance().permUsedRecToggleStatusMutex_);
+    const auto& statusMap = PermissionRecordManager::GetInstance().permUsedRecToggleStatusMap_;
+    auto iter = statusMap.find(GetToggleStatusMapKey(userID, subProfileId));
+    ASSERT_NE(statusMap.end(), iter);
+    EXPECT_EQ(expectedStatus, iter->second);
+}
+
+void VerifyToggleStatusMapNotExist(int32_t userID, int32_t subProfileId)
+{
+    std::lock_guard<std::mutex> lock(PermissionRecordManager::GetInstance().permUsedRecToggleStatusMutex_);
+    const auto& statusMap = PermissionRecordManager::GetInstance().permUsedRecToggleStatusMap_;
+    EXPECT_EQ(statusMap.end(), statusMap.find(GetToggleStatusMapKey(userID, subProfileId)));
+}
 }
 
 class PrivacyToggleRecordTest : public testing::Test {
@@ -197,6 +246,40 @@ HWTEST_F(PrivacyToggleRecordTest, SetPermissionUsedRecordToggleStatusWithLegacyS
     ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().GetPermissionUsedRecordToggleStatus(
         TEST_USER_ID_1, status, LEGACY_SUBPROFILE_ID));
     EXPECT_TRUE(status);
+}
+
+/*
+ * @tc.name: SetPermissionUsedRecordToggleStatusWithLegacySubProfileId002
+ * @tc.desc: PermissionRecordManager keeps query, toggle map and database state consistent when restoring default.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyToggleRecordTest, SetPermissionUsedRecordToggleStatusWithLegacySubProfileId002, TestSize.Level0)
+{
+    PrivacyToggleStatusMapGuard guard(TEST_USER_ID_1);
+    bool status = false;
+
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().GetPermissionUsedRecordToggleStatus(
+        TEST_USER_ID_1, status, LEGACY_SUBPROFILE_ID));
+    EXPECT_TRUE(status);
+    VerifyToggleStatusMapNotExist(TEST_USER_ID_1, LEGACY_SUBPROFILE_ID);
+    VerifyToggleStatusRecordNotExist(TEST_USER_ID_1, LEGACY_SUBPROFILE_ID);
+
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().SetPermissionUsedRecordToggleStatus(
+        TEST_USER_ID_1, false, LEGACY_SUBPROFILE_ID));
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().GetPermissionUsedRecordToggleStatus(
+        TEST_USER_ID_1, status, LEGACY_SUBPROFILE_ID));
+    EXPECT_FALSE(status);
+    VerifyToggleStatusMapValue(TEST_USER_ID_1, LEGACY_SUBPROFILE_ID, false);
+    VerifyToggleStatusRecord(TEST_USER_ID_1, LEGACY_SUBPROFILE_ID, false);
+
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().SetPermissionUsedRecordToggleStatus(
+        TEST_USER_ID_1, true, LEGACY_SUBPROFILE_ID));
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().GetPermissionUsedRecordToggleStatus(
+        TEST_USER_ID_1, status, LEGACY_SUBPROFILE_ID));
+    EXPECT_TRUE(status);
+    VerifyToggleStatusMapNotExist(TEST_USER_ID_1, LEGACY_SUBPROFILE_ID);
+    VerifyToggleStatusRecordNotExist(TEST_USER_ID_1, LEGACY_SUBPROFILE_ID);
 }
 
 /*
@@ -430,7 +513,7 @@ HWTEST_F(PrivacyToggleRecordTest, SetPermissionUsedRecordToggleStatusWithSubProf
 
 /*
  * @tc.name: SetPermissionUsedRecordToggleStatusWithSubProfileId002
- * @tc.desc: PermissionRecordManager allows subProfile toggle write after legacy cache cleanup.
+ * @tc.desc: PermissionRecordManager allows subProfile toggle write after legacy mode is reset to default.
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -445,15 +528,8 @@ HWTEST_F(PrivacyToggleRecordTest, SetPermissionUsedRecordToggleStatusWithSubProf
         PermissionRecordManager::GetInstance().SetPermissionUsedRecordToggleStatus(
             ACCOUNT_OWNER_USER_ID, true, SUBPROFILE_ID_TEN));
 
-    {
-        std::lock_guard<std::mutex> lock(PermissionRecordManager::GetInstance().permUsedRecToggleStatusMutex_);
-        PermissionRecordManager::GetInstance().permUsedRecToggleStatusMap_.erase(std::to_string(ACCOUNT_OWNER_USER_ID));
-    }
-    GenericValues condition;
-    condition.Put(PrivacyFiledConst::FIELD_USER_ID, ACCOUNT_OWNER_USER_ID);
-    condition.Put(PrivacyFiledConst::FIELD_SUB_PROFILE_ID, LEGACY_SUBPROFILE_ID);
-    ASSERT_EQ(PermissionUsedRecordDb::SUCCESS, PermissionUsedRecordDb::GetInstance().Remove(
-        PermissionUsedRecordDb::DataType::PERMISSION_USED_RECORD_TOGGLE_STATUS, condition));
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().SetPermissionUsedRecordToggleStatus(
+        ACCOUNT_OWNER_USER_ID, true, LEGACY_SUBPROFILE_ID));
 
     ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().SetPermissionUsedRecordToggleStatus(
         ACCOUNT_OWNER_USER_ID, false, SUBPROFILE_ID_TEN));
@@ -550,7 +626,7 @@ HWTEST_F(PrivacyToggleRecordTest, SetPermissionUsedRecordToggleStatusWithSubProf
 
 /*
  * @tc.name: SetPermissionUsedRecordToggleStatusWithSubProfileId006
- * @tc.desc: PermissionRecordManager returns storage mode conflict when legacy mode is requested after subProfile mode.
+ * @tc.desc: PermissionRecordManager returns conflict until subProfile mode is reset to default.
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -561,7 +637,7 @@ HWTEST_F(PrivacyToggleRecordTest, SetPermissionUsedRecordToggleStatusWithSubProf
 
     SetMockOsAccountLocalIdForSubProfile(ACCOUNT_OWNER_USER_ID, ERR_OK);
     int32_t ret = PermissionRecordManager::GetInstance().SetPermissionUsedRecordToggleStatus(
-        ACCOUNT_OWNER_USER_ID, true, SUBPROFILE_ID_TEN);
+        ACCOUNT_OWNER_USER_ID, false, SUBPROFILE_ID_TEN);
     ResetMockOsAccountManagerLite();
     EXPECT_EQ(RET_SUCCESS, ret);
 
@@ -571,6 +647,16 @@ HWTEST_F(PrivacyToggleRecordTest, SetPermissionUsedRecordToggleStatusWithSubProf
     EXPECT_EQ(PrivacyError::ERR_PERMISSION_USED_RECORD_STORAGE_MODE_CONFLICT,
         PermissionRecordManager::GetInstance().GetPermissionUsedRecordToggleStatus(
             ACCOUNT_OWNER_USER_ID, status, LEGACY_SUBPROFILE_ID));
+
+    SetMockOsAccountLocalIdForSubProfile(ACCOUNT_OWNER_USER_ID, ERR_OK);
+    EXPECT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().SetPermissionUsedRecordToggleStatus(
+        ACCOUNT_OWNER_USER_ID, true, SUBPROFILE_ID_TEN));
+    ResetMockOsAccountManagerLite();
+    EXPECT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().SetPermissionUsedRecordToggleStatus(
+        ACCOUNT_OWNER_USER_ID, false, LEGACY_SUBPROFILE_ID));
+    EXPECT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().GetPermissionUsedRecordToggleStatus(
+        ACCOUNT_OWNER_USER_ID, status, LEGACY_SUBPROFILE_ID));
+    EXPECT_FALSE(status);
 }
 
 #ifdef REMOTE_PRIVACY_ENABLE
@@ -626,6 +712,56 @@ HWTEST_F(PrivacyToggleRecordTest, SetPermissionUsedRecordToggleStatusWithSubProf
     ASSERT_EQ(1U, results.size());
     EXPECT_EQ(SUBPROFILE_ID_ELEVEN, results[0].GetInt(PrivacyFiledConst::FIELD_SUB_PROFILE_ID));
 }
+
+/*
+ * @tc.name: SetPermissionUsedRecordToggleStatusWithSubProfileId011
+ * @tc.desc: PermissionRecordManager removes only legacy remote records when legacy toggle is closed.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyToggleRecordTest, SetPermissionUsedRecordToggleStatusWithSubProfileId011, TestSize.Level0)
+{
+    PrivacyToggleStatusMapGuard toggleGuard(TEST_USER_ID_100);
+    RemotePermissionRecordGuard remoteGuard(TEST_USER_ID_100);
+
+    RemotePermissionRecord legacyRecord = BuildRemotePermissionRecord(
+        "legacyTargetId", "legacyTargetName", TEST_USER_ID_100, LEGACY_SUBPROFILE_ID);
+    RemotePermissionRecord subProfileRecord = BuildRemotePermissionRecord(
+        "subProfileTargetId", "subProfileTargetName", TEST_USER_ID_100, SUBPROFILE_ID_TEN);
+    RemotePermissionRecordCache legacyCache;
+    legacyCache.record = legacyRecord;
+    RemotePermissionRecordCache subProfileCache;
+    subProfileCache.record = subProfileRecord;
+    {
+        std::lock_guard<std::mutex> lock(PermissionRecordManager::GetInstance().remotePermUsedRecMutex_);
+        PermissionRecordManager::GetInstance().remotePermUsedRecList_.emplace_back(legacyCache);
+        PermissionRecordManager::GetInstance().remotePermUsedRecList_.emplace_back(subProfileCache);
+    }
+
+    GenericValues legacyValue;
+    GenericValues subProfileValue;
+    RemotePermissionRecord::TranslationIntoGenericValues(legacyRecord, legacyValue);
+    RemotePermissionRecord::TranslationIntoGenericValues(subProfileRecord, subProfileValue);
+    ASSERT_EQ(Constant::SUCCESS, RemotePermUsedRecordDbManager::GetInstance().Add(
+        TEST_USER_ID_100, { legacyValue, subProfileValue }));
+
+    EXPECT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().SetPermissionUsedRecordToggleStatus(
+        TEST_USER_ID_100, false, LEGACY_SUBPROFILE_ID));
+
+    {
+        std::lock_guard<std::mutex> lock(PermissionRecordManager::GetInstance().remotePermUsedRecMutex_);
+        ASSERT_EQ(1U, PermissionRecordManager::GetInstance().remotePermUsedRecList_.size());
+        EXPECT_EQ(SUBPROFILE_ID_TEN,
+            PermissionRecordManager::GetInstance().remotePermUsedRecList_[0].record.subProfileId);
+    }
+
+    GenericValues queryCondition;
+    std::vector<GenericValues> results;
+    ASSERT_EQ(Constant::SUCCESS, RemotePermUsedRecordDbManager::GetInstance().FindByConditions(
+        TEST_USER_ID_100, {}, queryCondition, results, REMOTE_RECORD_QUERY_LIMIT));
+    ASSERT_EQ(1U, results.size());
+    EXPECT_EQ(SUBPROFILE_ID_TEN, results[0].GetInt(PrivacyFiledConst::FIELD_SUB_PROFILE_ID));
+}
 #endif
 
 /*
@@ -665,6 +801,62 @@ HWTEST_F(PrivacyToggleRecordTest, SetPermissionUsedRecordToggleStatusWithSubProf
         std::lock_guard<std::mutex> lock(PermissionRecordManager::GetInstance().permUsedRecMutex_);
         EXPECT_TRUE(PermissionRecordManager::GetInstance().permUsedRecList_.empty());
     }
+    ResetMockOsAccountManagerLite();
+}
+
+/*
+ * @tc.name: SetPermissionUsedRecordToggleStatusWithSubProfileId010
+ * @tc.desc: PermissionRecordManager keeps query, toggle map and database state unchanged after mode conflicts.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyToggleRecordTest, SetPermissionUsedRecordToggleStatusWithSubProfileId010, TestSize.Level0)
+{
+    PrivacyToggleStatusMapGuard guard(ACCOUNT_OWNER_USER_ID);
+    bool status = true;
+
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().SetPermissionUsedRecordToggleStatus(
+        ACCOUNT_OWNER_USER_ID, false, LEGACY_SUBPROFILE_ID));
+    VerifyToggleStatusMapValue(ACCOUNT_OWNER_USER_ID, LEGACY_SUBPROFILE_ID, false);
+    VerifyToggleStatusRecord(ACCOUNT_OWNER_USER_ID, LEGACY_SUBPROFILE_ID, false);
+
+    SetMockOsAccountLocalIdForSubProfile(ACCOUNT_OWNER_USER_ID, ERR_OK);
+    EXPECT_EQ(PrivacyError::ERR_PERMISSION_USED_RECORD_STORAGE_MODE_CONFLICT,
+        PermissionRecordManager::GetInstance().SetPermissionUsedRecordToggleStatus(
+            ACCOUNT_OWNER_USER_ID, true, SUBPROFILE_ID_TEN));
+    EXPECT_EQ(PrivacyError::ERR_PERMISSION_USED_RECORD_STORAGE_MODE_CONFLICT,
+        PermissionRecordManager::GetInstance().SetPermissionUsedRecordToggleStatus(
+            ACCOUNT_OWNER_USER_ID, false, SUBPROFILE_ID_TEN));
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().GetPermissionUsedRecordToggleStatus(
+        ACCOUNT_OWNER_USER_ID, status, LEGACY_SUBPROFILE_ID));
+    EXPECT_FALSE(status);
+    VerifyToggleStatusMapValue(ACCOUNT_OWNER_USER_ID, LEGACY_SUBPROFILE_ID, false);
+    VerifyToggleStatusRecord(ACCOUNT_OWNER_USER_ID, LEGACY_SUBPROFILE_ID, false);
+
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().SetPermissionUsedRecordToggleStatus(
+        ACCOUNT_OWNER_USER_ID, true, LEGACY_SUBPROFILE_ID));
+    VerifyToggleStatusMapNotExist(ACCOUNT_OWNER_USER_ID, LEGACY_SUBPROFILE_ID);
+    VerifyToggleStatusRecordNotExist(ACCOUNT_OWNER_USER_ID, LEGACY_SUBPROFILE_ID);
+
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().SetPermissionUsedRecordToggleStatus(
+        ACCOUNT_OWNER_USER_ID, false, SUBPROFILE_ID_TEN));
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().GetPermissionUsedRecordToggleStatus(
+        ACCOUNT_OWNER_USER_ID, status, SUBPROFILE_ID_TEN));
+    EXPECT_FALSE(status);
+    VerifyToggleStatusMapValue(ACCOUNT_OWNER_USER_ID, SUBPROFILE_ID_TEN, false);
+    VerifyToggleStatusRecord(ACCOUNT_OWNER_USER_ID, SUBPROFILE_ID_TEN, false);
+
+    EXPECT_EQ(PrivacyError::ERR_PERMISSION_USED_RECORD_STORAGE_MODE_CONFLICT,
+        PermissionRecordManager::GetInstance().SetPermissionUsedRecordToggleStatus(
+            ACCOUNT_OWNER_USER_ID, true, LEGACY_SUBPROFILE_ID));
+    EXPECT_EQ(PrivacyError::ERR_PERMISSION_USED_RECORD_STORAGE_MODE_CONFLICT,
+        PermissionRecordManager::GetInstance().SetPermissionUsedRecordToggleStatus(
+            ACCOUNT_OWNER_USER_ID, false, LEGACY_SUBPROFILE_ID));
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().GetPermissionUsedRecordToggleStatus(
+        ACCOUNT_OWNER_USER_ID, status, SUBPROFILE_ID_TEN));
+    EXPECT_FALSE(status);
+    VerifyToggleStatusMapValue(ACCOUNT_OWNER_USER_ID, SUBPROFILE_ID_TEN, false);
+    VerifyToggleStatusRecord(ACCOUNT_OWNER_USER_ID, SUBPROFILE_ID_TEN, false);
     ResetMockOsAccountManagerLite();
 }
 

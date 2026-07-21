@@ -263,6 +263,7 @@ HWTEST_F(PermissionUsedToggleStatusTest, SetPermissionUsedRecordToggleStatusWith
     EXPECT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecordToggleStatus(USER_ID_2, status, SUBPROFILE_ID_TEN));
     EXPECT_FALSE(status);
     EXPECT_EQ(RET_NO_ERROR, PrivacyKit::SetPermissionUsedRecordToggleStatus(USER_ID_2, true, LEGACY_SUBPROFILE_ID));
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::SetPermissionUsedRecordToggleStatus(USER_ID_2, false, SUBPROFILE_ID_TEN));
 }
 
 /**
@@ -287,6 +288,8 @@ HWTEST_F(PermissionUsedToggleStatusTest, SetPermissionUsedRecordToggleStatusWith
         PrivacyKit::SetPermissionUsedRecordToggleStatus(USER_ID_2, true, LEGACY_SUBPROFILE_ID));
     EXPECT_EQ(PrivacyError::ERR_PERMISSION_USED_RECORD_STORAGE_MODE_CONFLICT,
         PrivacyKit::SetPermissionUsedRecordToggleStatus(USER_ID_2, false, LEGACY_SUBPROFILE_ID));
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::SetPermissionUsedRecordToggleStatus(USER_ID_2, true, SUBPROFILE_ID_ELEVEN));
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::SetPermissionUsedRecordToggleStatus(USER_ID_2, false, LEGACY_SUBPROFILE_ID));
 }
 
 /**

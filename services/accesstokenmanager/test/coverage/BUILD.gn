@@ -13,12 +13,8 @@
 
 import("//build/test.gni")
 import("../../accesstoken_manager.gni")
+import("//base/security/access_token/services/test/mock/account/account_mock.gni")
 
-account_mock_include_dirs =
-    [ "${access_token_path}/services/test/mock/account" ]
-account_mock_sources = [
-  "${access_token_path}/services/test/mock/account/os_account_manager_lite.cpp",
-]
 account_mock_base_external_deps =
     filter_exclude(accesstoken_manager_base_config.external_deps,
                    [ "os_account:os_account_innerkits_lite" ])
@@ -48,12 +44,13 @@ ohos_unittest("libaccesstoken_manager_service_coverage_test") {
     "../unittest/common/parameters.cpp",
     "accesstoken_database_coverage_test.cpp",
     "accesstoken_id_manager_coverage_test.cpp",
-    "permission_manager_coverage_test.cpp"
+    "permission_manager_coverage_test.cpp",
   ]
   sources += accesstoken_manager_base_config.sources
   sources += account_mock_sources
 
   cflags_cc = accesstoken_manager_base_config.cflags_cc
+  cflags_cc += account_mock_cflags_cc
 
   configs = accesstoken_manager_base_config.configs
 

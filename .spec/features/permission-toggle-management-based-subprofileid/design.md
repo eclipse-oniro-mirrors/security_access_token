@@ -18,9 +18,9 @@
 | 项 | 补充说明（如需） |
 |----|------------------|
 | 车机 feature 隔离 | 仅车机产品定义新 feature 时启用 `subProfileId` 逻辑；未定义时旧接口完整回退原行为，同名新增 `subProfileId` 签名返回 `801` |
-| 兼容阻塞规则 | 旧 `userId` 老数据存在时，新路径对 `subProfileId` 的 `status=true/false` 都报错；一旦已存在 `subProfileId` 新数据，旧接口设置也报错 |
+| 兼容阻塞规则 | 旧 `userId` 老数据存在时，新路径对权限弹框 `OPEN/CLOSED` 和 Privacy `true/false` 都报错；一旦已存在 `subProfileId` 新数据，旧接口设置也报错 |
 | `userId` 约束 | JS 新签名不暴露 `userId` 入参，服务端统一通过 `callingUid` 解析当前 `userId`；InnerKit 新路径保留 `userId` 参数，但仅允许传 `0`，非 `0` 直接返回 `201` |
-| `subProfileId` 合法性 | `subProfileId>=0` 时必须校验当前 `userId` 下是否存在对应 profile，不存在返回新增错误码 |
+| `subProfileId` 合法性 | `subProfileId>=0` 时必须校验当前 `userId` 下是否存在对应 profile；不存在时 InnerKit 返回对应模块专用错误码，JS/ANI 映射为 `12100001` |
 | `subProfileId` 默认值 | InnerKit/内部新路径新增 `subProfileId` 入参默认值为 `-1`，所有 `<0` 均按旧路径存取处理 |
 
 ## 上下文和现状
@@ -54,7 +54,7 @@
 | OH-ARCH-IPC-SAF | 涉及 ATM/Privacy IPC 调整 | 复用现有 SA/IPC 链路，不新增跨层捷径 | 集成测试 |
 | OH-ARCH-API-LEVEL | 涉及 System API 扩展 | 仅新增 System API，旧 API 保持兼容 | API 审查 |
 | OH-ARCH-COMPONENT-BUILD | 涉及车机 feature 隔离 | 通过 feature 宏/开关控制车机启用，非车机不定义 feature | 构建验证 |
-| OH-ARCH-ERROR-LOG | 涉及 `201`、`801` 和新增错误码 | 复用现有错误码体系；ATM 使用 `ERR_PERMISSION_REQUEST_TOGGLE_SUBPROFILE_NOT_EXIST`，Privacy 使用 `ERR_PERMISSION_USED_RECORD_SUBPROFILE_NOT_EXIST`，并在服务侧统一返回 | 单测 |
+| OH-ARCH-ERROR-LOG | 涉及 `201`、`801` 和 subProfile/storage conflict 错误码 | InnerKit 复用现有模块错误码体系；JS/ANI 不新增 `12100016/12100017`，subProfile 不存在映射 `12100001`；新增设置接口、老设置接口和老查询接口 storage conflict 映射 operation-not-allowed，老接口返回属于新增兼容错误；新增查询接口不返回 `12100006` | 单测 |
 
 ## 不涉及项承接
 
@@ -111,9 +111,9 @@
 
 | API 签名 | 类型 | Kit | d.ts 位置 | 权限要求 | SysCap |
 |----------|------|-----|-----------|----------|--------|
-| `setPermissionRequestToggleStatus(subProfileId, permissionName, status)` | System | abilityAccessCtrl | `@ohos.abilityAccessCtrl` | 沿用现有开关写权限 | 待与现有 API 对齐 |
-| `getPermissionRequestToggleStatus(subProfileId, permissionName)` | System | abilityAccessCtrl | `@ohos.abilityAccessCtrl` | 沿用现有开关读权限 | 待与现有 API 对齐 |
-| `setPermissionUsedRecordToggleStatus(subProfileId, status)` | System | privacyManager | `@ohos.privacyManager` | 沿用现有开关写权限 | 待与现有 API 对齐 |
+| `setPermissionRequestToggleStatus(permissionName, status, subProfileId)` | System | abilityAccessCtrl | `@ohos.abilityAccessCtrl` | 沿用现有开关写权限 | 待与现有 API 对齐 |
+| `getPermissionRequestToggleStatus(permissionName, subProfileId)` | System | abilityAccessCtrl | `@ohos.abilityAccessCtrl` | 沿用现有开关读权限 | 待与现有 API 对齐 |
+| `setPermissionUsedRecordToggleStatus(status, subProfileId)` | System | privacyManager | `@ohos.privacyManager` | 沿用现有开关写权限 | 待与现有 API 对齐 |
 | `getPermissionUsedRecordToggleStatus(subProfileId)` | System | privacyManager | `@ohos.privacyManager` | 沿用现有开关读权限 | 待与现有 API 对齐 |
 | `GetTokenIDByUserID(userId, tokenIdList, subProfileId)` | InnerKit | accesstoken | `AccessTokenKit` | 沿用现有系统侧调用权限 | 仅 `AccessTokenKit` 保留 `subProfileId=-1` 默认值，client/service/IDL 显式透传 |
 
@@ -142,7 +142,7 @@
 
 | 步骤 | 调用方 | 被调用方 | 数据/接口 | 说明 |
 |------|--------|----------|-----------|------|
-| 1 | JS/ETS 新 API 或系统调用方 | InnerKit / NAPI | `subProfileId + 其余原有入参` | JS 新路径不暴露 `userId`，且 `subProfileId` 为第一个入参 |
+| 1 | JS/ETS 新 API 或系统调用方 | InnerKit / NAPI | 原有入参 + `subProfileId` | JS 新路径不暴露 `userId`，且 `subProfileId` 为最后一个入参 |
 | 2 | InnerKit / NAPI | Service Proxy | IPC 请求 | 不做业务判断，只透传 |
 | 3 | Service | feature/调用上下文 | feature 开关, `callingUid -> userId` | 非车机同名新增 `subProfileId` 签名先返回 `801`；车机 JS 新签名再解析 `callingUid`；InnerKit 新路径校验 `userId==0` 后解析；未定义 feature 时服务端统一将 `subProfileId` 归一化为 `-1` |
 | 4 | Service | 路径分流 | `subProfileId` | `subProfileId<0` 时直接按旧路径存取 |
@@ -159,7 +159,7 @@ sequenceDiagram
   participant FW as InnerKit/NAPI
   participant SA as ATM/Privacy Service
   participant Store as DB/Cache
-  JS->>FW: set/get(subProfileId, ...)
+  JS->>FW: set/get(..., subProfileId)
   FW->>SA: IPC
   SA->>SA: if non-vehicle feature off return 801
   SA->>SA: parse callingUid to userId
@@ -205,6 +205,8 @@ sequenceDiagram
 | 新路径读写 | 当 `subProfileId >= 0` 且通过合法性校验后，仅访问 `userId + sub_profile_id (+ permissionName)` 对应记录 |
 | 老数据阻塞 | 若某 `userId` 下仍存在 `sub_profile_id = -1` 的旧记录，则禁止对该 `userId` 走 `subProfileId >= 0` 的写入，返回 storage mode conflict |
 | 新数据阻塞 | 若某 `userId` 下已存在任意 `sub_profile_id >= 0` 的新记录，则禁止再走旧路径写入，返回 storage mode conflict |
+| 默认状态 | ATM 中 `ohos.permission.APP_TRACKING_CONSENT` 默认 `CLOSED`，其他权限默认 `OPEN`；Privacy used record toggle 默认 `true` |
+| 状态落库 | DB/缓存只保存偏离默认值的状态；设置为默认状态时删除目标维度状态记录，设置为非默认状态时写入状态记录 |
 | 清理切换 | 旧路径执行清理时，删除该 `userId` 下 `sub_profile_id = -1` 的 DB 记录并同步清理缓存；清理完成后才允许写入 `sub_profile_id >= 0` 的新记录 |
 | 查询继承 | 新路径查询时，如果 `userId` 下仅有 `sub_profile_id = -1` 旧记录，则查询结果继承旧记录值；不生成物理复制行 |
 | 唯一性约束 | ATM 建议按 `userId + permissionName + sub_profile_id` 建立唯一约束；Privacy 建议按 `userId + sub_profile_id` 建立唯一约束 |
@@ -215,7 +217,7 @@ sequenceDiagram
 
 | 接口 | 参数 | 类型 | 合法范围 | 非法处理 | 边界说明 |
 |------|------|------|----------|----------|----------|
-| JS/ETS 同名新签名 | `subProfileId` | int32 | `>=0` 且归属 `callingUid` 解析出的当前 `userId` | 非车机返回 `801`；ATM 返回 `ERR_PERMISSION_REQUEST_TOGGLE_SUBPROFILE_NOT_EXIST`，Privacy 返回 `ERR_PERMISSION_USED_RECORD_SUBPROFILE_NOT_EXIST` | 第一个入参，且仅车机 feature 开启时生效 |
+| JS/ETS 同名新签名 | `subProfileId` | int32 | `>=0` 且归属 `callingUid` 解析出的当前 `userId` | 非车机返回 `801`；ATM 返回 `ERR_PERMISSION_REQUEST_TOGGLE_SUBPROFILE_NOT_EXIST`，Privacy 返回 `ERR_PERMISSION_USED_RECORD_SUBPROFILE_NOT_EXIST`；JS/ANI 映射为 `12100001` | 最后一个入参，且仅车机 feature 开启时生效 |
 | JS/ETS 同名新签名 | `status` | bool/enum | 沿用现有合法值 | 旧数据存在时返回兼容错误码 | `true/false` 都受老数据阻塞 |
 | InnerKit/内部新路径 | `userId` | int32 | 固定为 `0` | 非 `0` 返回 `201` | 服务端据此通过 `callingUid` 解析当前 `userId` |
 | InnerKit/内部新路径 | `subProfileId` | int32 | 默认 `-1`；任何 `<0` 均按旧路径存取；`>=0` 时需归属当前 `userId` | ATM 返回 `ERR_PERMISSION_REQUEST_TOGGLE_SUBPROFILE_NOT_EXIST`，Privacy 返回 `ERR_PERMISSION_USED_RECORD_SUBPROFILE_NOT_EXIST` | `userId` 解析完成后再做 profile 校验 |
@@ -239,4 +241,4 @@ sequenceDiagram
 | 项 | 类型 | 影响 | 处理方式 | Owner |
 |----|------|------|----------|-------|
 | `subProfileId` 存在性查询能力来自何处 | 外部依赖 | 若缺少现成接口，实现会被阻塞 | TODO: 接入账号能力（如 `OsAccountManager::QueryOsAccountById`）后完成 `subProfileId >= 0` 存在性校验 | TBD |
-| 兼容错误码与新增错误码枚举值 | 设计 | 影响 API 契约和测试 | ATM 使用 `ERR_PERMISSION_REQUEST_TOGGLE_STORAGE_MODE_CONFLICT` / `ERR_PERMISSION_REQUEST_TOGGLE_SUBPROFILE_NOT_EXIST`；Privacy 使用 `ERR_PERMISSION_USED_RECORD_STORAGE_MODE_CONFLICT` / `ERR_PERMISSION_USED_RECORD_SUBPROFILE_NOT_EXIST`；Stage 3 与现有错误码体系对齐数值 | TBD |
+| 兼容错误码与 JS/ANI 映射 | 设计 | 影响 API 契约和测试 | ATM 使用 `ERR_PERMISSION_REQUEST_TOGGLE_STORAGE_MODE_CONFLICT` / `ERR_PERMISSION_REQUEST_TOGGLE_SUBPROFILE_NOT_EXIST`；Privacy 使用 `ERR_PERMISSION_USED_RECORD_STORAGE_MODE_CONFLICT` / `ERR_PERMISSION_USED_RECORD_SUBPROFILE_NOT_EXIST`；JS/ANI 不新增 `12100016/12100017`，按既有错误码映射 | TBD |

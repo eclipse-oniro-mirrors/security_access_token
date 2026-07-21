@@ -54,7 +54,17 @@ void SwitchToManageToolCaller()
     EXPECT_EQ(0, SetSelfTokenID(g_manageToolCallerTokenId));
 }
 
-int32_t DeleteToolTokenByCurrentPid();
+int32_t DeleteToolTokenByCurrentPid()
+{
+    uint64_t callerTokenId = GetSelfTokenID();
+    uint32_t callerUid = getuid();
+    EXPECT_EQ(0, SetSelfTokenID(g_manageToolCallerTokenId));
+    EXPECT_EQ(0, setuid(AIMGR_UID));
+    int32_t ret = AccessTokenKit::DeleteToolTokenByPid(getpid());
+    EXPECT_EQ(0, setuid(callerUid));
+    EXPECT_EQ(0, SetSelfTokenID(callerTokenId));
+    return ret;
+}
 
 int32_t InitCliToolTokenWithEmptyChallenge(AccessTokenID hostTokenId, const CliInfo& cliInfo,
     AccessTokenIDEx& tokenIdEx, std::vector<PermissionWithValue>& kernelPermList)
@@ -71,18 +81,6 @@ int32_t InitCliToolTokenWithEmptyChallenge(AccessTokenID hostTokenId, const CliI
         .cliInfo = cliInfo,
     };
     int32_t ret = AccessTokenKit::InitCliToken(initInfo, tokenIdEx, kernelPermList);
-    EXPECT_EQ(0, setuid(callerUid));
-    EXPECT_EQ(0, SetSelfTokenID(callerTokenId));
-    return ret;
-}
-
-int32_t DeleteToolTokenByCurrentPid()
-{
-    uint64_t callerTokenId = GetSelfTokenID();
-    uint32_t callerUid = getuid();
-    EXPECT_EQ(0, SetSelfTokenID(g_manageToolCallerTokenId));
-    EXPECT_EQ(0, setuid(AIMGR_UID));
-    int32_t ret = AccessTokenKit::DeleteToolTokenByPid(getpid());
     EXPECT_EQ(0, setuid(callerUid));
     EXPECT_EQ(0, SetSelfTokenID(callerTokenId));
     return ret;

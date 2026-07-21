@@ -37,7 +37,7 @@
 - 已获得 Q-5 的需求方确认，并锁定“仅车机 + feature 隔离 + 其他平台保持原行为”。
 - 已获得旧 JS API 兼容行为确认：旧 API 保持原行为，新增 API 使用 `subProfileId`。
 - 已获得旧数据兼容规则确认：旧 `userId` 数据存在时，按 `subProfileId` 执行 `status=true` 或 `status=false` 都返回错误码；必须通过旧 `userId` 路径清理数据库和缓存中的老数据后，才允许按 `subProfileId` 新写入。
-- 已获得新增路径校验规则确认：`userId=0` 时解析 `callingUid`；`userId!=0` 时返回 `201`；`subProfileId>=0` 时必须校验当前 `userId` 下是否存在对应 `subProfileId`，不存在则返回新增错误码。
+- 已获得新增路径校验规则确认：`userId=0` 时解析 `callingUid`；`userId!=0` 时返回 `201`；`subProfileId>=0` 时必须校验当前 `userId` 下是否存在对应 `subProfileId`，不存在时 InnerKit 返回对应模块专用错误码，JS/ANI 映射为 `12100001`。
 - 已确认目标版本为 `master`，Owner 暂记 `TBD`。
 - 需求方已明确回复“批准 Define，进入 Stage 2”。
 

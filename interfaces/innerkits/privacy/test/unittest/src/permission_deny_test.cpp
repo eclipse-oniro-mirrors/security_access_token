@@ -306,6 +306,25 @@ HWTEST_F(PermDenyTest, SetPermissionUsedRecordToggleStatus002, TestSize.Level0)
 }
 
 /**
+ * @tc.name: SetPermissionUsedRecordToggleStatus003
+ * @tc.desc: Test SetPermissionUsedRecordToggleStatus with system hap but no PERMISSION_RECORD_TOGGLE permission.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermDenyTest, SetPermissionUsedRecordToggleStatus003, TestSize.Level0)
+{
+    std::vector<std::string> reqPerm;
+    MockHapToken mock("SetPermissionUsedRecordToggleStatus003", reqPerm, true);
+    uint32_t selfUid = getuid();
+    ASSERT_EQ(0, setuid(123)); // 123: uid
+
+    EXPECT_EQ(PrivacyError::ERR_PERMISSION_DENIED,
+        PrivacyKit::SetPermissionUsedRecordToggleStatus(TEST_USER_ID_2, true));
+
+    EXPECT_EQ(0, setuid(selfUid));
+}
+
+/**
 * @tc.name: SetMutePolicy001
 * @tc.desc: Test SetMutePolicy with no permssion.
 * @tc.type: FUNC
