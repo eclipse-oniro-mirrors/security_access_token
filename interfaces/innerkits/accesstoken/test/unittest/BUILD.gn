@@ -156,6 +156,10 @@ ohos_unittest("accesstoken_mock_test") {
   ]
 
   cflags_cc = access_token_cflags_cc
+  cflags_cc += [ "-DACCESSTOKEN_MANAGER_CLIENT_TEST_ENABLE" ]
+  if (build_variant == "user") {
+    cflags_cc += [ "-DATM_BUILD_VARIANT_USER_ENABLE" ]
+  }
   configs = [
     "${access_token_path}/config:coverage_flags",
     "${access_token_path}/services/accesstokenmanager/idl:access_token_manager_gen_config",

@@ -14,11 +14,23 @@
  */
 
 #include "accesstoken_mock_test.h"
+#include <cstring>
 #include <thread>
 #include "access_token_error.h"
+#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
+#include "access_token_manager_proxy.h"
+#endif
+#define private public
 #include "accesstoken_manager_client.h"
+#undef private
+#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
+#include "ipc_object_stub.h"
+#endif
 #include "permission_map.h"
 #include "permission_grant_info.h"
+#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
+#include "securec.h"
+#endif
 #include "token_setproc.h"
 
 using namespace testing::ext;
@@ -26,6 +38,14 @@ using namespace testing::ext;
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+#if defined(SECURITY_COMPONENT_ENHANCE_ENABLE) && defined(ACCESSTOKEN_MANAGER_CLIENT_TEST_ENABLE)
+bool TestClientIsEnhanceKeySizeValid(size_t size);
+void TestClientClearSecCompEnhanceKey(SecCompEnhanceKey& enhanceKey);
+SecCompEnhanceKeyIdl TestClientConvertSecCompEnhanceKeyToIdl(const SecCompEnhanceKey& enhanceKey);
+bool TestClientConvertSecCompEnhanceKeyFromIdl(const SecCompEnhanceKeyIdl& enhanceKeyIdl,
+    SecCompEnhanceKey& enhanceKey);
+#endif
+
 namespace {
 static AccessTokenID g_testTokenId = 123;  // 123: tokenId
 static constexpr int32_t DEFAULT_API_VERSION = 8;
@@ -42,6 +62,79 @@ HapPolicyParams g_infoManagerTestPolicyPrams = {
     .apl = APL_NORMAL,
     .domain = "test.domain",
 };
+
+#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
+SecCompEnhanceKey CreateEnhanceKey(uint64_t epoch, uint32_t size, uint8_t value)
+{
+    SecCompEnhanceKey enhanceKey;
+    enhanceKey.epoch = epoch;
+    enhanceKey.key.size = size;
+    if (size <= MAX_HMAC_SIZE) {
+        (void)memset_s(enhanceKey.key.data, MAX_HMAC_SIZE, value, size);
+    }
+    return enhanceKey;
+}
+
+SecCompEnhanceKeyIdl CreateEnhanceKeyIdl(uint64_t epoch, size_t size, uint8_t value)
+{
+    SecCompEnhanceKeyIdl enhanceKey;
+    enhanceKey.epoch = epoch;
+    enhanceKey.key.assign(size, value);
+    return enhanceKey;
+}
+
+class SecCompEnhanceKeyRemoteObject final : public IPCObjectStub {
+public:
+    SecCompEnhanceKeyRemoteObject() : IPCObjectStub(u"SecCompEnhanceKeyRemoteObject") {}
+
+    int OnRemoteRequest(uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option) override
+    {
+        (void)option;
+        (void)data.ReadInterfaceToken();
+        if (code == static_cast<uint32_t>(IAccessTokenManagerIpcCode::COMMAND_STORE_SEC_COMP_ENHANCE_KEY)) {
+            ++storeCallCount_;
+            storedKey_.key.clear();
+            if (SecCompEnhanceKeyIdlBlockUnmarshalling(data, storedKey_) != ERR_NONE) {
+                (void)reply.WriteInt32(ERR_INVALID_DATA);
+                return ERR_NONE;
+            }
+            (void)reply.WriteInt32(storeResult_);
+            return ERR_NONE;
+        }
+        if (code == static_cast<uint32_t>(IAccessTokenManagerIpcCode::COMMAND_GET_SEC_COMP_ENHANCE_KEY)) {
+            ++getCallCount_;
+            (void)reply.WriteInt32(getResult_);
+            if (getResult_ == RET_SUCCESS) {
+                (void)SecCompEnhanceKeyIdlBlockMarshalling(reply, outputKey_);
+            }
+            return ERR_NONE;
+        }
+        (void)reply.WriteInt32(ERR_INVALID_DATA);
+        return ERR_NONE;
+    }
+
+    SecCompEnhanceKeyIdl storedKey_;
+    SecCompEnhanceKeyIdl outputKey_;
+    int32_t storeResult_ = RET_SUCCESS;
+    int32_t getResult_ = RET_SUCCESS;
+    uint32_t storeCallCount_ = 0;
+    uint32_t getCallCount_ = 0;
+};
+
+sptr<SecCompEnhanceKeyRemoteObject> InstallSecCompEnhanceKeyRemoteObject()
+{
+    AccessTokenManagerClient::GetInstance().ReleaseProxy();
+    sptr<SecCompEnhanceKeyRemoteObject> remote = new (std::nothrow) SecCompEnhanceKeyRemoteObject();
+    if (remote != nullptr) {
+        sptr<AccessTokenManagerProxy> proxy = new (std::nothrow) AccessTokenManagerProxy(remote);
+        if (proxy == nullptr) {
+            return nullptr;
+        }
+        AccessTokenManagerClient::GetInstance().proxy_ = proxy;
+    }
+    return remote;
+}
+#endif
 
 std::vector<CliInfo> BuildClawCliInfos(size_t size = 1)
 {
@@ -104,6 +197,9 @@ void AccessTokenMockTest::SetUp()
 
 void AccessTokenMockTest::TearDown()
 {
+#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
+    AccessTokenManagerClient::GetInstance().ReleaseProxy();
+#endif
 }
 
 /**
@@ -552,6 +648,7 @@ HWTEST_F(AccessTokenMockTest, RegisterSelfPermStateChangeCallback001, TestSize.L
     ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr));
 }
 
+#ifdef ATM_BUILD_VARIANT_USER_ENABLE
 /**
  * @tc.name: ReloadNativeTokenInfo001
  * @tc.desc: ReloadNativeTokenInfo with proxy is null
@@ -562,6 +659,7 @@ HWTEST_F(AccessTokenMockTest, ReloadNativeTokenInfo001, TestSize.Level4)
 {
     ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::ReloadNativeTokenInfo());
 }
+#endif
 
 /**
  * @tc.name: GetNativeTokenId001
@@ -959,6 +1057,118 @@ HWTEST_F(AccessTokenMockTest, GetSecCompEnhanceKey001, TestSize.Level4)
     SecCompEnhanceKey enhanceKey;
     ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::GetSecCompEnhanceKey(enhanceKey));
 }
+
+/**
+ * @tc.name: StoreSecCompEnhanceKey002
+ * @tc.desc: StoreSecCompEnhanceKey validates key size and converts a valid key before IPC.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, StoreSecCompEnhanceKey002, TestSize.Level4)
+{
+    auto remote = InstallSecCompEnhanceKeyRemoteObject();
+    ASSERT_NE(nullptr, remote);
+
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
+        AccessTokenManagerClient::GetInstance().StoreSecCompEnhanceKey(CreateEnhanceKey(1, 0, 0x11)));
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
+        AccessTokenManagerClient::GetInstance().StoreSecCompEnhanceKey(
+            CreateEnhanceKey(1, MAX_HMAC_SIZE + 1, 0x22)));
+    EXPECT_EQ(0u, remote->storeCallCount_);
+
+    SecCompEnhanceKey input = CreateEnhanceKey(3, MAX_HMAC_SIZE, 0x33);
+    EXPECT_EQ(RET_SUCCESS, AccessTokenManagerClient::GetInstance().StoreSecCompEnhanceKey(input));
+    EXPECT_EQ(1u, remote->storeCallCount_);
+    EXPECT_EQ(input.epoch, remote->storedKey_.epoch);
+    EXPECT_EQ(input.key.size, remote->storedKey_.key.size());
+    EXPECT_EQ(0, memcmp(input.key.data, remote->storedKey_.key.data(), input.key.size));
+}
+
+/**
+ * @tc.name: GetSecCompEnhanceKey002
+ * @tc.desc: GetSecCompEnhanceKey handles remote errors and validates converted IDL key size.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, GetSecCompEnhanceKey002, TestSize.Level4)
+{
+    auto remote = InstallSecCompEnhanceKeyRemoteObject();
+    ASSERT_NE(nullptr, remote);
+
+    SecCompEnhanceKey output = CreateEnhanceKey(1, 1, 0x11);
+    remote->getResult_ = AccessTokenError::ERR_RESOURCE_IS_NOT_READY;
+    EXPECT_EQ(AccessTokenError::ERR_RESOURCE_IS_NOT_READY,
+        AccessTokenManagerClient::GetInstance().GetSecCompEnhanceKey(output));
+    EXPECT_EQ(1u, remote->getCallCount_);
+
+    remote->getResult_ = RET_SUCCESS;
+    remote->outputKey_ = CreateEnhanceKeyIdl(2, 0, 0x22);
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
+        AccessTokenManagerClient::GetInstance().GetSecCompEnhanceKey(output));
+    EXPECT_EQ(0u, output.epoch);
+    EXPECT_EQ(0u, output.key.size);
+
+    remote->outputKey_ = CreateEnhanceKeyIdl(3, MAX_HMAC_SIZE + 1, 0x33);
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
+        AccessTokenManagerClient::GetInstance().GetSecCompEnhanceKey(output));
+
+    remote->outputKey_ = CreateEnhanceKeyIdl(4, MAX_HMAC_SIZE, 0x44);
+    EXPECT_EQ(RET_SUCCESS, AccessTokenManagerClient::GetInstance().GetSecCompEnhanceKey(output));
+    EXPECT_EQ(remote->outputKey_.epoch, output.epoch);
+    EXPECT_EQ(remote->outputKey_.key.size(), output.key.size);
+    EXPECT_EQ(0, memcmp(remote->outputKey_.key.data(), output.key.data, output.key.size));
+}
+
+#ifdef ACCESSTOKEN_MANAGER_CLIENT_TEST_ENABLE
+/**
+ * @tc.name: SecCompEnhanceKeyConvert001
+ * @tc.desc: Validate client enhance key helper branches.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, SecCompEnhanceKeyConvert001, TestSize.Level4)
+{
+    EXPECT_FALSE(TestClientIsEnhanceKeySizeValid(0));
+    EXPECT_FALSE(TestClientIsEnhanceKeySizeValid(MAX_HMAC_SIZE + 1));
+    EXPECT_TRUE(TestClientIsEnhanceKeySizeValid(1));
+    EXPECT_TRUE(TestClientIsEnhanceKeySizeValid(MAX_HMAC_SIZE));
+
+    SecCompEnhanceKey input = CreateEnhanceKey(5, 4, 0x55);
+    SecCompEnhanceKeyIdl inputIdl = TestClientConvertSecCompEnhanceKeyToIdl(input);
+    EXPECT_EQ(input.epoch, inputIdl.epoch);
+    EXPECT_EQ(input.key.size, inputIdl.key.size());
+    EXPECT_EQ(0, memcmp(input.key.data, inputIdl.key.data(), input.key.size));
+
+    SecCompEnhanceKey invalidInput = CreateEnhanceKey(6, MAX_HMAC_SIZE + 1, 0x66);
+    SecCompEnhanceKeyIdl invalidInputIdl = TestClientConvertSecCompEnhanceKeyToIdl(invalidInput);
+    EXPECT_EQ(invalidInput.epoch, invalidInputIdl.epoch);
+    EXPECT_TRUE(invalidInputIdl.key.empty());
+
+    SecCompEnhanceKey cleared = CreateEnhanceKey(7, MAX_HMAC_SIZE, 0x77);
+    TestClientClearSecCompEnhanceKey(cleared);
+    SecCompEnhanceKey zeroKey = CreateEnhanceKey(0, MAX_HMAC_SIZE, 0);
+    EXPECT_EQ(0u, cleared.epoch);
+    EXPECT_EQ(0u, cleared.key.size);
+    EXPECT_EQ(0, memcmp(cleared.key.data, zeroKey.key.data, MAX_HMAC_SIZE));
+
+    SecCompEnhanceKey output = CreateEnhanceKey(8, MAX_HMAC_SIZE, 0x88);
+    EXPECT_FALSE(TestClientConvertSecCompEnhanceKeyFromIdl(CreateEnhanceKeyIdl(9, 0, 0x99), output));
+    EXPECT_EQ(0u, output.epoch);
+    EXPECT_EQ(0u, output.key.size);
+
+    output = CreateEnhanceKey(10, MAX_HMAC_SIZE, 0xAA);
+    EXPECT_FALSE(TestClientConvertSecCompEnhanceKeyFromIdl(
+        CreateEnhanceKeyIdl(11, MAX_HMAC_SIZE + 1, 0xBB), output));
+    EXPECT_EQ(0u, output.epoch);
+    EXPECT_EQ(0u, output.key.size);
+
+    SecCompEnhanceKeyIdl validInputIdl = CreateEnhanceKeyIdl(12, MAX_HMAC_SIZE, 0xCC);
+    EXPECT_TRUE(TestClientConvertSecCompEnhanceKeyFromIdl(validInputIdl, output));
+    EXPECT_EQ(validInputIdl.epoch, output.epoch);
+    EXPECT_EQ(validInputIdl.key.size(), output.key.size);
+    EXPECT_EQ(0, memcmp(validInputIdl.key.data(), output.key.data, output.key.size));
+}
+#endif
 #endif
 
 /**

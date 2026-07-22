@@ -185,6 +185,29 @@ PermissionStatusDetail ConvertPermissionStatusDetail(const PermissionStatusDetai
 }
 } // namespace
 
+#if defined(SECURITY_COMPONENT_ENHANCE_ENABLE) && defined(ACCESSTOKEN_MANAGER_CLIENT_TEST_ENABLE)
+bool TestClientIsEnhanceKeySizeValid(size_t size)
+{
+    return IsEnhanceKeySizeValid(size);
+}
+
+void TestClientClearSecCompEnhanceKey(SecCompEnhanceKey& enhanceKey)
+{
+    ClearSecCompEnhanceKey(enhanceKey);
+}
+
+SecCompEnhanceKeyIdl TestClientConvertSecCompEnhanceKeyToIdl(const SecCompEnhanceKey& enhanceKey)
+{
+    return ConvertSecCompEnhanceKey(enhanceKey);
+}
+
+bool TestClientConvertSecCompEnhanceKeyFromIdl(const SecCompEnhanceKeyIdl& enhanceKeyIdl,
+    SecCompEnhanceKey& enhanceKey)
+{
+    return ConvertSecCompEnhanceKey(enhanceKeyIdl, enhanceKey);
+}
+#endif
+
 AccessTokenManagerClient& AccessTokenManagerClient::GetInstance()
 {
     static AccessTokenManagerClient* instance = nullptr;
