@@ -98,6 +98,23 @@ static const std::string DISABLE_PERMISSION_DIALOG = "ohos.permission.DISABLE_PE
 static const unsigned int DEBUG_APP_FLAG = 0x0008;
 static uint64_t g_selfShellTokenId = 0;
 
+#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
+static constexpr uint64_t SEC_COMP_BASE_EPOCH = 1;
+static constexpr uint64_t SEC_COMP_OLDER_EPOCH = 9;
+static constexpr uint64_t SEC_COMP_STORED_EPOCH = 10;
+static constexpr uint64_t SEC_COMP_LATEST_EPOCH = 11;
+static constexpr size_t SEC_COMP_EMPTY_KEY_SIZE = 0;
+static constexpr size_t SEC_COMP_OVERSIZED_KEY_SIZE = MAX_HMAC_SIZE + 1;
+static constexpr uint8_t SEC_COMP_DENIED_KEY_VALUE = 0x11;
+static constexpr uint8_t SEC_COMP_ALLOWED_KEY_VALUE = 0x22;
+static constexpr uint8_t SEC_COMP_EMPTY_KEY_VALUE = 0x33;
+static constexpr uint8_t SEC_COMP_OVERSIZED_KEY_VALUE = 0x44;
+static constexpr uint8_t SEC_COMP_STORED_KEY_VALUE = 0x55;
+static constexpr uint8_t SEC_COMP_OLDER_KEY_VALUE = 0x66;
+static constexpr uint8_t SEC_COMP_DIFFERENT_KEY_VALUE = 0x77;
+static constexpr uint8_t SEC_COMP_LATEST_KEY_VALUE = 0x88;
+#endif
+
 class OsAccountMockGuard final {
 public:
     ~OsAccountMockGuard()
@@ -4226,7 +4243,7 @@ HWTEST_F(AccessTokenManagerServiceTest, SecCompEnhanceKeyService001, TestSize.Le
 {
     ResetSecCompEnhanceKey();
     MockNativeToken mock("foundation");
-    SecCompEnhanceKeyIdl input = BuildSecCompEnhanceKeyIdl(1, 0x11);
+    SecCompEnhanceKeyIdl input = BuildSecCompEnhanceKeyIdl(SEC_COMP_BASE_EPOCH, SEC_COMP_DENIED_KEY_VALUE);
     SecCompEnhanceKeyIdl output;
     EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, atManagerService_->StoreSecCompEnhanceKey(input));
     EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, atManagerService_->GetSecCompEnhanceKey(output));
@@ -4242,7 +4259,7 @@ HWTEST_F(AccessTokenManagerServiceTest, SecCompEnhanceKeyService002, TestSize.Le
 {
     ResetSecCompEnhanceKey();
     MockNativeToken mock("security_component_service");
-    SecCompEnhanceKeyIdl input = BuildSecCompEnhanceKeyIdl(1, 0x22);
+    SecCompEnhanceKeyIdl input = BuildSecCompEnhanceKeyIdl(SEC_COMP_BASE_EPOCH, SEC_COMP_ALLOWED_KEY_VALUE);
     SecCompEnhanceKeyIdl output;
     EXPECT_EQ(RET_SUCCESS, atManagerService_->StoreSecCompEnhanceKey(input));
     EXPECT_EQ(RET_SUCCESS, atManagerService_->GetSecCompEnhanceKey(output));
@@ -4261,8 +4278,10 @@ HWTEST_F(AccessTokenManagerServiceTest, SecCompEnhanceKeyService003, TestSize.Le
 {
     ResetSecCompEnhanceKey();
     MockNativeToken mock("security_component_service");
-    SecCompEnhanceKeyIdl emptyKey = BuildSecCompEnhanceKeyIdl(1, 0, 0x33);
-    SecCompEnhanceKeyIdl oversizedKey = BuildSecCompEnhanceKeyIdl(1, MAX_HMAC_SIZE + 1, 0x44);
+    SecCompEnhanceKeyIdl emptyKey = BuildSecCompEnhanceKeyIdl(
+        SEC_COMP_BASE_EPOCH, SEC_COMP_EMPTY_KEY_SIZE, SEC_COMP_EMPTY_KEY_VALUE);
+    SecCompEnhanceKeyIdl oversizedKey = BuildSecCompEnhanceKeyIdl(
+        SEC_COMP_BASE_EPOCH, SEC_COMP_OVERSIZED_KEY_SIZE, SEC_COMP_OVERSIZED_KEY_VALUE);
 
     EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, atManagerService_->StoreSecCompEnhanceKey(emptyKey));
     EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, atManagerService_->StoreSecCompEnhanceKey(oversizedKey));
@@ -4296,10 +4315,11 @@ HWTEST_F(AccessTokenManagerServiceTest, SecCompEnhanceKeyService005, TestSize.Le
 {
     ResetSecCompEnhanceKey();
     MockNativeToken mock("security_component_service");
-    SecCompEnhanceKeyIdl first = BuildSecCompEnhanceKeyIdl(10, 0x55);
-    SecCompEnhanceKeyIdl older = BuildSecCompEnhanceKeyIdl(9, 0x66);
-    SecCompEnhanceKeyIdl different = BuildSecCompEnhanceKeyIdl(10, 0x77);
-    SecCompEnhanceKeyIdl latest = BuildSecCompEnhanceKeyIdl(11, 0x88);
+    SecCompEnhanceKeyIdl first = BuildSecCompEnhanceKeyIdl(SEC_COMP_STORED_EPOCH, SEC_COMP_STORED_KEY_VALUE);
+    SecCompEnhanceKeyIdl older = BuildSecCompEnhanceKeyIdl(SEC_COMP_OLDER_EPOCH, SEC_COMP_OLDER_KEY_VALUE);
+    SecCompEnhanceKeyIdl different = BuildSecCompEnhanceKeyIdl(
+        SEC_COMP_STORED_EPOCH, SEC_COMP_DIFFERENT_KEY_VALUE);
+    SecCompEnhanceKeyIdl latest = BuildSecCompEnhanceKeyIdl(SEC_COMP_LATEST_EPOCH, SEC_COMP_LATEST_KEY_VALUE);
 
     EXPECT_EQ(RET_SUCCESS, atManagerService_->StoreSecCompEnhanceKey(first));
     EXPECT_EQ(RET_SUCCESS, atManagerService_->StoreSecCompEnhanceKey(first));
