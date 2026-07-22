@@ -205,6 +205,31 @@ void RestoreKernelPermissionState(
         (originalStatus == PERMISSION_GRANTED);
     PermissionKernelUtils::SetPermToKernel(tokenId, permissionName, kernelStatus);
 }
+
+void AddGrantedHapPermsToKernel(AccessTokenID tokenId)
+{
+    std::vector<uint32_t> opCodeList;
+    HapTokenInfoInner::GetGrantedPermCodeList(tokenId, opCodeList);
+    (void)PermissionKernelUtils::AddHapPermToKernel(tokenId, opCodeList);
+}
+
+void ReportRestoredHapToken(const std::shared_ptr<HapTokenInfoInner>& hap, AccessTokenID tokenId,
+    AccessTokenID oriTokenId)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx.tokenIdExStruct.tokenID = tokenId;
+    tokenIdEx.tokenIdExStruct.tokenAttr = hap->GetAttr();
+
+    HapDfxInfo dfxInfo;
+    dfxInfo.sceneCode = AddHapSceneCode::INIT;
+    dfxInfo.tokenId = tokenId;
+    dfxInfo.oriTokenId = oriTokenId;
+    dfxInfo.tokenIdEx = tokenIdEx;
+    dfxInfo.userID = hap->GetUserID();
+    dfxInfo.bundleName = hap->GetBundleName();
+    dfxInfo.instIndex = hap->GetInstIndex();
+    ReportSysEventAddHap(RET_SUCCESS, dfxInfo, false);
+}
 }
 
 int32_t AccessTokenInfoManager::FindPermissionByNameFromDb(const std::vector<uint32_t>& permCodeList,
@@ -542,6 +567,20 @@ void AccessTokenInfoManager::LoadPermissionDefinitionExt(ConfigPolicyLoaderInter
     }
 }
 
+bool AccessTokenInfoManager::AddReservedHapInfoFromDbValues(const GenericValues& tokenValue)
+{
+    AccessTokenID tokenId = static_cast<AccessTokenID>(tokenValue.GetInt(TokenFiledConst::FIELD_TOKEN_ID));
+    std::string bundle = tokenValue.GetString(TokenFiledConst::FIELD_BUNDLE_NAME);
+    ReservedType type = AccessTokenInfoUtils::GetReservedTokenTypeDBValue(tokenValue);
+    if (type != ReservedType::NONE) {
+        AccessTokenIDManager::GetInstance().AddReservedTokenId(tokenId);
+        LOGI(ATM_DOMAIN, ATM_TAG, "Restore reserved hap token %{public}u bundle name %{public}s ",
+            tokenId, bundle.c_str());
+        return true;
+    }
+    return false;
+}
+
 #ifdef TOKEN_SYNC_ENABLE
 void AccessTokenInfoManager::InitDmCallback(void)
 {
@@ -565,18 +604,32 @@ void AccessTokenInfoManager::InitDmCallback(void)
 int32_t AccessTokenInfoManager::AddHapInfoToCache(const GenericValues& tokenValue,
     const std::vector<GenericValues>& permStateRes, const std::vector<GenericValues>& extendedPermRes)
 {
-    AccessTokenID tokenId = static_cast<AccessTokenID>(tokenValue.GetInt(TokenFiledConst::FIELD_TOKEN_ID));
-    std::string bundle = tokenValue.GetString(TokenFiledConst::FIELD_BUNDLE_NAME);
     if (AccessTokenInfoUtils::CheckSpecifiedFlag(
         tokenValue.GetInt(TokenFiledConst::FIELD_TOKEN_ATTR), TOKEN_RESERVED_FLAG)) {
-        int32_t instIndex = tokenValue.GetInt(TokenFiledConst::FIELD_INST_INDEX);
-        int32_t userId = tokenValue.GetInt(TokenFiledConst::FIELD_USER_ID);
-        AddReservedHapTokenId(userId, bundle, instIndex, tokenId);
-        LOGI(ATM_DOMAIN, ATM_TAG, "Restore reserved hap token %{public}u bundle name %{public}s user %{public}d,"
-            "inst %{public}d ok!", tokenId, bundle.c_str(), userId, instIndex);
-        return RET_SUCCESS;
+        return RestoreReservedHapTokenToCache(tokenValue);
     }
-    int result = AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, TOKEN_HAP);
+
+    return RestoreActiveHapTokenToCache(tokenValue, permStateRes, extendedPermRes);
+}
+
+int32_t AccessTokenInfoManager::RestoreReservedHapTokenToCache(const GenericValues& tokenValue)
+{
+    AccessTokenID tokenId = static_cast<AccessTokenID>(tokenValue.GetInt(TokenFiledConst::FIELD_TOKEN_ID));
+    int32_t instIndex = tokenValue.GetInt(TokenFiledConst::FIELD_INST_INDEX);
+    int32_t userId = tokenValue.GetInt(TokenFiledConst::FIELD_USER_ID);
+    std::string bundle = tokenValue.GetString(TokenFiledConst::FIELD_BUNDLE_NAME);
+    AddReservedHapTokenId(userId, bundle, instIndex, tokenId);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Restore reserved hap token %{public}u bundle name %{public}s user %{public}d,"
+        "inst %{public}d ok!", tokenId, bundle.c_str(), userId, instIndex);
+    return RET_SUCCESS;
+}
+
+int32_t AccessTokenInfoManager::RestoreActiveHapTokenToCache(const GenericValues& tokenValue,
+    const std::vector<GenericValues>& permStateRes, const std::vector<GenericValues>& extendedPermRes)
+{
+    AccessTokenID tokenId = static_cast<AccessTokenID>(tokenValue.GetInt(TokenFiledConst::FIELD_TOKEN_ID));
+    std::string bundle = tokenValue.GetString(TokenFiledConst::FIELD_BUNDLE_NAME);
+    int32_t result = AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, TOKEN_HAP);
     if (result != RET_SUCCESS) {
         LOGE(ATM_DOMAIN, ATM_TAG, "TokenId %{public}u add id failed, error=%{public}d.", tokenId, result);
         ReportSysEventServiceStartError(INIT_HAP_TOKENINFO_ERROR,
@@ -600,20 +653,7 @@ int32_t AccessTokenInfoManager::AddHapInfoToCache(const GenericValues& tokenValu
         return result;
     }
 
-    AccessTokenIDEx tokenIdEx = {0};
-    tokenIdEx.tokenIdExStruct.tokenID = tokenId;
-    tokenIdEx.tokenIdExStruct.tokenAttr = hap->GetAttr();
-
-    HapDfxInfo dfxInfo;
-    dfxInfo.sceneCode = AddHapSceneCode::INIT;
-    dfxInfo.tokenId = tokenId;
-    dfxInfo.oriTokenId = oriTokenId;
-    dfxInfo.tokenIdEx = tokenIdEx;
-    dfxInfo.userID = hap->GetUserID();
-    dfxInfo.bundleName = hap->GetBundleName();
-    dfxInfo.instIndex = hap->GetInstIndex();
-    ReportSysEventAddHap(RET_SUCCESS, dfxInfo, false);
-
+    ReportRestoredHapToken(hap, tokenId, oriTokenId);
     LOGI(ATM_DOMAIN, ATM_TAG, "Restore hap token %{public}u bundle name %{public}s user %{public}d,"
         " permSize %{public}d, inst %{public}d ok!",
         tokenId, hap->GetBundleName().c_str(), hap->GetUserID(), hap->GetReqPermissionSize(), hap->GetInstIndex());
@@ -685,10 +725,7 @@ int AccessTokenInfoManager::AddHapTokenInfo(const std::shared_ptr<HapTokenInfoIn
         oriTokenId = idRemoved;
         (void)RemoveHapTokenInfo(idRemoved);
     }
-    // add hap to kernel
-    std::vector<uint32_t> opCodeList;
-    HapTokenInfoInner::GetGrantedPermCodeList(id, opCodeList);
-    (void)PermissionKernelUtils::AddHapPermToKernel(id, opCodeList);
+    AddGrantedHapPermsToKernel(id);
     return RET_SUCCESS;
 }
 
@@ -705,13 +742,7 @@ std::shared_ptr<HapTokenInfoInner> AccessTokenInfoManager::GetHapTokenInfoInnerF
         return nullptr;
     }
 
-    if (AccessTokenInfoUtils::CheckSpecifiedFlag(
-        hapTokenResults[0].GetInt(TokenFiledConst::FIELD_TOKEN_ATTR), TOKEN_RESERVED_FLAG)) {
-        AddReservedHapTokenId(hapTokenResults[0].GetInt(TokenFiledConst::FIELD_USER_ID),
-            hapTokenResults[0].GetString(TokenFiledConst::FIELD_BUNDLE_NAME),
-            hapTokenResults[0].GetInt(TokenFiledConst::FIELD_INST_INDEX), id);
-        LOGC(ATM_DOMAIN, ATM_TAG, "Id(%{public}u) is reserved in db, hapSize: %{public}zu, mapSize: %{public}zu.",
-            id, hapTokenResults.size(), hapTokenInfoMap_.size());
+    if (AddReservedHapInfoFromDbValues(hapTokenResults[0])) {
         return nullptr;
     }
 
@@ -744,9 +775,7 @@ std::shared_ptr<HapTokenInfoInner> AccessTokenInfoManager::GetHapTokenInfoInnerF
     (void)AccessTokenIDManager::GetInstance().RegisterTokenId(id, TOKEN_HAP);
     hapTokenIdMap_[AccessTokenInfoUtils::GetHapUniqueStr(hap)] = id;
     hapTokenInfoMap_[id] = hap;
-    std::vector<uint32_t> opCodeList;
-    HapTokenInfoInner::GetGrantedPermCodeList(id, opCodeList);
-    (void)PermissionKernelUtils::AddHapPermToKernel(id, opCodeList);
+    AddGrantedHapPermsToKernel(id);
     LOGI(ATM_DOMAIN, ATM_TAG, " Token %{public}u is not found in map(mapSize: %{public}zu), begin load from DB,"
         " restore bundle %{public}s user %{public}d, idx %{public}d, permSize %{public}d.", id, hapTokenInfoMap_.size(),
         hap->GetBundleName().c_str(), hap->GetUserID(), hap->GetInstIndex(), hap->GetReqPermissionSize());

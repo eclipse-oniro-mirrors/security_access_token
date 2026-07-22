@@ -263,6 +263,39 @@ bool IsCliInfoListSizeValid(size_t size)
     return (size > 0) && (size <= MAX_CLAW_CLI_INFO_LIST_SIZE);
 }
 
+void FillPermissionCheckResultIdl(const HapInfoCheckResult& permCheckResult, HapInfoCheckResultIdl& resultInfoIdl)
+{
+    resultInfoIdl.realResult = ERROR;
+    resultInfoIdl.permissionName = permCheckResult.permCheckResult.permissionName;
+    resultInfoIdl.rule = static_cast<PermissionRulesEnumIdl>(permCheckResult.permCheckResult.rule);
+}
+
+void BuildBundleParam(const HapInfoParams& info, BundleParam& bundleParam)
+{
+    bundleParam.bundleName = info.bundleName;
+    bundleParam.appId = info.appIDDesc;
+    bundleParam.apiVersion = info.apiVersion;
+#ifdef IS_SUPPORT_HAP_RUNNING
+    bundleParam.distributionType = static_cast<int32_t>(Verify::ParseAppDistType(info.appDistributionType));
+#endif
+    bundleParam.isSystem = info.isSystemApp;
+    bundleParam.isAtomicService = info.isAtomicService;
+    bundleParam.isDebug = (info.appProvisionType == "debug" || info.appDistributionType == "none");
+}
+
+void BuildBundleParam(const UpdateHapInfoParams& info, const std::string& bundleName, BundleParam& bundleParam)
+{
+    bundleParam.bundleName = bundleName;
+    bundleParam.appId = info.appIDDesc;
+    bundleParam.apiVersion = info.apiVersion;
+#ifdef IS_SUPPORT_HAP_RUNNING
+    bundleParam.distributionType = static_cast<int32_t>(Verify::ParseAppDistType(info.appDistributionType));
+#endif
+    bundleParam.isSystem = info.isSystemApp;
+    bundleParam.isAtomicService = info.isAtomicService;
+    bundleParam.isDebug = (info.appProvisionType == "debug" || info.appDistributionType == "none");
+}
+
 PermissionDecisionStatusIdl ConvertPermissionDecisionStatus(PermissionDecisionStatus status)
 {
     return static_cast<PermissionDecisionStatusIdl>(status);
@@ -1413,25 +1446,14 @@ int32_t AccessTokenManagerService::InitHapToken(const HapInfoParcel& info, const
     resultInfoIdl.realResult = ERR_OK;
     std::vector<PermissionStatus> initializedList;
     std::vector<GenericValues> undefValues;
+    int32_t ret = RET_SUCCESS;
     if (hapInfoParm.dlpType == DLP_COMMON) {
         HapInfoCheckResult permCheckResult;
         BundleParam bundleParam;
-        bundleParam.bundleName = hapInfoParm.bundleName;
-        bundleParam.appId = hapInfoParm.appIDDesc;
-        bundleParam.apiVersion = hapInfoParm.apiVersion;
-#ifdef IS_SUPPORT_HAP_RUNNING
-        bundleParam.distributionType = static_cast<int32_t>(Verify::ParseAppDistType(hapInfoParm.appDistributionType));
-#endif
-        bundleParam.isSystem = hapInfoParm.isSystemApp;
-        bundleParam.isAtomicService = hapInfoParm.isAtomicService;
-        bundleParam.isDebug = (hapInfoParm.appProvisionType == "debug" ||
-            hapInfoParm.appDistributionType == "none");
+        BuildBundleParam(hapInfoParm, bundleParam);
         if (!PermissionManager::GetInstance().InitPermissionList(bundleParam, policyCopy, initializedList,
-            permCheckResult,
-            undefValues)) {
-            resultInfoIdl.realResult = ERROR;
-            resultInfoIdl.permissionName = permCheckResult.permCheckResult.permissionName;
-            resultInfoIdl.rule = static_cast<PermissionRulesEnumIdl>(permCheckResult.permCheckResult.rule);
+            permCheckResult, undefValues)) {
+            FillPermissionCheckResultIdl(permCheckResult, resultInfoIdl);
             ReportAddHap({0}, hapInfoParm, policyCopy, beginTime, ERR_PERM_REQUEST_CFG_FAILED);
             return ERR_OK;
         }
@@ -1441,6 +1463,7 @@ int32_t AccessTokenManagerService::InitHapToken(const HapInfoParcel& info, const
             return ERR_PERM_REQUEST_CFG_FAILED;
         }
     }
+
     policyCopy.permStateList = initializedList;
 
     if (hapInfoParm.isSkillHap) {
@@ -1450,8 +1473,7 @@ int32_t AccessTokenManagerService::InitHapToken(const HapInfoParcel& info, const
     }
 
     AccessTokenIDEx tokenIdEx;
-    int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(
-        hapInfoParm, policyCopy, tokenIdEx, undefValues);
+    ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(hapInfoParm, policyCopy, tokenIdEx, undefValues);
     fullTokenId = tokenIdEx.tokenIDEx;
     ReportAddHap(tokenIdEx, hapInfoParm, policyCopy, beginTime, ret);
     return ret;
@@ -1592,22 +1614,11 @@ int32_t AccessTokenManagerService::UpdateHapToken(uint64_t& fullTokenId, const U
             ReportUpdateHap(tokenIdEx, hapInfo, policyParcel.hapPolicy, beginTime, error);
             return error;
         }
-        bundleParam.bundleName = hapInfo.bundleName;
     }
-    bundleParam.appId = info.appIDDesc;
-    bundleParam.apiVersion = info.apiVersion;
-#ifdef IS_SUPPORT_HAP_RUNNING
-    bundleParam.distributionType = static_cast<int32_t>(Verify::ParseAppDistType(info.appDistributionType));
-#endif
-    bundleParam.isSystem = info.isSystemApp;
-    bundleParam.isAtomicService = info.isAtomicService;
-    bundleParam.isDebug = (info.appProvisionType == "debug" || info.appDistributionType == "none");
-
+    BuildBundleParam(info, hapInfo.bundleName, bundleParam);
     if (!PermissionManager::GetInstance().InitPermissionList(bundleParam, policy, initializedList,
         permCheckResult, undefValues, info.dataRefresh)) {
-        resultInfoIdl.realResult = ERROR;
-        resultInfoIdl.permissionName = permCheckResult.permCheckResult.permissionName;
-        resultInfoIdl.rule = static_cast<PermissionRulesEnumIdl>(permCheckResult.permCheckResult.rule);
+        FillPermissionCheckResultIdl(permCheckResult, resultInfoIdl);
         ReportUpdateHap(tokenIdEx, hapInfo, policyParcel.hapPolicy, beginTime, ERR_PERM_REQUEST_CFG_FAILED);
         return ERR_OK;
     }
