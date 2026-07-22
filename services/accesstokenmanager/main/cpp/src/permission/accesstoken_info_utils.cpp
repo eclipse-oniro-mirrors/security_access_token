@@ -150,6 +150,19 @@ void AccessTokenInfoUtils::BuildBundleFullInfo(const BundleParam& param, const H
         }
     }
 }
+
+ReservedType AccessTokenInfoUtils::GetReservedTokenTypeDBValue(const GenericValues& values)
+{
+#ifdef SPM_DATA_ENABLE
+    return static_cast<ReservedType>(values.GetInt(TokenFiledConst::FIELD_RESERVED));
+#else
+    if (AccessTokenInfoUtils::CheckSpecifiedFlag(
+        values.GetInt(TokenFiledConst::FIELD_TOKEN_ATTR), 0x0004)) { // 0x0004: reserved
+        return ReservedType::RESERVED_IDENTITY;
+    }
+    return ReservedType::NONE;
+#endif
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

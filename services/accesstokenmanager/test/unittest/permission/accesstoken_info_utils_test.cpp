@@ -21,6 +21,7 @@
 #include "permission_feature_manager.h"
 #include "permission_map.h"
 #include "provision/provision_info.h"
+#include "token_field_const.h"
 
 using namespace testing::ext;
 
@@ -272,6 +273,39 @@ HWTEST_F(AccessTokenInfoUtilsTest, BuildBundleFullInfo005, TestSize.Level0)
 
     ASSERT_NE(nullptr, innerInfo);
     EXPECT_TRUE(innerInfo->permCodeList.empty());
+}
+
+/**
+ * @tc.name: GetReservedTokenTypeDBValue001
+ * @tc.desc: Verify GetReservedTokenTypeDBValue returns the persisted reserved type value.
+ * @tc.type: FUNC
+ */
+HWTEST_F(AccessTokenInfoUtilsTest, GetReservedTokenTypeDBValue001, TestSize.Level0)
+{
+    GenericValues values;
+#ifdef SPM_DATA_ENABLE
+    values.Put(TokenFiledConst::FIELD_RESERVED, static_cast<int32_t>(ReservedType::RESERVED_DATA));
+    EXPECT_EQ(ReservedType::RESERVED_DATA, AccessTokenInfoUtils::GetReservedTokenTypeDBValue(values));
+#else
+    values.Put(TokenFiledConst::FIELD_TOKEN_ATTR, 0x0004); // 0x0004: reserved
+    EXPECT_EQ(ReservedType::RESERVED_IDENTITY, AccessTokenInfoUtils::GetReservedTokenTypeDBValue(values));
+#endif
+}
+
+/**
+ * @tc.name: GetReservedTokenTypeDBValue002
+ * @tc.desc: Verify GetReservedTokenTypeDBValue returns none when no reserved mark is stored.
+ * @tc.type: FUNC
+ */
+HWTEST_F(AccessTokenInfoUtilsTest, GetReservedTokenTypeDBValue002, TestSize.Level0)
+{
+    GenericValues values;
+#ifdef SPM_DATA_ENABLE
+    values.Put(TokenFiledConst::FIELD_RESERVED, static_cast<int32_t>(ReservedType::NONE));
+#else
+    values.Put(TokenFiledConst::FIELD_TOKEN_ATTR, 0);
+#endif
+    EXPECT_EQ(ReservedType::NONE, AccessTokenInfoUtils::GetReservedTokenTypeDBValue(values));
 }
 } // namespace AccessToken
 } // namespace Security

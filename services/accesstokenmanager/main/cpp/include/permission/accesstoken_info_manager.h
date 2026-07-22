@@ -178,6 +178,9 @@ private:
     void InitHapTokenInfos(uint32_t& hapSize, std::map<int32_t, TokenIdInfo>& tokenIdAplMap);
     void ReportAddHapIdChange(const std::shared_ptr<HapTokenInfoInner>& hapInfo, AccessTokenID oriTokenId);
     int AddHapTokenInfo(const std::shared_ptr<HapTokenInfoInner>& info, AccessTokenID& oriTokenId);
+    int32_t RestoreReservedHapTokenToCache(const GenericValues& tokenValue);
+    int32_t RestoreActiveHapTokenToCache(const GenericValues& tokenValue,
+        const std::vector<GenericValues>& permStateRes, const std::vector<GenericValues>& extendedPermRes);
     int32_t RegisterTokenId(const HapInfoParams& info, AccessTokenID& tokenId);
     void GenerateAddInfoToVec(AtmDataType type, const std::vector<GenericValues>& addValues,
         std::vector<AddInfo>& addInfoVec);
@@ -224,6 +227,7 @@ private:
     void AddTokenIdToBundleInfoInner(const std::shared_ptr<BundleInfoInner>& bundleInfo, AccessTokenID tokenId);
     void RemoveTokenIdFromBundleInfoInner(const std::shared_ptr<BundleInfoInner>& bundleInfo, AccessTokenID tokenId);
     void LoadPermissionDefinitionExt(ConfigPolicyLoaderInterface& policy);
+    bool AddReservedHapInfoFromDbValues(const GenericValues& tokenValue);
     bool hasInited_;
 
     std::shared_mutex hapTokenInfoLock_;
