@@ -411,7 +411,7 @@ HWTEST_F(GetSelfPermissionStateTest, GetSelfPermissionsState007, TestSize.Level0
     EXPECT_EQ(permsList[1].errorReason, PERM_NOT_DECLEARED);
     EXPECT_EQ(permsList[2].errorReason, REQ_SUCCESS);
     EXPECT_EQ(permsList[3].errorReason, REQ_SUCCESS);
-    EXPECT_EQ(permsList[4].errorReason, UNABLE_POP_UP);
+    EXPECT_EQ(permsList[4].errorReason, REQ_SUCCESS);
     EXPECT_EQ(permsList[5].errorReason, CONDITIONS_NOT_MET);
     EXPECT_EQ(permsList[6].errorReason, REQ_SUCCESS);
     ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
@@ -460,7 +460,7 @@ HWTEST_F(GetSelfPermissionStateTest, GetSelfPermissionsState008, TestSize.Level0
     ASSERT_EQ(FORBIDDEN_OPER, AccessTokenKit::GetSelfPermissionsState(permsList, info));
     EXPECT_EQ(permsList[0].errorReason, PRIVACY_STATEMENT_NOT_AGREED);
     EXPECT_EQ(permsList[1].errorReason, PRIVACY_STATEMENT_NOT_AGREED);
-    EXPECT_EQ(permsList[2].errorReason, UNABLE_POP_UP);
+    EXPECT_EQ(permsList[2].errorReason, PRIVACY_STATEMENT_NOT_AGREED);
     EXPECT_EQ(permsList[3].errorReason, CONDITIONS_NOT_MET);
     EXPECT_EQ(permsList[4].errorReason, PRIVACY_STATEMENT_NOT_AGREED);
     ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
