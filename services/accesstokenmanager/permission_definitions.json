@@ -10085,6 +10085,17 @@
             "deviceTypes": ["2in1"]
         },
         {
+            "name": "ohos.permission.MOUNT_BUNDLE_INFO",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.1.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "tv", "wearable", "2in1", "tablet", "car", "liteWearable"]
+        },
+        {
             "name": "ohos.permission.HDC_REPORT_INFO",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
