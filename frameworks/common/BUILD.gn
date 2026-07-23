@@ -142,7 +142,7 @@ ohos_static_library("accesstoken_static_log_for_nativetoken") {
   ]
 
   external_deps = [
-    "bounds_checking_function:libsec_static",
+    "bounds_checking_function:libsec_shared",
     "c_utils:utils",
   ]
 
