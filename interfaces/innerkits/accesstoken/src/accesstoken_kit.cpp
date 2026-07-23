@@ -45,7 +45,6 @@ bool IsAgentIdValid(const std::string& agentID)
 }
 static const int FIRSTCALLER_TOKENID_DEFAULT = 0;
 static const int MAX_LENGTH = 256;
-static constexpr size_t MAX_MIGRATED_INFO_SIZE = 50;
 } // namespace
 
 PermUsedTypeEnum AccessTokenKit::GetPermissionUsedType(
@@ -170,104 +169,6 @@ FullTokenID AccessTokenKit::AllocLocalTokenID(const std::string& remoteDeviceID,
 #endif
 }
 
-int32_t AccessTokenKit::CheckHapSignInfo(const BundleHapList& list, int32_t& sessionId,
-    std::vector<TrustedBundleInfo>& bundleInfo, HapVerifyResultInfo& resultInfo)
-{
-    LOGI(ATM_DOMAIN, ATM_TAG, "CheckHapSignInfo called, hapPaths size=%{public}zu.", list.hapPaths.size());
-    if (!DataValidator::IsHapListSizeValid(list.hapPaths.size())) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "HapPaths is invalid.");
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-    return AccessTokenManagerClient::GetInstance().CheckHapSignInfo(list, sessionId, bundleInfo, resultInfo);
-}
-
-int32_t AccessTokenKit::CheckHapPermissionInfo(int32_t sessionId, InstallTypeEnum type, HapInfoCheckResult& result)
-{
-    LOGI(ATM_DOMAIN, ATM_TAG, "CheckHapPermissionInfo called, sessionId=%{public}d, type=%{public}d",
-        sessionId, static_cast<int32_t>(type));
-    if (sessionId <= 0) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "sessionId is 0.");
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-    return AccessTokenManagerClient::GetInstance().CheckHapPermissionInfo(sessionId, type, result);
-}
-
-int32_t AccessTokenKit::PrepareHapIdentity(int32_t& sessionId, const HapBaseInfo& info,
-    const BundlePolicy& policy, Identity& identity)
-{
-    LOGI(ATM_DOMAIN, ATM_TAG, "PrepareHapIdentity called, sessionId=%{public}d, user=%{public}d, bundleName=%{public}s"
-        ", index=%{public}d", sessionId, info.userID, info.bundleName.c_str(), info.instIndex);
-    if (sessionId < 0 || !DataValidator::IsUserIdValid(info.userID) ||
-        !DataValidator::IsBundleNameValid(info.bundleName)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "HapBaseInfo param check failed.");
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-    return AccessTokenManagerClient::GetInstance().PrepareHapIdentity(sessionId, info, policy, identity);
-}
-
-int32_t AccessTokenKit::UpdateHapPolicy(int32_t sessionId, int32_t tokenId, const BundlePolicy& policy)
-{
-    int32_t uid = -1;
-    return UpdateHapPolicy(sessionId, tokenId, policy, uid);
-}
-
-int32_t AccessTokenKit::UpdateHapPolicy(int32_t sessionId, int32_t tokenId, const BundlePolicy& policy, int32_t& uid)
-{
-    LOGI(ATM_DOMAIN, ATM_TAG, "UpdateHapPolicy called, sessionId=%{public}d, tokenId=%{public}d, uid=%{public}d.",
-        sessionId, tokenId, uid);
-    if (sessionId <= 0) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "SessionId is invalid.");
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-    return AccessTokenManagerClient::GetInstance().UpdateHapPolicy(sessionId, tokenId, policy, uid);
-}
-
-int32_t AccessTokenKit::FinishInstall(int32_t sessionId, bool isPersistent,
-    const std::map<std::string, std::string>& modulePathMap)
-{
-    LOGI(ATM_DOMAIN, ATM_TAG, "FinishInstall called, sessionId=%{public}d, isPersistent=%{public}d.",
-        sessionId, isPersistent);
-    if (sessionId <= 0) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "SessionId is invalid.");
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-    return AccessTokenManagerClient::GetInstance().FinishInstall(sessionId, isPersistent, modulePathMap);
-}
-
-int32_t AccessTokenKit::GetCacheSignInfoBySessionId(int32_t sessionId,
-    std::vector<TrustedBundleInfo>& bundleInfo)
-{
-    LOGI(ATM_DOMAIN, ATM_TAG, "GetCacheSignInfoBySessionId called, sessionId=%{public}d.", sessionId);
-    if (sessionId <= 0) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "SessionId is invalid.");
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-    return AccessTokenManagerClient::GetInstance().GetCacheSignInfoBySessionId(sessionId, bundleInfo);
-}
-
-int32_t AccessTokenKit::GetHapSignInfo(const std::string& bundleName,
-    std::vector<TrustedBundleInfo>& bundleInfo)
-{
-    LOGI(ATM_DOMAIN, ATM_TAG, "GetHapSignInfo called, bundleName=%{public}s.", bundleName.c_str());
-    if (!DataValidator::IsBundleNameValid(bundleName)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "BundleName is invalid.");
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-    return AccessTokenManagerClient::GetInstance().GetHapSignInfo(bundleName, bundleInfo);
-}
-
-int32_t AccessTokenKit::GetCachePolicyBySessionId(int32_t sessionId, const std::string& bundleName,
-    BundlePolicyInfo& bundlePolicyInfo)
-{
-    LOGI(ATM_DOMAIN, ATM_TAG, "GetCachePolicyBySessionId called, sessionId=%{public}d, bundleName=%{public}s.",
-        sessionId, bundleName.c_str());
-    if (sessionId <= 0 || !DataValidator::IsBundleNameValid(bundleName)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Param is invalid.");
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-    return AccessTokenManagerClient::GetInstance().GetCachePolicyBySessionId(sessionId, bundleName, bundlePolicyInfo);
-}
-
 int32_t AccessTokenKit::UpdateHapToken(
     AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info, const HapPolicyParams& policy)
 {
@@ -294,25 +195,6 @@ isAtomicService: %{public}d",
     return AccessTokenManagerClient::GetInstance().UpdateHapToken(tokenIdEx, info, newPolicy, result);
 }
 
-int32_t AccessTokenKit::MigrateInstalledBundles(const std::vector<MigratedInfo>& migratedInfoList,
-    std::vector<BundleMigrateResult>& results)
-{
-    results.clear();
-    LOGI(ATM_DOMAIN, ATM_TAG, "MigrateInstalledBundles size=%{public}zu.", migratedInfoList.size());
-    if (migratedInfoList.size() > MAX_MIGRATED_INFO_SIZE) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Migrated info size %{public}zu is invalid.", migratedInfoList.size());
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-
-    return AccessTokenManagerClient::GetInstance().MigrateInstalledBundles(migratedInfoList, results);
-}
-
-int32_t AccessTokenKit::FinishMigration()
-{
-    LOGI(ATM_DOMAIN, ATM_TAG, "FinishMigration.");
-    return AccessTokenManagerClient::GetInstance().FinishMigration();
-}
-
 int AccessTokenKit::DeleteToken(AccessTokenID tokenID)
 {
     return DeleteToken(tokenID, false);
@@ -334,18 +216,6 @@ int32_t AccessTokenKit::DeleteToolTokenByPid(int32_t pid)
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     return AccessTokenManagerClient::GetInstance().DeleteToolTokenByPid(pid);
-}
-
-int32_t AccessTokenKit::DeleteIdentity(
-    AccessTokenID tokenID, const std::string& bundleName, ReservedType type)
-{
-    LOGI(ATM_DOMAIN, ATM_TAG, "TokenID=%{public}u, bundle=%{public}s, type=%{public}d.",
-        tokenID, bundleName.c_str(), static_cast<int32_t>(type));
-    if (bundleName.empty() || (type < ReservedType::NONE) || (type > ReservedType::RESERVED_DATA)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Invalid param.");
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-    return AccessTokenManagerClient::GetInstance().DeleteIdentity(tokenID, bundleName, type);
 }
 
 ATokenTypeEnum AccessTokenKit::GetTokenType(AccessTokenID tokenID) __attribute__((no_sanitize("cfi")))
@@ -430,27 +300,6 @@ AccessTokenIDEx AccessTokenKit::GetHapTokenIDEx(int32_t userID, const std::strin
         return tokenIdEx;
     }
     return AccessTokenManagerClient::GetInstance().GetHapTokenID(userID, bundleName, instIndex);
-}
-
-int32_t AccessTokenKit::GetHapIdentity(const HapBaseInfo& info, Identity& identity)
-{
-    LOGD(ATM_DOMAIN, ATM_TAG, "UserID=%{public}d, bundleName=%{public}s, instIndex=%{public}d.",
-        info.userID, info.bundleName.c_str(), info.instIndex);
-    if ((!DataValidator::IsUserIdValid(info.userID)) || (!DataValidator::IsBundleNameValid(info.bundleName))) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Hap base info param check failed");
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-    return AccessTokenManagerClient::GetInstance().GetHapIdentity(info, identity);
-}
-
-int32_t AccessTokenKit::GetHapBaseInfoByUid(int32_t uid, HapBaseInfo& info)
-{
-    LOGD(ATM_DOMAIN, ATM_TAG, "Uid=%{public}d.", uid);
-    if (uid <= 0) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Uid=%{public}d is invalid.", uid);
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-    return AccessTokenManagerClient::GetInstance().GetHapBaseInfoByUid(uid, info);
 }
 
 int32_t AccessTokenKit::GetTokenIDByUserID(int32_t userID, std::unordered_set<AccessTokenID>& tokenIdList)
@@ -1076,17 +925,6 @@ int32_t AccessTokenKit::GetReqPermissionByName(
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     return AccessTokenManagerClient::GetInstance().GetReqPermissionByName(tokenID, permissionName, value);
-}
-
-int32_t AccessTokenKit::RefreshTokenStatus(const Identity& identity, ReservedType reserved)
-{
-    LOGI(ATM_DOMAIN, ATM_TAG, "RefreshTokenStatus tokenId=%{public}u, uid=%{public}d, reserved=%{public}d.",
-        static_cast<AccessTokenID>(identity.tokenId), identity.uid, static_cast<int32_t>(reserved));
-    if (identity.tokenId == INVALID_TOKENID) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "TokenId is invalid.");
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-    return AccessTokenManagerClient::GetInstance().RefreshTokenStatus(identity, reserved);
 }
 
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE

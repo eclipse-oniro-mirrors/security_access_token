@@ -37,7 +37,6 @@ ohos_fuzztest("RegisterPermStateChangeCallbackFuzzTest") {
     "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
     "${access_token_path}/interfaces/innerkits/token_setproc:libperm_setproc",
     "${access_token_path}/interfaces/innerkits/token_setproc:libtokensetproc_shared",
-    "${access_token_path}/services/common/proxy_death:proxy_death_stub",
   ]
 
   configs = [ "${access_token_path}/config:coverage_flags" ]

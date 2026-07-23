@@ -29,7 +29,6 @@ bool HapTokenInfoParcel::Marshalling(Parcel& out) const
     RETURN_IF_FALSE(out.WriteInt32(this->hapTokenInfoParams.dlpType));
     RETURN_IF_FALSE(out.WriteUint32(this->hapTokenInfoParams.tokenID));
     RETURN_IF_FALSE(out.WriteUint32(this->hapTokenInfoParams.tokenAttr));
-    RETURN_IF_FALSE(out.WriteInt32(this->hapTokenInfoParams.uid));
     return true;
 }
 
@@ -50,7 +49,6 @@ HapTokenInfoParcel* HapTokenInfoParcel::Unmarshalling(Parcel& in)
     RELEASE_IF_FALSE(in.ReadInt32(hapTokenInfoParcel->hapTokenInfoParams.dlpType), hapTokenInfoParcel);
     RELEASE_IF_FALSE(in.ReadUint32(hapTokenInfoParcel->hapTokenInfoParams.tokenID), hapTokenInfoParcel);
     RELEASE_IF_FALSE(in.ReadUint32(hapTokenInfoParcel->hapTokenInfoParams.tokenAttr), hapTokenInfoParcel);
-    RELEASE_IF_FALSE(in.ReadInt32(hapTokenInfoParcel->hapTokenInfoParams.uid), hapTokenInfoParcel);
     return hapTokenInfoParcel;
 }
 } // namespace AccessToken

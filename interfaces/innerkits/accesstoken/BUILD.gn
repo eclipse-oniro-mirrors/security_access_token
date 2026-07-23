@@ -70,7 +70,6 @@ if (is_standard_system) {
       "${access_token_path}/interfaces/innerkits/token_setproc:libperm_setproc_for_sdk",
       "${access_token_path}/interfaces/innerkits/token_setproc:libtoken_setproc",
       "${access_token_path}/services/accesstokenmanager/idl:access_token_manager_proxy",
-      "${access_token_path}/services/common/proxy_death:proxy_death_stub",
     ]
 
     external_deps = [

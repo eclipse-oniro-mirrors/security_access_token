@@ -37,9 +37,6 @@ public:
         std::vector<GenericValues>& results) = 0;
     virtual int32_t DeleteAndInsertValues(const std::vector<DelInfo>& delInfoVec,
         const std::vector<AddInfo>& addInfoVec) = 0;
-    virtual int32_t Modify(const AtmDataType type,
-        const std::vector<GenericValues>& modifyValues,
-        const std::vector<GenericValues>& conditions) = 0;
     virtual bool DestroyRdbHelper() = 0;
 };
 
@@ -57,9 +54,6 @@ public:
         std::vector<GenericValues>& results) override;
     int32_t DeleteAndInsertValues(const std::vector<DelInfo>& delInfoVec,
         const std::vector<AddInfo>& addInfoVec) override;
-    int32_t Modify(const AtmDataType type,
-        const std::vector<GenericValues>& modifyValues,
-        const std::vector<GenericValues>& conditions) override;
     bool DestroyRdbHelper() override;
 };
 

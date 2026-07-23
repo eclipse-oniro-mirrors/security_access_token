@@ -48,6 +48,11 @@ typedef struct {
     uint32_t tokenId;
 } BriefSecCompData;
 
+typedef enum AppProvisionType {
+    DEBUG = 0,
+    RELEASE = 1,
+} AppProvisionType;
+
 class PermissionDataBrief final {
 public:
     enum class PermissionStatusChangeType : uint32_t {
@@ -101,8 +106,6 @@ public:
     int32_t GetReqPermissionByName(
         AccessTokenID tokenId, const std::string& permissionName, std::string& value, bool tokenIdCheck);
     void GetExtendedValueList(AccessTokenID tokenId, std::vector<PermissionWithValue>& extendedPermList);
-    void UpdatePermStatus(const BriefPermData& permOld, BriefPermData& permNew);
-
 private:
     bool GetPermissionBriefData(AccessTokenID tokenID, const PermissionStatus &permState,
         const std::map<std::string, std::string>& aclExtendedMap, BriefPermData& briefPermData);
@@ -112,6 +115,7 @@ private:
         const std::map<std::string, std::string>& aclExtendedMap,
         std::vector<BriefPermData>& list);
     void AddBriefPermDataByTokenId(AccessTokenID tokenID, const std::vector<BriefPermData>& listInput);
+    void UpdatePermStatus(const BriefPermData& permOld, BriefPermData& permNew);
     uint32_t GetFlagWroteToDb(uint32_t grantFlag);
     void MergePermBriefData(std::vector<BriefPermData>& permBriefDataList, BriefPermData& data);
     bool IsRestrictedPermission(uint32_t oldFlag, uint32_t newFlag);

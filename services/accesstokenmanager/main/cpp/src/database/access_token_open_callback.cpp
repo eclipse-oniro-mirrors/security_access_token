@@ -217,13 +217,12 @@ int32_t AccessTokenOpenCallback::CreateVersionOneTable(NativeRdb::RdbStore& rdbS
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to create table permission_definition_table.");
         return res;
     }
-    
+
     res = CreatePermissionStateTable(rdbStore);
     if (res != NativeRdb::E_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to create table permission_state_table.");
         return res;
     }
-    
     return 0;
 }
 

@@ -81,16 +81,10 @@ public:
     AccessTokenIDEx AllocHapToken(const HapInfoParams& info, const HapPolicy& policy);
     int32_t InitHapToken(const HapInfoParams& info, HapPolicy& policy,
         AccessTokenIDEx& fullTokenId, HapInfoCheckResult& result);
-    int32_t MigrateInstalledBundles(const std::vector<MigratedInfo>& migratedInfoList,
-        std::vector<BundleMigrateResult>& results);
-    int32_t FinishMigration();
     int DeleteToken(AccessTokenID tokenID, bool isTokenReserved);
     int32_t DeleteToolTokenByPid(int32_t pid);
-    int32_t DeleteIdentity(AccessTokenID tokenID, const std::string& bundleName, ReservedType type);
     ATokenTypeEnum GetTokenType(AccessTokenID tokenID);
     AccessTokenIDEx GetHapTokenID(int32_t userID, const std::string& bundleName, int32_t instIndex);
-    int32_t GetHapIdentity(const HapBaseInfo& info, Identity& identity);
-    int32_t GetHapBaseInfoByUid(int32_t uid, HapBaseInfo& info);
     FullTokenID AllocLocalTokenID(const std::string& remoteDeviceID, AccessTokenID remoteTokenID);
     int32_t UpdateHapToken(AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info,
         const HapPolicy& policy, HapInfoCheckResult& result);
@@ -149,19 +143,6 @@ public:
         std::vector<PermissionStatus>& permissionInfoList, bool onlyHap);
     int32_t QueryStatusByTokenID(const std::vector<AccessTokenID>& tokenIDList,
         std::vector<PermissionStatus>& permissionInfoList);
-    int32_t CheckHapSignInfo(const BundleHapList& list, int32_t& sessionId,
-        std::vector<TrustedBundleInfo>& bundleInfo, HapVerifyResultInfo& resultInfo);
-    int32_t RefreshTokenStatus(const Identity& identity, ReservedType reserved);
-    int32_t CheckHapPermissionInfo(int32_t sessionId, InstallTypeEnum type, HapInfoCheckResult& result);
-    int32_t PrepareHapIdentity(int32_t& sessionId, const HapBaseInfo& info,
-        const BundlePolicy& policy, Identity& identity);
-    int32_t UpdateHapPolicy(int32_t sessionId, int32_t tokenId, const BundlePolicy& policy, int32_t& uid);
-    int32_t FinishInstall(
-        int32_t sessionId, bool isPersistent, const std::map<std::string, std::string>& modulePathMap);
-    int32_t GetCacheSignInfoBySessionId(int32_t sessionId, std::vector<TrustedBundleInfo>& bundleInfo);
-    int32_t GetHapSignInfo(const std::string& bundleName, std::vector<TrustedBundleInfo>& bundleInfo);
-    int32_t GetCachePolicyBySessionId(int32_t sessionId, const std::string& bundleName,
-        BundlePolicyInfo& bundlePolicyInfo);
     int32_t GetCliPermissionRequestInfo(
         const std::string& agentID, const std::vector<CliInfo>& cliInfoList, PermissionDialogResult& result);
     int32_t GetCliPermissions(AccessTokenID hostTokenID, const std::string& agentID,
@@ -175,7 +156,6 @@ private:
         const std::shared_ptr<PermStateChangeCallbackCustomize>& customizedCb,
         sptr<PermissionStateChangeCallback>& callback);
     void ReregisterTokenSyncCallback();
-    sptr<ProxyDeathCallBack> GetAnonyStub();
 
     DISALLOW_COPY_AND_MOVE(AccessTokenManagerClient);
     std::mutex proxyMutex_;
@@ -192,9 +172,6 @@ private:
     std::shared_ptr<TokenSyncKitInterface> syncCallbackImpl_ = nullptr;
     sptr<TokenSyncCallback> tokenSyncCallback_ = nullptr;
 #endif // TOKEN_SYNC_ENABLE
-
-    sptr<ProxyDeathCallBack> anonyStub_ = nullptr;
-    std::mutex stubMutex_;
 };
 } // namespace AccessToken
 } // namespace Security
