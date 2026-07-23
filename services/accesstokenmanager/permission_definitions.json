@@ -10241,6 +10241,17 @@
             "deviceTypes": ["phone", "tablet"]
         },
         {
+            "name": "ohos.permission.CONTROL_IMAGEVIDEO_ANALYSIS",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.1.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "tv", "wearable", "2in1", "tablet", "car", "liteWearable"]
+        },
+        {
             "name": "ohos.permission.MANAGE_SANDBOX_BUNDLE",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
