@@ -10417,6 +10417,17 @@
             "provisionEnable": true,
             "distributedSceneEnable": false,
             "deviceTypes": ["wearable", "tv", "tablet", "phone", "car", "2in1", "liteWearable", "router", "smartlock"]
+        },
+        {
+            "name": "ohos.permission.DEFAULT_WEB_BROWSER",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "NORMAL",
+            "since": "26.1.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1", "car", "phone", "tablet", "tv", "wearable"]
         }
     ]
 }
