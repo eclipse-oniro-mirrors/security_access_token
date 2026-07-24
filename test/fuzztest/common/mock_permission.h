@@ -35,12 +35,10 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-namespace {
-constexpr uid_t ACCESS_TOKEN_UID = 3020;
-const std::string MOCK_HAP_BUNDLE_NAME = "com.ohos.permissionmanager";
-const std::string MOCK_NATIVE_PROCESS_NAME = "privacy_service";
-constexpr uint64_t SYSTEM_APP_MASK = (static_cast<uint64_t>(1) << 32);
-}
+inline constexpr uid_t ACCESS_TOKEN_UID = 3020;
+inline const std::string MOCK_HAP_BUNDLE_NAME = "com.ohos.permissionmanager";
+inline const std::string MOCK_NATIVE_PROCESS_NAME = "privacy_service";
+inline constexpr uint64_t SYSTEM_APP_MASK = (static_cast<uint64_t>(1) << 32);
 
 inline uid_t MockAccessTokenUid()
 {
@@ -97,7 +95,7 @@ static AccessTokenID GetTokenByProcessName(const std::string& processName)
 
 class MockToken final {
 public:
-    MockToken(const std::vector<std::string>& permissionList, bool isHap = true, bool isSystem = false)
+    explicit MockToken(const std::vector<std::string>& permissionList, bool isHap = true, bool isSystem = false)
     {
         errMsg_.clear();
         selfToken_ = GetSelfTokenID();

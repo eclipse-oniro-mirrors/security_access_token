@@ -182,29 +182,29 @@ class PermissionDef(object):
 
 def parse_json(path, platform):
     extend_perm = {
-        'name' : 'ohos.permission.KERNEL_ATM_SELF_USE',
-        'grantMode' : 'system_grant',
-        'availableLevel' : 'system_core',
-        'availableType' : 'SYSTEM',
-        'since' : 18,
-        'deprecated' : '',
-        'provisionEnable' : True,
-        'distributedSceneEnable' : True,
-        'isKernelEffect' : True,
-        'hasValue' : True
+        'name': 'ohos.permission.KERNEL_ATM_SELF_USE',
+        'grantMode': 'system_grant',
+        'availableLevel': 'system_core',
+        'availableType': 'SYSTEM',
+        'since': 18,
+        'deprecated': '',
+        'provisionEnable': True,
+        'distributedSceneEnable': True,
+        'isKernelEffect': True,
+        'hasValue': True
     }
 
     manual_perm = {
-        'name' : 'ohos.permission.MANUAL_ATM_SELF_USE',
-        'grantMode' : 'manual_settings',
-        'availableLevel' : 'normal',
-        'availableType' : 'NORMAL',
-        'since' : 19,
-        'deprecated' : '',
-        'provisionEnable' : True,
-        'distributedSceneEnable' : False,
-        'isKernelEffect' : False,
-        'hasValue' : False
+        'name': 'ohos.permission.MANUAL_ATM_SELF_USE',
+        'grantMode': 'manual_settings',
+        'availableLevel': 'normal',
+        'availableType': 'NORMAL',
+        'since': 19,
+        'deprecated': '',
+        'provisionEnable': True,
+        'distributedSceneEnable': False,
+        'isKernelEffect': False,
+        'hasValue': False
     }
 
     def_list = []
