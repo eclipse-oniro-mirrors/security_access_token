@@ -334,7 +334,7 @@ int32_t ClawTicketManager::VerifyCliClawTicket(AccessTokenID hostTokenId, const 
     const std::string rawChallenge = NormalizeLegacyChallenge(challenge);
 #ifndef ENHANCE_CAPABILITY
     if (rawChallenge.empty()) {
-        return QueryCommandPermissions(cliInfo, permList);
+        return RET_SUCCESS;
     }
 #endif
 
@@ -499,41 +499,6 @@ void ClawTicketManager::DeleteClawTicketByCallerTokenId(AccessTokenID callerToke
 
     LOGI(ATM_DOMAIN, ATM_TAG, "Deleted %{public}zu tickets for callerTokenId=%{public}u", challengesToDelete.size(),
         callerTokenId);
-}
-
-int32_t ClawTicketManager::QueryCommandPermissions(const CliInfo& cliInfo, std::vector<PermissionStatus>& permList)
-{
-#ifdef SAF_AGENT_FENCE_ENABLE
-    std::vector<SAF::CommandInfo> cmds;
-    SAF::CommandInfo cmd;
-    cmd.cmdName = cliInfo.cliName;
-    cmd.subCmd = cliInfo.subCliName;
-    cmds.emplace_back(cmd);
-
-    std::vector<SAF::CommandPermissionInfo> permissionInfos;
-    SAF::SafAgentFence safAgentFence;
-    int32_t ret = safAgentFence.BatchQueryCommandPermission(cmds, permissionInfos);
-    if (ret != RET_SUCCESS) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Query cli callable permissions failed, ret=%{public}d.", ret);
-        return ret;
-    }
-    if (permissionInfos.size() != cmds.size()) {
-        LOGE(ATM_DOMAIN, ATM_TAG,
-            "Query cli callable permissions size mismatch, input=%{public}zu, output=%{public}zu.",
-            cmds.size(), permissionInfos.size());
-        return AccessTokenError::ERR_PERMISSION_NOT_EXIST;
-    }
-
-    for (size_t i = 0; i < permissionInfos.size(); ++i) {
-        for (const auto& perm : permissionInfos[i].permissions) {
-            PermissionStatus status;
-            status.permissionName = perm;
-            status.grantStatus = PERMISSION_GRANTED;
-            permList.emplace_back(status);
-        }
-    }
-#endif
-    return RET_SUCCESS;
 }
 } // namespace AccessToken
 } // namespace Security
