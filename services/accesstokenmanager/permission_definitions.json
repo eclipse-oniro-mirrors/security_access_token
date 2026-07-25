@@ -10428,6 +10428,17 @@
             "provisionEnable": true,
             "distributedSceneEnable": false,
             "deviceTypes": ["wearable", "tv", "tablet", "phone", "car", "2in1", "liteWearable", "router", "smartlock"]
+        },
+        {
+            "name": "ohos.permission.START_CALL_AI_SERVICE",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["tablet", "phone"]
         }
     ]
 }
