@@ -19,6 +19,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
+#include <mutex>
 #include <pthread.h>
 #include <unistd.h>
 #include <thread>
@@ -87,6 +88,8 @@ struct RequestAsyncContext {
     std::shared_ptr<AbilityRuntime::UIExtensionContext> uiExtensionContext;
     bool uiAbilityFlag = false;
     std::function<void(RetDataCPermissionRequestResult)> callbackRef =  nullptr;
+    bool releaseFlag = false;
+    std::mutex lockReleaseFlag;
 };
 
 class UIExtensionCallback {
@@ -109,7 +112,7 @@ private:
 
 class AuthorizationResult : public Security::AccessToken::TokenCallbackStub {
 public:
-    explicit AuthorizationResult(std::shared_ptr<RequestAsyncContext>& data) : data_(data) {}
+    explicit AuthorizationResult(const std::shared_ptr<RequestAsyncContext>& data) : data_(data) {}
     ~AuthorizationResult() override = default;
     void GrantResultsCallback(const std::vector<std::string>& permissions,
         const std::vector<int>& grantResults) override;
