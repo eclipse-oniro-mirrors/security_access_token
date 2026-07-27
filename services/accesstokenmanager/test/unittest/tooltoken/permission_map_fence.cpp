@@ -25,14 +25,11 @@ bool g_mockMappingConfigured = false;
 std::map<std::string, std::vector<std::string>> g_mockCliRuntimePermissions;
 
 const std::map<std::string, std::vector<std::string>> DEFAULT_CLI_PERMISSION_MAP = {
-    {"ohos.permission.POWER_MANAGER", {"ohos.permission.POWER_MANAGER"}},
-    {"ohos.permission.APPROXIMATELY_LOCATION",
-        {"ohos.permission.LOCATION", "ohos.permission.APPROXIMATELY_LOCATION"}},
     {"ohos.permission.cli.camera_bundle",
         {"ohos.permission.CAMERA", "ohos.permission.MICROPHONE", "ohos.permission.READ_MEDIA"}},
     {"ohos.permission.cli.location_query",
         {"ohos.permission.APPROXIMATELY_LOCATION", "ohos.permission.LOCATION"}},
-    {"ohos.permission.cli.resolved", {"ohos.permission.CAMERA"}},
+    {"ohos.permission.cli.POWER_MANAGER", {"ohos.permission.POWER_MANAGER"}},
 };
 
 bool QueryFromMap(const std::map<std::string, std::vector<std::string>>& permissionMap,
