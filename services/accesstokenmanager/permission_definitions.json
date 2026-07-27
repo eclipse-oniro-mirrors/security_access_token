@@ -11772,6 +11772,39 @@
             "deviceTypes": ["wearable", "tv", "tablet", "phone", "car", "2in1", "liteWearable", "router", "smartlock"]
         },
         {
+            "name": "ohos.permission.vehicle.MMA_SPATIALACTION",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "NORMAL",
+            "since": "26.1.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["car"]
+        },
+        {
+            "name": "ohos.permission.vehicle.MMA_WEATHER",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "NORMAL",
+            "since": "26.1.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["car"]
+        },
+        {
+            "name": "ohos.permission.vehicle.MMA_ENERGYREFILL",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "NORMAL",
+            "since": "26.1.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["car"]
+        },
+        {
             "name": "ohos.permission.MUTE_VOIP_CAPTURE",
             "grantMode": "system_grant",
             "availableLevel": "system_core",
