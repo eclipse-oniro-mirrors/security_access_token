@@ -11260,6 +11260,17 @@
             "deviceTypes": ["car"]
         },
         {
+            "name": "ohos.permission.vehicle.CAR_SECURITY_PRIVACY_SET_SUPER_PRIVACY",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.1.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["car"]
+        },
+        {
             "name": "ohos.permission.vehicle.CAR_CONTROL",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
