@@ -100,6 +100,15 @@ CONVERT_TARGET_PLATFORM = {
     "car": "car",
 }
 
+MAX_PERMISSION_DEFINITION_COUNT = 1800
+
+
+def check_permission_definition_count(permission_list):
+    if len(permission_list) > MAX_PERMISSION_DEFINITION_COUNT:
+        raise ValueError(
+            "Permission definition count {} exceeds the maximum {}".format(
+                len(permission_list), MAX_PERMISSION_DEFINITION_COUNT))
+
 
 class PermissionDef(object):
     def __init__(self, permission_def_dict, code):
@@ -223,6 +232,7 @@ def parse_json(path, platform):
 
 
 def convert_to_cpp(path, permission_list, hash_str):
+    check_permission_definition_count(permission_list)
     flags = os.O_WRONLY | os.O_CREAT | os.O_TRUNC
     mode = stat.S_IWUSR | stat.S_IRUSR
     with os.fdopen(os.open(path, flags, mode), "w") as f:
