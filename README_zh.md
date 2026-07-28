@@ -77,6 +77,16 @@ ATM部件的架构图如下所示：
 | int ClearUserGrantedPermissionState(AccessTokenID tokenID); | 清空指定tokenID的应用的user_grant权限状态 |
 | uint64_t GetAccessTokenId(const char *processname, const char **dcap, int32_t dacpNum, const char *aplStr); | 创建获取native进程的tokenId |
 
+## JS API
+
+[Access Token Manager ](https://gitcode.com/openharmony/interface_sdk-js/blob/master/api/%40ohos.abilityAccessCtrl.d.ts)
+[Privacy Manager ](https://gitcode.com/openharmony/interface_sdk-js/blob/master/api/%40ohos.privacyManager.d.ts)
+
+## API参考
+[Public API for Access Token Manager ](https://gitcode.com/openharmony/docs/blob/master/zh-cn/application-dev/reference/apis-ability-kit/js-apis-abilityAccessCtrl.md)
+[System API for Access Token Manager ](https://gitcode.com/openharmony/docs/blob/master/zh-cn/application-dev/reference/apis-ability-kit/js-apis-abilityAccessCtrl-sys.md)
+[System API for Privacy Manager ](https://gitcode.com/openharmony/docs/blob/master/zh-cn/application-dev/reference/apis-ability-kit/js-apis-privacyManager-sys.md)
+
 ### 使用说明<a name="section129654513264"></a>
 ATM提供了统一的应用权限访问控制功能，支持应用程序或者SA查询校验应用权限、APL等信息。从使用者角度，可以分为基于native进程启动的SA和应用Hap两类使用者。
 

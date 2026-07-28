@@ -1,268 +1,139 @@
 # Frameworks Common
 
-This directory contains common utilities, constants, and DFX (Design for X) components shared across the AccessToken module.
+## 核心职责
 
-## Overview
+包含 AccessToken 模块共享的工具、常量和 DFX 组件。关键组件：LOGC 日志、HiSysEvent 上报、数据验证、权限映射。
 
-```
-frameworks/common/
-├── include/
-│   ├── accesstoken_common_log.h    # Logging utilities (LOGC, LOGE, etc.)
-│   ├── accesstoken_thread_msg.h    # Thread-local error message storage
-│   ├── hisysevent_adapter.h        # HiSysEvent reporting interface
-│   ├── hisysevent_common.h         # Scene code and error code definitions
-│   ├── data_validator.h            # Input validation utilities
-│   ├── permission_map.h            # Permission definitions and mapping
-│   └── ...
-└── src/
-    ├── accesstoken_common_log.cpp  # Log and error message implementation
-    ├── hisysevent_adapter.cpp      # HiSysEvent reporting implementation
-    ├── data_validator.cpp          # Validation implementation
-    └── ...
-```
+## LOGC 关键错误日志
 
-## LOGC Critical Error Logging
+### 核心原则
 
-### Purpose
+**仅对导致函数调用失败并提前返回的致命错误使用 `LOGC`**。禁止用于非阻塞错误、预期失败或高频数据报告。
 
-`LOGC` is used for **critical errors** that need to be:
-1. Logged to HiLog for immediate visibility
-2. Reported via HiSysEvent for fault tracking and analysis
+### LOGC vs 其它日志宏
 
-### Usage
+| 宏 | 级别 | HiSysEvent | 使用场景 |
+| --- | --- | --- | --- |
+| `LOGC` | ERROR | 是（FAULT） | 关键验证失败，触发故障追踪 |
+| `LOGE` | ERROR | 否 | 一般错误 |
+| `LOGW` | WARN | 否 | 警告 |
+| `LOGI` | INFO | 否 | 信息 |
+| `LOGD` | DEBUG | 否 | 调试 |
 
-```cpp
-#include "accesstoken_common_log.h"
+### 使用规则
 
-// LOGC automatically:
-// 1. Logs the error via HiLog (LOG_ERROR level)
-// 2. Stores the error message in thread-local storage
-// 3. The stored message can be retrieved by HiSysEvent reporting
-LOGC(ATM_DOMAIN, ATM_TAG, "Invalid value length(%{public}d).", length);
-```
+1. **仅用于致命错误**：输入损坏、验证失败、不应出现的错误条件
+2. **不用于**：
+   - 预期的错误条件（如可选文件不存在）→ 用 `LOGE`
+   - 统计收集或数据报告 → 禁止
+   - 调试/跟踪信息 → 用 `LOGD`/`LOGI`
+3. **违规处理**：必须清除缓存消息（`ClearThreadErrorMsg()`）
 
-### LOGC vs Other Log Macros
+**理由**：`LOGC` 触发 HiSysEvent FAULT 上报，设计用于故障追踪。滥用会淹没故障跟踪系统。
 
-| Macro | Level | HiSysEvent | Use Case |
-|-------|-------|------------|----------|
-| `LOGC` | ERROR | Yes (ACCESSTOKEN_EXCEPTION) | Critical validation failures |
-| `LOGE` | ERROR | No | General errors |
-| `LOGW` | WARN | No | Warnings |
-| `LOGI` | INFO | No | Information |
-| `LOGD` | DEBUG | No | Debug |
-
-### LOGC Implementation
+### 工作机制
 
 ```cpp
-// accesstoken_common_log.h
 #define LOGC(domain, tag, fmt, ...)            \
 do { \
-    ((void)HILOG_IMPL(LOG_CORE, LOG_ERROR, domain, tag, \
-    "[%{public}s]" fmt, __FUNCTION__, ##__VA_ARGS__)); \
-    AddEventMessage(domain, tag, \
-        "%" LOG_PUBLIC "s[%" LOG_PUBLIC "u]: " fmt, __func__, __LINE__, ##__VA_ARGS__); \
+    HILOG_IMPL(LOG_CORE, LOG_ERROR, domain, tag, "[%{public}s]" fmt, __FUNCTION__, ##__VA_ARGS__); \
+    AddEventMessage(domain, tag, "%" LOG_PUBLIC "s[%" LOG_PUBLIC "u]: " fmt, __func__, __LINE__, ##__VA_ARGS__); \
 } while (0)
 ```
 
-### Usage Principles
+自动执行：
+1. HiLog 记录（LOG_ERROR 级别）
+2. 存储到线程本地存储
+3. HiSysEvent 上报获取
 
-**Core Principle**: Only use `LOGC` for errors that cause the function call to fail and return early. Do NOT use `LOGC` for non-blocking errors or high-frequency data reporting.
-
-**Rules**:
-1. **Only for fatal errors**: Use `LOGC` only when the error prevents the function from completing successfully
-2. **No mass data reporting**: Do NOT use `LOGC` for non-blocking errors or collecting statistics
-3. **Violation handling**: If these principles are violated, you must:
-   - Proactively report the violation through proper channels
-   - Clear the cached error message (`ClearThreadErrorMsg()`)
-
-**Rationale**: `LOGC` triggers HiSysEvent FAULT reporting which is designed for fault tracking, not for monitoring or statistics. Misuse can overwhelm the fault tracking system and mask real critical issues.
-
-### When to Use LOGC
-
-Use `LOGC` for **data validation failures** that indicate input corruption or critical errors:
+### 使用示例
 
 ```cpp
 bool DataValidator::IsBundleNameValid(const std::string& bundleName)
 {
     bool ret = (!bundleName.empty() && (bundleName.length() <= MAX_LENGTH));
     if (!ret) {
-        LOGC(ATM_DOMAIN, ATM_TAG, "bunldename %{public}s is invalid.", bundleName.c_str());
+        LOGC(ATM_DOMAIN, ATM_TAG, "Bundle name %{public}s is invalid.", bundleName.c_str());
     }
     return ret;
 }
 ```
 
-**Use LOGC for**:
-- Invalid input parameters that should never occur
-- Data corruption detected
-- Critical validation failures
-- Any error that needs fault tracking
-
-**Do NOT use LOGC for**:
-- Expected error conditions (e.g., file not found when optional)
-- Normal operation failures (use `LOGE`)
-- Debug/trace information (use `LOGD`/`LOGI`)
-
-## Thread-Local Error Message
-
-### Purpose
-
-Thread-local storage (`g_errMsg`) captures the error message chain for HiSysEvent reporting.
+## 线程本地错误消息
 
 ### API
 
 ```cpp
-// Get length of stored error message
-uint32_t GetThreadErrorMsgLen(void);
-
-// Get the stored error message
-const char* GetThreadErrorMsg(void);
-
-// Clear the stored error message
-void ClearThreadErrorMsg(void);
-
-// Add an error message (called by LOGC)
-void AddEventMessage(uint32_t domain, const char* tag, const char* format, ...);
+uint32_t GetThreadErrorMsgLen(void);   // 获取存储错误消息长度
+const char* GetThreadErrorMsg(void);   // 获取存储的错误消息
+void ClearThreadErrorMsg(void);        // 清除存储的错误消息
+void AddEventMessage(...);             // 添加错误消息（LOGC 调用）
 ```
 
-### Message Chain
-
-The error message can be built up across the call stack:
+### 消息链
 
 ```cpp
-// Function A calls LOGC
 // A() -> LOGC(...) -> "Error message A"
-
-// Function B calls LOGC
 // B() -> A() -> LOGC(...) -> "Error message B <A[123]"
-
-// Result: "Error message B <A[123]" stored in thread-local storage
+// 结果：线程本地存储 "Error message B <A[123]"
 ```
 
-## HiSysEvent Reporting
+## HiSysEvent 上报
 
-### Purpose
+### 事件类型
 
-HiSysEvent is used for fault tracking, performance monitoring, and statistics.
+| 事件名 | 类型 | 用途 |
+| --- | --- | --- |
+| `ACCESSTOKEN_EXCEPTION` | FAULT | LOGC 触发的关键错误 |
+| `DATABASE_EXCEPTION` | FAULT | 数据库操作失败 |
+| `ACCESSTOKEN_SERVICE_START` | STATISTIC | 服务启动统计 |
+| `ACCESSTOKEN_SERVICE_START_ERROR` | FAULT | 服务启动失败 |
+| `ADD_HAP` | STATISTIC | HAP token 创建 |
+| `UPDATE_HAP` | STATISTIC | HAP token 更新 |
+| `DEL_HAP` | STATISTIC | HAP token 删除 |
 
-### Event Types
+### ACCESSTOKEN_EXCEPTION 事件
 
-| Event Name | Type | Domain | Purpose |
-|------------|------|--------|---------|
-| `ACCESSTOKEN_EXCEPTION` | FAULT | ACCESS_TOKEN | Critical errors from LOGC |
-| `DATABASE_EXCEPTION` | FAULT | ACCESS_TOKEN | Database operation failures |
-| `ACCESSTOKEN_SERVICE_START` | STATISTIC | ACCESS_TOKEN | Service startup statistics |
-| `ACCESSTOKEN_SERVICE_START_ERROR` | FAULT | ACCESS_TOKEN | Service startup failures |
-| `ADD_HAP` | STATISTIC | ACCESS_TOKEN | HAP token creation |
-| `UPDATE_HAP` | STATISTIC | ACCESS_TOKEN | HAP token update |
-| `DEL_HAP` | STATISTIC | ACCESS_TOKEN | HAP token deletion |
+LOGC 通过 `ReportSysCommonEventError()` 自动触发，上报后自动清除缓存消息。
 
-### ACCESSTOKEN_EXCEPTION Event
-
-Triggered automatically by `LOGC` via `ReportSysCommonEventError()`:
+### 域和标签
 
 ```cpp
-// hisysevent_adapter.cpp
-void ReportSysCommonEventError(int32_t ipcCode, int32_t errCode)
-{
-    if (GetThreadErrorMsgLen() == 0) {
-        return;
-    }
-    int32_t ret = HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN,
-        "ACCESSTOKEN_EXCEPTION",
-        HiviewDFX::HiSysEvent::EventType::FAULT,
-        "SCENE_CODE", ipcCode,
-        "ERROR_CODE", errCode,
-        "ERROR_MSG", GetThreadErrorMsg());
-    if (ret != 0) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to write hisysevent write, ret %{public}d.", ret);
-    }
-    ClearThreadErrorMsg();
-}
+#define ATM_DOMAIN  0xD005A01
+#define ATM_TAG     "ATM"
+
+#define PRI_DOMAIN  0xD005A02
+#define PRI_TAG     "PRIVACY"
 ```
 
-### Scene Codes
-
-Defined in `hisysevent_common.h`:
+## 添加新故障追踪
 
 ```cpp
+// 1. 在 hisysevent_common.h 定义场景代码
 typedef enum AccessTokenExceptionSceneCode {
-    // 0~0xFFF reserved for ipc code of access token manager
-    // 0x1000~0x1FFF reserved for native token
-    NATIVE_TOKEN_INIT = 0x1000,
-    CHECK_PROCESS_INFO,
-    ADD_NODE,
-    UPDATE_NODE
-} AccessTokenExceptionSceneCode;
-```
-
-### Reporting Events
-
-```cpp
-#include "hisysevent_adapter.h"
-
-// Report database exception
-ReportSysEventDbException(AT_DB_INSERT_RESTORE, errCode, "token_table");
-
-// Report ADD_HAP event
-HapDfxInfo info;
-// ... populate info ...
-ReportSysEventAddHap(errorCode, info, needReportFault);
-```
-
-### Event Parameters
-
-**ACCESSTOKEN_EXCEPTION**:
-- `SCENE_CODE`: Scene identifier (where the error occurred)
-- `ERROR_CODE`: Error code (what went wrong)
-- `ERROR_MSG`: Error message from thread-local storage
-
-**DATABASE_EXCEPTION**:
-- `SCENE_CODE`: Database operation (INSERT/DELETE/UPDATE/QUERY/COMMIT)
-- `ERROR_CODE`: Database error code
-- `TABLE_NAME`: Affected table name
-
-## Domain and Tag Definitions
-
-```cpp
-// AccessTokenManager
-#define ATM_DOMAIN 0xD005A01
-#define ATM_TAG "ATM"
-
-// PrivacyManager
-#define PRI_DOMAIN 0xD005A02
-#define PRI_TAG "PRIVACY"
-```
-
-## Best Practices
-
-1. **Use LOGC sparingly**: Only for critical validation failures
-2. **Clear error messages**: After reporting via HiSysEvent, messages are automatically cleared
-3. **Scene codes**: Add new scene codes to `hisysevent_common.h` when adding new fault points
-4. **Error codes**: Define specific error codes for better fault analysis
-5. **Thread safety**: Error messages are thread-local, safe for multi-threaded use
-
-## Example: Adding New Fault Tracking
-
-```cpp
-// 1. Define scene code in hisysevent_common.h
-typedef enum AccessTokenExceptionSceneCode {
-    // ... existing codes ...
-    FEATURE_CONFIG_PARSE_FAILED = 0x2000,  // New code
+    FEATURE_CONFIG_PARSE_FAILED = 0x2000,
 } AccessTokenExceptionSceneCode;
 
-// 2. Use LOGC in code
-bool ConfigPolicLoader::LoadPermissionFeatureConfig()
+// 2. 在代码中使用 LOGC
+bool ConfigPolicyLoader::LoadPermissionFeatureConfig()
 {
     if (parseFailed) {
-        LOGC(ATM_DOMAIN, ATM_TAG, "Parse feature config failed: %{public}s", filePath.c_str());
+        LOGC(ATM_DOMAIN, ATM_TAG, "Parse failed: %{public}s", filePath.c_str());
         return false;
     }
     return true;
 }
 
-// 3. Report error (if not on IPC path)
+// 3. 报告错误（如不在 IPC 路径）
 if (GetThreadErrorMsgLen() > 0) {
     ReportSysCommonEventError(FEATURE_CONFIG_PARSE_FAILED, ERR_PARSE_FAILED);
 }
 ```
+
+## 推荐实践
+
+1. **谨慎使用 LOGC**：仅用于关键验证失败
+2. **清除错误消息**：HiSysEvent 上报后自动清除
+3. **场景代码**：在 `hisysevent_common.h` 添加新故障点场景代码
+4. **错误代码**：定义具体错误代码便于故障分析
+5. **线程安全**：错误消息线程本地，支持多线程

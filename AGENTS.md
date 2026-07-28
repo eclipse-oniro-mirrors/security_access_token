@@ -1,297 +1,158 @@
 # AGENTS.md
 
-## Project Overview
+## 项目定位
 
-This is the **AccessTokenManager (ATM)** module for OpenHarmony. It provides unified permission management based on access tokens, controlling what permissions apps have to access sensitive data and APIs.
+本仓库对应 OpenHarmony `base/security/access_token`，提供统一的访问令牌权限管理，控制应用对敏感数据和 API 的访问权限。优先按这些目录定位问题：
 
-## Basic Information
-| Property | Value |
-|----------|-------|
-| Repository Name | security_access_token |
-| Subsystem | security |
-| Primary Language | C++ |
-| Last Updated | 2026-01-31 |
+- `services/`：AccessTokenManager（权限授予状态）、PrivacyManager（权限使用状态）、TokenSyncManager（分布式权限同步）、El5FileKeyManager（锁屏文件加密）
+- `interfaces/`：内部接口（`innerkits`）、外部接口（`kits/capi`、`kits/cj`、`kits/js`）
+- `frameworks/`：IPC 序列化、公共组件（`frameworks/common`）、JSON 适配（`frameworks/json_adapter`）、NAPI/ANI绑定
+- `services/common/`：数据库、DFX等基础结构
+- `config/`、`tools/`：构建配置与开发工具
+- `test/`、`test/fuzztest/`：单元测试和 fuzz 目标
 
-## Architecture
+## 核心职责划分
 
-### Document Directory Structure
-```
-/base/security/access_token
-├── interfaces                  # Inner interfaces (C++ SDK for system components)
-│   ├── innerkits               # Internal interfaces.
-│   │   ├── accesstoken         # Access token management interfaces
-│   │   ├── nativetoken         # Native process token interfaces
-│   │   ├── privacy             # Privacy management interfaces
-│   │   ├── token_callback      # Token callback interfaces
-│   │   ├── token_setproc       # internal interfaces for exchanging token IDs.
-│   │   └── tokensync           # Token sync interfaces
-│   └── kits                    # Outer interfaces (APIs for applications)
-│       ├── capi                # C API interfaces
-│       └── js                  # JS API interfaces.
-├── frameworks                  # Code of basic functionalities.
-│   ├── accesstoken             # Access token IPC data serialization (Parcel class definitions and implementations)
-│   ├── common                  # Common components (validators, logging, utilities, permission mapping)
-│   ├── privacy                 # Privacy management IPC data serialization
-│   ├── tokensync               # Token sync IPC interface definitions
-│   ├── json_adapter            # JSON parsing utilities (based on cJSON)
-│   ├── js                      # JavaScript NAPI binding implementations
-│   ├── ets                     # ArkTS (ETS/ANI) binding implementations
-│   ├── inner_api               # Internal APIs (cross-module call interfaces)
-│   └── test                    # Framework layer unit tests
-└── services                    # Services
-    ├── accesstokenmanager      # ATM service code.
-    ├── el5filekeymanager       # el5 filekey service code.
-    ├── privacymanager          # Privacy manager service code.
-    └── tokensyncmanager        # Code of the access token synchronization service. 
+| 组件 | 职责 |
+| --- | --- |
+| AccessTokenManager | 管理权限授予状态（应用是否拥有权限），提供权限验证、授权、撤销、状态订阅 |
+| PrivacyManager | 管理权限使用状态（应用是否正在使用权限），提供使用记录、活跃状态、状态订阅 |
+| TokenSyncManager | 在可信设备间同步权限状态，支持分布式权限验证 |
+| El5FileKeyManager | 提供锁屏文件加密的密钥管理服务 |
+| Frameworks Common | 共享工具、LOGC 日志、HiSysEvent 上报、数据验证、权限映射 |
+| 工具、测试辅助 | 开发工具和测试辅助脚本 |
 
-```
+## 改动前确认
 
-## Core Capabilities
-### Access Token Manager
-- **Location**: `frameworks/accesstoken`, `frameworks/ets/ani/accesstoken`, `frameworks/js/napi/accesstoken`, `interfaces/innerkits/accesstoken`, `services/accesstokenmanager`
-- **Purpose**:
-  - **Manage Permission Grant State**: Manage permission grant/revoke state (granted/denied) and grant flag. This is about whether an app HAS a permission, not whether it is USING it.
-  - Provide unified permission management enabling application and system service processes to request and verify permission.
-  - Provide the capability to subscribe to permission grant status change events for specific processes.
-  - Provide capabilities for granting and revoking permissions by user and system mechanism.
-- **Details**: @services/accesstokenmanager/AGENTS.md
+改动前必须明确：
 
-### Privacy Manager
-- **Location**: `frameworks/privacy`, `frameworks/ets/ani/privacy`, `frameworks/js/napi/privacy`, `interfaces/innerkits/privacy`, `services/privacymanager`
-- **Purpose**:
-  - **Manage Permission Usage Records/Status**: Manage permission usage records and active status (when an app is actively using a permission).
-  - Support validation whether a process or application is allowed to use permissions.
-  - Provide the capability to add and persist permission usage records.
-  - Provide the switch of permissions records. When the switch is turned off permission records of the user will be deleted.
-  - Manage the usage status of sensitive permissions and provides the capability to subscribe to active status change notifications.
-- **Details**: @services/privacymanager/AGENTS.md
+1. **任务类别**：权限授予状态、权限使用状态、分布式同步、锁屏加密、IPC、数据库、JS/ETS 绑定、DFX、安全审查或其它
+2. **已读文档**：列出相关的 AGENTS.md、源码文件或设计文档
+3. **适用约束**：列出本次改动必须遵守的约束项（高频路径、数据一致性、接口兼容性、安全、架构依赖、并发重入、编码规范等）
 
-### Token Sync Manager
-- **Location**: `frameworks/tokensync`, `interfaces/innerkits/tokensync`, `services/tokensyncmanager`
-- **Purpose**: 
-  - Synchronize distributed permissions among trusted devices and update when the permission status changes.
-  - Support permission verification to check whether the peer in the RPC call has the distributed permission.
-- **Details**: @services/tokensyncmanager/AGENTS.md
+## 知识索引
 
-### El5 File Key Manager
-- **Location**: `frameworks/ets/ani/el5filekeymanager`, `frameworks/js/napi/el5filekeymanager`, `interfaces/inner_api/el5filekeymanager`, `services/el5filekeymanager`
-- **Purpose**: 
-  - Provides key management services for lock screen file encryption, supporting application and data group key generation and deletion, data access control.
+改动前按场景读取对应文件或查看代码：
 
-## Where To Look
+| 场景 | 先读 |
+| --- | --- |
+| 权限授予状态、Token 生命周期、权限验证 | `services/accesstokenmanager/AGENTS.md` |
+| 权限使用记录、活跃状态、隐私开关 | `services/privacymanager/AGENTS.md` |
+| 分布式权限同步、设备间权限验证 | `services/tokensyncmanager/AGENTS.md` |
+| 锁屏文件加密、密钥管理 | 探索 `services/el5filekeymanager/`  |
+| 工具、测试辅助 | 探索 `tools/` |
+| LOGC 日志、HiSysEvent、DFX | `frameworks/common/AGENTS.md` |
+| IPC 序列化、IDL、Parcel 字段、事务码 | `frameworks/accesstoken`、`frameworks/privacy`、`services/accesstokenmanager/idl`、`services/privacymanager/idl`；改动前追踪 client → proxy/stub → service 完整路径，核对所有调用点 |
+| JS/ETS/NAPI/ANI 绑定、`kits/js`、`kits/capi`、`kits/cj` | `interfaces/kits/` 下的 API 声明与 `frameworks/js/napi`、`frameworks/ets/ani` 的原生实现必须一致 |
+| 数据库或持久化改动 | 追踪内存缓存更新路径后再改 schema 或存储值 |
+| 公共工具、权限映射 | `frameworks/common/AGENTS.md`，检查所有服务和 SDK 调用点后再改公共组件 |
 
-Use this table before editing. If a directory has its own `AGENTS.md`, read that file before changing code under that scope.
+## 构建和验证
 
-| Task type | First paths to inspect | Required deeper guidance |
-| --- | --- | --- |
-| Public C++ SDK or system API change | `interfaces/innerkits`, `interfaces/kits`, `frameworks/accesstoken`, `services/accesstokenmanager/idl` | Read the matching API reference and the subsystem `AGENTS.md` for the service you are changing. |
-| Permission grant state or token lifecycle logic | `services/accesstokenmanager`, `frameworks/accesstoken`, `interfaces/innerkits/accesstoken` | Read `services/accesstokenmanager/AGENTS.md` before editing service logic or IPC contracts. |
-| Privacy usage record or active status logic | `services/privacymanager`, `frameworks/privacy`, `interfaces/innerkits/privacy` | Read `services/privacymanager/AGENTS.md` before editing persistence, callbacks, or IPC. |
-| Token sync or distributed permission behavior | `services/tokensyncmanager`, `frameworks/tokensync`, `interfaces/innerkits/tokensync` | Read `services/tokensyncmanager/AGENTS.md` before editing protocol, device sync, or distributed verification. |
-| El5 file key service or screen-lock file encryption logic | `services/el5filekeymanager`, `interfaces/inner_api/el5filekeymanager`, `frameworks/js/napi/el5filekeymanager`, `frameworks/ets/ani/el5filekeymanager` | Read `services/el5filekeymanager/AGENTS.md` before editing service lifecycle, memory management, or IPC behavior. |
-| IPC/Parcel/IDL serialization | `frameworks/accesstoken`, `frameworks/privacy`, `services/*/idl`, `interfaces/innerkits/*/include` | Inspect generated or mirrored types, transaction codes, and service/client call paths before editing fields or order. |
-| Database or persistence change | `services/accesstokenmanager/main/cpp/src/database`, `services/common/database`, service managers that read or write DB | Read the owning service `AGENTS.md` and trace in-memory cache update paths before changing schema or stored values. |
-| JS/ETS/NAPI binding change | `frameworks/js`, `frameworks/ets`, `interfaces/kits/js` | Read the matching API reference first, then verify native and JS/ETS behavior stay aligned. |
-| Common validators, permission mapping, utilities | `frameworks/common`, `services/common` | Check all service and SDK call sites before changing shared helpers. |
-
-## Core Concepts
-
-### AccessTokenID
-A unique identifier for applications, used for permission verification and application identification. Each application instance has a unique AccessTokenID that differs across users and application clones.
-
-### APL (Ability Privilege Level)
-Classifies applications into privilege levels that determine the permission scope they can request:
-- `APL_NORMAL` - Normal applications
-- `APL_SYSTEM_BASIC` - System basic applications
-- `APL_SYSTEM_CORE` - System core applications (highest level)
-
-Details for core concepts: [Application Permission Management Overview](../../../docs/en/application-dev/security/AccessToken/app-permission-mgmt-overview.md)
-
-## When To Read More
-
-Apply these routing rules before editing:
-
-- For high-risk changes involving API, IDL, IPC, persistence, permission semantics, or distributed behavior, state the task category, documents read, and key constraints you found before editing.
-- If the task changes `services/accesstokenmanager`, read `services/accesstokenmanager/AGENTS.md` first.
-- If the task changes `services/privacymanager`, read `services/privacymanager/AGENTS.md` first.
-- If the task changes `services/tokensyncmanager`, read `services/tokensyncmanager/AGENTS.md` first.
-- If the task changes `frameworks/js`, `frameworks/ets`, or `interfaces/kits/js`, read the relevant API reference first because external behavior must stay compatible.
-- If the task changes `services/*/idl`, `frameworks/*` Parcel classes, or IPC transaction handlers, trace the full client -> proxy/stub -> service path before editing.
-- If the task changes database reads, writes, or cache refresh logic, inspect both persistence code and in-memory ownership code before editing.
-- If the task description or code mentions `AccessTokenID`, `APL`, `grant state`, `grant flag`, `token sync`, `distributed permission`, `permission active status`, or `usage record`, read the core concept doc and the owning subsystem guidance before editing.
-- If the task touches `VerifyAccessToken`, `AddPermissionUsedRecord`, or `StartUsingPermission`, treat it as a performance-sensitive path and inspect existing hot-path behavior before changing logic.
-
-
-## Build System
-
-This codebase uses **GN (Generate Ninja)** as the build system, which is standard for OpenHarmony.
-
-### Feature Flags
-
-The module supports various feature flags defined in [access_token.gni](access_token.gni) that control optional functionality:
-
-#### User-Configurable Flags
-- Support Camera Float Window: access_token_camera_float_window_enable
-
-#### Dependency-Based Feature Flags
-These flags are automatically enabled/disabled based on `global_parts_info` dependencies:
-- ability_runtime: ability_runtime_enable
-- Dfx: hicollie_enable
-- Multimedia: audio_framework_enable, camera_framework_enable
-- Security: security_guard_enable, token_sync_enable, dlp_permission_enable
-- Platform-specific: light_device_enable
-
-**Note**: Dependency-based flags default to `false` unless the corresponding part is included in the build configuration.
-
-### Building Module
+构建命令从 OpenHarmony 源码根目录执行，不在本子目录执行。
 
 ```bash
-# Build access_token components from OpenHarmony root
-./build.sh --product-name <product> --build-target access_token
-
-# Build unit tests
-./build.sh --product-name <product> --build-target base/security/access_token:accesstoken_build_module_test
-
-# Build fuzz tests
-./build.sh --product-name <product> --build-target base/security/access_token:accesstoken_build_fuzz_test --gn-args use_cfi=false use_thin_lto=false
-
-# Common product names: rk3568, ohos-sdk
-# Example for rk3568
+# 构建功能代码
 ./build.sh --product-name rk3568 --build-target access_token
 
-# part compile for access_token components from OpenHarmony root
-# -i indicates compiling function code
+# 构建单元测试
+./build.sh --product-name rk3568 --build-target base/security/access_token:accesstoken_build_module_test
+
+# 构建 fuzz 测试
+./build.sh --product-name rk3568 --build-target base/security/access_token:accesstoken_build_fuzz_test --gn-args use_cfi=false use_thin_lto=false
+
+# 独立编译（功能代码）
 hb build access_token -i
 
-# -t indicates compiling test cases
+# 独立编译（测试用例）
 hb build access_token -t --gn-args use_cfi=false use_thin_lto=false
-```
 
-### Outputs Location
-```bash
-# output of function code for build all 
-./out/rk3568/security/access_token
-
-# unit test
-./out/rk3568/tests/unittest/access_token
-
-# fuzztest
-./out/rk3568/tests/fuzztest/access_token
-
-# output of part compile
-./out/standard/src_test/security/access_token
-
-# unit test of part compile
-./out/standard/src_test/tests/unittest/access_token
-
-# fuzz test of part compile
-./out/standard/src_test/tests/fuzztest/access_token
-```
-
-### Running Tests
-```bash
-# it runs in test framework
-# run unit test
+# 运行单元测试
 run -t UT -tp access_token
 
-# run fuzz test
+# 运行 fuzz 测试
 run -t FUZZ -tp access_token
+
+# 静态分析（如可用）
+./build.sh --product-name rk3568 --build-target access_token --gn-args enable_cpp_static_check=true
 ```
 
-## Coding Guide
-[OpenHarmony C Coding Style Guide](https://gitcode.com/openharmony/docs/blob/master/en/contribute/OpenHarmony-c-coding-style-guide.md)
+## 项目约束
 
-[OpenHarmony C++ Coding Style Guide](https://gitcode.com/openharmony/docs/blob/master/en/contribute/OpenHarmony-cpp-coding-style-guide.md)
+### 高频路径与性能约束
 
-[OpenHarmony C/C++ Secure Coding Guide](https://gitcode.com/openharmony/docs/blob/master/en/contribute/OpenHarmony-c-cpp-secure-coding-guide.md)
+- **权限验证高频路径**（`VerifyAccessToken`）：每次权限校验都会调用，禁止增加阻塞 I/O、数据库查询或复杂迭代
+- **权限使用记录写入**（`AddPermissionUsedRecord`）：应用使用敏感权限时触发，数据库写入禁止阻塞调用方，优先批量持久化
+- **权限使用开始**（`StartUsingPermission`）：应用启动功能时调用，禁止阻塞操作延迟应用启动或功能接入
+- **SA 初始化**禁止耗时操作，必须保证不失败
 
-[OpenHarmony Security Design Guide](https://gitcode.com/openharmony/docs/blob/master/en/contribute/OpenHarmony-security-design-guide.md)
+### 数据一致性与持久化约束
 
-[OpenHarmony Security Test Guide](https://gitcode.com/openharmony/docs/blob/master/en/contribute/OpenHarmony-security-test-guide.md)
+- **数据库操作**必须保持内存与持久化状态一致，失败时需回滚到一致状态
+- **Token、权限、记录的更新**优先使用原地更新或原子替换，避免破坏性的中间状态。对于 token、权限、记录或数据库更新流程，优先使用就地更新或原子替换而非删除重建模式。如果必须重建，需保持原始有效状态可恢复，直到新状态完全提交，并确保回滚恢复完整的更新前状态
 
-### Additional Coding Rules
-- Do not mix signed and unsigned types. Keep integer types consistent in declarations, comparisons, arithmetic, and loop/index logic to avoid implicit conversions and unexpected behavior.
-- Do not introduce circular dependencies. Keep dependencies acyclic across modules, directories, and files, and avoid mutual inclusion or call chains that create circular references between files within the same directory.
-- Keep source line width within 120 characters. If a line exceeds that limit, refactor it to comply.
-- Keep functions within 50 lines where practical. If logic would exceed that size, split it into smaller helpers while preserving readability and behavior.
+### 接口兼容性约束
 
-## API Reference
-[Public API for Access Token Manager ](../../../docs/en/application-dev/reference/apis-ability-kit/js-apis-abilityAccessCtrl.md)
+- **IPC 序列化、IDL、Parcel 字段**改动必须检查所有客户端、proxy、stub、服务调用的兼容性
+- **公共 API、SDK、JS/ETS 接口**改动必须保证向后兼容
+- **事务码、字段顺序、存储格式**等跨版本兼容性问题需检查所有调用点
 
-[System API for Access Token Manager ](../../../docs/en/application-dev/reference/apis-ability-kit/js-apis-abilityAccessCtrl-sys.md)
+### 安全约束
 
-[System API for Privacy Manager ](../../../docs/en/application-dev/reference/apis-ability-kit/js-apis-privacyManager-sys.md)
+- 禁止绕过权限检查、信任检查、设备信任假设、跨用户隔离规则
 
-[API for El5 Filekey Manager](../../../docs/en/application-dev/reference/apis-ability-kit/js-apis-screenLockFileManager.md)
+### DFX 与可观测性约束
 
-## Constraints And Boundaries
+- **LOGC 使用**：仅用于致命验证失败，禁止用于统计、调试或预期错误（参考 `frameworks/common/AGENTS.md`）
+- **HiSysEvent 上报**：遵循事件类型定义，禁止滥用 FAULT 类型上报
+- **日志规范**：遵循 OpenHarmony 日志规范，禁止泄露敏感信息
 
-### Do Not Change Without Explicit Review
-- Do not change public API signatures, argument meaning, return codes, callback contracts, or lifecycle semantics in `interfaces/kits`, `interfaces/innerkits`, `frameworks/js`, or `frameworks/ets` without compatibility review.
-- Do not change permission grant semantics, permission usage semantics, `APL` meaning, token type meaning, or verification result interpretation without subsystem-level confirmation.
-- Do not change IPC transaction codes, Parcel field order, IDL field meaning, or serialized data layout without checking all client, stub, proxy, and service call sites for compatibility.
-- Do not change database schema, persisted key names, stored value formats, or cross-version migration behavior without tracing rollback and startup recovery logic.
-- Do not bypass permission checks, trust checks, authentication checks, device trust assumptions, or cross-user isolation rules for convenience.
-- Do not edit generated outputs as the source of truth when the change should be made in the corresponding `.idl`, template, or handwritten source file.
+### 架构与依赖约束
 
-### Ask Before High-Risk Changes
-- Ask before changing `VerifyAccessToken`, `AddPermissionUsedRecord`, `StartUsingPermission`, or other hot paths in a way that may add blocking I/O, new DB access, or heavy iteration.
-- Ask before introducing new third-party dependencies, changing feature flags, or changing whether a capability is gated by a build flag.
+- **权限授予状态**（AccessTokenManager）与**权限使用状态**（PrivacyManager）职责分离，不要混淆
+- **依赖方向**保持单向：`interfaces` ← `frameworks` ← `services`，避免循环依赖
 
-### Concurrency And Reentrancy Boundaries
-- Do not invoke synchronous callbacks, IPC requests, or cross-module notifications while holding locks if they may re-enter the current module.
-- Limit lock scope to local state updates, capture notification data before unlocking, and perform external callbacks only after the lock is released.
+### 并发与重入约束
 
-### Project-Specific Invariants
-- Keep permission grant state logic in AccessTokenManager distinct from permission usage status logic in PrivacyManager.
-- Keep in-memory cache and database state synchronized; when persistence fails, preserve or restore a consistent state instead of partially updating one side.
-- Keep dependency direction acyclic across `interfaces`, `frameworks`, and `services`; avoid adding service-only knowledge into public SDK layers.
-- Preserve DFX behavior when changing fault paths, logs, or observability points; do not silently remove useful diagnostics from high-risk flows.
+- 禁止持有锁时调用可能重入当前模块的同步回调、IPC 请求或跨模块通知
+- 限制锁范围到本地状态更新，在解锁前捕获通知数据，在锁释放后执行外部回调
 
-### Common Agent Failure Modes
-- Do not change only `.idl` or Parcel definitions without checking the matching proxy, stub, service, client, tests, and any manually converted containers.
-- Do not change only database persistence logic without checking cache initialization, refresh, rollback, and startup recovery paths.
-- Do not change SDK or JS/ETS API exposure without checking the corresponding native implementation and reference documentation stay aligned.
-- Do not optimize hot paths by skipping validation, permission checks, or state synchronization that the existing design depends on.
+### 编码规范约束
 
-## Common Issue
-### SA Initialization
-- **Avoid time-consuming operations**: System ability startup must complete quickly; do not perform blocking I/O, network requests, or complex computations during initialization
-- **No failures allowed**: Startup operations must not fail; ensure all dependencies and resources are properly prepared before initialization.
+- **C++ 改动**遵循 OpenHarmony 编码规范：不混用有符号/无符号类型，行宽 ≤120 字符，函数 ≤50 行
+- 目录之间不要出现循环依赖
 
-### Performance Requirements
-- **VerifyAccessToken API**: This interface has strict performance requirements as it is called frequently during permission verification; avoid heavy database queries or complex logic in the hot path.
-- **AddPermissionUsedRecord API**: This interface is called when applications use sensitive permissions; optimize database writes to avoid blocking callers, consider batch or asynchronous operations for record persistence.
-- **StartUsingPermission API**: This interface is invoked when applications begin using permissions; avoid blocking operations that could delay application startup or feature access.
+## 完成定义
 
-### Database Operations
-- **Memory-data consistency**: When performing database operations, ensure in-memory data structures stay synchronized with persistent storage.
-- **Transaction rollback**: On operation failures, implement proper rollback mechanisms to restore data to a consistent state; use database transactions for atomic multi-step operations.
-- **No destructive intermediate state during updates**: For token, permission, record, or database update flows, prefer in-place update or atomic replacement over delete-and-recreate patterns. If a rebuild is required, keep the original valid state recoverable until the new state is fully committed, and ensure rollback restores the complete pre-update state.
+改动必须满足：
+- 构建受影响的目标代码，或明确说明无法构建的原因
+- 保持 API、IPC、持久化、权限语义兼容（除非任务明确要求改动）
+- 运行对应的单元测试和 fuzz 测试
+- 说明运行的命令、结果、跳过的验证及剩余风险
 
-## Minimum Validation By Change Type
+## 最终响应要求
 
-- Compile the affected business code and test targets by following the commands in the `Build System` section.
-- Run the corresponding unit tests for the changed scope.
-- Run the corresponding fuzz tests for the changed scope when fuzz targets exist.
-- Hot-path changes: in addition to building, explain why the change does not add blocking work or extra heavy-path cost.
+任务完成时报告：
 
-## Done Definition
+1. **修改清单**：修改的文件列表和关键变更点
+2. **构建结果**：运行的构建命令和结果（成功/失败）
+3. **测试结果**：运行的测试命令和结果（通过/失败）
+4. **影响评估**：兼容性影响评估（API、IPC、持久化、权限语义）
+5. **风险说明**：未验证的场景和剩余风险
+6. **替代方案**：如果无法运行验证，说明原因并提供替代验证方案
 
-- The changed code builds for the affected target set, or the final response clearly states what could not be built.
-- The changed code preserves API, IPC, persistence, and permission semantics unless the task explicitly requires changing them.
-- The final response reports the commands run, the result, any skipped validation, and the remaining risks or compatibility concerns.
+## 常见陷阱
 
-## If Validation Cannot Run
+- 只改 `.idl` 或 Parcel 而不检查对应的代理、stub、服务、客户端、测试
+- 只改数据库持久化而不检查缓存初始化、刷新、回滚、启动恢复路径
+- 优化高频路径时跳过验证、权限检查或状态同步
+- 持有锁时调用可能重入当前模块的同步回调、IPC 请求或跨模块通知
 
-- State exactly which command could not be run.
-- State why it could not be run, such as missing environment, excessive runtime, or unrelated build breakage.
-- State the best partial validation that was completed and the remaining risk.
-
-## History Record
+## 历史记录
 | version | date | modify content | writer |
 |------|------|---------|--------|
 | v1.0 | 2026-01-31 | primary version | xiacong |
 | v1.1 | 2026-02-05 | clarify distinction between Permission Grant State (AccessTokenManager) and Permission Usage Status (PrivacyManager) | hehehe-li |
 | v1.2 | 2026-07-10 | add task routing, high-risk boundaries, and validation loop guidance for coding agents | xiacong, AI |
 | v1.3 | 2026-07-14 | add repository-wide lock callback safety and update-state consistency constraints | linshuqing, AI |
+| v2.0 | 2026-07-23 | simplify by removing code-explorable knowledge, keep only constraints and routing guidance | hehehe-li, AI |
