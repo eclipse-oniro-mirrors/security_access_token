@@ -484,7 +484,7 @@ HWTEST_F(AccessTokenCoverageTest, IsBinTokenIdTest001, TestSize.Level4)
 
 /**
  * @tc.name: GetUsedPermissionsByCliPermissionTest001
- * @tc.desc: AccessTokenKit::GetUsedPermissionsByCliPermission mapped permission test
+ * @tc.desc: AccessTokenKit::GetUsedPermissionsByCliPermission mapped CLI permission test
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -492,14 +492,14 @@ HWTEST_F(AccessTokenCoverageTest, GetUsedPermissionsByCliPermissionTest001, Test
 {
     std::vector<CliPermissionQueryResult> queryResults;
     int32_t ret = AccessTokenKit::GetUsedPermissionsByCliPermission(
-        {"ohos.permission.APPROXIMATELY_LOCATION"}, queryResults);
+        {"ohos.permission.cli.CONTROL_LOCATION_SWITCH"}, queryResults);
 
     ASSERT_EQ(RET_SUCCESS, ret);
     ASSERT_EQ(SINGLE_QUERY_RESULT_COUNT, queryResults.size());
     ASSERT_EQ(RET_SUCCESS, queryResults[0].result);
     ASSERT_EQ(MAPPED_USED_PERMISSION_COUNT, queryResults[0].usedPermissions.size());
-    EXPECT_EQ("ohos.permission.LOCATION", queryResults[0].usedPermissions[0]);
-    EXPECT_EQ("ohos.permission.APPROXIMATELY_LOCATION", queryResults[0].usedPermissions[1]);
+    EXPECT_EQ("ohos.permission.MANAGE_SECURE_SETTINGS", queryResults[0].usedPermissions[0]);
+    EXPECT_EQ("ohos.permission.CONTROL_LOCATION_SWITCH", queryResults[0].usedPermissions[1]);
 }
 
 /**
@@ -564,7 +564,7 @@ HWTEST_F(AccessTokenCoverageTest, GetUsedPermissionsByCliPermissionTest005, Test
 {
     std::vector<CliPermissionQueryResult> queryResults;
     int32_t ret = AccessTokenKit::GetUsedPermissionsByCliPermission(
-        {"ohos.permission.APPROXIMATELY_LOCATION", "ohos.permission.APPROXIMATELY_LOCATION"},
+        {"ohos.permission.cli.CONTROL_LOCATION_SWITCH", "ohos.permission.cli.CONTROL_LOCATION_SWITCH"},
         queryResults);
 
     ASSERT_EQ(RET_SUCCESS, ret);
@@ -573,10 +573,10 @@ HWTEST_F(AccessTokenCoverageTest, GetUsedPermissionsByCliPermissionTest005, Test
     ASSERT_EQ(RET_SUCCESS, queryResults[1].result);
     ASSERT_EQ(MAPPED_USED_PERMISSION_COUNT, queryResults[0].usedPermissions.size());
     ASSERT_EQ(MAPPED_USED_PERMISSION_COUNT, queryResults[1].usedPermissions.size());
-    EXPECT_EQ("ohos.permission.LOCATION", queryResults[0].usedPermissions[0]);
-    EXPECT_EQ("ohos.permission.APPROXIMATELY_LOCATION", queryResults[0].usedPermissions[1]);
-    EXPECT_EQ("ohos.permission.LOCATION", queryResults[1].usedPermissions[0]);
-    EXPECT_EQ("ohos.permission.APPROXIMATELY_LOCATION", queryResults[1].usedPermissions[1]);
+    EXPECT_EQ("ohos.permission.MANAGE_SECURE_SETTINGS", queryResults[0].usedPermissions[0]);
+    EXPECT_EQ("ohos.permission.CONTROL_LOCATION_SWITCH", queryResults[0].usedPermissions[1]);
+    EXPECT_EQ("ohos.permission.MANAGE_SECURE_SETTINGS", queryResults[1].usedPermissions[0]);
+    EXPECT_EQ("ohos.permission.CONTROL_LOCATION_SWITCH", queryResults[1].usedPermissions[1]);
 }
 
 /**
@@ -589,7 +589,7 @@ HWTEST_F(AccessTokenCoverageTest, GetUsedPermissionsByCliPermissionTest006, Test
 {
     std::vector<CliPermissionQueryResult> queryResults;
     int32_t ret = AccessTokenKit::GetUsedPermissionsByCliPermission(
-        {"ohos.permission.APPROXIMATELY_LOCATION", "ohos.permission.cli.not.exist", "ohos.permission.CAMERA"},
+        {"ohos.permission.cli.CONTROL_LOCATION_SWITCH", "ohos.permission.cli.not.exist", "ohos.permission.CAMERA"},
         queryResults);
 
     ASSERT_EQ(RET_SUCCESS, ret);

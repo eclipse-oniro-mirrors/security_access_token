@@ -796,13 +796,13 @@ HWTEST_F(ClawTicketManagerTest, VerifyCliClawTicketByVerifyInfoTest003, TestSize
         .callerTokenId = std::to_string(tokenId),
         .cliCmdName = "camera",
         .subCliCmdName = "capture",
-        .permissionList = {"ohos.permission.cli.resolved"},
+        .permissionList = {"ohos.permission.cli.POWER_MANAGER"},
     };
     SAF::CliInfo wrongCallerCliInfo = {
         .callerTokenId = std::to_string(tokenId + 1),
         .cliCmdName = "resolved",
         .subCliCmdName = "run",
-        .permissionList = {"ohos.permission.cli.resolved"},
+        .permissionList = {"ohos.permission.cli.POWER_MANAGER"},
     };
     SetMockVerifyTicketV2Result({unmatchedCliInfo, wrongCallerCliInfo}, RET_SUCCESS);
 
@@ -838,7 +838,7 @@ HWTEST_F(ClawTicketManagerTest, VerifyCliClawTicketByVerifyInfoTest004, TestSize
         .callerTokenId = std::to_string(tokenId),
         .cliCmdName = "resolved",
         .subCliCmdName = "run",
-        .permissionList = {"ohos.permission.cli.resolved", "ohos.permission.cli.resolved"},
+        .permissionList = {"ohos.permission.cli.POWER_MANAGER", "ohos.permission.cli.POWER_MANAGER"},
     };
     SetMockVerifyTicketV2Result({unmatchedCliInfo, matchedCliInfo}, RET_SUCCESS);
 
@@ -849,7 +849,7 @@ HWTEST_F(ClawTicketManagerTest, VerifyCliClawTicketByVerifyInfoTest004, TestSize
 
     EXPECT_EQ(RET_SUCCESS, ret);
     ASSERT_EQ(1u, permList.size());
-    EXPECT_EQ("ohos.permission.CAMERA", permList[0].permissionName);
+    EXPECT_EQ("ohos.permission.POWER_MANAGER", permList[0].permissionName);
     EXPECT_EQ(PERMISSION_GRANTED, permList[0].grantStatus);
 
     DeleteTestHapToken(tokenId);

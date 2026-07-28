@@ -53,7 +53,7 @@ const std::map<std::string, std::vector<std::string>> MOCK_CLI_REQUIRED_PERMISSI
     {"mixed:run", {"ohos.permission.APPROXIMATELY_LOCATION", "ohos.permission.CAMERA"}},
     {"multi:run", {"ohos.permission.APPROXIMATELY_LOCATION", "ohos.permission.POWER_MANAGER"}},
     {"location:query", {"ohos.permission.APPROXIMATELY_LOCATION"}},
-    {"resolved:run", {"ohos.permission.cli.resolved"}},
+    {"resolved:run", {"ohos.permission.cli.POWER_MANAGER"}},
 };
 } // namespace
 

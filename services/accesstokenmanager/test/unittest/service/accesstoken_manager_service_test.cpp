@@ -3172,11 +3172,9 @@ HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest014, TestSize.L
     ASSERT_EQ(RET_SUCCESS, ClawTicketManager::GetInstance().VerifyCliClawTicket(
         tokenId, authResult.authResults[0],
         { .cliName = authInfoIdl.cliInfo.cliName, .subCliName = authInfoIdl.cliInfo.subCliName }, permList));
-    ASSERT_EQ(2, static_cast<int32_t>(permList.size()));
-    EXPECT_EQ("ohos.permission.LOCATION", permList[0].permissionName);
+    ASSERT_EQ(1, static_cast<int32_t>(permList.size()));
+    EXPECT_EQ("ohos.permission.APPROXIMATELY_LOCATION", permList[0].permissionName);
     EXPECT_EQ(PERMISSION_GRANTED, permList[0].grantStatus);
-    EXPECT_EQ("ohos.permission.APPROXIMATELY_LOCATION", permList[1].permissionName);
-    EXPECT_EQ(PERMISSION_GRANTED, permList[1].grantStatus);
 
     SetSelfTokenID(g_selfShellTokenId);
     (void)AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId);

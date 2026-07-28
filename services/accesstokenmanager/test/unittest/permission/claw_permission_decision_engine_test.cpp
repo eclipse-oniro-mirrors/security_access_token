@@ -504,9 +504,8 @@ HWTEST_F(ClawPermissionDecisionEngineTest, BuildCliPermissions004, TestSize.Leve
     const auto& detail = result.permList[0].requiredCliPermissions[0];
     EXPECT_EQ("ohos.permission.APPROXIMATELY_LOCATION", detail.requiredCliPermission);
     EXPECT_EQ(PermissionDecisionStatus::NO_DIALOG_DENIED, detail.cliPermissionStatus);
-    ASSERT_EQ(2, static_cast<int32_t>(detail.usedPermissions.size()));
-    EXPECT_EQ("ohos.permission.LOCATION", detail.usedPermissions[0]);
-    EXPECT_EQ("ohos.permission.APPROXIMATELY_LOCATION", detail.usedPermissions[1]);
+    ASSERT_EQ(1, static_cast<int32_t>(detail.usedPermissions.size()));
+    EXPECT_EQ("ohos.permission.APPROXIMATELY_LOCATION", detail.usedPermissions[0]);
 }
 
 /**
@@ -571,19 +570,19 @@ HWTEST_F(ClawPermissionDecisionEngineTest, BuildCliPermissions006, TestSize.Leve
 
 /**
  * @tc.name: BuildCliPermissions008
- * @tc.desc: Undefined required CLI permission should stay not declared even if mapped used permission is granted.
+ * @tc.desc: Declared CLI permission should report resolved status and mapped used permission.
  * @tc.type: FUNC
  * @tc.require:
  */
 HWTEST_F(ClawPermissionDecisionEngineTest, BuildCliPermissions008, TestSize.Level0)
 {
     PermissionStatus cliState = {
-        .permissionName = "ohos.permission.cli.resolved",
+        .permissionName = "ohos.permission.cli.POWER_MANAGER",
         .grantStatus = PERMISSION_DENIED,
         .grantFlag = PERMISSION_DEFAULT_FLAG
     };
     PermissionStatus usedState = {
-        .permissionName = "ohos.permission.CAMERA",
+        .permissionName = "ohos.permission.POWER_MANAGER",
         .grantStatus = PERMISSION_GRANTED,
         .grantFlag = PERMISSION_USER_SET
     };
@@ -600,9 +599,10 @@ HWTEST_F(ClawPermissionDecisionEngineTest, BuildCliPermissions008, TestSize.Leve
     ASSERT_EQ(1, static_cast<int32_t>(result.permList.size()));
     ASSERT_EQ(1, static_cast<int32_t>(result.permList[0].requiredCliPermissions.size()));
     const auto& detail = result.permList[0].requiredCliPermissions[0];
-    EXPECT_EQ("ohos.permission.cli.resolved", detail.requiredCliPermission);
-    EXPECT_EQ(PermissionDecisionStatus::NO_DIALOG_NOT_DECLARED, detail.cliPermissionStatus);
-    EXPECT_TRUE(detail.usedPermissions.empty());
+    EXPECT_EQ("ohos.permission.cli.POWER_MANAGER", detail.requiredCliPermission);
+    EXPECT_EQ(PermissionDecisionStatus::NO_DIALOG_CLI_PERMISSION_RESOLVED, detail.cliPermissionStatus);
+    ASSERT_EQ(1, static_cast<int32_t>(detail.usedPermissions.size()));
+    EXPECT_EQ("ohos.permission.POWER_MANAGER", detail.usedPermissions[0]);
 }
 
 /**
