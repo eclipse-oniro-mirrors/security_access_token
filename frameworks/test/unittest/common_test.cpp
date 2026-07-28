@@ -181,6 +181,17 @@ HWTEST_F(CommonTest, PermissionDefineMapTest, TestSize.Level1)
 }
 
 /*
+ * @tc.name: PermissionDefinitionSizeTest
+ * @tc.desc: Test permission definition count is within the parcel limit.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(CommonTest, PermissionDefinitionSizeTest, TestSize.Level1)
+{
+    EXPECT_LT(GetDefPermissionsSize(), MAX_PERM_SIZE);
+}
+
+/*
  * @tc.name: QueryRequredPermissions001
  * @tc.desc: Query required permissions for an existing cli permission.
  * @tc.type: FUNC

@@ -32,6 +32,7 @@ bool HapPolicyParcel::Marshalling(Parcel& out) const
 
     const std::vector<PermissionDef>& permList = this->hapPolicy.permList;
     uint32_t permListSize = permList.size();
+    RETURN_IF_FALSE(permListSize <= MAX_PERMISSION_DEF_SIZE);
     RETURN_IF_FALSE(out.WriteUint32(permListSize));
 
     for (uint32_t i = 0; i < permListSize; i++) {
@@ -120,7 +121,7 @@ HapPolicyParcel* HapPolicyParcel::Unmarshalling(Parcel& in)
 
     uint32_t permListSize;
     RELEASE_IF_FALSE(in.ReadUint32(permListSize), hapPolicyParcel);
-    RELEASE_IF_FALSE((permListSize <= MAX_PERMLIST_SIZE), hapPolicyParcel);
+    RELEASE_IF_FALSE((permListSize <= MAX_PERMISSION_DEF_SIZE), hapPolicyParcel);
 
     for (uint32_t i = 0; i < permListSize; i++) {
         sptr<PermissionDefParcel> permDefParcel = in.ReadParcelable<PermissionDefParcel>();
