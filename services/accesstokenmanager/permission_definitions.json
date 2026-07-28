@@ -11791,7 +11791,7 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
-            "deviceTypes": ["phone", "wearable", "2in1", "tablet", "car", "liteWearable"]
+            "deviceTypes": ["phone", "wearable"]
         }
     ]
 }
