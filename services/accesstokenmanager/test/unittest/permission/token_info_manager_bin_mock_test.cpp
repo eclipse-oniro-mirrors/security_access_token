@@ -107,7 +107,7 @@ public:
 
 /**
  * @tc.name: GetHapTokenInfoWithBinToken001
- * @tc.desc: Verify GetHapTokenInfo returns ERR_IOCTL_UNSUPPORT when querying parent hap token is unsupported.
+ * @tc.desc: Verify GetHapTokenInfo returns ERR_TOKENID_NOT_EXIST when querying parent hap token is unsupported.
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -118,7 +118,7 @@ HWTEST_F(TokenInfoManagerBinMockTest, GetHapTokenInfoWithBinToken001, TestSize.L
     AccessTokenID binTokenId = BuildBinTokenIdFromHapTokenId(123);
 
     HapTokenInfo info;
-    EXPECT_EQ(AccessTokenError::ERR_IOCTL_UNSUPPORT,
+    EXPECT_EQ(AccessTokenError::ERR_TOKENID_NOT_EXIST,
         AccessTokenInfoManager::GetInstance().GetHapTokenInfo(binTokenId, info));
     EXPECT_EQ(1, fakeState.callCount);
     EXPECT_EQ(binTokenId, fakeState.lastBinTokenID);
