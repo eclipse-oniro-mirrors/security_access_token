@@ -56,6 +56,7 @@ static int32_t g_curRequestCode = 0;
 
 static constexpr int32_t VALUE_MAX_LEN = 32;
 static constexpr int32_t MAX_WAIT_TIME = 1000;
+static constexpr int32_t WAIT_UI_CONTENT_INTERVAL_MS = 5;
 
 extern "C" {
 static int32_t GetCjErrorCode(uint32_t errCode)
@@ -160,6 +161,24 @@ static char** VectorToCArrString(const std::vector<std::string>& vec)
     }
     for (size_t i = 0; i < vec.size(); i++) {
         result[i] = MallocCString(vec[i]);
+        if (result[i] != nullptr) {
+            continue;
+        }
+        if (vec[i].empty()) {
+            result[i] = static_cast<char*>(malloc(sizeof(char)));
+            if (result[i] != nullptr) {
+                result[i][0] = '\0';
+                continue;
+            }
+            LOGE("VectorToCArrString: alloc empty string at index %{public}zu failed!", i);
+        } else {
+            LOGE("VectorToCArrString: MallocCString at index %{public}zu failed!", i);
+        }
+        for (size_t j = 0; j < i; j++) {
+            free(result[j]);
+        }
+        free(result);
+        return nullptr;
     }
     return result;
 }
@@ -428,6 +447,12 @@ static void fillRequestResult(CPermissionRequestResult& retData, std::vector<std
 static void UpdateGrantPermissionResultOnly(const std::vector<std::string>& permissions,
     const std::vector<int>& grantResults, const std::vector<int>& permissionsState, std::vector<int>& newGrantResults)
 {
+    if ((permissions.size() != grantResults.size()) || (permissions.size() != permissionsState.size())) {
+        LOGE("UpdateGrantPermissionResultOnly: size mismatch, permissions=%{public}zu, "
+             "grantResults=%{public}zu, permissionsState=%{public}zu",
+             permissions.size(), grantResults.size(), permissionsState.size());
+        return;
+    }
     uint32_t size = permissions.size();
 
     for (uint32_t i = 0; i < size; i++) {
@@ -446,8 +471,12 @@ void AuthorizationResult::GrantResultsCallback(const std::vector<std::string>& p
     data_->callbackRef(ret);
 }
 
-static int32_t StartServiceExtension(std::shared_ptr<RequestAsyncContext>& asyncContext)
+static int32_t StartServiceExtension(const std::shared_ptr<RequestAsyncContext>& asyncContext)
 {
+    if (asyncContext->abilityContext == nullptr) {
+        LOGE("StartServiceExtension: abilityContext is null, cannot pop service ability window.");
+        return CjErrorCode::CJ_ERROR_INNER;
+    }
     sptr<IRemoteObject> remoteObject = new (std::nothrow) AuthorizationResult(asyncContext);
     if (remoteObject == nullptr) {
         return CjErrorCode::CJ_ERROR_INNER;
@@ -482,6 +511,10 @@ bool AtManagerImpl::ParseRequestPermissionFromUser(OHOS::AbilityRuntime::Context
     const std::function<void(RetDataCPermissionRequestResult)>& callbackRef,
     const std::shared_ptr<RequestAsyncContext>& asyncContext)
 {
+    if (context == nullptr) {
+        LOGE("ParseRequestPermissionFromUser: context is null.");
+        return false;
+    }
     // context : AbilityContext
     auto contextSharedPtr = context->shared_from_this();
     asyncContext->abilityContext = AbilityRuntime::Context::ConvertTo<AbilityRuntime::AbilityContext>(contextSharedPtr);
@@ -508,20 +541,41 @@ bool AtManagerImpl::ParseRequestPermissionFromUser(OHOS::AbilityRuntime::Context
 
 void UIExtensionCallback::ReleaseOrErrorHandle(int32_t code)
 {
+    if (this->reqContext_ == nullptr) {
+        LOGE("ReleaseOrErrorHandle: reqContext_ is null.");
+        return;
+    }
+    {
+        std::lock_guard<std::mutex> lock(this->reqContext_->lockReleaseFlag);
+        if (this->reqContext_->releaseFlag) {
+            LOGI("ReleaseOrErrorHandle: callback has executed.");
+            return;
+        }
+        this->reqContext_->releaseFlag = true;
+    }
     Ace::UIContent* uiContent = nullptr;
     if (this->reqContext_->uiAbilityFlag) {
-        uiContent = this->reqContext_->abilityContext->GetUIContent();
+        if (this->reqContext_->abilityContext != nullptr) {
+            uiContent = this->reqContext_->abilityContext->GetUIContent();
+        }
     } else {
-        uiContent = this->reqContext_->uiExtensionContext->GetUIContent();
+        if (this->reqContext_->uiExtensionContext != nullptr) {
+            uiContent = this->reqContext_->uiExtensionContext->GetUIContent();
+        }
     }
     if (uiContent != nullptr) {
         LOGI("close uiextension component");
         uiContent->CloseModalUIExtension(this->sessionId_);
     }
-
+    RetDataCPermissionRequestResult ret{};
     if (code == 0) {
-        return; // code is 0 means request has return by OnResult
+        fillRequestResult(ret.data, this->reqContext_->permissionList,
+            this->reqContext_->permissionsState, this->reqContext_->dialogShownResults);
+        ret.code = AT_PERM_OPERA_SUCC;
+    } else {
+        ret.code = CjErrorCode::CJ_ERROR_INNER;
     }
+    this->reqContext_->callbackRef(ret);
 }
 
 UIExtensionCallback::UIExtensionCallback(const std::shared_ptr<RequestAsyncContext>& reqContext)
@@ -544,20 +598,20 @@ void UIExtensionCallback::SetSessionId(int32_t sessionId)
 void UIExtensionCallback::OnRelease(int32_t releaseCode)
 {
     LOGI("releaseCode is %{public}d", releaseCode);
-
-    ReleaseOrErrorHandle(releaseCode);
+    if (this->reqContext_ == nullptr) {
+        LOGE("Request context is null.");
+        return;
+    }
+    ReleaseOrErrorHandle(-1);
 }
 
 static void GrantResultsCallbackUI(const std::vector<std::string>& permissionList,
     const std::vector<int32_t>& permissionStates, std::shared_ptr<RequestAsyncContext>& data)
 {
-    // only permissions which need to grant change the result, other keey as GetSelfPermissionsState result
     std::vector<int> newGrantResults;
     UpdateGrantPermissionResultOnly(permissionList, permissionStates, data->permissionsState, newGrantResults);
-    RetDataCPermissionRequestResult ret{};
-    fillRequestResult(ret.data, permissionList, newGrantResults, data->dialogShownResults);
-    ret.code = AT_PERM_OPERA_SUCC;
-    data->callbackRef(ret);
+    data->permissionList = permissionList;
+    data->permissionsState.assign(newGrantResults.begin(), newGrantResults.end());
 }
 
 /*
@@ -566,10 +620,14 @@ static void GrantResultsCallbackUI(const std::vector<std::string>& permissionLis
 void UIExtensionCallback::OnResult(int32_t resultCode, const AAFwk::Want& result)
 {
     LOGI("resultCode is %{public}d", resultCode);
+    if (this->reqContext_ == nullptr) {
+        LOGE("Request context is null.");
+        return;
+    }
     std::vector<std::string> permissionList = result.GetStringArrayParam(PERMISSION_KEY);
     std::vector<int32_t> permissionStates = result.GetIntArrayParam(RESULT_KEY);
-
     GrantResultsCallbackUI(permissionList, permissionStates, this->reqContext_);
+    ReleaseOrErrorHandle(0);
 }
 
 /*
@@ -587,8 +645,11 @@ void UIExtensionCallback::OnError(int32_t code, const std::string& name, const s
 {
     LOGI("code is %{public}d, name is %{public}s, message is %{public}s",
         code, name.c_str(), message.c_str());
-
-    ReleaseOrErrorHandle(code);
+    if (this->reqContext_ == nullptr) {
+        LOGE("Request context is null.");
+        return;
+    }
+    ReleaseOrErrorHandle(-1);
 }
 
 /*
@@ -606,6 +667,11 @@ void UIExtensionCallback::OnRemoteReady(const std::shared_ptr<Ace::ModalUIExtens
 void UIExtensionCallback::OnDestroy()
 {
     LOGI("UIExtensionAbility destructed.");
+    if (this->reqContext_ == nullptr) {
+        LOGE("Request context is null.");
+        return;
+    }
+    ReleaseOrErrorHandle(-1);
 }
 
 static Ace::ModalUIExtensionCallbacks BindCallbacks(std::shared_ptr<UIExtensionCallback> uiExtCallback)
@@ -620,8 +686,8 @@ static Ace::ModalUIExtensionCallbacks BindCallbacks(std::shared_ptr<UIExtensionC
         [uiExtCallback](const OHOS::AAFwk::WantParams& request) {
             uiExtCallback->OnReceive(request);
         },
-        [uiExtCallback](int32_t code, const std::string& name, [[maybe_unused]]const std::string& message) {
-            uiExtCallback->OnError(code, name, name);
+        [uiExtCallback](int32_t code, const std::string& name, const std::string& message) {
+            uiExtCallback->OnError(code, name, message);
         },
         [uiExtCallback](const std::shared_ptr<OHOS::Ace::ModalUIExtensionProxy>& uiProxy) {
             uiExtCallback->OnRemoteReady(uiProxy);
@@ -646,6 +712,7 @@ static int32_t CreateUIExtension(const Want &want, std::shared_ptr<RequestAsyncC
             if ((uiContent != nullptr) || (curTime - beginTime > MAX_WAIT_TIME)) {
                 break;
             }
+            std::this_thread::sleep_for(std::chrono::milliseconds(WAIT_UI_CONTENT_INTERVAL_MS));
         }
     } else {
         while (true) {
@@ -655,6 +722,7 @@ static int32_t CreateUIExtension(const Want &want, std::shared_ptr<RequestAsyncC
             if ((uiContent != nullptr) || (curTime - beginTime > MAX_WAIT_TIME)) {
                 break;
             }
+            std::this_thread::sleep_for(std::chrono::milliseconds(WAIT_UI_CONTENT_INTERVAL_MS));
         }
     }
 
@@ -686,6 +754,45 @@ static int32_t StartUIExtension(std::shared_ptr<RequestAsyncContext> asyncContex
     return CreateUIExtension(want, asyncContext);
 }
 
+static bool GetTokenIdFromContext(const std::shared_ptr<RequestAsyncContext>& asyncContext, AccessTokenID& outTokenID)
+{
+    if (asyncContext->uiAbilityFlag) {
+        if (asyncContext->abilityContext == nullptr) {
+            return false;
+        }
+        auto appInfo = asyncContext->abilityContext->GetApplicationInfo();
+        if (appInfo == nullptr) {
+            return false;
+        }
+        outTokenID = appInfo->accessTokenId;
+        return true;
+    }
+    if (asyncContext->uiExtensionContext == nullptr) {
+        return false;
+    }
+    auto appInfo = asyncContext->uiExtensionContext->GetApplicationInfo();
+    if (appInfo == nullptr) {
+        return false;
+    }
+    outTokenID = appInfo->accessTokenId;
+    return true;
+}
+
+static int32_t DispatchPermissionDialog(const std::shared_ptr<RequestAsyncContext>& asyncContext)
+{
+    if (asyncContext->info.grantBundleName == GRANT_ABILITY_BUNDLE_NAME) {
+        LOGI("pop service extension dialog");
+        return StartServiceExtension(asyncContext);
+    }
+    LOGI("pop ui extension dialog");
+    int32_t result = StartUIExtension(asyncContext);
+    if (result != CJ_OK) {
+        LOGI("pop uiextension dialog fail, start to pop service extension dialog");
+        result = StartServiceExtension(asyncContext);
+    }
+    return result;
+}
+
 void AtManagerImpl::RequestPermissionsFromUser(OHOS::AbilityRuntime::Context* context, CArrString cPermissionList,
     const std::function<void(RetDataCPermissionRequestResult)>& callbackRef)
 {
@@ -702,10 +809,10 @@ void AtManagerImpl::RequestPermissionsFromUser(OHOS::AbilityRuntime::Context* co
         return;
     }
     AccessTokenID tokenID = 0;
-    if (asyncContext->uiAbilityFlag) {
-        tokenID = asyncContext->abilityContext->GetApplicationInfo()->accessTokenId;
-    } else {
-        tokenID = asyncContext->uiExtensionContext->GetApplicationInfo()->accessTokenId;
+    if (!GetTokenIdFromContext(asyncContext, tokenID)) {
+        ret.code = CjErrorCode::CJ_ERROR_INNER;
+        callbackRef(ret);
+        return;
     }
     if (tokenID != static_cast<AccessTokenID>(GetSelfTokenID())) {
         ret.code = CjErrorCode::CJ_ERROR_PARAM_INVALID;
@@ -720,20 +827,7 @@ void AtManagerImpl::RequestPermissionsFromUser(OHOS::AbilityRuntime::Context* co
         callbackRef(ret);
         return;
     }
-    int32_t result;
-    // service extension dialog
-    if (asyncContext->info.grantBundleName == GRANT_ABILITY_BUNDLE_NAME) {
-        LOGI("pop service extension dialog");
-        result = StartServiceExtension(asyncContext);
-    } else {
-        LOGI("pop ui extension dialog");
-        result = StartUIExtension(asyncContext);
-        if (result != CJ_OK) {
-            LOGI("pop uiextension dialog fail, start to pop service extension dialog");
-            result = StartServiceExtension(asyncContext);
-        }
-    }
-    ret.code = result;
+    ret.code = DispatchPermissionDialog(asyncContext);
     if (ret.code != CJ_OK) {
         callbackRef(ret);
         return;
@@ -890,6 +984,22 @@ std::string AtManagerImpl::GetPermParamValue()
     return g_paramCache.sysParamCache;
 }
 
+extern "C++" {
+template <typename T>
+static bool HasIntersection(const std::vector<T>& scope, const std::vector<T>& target)
+{
+    if (scope.empty() || target.empty()) {
+        return true;
+    }
+    for (const auto& item : target) {
+        if (std::find(scope.begin(), scope.end(), item) != scope.end()) {
+            return true;
+        }
+    }
+    return false;
+}
+}
+
 bool AtManagerImpl::IsExistRegister(const RegisterPermStateChangeInfo* registerPermStateChangeInfo)
 {
     PermStateChangeScope targetScopeInfo;
@@ -901,40 +1011,8 @@ bool AtManagerImpl::IsExistRegister(const RegisterPermStateChangeInfo* registerP
     for (const auto& item : g_permStateChangeRegisters) {
         PermStateChangeScope scopeInfo;
         item->subscriber->GetScope(scopeInfo);
-
-        bool hasPermIntersection = false;
-        // Special cases:
-        // 1.Have registered full, and then register some
-        // 2.Have registered some, then register full
-        if (scopeInfo.permList.empty() || targetPermList.empty()) {
-            hasPermIntersection = true;
-        }
-        for (const auto& PermItem : targetPermList) {
-            if (hasPermIntersection) {
-                break;
-            }
-            auto iter = std::find(scopeInfo.permList.begin(), scopeInfo.permList.end(), PermItem);
-            if (iter != scopeInfo.permList.end()) {
-                hasPermIntersection = true;
-            }
-        }
-
-        bool hasTokenIdIntersection = false;
-
-        if (scopeInfo.tokenIDs.empty() || targetTokenIDs.empty()) {
-            hasTokenIdIntersection = true;
-        }
-        for (const auto& tokenItem : targetTokenIDs) {
-            if (hasTokenIdIntersection) {
-                break;
-            }
-            auto iter = std::find(scopeInfo.tokenIDs.begin(), scopeInfo.tokenIDs.end(), tokenItem);
-            if (iter != scopeInfo.tokenIDs.end()) {
-                hasTokenIdIntersection = true;
-            }
-        }
-
-        if (hasTokenIdIntersection && hasPermIntersection &&
+        if (HasIntersection(scopeInfo.permList, targetPermList) &&
+            HasIntersection(scopeInfo.tokenIDs, targetTokenIDs) &&
             CompareCallbackRef(item->callbackRef, registerPermStateChangeInfo->callbackRef, item->threadId)) {
             return true;
         }
@@ -959,15 +1037,15 @@ bool AtManagerImpl::IsDynamicRequest(const std::vector<std::string>& permissions
 
     auto ret = AccessTokenKit::GetSelfPermissionsState(permList, info);
 
-    for (const auto& permState : permList) {
-        LOGI("permissions: %{public}s. permissionsState: %{public}u",
-            permState.permissionName.c_str(), permState.state);
-        permissionsState.emplace_back(permState.state);
-        dialogShownResults.emplace_back(permState.state == TypePermissionOper::DYNAMIC_OPER);
-    }
     if (permList.size() != permissions.size()) {
         LOGE("Returned permList size: %{public}zu.", permList.size());
         return false;
+    }
+    for (const auto& permState : permList) {
+        LOGI("permissions: %{public}s. permissionsState: %{public}d",
+            permState.permissionName.c_str(), static_cast<int32_t>(permState.state));
+        permissionsState.emplace_back(permState.state);
+        dialogShownResults.emplace_back(permState.state == TypePermissionOper::DYNAMIC_OPER);
     }
     if (ret != TypePermissionOper::DYNAMIC_OPER) {
         return false;
