@@ -111,6 +111,7 @@ run -t FUZZ -tp access_token
 
 - **权限授予状态**（AccessTokenManager）与**权限使用状态**（PrivacyManager）职责分离，不要混淆
 - **依赖方向**保持单向：`interfaces` ← `frameworks` ← `services`，避免循环依赖
+- 既有外部查询接口的返回值语义必须保持兼容；如果内部新增更细粒度或平台相关错误码，不能直接对外透传，历史上返回 `ERR_TOKENID_NOT_EXIST` 的非法或不可解析 TokenID 场景仍应保持该错误码，除非经过兼容性评审明确允许变更
 
 ### 并发与重入约束
 
@@ -156,3 +157,4 @@ run -t FUZZ -tp access_token
 | v1.2 | 2026-07-10 | add task routing, high-risk boundaries, and validation loop guidance for coding agents | xiacong, AI |
 | v1.3 | 2026-07-14 | add repository-wide lock callback safety and update-state consistency constraints | linshuqing, AI |
 | v2.0 | 2026-07-23 | simplify by removing code-explorable knowledge, keep only constraints and routing guidance | hehehe-li, AI |
+| v2.1 | 2026-07-28 | clarify that existing external query interfaces must preserve compatible return-code semantics | linshuqing, AI |

@@ -76,6 +76,8 @@ Client Process → Kernel Cache (fast)
 失败时回滚已完成的步骤
 ```
 
+- BinTokenID/父 HAP TokenID 解析链路如果引入更细粒度的内部失败原因，`GetHapTokenInfo` 等既有对外查询接口仍需对非法或不可解析 TokenID 返回兼容错误码 `ERR_TOKENID_NOT_EXIST`，不能把内部错误直接暴露给调用方
+
 ## 相关模块
 
 | 模块 | 职责 |
