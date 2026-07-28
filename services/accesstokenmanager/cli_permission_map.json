@@ -143,6 +143,12 @@
             "usedPermissions": [
                 "ohos.permission.MANAGE_DISPOSED_APP_STATUS"
             ]
+        },
+        {
+            "cliPermission": "ohos.permission.cli.MANAGE_NFC_SWITCH",
+            "usedPermissions": [
+                "ohos.permission.MANAGE_SECURE_SETTINGS"
+            ]
         }
     ]
 }
