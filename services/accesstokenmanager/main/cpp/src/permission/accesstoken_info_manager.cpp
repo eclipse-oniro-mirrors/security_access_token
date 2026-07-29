@@ -874,7 +874,7 @@ int32_t AccessTokenInfoManager::ResolveQueryTokenID(AccessTokenID tokenID, Acces
     int32_t ret = GetParentHapTokenID(tokenID, &parent);
     if (ret == ENOTSUP) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Parent hap ioctl unsupported, binTokenID=%{public}u.", tokenID);
-        return AccessTokenError::ERR_IOCTL_UNSUPPORT;
+        return AccessTokenError::ERR_TOKENID_NOT_EXIST;
     }
     if (ret != ACCESS_TOKEN_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG,
@@ -896,9 +896,7 @@ int AccessTokenInfoManager::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo&
     AccessTokenID queryTokenID = INVALID_TOKENID;
     int32_t ret = ResolveQueryTokenID(tokenID, queryTokenID);
     if (ret != RET_SUCCESS) {
-        LOGE(ATM_DOMAIN, ATM_TAG,
-            "Failed to resolve query token, tokenID=%{public}u, ret=%{public}d.", tokenID, ret);
-        return AccessTokenError::ERR_TOKENID_NOT_EXIST;
+        return ret;
     }
     std::shared_ptr<HapTokenInfoInner> infoPtr = GetHapTokenInfoInner(queryTokenID);
     if (infoPtr == nullptr) {
@@ -1768,8 +1766,7 @@ int32_t AccessTokenInfoManager::GetHapAppIdByTokenId(AccessTokenID tokenID, std:
     GenericValues conditionValue;
     conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenID));
     std::vector<GenericValues> hapTokenResults;
-    int32_t ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, conditionValue,
-        hapTokenResults);
+    int32_t ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, conditionValue, hapTokenResults);
     if (ret != RET_SUCCESS) {
         LOGE(ATM_DOMAIN, ATM_TAG,
             "Failed to find Id(%{public}u) from hap_token_table, err: %{public}d.", tokenID, ret);
