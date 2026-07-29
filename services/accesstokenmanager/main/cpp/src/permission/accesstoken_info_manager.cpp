@@ -2078,7 +2078,6 @@ static bool GetPermissionFromKernelCache(AccessTokenID tokenID, const std::strin
 {
     uint32_t code = 0;
     if (!IsDefinedPermissionInner(permissionName)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Permission=%{public}s is not defined.", permissionName.c_str());
         res = PERMISSION_DENIED;
         return true;
     }
@@ -2095,7 +2094,6 @@ static bool GetPermissionFromKernelCache(AccessTokenID tokenID, const std::strin
 int AccessTokenInfoManager::VerifyNativeAccessToken(AccessTokenID tokenID, const std::string& permissionName)
 {
     if (!IsDefinedPermissionInner(permissionName)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "No definition for permission: %{public}s!", permissionName.c_str());
         return PERMISSION_DENIED;
     }
     uint32_t code;
@@ -2131,7 +2129,6 @@ int32_t AccessTokenInfoManager::VerifyAccessToken(AccessTokenID tokenID, const s
     }
 
     if (!PermissionValidator::IsPermissionNameValid(permissionName)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "%{public}s of %{public}u is invalid!", permissionName.c_str(), tokenID);
         return PERMISSION_DENIED;
     }
     uint64_t callerFullTokenID = IPCSkeleton::GetCallingFullTokenID();

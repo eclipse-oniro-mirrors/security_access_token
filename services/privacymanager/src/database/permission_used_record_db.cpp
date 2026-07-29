@@ -36,6 +36,14 @@ constexpr const char* TEXT_STR = " text not null,";
 constexpr const char* CREATE_TABLE_STR = "create table if not exists ";
 constexpr const char* WHERE_1_STR = " where 1 = 1";
 constexpr const size_t TOKEN_ID_LENGTH = 11;
+constexpr int64_t COST_TIME_LOG_THRESHOLD = 5;
+
+static void LogCost(const char* func, int64_t cost)
+{
+    if (cost > COST_TIME_LOG_THRESHOLD) {
+        LOGI(PRI_DOMAIN, PRI_TAG, "%{public}s cost %{public}" PRId64 ".", func, cost);
+    }
+}
 
 std::recursive_mutex g_instanceMutex;
 }
@@ -210,7 +218,7 @@ int32_t PermissionUsedRecordDb::Add(DataType type, const std::vector<GenericValu
     CommitTransaction();
 
     int64_t endTime = TimeUtil::GetCurrentTimestamp();
-    LOGI(PRI_DOMAIN, PRI_TAG, "Add cost %{public}" PRId64 ".", endTime - beginTime);
+    LogCost("Add", endTime - beginTime);
 
     return SUCCESS;
 }
@@ -235,7 +243,7 @@ int32_t PermissionUsedRecordDb::Remove(DataType type, const GenericValues& condi
     int32_t ret = statement.Step();
     
     int64_t endTime = TimeUtil::GetCurrentTimestamp();
-    LOGI(PRI_DOMAIN, PRI_TAG, "Remove cost %{public}" PRId64 ".", endTime - beginTime);
+    LogCost("Remove", endTime - beginTime);
 
     return (ret == Statement::State::DONE) ? SUCCESS : PrivacyError::ERR_DATABASE_OPERATE_FAILED;
 }
@@ -281,7 +289,7 @@ int32_t PermissionUsedRecordDb::FindByConditions(DataType type, const std::set<i
     }
     
     int64_t endTime = TimeUtil::GetCurrentTimestamp();
-    LOGI(PRI_DOMAIN, PRI_TAG, "FindByConditions cost %{public}" PRId64 ".", endTime - beginTime);
+    LogCost("FindByConditions", endTime - beginTime);
 
     return SUCCESS;
 }
@@ -301,7 +309,7 @@ int32_t PermissionUsedRecordDb::Count(DataType type)
     }
     
     int64_t endTime = TimeUtil::GetCurrentTimestamp();
-    LOGI(PRI_DOMAIN, PRI_TAG, "Count cost %{public}" PRId64 ".", endTime - beginTime);
+    LogCost("Count", endTime - beginTime);
 
     return countValue.GetInt(FIELD_COUNT_NUMBER);
 }
@@ -327,7 +335,7 @@ int32_t PermissionUsedRecordDb::DeleteExpireRecords(DataType type,
     }
     
     int64_t endTime = TimeUtil::GetCurrentTimestamp();
-    LOGI(PRI_DOMAIN, PRI_TAG, "DeleteExpireRecords cost %{public}" PRId64 ".", endTime - beginTime);
+    LogCost("DeleteExpireRecords", endTime - beginTime);
 
     return SUCCESS;
 }
@@ -354,7 +362,7 @@ int32_t PermissionUsedRecordDb::DeleteHistoryRecordsInTables(std::vector<DataTyp
     CommitTransaction();
 
     int64_t endTime = TimeUtil::GetCurrentTimestamp();
-    LOGI(PRI_DOMAIN, PRI_TAG, "DeleteHistoryRecordsInTables cost %{public}" PRId64 ".", endTime - beginTime);
+    LogCost("DeleteHistoryRecordsInTables", endTime - beginTime);
 
     return SUCCESS;
 }
@@ -373,7 +381,7 @@ int32_t PermissionUsedRecordDb::DeleteExcessiveRecords(DataType type, uint32_t e
     }
 
     int64_t endTime = TimeUtil::GetCurrentTimestamp();
-    LOGI(PRI_DOMAIN, PRI_TAG, "DeleteExcessiveRecords cost %{public}" PRId64 ".", endTime - beginTime);
+    LogCost("DeleteExcessiveRecords", endTime - beginTime);
 
     return SUCCESS;
 }
@@ -413,7 +421,7 @@ int32_t PermissionUsedRecordDb::Update(DataType type, const GenericValues& modif
     }
 
     int64_t endTime = TimeUtil::GetCurrentTimestamp();
-    LOGI(PRI_DOMAIN, PRI_TAG, "Update cost %{public}" PRId64 ".", endTime - beginTime);
+    LogCost("Update", endTime - beginTime);
 
     return SUCCESS;
 }
@@ -450,7 +458,7 @@ int32_t PermissionUsedRecordDb::Query(DataType type, const GenericValues& condit
     }
 
     int64_t endTime = TimeUtil::GetCurrentTimestamp();
-    LOGI(PRI_DOMAIN, PRI_TAG, "Query cost %{public}" PRId64 ".", endTime - beginTime);
+    LogCost("Query", endTime - beginTime);
 
     return SUCCESS;
 }

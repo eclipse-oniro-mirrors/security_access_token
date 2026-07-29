@@ -86,8 +86,6 @@ void DisablePolicyCbkManager::RemoveFromCallbackList(const sptr<IRemoteObject>& 
     std::unique_lock<std::shared_mutex> lock(callbackMutex_);
     for (auto it = callbackDataList_.begin(); it != callbackDataList_.end(); ++it) {
         if (callback == it->callbackObject) {
-            LOGI(PRI_DOMAIN, PRI_TAG, "Find callback");
-
             if (callbackDeathRecipient_ != nullptr) {
                 callback->RemoveDeathRecipient(callbackDeathRecipient_);
             }
