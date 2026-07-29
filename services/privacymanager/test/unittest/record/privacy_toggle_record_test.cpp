@@ -245,6 +245,39 @@ HWTEST_F(PrivacyToggleRecordTest, GetPermissionUsedRecordToggleStatus001, TestSi
 }
 
 /*
+ * @tc.name: UpdatePermUsedRecToggleStatusMapFromDb001
+ * @tc.desc: PermissionRecordManager skips default true toggle records when loading cache from database.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyToggleRecordTest, UpdatePermUsedRecToggleStatusMapFromDb001, TestSize.Level0)
+{
+    PrivacyToggleStatusMapGuard guard;
+    {
+        std::lock_guard<std::mutex> lock(PermissionRecordManager::GetInstance().permUsedRecToggleStatusMutex_);
+        PermissionRecordManager::GetInstance().permUsedRecToggleStatusMap_.erase(
+            GetToggleStatusMapKey(TEST_USER_ID_1, LEGACY_SUBPROFILE_ID));
+        PermissionRecordManager::GetInstance().permUsedRecToggleStatusMap_.erase(
+            GetToggleStatusMapKey(TEST_USER_ID_10, LEGACY_SUBPROFILE_ID));
+    }
+    GenericValues falseRecord;
+    falseRecord.Put(PrivacyFiledConst::FIELD_USER_ID, TEST_USER_ID_1);
+    falseRecord.Put(PrivacyFiledConst::FIELD_SUB_PROFILE_ID, LEGACY_SUBPROFILE_ID);
+    falseRecord.Put(PrivacyFiledConst::FIELD_STATUS, false);
+    GenericValues trueRecord;
+    trueRecord.Put(PrivacyFiledConst::FIELD_USER_ID, TEST_USER_ID_10);
+    trueRecord.Put(PrivacyFiledConst::FIELD_SUB_PROFILE_ID, LEGACY_SUBPROFILE_ID);
+    trueRecord.Put(PrivacyFiledConst::FIELD_STATUS, true);
+    ASSERT_EQ(PermissionUsedRecordDb::SUCCESS, PermissionUsedRecordDb::GetInstance().Add(
+        PermissionUsedRecordDb::DataType::PERMISSION_USED_RECORD_TOGGLE_STATUS, {falseRecord, trueRecord}));
+
+    PermissionRecordManager::GetInstance().UpdatePermUsedRecToggleStatusMapFromDb();
+
+    VerifyToggleStatusMapValue(TEST_USER_ID_1, LEGACY_SUBPROFILE_ID, false);
+    VerifyToggleStatusMapNotExist(TEST_USER_ID_10, LEGACY_SUBPROFILE_ID);
+}
+
+/*
  * @tc.name:SetPermissionUsedRecordToggleStatusWithLegacySubProfileId001
  * @tc.desc: PermissionRecordManager sets and gets legacy subProfile toggle status by userId.
  * @tc.type: FUNC

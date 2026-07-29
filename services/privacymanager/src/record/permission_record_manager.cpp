@@ -118,10 +118,20 @@ std::string BuildToggleStatusKey(int32_t userID, int32_t subProfileId)
 #endif
 }
 
-#ifdef ACCESS_TOKEN_SUPPORT_SUBPROFILE
-int32_t ValidateSubProfileIdForToggle(int32_t userID, int32_t subProfileId)
+int32_t NormalizeToggleSubProfileId([[maybe_unused]] int32_t subProfileId)
 {
-    if (subProfileId < 0) {
+#ifdef ACCESS_TOKEN_SUPPORT_SUBPROFILE
+    if (subProfileId >= 0) {
+        return subProfileId;
+    }
+#endif
+    return LEGACY_SUBPROFILE_ID;
+}
+
+int32_t ValidateSubProfileIdForToggle([[maybe_unused]] int32_t userID, [[maybe_unused]] int32_t subProfileId)
+{
+#ifdef ACCESS_TOKEN_SUPPORT_SUBPROFILE
+    if (subProfileId == LEGACY_SUBPROFILE_ID) {
         return RET_SUCCESS;
     }
     int32_t localUserId = LEGACY_SUBPROFILE_ID;
@@ -136,21 +146,15 @@ int32_t ValidateSubProfileIdForToggle(int32_t userID, int32_t subProfileId)
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
     return (localUserId == userID) ? RET_SUCCESS : PrivacyError::ERR_PERMISSION_USED_RECORD_SUBPROFILE_NOT_EXIST;
+#endif
+    return RET_SUCCESS;
 }
 
-bool ValidateUsedRecordToggleStorageModeConflict(
-    const std::map<std::string, bool>& permUsedRecToggleStatusMap, int32_t userID, int32_t subProfileId)
+#ifdef ACCESS_TOKEN_SUPPORT_SUBPROFILE
+bool HasLegacyToggleStatus(const std::map<std::string, bool>& permUsedRecToggleStatusMap, int32_t userID)
 {
-    const std::string legacyKey = BuildToggleStatusKey(userID, LEGACY_SUBPROFILE_ID);
-    if (subProfileId >= 0) {
-        return (permUsedRecToggleStatusMap.find(legacyKey) != permUsedRecToggleStatusMap.end());
-    }
-
-    const std::string prefix = std::to_string(userID) + "_";
-    return std::any_of(permUsedRecToggleStatusMap.begin(), permUsedRecToggleStatusMap.end(),
-        [&legacyKey, &prefix](const auto& item) {
-            return (item.first != legacyKey) && (item.first.rfind(prefix, 0) == 0);
-        });
+    return permUsedRecToggleStatusMap.find(BuildToggleStatusKey(userID, LEGACY_SUBPROFILE_ID)) !=
+        permUsedRecToggleStatusMap.end();
 }
 
 bool IsSubProfileToggleKey(const std::string& key, int32_t userID)
@@ -167,6 +171,15 @@ bool HasSubProfileToggleStatus(const std::map<std::string, bool>& permUsedRecTog
             return IsSubProfileToggleKey(item.first, userID);
         });
 }
+
+bool HasToggleStorageModeConflict(
+    const std::map<std::string, bool>& permUsedRecToggleStatusMap, int32_t userID, int32_t subProfileId)
+{
+    if (subProfileId == LEGACY_SUBPROFILE_ID) {
+        return HasSubProfileToggleStatus(permUsedRecToggleStatusMap, userID);
+    }
+    return HasLegacyToggleStatus(permUsedRecToggleStatusMap, userID);
+}
 #endif
 
 bool GetCachedToggleStatus(const std::map<std::string, bool>& permUsedRecToggleStatusMap, int32_t userID,
@@ -177,10 +190,10 @@ bool GetCachedToggleStatus(const std::map<std::string, bool>& permUsedRecToggleS
         return it->second;
     }
 #ifdef ACCESS_TOKEN_SUPPORT_SUBPROFILE
-    if ((subProfileId >= 0) && HasSubProfileToggleStatus(permUsedRecToggleStatusMap, userID)) {
-        return true;
-    }
     if (subProfileId >= 0) {
+        if (HasSubProfileToggleStatus(permUsedRecToggleStatusMap, userID)) {
+            return true;
+        }
         auto legacyIt = permUsedRecToggleStatusMap.find(BuildToggleStatusKey(userID, LEGACY_SUBPROFILE_ID));
         return (legacyIt == permUsedRecToggleStatusMap.end()) ? true : legacyIt->second;
     }
@@ -545,6 +558,30 @@ bool PermissionRecordManager::CheckPermissionUsedRecordToggleStatus(int32_t user
     return status;
 }
 
+int32_t PermissionRecordManager::ResolveAddRecordSubProfileId([[maybe_unused]] const HapTokenInfo& tokenInfo,
+    int32_t& subProfileId) const
+{
+    subProfileId = LEGACY_SUBPROFILE_ID;
+#ifdef ACCESS_TOKEN_SUPPORT_SUBPROFILE
+    {
+        std::lock_guard<std::mutex> lock(permUsedRecToggleStatusMutex_);
+        if (!HasSubProfileToggleStatus(permUsedRecToggleStatusMap_, tokenInfo.userID)) {
+            return RET_SUCCESS;
+        }
+    }
+    int32_t ret = OHOS::AccountSA::OsAccountManagerLite::GetOsAccountSubProfileId(
+        tokenInfo.userID, tokenInfo.instIndex, subProfileId);
+    if (ret != ERR_OK) {
+        LOGE(PRI_DOMAIN, PRI_TAG,
+            "Get subProfileId failed, userID=%{public}d, index=%{public}d, ret=%{public}d.",
+            tokenInfo.userID, tokenInfo.instIndex, ret);
+        return (ret == ERR_OS_ACCOUNT_SUBSPACE_NOT_FOUND) ?
+            PrivacyError::ERR_PARAM_INVALID : PrivacyError::ERR_SERVICE_ABNORMAL;
+    }
+#endif
+    return RET_SUCCESS;
+}
+
 bool PermissionRecordManager::VerifyNativeRecordPermission(
     const std::string& permissionName, const AccessTokenID& tokenId)
 {
@@ -637,16 +674,10 @@ int32_t PermissionRecordManager::AddPermissionUsedRecordInner(
         return PrivacyError::ERR_TOKENID_NOT_EXIST;
     }
     int32_t subProfileId = LEGACY_SUBPROFILE_ID;
-#ifdef ACCESS_TOKEN_SUPPORT_SUBPROFILE
-    int32_t ret = OHOS::AccountSA::OsAccountManagerLite::GetOsAccountSubProfileId(
-        tokenInfo.userID, tokenInfo.instIndex, subProfileId);
-    if (ret != ERR_OK) {
-        LOGE(PRI_DOMAIN, PRI_TAG,
-            "Get subProfileId failed, userID=%{public}d, index=%{public}d, ret=%{public}d.",
-            tokenInfo.userID, tokenInfo.instIndex, ret);
-        return PrivacyError::ERR_SERVICE_ABNORMAL;
+    int32_t ret = ResolveAddRecordSubProfileId(tokenInfo, subProfileId);
+    if (ret != RET_SUCCESS) {
+        return ret;
     }
-#endif
     if (!CheckPermissionUsedRecordToggleStatus(tokenInfo.userID, subProfileId)) {
         LOGI(PRI_DOMAIN, PRI_TAG, "The permission used record toggle status is false.");
         return PrivacyError::ERR_PRIVACY_TOGGELE_RESTRICTED;
@@ -1249,56 +1280,53 @@ int32_t PermissionRecordManager::SetPermissionUsedRecordToggleStatus(int32_t use
         LOGE(PRI_DOMAIN, PRI_TAG, "UserID is invalid.");
         return PrivacyError::ERR_PARAM_INVALID;
     }
-#ifdef ACCESS_TOKEN_SUPPORT_SUBPROFILE
-    subProfileId = (subProfileId < 0) ? LEGACY_SUBPROFILE_ID : subProfileId;
+    subProfileId = NormalizeToggleSubProfileId(subProfileId);
     int32_t ret = ValidateSubProfileIdForToggle(userID, subProfileId);
     if (ret != RET_SUCCESS) {
         return ret;
     }
+#ifdef ACCESS_TOKEN_SUPPORT_SUBPROFILE
     {
         std::lock_guard<std::mutex> lock(permUsedRecToggleStatusMutex_);
-        if (ValidateUsedRecordToggleStorageModeConflict(permUsedRecToggleStatusMap_, userID, subProfileId)) {
+        if (HasToggleStorageModeConflict(permUsedRecToggleStatusMap_, userID, subProfileId)) {
             return PrivacyError::ERR_PERMISSION_USED_RECORD_STORAGE_MODE_CONFLICT;
         }
     }
-#else
-    subProfileId = LEGACY_SUBPROFILE_ID;
 #endif
 
     if (status) {
         return DeletePermUsedRecToggleStatus(userID, subProfileId);
     }
 
-    if (!status) {
-        std::unordered_set<AccessTokenID> tokenIDList;
-        int32_t ret = AccessTokenKit::GetTokenIDByUserID(userID, tokenIDList, subProfileId);
-        if (ret != RET_SUCCESS) {
-            return Constant::FAILURE;
-        }
-        if (!tokenIDList.empty()) {
-            RemoveHistoryPermissionUsedRecords(tokenIDList);
-        }
+    std::unordered_set<AccessTokenID> tokenIDList;
+    ret = AccessTokenKit::GetTokenIDByUserID(userID, tokenIDList, subProfileId);
+    if (ret != RET_SUCCESS) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Get tokenId by userId failed, userID=%{public}d, ret=%{public}d.", userID, ret);
+        return PrivacyError::ERR_SERVICE_ABNORMAL;
+    }
+    if (!tokenIDList.empty()) {
+        RemoveHistoryPermissionUsedRecords(tokenIDList);
+    }
 #ifdef REMOTE_PRIVACY_ENABLE
-        // Remove remote permission records
-        const std::string toggleKey = BuildToggleStatusKey(userID, subProfileId);
-        {
-            std::lock_guard<std::mutex> lock(remotePermUsedRecMutex_);
-            for (auto it = remotePermUsedRecList_.begin(); it != remotePermUsedRecList_.end();) {
-                if (BuildToggleStatusKey(it->record.userId, it->record.subProfileId) == toggleKey) {
-                    it = remotePermUsedRecList_.erase(it);
-                } else {
-                    it++;
-                }
+    // Remove remote permission records
+    const std::string toggleKey = BuildToggleStatusKey(userID, subProfileId);
+    {
+        std::lock_guard<std::mutex> lock(remotePermUsedRecMutex_);
+        for (auto it = remotePermUsedRecList_.begin(); it != remotePermUsedRecList_.end();) {
+            if (BuildToggleStatusKey(it->record.userId, it->record.subProfileId) == toggleKey) {
+                it = remotePermUsedRecList_.erase(it);
+            } else {
+                ++it;
             }
         }
-
-        GenericValues conditions;
-        conditions.Put(PrivacyFiledConst::FIELD_SUB_PROFILE_ID, subProfileId);
-        std::unique_lock<std::shared_mutex> lk(this->rwLock_);
-        RemotePermUsedRecordDbManager::GetInstance().Remove(userID, conditions);
-        LOGI(PRI_DOMAIN, PRI_TAG, "Remove remote permission records when toggle status is false.");
-#endif
     }
+
+    GenericValues conditions;
+    conditions.Put(PrivacyFiledConst::FIELD_SUB_PROFILE_ID, subProfileId);
+    std::unique_lock<std::shared_mutex> lk(this->rwLock_);
+    RemotePermUsedRecordDbManager::GetInstance().Remove(userID, conditions);
+    LOGI(PRI_DOMAIN, PRI_TAG, "Remove remote permission records when toggle status is false.");
+#endif
 
     if (!UpdatePermUsedRecToggleStatusMap(userID, subProfileId, status)) {
         LOGD(PRI_DOMAIN, PRI_TAG, "The status is the same as that set last time, not need to update database.");
@@ -1328,16 +1356,18 @@ bool PermissionRecordManager::UpdatePermUsedRecToggleStatusMap(int32_t userID, i
 
 int32_t PermissionRecordManager::DeletePermUsedRecToggleStatus(int32_t userID, int32_t subProfileId)
 {
-    {
-        std::lock_guard<std::mutex> lock(permUsedRecToggleStatusMutex_);
-        permUsedRecToggleStatusMap_.erase(BuildToggleStatusKey(userID, subProfileId));
-    }
-
     GenericValues conditionValue;
     conditionValue.Put(PrivacyFiledConst::FIELD_USER_ID, userID);
     conditionValue.Put(PrivacyFiledConst::FIELD_SUB_PROFILE_ID, subProfileId);
-    return PermissionUsedRecordDb::GetInstance().Remove(
+    int32_t ret = PermissionUsedRecordDb::GetInstance().Remove(
         PermissionUsedRecordDb::DataType::PERMISSION_USED_RECORD_TOGGLE_STATUS, conditionValue);
+    if (ret != PermissionUsedRecordDb::SUCCESS) {
+        return ret;
+    }
+
+    std::lock_guard<std::mutex> lock(permUsedRecToggleStatusMutex_);
+    permUsedRecToggleStatusMap_.erase(BuildToggleStatusKey(userID, subProfileId));
+    return ret;
 }
 
 int32_t PermissionRecordManager::AddOrUpdateUsedStatusIfNeeded(int32_t userID, int32_t subProfileId, bool status)
@@ -1381,20 +1411,15 @@ int32_t PermissionRecordManager::GetPermissionUsedRecordToggleStatus(int32_t use
         LOGE(PRI_DOMAIN, PRI_TAG, "UserID is invalid.");
         return PrivacyError::ERR_PARAM_INVALID;
     }
-#ifdef ACCESS_TOKEN_SUPPORT_SUBPROFILE
-    subProfileId = (subProfileId < 0) ? LEGACY_SUBPROFILE_ID : subProfileId;
+    subProfileId = NormalizeToggleSubProfileId(subProfileId);
     int32_t ret = ValidateSubProfileIdForToggle(userID, subProfileId);
     if (ret != RET_SUCCESS) {
         return ret;
     }
-#else
-    subProfileId = LEGACY_SUBPROFILE_ID;
-#endif
-
     std::lock_guard<std::mutex> lock(permUsedRecToggleStatusMutex_);
 #ifdef ACCESS_TOKEN_SUPPORT_SUBPROFILE
-    if ((subProfileId < 0) &&
-        ValidateUsedRecordToggleStorageModeConflict(permUsedRecToggleStatusMap_, userID, subProfileId)) {
+    if ((subProfileId == LEGACY_SUBPROFILE_ID) &&
+        HasToggleStorageModeConflict(permUsedRecToggleStatusMap_, userID, subProfileId)) {
         return PrivacyError::ERR_PERMISSION_USED_RECORD_LEGACY_QUERY_CONFLICT;
     }
 #endif
@@ -1422,7 +1447,9 @@ void PermissionRecordManager::UpdatePermUsedRecToggleStatusMapFromDb()
         userID = it->GetInt(PrivacyFiledConst::FIELD_USER_ID);
         int32_t subProfileId = it->GetInt(PrivacyFiledConst::FIELD_SUB_PROFILE_ID);
         status = static_cast<bool>(it->GetInt(PrivacyFiledConst::FIELD_STATUS));
-        (void)UpdatePermUsedRecToggleStatusMap(userID, subProfileId, status);
+        if (!status) {
+            (void)UpdatePermUsedRecToggleStatusMap(userID, subProfileId, status);
+        }
         ++it;
     }
 
