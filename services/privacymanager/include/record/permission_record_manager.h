@@ -151,6 +151,7 @@ private:
     bool IsAllowedUsingMicrophone(AccessTokenID tokenId, int32_t pid);
 
     bool CheckPermissionUsedRecordToggleStatus(int32_t userID, int32_t subProfileId) const;
+    int32_t ResolveAddRecordSubProfileId(const HapTokenInfo& tokenInfo, int32_t& subProfileId) const;
     bool VerifyNativeRecordPermission(const std::string& permissionName, const AccessTokenID& tokenId);
     int32_t NormalizeRecordTokenId(AccessTokenID inputTokenId, AccessTokenID& outputTokenId);
     bool UpdatePermUsedRecToggleStatusMap(int32_t userID, int32_t subProfileId, bool status);

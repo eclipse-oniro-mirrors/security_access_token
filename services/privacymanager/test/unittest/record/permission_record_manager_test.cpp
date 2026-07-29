@@ -49,6 +49,7 @@
 #include "time_util.h"
 #include "token_setproc.h"
 #ifdef ACCESS_TOKEN_SUPPORT_SUBPROFILE
+#include "account_error_no.h"
 #include "os_account_manager_lite.h"
 #endif
 
@@ -295,6 +296,21 @@ static AddPermParamInfo MakeAddInfo(
     AddPermParamInfo info = {.tokenId = tokenId, .permissionName = permissionName, .successCount = 1};
     info.enhancedIdentity = enhancedIdentity;
     return info;
+}
+
+static void ClearToggleStatusMapByUserId(int32_t userID)
+{
+    std::lock_guard<std::mutex> lock(PermissionRecordManager::GetInstance().permUsedRecToggleStatusMutex_);
+    const std::string legacyKey = std::to_string(userID);
+    const std::string subProfileKeyPrefix = legacyKey + "_";
+    auto iter = PermissionRecordManager::GetInstance().permUsedRecToggleStatusMap_.begin();
+    while (iter != PermissionRecordManager::GetInstance().permUsedRecToggleStatusMap_.end()) {
+        if (iter->first == legacyKey || iter->first.find(subProfileKeyPrefix) == 0) {
+            iter = PermissionRecordManager::GetInstance().permUsedRecToggleStatusMap_.erase(iter);
+        } else {
+            ++iter;
+        }
+    }
 }
 
 static PermissionUsedResult QueryUsedRecords(AccessTokenID tokenId)
@@ -1269,6 +1285,7 @@ HWTEST_F(PermissionRecordManagerTest, AddPermissionUsedRecordWithSubProfile001, 
     AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
     ASSERT_NE(INVALID_TOKENID, tokenId);
 
+    ClearToggleStatusMapByUserId(g_InfoParms1.userID);
     SetMockOsAccountSubProfileId(SUBPROFILE_TEST_ID, ERR_OK);
     const std::string toggleKey = std::to_string(g_InfoParms1.userID) + "_" + std::to_string(SUBPROFILE_TEST_ID);
     PermissionRecordManager::GetInstance().permUsedRecToggleStatusMap_[toggleKey] = false;
@@ -1281,13 +1298,13 @@ HWTEST_F(PermissionRecordManagerTest, AddPermissionUsedRecordWithSubProfile001, 
     EXPECT_EQ(PrivacyError::ERR_PRIVACY_TOGGELE_RESTRICTED,
         PermissionRecordManager::GetInstance().AddPermissionUsedRecord(info));
 
-    PermissionRecordManager::GetInstance().permUsedRecToggleStatusMap_.erase(toggleKey);
+    ClearToggleStatusMapByUserId(g_InfoParms1.userID);
     ResetMockOsAccountManagerLite();
 }
 
 /*
  * @tc.name: AddPermissionUsedRecordWithSubProfile002
- * @tc.desc: AddPermissionUsedRecord returns service abnormal when account lite fails to resolve subProfileId.
+ * @tc.desc: AddPermissionUsedRecord uses legacy toggle when there is no subProfile toggle status.
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -1299,6 +1316,37 @@ HWTEST_F(PermissionRecordManagerTest, AddPermissionUsedRecordWithSubProfile002, 
     AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
     ASSERT_NE(INVALID_TOKENID, tokenId);
 
+    ClearToggleStatusMapByUserId(g_InfoParms1.userID);
+    SetMockOsAccountSubProfileId(SUBPROFILE_TEST_ID, ERR_INVALID_VALUE);
+
+    AddPermParamInfo info;
+    info.tokenId = tokenId;
+    info.permissionName = "ohos.permission.CAMERA";
+    info.successCount = 1;
+    info.failCount = 0;
+    EXPECT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().AddPermissionUsedRecord(info));
+
+    ClearToggleStatusMapByUserId(g_InfoParms1.userID);
+    ResetMockOsAccountManagerLite();
+}
+
+/*
+ * @tc.name: AddPermissionUsedRecordWithSubProfile003
+ * @tc.desc: AddPermissionUsedRecord returns service abnormal when subProfile mode exists and account lite fails.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, AddPermissionUsedRecordWithSubProfile003, TestSize.Level0)
+{
+    MockNativeToken mock("audio_server");
+    AccessTokenIDEx tokenIdEx = PrivacyTestCommon::GetHapTokenIdFromBundle(g_InfoParms1.userID, g_InfoParms1.bundleName,
+        g_InfoParms1.instIndex);
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+
+    ClearToggleStatusMapByUserId(g_InfoParms1.userID);
+    const std::string toggleKey = std::to_string(g_InfoParms1.userID) + "_" + std::to_string(SUBPROFILE_TEST_ID);
+    PermissionRecordManager::GetInstance().permUsedRecToggleStatusMap_[toggleKey] = false;
     SetMockOsAccountSubProfileId(SUBPROFILE_TEST_ID, ERR_INVALID_VALUE);
 
     AddPermParamInfo info;
@@ -1309,6 +1357,37 @@ HWTEST_F(PermissionRecordManagerTest, AddPermissionUsedRecordWithSubProfile002, 
     EXPECT_EQ(PrivacyError::ERR_SERVICE_ABNORMAL,
         PermissionRecordManager::GetInstance().AddPermissionUsedRecord(info));
 
+    ClearToggleStatusMapByUserId(g_InfoParms1.userID);
+    ResetMockOsAccountManagerLite();
+}
+
+/*
+ * @tc.name: AddPermissionUsedRecordWithSubProfile004
+ * @tc.desc: AddPermissionUsedRecord returns param invalid when token cannot resolve to a subProfile.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, AddPermissionUsedRecordWithSubProfile004, TestSize.Level0)
+{
+    MockNativeToken mock("audio_server");
+    AccessTokenIDEx tokenIdEx = PrivacyTestCommon::GetHapTokenIdFromBundle(g_InfoParms1.userID, g_InfoParms1.bundleName,
+        g_InfoParms1.instIndex);
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+
+    ClearToggleStatusMapByUserId(g_InfoParms1.userID);
+    const std::string toggleKey = std::to_string(g_InfoParms1.userID) + "_" + std::to_string(SUBPROFILE_TEST_ID);
+    PermissionRecordManager::GetInstance().permUsedRecToggleStatusMap_[toggleKey] = false;
+    SetMockOsAccountSubProfileId(SUBPROFILE_TEST_ID, ERR_OS_ACCOUNT_SUBSPACE_NOT_FOUND);
+
+    AddPermParamInfo info;
+    info.tokenId = tokenId;
+    info.permissionName = "ohos.permission.CAMERA";
+    info.successCount = 1;
+    info.failCount = 0;
+    EXPECT_EQ(PrivacyError::ERR_PARAM_INVALID, PermissionRecordManager::GetInstance().AddPermissionUsedRecord(info));
+
+    ClearToggleStatusMapByUserId(g_InfoParms1.userID);
     ResetMockOsAccountManagerLite();
 }
 #endif
