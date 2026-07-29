@@ -352,7 +352,7 @@ int32_t PermissionRecordManager::MergeOrInsertRecord(const PermissionRecord& rec
     }
 
     LOGI(PRI_DOMAIN, PRI_TAG, "Add record, id %{public}d, op %{public}d, status: %{public}d, sucCnt: %{public}d, "
-        "failCnt: %{public}d, lockScreenStatus %{public}d, timestamp %{public}s, type %{public}d.",
+        "failCnt: %{public}d, lockScreen %{public}d, time %{public}s, type %{public}d.",
         record.tokenId, record.opCode, record.status, record.accessCount, record.rejectCount, record.lockScreenStatus,
         std::to_string(record.timestamp).c_str(), record.type);
 
@@ -1848,7 +1848,7 @@ void PermissionRecordManager::GetCurrUsingPermInfo(std::vector<CurrUsingPermInfo
             infoList.emplace_back(info);
             LOGI(PRI_DOMAIN, PRI_TAG, "TokenId %{public}d using permission %{public}s, "
                 "status %{public}d, type %{public}d, pid %{public}d, callerPid %{public}d, "
-                "enhancedIdentity=%{public}s.",
+                "enhancedId=%{public}s.",
                 record.tokenId, perm.c_str(), record.status, record.usedType, record.pid, record.callerPid,
                 record.enhancedIdentity.c_str());
         }
@@ -2044,7 +2044,7 @@ int32_t PermissionRecordManager::RemoveRecordFromStartList(
     };
     if (!ToRemoveRecord(record, &ContinuousPermissionRecord::IsEqualRecord, true)) {
         LOGE(PRI_DOMAIN, PRI_TAG, "No records started, tokenId=%{public}u, pid=%{public}d, "
-            "opCode=%{public}d, callerPid=%{public}d, enhancedIdentity=%{public}s", tokenId, pid, opCode,
+            "opCode=%{public}d, callerPid=%{public}d, enhancedId=%{public}s", tokenId, pid, opCode,
             callerPid, enhancedIdentity.c_str());
         return PrivacyError::ERR_PERMISSION_NOT_START_USING;
     }
@@ -2070,7 +2070,7 @@ void PermissionRecordManager::RemoveRecordFromStartListByPid(const AccessTokenID
 void PermissionRecordManager::RemoveRecordFromStartListByTokenAndIdentity(
     const AccessTokenID tokenId, const std::string& enhancedIdentity)
 {
-    LOGI(PRI_DOMAIN, PRI_TAG, "TokenId %{public}u, enhancedIdentity=%{public}s", tokenId, enhancedIdentity.c_str());
+    LOGI(PRI_DOMAIN, PRI_TAG, "TokenId %{public}u, enhancedId=%{public}s", tokenId, enhancedIdentity.c_str());
     ContinuousPermissionRecord record = {0};
     record.tokenId = tokenId;
     record.enhancedIdentity = enhancedIdentity;
@@ -2142,7 +2142,7 @@ bool PermissionRecordManager::ToRemoveRecord(const ContinuousPermissionRecord& t
     for (const auto& record: unusedCameraRecord) {
         cameraCallbackMap_.Erase(GetUniqueId(record.tokenId, record.pid));
     }
-    LOGI(PRI_DOMAIN, PRI_TAG, "CameraCallbackMap size = %{public}d after clearing",
+    LOGD(PRI_DOMAIN, PRI_TAG, "CameraCallbackMap size = %{public}d after clearing",
         cameraCallbackMap_.Size());
     return true;
 }
@@ -2150,10 +2150,9 @@ bool PermissionRecordManager::ToRemoveRecord(const ContinuousPermissionRecord& t
 void PermissionRecordManager::CallbackExecute(
     const ContinuousPermissionRecord& record, const std::string& permissionName, PermissionUsedType type)
 {
-    LOGI(PRI_DOMAIN, PRI_TAG, "ExecuteCallbackAsync, tokenId %{public}d using permission %{public}s, "
-        "status %{public}d, type %{public}d, pid %{public}d, callerPid %{public}d, "
-        "enhancedIdentity=%{public}s.", record.tokenId, permissionName.c_str(), record.status, type, record.pid,
-        record.callerPid, record.enhancedIdentity.c_str());
+    LOGI(PRI_DOMAIN, PRI_TAG, "Token %{public}u %{public}s, status %{public}d, type %{public}d, pid %{public}d, "
+        "callerPid %{public}d, enhancedId=%{public}s.", record.tokenId, permissionName.c_str(), record.status, type,
+        record.pid, record.callerPid, record.enhancedIdentity.c_str());
 
     ActiveChangeResponse info;
     info.callingTokenID = IPCSkeleton::GetCallingTokenID();
@@ -2172,9 +2171,8 @@ void PermissionRecordManager::CallbackExecute(
 void PermissionRecordManager::ExecutePermAddCallbackAsync(
     const AddPermParamInfo& info, AccessTokenID callingTokenID, int32_t callingPid)
 {
-    LOGI(PRI_DOMAIN, PRI_TAG, "ExecutePermAddCallbackAsync, callingTokenId %{public}u, tokenId %{public}u, "
-        "permission %{public}s, usedType %{public}d, pid %{public}d.", callingTokenID, info.tokenId,
-        info.permissionName.c_str(), info.type, callingPid);
+    LOGI(PRI_DOMAIN, PRI_TAG, "Caller %{public}u, token %{public}u, %{public}s, type %{public}d, pid %{public}d.",
+        callingTokenID, info.tokenId, info.permissionName.c_str(), info.type, callingPid);
 
     ActiveChangeResponse callbackInfo;
     callbackInfo.callingTokenID = callingTokenID;

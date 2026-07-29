@@ -100,7 +100,7 @@ int32_t ActiveStatusCallbackManager::AddCallback(
 
     callbackDataList_.emplace_back(registerTokenId, permList, callback, registerType);
 
-    LOGI(PRI_DOMAIN, PRI_TAG, "RecordInstance is added");
+    LOGD(PRI_DOMAIN, PRI_TAG, "RecordInstance is added");
     return RET_SUCCESS;
 }
 
@@ -169,8 +169,8 @@ void ActiveStatusCallbackManager::ActiveStatusChange(ActiveChangeResponse& info,
     for (auto it = list.begin(); it != list.end(); ++it) {
         sptr<IPermActiveStatusCallback> callback = new (std::nothrow) PermActiveStatusChangeCallbackProxy(*it);
         if (callback != nullptr) {
-            LOGI(PRI_DOMAIN, PRI_TAG, "Callback execute callingTokenId %{public}u, tokenId %{public}u, "
-                "permission %{public}s, changeType %{public}d, usedType %{public}d, pid %{public}d",
+            LOGI(PRI_DOMAIN, PRI_TAG, "Caller %{public}u, token %{public}u, "
+                " %{public}s, type %{public}d, usedType %{public}d, pid %{public}d",
                 info.callingTokenID, info.tokenID, info.permissionName.c_str(), info.type, info.usedType, info.pid);
             callback->ActiveStatusChangeCallback(info);
         }
@@ -190,8 +190,8 @@ void ActiveStatusCallbackManager::ExecuteCallbackAsync(ActiveChangeResponse& inf
     LOGI(PRI_DOMAIN, PRI_TAG, "Add permission task name:%{public}s", taskName.c_str());
     std::function<void()> task = ([info, sourceType]() mutable {
         ActiveStatusCallbackManager::GetInstance().ActiveStatusChange(info, sourceType);
-        LOGI(PRI_DOMAIN, PRI_TAG, "deviceId: %{public}s, "
-            "token: %{public}u, pid: %{public}d, permName: %{public}s, changeType: %{public}d, ActiveStatusChange end",
+        LOGI(PRI_DOMAIN, PRI_TAG, "DeviceId: %{public}s, "
+            "token: %{public}u, pid: %{public}d, %{public}s, type: %{public}d, Change end",
             ConstantCommon::EncryptDevId(info.deviceId).c_str(),
             info.tokenID, info.pid, info.permissionName.c_str(), info.type);
     });
