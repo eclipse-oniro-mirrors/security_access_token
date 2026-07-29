@@ -219,7 +219,6 @@ void PrivacyManagerClient::SetInputCache(
         }
     }
     cacheList_.emplace_back(cache);
-    LOGI(PRI_DOMAIN, PRI_TAG, "Cache is added.");
 }
 
 void PrivacyManagerClient::DeleteInputCache(AccessTokenID tokenID, int32_t pid, const std::string& permissionName,
@@ -231,7 +230,6 @@ void PrivacyManagerClient::DeleteInputCache(AccessTokenID tokenID, int32_t pid, 
             (it->input.pid == pid) && (it->input.tokenId == tokenID) &&
             (it->input.enhancedIdentity == enhancedIdentity)) {
             cacheList_.erase(it);
-            LOGI(PRI_DOMAIN, PRI_TAG, "Cache is cleared.");
             break;
         }
     }
