@@ -86,6 +86,18 @@ bool QueryRequredPermissions(const std::string& cliPermission, std::vector<std::
     return true;
 }
 
+bool QueryMappedPermissionsByCliPermission(
+    const std::string& cliPermission, std::vector<std::string>& mappedPermissions)
+{
+    mappedPermissions.clear();
+    auto iter = g_cliPermissionMap.find(cliPermission);
+    if (iter == g_cliPermissionMap.end()) {
+        return false;
+    }
+    mappedPermissions = iter->second;
+    return true;
+}
+
 bool IsUserGrantPermission(const std::string& permission)
 {
     uint32_t opCode;
