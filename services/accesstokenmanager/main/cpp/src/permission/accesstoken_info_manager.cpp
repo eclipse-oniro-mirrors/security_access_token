@@ -1282,12 +1282,14 @@ void AccessTokenInfoManager::GetNativePermissionList(const NativeTokenInfoBase& 
 {
     // need to process aclList
     for (const auto& state : native.permStateList) {
+        PermissionBriefDef briefDef;
         uint32_t code;
-        // add IsPermissionReqValid to filter invalid permission
-        if (TransferPermissionToOpcode(state.permissionName, code)) {
-            opCodeList.emplace_back(code);
-            statusList.emplace_back(state.grantStatus == PERMISSION_GRANTED);
+        if (!GetPermissionBriefDef(state.permissionName, briefDef, code) || !briefDef.isEnable) {
+            continue;
         }
+        // add IsPermissionReqValid to filter invalid permission
+        opCodeList.emplace_back(code);
+        statusList.emplace_back(state.grantStatus == PERMISSION_GRANTED);
     }
 }
 
