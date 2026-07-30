@@ -134,7 +134,7 @@ void PermissionRecordSet::GetUnusedCameraRecords(const std::set<ContinuousPermis
             ++iterRemain;
         }
     }
-    LOGI(PRI_DOMAIN, PRI_TAG, "Get unused camera list size = %{public}zu", retList.size());
+    LOGD(PRI_DOMAIN, PRI_TAG, "Get unused camera list size = %{public}zu", retList.size());
 }
 } // namespace AccessToken
 } // namespace Security

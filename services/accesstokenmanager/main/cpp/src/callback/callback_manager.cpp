@@ -95,7 +95,6 @@ int32_t CallbackManager::RemoveCallback(const sptr<IRemoteObject>& callback)
 
     for (auto it = callbackInfoList_.begin(); it != callbackInfoList_.end(); ++it) {
         if (callback == (*it).callbackObject_) {
-            LOGI(ATM_DOMAIN, ATM_TAG, "Find callback");
             if (callbackDeathRecipient_ != nullptr) {
                 callback->RemoveDeathRecipient(callbackDeathRecipient_);
             }
