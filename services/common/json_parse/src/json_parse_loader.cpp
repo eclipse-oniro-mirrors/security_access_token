@@ -598,28 +598,6 @@ std::string ConfigPolicLoader::DumpHapTokenInfo(const HapTokenInfo& hapInfo, boo
     return JsonToStringFormatted(j.get());
 }
 
-static bool IsPermissionReqValid(int32_t tokenApl, const std::string& permissionName,
-    const std::vector<std::string>& nativeAcls)
-{
-    PermissionBriefDef briefDef;
-    if (!GetPermissionBriefDef(permissionName, briefDef)) {
-        return false;
-    }
-    if (!briefDef.isEnable) {
-        return false;
-    }
-
-    if (tokenApl >= briefDef.availableLevel) {
-        return true;
-    }
-
-    auto iter = std::find(nativeAcls.begin(), nativeAcls.end(), permissionName);
-    if (iter != nativeAcls.end()) {
-        return true;
-    }
-    return false;
-}
-
 static void AddNativeTokenInfo(CJsonUnique& j, const NativeTokenInfoBase& native)
 {
     (void)AddUnsignedIntToJson(j, "tokenID", native.tokenID);
@@ -632,7 +610,13 @@ static void AddPermStateListInNativeTokenInfo(const NativeTokenInfoBase& native,
     CJsonUnique& permStateListJson, CJsonUnique& invalidPermStringJson)
 {
     for (auto iter = native.permStateList.begin(); iter != native.permStateList.end(); ++iter) {
-        if (!IsPermissionReqValid(native.apl, iter->permissionName, native.nativeAcls)) {
+        std::string permissionName = iter->permissionName;
+        PermissionBriefDef briefDef;
+        if (!GetPermissionBriefDef(permissionName, briefDef) || !briefDef.isEnable) {
+            continue;
+        }
+        if ((native.apl < briefDef.availableLevel) &&
+            std::find(native.nativeAcls.begin(), native.nativeAcls.end(), permissionName) == native.nativeAcls.end()) {
             CJsonUnique tmpJson = CreateJsonString(iter->permissionName);
             (void)AddObjToArray(invalidPermStringJson, tmpJson);
             continue;
