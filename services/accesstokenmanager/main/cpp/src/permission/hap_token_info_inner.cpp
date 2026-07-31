@@ -109,9 +109,9 @@ HapTokenInfoInner::HapTokenInfoInner(const HapTokenInfoItem& item) : permUpdateT
     tokenInfoBasic_.ver = DEFAULT_TOKEN_VERSION;
     tokenInfoBasic_.tokenID = item.tokenId;
     tokenInfoBasic_.tokenAttr = item.tokenAttr;
-    tokenInfoBasic_.userID = item.userId;
+    tokenInfoBasic_.userID = static_cast<int>(item.userId);
     tokenInfoBasic_.apiVersion = item.apiVersion;
-    tokenInfoBasic_.instIndex = item.instIndex;
+    tokenInfoBasic_.instIndex = static_cast<int>(item.instIndex);
     tokenInfoBasic_.dlpType = item.dlpType;
     tokenInfoBasic_.uid = item.uid;
     tokenInfoBasic_.bundleName = item.bundleName;

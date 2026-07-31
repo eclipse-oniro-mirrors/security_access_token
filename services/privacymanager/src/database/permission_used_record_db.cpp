@@ -932,6 +932,7 @@ int32_t PermissionUsedRecordDb::UpdatePermissionRecordTablePrimaryKey() const
     if (createNewRes != 0) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Create new table failed, errCode is %{public}d, errMsg is %{public}s.",
             createNewRes, SpitError().c_str());
+        RollbackTransaction();
         return PrivacyError::ERR_DATABASE_OPERATE_FAILED;
     }
 

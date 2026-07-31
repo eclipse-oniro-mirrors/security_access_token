@@ -73,13 +73,13 @@ extern "C" int32_t AddPermissionToKernel(uint32_t tokenId, const char *perms, ui
         return ACCESS_TOKEN_OPEN_ERROR;
     }
     fdsan_exchange_owner_tag(fd, 0, FD_TAG);
+    int32_t ans = ACCESS_TOKEN_OK;
     int32_t ret = ioctl(fd, ACCESS_TOKENID_ADD_PERMISSIONS, &data);
-    (void)fdsan_close_with_tag(fd, FD_TAG);
     if (ret != ACCESS_TOKEN_OK) {
-        return errno;
+        ans = errno;
     }
-
-    return ACCESS_TOKEN_OK;
+    (void)fdsan_close_with_tag(fd, FD_TAG);
+    return ans;
 }
 
 extern "C" int32_t RemovePermissionFromKernel(uint32_t tokenID)
@@ -89,13 +89,13 @@ extern "C" int32_t RemovePermissionFromKernel(uint32_t tokenID)
         return ACCESS_TOKEN_OPEN_ERROR;
     }
     fdsan_exchange_owner_tag(fd, 0, FD_TAG);
+    int32_t ans = ACCESS_TOKEN_OK;
     int32_t ret = ioctl(fd, ACCESS_TOKENID_REMOVE_PERMISSIONS, &tokenID);
-    (void)fdsan_close_with_tag(fd, FD_TAG);
     if (ret != ACCESS_TOKEN_OK) {
-        return errno;
+        ans = errno;
     }
-
-    return ACCESS_TOKEN_OK;
+    (void)fdsan_close_with_tag(fd, FD_TAG);
+    return ans;
 }
 
 extern "C" int32_t SetPermissionToKernel(uint32_t tokenID, int32_t opCode, bool status)
@@ -111,13 +111,13 @@ extern "C" int32_t SetPermissionToKernel(uint32_t tokenID, int32_t opCode, bool 
         return ACCESS_TOKEN_OPEN_ERROR;
     }
     fdsan_exchange_owner_tag(fd, 0, FD_TAG);
+    int32_t ans = ACCESS_TOKEN_OK;
     int32_t ret = ioctl(fd, ACCESS_TOKENID_SET_PERMISSION, &data);
-    (void)fdsan_close_with_tag(fd, FD_TAG);
     if (ret != ACCESS_TOKEN_OK) {
-        return errno;
+        ans = errno;
     }
-
-    return ACCESS_TOKEN_OK;
+    (void)fdsan_close_with_tag(fd, FD_TAG);
+    return ans;
 }
 
 extern "C" int32_t GetPermissionFromKernel(uint32_t tokenID, int32_t opCode, bool *isGranted)
@@ -139,10 +139,12 @@ extern "C" int32_t GetPermissionFromKernel(uint32_t tokenID, int32_t opCode, boo
     }
     fdsan_exchange_owner_tag(fd, 0, FD_TAG);
     int32_t ret = ioctl(fd, ACCESS_TOKENID_GET_PERMISSION, &data);
-    (void)fdsan_close_with_tag(fd, FD_TAG);
     if (ret < 0) {
-        return errno;
+        int32_t savedErrno = errno;
+        (void)fdsan_close_with_tag(fd, FD_TAG);
+        return savedErrno;
     }
+    (void)fdsan_close_with_tag(fd, FD_TAG);
     *isGranted = (ret == 1);
     return ACCESS_TOKEN_OK;
 }
@@ -163,10 +165,12 @@ extern "C" int32_t GetPermissionsFromKernel(uint32_t tokenId, uint32_t perms[MAX
     }
     fdsan_exchange_owner_tag(fd, 0, FD_TAG);
     int32_t ret = ioctl(fd, ACCESS_TOKENID_GET_ALL_PERMISSIONS, &data);
-    (void)fdsan_close_with_tag(fd, FD_TAG);
     if (ret < 0) {
-        return errno;
+        int32_t savedErrno = errno;
+        (void)fdsan_close_with_tag(fd, FD_TAG);
+        return savedErrno;
     }
+    (void)fdsan_close_with_tag(fd, FD_TAG);
     for (uint32_t i = 0; i < MAX_PERM_BIT_MAP_SIZE; ++i) {
         perms[i] = data.perm[i];
     }
