@@ -170,7 +170,7 @@ static void FreeTokenNode(NativeTokenList **node)
     }
     FreeStrArray(&(*node)->dcaps, (*node)->dcapsNum - 1);
     FreeStrArray(&(*node)->perms, (*node)->permsNum - 1);
-    FreeStrArray(&(*node)->perms, (*node)->permsNum - 1);
+    FreeStrArray(&(*node)->acls, (*node)->aclsNum - 1);
     free(*node);
     *node = NULL;
 }

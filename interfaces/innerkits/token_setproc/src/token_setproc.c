@@ -61,8 +61,9 @@ int32_t GetParentHapTokenID(uint32_t bin, uint64_t *parent)
     };
     int ret = ioctl(fd, ACCESS_TOKENID_GET_HAP_PTOKENID, &query);
     if (ret) {
+        int savedErrno = errno;
         (void)fdsan_close_with_tag(fd, SET_PROC_FD_TAG);
-        return errno;
+        return savedErrno;
     }
 
     *parent = query.parent;
