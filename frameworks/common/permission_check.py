@@ -20,6 +20,7 @@ limitations under the License.
 import json
 import argparse
 import os
+from pathlib import Path
 
 
 REQUIRED_ATTRS = [
@@ -125,6 +126,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--source-root-dir', help='build root dir', required=True)
     parser.add_argument('--input-full-permissions', help='json file for permission definition', required=True)
+    parser.add_argument('--stamp', help='stamp file to create on success', required=True)
     return parser.parse_args()
 
 
@@ -135,7 +137,11 @@ if __name__ == "__main__":
     module_json_map = parse_module_json(module_json_path)
     if not module_json_map:
         print("Not found {}, no need to check consistency.".format(module_json_path))
+        Path(input_args.stamp).parent.mkdir(parents=True, exist_ok=True)
+        Path(input_args.stamp).touch()
         exit(0)
     full_permissions_map = parse_definition_json(input_args.input_full_permissions)
     check_maps(module_json_map, full_permissions_map)
     print("Check permission consistency pass!")
+    Path(input_args.stamp).parent.mkdir(parents=True, exist_ok=True)
+    Path(input_args.stamp).touch()

@@ -27,6 +27,8 @@ action("permission_definition_check") {
     "--input-full-permissions",
     rebase_path("${access_token_path}") +
         "/services/accesstokenmanager/permission_definitions.json",
+    "--stamp",
+    rebase_path("$target_out_dir/permission_definition_check.stamp", root_build_dir),
   ]
   inputs = [ rebase_path("${access_token_path}") +
              "/services/accesstokenmanager/permission_definitions.json" ]
