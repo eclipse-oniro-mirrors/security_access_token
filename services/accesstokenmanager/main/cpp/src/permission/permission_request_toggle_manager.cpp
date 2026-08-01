@@ -79,6 +79,17 @@ uint32_t GetDefaultToggleStatus(const std::string& permissionName)
     return (permissionName == APP_TRACKING_CONSENT) ? PermissionRequestToggleStatus::CLOSED :
         PermissionRequestToggleStatus::OPEN;
 }
+
+int32_t GetToggleStatusFromRecord(const GenericValues& record, uint32_t& status)
+{
+    const int32_t storedStatus = record.GetInt(TokenFiledConst::FIELD_REQUEST_TOGGLE_STATUS);
+    if ((storedStatus < 0) || !PermissionValidator::IsToggleStatusValid(static_cast<uint32_t>(storedStatus))) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Invalid request toggle status in database.");
+        return AccessTokenError::ERR_DATABASE_OPERATE_FAILED;
+    }
+    status = static_cast<uint32_t>(storedStatus);
+    return RET_SUCCESS;
+}
 }
 
 PermissionRequestToggleManager& PermissionRequestToggleManager::GetInstance()
@@ -224,14 +235,17 @@ int32_t PermissionRequestToggleManager::FindPermRequestToggleStatusFromDb(
             LOGE(ATM_DOMAIN, ATM_TAG, "Storage mode conflict, subProfile record exists.");
             return AccessTokenError::ERR_PERMISSION_REQUEST_TOGGLE_LEGACY_QUERY_CONFLICT;
         }
-        status = static_cast<uint32_t>(records[0].GetInt(TokenFiledConst::FIELD_REQUEST_TOGGLE_STATUS));
-        return RET_SUCCESS;
+        return GetToggleStatusFromRecord(records[0], status);
     }
 
     uint32_t legacyStatus = defaultStatus;
     for (const auto& item : records) {
         const int32_t currentSubProfileId = item.GetInt(TokenFiledConst::FIELD_SUB_PROFILE_ID);
-        const uint32_t currentStatus = static_cast<uint32_t>(item.GetInt(TokenFiledConst::FIELD_REQUEST_TOGGLE_STATUS));
+        uint32_t currentStatus = defaultStatus;
+        ret = GetToggleStatusFromRecord(item, currentStatus);
+        if (ret != RET_SUCCESS) {
+            return ret;
+        }
         if (currentSubProfileId == subProfileId) {
             status = currentStatus;
             return RET_SUCCESS;

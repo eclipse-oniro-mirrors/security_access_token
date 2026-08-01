@@ -105,7 +105,7 @@ bool ParseUserList(const std::string& value, std::vector<int32_t>& userList)
         std::string item = (end == std::string::npos) ? value.substr(begin) : value.substr(begin, end - begin);
         if (!Trim(item).empty()) {
             int32_t userId = 0;
-            if (!ParseInt32Value(item, userId)) {
+            if (!ParseInt32Value(item, userId) || userList.size() >= USER_POLICY_MAX_LIST_SIZE) {
                 return false;
             }
             userList.emplace_back(userId);
@@ -125,15 +125,17 @@ bool ParseWhiteTokenList(const std::string& value, std::unordered_set<AccessToke
         return true;
     }
     size_t begin = 0;
+    size_t tokenCount = 0;
     while (begin <= value.size()) {
         size_t end = value.find(USER_POLICY_SEPARATOR, begin);
         std::string item = (end == std::string::npos) ? value.substr(begin) : value.substr(begin, end - begin);
         if (!Trim(item).empty()) {
             AccessTokenID tokenId = INVALID_TOKENID;
-            if (!ParseTokenIdValue(item, tokenId)) {
+            if (!ParseTokenIdValue(item, tokenId) || tokenCount >= USER_POLICY_MAX_LIST_SIZE) {
                 return false;
             }
             whiteList.insert(tokenId);
+            ++tokenCount;
         }
         if (end == std::string::npos) {
             break;

@@ -74,6 +74,7 @@ private:
     std::unordered_map<AccessTokenID, std::shared_ptr<ClawTokenInfoInnerBase>> toolTokenInfoMap_;
     std::unordered_map<AccessTokenID, std::unordered_set<AccessTokenID>> hostToolTokenMap_;
     std::unordered_map<int32_t, AccessTokenID> pidToolTokenMap_;
+    std::unordered_set<AccessTokenID> deletingToolTokenIdSet_;
 };
 } // namespace AccessToken
 } // namespace Security

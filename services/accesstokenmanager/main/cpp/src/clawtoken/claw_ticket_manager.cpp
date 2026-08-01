@@ -161,16 +161,16 @@ bool IsCliInfoMatched(const CliInfo& expectedCliInfo, const CliInfo& actualCliIn
         (expectedCliInfo.subCliName == actualCliInfo.subCliName);
 }
 
-CliAuthInfo DeserializeCliAuthInfo(const std::string& json)
+bool DeserializeCliAuthInfo(const std::string& json, CliAuthInfo& cliAuth)
 {
-    CliAuthInfo cliAuth;
+    cliAuth = {};
     if (json.empty()) {
-        return cliAuth;
+        return false;
     }
     CJsonUnique jsonRoot = CreateJsonFromString(json);
     if (jsonRoot == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Deserialize cli auth info failed");
-        return cliAuth;
+        return false;
     }
     cJSON* root = jsonRoot.get();
 
@@ -201,7 +201,11 @@ CliAuthInfo DeserializeCliAuthInfo(const std::string& json)
             }
         }
     }
-    return cliAuth;
+    if (cliAuth.permissionNames.size() != cliAuth.authorizationResults.size()) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Cli auth permission and authorization result sizes are inconsistent.");
+        return false;
+    }
+    return true;
 }
 #endif
 }
@@ -231,6 +235,7 @@ ClawTicketManager::~ClawTicketManager()
 
 void ClawTicketManager::RegisterAppStateObserver()
 {
+    sptr<ClawTicketAppStateObserver> observer;
     {
         std::lock_guard<std::mutex> lock(appStateObserverMutex_);
         if (appStateObserver_ == nullptr) {
@@ -240,6 +245,7 @@ void ClawTicketManager::RegisterAppStateObserver()
                 return;
             }
         }
+        observer = appStateObserver_;
     }
     {
         if (appManagerDeathCallback_ == nullptr) {
@@ -247,17 +253,41 @@ void ClawTicketManager::RegisterAppStateObserver()
             AppManagerAccessClient::GetInstance().RegisterDeathCallback(appManagerDeathCallback_);
         }
     }
-    int ret = AppManagerAccessClient::GetInstance().RegisterApplicationStateObserver(appStateObserver_);
+    int ret = AppManagerAccessClient::GetInstance().RegisterApplicationStateObserver(observer);
     if (ret != ERR_OK) {
         LOGI(ATM_DOMAIN, ATM_TAG, "Register appStateObserver ret: %{public}d.", ret);
+        return;
+    }
+    bool needUnregister = false;
+    {
+        std::lock_guard<std::mutex> lock(appStateObserverMutex_);
+        needUnregister = appStateObserver_ != observer;
+    }
+    if (needUnregister) {
+        ret = AppManagerAccessClient::GetInstance().UnregisterApplicationStateObserver(observer);
+        if (ret != ERR_OK) {
+            LOGI(ATM_DOMAIN, ATM_TAG, "Unregister stale appStateObserver failed, ret: %{public}d.", ret);
+        }
     }
 }
 
 void ClawTicketManager::UnregisterAppStateObserver()
 {
+    sptr<ClawTicketAppStateObserver> observer;
+    {
+        std::lock_guard<std::mutex> lock(appStateObserverMutex_);
+        observer = appStateObserver_;
+    }
+    if (observer == nullptr) {
+        return;
+    }
+    int32_t ret = AppManagerAccessClient::GetInstance().UnregisterApplicationStateObserver(observer);
+    if (ret != ERR_OK) {
+        LOGI(ATM_DOMAIN, ATM_TAG, "Unregister appStateObserver failed, ret: %{public}d.", ret);
+        return;
+    }
     std::lock_guard<std::mutex> lock(appStateObserverMutex_);
-    if (appStateObserver_ != nullptr) {
-        (void)AppManagerAccessClient::GetInstance().UnregisterApplicationStateObserver(appStateObserver_);
+    if (appStateObserver_ == observer) {
         appStateObserver_ = nullptr;
     }
 }
@@ -366,7 +396,10 @@ int32_t ClawTicketManager::VerifyCliClawTicketLegacy(AccessTokenID hostTokenId, 
     }
     for (size_t ticketIdx = 0; ticketIdx < verifyInfos.size(); ++ticketIdx) {
         bool ticketValid = (verifyRes[ticketIdx] == 0);
-        CliAuthInfo cliAuth = DeserializeCliAuthInfo(verifyInfos[ticketIdx].message);
+        CliAuthInfo cliAuth;
+        if (!DeserializeCliAuthInfo(verifyInfos[ticketIdx].message, cliAuth)) {
+            return AccessTokenError::ERR_PARAM_INVALID;
+        }
         if (!IsCliInfoMatched(cliInfo, cliAuth.cliInfo)) {
             LOGE(ATM_DOMAIN, ATM_TAG,
                 "Verify cli ticket failed, cliInfo mismatch, inputCliName=%{public}s, inputSubCliName=%{public}s, "
@@ -456,6 +489,10 @@ int32_t ClawTicketManager::PrepareVerifiedTicketInfo(AccessTokenID hostTokenId, 
     if (ret != RET_SUCCESS) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Verify ticket failed, ret=%{public}d", ret);
         return TransferErrorCode(ret);
+    }
+    if (verifyInfos.size() != verifyRes.size()) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Verify ticket result sizes are inconsistent.");
+        return AccessTokenError::ERR_PARAM_INVALID;
     }
     return RET_SUCCESS;
 }

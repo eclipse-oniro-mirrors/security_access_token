@@ -360,6 +360,16 @@ static int32_t UpsertUserPolicyDbRecord(
     addInfo.addValues = { addValue };
     return AccessTokenDb::GetInstance()->DeleteAndInsertValues({ delInfo }, { addInfo });
 }
+
+static std::string BuildOversizedUserPolicyList()
+{
+    std::string userList;
+    for (uint32_t index = 0; index <= USER_POLICY_MAX_LIST_SIZE; ++index) {
+        userList.append(userList.empty() ? "" : ",");
+        userList.append(std::to_string(index));
+    }
+    return userList;
+}
 #endif
 
 #ifdef TOKEN_SYNC_ENABLE
@@ -2192,6 +2202,48 @@ HWTEST_F(TokenInfoManagerTest, UpdatePermissionStatus001, TestSize.Level0)
 }
 
 /**
+ * @tc.name: AddPermToBriefPermission001
+ * @tc.desc: Verify remote permission states with invalid grant flags are filtered.
+ * @tc.type: FUNC
+ */
+HWTEST_F(TokenInfoManagerTest, AddPermToBriefPermission001, TestSize.Level0)
+{
+    constexpr AccessTokenID tokenId = 790;
+    PermissionStatus invalidState = {
+        .permissionName = "ohos.permission.CAMERA",
+        .grantStatus = PERMISSION_GRANTED,
+        .grantFlag = std::numeric_limits<uint32_t>::max(),
+    };
+    PermissionDataBrief::GetInstance().AddPermToBriefPermission(tokenId, { invalidState }, true);
+
+    std::vector<BriefPermData> permDataList;
+    ASSERT_EQ(RET_SUCCESS, PermissionDataBrief::GetInstance().GetBriefPermDataByTokenId(tokenId, permDataList));
+    EXPECT_TRUE(permDataList.empty());
+    ASSERT_EQ(RET_SUCCESS, PermissionDataBrief::GetInstance().DeleteBriefPermDataByTokenId(tokenId));
+}
+
+/**
+ * @tc.name: AddBriefPermData001
+ * @tc.desc: Verify extended permission values are cleared when the token cache is absent.
+ * @tc.type: FUNC
+ */
+HWTEST_F(TokenInfoManagerTest, AddBriefPermData001, TestSize.Level0)
+{
+    constexpr AccessTokenID tokenId = 791;
+    const std::string permissionName = "ohos.permission.ACCESS_DDK_DRIVERS";
+    PermissionBriefDef briefDef;
+    ASSERT_TRUE(GetPermissionBriefDef(permissionName, briefDef));
+    ASSERT_TRUE(briefDef.hasValue);
+
+    EXPECT_EQ(ERR_TOKEN_INVALID, PermissionDataBrief::GetInstance().AddBriefPermData(tokenId, permissionName,
+        PERMISSION_GRANTED, PERMISSION_DEFAULT_FLAG, "test_value"));
+
+    std::vector<PermissionWithValue> extendedPermList;
+    PermissionDataBrief::GetInstance().GetExtendedValueList(tokenId, extendedPermList);
+    EXPECT_TRUE(extendedPermList.empty());
+}
+
+/**
  * @tc.name: UpdatePermStatus001
  * @tc.desc: PermissionDataBrief::UpdatePermStatus function test
  * @tc.type: FUNC
@@ -2226,6 +2278,26 @@ HWTEST_F(TokenInfoManagerTest, UpdatePermStatus001, TestSize.Level0)
     permOld.flag = PermissionFlag::PERMISSION_PRE_AUTHORIZED_CANCELABLE;
     PermissionDataBrief::GetInstance().UpdatePermStatus(permOld, permNew);
     ASSERT_NE(permOld.status, permNew.status);
+
+    permOld.flag = PERMISSION_PRE_AUTHORIZED_CANCELABLE | PERMISSION_USER_FIXED;
+    permOld.status = PERMISSION_DENIED;
+    permNew.flag = PERMISSION_DEFAULT_FLAG;
+    permNew.status = PERMISSION_GRANTED;
+    PermissionDataBrief::GetInstance().UpdatePermStatus(permOld, permNew);
+    EXPECT_EQ(PERMISSION_DENIED, permNew.status);
+    EXPECT_EQ(PERMISSION_PRE_AUTHORIZED_CANCELABLE | PERMISSION_USER_FIXED, permNew.flag);
+    permOld.flag = PERMISSION_SYSTEM_FIXED | PERMISSION_RESTRICTED_BY_ADMIN;
+    permOld.status = PERMISSION_GRANTED;
+    permNew.flag = PERMISSION_DEFAULT_FLAG;
+    permNew.status = PERMISSION_DENIED;
+    PermissionDataBrief::GetInstance().UpdatePermStatus(permOld, permNew);
+    EXPECT_EQ(PERMISSION_GRANTED, permNew.status);
+    EXPECT_EQ(PERMISSION_SYSTEM_FIXED, permNew.flag);
+
+    permOld.flag = PERMISSION_PRE_AUTHORIZED_CANCELABLE | PERMISSION_RESTRICTED_BY_ADMIN;
+    PermissionDataBrief::GetInstance().UpdatePermStatus(permOld, permNew);
+    EXPECT_EQ(PERMISSION_GRANTED, permNew.status);
+    EXPECT_EQ(PERMISSION_PRE_AUTHORIZED_CANCELABLE, permNew.flag);
 }
 
 #ifdef TOKEN_SYNC_ENABLE
@@ -4110,6 +4182,26 @@ HWTEST_F(TokenInfoManagerTest, LoadPersistedPolicies008, TestSize.Level0)
     UserPolicyRecordsGuard recordsGuard(manager);
     EXPECT_EQ(RET_SUCCESS, UpsertUserPolicyDbRecord(permissionName, GetSelfTokenID(), std::to_string(USER_ID),
         std::to_string(FIRST_INVALID_TOKEN_ID)));
+    EXPECT_EQ(RET_SUCCESS, manager.LoadPersistedPolicies());
+    EXPECT_FALSE(manager.IsPolicyPersisted(permCode));
+    EXPECT_EQ(RET_SUCCESS, DeleteUserPolicyDbRecord(permissionName));
+}
+
+/**
+ * @tc.name: LoadPersistedPolicies009
+ * @tc.desc: LoadPersistedPolicies ignores an oversized user list.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenInfoManagerTest, LoadPersistedPolicies009, TestSize.Level0)
+{
+    const std::string permissionName = "ohos.permission.LOCATION_IN_BACKGROUND";
+    uint32_t permCode;
+    ASSERT_TRUE(TransferPermissionToOpcode(permissionName, permCode));
+    auto& manager = UserPolicyManager::GetInstance();
+    UserPolicyRecordsGuard recordsGuard(manager);
+    EXPECT_EQ(RET_SUCCESS, UpsertUserPolicyDbRecord(permissionName, GetSelfTokenID(),
+        BuildOversizedUserPolicyList(), ""));
     EXPECT_EQ(RET_SUCCESS, manager.LoadPersistedPolicies());
     EXPECT_FALSE(manager.IsPolicyPersisted(permCode));
     EXPECT_EQ(RET_SUCCESS, DeleteUserPolicyDbRecord(permissionName));

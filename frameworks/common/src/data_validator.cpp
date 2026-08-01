@@ -172,6 +172,12 @@ bool DataValidator::IsPermissionFlagValidForAdmin(uint32_t flag)
            flag == PermissionFlag::PERMISSION_ADMIN_POLICIES_CANCEL;
 }
 
+bool DataValidator::IsAdminPermissionFlag(uint32_t flag)
+{
+    return (flag & (PermissionFlag::PERMISSION_FIXED_BY_ADMIN_POLICY |
+        PermissionFlag::PERMISSION_ADMIN_POLICIES_CANCEL)) != 0;
+}
+
 bool DataValidator::IsPermissionStatusValid(int32_t status)
 {
     return status == PERMISSION_GRANTED || status == PERMISSION_DENIED;

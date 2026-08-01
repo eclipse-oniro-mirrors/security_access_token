@@ -28,6 +28,7 @@
 #include "accesstoken_common_log.h"
 #include "app_manager_access_client.h"
 #include "callback_manager.h"
+#include "data_validator.h"
 #ifdef SUPPORT_SANDBOX_APP
 #include "dlp_permission_set_manager.h"
 #endif
@@ -627,7 +628,7 @@ int32_t PermissionManager::CheckAndUpdatePermission(AccessTokenID tokenID, const
     if (!IsDefinedPermissionInner(permissionName)) {
         return AccessTokenError::ERR_PERMISSION_NOT_EXIST;
     }
-    if (!PermissionValidator::IsPermissionFlagValid(flag) || PermissionValidator::IsPermissionFlagValidForAdmin(flag)) {
+    if (!PermissionValidator::IsPermissionFlagValid(flag) || DataValidator::IsAdminPermissionFlag(flag)) {
         LOGC(ATM_DOMAIN, ATM_TAG, "Flag(%{public}u) of %{public}s from %{public}u is invaid!",
             flag, permissionName.c_str(), tokenID);
         return AccessTokenError::ERR_PARAM_INVALID;
@@ -679,6 +680,10 @@ int32_t PermissionManager::CheckAndUpdatePermissionInner(AccessTokenID tokenID, 
 int32_t PermissionManager::CheckMultiPermissionStatus(
     AccessTokenID tokenID, const std::vector<std::string> &permissionList, int32_t status, uint32_t flag)
 {
+    if (!DataValidator::IsPermissionStatusValid(status)) {
+        LOGC(ATM_DOMAIN, ATM_TAG, "Invalid status: %{public}d!", status);
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
     if (!PermissionValidator::IsPermissionFlagValidForAdmin(flag)) {
         LOGC(ATM_DOMAIN, ATM_TAG, "Invalid flag: %{public}d!", flag);
         return AccessTokenError::ERR_PARAM_INVALID;
@@ -687,6 +692,9 @@ int32_t PermissionManager::CheckMultiPermissionStatus(
         LOGI(ATM_DOMAIN, ATM_TAG,
             "Id: %{public}d, perm: %{public}s, status: %{public}d, flag: %{public}d.", tokenID,
             permissionName.c_str(), status, flag);
+        if (!PermissionValidator::IsPermissionNameValid(permissionName)) {
+            return AccessTokenError::ERR_PARAM_INVALID;
+        }
         if (!IsDefinedPermissionInner(permissionName)) {
             return AccessTokenError::ERR_PERMISSION_NOT_EXIST;
         }

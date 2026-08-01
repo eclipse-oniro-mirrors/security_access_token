@@ -44,6 +44,21 @@ void ClearSecCompEnhanceKey(SecCompEnhanceKey& enhanceKey)
     enhanceKey.epoch = 0;
 }
 
+void ClearSecCompEnhanceDataKey(SecCompEnhanceData& enhanceData)
+{
+    if (memset_s(enhanceData.key, AES_KEY_STORAGE_LEN, 0, AES_KEY_STORAGE_LEN) != EOK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Clear sec comp enhance data key failed.");
+    }
+}
+
+void ClearSecCompEnhanceDataList(std::vector<SecCompEnhanceData>& enhanceDataList)
+{
+    for (auto& enhanceData : enhanceDataList) {
+        ClearSecCompEnhanceDataKey(enhanceData);
+    }
+    enhanceDataList.clear();
+}
+
 bool CopySecCompEnhanceKey(const SecCompEnhanceKey& source, SecCompEnhanceKey& destination)
 {
     if (!IsEnhanceKeySizeValid(source.key.size)) {
@@ -124,6 +139,10 @@ SecCompEnhanceAgent::~SecCompEnhanceAgent()
         AppManagerAccessClient::GetInstance().UnregisterApplicationStateObserver(observer_);
         observer_ = nullptr;
     }
+    {
+        std::lock_guard<std::mutex> lock(secCompEnhanceMutex_);
+        ClearSecCompEnhanceDataList(secCompEnhanceData_);
+    }
     std::lock_guard<std::mutex> lock(secCompEnhanceKeyMutex_);
     ClearSecCompEnhanceKey(secCompEnhanceKey_);
     hasSecCompEnhanceKey_ = false;
@@ -133,7 +152,7 @@ void SecCompEnhanceAgent::OnAppMgrRemoteDiedHandle()
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "OnAppMgrRemoteDiedHandle.");
     std::lock_guard<std::mutex> lock(secCompEnhanceMutex_);
-    secCompEnhanceData_.clear();
+    ClearSecCompEnhanceDataList(secCompEnhanceData_);
     observer_ = nullptr;
 }
 
@@ -141,17 +160,24 @@ void SecCompEnhanceAgent::RemoveSecCompEnhance(int pid, uint32_t tokenId)
 {
     std::lock_guard<std::mutex> lock(secCompEnhanceMutex_);
     for (auto iter = secCompEnhanceData_.begin(); iter != secCompEnhanceData_.end(); ++iter) {
-        if (iter->pid == pid && iter->token == tokenId) {
-            --iter->count;
-            if (iter->count <= 0) {
-                secCompEnhanceData_.erase(iter);
-                LOGI(ATM_DOMAIN, ATM_TAG, "Remove pid %{public}d data.", pid);
-            }
+        if (iter->pid != pid || iter->token != tokenId) {
+            continue;
+        }
+        --iter->count;
+        if (iter->count > 0) {
             return;
         }
+        ClearSecCompEnhanceDataKey(*iter);
+        auto lastIter = secCompEnhanceData_.end() - 1;
+        if (iter != lastIter) {
+            *iter = std::move(*lastIter);
+        }
+        ClearSecCompEnhanceDataKey(*lastIter);
+        secCompEnhanceData_.pop_back();
+        LOGI(ATM_DOMAIN, ATM_TAG, "Remove pid %{public}d data.", pid);
+        return;
     }
     LOGD(ATM_DOMAIN, ATM_TAG, "Not found pid %{public}d data.", pid);
-    return;
 }
 
 int32_t SecCompEnhanceAgent::RegisterSecCompEnhance(const SecCompEnhanceData& enhanceData)
@@ -176,7 +202,7 @@ int32_t SecCompEnhanceAgent::RegisterSecCompEnhance(const SecCompEnhanceData& en
             return RET_SUCCESS;
         }
     }
-    SecCompEnhanceData enhance;
+    SecCompEnhanceData enhance = {};
     enhance.callback = enhanceData.callback;
     enhance.pid = pid;
     enhance.token = IPCSkeleton::GetCallingTokenID();
@@ -185,9 +211,11 @@ int32_t SecCompEnhanceAgent::RegisterSecCompEnhance(const SecCompEnhanceData& en
     enhance.seqNum = enhanceData.seqNum;
     enhance.count = 1;
     if (memcpy_s(enhance.key, AES_KEY_STORAGE_LEN, enhanceData.key, AES_KEY_STORAGE_LEN) != EOK) {
+        ClearSecCompEnhanceDataKey(enhance);
         return AccessTokenError::ERR_UTIL_OPER_FAILED;
     }
     secCompEnhanceData_.emplace_back(enhance);
+    ClearSecCompEnhanceDataKey(enhance);
     LOGI(ATM_DOMAIN, ATM_TAG, "Register sec comp enhance success, pid %{public}d, total %{public}u.",
         pid, static_cast<uint32_t>(secCompEnhanceData_.size()));
     return RET_SUCCESS;

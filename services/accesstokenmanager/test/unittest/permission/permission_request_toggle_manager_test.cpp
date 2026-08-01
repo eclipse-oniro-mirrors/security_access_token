@@ -272,6 +272,34 @@ HWTEST_F(PermissionRequestToggleManagerTest, GetPermissionRequestToggleStatus003
 }
 
 /**
+ * @tc.name: GetPermissionRequestToggleStatusInvalidDbValue001
+ * @tc.desc: Verify that an invalid request toggle status in the database is rejected.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRequestToggleManagerTest, GetPermissionRequestToggleStatusInvalidDbValue001, TestSize.Level0)
+{
+    const std::string permissionName = "ohos.permission.CAMERA";
+    PermissionRequestToggleStatusGuard guard(TEST_USER_ID, permissionName);
+    GenericValues value;
+    value.Put(TokenFiledConst::FIELD_USER_ID, TEST_USER_ID);
+    value.Put(TokenFiledConst::FIELD_PERMISSION_NAME, permissionName);
+    value.Put(TokenFiledConst::FIELD_SUB_PROFILE_ID, LEGACY_SUBPROFILE_ID);
+    value.Put(TokenFiledConst::FIELD_REQUEST_TOGGLE_STATUS, -1);
+    std::vector<GenericValues> values = {value};
+    std::vector<AddInfo> addInfoVec;
+    AccessTokenInfoUtils::GenerateAddInfoToVec(
+        AtmDataType::ACCESSTOKEN_PERMISSION_REQUEST_TOGGLE_STATUS, values, addInfoVec);
+    ASSERT_EQ(RET_SUCCESS, AccessTokenDbOperator::DeleteAndInsertValues({}, addInfoVec));
+
+    uint32_t status = PermissionRequestToggleStatus::CLOSED;
+    EXPECT_EQ(ERR_DATABASE_OPERATE_FAILED,
+        PermissionRequestToggleManager::GetInstance().GetPermissionRequestToggleStatus(
+            permissionName, status, TEST_USER_ID, LEGACY_SUBPROFILE_ID));
+    EXPECT_EQ(PermissionRequestToggleStatus::CLOSED, status);
+}
+
+/**
  * @tc.name: GetPermissionRequestToggleStatus005
  * @tc.desc: Verify APP_TRACKING_CONSENT query result and database record for both toggle statuses.
  * @tc.type: FUNC

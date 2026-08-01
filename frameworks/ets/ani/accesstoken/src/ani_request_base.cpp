@@ -116,12 +116,18 @@ void RequestAsyncContextBase::FinishCallback()
         LOGE(ATM_DOMAIN, ATM_TAG, "GetCurrentEnv failed.");
         return;
     }
+    auto detachCurrentEnv = [this, isSameThread]() {
+        if (!isSameThread && DetachCurrentEnv(vm_) != ANI_OK) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to DetachCurrentEnv!");
+        }
+    };
 
     int32_t stsCode = ConvertErrorCode(result_.errorCode);
     ani_ref undefRef = nullptr;
     ani_status status;
     if ((status = env->GetUndefined(&undefRef)) != ANI_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to GetUndefined: %{public}u.", status);
+        detachCurrentEnv();
         return;
     }
     ani_object aniResult = reinterpret_cast<ani_object>(undefRef);
@@ -130,6 +136,7 @@ void RequestAsyncContextBase::FinishCallback()
     status = env->GetNull(&nullRef);
     if (status != ANI_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to GetNull: %{public}u.", status);
+        detachCurrentEnv();
         return;
     }
     ani_object aniError = reinterpret_cast<ani_object>(nullRef);
@@ -141,10 +148,7 @@ void RequestAsyncContextBase::FinishCallback()
     }
 
     (void)ExecuteAsyncCallback(env, reinterpret_cast<ani_object>(callbackRef_), aniError, aniResult);
-
-    if (!isSameThread && DetachCurrentEnv(vm_) != ANI_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to DetachCurrentEnv!");
-    }
+    detachCurrentEnv();
 }
 
 void RequestAsyncContextBase::Clear()

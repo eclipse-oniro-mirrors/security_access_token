@@ -743,6 +743,74 @@ HWTEST_F(PermissionManagerTest, GetPermissionFlag003, TestSize.Level0)
 }
 
 /**
+ * @tc.name: InitDlpPermissionList001
+ * @tc.desc: Test InitDlpPermissionList succeeds with an empty permission list when the original application's
+ * permission brief cache is missing.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionManagerTest, InitDlpPermissionList001, TestSize.Level0)
+{
+    HapInfoParams masterInfo = {
+        .userID = USER_ID,
+        .bundleName = "permission_manager_dlp_missing_brief_test",
+        .instIndex = 0,
+        .dlpType = DLP_COMMON,
+        .appIDDesc = "permission_manager_dlp_missing_brief_test"
+    };
+    PermissionStatus permissionStatus = {
+        .permissionName = "ohos.permission.CAMERA",
+        .grantStatus = PERMISSION_DENIED,
+        .grantFlag = PERMISSION_DEFAULT_FLAG
+    };
+    HapPolicy policy = {
+        .apl = APL_NORMAL,
+        .domain = "test.domain",
+        .permStateList = {permissionStatus}
+    };
+    AccessTokenIDEx tokenIdEx = {0};
+    std::vector<GenericValues> undefValues;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(
+        masterInfo, policy, tokenIdEx, undefValues));
+
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_EQ(RET_SUCCESS, PermissionDataBrief::GetInstance().DeleteBriefPermDataByTokenId(tokenId));
+
+    HapInfoParams dlpInfo = masterInfo;
+    dlpInfo.dlpType = DLP_FULL_CONTROL;
+    std::vector<PermissionStatus> initializedList;
+    EXPECT_TRUE(PermissionManager::GetInstance().InitDlpPermissionList(dlpInfo, initializedList, undefValues));
+    EXPECT_TRUE(initializedList.empty());
+
+    EXPECT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId));
+}
+
+/**
+ * @tc.name: CreateHapTokenInfoInvalidApl001
+ * @tc.desc: Verify that an invalid application privilege level is rejected before token creation.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionManagerTest, CreateHapTokenInfoInvalidApl001, TestSize.Level0)
+{
+    HapInfoParams info = {
+        .userID = USER_ID,
+        .bundleName = "permission_manager_invalid_apl_test",
+        .instIndex = 0,
+        .appIDDesc = "permission_manager_invalid_apl_test",
+    };
+    HapPolicy policy = {
+        .apl = static_cast<ATokenAplEnum>(100),
+        .domain = "test.domain",
+    };
+    AccessTokenIDEx tokenIdEx = {0};
+    std::vector<GenericValues> undefValues;
+    EXPECT_EQ(ERR_PARAM_INVALID, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(
+        info, policy, tokenIdEx, undefValues));
+    EXPECT_EQ(INVALID_TOKENID, tokenIdEx.tokenIdExStruct.tokenID);
+}
+
+/**
  * @tc.name: UpdateTokenPermissionState002
  * @tc.desc: PermissionManager::UpdateTokenPermissionState function test
  * @tc.type: FUNC
@@ -970,7 +1038,15 @@ HWTEST_F(PermissionManagerTest, SetPermissionStatusWithPolicy001, TestSize.Level
         tokenID, permList, PERMISSION_GRANTED, PERMISSION_FIXED_BY_ADMIN_POLICY));
 
     EXPECT_EQ(ERR_PARAM_INVALID, PermissionManager::GetInstance().SetPermissionStatusWithPolicy(
+        tokenID, permList, 1, PERMISSION_FIXED_BY_ADMIN_POLICY));
+    EXPECT_EQ(PERMISSION_GRANTED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, permList.front()));
+
+    EXPECT_EQ(ERR_PARAM_INVALID, PermissionManager::GetInstance().SetPermissionStatusWithPolicy(
         tokenID, permList, PERMISSION_GRANTED, PERMISSION_ALLOW_THIS_TIME));
+
+    EXPECT_EQ(ERR_PERMISSION_NOT_EXIST, PermissionManager::GetInstance().SetPermissionStatusWithPolicy(
+        tokenID, {"ohos.permission.CAMERA!"}, PERMISSION_GRANTED, PERMISSION_FIXED_BY_ADMIN_POLICY));
 
     EXPECT_EQ(ERR_PERMISSION_NOT_EXIST, PermissionManager::GetInstance().SetPermissionStatusWithPolicy(
         tokenID, {"ohos.permission.test123"}, PERMISSION_GRANTED, PERMISSION_FIXED_BY_ADMIN_POLICY));

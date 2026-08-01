@@ -586,6 +586,21 @@ bool IsCliAuthInfoValid(const CliAuthInfo& info)
     return info.permissionNames.size() == info.authorizationResults.size();
 }
 
+int32_t ValidateCliAuthInfoList(AccessTokenID hostTokenID, const std::vector<CliAuthInfoIdl>& authInfoList)
+{
+    for (size_t i = 0; i < authInfoList.size(); ++i) {
+        CliAuthInfo authInfo = ConvertCliAuthInfoIdl(authInfoList[i]);
+        if (!IsCliAuthInfoValid(authInfo)) {
+            LOGE(ATM_DOMAIN, ATM_TAG,
+                "GenerateCliAuthResult invalid auth info, targetToken=%{public}u, index=%{public}zu, "
+                "permissionSize=%{public}zu, resultSize=%{public}zu.",
+                hostTokenID, i, authInfo.permissionNames.size(), authInfo.authorizationResults.size());
+            return AccessTokenError::ERR_PARAM_INVALID;
+        }
+    }
+    return RET_SUCCESS;
+}
+
 int32_t BuildCliTicketAuthInfos(AccessTokenID hostTokenID, const std::vector<CliAuthInfoIdl>& authInfoList,
     std::vector<CliAuthInfo>& authInfos)
 {
@@ -943,6 +958,24 @@ bool IsRenderToken(AccessTokenID tokenID)
     return idInner->renderFlag;
 }
 
+static int32_t CheckPermissionUpdateParam(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag,
+    int32_t updateFlag)
+{
+    if (!DataValidator::IsTokenIDValid(tokenID)) {
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    if (IsRenderToken(tokenID)) {
+        return AccessTokenError::ERR_TOKENID_NOT_EXIST;
+    }
+    if (!DataValidator::IsPermissionNameValid(permissionName)) {
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    if (!DataValidator::IsPermissionFlagValid(flag) || DataValidator::IsAdminPermissionFlag(flag)) {
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    return (updateFlag == USER_GRANTED_PERM || updateFlag == OPERABLE_PERM) ? RET_SUCCESS : ERR_PARAM_INVALID;
+}
+
 int32_t AccessTokenManagerService::GetPermissionStatusDetails(AccessTokenID tokenID,
     const std::vector<std::string>& permissionList, std::vector<PermissionStatusDetailIdl>& resultList)
 {
@@ -1114,6 +1147,10 @@ int32_t AccessTokenManagerService::RequestAppPermOnSetting(AccessTokenID tokenID
 int AccessTokenManagerService::GrantPermission(
     AccessTokenID tokenID, const std::string& permissionName, uint32_t flag, int32_t updateFlag)
 {
+    int32_t ret = CheckPermissionUpdateParam(tokenID, permissionName, flag, updateFlag);
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
     AccessTokenID callingTokenID = IPCSkeleton::GetCallingTokenID();
     if ((this->GetTokenType(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
         return AccessTokenError::ERR_NOT_SYSTEM_APP;
@@ -1127,7 +1164,7 @@ int AccessTokenManagerService::GrantPermission(
         return AccessTokenError::ERR_PERMISSION_DENIED;
     }
 
-    int32_t ret = PermissionManager::GetInstance().GrantPermission(
+    ret = PermissionManager::GetInstance().GrantPermission(
         tokenID, permissionName, flag, static_cast<UpdatePermissionFlag>(updateFlag));
     return ret;
 }
@@ -1135,6 +1172,10 @@ int AccessTokenManagerService::GrantPermission(
 int AccessTokenManagerService::RevokePermission(
     AccessTokenID tokenID, const std::string& permissionName, uint32_t flag, int32_t updateFlag, bool killProcess)
 {
+    int32_t ret = CheckPermissionUpdateParam(tokenID, permissionName, flag, updateFlag);
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
     AccessTokenID callingTokenID = IPCSkeleton::GetCallingTokenID();
     if ((this->GetTokenType(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
         return AccessTokenError::ERR_NOT_SYSTEM_APP;
@@ -2457,7 +2498,10 @@ void AccessTokenManagerService::UpdateDatabaseAsync(const std::vector<DelInfo>& 
 {
     auto task = [delInfoVec, addInfoVec]() {
         LOGI(ATM_DOMAIN, ATM_TAG, "Entry!");
-        (void)AccessTokenDbOperator::DeleteAndInsertValues(delInfoVec, addInfoVec);
+        int32_t ret = AccessTokenDbOperator::DeleteAndInsertValues(delInfoVec, addInfoVec);
+        if (ret != RET_SUCCESS) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Update permission definition database failed, ret=%{public}d.", ret);
+        }
     };
     std::thread updateDbThread(task);
     updateDbThread.detach();
@@ -2950,15 +2994,9 @@ int32_t AccessTokenManagerService::GenerateCliAuthResult(
             callingTokenId, hostTokenID, agentID.c_str(), authInfoList.size(), ret);
         return (ret == RET_SUCCESS) ? AccessTokenError::ERR_PARAM_INVALID : ret;
     }
-    for (size_t i = 0; i < authInfoList.size(); ++i) {
-        CliAuthInfo authInfo = ConvertCliAuthInfoIdl(authInfoList[i]);
-        if (!IsCliAuthInfoValid(authInfo)) {
-            LOGE(ATM_DOMAIN, ATM_TAG,
-                "GenerateCliAuthResult invalid auth info, targetToken=%{public}u, index=%{public}zu, "
-                "permissionSize=%{public}zu, resultSize=%{public}zu.",
-                hostTokenID, i, authInfo.permissionNames.size(), authInfo.authorizationResults.size());
-            return AccessTokenError::ERR_PARAM_INVALID;
-        }
+    ret = ValidateCliAuthInfoList(hostTokenID, authInfoList);
+    if (ret != RET_SUCCESS) {
+        return ret;
     }
     ToolAuthResult result;
     std::vector<CliAuthInfo> authInfos;
@@ -2967,6 +3005,13 @@ int32_t AccessTokenManagerService::GenerateCliAuthResult(
         return ret;
     }
     ret = ClawTicketManager::GetInstance().GenerateCliTicket(hostTokenID, authInfos, result.authResults);
+    if (ret != RET_SUCCESS) {
+        LOGE(ATM_DOMAIN, ATM_TAG,
+            "GenerateCliAuthResult generate ticket failed, targetToken=%{public}u, agentID=%{public}s, "
+            "authSize=%{public}zu, ret=%{public}d.",
+            hostTokenID, agentID.c_str(), authInfos.size(), ret);
+        return ret;
+    }
     resultIdl = ConvertToolAuthResult(result);
     LOGI(ATM_DOMAIN, ATM_TAG,
         "GenerateCliAuthResult done, callerToken=%{public}u, targetToken=%{public}u, agentID=%{public}s, "

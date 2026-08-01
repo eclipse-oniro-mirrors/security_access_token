@@ -40,7 +40,7 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-const static int MAX_CHALLENGE_LENGTH = 40960;
+constexpr size_t MAX_CHALLENGE_LENGTH = 40960;
 constexpr const char* LEGACY_CHALLENGE_PREFIX = "legacy:";
 
 bool IsPermissionRestrictedByAdminFlag(uint32_t flag)
@@ -142,7 +142,7 @@ bool ToolTokenInfoManager::CheckCliInfo(const CliInfo& info) const
         LOGE(ATM_DOMAIN, ATM_TAG, "Invalid cliName, cliName=%{public}s.", info.cliName.c_str());
         return false;
     }
-    if (!info.subCliName.empty() && info.subCliName.size() > MAX_CHALLENGE_LENGTH) {
+    if (!info.subCliName.empty() && info.subCliName.size() > MAX_CLAW_SUB_CLI_NAME_LEN) {
         LOGE(ATM_DOMAIN, ATM_TAG,
             "Invalid subCliName, cliName=%{public}s, subCliName=%{public}s, info.subCliName.length()=%{public}zu.",
             info.cliName.c_str(), info.subCliName.c_str(), info.subCliName.size());
@@ -282,9 +282,15 @@ int32_t ToolTokenInfoManager::InitCliToken(const CliInitInfo& info, int32_t call
             "CliTokenInfoInner init failed, hostTokenId=%{public}u, callerPid=%{public}d, tokenId=%{public}u.",
             info.hostTokenId, callerPid, baseInfo.tokenId);
         AccessTokenIDManager::GetInstance().ReleaseTokenId(baseInfo.tokenId);
+        tokenIdEx = {0};
         return ret;
     }
-    return FinalizeToolTokenInit(inner, baseInfo, permStateList, kernelPermList);
+    ret = FinalizeToolTokenInit(inner, baseInfo, permStateList, kernelPermList);
+    if (ret != RET_SUCCESS) {
+        tokenIdEx = {0};
+        kernelPermList.clear();
+    }
+    return ret;
 }
 
 int32_t ToolTokenInfoManager::VerifyCliInitInputAndTicket(const CliInitInfo& info, int32_t callerPid,
@@ -338,7 +344,17 @@ int32_t ToolTokenInfoManager::FinalizeToolTokenInit(const std::shared_ptr<ClawTo
     const ClawTokenBaseInfo& baseInfo, const std::vector<PermissionStatus>& permStateList,
     std::vector<std::string>& kernelPermList)
 {
-    int32_t ret = RET_SUCCESS;
+    std::vector<uint32_t> opCodeList;
+    std::vector<bool> statusList;
+    BuildGrantedKernelPermList(baseInfo.toolType, permStateList, kernelPermList);
+    BuildPermStatusList(baseInfo.toolType, permStateList, opCodeList, statusList);
+    int32_t ret = PermissionKernelUtils::AddNativePermToKernel(baseInfo.tokenId, opCodeList, statusList);
+    if (ret != RET_SUCCESS) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "AddNativePermToKernel failed, tokenId=%{public}u, ret=%{public}d.",
+            baseInfo.tokenId, ret);
+        AccessTokenIDManager::GetInstance().ReleaseTokenId(baseInfo.tokenId);
+        return AccessTokenError::ERR_KERNEL_OPERATION_FAILED;
+    }
     {
         std::unique_lock<std::shared_mutex> lock(lock_);
         ret = AddToolTokenInfoLocked(inner);
@@ -347,15 +363,17 @@ int32_t ToolTokenInfoManager::FinalizeToolTokenInit(const std::shared_ptr<ClawTo
         LOGE(ATM_DOMAIN, ATM_TAG, "AddToolTokenInfoLocked failed, hostTokenId=%{public}u, callerPid=%{public}d, "
             "tokenId=%{public}u, toolType=%{public}u, ret=%{public}d.", baseInfo.hostTokenId, baseInfo.callerPid,
             baseInfo.tokenId, static_cast<uint32_t>(baseInfo.toolType), ret);
+        int32_t removeRet = PermissionKernelUtils::RemovePermFromKernel(baseInfo.tokenId);
+        if (removeRet != RET_SUCCESS) {
+            LOGE(ATM_DOMAIN, ATM_TAG,
+                "Remove tool token permission from kernel failed during rollback, tokenId=%{public}u, ret=%{public}d.",
+                baseInfo.tokenId, removeRet);
+            return AccessTokenError::ERR_KERNEL_OPERATION_FAILED;
+        }
         AccessTokenIDManager::GetInstance().ReleaseTokenId(baseInfo.tokenId);
         return ret;
     }
     (void)ClawTicketManager::GetInstance().DeleteClawTicket(baseInfo.challenge);
-    std::vector<uint32_t> opCodeList;
-    std::vector<bool> statusList;
-    BuildGrantedKernelPermList(baseInfo.toolType, permStateList, kernelPermList);
-    BuildPermStatusList(baseInfo.toolType, permStateList, opCodeList, statusList);
-    PermissionKernelUtils::AddNativePermToKernel(baseInfo.tokenId, opCodeList, statusList);
     LOGI(ATM_DOMAIN, ATM_TAG, "TokenId=%{public}u, hostTokenId=%{public}u.",
         baseInfo.tokenId, baseInfo.hostTokenId);
     for (size_t i = 0; i < permStateList.size(); ++i) {
@@ -368,19 +386,40 @@ int32_t ToolTokenInfoManager::FinalizeToolTokenInit(const std::shared_ptr<ClawTo
 
 int32_t ToolTokenInfoManager::DeleteToolTokenByPid(int32_t pid)
 {
-    std::shared_ptr<ClawTokenInfoInnerBase> inner;
     AccessTokenID tokenId = INVALID_TOKENID;
     {
         std::unique_lock<std::shared_mutex> lock(lock_);
-        inner = RemoveToolTokenInfoByPidLocked(pid);
-        if (inner == nullptr) {
+        auto iter = pidToolTokenMap_.find(pid);
+        if (iter == pidToolTokenMap_.end()) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Tool token not exist when delete, pid=%{public}d.", pid);
             return AccessTokenError::ERR_TOKENID_NOT_EXIST;
         }
-        tokenId = inner->GetTokenId();
+        tokenId = iter->second;
+        if (!deletingToolTokenIdSet_.insert(tokenId).second) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Tool token is deleting, tokenId=%{public}u.", tokenId);
+            return AccessTokenError::ERR_TOKENID_NOT_EXIST;
+        }
     }
-    PermissionKernelUtils::RemovePermFromKernel(tokenId);
-    AccessTokenIDManager::GetInstance().ReleaseTokenId(tokenId);
+    int32_t ret = PermissionKernelUtils::RemovePermFromKernel(tokenId);
+    if (ret != RET_SUCCESS) {
+        LOGE(ATM_DOMAIN, ATM_TAG,
+            "Remove tool token permission from kernel failed, tokenId=%{public}u, ret=%{public}d.", tokenId, ret);
+        std::unique_lock<std::shared_mutex> lock(lock_);
+        deletingToolTokenIdSet_.erase(tokenId);
+        return AccessTokenError::ERR_KERNEL_OPERATION_FAILED;
+    }
+    std::shared_ptr<ClawTokenInfoInnerBase> inner;
+    {
+        std::unique_lock<std::shared_mutex> lock(lock_);
+        auto iter = pidToolTokenMap_.find(pid);
+        if (iter != pidToolTokenMap_.end() && iter->second == tokenId) {
+            inner = RemoveToolTokenInfoLocked(tokenId);
+        }
+        deletingToolTokenIdSet_.erase(tokenId);
+    }
+    if (inner != nullptr) {
+        AccessTokenIDManager::GetInstance().ReleaseTokenId(tokenId);
+    }
     return RET_SUCCESS;
 }
 

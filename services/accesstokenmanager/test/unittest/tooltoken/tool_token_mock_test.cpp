@@ -1968,6 +1968,26 @@ HWTEST_F(ToolTokenMockTest, InitCliToken_009, TestSize.Level1)
 }
 
 /**
+ * @tc.name: InitCliToken_010
+ * @tc.desc: Test overlong subCliName is rejected by input validation.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ToolTokenMockTest, InitCliToken_010, TestSize.Level1)
+{
+    CliInitInfo initInfo = {
+        .hostTokenId = INVALID_TOKENID,
+        .challenge = "",
+        .cliInfo = BuildCliInfo("settings", std::string(MAX_CLAW_SUB_CLI_NAME_LEN + 1, 's')),
+    };
+    AccessTokenIDEx tokenIdEx = {0};
+    std::vector<std::string> kernelPermList;
+    EXPECT_EQ(ERR_PARAM_INVALID,
+        ToolTokenInfoManager::GetInstance().InitCliToken(initInfo, getpid(), tokenIdEx, kernelPermList));
+    EXPECT_EQ(INVALID_TOKENID, tokenIdEx.tokenIdExStruct.tokenID);
+    EXPECT_TRUE(kernelPermList.empty());
+}
+
+/**
  * @tc.name: DeleteToolTokenByPid_001
  * @tc.desc: Test deleting the same pid twice returns token-not-exist on the second call.
  * @tc.type: FUNC
