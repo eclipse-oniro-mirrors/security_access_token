@@ -43,7 +43,7 @@ struct CallbackData {
     AccessTokenID registerTokenId {0};
     std::vector<std::string> permList_;
     sptr<IRemoteObject> callbackObject_;
-    int32_t registerType_;
+    int32_t registerType_ = 0;
 };
 
 class ActiveStatusCallbackManager {

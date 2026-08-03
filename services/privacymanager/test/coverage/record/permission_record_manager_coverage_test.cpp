@@ -449,8 +449,10 @@ HWTEST_F(PermissionRecordManagerTest, OnApplicationStateChanged001, TestSize.Lev
 
     ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().RegisterPermActiveStatusCallback(
         GetSelfTokenID(), permList, callbackPtr->AsObject(), static_cast<int32_t>(CallbackRegisterType::TOKEN_ONLY)));
+    EXPECT_EQ(0, SetSelfTokenID(g_nativeToken));
     ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
         MakeInfo(tokenId, PID, "ohos.permission.ACTIVITY_MOTION"), CALLER_PID));
+    EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));
     AppStateData appStateData;
     appStateData.state = static_cast<int32_t>(ApplicationState::APP_STATE_TERMINATED);
     appStateData.accessTokenId = tokenId;
@@ -573,6 +575,7 @@ HWTEST_F(PermissionRecordManagerTest, RemoveRecordFromStartList001, TestSize.Lev
     AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
     ASSERT_NE(INVALID_TOKENID, tokenId);
 
+    EXPECT_EQ(0, SetSelfTokenID(g_nativeToken));
     std::string permission = "ohos.permission.ACTIVITY_MOTION";
     ASSERT_EQ(Constant::SUCCESS,
         PermissionRecordManager::GetInstance().StartUsingPermission(
@@ -595,6 +598,7 @@ HWTEST_F(PermissionRecordManagerTest, RemoveRecordFromStartList001, TestSize.Lev
     ASSERT_EQ(Constant::SUCCESS,
         PermissionRecordManager::GetInstance().StopUsingPermission(
         tokenId, PID, "ohos.permission.ACTIVITY_MOTION", CALLER_PID));
+    EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));
 }
 
 /*
@@ -636,6 +640,7 @@ HWTEST_F(PermissionRecordManagerTest, Unregister001, TestSize.Level4)
     AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
     ASSERT_NE(INVALID_TOKENID, tokenId);
 
+    EXPECT_EQ(0, SetSelfTokenID(g_nativeToken));
     ASSERT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
         MakeInfo(tokenId, PID, "ohos.permission.ACTIVITY_MOTION"), CALLER_PID));
 
@@ -644,6 +649,7 @@ HWTEST_F(PermissionRecordManagerTest, Unregister001, TestSize.Level4)
 
     ASSERT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().StopUsingPermission(
         tokenId, PID, "ohos.permission.ACTIVITY_MOTION", CALLER_PID));
+    EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));
 }
 
 /*
