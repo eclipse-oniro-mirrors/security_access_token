@@ -37,14 +37,14 @@ bool PermissionUsedRecordParcel::Marshalling(Parcel& out) const
     for (const auto& accRecord : this->permissionRecord.accessRecords) {
         UsedRecordDetailParcel detailParcel;
         detailParcel.detail = accRecord;
-        out.WriteParcelable(&detailParcel);
+        RETURN_IF_FALSE(out.WriteParcelable(&detailParcel));
     }
 
     RETURN_IF_FALSE(out.WriteUint32(this->permissionRecord.rejectRecords.size()));
     for (const auto& rejRecord : this->permissionRecord.rejectRecords) {
         UsedRecordDetailParcel detailParcel;
         detailParcel.detail = rejRecord;
-        out.WriteParcelable(&detailParcel);
+        RETURN_IF_FALSE(out.WriteParcelable(&detailParcel));
     }
     return true;
 }

@@ -270,14 +270,12 @@ private:
     std::mutex micLoadMutex_;
     bool isMicEdmMute_ = false;
     bool isMicMixMute_ = false;
-    bool isMicLoad_ = false;
 
     // camera
     std::mutex camMuteMutex_;
     std::mutex camLoadMutex_;
     bool isCamEdmMute_ = false;
     bool isCamMixMute_ = false;
-    bool isCamLoad_ = false;
 
     // appState
     std::mutex appStateMutex_;

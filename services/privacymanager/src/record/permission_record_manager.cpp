@@ -569,7 +569,8 @@ bool PermissionRecordManager::VerifyNativeRecordPermission(
 int32_t PermissionRecordManager::AddPermissionUsedRecord(const AddPermParamInfo& info)
 {
     if (info.extra.length() > MAX_PERMISSION_USED_RECORD_EXTRA_LENGTH ||
-        !DataValidator::IsEnhancedIdentityValid(info.enhancedIdentity)) {
+        !DataValidator::IsEnhancedIdentityValid(info.enhancedIdentity) ||
+        info.successCount < 0 || info.failCount < 0) {
         return PrivacyError::ERR_PARAM_INVALID;
     }
 
@@ -860,6 +861,11 @@ int32_t PermissionRecordManager::AddRemotePermissionUsedRecord(const RemoteAddPe
         !DataValidator::IsPermissionNameValid(info.permissionName) ||
         ((info.successCount == 0) && (info.failCount == 0))) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Invalid param");
+        return PrivacyError::ERR_PARAM_INVALID;
+    }
+
+    if (info.successCount < 0 || info.failCount < 0) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Invalid count");
         return PrivacyError::ERR_PARAM_INVALID;
     }
 
@@ -3131,6 +3137,7 @@ bool PermissionRecordManager::Register()
             int32_t result = AppManagerAccessClient::GetInstance().RegisterApplicationStateObserver(appStateCallback_);
             if (result != ERR_OK) {
                 LOGE(PRI_DOMAIN, PRI_TAG, "Register application state observer failed(%{public}d).", result);
+                appStateCallback_ = nullptr;
                 return false;
             }
         }
@@ -3146,15 +3153,12 @@ void PermissionRecordManager::InitializeMuteState(const std::string& permissionN
         ModifyMuteStatus(MICROPHONE_PERMISSION_NAME, MIXED, isMicMute);
         {
             std::lock_guard<std::mutex> lock(micLoadMutex_);
-            if (!isMicLoad_) {
-                LOGI(PRI_DOMAIN, PRI_TAG, "Mic mute state: %{public}d.", isMicLoad_);
-                bool isEdmMute = false;
-                if (!GetMuteParameter(EDM_MIC_MUTE_KEY, isEdmMute)) {
-                    LOGE(PRI_DOMAIN, PRI_TAG, "Get param failed");
-                    return;
-                }
-                ModifyMuteStatus(MICROPHONE_PERMISSION_NAME, EDM, isEdmMute);
+            bool isEdmMute = false;
+            if (!GetMuteParameter(EDM_MIC_MUTE_KEY, isEdmMute)) {
+                LOGE(PRI_DOMAIN, PRI_TAG, "Get param failed");
+                return;
             }
+            ModifyMuteStatus(MICROPHONE_PERMISSION_NAME, EDM, isEdmMute);
         }
     } else if (permissionName == CAMERA_PERMISSION_NAME) {
         bool isCameraMute = CameraManagerAdapter::GetInstance().IsCameraMuted();
@@ -3162,14 +3166,12 @@ void PermissionRecordManager::InitializeMuteState(const std::string& permissionN
         ModifyMuteStatus(CAMERA_PERMISSION_NAME, MIXED, isCameraMute);
         {
             std::lock_guard<std::mutex> lock(camLoadMutex_);
-            if (!isCamLoad_) {
-                bool isEdmMute = false;
-                if (!GetMuteParameter(EDM_CAMERA_MUTE_KEY, isEdmMute)) {
-                    LOGE(PRI_DOMAIN, PRI_TAG, "Get camera param failed");
-                    return;
-                }
-                ModifyMuteStatus(CAMERA_PERMISSION_NAME, EDM, isEdmMute);
+            bool isEdmMute = false;
+            if (!GetMuteParameter(EDM_CAMERA_MUTE_KEY, isEdmMute)) {
+                LOGE(PRI_DOMAIN, PRI_TAG, "Get camera param failed");
+                return;
             }
+            ModifyMuteStatus(CAMERA_PERMISSION_NAME, EDM, isEdmMute);
         }
     }
 }
@@ -3210,19 +3212,11 @@ void PermissionRecordManager::OnAppMgrRemoteDiedHandle()
 void PermissionRecordManager::OnAudioMgrRemoteDiedHandle()
 {
     LOGI(PRI_DOMAIN, PRI_TAG, "Handle audio fwk died.");
-    {
-        std::lock_guard<std::mutex> lock(micLoadMutex_);
-        isMicLoad_ = false;
-    }
 }
 
 void PermissionRecordManager::OnCameraMgrRemoteDiedHandle()
 {
     LOGI(PRI_DOMAIN, PRI_TAG, "Handle camera fwk died.");
-    {
-        std::lock_guard<std::mutex> lock(camLoadMutex_);
-        isCamLoad_ = false;
-    }
 }
 
 void PermissionRecordManager::InitDisablePolicyFromDb()

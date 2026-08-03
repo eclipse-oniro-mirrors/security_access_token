@@ -282,6 +282,7 @@ int32_t PrivacyManagerClient::CreateStateChangeCbk(uint64_t id,
             LOGE(PRI_DOMAIN, PRI_TAG, "Memory allocation for callbackWrap failed!");
             return PrivacyError::ERR_MALLOC_FAILED;
         }
+        stateChangeCallbackMap_[id] = callbackWrap;
     }
     return RET_SUCCESS;
 }
@@ -296,12 +297,6 @@ int32_t PrivacyManagerClient::StartUsingPermission(AccessTokenID tokenId, int32_
     if (permissionName != CAMERA_PERMISSION_NAME) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Permission %{public}s is not supported.", permissionName.c_str());
         return PrivacyError::ERR_PARAM_INVALID;
-    }
-    sptr<StateChangeCallback> callbackWrap = nullptr;
-    uint64_t id = GetUniqueId(tokenId, pid);
-    int32_t result = CreateStateChangeCbk(id, callback, callbackWrap);
-    if (result != RET_SUCCESS) {
-        return result;
     }
 
     auto proxy = GetProxy();
@@ -319,17 +314,23 @@ int32_t PrivacyManagerClient::StartUsingPermission(AccessTokenID tokenId, int32_
         LOGE(PRI_DOMAIN, PRI_TAG, "Proxy death recipent is null.");
         return PrivacyError::ERR_MALLOC_FAILED;
     }
+
+    sptr<StateChangeCallback> callbackWrap = nullptr;
+    uint64_t id = GetUniqueId(tokenId, pid);
+    int32_t result = CreateStateChangeCbk(id, callback, callbackWrap);
+    if (result != RET_SUCCESS) {
+        return result;
+    }
+
     result = proxy->StartUsingPermissionCallback(parcel, callbackWrap->AsObject(), anonyStub->AsObject());
     if (result == RET_SUCCESS) {
-        {
-            std::lock_guard<std::mutex> lock(stateCbkMutex_);
-            stateChangeCallbackMap_[id] = callbackWrap;
-            LOGI(PRI_DOMAIN, PRI_TAG, "CallbackObject added.");
-        }
+        LOGI(PRI_DOMAIN, PRI_TAG, "CallbackObject added.");
         SetInputCache(parcel.info, true);
     } else {
         result = ConvertResult(result);
         LOGE(PRI_DOMAIN, PRI_TAG, "Result is %{public}d.", result);
+        std::lock_guard<std::mutex> lock(stateCbkMutex_);
+        stateChangeCallbackMap_.erase(id);
     }
     return result;
 }
@@ -658,6 +659,7 @@ int32_t PrivacyManagerClient::CreateActiveStatusChangeCbk(
         if (!callbackWrap) {
             return PrivacyError::ERR_MALLOC_FAILED;
         }
+        activeCbkMap_[callback] = callbackWrap;
     }
     return RET_SUCCESS;
 }
@@ -668,13 +670,6 @@ int32_t PrivacyManagerClient::RegisterPermActiveStatusCallback(
     if (callback == nullptr) {
         LOGE(PRI_DOMAIN, PRI_TAG, "CustomizedCb is nullptr.");
         return PrivacyError::ERR_PARAM_INVALID;
-    }
-
-    sptr<PermActiveStatusChangeCallback> callbackWrap = nullptr;
-    int32_t result = CreateActiveStatusChangeCbk(callback, callbackWrap);
-    if (result != RET_SUCCESS) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to create callback, err: %{public}d.", result);
-        return result;
     }
 
     auto proxy = GetProxy();
@@ -688,13 +683,20 @@ int32_t PrivacyManagerClient::RegisterPermActiveStatusCallback(
         return PrivacyError::ERR_PARAM_INVALID;
     }
 
+    sptr<PermActiveStatusChangeCallback> callbackWrap = nullptr;
+    int32_t result = CreateActiveStatusChangeCbk(callback, callbackWrap);
+    if (result != RET_SUCCESS) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Failed to create callback, err: %{public}d.", result);
+        return result;
+    }
+
     result = proxy->RegisterPermActiveStatusCallback(permList, callbackWrap->AsObject(), static_cast<int32_t>(type));
     if (result == RET_SUCCESS) {
-        std::lock_guard<std::mutex> lock(activeCbkMutex_);
-        activeCbkMap_[callback] = callbackWrap;
         LOGI(PRI_DOMAIN, PRI_TAG, "CallbackObject added.");
     } else {
         result = ConvertResult(result);
+        std::lock_guard<std::mutex> lock(activeCbkMutex_);
+        activeCbkMap_.erase(callback);
     }
     LOGI(PRI_DOMAIN, PRI_TAG, "Result is %{public}d.", result);
     return result;
@@ -876,6 +878,7 @@ int32_t PrivacyManagerClient::CreatePermDisablePolicyCbk(
         if (callbackWrap == nullptr) {
             return PrivacyError::ERR_MALLOC_FAILED;
         }
+        disableCbkMap_[callback] = callbackWrap;
     }
     return RET_SUCCESS;
 }
@@ -894,26 +897,26 @@ int32_t PrivacyManagerClient::RegisterPermDisablePolicyCallback(
         return PrivacyError::ERR_OVERSIZE;
     }
 
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Proxy is null.");
+        return PrivacyError::ERR_SERVICE_ABNORMAL;
+    }
+
     sptr<PermDisablePolicyChangeCallback> callbackWrap = nullptr;
     int32_t result = CreatePermDisablePolicyCbk(callback, callbackWrap);
     if (result != RET_SUCCESS) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Failed to create callback, err: %{public}d.", result);
         return result;
     }
-
-    auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Proxy is null.");
-        return PrivacyError::ERR_SERVICE_ABNORMAL;
-    }
     
     result = proxy->RegisterPermDisablePolicyCallback(permList, callbackWrap->AsObject());
     if (result == RET_SUCCESS) {
-        std::lock_guard<std::mutex> lock(disableCbkMutex_);
-        disableCbkMap_[callback] = callbackWrap;
         LOGI(PRI_DOMAIN, PRI_TAG, "CallbackObject added.");
     } else {
         result = ConvertResult(result);
+        std::lock_guard<std::mutex> lock(disableCbkMutex_);
+        disableCbkMap_.erase(callback);
     }
     LOGI(PRI_DOMAIN, PRI_TAG, "Result is %{public}d.", result);
     return result;
