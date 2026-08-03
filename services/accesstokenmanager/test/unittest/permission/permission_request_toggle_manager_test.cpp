@@ -556,7 +556,7 @@ HWTEST_F(PermissionRequestToggleManagerTest, SetPermissionRequestToggleStatusWit
         PermissionRequestToggleManager::GetInstance().GetPermissionRequestToggleStatus(
             permissionName, status, userID, SUBPROFILE_ID_TEN));
 
-    SetMockOsAccountLocalIdForSubProfile(userID, ERR_OS_ACCOUNT_SUBSPACE_NOT_FOUND);
+    SetMockOsAccountLocalIdForSubProfile(userID, ERR_OS_ACCOUNT_SUBPROFILE_NOT_FOUND);
     EXPECT_EQ(ERR_PERMISSION_REQUEST_TOGGLE_SUBPROFILE_NOT_EXIST,
         PermissionRequestToggleManager::GetInstance().SetPermissionRequestToggleStatus(
             permissionName, PermissionRequestToggleStatus::OPEN, userID, SUBPROFILE_ID_TEN));

@@ -641,7 +641,7 @@ HWTEST_F(PrivacyToggleRecordTest, SetPermissionUsedRecordToggleStatusWithSubProf
         PermissionRecordManager::GetInstance().GetPermissionUsedRecordToggleStatus(
             ACCOUNT_OWNER_USER_ID, status, SUBPROFILE_ID_TEN));
 
-    SetMockOsAccountLocalIdForSubProfile(ACCOUNT_OWNER_USER_ID, ERR_OS_ACCOUNT_SUBSPACE_NOT_FOUND);
+    SetMockOsAccountLocalIdForSubProfile(ACCOUNT_OWNER_USER_ID, ERR_OS_ACCOUNT_SUBPROFILE_NOT_FOUND);
     EXPECT_EQ(PrivacyError::ERR_PERMISSION_USED_RECORD_SUBPROFILE_NOT_EXIST,
         PermissionRecordManager::GetInstance().SetPermissionUsedRecordToggleStatus(
             ACCOUNT_OWNER_USER_ID, false, SUBPROFILE_ID_TEN));
