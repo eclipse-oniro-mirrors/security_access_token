@@ -11891,6 +11891,17 @@
             "provisionEnable": true,
             "distributedSceneEnable": false,
             "deviceTypes": ["car"]
+        },
+        {
+            "name": "ohos.permission.ACCESS_FILE_MONITOR_DIR",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["general", "2in1", "phone", "tablet", "tv", "smartlock", "car"]
         }
     ]
 }
