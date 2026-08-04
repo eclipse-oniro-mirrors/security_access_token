@@ -1416,7 +1416,7 @@ HWTEST_F(PermissionRecordManagerTest, AddPermissionUsedRecordWithSubProfile004, 
     ClearToggleStatusMapByUserId(g_InfoParms1.userID);
     const std::string toggleKey = std::to_string(g_InfoParms1.userID) + "_" + std::to_string(SUBPROFILE_TEST_ID);
     PermissionRecordManager::GetInstance().permUsedRecToggleStatusMap_[toggleKey] = false;
-    SetMockOsAccountSubProfileId(SUBPROFILE_TEST_ID, ERR_OS_ACCOUNT_SUBSPACE_NOT_FOUND);
+    SetMockOsAccountSubProfileId(SUBPROFILE_TEST_ID, ERR_OS_ACCOUNT_SUBPROFILE_NOT_FOUND);
 
     AddPermParamInfo info;
     info.tokenId = tokenId;

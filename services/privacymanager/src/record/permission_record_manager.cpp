@@ -137,7 +137,7 @@ int32_t ValidateSubProfileIdForToggle([[maybe_unused]] int32_t userID, [[maybe_u
     int32_t localUserId = LEGACY_SUBPROFILE_ID;
     int32_t ret = OHOS::AccountSA::OsAccountManagerLite::GetOsAccountLocalIdForSubProfile(
         subProfileId, localUserId);
-    if (ret == ERR_OS_ACCOUNT_SUBSPACE_NOT_FOUND) {
+    if (ret == ERR_OS_ACCOUNT_SUBPROFILE_NOT_FOUND) {
         LOGE(PRI_DOMAIN, PRI_TAG, "SubProfile does not exist, subProfileId=%{public}d.", subProfileId);
         return PrivacyError::ERR_PERMISSION_USED_RECORD_SUBPROFILE_NOT_EXIST;
     }
@@ -575,7 +575,7 @@ int32_t PermissionRecordManager::ResolveAddRecordSubProfileId([[maybe_unused]] c
         LOGE(PRI_DOMAIN, PRI_TAG,
             "Get subProfileId failed, userID=%{public}d, index=%{public}d, ret=%{public}d.",
             tokenInfo.userID, tokenInfo.instIndex, ret);
-        return (ret == ERR_OS_ACCOUNT_SUBSPACE_NOT_FOUND) ?
+        return (ret == ERR_OS_ACCOUNT_SUBPROFILE_NOT_FOUND) ?
             PrivacyError::ERR_PARAM_INVALID : PrivacyError::ERR_SERVICE_ABNORMAL;
     }
 #endif
