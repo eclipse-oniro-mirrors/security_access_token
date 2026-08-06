@@ -744,6 +744,64 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, OnUpgrade005, TestSize.Level4)
     EXPECT_TRUE(foundSubProfileId);
 }
 
+/*
+* @tc.name: UpgradeFromVersion9001
+* @tc.desc: AccessTokenOpenCallback::UpgradeFromVersion10 clears hap info
+* @tc.type: FUNC
+* @tc.require: TDD
+*/
+HWTEST_F(AccessTokenDatabaseCoverageTest, UpgradeFromVersion10001, TestSize.Level4)
+{
+    std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance()->GetRdb();
+    AccessTokenOpenCallback callback;
+
+    db->executeSqlResults_.clear();
+    db->executeSqlIndex_ = 0;
+    db->executedSqls_.clear();
+
+    ASSERT_EQ(NativeRdb::E_OK, callback.UpgradeFromVersion10(*(db.get())));
+    ASSERT_EQ(1u, db->executedSqls_.size());
+    EXPECT_EQ("delete from hap_info_table", db->executedSqls_[0]);
+}
+
+/*
+* @tc.name: UpgradeFromVersion9002
+* @tc.desc: AccessTokenOpenCallback::UpgradeFromVersion10 fails when clears hap info
+* @tc.type: FUNC
+* @tc.require: TDD
+*/
+HWTEST_F(AccessTokenDatabaseCoverageTest, UpgradeFromVersion10002, TestSize.Level4)
+{
+    std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance()->GetRdb();
+    AccessTokenOpenCallback callback;
+
+    db->executeSqlResults_ = {NativeRdb::E_SQLITE_CORRUPT};
+    db->executeSqlIndex_ = 0;
+    db->executedSqls_.clear();
+
+    ASSERT_EQ(NativeRdb::E_SQLITE_CORRUPT, callback.UpgradeFromVersion10(*(db.get())));
+    ASSERT_EQ(1u, db->executedSqls_.size());
+    EXPECT_EQ("delete from hap_info_table", db->executedSqls_[0]);
+}
+
+/*
+* @tc.name: OnUpgrade006
+* @tc.desc: AccessTokenOpenCallback::OnUpgrade version 10->11
+* @tc.type: FUNC
+* @tc.require: TDD
+*/
+HWTEST_F(AccessTokenDatabaseCoverageTest, OnUpgrade006, TestSize.Level4)
+{
+    std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance()->GetRdb();
+    AccessTokenOpenCallback callback;
+
+    db->executeSqlResults_.clear();
+    db->executeSqlIndex_ = 0;
+    db->executedSqls_.clear();
+
+    ASSERT_EQ(NativeRdb::E_OK, callback.OnUpgrade(*(db.get()), DATABASE_VERSION_10, DATABASE_VERSION_11));
+    ASSERT_EQ(NativeRdb::E_OK, callback.OnUpgrade(*(db.get()), DATABASE_VERSION_11, DATABASE_VERSION_11));
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

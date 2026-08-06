@@ -36,6 +36,7 @@ static constexpr const int32_t DATABASE_VERSION_7 = 7;
 static constexpr const int32_t DATABASE_VERSION_8 = 8;
 static constexpr const int32_t DATABASE_VERSION_9 = 9;
 static constexpr const int32_t DATABASE_VERSION_10 = 10;
+static constexpr const int32_t DATABASE_VERSION_11 = 11;
 
 class AccessTokenOpenCallback : public NativeRdb::RdbOpenCallback {
 public:
@@ -91,6 +92,7 @@ private:
     int32_t UpgradeFromVersion7(NativeRdb::RdbStore& rdbStore);
     int32_t UpgradeFromVersion8(NativeRdb::RdbStore& rdbStore);
     int32_t UpgradeFromVersion9(NativeRdb::RdbStore& rdbStore);
+    int32_t UpgradeFromVersion10(NativeRdb::RdbStore& rdbStore);
 };
 } // namespace AccessToken
 } // namespace Security
