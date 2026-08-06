@@ -10185,6 +10185,39 @@
             "deviceTypes": ["2in1", "tablet", "phone"]
         },
         {
+            "name": "ohos.permission.MUTE_VOIP_CAPTURE",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "tablet", "tv", "2in1", "car", "wearable"]
+        },
+        {
+            "name": "ohos.permission.MUTE_VOIP_PLAYBACK",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "tablet", "tv", "2in1", "car", "wearable"]
+        },
+        {
+            "name": "ohos.permission.VOIP_CAPTURE_CONCURRENCY",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "availableType": "SYSTEM",
+            "since": "26.0.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "tablet", "tv", "2in1", "car", "wearable"]
+        },
+        {
             "name": "ohos.permission.ACCESS_ASSOCIATE_ASSISTANT",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
