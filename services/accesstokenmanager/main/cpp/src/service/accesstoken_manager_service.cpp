@@ -605,16 +605,16 @@ const bool REGISTER_RESULT =
 int32_t AccessTokenManagerService::PreCheckPermissionStatusDetails(
     AccessTokenID tokenID, const std::vector<std::string>& permissionList)
 {
+    if (!IsNativeProcessCalling()) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "GetPermissionStatusDetails permission denied, callingTokenId=%{public}u.",
+            IPCSkeleton::GetCallingTokenID());
+        return ERR_PERMISSION_DENIED;
+    }
     if (!DataValidator::IsTokenIDValid(tokenID) ||
         !DataValidator::IsListSizeValid(permissionList.size()) || !ArePermissionNamesValid(permissionList)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "GetPermissionStatusDetails invalid input, tokenId=%{public}u, size=%{public}zu.",
             tokenID, permissionList.size());
         return ERR_PARAM_INVALID;
-    }
-    if (!IsNativeProcessCalling()) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "GetPermissionStatusDetails permission denied, callingTokenId=%{public}u.",
-            IPCSkeleton::GetCallingTokenID());
-        return ERR_PERMISSION_DENIED;
     }
     int32_t tokenType = GetTokenType(tokenID);
     if (tokenType == TOKEN_INVALID) {
@@ -653,13 +653,13 @@ void AccessTokenManagerService::OnStart()
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to initialize.");
         return;
     }
-    state_ = ServiceRunningState::STATE_RUNNING;
     bool ret = Publish(DelayedSingleton<AccessTokenManagerService>::GetInstance().get());
     if (!ret) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to publish service!");
         ReportSysEventServiceStartError(SA_PUBLISH_FAILED, "Publish accesstoken_service fail.", ERROR);
         return;
     }
+    state_ = ServiceRunningState::STATE_RUNNING;
     AccessTokenServiceParamSet();
     (void)AddSystemAbilityListener(SECURITY_COMPONENT_SERVICE_ID);
 #ifdef TOKEN_SYNC_ENABLE
@@ -931,6 +931,7 @@ static bool GetAppReqPermissions(AccessTokenID tokenID, std::vector<PermissionSt
         LOGE(ATM_DOMAIN, ATM_TAG,
             "GetReqPermissions failed, retUserGrant %{public}d, retSysGrant %{public}d.",
             retUserGrant, retSysGrant);
+        permsList.clear();
         return false;
     }
     return true;
@@ -1245,7 +1246,7 @@ int32_t AccessTokenManagerService::SetPermissionStatusWithPolicy(
         LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", callingTokenID);
         return AccessTokenError::ERR_PERMISSION_DENIED;
     }
-    if (!DataValidator::IsListSizeValid(permissionList.size())) {
+    if (!DataValidator::IsTokenIDValid(tokenID) || !DataValidator::IsListSizeValid(permissionList.size())) {
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     return PermissionManager::GetInstance().SetPermissionStatusWithPolicy(tokenID, permissionList, status, flag);
@@ -1667,11 +1668,11 @@ int AccessTokenManagerService::GetHapTokenInfo(AccessTokenID tokenID, HapTokenIn
         LOGE(ATM_DOMAIN, ATM_TAG, "Token %{public}u is not exist.", tokenID);
         return AccessTokenError::ERR_TOKENID_NOT_EXIST;
     }
-    if (!TokenIDAttributes::IsDebugAppAttr(infoPtr->GetAttr())) {
+    infoPtr->TranslateToHapTokenInfo(infoParcel.hapTokenInfoParams);
+    if (!TokenIDAttributes::IsDebugAppAttr(infoParcel.hapTokenInfoParams.tokenAttr)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", IPCSkeleton::GetCallingTokenID());
         return AccessTokenError::ERR_PERMISSION_DENIED;
     }
-    infoPtr->TranslateToHapTokenInfo(infoParcel.hapTokenInfoParams);
     return RET_SUCCESS;
 }
 
@@ -1879,6 +1880,9 @@ int32_t AccessTokenManagerService::RegisterTokenSyncCallback(const sptr<IRemoteO
         LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied, tokenID=%{public}d.", IPCSkeleton::GetCallingTokenID());
         return AccessTokenError::ERR_PERMISSION_DENIED;
     }
+    if (callback == nullptr) {
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
     return TokenModifyNotifier::GetInstance().RegisterTokenSyncCallback(callback);
 }
 
@@ -2034,18 +2038,17 @@ int32_t AccessTokenManagerService::SetUserPolicy(const std::vector<UserPermissio
 {
     std::lock_guard<std::mutex> userPolicyUpdateGuard(g_userPolicyUpdateMutex);
     LOGI(ATM_DOMAIN, ATM_TAG, "CallerPid %{public}d.", IPCSkeleton::GetCallingPid());
+    uint32_t callingToken = IPCSkeleton::GetCallingTokenID();
+    if (VerifyAccessToken(callingToken, "ohos.permission.MANAGE_USER_POLICY") == PERMISSION_DENIED) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", callingToken);
+        return AccessTokenError::ERR_PERMISSION_DENIED;
+    }
     size_t policySize = userPermissionList.size();
     if (policySize == 0) {
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     if (policySize > MAX_SET_USER_POLICY_SIZE) {
         return AccessTokenError::ERR_PARAM_INVALID;
-    }
-
-    uint32_t callingToken = IPCSkeleton::GetCallingTokenID();
-    if (VerifyAccessToken(callingToken, "ohos.permission.MANAGE_USER_POLICY") == PERMISSION_DENIED) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", callingToken);
-        return AccessTokenError::ERR_PERMISSION_DENIED;
     }
 
     std::vector<UserPermissionPolicy> policyList;
@@ -2073,18 +2076,17 @@ int32_t AccessTokenManagerService::ClearUserPolicy(const std::vector<std::string
 {
     std::lock_guard<std::mutex> userPolicyUpdateGuard(g_userPolicyUpdateMutex);
     LOGI(ATM_DOMAIN, ATM_TAG, "CallerPid %{public}d.", IPCSkeleton::GetCallingPid());
+    uint32_t callingToken = IPCSkeleton::GetCallingTokenID();
+    if (VerifyAccessToken(callingToken, "ohos.permission.MANAGE_USER_POLICY") == PERMISSION_DENIED) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", callingToken);
+        return AccessTokenError::ERR_PERMISSION_DENIED;
+    }
     size_t permSize = permissionList.size();
     if (permSize == 0) {
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     if (!DataValidator::IsListSizeValid(permSize)) {
         return AccessTokenError::ERR_OVERSIZE;
-    }
-
-    uint32_t callingToken = IPCSkeleton::GetCallingTokenID();
-    if (VerifyAccessToken(callingToken, "ohos.permission.MANAGE_USER_POLICY") == PERMISSION_DENIED) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", callingToken);
-        return AccessTokenError::ERR_PERMISSION_DENIED;
     }
 
     std::vector<UserPolicyChange> changedPolicyList;
@@ -2103,6 +2105,11 @@ int32_t AccessTokenManagerService::UpdatePolicyWhiteList(AccessTokenID tokenId, 
 {
     std::lock_guard<std::mutex> userPolicyUpdateGuard(g_userPolicyUpdateMutex);
     LOGI(ATM_DOMAIN, ATM_TAG, "CallerPid %{public}d.", IPCSkeleton::GetCallingPid());
+    uint32_t callingToken = IPCSkeleton::GetCallingTokenID();
+    if (VerifyAccessToken(callingToken, "ohos.permission.MANAGE_USER_POLICY") == PERMISSION_DENIED) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", callingToken);
+        return AccessTokenError::ERR_PERMISSION_DENIED;
+    }
     auto updateType = static_cast<UpdateWhiteListType>(type);
     if (!DataValidator::IsTokenIDValid(tokenId) || !DataValidator::IsUpdateWhiteListTypeValid(updateType)) {
         return AccessTokenError::ERR_PARAM_INVALID;
@@ -2115,11 +2122,6 @@ int32_t AccessTokenManagerService::UpdatePolicyWhiteList(AccessTokenID tokenId, 
     if (permission.empty()) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Invalid permCode: %{public}u.", permCode);
         return AccessTokenError::ERR_PARAM_INVALID;
-    }
-    uint32_t callingToken = IPCSkeleton::GetCallingTokenID();
-    if (VerifyAccessToken(callingToken, "ohos.permission.MANAGE_USER_POLICY") == PERMISSION_DENIED) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", callingToken);
-        return AccessTokenError::ERR_PERMISSION_DENIED;
     }
     int32_t userId = 0;
     if (GetHapUserIdByTokenId(tokenId, userId) != RET_SUCCESS) {
@@ -2140,15 +2142,15 @@ int32_t AccessTokenManagerService::GetPolicyWhiteList(uint32_t permCode, std::ve
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "CallerPid %{public}d.", IPCSkeleton::GetCallingPid());
     tokenIdList.clear();
-    std::string permission = TransferOpcodeToPermission(permCode);
-    if (permission.empty()) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Invalid permCode: %{public}u.", permCode);
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
     uint32_t callingToken = IPCSkeleton::GetCallingTokenID();
     if (VerifyAccessToken(callingToken, "ohos.permission.MANAGE_USER_POLICY") == PERMISSION_DENIED) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", callingToken);
         return AccessTokenError::ERR_PERMISSION_DENIED;
+    }
+    std::string permission = TransferOpcodeToPermission(permCode);
+    if (permission.empty()) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Invalid permCode: %{public}u.", permCode);
+        return AccessTokenError::ERR_PARAM_INVALID;
     }
     return UserPolicyManager::GetInstance().GetPolicyWhiteList(permCode, tokenIdList);
 }
@@ -2521,10 +2523,13 @@ bool AccessTokenManagerService::Initialize()
     std::map<int32_t, TokenIdInfo> tokenIdAplMap;
     AccessTokenInfoManager::GetInstance().Init(hapSize, nativeSize, pefDefSize, dlpSize, tokenIdAplMap);
 #ifdef SUPPORT_MANAGE_USER_POLICY
-    int32_t ret = UserPolicyManager::GetInstance().LoadPersistedPolicies();
-    if (ret != RET_SUCCESS) {
-        ReportSysEventServiceStartError(INIT_USER_POLICY_ERROR, "Load user policy from db fail.", ret);
-    }
+    std::thread loadPersistedPolicies([]() {
+        int32_t ret = UserPolicyManager::GetInstance().LoadPersistedPolicies();
+        if (ret != RET_SUCCESS) {
+            ReportSysEventServiceStartError(INIT_USER_POLICY_ERROR, "Load user policy from db fail.", ret);
+        }
+    });
+    loadPersistedPolicies.detach();
 #endif
     HandlePermDefUpdate(tokenIdAplMap);
 
@@ -2532,7 +2537,7 @@ bool AccessTokenManagerService::Initialize()
     TempPermissionObserver::GetInstance().InitEventHandler();
     ShortGrantManager::GetInstance().InitEventHandler();
 #endif
-    InitDfxInfo dfxInfo;
+    InitDfxInfo dfxInfo = {0};
     dfxInfo.pid = getpid();
     dfxInfo.hapSize = hapSize;
     dfxInfo.nativeSize = nativeSize;
@@ -2618,13 +2623,6 @@ bool AccessTokenManagerService::IsSystemAppCalling() const
 int32_t AccessTokenManagerService::ValidateGetCliPermissionRequestInfoCaller(
     AccessTokenID callingTokenId, const std::string& agentID, const std::vector<CliInfoIdl>& cliInfoList)
 {
-    if (!IsAgentIdValid(agentID) || !IsCliInfoListSizeValid(cliInfoList.size()) ||
-        !AreCliInfosValid(cliInfoList)) {
-        LOGE(ATM_DOMAIN, ATM_TAG,
-            "GetCliPermissionRequestInfo invalid param, callerToken=%{public}u, agentID=%{public}s, "
-            "cliSize=%{public}zu.", callingTokenId, agentID.c_str(), cliInfoList.size());
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
     if (!IsSystemAppCalling()) {
         LOGE(ATM_DOMAIN, ATM_TAG,
             "GetCliPermissionRequestInfo non-system caller, callerToken=%{public}u, "
@@ -2636,21 +2634,19 @@ int32_t AccessTokenManagerService::ValidateGetCliPermissionRequestInfoCaller(
         LOGE(ATM_DOMAIN, ATM_TAG, "Caller does not have QUERY_TOOL_PERMISSIONS permission.");
         return AccessTokenError::ERR_PERMISSION_DENIED;
     }
+    if (!IsAgentIdValid(agentID) || !IsCliInfoListSizeValid(cliInfoList.size()) ||
+        !AreCliInfosValid(cliInfoList)) {
+        LOGE(ATM_DOMAIN, ATM_TAG,
+            "GetCliPermissionRequestInfo invalid param, callerToken=%{public}u, agentID=%{public}s, "
+            "cliSize=%{public}zu.", callingTokenId, agentID.c_str(), cliInfoList.size());
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
     return RET_SUCCESS;
 }
 
 int32_t AccessTokenManagerService::ValidateGetCliPermissionsCaller(AccessTokenID callingTokenId,
     AccessTokenID hostTokenID, const std::string& agentID, const std::vector<CliInfoIdl>& cliInfoList)
 {
-    int32_t ret = ValidateHostTokenId(hostTokenID);
-    if ((ret != RET_SUCCESS) || !IsAgentIdValid(agentID) || !IsCliInfoListSizeValid(cliInfoList.size()) ||
-        !AreCliInfosValid(cliInfoList)) {
-        LOGE(ATM_DOMAIN, ATM_TAG,
-            "GetCliPermissions invalid param, callerToken=%{public}u, targetToken=%{public}u, "
-            "agentID=%{public}s, cliSize=%{public}zu, ret=%{public}d.",
-            callingTokenId, hostTokenID, agentID.c_str(), cliInfoList.size(), ret);
-        return (ret == RET_SUCCESS) ? AccessTokenError::ERR_PARAM_INVALID : ret;
-    }
     if (!IsSystemAppCalling()) {
         LOGE(ATM_DOMAIN, ATM_TAG,
             "GetCliPermissions non-system caller, callerToken=%{public}u, targetToken=%{public}u, "
@@ -2660,6 +2656,15 @@ int32_t AccessTokenManagerService::ValidateGetCliPermissionsCaller(AccessTokenID
     if (VerifyAccessToken(callingTokenId, MANAGE_TOOL_RUNTIME_PERMISSIONS) == PERMISSION_DENIED) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Caller does not have MANAGE_TOOL_RUNTIME_PERMISSIONS permission.");
         return AccessTokenError::ERR_PERMISSION_DENIED;
+    }
+    int32_t ret = ValidateHostTokenId(hostTokenID);
+    if ((ret != RET_SUCCESS) || !IsAgentIdValid(agentID) || !IsCliInfoListSizeValid(cliInfoList.size()) ||
+        !AreCliInfosValid(cliInfoList)) {
+        LOGE(ATM_DOMAIN, ATM_TAG,
+            "GetCliPermissions invalid param, callerToken=%{public}u, targetToken=%{public}u, "
+            "agentID=%{public}s, cliSize=%{public}zu, ret=%{public}d.",
+            callingTokenId, hostTokenID, agentID.c_str(), cliInfoList.size(), ret);
+        return (ret == RET_SUCCESS) ? AccessTokenError::ERR_PARAM_INVALID : ret;
     }
     return RET_SUCCESS;
 }
@@ -2926,6 +2931,16 @@ int32_t AccessTokenManagerService::GenerateCliAuthResult(
     const std::vector<CliAuthInfoIdl>& authInfoList, ToolAuthResultIdl& resultIdl)
 {
     AccessTokenID callingTokenId = IPCSkeleton::GetCallingTokenID();
+    if (!IsSystemAppCalling()) {
+        LOGE(ATM_DOMAIN, ATM_TAG,
+            "GenerateCliAuthResult non-system caller, callerToken=%{public}u, targetToken=%{public}u, "
+            "agentID=%{public}s.", callingTokenId, hostTokenID, agentID.c_str());
+        return AccessTokenError::ERR_NOT_SYSTEM_APP;
+    }
+    if (VerifyAccessToken(callingTokenId, MANAGE_TOOL_RUNTIME_PERMISSIONS) == PERMISSION_DENIED) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Caller does not have MANAGE_TOOL_RUNTIME_PERMISSIONS permission.");
+        return AccessTokenError::ERR_PERMISSION_DENIED;
+    }
     int32_t ret = ValidateHostTokenId(hostTokenID);
     if ((ret != RET_SUCCESS) || !IsAgentIdValid(agentID) || !IsCliInfoListSizeValid(authInfoList.size()) ||
         !AreCliAuthInfosValid(authInfoList)) {
@@ -2944,16 +2959,6 @@ int32_t AccessTokenManagerService::GenerateCliAuthResult(
                 hostTokenID, i, authInfo.permissionNames.size(), authInfo.authorizationResults.size());
             return AccessTokenError::ERR_PARAM_INVALID;
         }
-    }
-    if (!IsSystemAppCalling()) {
-        LOGE(ATM_DOMAIN, ATM_TAG,
-            "GenerateCliAuthResult non-system caller, callerToken=%{public}u, targetToken=%{public}u, "
-            "agentID=%{public}s.", callingTokenId, hostTokenID, agentID.c_str());
-        return AccessTokenError::ERR_NOT_SYSTEM_APP;
-    }
-    if (VerifyAccessToken(callingTokenId, MANAGE_TOOL_RUNTIME_PERMISSIONS) == PERMISSION_DENIED) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Caller does not have MANAGE_TOOL_RUNTIME_PERMISSIONS permission.");
-        return AccessTokenError::ERR_PERMISSION_DENIED;
     }
     ToolAuthResult result;
     std::vector<CliAuthInfo> authInfos;

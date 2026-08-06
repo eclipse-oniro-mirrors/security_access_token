@@ -2032,6 +2032,10 @@ HWTEST_F(AtmCommandTest, atm_perm_revoke_test009, TestSize.Level1)
 }
 
 #ifndef ATM_BUILD_VARIANT_USER_ENABLE
+constexpr char TEST_TOGGLE_USER_ID[] = "100";
+constexpr char TEST_TOGGLE_STATUS_OPEN[] = "1";
+constexpr char INVALID_TOGGLE_USER_ID[] = "2147483648";
+
 /**
  * @tc.name: atm_toggle_req_test001
  * @tc.desc: Set request toggle status to open
@@ -2078,7 +2082,7 @@ HWTEST_F(AtmCommandTest, atm_toggle_req_test003, TestSize.Level1)
 
 /**
  * @tc.name: atm_toggle_req_test004
- * @tc.desc: Set request toggle without userID parameter
+ * @tc.desc: Set request toggle without userID parameter fails
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -2087,8 +2091,21 @@ HWTEST_F(AtmCommandTest, atm_toggle_req_test004, TestSize.Level1)
     const char* argv[] = {"atm", "toggle", "request", "-s", "-p", PERM_CAMERA.c_str(), "-k", "1"};
     int32_t argc = sizeof(argv) / sizeof(argv[0]);
     std::string result = ExecAtmCommand(argc, const_cast<char**>(argv));
-    // System may have default userID, so it can succeed
-    EXPECT_TRUE(IsOutputContain(result, "Success") || IsOutputContain(result, "open"));
+    EXPECT_TRUE(IsOutputContain(result, "Missing required parameter") || IsOutputContain(result, "-i"));
+}
+
+/**
+ * @tc.name: atm_toggle_req_test004_1
+ * @tc.desc: Get request toggle without userID parameter fails
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AtmCommandTest, atm_toggle_req_test004_1, TestSize.Level1)
+{
+    const char* argv[] = {"atm", "toggle", "request", "-o", "-p", PERM_CAMERA.c_str()};
+    int32_t argc = sizeof(argv) / sizeof(argv[0]);
+    std::string result = ExecAtmCommand(argc, const_cast<char**>(argv));
+    EXPECT_TRUE(IsOutputContain(result, "Missing required parameter") || IsOutputContain(result, "-i"));
 }
 
 /**
@@ -2191,7 +2208,7 @@ HWTEST_F(AtmCommandTest, atm_toggle_req_test010, TestSize.Level2)
         "atm", "toggle", "request", "-s", "-i", "abc", "-p", PERM_CAMERA.c_str(), "-k", "1"};
     int32_t argc = sizeof(argv) / sizeof(argv[0]);
     std::string result = ExecAtmCommand(argc, const_cast<char**>(argv));
-    EXPECT_TRUE(IsOutputContain(result, "Failure"));
+    EXPECT_TRUE(IsOutputContain(result, "Invalid parameter") || IsOutputContain(result, "Failure"));
 }
 
 /**
@@ -2205,7 +2222,7 @@ HWTEST_F(AtmCommandTest, atm_toggle_req_test011, TestSize.Level2)
     const char* argv[] = {"atm", "toggle", "request", "-o", "-i", "abc", "-p", PERM_CAMERA.c_str()};
     int32_t argc = sizeof(argv) / sizeof(argv[0]);
     std::string result = ExecAtmCommand(argc, const_cast<char**>(argv));
-    EXPECT_TRUE(IsOutputContain(result, "Failure"));
+    EXPECT_TRUE(IsOutputContain(result, "Invalid parameter") || IsOutputContain(result, "Failure"));
 }
 
 /**
@@ -2216,10 +2233,10 @@ HWTEST_F(AtmCommandTest, atm_toggle_req_test011, TestSize.Level2)
  */
 HWTEST_F(AtmCommandTest, atm_toggle_req_test012, TestSize.Level2)
 {
-    const char* argv[] = {"atm", "toggle", "request", "-o", "-i", "100"};
+    const char* argv[] = {"atm", "toggle", "request", "-o", "-i", TEST_TOGGLE_USER_ID};
     int32_t argc = sizeof(argv) / sizeof(argv[0]);
     std::string result = ExecAtmCommand(argc, const_cast<char**>(argv));
-    EXPECT_TRUE(IsOutputContain(result, "Failure"));
+    EXPECT_TRUE(IsOutputContain(result, "Missing required parameter: -p"));
 }
 
 /**
@@ -2360,6 +2377,20 @@ HWTEST_F(AtmCommandTest, atm_toggle_rec_test006, TestSize.Level1)
 }
 
 /**
+ * @tc.name: atm_toggle_rec_test006_1
+ * @tc.desc: Get record toggle without userID parameter fails
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AtmCommandTest, atm_toggle_rec_test006_1, TestSize.Level1)
+{
+    const char* argv[] = {"atm", "toggle", "record", "-o"};
+    int32_t argc = sizeof(argv) / sizeof(argv[0]);
+    std::string result = ExecAtmCommand(argc, const_cast<char**>(argv));
+    EXPECT_TRUE(IsOutputContain(result, "Missing required parameter") || IsOutputContain(result, "-i"));
+}
+
+/**
  * @tc.name: atm_toggle_rec_test007
  * @tc.desc: Set record toggle without status parameter
  * @tc.type: FUNC
@@ -2385,7 +2416,8 @@ HWTEST_F(AtmCommandTest, atm_toggle_rec_test008, TestSize.Level2)
     const char* argv[] = {"atm", "toggle", "record", "-s", "-i", "abc", "-k", "1"};
     int32_t argc = sizeof(argv) / sizeof(argv[0]);
     std::string result = ExecAtmCommand(argc, const_cast<char**>(argv));
-    EXPECT_TRUE(IsOutputContain(result, "Invalid userID") || IsOutputContain(result, "Failure"));
+    EXPECT_TRUE(IsOutputContain(result, "Invalid userID") || IsOutputContain(result, "Invalid parameter") ||
+        IsOutputContain(result, "Failure"));
 }
 
 /**
@@ -2399,7 +2431,8 @@ HWTEST_F(AtmCommandTest, atm_toggle_rec_test009, TestSize.Level2)
     const char* argv[] = {"atm", "toggle", "record", "-o", "-i", "abc"};
     int32_t argc = sizeof(argv) / sizeof(argv[0]);
     std::string result = ExecAtmCommand(argc, const_cast<char**>(argv));
-    EXPECT_TRUE(IsOutputContain(result, "Invalid userID") || IsOutputContain(result, "Failure"));
+    EXPECT_TRUE(IsOutputContain(result, "Invalid userID") || IsOutputContain(result, "Invalid parameter") ||
+        IsOutputContain(result, "Failure"));
 }
 
 /**
@@ -2464,6 +2497,80 @@ HWTEST_F(AtmCommandTest, atm_toggle_error_test001, TestSize.Level2)
     int32_t argc = sizeof(argv) / sizeof(argv[0]);
     std::string result = ExecAtmCommand(argc, const_cast<char**>(argv));
     EXPECT_TRUE(IsOutputContain(result, "must specify") || IsOutputContain(result, "usage: atm toggle"));
+}
+
+/**
+ * @tc.name: atm_toggle_error_test002
+ * @tc.desc: Toggle command rejects conflicting operation options
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AtmCommandTest, atm_toggle_error_test002, TestSize.Level1)
+{
+    const char* argv[] = {"atm", "toggle", "request", "-s", "-o", "-i", TEST_TOGGLE_USER_ID,
+        "-p", PERM_CAMERA.c_str(), "-k", TEST_TOGGLE_STATUS_OPEN};
+    int32_t argc = sizeof(argv) / sizeof(argv[0]);
+    std::string result = ExecAtmCommand(argc, const_cast<char**>(argv));
+    EXPECT_TRUE(IsOutputContain(result, "Options -s and -o cannot be used together"));
+}
+
+/**
+ * @tc.name: atm_toggle_error_test003
+ * @tc.desc: Toggle command rejects conflicting legacy mode options
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AtmCommandTest, atm_toggle_error_test003, TestSize.Level1)
+{
+    const char* argv[] = {"atm", "toggle", "-r", "-u", "-o", "-i", TEST_TOGGLE_USER_ID};
+    int32_t argc = sizeof(argv) / sizeof(argv[0]);
+    std::string result = ExecAtmCommand(argc, const_cast<char**>(argv));
+    EXPECT_TRUE(IsOutputContain(result, "Options -r and -u cannot be used together"));
+}
+
+/**
+ * @tc.name: atm_toggle_error_test004
+ * @tc.desc: Record toggle rejects permission name option
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AtmCommandTest, atm_toggle_error_test004, TestSize.Level1)
+{
+    const char* argv[] = {"atm", "toggle", "record", "-o", "-i", TEST_TOGGLE_USER_ID,
+        "-p", PERM_CAMERA.c_str()};
+    int32_t argc = sizeof(argv) / sizeof(argv[0]);
+    std::string result = ExecAtmCommand(argc, const_cast<char**>(argv));
+    EXPECT_TRUE(IsOutputContain(result, "Option -p is not supported for record mode"));
+}
+
+/**
+ * @tc.name: atm_toggle_error_test005
+ * @tc.desc: Toggle command rejects mode option with subcommand
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AtmCommandTest, atm_toggle_error_test005, TestSize.Level1)
+{
+    const char* argv[] = {"atm", "toggle", "request", "-r", "-o", "-i", TEST_TOGGLE_USER_ID,
+        "-p", PERM_CAMERA.c_str()};
+    int32_t argc = sizeof(argv) / sizeof(argv[0]);
+    std::string result = ExecAtmCommand(argc, const_cast<char**>(argv));
+    EXPECT_TRUE(IsOutputContain(result, "Toggle mode option cannot be used with a subcommand"));
+}
+
+/**
+ * @tc.name: atm_toggle_error_test006
+ * @tc.desc: Toggle command rejects out of range user ID
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AtmCommandTest, atm_toggle_error_test006, TestSize.Level1)
+{
+    const char* argv[] = {"atm", "toggle", "request", "-o", "-i", INVALID_TOGGLE_USER_ID,
+        "-p", PERM_CAMERA.c_str()};
+    int32_t argc = sizeof(argv) / sizeof(argv[0]);
+    std::string result = ExecAtmCommand(argc, const_cast<char**>(argv));
+    EXPECT_TRUE(IsOutputContain(result, "Invalid parameter: -i"));
 }
 #endif
 } // namespace AccessToken

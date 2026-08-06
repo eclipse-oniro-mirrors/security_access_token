@@ -44,8 +44,7 @@ int32_t FormStateObserverStub::OnRemoteRequest(
     }
     switch (static_cast<IJsFormStateObserver::Message>(code)) {
         case IJsFormStateObserver::Message::FORM_STATE_OBSERVER_NOTIFY_WHETHER_FORMS_VISIBLE: {
-            (void)HandleNotifyWhetherFormsVisible(data, reply);
-            return NO_ERROR;
+            return HandleNotifyWhetherFormsVisible(data, reply);
         }
         default: {
             LOGD(ATM_DOMAIN, ATM_TAG, "Default case code: %{public}d.", code);
@@ -61,6 +60,11 @@ int32_t FormStateObserverStub::HandleNotifyWhetherFormsVisible(MessageParcel &da
     if (!data.ReadInt32(visibleTypeValue)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Read visibleType failed!");
         return ERR_READ_PARCEL_FAILED;
+    }
+    if (visibleTypeValue < static_cast<int32_t>(FormVisibilityType::UNKNOWN) ||
+        visibleTypeValue > static_cast<int32_t>(FormVisibilityType::INVISIBLE)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Invalid visibleType=%{public}d.", visibleTypeValue);
+        return ERR_PARAM_INVALID;
     }
     FormVisibilityType visibleType = static_cast<FormVisibilityType>(visibleTypeValue);
 
@@ -89,8 +93,7 @@ int32_t FormStateObserverStub::HandleNotifyWhetherFormsVisible(MessageParcel &da
         }
         formInstances.emplace_back(*info);
     }
-    (void)NotifyWhetherFormsVisible(visibleType, bundleName, formInstances);
-    return NO_ERROR;
+    return NotifyWhetherFormsVisible(visibleType, bundleName, formInstances);
 }
 } // namespace AccessToken
 } // namespace Security

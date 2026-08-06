@@ -124,9 +124,6 @@ static std::string FormatAvailableType(ATokenAvailableTypeEnum availableType)
         case ATokenAvailableTypeEnum::MDM:
             type = "MDM";
             break;
-        case ATokenAvailableTypeEnum::SYSTEM_AND_MDM:
-            type = "MDM";
-            break;
         case ATokenAvailableTypeEnum::SERVICE:
             type = "SERVICE";
             break;

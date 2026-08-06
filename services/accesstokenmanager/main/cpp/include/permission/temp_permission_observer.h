@@ -132,6 +132,8 @@ public:
         const std::string& permissionName, const std::string& taskName);
     bool CancelTaskOfPermissionRevoking(const std::string& taskName);
     void RegisterCallback();
+    void RegisterBackgroundCallback();
+    void RegisterFormVisibleCallback();
     void RegisterAppStatusListener();
     void UnRegisterCallback();
     int32_t NotifyWhetherFormsVisible(const FormVisibilityType visibleType,

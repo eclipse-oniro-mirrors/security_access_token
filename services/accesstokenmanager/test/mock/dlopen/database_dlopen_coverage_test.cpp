@@ -28,6 +28,36 @@ namespace Security {
 namespace AccessToken {
 namespace {
 constexpr const int32_t WAIT_EVENTHANDLE_TIME = 2;
+
+class DbLoaderFake final : public AccessTokenDbLoaderInterface {
+public:
+    ~DbLoaderFake() override = default;
+
+    void InitRdbHelper() override {}
+
+    int32_t Modify(const AtmDataType, const GenericValues&, const GenericValues&) override
+    {
+        return RET_FAILED;
+    }
+
+    int32_t Find(const AtmDataType, const GenericValues&, std::vector<GenericValues>&) override
+    {
+        return RET_FAILED;
+    }
+
+    int32_t Find(const AtmDataType, const std::string&, const std::vector<VariantValue>&,
+        std::vector<GenericValues>&) override
+    {
+        return RET_FAILED;
+    }
+
+    int32_t DeleteAndInsertValues(const std::vector<DelInfo>&, const std::vector<AddInfo>&) override
+    {
+        return RET_FAILED;
+    }
+
+    bool DestroyRdbHelper() override { return true; }
+};
 }
 class AccessTokenDatabaseDlopenTest : public testing::Test {
 public:
@@ -100,6 +130,42 @@ HWTEST_F(AccessTokenDatabaseDlopenTest, Create001, TestSize.Level4)
     ASSERT_NE(nullptr, instance->instance_);
     dlclose(handle);
     handle = nullptr;
+}
+
+/*
+ * @tc.name: DatabaseCallTaskNum001
+ * @tc.desc: RDB calls restore task count after a loader operation fails.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenDatabaseDlopenTest, DatabaseCallTaskNum001, TestSize.Level4)
+{
+    auto manager = RdbDlopenManager::GetInstance();
+    ASSERT_NE(nullptr, manager);
+    manager->handle_ = dlopen(RDB_ADAPTER_LIBPATH, RTLD_LAZY);
+    ASSERT_NE(nullptr, manager->handle_);
+    manager->instance_ = new DbLoaderFake();
+
+    GenericValues values;
+    std::vector<GenericValues> results;
+    std::vector<VariantValue> queryValues;
+    std::vector<DelInfo> delInfo;
+    std::vector<AddInfo> addInfo;
+    EXPECT_EQ(RET_FAILED, manager->Modify(AtmDataType::ACCESSTOKEN_SYSTEM_CONFIG, values, values));
+    EXPECT_EQ(0, manager->taskNum_);
+    EXPECT_EQ(RET_FAILED, manager->Find(AtmDataType::ACCESSTOKEN_SYSTEM_CONFIG, values, results));
+    EXPECT_EQ(0, manager->taskNum_);
+    EXPECT_EQ(RET_FAILED,
+        manager->Find(AtmDataType::ACCESSTOKEN_SYSTEM_CONFIG, "name", queryValues, results));
+    EXPECT_EQ(0, manager->taskNum_);
+    EXPECT_EQ(RET_FAILED, manager->DeleteAndInsertValues(delInfo, addInfo));
+    EXPECT_EQ(0, manager->taskNum_);
+
+    manager->GetEventHandler()->ProxyRemoveTask("DelayDlclose");
+    delete manager->instance_;
+    manager->instance_ = nullptr;
+    dlclose(manager->handle_);
+    manager->handle_ = nullptr;
 }
 
 /*

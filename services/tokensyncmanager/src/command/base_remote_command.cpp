@@ -153,7 +153,7 @@ CJsonUnique BaseRemoteCommand::ToHapTokenInfosJson(const HapTokenInfoForSync& to
 void BaseRemoteCommand::FromHapTokenBasicInfoJson(const CJson* hapTokenJson,
     HapTokenInfo& hapTokenBasicInfo)
 {
-    int32_t ver;
+    int32_t ver = 0;
     GetIntFromJson(hapTokenJson, JSON_VERSION, ver);
     hapTokenBasicInfo.ver = (char)ver;
     GetUnsignedIntFromJson(hapTokenJson, JSON_TOKENID, hapTokenBasicInfo.tokenID);

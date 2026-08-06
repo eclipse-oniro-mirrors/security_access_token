@@ -457,6 +457,9 @@ int32_t ToolTokenInfoManager::VerifyToolAccessToken(AccessTokenID tokenId, const
         }
         inner = iter->second;
     }
+    if (inner == nullptr) {
+        return PERMISSION_DENIED;
+    }
     return inner->VerifyAccessToken(permissionName);
 }
 

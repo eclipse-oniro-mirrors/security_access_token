@@ -25,7 +25,7 @@ namespace Security {
 namespace AccessToken {
 struct NativeTokenInfoBase {
     /** native token info */
-    ATokenAplEnum apl = APL_NORMAL;
+    ATokenAplEnum apl = APL_INVALID;
     unsigned char ver = DEFAULT_TOKEN_VERSION;
     int32_t uid = -1;
     std::string processName;

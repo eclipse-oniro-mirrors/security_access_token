@@ -32,6 +32,21 @@ constexpr int64_t DELAY_DLCLOSE_TIME_MILLISECONDS = 180 * 1000;
 
 using CreateFunc = void* (*)(void);
 using DestroyFunc = void (*)(void*);
+
+class TaskNumGuard final {
+public:
+    explicit TaskNumGuard(std::atomic_int32_t& taskNum) : taskNum_(taskNum) {}
+    TaskNumGuard(const TaskNumGuard&) = delete;
+    TaskNumGuard& operator=(const TaskNumGuard&) = delete;
+
+    ~TaskNumGuard()
+    {
+        --taskNum_;
+    }
+
+private:
+    std::atomic_int32_t& taskNum_;
+};
 }
 
 RdbDlopenManager::RdbDlopenManager()
@@ -172,6 +187,10 @@ AccessTokenDbLoaderInterface* RdbDlopenManager::GetDbInstance()
         if (instance_ == nullptr) {
             Create(handle_);
         }
+
+        if (instance_ != nullptr) {
+            ++taskNum_;
+        }
     }
 
     DelayDlcloseHandle(DELAY_DLCLOSE_TIME_MILLISECONDS);
@@ -186,10 +205,8 @@ int32_t RdbDlopenManager::Modify(const AtmDataType type, const GenericValues& mo
         return AccessTokenError::ERR_LOAD_SO_FAILED;
     }
 
-    ++taskNum_;
-    int32_t res = instance->Modify(type, modifyValue, conditionValue);
-    --taskNum_;
-    return res;
+    TaskNumGuard taskNumGuard(taskNum_);
+    return instance->Modify(type, modifyValue, conditionValue);
 }
 
 int32_t RdbDlopenManager::Find(AtmDataType type, const GenericValues& conditionValue,
@@ -200,10 +217,8 @@ int32_t RdbDlopenManager::Find(AtmDataType type, const GenericValues& conditionV
         return AccessTokenError::ERR_LOAD_SO_FAILED;
     }
 
-    ++taskNum_;
-    int32_t res = instance->Find(type, conditionValue, results);
-    --taskNum_;
-    return res;
+    TaskNumGuard taskNumGuard(taskNum_);
+    return instance->Find(type, conditionValue, results);
 }
 
 int32_t RdbDlopenManager::Find(const AtmDataType type, const std::string& column,
@@ -214,10 +229,8 @@ int32_t RdbDlopenManager::Find(const AtmDataType type, const std::string& column
         return AccessTokenError::ERR_LOAD_SO_FAILED;
     }
 
-    ++taskNum_;
-    int32_t res = instance->Find(type, column, values, results);
-    --taskNum_;
-    return res;
+    TaskNumGuard taskNumGuard(taskNum_);
+    return instance->Find(type, column, values, results);
 }
 
 int32_t RdbDlopenManager::DeleteAndInsertValues(const std::vector<DelInfo>& delInfoVec,
@@ -228,10 +241,8 @@ int32_t RdbDlopenManager::DeleteAndInsertValues(const std::vector<DelInfo>& delI
         return AccessTokenError::ERR_LOAD_SO_FAILED;
     }
 
-    ++taskNum_;
-    int32_t res = instance->DeleteAndInsertValues(delInfoVec, addInfoVec);
-    --taskNum_;
-    return res;
+    TaskNumGuard taskNumGuard(taskNum_);
+    return instance->DeleteAndInsertValues(delInfoVec, addInfoVec);
 }
 } // namespace AccessToken
 } // namespace Security

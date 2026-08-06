@@ -15,6 +15,9 @@
 
 #include "atm_command.h"
 
+#include <cerrno>
+#include <climits>
+#include <cstdlib>
 #include <getopt.h>
 #include <map>
 #include <sstream>
@@ -188,14 +191,52 @@ std::map<char, OptType> DUMP_COMMAND_TYPE = {
 };
 
 #ifndef ATM_BUILD_VARIANT_USER_ENABLE
-std::map<char, ToggleModeType> TOGGLE_MODE_TYPE = {
-    {'r', TOGGLE_REQUEST},
-    {'u', TOGGLE_RECORD},
-};
-std::map<char, ToggleOperateType> TOGGLE_OPERATE_TYPE = {
-    {'s', TOGGLE_SET},
-    {'o', TOGGLE_GET},
-};
+static constexpr int32_t DECIMAL_BASE = 10;
+
+static bool IsUnsignedNumericString(const char* value)
+{
+    if ((value == nullptr) || (value[0] == '\0')) {
+        return false;
+    }
+    for (int32_t index = 0; value[index] != '\0'; ++index) {
+        if ((value[index] < '0') || (value[index] > '9')) {
+            return false;
+        }
+    }
+    return true;
+}
+
+static bool ParseUnsignedLong(const char* value, unsigned long& result)
+{
+    if (!IsUnsignedNumericString(value)) {
+        return false;
+    }
+    errno = 0;
+    char* end = nullptr;
+    result = std::strtoul(value, &end, DECIMAL_BASE);
+    return (errno != ERANGE) && (*end == '\0');
+}
+
+static bool ConvertToInt32(const char* value, int32_t& result)
+{
+    unsigned long parsedValue = 0;
+    if (!ParseUnsignedLong(value, parsedValue) || (parsedValue > INT32_MAX)) {
+        return false;
+    }
+    result = static_cast<int32_t>(parsedValue);
+    return true;
+}
+
+static bool ConvertToUint32(const char* value, uint32_t& result)
+{
+    unsigned long parsedValue = 0;
+    if (!ParseUnsignedLong(value, parsedValue) || (parsedValue > UINT32_MAX)) {
+        return false;
+    }
+    result = static_cast<uint32_t>(parsedValue);
+    return true;
+}
+
 #endif
 }
 
@@ -376,51 +417,40 @@ void AtmCommand::RunAsCommandExistentOptionForToggle(int32_t option, AtmTogglePa
 {
     switch (option) {
         case 'r':
+            info.hasRequestOption = true;
+            info.toggleMode = TOGGLE_REQUEST;
+            break;
         case 'u':
-            info.toggleMode = TOGGLE_MODE_TYPE[option];
+            info.hasRecordOption = true;
+            info.toggleMode = TOGGLE_RECORD;
             break;
         case 's':
+            info.hasSetOption = true;
+            info.type = TOGGLE_SET;
+            break;
         case 'o':
-            info.type = TOGGLE_OPERATE_TYPE[option];
+            info.hasGetOption = true;
+            info.type = TOGGLE_GET;
             break;
         case 'p':
             info.hasPermissionOption = true;
-            info.permissionName = (optarg != nullptr) ? optarg : "";;
+            info.permissionName = (optarg != nullptr) ? optarg : "";
             break;
         case 'i':
             info.hasUserIdOption = true;
-            if (optarg != nullptr) {
-                if (IsNumericString(optarg)) {
-                    info.userID = static_cast<int32_t>(std::atoi(optarg));
-                } else {
-                    info.userID = -1;
-                }
+            if (!ConvertToInt32(optarg, info.userID)) {
+                info.hasInvalidUserIdOption = true;
             }
             break;
         case 'k':
             info.hasStatusOption = true;
-            if (optarg != nullptr && IsNumericString(optarg)) {
-                info.status = static_cast<uint32_t>(std::atoi(optarg));
+            if (!ConvertToUint32(optarg, info.status)) {
+                info.hasInvalidStatusOption = true;
             }
             break;
         default:
             break;
     }
-}
-
-bool AtmCommand::IsNumericString(const char* string)
-{
-    if (string == nullptr || string[0] == '\0') {
-        return false;
-    }
-
-    for (int32_t i = 0; string[i] != '\0'; i++) {
-        if (!isdigit(string[i])) {
-            return false;
-        }
-    }
-
-    return true;
 }
 
 std::string AtmCommand::DumpRecordInfo(uint32_t tokenId, const std::string& permissionName)
@@ -954,34 +984,40 @@ int32_t AtmCommand::ValidatePermParams(const PermOptionsContext& context)
 }
 
 #ifndef ATM_BUILD_VARIANT_USER_ENABLE
-static int32_t ValidateToggleSetParams(const AtmToggleParamInfo& info, std::string& errorMsg)
+static int32_t ValidateToggleParams(const AtmToggleParamInfo& info, bool hasSubcommandMode, std::string& errorMsg)
 {
+    if (!info.hasUserIdOption) {
+        errorMsg += "Error: Missing required parameter: -i <user-id>\n\n";
+    } else if (info.hasInvalidUserIdOption) {
+        errorMsg += "Error: Invalid parameter: -i <user-id>\n\n";
+    }
+
+    if (info.hasRequestOption && info.hasRecordOption) {
+        errorMsg += "Error: Options -r and -u cannot be used together.\n\n";
+    }
+    if (hasSubcommandMode && (info.hasRequestOption || info.hasRecordOption)) {
+        errorMsg += "Error: Toggle mode option cannot be used with a subcommand.\n\n";
+    }
+    if (info.hasSetOption && info.hasGetOption) {
+        errorMsg += "Error: Options -s and -o cannot be used together.\n\n";
+    }
+    if ((info.toggleMode == TOGGLE_RECORD) && info.hasPermissionOption) {
+        errorMsg += "Error: Option -p is not supported for record mode.\n\n";
+    }
+
     if (info.toggleMode == TOGGLE_REQUEST) {
         if (!info.hasPermissionOption || info.permissionName.empty()) {
             errorMsg += "Error: Missing required parameter: -p <permission-name>\n\n";
         }
-        if (!info.hasStatusOption) {
-            errorMsg += "Error: Missing required parameter: -k <status>\n\n";
-        }
-        if (errorMsg.empty()) {
-            return RET_SUCCESS;
-        }
-        errorMsg += HELP_MSG_TOGGLE_REQUEST + "\n";
-        return ERR_INVALID_VALUE;
-    } else if (info.toggleMode == TOGGLE_RECORD) {
-        if (!info.hasUserIdOption) {
-            errorMsg += "Error: Missing required parameter: -i <user-id>\n\n";
-        }
-        if (!info.hasStatusOption) {
-            errorMsg += "Error: Missing required parameter: -k <status>\n\n";
-        }
-        if (errorMsg.empty()) {
-            return RET_SUCCESS;
-        }
-        errorMsg += HELP_MSG_TOGGLE_RECORD + "\n";
-        return ERR_INVALID_VALUE;
     }
-    return RET_SUCCESS;
+    if (info.type == TOGGLE_SET) {
+        if (!info.hasStatusOption) {
+            errorMsg += "Error: Missing required parameter: -k <status>\n\n";
+        } else if (info.hasInvalidStatusOption) {
+            errorMsg += "Error: Invalid parameter: -k <status>\n\n";
+        }
+    }
+    return errorMsg.empty() ? RET_SUCCESS : ERR_INVALID_VALUE;
 }
 
 int32_t AtmCommand::RunAsCommonCommandForToggle()
@@ -1034,13 +1070,11 @@ int32_t AtmCommand::RunAsCommonCommandForToggle()
         return result;
     }
 
-    if (info.type == TOGGLE_SET) {
-        std::string errorMsg;
-        result = ValidateToggleSetParams(info, errorMsg);
-        if (result != RET_SUCCESS) {
-            resultReceiver_.append(errorMsg);
-            return result;
-        }
+    std::string errorMsg;
+    result = ValidateToggleParams(info, hasToggleMode, errorMsg);
+    if (result != RET_SUCCESS) {
+        resultReceiver_.append(errorMsg);
+        return result;
     }
 
     return RunToggleCommandByOperationType(info);

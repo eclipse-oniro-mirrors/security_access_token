@@ -1818,15 +1818,38 @@ HWTEST_F(AccessTokenManagerServiceTest, OTATest008, TestSize.Level0)
  */
 HWTEST_F(AccessTokenManagerServiceTest, SetPermissionStatusWithPolicy001, TestSize.Level0)
 {
-    std::vector<std::string> permList;
+    std::vector<std::string> permList = { "ohos.permission.LOCATION" };
     uint32_t ret = atManagerService_->SetPermissionStatusWithPolicy(
-        0, permList, 0, PERMISSION_FIXED_BY_ADMIN_POLICY);
+        INVALID_TOKENID, permList, PERMISSION_GRANTED, PERMISSION_FIXED_BY_ADMIN_POLICY);
+    ASSERT_EQ(ERR_PARAM_INVALID, ret);
+
+    permList.clear();
+    ret = atManagerService_->SetPermissionStatusWithPolicy(
+        INVALID_TOKENID, permList, PERMISSION_GRANTED, PERMISSION_FIXED_BY_ADMIN_POLICY);
     ASSERT_EQ(ERR_PARAM_INVALID, ret);
 
     permList.resize(1024 + 1);
     ret = atManagerService_->SetPermissionStatusWithPolicy(
-        0, permList, 0, PERMISSION_FIXED_BY_ADMIN_POLICY);
+        INVALID_TOKENID, permList, PERMISSION_GRANTED, PERMISSION_FIXED_BY_ADMIN_POLICY);
     ASSERT_EQ(ERR_PARAM_INVALID, ret);
+}
+
+/**
+ * @tc.name: SetPermissionStatusWithPolicy002
+ * @tc.desc: SetPermissionStatusWithPolicy rejects an empty permission list for a valid token.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, SetPermissionStatusWithPolicy002, TestSize.Level0)
+{
+    AccessTokenID tokenId = INVALID_TOKENID;
+    ASSERT_NE(0, CreateServiceTestHapToken("set_permission_status_policy_list", false, {}, tokenId));
+
+    std::vector<std::string> permissionList;
+    EXPECT_EQ(ERR_PARAM_INVALID, atManagerService_->SetPermissionStatusWithPolicy(
+        tokenId, permissionList, PERMISSION_GRANTED, PERMISSION_FIXED_BY_ADMIN_POLICY));
+
+    EXPECT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId));
 }
 
 /**
@@ -2632,6 +2655,7 @@ HWTEST_F(AccessTokenManagerServiceTest, AccessTokenServiceCoverageTest001, TestS
  */
 HWTEST_F(AccessTokenManagerServiceTest, GetPermissionStatusDetailsServiceTest001, TestSize.Level1)
 {
+    MockNativeToken mock("foundation");
     std::vector<PermissionStatusDetailIdl> resultList;
     EXPECT_EQ(ERR_PARAM_INVALID,
         atManagerService_->GetPermissionStatusDetails(INVALID_TOKENID, {"ohos.permission.LOCATION"}, resultList));
@@ -2645,7 +2669,7 @@ HWTEST_F(AccessTokenManagerServiceTest, GetPermissionStatusDetailsServiceTest001
 
 /**
  * @tc.name: GetPermissionStatusDetailsServiceTest002
- * @tc.desc: Test GetPermissionStatusDetails checks invalid param before caller permission.
+ * @tc.desc: Test GetPermissionStatusDetails checks caller permission before invalid param.
  * @tc.require:
  * @tc.type: FUNC
  */
@@ -2657,7 +2681,7 @@ HWTEST_F(AccessTokenManagerServiceTest, GetPermissionStatusDetailsServiceTest002
     SetSelfTokenID(fullTokenId);
 
     std::vector<PermissionStatusDetailIdl> resultList;
-    EXPECT_EQ(ERR_PARAM_INVALID, atManagerService_->GetPermissionStatusDetails(tokenId, {}, resultList));
+    EXPECT_EQ(ERR_PERMISSION_DENIED, atManagerService_->GetPermissionStatusDetails(tokenId, {}, resultList));
     EXPECT_TRUE(resultList.empty());
 
     SetSelfTokenID(g_selfShellTokenId);
@@ -2719,6 +2743,12 @@ HWTEST_F(AccessTokenManagerServiceTest, GetPermissionStatusDetailsServiceTest004
  */
 HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest001, TestSize.Level1)
 {
+    AccessTokenID tokenId = INVALID_TOKENID;
+    uint64_t fullTokenId = CreateServiceTestHapToken(
+        "claw_permission_param_test", true, BuildClawQueryAndManagePermissionStates(), tokenId);
+    ASSERT_NE(0, fullTokenId);
+    SetSelfTokenID(fullTokenId);
+
     PermissionDialogResultIdl dialogResult;
     EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
         atManagerService_->GetCliPermissionRequestInfo(
@@ -2728,6 +2758,9 @@ HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest001, TestSize.L
     EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
         atManagerService_->GetCliPermissions(
             INVALID_TOKENID, DEFAULT_AGENT_ID, BuildCliInfoIdls(), cliPermissionsResult));
+
+    SetSelfTokenID(g_selfShellTokenId);
+    (void)AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId);
 }
 
 /**
@@ -2777,6 +2810,9 @@ HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest004, TestSize.L
     EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
         atManagerService_->GetCliPermissions(
             tokenId, DEFAULT_AGENT_ID, BuildCliInfoIdls(), cliPermissionsResult));
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
+        atManagerService_->GetCliPermissions(
+            INVALID_TOKENID, DEFAULT_AGENT_ID, BuildCliInfoIdls(), cliPermissionsResult));
 
     CliAuthInfoIdl cliAuthInfoIdl;
     cliAuthInfoIdl.cliInfo = BuildCliInfoIdls()[0];
@@ -2785,6 +2821,8 @@ HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest004, TestSize.L
     ToolAuthResultIdl authResult;
     EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
         atManagerService_->GenerateCliAuthResult(tokenId, DEFAULT_AGENT_ID, {cliAuthInfoIdl}, authResult));
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
+        atManagerService_->GenerateCliAuthResult(INVALID_TOKENID, DEFAULT_AGENT_ID, {cliAuthInfoIdl}, authResult));
 
     SetSelfTokenID(g_selfShellTokenId);
     (void)AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId);
@@ -3232,6 +3270,8 @@ HWTEST_F(AccessTokenManagerServiceTest, ClawPermissionServiceTest015, TestSize.L
  */
 HWTEST_F(AccessTokenManagerServiceTest, UserPolicyServiceTest001, TestSize.Level1)
 {
+    MockToken mock(g_selfShellTokenId, "accesstoken_service", false);
+    mock.Grant(MANAGE_USER_POLICY);
     EXPECT_EQ(ERR_PARAM_INVALID, atManagerService_->SetUserPolicy({}));
     constexpr int32_t MAX_SET_USER_POLICY_SIZE = 200;
 
@@ -3247,6 +3287,8 @@ HWTEST_F(AccessTokenManagerServiceTest, UserPolicyServiceTest001, TestSize.Level
  */
 HWTEST_F(AccessTokenManagerServiceTest, UserPolicyServiceTest002, TestSize.Level1)
 {
+    MockToken mock(g_selfShellTokenId, "accesstoken_service", false);
+    mock.Grant(MANAGE_USER_POLICY);
     EXPECT_EQ(ERR_PARAM_INVALID, atManagerService_->ClearUserPolicy({}));
 
     std::vector<std::string> permissionList(MAX_PERMISSION_SIZE + 1, "ohos.permission.INTERNET");
@@ -3739,6 +3781,8 @@ HWTEST_F(AccessTokenManagerServiceTest, UserPolicyServiceTest014, TestSize.Level
  */
 HWTEST_F(AccessTokenManagerServiceTest, PolicyWhiteListServiceTest001, TestSize.Level1)
 {
+    MockToken mock(g_selfShellTokenId, "accesstoken_service", false);
+    mock.Grant(MANAGE_USER_POLICY);
     HapInfoParcel infoParcel;
     infoParcel.hapInfoParameter = g_info;
     HapPolicyParcel policyParcel;
@@ -3780,6 +3824,8 @@ HWTEST_F(AccessTokenManagerServiceTest, PolicyWhiteListServiceTest001, TestSize.
  */
 HWTEST_F(AccessTokenManagerServiceTest, PolicyWhiteListServiceTest002, TestSize.Level1)
 {
+    MockToken mock(g_selfShellTokenId, "accesstoken_service", false);
+    mock.Grant(MANAGE_USER_POLICY);
     std::vector<AccessTokenID> tokenIdList = {RANDOM_TOKENID};
     EXPECT_EQ(ERR_PARAM_INVALID, atManagerService_->GetPolicyWhiteList(UINT32_MAX, tokenIdList));
     EXPECT_TRUE(tokenIdList.empty());
@@ -3953,6 +3999,8 @@ HWTEST_F(AccessTokenManagerServiceTest, PolicyWhiteListServicePermissionTest001,
 
     EXPECT_EQ(ERR_PERMISSION_DENIED,
         atManagerService_->UpdatePolicyWhiteList(targetTokenId, permCode, static_cast<int32_t>(ADD)));
+    EXPECT_EQ(ERR_PERMISSION_DENIED,
+        atManagerService_->UpdatePolicyWhiteList(INVALID_TOKENID, permCode, static_cast<int32_t>(ADD)));
 
     SetSelfTokenID(g_selfShellTokenId);
     (void)AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(callerTokenId);

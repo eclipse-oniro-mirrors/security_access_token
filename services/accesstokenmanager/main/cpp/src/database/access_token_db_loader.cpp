@@ -103,7 +103,6 @@ void Destroy(void* loaderPtr)
         delete loader;
         loader = nullptr;
     }
-    loaderPtr = nullptr;
 }
 }
 } // namespace AccessToken

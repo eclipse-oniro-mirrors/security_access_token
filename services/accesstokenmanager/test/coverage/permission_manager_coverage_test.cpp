@@ -145,6 +145,15 @@ public:
     }
 };
 
+class PermissionRecordManagerCoverTestCb2 : public FormStateObserverStub {
+public:
+    int32_t NotifyWhetherFormsVisible(const FormVisibilityType,
+        const std::string&, std::vector<FormInstance>&) override
+    {
+        return RET_FAILED;
+    }
+};
+
 /**
  * @tc.name: OnRemoteRequest001
  * @tc.desc: FormStateObserverStub::OnRemoteRequest function test
@@ -160,8 +169,15 @@ HWTEST_F(PermissionManagerCoverageTest, OnRemoteRequest001, TestSize.Level4)
 
     OHOS::MessageParcel data1;
     ASSERT_EQ(true, data1.WriteInterfaceToken(IJsFormStateObserver::GetDescriptor()));
-    EXPECT_EQ(RET_SUCCESS, callback.OnRemoteRequest(static_cast<uint32_t>(
+    EXPECT_EQ(ERR_READ_PARCEL_FAILED, callback.OnRemoteRequest(static_cast<uint32_t>(
         IJsFormStateObserver::Message::FORM_STATE_OBSERVER_NOTIFY_WHETHER_FORMS_VISIBLE), data1, reply, option));
+
+    OHOS::MessageParcel invalidVisibleTypeData;
+    ASSERT_EQ(true, invalidVisibleTypeData.WriteInterfaceToken(IJsFormStateObserver::GetDescriptor()));
+    ASSERT_EQ(true, invalidVisibleTypeData.WriteInt32(3));
+    EXPECT_EQ(ERR_PARAM_INVALID, callback.OnRemoteRequest(static_cast<uint32_t>(
+        IJsFormStateObserver::Message::FORM_STATE_OBSERVER_NOTIFY_WHETHER_FORMS_VISIBLE), invalidVisibleTypeData,
+        reply, option));
 
     OHOS::MessageParcel data2;
     ASSERT_EQ(true, data2.WriteInterfaceToken(IJsFormStateObserver::GetDescriptor()));
@@ -186,6 +202,54 @@ HWTEST_F(PermissionManagerCoverageTest, OnRemoteRequest001, TestSize.Level4)
 }
 
 /**
+ * @tc.name: OnRemoteRequest002
+ * @tc.desc: FormStateObserverStub rejects incomplete form visibility parcels and forwards callback failures.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionManagerCoverageTest, OnRemoteRequest002, TestSize.Level4)
+{
+    PermissionRecordManagerCoverTestCb1 callback;
+    PermissionRecordManagerCoverTestCb2 failedCallback;
+    MessageParcel reply;
+    MessageOption option(MessageOption::TF_SYNC);
+    uint32_t code = static_cast<uint32_t>(
+        IJsFormStateObserver::Message::FORM_STATE_OBSERVER_NOTIFY_WHETHER_FORMS_VISIBLE);
+
+    MessageParcel missingBundle;
+    ASSERT_TRUE(missingBundle.WriteInterfaceToken(IJsFormStateObserver::GetDescriptor()));
+    ASSERT_TRUE(missingBundle.WriteInt32(static_cast<int32_t>(FormVisibilityType::VISIBLE)));
+    EXPECT_EQ(ERR_READ_PARCEL_FAILED, callback.OnRemoteRequest(code, missingBundle, reply, option));
+
+    MessageParcel missingSize;
+    ASSERT_TRUE(missingSize.WriteInterfaceToken(IJsFormStateObserver::GetDescriptor()));
+    ASSERT_TRUE(missingSize.WriteInt32(static_cast<int32_t>(FormVisibilityType::VISIBLE)));
+    ASSERT_TRUE(missingSize.WriteString(FORM_VISIBLE_NAME));
+    EXPECT_EQ(ERR_READ_PARCEL_FAILED, callback.OnRemoteRequest(code, missingSize, reply, option));
+
+    MessageParcel invalidSize;
+    ASSERT_TRUE(invalidSize.WriteInterfaceToken(IJsFormStateObserver::GetDescriptor()));
+    ASSERT_TRUE(invalidSize.WriteInt32(static_cast<int32_t>(FormVisibilityType::VISIBLE)));
+    ASSERT_TRUE(invalidSize.WriteString(FORM_VISIBLE_NAME));
+    ASSERT_TRUE(invalidSize.WriteInt32(-1));
+    EXPECT_EQ(ERR_OVERSIZE, callback.OnRemoteRequest(code, invalidSize, reply, option));
+
+    MessageParcel missingForm;
+    ASSERT_TRUE(missingForm.WriteInterfaceToken(IJsFormStateObserver::GetDescriptor()));
+    ASSERT_TRUE(missingForm.WriteInt32(static_cast<int32_t>(FormVisibilityType::VISIBLE)));
+    ASSERT_TRUE(missingForm.WriteString(FORM_VISIBLE_NAME));
+    ASSERT_TRUE(missingForm.WriteInt32(1));
+    EXPECT_EQ(RET_FAILED, callback.OnRemoteRequest(code, missingForm, reply, option));
+
+    MessageParcel callbackFailure;
+    ASSERT_TRUE(callbackFailure.WriteInterfaceToken(IJsFormStateObserver::GetDescriptor()));
+    ASSERT_TRUE(callbackFailure.WriteInt32(static_cast<int32_t>(FormVisibilityType::VISIBLE)));
+    ASSERT_TRUE(callbackFailure.WriteString(FORM_VISIBLE_NAME));
+    ASSERT_TRUE(callbackFailure.WriteInt32(0));
+    EXPECT_EQ(RET_FAILED, failedCallback.OnRemoteRequest(code, callbackFailure, reply, option));
+}
+
+/**
  * @tc.name: UpdateCapStateToDatabase001
  * @tc.desc: Test AccessTokenInfoManager::UpdateCapStateToDatabase
  * @tc.type: FUNC
@@ -203,6 +267,32 @@ HWTEST_F(PermissionManagerCoverageTest, UpdateCapStateToDatabase001, TestSize.Le
     ASSERT_EQ(true, AccessTokenInfoManager::GetInstance().UpdateCapStateToDatabase(tokenId, false));
 
     AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId);
+}
+
+/**
+ * @tc.name: SetPermDialogCapRollback001
+ * @tc.desc: SetPermDialogCap restores its in-memory state when the database update fails.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionManagerCoverageTest, SetPermDialogCapRollback001, TestSize.Level4)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+    std::vector<GenericValues> undefValues;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_info, g_policy, tokenIdEx,
+        undefValues));
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+    ASSERT_FALSE(AccessTokenInfoManager::GetInstance().GetPermDialogCap(tokenId));
+
+    std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance()->GetRdb();
+    ASSERT_NE(nullptr, db);
+    db->updateFlag_ = NativeRdb::RdbStore::RdbStoreOperationResult::RESULT_FAIL;
+    EXPECT_EQ(ERR_DATABASE_OPERATE_FAILED, AccessTokenInfoManager::GetInstance().SetPermDialogCap(tokenId, true));
+    db->updateFlag_ = 0;
+
+    EXPECT_FALSE(AccessTokenInfoManager::GetInstance().GetPermDialogCap(tokenId));
+    EXPECT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId));
 }
 
 /**
