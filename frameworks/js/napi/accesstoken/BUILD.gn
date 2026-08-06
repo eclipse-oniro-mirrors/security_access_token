@@ -63,7 +63,9 @@ ohos_shared_library("libabilityaccessctrl") {
     "hisysevent:libhisysevent",
     "init:libbegetutil",
     "ipc:ipc_single",
+    "libuv:uv",
     "napi:ace_napi",
+    "node:node_header_notice",
     "window_manager:libwm",
   ]
 

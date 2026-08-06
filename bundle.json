@@ -57,6 +57,7 @@
         "memmgr",
         "libuv",
         "napi",
+        "node",
         "openssl",
         "os_account",
         "power_manager",
