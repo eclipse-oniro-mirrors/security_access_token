@@ -1855,6 +1855,10 @@ napi_value NapiAtManager::UnregisterPermStateChangeCallback(napi_env env, napi_c
         }
         return nullptr;
     }
+    if ((unregisterPermStateChangeInfo->permStateChangeType == REGISTER_SELF_PERMISSION_STATE_CHANGE_TYPE) &&
+        (unregisterPermStateChangeInfo->callbackRef == nullptr)) {
+        LOGI(ATM_DOMAIN, ATM_TAG, "SubEvent op=off_all kit=AbilityKit event=selfPermissionStateChange");
+    }
     for (const auto& item : batchPermStateChangeRegisters) {
         PermStateChangeScope scopeInfo;
         item->subscriber->GetScope(scopeInfo);
