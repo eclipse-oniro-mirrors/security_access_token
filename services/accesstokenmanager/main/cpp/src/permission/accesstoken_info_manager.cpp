@@ -948,8 +948,6 @@ int AccessTokenInfoManager::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo&
     AccessTokenID queryTokenID = INVALID_TOKENID;
     int32_t ret = ResolveQueryTokenID(tokenID, queryTokenID);
     if (ret != RET_SUCCESS) {
-        LOGE(ATM_DOMAIN, ATM_TAG,
-            "Failed to resolve query token, tokenID=%{public}u, ret=%{public}d.", tokenID, ret);
         return AccessTokenError::ERR_TOKENID_NOT_EXIST;
     }
     std::shared_ptr<HapTokenInfoInner> infoPtr = GetHapTokenInfoInner(queryTokenID);

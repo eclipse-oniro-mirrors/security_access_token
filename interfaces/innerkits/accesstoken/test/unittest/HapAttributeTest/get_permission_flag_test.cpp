@@ -142,6 +142,8 @@ HWTEST_F(GetPermissionFlagTest, GetPermissionFlagFuncTest001, TestSize.Level0)
     uint32_t flag;
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetPermissionFlag(tokenID, PERMISSION_MICROPHONE, flag));
     ASSERT_EQ(PERMISSION_USER_FIXED, flag);
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetPermissionFlagEx(tokenID, PERMISSION_MICROPHONE, flag));
+    ASSERT_EQ(PERMISSION_USER_FIXED, flag);
 
     ASSERT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
@@ -178,6 +180,32 @@ HWTEST_F(GetPermissionFlagTest, GetPermissionFlagAbnormalTest001, TestSize.Level
 
     ret = AccessTokenKit::GetPermissionFlag(tokenID, "ohos.permission.ALPHA", flag);
     EXPECT_EQ(AccessTokenError::ERR_PERMISSION_NOT_EXIST, ret);
+}
+
+/**
+ * @tc.name: GetPermissionFlagExAbnormalTest001
+ * @tc.desc: Get permission flag through the extended interface with invalid input.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(GetPermissionFlagTest, GetPermissionFlagExAbnormalTest001, TestSize.Level0)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetPermissionFlagExAbnormalTest001");
+
+    AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+
+    uint32_t flag = 0;
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
+        AccessTokenKit::GetPermissionFlagEx(TEST_TOKENID_INVALID, PERMISSION_MICROPHONE, flag));
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, AccessTokenKit::GetPermissionFlagEx(tokenID, "", flag));
+
+    std::string invalidPerm(INVALID_PERMNAME_LEN, 'a');
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
+        AccessTokenKit::GetPermissionFlagEx(tokenID, invalidPerm, flag));
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_NOT_EXIST,
+        AccessTokenKit::GetPermissionFlagEx(tokenID, "ohos.permission.GAMMA", flag));
 }
 
 /**

@@ -301,6 +301,15 @@ public:
      */
     static int GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName, uint32_t& flag);
     /**
+     * @brief Get permission grant flag through the extended interface.
+     * @param tokenID token id
+     * @param permissionName permission name quote
+     * @param flag the permission grant flag, as query result
+     * @return error code, see access_token_error.h
+     */
+    static int32_t GetPermissionFlagEx(
+        AccessTokenID tokenID, const std::string& permissionName, uint32_t& flag);
+    /**
      * @brief Set permission request toggle status
      * @param permissionName permission name quote
      * @param status the permission request toggle status to set

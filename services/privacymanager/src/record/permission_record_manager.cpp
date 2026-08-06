@@ -625,7 +625,7 @@ int32_t PermissionRecordManager::AddPermissionUsedRecord(const AddPermParamInfo&
     }
 
     uint32_t flag = TypePermissionFlag::PERMISSION_DEFAULT_FLAG;
-    ret = AccessTokenKit::GetPermissionFlag(normalizedInfo.tokenId, normalizedInfo.permissionName, flag);
+    ret = AccessTokenKit::GetPermissionFlagEx(normalizedInfo.tokenId, normalizedInfo.permissionName, flag);
     if (ret == Constant::SUCCESS) {
         if ((flag & TypePermissionFlag::PERMISSION_FIXED_BY_ADMIN_POLICY) != 0) {
             LOGI(PRI_DOMAIN, PRI_TAG, "Fixed by admin policy, don't add used record.");
