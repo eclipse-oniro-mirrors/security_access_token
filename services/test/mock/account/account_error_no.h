@@ -19,7 +19,7 @@
 #include "errors.h"
 
 namespace OHOS {
-constexpr ErrCode ERR_OS_ACCOUNT_SUBSPACE_NOT_FOUND = 4194364;
+constexpr ErrCode ERR_OS_ACCOUNT_SUBPROFILE_NOT_FOUND = 4194364;
 }
 
 #endif // ACCESS_TOKEN_TEST_MOCK_ACCOUNT_ERROR_NO_H

@@ -518,7 +518,7 @@ static void ConvertPermissionUsedRecord(napi_env env, napi_value value, const Pe
 static void ConvertBundleUsedRecord(napi_env env, napi_value value, const BundleUsedRecord& bundleRecord)
 {
     napi_value nTokenId;
-    NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, bundleRecord.tokenId, &nTokenId));
+    NAPI_CALL_RETURN_VOID(env, napi_create_uint32(env, bundleRecord.tokenId, &nTokenId));
     NAPI_CALL_RETURN_VOID(env, napi_set_named_property(env, value, "tokenId", nTokenId));
 
     napi_value nIsRemote;
@@ -1371,7 +1371,7 @@ static void GetPermissionUsedTypeInfosExecute(napi_env env, void* data)
 static void ConvertPermissionUsedTypeInfo(const napi_env& env, napi_value& value, const PermissionUsedTypeInfo& info)
 {
     napi_value tokenIdValue;
-    NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, info.tokenId, &tokenIdValue));
+    NAPI_CALL_RETURN_VOID(env, napi_create_uint32(env, info.tokenId, &tokenIdValue));
     NAPI_CALL_RETURN_VOID(env, napi_set_named_property(env, value, "tokenId", tokenIdValue));
 
     napi_value permissionNameValue;

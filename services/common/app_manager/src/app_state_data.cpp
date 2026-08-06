@@ -15,6 +15,8 @@
 
 #include "app_state_data.h"
 
+#include "parcel_utils.h"
+
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
@@ -35,23 +37,23 @@ AppStateData *AppStateData::Unmarshalling(Parcel &parcel)
     if (appStateData == nullptr) {
         return nullptr;
     }
-    appStateData->bundleName = parcel.ReadString();
-    appStateData->uid = parcel.ReadInt32();
-    appStateData->state = parcel.ReadInt32();
-    appStateData->pid = parcel.ReadInt32();
-    appStateData->accessTokenId = parcel.ReadUint32();
-    appStateData->isFocused = parcel.ReadBool();
-    appStateData->extensionType = parcel.ReadInt32();
-    parcel.ReadInt32Vector(&appStateData->renderPids);
-    appStateData->callerBundleName = parcel.ReadString();
-    appStateData->isSplitScreenMode = parcel.ReadBool();
-    appStateData->callerUid = parcel.ReadInt32();
-    appStateData->isFloatingWindowMode = parcel.ReadBool();
-    appStateData->appIndex = parcel.ReadInt32();
-    appStateData->isPreloadModule = parcel.ReadBool();
-    appStateData->isFromWindowFocusChanged = parcel.ReadBool();
-    appStateData->preloadMode = parcel.ReadInt32();
-    appStateData->byCallStatus = parcel.ReadInt32();
+    RELEASE_IF_FALSE(parcel.ReadString(appStateData->bundleName), appStateData);
+    RELEASE_IF_FALSE(parcel.ReadInt32(appStateData->uid), appStateData);
+    RELEASE_IF_FALSE(parcel.ReadInt32(appStateData->state), appStateData);
+    RELEASE_IF_FALSE(parcel.ReadInt32(appStateData->pid), appStateData);
+    RELEASE_IF_FALSE(parcel.ReadUint32(appStateData->accessTokenId), appStateData);
+    RELEASE_IF_FALSE(parcel.ReadBool(appStateData->isFocused), appStateData);
+    RELEASE_IF_FALSE(parcel.ReadInt32(appStateData->extensionType), appStateData);
+    RELEASE_IF_FALSE(parcel.ReadInt32Vector(&appStateData->renderPids), appStateData);
+    RELEASE_IF_FALSE(parcel.ReadString(appStateData->callerBundleName), appStateData);
+    RELEASE_IF_FALSE(parcel.ReadBool(appStateData->isSplitScreenMode), appStateData);
+    RELEASE_IF_FALSE(parcel.ReadInt32(appStateData->callerUid), appStateData);
+    RELEASE_IF_FALSE(parcel.ReadBool(appStateData->isFloatingWindowMode), appStateData);
+    RELEASE_IF_FALSE(parcel.ReadInt32(appStateData->appIndex), appStateData);
+    RELEASE_IF_FALSE(parcel.ReadBool(appStateData->isPreloadModule), appStateData);
+    RELEASE_IF_FALSE(parcel.ReadBool(appStateData->isFromWindowFocusChanged), appStateData);
+    RELEASE_IF_FALSE(parcel.ReadInt32(appStateData->preloadMode), appStateData);
+    RELEASE_IF_FALSE(parcel.ReadInt32(appStateData->byCallStatus), appStateData);
     return appStateData;
 }
 }  // namespace AccessToken

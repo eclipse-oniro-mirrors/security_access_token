@@ -1041,8 +1041,16 @@ HWTEST_F(PermissionRecordManagerTest, AddRemotePermissionUsedRecordTest001, Test
     info.failCount = 0;
     EXPECT_EQ(PrivacyError::ERR_PARAM_INVALID,
         PermissionRecordManager::GetInstance().AddRemotePermissionUsedRecord(info));
-    info.successCount = 1;
+
+    info.successCount = -1;
     info.failCount = 0;
+    EXPECT_EQ(PrivacyError::ERR_PARAM_INVALID,
+        PermissionRecordManager::GetInstance().AddRemotePermissionUsedRecord(info));
+    
+    info.successCount = 0;
+    info.failCount = -1;
+    EXPECT_EQ(PrivacyError::ERR_PARAM_INVALID,
+        PermissionRecordManager::GetInstance().AddRemotePermissionUsedRecord(info));
 
     PermissionRecordManager::GetInstance().remotePermUsedRecList_.clear();
     GenericValues conditions;
@@ -1270,6 +1278,36 @@ HWTEST_F(PermissionRecordManagerTest, AddPermissionUsedRecord002, TestSize.Level
     ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, PermissionRecordManager::GetInstance().AddPermissionUsedRecord(info));
 }
 
+/*
+ * @tc.name: AddPermissionUsedRecord003
+ * @tc.desc: PermissionRecordManager::AddPermissionUsedRecord function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, AddPermissionUsedRecord003, TestSize.Level0)
+{
+    MockNativeToken mock("audio_server"); // native process with have add permission
+    AccessTokenIDEx tokenIdEx = PrivacyTestCommon::GetHapTokenIdFromBundle(g_InfoParms1.userID, g_InfoParms1.bundleName,
+        g_InfoParms1.instIndex);
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+
+    AddPermParamInfo info;
+    info.tokenId = tokenId;
+    info.permissionName = "com.ohos.test";
+    info.successCount = -1;
+    info.failCount = 0;
+
+    EXPECT_EQ(PrivacyError::ERR_PARAM_INVALID,
+        PermissionRecordManager::GetInstance().AddPermissionUsedRecord(info));
+    
+    info.successCount = 0;
+    info.failCount = -1;
+
+    EXPECT_EQ(PrivacyError::ERR_PARAM_INVALID,
+        PermissionRecordManager::GetInstance().AddPermissionUsedRecord(info));
+}
+
 #ifdef ACCESS_TOKEN_SUPPORT_SUBPROFILE
 /*
  * @tc.name: AddPermissionUsedRecordWithSubProfile001
@@ -1378,7 +1416,7 @@ HWTEST_F(PermissionRecordManagerTest, AddPermissionUsedRecordWithSubProfile004, 
     ClearToggleStatusMapByUserId(g_InfoParms1.userID);
     const std::string toggleKey = std::to_string(g_InfoParms1.userID) + "_" + std::to_string(SUBPROFILE_TEST_ID);
     PermissionRecordManager::GetInstance().permUsedRecToggleStatusMap_[toggleKey] = false;
-    SetMockOsAccountSubProfileId(SUBPROFILE_TEST_ID, ERR_OS_ACCOUNT_SUBSPACE_NOT_FOUND);
+    SetMockOsAccountSubProfileId(SUBPROFILE_TEST_ID, ERR_OS_ACCOUNT_SUBPROFILE_NOT_FOUND);
 
     AddPermParamInfo info;
     info.tokenId = tokenId;

@@ -63,7 +63,7 @@ public:
     /**
      * dlp mode, for details about the valid values,
      */
-    int32_t dlpMode;
+    int32_t dlpMode = DLP_PERM_NONE;
 };
 } // namespace AccessToken
 } // namespace Security

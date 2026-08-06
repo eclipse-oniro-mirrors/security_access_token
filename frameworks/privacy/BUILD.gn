@@ -24,6 +24,7 @@ ohos_shared_library("privacy_communication_adapter_cxx") {
     debug = false
   }
   branch_protector_ret = "pac_ret"
+  branch_protector_frt = "bti"
 
   include_dirs = [
     "${access_token_path}/frameworks/common/include",

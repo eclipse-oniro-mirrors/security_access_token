@@ -25,20 +25,20 @@ namespace Security {
 namespace AccessToken {
 struct NativeTokenInfoBase {
     /** native token info */
-    ATokenAplEnum apl;
-    unsigned char ver;
+    ATokenAplEnum apl = APL_NORMAL;
+    unsigned char ver = DEFAULT_TOKEN_VERSION;
     int32_t uid = -1;
     std::string processName;
     std::vector<std::string> dcap;
-    AccessTokenID tokenID;
-    AccessTokenAttr tokenAttr;
+    AccessTokenID tokenID = 0;
+    AccessTokenAttr tokenAttr = 0;
     std::vector<std::string> nativeAcls;
     /** permission state list */
     std::vector<PermissionStatus> permStateList;
 };
 
 struct NativeTokenInfoCache {
-    ATokenAplEnum apl;
+    ATokenAplEnum apl = APL_NORMAL;
     std::string processName;
     std::vector<uint16_t> opCodeList;
 };

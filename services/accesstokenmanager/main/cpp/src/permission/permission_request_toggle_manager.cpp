@@ -45,7 +45,7 @@ int32_t ValidateSubProfileIdForToggle(int32_t userID, int32_t subProfileId)
     int32_t localUserId = LEGACY_SUBPROFILE_ID;
     int32_t ret = OHOS::AccountSA::OsAccountManagerLite::GetOsAccountLocalIdForSubProfile(
         subProfileId, localUserId);
-    if (ret == ERR_OS_ACCOUNT_SUBSPACE_NOT_FOUND) {
+    if (ret == ERR_OS_ACCOUNT_SUBPROFILE_NOT_FOUND) {
         LOGE(ATM_DOMAIN, ATM_TAG, "SubProfile does not exist, subProfileId=%{public}d.", subProfileId);
         return AccessTokenError::ERR_PERMISSION_REQUEST_TOGGLE_SUBPROFILE_NOT_EXIST;
     }
