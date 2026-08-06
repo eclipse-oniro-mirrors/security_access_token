@@ -780,6 +780,21 @@ int32_t AccessTokenOpenCallback::UpgradeFromVersion9(NativeRdb::RdbStore& rdbSto
         "integer default " + std::to_string(LEGACY_SUBPROFILE_ID));
 }
 
+int32_t AccessTokenOpenCallback::UpgradeFromVersion10(NativeRdb::RdbStore& rdbStore)
+{
+    std::string hapInfoTableName;
+    AccessTokenDbUtil::GetTableNameByType(AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO, hapInfoTableName);
+    int32_t res = rdbStore.ExecuteSql("delete from " + hapInfoTableName);
+    if (res != NativeRdb::E_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to clear table %{public}s, errCode is %{public}d.",
+            hapInfoTableName.c_str(), res);
+        return res;
+    }
+
+    LOGI(ATM_DOMAIN, ATM_TAG, "Success to upgrade from version 10 to version 11.");
+    return NativeRdb::E_OK;
+}
+
 int32_t AccessTokenOpenCallback::OnUpgrade(NativeRdb::RdbStore& rdbStore, int32_t currentVersion, int32_t targetVersion)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "DB OnUpgrade from Ver %{public}d to Ver %{public}d.", currentVersion, targetVersion);
@@ -838,6 +853,9 @@ int32_t AccessTokenOpenCallback::OnUpgrade(NativeRdb::RdbStore& rdbStore, int32_
             if (res != NativeRdb::E_OK) {
                 return res;
             }
+            [[fallthrough]];
+        case DATABASE_VERSION_10: // 10->11
+            (void)UpgradeFromVersion10(rdbStore);
             [[fallthrough]];
         default:
             return NativeRdb::E_OK;
