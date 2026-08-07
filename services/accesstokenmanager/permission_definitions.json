@@ -11924,6 +11924,17 @@
             "provisionEnable": true,
             "distributedSceneEnable": false,
             "deviceTypes": ["2in1", "car", "phone", "tablet", "tv", "wearable"]
+        },
+        {
+            "name": "ohos.permission.CONNECTIVITY_USE_RESTRICTED_NETWORKS",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.1.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["car"]
         }
     ]
 }
