@@ -11901,7 +11901,7 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
-            "deviceTypes": ["general", "2in1", "phone", "tablet", "tv", "smartlock", "car"]
+            "deviceTypes": ["2in1", "phone", "tablet", "tv", "smartlock", "car"]
         },
         {
             "name": "ohos.permission.vehicle.VEHICLE_OEMCERTSIGN",
