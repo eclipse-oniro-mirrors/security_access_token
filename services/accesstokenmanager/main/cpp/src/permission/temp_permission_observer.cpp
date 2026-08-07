@@ -216,7 +216,7 @@ TempPermissionObserver::~TempPermissionObserver()
     UnRegisterCallback();
 }
 
-void TempPermissionObserver::RegisterCallback()
+void TempPermissionObserver::RegisterBackgroundCallback()
 {
 #ifdef BGTASKMGR_CONTINUOUS_TASK_ENABLE
     {
@@ -228,38 +228,53 @@ void TempPermissionObserver::RegisterCallback()
                 return;
             }
             int ret = BackgroundTaskManagerAccessClient::GetInstance().SubscribeBackgroundTask(backgroundTaskCallback_);
-            LOGI(ATM_DOMAIN, ATM_TAG, "Register backgroundTaskCallback %{public}d.", ret);
+            if (ret != ERR_OK) {
+                backgroundTaskCallback_ = nullptr;
+                LOGE(ATM_DOMAIN, ATM_TAG, "Register backgroundTaskCallback %{public}d.", ret);
+            }
         }
     }
 #endif
-    {
-        std::lock_guard<std::mutex> lock(formStateCallbackMutex_);
+}
+
+void TempPermissionObserver::RegisterFormVisibleCallback()
+{
+    std::lock_guard<std::mutex> lock(formStateCallbackMutex_);
+    if (formVisibleCallback_ == nullptr) {
+        formVisibleCallback_ = new (std::nothrow) PermissionFormStateObserver();
         if (formVisibleCallback_ == nullptr) {
-            formVisibleCallback_ = new (std::nothrow) PermissionFormStateObserver();
-            if (formVisibleCallback_ == nullptr) {
-                LOGE(ATM_DOMAIN, ATM_TAG, "Register formStateCallback failed.");
-                return;
-            }
-            int ret = FormManagerAccessClient::GetInstance().RegisterAddObserver(
-                FORM_VISIBLE_NAME, formVisibleCallback_->AsObject());
-            if (ret != ERR_OK) {
-                LOGI(ATM_DOMAIN, ATM_TAG, "Register observer %{public}d.", ret);
-            }
+            LOGE(ATM_DOMAIN, ATM_TAG, "Register formStateCallback failed.");
+            return;
         }
-        if (formInvisibleCallback_ == nullptr) {
-            formInvisibleCallback_ = new (std::nothrow) PermissionFormStateObserver();
-            if (formInvisibleCallback_ == nullptr) {
-                LOGE(ATM_DOMAIN, ATM_TAG, "Register formStateCallback failed.");
-                formVisibleCallback_ = nullptr;
-                return;
-            }
-            int ret = FormManagerAccessClient::GetInstance().RegisterAddObserver(
-                FORM_INVISIBLE_NAME, formInvisibleCallback_->AsObject());
-            if (ret != ERR_OK) {
-                LOGI(ATM_DOMAIN, ATM_TAG, "Register observer %{public}d.", ret);
-            }
+        int32_t ret = FormManagerAccessClient::GetInstance().RegisterAddObserver(
+            FORM_VISIBLE_NAME, formVisibleCallback_->AsObject());
+        if (ret != ERR_OK) {
+            LOGI(ATM_DOMAIN, ATM_TAG, "Register observer %{public}d.", ret);
+            formVisibleCallback_ = nullptr;
         }
     }
+    int32_t ret = RET_FAILED;
+    if (formInvisibleCallback_ == nullptr) {
+        formInvisibleCallback_ = new (std::nothrow) PermissionFormStateObserver();
+        if (formInvisibleCallback_ != nullptr) {
+            ret = FormManagerAccessClient::GetInstance().RegisterAddObserver(
+                FORM_INVISIBLE_NAME, formInvisibleCallback_->AsObject());
+        }
+    }
+    if (ret == ERR_OK) {
+        return;
+    }
+    LOGI(ATM_DOMAIN, ATM_TAG, "Create callback or register observer %{public}d failed.", ret);
+    (void) FormManagerAccessClient::GetInstance().RegisterRemoveObserver(
+        FORM_VISIBLE_NAME, formVisibleCallback_);
+    formVisibleCallback_ = nullptr;
+    formInvisibleCallback_ = nullptr;
+}
+
+void TempPermissionObserver::RegisterCallback()
+{
+    RegisterBackgroundCallback();
+    RegisterFormVisibleCallback();
     RegisterAppStatusListener();
 }
 
@@ -276,6 +291,7 @@ void TempPermissionObserver::RegisterAppStatusListener()
             int ret = AppManagerAccessClient::GetInstance().RegisterApplicationStateObserver(appStateCallback_);
             if (ret != ERR_OK) {
                 LOGI(ATM_DOMAIN, ATM_TAG, "Register appStateCallback %{public}d.", ret);
+                appStateCallback_ = nullptr;
             }
         }
     }
@@ -835,16 +851,6 @@ void TempPermissionObserver::RevokeAllTempPermission(AccessTokenID tokenID)
         LOGE(ATM_DOMAIN, ATM_TAG, "TokenID:%{public}d not exist in permList", tokenID);
         return;
     }
-    bool needUnregister = false;
-    {
-        std::lock_guard<std::mutex> lock(tempPermissionMutex_);
-        tempPermTokenMap_.erase(tokenID);
-        tempPermPermissionMap_.erase(tokenID);
-        needUnregister = tempPermTokenMap_.empty();
-    }
-    if (needUnregister) {
-        UnRegisterCallback();
-    }
 
     std::vector<PermissionStatus> tmpList;
     if (!GetPermissionState(tokenID, tmpList)) {
@@ -865,6 +871,16 @@ void TempPermissionObserver::RevokeAllTempPermission(AccessTokenID tokenID)
     {
         std::lock_guard<std::mutex> lock(continuousTaskMutex_);
         continuousTaskIdMap_.erase(tokenID);
+    }
+    bool needUnregister = false;
+    {
+        std::lock_guard<std::mutex> lock(tempPermissionMutex_);
+        tempPermTokenMap_.erase(tokenID);
+        tempPermPermissionMap_.erase(tokenID);
+        needUnregister = tempPermTokenMap_.empty();
+    }
+    if (needUnregister) {
+        UnRegisterCallback();
     }
 }
 
@@ -959,6 +975,7 @@ void TempPermissionObserver::OnAppMgrRemoteDiedHandle()
         continuousTaskIdMap_.clear();
     }
     LOGI(ATM_DOMAIN, ATM_TAG, "TempPermTokenMap_ clear!");
+    std::lock_guard<std::mutex> lock(appStateCallbackMutex_);
     appStateCallback_= nullptr;
 }
 

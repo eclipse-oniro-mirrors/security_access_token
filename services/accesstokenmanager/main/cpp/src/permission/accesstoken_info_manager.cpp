@@ -1055,13 +1055,13 @@ int AccessTokenInfoManager::RemoveNativeTokenInfo(AccessTokenID id)
             return ERR_TOKENID_NOT_EXIST;
         }
 
+        // remove native to kernel
+        PermissionKernelUtils::RemovePermFromKernel(id);
         nativeTokenInfoMap_.erase(id);
     }
     AccessTokenIDManager::GetInstance().ReleaseTokenId(id);
     LOGI(ATM_DOMAIN, ATM_TAG, "Remove native token %{public}u ok!", id);
 
-    // remove native to kernel
-    PermissionKernelUtils::RemovePermFromKernel(id);
     return RET_SUCCESS;
 }
 
@@ -1547,19 +1547,27 @@ int AccessTokenInfoManager::DeleteRemoteToken(const std::string& deviceID, Acces
 
     ATokenTypeEnum type = TokenIDAttributes::GetTokenIdTypeEnum(mapID);
     if (type == TOKEN_HAP) {
-        std::unique_lock<std::shared_mutex> infoGuard(this->hapTokenInfoLock_);
-        if (hapTokenInfoMap_.count(mapID) == 0) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "Hap token %{public}u no exist.", mapID);
-            return ERR_TOKEN_INVALID;
+        {
+            std::unique_lock<std::shared_mutex> infoGuard(this->hapTokenInfoLock_);
+            if (hapTokenInfoMap_.count(mapID) == 0) {
+                LOGE(ATM_DOMAIN, ATM_TAG, "Hap token %{public}u no exist.", mapID);
+                return ERR_TOKEN_INVALID;
+            }
+            hapTokenInfoMap_.erase(mapID);
         }
-        hapTokenInfoMap_.erase(mapID);
+
+        PermissionKernelUtils::RemovePermFromKernel(mapID);
+        (void)PermissionDataBrief::GetInstance().DeleteBriefPermDataByTokenId(mapID);
     } else if ((type == TOKEN_NATIVE) || (type == TOKEN_SHELL)) {
-        std::unique_lock<std::shared_mutex> infoGuard(this->nativeTokenInfoLock_);
-        if (nativeTokenInfoMap_.count(mapID) == 0) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "Native token %{public}u is null.", mapID);
-            return ERR_TOKEN_INVALID;
+        {
+            std::unique_lock<std::shared_mutex> infoGuard(this->nativeTokenInfoLock_);
+            if (nativeTokenInfoMap_.count(mapID) == 0) {
+                LOGE(ATM_DOMAIN, ATM_TAG, "Native token %{public}u is null.", mapID);
+                return ERR_TOKEN_INVALID;
+            }
+            nativeTokenInfoMap_.erase(mapID);
         }
-        nativeTokenInfoMap_.erase(mapID);
+        PermissionKernelUtils::RemovePermFromKernel(mapID);
     } else {
         LOGE(ATM_DOMAIN, ATM_TAG, "Mapping tokenId %{public}u type is unknown.", mapID);
     }
@@ -2041,7 +2049,6 @@ void AccessTokenInfoManager::RollbackUserPolicyFlag(const std::vector<UserPolicy
             LOGE(ATM_DOMAIN, ATM_TAG,
                 "Rollback restricted flag failed, tokenId=%{public}u, permCode=%{public}u, ret=%{public}d.",
                 iter->tokenId, iter->permCode, ret);
-            continue;
         }
         ret = UpdateRestrictedFlagToDb(iter->tokenId, iter->permCode);
         if (ret != RET_SUCCESS && ret != AccessTokenError::ERR_PERMISSION_NOT_EXIST) {
@@ -2110,11 +2117,10 @@ int32_t AccessTokenInfoManager::SetPermDialogCap(AccessTokenID tokenID, bool ena
         LOGE(ATM_DOMAIN, ATM_TAG, "Id %{publid}u is not exits.", tokenID);
         return ERR_TOKENID_NOT_EXIST;
     }
-    infoIter->second->SetPermDialogForbidden(enable);
-
     if (!UpdateCapStateToDatabase(tokenID, enable)) {
-        return RET_FAILED;
+        return ERR_DATABASE_OPERATE_FAILED;
     }
+    infoIter->second->SetPermDialogForbidden(enable);
 
     return RET_SUCCESS;
 }

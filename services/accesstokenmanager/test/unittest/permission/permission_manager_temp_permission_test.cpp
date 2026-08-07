@@ -1566,6 +1566,171 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission038, TestSize.Level0)
     ASSERT_EQ(RET_SUCCESS, ret);
 }
 #endif
+
+/**
+ * @tc.name: GrantTempPermission040
+ * @tc.desc: RevokeAllTempPermission revokes permission before clearing temporary state.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionManagerTest, GrantTempPermission040, TestSize.Level0)
+{
+    accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
+    accessTokenService_->Initialize();
+    AccessTokenID tokenID = CreateTempHapTokenInfo();
+    auto& observer = TempPermissionObserver::GetInstance();
+    EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GrantPermission(tokenID,
+        "ohos.permission.APPROXIMATELY_LOCATION", PERMISSION_ALLOW_THIS_TIME));
+    ASSERT_NE(observer.tempPermTokenMap_.end(), observer.tempPermTokenMap_.find(tokenID));
+    ASSERT_NE(observer.tempPermPermissionMap_.end(), observer.tempPermPermissionMap_.find(tokenID));
+
+    observer.RevokeAllTempPermission(tokenID);
+
+    EXPECT_EQ(PERMISSION_DENIED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.APPROXIMATELY_LOCATION"));
+    EXPECT_EQ(observer.tempPermTokenMap_.end(), observer.tempPermTokenMap_.find(tokenID));
+    EXPECT_EQ(observer.tempPermPermissionMap_.end(), observer.tempPermPermissionMap_.find(tokenID));
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID));
+}
+
+#ifdef BGTASKMGR_CONTINUOUS_TASK_ENABLE
+/**
+ * @tc.name: RegisterBackgroundCallback001
+ * @tc.desc: Test RegisterBackgroundCallback with temp permission
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionManagerTest, RegisterBackgroundCallback001, TestSize.Level0)
+{
+    accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
+    accessTokenService_->Initialize();
+    AccessTokenID tokenID = CreateTempHapTokenInfo();
+    EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GrantPermission(tokenID,
+        "ohos.permission.APPROXIMATELY_LOCATION", PERMISSION_ALLOW_THIS_TIME));
+
+    // Register callback with temp permission granted
+    TempPermissionObserver::GetInstance().RegisterBackgroundCallback();
+
+    // Verify callback is registered by testing continuous task
+    auto continuousTaskCallbackInfo = CreateContinuousTaskInfo(tokenID, 3001, {BackgroundMode::LOCATION});
+    backgroundTaskObserver_->OnContinuousTaskStart(continuousTaskCallbackInfo);
+
+    auto tokenIter = TempPermissionObserver::GetInstance().continuousTaskIdMap_.find(tokenID);
+    EXPECT_NE(TempPermissionObserver::GetInstance().continuousTaskIdMap_.end(), tokenIter);
+
+    TempPermissionObserver::GetInstance().UnRegisterCallback();
+    int32_t ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID);
+    ASSERT_EQ(RET_SUCCESS, ret);
+}
+#endif
+
+/**
+ * @tc.name: RegisterFormVisibleCallback001
+ * @tc.desc: Test RegisterFormVisibleCallback with temp permission
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionManagerTest, RegisterFormVisibleCallback001, TestSize.Level0)
+{
+    accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
+    accessTokenService_->Initialize();
+    AccessTokenID tokenID = CreateTempHapTokenInfo();
+    EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GrantPermission(tokenID,
+        "ohos.permission.READ_PASTEBOARD", PERMISSION_ALLOW_THIS_TIME));
+
+    // Register form callback with temp permission granted
+    TempPermissionObserver::GetInstance().RegisterFormVisibleCallback();
+
+    // Verify form callback is registered
+    FormInstance formInstance;
+    formInstance.bundleName_ = "GrantTempPermission";
+    formInstance.appIndex_ = 0;
+    formInstance.userId_ = USER_ID;
+    formInstance.formVisiblity_ = FormVisibilityType::VISIBLE;
+    std::vector<FormInstance> formInstances;
+    formInstances.emplace_back(formInstance);
+    EXPECT_EQ(RET_SUCCESS,
+        formStateObserver_->NotifyWhetherFormsVisible(FormVisibilityType::VISIBLE, "#1", formInstances));
+
+    TempPermissionObserver::GetInstance().UnRegisterCallback();
+    int32_t ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID);
+    ASSERT_EQ(RET_SUCCESS, ret);
+}
+
+/**
+ * @tc.name: RegisterFormVisibleCallback002
+ * @tc.desc: Test RegisterFormVisibleCallback registers both visible and invisible callbacks
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionManagerTest, RegisterFormVisibleCallback002, TestSize.Level0)
+{
+    accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
+    accessTokenService_->Initialize();
+
+    // Register both form callbacks
+    TempPermissionObserver::GetInstance().RegisterFormVisibleCallback();
+
+    // Test visible callback
+    FormInstance formInstance;
+    formInstance.bundleName_ = "GrantTempPermission";
+    formInstance.appIndex_ = 0;
+    formInstance.userId_ = USER_ID;
+    formInstance.formVisiblity_ = FormVisibilityType::VISIBLE;
+    std::vector<FormInstance> formInstances;
+    formInstances.emplace_back(formInstance);
+    EXPECT_EQ(RET_SUCCESS,
+        formStateObserver_->NotifyWhetherFormsVisible(FormVisibilityType::VISIBLE, "#1", formInstances));
+
+    // Test invisible callback
+    formInstances.clear();
+    formInstance.formVisiblity_ = FormVisibilityType::INVISIBLE;
+    formInstances.emplace_back(formInstance);
+    EXPECT_EQ(RET_SUCCESS,
+        formStateObserver_->NotifyWhetherFormsVisible(FormVisibilityType::INVISIBLE, "#0", formInstances));
+
+    TempPermissionObserver::GetInstance().UnRegisterCallback();
+}
+
+/**
+ * @tc.name: TempPermissionObserverRegisterCallback001
+ * @tc.desc: Test RegisterCallback calls all registration functions
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionManagerTest, TempPermissionObserverRegisterCallback001, TestSize.Level0)
+{
+    accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
+    accessTokenService_->Initialize();
+
+    // RegisterCallback should register background, form visibility,
+    // and app status callbacks.
+    TempPermissionObserver::GetInstance().RegisterCallback();
+
+    // Verify callbacks are registered by checking they can process notifications
+    AppStateData appStateData;
+    appStateData.state = static_cast<int32_t>(ApplicationState::APP_STATE_FOREGROUND);
+    appStateData.accessTokenId = 0;
+    appStateObserver_->OnAppStateChanged(appStateData);
+
+    FormInstance formInstance;
+    formInstance.bundleName_ = "GrantTempPermission";
+    formInstance.appIndex_ = 0;
+    formInstance.userId_ = USER_ID;
+    formInstance.formVisiblity_ = FormVisibilityType::VISIBLE;
+    std::vector<FormInstance> formInstances;
+    formInstances.emplace_back(formInstance);
+    EXPECT_EQ(RET_SUCCESS,
+        formStateObserver_->NotifyWhetherFormsVisible(FormVisibilityType::VISIBLE, "#1", formInstances));
+
+#ifdef BGTASKMGR_CONTINUOUS_TASK_ENABLE
+    auto continuousTaskCallbackInfo = CreateContinuousTaskInfo(0, 3002, {BackgroundMode::LOCATION});
+    backgroundTaskObserver_->OnContinuousTaskStart(continuousTaskCallbackInfo);
+#endif
+
+    TempPermissionObserver::GetInstance().UnRegisterCallback();
+}
+
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

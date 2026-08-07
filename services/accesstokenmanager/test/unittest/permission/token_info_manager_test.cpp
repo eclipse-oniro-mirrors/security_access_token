@@ -43,6 +43,7 @@
 #include "token_sync_kit_loader.h"
 #endif
 #include "permission_manager.h"
+#include "permission_data_brief.h"
 #include "permission_constraint_check.h"
 #include "token_modify_notifier.h"
 #undef private
@@ -64,9 +65,20 @@ namespace Security {
 namespace AccessToken {
 namespace {
 static constexpr int32_t RANDOM_TOKENID = 123;
+static constexpr AccessTokenID MAX_NATIVE_TOKEN_ID = 672137215;
 static constexpr int32_t DEFAULT_API_VERSION = 8;
 static constexpr int USER_ID = 100;
 static constexpr int INST_INDEX = 0;
+static constexpr size_t SINGLE_WHITELIST_SIZE = 1;
+static constexpr size_t TRIMMED_WHITELIST_SIZE = 2;
+static constexpr AccessTokenID VALID_POLICY_CHECK_TOKEN_ID = RANDOM_TOKENID + 1;
+static constexpr AccessTokenID TRIMMED_WHITELIST_TOKEN_ID_FIRST = 100001;
+static constexpr AccessTokenID TRIMMED_WHITELIST_TOKEN_ID_SECOND = 100002;
+static constexpr AccessTokenID TRIMMED_POLICY_CHECK_TOKEN_ID = RANDOM_TOKENID + 3;
+static constexpr int64_t FIRST_INVALID_USER_ID =
+    static_cast<int64_t>(std::numeric_limits<int32_t>::max()) + 1;
+static constexpr uint64_t FIRST_INVALID_TOKEN_ID =
+    static_cast<uint64_t>(std::numeric_limits<uint32_t>::max()) + 1U;
 static constexpr int32_t MAX_EXTENDED_MAP_SIZE = 512;
 static constexpr int32_t MAX_VALUE_LENGTH = 1024;
 #ifdef SUPPORT_MANAGE_USER_POLICY
@@ -1525,8 +1537,14 @@ HWTEST_F(TokenInfoManagerTest, DeleteRemoteToken001, TestSize.Level0)
     ASSERT_EQ(RET_SUCCESS, ret);
     ret = AccessTokenInfoManager::GetInstance().SetRemoteHapTokenInfo(deviceId, hapSync);
     ASSERT_EQ(RET_SUCCESS, ret);
+    mapId = AccessTokenRemoteTokenManager::GetInstance().GetDeviceMappingTokenID(
+        deviceId, tokenIdEx.tokenIdExStruct.tokenID);
+    ASSERT_NE(INVALID_TOKENID, mapId);
+    std::vector<BriefPermData> permDataList;
+    ASSERT_EQ(RET_SUCCESS, PermissionDataBrief::GetInstance().GetBriefPermDataByTokenId(mapId, permDataList));
     ret = AccessTokenInfoManager::GetInstance().DeleteRemoteToken(deviceId, tokenIdEx.tokenIdExStruct.tokenID);
     ASSERT_EQ(RET_SUCCESS, ret);
+    ASSERT_EQ(ERR_TOKEN_INVALID, PermissionDataBrief::GetInstance().GetBriefPermDataByTokenId(mapId, permDataList));
     ret = AccessTokenInfoManager::GetInstance().DeleteRemoteToken(deviceId2, tokenIdEx.tokenIdExStruct.tokenID);
     ASSERT_NE(RET_SUCCESS, ret);
 
@@ -1736,6 +1754,19 @@ HWTEST_F(TokenInfoManagerTest, RegisterTokenSyncCallback002, TestSize.Level0)
 }
 
 /**
+ * @tc.name: RegisterTokenSyncCallback003
+ * @tc.desc: RegisterTokenSyncCallback rejects a null callback.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenInfoManagerTest, RegisterTokenSyncCallback003, TestSize.Level0)
+{
+    setPermission();
+    EXPECT_EQ(ERR_PARAM_INVALID, atManagerService_->RegisterTokenSyncCallback(nullptr));
+    setuid(0);
+}
+
+/**
  * @tc.name: GetRemoteHapTokenInfo001
  * @tc.desc: TokenModifyNotifier::GetRemoteHapTokenInfo function test
  * @tc.type: FUNC
@@ -1782,6 +1813,10 @@ HWTEST_F(TokenInfoManagerTest, UpdateRemoteHapTokenInfo001, TestSize.Level0)
     info->SetRemote(true);
     AccessTokenInfoManager::GetInstance().hapTokenInfoMap_[mapID] = info;
 
+    info->SetRemote(false);
+    ASSERT_NE(RET_SUCCESS, AccessTokenInfoManager::GetInstance().UpdateRemoteHapTokenInfo(mapID, hapSync));
+
+    info->SetRemote(true);
     // remote is true
     ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().UpdateRemoteHapTokenInfo(mapID, hapSync));
 
@@ -1844,6 +1879,34 @@ HWTEST_F(TokenInfoManagerTest, DeleteRemoteToken002, TestSize.Level0)
     ASSERT_NE(RET_SUCCESS, AccessTokenInfoManager::GetInstance().DeleteRemoteToken(deviceID, tokenID));
     AccessTokenRemoteTokenManager::GetInstance().remoteDeviceMap_.erase(deviceID);
     AccessTokenIDManager::GetInstance().ReleaseTokenId(672137215);
+}
+
+/**
+ * @tc.name: DeleteRemoteToken003
+ * @tc.desc: DeleteRemoteToken removes an existing remote native token.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenInfoManagerTest, DeleteRemoteToken003, TestSize.Level0)
+{
+    const std::string deviceId = "remote_native_device";
+    NativeTokenInfoBase nativeTokenInfo;
+    nativeTokenInfo.tokenID = MAX_NATIVE_TOKEN_ID;
+    nativeTokenInfo.processName = "remote_native_token";
+    AccessTokenInfoManager::GetInstance().InitNativeTokenInfos({ nativeTokenInfo });
+    ASSERT_NE(AccessTokenInfoManager::GetInstance().nativeTokenInfoMap_.end(),
+        AccessTokenInfoManager::GetInstance().nativeTokenInfoMap_.find(MAX_NATIVE_TOKEN_ID));
+
+    AccessTokenRemoteDevice device;
+    device.deviceID_ = deviceId;
+    device.MappingTokenIDPairMap_[RANDOM_TOKENID] = MAX_NATIVE_TOKEN_ID;
+    AccessTokenRemoteTokenManager::GetInstance().remoteDeviceMap_[deviceId] = device;
+
+    EXPECT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().DeleteRemoteToken(deviceId, RANDOM_TOKENID));
+    EXPECT_EQ(AccessTokenInfoManager::GetInstance().nativeTokenInfoMap_.end(),
+        AccessTokenInfoManager::GetInstance().nativeTokenInfoMap_.find(MAX_NATIVE_TOKEN_ID));
+    AccessTokenRemoteTokenManager::GetInstance().remoteDeviceMap_.erase(deviceId);
+    AccessTokenIDManager::GetInstance().ReleaseTokenId(MAX_NATIVE_TOKEN_ID);
 }
 
 /**
@@ -3886,55 +3949,170 @@ HWTEST_F(TokenInfoManagerTest, UserPolicyDbRecoverDirtyData001, TestSize.Level0)
 
 /**
  * @tc.name: LoadPersistedPolicies001
- * @tc.desc: LoadPersistedPolicies loads valid rows and ignores dirty persisted rows.
+ * @tc.desc: LoadPersistedPolicies loads a valid persisted policy.
  * @tc.type: FUNC
  * @tc.require:
  */
 HWTEST_F(TokenInfoManagerTest, LoadPersistedPolicies001, TestSize.Level0)
 {
     const std::string permissionName = "ohos.permission.CAMERA";
-    const std::string invalidPermissionName = "ohos.permission.TEST_INVALID_USER_POLICY";
-    const std::string invalidUserListPermission = "ohos.permission.INTERNET";
-    const std::string invalidWhiteListPermission = "ohos.permission.GET_NETWORK_STATS";
-    const std::string emptyUserListPermission = "ohos.permission.LOCATION";
     uint32_t permCode;
-    uint32_t invalidUserListPermCode;
-    uint32_t invalidWhiteListPermCode;
-    uint32_t emptyUserListPermCode;
     ASSERT_TRUE(TransferPermissionToOpcode(permissionName, permCode));
-    ASSERT_TRUE(TransferPermissionToOpcode(invalidUserListPermission, invalidUserListPermCode));
-    ASSERT_TRUE(TransferPermissionToOpcode(invalidWhiteListPermission, invalidWhiteListPermCode));
-    ASSERT_TRUE(TransferPermissionToOpcode(emptyUserListPermission, emptyUserListPermCode));
     auto& manager = UserPolicyManager::GetInstance();
     UserPolicyRecordsGuard recordsGuard(manager);
     EXPECT_EQ(RET_SUCCESS, UpsertUserPolicyDbRecord(permissionName, GetSelfTokenID(),
         std::to_string(USER_ID), std::to_string(RANDOM_TOKENID)));
-    EXPECT_EQ(RET_SUCCESS, UpsertUserPolicyDbRecord(invalidPermissionName, GetSelfTokenID(),
-        std::to_string(USER_ID + 1), ""));
-    EXPECT_EQ(RET_SUCCESS, UpsertUserPolicyDbRecord(invalidUserListPermission, GetSelfTokenID(),
-        "abc", ""));
-    EXPECT_EQ(RET_SUCCESS, UpsertUserPolicyDbRecord(invalidWhiteListPermission, GetSelfTokenID(),
-        std::to_string(USER_ID + 2), "abc"));
-    EXPECT_EQ(RET_SUCCESS, UpsertUserPolicyDbRecord(emptyUserListPermission, GetSelfTokenID(), "", ""));
-
     EXPECT_EQ(RET_SUCCESS, manager.LoadPersistedPolicies());
-
     EXPECT_TRUE(manager.IsPolicyPersisted(permCode));
-    EXPECT_FALSE(manager.IsPolicyPersisted(invalidUserListPermCode));
-    EXPECT_FALSE(manager.IsPolicyPersisted(invalidWhiteListPermCode));
-    EXPECT_FALSE(manager.IsPolicyPersisted(emptyUserListPermCode));
-    EXPECT_TRUE(manager.IsPermissionRestricted(RANDOM_TOKENID + 1, USER_ID, permCode));
+    EXPECT_TRUE(manager.IsPermissionRestricted(VALID_POLICY_CHECK_TOKEN_ID, USER_ID, permCode));
     EXPECT_FALSE(manager.IsPermissionRestricted(RANDOM_TOKENID, USER_ID, permCode));
     std::vector<AccessTokenID> tokenIdList;
     EXPECT_EQ(RET_SUCCESS, manager.GetPolicyWhiteList(permCode, tokenIdList));
-    ASSERT_EQ(1u, tokenIdList.size());
+    ASSERT_EQ(SINGLE_WHITELIST_SIZE, tokenIdList.size());
     EXPECT_EQ(RANDOM_TOKENID, tokenIdList[0]);
-
     EXPECT_EQ(RET_SUCCESS, DeleteUserPolicyDbRecord(permissionName));
-    EXPECT_EQ(RET_SUCCESS, DeleteUserPolicyDbRecord(invalidPermissionName));
-    EXPECT_EQ(RET_SUCCESS, DeleteUserPolicyDbRecord(invalidUserListPermission));
-    EXPECT_EQ(RET_SUCCESS, DeleteUserPolicyDbRecord(invalidWhiteListPermission));
-    EXPECT_EQ(RET_SUCCESS, DeleteUserPolicyDbRecord(emptyUserListPermission));
+}
+
+/**
+ * @tc.name: LoadPersistedPolicies002
+ * @tc.desc: LoadPersistedPolicies ignores an unknown permission row.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenInfoManagerTest, LoadPersistedPolicies002, TestSize.Level0)
+{
+    const std::string unknownPermission = "ohos.permission.TEST_INVALID_USER_POLICY";
+    auto& manager = UserPolicyManager::GetInstance();
+    UserPolicyRecordsGuard recordsGuard(manager);
+    EXPECT_EQ(RET_SUCCESS, UpsertUserPolicyDbRecord(unknownPermission, GetSelfTokenID(), std::to_string(USER_ID), ""));
+    EXPECT_EQ(RET_SUCCESS, manager.LoadPersistedPolicies());
+    EXPECT_EQ(RET_SUCCESS, DeleteUserPolicyDbRecord(unknownPermission));
+}
+
+/**
+ * @tc.name: LoadPersistedPolicies003
+ * @tc.desc: LoadPersistedPolicies ignores a malformed user list.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenInfoManagerTest, LoadPersistedPolicies003, TestSize.Level0)
+{
+    const std::string permissionName = "ohos.permission.INTERNET";
+    uint32_t permCode;
+    ASSERT_TRUE(TransferPermissionToOpcode(permissionName, permCode));
+    auto& manager = UserPolicyManager::GetInstance();
+    UserPolicyRecordsGuard recordsGuard(manager);
+    EXPECT_EQ(RET_SUCCESS, UpsertUserPolicyDbRecord(permissionName, GetSelfTokenID(), "abc", ""));
+    EXPECT_EQ(RET_SUCCESS, manager.LoadPersistedPolicies());
+    EXPECT_FALSE(manager.IsPolicyPersisted(permCode));
+    EXPECT_EQ(RET_SUCCESS, DeleteUserPolicyDbRecord(permissionName));
+}
+
+/**
+ * @tc.name: LoadPersistedPolicies004
+ * @tc.desc: LoadPersistedPolicies ignores a malformed whitelist.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenInfoManagerTest, LoadPersistedPolicies004, TestSize.Level0)
+{
+    const std::string permissionName = "ohos.permission.GET_NETWORK_STATS";
+    uint32_t permCode;
+    ASSERT_TRUE(TransferPermissionToOpcode(permissionName, permCode));
+    auto& manager = UserPolicyManager::GetInstance();
+    UserPolicyRecordsGuard recordsGuard(manager);
+    EXPECT_EQ(RET_SUCCESS, UpsertUserPolicyDbRecord(permissionName, GetSelfTokenID(), std::to_string(USER_ID), "abc"));
+    EXPECT_EQ(RET_SUCCESS, manager.LoadPersistedPolicies());
+    EXPECT_FALSE(manager.IsPolicyPersisted(permCode));
+    EXPECT_EQ(RET_SUCCESS, DeleteUserPolicyDbRecord(permissionName));
+}
+
+/**
+ * @tc.name: LoadPersistedPolicies005
+ * @tc.desc: LoadPersistedPolicies ignores an empty user list.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenInfoManagerTest, LoadPersistedPolicies005, TestSize.Level0)
+{
+    const std::string permissionName = "ohos.permission.LOCATION";
+    uint32_t permCode;
+    ASSERT_TRUE(TransferPermissionToOpcode(permissionName, permCode));
+    auto& manager = UserPolicyManager::GetInstance();
+    UserPolicyRecordsGuard recordsGuard(manager);
+    EXPECT_EQ(RET_SUCCESS, UpsertUserPolicyDbRecord(permissionName, GetSelfTokenID(), "", ""));
+    EXPECT_EQ(RET_SUCCESS, manager.LoadPersistedPolicies());
+    EXPECT_FALSE(manager.IsPolicyPersisted(permCode));
+    EXPECT_EQ(RET_SUCCESS, DeleteUserPolicyDbRecord(permissionName));
+}
+
+/**
+ * @tc.name: LoadPersistedPolicies006
+ * @tc.desc: LoadPersistedPolicies accepts whitespace around persisted user and token IDs.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenInfoManagerTest, LoadPersistedPolicies006, TestSize.Level0)
+{
+    const std::string permissionName = "ohos.permission.MICROPHONE";
+    const std::string userList = " " + std::to_string(USER_ID) + " ";
+    const std::string whiteList = " " + std::to_string(TRIMMED_WHITELIST_TOKEN_ID_FIRST) + " , "
+        + std::to_string(TRIMMED_WHITELIST_TOKEN_ID_SECOND) + " ";
+    uint32_t permCode;
+    ASSERT_TRUE(TransferPermissionToOpcode(permissionName, permCode));
+    auto& manager = UserPolicyManager::GetInstance();
+    UserPolicyRecordsGuard recordsGuard(manager);
+    EXPECT_EQ(RET_SUCCESS, UpsertUserPolicyDbRecord(permissionName, GetSelfTokenID(), userList, whiteList));
+    EXPECT_EQ(RET_SUCCESS, manager.LoadPersistedPolicies());
+    EXPECT_TRUE(manager.IsPolicyPersisted(permCode));
+    EXPECT_TRUE(manager.IsPermissionRestricted(TRIMMED_POLICY_CHECK_TOKEN_ID, USER_ID, permCode));
+    EXPECT_FALSE(manager.IsPermissionRestricted(TRIMMED_WHITELIST_TOKEN_ID_FIRST, USER_ID, permCode));
+    std::vector<AccessTokenID> tokenIdList;
+    EXPECT_EQ(RET_SUCCESS, manager.GetPolicyWhiteList(permCode, tokenIdList));
+    ASSERT_EQ(TRIMMED_WHITELIST_SIZE, tokenIdList.size());
+    EXPECT_NE(tokenIdList.end(), std::find(tokenIdList.begin(), tokenIdList.end(), TRIMMED_WHITELIST_TOKEN_ID_FIRST));
+    EXPECT_NE(tokenIdList.end(), std::find(tokenIdList.begin(), tokenIdList.end(), TRIMMED_WHITELIST_TOKEN_ID_SECOND));
+    EXPECT_EQ(RET_SUCCESS, DeleteUserPolicyDbRecord(permissionName));
+}
+
+/**
+ * @tc.name: LoadPersistedPolicies007
+ * @tc.desc: LoadPersistedPolicies ignores a user ID outside the int32_t range.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenInfoManagerTest, LoadPersistedPolicies007, TestSize.Level0)
+{
+    const std::string permissionName = "ohos.permission.READ_PASTEBOARD";
+    uint32_t permCode;
+    ASSERT_TRUE(TransferPermissionToOpcode(permissionName, permCode));
+    auto& manager = UserPolicyManager::GetInstance();
+    UserPolicyRecordsGuard recordsGuard(manager);
+    EXPECT_EQ(RET_SUCCESS, UpsertUserPolicyDbRecord(permissionName, GetSelfTokenID(),
+        std::to_string(FIRST_INVALID_USER_ID), ""));
+    EXPECT_EQ(RET_SUCCESS, manager.LoadPersistedPolicies());
+    EXPECT_FALSE(manager.IsPolicyPersisted(permCode));
+    EXPECT_EQ(RET_SUCCESS, DeleteUserPolicyDbRecord(permissionName));
+}
+
+/**
+ * @tc.name: LoadPersistedPolicies008
+ * @tc.desc: LoadPersistedPolicies ignores a whitelist token ID outside the uint32_t range.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenInfoManagerTest, LoadPersistedPolicies008, TestSize.Level0)
+{
+    const std::string permissionName = "ohos.permission.GET_BUNDLE_INFO";
+    uint32_t permCode;
+    ASSERT_TRUE(TransferPermissionToOpcode(permissionName, permCode));
+    auto& manager = UserPolicyManager::GetInstance();
+    UserPolicyRecordsGuard recordsGuard(manager);
+    EXPECT_EQ(RET_SUCCESS, UpsertUserPolicyDbRecord(permissionName, GetSelfTokenID(), std::to_string(USER_ID),
+        std::to_string(FIRST_INVALID_TOKEN_ID)));
+    EXPECT_EQ(RET_SUCCESS, manager.LoadPersistedPolicies());
+    EXPECT_FALSE(manager.IsPolicyPersisted(permCode));
+    EXPECT_EQ(RET_SUCCESS, DeleteUserPolicyDbRecord(permissionName));
 }
 
 /**

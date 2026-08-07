@@ -16,9 +16,9 @@
 #include "user_policy_manager.h"
 
 #include <algorithm>
+#include <charconv>
 #include <climits>
 #include <cstdint>
-#include <cstdlib>
 #include <map>
 #include <mutex>
 #include <new>
@@ -56,24 +56,40 @@ std::string Trim(const std::string& value)
 bool ParseInt32Value(const std::string& value, int32_t& parsedValue)
 {
     std::string trimmedValue = Trim(value);
-    char* endPtr = nullptr;
-    long parsed = std::strtol(trimmedValue.c_str(), &endPtr, 10);
-    if ((*endPtr != '\0') || (parsed < INT32_MIN) || (parsed > INT32_MAX)) {
+    if (trimmedValue.empty()) {
         return false;
     }
-    parsedValue = static_cast<int32_t>(parsed);
+
+    int32_t result = 0;
+    const char* ptr = trimmedValue.c_str();
+    const char* end = ptr + trimmedValue.length();
+
+    auto [p, ec] = std::from_chars(ptr, end, result, 10);
+    if (ec != std::errc() || p != end) {
+        return false;
+    }
+
+    parsedValue = result;
     return true;
 }
 
 bool ParseTokenIdValue(const std::string& value, AccessTokenID& parsedValue)
 {
     std::string trimmedValue = Trim(value);
-    char* endPtr = nullptr;
-    unsigned long parsed = std::strtoul(trimmedValue.c_str(), &endPtr, 10);
-    if ((*endPtr != '\0') || (parsed > UINT32_MAX)) {
+    if (trimmedValue.empty()) {
         return false;
     }
-    parsedValue = static_cast<AccessTokenID>(parsed);
+
+    uint32_t result = 0;
+    const char* ptr = trimmedValue.c_str();
+    const char* end = ptr + trimmedValue.length();
+
+    auto [p, ec] = std::from_chars(ptr, end, result, 10);
+    if (ec != std::errc() || p != end) {
+        return false;
+    }
+
+    parsedValue = result;
     return true;
 }
 

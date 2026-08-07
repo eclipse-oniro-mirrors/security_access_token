@@ -18,6 +18,7 @@
 #include <cinttypes>
 #include <cstdlib>
 #include <mutex>
+#include "securec.h"
 #include "access_token_error.h"
 #include "accesstoken_common_log.h"
 #include "data_validator.h"
@@ -74,8 +75,9 @@ ATokenTypeEnum AccessTokenIDManager::GetTokenIdType(AccessTokenID id)
 
 int AccessTokenIDManager::RegisterTokenId(AccessTokenID id, ATokenTypeEnum type)
 {
-    AccessTokenIDInner *idInner = reinterpret_cast<AccessTokenIDInner *>(&id);
-    if (idInner->version != DEFAULT_TOKEN_VERSION || idInner->type != type || idInner->type_ext != 0) {
+    AccessTokenIDInner idInner = {0};
+    (void)memcpy_s(&idInner, sizeof(idInner), &id, sizeof(id));
+    if (idInner.version != DEFAULT_TOKEN_VERSION || idInner.type != type || idInner.type_ext != 0) {
         return ERR_PARAM_INVALID;
     }
     std::unique_lock<std::shared_mutex> idGuard(this->tokenIdLock_);
@@ -107,7 +109,8 @@ AccessTokenID AccessTokenIDManager::CreateTokenId(ATokenTypeEnum type, int32_t d
     innerId.renderFlag = 0;
     innerId.dlpFlag = static_cast<uint32_t>(dlpFlag);
     innerId.tokenUniqueID = rand & TOKEN_RANDOM_MASK;
-    AccessTokenID tokenId = *reinterpret_cast<AccessTokenID *>(&innerId);
+    AccessTokenID tokenId = INVALID_TOKENID;
+    (void)memcpy_s(&tokenId, sizeof(tokenId), &innerId, sizeof(innerId));
     return tokenId;
 }
 

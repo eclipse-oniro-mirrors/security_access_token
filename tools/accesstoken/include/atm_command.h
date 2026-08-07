@@ -90,6 +90,12 @@ public:
     bool hasUserIdOption = false;
     bool hasPermissionOption = false;
     bool hasStatusOption = false;
+    bool hasRequestOption = false;
+    bool hasRecordOption = false;
+    bool hasSetOption = false;
+    bool hasGetOption = false;
+    bool hasInvalidUserIdOption = false;
+    bool hasInvalidStatusOption = false;
 };
 
 struct DumpOptionsContext {
@@ -142,7 +148,6 @@ private:
     int32_t HandleToggleRecord(const AtmToggleParamInfo& info, std::string& dumpInfo);
     int32_t SetRecordToggleStatus(int32_t userID, const uint32_t& recordStatus, std::string& statusInfo);
     int32_t GetRecordToggleStatus(int32_t userID, std::string& statusInfo);
-    bool IsNumericString(const char* string);
 #endif
     int32_t ModifyPermission(const PermOptionsContext& context);
     int32_t CheckPermCommandToken(AccessTokenID tokenId);

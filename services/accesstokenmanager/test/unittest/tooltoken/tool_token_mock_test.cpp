@@ -2178,6 +2178,27 @@ HWTEST_F(ToolTokenMockTest, RefreshUserPolicyFlag_001, TestSize.Level1)
 }
 
 /**
+ * @tc.name: VerifyToolAccessTokenNullInfo001
+ * @tc.desc: VerifyToolAccessToken rejects a token map entry with null information.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(ToolTokenMockTest, VerifyToolAccessTokenNullInfo001, TestSize.Level1)
+{
+    constexpr AccessTokenID nullInfoTokenId = 123456;
+    auto& manager = ToolTokenInfoManager::GetInstance();
+    {
+        std::unique_lock<std::shared_mutex> lock(manager.lock_);
+        manager.toolTokenInfoMap_[nullInfoTokenId] = nullptr;
+    }
+
+    EXPECT_EQ(PERMISSION_DENIED, manager.VerifyToolAccessToken(nullInfoTokenId, CAMERA_PERMISSION));
+
+    std::unique_lock<std::shared_mutex> lock(manager.lock_);
+    manager.toolTokenInfoMap_.erase(nullInfoTokenId);
+}
+
+/**
  * @tc.name: RefreshUserPolicyFlag_002
  * @tc.desc: Test service user policy refresh covers tool token policy branches.
  * @tc.type: FUNC
