@@ -136,6 +136,7 @@ void RdbPredicates::EndWrap()
 
 int32_t Transaction::Rollback()
 {
+    rollbackCount_++;
     return NativeRdb::E_OK;
 }
 

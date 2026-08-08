@@ -123,6 +123,7 @@ public:
     int32_t commitFlag_ = 0;
     int32_t insertFlag_ = 0;
     int32_t deleteFlag_ = 0;
+    uint32_t rollbackCount_ = 0;
     int64_t insertRows_ = 1;
 };
 
