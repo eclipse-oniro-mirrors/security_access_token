@@ -501,7 +501,7 @@ int32_t PermissionRecordManager::AddPermissionUsedRecord(const AddPermParamInfo&
     }
 
     uint32_t flag = TypePermissionFlag::PERMISSION_DEFAULT_FLAG;
-    if (AccessTokenKit::GetPermissionFlag(normalizedInfo.tokenId, normalizedInfo.permissionName, flag) ==
+    if (AccessTokenKit::GetPermissionFlagEx(normalizedInfo.tokenId, normalizedInfo.permissionName, flag) ==
         Constant::SUCCESS) {
         if (flag == TypePermissionFlag::PERMISSION_SYSTEM_FIXED &&
             normalizedInfo.permissionName == CAMERA_PERMISSION_NAME) {

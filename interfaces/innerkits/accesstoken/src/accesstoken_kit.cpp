@@ -316,11 +316,10 @@ int AccessTokenKit::GetHapTokenInfo(
 {
     LOGD(ATM_DOMAIN, ATM_TAG, "TokenID=%{public}d.", tokenID);
     if (GetTokenTypeFlag(tokenID) != TOKEN_HAP) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "TokenID =%{public}d is invalid", tokenID);
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     if (IsRenderToken(tokenID)) {
-        LOGI(ATM_DOMAIN, ATM_TAG, "TokenID %{public}d is render process.", tokenID);
+        LOGW(ATM_DOMAIN, ATM_TAG, "TokenID %{public}d is render process.", tokenID);
         return ERR_TOKENID_NOT_EXIST;
     }
 
@@ -332,7 +331,6 @@ int AccessTokenKit::GetNativeTokenInfo(
 {
     LOGD(ATM_DOMAIN, ATM_TAG, "TokenID=%{public}d.", tokenID);
     if (GetTokenTypeFlag(tokenID) != TOKEN_NATIVE && GetTokenTypeFlag(tokenID) != TOKEN_SHELL) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "TokenID =%{public}d is invalid", tokenID);
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     return AccessTokenManagerClient::GetInstance().GetNativeTokenInfo(tokenID, nativeTokenInfoRes);
@@ -543,6 +541,20 @@ int AccessTokenKit::GetPermissionFlag(AccessTokenID tokenID, const std::string& 
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     if (!DataValidator::IsPermissionNameValid(permissionName)) {
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    int result = AccessTokenManagerClient::GetInstance().GetPermissionFlag(tokenID, permissionName, flag);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Ret: %{public}d, id: %{public}u, perm: %{public}s, flag: %{public}u.",
+        result, tokenID, permissionName.c_str(), flag);
+    return result;
+}
+
+int AccessTokenKit::GetPermissionFlagEx(
+    AccessTokenID tokenID, const std::string& permissionName, uint32_t& flag)
+{
+    LOGD(ATM_DOMAIN, ATM_TAG, "Query privacy permission flag, TokenID=%{public}d, permissionName=%{public}s.",
+        tokenID, permissionName.c_str());
+    if (tokenID == INVALID_TOKENID || !DataValidator::IsPermissionNameValid(permissionName)) {
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     return AccessTokenManagerClient::GetInstance().GetPermissionFlag(tokenID, permissionName, flag);
