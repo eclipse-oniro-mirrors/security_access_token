@@ -890,7 +890,8 @@ static void StartUsingPermissionComplete(napi_env env, napi_status status, void*
     }
     std::unique_ptr<RecordManagerAsyncContext> callbackPtr{asyncContext};
 
-    napi_value result = GetNapiNull(env);
+    napi_value result = nullptr;
+    napi_get_undefined(env, &result);
     if (asyncContext->deferred != nullptr) {
         ReturnPromiseResult(env, *asyncContext, result);
     } else {
@@ -956,7 +957,8 @@ static void StopUsingPermissionComplete(napi_env env, napi_status status, void* 
     }
     std::unique_ptr<RecordManagerAsyncContext> callbackPtr{asyncContext};
 
-    napi_value result = GetNapiNull(env);
+    napi_value result = nullptr;
+    napi_get_undefined(env, &result);
     if (asyncContext->deferred != nullptr) {
         ReturnPromiseResult(env, *asyncContext, result);
     } else {
