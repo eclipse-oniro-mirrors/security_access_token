@@ -136,6 +136,7 @@ void RdbPredicates::EndWrap()
 
 int32_t Transaction::Rollback()
 {
+    rollbackCount_++;
     return NativeRdb::E_OK;
 }
 
@@ -232,6 +233,7 @@ std::pair<int32_t, std::shared_ptr<OHOS::NativeRdb::Transaction>> RdbStore::Crea
 
 int32_t RdbStore::ExecuteSql(const std::string& a)
 {
+    executedSqls_.emplace_back(a);
     if (executeSqlIndex_ < executeSqlResults_.size()) {
         return executeSqlResults_[executeSqlIndex_++];
     }

@@ -15,6 +15,8 @@
 
 #include "access_token_open_callback.h"
 
+#include <functional>
+
 #include "access_token_error.h"
 #include "access_token.h"
 #include "accesstoken_common_log.h"
@@ -29,6 +31,8 @@ constexpr const char*  INTEGER_STR = " integer not null,";
 constexpr const char*  TEXT_STR = " text not null,";
 // back up name is xxx_slave fixed, can not be changed
 constexpr const char* DATABASE_NAME_BACK = "access_token_slave.db";
+constexpr int32_t LEGACY_SUBPROFILE_ID = -1;
+constexpr const char* BACKUP_SUFFIX = "_backup";
 }
 
 static int32_t GetTableColumnList(NativeRdb::RdbStore& rdbStore, const std::string& tableName,
@@ -237,12 +241,18 @@ int32_t AccessTokenOpenCallback::CreatePermissionRequestToggleStatusTable(Native
         .append(INTEGER_STR)
         .append(TokenFiledConst::FIELD_PERMISSION_NAME)
         .append(TEXT_STR)
+        .append(TokenFiledConst::FIELD_SUB_PROFILE_ID)
+        .append(" integer default ")
+        .append(std::to_string(LEGACY_SUBPROFILE_ID))
+        .append(",")
         .append(TokenFiledConst::FIELD_REQUEST_TOGGLE_STATUS)
         .append(INTEGER_STR)
         .append("primary key(")
         .append(TokenFiledConst::FIELD_USER_ID)
         .append(",")
         .append(TokenFiledConst::FIELD_PERMISSION_NAME)
+        .append(",")
+        .append(TokenFiledConst::FIELD_SUB_PROFILE_ID)
         .append("))");
 
     return rdbStore.ExecuteSql(sql);
@@ -759,6 +769,60 @@ int32_t AccessTokenOpenCallback::UpgradeFromVersion8(NativeRdb::RdbStore& rdbSto
     return NativeRdb::E_OK;
 }
 
+int32_t AccessTokenOpenCallback::UpgradeFromVersion9(NativeRdb::RdbStore& rdbStore)
+{
+    std::string tableName;
+    AccessTokenDbUtil::GetTableNameByType(AtmDataType::ACCESSTOKEN_PERMISSION_REQUEST_TOGGLE_STATUS, tableName);
+
+    auto [errCode, transaction] = rdbStore.CreateTransaction(OHOS::NativeRdb::Transaction::DEFERRED);
+    if (errCode != NativeRdb::E_OK || transaction == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to create transaction, errCode is %{public}d.", errCode);
+        return errCode == NativeRdb::E_OK ? ERR_DATABASE_OPERATE_FAILED : errCode;
+    }
+
+    const std::string backupTableName = tableName + BACKUP_SUFFIX;
+    const std::string copySql = "insert into " + tableName + " (" + TokenFiledConst::FIELD_USER_ID + "," +
+        TokenFiledConst::FIELD_PERMISSION_NAME + "," + TokenFiledConst::FIELD_SUB_PROFILE_ID + "," +
+        TokenFiledConst::FIELD_REQUEST_TOGGLE_STATUS + ") select " + TokenFiledConst::FIELD_USER_ID + "," +
+        TokenFiledConst::FIELD_PERMISSION_NAME + "," + std::to_string(LEGACY_SUBPROFILE_ID) + "," +
+        TokenFiledConst::FIELD_REQUEST_TOGGLE_STATUS + " from " + backupTableName;
+    int32_t res = NativeRdb::E_OK;
+    const std::vector<std::function<int32_t()>> migrationSteps = {
+        [&]() { return rdbStore.ExecuteSql("alter table " + tableName + " rename to " + backupTableName); },
+        [&]() { return CreatePermissionRequestToggleStatusTable(rdbStore); },
+        [&]() { return rdbStore.ExecuteSql(copySql); },
+        [&]() { return rdbStore.ExecuteSql("drop table " + backupTableName); },
+    };
+    for (const auto& step : migrationSteps) {
+        res = step();
+        if (res != NativeRdb::E_OK) {
+            break;
+        }
+    }
+    if (res == NativeRdb::E_OK) {
+        res = transaction->Commit();
+    }
+    if (res != NativeRdb::E_OK) {
+        (void)transaction->Rollback();
+    }
+    return res;
+}
+
+int32_t AccessTokenOpenCallback::UpgradeFromVersion10(NativeRdb::RdbStore& rdbStore)
+{
+    std::string hapInfoTableName;
+    AccessTokenDbUtil::GetTableNameByType(AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO, hapInfoTableName);
+    int32_t res = rdbStore.ExecuteSql("delete from " + hapInfoTableName);
+    if (res != NativeRdb::E_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to clear table %{public}s, errCode is %{public}d.",
+            hapInfoTableName.c_str(), res);
+        return res;
+    }
+
+    LOGI(ATM_DOMAIN, ATM_TAG, "Success to upgrade from version 10 to version 11.");
+    return NativeRdb::E_OK;
+}
+
 int32_t AccessTokenOpenCallback::OnUpgrade(NativeRdb::RdbStore& rdbStore, int32_t currentVersion, int32_t targetVersion)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "DB OnUpgrade from Ver %{public}d to Ver %{public}d.", currentVersion, targetVersion);
@@ -811,6 +875,15 @@ int32_t AccessTokenOpenCallback::OnUpgrade(NativeRdb::RdbStore& rdbStore, int32_
             if (res != NativeRdb::E_OK) {
                 return res;
             }
+            [[fallthrough]];
+        case DATABASE_VERSION_9: // 9->10
+            res = UpgradeFromVersion9(rdbStore);
+            if (res != NativeRdb::E_OK) {
+                return res;
+            }
+            [[fallthrough]];
+        case DATABASE_VERSION_10: // 10->11
+            (void)UpgradeFromVersion10(rdbStore);
             [[fallthrough]];
         default:
             return NativeRdb::E_OK;
