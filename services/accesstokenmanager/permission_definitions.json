@@ -11948,6 +11948,17 @@
             "deviceTypes": ["car"]
         },
         {
+            "name": "ohos.permission.ENTERPRISE_ENCRYPT_BLOCK_DEVICE",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "MDM",
+            "since": "26.1.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1"]
+        },
+        {
             "name": "ohos.permission.vehicle.FACTORYRESET_WRITE_CONFIG",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
