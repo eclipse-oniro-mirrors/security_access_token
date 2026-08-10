@@ -75,13 +75,13 @@ bool FindAndInsertRecord(const AddPermParamInfo& record)
         g_recordMap[newRecordStr].timespamp = curTimestamp;
         return false;
     }
+    // Report the first success record in this merge window instead of dropping it.
     if (iter->second.successCount == 0 && record.successCount != 0) {
         g_recordMap[newRecordStr].successCount += record.successCount;
         g_recordMap[newRecordStr].timespamp = curTimestamp;
         return false;
     }
     g_recordMap[newRecordStr].successCount += record.successCount;
-    g_recordMap[newRecordStr].timespamp = curTimestamp;
     return true;
 }
 
@@ -111,9 +111,10 @@ int32_t PrivacyKit::AddPermissionUsedRecord(const AddPermParamInfo& info, bool a
     }
 
     int32_t res = RET_SUCCESS;
-    if (!FindAndInsertRecord(info)) {
+    const bool hasExtra = !info.extra.empty();
+    if (hasExtra || !FindAndInsertRecord(info)) {
         res = PrivacyManagerClient::GetInstance().AddPermissionUsedRecord(info, asyncMode);
-        if (res != RET_SUCCESS) {
+        if (res != RET_SUCCESS && !hasExtra) {
             std::lock_guard<std::mutex> lock(g_lockCache);
             std::string recordStr = GetRecordUniqueStr(info);
             g_recordMap.erase(recordStr);
@@ -273,7 +274,6 @@ bool FindAndInsertRemoteRecord(const std::string& deviceId, const std::string& p
         return false;
     }
     g_remoteRecordMap[newRecordStr].successCount += successCount;
-    g_remoteRecordMap[newRecordStr].timespamp = curTimestamp;
     return true;
 }
 
