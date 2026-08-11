@@ -4005,6 +4005,36 @@ HWTEST_F(PrivacyKitTest, AddPermissionRecordCallbackTest003, TestSize.Level1)
 }
 
 /**
+ * @tc.name: AddPermissionRecordCallbackTest007
+ * @tc.desc: Verify PERM_ADD keeps extra when the client merges repeated records.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, AddPermissionRecordCallbackTest007, TestSize.Level1)
+{
+    std::vector<std::string> permList = {"ohos.permission.READ_IMAGEVIDEO"};
+    auto callbackPtr = std::make_shared<CbCustomizeTest7>(permList);
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::RegisterPermActiveStatusCallback(callbackPtr));
+
+    AddPermParamInfo info;
+    info.tokenId = g_tokenIdA;
+    info.permissionName = "ohos.permission.READ_IMAGEVIDEO";
+    info.successCount = 1;
+    info.failCount = 0;
+    info.type = PICKER_TYPE;
+    info.extra = "perm_add_extra_first";
+
+    EXPECT_EQ(RET_SUCCESS, PrivacyKit::AddPermissionUsedRecord(info));
+    info.extra = "perm_add_extra_merged";
+    EXPECT_EQ(RET_SUCCESS, PrivacyKit::AddPermissionUsedRecord(info));
+    usleep(1000000); // 1000000us = 1s
+    EXPECT_EQ(PERM_ADD, callbackPtr->type_);
+    EXPECT_EQ("perm_add_extra_merged", callbackPtr->extra_);
+
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::UnRegisterPermActiveStatusCallback(callbackPtr));
+}
+
+/**
  * @tc.name: AddPermissionRecordCallbackTest004
  * @tc.desc: Does not trigger PERM_ADD when extra is not empty for permission out of add callback list.
  * @tc.type: FUNC

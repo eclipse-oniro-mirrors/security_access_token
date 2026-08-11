@@ -15,6 +15,7 @@
 
 #include "active_status_callback_manager.h"
 
+#include <chrono>
 #include <future>
 #include <thread>
 #include <datetime_ex.h>
@@ -187,7 +188,11 @@ void ActiveStatusCallbackManager::ExecuteCallbackAsync(ActiveChangeResponse& inf
     }
 
     std::string taskName = info.permissionName + std::to_string(info.tokenID);
-    LOGI(PRI_DOMAIN, PRI_TAG, "Add permission task name:%{public}s", taskName.c_str());
+    if (info.type == PERM_ADD) {
+        taskName += "_" + std::to_string(std::chrono::duration_cast<std::chrono::microseconds>(
+            std::chrono::system_clock::now().time_since_epoch()).count());
+    }
+    LOGI(PRI_DOMAIN, PRI_TAG, "Add callback task name:%{public}s", taskName.c_str());
     std::function<void()> task = ([info, sourceType]() mutable {
         ActiveStatusCallbackManager::GetInstance().ActiveStatusChange(info, sourceType);
         LOGI(PRI_DOMAIN, PRI_TAG, "DeviceId: %{public}s, "
