@@ -15,6 +15,8 @@
 
 #include "access_token_open_callback.h"
 
+#include <functional>
+
 #include "access_token_error.h"
 #include "access_token.h"
 #include "accesstoken_common_log.h"
@@ -30,6 +32,7 @@ constexpr const char*  TEXT_STR = " text not null,";
 // back up name is xxx_slave fixed, can not be changed
 constexpr const char* DATABASE_NAME_BACK = "access_token_slave.db";
 constexpr int32_t LEGACY_SUBPROFILE_ID = -1;
+constexpr const char* BACKUP_SUFFIX = "_backup";
 }
 
 static int32_t GetTableColumnList(NativeRdb::RdbStore& rdbStore, const std::string& tableName,
@@ -771,13 +774,38 @@ int32_t AccessTokenOpenCallback::UpgradeFromVersion9(NativeRdb::RdbStore& rdbSto
     std::string tableName;
     AccessTokenDbUtil::GetTableNameByType(AtmDataType::ACCESSTOKEN_PERMISSION_REQUEST_TOGGLE_STATUS, tableName);
 
-    std::vector<std::string> columnList;
-    int32_t res = GetTableColumnList(rdbStore, tableName, columnList);
-    if (res != NativeRdb::E_OK) {
-        return res;
+    auto [errCode, transaction] = rdbStore.CreateTransaction(OHOS::NativeRdb::Transaction::DEFERRED);
+    if (errCode != NativeRdb::E_OK || transaction == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to create transaction, errCode is %{public}d.", errCode);
+        return errCode == NativeRdb::E_OK ? ERR_DATABASE_OPERATE_FAILED : errCode;
     }
-    return AddColumn(columnList, rdbStore, tableName, TokenFiledConst::FIELD_SUB_PROFILE_ID,
-        "integer default " + std::to_string(LEGACY_SUBPROFILE_ID));
+
+    const std::string backupTableName = tableName + BACKUP_SUFFIX;
+    const std::string copySql = "insert into " + tableName + " (" + TokenFiledConst::FIELD_USER_ID + "," +
+        TokenFiledConst::FIELD_PERMISSION_NAME + "," + TokenFiledConst::FIELD_SUB_PROFILE_ID + "," +
+        TokenFiledConst::FIELD_REQUEST_TOGGLE_STATUS + ") select " + TokenFiledConst::FIELD_USER_ID + "," +
+        TokenFiledConst::FIELD_PERMISSION_NAME + "," + std::to_string(LEGACY_SUBPROFILE_ID) + "," +
+        TokenFiledConst::FIELD_REQUEST_TOGGLE_STATUS + " from " + backupTableName;
+    int32_t res = NativeRdb::E_OK;
+    const std::vector<std::function<int32_t()>> migrationSteps = {
+        [&]() { return rdbStore.ExecuteSql("alter table " + tableName + " rename to " + backupTableName); },
+        [&]() { return CreatePermissionRequestToggleStatusTable(rdbStore); },
+        [&]() { return rdbStore.ExecuteSql(copySql); },
+        [&]() { return rdbStore.ExecuteSql("drop table " + backupTableName); },
+    };
+    for (const auto& step : migrationSteps) {
+        res = step();
+        if (res != NativeRdb::E_OK) {
+            break;
+        }
+    }
+    if (res == NativeRdb::E_OK) {
+        res = transaction->Commit();
+    }
+    if (res != NativeRdb::E_OK) {
+        (void)transaction->Rollback();
+    }
+    return res;
 }
 
 int32_t AccessTokenOpenCallback::UpgradeFromVersion10(NativeRdb::RdbStore& rdbStore)
