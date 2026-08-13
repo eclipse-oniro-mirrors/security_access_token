@@ -454,6 +454,35 @@ HWTEST_F(TokenInfoManagerTest, IsPermissionAvailableToDlpHap001, TestSize.Level0
         manager.IsPermissionAvailableToDlpHap(DLP_READ, cameraCode));
     EXPECT_FALSE(manager.IsPermissionAvailableToDlpHap(DLP_READ, std::numeric_limits<uint32_t>::max()));
 }
+
+/**
+ * @tc.name: IsPermDlpModeAvailableToDlpHap002
+ * @tc.desc: Verify the permission matrices of all DLP application types.
+ * @tc.type: FUNC
+ */
+HWTEST_F(TokenInfoManagerTest, IsPermDlpModeAvailableToDlpHap002, TestSize.Level0)
+{
+    auto& manager = DlpPermissionSetManager::GetInstance();
+    struct Case {
+        HapDlpType type;
+        bool all;
+        bool fullControl;
+        bool none;
+    };
+    const std::vector<Case> cases = {
+        {DLP_COMMON, true, true, true},
+        {DLP_READ, true, false, false},
+        {DLP_FULL_CONTROL, true, true, false},
+        {DLP_READ_PERM, true, false, true},
+        {DLP_FULL_PERM, true, true, true},
+    };
+    for (const auto& item : cases) {
+        EXPECT_EQ(item.all, manager.IsPermDlpModeAvailableToDlpHap(item.type, DLP_PERM_ALL));
+        EXPECT_EQ(item.fullControl,
+            manager.IsPermDlpModeAvailableToDlpHap(item.type, DLP_PERM_FULL_CONTROL));
+        EXPECT_EQ(item.none, manager.IsPermDlpModeAvailableToDlpHap(item.type, DLP_PERM_NONE));
+    }
+}
 #endif
 
 /**
