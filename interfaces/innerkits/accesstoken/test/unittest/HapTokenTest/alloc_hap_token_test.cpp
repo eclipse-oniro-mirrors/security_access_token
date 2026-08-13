@@ -42,7 +42,7 @@ static const int INVALID_APPIDDESC_LEN = 10244;
 static const int INVALID_LABEL_LEN = 260;
 static const int INVALID_DESCRIPTION_LEN = 260;
 static const int INVALID_PERMNAME_LEN = 260;
-static const int INVALID_DLP_TYPE = 4;
+static const int INVALID_DLP_TYPE = static_cast<int>(BUTT_DLP_TYPE);
 static MockNativeToken* g_mock;
 
 HapInfoParams g_infoManagerTestInfoParms = {

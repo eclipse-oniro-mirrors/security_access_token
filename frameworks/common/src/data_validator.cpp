@@ -188,7 +188,9 @@ bool DataValidator::IsTokenIDValid(AccessTokenID id)
 
 bool DataValidator::IsDlpTypeValid(int dlpType)
 {
-    return ((dlpType == DLP_COMMON) || (dlpType == DLP_READ) || (dlpType == DLP_FULL_CONTROL));
+    return ((dlpType == DLP_COMMON) || (dlpType == DLP_READ) ||
+        (dlpType == DLP_FULL_CONTROL) || (dlpType == DLP_READ_PERM) ||
+        (dlpType == DLP_FULL_PERM));
 }
 
 bool DataValidator::IsPermissionUsedFlagValid(uint32_t flag)

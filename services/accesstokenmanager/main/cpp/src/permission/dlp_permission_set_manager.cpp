@@ -117,11 +117,20 @@ bool DlpPermissionSetManager::IsPermDlpModeAvailableToDlpHap(int32_t hapDlpType,
         return true;
     }
 
-    /* permission is available to full control */
+    /* DLP_READ_PERM is unavailable only in full-control permission mode. */
+    if (hapDlpType == DLP_READ_PERM) {
+        return permDlpMode != DLP_PERM_FULL_CONTROL;
+    }
+
+    /* DLP_FULL_PERM is available in all permission modes. */
+    if (hapDlpType == DLP_FULL_PERM) {
+        return true;
+    }
+
+    /* Permission is available to full-control DLP applications. */
     if (permDlpMode == DLP_PERM_FULL_CONTROL && hapDlpType == DLP_FULL_CONTROL) {
         return true;
     }
-    /* permission is available to none */
     return false;
 }
 } // namespace AccessToken
