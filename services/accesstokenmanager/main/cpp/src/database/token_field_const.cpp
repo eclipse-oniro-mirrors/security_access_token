@@ -55,6 +55,7 @@ const std::string TokenFiledConst::FIELD_GRANT_STATE = "grant_state";
 const std::string TokenFiledConst::FIELD_GRANT_FLAG = "grant_flag";
 const std::string TokenFiledConst::FIELD_TIMESTAMP = "timestamp";
 const std::string TokenFiledConst::FIELD_REQUEST_TOGGLE_STATUS = "status";
+const std::string TokenFiledConst::FIELD_SUB_PROFILE_ID = "sub_profile_id";
 const std::string TokenFiledConst::FIELD_KERNEL_EFFECT = "kernel_effect";
 const std::string TokenFiledConst::FIELD_HAS_VALUE = "has_value";
 const std::string TokenFiledConst::FIELD_VALUE = "value";

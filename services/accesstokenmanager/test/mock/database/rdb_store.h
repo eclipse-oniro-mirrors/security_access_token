@@ -123,6 +123,7 @@ public:
     int32_t commitFlag_ = 0;
     int32_t insertFlag_ = 0;
     int32_t deleteFlag_ = 0;
+    uint32_t rollbackCount_ = 0;
     int64_t insertRows_ = 1;
 };
 
@@ -159,6 +160,7 @@ public:
     int32_t queryFlag_ = 0;
     std::vector<int32_t> executeSqlResults_;
     size_t executeSqlIndex_ = 0;
+    std::vector<std::string> executedSqls_;
     std::shared_ptr<OHOS::NativeRdb::Transaction> transaction_;
     std::vector<std::string> queryColumnNames_;
     NativeRdb::ColumnType queryColumnType_ = TYPE_INTEGER;

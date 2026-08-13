@@ -64,6 +64,7 @@ void AccessTokenDatabaseCoverageTest::SetUp()
         db->transaction_->commitFlag_ = 0;
         db->transaction_->insertFlag_ = 0;
         db->transaction_->deleteFlag_ = 0;
+        db->transaction_->rollbackCount_ = 0;
         db->transaction_->insertRows_ = 1;
     }
 }
@@ -228,6 +229,44 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, OnUpgrade002, TestSize.Level4)
     ASSERT_EQ(NativeRdb::E_OK, callback.OnUpgrade(*(db.get()), DATABASE_VERSION_6, DATABASE_VERSION_7));
     ASSERT_EQ(NativeRdb::E_OK, callback.OnUpgrade(*(db.get()), DATABASE_VERSION_6, DATABASE_VERSION_7));
     ASSERT_EQ(NativeRdb::E_OK, callback.OnUpgrade(*(db.get()), DATABASE_VERSION_7, DATABASE_VERSION_7));
+}
+
+/*
+ * @tc.name: UpgradeFromVersion9001
+ * @tc.desc: AccessTokenOpenCallback::UpgradeFromVersion9 adds sub_profile_id when the column is missing.
+ * @tc.type: FUNC
+ * @tc.require: TDD
+ */
+HWTEST_F(AccessTokenDatabaseCoverageTest, UpgradeFromVersion9001, TestSize.Level4)
+{
+    std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance()->GetRdb();
+    AccessTokenOpenCallback callback;
+
+    db->executeSqlResults_.clear();
+    db->executeSqlIndex_ = 0;
+    db->executedSqls_.clear();
+
+    ASSERT_EQ(NativeRdb::E_OK, callback.UpgradeFromVersion9(*(db.get())));
+    ASSERT_EQ(4U, db->executedSqls_.size());
+}
+
+/*
+ * @tc.name: UpgradeFromVersion9002
+ * @tc.desc: AccessTokenOpenCallback::UpgradeFromVersion9 skips alter table when sub_profile_id already exists.
+ * @tc.type: FUNC
+ * @tc.require: TDD
+ */
+HWTEST_F(AccessTokenDatabaseCoverageTest, UpgradeFromVersion9002, TestSize.Level4)
+{
+    std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance()->GetRdb();
+    AccessTokenOpenCallback callback;
+
+    db->executeSqlResults_ = {NativeRdb::E_OK, NativeRdb::E_SQLITE_CORRUPT};
+    db->executeSqlIndex_ = 0;
+    db->executedSqls_.clear();
+
+    ASSERT_EQ(NativeRdb::E_SQLITE_CORRUPT, callback.UpgradeFromVersion9(*(db.get())));
+    ASSERT_EQ(1U, db->transaction_->rollbackCount_);
 }
 
 /*
@@ -638,6 +677,168 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, OnUpgrade004, TestSize.Level4)
     ASSERT_EQ(NativeRdb::E_OK, callback.OnUpgrade(*(db.get()), DATABASE_VERSION_9, DATABASE_VERSION_9));
 }
 
+/*
+ * @tc.name: OnUpgrade005
+ * @tc.desc: AccessTokenOpenCallback::OnUpgrade version 9->10 rebuilds the request-toggle table and preserves data.
+ * @tc.type: FUNC
+ * @tc.require: TDD
+ */
+HWTEST_F(AccessTokenDatabaseCoverageTest, OnUpgrade005, TestSize.Level4)
+{
+    std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance()->GetRdb();
+    ASSERT_NE(nullptr, db);
+    db->executeSqlResults_.clear();
+    db->executeSqlIndex_ = 0;
+    db->executedSqls_.clear();
+
+    AccessTokenOpenCallback callback;
+    ASSERT_EQ(NativeRdb::E_OK, callback.OnUpgrade(*(db.get()), DATABASE_VERSION_9, DATABASE_VERSION_10));
+    const std::vector<std::string> expectedSqls = {
+        "alter table permission_request_toggle_status_table rename to permission_request_toggle_status_table_backup",
+        "create table if not exists permission_request_toggle_status_table (user_id integer not null,"
+            "permission_name text not null,sub_profile_id integer default -1,status integer not null,"
+            "primary key(user_id,permission_name,sub_profile_id))",
+        "insert into permission_request_toggle_status_table (user_id,permission_name,sub_profile_id,status) select "
+            "user_id,permission_name,-1,status from permission_request_toggle_status_table_backup",
+        "drop table permission_request_toggle_status_table_backup",
+        "delete from hap_info_table",
+    };
+    EXPECT_EQ(expectedSqls, db->executedSqls_);
+}
+
+/*
+* @tc.name: UpgradeFromVersion9001
+* @tc.desc: AccessTokenOpenCallback::UpgradeFromVersion10 clears hap info
+* @tc.type: FUNC
+* @tc.require: TDD
+*/
+HWTEST_F(AccessTokenDatabaseCoverageTest, UpgradeFromVersion10001, TestSize.Level4)
+{
+    std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance()->GetRdb();
+    AccessTokenOpenCallback callback;
+
+    db->executeSqlResults_.clear();
+    db->executeSqlIndex_ = 0;
+    db->executedSqls_.clear();
+
+    ASSERT_EQ(NativeRdb::E_OK, callback.UpgradeFromVersion10(*(db.get())));
+    ASSERT_EQ(1u, db->executedSqls_.size());
+    EXPECT_EQ("delete from hap_info_table", db->executedSqls_[0]);
+}
+
+/*
+* @tc.name: UpgradeFromVersion9002
+* @tc.desc: AccessTokenOpenCallback::UpgradeFromVersion10 fails when clears hap info
+* @tc.type: FUNC
+* @tc.require: TDD
+*/
+HWTEST_F(AccessTokenDatabaseCoverageTest, UpgradeFromVersion10002, TestSize.Level4)
+{
+    std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance()->GetRdb();
+    AccessTokenOpenCallback callback;
+
+    db->executeSqlResults_ = {NativeRdb::E_SQLITE_CORRUPT};
+    db->executeSqlIndex_ = 0;
+    db->executedSqls_.clear();
+
+    ASSERT_EQ(NativeRdb::E_SQLITE_CORRUPT, callback.UpgradeFromVersion10(*(db.get())));
+    ASSERT_EQ(1u, db->executedSqls_.size());
+    EXPECT_EQ("delete from hap_info_table", db->executedSqls_[0]);
+}
+
+/*
+* @tc.name: OnUpgrade006
+* @tc.desc: AccessTokenOpenCallback::OnUpgrade version 10->11
+* @tc.type: FUNC
+* @tc.require: TDD
+*/
+HWTEST_F(AccessTokenDatabaseCoverageTest, OnUpgrade006, TestSize.Level4)
+{
+    std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance()->GetRdb();
+    AccessTokenOpenCallback callback;
+
+    db->executeSqlResults_.clear();
+    db->executeSqlIndex_ = 0;
+    db->executedSqls_.clear();
+
+    ASSERT_EQ(NativeRdb::E_OK, callback.OnUpgrade(*(db.get()), DATABASE_VERSION_10, DATABASE_VERSION_11));
+    ASSERT_EQ(NativeRdb::E_OK, callback.OnUpgrade(*(db.get()), DATABASE_VERSION_11, DATABASE_VERSION_11));
+}
+
+/*
+ * @tc.name: OnUpgrade007
+ * @tc.desc: AccessTokenOpenCallback::OnUpgrade version 9->10 rolls back when each migration step fails.
+ * @tc.type: FUNC
+ * @tc.require: TDD
+ */
+HWTEST_F(AccessTokenDatabaseCoverageTest, OnUpgrade007, TestSize.Level4)
+{
+    std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance()->GetRdb();
+    ASSERT_NE(nullptr, db);
+    AccessTokenOpenCallback callback;
+    constexpr size_t migrationStepCount = 4;
+
+    for (size_t failedStep = 0; failedStep < migrationStepCount; ++failedStep) {
+        db->executeSqlResults_.assign(failedStep, NativeRdb::E_OK);
+        db->executeSqlResults_.emplace_back(NativeRdb::E_SQLITE_CORRUPT);
+        db->executeSqlIndex_ = 0;
+        db->executedSqls_.clear();
+        if (db->transaction_ != nullptr) {
+            db->transaction_->rollbackCount_ = 0;
+        }
+
+        EXPECT_EQ(NativeRdb::E_SQLITE_CORRUPT,
+            callback.OnUpgrade(*(db.get()), DATABASE_VERSION_9, DATABASE_VERSION_10));
+        EXPECT_EQ(failedStep + 1U, db->executedSqls_.size());
+        EXPECT_EQ(1U, db->transaction_->rollbackCount_);
+    }
+
+    db->createTransFlag_ = NativeRdb::RdbStore::RESULT_FAIL;
+    db->executedSqls_.clear();
+    EXPECT_EQ(NativeRdb::E_SQLITE_CORRUPT,
+        callback.OnUpgrade(*(db.get()), DATABASE_VERSION_9, DATABASE_VERSION_10));
+    EXPECT_TRUE(db->executedSqls_.empty());
+
+    db->createTransFlag_ = NativeRdb::RdbStore::TRANSACTION_NULL;
+    EXPECT_EQ(ERR_DATABASE_OPERATE_FAILED,
+        callback.OnUpgrade(*(db.get()), DATABASE_VERSION_9, DATABASE_VERSION_10));
+
+    db->createTransFlag_ = 0;
+    db->executeSqlResults_.assign(migrationStepCount, NativeRdb::E_OK);
+    db->executeSqlIndex_ = 0;
+    db->executedSqls_.clear();
+    ASSERT_NE(nullptr, db->transaction_);
+    db->transaction_->rollbackCount_ = 0;
+    db->transaction_->commitFlag_ = NativeRdb::Transaction::OPERATION_FAIL;
+    EXPECT_EQ(NativeRdb::E_SQLITE_CORRUPT,
+        callback.OnUpgrade(*(db.get()), DATABASE_VERSION_9, DATABASE_VERSION_10));
+    EXPECT_EQ(migrationStepCount, db->executedSqls_.size());
+    EXPECT_EQ(1U, db->transaction_->rollbackCount_);
+    db->transaction_->commitFlag_ = 0;
+}
+
+/*
+ * @tc.name: OnUpgrade008
+ * @tc.desc: AccessTokenOpenCallback::OnUpgrade propagates a version 10->11 cleanup failure.
+ * @tc.type: FUNC
+ * @tc.require: TDD
+ */
+HWTEST_F(AccessTokenDatabaseCoverageTest, OnUpgrade008, TestSize.Level4)
+{
+    std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance()->GetRdb();
+    ASSERT_NE(nullptr, db);
+    AccessTokenOpenCallback callback;
+
+    db->executeSqlResults_ = {NativeRdb::E_SQLITE_CORRUPT};
+    db->executeSqlIndex_ = 0;
+    db->executedSqls_.clear();
+
+    // ignore the failure
+    EXPECT_EQ(NativeRdb::E_OK,
+        callback.OnUpgrade(*(db.get()), DATABASE_VERSION_10, DATABASE_VERSION_11));
+    ASSERT_EQ(1U, db->executedSqls_.size());
+    EXPECT_EQ("delete from hap_info_table", db->executedSqls_[0]);
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
