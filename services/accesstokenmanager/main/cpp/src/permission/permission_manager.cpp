@@ -268,7 +268,6 @@ int PermissionManager::GetPermissionFlag(AccessTokenID tokenID, const std::strin
     }
     uint32_t opCode;
     if (!TransferPermissionToOpcode(permissionName, opCode)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "PermissionName is invalid %{public}s.", permissionName.c_str());
         return AccessTokenError::ERR_PERMISSION_NOT_EXIST;
     }
     int32_t status = PERMISSION_DENIED;

@@ -382,8 +382,6 @@ int32_t ResolvePermissionDetailBase(const std::string& permissionName,
     }
 
     if (!TransferPermissionToOpcode(permissionName, permCode)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Permission transfer to opcode failed, permission=%{public}s.",
-            permissionName.c_str());
         return ERR_PERMISSION_NOT_EXIST;
     }
     resultType = PermissionResultTypeIdl::PERMISSION_VALID;

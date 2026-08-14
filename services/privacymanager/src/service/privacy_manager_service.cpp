@@ -248,7 +248,6 @@ int32_t PrivacyManagerService::StartUsingPermission(
     }
 
     int32_t callerPid = IPCSkeleton::GetCallingPid();
-    LOGI(PRI_DOMAIN, PRI_TAG, "CallerPid=%{public}d.", callerPid);
     ProcessProxyDeathStub(anonyStub, callerPid);
     return PermissionRecordManager::GetInstance().StartUsingPermission(infoParcel.info, callerPid);
 }
@@ -268,7 +267,6 @@ int32_t PrivacyManagerService::StartUsingPermissionCallback(const PermissionUsed
     }
 
     int32_t callerPid = IPCSkeleton::GetCallingPid();
-    LOGI(PRI_DOMAIN, PRI_TAG, "CallerPid=%{public}d.", callerPid);
     ProcessProxyDeathStub(anonyStub, callerPid);
     return PermissionRecordManager::GetInstance().StartUsingPermission(infoParcel.info, callback, callerPid);
 }

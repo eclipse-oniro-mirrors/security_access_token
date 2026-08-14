@@ -69,7 +69,6 @@ ATokenTypeEnum AccessTokenCompatKit::GetTokenTypeFlag(AccessTokenID tokenID)
 {
     LOGD(ATM_DOMAIN, ATM_TAG, "Id=%{public}u.", tokenID);
     if (tokenID == INVALID_TOKENID) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "TokenID is invalid.");
         return TOKEN_INVALID;
     }
     AccessTokenIDInner* idInner = reinterpret_cast<AccessTokenIDInner*>(&tokenID);
@@ -85,7 +84,6 @@ PermissionState AccessTokenCompatKit::VerifyAccessToken(AccessTokenID tokenID, c
     }
     uint32_t code;
     if (!TransferPermissionToOpcode(permission, code)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Permission=%{public}s is not exist.", permission.c_str());
         return PERMISSION_DENIED;
     }
     if (IsNeedCrossIpc(tokenID)) {

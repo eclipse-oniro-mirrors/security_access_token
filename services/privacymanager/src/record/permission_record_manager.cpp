@@ -589,17 +589,17 @@ bool PermissionRecordManager::VerifyNativeRecordPermission(
     if (permissionName == CAMERA_PERMISSION_NAME) {
         isGranted = (AccessTokenHelper::VerifyAccessToken(
             tokenId, CAMERA_BACKGROUND_PERMISSION_NAME) == PERMISSION_GRANTED);
-        LOGI(PRI_DOMAIN, PRI_TAG, "Native tokenId %{public}d, isGranted %{public}d, permission %{public}s.",
+        LOGD(PRI_DOMAIN, PRI_TAG, "Native id %{public}d, isGranted %{public}d, perm %{public}s.",
             tokenId, isGranted, permissionName.c_str());
         return isGranted;
     } else if (permissionName == MICROPHONE_PERMISSION_NAME) {
         isGranted = (AccessTokenHelper::VerifyAccessToken(
             tokenId, MICROPHONE_BACKGROUND_PERMISSION_NAME) == PERMISSION_GRANTED);
-        LOGI(PRI_DOMAIN, PRI_TAG, "Native tokenId %{public}d, isGranted %{public}d, permission %{public}s.",
+        LOGD(PRI_DOMAIN, PRI_TAG, "Native id %{public}d, isGranted %{public}d, perm %{public}s.",
             tokenId, isGranted, permissionName.c_str());
         return isGranted;
     }
-    LOGE(PRI_DOMAIN, PRI_TAG, "Invalid permission %{public}s.", permissionName.c_str());
+    LOGD(PRI_DOMAIN, PRI_TAG, "Invalid perm %{public}s.", permissionName.c_str());
     return isGranted;
 }
 
@@ -1920,7 +1920,6 @@ int32_t PermissionRecordManager::CheckPermissionInUse(const std::string& permiss
 {
     int32_t opCode;
     if (!Constant::TransferPermissionToOpcode(permissionName, opCode)) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Permission(%{public}s) is not exist", permissionName.c_str());
         return PrivacyError::ERR_PERMISSION_NOT_EXIST;
     }
 
