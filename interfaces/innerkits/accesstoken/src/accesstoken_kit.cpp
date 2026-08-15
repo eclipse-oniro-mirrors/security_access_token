@@ -231,7 +231,6 @@ ATokenTypeEnum AccessTokenKit::GetTokenTypeFlag(AccessTokenID tokenID)
 {
     LOGD(ATM_DOMAIN, ATM_TAG, "TokenID=%{public}d.", tokenID);
     if (tokenID == INVALID_TOKENID) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "TokenID is invalid");
         return TOKEN_INVALID;
     }
     AccessTokenIDInner* idInner = reinterpret_cast<AccessTokenIDInner*>(&tokenID);
@@ -254,7 +253,6 @@ ATokenTypeEnum AccessTokenKit::GetTokenTypeFlag(FullTokenID tokenID)
     AccessTokenID id = tokenID & TOKEN_ID_LOWMASK;
     LOGD(ATM_DOMAIN, ATM_TAG, "TokenID=%{public}d.", id);
     if (id == INVALID_TOKENID) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "TokenID is invalid");
         return TOKEN_INVALID;
     }
     AccessTokenIDInner* idInner = reinterpret_cast<AccessTokenIDInner*>(&id);
@@ -389,7 +387,6 @@ int AccessTokenKit::VerifyAccessToken(AccessTokenID tokenID, const std::string& 
     }
     uint32_t code;
     if (!TransferPermissionToOpcode(permissionName, code)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "PermissionName(%{public}s) is not exist.", permissionName.c_str());
         return PERMISSION_DENIED;
     }
     if (crossIpc || IsNeedCrossIpc(tokenID)) {
@@ -431,7 +428,6 @@ int AccessTokenKit::VerifyAccessToken(AccessTokenID tokenID, const std::string& 
     }
     uint32_t code;
     if (!TransferPermissionToOpcode(permissionName, code)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "PermissionName(%{public}s) is not exist.", permissionName.c_str());
         return PERMISSION_DENIED;
     }
     bool isGranted = false;
@@ -479,7 +475,6 @@ int AccessTokenKit::VerifyAccessToken(AccessTokenID tokenID, const std::vector<s
         bool isGranted = false;
         uint32_t code;
         if (!TransferPermissionToOpcode(permissionList[i], code)) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "PermissionName(%{public}s) is not exist.", permissionList[i].c_str());
             permStateList[i] = PERMISSION_DENIED;
             continue;
         }
@@ -857,7 +852,6 @@ int32_t AccessTokenKit::UpdatePolicyWhiteList(
     }
     uint32_t permCode = 0;
     if (!TransferPermissionToOpcode(permission, permCode)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "PermissionName=%{public}s is invalid.", permission.c_str());
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     return AccessTokenManagerClient::GetInstance().UpdatePolicyWhiteList(tokenId, permCode, type);
@@ -873,7 +867,6 @@ int32_t AccessTokenKit::GetPolicyWhiteList(const std::string& permission, std::v
     tokenIdList.clear();
     uint32_t permCode = 0;
     if (!TransferPermissionToOpcode(permission, permCode)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "PermissionName=%{public}s is invalid.", permission.c_str());
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     return AccessTokenManagerClient::GetInstance().GetPolicyWhiteList(permCode, tokenIdList);
@@ -1077,7 +1070,6 @@ bool AccessTokenKit::TransferOpcodeToPermission(uint32_t permCode, std::string& 
 {
     permissionName = AccessToken::TransferOpcodeToPermission(permCode);
     if (permissionName.empty()) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Perm(%{public}u) is not exist.", permCode);
         return false;
     }
     return true;
@@ -1103,7 +1095,6 @@ int32_t AccessTokenKit::QueryStatusByPermission(const std::vector<std::string>& 
         // Validate permission exists and convert to permCode
         uint32_t permCode = 0;
         if (!AccessToken::TransferPermissionToOpcode(permissionName, permCode)) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "Permission %{public}s does not exist.", permissionName.c_str());
             return AccessTokenError::ERR_PERMISSION_NOT_EXIST;
         }
         permCodeList.emplace_back(permCode);

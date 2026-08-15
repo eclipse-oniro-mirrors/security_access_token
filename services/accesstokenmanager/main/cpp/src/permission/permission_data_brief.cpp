@@ -204,8 +204,6 @@ int32_t PermissionDataBrief::GetReqPermissionByName(
     }
     uint32_t permCode;
     if (!TransferPermissionToOpcode(permissionName, permCode)) {
-        LOGE(ATM_DOMAIN, ATM_TAG,
-            "TransferPermissionToOpcode failed, permissionName: %{public}s.", permissionName.c_str());
         return ERR_PERMISSION_NOT_EXIST;
     }
     uint64_t key = (static_cast<uint64_t>(tokenId) << TOKEN_ID_SHIFT) | permCode;
