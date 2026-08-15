@@ -21,6 +21,7 @@
 #include "access_token.h"
 #include "accesstoken_common_log.h"
 #include "accesstoken_id_manager.h"
+#include "permission_map.h"
 #include "time_util.h"
 #ifdef SECURITY_GUARD_ENABLE
 #include "sg_collect_client.h"
@@ -112,7 +113,9 @@ void VerifyAccessTokenMonitor::RecordExceptionalBehavior(
         HapTokenMonitoredInfo info;
         info.bundleName = callerHapTokenInfo.bundleName;
         info.tokenAttr = callerHapTokenInfo.tokenAttr;
-        VerifyAccessTokenRecord record = {targetTokenID, permissionName, currentTimeStamp};
+        uint32_t permissionCode = 0;
+        (void)TransferPermissionToOpcode(permissionName, permissionCode);
+        VerifyAccessTokenRecord record = {targetTokenID, permissionCode, currentTimeStamp};
         info.verifyTokenRecords.push_back(record);
         info.reportNum = 1;
         monitoredHapTokenMap_[callerHapTokenInfo.tokenID] = info;
@@ -123,7 +126,9 @@ void VerifyAccessTokenMonitor::RecordExceptionalBehavior(
     }
 
     // add record when caller tokenId exist in monitor list
-    VerifyAccessTokenRecord record = {targetTokenID, permissionName, currentTimeStamp};
+    uint32_t permissionCode = 0;
+    (void)TransferPermissionToOpcode(permissionName, permissionCode);
+    VerifyAccessTokenRecord record = {targetTokenID, permissionCode, currentTimeStamp};
     if (it->second.verifyTokenRecords.size() >= MAX_RECORD_TOKENID_NUM_MAX) {
         VerifyAccessTokenRecord toRemoveRecord = it->second.verifyTokenRecords.front();
         it->second.verifyTokenRecords.pop_front();
@@ -158,7 +163,7 @@ CJsonUnique VerifyAccessTokenMonitor::ToReportHapInfoJson(AccessTokenID callerTo
         if (item->timestamp < lastReportTime_ || count >= MAX_REPORT_TOKENID_NUM_MAX) {
             break;
         }
-        (void)AddStringToArray(permsJson, item->permissionName);
+        (void)AddStringToArray(permsJson, TransferOpcodeToPermission(item->permissionCode));
         (void)AddUnsignedIntToArray(tokenIdsJson, static_cast<uint32_t>(item->tokenID));
         count++;
     }
