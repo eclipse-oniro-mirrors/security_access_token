@@ -31,7 +31,7 @@ namespace AccessToken {
 
 struct VerifyAccessTokenRecord {
     AccessTokenID tokenID = INVALID_TOKENID;
-    std::string permissionName;
+    uint32_t permissionCode = 0;
     int64_t timestamp = 0;
 };
 
