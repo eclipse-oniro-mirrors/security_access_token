@@ -30,6 +30,7 @@ namespace Security {
 namespace AccessToken {
 namespace {
 constexpr const int64_t MERGE_TIMESTAMP = 200; // 200ms
+constexpr const int64_t MERGE_MINUTE_TIMESTAMP = 60 * 1000; // 60s
 
 bool IsValidCallbackRegisterType(CallbackRegisterType type)
 {
@@ -70,7 +71,8 @@ bool FindAndInsertRecord(const AddPermParamInfo& record)
         g_recordMap[newRecordStr].timespamp = curTimestamp;
         return false;
     }
-    if (curTimestamp - iter->second.timespamp >= MERGE_TIMESTAMP) {
+    if ((curTimestamp / MERGE_MINUTE_TIMESTAMP != iter->second.timespamp / MERGE_MINUTE_TIMESTAMP) ||
+        (curTimestamp - iter->second.timespamp >= MERGE_TIMESTAMP)) {
         g_recordMap[newRecordStr].successCount = record.successCount;
         g_recordMap[newRecordStr].timespamp = curTimestamp;
         return false;

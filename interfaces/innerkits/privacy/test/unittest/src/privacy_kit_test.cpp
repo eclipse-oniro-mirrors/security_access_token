@@ -1277,6 +1277,11 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord006, TestSize.Level0)
     // <200ms, record is dropped
     EXPECT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info)); // record3 drop
     EXPECT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info)); // record4 drop
+
+    PermissionUsedResult resultBeforeMergeWindowEnd;
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, resultBeforeMergeWindowEnd));
+    CheckPermissionUsedResult(request, resultBeforeMergeWindowEnd, 1, 2, 0); // 1 permission record, 2 successes
+
     usleep(200000); // 200000us = 200ms
     EXPECT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info)); // record5 combine with record2
     usleep(200000); // 200000us = 200ms
