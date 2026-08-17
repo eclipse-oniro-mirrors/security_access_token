@@ -157,6 +157,54 @@ void AddNativePermissionsFromCache(const NativeTokenInfoCache& cache, AccessToke
     }
 }
 
+void GetHapPermissionsFromCache(const std::vector<PermissionStatus>& permStateList, AccessTokenID tokenID,
+    std::vector<PermissionStatusIdl>& permissionInfoList)
+{
+    for (const auto& permState : permStateList) {
+        uint32_t permCode = 0;
+        if (!TransferPermissionToOpcode(permState.permissionName, permCode)) {
+            continue;
+        }
+
+        PermissionStatusIdl idl;
+        idl.tokenID = tokenID;
+        idl.permCode = permCode;
+        idl.grantStatus = permState.grantStatus;
+        idl.grantFlag = permState.grantFlag;
+        idl.timestamp = 0;
+        permissionInfoList.emplace_back(idl);
+    }
+}
+
+int32_t ValidateQueryTokenIdList(const std::vector<AccessTokenID>& tokenIDList,
+    std::vector<AccessTokenID>& uniqueTokenIDs)
+{
+    std::unordered_set<AccessTokenID> tokenIdSet;
+    tokenIdSet.reserve(tokenIDList.size());
+    uniqueTokenIDs.clear();
+    uniqueTokenIDs.reserve(tokenIDList.size());
+    for (const auto tokenID : tokenIDList) {
+        if (tokenIdSet.find(tokenID) != tokenIdSet.end()) {
+            continue;
+        }
+        if (tokenID == 0) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "TokenID cannot be 0.");
+            return AccessTokenError::ERR_PARAM_INVALID;
+        }
+        if (!AccessTokenInfoManager::GetInstance().IsTokenIdExist(tokenID)) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "TokenID %{public}u does not exist.", tokenID);
+            return AccessTokenError::ERR_TOKENID_NOT_EXIST;
+        }
+        if (TokenIDAttributes::GetTokenIdTypeEnum(tokenID) != TOKEN_HAP) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "TokenID %{public}u is not HAP type.", tokenID);
+            return AccessTokenError::ERR_PARAM_INVALID;
+        }
+        tokenIdSet.emplace(tokenID);
+        uniqueTokenIDs.emplace_back(tokenID);
+    }
+    return RET_SUCCESS;
+}
+
 void AddNativePermissionsFromKernel(const std::vector<uint32_t>& permCodeList, AccessTokenID tokenID,
     std::vector<PermissionStatusIdl>& permissionInfoList)
 {
@@ -275,36 +323,47 @@ int32_t AccessTokenInfoManager::FindPermissionByNameFromDb(const std::vector<uin
     return RET_SUCCESS;
 }
 
-int32_t AccessTokenInfoManager::FindPermissionByTokenIdFromDb(const std::vector<AccessTokenID>& tokenIDList,
+int32_t AccessTokenInfoManager::FindPermissionByTokenIdFromDb(const std::vector<AccessTokenID>& uniqueTokenIDs,
     std::vector<GenericValues>& permStateResults)
 {
-    std::unordered_set<AccessTokenID> tokenIdSet;
-    tokenIdSet.reserve(tokenIDList.size());
     std::vector<VariantValue> tokenIdValues;
-    tokenIdValues.reserve(tokenIDList.size());
-    for (const auto tokenID : tokenIDList) {
-        if (tokenIdSet.find(tokenID) != tokenIdSet.end()) {
-            continue;
-        }
-        if (tokenID == 0) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "TokenID cannot be 0.");
-            return AccessTokenError::ERR_PARAM_INVALID;
-        }
-        if (!IsTokenIdExist(tokenID)) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "TokenID %{public}u does not exist.", tokenID);
-            return AccessTokenError::ERR_TOKENID_NOT_EXIST;
-        }
-        if (TokenIDAttributes::GetTokenIdTypeEnum(tokenID) != TOKEN_HAP) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "TokenID %{public}u is not HAP type.", tokenID);
-            return AccessTokenError::ERR_PARAM_INVALID;
-        }
-
-        tokenIdSet.emplace(tokenID);
+    tokenIdValues.reserve(uniqueTokenIDs.size());
+    for (const auto tokenID : uniqueTokenIDs) {
         tokenIdValues.emplace_back(static_cast<int32_t>(tokenID));
     }
 
     return AccessTokenDbOperator::Find(
         AtmDataType::ACCESSTOKEN_PERMISSION_STATE, TokenFiledConst::FIELD_TOKEN_ID, tokenIdValues, permStateResults);
+}
+
+int32_t AccessTokenInfoManager::QueryStatusByTokenIdFromCache(const std::vector<AccessTokenID>& uniqueTokenIDs,
+    std::vector<PermissionStatusIdl>& permissionInfoList)
+{
+    std::vector<std::shared_ptr<HapTokenInfoInner>> hapInfoList;
+    hapInfoList.reserve(uniqueTokenIDs.size());
+    {
+        std::shared_lock<std::shared_mutex> infoGuard(this->hapTokenInfoLock_);
+        for (const auto tokenID : uniqueTokenIDs) {
+            auto iter = hapTokenInfoMap_.find(tokenID);
+            if ((iter == hapTokenInfoMap_.end()) || (iter->second == nullptr)) {
+                LOGE(ATM_DOMAIN, ATM_TAG, "TokenID %{public}u is not in hap cache.", tokenID);
+                return AccessTokenError::ERR_TOKENID_NOT_EXIST;
+            }
+            hapInfoList.emplace_back(iter->second);
+        }
+    }
+
+    for (size_t i = 0; i < uniqueTokenIDs.size(); ++i) {
+        std::vector<PermissionStatus> permStateList;
+        int32_t ret = hapInfoList[i]->GetPermissionStateList(permStateList);
+        if (ret != RET_SUCCESS) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Get permission states from cache failed, tokenID=%{public}u, ret=%{public}d.",
+                uniqueTokenIDs[i], ret);
+            return ret;
+        }
+        GetHapPermissionsFromCache(permStateList, uniqueTokenIDs[i], permissionInfoList);
+    }
+    return RET_SUCCESS;
 }
 
 AccessTokenInfoManager::AccessTokenInfoManager()
@@ -2328,11 +2387,21 @@ int32_t AccessTokenInfoManager::QueryStatusByPermission(const std::vector<uint32
 }
 
 int32_t AccessTokenInfoManager::QueryStatusByTokenID(const std::vector<AccessTokenID>& tokenIDList,
-    std::vector<PermissionStatusIdl>& permissionInfoList)
+    std::vector<PermissionStatusIdl>& permissionInfoList, bool needTimestamp)
 {
+    std::vector<AccessTokenID> uniqueTokenIDs;
+    int32_t ret = ValidateQueryTokenIdList(tokenIDList, uniqueTokenIDs);
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
     permissionInfoList.clear();
+    if (!needTimestamp) {
+        ret = QueryStatusByTokenIdFromCache(uniqueTokenIDs, permissionInfoList);
+        return ret;
+    }
+
     std::vector<GenericValues> permStateResults;
-    int32_t ret = FindPermissionByTokenIdFromDb(tokenIDList, permStateResults);
+    ret = FindPermissionByTokenIdFromDb(uniqueTokenIDs, permStateResults);
     if (ret != RET_SUCCESS) {
         return ret;
     }

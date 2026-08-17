@@ -1651,7 +1651,7 @@ int32_t AccessTokenManagerClient::QueryStatusByPermission(const std::vector<uint
 }
 
 int32_t AccessTokenManagerClient::QueryStatusByTokenID(const std::vector<AccessTokenID>& tokenIDList,
-    std::vector<PermissionStatus>& permissionInfoList)
+    std::vector<PermissionStatus>& permissionInfoList, bool needTimestamp)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
@@ -1659,7 +1659,7 @@ int32_t AccessTokenManagerClient::QueryStatusByTokenID(const std::vector<AccessT
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
     std::vector<PermissionStatusIdl> idlList;
-    int32_t res = proxy->QueryStatusByTokenID(tokenIDList, idlList);
+    int32_t res = proxy->QueryStatusByTokenID(tokenIDList, idlList, needTimestamp);
     if (res != RET_SUCCESS) {
         return ConvertResult(res);
     }

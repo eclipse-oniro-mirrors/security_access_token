@@ -147,7 +147,7 @@ public:
     int32_t QueryStatusByPermission(const std::vector<uint32_t>& permCodeList,
         std::vector<PermissionStatusIdl>& permissionInfoList, bool onlyHap);
     int32_t QueryStatusByTokenID(const std::vector<AccessTokenID>& tokenIDList,
-        std::vector<PermissionStatusIdl>& permissionInfoList);
+        std::vector<PermissionStatusIdl>& permissionInfoList, bool needTimestamp);
     size_t GetMaxQueryResultSize() const;
 
 #ifdef ATM_TEST_ENABLE
@@ -209,6 +209,8 @@ private:
         std::vector<GenericValues>& permStateResults);
     int32_t FindPermissionByTokenIdFromDb(const std::vector<AccessTokenID>& tokenIDList,
         std::vector<GenericValues>& permStateResults);
+    int32_t QueryStatusByTokenIdFromCache(const std::vector<AccessTokenID>& tokenIDList,
+        std::vector<PermissionStatusIdl>& permissionInfoList);
     int32_t UpdateRestrictedFlagToDb(AccessTokenID tokenId, uint32_t permCode);
     int32_t UpdateRestrictedFlag(
         AccessTokenID tokenId, uint32_t permCode, bool isRestricted, bool isPersist, bool& hasFlagChanged);

@@ -151,7 +151,7 @@ public:
     ErrCode QueryStatusByPermission(const std::vector<uint32_t>& permCodeList,
         std::vector<PermissionStatusIdl>& permissionInfoList, bool onlyHap) override;
     ErrCode QueryStatusByTokenID(const std::vector<uint32_t>& tokenIDList,
-        std::vector<PermissionStatusIdl>& permissionInfoList) override;
+        std::vector<PermissionStatusIdl>& permissionInfoList, bool needTimestamp) override;
     int32_t GetCliPermissionRequestInfo(
         const std::string& agentID, const std::vector<CliInfoIdl>& cliInfoList,
         PermissionDialogResultIdl& resultIdl) override;

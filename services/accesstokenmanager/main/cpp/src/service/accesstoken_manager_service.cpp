@@ -2805,7 +2805,7 @@ ErrCode AccessTokenManagerService::QueryStatusByPermission(const std::vector<uin
 }
 
 ErrCode AccessTokenManagerService::QueryStatusByTokenID(const std::vector<uint32_t>& tokenIDList,
-    std::vector<PermissionStatusIdl>& permissionInfoList)
+    std::vector<PermissionStatusIdl>& permissionInfoList, bool needTimestamp)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "Start, tokenIDList size: %{public}zu", tokenIDList.size());
 
@@ -2825,7 +2825,8 @@ ErrCode AccessTokenManagerService::QueryStatusByTokenID(const std::vector<uint32
     }
 
     permissionInfoList.clear();
-    int32_t ret = AccessTokenInfoManager::GetInstance().QueryStatusByTokenID(tokenIDList, permissionInfoList);
+    int32_t ret = AccessTokenInfoManager::GetInstance().QueryStatusByTokenID(
+        tokenIDList, permissionInfoList, needTimestamp);
     if (ret != RET_SUCCESS) {
         LOGE(ATM_DOMAIN, ATM_TAG, "QueryStatusByTokenID failed, ret: %{public}d.", ret);
         return ret;
