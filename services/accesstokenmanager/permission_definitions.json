@@ -11915,6 +11915,17 @@
             "deviceTypes": ["phone", "wearable"]
         },
         {
+            "name": "ohos.permission.MULTI_SCREEN_MANAGER",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.1.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["car"]
+        },
+        {
             "name": "ohos.permission.vehicle.DEVICE_AUTH",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
