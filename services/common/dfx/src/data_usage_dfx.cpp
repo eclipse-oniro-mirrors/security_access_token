@@ -194,6 +194,13 @@ void ReportAccessTokenUserData()
     LOGI(ATM_DOMAIN, ATM_TAG, "Report accesstoken_service userdata end.");
 }
 
+void ReportDbException(int32_t sceneCode, int32_t errCode, const std::string& dbName)
+{
+    (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "DATABASE_EXCEPTION",
+        HiviewDFX::HiSysEvent::EventType::FAULT, "SCENE_CODE", sceneCode, "ERROR_CODE", errCode,
+        "TABLE_NAME", dbName);
+}
+
 #ifdef REMOTE_PRIVACY_ENABLE
 void ReportPrivacyUserData(const std::string& path)
 {

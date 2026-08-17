@@ -51,6 +51,12 @@ public:
 private:
     std::shared_mutex rwLock_;
 
+    int32_t AddLocked(const std::vector<GenericValues>& values);
+    int32_t RemoveLocked(const GenericValues& conditions);
+    int32_t UpdateLocked(const GenericValues& modifyValue, const GenericValues& conditionValue);
+    int32_t DeleteExpireRecordsLocked(const GenericValues& andConditions);
+    int32_t DeleteExcessiveRecordsLocked(uint32_t excessiveSize);
+
     int32_t CreateRemotePermissionRecordTable() const;
     int32_t AddSubProfileIdColumn();
 

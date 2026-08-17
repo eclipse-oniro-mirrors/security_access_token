@@ -16,7 +16,9 @@
 #include "sqlite_helper.h"
 
 #include "accesstoken_common_log.h"
+#include "data_usage_dfx.h"
 #include "sqlite3ext.h"
+#include <cstdio>
 #include <sys/types.h>
 
 namespace OHOS {
@@ -30,7 +32,7 @@ SqliteHelper::SqliteHelper(const std::string& dbName, const std::string& dbPath,
 SqliteHelper::~SqliteHelper()
 {}
 
-void SqliteHelper::Open() __attribute__((no_sanitize("cfi")))
+void SqliteHelper::Open(bool skipCheck) __attribute__((no_sanitize("cfi")))
 {
     LOGE(ATM_DOMAIN, ATM_TAG, "Open db enter.");
     if (db_ != nullptr) {
@@ -54,6 +56,12 @@ void SqliteHelper::Open() __attribute__((no_sanitize("cfi")))
     }
     SetWal();
 
+    if (!skipCheck && NeedRebuild()) {
+        LOGW(ATM_DOMAIN, ATM_TAG, "integrity_check failed, rebuild!");
+        (void)Rebuild();
+        return;
+    }
+
     int32_t version = GetVersion();
     if (version == currentVersion_) {
         return;
@@ -69,6 +77,10 @@ void SqliteHelper::Open() __attribute__((no_sanitize("cfi")))
     }
     SetVersion();
     CommitTransaction();
+    if (!skipCheck && NeedRebuild()) {
+        LOGW(ATM_DOMAIN, ATM_TAG, "integrity_check failed after open, rebuild!");
+        (void)Rebuild();
+    }
 }
 
 void SqliteHelper::Close()
@@ -205,6 +217,74 @@ std::string SqliteHelper::SpitError() const
         return "";
     }
     return sqlite3_errmsg(db_);
+}
+
+bool SqliteHelper::IsCorruptCode(int32_t code) const
+{
+    return code == SQLITE_CORRUPT || code == SQLITE_NOTADB;
+}
+
+bool SqliteHelper::NeedRebuild() const
+{
+    if (db_ == nullptr) {
+        return false;
+    }
+    int32_t code = sqlite3_errcode(db_);
+    if (IsCorruptCode(code)) {
+        LOGW(ATM_DOMAIN, ATM_TAG, "Corrupt detected by errcode=%{public}d, msg=%{public}s", code,
+            sqlite3_errmsg(db_));
+        return true;
+    }
+    char** table = nullptr;
+    int32_t nrow = 0;
+    int32_t ncol = 0;
+    char* errMsg = nullptr;
+    int32_t ret = sqlite3_get_table(db_, "PRAGMA integrity_check;", &table, &nrow, &ncol, &errMsg);
+    code = sqlite3_errcode(db_);
+    sqlite3_free(errMsg);
+    if (ret != SQLITE_OK) {
+        ReportDbException(DB_INTEGRITY_CHECK_FAILED, code, dbPath_ + dbName_);
+        bool corrupt = IsCorruptCode(code);
+        if (corrupt) {
+            LOGW(ATM_DOMAIN, ATM_TAG, "integrity_check exec failed, code=%{public}d, msg=%{public}s", code,
+                sqlite3_errmsg(db_));
+        }
+        sqlite3_free_table(table);
+        return corrupt;
+    }
+    std::string result;
+    if (nrow > 0 && ncol > 0 && table != nullptr) {
+        result = table[ncol];
+    }
+    sqlite3_free_table(table);
+    if (result != "ok") {
+        LOGW(ATM_DOMAIN, ATM_TAG, "integrity_check not ok: %{public}s", result.c_str());
+        return true;
+    }
+    return false;
+}
+
+int32_t SqliteHelper::Rebuild()
+{
+    int32_t result = 0;
+    if (db_ != nullptr) {
+        // Use close_v2 to always return SQLITE_OK instead of BUSY when statements remain.
+        sqlite3_close_v2(db_);
+        db_ = nullptr;
+    }
+    std::string f = dbPath_ + dbName_;
+    (void)remove(f.c_str());
+    (void)remove((f + "-wal").c_str());
+    (void)remove((f + "-shm").c_str());
+    Open(true);
+    if (db_ == nullptr) {
+        result = GENERAL_ERROR;
+        LOGE(ATM_DOMAIN, ATM_TAG, "Rebuild failed, reopen db failed");
+    } else {
+        LOGI(ATM_DOMAIN, ATM_TAG, "Rebuild succeeded, db recreated");
+    }
+    ReportDbException(DB_REBUILD, result, dbPath_ + dbName_);
+    return result;
 }
 } // namespace AccessToken
 } // namespace Security

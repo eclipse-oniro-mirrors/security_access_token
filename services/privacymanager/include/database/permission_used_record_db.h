@@ -74,6 +74,14 @@ private:
     std::map<DataType, SqliteTable> dataTypeToSqlTable_;
     std::shared_mutex rwLock_;
 
+    int32_t AddLocked(DataType type, const std::vector<GenericValues>& values);
+    int32_t RemoveLocked(DataType type, const GenericValues& conditions);
+    int32_t UpdateLocked(DataType type, const GenericValues& modifyValue, const GenericValues& conditionValue);
+    int32_t DeleteExpireRecordsLocked(DataType type, const GenericValues& andConditions);
+    int32_t DeleteHistoryRecordsInTablesLocked(std::vector<DataType> dateTypes,
+        const std::unordered_set<AccessTokenID>& tokenIDList);
+    int32_t DeleteExcessiveRecordsLocked(DataType type, uint32_t excessiveSize);
+
     int32_t CreatePermissionRecordTable() const;
     int32_t CreatePermissionUsedTypeTable() const;
     int32_t CreatePermissionUsedRecordToggleStatusTable() const;
