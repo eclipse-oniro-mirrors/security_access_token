@@ -12049,6 +12049,17 @@
             "provisionEnable": true,
             "distributedSceneEnable": false,
             "deviceTypes": ["2in1", "tablet"]
+        },
+        {
+            "name": "ohos.permission.vehicle.FAULT_MANAGER_PLATFORM",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.1.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["car"]
         }
     ]
 }
