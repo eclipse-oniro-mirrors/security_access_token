@@ -45,9 +45,41 @@ static const int32_t MAX_KERNEL_OPERATE_TRY_TIMES = 2;
         break; \
     }
 
+static void TryRemoveInvalidConfigPath(const char *path)
+{
+    struct stat fileStat;
+    if (lstat(path, &fileStat) != 0) {
+        LOGC("lstat path(%s)  errno=%d.", path, errno);
+        return;
+    }
+    if (S_ISREG(fileStat.st_mode)) {
+        return;
+    }
+    LOGI("Start removing invalid config path(%s).", path);
+    if (S_ISDIR(fileStat.st_mode)) {
+        if (rmdir(path) != 0) {
+            LOGC("Failed to remove directory(%s), errno=%d.", path, errno);
+        }
+        return;
+    }
+    if (unlink(path) == 0) {
+        return;
+    }
+    LOGC("Failed to remove non-regular config node, errno=%d.", errno);
+}
+
 uint32_t GetFileBuff(const char *cfg, char **retBuff)
 {
     struct stat fileStat;
+
+    if ((cfg == NULL) || (retBuff == NULL)) {
+        LOGC("Invalid config file path.");
+        return GET_FILE_BUFF_FAILED;
+    }
+    if ((lstat(cfg, &fileStat) == 0) && S_ISLNK(fileStat.st_mode)) {
+        LOGC("Config file path is a symbolic link.");
+        return GET_FILE_BUFF_FAILED;
+    }
 
     char filePath[PATH_MAX_LEN + 1] = {0};
     if (realpath(cfg, filePath) == NULL) {
@@ -64,7 +96,10 @@ uint32_t GetFileBuff(const char *cfg, char **retBuff)
         LOGC("Failed to stat file, errno=%d.", errno);
         return GET_FILE_BUFF_FAILED;
     }
-
+    if (!S_ISREG(fileStat.st_mode)) {
+        LOGC("Config path is not a regular file.");
+        return GET_FILE_BUFF_FAILED;
+    }
     if (fileStat.st_size == 0) {
         LOGI("Empty file");
         *retBuff = NULL;
@@ -272,6 +307,7 @@ static uint32_t ParseTokenInfo(void)
 
 static uint32_t ClearOrCreateCfgFile(void)
 {
+    TryRemoveInvalidConfigPath(TOKEN_ID_CFG_FILE_PATH);
     int32_t fd = open(TOKEN_ID_CFG_FILE_PATH, O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP);
     if (fd < 0) {
         LOGC("Failed to open file, errno=%d.", errno);
@@ -295,7 +331,6 @@ static uint32_t ClearOrCreateCfgFile(void)
         LOGC("Failed to chown file, errno=%d.", errno);
         return CLEAR_CREATE_FILE_FAILED;
     }
-
     return ATRET_SUCCESS;
 }
 
@@ -792,9 +827,10 @@ static uint32_t UpdateInfoInCfgFile(const NativeTokenList *tokenNode)
 
 static uint32_t LockNativeTokenFile(int32_t *lockFileFd)
 {
+    TryRemoveInvalidConfigPath(TOKEN_ID_CFG_FILE_LOCK_PATH);
     int32_t fd = open(TOKEN_ID_CFG_FILE_LOCK_PATH, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP);
     if (fd < 0) {
-        LOGC("Failed to open native token file, errno=%d.", errno);
+        LOGC("Failed to open native token file, errno=%d!", errno);
         return LOCK_FILE_FAILED;
     }
     fdsan_exchange_owner_tag(fd, 0, g_nativeFdTag);

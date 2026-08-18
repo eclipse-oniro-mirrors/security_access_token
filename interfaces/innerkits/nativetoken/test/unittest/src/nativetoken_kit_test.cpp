@@ -14,9 +14,14 @@
  */
 
 #include "nativetoken_kit_test.h"
+#include <cerrno>
 #include <fcntl.h>
 #include <poll.h>
 #include <pthread.h>
+#include <string>
+#include <sys/stat.h>
+#include <sys/wait.h>
+#include <unistd.h>
 #include "securec.h"
 #include "nativetoken.h"
 #include "nativetoken_json_oper.h"
@@ -36,6 +41,124 @@ extern uint32_t GetFileBuff(const char *cfg, char **retBuff);
 
 static constexpr uint32_t KERNEL_PERM_BIT_NUM = 32;
 static constexpr uint32_t ACCESSTOKEN_UID = 3020;
+static const char* TOKEN_ID_CFG_FILE_BACKUP_PATH = "/data/service/el0/access_token/nativetoken.json.test_backup";
+static const char* TOKEN_ID_CFG_FILE_LINK_PATH = "/data/service/el0/access_token/nativetoken.json.test_link";
+static const char* TOKEN_ID_CFG_FILE_LINK_TARGET_PATH = "/data/service/el0/access_token/nativetoken.json.test_target";
+
+class NativeTokenConfigFileGuard {
+public:
+    bool ReplaceWithDirectory()
+    {
+        if (!Backup()) {
+            return false;
+        }
+        if (mkdir(TOKEN_ID_CFG_FILE_PATH, S_IRWXU) == 0) {
+            return true;
+        }
+        Restore();
+        return false;
+    }
+
+    bool ReplaceWithSymbolicLink()
+    {
+        if (!Backup()) {
+            return false;
+        }
+        if ((unlink(TOKEN_ID_CFG_FILE_LINK_TARGET_PATH) != 0) && (errno != ENOENT)) {
+            Restore();
+            return false;
+        }
+        int32_t fd = open(TOKEN_ID_CFG_FILE_LINK_TARGET_PATH, O_RDWR | O_CREAT | O_EXCL,
+            S_IRUSR | S_IWUSR);
+        if (fd < 0) {
+            Restore();
+            return false;
+        }
+        linkTargetCreated_ = true;
+        if (close(fd) != 0) {
+            Restore();
+            return false;
+        }
+        if (symlink(TOKEN_ID_CFG_FILE_LINK_TARGET_PATH, TOKEN_ID_CFG_FILE_PATH) == 0) {
+            return true;
+        }
+        Restore();
+        return false;
+    }
+
+    bool ReplaceWithFifo()
+    {
+        if (!Backup()) {
+            return false;
+        }
+        if (mkfifo(TOKEN_ID_CFG_FILE_PATH, S_IRUSR | S_IWUSR) == 0) {
+            return true;
+        }
+        Restore();
+        return false;
+    }
+
+    bool ReplaceWithInvalidJson()
+    {
+        if (!Backup()) {
+            return false;
+        }
+        int32_t fd = open(TOKEN_ID_CFG_FILE_PATH, O_RDWR | O_CREAT | O_TRUNC,
+            S_IRUSR | S_IWUSR);
+        if (fd < 0) {
+            Restore();
+            return false;
+        }
+        const char invalidJson[] = "not-json";
+        ssize_t writtenLen = write(fd, invalidJson, sizeof(invalidJson) - 1);
+        bool closeSucceeded = (close(fd) == 0);
+        if ((writtenLen != static_cast<ssize_t>(sizeof(invalidJson) - 1)) || !closeSucceeded) {
+            Restore();
+            return false;
+        }
+        return true;
+    }
+
+    ~NativeTokenConfigFileGuard()
+    {
+        Restore();
+    }
+
+private:
+    bool Backup()
+    {
+        if ((unlink(TOKEN_ID_CFG_FILE_BACKUP_PATH) != 0) && (errno != ENOENT)) {
+            return false;
+        }
+        struct stat fileStat = {};
+        if (lstat(TOKEN_ID_CFG_FILE_PATH, &fileStat) != 0) {
+            return errno == ENOENT;
+        }
+        if (rename(TOKEN_ID_CFG_FILE_PATH, TOKEN_ID_CFG_FILE_BACKUP_PATH) != 0) {
+            return false;
+        }
+        hasBackup_ = true;
+        return true;
+    }
+
+    void Restore()
+    {
+        if (unlink(TOKEN_ID_CFG_FILE_PATH) != 0) {
+            (void)rmdir(TOKEN_ID_CFG_FILE_PATH);
+        }
+        if (hasBackup_) {
+            (void)rename(TOKEN_ID_CFG_FILE_BACKUP_PATH, TOKEN_ID_CFG_FILE_PATH);
+            hasBackup_ = false;
+        }
+        if (linkTargetCreated_) {
+            (void)unlink(TOKEN_ID_CFG_FILE_LINK_TARGET_PATH);
+            linkTargetCreated_ = false;
+        }
+    }
+
+    bool hasBackup_ = false;
+    bool linkTargetCreated_ = false;
+};
 
 void TokenLibKitTest::SetUpTestCase()
 {}
@@ -249,6 +372,242 @@ int32_t Start(const char *processName)
     delete[] permArray;
     delete[] acls;
     return tokenId;
+}
+
+/**
+ * @tc.name: AtlibInitJsonDirectory001
+ * @tc.desc: Verify that init recovers an empty directory at the config file path.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenLibKitTest, AtlibInitJsonDirectory001, TestSize.Level0)
+{
+    NativeTokenConfigFileGuard configFileGuard;
+    ASSERT_TRUE(configFileGuard.ReplaceWithDirectory());
+
+    struct stat backupStat = {};
+    ASSERT_EQ(lstat(TOKEN_ID_CFG_FILE_BACKUP_PATH, &backupStat), 0);
+    ASSERT_TRUE(S_ISREG(backupStat.st_mode));
+
+    struct stat fileStat = {};
+    ASSERT_EQ(lstat(TOKEN_ID_CFG_FILE_PATH, &fileStat), 0);
+    ASSERT_TRUE(S_ISDIR(fileStat.st_mode));
+
+    ASSERT_EQ(AtlibInit(), ATRET_SUCCESS);
+    ASSERT_EQ(lstat(TOKEN_ID_CFG_FILE_PATH, &fileStat), 0);
+    ASSERT_TRUE(S_ISREG(fileStat.st_mode));
+    ASSERT_EQ(fileStat.st_size, 0);
+
+    char *fileBuff = nullptr;
+    ASSERT_EQ(GetFileBuff(TOKEN_ID_CFG_FILE_PATH, &fileBuff), ATRET_SUCCESS);
+    ASSERT_EQ(fileBuff, nullptr);
+}
+
+/**
+ * @tc.name: GetAccessTokenIdJsonDirectory001
+ * @tc.desc: Verify that a config path replaced by a directory is recovered before creating a token.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenLibKitTest, GetAccessTokenIdJsonDirectory001, TestSize.Level0)
+{
+    NativeTokenConfigFileGuard configFileGuard;
+    ASSERT_TRUE(configFileGuard.ReplaceWithDirectory());
+
+    struct stat backupStat = {};
+    ASSERT_EQ(lstat(TOKEN_ID_CFG_FILE_BACKUP_PATH, &backupStat), 0);
+    ASSERT_TRUE(S_ISREG(backupStat.st_mode));
+
+    uint64_t tokenId = Start("GetAccessTokenIdJsonDirectory001");
+    ASSERT_NE(tokenId, 0);
+    struct stat fileStat = {};
+    ASSERT_EQ(lstat(TOKEN_ID_CFG_FILE_PATH, &fileStat), 0);
+    ASSERT_TRUE(S_ISREG(fileStat.st_mode));
+    ASSERT_EQ(DeleteAccessTokenId("GetAccessTokenIdJsonDirectory001"), ATRET_SUCCESS);
+}
+
+/**
+ * @tc.name: GetAccessTokenIdJsonDirectoryDataLoss001
+ * @tc.desc: Verify that recovering a directory config changes persisted native token IDs after a restart.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenLibKitTest, GetAccessTokenIdJsonDirectoryDataLoss001, TestSize.Level0)
+{
+    const char *processName = "GetAccessTokenIdJsonDirectoryDataLoss001";
+    uint64_t originalTokenId = Start(processName);
+    ASSERT_NE(originalTokenId, 0);
+
+    {
+        NativeTokenConfigFileGuard configFileGuard;
+        ASSERT_TRUE(configFileGuard.ReplaceWithDirectory());
+        struct stat backupStat = {};
+        ASSERT_EQ(lstat(TOKEN_ID_CFG_FILE_BACKUP_PATH, &backupStat), 0);
+        ASSERT_TRUE(S_ISREG(backupStat.st_mode));
+
+        pid_t pid = fork();
+        ASSERT_GE(pid, 0);
+        if (pid == 0) {
+            g_isNativeTokenInited = 0;
+            uint64_t recoveredTokenId = Start(processName);
+            _exit((recoveredTokenId != 0) && (recoveredTokenId != originalTokenId) ? 0 : 1);
+        }
+        int32_t status = 0;
+        ASSERT_EQ(waitpid(pid, &status, 0), pid);
+        ASSERT_TRUE(WIFEXITED(status));
+        ASSERT_EQ(WEXITSTATUS(status), 0);
+    }
+
+    ASSERT_EQ(DeleteAccessTokenId(processName), ATRET_SUCCESS);
+}
+
+/**
+ * @tc.name: GetFileBuffSymbolicLink001
+ * @tc.desc: Verify that a symbolic link is rejected without reading its target.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenLibKitTest, GetFileBuffSymbolicLink001, TestSize.Level0)
+{
+    ASSERT_EQ(AtlibInit(), ATRET_SUCCESS);
+    ASSERT_TRUE((unlink(TOKEN_ID_CFG_FILE_LINK_PATH) == 0) || (errno == ENOENT));
+    ASSERT_TRUE((unlink(TOKEN_ID_CFG_FILE_LINK_TARGET_PATH) == 0) || (errno == ENOENT));
+    int32_t fd = open(TOKEN_ID_CFG_FILE_LINK_TARGET_PATH, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+    ASSERT_GE(fd, 0);
+    ASSERT_EQ(close(fd), 0);
+    ASSERT_EQ(symlink(TOKEN_ID_CFG_FILE_LINK_TARGET_PATH, TOKEN_ID_CFG_FILE_LINK_PATH), 0);
+
+    char *fileBuff = nullptr;
+    EXPECT_NE(GetFileBuff(TOKEN_ID_CFG_FILE_LINK_PATH, &fileBuff), ATRET_SUCCESS);
+
+    ASSERT_EQ(unlink(TOKEN_ID_CFG_FILE_LINK_PATH), 0);
+    ASSERT_EQ(unlink(TOKEN_ID_CFG_FILE_LINK_TARGET_PATH), 0);
+}
+
+/**
+ * @tc.name: GetFileBuffNullConfig001
+ * @tc.desc: Verify that a null config path is rejected.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenLibKitTest, GetFileBuffNullConfig001, TestSize.Level0)
+{
+    ASSERT_EQ(AtlibInit(), ATRET_SUCCESS);
+    char *fileBuff = nullptr;
+    EXPECT_NE(GetFileBuff(nullptr, &fileBuff), ATRET_SUCCESS);
+}
+
+/**
+ * @tc.name: GetFileBuffNullBuffer001
+ * @tc.desc: Verify that a null output buffer is rejected.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenLibKitTest, GetFileBuffNullBuffer001, TestSize.Level0)
+{
+    ASSERT_EQ(AtlibInit(), ATRET_SUCCESS);
+    EXPECT_NE(GetFileBuff(TOKEN_ID_CFG_FILE_PATH, nullptr), ATRET_SUCCESS);
+}
+
+/**
+ * @tc.name: GetFileBuffLstatFailed001
+ * @tc.desc: Verify that a missing config path is handled when lstat fails.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenLibKitTest, GetFileBuffLstatFailed001, TestSize.Level0)
+{
+    ASSERT_EQ(AtlibInit(), ATRET_SUCCESS);
+    const char *missingPath = "/data/service/el0/access_token/missing_dir/nativetoken.json";
+    char *fileBuff = nullptr;
+    EXPECT_EQ(GetFileBuff(missingPath, &fileBuff), ATRET_SUCCESS);
+    EXPECT_EQ(fileBuff, nullptr);
+}
+
+/**
+ * @tc.name: GetAccessTokenIdJsonSymbolicLink001
+ * @tc.desc: Verify that a config symbolic link is replaced with a regular file.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenLibKitTest, GetAccessTokenIdJsonSymbolicLink001, TestSize.Level0)
+{
+    NativeTokenConfigFileGuard configFileGuard;
+    ASSERT_TRUE(configFileGuard.ReplaceWithSymbolicLink());
+    struct stat backupStat = {};
+    ASSERT_EQ(lstat(TOKEN_ID_CFG_FILE_BACKUP_PATH, &backupStat), 0);
+    ASSERT_TRUE(S_ISREG(backupStat.st_mode));
+
+    uint64_t tokenId = Start("GetAccessTokenIdJsonSymbolicLink001");
+    ASSERT_NE(tokenId, 0);
+    struct stat fileStat = {};
+    ASSERT_EQ(lstat(TOKEN_ID_CFG_FILE_PATH, &fileStat), 0);
+    ASSERT_TRUE(S_ISREG(fileStat.st_mode));
+    ASSERT_EQ(lstat(TOKEN_ID_CFG_FILE_LINK_TARGET_PATH, &fileStat), 0);
+    ASSERT_TRUE(S_ISREG(fileStat.st_mode));
+    ASSERT_EQ(DeleteAccessTokenId("GetAccessTokenIdJsonSymbolicLink001"), ATRET_SUCCESS);
+}
+
+/**
+ * @tc.name: GetAccessTokenIdJsonFifo001
+ * @tc.desc: Verify that a config FIFO is replaced with a regular file.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenLibKitTest, GetAccessTokenIdJsonFifo001, TestSize.Level0)
+{
+    NativeTokenConfigFileGuard configFileGuard;
+    ASSERT_TRUE(configFileGuard.ReplaceWithFifo());
+    struct stat backupStat = {};
+    ASSERT_EQ(lstat(TOKEN_ID_CFG_FILE_BACKUP_PATH, &backupStat), 0);
+    ASSERT_TRUE(S_ISREG(backupStat.st_mode));
+
+    uint64_t tokenId = Start("GetAccessTokenIdJsonFifo001");
+    ASSERT_NE(tokenId, 0);
+    struct stat fileStat = {};
+    ASSERT_EQ(lstat(TOKEN_ID_CFG_FILE_PATH, &fileStat), 0);
+    ASSERT_TRUE(S_ISREG(fileStat.st_mode));
+    ASSERT_EQ(DeleteAccessTokenId("GetAccessTokenIdJsonFifo001"), ATRET_SUCCESS);
+}
+
+/**
+ * @tc.name: GetAccessTokenIdJsonInvalidContent001
+ * @tc.desc: Verify that invalid JSON content is cleared during initialization.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenLibKitTest, GetAccessTokenIdJsonInvalidContent001, TestSize.Level0)
+{
+    NativeTokenConfigFileGuard configFileGuard;
+    ASSERT_TRUE(configFileGuard.ReplaceWithInvalidJson());
+    struct stat backupStat = {};
+    ASSERT_EQ(lstat(TOKEN_ID_CFG_FILE_BACKUP_PATH, &backupStat), 0);
+    ASSERT_TRUE(S_ISREG(backupStat.st_mode));
+
+    ASSERT_EQ(AtlibInit(), ATRET_SUCCESS);
+    struct stat fileStat = {};
+    ASSERT_EQ(lstat(TOKEN_ID_CFG_FILE_PATH, &fileStat), 0);
+    ASSERT_TRUE(S_ISREG(fileStat.st_mode));
+    ASSERT_EQ(fileStat.st_size, 0);
+}
+
+/**
+ * @tc.name: GetAccessTokenIdLockDirectory001
+ * @tc.desc: Verify that a lock path replaced by a directory is recovered before creating a token.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenLibKitTest, GetAccessTokenIdLockDirectory001, TestSize.Level0)
+{
+    ASSERT_TRUE((unlink(TOKEN_ID_CFG_FILE_LOCK_PATH) == 0) || (errno == ENOENT));
+    ASSERT_EQ(mkdir(TOKEN_ID_CFG_FILE_LOCK_PATH, S_IRWXU), 0);
+
+    uint64_t tokenId = Start("GetAccessTokenIdLockDirectory001");
+    ASSERT_NE(tokenId, 0);
+    struct stat fileStat = {};
+    ASSERT_EQ(lstat(TOKEN_ID_CFG_FILE_LOCK_PATH, &fileStat), 0);
+    ASSERT_TRUE(S_ISREG(fileStat.st_mode));
+    ASSERT_EQ(DeleteAccessTokenId("GetAccessTokenIdLockDirectory001"), ATRET_SUCCESS);
 }
 
 /**
