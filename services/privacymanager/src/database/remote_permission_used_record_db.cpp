@@ -15,6 +15,7 @@
 
 #include "remote_permission_used_record_db.h"
 
+#include <chrono>
 #include <cinttypes>
 #include <cstdint>
 #include <fcntl.h>
@@ -51,6 +52,7 @@ const std::string REMOTE_PERMISSION_RECORD_TABLE = "remote_permission_record";
 constexpr const char* DATABASE_NAME = "remote_permission_used_record.db";
 constexpr const char* DATABASE_PATH_BASE = "/data/service/el2/";
 constexpr const char* DATABASE_PATH_INNER = "/access_token/";
+constexpr int32_t SLEEP_RETRY_MS = 300;
 std::set<int32_t> g_dfxSet;
 
 std::vector<std::string> g_tableColumnNames = {
@@ -251,9 +253,27 @@ RemotePermissionUsedRecordDb::RemotePermissionUsedRecordDb(const std::string& db
 
 int32_t RemotePermissionUsedRecordDb::Add(const std::vector<GenericValues>& values)
 {
+    std::unique_lock<std::shared_mutex> lock(this->rwLock_);
+    int32_t ret = AddLocked(values);
+    if (ret == SUCCESS) {
+        return ret;
+    }
+    if (!NeedRebuild()) {
+        LOGW(PRI_DOMAIN, PRI_TAG, "Db operate failed but not corrupt, retry after 300ms");
+        std::this_thread::sleep_for(std::chrono::milliseconds(SLEEP_RETRY_MS));
+        return AddLocked(values);
+    }
+    LOGW(PRI_DOMAIN, PRI_TAG, "Detech db corrupt, rebuild!");
+    if (Rebuild() == SUCCESS) {
+        ret = AddLocked(values);
+    }
+    return ret;
+}
+
+int32_t RemotePermissionUsedRecordDb::AddLocked(const std::vector<GenericValues>& values)
+{
     int64_t beginTime = TimeUtil::GetCurrentTimestamp();
 
-    std::unique_lock<std::shared_mutex> lock(this->rwLock_);
     std::string prepareSql = CreateInsertPrepareSqlCmd();
     LOGD(PRI_DOMAIN, PRI_TAG, "Add sql is %{public}s.", prepareSql.c_str());
 
@@ -305,9 +325,27 @@ int32_t RemotePermissionUsedRecordDb::AddSubProfileIdColumn()
 
 int32_t RemotePermissionUsedRecordDb::Remove(const GenericValues& conditions)
 {
+    std::unique_lock<std::shared_mutex> lock(this->rwLock_);
+    int32_t ret = RemoveLocked(conditions);
+    if (ret == SUCCESS) {
+        return ret;
+    }
+    if (!NeedRebuild()) {
+        LOGW(PRI_DOMAIN, PRI_TAG, "Db operate failed but not corrupt, retry after 300ms");
+        std::this_thread::sleep_for(std::chrono::milliseconds(SLEEP_RETRY_MS));
+        return RemoveLocked(conditions);
+    }
+    LOGW(PRI_DOMAIN, PRI_TAG, "Detech db corrupt, rebuild!");
+    if (Rebuild() == SUCCESS) {
+        ret = RemoveLocked(conditions);
+    }
+    return ret;
+}
+
+int32_t RemotePermissionUsedRecordDb::RemoveLocked(const GenericValues& conditions)
+{
     int64_t beginTime = TimeUtil::GetCurrentTimestamp();
 
-    std::unique_lock<std::shared_mutex> lock(this->rwLock_);
     std::vector<std::string> columnNames = conditions.GetAllKeys();
     std::string prepareSql = CreateDeletePrepareSqlCmd(columnNames);
     LOGD(PRI_DOMAIN, PRI_TAG, "Remove sql is %{public}s.", prepareSql.c_str());
@@ -383,9 +421,27 @@ int32_t RemotePermissionUsedRecordDb::Count()
 
 int32_t RemotePermissionUsedRecordDb::DeleteExpireRecords(const GenericValues& andConditions)
 {
+    std::unique_lock<std::shared_mutex> lock(this->rwLock_);
+    int32_t ret = DeleteExpireRecordsLocked(andConditions);
+    if (ret == SUCCESS) {
+        return ret;
+    }
+    if (!NeedRebuild()) {
+        LOGW(PRI_DOMAIN, PRI_TAG, "Db operate failed but not corrupt, retry after 300ms");
+        std::this_thread::sleep_for(std::chrono::milliseconds(SLEEP_RETRY_MS));
+        return DeleteExpireRecordsLocked(andConditions);
+    }
+    LOGW(PRI_DOMAIN, PRI_TAG, "Detech db corrupt, rebuild!");
+    if (Rebuild() == SUCCESS) {
+        ret = DeleteExpireRecordsLocked(andConditions);
+    }
+    return ret;
+}
+
+int32_t RemotePermissionUsedRecordDb::DeleteExpireRecordsLocked(const GenericValues& andConditions)
+{
     int64_t beginTime = TimeUtil::GetCurrentTimestamp();
 
-    std::unique_lock<std::shared_mutex> lock(this->rwLock_);
     std::vector<std::string> andColumns = andConditions.GetAllKeys();
     if (!andColumns.empty()) {
         std::string deleteExpireSql = CreateDeleteExpireRecordsPrepareSqlCmd(andColumns);
@@ -408,9 +464,27 @@ int32_t RemotePermissionUsedRecordDb::DeleteExpireRecords(const GenericValues& a
 
 int32_t RemotePermissionUsedRecordDb::DeleteExcessiveRecords(uint32_t excessiveSize)
 {
+    std::unique_lock<std::shared_mutex> lock(this->rwLock_);
+    int32_t ret = DeleteExcessiveRecordsLocked(excessiveSize);
+    if (ret == SUCCESS) {
+        return ret;
+    }
+    if (!NeedRebuild()) {
+        LOGW(PRI_DOMAIN, PRI_TAG, "Db operate failed but not corrupt, retry after 300ms");
+        std::this_thread::sleep_for(std::chrono::milliseconds(SLEEP_RETRY_MS));
+        return DeleteExcessiveRecordsLocked(excessiveSize);
+    }
+    LOGW(PRI_DOMAIN, PRI_TAG, "Detech db corrupt, rebuild!");
+    if (Rebuild() == SUCCESS) {
+        ret = DeleteExcessiveRecordsLocked(excessiveSize);
+    }
+    return ret;
+}
+
+int32_t RemotePermissionUsedRecordDb::DeleteExcessiveRecordsLocked(uint32_t excessiveSize)
+{
     int64_t beginTime = TimeUtil::GetCurrentTimestamp();
 
-    std::unique_lock<std::shared_mutex> lock(this->rwLock_);
     std::string deleteExcessiveSql = CreateDeleteExcessiveRecordsPrepareSqlCmd(excessiveSize);
     LOGD(PRI_DOMAIN, PRI_TAG, "DeleteExcessiveRecords sql is %{public}s.", deleteExcessiveSql.c_str());
     auto deleteExcessiveStatement = Prepare(deleteExcessiveSql);
@@ -428,12 +502,31 @@ int32_t RemotePermissionUsedRecordDb::DeleteExcessiveRecords(uint32_t excessiveS
 int32_t RemotePermissionUsedRecordDb::Update(const GenericValues& modifyValue,
     const GenericValues& conditionValue)
 {
+    std::unique_lock<std::shared_mutex> lock(this->rwLock_);
+    int32_t ret = UpdateLocked(modifyValue, conditionValue);
+    if (ret == SUCCESS) {
+        return ret;
+    }
+    if (!NeedRebuild()) {
+        LOGW(PRI_DOMAIN, PRI_TAG, "Db operate failed but not corrupt, retry after 300ms");
+        std::this_thread::sleep_for(std::chrono::milliseconds(SLEEP_RETRY_MS));
+        return UpdateLocked(modifyValue, conditionValue);
+    }
+    LOGW(PRI_DOMAIN, PRI_TAG, "Detech db corrupt, rebuild!");
+    if (Rebuild() == SUCCESS) {
+        ret = UpdateLocked(modifyValue, conditionValue);
+    }
+    return ret;
+}
+
+int32_t RemotePermissionUsedRecordDb::UpdateLocked(const GenericValues& modifyValue,
+    const GenericValues& conditionValue)
+{
     int64_t beginTime = TimeUtil::GetCurrentTimestamp();
 
     std::vector<std::string> modifyNames = modifyValue.GetAllKeys();
     std::vector<std::string> conditionNames = conditionValue.GetAllKeys();
 
-    std::unique_lock<std::shared_mutex> lock(this->rwLock_);
     std::string prepareSql = CreateUpdatePrepareSqlCmd(modifyNames, conditionNames);
     LOGD(PRI_DOMAIN, PRI_TAG, "Update sql is %{public}s.", prepareSql.c_str());
 

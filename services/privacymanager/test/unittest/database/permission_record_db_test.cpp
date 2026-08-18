@@ -14,6 +14,9 @@
  */
 
 #include <gtest/gtest.h>
+#include <fstream>
+#include <pwd.h>
+#include <unistd.h>
 #include "constant.h"
 #include "data_translator.h"
 #include "active_change_response_info.h"
@@ -67,6 +70,21 @@ void PermissionRecordDBTest::SetUpTestCase()
 void PermissionRecordDBTest::TearDownTestCase()
 {
     SetSelfTokenID(g_selfTokenId);
+    struct passwd* pwd = getpwnam("access_token");
+    if (pwd != nullptr) {
+        auto& db = PermissionUsedRecordDb::GetInstance();
+        std::string f = db.dbPath_ + db.dbName_;
+        chown(f.c_str(), pwd->pw_uid, pwd->pw_gid);
+        chown((f + "-wal").c_str(), pwd->pw_uid, pwd->pw_gid);
+        chown((f + "-shm").c_str(), pwd->pw_uid, pwd->pw_gid);
+#ifdef REMOTE_PRIVACY_ENABLE
+        std::string rf = "/data/service/el2/" + std::to_string(USER_ID_100) +
+            "/access_token/remote_permission_used_record.db";
+        chown(rf.c_str(), pwd->pw_uid, pwd->pw_gid);
+        chown((rf + "-wal").c_str(), pwd->pw_uid, pwd->pw_gid);
+        chown((rf + "-shm").c_str(), pwd->pw_uid, pwd->pw_gid);
+#endif
+    }
     PrivacyTestCommon::ResetTestEvironment();
 }
 
@@ -1401,6 +1419,360 @@ HWTEST_F(PermissionRecordDBTest, Update001, TestSize.Level0)
     ASSERT_EQ(PermissionUsedRecordDb::ExecuteResult::SUCCESS, PermissionUsedRecordDb::GetInstance().Remove(
         type, conditionValue));
 }
+
+static void MakeDbCorrupt(const std::string& dbPath, const std::string& dbName)
+{
+    std::string f = dbPath + dbName;
+    std::ofstream out(f, std::ios::binary | std::ios::trunc);
+    char bad[128] = {0};
+    out.write(bad, sizeof(bad));
+    out.close();
+}
+
+/*
+ * @tc.name: NeedRebuild_NormalThenCorrupt
+ * @tc.desc: NeedRebuild false on normal db, true on corrupt db
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordDBTest, NeedRebuild_NormalThenCorrupt, TestSize.Level0)
+{
+    auto& db = PermissionUsedRecordDb::GetInstance();
+    EXPECT_FALSE(db.NeedRebuild());
+    db.ExecuteSql("PRAGMA wal_checkpoint(TRUNCATE)");
+    db.Close();
+    MakeDbCorrupt(db.dbPath_, db.dbName_);
+    db.Open(true);
+    EXPECT_TRUE(db.NeedRebuild());
+    db.Rebuild();
+}
+
+/*
+ * @tc.name: Rebuild_CorruptThenNull
+ * @tc.desc: Rebuild on corrupt db (close_v2) and null db (skip close)
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordDBTest, Rebuild_CorruptThenNull, TestSize.Level0)
+{
+    auto& db = PermissionUsedRecordDb::GetInstance();
+    db.ExecuteSql("PRAGMA wal_checkpoint(TRUNCATE)");
+    db.Close();
+    MakeDbCorrupt(db.dbPath_, db.dbName_);
+    db.Open(true);
+    EXPECT_EQ(PermissionUsedRecordDb::ExecuteResult::SUCCESS, db.Rebuild());
+    EXPECT_NE(nullptr, db.db_);
+    db.Close();
+    EXPECT_EQ(PermissionUsedRecordDb::ExecuteResult::SUCCESS, db.Rebuild());
+    EXPECT_NE(nullptr, db.db_);
+}
+
+/*
+ * @tc.name: Open_NormalThenCorrupt_Rebuild
+ * @tc.desc: Open normal db no rebuild, corrupt db triggers rebuild
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordDBTest, Open_NormalThenCorrupt_Rebuild, TestSize.Level0)
+{
+    auto& db = PermissionUsedRecordDb::GetInstance();
+    db.Close();
+    db.Open(false);
+    EXPECT_NE(nullptr, db.db_);
+    db.ExecuteSql("PRAGMA wal_checkpoint(TRUNCATE)");
+    db.Close();
+    MakeDbCorrupt(db.dbPath_, db.dbName_);
+    db.Open(false);
+    EXPECT_NE(nullptr, db.db_);
+}
+
+/*
+ * @tc.name: IsCorruptCode_AllCodes
+ * @tc.desc: IsCorruptCode true for CORRUPT/NOTADB, false for others
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordDBTest, IsCorruptCode_AllCodes, TestSize.Level0)
+{
+    auto& db = PermissionUsedRecordDb::GetInstance();
+    EXPECT_TRUE(db.IsCorruptCode(SQLITE_CORRUPT));
+    EXPECT_TRUE(db.IsCorruptCode(SQLITE_NOTADB));
+    EXPECT_FALSE(db.IsCorruptCode(SQLITE_OK));
+    EXPECT_FALSE(db.IsCorruptCode(SQLITE_IOERR));
+    EXPECT_FALSE(db.IsCorruptCode(SQLITE_ERROR));
+    EXPECT_FALSE(db.IsCorruptCode(SQLITE_ROW));
+}
+
+/*
+ * @tc.name: Add_CorruptRebuildThenDupKeyRetry
+ * @tc.desc: Add corrupt->rebuild retry succeed, dup key->sleep retry fail
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordDBTest, Add_CorruptRebuildThenDupKeyRetry, TestSize.Level0)
+{
+    auto& db = PermissionUsedRecordDb::GetInstance();
+    db.ExecuteSql("PRAGMA wal_checkpoint(TRUNCATE)");
+    db.Close();
+    MakeDbCorrupt(db.dbPath_, db.dbName_);
+    db.Open(true);
+    GenericValues v1 = BuildPermissionRecordValue(RANDOM_TOKENID, 1002,
+        LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED, PermissionUsedType::NORMAL_TYPE, "id2");
+    std::vector<GenericValues> vals1 = {v1};
+    EXPECT_EQ(PermissionUsedRecordDb::ExecuteResult::SUCCESS,
+        db.Add(PermissionUsedRecordDb::PERMISSION_RECORD, vals1));
+    db.Rebuild();
+    GenericValues v2 = BuildPermissionRecordValue(RANDOM_TOKENID, 1003,
+        LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED, PermissionUsedType::NORMAL_TYPE, "id3");
+    std::vector<GenericValues> vals2 = {v2};
+    EXPECT_EQ(PermissionUsedRecordDb::ExecuteResult::SUCCESS,
+        db.Add(PermissionUsedRecordDb::PERMISSION_RECORD, vals2));
+    EXPECT_NE(PermissionUsedRecordDb::ExecuteResult::SUCCESS,
+        db.Add(PermissionUsedRecordDb::PERMISSION_RECORD, vals2));
+}
+
+/*
+ * @tc.name: Remove_CorruptRebuildThenNonExistCol
+ * @tc.desc: Remove corrupt->rebuild retry succeed, non-exist col->sleep retry fail
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordDBTest, Remove_CorruptRebuildThenNonExistCol, TestSize.Level0)
+{
+    auto& db = PermissionUsedRecordDb::GetInstance();
+    db.ExecuteSql("PRAGMA wal_checkpoint(TRUNCATE)");
+    db.Close();
+    MakeDbCorrupt(db.dbPath_, db.dbName_);
+    db.Open(true);
+    GenericValues cond1;
+    cond1.Put(PrivacyFiledConst::FIELD_TOKEN_ID, RANDOM_TOKENID);
+    EXPECT_EQ(PermissionUsedRecordDb::ExecuteResult::SUCCESS,
+        db.Remove(PermissionUsedRecordDb::PERMISSION_RECORD, cond1));
+    db.Rebuild();
+    GenericValues cond2;
+    cond2.Put("nonexistent_col", 1);
+    EXPECT_NE(PermissionUsedRecordDb::ExecuteResult::SUCCESS,
+        db.Remove(PermissionUsedRecordDb::PERMISSION_RECORD, cond2));
+}
+
+/*
+ * @tc.name: Update_CorruptRebuildThenNonExistCol
+ * @tc.desc: Update corrupt->rebuild retry succeed, non-exist col->sleep retry fail
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordDBTest, Update_CorruptRebuildThenNonExistCol, TestSize.Level0)
+{
+    auto& db = PermissionUsedRecordDb::GetInstance();
+    db.ExecuteSql("PRAGMA wal_checkpoint(TRUNCATE)");
+    db.Close();
+    MakeDbCorrupt(db.dbPath_, db.dbName_);
+    db.Open(true);
+    GenericValues mod1;
+    mod1.Put(PrivacyFiledConst::FIELD_ACCESS_COUNT, 5);
+    GenericValues c1;
+    c1.Put(PrivacyFiledConst::FIELD_TOKEN_ID, RANDOM_TOKENID);
+    EXPECT_EQ(PermissionUsedRecordDb::ExecuteResult::SUCCESS,
+        db.Update(PermissionUsedRecordDb::PERMISSION_RECORD, mod1, c1));
+    db.Rebuild();
+    GenericValues mod2;
+    mod2.Put("nonexistent_col", 1);
+    GenericValues c2;
+    c2.Put(PrivacyFiledConst::FIELD_TOKEN_ID, RANDOM_TOKENID);
+    EXPECT_NE(PermissionUsedRecordDb::ExecuteResult::SUCCESS,
+        db.Update(PermissionUsedRecordDb::PERMISSION_RECORD, mod2, c2));
+}
+
+/*
+ * @tc.name: DeleteExpireRecords_CorruptRebuildThenNonExistCol
+ * @tc.desc: DeleteExpire corrupt->rebuild retry, non-exist col->sleep retry fail
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordDBTest, DeleteExpireRecords_CorruptRebuildThenNonExistCol, TestSize.Level0)
+{
+    auto& db = PermissionUsedRecordDb::GetInstance();
+    db.ExecuteSql("PRAGMA wal_checkpoint(TRUNCATE)");
+    db.Close();
+    MakeDbCorrupt(db.dbPath_, db.dbName_);
+    db.Open(true);
+    GenericValues cond1;
+    cond1.Put(PrivacyFiledConst::FIELD_TIMESTAMP_BEGIN, 0);
+    cond1.Put(PrivacyFiledConst::FIELD_TIMESTAMP_END, 9999);
+    EXPECT_EQ(PermissionUsedRecordDb::ExecuteResult::SUCCESS,
+        db.DeleteExpireRecords(PermissionUsedRecordDb::PERMISSION_RECORD, cond1));
+    db.Rebuild();
+    GenericValues cond2;
+    cond2.Put("nonexistent_col", 1);
+    EXPECT_NE(PermissionUsedRecordDb::ExecuteResult::SUCCESS,
+        db.DeleteExpireRecords(PermissionUsedRecordDb::PERMISSION_RECORD, cond2));
+}
+
+/*
+ * @tc.name: DeleteHistoryRecordsInTables_CorruptDb
+ * @tc.desc: DeleteHistoryRecordsInTables on corrupt db triggers rebuild retry succeed
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordDBTest, DeleteHistoryRecordsInTables_CorruptDb, TestSize.Level0)
+{
+    auto& db = PermissionUsedRecordDb::GetInstance();
+    db.ExecuteSql("PRAGMA wal_checkpoint(TRUNCATE)");
+    db.Close();
+    MakeDbCorrupt(db.dbPath_, db.dbName_);
+    db.Open(true);
+    std::vector<PermissionUsedRecordDb::DataType> types = {PermissionUsedRecordDb::PERMISSION_RECORD};
+    std::unordered_set<AccessTokenID> ids = {RANDOM_TOKENID};
+    EXPECT_EQ(PermissionUsedRecordDb::ExecuteResult::SUCCESS, db.DeleteHistoryRecordsInTables(types, ids));
+    db.Rebuild();
+}
+
+/*
+ * @tc.name: DeleteExcessiveRecords_CorruptDb
+ * @tc.desc: DeleteExcessiveRecords on corrupt db triggers rebuild retry succeed
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordDBTest, DeleteExcessiveRecords_CorruptDb, TestSize.Level0)
+{
+    auto& db = PermissionUsedRecordDb::GetInstance();
+    db.ExecuteSql("PRAGMA wal_checkpoint(TRUNCATE)");
+    db.Close();
+    MakeDbCorrupt(db.dbPath_, db.dbName_);
+    db.Open(true);
+    EXPECT_EQ(PermissionUsedRecordDb::ExecuteResult::SUCCESS,
+        db.DeleteExcessiveRecords(PermissionUsedRecordDb::PERMISSION_RECORD, 1));
+    db.Rebuild();
+}
+
+#ifdef REMOTE_PRIVACY_ENABLE
+static GenericValues BuildRemoteRecordValue(const std::string& deviceId, int64_t ts)
+{
+    GenericValues v;
+    v.Put(PrivacyFiledConst::FIELD_DEVICE_ID, deviceId);
+    v.Put(PrivacyFiledConst::FIELD_DEVICE_NAME, "n");
+    v.Put(PrivacyFiledConst::FIELD_OP_CODE, static_cast<int32_t>(Constant::OpCode::OP_ANSWER_CALL));
+    v.Put(PrivacyFiledConst::FIELD_TIMESTAMP, ts);
+    v.Put(PrivacyFiledConst::FIELD_ACCESS_COUNT, 1);
+    v.Put(PrivacyFiledConst::FIELD_REJECT_COUNT, 0);
+    v.Put(PrivacyFiledConst::FIELD_SUB_PROFILE_ID, -1);
+    return v;
+}
+
+/*
+ * @tc.name: Remote_Add_CorruptRebuildThenDupKey
+ * @tc.desc: Remote Add corrupt->rebuild retry succeed, dup key->sleep retry fail
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordDBTest, Remote_Add_CorruptRebuildThenDupKey, TestSize.Level0)
+{
+    auto db = RemotePermUsedRecordDbManager::GetInstance().GetDatabase(USER_ID_100, true);
+    ASSERT_NE(nullptr, db);
+    db->ExecuteSql("PRAGMA wal_checkpoint(TRUNCATE)");
+    db->Close();
+    MakeDbCorrupt(db->dbPath_, db->dbName_);
+    db->Open(true);
+    std::vector<GenericValues> v1 = {BuildRemoteRecordValue("rid2", 2002)};
+    EXPECT_EQ(Constant::SUCCESS, db->Add(v1));
+    db->Rebuild();
+    std::vector<GenericValues> v2 = {BuildRemoteRecordValue("rid3", 2003)};
+    EXPECT_EQ(Constant::SUCCESS, db->Add(v2));
+    EXPECT_NE(Constant::SUCCESS, db->Add(v2));
+}
+
+/*
+ * @tc.name: Remote_Remove_CorruptRebuildThenNonExistCol
+ * @tc.desc: Remote Remove corrupt->rebuild retry, non-exist col->sleep retry fail
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordDBTest, Remote_Remove_CorruptRebuildThenNonExistCol, TestSize.Level0)
+{
+    auto db = RemotePermUsedRecordDbManager::GetInstance().GetDatabase(USER_ID_100, true);
+    ASSERT_NE(nullptr, db);
+    db->ExecuteSql("PRAGMA wal_checkpoint(TRUNCATE)");
+    db->Close();
+    MakeDbCorrupt(db->dbPath_, db->dbName_);
+    db->Open(true);
+    GenericValues cond1;
+    cond1.Put(PrivacyFiledConst::FIELD_DEVICE_ID, "rid5");
+    EXPECT_EQ(Constant::SUCCESS, db->Remove(cond1));
+    db->Rebuild();
+    GenericValues cond2;
+    cond2.Put("nonexistent_col", 1);
+    EXPECT_NE(Constant::SUCCESS, db->Remove(cond2));
+}
+
+/*
+ * @tc.name: Remote_Update_CorruptRebuildThenNonExistCol
+ * @tc.desc: Remote Update corrupt->rebuild retry, non-exist col->sleep retry fail
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordDBTest, Remote_Update_CorruptRebuildThenNonExistCol, TestSize.Level0)
+{
+    auto db = RemotePermUsedRecordDbManager::GetInstance().GetDatabase(USER_ID_100, true);
+    ASSERT_NE(nullptr, db);
+    db->ExecuteSql("PRAGMA wal_checkpoint(TRUNCATE)");
+    db->Close();
+    MakeDbCorrupt(db->dbPath_, db->dbName_);
+    db->Open(true);
+    GenericValues mod1;
+    mod1.Put(PrivacyFiledConst::FIELD_ACCESS_COUNT, 5);
+    GenericValues c1;
+    c1.Put(PrivacyFiledConst::FIELD_DEVICE_ID, "rid7");
+    EXPECT_EQ(Constant::SUCCESS, db->Update(mod1, c1));
+    db->Rebuild();
+    GenericValues mod2;
+    mod2.Put("nonexistent_col", 1);
+    GenericValues c2;
+    c2.Put(PrivacyFiledConst::FIELD_DEVICE_ID, "rid8");
+    EXPECT_NE(Constant::SUCCESS, db->Update(mod2, c2));
+}
+
+/*
+ * @tc.name: Remote_DeleteExpireRecords_CorruptRebuildThenNonExistCol
+ * @tc.desc: Remote DeleteExpire corrupt->rebuild retry, non-exist col->sleep retry fail
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordDBTest, Remote_DeleteExpireRecords_CorruptRebuildThenNonExistCol, TestSize.Level0)
+{
+    auto db = RemotePermUsedRecordDbManager::GetInstance().GetDatabase(USER_ID_100, true);
+    ASSERT_NE(nullptr, db);
+    db->ExecuteSql("PRAGMA wal_checkpoint(TRUNCATE)");
+    db->Close();
+    MakeDbCorrupt(db->dbPath_, db->dbName_);
+    db->Open(true);
+    GenericValues cond1;
+    cond1.Put(PrivacyFiledConst::FIELD_TIMESTAMP_BEGIN, 0);
+    cond1.Put(PrivacyFiledConst::FIELD_TIMESTAMP_END, 9999);
+    EXPECT_EQ(Constant::SUCCESS, db->DeleteExpireRecords(cond1));
+    db->Rebuild();
+    GenericValues cond2;
+    cond2.Put("nonexistent_col", 1);
+    EXPECT_NE(Constant::SUCCESS, db->DeleteExpireRecords(cond2));
+}
+
+/*
+ * @tc.name: Remote_DeleteExcessiveRecords_CorruptDb
+ * @tc.desc: Remote DeleteExcessive on corrupt db triggers rebuild retry succeed
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordDBTest, Remote_DeleteExcessiveRecords_CorruptDb, TestSize.Level0)
+{
+    auto db = RemotePermUsedRecordDbManager::GetInstance().GetDatabase(USER_ID_100, true);
+    ASSERT_NE(nullptr, db);
+    db->ExecuteSql("PRAGMA wal_checkpoint(TRUNCATE)");
+    db->Close();
+    MakeDbCorrupt(db->dbPath_, db->dbName_);
+    db->Open(true);
+    EXPECT_EQ(Constant::SUCCESS, db->DeleteExcessiveRecords(1));
+    db->Rebuild();
+}
+#endif
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

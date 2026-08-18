@@ -39,7 +39,7 @@ public:
         VERISION_6
     };
 
-    void Open();
+    void Open(bool skipCheck = false);
     void Close();
 
     int32_t BeginTransaction() const;
@@ -49,6 +49,9 @@ public:
     Statement Prepare(const std::string& sql) const;
     int32_t ExecuteSql(const std::string& sql) const;
     std::string SpitError() const;
+
+    bool NeedRebuild() const;
+    int32_t Rebuild();
 
     virtual void OnCreate() = 0;
     virtual void OnUpdate(int32_t version) = 0;
@@ -63,6 +66,7 @@ private:
     int32_t currentVersion_;
     sqlite3* db_;
 
+    bool IsCorruptCode(int32_t code) const;
     void SetWal() const;
     int32_t GetVersion() const;
     void SetVersion() const;

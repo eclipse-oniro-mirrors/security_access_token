@@ -15,8 +15,10 @@
 
 #include "permission_used_record_db.h"
 
+#include <chrono>
 #include <cinttypes>
 #include <mutex>
+#include <thread>
 
 #include "accesstoken_common_log.h"
 #include "active_change_response_info.h"
@@ -35,6 +37,7 @@ constexpr const char* INTEGER_STR = " integer not null,";
 constexpr const char* TEXT_STR = " text not null,";
 constexpr const char* CREATE_TABLE_STR = "create table if not exists ";
 constexpr const char* WHERE_1_STR = " where 1 = 1";
+constexpr int32_t SLEEP_RETRY_MS = 300;
 constexpr const size_t TOKEN_ID_LENGTH = 11;
 constexpr int64_t COST_TIME_LOG_THRESHOLD = 5;
 
@@ -189,9 +192,27 @@ PermissionUsedRecordDb::PermissionUsedRecordDb() : SqliteHelper(DATABASE_NAME, D
 
 int32_t PermissionUsedRecordDb::Add(DataType type, const std::vector<GenericValues>& values)
 {
+    std::unique_lock<std::shared_mutex> lock(this->rwLock_);
+    int32_t ret = AddLocked(type, values);
+    if (ret == SUCCESS) {
+        return ret;
+    }
+    if (!NeedRebuild()) {
+        LOGW(PRI_DOMAIN, PRI_TAG, "Db operate failed but not corrupt, retry after 300ms");
+        std::this_thread::sleep_for(std::chrono::milliseconds(SLEEP_RETRY_MS));
+        return AddLocked(type, values);
+    }
+    LOGW(PRI_DOMAIN, PRI_TAG, "Detech db corrupt, rebuild!");
+    if (Rebuild() == SUCCESS) {
+        ret = AddLocked(type, values);
+    }
+    return ret;
+}
+
+int32_t PermissionUsedRecordDb::AddLocked(DataType type, const std::vector<GenericValues>& values)
+{
     int64_t beginTime = TimeUtil::GetCurrentTimestamp();
 
-    std::unique_lock<std::shared_mutex> lock(this->rwLock_);
     std::string prepareSql = CreateInsertPrepareSqlCmd(type);
     if (prepareSql.empty()) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Type %{public}u invalid", type);
@@ -230,9 +251,27 @@ int32_t PermissionUsedRecordDb::Add(DataType type, const std::vector<GenericValu
 
 int32_t PermissionUsedRecordDb::Remove(DataType type, const GenericValues& conditions)
 {
+    std::unique_lock<std::shared_mutex> lock(this->rwLock_);
+    int32_t ret = RemoveLocked(type, conditions);
+    if (ret == SUCCESS) {
+        return ret;
+    }
+    if (!NeedRebuild()) {
+        LOGW(PRI_DOMAIN, PRI_TAG, "Db operate failed but not corrupt, retry after 300ms");
+        std::this_thread::sleep_for(std::chrono::milliseconds(SLEEP_RETRY_MS));
+        return RemoveLocked(type, conditions);
+    }
+    LOGW(PRI_DOMAIN, PRI_TAG, "Detech db corrupt, rebuild!");
+    if (Rebuild() == SUCCESS) {
+        ret = RemoveLocked(type, conditions);
+    }
+    return ret;
+}
+
+int32_t PermissionUsedRecordDb::RemoveLocked(DataType type, const GenericValues& conditions)
+{
     int64_t beginTime = TimeUtil::GetCurrentTimestamp();
 
-    std::unique_lock<std::shared_mutex> lock(this->rwLock_);
     std::vector<std::string> columnNames = conditions.GetAllKeys();
     std::string prepareSql = CreateDeletePrepareSqlCmd(type, columnNames);
     if (prepareSql.empty()) {
@@ -322,9 +361,28 @@ int32_t PermissionUsedRecordDb::Count(DataType type)
 int32_t PermissionUsedRecordDb::DeleteExpireRecords(DataType type,
     const GenericValues& andConditions)
 {
+    std::unique_lock<std::shared_mutex> lock(this->rwLock_);
+    int32_t ret = DeleteExpireRecordsLocked(type, andConditions);
+    if (ret == SUCCESS) {
+        return ret;
+    }
+    if (!NeedRebuild()) {
+        LOGW(PRI_DOMAIN, PRI_TAG, "Db operate failed but not corrupt, retry after 300ms");
+        std::this_thread::sleep_for(std::chrono::milliseconds(SLEEP_RETRY_MS));
+        return DeleteExpireRecordsLocked(type, andConditions);
+    }
+    LOGW(PRI_DOMAIN, PRI_TAG, "Detech db corrupt, rebuild!");
+    if (Rebuild() == SUCCESS) {
+        ret = DeleteExpireRecordsLocked(type, andConditions);
+    }
+    return ret;
+}
+
+int32_t PermissionUsedRecordDb::DeleteExpireRecordsLocked(DataType type,
+    const GenericValues& andConditions)
+{
     int64_t beginTime = TimeUtil::GetCurrentTimestamp();
 
-    std::unique_lock<std::shared_mutex> lock(this->rwLock_);
     std::vector<std::string> andColumns = andConditions.GetAllKeys();
     if (!andColumns.empty()) {
         std::string deleteExpireSql = CreateDeleteExpireRecordsPrepareSqlCmd(type, andColumns);
@@ -348,9 +406,28 @@ int32_t PermissionUsedRecordDb::DeleteExpireRecords(DataType type,
 int32_t PermissionUsedRecordDb::DeleteHistoryRecordsInTables(std::vector<DataType> dateTypes,
     const std::unordered_set<AccessTokenID>& tokenIDList)
 {
+    std::unique_lock<std::shared_mutex> lock(this->rwLock_);
+    int32_t ret = DeleteHistoryRecordsInTablesLocked(dateTypes, tokenIDList);
+    if (ret == SUCCESS) {
+        return ret;
+    }
+    if (!NeedRebuild()) {
+        LOGW(PRI_DOMAIN, PRI_TAG, "Db operate failed but not corrupt, retry after 300ms");
+        std::this_thread::sleep_for(std::chrono::milliseconds(SLEEP_RETRY_MS));
+        return DeleteHistoryRecordsInTablesLocked(dateTypes, tokenIDList);
+    }
+    LOGW(PRI_DOMAIN, PRI_TAG, "Detech db corrupt, rebuild!");
+    if (Rebuild() == SUCCESS) {
+        ret = DeleteHistoryRecordsInTablesLocked(dateTypes, tokenIDList);
+    }
+    return ret;
+}
+
+int32_t PermissionUsedRecordDb::DeleteHistoryRecordsInTablesLocked(std::vector<DataType> dateTypes,
+    const std::unordered_set<AccessTokenID>& tokenIDList)
+{
     int64_t beginTime = TimeUtil::GetCurrentTimestamp();
 
-    std::unique_lock<std::shared_mutex> lock(this->rwLock_);
     BeginTransaction();
     for (const auto& type : dateTypes) {
         std::string deleteHistorySql = CreateDeleteHistoryRecordsPrepareSqlCmd(type, tokenIDList);
@@ -374,9 +451,27 @@ int32_t PermissionUsedRecordDb::DeleteHistoryRecordsInTables(std::vector<DataTyp
 
 int32_t PermissionUsedRecordDb::DeleteExcessiveRecords(DataType type, uint32_t excessiveSize)
 {
+    std::unique_lock<std::shared_mutex> lock(this->rwLock_);
+    int32_t ret = DeleteExcessiveRecordsLocked(type, excessiveSize);
+    if (ret == SUCCESS) {
+        return ret;
+    }
+    if (!NeedRebuild()) {
+        LOGW(PRI_DOMAIN, PRI_TAG, "Db operate failed but not corrupt, retry after 300ms");
+        std::this_thread::sleep_for(std::chrono::milliseconds(SLEEP_RETRY_MS));
+        return DeleteExcessiveRecordsLocked(type, excessiveSize);
+    }
+    LOGW(PRI_DOMAIN, PRI_TAG, "Detech db corrupt, rebuild!");
+    if (Rebuild() == SUCCESS) {
+        ret = DeleteExcessiveRecordsLocked(type, excessiveSize);
+    }
+    return ret;
+}
+
+int32_t PermissionUsedRecordDb::DeleteExcessiveRecordsLocked(DataType type, uint32_t excessiveSize)
+{
     int64_t beginTime = TimeUtil::GetCurrentTimestamp();
 
-    std::unique_lock<std::shared_mutex> lock(this->rwLock_);
     std::string deleteExcessiveSql = CreateDeleteExcessiveRecordsPrepareSqlCmd(type, excessiveSize);
     LOGD(PRI_DOMAIN, PRI_TAG, "DeleteExcessiveRecords sql is %{public}s.", deleteExcessiveSql.c_str());
     auto deleteExcessiveStatement = Prepare(deleteExcessiveSql);
@@ -394,12 +489,31 @@ int32_t PermissionUsedRecordDb::DeleteExcessiveRecords(DataType type, uint32_t e
 int32_t PermissionUsedRecordDb::Update(DataType type, const GenericValues& modifyValue,
     const GenericValues& conditionValue)
 {
+    std::unique_lock<std::shared_mutex> lock(this->rwLock_);
+    int32_t ret = UpdateLocked(type, modifyValue, conditionValue);
+    if (ret == SUCCESS) {
+        return ret;
+    }
+    if (!NeedRebuild()) {
+        LOGW(PRI_DOMAIN, PRI_TAG, "Db operate failed but not corrupt, retry after 300ms");
+        std::this_thread::sleep_for(std::chrono::milliseconds(SLEEP_RETRY_MS));
+        return UpdateLocked(type, modifyValue, conditionValue);
+    }
+    LOGW(PRI_DOMAIN, PRI_TAG, "Detech db corrupt, rebuild!");
+    if (Rebuild() == SUCCESS) {
+        ret = UpdateLocked(type, modifyValue, conditionValue);
+    }
+    return ret;
+}
+
+int32_t PermissionUsedRecordDb::UpdateLocked(DataType type, const GenericValues& modifyValue,
+    const GenericValues& conditionValue)
+{
     int64_t beginTime = TimeUtil::GetCurrentTimestamp();
 
     std::vector<std::string> modifyNames = modifyValue.GetAllKeys();
     std::vector<std::string> conditionNames = conditionValue.GetAllKeys();
 
-    std::unique_lock<std::shared_mutex> lock(this->rwLock_);
     std::string prepareSql = CreateUpdatePrepareSqlCmd(type, modifyNames, conditionNames);
     if (prepareSql.empty()) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Type %{public}u invalid", type);
@@ -926,8 +1040,6 @@ int32_t PermissionUsedRecordDb::UpdatePermissionRecordTablePrimaryKey() const
     std::string createNewSql;
     CreateNewPermissionRecordTable(newTableName, createNewSql);
 
-    BeginTransaction();
-
     int32_t createNewRes = ExecuteSql(createNewSql); // 1、create new table with new primary key
     if (createNewRes != 0) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Create new table failed, errCode is %{public}d, errMsg is %{public}s.",
@@ -962,8 +1074,6 @@ int32_t PermissionUsedRecordDb::UpdatePermissionRecordTablePrimaryKey() const
         RollbackTransaction();
         return PrivacyError::ERR_DATABASE_OPERATE_FAILED;
     }
-
-    CommitTransaction();
 
     return SUCCESS;
 }

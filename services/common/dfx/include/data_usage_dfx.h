@@ -31,6 +31,13 @@ void GetAllDirFile(const std::string& path, std::vector<std::string>& files);
 void GetDirFileSize(
     const std::string& path, std::vector<std::string>& filePath, std::vector<uint64_t>& fileSize, int32_t depth);
 void ReportAccessTokenUserData();
+
+enum DbSceneCode {
+    DB_REBUILD = 2001,
+    DB_INTEGRITY_CHECK_FAILED = 2002,
+};
+void ReportDbException(int32_t sceneCode, int32_t errCode, const std::string& dbName);
+
 #ifdef REMOTE_PRIVACY_ENABLE
 void ReportPrivacyUserData(const std::string& path);
 #endif
