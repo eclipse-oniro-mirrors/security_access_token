@@ -17,15 +17,11 @@
 #include <cstring>
 #include <thread>
 #include "access_token_error.h"
-#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
 #include "access_token_manager_proxy.h"
-#endif
 #define private public
 #include "accesstoken_manager_client.h"
 #undef private
-#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
 #include "ipc_object_stub.h"
-#endif
 #include "permission_map.h"
 #include "permission_grant_info.h"
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
@@ -62,6 +58,41 @@ HapPolicyParams g_infoManagerTestPolicyPrams = {
     .apl = APL_NORMAL,
     .domain = "test.domain",
 };
+
+class ResetDatabaseRecoveryStatusRemoteObject final : public IPCObjectStub {
+public:
+    ResetDatabaseRecoveryStatusRemoteObject() : IPCObjectStub(u"ResetDatabaseRecoveryStatusRemoteObject") {}
+
+    int OnRemoteRequest(uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option) override
+    {
+        (void)option;
+        (void)data.ReadInterfaceToken();
+        if (code != static_cast<uint32_t>(IAccessTokenManagerIpcCode::COMMAND_RESET_DATABASE_RECOVERY_STATUS)) {
+            return ERR_INVALID_DATA;
+        }
+        ++callCount_;
+        (void)reply.WriteInt32(result_);
+        return ERR_NONE;
+    }
+
+    int32_t result_ = RET_SUCCESS;
+    uint32_t callCount_ = 0;
+};
+
+sptr<ResetDatabaseRecoveryStatusRemoteObject> InstallResetDatabaseRecoveryStatusRemoteObject()
+{
+    AccessTokenManagerClient::GetInstance().ReleaseProxy();
+    sptr<ResetDatabaseRecoveryStatusRemoteObject> remote = new (std::nothrow) ResetDatabaseRecoveryStatusRemoteObject();
+    if (remote == nullptr) {
+        return nullptr;
+    }
+    sptr<AccessTokenManagerProxy> proxy = new (std::nothrow) AccessTokenManagerProxy(remote);
+    if (proxy == nullptr) {
+        return nullptr;
+    }
+    AccessTokenManagerClient::GetInstance().proxy_ = proxy;
+    return remote;
+}
 
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
 SecCompEnhanceKey CreateEnhanceKey(uint64_t epoch, uint32_t size, uint8_t value)
@@ -197,9 +228,34 @@ void AccessTokenMockTest::SetUp()
 
 void AccessTokenMockTest::TearDown()
 {
-#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
     AccessTokenManagerClient::GetInstance().ReleaseProxy();
-#endif
+}
+
+/**
+ * @tc.name: ResetDatabaseRecoveryStatus001
+ * @tc.desc: ResetDatabaseRecoveryStatus returns service abnormal when the proxy is unavailable.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, ResetDatabaseRecoveryStatus001, TestSize.Level4)
+{
+    EXPECT_EQ(ERR_SERVICE_ABNORMAL, AccessTokenKit::ResetDatabaseRecoveryStatus());
+}
+
+/**
+ * @tc.name: ResetDatabaseRecoveryStatus002
+ * @tc.desc: ResetDatabaseRecoveryStatus forwards the IPC transaction and service return value.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, ResetDatabaseRecoveryStatus002, TestSize.Level4)
+{
+    auto remote = InstallResetDatabaseRecoveryStatusRemoteObject();
+    ASSERT_NE(nullptr, remote);
+    remote->result_ = ERR_PERMISSION_DENIED;
+
+    EXPECT_EQ(ERR_PERMISSION_DENIED, AccessTokenKit::ResetDatabaseRecoveryStatus());
+    EXPECT_EQ(1U, remote->callCount_);
 }
 
 /**

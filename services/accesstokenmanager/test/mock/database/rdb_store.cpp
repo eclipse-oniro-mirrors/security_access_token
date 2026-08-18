@@ -171,6 +171,14 @@ RdbStoreConfig::RdbStoreConfig()
 RdbStoreConfig::RdbStoreConfig(std::string path)
 {}
 
+int RdbStoreConfig::SetBundleName(const std::string& bundleName)
+{
+    return E_OK;
+}
+
+void RdbStoreConfig::SetLocalOnly(bool isLocalOnly)
+{}
+
 void RdbStoreConfig::SetSecurityLevel(NativeRdb::SecurityLevel level)
 {}
 

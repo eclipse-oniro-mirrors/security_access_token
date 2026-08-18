@@ -138,6 +138,7 @@ public:
         uint64_t& fullTokenId, std::vector<PermissionWithValueIdl>& kernelPermIdlList) override;
     int32_t DeleteToolTokenByPid(int32_t pid) override;
     int32_t GetHostTokenId(AccessTokenID toolTokenId, AccessTokenID& hostTokenId) override;
+    int32_t ResetDatabaseRecoveryStatus() override;
     int SetPermDialogCap(const HapBaseInfoParcel& hapBaseInfoParcel, bool enable) override;
     int32_t GetPermissionManagerInfo(PermissionGrantInfoParcel& infoParcel) override;
 #ifdef SUPPORT_MANAGE_USER_POLICY
@@ -170,6 +171,8 @@ private:
     bool GetConfigGrantValueFromFile(std::string& fileContent);
     void SetFlagIfNeed(const AccessTokenServiceConfig& atConfig, int32_t& cancelTime, uint32_t& parseConfigFlag);
     void GetConfigValue(uint32_t& parseConfigFlag);
+    void CheckAccessTokenDbDir(const char* dbDirPath) const;
+    void CheckHapDataEmpty(uint32_t hapSize, const std::vector<std::string>& bmsDbPathList) const;
     bool Initialize();
     void AccessTokenServiceParamSet() const;
     bool IsLocationPermSpecialHandle(std::string permissionName, int32_t apiVersion);

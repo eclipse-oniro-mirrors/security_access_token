@@ -1530,6 +1530,16 @@ int32_t AccessTokenManagerClient::GetHostTokenId(AccessTokenID toolTokenId, Acce
     return RET_SUCCESS;
 }
 
+int32_t AccessTokenManagerClient::ResetDatabaseRecoveryStatus()
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+    return ConvertResult(proxy->ResetDatabaseRecoveryStatus());
+}
+
 int32_t AccessTokenManagerClient::GetReqPermissionByName(
     AccessTokenID tokenId, const std::string& permissionName, std::string& value)
 {

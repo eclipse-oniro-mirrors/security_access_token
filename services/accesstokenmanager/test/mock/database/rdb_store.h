@@ -131,6 +131,8 @@ class RdbStoreConfig {
 public:
     RdbStoreConfig();
     explicit RdbStoreConfig(std::string path);
+    int SetBundleName(const std::string& bundleName);
+    void SetLocalOnly(bool isLocalOnly);
     void SetSecurityLevel(NativeRdb::SecurityLevel level);
     void SetAllowRebuild(bool allow);
     void SetHaMode(NativeRdb::HAMode mode);

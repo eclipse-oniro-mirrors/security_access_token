@@ -818,6 +818,17 @@ HWTEST_F(AccessTokenCoverageTest, GetPermissionManagerInfo001, TestSize.Level4)
     ASSERT_EQ(false, info.grantBundleName.empty());
 }
 
+/**
+ * @tc.name: ResetDatabaseRecoveryStatus001
+ * @tc.desc: ResetDatabaseRecoveryStatus succeeds for a native caller with MANAGE_HAP_TOKENID.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenCoverageTest, ResetDatabaseRecoveryStatus001, TestSize.Level1)
+{
+    MockNativeToken mock("foundation");
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::ResetDatabaseRecoveryStatus());
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

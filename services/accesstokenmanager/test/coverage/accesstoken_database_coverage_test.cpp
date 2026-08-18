@@ -839,6 +839,58 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, OnUpgrade008, TestSize.Level4)
     ASSERT_EQ(1U, db->executedSqls_.size());
     EXPECT_EQ("delete from hap_info_table", db->executedSqls_[0]);
 }
+
+/*
+ * @tc.name: UpgradeFromVersionErrorBranches001
+ * @tc.desc: AccessTokenOpenCallback upgrade steps return database errors.
+ * @tc.type: FUNC
+ * @tc.require: TDD
+ */
+HWTEST_F(AccessTokenDatabaseCoverageTest, UpgradeFromVersionErrorBranches001, TestSize.Level4)
+{
+    std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance()->GetRdb();
+    ASSERT_NE(nullptr, db);
+    AccessTokenOpenCallback callback;
+
+    db->executeSqlResults_.assign(4, NativeRdb::E_SQLITE_CORRUPT);
+    db->executeSqlIndex_ = 0;
+    EXPECT_EQ(NativeRdb::E_SQLITE_CORRUPT, callback.UpgradeFromVersion1(*(db.get())));
+
+    db->executeSqlResults_ = {
+        NativeRdb::E_SQLITE_CORRUPT, NativeRdb::E_OK,
+        NativeRdb::E_SQLITE_CORRUPT, NativeRdb::E_SQLITE_CORRUPT
+    };
+    db->executeSqlIndex_ = 0;
+    EXPECT_EQ(NativeRdb::E_SQLITE_CORRUPT, callback.UpgradeFromVersion1(*(db.get())));
+
+    db->executeSqlResults_ = {NativeRdb::E_SQLITE_CORRUPT};
+    db->executeSqlIndex_ = 0;
+    EXPECT_EQ(NativeRdb::E_SQLITE_CORRUPT, callback.UpgradeFromVersion2(*(db.get())));
+
+    db->executeSqlResults_.assign(2, NativeRdb::E_SQLITE_CORRUPT);
+    db->executeSqlIndex_ = 0;
+    EXPECT_EQ(NativeRdb::E_SQLITE_CORRUPT, callback.UpgradeFromVersion3(*(db.get())));
+
+    db->executeSqlResults_ = {NativeRdb::E_SQLITE_CORRUPT, NativeRdb::E_SQLITE_CORRUPT};
+    db->executeSqlIndex_ = 0;
+    EXPECT_EQ(NativeRdb::E_SQLITE_CORRUPT, callback.UpgradeFromVersion4(*(db.get())));
+
+    db->executeSqlResults_ = {NativeRdb::E_OK, NativeRdb::E_SQLITE_CORRUPT, NativeRdb::E_SQLITE_CORRUPT};
+    db->executeSqlIndex_ = 0;
+    EXPECT_EQ(NativeRdb::E_SQLITE_CORRUPT, callback.UpgradeFromVersion4(*(db.get())));
+
+    db->executeSqlResults_ = {NativeRdb::E_SQLITE_CORRUPT};
+    db->executeSqlIndex_ = 0;
+    EXPECT_EQ(NativeRdb::E_SQLITE_CORRUPT, callback.UpgradeFromVersion5(*(db.get())));
+
+    db->executeSqlResults_ = {NativeRdb::E_SQLITE_CORRUPT, NativeRdb::E_SQLITE_CORRUPT};
+    db->executeSqlIndex_ = 0;
+    EXPECT_EQ(NativeRdb::E_SQLITE_CORRUPT, callback.UpgradeFromVersion6(*(db.get())));
+
+    db->executeSqlResults_ = {NativeRdb::E_SQLITE_CORRUPT};
+    db->executeSqlIndex_ = 0;
+    EXPECT_EQ(NativeRdb::E_SQLITE_CORRUPT, callback.UpgradeFromVersion7(*(db.get())));
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

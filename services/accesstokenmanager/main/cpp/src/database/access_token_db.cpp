@@ -32,6 +32,7 @@ namespace Security {
 namespace AccessToken {
 namespace {
 constexpr const char* DATABASE_NAME = "access_token.db";
+constexpr const char* DATABASE_BUNDLE_NAME = "access_token";
 static constexpr int32_t ACCESSTOKEN_CLEAR_MEMORY_SIZE = 4;
 }
 
@@ -50,6 +51,8 @@ void AccessTokenDb::InitRdb()
 {
     std::string dbPath = std::string(DATABASE_PATH) + std::string(DATABASE_NAME);
     NativeRdb::RdbStoreConfig config(dbPath);
+    (void)config.SetBundleName(DATABASE_BUNDLE_NAME);
+    config.SetLocalOnly(true);
     config.SetSecurityLevel(NativeRdb::SecurityLevel::S3);
     config.SetAllowRebuild(true);
     config.SetHaMode(NativeRdb::HAMode::MAIN_REPLICA); // Real-time dual-write backup database
