@@ -122,6 +122,7 @@ public:
     int32_t GetPermissionStatusDetails(AccessTokenID tokenID,
         const std::vector<std::string>& permissionList, std::vector<PermissionStatusDetail>& resultList);
     int32_t GetHostTokenId(AccessTokenID toolTokenId, AccessTokenID& hostTokenId);
+    int32_t ResetDatabaseRecoveryStatus();
     void DumpTokenInfo(const AtmToolsParamInfo& info, std::string& dumpInfo);
     int32_t GetVersion(uint32_t& version);
     bool IsSupportPermission(const std::string& permissionName);

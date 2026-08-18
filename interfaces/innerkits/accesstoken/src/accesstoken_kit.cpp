@@ -964,6 +964,11 @@ int32_t AccessTokenKit::GetHostTokenId(AccessTokenID toolTokenId, AccessTokenID&
     return AccessTokenManagerClient::GetInstance().GetHostTokenId(toolTokenId, hostTokenId);
 }
 
+int32_t AccessTokenKit::ResetDatabaseRecoveryStatus()
+{
+    return AccessTokenManagerClient::GetInstance().ResetDatabaseRecoveryStatus();
+}
+
 int32_t AccessTokenKit::GetReqPermissionByName(
     AccessTokenID tokenID, const std::string& permissionName, std::string& value)
 {

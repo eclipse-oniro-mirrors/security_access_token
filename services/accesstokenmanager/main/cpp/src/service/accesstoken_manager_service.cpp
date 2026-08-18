@@ -15,9 +15,11 @@
 
 #include "accesstoken_manager_service.h"
 
+#include <cstring>
 #include <memory>
 #include <mutex>
 #include <stack>
+#include <sys/stat.h>
 #include <unordered_map>
 #include <unordered_set>
 #include <unistd.h>
@@ -90,6 +92,11 @@ namespace Security {
 namespace AccessToken {
 namespace {
 static const char* ACCESS_TOKEN_SERVICE_INIT_KEY = "accesstoken.permission.init";
+static const char* ACCESS_TOKEN_DB_EMPTY_KEY = "persist.accesstoken.permission.dberror";
+static const char* ACCESS_TOKEN_DB_DIR_PATH = "/data/service/el1/public/access_token/";
+const std::string BMS_DB_DIR_PATH = "/data/service/el1/public/bms/bundle_manager_service/";
+const std::string BMS_DB_FILE_NAME = "bmsdb.db";
+const std::string BMS_SLAVE_DB_FILE_NAME = "bmsdb_slave.db";
 constexpr int32_t ERROR = -1;
 const char* GRANT_ABILITY_BUNDLE_NAME = "com.ohos.permissionmanager";
 const char* GRANT_ABILITY_ABILITY_NAME = "com.ohos.permissionmanager.GrantAbility";
@@ -2509,10 +2516,49 @@ void AccessTokenManagerService::HandlePermDefUpdate(const std::map<int32_t, Toke
     }
 }
 
+void AccessTokenManagerService::CheckAccessTokenDbDir(const char* dbDirPath) const
+{
+    struct stat dbDirInfo = {};
+    int32_t statResult = lstat(dbDirPath, &dbDirInfo);
+    if (statResult != 0 || !S_ISDIR(dbDirInfo.st_mode)) {
+        int32_t errorCode = (statResult != 0) ? errno : ENOTDIR;
+        LOGE(ATM_DOMAIN, ATM_TAG, "Access token database directory check failed, path=%{public}s, error=%{public}s.",
+            dbDirPath, std::strerror(errorCode));
+        ReportSysEventDbException(AccessTokenDbSceneCode::AT_DB_DATA_DIR_ERROR, errorCode,
+            dbDirPath);
+        return;
+    }
+    ReportAccessTokenRdbFileInfoAsync();
+}
+
+void AccessTokenManagerService::CheckHapDataEmpty(
+    uint32_t hapSize, const std::vector<std::string>& bmsDbPathList) const
+{
+    bool isBmsDbExisted = false;
+    for (const auto& dbPath : bmsDbPathList) {
+        if (access(dbPath.c_str(), F_OK) == 0) {
+            isBmsDbExisted = true;
+            break;
+        }
+    }
+    if (hapSize == 0 && isBmsDbExisted) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Access token database is empty and BMS database exists.");
+        ReportSysEventDbException(AccessTokenDbSceneCode::AT_DB_HAP_DATA_EMPTY, EIO,
+            "hap_token_info_table: empty");
+        int32_t setParamRet = SetParameter(ACCESS_TOKEN_DB_EMPTY_KEY, "1");
+        if (setParamRet != 0) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Set database empty parameter failed, ret=%{public}d.", setParamRet);
+            ReportSysEventServiceStartError(INIT_HAP_RECOVERY_PARAM_ERROR,
+                "Set database recovery parameter failed.", setParamRet);
+        }
+    }
+}
+
 bool AccessTokenManagerService::Initialize()
 {
     MemoryGuard guard;
     ReportSysEventPerformance();
+    CheckAccessTokenDbDir(ACCESS_TOKEN_DB_DIR_PATH);
 
     uint32_t hapSize = 0;
     uint32_t nativeSize = 0;
@@ -2520,6 +2566,9 @@ bool AccessTokenManagerService::Initialize()
     uint32_t dlpSize = 0;
     std::map<int32_t, TokenIdInfo> tokenIdAplMap;
     AccessTokenInfoManager::GetInstance().Init(hapSize, nativeSize, pefDefSize, dlpSize, tokenIdAplMap);
+    std::vector<std::string> bmsDbPathList =
+        {BMS_DB_DIR_PATH + BMS_DB_FILE_NAME, BMS_DB_DIR_PATH + BMS_SLAVE_DB_FILE_NAME};
+    CheckHapDataEmpty(hapSize, bmsDbPathList);
 #ifdef SUPPORT_MANAGE_USER_POLICY
     std::thread loadPersistedPolicies([]() {
         int32_t ret = UserPolicyManager::GetInstance().LoadPersistedPolicies();
@@ -2546,10 +2595,27 @@ bool AccessTokenManagerService::Initialize()
     isInitialize_ = true;
 
     ReportSysEventServiceStart(dfxInfo);
-    std::thread reportUserData(ReportAccessTokenUserData);
-    reportUserData.detach();
+    ReportAccessTokenRdbFileInfoAsync();
     LOGI(ATM_DOMAIN, ATM_TAG, "Initialize success.");
     return true;
+}
+
+int32_t AccessTokenManagerService::ResetDatabaseRecoveryStatus()
+{
+    AccessTokenID callingTokenId = IPCSkeleton::GetCallingTokenID();
+    if (!IsNativeProcessCalling() ||
+        VerifyAccessToken(callingTokenId, MANAGE_HAP_TOKENID_PERMISSION) == PERMISSION_DENIED) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Permission denied, callingTokenId=%{public}u.", IPCSkeleton::GetCallingTokenID());
+        return AccessTokenError::ERR_PERMISSION_DENIED;
+    }
+    int32_t ret = SetParameter(ACCESS_TOKEN_DB_EMPTY_KEY, "0");
+    if (ret != 0) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Reset HAP data recovery parameter failed, ret=%{public}d.", ret);
+        ReportSysEventDbException(AccessTokenDbSceneCode::AT_DB_RESET_RECOVERY_PARAM_ERROR, ret,
+            ACCESS_TOKEN_DB_EMPTY_KEY);
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+    return RET_SUCCESS;
 }
 
 bool AccessTokenManagerService::IsPrivilegedCalling() const

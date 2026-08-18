@@ -20,6 +20,7 @@
 #include "access_token_error.h"
 #include "access_token.h"
 #include "accesstoken_common_log.h"
+#include "hisysevent_adapter.h"
 #include "time_util.h"
 #include "token_field_const.h"
 
@@ -51,6 +52,16 @@ static int32_t GetTableColumnList(NativeRdb::RdbStore& rdbStore, const std::stri
         columnList.push_back(columnName);
     }
     return NativeRdb::E_OK;
+}
+
+static bool ReportUpgradeError(int32_t result, int32_t version, const std::string& operation)
+{
+    if (result == NativeRdb::E_OK) {
+        return false;
+    }
+    ReportSysEventDbException(AccessTokenDbSceneCode::AT_DB_UPGRADE_ERROR, result,
+        "upgrade from version " + std::to_string(version) + ": " + operation);
+    return true;
 }
 
 int32_t AccessTokenOpenCallback::CreateHapTokenInfoTable(NativeRdb::RdbStore& rdbStore)
@@ -439,34 +450,41 @@ int32_t AccessTokenOpenCallback::CreateVersionNineTable(NativeRdb::RdbStore& rdb
 int32_t AccessTokenOpenCallback::OnCreate(NativeRdb::RdbStore& rdbStore)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "DB OnCreate.");
+    ReportSysEventDbException(AccessTokenDbSceneCode::AT_DB_CREATE_ERROR, NativeRdb::E_OK, "OnCreate");
 
     int32_t res = CreateVersionOneTable(rdbStore);
     if (res != NativeRdb::E_OK) {
+        ReportSysEventDbException(AccessTokenDbSceneCode::AT_DB_CREATE_ERROR, res, "version 1 tables");
         return res;
     }
 
     res = CreateVersionThreeTable(rdbStore);
     if (res != NativeRdb::E_OK) {
+        ReportSysEventDbException(AccessTokenDbSceneCode::AT_DB_CREATE_ERROR, res, "version 3 tables");
         return res;
     }
 
     res = CreateVersionFiveTable(rdbStore);
     if (res != NativeRdb::E_OK) {
+        ReportSysEventDbException(AccessTokenDbSceneCode::AT_DB_CREATE_ERROR, res, "version 5 tables");
         return res;
     }
 
     res = CreateVersionSixTable(rdbStore);
     if (res != NativeRdb::E_OK) {
+        ReportSysEventDbException(AccessTokenDbSceneCode::AT_DB_CREATE_ERROR, res, "version 6 tables");
         return res;
     }
 
     res = CreateVersionEightTable(rdbStore);
     if (res != NativeRdb::E_OK) {
+        ReportSysEventDbException(AccessTokenDbSceneCode::AT_DB_CREATE_ERROR, res, "version 8 tables");
         return res;
     }
 #ifdef SPM_DATA_ENABLE
     res = CreateVersionNineTable(rdbStore);
     if (res != NativeRdb::E_OK) {
+        ReportSysEventDbException(AccessTokenDbSceneCode::AT_DB_CREATE_ERROR, res, "version 9 tables");
         return res;
     }
 #endif
@@ -481,9 +499,10 @@ int32_t AccessTokenOpenCallback::OnCreate(NativeRdb::RdbStore& rdbStore)
     res = rdbStore.Restore("");
     if (res != NativeRdb::E_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Db restore failed, res is %{public}d.", res);
+        ReportSysEventDbException(AccessTokenDbSceneCode::AT_DB_RESTORE_ERROR, res, DATABASE_NAME_BACK);
+    } else {
+        LOGW(ATM_DOMAIN, ATM_TAG, "Database restore from backup success!");
     }
-
-    LOGW(ATM_DOMAIN, ATM_TAG, "Database restore from backup success!");
 
     return 0;
 }
@@ -712,43 +731,73 @@ int32_t AccessTokenOpenCallback::UpgradeFromVersion1(NativeRdb::RdbStore& rdbSto
 {
     int32_t res = AddAvailableTypeColumn(rdbStore);
     if (res != NativeRdb::E_OK) {
+        ReportUpgradeError(res, DATABASE_VERSION_1, "AddAvailableTypeColumn");
         return res;
     }
-    return AddPermDialogCapColumn(rdbStore);
+    res = AddPermDialogCapColumn(rdbStore);
+    if (res != NativeRdb::E_OK) {
+        ReportUpgradeError(res, DATABASE_VERSION_1, "AddPermDialogCapColumn");
+    }
+    return res;
 }
 
 int32_t AccessTokenOpenCallback::UpgradeFromVersion2(NativeRdb::RdbStore& rdbStore)
 {
-    return CreateVersionThreeTable(rdbStore);
+    int32_t res = CreateVersionThreeTable(rdbStore);
+    if (res != NativeRdb::E_OK) {
+        ReportUpgradeError(res, DATABASE_VERSION_2, "CreateVersionThreeTable");
+    }
+    return res;
 }
 
 int32_t AccessTokenOpenCallback::UpgradeFromVersion3(NativeRdb::RdbStore& rdbStore)
 {
-    return AddRequestToggleStatusColumn(rdbStore);
+    int32_t res = AddRequestToggleStatusColumn(rdbStore);
+    if (res != NativeRdb::E_OK) {
+        ReportUpgradeError(res, DATABASE_VERSION_3, "AddRequestToggleStatusColumn");
+    }
+    return res;
 }
 
 int32_t AccessTokenOpenCallback::UpgradeFromVersion4(NativeRdb::RdbStore& rdbStore)
 {
     int32_t res = CreateVersionFiveTable(rdbStore);
     if (res != NativeRdb::E_OK) {
+        ReportUpgradeError(res, DATABASE_VERSION_4, "CreateVersionFiveTable");
         return res;
     }
-    return AddKernelEffectAndHasValueColumn(rdbStore);
+    res = AddKernelEffectAndHasValueColumn(rdbStore);
+    if (res != NativeRdb::E_OK) {
+        ReportUpgradeError(res, DATABASE_VERSION_4, "AddKernelEffectAndHasValueColumn");
+    }
+    return res;
 }
 
 int32_t AccessTokenOpenCallback::UpgradeFromVersion5(NativeRdb::RdbStore& rdbStore)
 {
-    return CreateVersionSixTable(rdbStore);
+    int32_t res = CreateVersionSixTable(rdbStore);
+    if (res != NativeRdb::E_OK) {
+        ReportUpgradeError(res, DATABASE_VERSION_5, "CreateVersionSixTable");
+    }
+    return res;
 }
 
 int32_t AccessTokenOpenCallback::UpgradeFromVersion6(NativeRdb::RdbStore& rdbStore)
 {
-    return AddTimestampColumn(rdbStore);
+    int32_t res = AddTimestampColumn(rdbStore);
+    if (res != NativeRdb::E_OK) {
+        ReportUpgradeError(res, DATABASE_VERSION_6, "AddTimestampColumn");
+    }
+    return res;
 }
 
 int32_t AccessTokenOpenCallback::UpgradeFromVersion7(NativeRdb::RdbStore& rdbStore)
 {
-    return CreateVersionEightTable(rdbStore);
+    int32_t res = CreateVersionEightTable(rdbStore);
+    if (res != NativeRdb::E_OK) {
+        ReportUpgradeError(res, DATABASE_VERSION_7, "CreateVersionEightTable");
+    }
+    return res;
 }
 
 int32_t AccessTokenOpenCallback::UpgradeFromVersion8(NativeRdb::RdbStore& rdbStore)
@@ -756,12 +805,14 @@ int32_t AccessTokenOpenCallback::UpgradeFromVersion8(NativeRdb::RdbStore& rdbSto
     int32_t res = CreateHapInfoTable(rdbStore);
     if (res != NativeRdb::E_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to create hap_info_table during upgrade from version 8.");
+        ReportUpgradeError(res, DATABASE_VERSION_8, "CreateHapInfoTable");
         return res;
     }
 
     res = AddUidMigratedReservedColumns(rdbStore);
     if (res != NativeRdb::E_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to add uid/migrated/reserved columns during upgrade from version 8.");
+        ReportUpgradeError(res, DATABASE_VERSION_8, "AddUidMigratedReservedColumns");
         return res;
     }
 
@@ -816,6 +867,7 @@ int32_t AccessTokenOpenCallback::UpgradeFromVersion10(NativeRdb::RdbStore& rdbSt
     if (res != NativeRdb::E_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to clear table %{public}s, errCode is %{public}d.",
             hapInfoTableName.c_str(), res);
+        ReportUpgradeError(res, DATABASE_VERSION_10, "ClearHapInfoTable");
         return res;
     }
 

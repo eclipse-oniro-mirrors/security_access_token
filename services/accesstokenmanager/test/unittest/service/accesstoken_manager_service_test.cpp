@@ -17,6 +17,7 @@
 #include "gtest/gtest.h"
 #include <gtest/hwext/gtest-multithread.h>
 #include <cstring>
+#include <fcntl.h>
 
 #define private public
 #include "accesstoken_callbacks.h"
@@ -88,8 +89,10 @@ static constexpr int32_t MAX_PERMISSION_SIZE = 1024;
 static constexpr int32_t API_VERSION_9 = 9;
 static constexpr int32_t RANDOM_TOKENID = 123;
 static constexpr uid_t NON_ROOT_UID = 2000;
+static constexpr const char* INVALID_DB_PATH = "/data/123456/invalid_db";
 static const std::string DEFAULT_AGENT_ID = "1001";
 static const std::string MANAGE_USER_POLICY = "ohos.permission.MANAGE_USER_POLICY";
+static const std::string MANAGE_HAP_TOKENID = "ohos.permission.MANAGE_HAP_TOKENID";
 static const std::string MANAGE_EDM_POLICY = "ohos.permission.MANAGE_EDM_POLICY";
 static const std::string GRANT_SENSITIVE_PERMISSIONS = "ohos.permission.GRANT_SENSITIVE_PERMISSIONS";
 static const std::string REVOKE_SENSITIVE_PERMISSIONS = "ohos.permission.REVOKE_SENSITIVE_PERMISSIONS";
@@ -489,6 +492,21 @@ void AccessTokenManagerServiceTest::TearDown()
 {
     DelayedSingleton<AccessTokenManagerService>::DestroyInstance();
     atManagerService_ = nullptr;
+}
+
+/**
+ * @tc.name: ResetDatabaseRecoveryStatusServiceTest001
+ * @tc.desc: ResetDatabaseRecoveryStatus requires MANAGE_HAP_TOKENID for a native caller.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, ResetDatabaseRecoveryStatusServiceTest001, TestSize.Level1)
+{
+    MockToken mock(g_selfShellTokenId, "accesstoken_service", false);
+    EXPECT_EQ(ERR_PERMISSION_DENIED, atManagerService_->ResetDatabaseRecoveryStatus());
+
+    mock.Grant(MANAGE_HAP_TOKENID);
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->ResetDatabaseRecoveryStatus());
 }
 
 /**
@@ -2645,6 +2663,28 @@ HWTEST_F(AccessTokenManagerServiceTest, AccessTokenServiceCoverageTest001, TestS
     std::vector<PermissionListStateParcel> reqPermList(MAX_PERMISSION_SIZE + 1, parcel);
     ret = atManagerService_->GetPermissionsStatus(RANDOM_TOKENID, reqPermList);
     EXPECT_NE(RET_SUCCESS, ret);
+}
+
+/**
+ * @tc.name: InitializeHelperCoverageTest001
+ * @tc.desc: Cover both input conditions of initialization helper methods.
+ * @tc.type: FUNC
+ * @tc.require: TDD
+ */
+HWTEST_F(AccessTokenManagerServiceTest, InitializeHelperCoverageTest001, TestSize.Level4)
+{
+    std::string regularFile = "/data/atm_initialize_test_" + std::to_string(getpid());
+    int32_t fd = open(regularFile.c_str(), O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR);
+    ASSERT_GE(fd, 0);
+    ASSERT_EQ(close(fd), 0);
+
+    atManagerService_->CheckAccessTokenDbDir(INVALID_DB_PATH);
+    atManagerService_->CheckAccessTokenDbDir(regularFile.c_str());
+    atManagerService_->CheckHapDataEmpty(1, {regularFile});
+    atManagerService_->CheckHapDataEmpty(0, {INVALID_DB_PATH});
+    atManagerService_->CheckHapDataEmpty(0, {regularFile});
+
+    EXPECT_EQ(remove(regularFile.c_str()), 0);
 }
 
 /**

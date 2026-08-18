@@ -613,6 +613,12 @@ public:
     static int32_t GetHostTokenId(AccessTokenID toolTokenId, AccessTokenID& hostTokenId);
 
     /**
+     * @brief Reset the database recovery status.
+     * @return error code, see access_token_error.h
+     */
+    static int32_t ResetDatabaseRecoveryStatus();
+
+    /**
      * @brief Get extended value of permission by token id and permission name.
      * @param tokenID token id
      * @param permissionName permission name

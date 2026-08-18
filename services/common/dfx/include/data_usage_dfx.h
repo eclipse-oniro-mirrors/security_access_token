@@ -38,6 +38,7 @@ enum DbSceneCode {
 };
 void ReportDbException(int32_t sceneCode, int32_t errCode, const std::string& dbName);
 
+void ReportAccessTokenRdbFileInfoAsync();
 #ifdef REMOTE_PRIVACY_ENABLE
 void ReportPrivacyUserData(const std::string& path);
 #endif

@@ -38,6 +38,7 @@ static const std::string DEFAULT_AGENT_ID = "1001";
 static const std::string QUERY_TOOL_PERMISSIONS = "ohos.permission.QUERY_TOOL_PERMISSIONS";
 static const std::string MANAGE_TOOL_TOKENID = "ohos.permission.MANAGE_TOOL_TOKENID";
 static const std::string MANAGE_TOOL_RUNTIME_PERMISSIONS = "ohos.permission.MANAGE_TOOL_RUNTIME_PERMISSIONS";
+static const std::string MANAGE_HAP_TOKENID = "ohos.permission.MANAGE_HAP_TOKENID";
 static uint64_t g_selfTokenId = 0;
 static AccessTokenIDEx g_testTokenIDEx = {0};
 static int32_t g_selfUid;
@@ -132,6 +133,17 @@ void AccessTokenDenyTest::TearDown()
 {
     setuid(g_selfUid);
     EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));
+}
+
+/**
+ * @tc.name: ResetDatabaseRecoveryStatus001
+ * @tc.desc: ResetDatabaseRecoveryStatus rejects callers without MANAGE_HAP_TOKENID.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenDenyTest, ResetDatabaseRecoveryStatus001, TestSize.Level1)
+{
+    EXPECT_EQ(ERR_PERMISSION_DENIED, AccessTokenKit::ResetDatabaseRecoveryStatus());
 }
 
 #ifdef SUPPORT_MANAGE_USER_POLICY

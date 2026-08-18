@@ -40,6 +40,7 @@ typedef enum SceneCode {
     INIT_NATIVE_TOKENINFO_ERROR,
     INIT_PERM_DEF_JSON_ERROR,
     INIT_USER_POLICY_ERROR,
+    INIT_HAP_RECOVERY_PARAM_ERROR,
     TOKENID_NOT_EQUAL,
 } SceneCode;
 
@@ -72,6 +73,12 @@ typedef enum AccessTokenDbSceneCode {
     AT_DB_UPDATE_RESTORE = 1003,
     AT_DB_QUERY_RESTORE = 1004,
     AT_DB_COMMIT_RESTORE = 1005,
+    AT_DB_DATA_DIR_ERROR = 1006,
+    AT_DB_HAP_DATA_EMPTY = 1007,
+    AT_DB_CREATE_ERROR = 1008,
+    AT_DB_UPGRADE_ERROR = 1009,
+    AT_DB_RESTORE_ERROR = 1010,
+    AT_DB_RESET_RECOVERY_PARAM_ERROR = 1011,
 } AccessTokenDbSceneCode;
 } // namespace AccessToken
 } // namespace Security
