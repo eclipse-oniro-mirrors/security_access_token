@@ -23,7 +23,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <dirent.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include "accesstoken_klog.h"
@@ -40,82 +39,33 @@ const uint64_t g_nativeFdTag = 0xD005A01;
 static const uint32_t SPM_PERM_ARRAY_SIZE = 64;
 static const uint32_t UINT32_BITS_NUM = 32;
 static const int32_t MAX_KERNEL_OPERATE_TRY_TIMES = 2;
-static const uint32_t MAX_REMOVE_DIRECTORY_DEPTH = 32;
 
 #define BREAK_IF_TRUE(cond) \
     if (cond) { \
         break; \
     }
 
-static uint32_t RemoveDirectoryContent(int32_t directoryFd, uint32_t depth)
-{
-    DIR *directory = fdopendir(directoryFd);
-    if (directory == NULL) {
-        (void)close(directoryFd);
-        return ATRET_FAILED;
-    }
-
-    uint32_t ret = ATRET_SUCCESS;
-    struct dirent *entry = NULL;
-    errno = 0;
-    while ((entry = readdir(directory)) != NULL) {
-        if ((strcmp(entry->d_name, ".") == 0) || (strcmp(entry->d_name, "..") == 0)) {
-            continue;
-        }
-        int32_t parentFd = dirfd(directory);
-        struct stat entryStat;
-        if (fstatat(parentFd, entry->d_name, &entryStat, AT_SYMLINK_NOFOLLOW) != 0) {
-            ret = ATRET_FAILED;
-            break;
-        }
-        if (S_ISDIR(entryStat.st_mode)) {
-            if (depth >= MAX_REMOVE_DIRECTORY_DEPTH) {
-                ret = ATRET_FAILED;
-                break;
-            }
-            int32_t childFd = openat(parentFd, entry->d_name, O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC);
-            if ((childFd < 0) || (RemoveDirectoryContent(childFd, depth + 1) != ATRET_SUCCESS) ||
-                (unlinkat(parentFd, entry->d_name, AT_REMOVEDIR) != 0)) {
-                ret = ATRET_FAILED;
-                break;
-            }
-            continue;
-        }
-        if (unlinkat(parentFd, entry->d_name, 0) != 0) {
-            ret = ATRET_FAILED;
-            break;
-        }
-    }
-    if (errno != 0) {
-        ret = ATRET_FAILED;
-    }
-    (void)closedir(directory);
-    return ret;
-}
-
-static uint32_t RemoveDirectory(const char *path)
-{
-    int32_t directoryFd = open(path, O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC);
-    if ((directoryFd < 0) || (RemoveDirectoryContent(directoryFd, 0) != ATRET_SUCCESS) || (rmdir(path) != 0)) {
-        LOGC("Failed to remove directory, errno=%d.", errno);
-        return ATRET_FAILED;
-    }
-    return ATRET_SUCCESS;
-}
-
-static uint32_t RemoveDirectoryIfExist(const char *path)
+static void TryRemoveInvalidConfigPath(const char *path)
 {
     struct stat fileStat;
     if (lstat(path, &fileStat) != 0) {
-        return (errno == ENOENT) ? ATRET_SUCCESS : ATRET_FAILED;
+        LOGC("lstat path(%s)  errno=%d.", path, errno);
+        return;
     }
     if (S_ISREG(fileStat.st_mode)) {
-        return ATRET_SUCCESS;
+        return;
     }
+    LOGI("Start removing invalid config path(%s).", path);
     if (S_ISDIR(fileStat.st_mode)) {
-        return RemoveDirectory(path);
+        if (rmdir(path) != 0) {
+            LOGC("Failed to remove directory(%s), errno=%d.", path, errno);
+        }
+        return;
     }
-    return (unlink(path) == 0) ? ATRET_SUCCESS : ATRET_FAILED;
+    if (unlink(path) == 0) {
+        return;
+    }
+    LOGC("Failed to remove non-regular config node, errno=%d.", errno);
 }
 
 uint32_t GetFileBuff(const char *cfg, char **retBuff)
@@ -144,6 +94,10 @@ uint32_t GetFileBuff(const char *cfg, char **retBuff)
 
     if (stat(filePath, &fileStat) != 0) {
         LOGC("Failed to stat file, errno=%d.", errno);
+        return GET_FILE_BUFF_FAILED;
+    }
+    if (!S_ISREG(fileStat.st_mode)) {
+        LOGC("Config path is not a regular file.");
         return GET_FILE_BUFF_FAILED;
     }
     if (fileStat.st_size == 0) {
@@ -353,12 +307,8 @@ static uint32_t ParseTokenInfo(void)
 
 static uint32_t ClearOrCreateCfgFile(void)
 {
-    if (RemoveDirectoryIfExist(TOKEN_ID_CFG_FILE_PATH) != ATRET_SUCCESS) {
-        LOGC("Failed to recover config directory, errno=%d.", errno);
-        return CLEAR_CREATE_FILE_FAILED;
-    }
-    int32_t fd = open(TOKEN_ID_CFG_FILE_PATH, O_RDWR | O_CREAT | O_TRUNC | O_NOFOLLOW | O_CLOEXEC,
-        S_IRUSR | S_IWUSR | S_IRGRP);
+    TryRemoveInvalidConfigPath(TOKEN_ID_CFG_FILE_PATH);
+    int32_t fd = open(TOKEN_ID_CFG_FILE_PATH, O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP);
     if (fd < 0) {
         LOGC("Failed to open file, errno=%d.", errno);
         return CLEAR_CREATE_FILE_FAILED;
@@ -381,7 +331,6 @@ static uint32_t ClearOrCreateCfgFile(void)
         LOGC("Failed to chown file, errno=%d.", errno);
         return CLEAR_CREATE_FILE_FAILED;
     }
-
     return ATRET_SUCCESS;
 }
 
@@ -526,8 +475,8 @@ static uint32_t WriteToFile(const cJSON *root)
     uint32_t ret = ATRET_SUCCESS;
 
     do {
-        int32_t fd = open(TOKEN_ID_CFG_FILE_PATH, O_RDWR | O_CREAT | O_TRUNC | O_NOFOLLOW | O_CLOEXEC,
-            S_IRUSR | S_IWUSR | S_IRGRP);
+        int32_t fd = open(TOKEN_ID_CFG_FILE_PATH, O_RDWR | O_CREAT | O_TRUNC,
+                          S_IRUSR | S_IWUSR | S_IRGRP);
         if (fd < 0) {
             LOGC("Failed to open file, errno(%d).", errno);
             ret = ATRET_FAILED;
@@ -878,14 +827,10 @@ static uint32_t UpdateInfoInCfgFile(const NativeTokenList *tokenNode)
 
 static uint32_t LockNativeTokenFile(int32_t *lockFileFd)
 {
-    if (RemoveDirectoryIfExist(TOKEN_ID_CFG_FILE_LOCK_PATH) != ATRET_SUCCESS) {
-        LOGC("Failed to recover native token lock directory, errno=%d.", errno);
-        return LOCK_FILE_FAILED;
-    }
-    int32_t fd = open(TOKEN_ID_CFG_FILE_LOCK_PATH, O_RDWR | O_CREAT | O_NOFOLLOW | O_CLOEXEC,
-        S_IRUSR | S_IWUSR | S_IRGRP);
+    TryRemoveInvalidConfigPath(TOKEN_ID_CFG_FILE_LOCK_PATH);
+    int32_t fd = open(TOKEN_ID_CFG_FILE_LOCK_PATH, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP);
     if (fd < 0) {
-        LOGC("Failed to open native token file, errno=%d.", errno);
+        LOGC("Failed to open native token file, errno=%d!", errno);
         return LOCK_FILE_FAILED;
     }
     fdsan_exchange_owner_tag(fd, 0, g_nativeFdTag);
