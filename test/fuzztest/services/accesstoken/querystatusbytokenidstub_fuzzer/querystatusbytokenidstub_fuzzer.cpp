@@ -38,6 +38,7 @@ using namespace OHOS::Security::AccessToken;
 namespace OHOS {
 namespace {
 std::unique_ptr<MockToken> g_mockToken;
+static constexpr int32_t SLEEP_TIME = 5;
 }
 
 bool QueryStatusByTokenIDStubFuzzTest(const uint8_t* data, size_t size)
@@ -84,10 +85,16 @@ void Initialize()
 }
 }
 
+void BeforeExit()
+{
+    std::this_thread::sleep_for(std::chrono::seconds(SLEEP_TIME));
+}
+
 extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv)
 {
     g_mockToken.reset(new MockToken({ "ohos.permission.GET_SENSITIVE_PERMISSIONS" }, true, true));
     OHOS::Initialize();
+    (void)atexit(BeforeExit);
     return 0;
 }
 
