@@ -12023,6 +12023,6 @@
             "provisionEnable": true,
             "distributedSceneEnable": false,
             "deviceTypes": ["car"]
-        },
+        }
     ]
 }
