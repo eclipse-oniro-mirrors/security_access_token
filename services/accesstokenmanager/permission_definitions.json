@@ -2259,8 +2259,9 @@
             "availableType": "NORMAL",
             "since": 8,
             "deprecated": "",
-            "provisionEnable": true,
-            "distributedSceneEnable": false
+            "provisionEnable": false,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "tv", "wearable", "2in1", "tablet", "car"]
         },
         {
             "name": "ohos.permission.SET_WIFI_INFO",
@@ -2269,8 +2270,9 @@
             "availableType": "NORMAL",
             "since": 8,
             "deprecated": "",
-            "provisionEnable": true,
-            "distributedSceneEnable": false
+            "provisionEnable": false,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "tv", "wearable", "2in1", "tablet", "car"]
         },
         {
             "name": "ohos.permission.GET_WIFI_PEERS_MAC",
@@ -2300,7 +2302,8 @@
             "since": 8,
             "deprecated": "",
             "provisionEnable": true,
-            "distributedSceneEnable": false
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "tv", "wearable", "2in1", "tablet", "car"]
         },
         {
             "name": "ohos.permission.SET_WIFI_CONFIG",
@@ -2310,7 +2313,8 @@
             "since": 8,
             "deprecated": "",
             "provisionEnable": true,
-            "distributedSceneEnable": false
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "tv", "wearable", "2in1", "tablet", "car"]
         },
         {
             "name": "ohos.permission.MANAGE_ENTERPRISE_WIFI_CONNECTION",
