@@ -10203,7 +10203,7 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
-            "deviceTypes": ["2in1"]
+            "deviceTypes": ["2in1", "car", "phone", "tablet", "tv", "wearable"]
         },
         {
             "name": "ohos.permission.GET_LOCAL_ACCOUNT_IDENTIFIERS",
