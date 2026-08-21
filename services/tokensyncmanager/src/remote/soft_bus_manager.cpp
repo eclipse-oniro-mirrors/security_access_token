@@ -199,7 +199,7 @@ int32_t SoftBusManager::ServiceSocketInit()
         { .qos = QOS_TYPE_MIN_LATENCY, .value = MIN_LATENCY },
     };
 
-    ISocketListener listener;
+    ISocketListener listener {};
     listener.OnBind = SoftBusSocketListener::OnBind; // only service may receive OnBind
     listener.OnShutdown = SoftBusSocketListener::OnShutdown;
     listener.OnBytes = SoftBusSocketListener::OnClientBytes;
@@ -207,6 +207,8 @@ int32_t SoftBusManager::ServiceSocketInit()
     ret = ::Listen(socketFd_, serverQos, QOS_LEN, &listener);
     if (ret != ERR_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Create listener failed, ret is %{public}d.", ret);
+        ::Shutdown(socketFd_);
+        socketFd_ = Constant::INVALID_SOCKET_FD;
         return ERROR_CREATE_LISTENER_FAIL;
     } else {
         LOGD(ATM_DOMAIN, ATM_TAG, "Create listener success.");
@@ -364,6 +366,38 @@ int32_t SoftBusManager::InitSocketAndListener(const std::string& networkId, ISoc
     return ::Socket(info);
 }
 
+int32_t SoftBusManager::BindClientSocket(int32_t socketFd, ISocketListener& listener)
+{
+    QosTV clientQos[] = {
+        { .qos = QOS_TYPE_MIN_BW,      .value = MIN_BW },
+        { .qos = QOS_TYPE_MAX_LATENCY, .value = MAX_LATENCY },
+        { .qos = QOS_TYPE_MIN_LATENCY, .value = MIN_LATENCY },
+    };
+
+    AccessTokenID firstCaller = IPCSkeleton::GetFirstTokenID();
+    SetFirstCallerTokenID(firstCaller);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Bind service and setFirstCaller %{public}u.", firstCaller);
+
+    int32_t retryTimes = 0;
+    int32_t bindResult = Constant::FAILURE;
+    auto sleepTime = std::chrono::milliseconds(BIND_SERVICE_SLEEP_TIMES_MS);
+    while (retryTimes < BIND_SERVICE_MAX_RETRY_TIMES) {
+        bindResult = ::Bind(socketFd, clientQos, QOS_LEN, &listener);
+        if (bindResult == Constant::SUCCESS) {
+            break;
+        }
+        std::this_thread::sleep_for(sleepTime);
+        ++retryTimes;
+    }
+    if (bindResult != Constant::SUCCESS) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Bind service failed, result: %{public}d.", bindResult);
+        (void)CloseSocket(socketFd);
+        return Constant::FAILURE;
+    }
+    LOGD(ATM_DOMAIN, ATM_TAG, "Bind service succeed, socketFd is %{public}d.", socketFd);
+    return socketFd;
+}
+
 int32_t SoftBusManager::BindService(const std::string &deviceId)
 {
 #ifdef DEBUG_API_PERFORMANCE
@@ -379,49 +413,25 @@ int32_t SoftBusManager::BindService(const std::string &deviceId)
     }
     std::string networkId = info.deviceId.networkId;
 
-    ISocketListener listener;
+    ISocketListener listener {};
     int32_t socketFd = InitSocketAndListener(networkId, listener);
     if (socketFd <= Constant::INVALID_SOCKET_FD) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Create client socket faild.");
         return ERROR_CREATE_SOCKET_FAIL;
     }
 
+    bool inserted = false;
     {
         std::lock_guard<std::mutex> guard(clientSocketMutex_);
-        auto iter = clientSocketMap_.find(socketFd);
-        if (iter == clientSocketMap_.end()) {
-            clientSocketMap_.insert(std::pair<int32_t, std::string>(socketFd, networkId));
-        } else {
-            LOGE(ATM_DOMAIN, ATM_TAG, "Client socket has bind already");
-            return ERROR_CLIENT_HAS_BIND_ALREADY;
-        }
+        inserted = clientSocketMap_.emplace(socketFd, networkId).second;
+    }
+    if (!inserted) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Client socket has bind already");
+        ::Shutdown(socketFd);
+        return ERROR_CLIENT_HAS_BIND_ALREADY;
     }
 
-    QosTV clientQos[] = {
-        { .qos = QOS_TYPE_MIN_BW,      .value = MIN_BW },
-        { .qos = QOS_TYPE_MAX_LATENCY, .value = MAX_LATENCY },
-        { .qos = QOS_TYPE_MIN_LATENCY, .value = MIN_LATENCY },
-    };
-
-    AccessTokenID firstCaller = IPCSkeleton::GetFirstTokenID();
-    SetFirstCallerTokenID(firstCaller);
-    LOGI(ATM_DOMAIN, ATM_TAG, "Bind service and setFirstCaller %{public}u.", firstCaller);
-
-    // retry 10 times or bind success
-    int32_t retryTimes = 0;
-    auto sleepTime = std::chrono::milliseconds(BIND_SERVICE_SLEEP_TIMES_MS);
-    while (retryTimes < BIND_SERVICE_MAX_RETRY_TIMES) {
-        int32_t res = ::Bind(socketFd, clientQos, QOS_LEN, &listener);
-        if (res != Constant::SUCCESS) {
-            std::this_thread::sleep_for(sleepTime);
-            retryTimes++;
-            continue;
-        }
-        break;
-    }
-
-    LOGD(ATM_DOMAIN, ATM_TAG, "Bind service succeed, socketFd is %{public}d.", socketFd);
-    return socketFd;
+    return BindClientSocket(socketFd, listener);
 }
 
 int SoftBusManager::CloseSocket(int socketFd)
@@ -518,7 +528,7 @@ int SoftBusManager::FulfillLocalDeviceInfo()
         return Constant::SUCCESS;
     }
 
-    DistributedHardware::DmDeviceInfo deviceInfo;
+    DistributedHardware::DmDeviceInfo deviceInfo {};
     int32_t res = DistributedHardware::DeviceManager::GetInstance().GetLocalDeviceInfo(TOKEN_SYNC_PACKAGE_NAME,
         deviceInfo);
     if (res != Constant::SUCCESS) {

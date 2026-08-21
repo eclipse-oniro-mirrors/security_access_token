@@ -16,8 +16,10 @@
 #include "atm_command.h"
 
 #include <cerrno>
+#include <charconv>
 #include <climits>
 #include <cstdlib>
+#include <cstring>
 #include <getopt.h>
 #include <map>
 #include <sstream>
@@ -41,6 +43,23 @@ static constexpr int32_t MAX_COUNTER = 1000;
 #endif
 static constexpr int32_t MIN_ARGUMENT_NUMBER = 2;
 static constexpr int32_t MAX_ARGUMENT_NUMBER = 4096;
+
+bool ParseTokenId(const char* string, AccessTokenID& tokenId)
+{
+    if (string == nullptr || string[0] == '\0') {
+        return false;
+    }
+
+    const char* end = string + std::strlen(string);
+    AccessTokenID parsedValue = 0;
+    auto [ptr, error] = std::from_chars(string, end, parsedValue);
+    if (error != std::errc() || ptr != end) {
+        return false;
+    }
+    tokenId = parsedValue;
+    return true;
+}
+
 static const std::string HELP_MSG_NO_OPTION = "Error: You must specify an option at least.\n";
 #ifndef ATM_BUILD_VARIANT_USER_ENABLE
 static const std::string SHORT_OPTIONS_DUMP = "d::h::t::r::v::i:p:b:n:";
@@ -353,9 +372,8 @@ void AtmCommand::RunAsCommandExistentOptionForDump(int32_t option, DumpOptionsCo
             break;
         case 'i':
             context.hasTokenIdOption = true;
-            if (optarg != nullptr && optarg[0] != '\0') {
-                context.info.tokenId = static_cast<AccessTokenID>(std::atoi(optarg));
-            }
+            context.info.tokenId = 0;
+            (void)ParseTokenId(optarg, context.info.tokenId);
             break;
         case 'p':
             context.hasPermissionOption = true;

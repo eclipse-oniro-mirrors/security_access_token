@@ -120,6 +120,7 @@ void TokenSyncServiceTest::SetUp()
 void TokenSyncServiceTest::TearDown()
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "TearDown start.");
+    ResetSoftBusSocketMock();
     tokenSyncManagerService_ = nullptr;
     for (auto it = threads_.begin(); it != threads_.end(); it++) {
         it->join();
@@ -194,6 +195,129 @@ HWTEST_F(TokenSyncServiceTest, GetUniversallyUniqueIdByNodeId001, TestSize.Level
 }
 
 /**
+ * @tc.name: ServiceSocketInit001
+ * @tc.desc: listener is initialized and the socket is closed when Listen fails
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenSyncServiceTest, ServiceSocketInit001, TestSize.Level4)
+{
+    constexpr int32_t socketFd = 20;
+    SoftBusManager manager;
+    SetSocketMockResult(socketFd);
+    SetListenMockResult(Constant::FAILURE);
+
+    EXPECT_NE(Constant::SUCCESS, manager.ServiceSocketInit());
+    EXPECT_EQ(0, manager.socketFd_);
+    EXPECT_EQ(1, GetShutdownMockCallCount());
+    EXPECT_TRUE(WasLastListenListenerInitialized());
+}
+
+/**
+ * @tc.name: ServiceSocketInit_002
+ * @tc.desc: service socket initialization handles successful Listen and invalid socket results
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenSyncServiceTest, ServiceSocketInit_002, TestSize.Level2)
+{
+    constexpr int32_t socketFd = 21;
+    SoftBusManager manager;
+    SetSocketMockResult(socketFd);
+    SetListenMockResult(Constant::SUCCESS);
+
+    EXPECT_EQ(Constant::SUCCESS, manager.ServiceSocketInit());
+    EXPECT_EQ(socketFd, manager.socketFd_);
+    EXPECT_EQ(0, GetShutdownMockCallCount());
+    EXPECT_TRUE(WasLastListenListenerInitialized());
+
+    ResetSoftBusSocketMock();
+    SoftBusManager invalidManager;
+    constexpr int32_t invalidSession = Constant::INVALID_SESSION;
+    SetSocketMockResult(Constant::INVALID_SOCKET_FD);
+    EXPECT_NE(Constant::SUCCESS, invalidManager.ServiceSocketInit());
+    EXPECT_EQ(invalidSession, invalidManager.socketFd_);
+    EXPECT_EQ(0, GetShutdownMockCallCount());
+    EXPECT_FALSE(WasLastListenListenerInitialized());
+}
+
+/**
+ * @tc.name: BindService001
+ * @tc.desc: failed Bind attempts roll back the socket map and close the socket
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenSyncServiceTest, BindService001, TestSize.Level4)
+{
+    constexpr int32_t socketFd = 30;
+    constexpr int32_t maxBindRetryTimes = 10;
+    const std::string networkId = "bind-network-id";
+    const std::string uuid = "bind-uuid";
+    const std::string udid = "bind-udid";
+    DeviceInfoManager::GetInstance().AddDeviceInfo(networkId, uuid, udid, "device", "1");
+    SoftBusManager manager;
+    SetSocketMockResult(socketFd);
+    SetBindMockResult(Constant::FAILURE);
+
+    EXPECT_EQ(Constant::FAILURE, manager.BindService(udid));
+    EXPECT_EQ(maxBindRetryTimes, GetBindMockCallCount());
+    EXPECT_EQ(1, GetShutdownMockCallCount());
+    EXPECT_TRUE(WasLastBindListenerInitialized());
+    EXPECT_TRUE(manager.clientSocketMap_.empty());
+
+    DeviceInfoManager::GetInstance().RemoveRemoteDeviceInfo(networkId, DeviceIdType::NETWORK_ID);
+}
+
+/**
+ * @tc.name: BindService002
+ * @tc.desc: duplicate socket mapping closes the new socket without attempting Bind
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenSyncServiceTest, BindService002, TestSize.Level4)
+{
+    constexpr int32_t socketFd = 31;
+    const std::string networkId = "duplicate-network-id";
+    const std::string uuid = "duplicate-uuid";
+    const std::string udid = "duplicate-udid";
+    DeviceInfoManager::GetInstance().AddDeviceInfo(networkId, uuid, udid, "device", "1");
+    SoftBusManager manager;
+    manager.clientSocketMap_.emplace(socketFd, networkId);
+    SetSocketMockResult(socketFd);
+
+    EXPECT_LT(manager.BindService(udid), Constant::SUCCESS);
+    EXPECT_EQ(0, GetBindMockCallCount());
+    EXPECT_EQ(1, GetShutdownMockCallCount());
+    EXPECT_EQ(1U, manager.clientSocketMap_.size());
+
+    manager.clientSocketMap_.clear();
+    DeviceInfoManager::GetInstance().RemoveRemoteDeviceInfo(networkId, DeviceIdType::NETWORK_ID);
+}
+
+/**
+ * @tc.name: BindService_003
+ * @tc.desc: client socket creation failure returns before map insertion and Bind
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenSyncServiceTest, BindService_003, TestSize.Level2)
+{
+    const std::string networkId = "invalid-socket-network-id";
+    const std::string uuid = "invalid-socket-uuid";
+    const std::string udid = "invalid-socket-udid";
+    DeviceInfoManager::GetInstance().AddDeviceInfo(networkId, uuid, udid, "device", "1");
+    SoftBusManager manager;
+    SetSocketMockResult(Constant::INVALID_SOCKET_FD);
+
+    EXPECT_LT(manager.BindService(udid), Constant::SUCCESS);
+    EXPECT_EQ(0, GetBindMockCallCount());
+    EXPECT_EQ(0, GetShutdownMockCallCount());
+    EXPECT_TRUE(manager.clientSocketMap_.empty());
+
+    DeviceInfoManager::GetInstance().RemoveRemoteDeviceInfo(networkId, DeviceIdType::NETWORK_ID);
+}
+
+/**
  * @tc.name: InsertCallbackAndExcute001
  * @tc.desc: Ond
  * @tc.type: FUNC
@@ -211,6 +335,141 @@ HWTEST_F(TokenSyncServiceTest, InsertCallbackAndExcute001, TestSize.Level4)
     channel.InsertCallback(0, test);
     ASSERT_EQ(true, channel.isSocketUsing_);
     ASSERT_EQ("", channel.ExecuteCommand("test", "test"));
+}
+
+/**
+ * @tc.name: Compress001
+ * @tc.desc: compression rejects an undersized output buffer and preserves the terminating byte
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenSyncServiceTest, Compress001, TestSize.Level4)
+{
+    SoftBusChannel channel("test");
+    unsigned char compressedBytes[128] = { 0 };
+    int compressedLength = static_cast<int>(sizeof(compressedBytes));
+    EXPECT_EQ(Constant::FAILURE, channel.Compress("test", nullptr, compressedLength));
+
+    compressedLength = 0;
+    EXPECT_EQ(Constant::FAILURE, channel.Compress("test", compressedBytes, compressedLength));
+
+    compressedLength = -1;
+    EXPECT_EQ(Constant::FAILURE, channel.Compress("test", compressedBytes, compressedLength));
+
+    compressedLength = 1;
+    EXPECT_EQ(Constant::FAILURE, channel.Compress("test", compressedBytes, compressedLength));
+
+    compressedLength = static_cast<int>(sizeof(compressedBytes));
+    EXPECT_EQ(Constant::SUCCESS, channel.Compress("test", compressedBytes, compressedLength));
+    EXPECT_EQ("test", channel.Decompress(compressedBytes, compressedLength));
+}
+
+/**
+ * @tc.name: RandomUuid001
+ * @tc.desc: UUID generation keeps the expected format
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenSyncServiceTest, RandomUuid001, TestSize.Level4)
+{
+    constexpr size_t uuidBufferSize = 37;
+    SoftBusChannel channel("test");
+    char uuidBuffer[uuidBufferSize] = { 0 };
+    channel.RandomUuid(uuidBuffer, sizeof(uuidBuffer));
+    std::string uuid(uuidBuffer);
+    EXPECT_EQ(uuidBufferSize - 1, uuid.length());
+    EXPECT_EQ('-', uuid[8]);
+    EXPECT_EQ('-', uuid[13]);
+    EXPECT_EQ('4', uuid[14]);
+    EXPECT_EQ('-', uuid[18]);
+    EXPECT_NE(std::string::npos, std::string("89ab").find(uuid[19]));
+    EXPECT_EQ('-', uuid[23]);
+}
+
+/**
+ * @tc.name: SoftBusChannelCloseTaskName001
+ * @tc.desc: each channel uses an independent delayed close task name
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenSyncServiceTest, SoftBusChannelCloseTaskName001, TestSize.Level4)
+{
+    auto first = std::make_shared<SoftBusChannel>("device-a");
+    auto second = std::make_shared<SoftBusChannel>("device-b");
+
+    EXPECT_FALSE(first->closeTaskName_.empty());
+    EXPECT_FALSE(second->closeTaskName_.empty());
+    EXPECT_NE(first->closeTaskName_, second->closeTaskName_);
+}
+
+/**
+ * @tc.name: CancelCloseConnectionIfNeeded_001
+ * @tc.desc: delayed closing state is canceled under the socket mutex
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenSyncServiceTest, CancelCloseConnectionIfNeeded_001, TestSize.Level4)
+{
+    auto channel = std::make_shared<SoftBusChannel>("device-a");
+    channel->isDelayClosing_ = true;
+
+    channel->CancelCloseConnectionIfNeeded();
+
+    EXPECT_FALSE(channel->isDelayClosing_);
+    std::unique_lock<std::mutex> lock(channel->socketMutex_, std::try_to_lock);
+    EXPECT_TRUE(lock.owns_lock());
+}
+
+/**
+ * @tc.name: BuildConnection_001
+ * @tc.desc: negative SoftBus errors are not treated as valid socket descriptors
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenSyncServiceTest, BuildConnection_001, TestSize.Level4)
+{
+    constexpr int32_t invalidSocketFd = Constant::INVALID_SOCKET_FD;
+    auto channel = std::make_shared<SoftBusChannel>("device-without-info");
+
+    EXPECT_EQ(Constant::FAILURE, channel->BuildConnection());
+    EXPECT_EQ(invalidSocketFd, channel->socketFd_);
+
+    channel->socketFd_ = Constant::FAILURE;
+    EXPECT_FALSE(channel->IsSessionAvailable());
+    channel->socketFd_ = Constant::INVALID_SOCKET_FD;
+    EXPECT_FALSE(channel->IsSessionAvailable());
+    channel->socketFd_ = 1;
+    EXPECT_TRUE(channel->IsSessionAvailable());
+}
+
+/**
+ * @tc.name: BuildConnection_002
+ * @tc.desc: successful client Bind is reused without opening another socket
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenSyncServiceTest, BuildConnection_002, TestSize.Level1)
+{
+    constexpr int32_t socketFd = 32;
+    const std::string networkId = "build-network-id";
+    const std::string uuid = "build-uuid";
+    const std::string udid = "build-udid";
+    DeviceInfoManager::GetInstance().AddDeviceInfo(networkId, uuid, udid, "device", "1");
+    SetSocketMockResult(socketFd);
+    SetBindMockResult(Constant::SUCCESS);
+    auto channel = std::make_shared<SoftBusChannel>(udid);
+
+    EXPECT_EQ(Constant::SUCCESS, channel->BuildConnection());
+    EXPECT_EQ(socketFd, channel->socketFd_);
+    EXPECT_EQ(1, GetBindMockCallCount());
+    EXPECT_TRUE(WasLastBindListenerInitialized());
+
+    EXPECT_EQ(Constant::SUCCESS, channel->BuildConnection());
+    EXPECT_EQ(1, GetBindMockCallCount());
+
+    EXPECT_EQ(Constant::SUCCESS, SoftBusManager::GetInstance().CloseSocket(socketFd));
+    channel->socketFd_ = Constant::INVALID_SOCKET_FD;
+    DeviceInfoManager::GetInstance().RemoveRemoteDeviceInfo(networkId, DeviceIdType::NETWORK_ID);
 }
 }  // namespace AccessToken
 }  // namespace Security

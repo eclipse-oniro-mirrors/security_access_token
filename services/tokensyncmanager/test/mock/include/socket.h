@@ -481,6 +481,14 @@ std::string GetUuidMock();
 bool GetSendMessFlagMock();
 void ResetSendMessFlagMock();
 void ResetUuidMock();
+void ResetSoftBusSocketMock();
+void SetSocketMockResult(int32_t result);
+void SetListenMockResult(int32_t result);
+void SetBindMockResult(int32_t result);
+int32_t GetBindMockCallCount();
+int32_t GetShutdownMockCallCount();
+bool WasLastListenListenerInitialized();
+bool WasLastBindListenerInitialized();
 
 #endif
 #endif // SOCKET_H
