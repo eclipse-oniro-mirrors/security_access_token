@@ -730,11 +730,12 @@ public:
      *       For Native token IDs, the query will not return any permission information.
      * @param tokenIDList The list of token IDs to be queried
      * @param permissionInfoList Output parameter, returns the list of permission information
+     * @param needTimestamp true means query valid timestamp, false means omit timestamp and return 0
      * @return Returns RET_SUCCESS(0) on success, returns corresponding error code on failure
      * @since 26
      */
     static int32_t QueryStatusByTokenID(const std::vector<AccessTokenID>& tokenIDList,
-        std::vector<PermissionStatus>& permissionInfoList);
+        std::vector<PermissionStatus>& permissionInfoList, bool needTimestamp = true);
 
     /**
      * @brief Query whether the current caller needs a permission dialog for CLI commands.

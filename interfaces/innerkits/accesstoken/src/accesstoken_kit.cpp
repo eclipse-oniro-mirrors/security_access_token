@@ -1110,13 +1110,14 @@ int32_t AccessTokenKit::QueryStatusByPermission(const std::vector<std::string>& 
 }
 
 int32_t AccessTokenKit::QueryStatusByTokenID(const std::vector<AccessTokenID>& tokenIDList,
-    std::vector<PermissionStatus>& permissionInfoList)
+    std::vector<PermissionStatus>& permissionInfoList, bool needTimestamp)
 {
     if (!DataValidator::IsListSizeValid(tokenIDList.size())) {
         LOGE(ATM_DOMAIN, ATM_TAG, "TokenIDList size is invalid: %{public}zu", tokenIDList.size());
         return ERR_PARAM_INVALID;
     }
-    return AccessTokenManagerClient::GetInstance().QueryStatusByTokenID(tokenIDList, permissionInfoList);
+    return AccessTokenManagerClient::GetInstance().QueryStatusByTokenID(
+        tokenIDList, permissionInfoList, needTimestamp);
 }
 
 int32_t AccessTokenKit::GetCliPermissionRequestInfo(

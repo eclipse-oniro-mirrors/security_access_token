@@ -2405,6 +2405,36 @@ HWTEST_F(QueryPermissionInfosTest, QueryStatusTimestampTest007, TestSize.Level1)
 }
 
 /**
+ * @tc.name: QueryStatusTimestampTest014
+ * @tc.desc: QueryStatusByTokenID with needTimestamp false should return timestamp 0 from cache
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(QueryPermissionInfosTest, QueryStatusTimestampTest014, TestSize.Level1)
+{
+    std::vector<std::string> permissions = {"ohos.permission.CAMERA"};
+    AccessTokenID tokenID = PrepareTestHap("com.example.timestamp.test014", permissions, true);
+    ASSERT_NE(tokenID, INVALID_TOKENID);
+
+    EXPECT_EQ(RET_SUCCESS, TestCommon::GrantPermissionByTest(tokenID, "ohos.permission.CAMERA",
+        PERMISSION_USER_FIXED));
+
+    std::vector<PermissionStatus> permissionInfoList;
+    int32_t ret = AccessTokenKit::QueryStatusByTokenID({tokenID}, permissionInfoList, false);
+    ASSERT_EQ(RET_SUCCESS, ret);
+
+    auto tokenIt = std::find_if(permissionInfoList.begin(), permissionInfoList.end(),
+        [tokenID](const PermissionStatus& status) {
+            return status.tokenID == tokenID && status.permissionName == "ohos.permission.CAMERA";
+        });
+    ASSERT_NE(tokenIt, permissionInfoList.end());
+    ExpectGrantedQueryResult(*tokenIt);
+    EXPECT_EQ(0U, tokenIt->timestamp);
+
+    CleanupTestHap(tokenID);
+}
+
+/**
  * @tc.name: QueryStatusTimestampTest008
  * @tc.desc: App update should keep timestamp unchanged for unchanged user_grant permission
  * @tc.type: FUNC

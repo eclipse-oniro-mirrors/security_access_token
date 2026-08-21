@@ -2023,7 +2023,7 @@ HWTEST_F(AccessTokenManagerServiceTest, QueryStatusByTokenIDServiceTest001, Test
     }
 
     std::vector<PermissionStatusIdl> permissionInfoList;
-    ErrCode ret = atManagerService_->QueryStatusByTokenID(tokenIDList, permissionInfoList);
+    ErrCode ret = atManagerService_->QueryStatusByTokenID(tokenIDList, permissionInfoList, true);
 
     // Assert: Should return ERR_PARAM_INVALID due to size exceeding limit
     EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
@@ -2048,7 +2048,7 @@ HWTEST_F(AccessTokenManagerServiceTest, QueryStatusByTokenIDServiceTest002, Test
 
     // Act: Query with empty tokenIDList
     atManagerService_->Initialize();
-    ErrCode ret = atManagerService_->QueryStatusByTokenID(tokenIDList, permissionInfoList);
+    ErrCode ret = atManagerService_->QueryStatusByTokenID(tokenIDList, permissionInfoList, true);
 
     // Assert: Should return ERR_PARAM_INVALID due to empty list
     ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
@@ -2069,11 +2069,62 @@ HWTEST_F(AccessTokenManagerServiceTest, QueryStatusByTokenIDServiceTest003, Test
 
     // Act: Query with tokenID=0
     atManagerService_->Initialize();
-    ErrCode ret = atManagerService_->QueryStatusByTokenID(tokenIDList, permissionInfoList);
+    ErrCode ret = atManagerService_->QueryStatusByTokenID(tokenIDList, permissionInfoList, true);
 
     // Assert: Should return ERR_PARAM_INVALID due to tokenID=0
     ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
     ASSERT_TRUE(permissionInfoList.empty());
+}
+
+/**
+ * @tc.name: QueryStatusByTokenIDServiceTest004
+ * @tc.desc: Test QueryStatusByTokenID with needTimestamp false, timestamp should be zero
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, QueryStatusByTokenIDServiceTest004, TestSize.Level1)
+{
+    atManagerService_->Initialize();
+    HapInfoParcel infoParcel;
+    infoParcel.hapInfoParameter.userID = USER_ID;
+    infoParcel.hapInfoParameter.bundleName = "com.example.query.token.timestamp";
+    infoParcel.hapInfoParameter.instIndex = INST_INDEX;
+    infoParcel.hapInfoParameter.dlpType = static_cast<int>(HapDlpType::DLP_COMMON);
+    infoParcel.hapInfoParameter.apiVersion = API_VERSION_9;
+    infoParcel.hapInfoParameter.isSystemApp = false;
+    infoParcel.hapInfoParameter.appIDDesc = "com.example.query.token.timestamp";
+
+    HapPolicyParcel policyParcel;
+    policyParcel.hapPolicy.apl = APL_NORMAL;
+    policyParcel.hapPolicy.domain = "test.domain";
+
+    PermissionStatus permState;
+    permState.permissionName = "ohos.permission.CAMERA";
+    permState.grantFlag = static_cast<uint32_t>(PermissionFlag::PERMISSION_USER_FIXED);
+    permState.grantStatus = static_cast<int32_t>(PermissionState::PERMISSION_GRANTED);
+    policyParcel.hapPolicy.permStateList.emplace_back(permState);
+
+    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
+    AccessTokenID tokenID;
+    CreateHapToken(infoParcel, policyParcel, tokenID, tokenIdAplMap, true);
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+
+    std::vector<PermissionStatusIdl> permissionInfoList;
+    ErrCode ret = atManagerService_->QueryStatusByTokenID({tokenID}, permissionInfoList, false);
+
+    ASSERT_EQ(RET_SUCCESS, ret);
+    ASSERT_FALSE(permissionInfoList.empty());
+
+    uint32_t cameraPermCode = 0;
+    ASSERT_TRUE(TransferPermissionToOpcode("ohos.permission.CAMERA", cameraPermCode));
+    auto resultIt = std::find_if(permissionInfoList.begin(), permissionInfoList.end(),
+        [cameraPermCode](const PermissionStatusIdl& status) {
+            return status.permCode == cameraPermCode;
+        });
+    ASSERT_NE(resultIt, permissionInfoList.end());
+    EXPECT_EQ(0, resultIt->timestamp);
+
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->DeleteToken(tokenID, false));
 }
 
 /**
@@ -2306,7 +2357,7 @@ HWTEST_F(AccessTokenManagerServiceTest, QueryStatusByTokenIDOverSizeTest001, Tes
     AccessTokenInfoManager::GetInstance().SetMaxQueryResultSize(0); // 0: Set small max size for testing and query
     std::vector<AccessTokenID> tokenIDList = {static_cast<uint32_t>(tokenID)};
     std::vector<PermissionStatusIdl> permissionInfoList;
-    ErrCode errCode = atManagerService_->QueryStatusByTokenID(tokenIDList, permissionInfoList);
+    ErrCode errCode = atManagerService_->QueryStatusByTokenID(tokenIDList, permissionInfoList, true);
 
     // Assert: Should return ERR_OVERSIZE since result exceeds limit
     EXPECT_EQ(AccessTokenError::ERR_OVERSIZE, errCode);

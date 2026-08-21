@@ -145,7 +145,7 @@ public:
     int32_t QueryStatusByPermission(const std::vector<uint32_t>& permCodeList,
         std::vector<PermissionStatus>& permissionInfoList, bool onlyHap);
     int32_t QueryStatusByTokenID(const std::vector<AccessTokenID>& tokenIDList,
-        std::vector<PermissionStatus>& permissionInfoList);
+        std::vector<PermissionStatus>& permissionInfoList, bool needTimestamp);
     int32_t GetCliPermissionRequestInfo(
         const std::string& agentID, const std::vector<CliInfo>& cliInfoList, PermissionDialogResult& result);
     int32_t GetCliPermissions(AccessTokenID hostTokenID, const std::string& agentID,
