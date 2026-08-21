@@ -1191,7 +1191,10 @@ int AccessTokenManagerService::ClearUserGrantedPermissionState(AccessTokenID tok
         LOGE(ATM_DOMAIN, ATM_TAG, "TokenID %{public}u does not exist or is not a valid hap token.", tokenID);
         return AccessTokenError::ERR_TOKENID_NOT_EXIST;
     }
-    AccessTokenInfoManager::GetInstance().ClearUserGrantedPermissionState(tokenID);
+    int32_t ret = AccessTokenInfoManager::GetInstance().ClearUserGrantedPermissionState(tokenID);
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
     AccessTokenInfoManager::GetInstance().SetPermDialogCap(tokenID, false);
     return RET_SUCCESS;
 }
@@ -1223,7 +1226,12 @@ int32_t AccessTokenManagerService::ClearUserGrantedPermStateByBundle(const std::
             continue;
         }
 #endif
-        AccessTokenInfoManager::GetInstance().ClearUserGrantedPermissionState(tokenID);
+        ret = AccessTokenInfoManager::GetInstance().ClearUserGrantedPermissionState(tokenID);
+        if (ret != RET_SUCCESS) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "ClearUserGrantedPermissionState failed, tokenID=%{public}d, ret=%{public}d.",
+                tokenID, ret);
+            continue;
+        }
         AccessTokenInfoManager::GetInstance().SetPermDialogCap(tokenID, false);
         isCleared = true;
     }

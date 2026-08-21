@@ -100,7 +100,7 @@ public:
     int32_t GetHapTokenDlpType(AccessTokenID id);
     int32_t SetPermDialogCap(AccessTokenID tokenID, bool enable);
     bool GetPermDialogCap(AccessTokenID tokenID);
-    void ClearUserGrantedPermissionState(AccessTokenID tokenID);
+    int32_t ClearUserGrantedPermissionState(AccessTokenID tokenID);
     int32_t ClearUserGrantedPermission(AccessTokenID tokenID);
     int32_t UpdateRestrictedFlagAndRefreshKernel(
         AccessTokenID tokenId, uint32_t permCode, bool isRestricted, bool isPersist, const char* source);

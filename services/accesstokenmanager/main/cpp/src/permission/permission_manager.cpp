@@ -682,6 +682,10 @@ int32_t PermissionManager::CheckMultiPermissionStatus(
         LOGC(ATM_DOMAIN, ATM_TAG, "Invalid flag: %{public}d!", flag);
         return AccessTokenError::ERR_PARAM_INVALID;
     }
+    if (!PermissionValidator::IsGrantStatusValid(status)) {
+        LOGC(ATM_DOMAIN, ATM_TAG, "Invalid status: %{public}d!", status);
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
     for (const std::string& permissionName : permissionList) {
         LOGI(ATM_DOMAIN, ATM_TAG,
             "Id: %{public}d, perm: %{public}s, status: %{public}d, flag: %{public}d.", tokenID,

@@ -560,7 +560,8 @@ HWTEST_F(SetRemoteHapTokenInfoTest, SetRemoteHapTokenInfoSpecTest005, TestSize.L
 
     {
         MockNativeToken mock("foundation");
-        ASSERT_EQ(RET_SUCCESS, AccessTokenKit::ClearUserGrantedPermissionState(mapID));
+        ASSERT_EQ(AccessTokenError::ERR_IDENTITY_CHECK_FAILED,
+            AccessTokenKit::ClearUserGrantedPermissionState(mapID));
     }
 
     ret = AccessTokenKit::VerifyAccessToken(mapID, "ohos.permission.CAMERA", false);

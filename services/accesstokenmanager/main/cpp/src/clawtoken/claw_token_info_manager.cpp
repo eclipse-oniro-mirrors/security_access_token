@@ -542,6 +542,7 @@ void ToolTokenInfoManager::RollbackUserPolicyFlag(
             LOGE(ATM_DOMAIN, ATM_TAG,
                 "Rollback restricted flag failed, tokenId=%{public}u, permCode=%{public}u, ret=%{public}d.",
                 iter->tokenId, iter->permCode, ret);
+            continue;
         }
         RestoreToolKernelPermissionState(iter->tokenId, iter->permCode, iter->originalStatus, iter->originalFlag);
     }

@@ -242,6 +242,7 @@ void PermActiveStatusPtr::ActiveStatusChangeCallback(ActiveChangeResponse& activ
         LOGE(PRI_DOMAIN, PRI_TAG, "Failed to GetCurrentEnv!");
         return;
     }
+    std::shared_ptr<void> envGuard(nullptr, [this](void*) { DetachCurrentEnv(vm_); });
 
     ani_fn_object fnObj = reinterpret_cast<ani_fn_object>(ref_);
     if (fnObj == nullptr) {
