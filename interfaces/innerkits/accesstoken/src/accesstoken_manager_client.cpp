@@ -50,6 +50,7 @@ static constexpr int32_t MAX_USER_POLICY_SIZE = 200;
 #endif
 static constexpr int32_t MAX_EXTENDED_VALUE_LIST_SIZE = 512;
 static constexpr uint32_t MAX_CALLBACK_MAP_SIZE = 200;
+static constexpr uint32_t ERR_SERVICE_DIED = 29189;
 
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
 bool IsEnhanceKeySizeValid(size_t size)
@@ -238,6 +239,7 @@ static int32_t ConvertResult(int32_t ret)
             ret = ERR_WRITE_PARCEL_FAILED;
             break;
         case ERR_TRANSACTION_FAILED:
+        case ERR_SERVICE_DIED:
             ret = ERR_SERVICE_ABNORMAL;
             break;
         default:
