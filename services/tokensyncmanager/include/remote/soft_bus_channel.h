@@ -311,6 +311,7 @@ private:
 
     // callback function arguments: response string variable
     std::string responseResult_;
+    bool responseReceived_ = false;
     // callback function execute variable
     std::condition_variable loadedCond_;
 };

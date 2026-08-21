@@ -171,8 +171,11 @@ std::string SoftBusChannel::GetUuid()
 void SoftBusChannel::InsertCallback(int result, std::string &uuid)
 {
     std::unique_lock<std::mutex> lock(socketMutex_);
+    responseReceived_ = false;
     std::function<void(const std::string &)> callback = [this](const std::string &result) {
+        std::lock_guard<std::mutex> lock(socketMutex_);
         responseResult_ = std::string(result);
+        responseReceived_ = true;
         loadedCond_.notify_all();
         LOGD(ATM_DOMAIN, ATM_TAG, "OnResponse called end");
     };
@@ -231,7 +234,8 @@ std::string SoftBusChannel::ExecuteCommand(const std::string &commandName, const
     }
 
     LOGD(ATM_DOMAIN, ATM_TAG, "Wait command response");
-    if (loadedCond_.wait_for(lock2, std::chrono::milliseconds(EXECUTE_COMMAND_TIME_OUT)) == std::cv_status::timeout) {
+    if (!loadedCond_.wait_for(lock2, std::chrono::milliseconds(EXECUTE_COMMAND_TIME_OUT),
+        [this] { return responseReceived_; })) {
         LOGW(ATM_DOMAIN, ATM_TAG, "Time out to wait response.");
         callbacks_.erase(uuid);
         isSocketUsing_ = false;
@@ -483,12 +487,17 @@ void SoftBusChannel::HandleRequest(int socket, const std::string &id, const std:
 
 void SoftBusChannel::HandleResponse(const std::string &id, const std::string &jsonPayload)
 {
-    std::unique_lock<std::mutex> lock(socketMutex_);
-    auto callback = callbacks_.find(id);
-    if (callback != callbacks_.end()) {
-        (callback->second)(jsonPayload);
-        callbacks_.erase(callback);
+    std::function<void(std::string)> callback;
+    {
+        std::lock_guard<std::mutex> lock(socketMutex_);
+        auto iter = callbacks_.find(id);
+        if (iter == callbacks_.end()) {
+            return;
+        }
+        callback = iter->second;
+        callbacks_.erase(iter);
     }
+    callback(jsonPayload);
 }
 
 int SoftBusChannel::SendResponseBytes(int socket, const unsigned char* bytes, const int bytesLength)

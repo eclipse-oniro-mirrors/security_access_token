@@ -155,6 +155,25 @@ void TokenSyncServiceTest::OnDeviceOffline(const DistributedHardware::DmDeviceIn
 }
 
 /**
+ * @tc.name: HandleResponse001
+ * @tc.desc: Handle response without holding the socket mutex while invoking the callback
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenSyncServiceTest, HandleResponse001, TestSize.Level4)
+{
+    SoftBusChannel channel("test");
+    std::string uuid("response-id");
+    channel.InsertCallback(0, uuid);
+
+    channel.HandleResponse(uuid, "response");
+
+    ASSERT_TRUE(channel.callbacks_.empty());
+    ASSERT_TRUE(channel.responseReceived_);
+    ASSERT_EQ("response", channel.responseResult_);
+}
+
+/**
  * @tc.name: CheckAndCopyStr001
  * @tc.desc: destlen not equal to src
  * @tc.type: FUNC

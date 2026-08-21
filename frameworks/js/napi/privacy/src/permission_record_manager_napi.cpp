@@ -28,8 +28,7 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 std::mutex g_lockForPermActiveChangeSubscribers;
-std::vector<RegisterPermActiveChangeContext*> g_permActiveChangeSubscribers;
-static constexpr size_t MAX_CALLBACK_SIZE = 200;
+std::vector<std::shared_ptr<RegisterPermActiveChangeContext>> g_permActiveChangeSubscribers;
 static constexpr int32_t ADD_PERMISSION_RECORD_MAX_PARAMS = 5;
 static constexpr int32_t ADD_PERMISSION_RECORD_MIN_PARAMS = 4;
 static constexpr int32_t GET_PERMISSION_RECORD_MAX_PARAMS = 2;
@@ -1160,7 +1159,7 @@ static bool ParseInputToUnregister(const napi_env env, const napi_callback_info 
     return true;
 }
 
-static bool IsExistRegister(const PermActiveChangeContext* permActiveChangeContext)
+static bool IsExistRegister(const std::shared_ptr<RegisterPermActiveChangeContext>& permActiveChangeContext)
 {
     std::vector<std::string> targetPermList;
     permActiveChangeContext->subscriber->GetPermList(targetPermList);
@@ -1189,38 +1188,52 @@ static bool IsExistRegister(const PermActiveChangeContext* permActiveChangeConte
             return true;
         }
     }
+    g_permActiveChangeSubscribers.emplace_back(permActiveChangeContext);
     return false;
 }
 
-static void DeleteRegisterInVector(PermActiveChangeContext* permActiveChangeContext)
+static void FinishRegister(const std::shared_ptr<RegisterPermActiveChangeContext>& registerInfo, bool success)
 {
-    std::vector<std::string> targetPermList;
-    permActiveChangeContext->subscriber->GetPermList(targetPermList);
+    std::lock_guard<std::mutex> lock(g_lockForPermActiveChangeSubscribers);
+    auto item = std::find(g_permActiveChangeSubscribers.begin(), g_permActiveChangeSubscribers.end(), registerInfo);
+    if (item == g_permActiveChangeSubscribers.end()) {
+        return;
+    }
+    if (success) {
+        (*item)->registerState = PermActiveChangeRegisterState::ACTIVE;
+    } else {
+        g_permActiveChangeSubscribers.erase(item);
+    }
+}
+
+static void FinishUnregister(const std::shared_ptr<RegisterPermActiveChangeContext>& registerInfo, bool success)
+{
     std::lock_guard<std::mutex> lock(g_lockForPermActiveChangeSubscribers);
     auto item = g_permActiveChangeSubscribers.begin();
     while (item != g_permActiveChangeSubscribers.end()) {
-        std::vector<std::string> permList;
-        (*item)->subscriber->GetPermList(permList);
-        if ((permList == targetPermList) && CompareCallbackRef(permActiveChangeContext->env, (*item)->callbackRef,
-            permActiveChangeContext->callbackRef, (*item)->threadId_)) {
-            delete *item;
-            *item = nullptr;
-            g_permActiveChangeSubscribers.erase(item);
+        if (*item == registerInfo) {
+            if (success) {
+                g_permActiveChangeSubscribers.erase(item);
+            } else {
+                (*item)->registerState = PermActiveChangeRegisterState::ACTIVE;
+            }
             return;
-        } else {
-            ++item;
         }
+        ++item;
     }
 }
 
 static bool FindAndGetSubscriber(UnregisterPermActiveChangeContext* unregisterPermActiveChangeContext,
-    std::vector<RegisterPermActiveChangeContext*>& batchPermActiveChangeSubscribers)
+    std::vector<std::shared_ptr<RegisterPermActiveChangeContext>>& batchPermActiveChangeSubscribers)
 {
     std::vector<std::string> targetPermList = unregisterPermActiveChangeContext->permList;
     std::lock_guard<std::mutex> lock(g_lockForPermActiveChangeSubscribers);
     bool callbackEqual;
     napi_ref callbackRef = unregisterPermActiveChangeContext->callbackRef;
     for (const auto& item : g_permActiveChangeSubscribers) {
+        if (item->registerState != PermActiveChangeRegisterState::ACTIVE) {
+            continue;
+        }
         std::vector<std::string> permList;
         item->subscriber->GetPermList(permList);
         // targetCallback == nullptr, Unsubscribe from all callbacks under the same permList
@@ -1234,6 +1247,7 @@ static bool FindAndGetSubscriber(UnregisterPermActiveChangeContext* unregisterPe
         }
 
         if ((permList == targetPermList) && callbackEqual) {
+            item->registerState = PermActiveChangeRegisterState::UNREGISTERING;
             batchPermActiveChangeSubscribers.emplace_back(item);
             if (callbackRef != nullptr) {
                 return true;
@@ -1248,13 +1262,11 @@ static bool FindAndGetSubscriber(UnregisterPermActiveChangeContext* unregisterPe
 
 napi_value RegisterPermActiveChangeCallback(napi_env env, napi_callback_info cbInfo)
 {
-    RegisterPermActiveChangeContext* registerPermActiveChangeContext =
-        new (std::nothrow) RegisterPermActiveChangeContext();
+    auto registerPermActiveChangeContext = std::make_shared<RegisterPermActiveChangeContext>();
     if (registerPermActiveChangeContext == nullptr) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Insufficient memory for registerPermActiveChangeContext!");
         return nullptr;
     }
-    std::unique_ptr<RegisterPermActiveChangeContext> callbackPtr {registerPermActiveChangeContext};
     if (!ParseInputToRegister(env, cbInfo, *registerPermActiveChangeContext)) {
         return nullptr;
     }
@@ -1266,21 +1278,14 @@ napi_value RegisterPermActiveChangeCallback(napi_env env, napi_callback_info cbI
     }
     int32_t result = PrivacyKit::RegisterPermActiveStatusCallback(registerPermActiveChangeContext->subscriber);
     if (result != RET_SUCCESS) {
+        FinishRegister(registerPermActiveChangeContext, false);
         LOGE(PRI_DOMAIN, PRI_TAG, "RegisterPermActiveStatusCallback failed");
         int32_t jsCode = GetJsErrorCode(result);
         std::string errMsg = GetErrorMessage(jsCode);
         NAPI_CALL(env, napi_throw(env, GenerateBusinessError(env, jsCode, errMsg)));
         return nullptr;
     }
-    {
-        std::lock_guard<std::mutex> lock(g_lockForPermActiveChangeSubscribers);
-        if (g_permActiveChangeSubscribers.size() >= MAX_CALLBACK_SIZE) {
-            LOGE(PRI_DOMAIN, PRI_TAG, "Subscribers size has reached max value");
-            return nullptr;
-        }
-        g_permActiveChangeSubscribers.emplace_back(registerPermActiveChangeContext);
-    }
-    callbackPtr.release();
+    FinishRegister(registerPermActiveChangeContext, true);
     return nullptr;
 }
 
@@ -1296,7 +1301,7 @@ napi_value UnregisterPermActiveChangeCallback(napi_env env, napi_callback_info c
     if (!ParseInputToUnregister(env, cbInfo, *unregisterPermActiveChangeContext)) {
         return nullptr;
     }
-    std::vector<RegisterPermActiveChangeContext*> batchPermActiveChangeSubscribers;
+    std::vector<std::shared_ptr<RegisterPermActiveChangeContext>> batchPermActiveChangeSubscribers;
     if (!FindAndGetSubscriber(unregisterPermActiveChangeContext, batchPermActiveChangeSubscribers)) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Unsubscribe failed. The current subscriber does not exist");
         std::string errMsg = GetErrorMessage(JsErrorCode::JS_ERROR_PARAM_INVALID);
@@ -1306,8 +1311,9 @@ napi_value UnregisterPermActiveChangeCallback(napi_env env, napi_callback_info c
     for (const auto& item : batchPermActiveChangeSubscribers) {
         int32_t result = PrivacyKit::UnRegisterPermActiveStatusCallback(item->subscriber);
         if (result == RET_SUCCESS) {
-            DeleteRegisterInVector(item);
+            FinishUnregister(item, true);
         } else {
+            FinishUnregister(item, false);
             LOGE(PRI_DOMAIN, PRI_TAG, "UnregisterPermActiveChangeCompleted failed");
             int32_t jsCode = GetJsErrorCode(result);
             std::string errMsg = GetErrorMessage(jsCode);

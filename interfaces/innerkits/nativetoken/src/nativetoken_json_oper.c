@@ -115,6 +115,7 @@ uint32_t GetInfoArrFromJson(cJSON *cjsonItem, char **strArr[], int32_t *strNum, 
     }
     if (size == 0) {
         *strArr = NULL;
+        *strNum = 0;
         return ATRET_SUCCESS;
     }
     *strNum = size;

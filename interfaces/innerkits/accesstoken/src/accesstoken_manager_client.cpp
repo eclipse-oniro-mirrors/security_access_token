@@ -658,6 +658,7 @@ int32_t AccessTokenManagerClient::CreatePermStateChangeCallback(
             LOGE(ATM_DOMAIN, ATM_TAG, "Memory allocation for callback failed!");
             return AccessTokenError::ERR_SERVICE_ABNORMAL;
         }
+        callbackMap_[customizedCb] = callback;
     }
     return RET_SUCCESS;
 }
@@ -675,9 +676,14 @@ int32_t AccessTokenManagerClient::RegisterPermStateChangeCallback(
     if (result != RET_SUCCESS) {
         return result;
     }
+    auto removeCallback = [this, &customizedCb]() {
+        std::lock_guard<std::mutex> lock(callbackMutex_);
+        callbackMap_.erase(customizedCb);
+    };
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
+        removeCallback();
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
 
@@ -686,26 +692,26 @@ int32_t AccessTokenManagerClient::RegisterPermStateChangeCallback(
 
     if (scopeParcel.scope.permList.size() > PERMS_LIST_SIZE_MAX) {
         LOGE(ATM_DOMAIN, ATM_TAG, "PermList scope oversize");
+        removeCallback();
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     if (type == SYSTEM_REGISTER_TYPE) {
         if (scopeParcel.scope.tokenIDs.size() > TOKENIDS_LIST_SIZE_MAX) {
             LOGE(ATM_DOMAIN, ATM_TAG, "TokenIDs scope oversize");
+            removeCallback();
             return AccessTokenError::ERR_PARAM_INVALID;
         }
         result = proxy->RegisterPermStateChangeCallback(scopeParcel, callback->AsObject());
     } else {
         if (scopeParcel.scope.tokenIDs.size() != 1) {
             LOGE(ATM_DOMAIN, ATM_TAG, "TokenIDs scope invalid");
+            removeCallback();
             return AccessTokenError::ERR_PARAM_INVALID;
         }
         result = proxy->RegisterSelfPermStateChangeCallback(scopeParcel, callback->AsObject());
     }
-    if (result == RET_SUCCESS) {
-        std::lock_guard<std::mutex> lock(callbackMutex_);
-        callbackMap_[customizedCb] = callback;
-    }
     if (result != RET_SUCCESS) {
+        removeCallback();
         result = ConvertResult(result);
     }
     LOGI(ATM_DOMAIN, ATM_TAG, "Result is %{public}d.", result);
@@ -721,24 +727,32 @@ int32_t AccessTokenManagerClient::UnRegisterPermStateChangeCallback(
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
 
-    std::lock_guard<std::mutex> lock(callbackMutex_);
-    auto goalCallback = callbackMap_.find(customizedCb);
-    if (goalCallback == callbackMap_.end()) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "GoalCallback already is not exist");
-        return AccessTokenError::ERR_INTERFACE_NOT_USED_TOGETHER;
-    }
-    if (goalCallback->second == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "GoalCallback is null");
-        return AccessTokenError::ERR_INTERFACE_NOT_USED_TOGETHER;
+    sptr<PermissionStateChangeCallback> callback;
+    {
+        std::lock_guard<std::mutex> lock(callbackMutex_);
+        auto goalCallback = callbackMap_.find(customizedCb);
+        if (goalCallback == callbackMap_.end()) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "GoalCallback already is not exist");
+            return AccessTokenError::ERR_INTERFACE_NOT_USED_TOGETHER;
+        }
+        if (goalCallback->second == nullptr) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "GoalCallback is null");
+            return AccessTokenError::ERR_INTERFACE_NOT_USED_TOGETHER;
+        }
+        callback = goalCallback->second;
     }
     int32_t result;
     if (type == SYSTEM_REGISTER_TYPE) {
-        result = proxy->UnRegisterPermStateChangeCallback(goalCallback->second->AsObject());
+        result = proxy->UnRegisterPermStateChangeCallback(callback->AsObject());
     } else {
-        result = proxy->UnRegisterSelfPermStateChangeCallback(goalCallback->second->AsObject());
+        result = proxy->UnRegisterSelfPermStateChangeCallback(callback->AsObject());
     }
     if (result == RET_SUCCESS) {
-        callbackMap_.erase(goalCallback);
+        std::lock_guard<std::mutex> lock(callbackMutex_);
+        auto goalCallback = callbackMap_.find(customizedCb);
+        if (goalCallback != callbackMap_.end() && goalCallback->second == callback) {
+            callbackMap_.erase(goalCallback);
+        }
     }
     if (result != RET_SUCCESS) {
         result = ConvertResult(result);
@@ -1426,7 +1440,7 @@ int32_t AccessTokenManagerClient::GetPolicyWhiteList(uint32_t permCode, std::vec
 
 void AccessTokenManagerClient::ReleaseProxy()
 {
-    if (proxy_ != nullptr && serviceDeathObserver_ != nullptr) {
+    if (proxy_ != nullptr && serviceDeathObserver_ != nullptr && proxy_->AsObject() != nullptr) {
         proxy_->AsObject()->RemoveDeathRecipient(serviceDeathObserver_);
     }
     proxy_ = nullptr;

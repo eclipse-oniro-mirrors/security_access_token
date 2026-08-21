@@ -709,20 +709,28 @@ int32_t PrivacyManagerClient::UnRegisterPermActiveStatusCallback(
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
 
-    std::lock_guard<std::mutex> lock(activeCbkMutex_);
-    auto goalCallback = activeCbkMap_.find(callback);
-    if (goalCallback == activeCbkMap_.end()) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "GoalCallback already is not exist.");
-        return PrivacyError::ERR_CALLBACK_NOT_EXIST;
-    }
-    if (goalCallback->second == nullptr) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "GoalCallback is null.");
-        return PrivacyError::ERR_CALLBACK_NOT_EXIST;
+    sptr<PermActiveStatusChangeCallback> callbackWrap;
+    {
+        std::lock_guard<std::mutex> lock(activeCbkMutex_);
+        auto goalCallback = activeCbkMap_.find(callback);
+        if (goalCallback == activeCbkMap_.end()) {
+            LOGE(PRI_DOMAIN, PRI_TAG, "GoalCallback already is not exist.");
+            return PrivacyError::ERR_CALLBACK_NOT_EXIST;
+        }
+        if (goalCallback->second == nullptr) {
+            LOGE(PRI_DOMAIN, PRI_TAG, "GoalCallback is null.");
+            return PrivacyError::ERR_CALLBACK_NOT_EXIST;
+        }
+        callbackWrap = goalCallback->second;
     }
 
-    int32_t result = proxy->UnRegisterPermActiveStatusCallback(goalCallback->second->AsObject());
+    int32_t result = proxy->UnRegisterPermActiveStatusCallback(callbackWrap->AsObject());
     if (result == RET_SUCCESS) {
-        activeCbkMap_.erase(goalCallback);
+        std::lock_guard<std::mutex> lock(activeCbkMutex_);
+        auto goalCallback = activeCbkMap_.find(callback);
+        if (goalCallback != activeCbkMap_.end() && goalCallback->second == callbackWrap) {
+            activeCbkMap_.erase(goalCallback);
+        }
     } else {
         result = ConvertResult(result);
     }

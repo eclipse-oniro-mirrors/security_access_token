@@ -289,7 +289,7 @@ static uint32_t ParseTokenInfo(void)
 
     ret = GetFileBuff(TOKEN_ID_CFG_FILE_PATH, &fileBuff);
     if (ret != ATRET_SUCCESS) {
-        LOGC("Failed to read nativetoken.json to buffer, ret=%d.", ret);
+        LOGC("Failed to read nativetoken.json to buffer, ret=%u.", ret);
         return ret;
     }
     if (fileBuff == NULL) {
@@ -1054,6 +1054,10 @@ static void SyncNativeTokenToKernel(const NativeTokenInfoParams *tokenInfo, Nati
 
 uint64_t GetAccessTokenId(NativeTokenInfoParams *tokenInfo)
 {
+    if (tokenInfo == NULL) {
+        LOGC("Native token info is null.");
+        return 0;
+    }
     NativeAtId tokenId = 0;
     uint64_t result = 0;
     int32_t apl = 0;

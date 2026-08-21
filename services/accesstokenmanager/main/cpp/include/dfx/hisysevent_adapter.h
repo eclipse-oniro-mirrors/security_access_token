@@ -57,12 +57,12 @@ struct HapDfxInfo {
  * @details Contains statistics for access token service startup
  */
 struct InitDfxInfo {
-    int32_t pid;                            // Process ID
-    uint32_t hapSize;                       // Number of HAP tokens loaded
-    uint32_t nativeSize;                    // Number of native tokens loaded
-    uint32_t permDefSize;                   // Number of permission definitions loaded
-    uint32_t dlpSize;                       // Number of DLP permissions loaded
-    uint32_t parseConfigFlag;               // Config parsing flags
+    int32_t pid = 0;                        // Process ID
+    uint32_t hapSize = 0;                   // Number of HAP tokens loaded
+    uint32_t nativeSize = 0;                // Number of native tokens loaded
+    uint32_t permDefSize = 0;               // Number of permission definitions loaded
+    uint32_t dlpSize = 0;                   // Number of DLP permissions loaded
+    uint32_t parseConfigFlag = 0;           // Config parsing flags
 };
 
 /**

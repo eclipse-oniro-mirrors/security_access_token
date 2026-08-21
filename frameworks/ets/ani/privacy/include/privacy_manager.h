@@ -44,12 +44,19 @@ private:
     std::thread::id threadId_;
 };
 
+enum class PermActiveChangeRegisterState {
+    REGISTERING,
+    ACTIVE,
+    UNREGISTERING,
+};
+
 struct RegisterPermActiveChangeContext {
     ani_env* env = nullptr;
     ani_ref callbackRef = nullptr;
     std::vector<std::string> permissionList;
     std::shared_ptr<PermActiveStatusPtr> subscriber = nullptr;
     std::thread::id threadId;
+    PermActiveChangeRegisterState registerState = PermActiveChangeRegisterState::REGISTERING;
 };
 } // namespace AccessToken
 } // namespace Security

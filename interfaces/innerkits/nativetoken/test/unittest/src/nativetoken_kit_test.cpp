@@ -1529,6 +1529,17 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId020, TestSize.Level0)
 }
 
 /**
+ * @tc.name: GetAccessTokenId021
+ * @tc.desc: GetAccessTokenId returns zero for null token info.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenLibKitTest, GetAccessTokenId021, TestSize.Level0)
+{
+    EXPECT_EQ(GetAccessTokenId(nullptr), 0);
+}
+
+/**
  * @tc.name: PermissionMapForC001
  * @tc.desc: Verify permission map C adapter invalid params.
  * @tc.type: FUNC

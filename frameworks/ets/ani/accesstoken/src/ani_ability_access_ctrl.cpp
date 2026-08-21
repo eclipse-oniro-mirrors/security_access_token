@@ -56,7 +56,7 @@ constexpr const char* PERM_STATE_CHANGE_FIELD_TOKEN_ID = "tokenID";
 constexpr const char* PERM_STATE_CHANGE_FIELD_PERMISSION_NAME = "permissionName";
 constexpr const char* PERM_STATE_CHANGE_FIELD_CHANGE = "change";
 std::mutex g_lockForPermStateChangeRegisters;
-std::vector<RegisterPermStateChangeInf*> g_permStateChangeRegisters;
+std::vector<std::shared_ptr<RegisterPermStateChangeInf>> g_permStateChangeRegisters;
 static const char* REGISTER_PERMISSION_STATE_CHANGE_TYPE = "permissionStateChange";
 static const char* REGISTER_SELF_PERMISSION_STATE_CHANGE_TYPE = "selfPermissionStateChange";
 
@@ -175,6 +175,7 @@ void RegisterPermStateChangeScopePtr::PermStateChangeCallback(PermStateChangeInf
     ani_fn_object fnObj = reinterpret_cast<ani_fn_object>(ref_);
     if (fnObj == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Reinterpret_cast!");
+        (void)DetachCurrentEnv(vm_);
         return;
     }
 
@@ -185,6 +186,7 @@ void RegisterPermStateChangeScopePtr::PermStateChangeCallback(PermStateChangeInf
     args.emplace_back(aniObject);
     ani_ref result;
     if (!AniFunctionalObjectCall(env, fnObj, args.size(), args.data(), result)) {
+        (void)DetachCurrentEnv(vm_);
         return;
     }
     if (DetachCurrentEnv(vm_) != ANI_OK) {
@@ -482,7 +484,10 @@ static ani_ref GetPermissionsStatusExecute([[maybe_unused]] ani_env* env,
         LOGE(ATM_DOMAIN, ATM_TAG, "TokenId(%{public}u) is invalid.", tokenID);
         return nullptr;
     }
-    std::vector<std::string> permissionList = ParseAniStringVector(env, aniPermissionList);
+    std::vector<std::string> permissionList;
+    if (!ParseAniStringVector(env, aniPermissionList, permissionList)) {
+        return nullptr;
+    }
 
     std::vector<PermissionListState> permList;
     for (const auto& permission : permissionList) {
@@ -650,7 +655,11 @@ static bool ParseInputToRegister(const RegisterInputInfoAni& aniInputInfo,
     } else if (type == REGISTER_SELF_PERMISSION_STATE_CHANGE_TYPE) {
         scopeInfo.tokenIDs = {GetSelfTokenID()};
     }
-    scopeInfo.permList = ParseAniStringVector(context->env, aniInputInfo.aniPermissionNames);
+    if (!ParseAniStringVector(context->env, aniInputInfo.aniPermissionNames, scopeInfo.permList)) {
+        BusinessErrorAni::ThrowError(
+            context->env, STS_ERROR_PARAM_ILLEGAL, GetParamErrorMsg("permissionList", "Array<Permissions>"));
+        return false;
+    }
     bool hasCallback = true;
     if (!isReg) {
         hasCallback = !(AniIsRefUndefined(context->env, aniInputInfo.aniCallback));
@@ -668,7 +677,7 @@ static bool ParseInputToRegister(const RegisterInputInfoAni& aniInputInfo,
     return SetupPermissionSubscriber(context, scopeInfo, callback);
 }
 
-static bool IsExistRegister(const RegisterPermStateChangeInf* context)
+static bool IsExistRegister(const std::shared_ptr<RegisterPermStateChangeInf>& context)
 {
     PermStateChangeScope targetScopeInfo;
     context->subscriber->GetScope(targetScopeInfo);
@@ -711,14 +720,29 @@ static bool IsExistRegister(const RegisterPermStateChangeInf* context)
             }
         }
         bool isEqual = true;
-        if (!AniIsCallbackRefEqual(context->env, item->callbackRef, context->callbackRef, item->threadId, isEqual)) {
-            return true;
+        if (!CompareAniCallbackRef(context->env, item->callbackRef, context->callbackRef, item->threadId, isEqual)) {
+            continue;
         }
         if (hasPermIntersection && hasTokenIdIntersection && isEqual) {
             return true;
         }
     }
+    g_permStateChangeRegisters.emplace_back(context);
     return false;
+}
+
+static void FinishRegister(const std::shared_ptr<RegisterPermStateChangeInf>& context, bool success)
+{
+    std::lock_guard<std::mutex> lock(g_lockForPermStateChangeRegisters);
+    auto item = std::find(g_permStateChangeRegisters.begin(), g_permStateChangeRegisters.end(), context);
+    if (item == g_permStateChangeRegisters.end()) {
+        return;
+    }
+    if (success) {
+        (*item)->registerState = PermStateChangeRegisterState::ACTIVE;
+    } else {
+        g_permStateChangeRegisters.erase(item);
+    }
 }
 
 static void FillRegisterInfo(const ani_string& aniType, const ani_array& aniId, const ani_array& aniArray,
@@ -738,16 +762,15 @@ static void RegisterPermStateChangeCallback([[maybe_unused]] ani_env* env, [[may
         return;
     }
 
-    RegisterPermStateChangeInf* registerPermStateChangeInf = new (std::nothrow) RegisterPermStateChangeInf();
+    auto registerPermStateChangeInf = std::make_shared<RegisterPermStateChangeInf>();
     if (registerPermStateChangeInf == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to allocate memory for RegisterPermStateChangeInf!");
         return;
     }
     registerPermStateChangeInf->env = env;
-    std::unique_ptr<RegisterPermStateChangeInf> callbackPtr {registerPermStateChangeInf};
     RegisterInputInfoAni aniInputInfo;
     FillRegisterInfo(aniType, aniId, aniArray, callback, aniInputInfo);
-    if (!ParseInputToRegister(aniInputInfo, registerPermStateChangeInf, true)) {
+    if (!ParseInputToRegister(aniInputInfo, registerPermStateChangeInf.get(), true)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to ParseInputToRegister.");
         return;
     }
@@ -772,23 +795,20 @@ static void RegisterPermStateChangeCallback([[maybe_unused]] ani_env* env, [[may
         result = AccessTokenKit::RegisterSelfPermStateChangeCallback(registerPermStateChangeInf->subscriber);
     }
     if (result != RET_SUCCESS) {
+        FinishRegister(registerPermStateChangeInf, false);
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to RegisterPermStateChangeCallback.");
         int32_t stsCode = BusinessErrorAni::GetStsErrorCode(result);
         BusinessErrorAni::ThrowError(env, stsCode, GetErrorMessage(stsCode));
         return;
     }
 
-    {
-        std::lock_guard<std::mutex> lock(g_lockForPermStateChangeRegisters);
-        g_permStateChangeRegisters.emplace_back(registerPermStateChangeInf);
-        LOGI(ATM_DOMAIN, ATM_TAG, "g_PermStateChangeRegisters size = %{public}zu.", g_permStateChangeRegisters.size());
-    }
-    callbackPtr.release();
+    FinishRegister(registerPermStateChangeInf, true);
+    LOGI(ATM_DOMAIN, ATM_TAG, "RegisterPermStateChangeCallback success.");
     return;
 }
 
 static bool FindAndGetSubscriberInVector(RegisterPermStateChangeInf* unregisterPermStateChangeInf,
-    std::vector<RegisterPermStateChangeInf*>& batchPermStateChangeRegisters)
+    std::vector<std::shared_ptr<RegisterPermStateChangeInf>>& batchPermStateChangeRegisters)
 {
     LOGD(ATM_DOMAIN, ATM_TAG, "FindAndGetSubscriberInVector In.");
     std::lock_guard<std::mutex> lock(g_lockForPermStateChangeRegisters);
@@ -799,12 +819,15 @@ static bool FindAndGetSubscriberInVector(RegisterPermStateChangeInf* unregisterP
     bool isUndef = AniIsRefUndefined(unregisterPermStateChangeInf->env, unregisterPermStateChangeInf->callbackRef);
 
     for (const auto& item : g_permStateChangeRegisters) {
+        if (item->registerState != PermStateChangeRegisterState::ACTIVE) {
+            continue;
+        }
         if (isUndef) {
             // batch delete currentThread callback
             LOGI(ATM_DOMAIN, ATM_TAG, "Callback is null.");
             callbackEqual = IsCurrentThread(item->threadId);
         } else {
-            if (!AniIsCallbackRefEqual(unregisterPermStateChangeInf->env, callbackRef,
+            if (!CompareAniCallbackRef(unregisterPermStateChangeInf->env, callbackRef,
                 item->callbackRef, item->threadId, callbackEqual)) {
                 continue;
             }
@@ -818,6 +841,7 @@ static bool FindAndGetSubscriberInVector(RegisterPermStateChangeInf* unregisterP
         item->subscriber->GetScope(scopeInfo);
         if (scopeInfo.tokenIDs == targetTokenIDs && scopeInfo.permList == targetPermList) {
             unregisterPermStateChangeInf->subscriber = item->subscriber;
+            item->registerState = PermStateChangeRegisterState::UNREGISTERING;
             batchPermStateChangeRegisters.emplace_back(item);
         }
     }
@@ -827,34 +851,20 @@ static bool FindAndGetSubscriberInVector(RegisterPermStateChangeInf* unregisterP
     return false;
 }
 
-static void DeleteRegisterFromVector(const RegisterPermStateChangeInf* context)
+static void FinishUnregister(const std::shared_ptr<RegisterPermStateChangeInf>& context, bool success)
 {
-    std::vector<AccessTokenID> targetTokenIDs = context->scopeInfo.tokenIDs;
-    std::vector<std::string> targetPermList = context->scopeInfo.permList;
     std::lock_guard<std::mutex> lock(g_lockForPermStateChangeRegisters);
     auto item = g_permStateChangeRegisters.begin();
     while (item != g_permStateChangeRegisters.end()) {
-        PermStateChangeScope stateChangeScope;
-        (*item)->subscriber->GetScope(stateChangeScope);
-        bool callbackEqual = true;
-        if (!AniIsCallbackRefEqual(
-            context->env, (*item)->callbackRef, context->callbackRef, (*item)->threadId, callbackEqual)) {
-            ++item;
-            continue;
+        if (*item == context) {
+            if (success) {
+                g_permStateChangeRegisters.erase(item);
+            } else {
+                (*item)->registerState = PermStateChangeRegisterState::ACTIVE;
+            }
+            return;
         }
-        if (!callbackEqual) {
-            ++item;
-            continue;
-        }
-
-        if ((stateChangeScope.tokenIDs == targetTokenIDs) && (stateChangeScope.permList == targetPermList)) {
-            delete *item;
-            *item = nullptr;
-            g_permStateChangeRegisters.erase(item);
-            break;
-        } else {
-            ++item;
-        }
+        ++item;
     }
 }
 
@@ -882,7 +892,7 @@ static void UnregisterPermStateChangeCallback([[maybe_unused]] ani_env* env, [[m
         return;
     }
 
-    std::vector<RegisterPermStateChangeInf*> batchPermStateChangeRegisters;
+    std::vector<std::shared_ptr<RegisterPermStateChangeInf>> batchPermStateChangeRegisters;
     if (!FindAndGetSubscriberInVector(context, batchPermStateChangeRegisters)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Unsubscribe. The subscriber does not exist or reference equals failed!");
         if (context->permStateChangeType == REGISTER_SELF_PERMISSION_STATE_CHANGE_TYPE) {
@@ -895,8 +905,6 @@ static void UnregisterPermStateChangeCallback([[maybe_unused]] ani_env* env, [[m
         return;
     }
     for (const auto& item : batchPermStateChangeRegisters) {
-        PermStateChangeScope scopeInfo;
-        item->subscriber->GetScope(scopeInfo);
         int32_t result;
         if (context->permStateChangeType == REGISTER_PERMISSION_STATE_CHANGE_TYPE) {
             result = AccessTokenKit::UnRegisterPermStateChangeCallback(item->subscriber);
@@ -904,12 +912,13 @@ static void UnregisterPermStateChangeCallback([[maybe_unused]] ani_env* env, [[m
             result = AccessTokenKit::UnRegisterSelfPermStateChangeCallback(item->subscriber);
         }
         if (result != RET_SUCCESS) {
+            FinishUnregister(item, false);
             LOGE(ATM_DOMAIN, ATM_TAG, "Failed to UnregisterPermStateChangeCallback.");
             int32_t stsCode = BusinessErrorAni::GetStsErrorCode(result);
             BusinessErrorAni::ThrowError(env, stsCode, GetErrorMessage(stsCode));
             return;
         }
-        DeleteRegisterFromVector(item);
+        FinishUnregister(item, true);
     }
     return;
 }
@@ -977,51 +986,38 @@ static ani_int GetSelfPermissionStatusExecute([[maybe_unused]] ani_env* env, [[m
 static ani_ref CreatePermissionStatusInfoArray(ani_env* env,
     const std::vector<PermissionStatus>& permissionInfoList)
 {
-    // Create result array
-    ani_ref resultArray = CreateArrayObject(env, permissionInfoList.size());
-    if (resultArray == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to create result array.");
-        return nullptr;
-    }
-
-    // Fill array with PermissionStatusInfo objects
-    for (size_t i = 0; i < permissionInfoList.size(); ++i) {
-        const auto& permStatus = permissionInfoList[i];
-
+    std::vector<ani_object> objects;
+    objects.reserve(permissionInfoList.size());
+    for (const auto& permStatus : permissionInfoList) {
         ani_object aniObject = CreateClassObject(env,
             "@ohos.abilityAccessCtrl.abilityAccessCtrl.PermissionStatusInfoInner");
         if (aniObject == nullptr) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Failed to create PermissionStatusInfo object.");
             continue;
         }
-
-        // Set tokenID property
-        SetIntProperty(env, aniObject, "tokenID", static_cast<int32_t>(permStatus.tokenID));
-
-        // Set permissionName property
-        SetStringProperty(env, aniObject, "permissionName", permStatus.permissionName);
-
-        // Set grantStatus property
-        // set permStateChangeType: int32_t
         ani_size enumIndex = (permStatus.grantStatus == 0) ? 1 : 0;
         const char* enumDescriptor = "@ohos.abilityAccessCtrl.abilityAccessCtrl.GrantStatus";
-        SetEnumProperty(
-            env, aniObject, enumDescriptor, "grantStatus", static_cast<int32_t>(enumIndex));
-
-        // Set grantFlags property
-        SetIntProperty(env, aniObject, "grantFlags", static_cast<int32_t>(permStatus.grantFlag));
-
-        // Set optional grantTimestamp property
-        SetOptionalLongProperty(env, aniObject, "grantTimestamp", static_cast<int64_t>(permStatus.timestamp));
-
-        // Set array element
-        ani_size index = static_cast<ani_size>(i);
-        ani_status status = env->Array_Set(reinterpret_cast<ani_array>(resultArray), index, aniObject);
-        if (status != ANI_OK) {
+        if (!SetIntProperty(env, aniObject, "tokenID", static_cast<int32_t>(permStatus.tokenID)) ||
+            !SetStringProperty(env, aniObject, "permissionName", permStatus.permissionName) ||
+            !SetEnumProperty(env, aniObject, enumDescriptor, "grantStatus", static_cast<int32_t>(enumIndex)) ||
+            !SetIntProperty(env, aniObject, "grantFlags", static_cast<int32_t>(permStatus.grantFlag)) ||
+            !SetOptionalLongProperty(env, aniObject, "grantTimestamp", static_cast<int64_t>(permStatus.timestamp))) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to set PermissionStatusInfo properties.");
+            continue;
+        }
+        objects.emplace_back(aniObject);
+    }
+    ani_ref resultArray = CreateArrayObject(env, objects.size());
+    if (resultArray == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to create result array.");
+        return nullptr;
+    }
+    for (size_t i = 0; i < objects.size(); ++i) {
+        if (env->Array_Set(reinterpret_cast<ani_array>(resultArray), static_cast<ani_size>(i), objects[i]) != ANI_OK) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Failed to set array element at index %{public}zu.", i);
+            return nullptr;
         }
     }
-
     return resultArray;
 }
 
@@ -1035,7 +1031,10 @@ static ani_ref QueryStatusByPermissionExecute([[maybe_unused]] ani_env* env,
     }
 
     // Parse permission list from ANI array
-    std::vector<std::string> permissionList = ParseAniStringVector(env, aniPermissionList);
+    std::vector<std::string> permissionList;
+    if (!ParseAniStringVector(env, aniPermissionList, permissionList)) {
+        return nullptr;
+    }
 
     // Call C++ API to query permission information
     std::vector<PermissionStatus> permissionInfoList;
@@ -1102,6 +1101,10 @@ static bool ParseObjectArray(ani_env* env, ani_array array, std::vector<T>& resu
             LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Array_Get: %{public}u.", status);
             return false;
         }
+        if (item == nullptr || AniIsRefUndefined(env, item)) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Invalid array item at index %{public}zu.", i);
+            return false;
+        }
         T value;
         if (!parser(env, static_cast<ani_object>(item), value)) {
             return false;
@@ -1134,8 +1137,8 @@ static ani_ref CreateAniObjectArray(ani_env* env, const std::vector<T>& values, 
 
 static bool ParseCliInfo(ani_env* env, ani_object object, CliInfo& info)
 {
-    if (!GetStringProperty(env, object, "cliName", info.cliName) ||
-        !GetStringProperty(env, object, "subCliName", info.subCliName)) {
+    if (!GetStringProperty(env, object, "cliName", info.cliName, !OPTIONAL_PROPERTY) ||
+        !GetStringProperty(env, object, "subCliName", info.subCliName, !OPTIONAL_PROPERTY)) {
         return false;
     }
     return true;
@@ -1157,7 +1160,7 @@ static bool GetObjectProperty(ani_env* env, ani_object object, const std::string
 {
     ani_ref ref = nullptr;
     ani_status status = env->Object_GetPropertyByName_Ref(object, property.c_str(), &ref);
-    if ((status != ANI_OK) || AniIsRefUndefined(env, ref)) {
+    if ((status != ANI_OK) || (ref == nullptr) || AniIsRefUndefined(env, ref)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get object property %{public}s.", property.c_str());
         return false;
     }
@@ -1170,7 +1173,7 @@ static bool GetBoolVecProperty(ani_env* env, ani_object object, const std::strin
 {
     ani_ref ref = nullptr;
     ani_status status = env->Object_GetPropertyByName_Ref(object, property.c_str(), &ref);
-    if ((status != ANI_OK) || AniIsRefUndefined(env, ref)) {
+    if ((status != ANI_OK) || (ref == nullptr) || AniIsRefUndefined(env, ref)) {
         return false;
     }
     ani_array array = static_cast<ani_array>(ref);
@@ -1182,6 +1185,9 @@ static bool GetBoolVecProperty(ani_env* env, ani_object object, const std::strin
         ani_ref item = nullptr;
         ani_boolean boolValue = false;
         if (env->Array_Get(array, i, &item) != ANI_OK) {
+            return false;
+        }
+        if (item == nullptr || AniIsRefUndefined(env, item)) {
             return false;
         }
         if (env->Object_CallMethodByName_Boolean(
@@ -1198,7 +1204,7 @@ static bool ParseCliAuthInfo(ani_env* env, ani_object object, CliAuthInfo& info)
     ani_object cliObject = nullptr;
     return GetObjectProperty(env, object, "cliInfo", cliObject) &&
         ParseCliInfo(env, cliObject, info.cliInfo) &&
-        GetStringVecProperty(env, object, "permissionNames", info.permissionNames) &&
+        GetStringVecProperty(env, object, "permissionNames", info.permissionNames, !OPTIONAL_PROPERTY) &&
         GetBoolVecProperty(env, object, "authorizationResults", info.authorizationResults);
 }
 
@@ -1256,10 +1262,17 @@ static ani_object CreatePermissionDialogDetailObject(ani_env* env, const Permiss
     if (aniObject == nullptr) {
         return nullptr;
     }
-    SetBoolProperty(env, aniObject, "needPermissionDialog", detail.needPermissionDialog);
-    SetRefProperty(env, aniObject, "permissionNameList", CreateAniArrayString(env, detail.permissionNameList));
-    SetRefProperty(env, aniObject, "statusList", CreateAniArrayInt(env, ConvertStatusList(detail.statusList)));
-    SetStringProperty(env, aniObject, "authResult", detail.authResult);
+    ani_ref permissionNameList = CreateAniArrayString(env, detail.permissionNameList);
+    ani_ref statusList = CreateAniArrayInt(env, ConvertStatusList(detail.statusList));
+    bool result = SetBoolProperty(env, aniObject, "needPermissionDialog", detail.needPermissionDialog) &&
+        SetRefProperty(env, aniObject, "permissionNameList", permissionNameList) &&
+        SetRefProperty(env, aniObject, "statusList", statusList) &&
+        SetStringProperty(env, aniObject, "authResult", detail.authResult);
+    DeleteReference(env, permissionNameList);
+    DeleteReference(env, statusList);
+    if (!result) {
+        return nullptr;
+    }
     return aniObject;
 }
 
@@ -1287,10 +1300,15 @@ static ani_object CreateCliPermissionDetailObject(ani_env* env, const CliPermiss
     if (aniObject == nullptr) {
         return nullptr;
     }
-    SetStringProperty(env, aniObject, "requiredCliPermission", detail.requiredCliPermission);
-    SetEnumProperty(env, aniObject, "@ohos.abilityAccessCtrl.abilityAccessCtrl.PermissionDecisionStatus",
-        "cliPermissionStatus", static_cast<uint32_t>(detail.cliPermissionStatus));
-    SetRefProperty(env, aniObject, "usedPermissions", CreateAniArrayString(env, detail.usedPermissions));
+    ani_ref usedPermissions = CreateAniArrayString(env, detail.usedPermissions);
+    bool result = SetStringProperty(env, aniObject, "requiredCliPermission", detail.requiredCliPermission) &&
+        SetEnumProperty(env, aniObject, "@ohos.abilityAccessCtrl.abilityAccessCtrl.PermissionDecisionStatus",
+            "cliPermissionStatus", static_cast<uint32_t>(detail.cliPermissionStatus)) &&
+        SetRefProperty(env, aniObject, "usedPermissions", usedPermissions);
+    DeleteReference(env, usedPermissions);
+    if (!result) {
+        return nullptr;
+    }
     return aniObject;
 }
 
@@ -1335,7 +1353,12 @@ static ani_ref CreateToolAuthResultObject(ani_env* env, const ToolAuthResult& re
     if (aniObject == nullptr) {
         return nullptr;
     }
-    SetRefProperty(env, aniObject, "authResults", CreateAniArrayString(env, result.authResults));
+    ani_ref authResults = CreateAniArrayString(env, result.authResults);
+    bool setResult = SetRefProperty(env, aniObject, "authResults", authResults);
+    DeleteReference(env, authResults);
+    if (!setResult) {
+        return nullptr;
+    }
     return aniObject;
 }
 
