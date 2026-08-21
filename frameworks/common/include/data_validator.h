@@ -68,7 +68,7 @@ public:
     static bool IsAclExtendedMapSizeValid(const std::map<std::string, std::string>& aclExtendedMap);
     static bool IsAclExtendedMapContentValid(const std::string& permissionName, const std::string& value);
     static bool IsAppProvisionTypeValid(const std::string& appProvisionType);
-    static bool IsListSizeValid(uint32_t size);
+    static bool IsListSizeValid(size_t size);
     static bool IsPermFeatureValid(const std::string& feature);
 
 private:

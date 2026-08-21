@@ -1321,8 +1321,7 @@ int32_t AccessTokenManagerService::AllocHapToken(const HapInfoParcel& info, cons
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "Bundle %{public}s, callerPid %{public}d.",
         info.hapInfoParameter.bundleName.c_str(), IPCSkeleton::GetCallingPid());
-    AccessTokenIDEx tokenIdEx;
-    tokenIdEx.tokenIDEx = 0LL;
+    AccessTokenIDEx tokenIdEx {0};
 
     AccessTokenID tokenID = IPCSkeleton::GetCallingTokenID();
     if (!IsPrivilegedCalling() &&
@@ -1434,6 +1433,7 @@ void AccessTokenManagerService::ReportUpdateHap(AccessTokenIDEx fullTokenId, con
 int32_t AccessTokenManagerService::InitHapToken(const HapInfoParcel& info, const HapPolicyParcel& policy,
     uint64_t& fullTokenId, HapInfoCheckResultIdl& resultInfoIdl)
 {
+    fullTokenId = 0;
     HapInfoParams hapInfoParm = info.hapInfoParameter;
     LOGI(ATM_DOMAIN, ATM_TAG, "Init hap %{public}s, callerPid %{public}d.",
         hapInfoParm.bundleName.c_str(), IPCSkeleton::GetCallingPid());
@@ -1478,7 +1478,7 @@ int32_t AccessTokenManagerService::InitHapToken(const HapInfoParcel& info, const
         return RET_SUCCESS;
     }
 
-    AccessTokenIDEx tokenIdEx;
+    AccessTokenIDEx tokenIdEx {0};
     ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(hapInfoParm, policyCopy, tokenIdEx, undefValues);
     fullTokenId = tokenIdEx.tokenIDEx;
     ReportAddHap(tokenIdEx, hapInfoParm, policyCopy, beginTime, ret);

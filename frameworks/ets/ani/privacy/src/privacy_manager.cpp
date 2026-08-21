@@ -28,8 +28,7 @@ namespace Security {
 namespace AccessToken {
 namespace {
 std::mutex g_mutex;
-std::vector<RegisterPermActiveChangeContext*> g_subScribers;
-static constexpr size_t MAX_CALLBACK_SIZE = 200;
+std::vector<std::shared_ptr<RegisterPermActiveChangeContext>> g_subScribers;
 constexpr const char* ADD_PERMISSION_RECORD_ENHANCED_IDENTITY_ERR_MSG =
     "The enhancedIdentity in AddPermissionUsedRecordOptions exceeds 48 characters.";
 constexpr const char* PERMISSION_USING_ENHANCED_IDENTITY_ERR_MSG =
@@ -116,11 +115,11 @@ static void AddPermissionUsedRecordExecute([[maybe_unused]] ani_env* env,
     }
 
     int32_t usedType = 0;
-    if (!GetEnumProperty(env, options, "usedType", usedType)) {
+    if (!GetEnumProperty(env, options, "usedType", usedType, OPTIONAL_PROPERTY)) {
         return;
     }
     std::string enhancedIdentity;
-    if (!GetStringProperty(env, options, "enhancedIdentity", enhancedIdentity)) {
+    if (!GetStringProperty(env, options, "enhancedIdentity", enhancedIdentity, OPTIONAL_PROPERTY)) {
         return;
     }
     if (!BusinessErrorAni::ValidateEnhancedIdentityWithThrowError(
@@ -246,18 +245,21 @@ void PermActiveStatusPtr::ActiveStatusChangeCallback(ActiveChangeResponse& activ
     ani_fn_object fnObj = reinterpret_cast<ani_fn_object>(ref_);
     if (fnObj == nullptr) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Reinterpret_cast failed!");
+        (void)DetachCurrentEnv(vm_);
         return;
     }
 
     ani_object aniObject = ConvertActiveChangeResponse(env, activeChangeResponse);
     if (aniObject == nullptr) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Convert object is null.");
+        (void)DetachCurrentEnv(vm_);
         return;
     }
     std::vector<ani_ref> args;
     args.emplace_back(aniObject);
     ani_ref result;
     if (!AniFunctionalObjectCall(env, fnObj, args.size(), args.data(), result)) {
+        (void)DetachCurrentEnv(vm_);
         return;
     }
 
@@ -270,7 +272,12 @@ void PermActiveStatusPtr::ActiveStatusChangeCallback(ActiveChangeResponse& activ
 static bool ParseInputToRegister(const ani_array& aniArray,
     const ani_ref& aniCallback, RegisterPermActiveChangeContext* context, bool isReg)
 {
-    std::vector<std::string> permList = ParseAniStringVector(context->env, aniArray);
+    std::vector<std::string> permList;
+    if (!ParseAniStringVector(context->env, aniArray, permList)) {
+        BusinessErrorAni::ThrowError(
+            context->env, STS_ERROR_PARAM_ILLEGAL, GetParamErrorMsg("permissionList", "Array<Permissions>"));
+        return false;
+    }
     std::sort(permList.begin(), permList.end());
 
     bool hasCallback = true;
@@ -306,7 +313,7 @@ static bool ParseInputToRegister(const ani_array& aniArray,
     return true;
 }
 
-static bool IsExistRegister(const RegisterPermActiveChangeContext* context)
+static bool IsExistRegister(const std::shared_ptr<RegisterPermActiveChangeContext>& context)
 {
     std::vector<std::string> targetPermList;
     context->subscriber->GetPermList(targetPermList);
@@ -331,14 +338,29 @@ static bool IsExistRegister(const RegisterPermActiveChangeContext* context)
             }
         }
         bool isEqual = true;
-        if (!AniIsCallbackRefEqual(context->env, item->callbackRef, context->callbackRef, item->threadId, isEqual)) {
-            return true;
+        if (!CompareAniCallbackRef(context->env, item->callbackRef, context->callbackRef, item->threadId, isEqual)) {
+            continue;
         }
         if (hasPermIntersection && isEqual) {
             return true;
         }
     }
+    g_subScribers.emplace_back(context);
     return false;
+}
+
+static void FinishRegister(const std::shared_ptr<RegisterPermActiveChangeContext>& context, bool success)
+{
+    std::lock_guard<std::mutex> lock(g_mutex);
+    auto item = std::find(g_subScribers.begin(), g_subScribers.end(), context);
+    if (item == g_subScribers.end()) {
+        return;
+    }
+    if (success) {
+        (*item)->registerState = PermActiveChangeRegisterState::ACTIVE;
+    } else {
+        g_subScribers.erase(item);
+    }
 }
 
 static void RegisterPermActiveStatusCallback([[maybe_unused]] ani_env* env,
@@ -348,15 +370,13 @@ static void RegisterPermActiveStatusCallback([[maybe_unused]] ani_env* env,
         return;
     }
 
-    RegisterPermActiveChangeContext* context = new (std::nothrow) RegisterPermActiveChangeContext();
+    auto context = std::make_shared<RegisterPermActiveChangeContext>();
     if (context == nullptr) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Failed to allocate memory for RegisterPermActiveChangeContext!");
         return;
     }
     context->env = env;
-    std::unique_ptr<RegisterPermActiveChangeContext> callbackPtr {context};
-
-    if (!ParseInputToRegister(aniArray, callback, context, true)) {
+    if (!ParseInputToRegister(aniArray, callback, context.get(), true)) {
         return;
     }
 
@@ -370,30 +390,21 @@ static void RegisterPermActiveStatusCallback([[maybe_unused]] ani_env* env,
 
     int32_t result = PrivacyKit::RegisterPermActiveStatusCallback(context->subscriber);
     if (result != RET_SUCCESS) {
+        FinishRegister(context, false);
         LOGE(PRI_DOMAIN, PRI_TAG, "RegisterPermActiveStatusCallback failed, res is %{public}d.", result);
         int32_t stsCode = GetStsErrorCode(result);
         BusinessErrorAni::ThrowError(env, stsCode, GetErrorMessage(stsCode));
         return;
     }
 
-    {
-        std::lock_guard<std::mutex> lock(g_mutex);
-        if (g_subScribers.size() >= MAX_CALLBACK_SIZE) {
-            LOGE(PRI_DOMAIN, PRI_TAG, "Subscribers size has reached the max %{public}zu.", MAX_CALLBACK_SIZE);
-            BusinessErrorAni::ThrowError(env, STSErrorCode::STS_ERROR_REGISTERS_EXCEED_LIMITATION,
-                GetErrorMessage(STSErrorCode::STS_ERROR_REGISTERS_EXCEED_LIMITATION));
-            return;
-        }
-        g_subScribers.emplace_back(context);
-    }
+    FinishRegister(context, true);
 
-    callbackPtr.release();
     LOGI(PRI_DOMAIN, PRI_TAG, "RegisterPermActiveStatusCallback success!");
     return;
 }
 
 static bool FindAndGetSubscriber(const RegisterPermActiveChangeContext* context,
-    std::vector<RegisterPermActiveChangeContext*>& batchPermActiveChangeSubscribers)
+    std::vector<std::shared_ptr<RegisterPermActiveChangeContext>>& batchPermActiveChangeSubscribers)
 {
     std::vector<std::string> targetPermList = context->permissionList;
     std::lock_guard<std::mutex> lock(g_mutex);
@@ -401,6 +412,9 @@ static bool FindAndGetSubscriber(const RegisterPermActiveChangeContext* context,
     ani_ref callbackRef = context->callbackRef;
     bool isUndef = AniIsRefUndefined(context->env, context->callbackRef);
     for (const auto& item : g_subScribers) {
+        if (item->registerState != PermActiveChangeRegisterState::ACTIVE) {
+            continue;
+        }
         std::vector<std::string> permList;
         item->subscriber->GetPermList(permList);
         // targetCallback == nullptr, Unsubscribe from all callbacks under the same permList
@@ -411,12 +425,13 @@ static bool FindAndGetSubscriber(const RegisterPermActiveChangeContext* context,
             callbackEqual = IsCurrentThread(item->threadId);
         } else {
             LOGI(PRI_DOMAIN, PRI_TAG, "Compare callback.");
-            if (!AniIsCallbackRefEqual(context->env, item->callbackRef, callbackRef, item->threadId, callbackEqual)) {
+            if (!CompareAniCallbackRef(context->env, item->callbackRef, callbackRef, item->threadId, callbackEqual)) {
                 continue;
             }
         }
 
         if (callbackEqual && (permList == targetPermList)) {
+            item->registerState = PermActiveChangeRegisterState::UNREGISTERING;
             batchPermActiveChangeSubscribers.emplace_back(item);
             if (!isUndef) {
                 return true;
@@ -426,34 +441,20 @@ static bool FindAndGetSubscriber(const RegisterPermActiveChangeContext* context,
     return !batchPermActiveChangeSubscribers.empty();
 }
 
-static void DeleteRegisterInVector(const RegisterPermActiveChangeContext* context)
+static void FinishUnregister(const std::shared_ptr<RegisterPermActiveChangeContext>& context, bool success)
 {
-    std::vector<std::string> targetPermList;
-    context->subscriber->GetPermList(targetPermList);
     std::lock_guard<std::mutex> lock(g_mutex);
     auto item = g_subScribers.begin();
     while (item != g_subScribers.end()) {
-        bool isEqual = true;
-        if (!AniIsCallbackRefEqual(
-            context->env, (*item)->callbackRef, context->callbackRef, (*item)->threadId, isEqual)) {
-            ++item;
-            continue;
-        }
-        if (!isEqual) {
-            ++item;
-            continue;
-        }
-
-        std::vector<std::string> permList;
-        (*item)->subscriber->GetPermList(permList);
-        if (permList == targetPermList) {
-            delete *item;
-            *item = nullptr;
-            g_subScribers.erase(item);
+        if (*item == context) {
+            if (success) {
+                g_subScribers.erase(item);
+            } else {
+                (*item)->registerState = PermActiveChangeRegisterState::ACTIVE;
+            }
             return;
-        } else {
-            ++item;
         }
+        ++item;
     }
 }
 
@@ -464,17 +465,17 @@ static void UnRegisterPermActiveStatusCallback([[maybe_unused]] ani_env* env,
         return;
     }
 
-    RegisterPermActiveChangeContext* context = new (std::nothrow) RegisterPermActiveChangeContext();
+    auto context = new (std::nothrow) RegisterPermActiveChangeContext();
     if (context == nullptr) {
         return;
     }
+    std::unique_ptr<RegisterPermActiveChangeContext> contextPtr {context};
     context->env = env;
-    std::unique_ptr<RegisterPermActiveChangeContext> callbackPtr {context};
     if (!ParseInputToRegister(aniArray, callback, context, false)) {
         return;
     }
 
-    std::vector<RegisterPermActiveChangeContext*> batchPermActiveChangeSubscribers;
+    std::vector<std::shared_ptr<RegisterPermActiveChangeContext>> batchPermActiveChangeSubscribers;
     if (!FindAndGetSubscriber(context, batchPermActiveChangeSubscribers)) {
         std::string errMsg = GetErrorMessage(
             STS_ERROR_NOT_USE_TOGETHER, "The API is not used in pair with 'on'. The subscriber does not exist.");
@@ -486,8 +487,9 @@ static void UnRegisterPermActiveStatusCallback([[maybe_unused]] ani_env* env,
     for (const auto& item : batchPermActiveChangeSubscribers) {
         int32_t result = PrivacyKit::UnRegisterPermActiveStatusCallback(item->subscriber);
         if (result == RET_SUCCESS) {
-            DeleteRegisterInVector(item);
+            FinishUnregister(item, true);
         } else {
+            FinishUnregister(item, false);
             LOGE(PRI_DOMAIN, PRI_TAG, "Failed to UnregisterPermActiveChangeCompleted.");
             int32_t stsCode = GetStsErrorCode(result);
             BusinessErrorAni::ThrowError(env, stsCode, GetErrorMessage(stsCode));
@@ -769,37 +771,37 @@ static bool ParseRequest(ani_env* env, const ani_object& aniRequest, PermissionU
     }
 
     int32_t value;
-    if (!GetIntProperty(env, aniRequest, "tokenId", value)) {
+    if (!GetIntProperty(env, aniRequest, "tokenId", value, OPTIONAL_PROPERTY)) {
         return false;
     }
     request.tokenId = static_cast<AccessTokenID>(value);
 
-    if (!GetBoolProperty(env, aniRequest, "isRemote", request.isRemote)) {
+    if (!GetBoolProperty(env, aniRequest, "isRemote", request.isRemote, OPTIONAL_PROPERTY)) {
         return false;
     }
 
-    if (!GetStringProperty(env, aniRequest, "deviceId", request.deviceId)) {
+    if (!GetStringProperty(env, aniRequest, "deviceId", request.deviceId, OPTIONAL_PROPERTY)) {
         return false;
     }
 
-    if (!GetStringProperty(env, aniRequest, "bundleName", request.bundleName)) {
+    if (!GetStringProperty(env, aniRequest, "bundleName", request.bundleName, OPTIONAL_PROPERTY)) {
         return false;
     }
 
-    if (!GetLongProperty(env, aniRequest, "beginTime", request.beginTimeMillis)) {
+    if (!GetLongProperty(env, aniRequest, "beginTime", request.beginTimeMillis, OPTIONAL_PROPERTY)) {
         return false;
     }
 
-    if (!GetLongProperty(env, aniRequest, "endTime", request.endTimeMillis)) {
+    if (!GetLongProperty(env, aniRequest, "endTime", request.endTimeMillis, OPTIONAL_PROPERTY)) {
         return false;
     }
 
-    if (!GetStringVecProperty(env, aniRequest, "permissionNames", request.permissionList)) {
+    if (!GetStringVecProperty(env, aniRequest, "permissionNames", request.permissionList, OPTIONAL_PROPERTY)) {
         return false;
     }
 
     int32_t flag;
-    if (!GetEnumProperty(env, aniRequest, "flag", flag)) {
+    if (!GetEnumProperty(env, aniRequest, "flag", flag, !OPTIONAL_PROPERTY)) {
         return false;
     }
     request.flag = static_cast<PermissionUsageFlag>(flag);
@@ -841,7 +843,7 @@ static ani_object ConvertPermissionUsedTypeInfo(ani_env *env, const PermissionUs
     if (aObject == nullptr) {
         return nullptr;
     }
-    if (!SetIntProperty(env, aObject, "tokenId", info.tokenId)) {
+    if (!SetIntProperty(env, aObject, "tokenId", static_cast<int32_t>(info.tokenId))) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Failed to set tokenId.");
         return nullptr;
     }

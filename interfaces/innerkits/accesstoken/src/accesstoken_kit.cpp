@@ -1030,6 +1030,9 @@ int32_t AccessTokenKit::SetPermissionStatusWithPolicy(
         LOGE(ATM_DOMAIN, ATM_TAG, "PermissionList is empty.");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
+    if (!DataValidator::IsListSizeValid(permissionList.size())) {
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
     for (const auto& perm : permissionList) {
         if (!DataValidator::IsPermissionNameValid(perm)) {
             return AccessTokenError::ERR_PARAM_INVALID;
@@ -1041,9 +1044,6 @@ int32_t AccessTokenKit::SetPermissionStatusWithPolicy(
     }
     if (!DataValidator::IsPermissionFlagValidForAdmin(flag)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Flag: %{public}u, flag is invalid.", flag);
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-    if (!DataValidator::IsListSizeValid(permissionList.size())) {
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     return AccessTokenManagerClient::GetInstance().SetPermissionStatusWithPolicy(tokenID, permissionList, status, flag);

@@ -474,7 +474,10 @@ void OpenOnSettingAsyncInstanceControl::AddCallbackByInstanceId(
         // make sure id is in map to indicate a pop-up window is showing
         instanceIdMap_[asyncContext->instanceId] = {};
     }
-    (void)StartUIExtension(asyncContext);
+    if (StartUIExtension(asyncContext) != RET_SUCCESS) {
+        std::lock_guard<std::mutex> lock(instanceIdMutex_);
+        instanceIdMap_.erase(asyncContext->instanceId);
+    }
 }
 
 void OpenOnSettingAsyncInstanceControl::UpdateQueueData(

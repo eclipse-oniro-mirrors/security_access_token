@@ -118,9 +118,13 @@ bool AniParseAccessTokenIDArray(ani_env* env, const ani_array& array, std::vecto
     }
 
     for (ani_size i = 0; i < size; ++i) {
-        ani_ref elementRef;
+        ani_ref elementRef = nullptr;
         if ((status = env->Array_Get(array, i, &elementRef)) != ANI_OK) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Array_Get at index %{public}zu, status: %{public}u.", i, status);
+            return false;
+        }
+        if (elementRef == nullptr || AniIsRefUndefined(env, elementRef)) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Invalid token ID at index %{public}zu.", i);
             return false;
         }
         uint32_t value;
@@ -132,33 +136,34 @@ bool AniParseAccessTokenIDArray(ani_env* env, const ani_array& array, std::vecto
     return true;
 }
 
-std::vector<std::string> ParseAniStringVector(ani_env* env, const ani_array& aniStrArr)
+bool ParseAniStringVector(ani_env* env, const ani_array& aniStrArr, std::vector<std::string>& out)
 {
-    std::vector<std::string> out;
     if (env == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Env is null.");
-        return out;
+        return false;
     }
     ani_size size = 0;
     ani_status status;
     if ((status = env->Array_GetLength(aniStrArr, &size)) != ANI_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Array_GetLength: %{public}u.", status);
-        return out;
+        return false;
     }
 
     for (ani_size i = 0; i < size; ++i) {
-        ani_ref aniRef;
+        ani_ref aniRef = nullptr;
         if ((status = env->Array_Get(aniStrArr, i, &aniRef)) != ANI_OK) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Failed to Array_Get: %{public}u.", status);
-            return out;
+            return false;
         }
-
         std::string stdStr;
-        if (ParseAniString(env, static_cast<ani_string>(aniRef), stdStr)) {
-            out.emplace_back(stdStr);
+        if (aniRef == nullptr || AniIsRefUndefined(env, aniRef) ||
+            !ParseAniString(env, static_cast<ani_string>(aniRef), stdStr)) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Invalid string at index %{public}zu.", i);
+            return false;
         }
+        out.emplace_back(stdStr);
     }
-    return out;
+    return true;
 }
 
 bool AniParseCallback(ani_env* env, const ani_ref& aniCallback, ani_ref& out)
@@ -213,7 +218,7 @@ bool IsCurrentThread(std::thread::id threadId)
     return threadId == std::this_thread::get_id();
 }
 
-bool AniIsCallbackRefEqual(ani_env* env, const ani_ref& compareRef, const ani_ref& targetRref, std::thread::id threadId,
+bool CompareAniCallbackRef(ani_env* env, const ani_ref& compareRef, const ani_ref& targetRref, std::thread::id threadId,
     bool& isEqual)
 {
     if (env == nullptr) {
@@ -563,7 +568,8 @@ ani_object CreateArrayObject(ani_env* env, uint32_t length)
     return out;
 }
 
-bool GetBoolProperty(ani_env* env, const ani_object& object, const std::string& property, bool& value)
+bool GetBoolProperty(ani_env* env, const ani_object& object, const std::string& property, bool& value,
+    bool isPropertyOptional)
 {
     if (env == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Env is null.");
@@ -578,7 +584,7 @@ bool GetBoolProperty(ani_env* env, const ani_object& object, const std::string& 
         return false;
     }
     if (AniIsRefUndefined(env, ref)) {
-        return true;
+        return isPropertyOptional;
     }
 
     ani_boolean boolValue;
@@ -592,7 +598,8 @@ bool GetBoolProperty(ani_env* env, const ani_object& object, const std::string& 
     return true;
 }
 
-bool GetIntProperty(ani_env* env, const ani_object& object, const std::string& property, int32_t& value)
+bool GetIntProperty(ani_env* env, const ani_object& object, const std::string& property, int32_t& value,
+    bool isPropertyOptional)
 {
     if (env == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Env is null.");
@@ -608,7 +615,7 @@ bool GetIntProperty(ani_env* env, const ani_object& object, const std::string& p
     }
     if (AniIsRefUndefined(env, ref)) {
         LOGI(ATM_DOMAIN, ATM_TAG, "Property(%{public}s) is undefined!", property.c_str());
-        return true;
+        return isPropertyOptional;
     }
 
     ani_int intValue;
@@ -622,7 +629,8 @@ bool GetIntProperty(ani_env* env, const ani_object& object, const std::string& p
     return true;
 }
 
-bool GetLongProperty(ani_env* env, const ani_object& object, const std::string& property, int64_t& value)
+bool GetLongProperty(ani_env* env, const ani_object& object, const std::string& property, int64_t& value,
+    bool isPropertyOptional)
 {
     if (env == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Env is null.");
@@ -636,7 +644,7 @@ bool GetLongProperty(ani_env* env, const ani_object& object, const std::string& 
         return false;
     }
     if (AniIsRefUndefined(env, ref)) {
-        return true;
+        return isPropertyOptional;
     }
 
     ani_long longValue;
@@ -650,7 +658,8 @@ bool GetLongProperty(ani_env* env, const ani_object& object, const std::string& 
     return true;
 }
 
-bool GetStringProperty(ani_env* env, const ani_object& object, const std::string& property, std::string& value)
+bool GetStringProperty(ani_env* env, const ani_object& object, const std::string& property, std::string& value,
+    bool isPropertyOptional)
 {
     if (env == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Env is null.");
@@ -664,12 +673,13 @@ bool GetStringProperty(ani_env* env, const ani_object& object, const std::string
         return false;
     }
     if (AniIsRefUndefined(env, ref)) {
-        return true;
+        return isPropertyOptional;
     }
     return ParseAniString(env, static_cast<ani_string>(ref), value);
 }
 
-bool GetEnumProperty(ani_env* env, const ani_object& object, const std::string& property, int32_t& value)
+bool GetEnumProperty(ani_env* env, const ani_object& object, const std::string& property, int32_t& value,
+    bool isPropertyOptional)
 {
     if (env == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Env is null.");
@@ -683,7 +693,7 @@ bool GetEnumProperty(ani_env* env, const ani_object& object, const std::string& 
         return false;
     }
     if (AniIsRefUndefined(env, ref)) {
-        return true;
+        return isPropertyOptional;
     }
     ani_enum_item aniEnum = static_cast<ani_enum_item>(ref);
     ani_int aniInt;
@@ -697,7 +707,8 @@ bool GetEnumProperty(ani_env* env, const ani_object& object, const std::string& 
 }
 
 bool GetStringVecProperty(
-    ani_env* env, const ani_object& object, const std::string& property, std::vector<std::string>& value)
+    ani_env* env, const ani_object& object, const std::string& property, std::vector<std::string>& value,
+    bool isPropertyOptional)
 {
     if (env == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Env is null.");
@@ -711,11 +722,10 @@ bool GetStringVecProperty(
         return false;
     }
     if (AniIsRefUndefined(env, ref)) {
-        return true;
+        return isPropertyOptional;
     }
     ani_array anirefArray = static_cast<ani_array>(ref);
-    value = ParseAniStringVector(env, anirefArray);
-    return true;
+    return ParseAniStringVector(env, anirefArray, value);
 }
 
 bool SetBoolProperty(ani_env* env, ani_object& object, const std::string& property, bool in)

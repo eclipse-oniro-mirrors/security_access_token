@@ -112,6 +112,7 @@ public:
 protected:
     static void RegisterImpl(PermissionManager* implInstance);
 private:
+    int32_t CheckPermissionParams(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag);
     void ScopeToString(
         const std::vector<AccessTokenID>& tokenIDs, const std::vector<std::string>& permList);
     int32_t ScopeFilter(const PermStateChangeScope& scopeSrc, PermStateChangeScope& scopeRes);

@@ -1082,6 +1082,38 @@ HWTEST_F(PermissionManagerTest, UpdateMultiTokenPermissionState001, TestSize.Lev
     AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId);
 }
 
+/**
+ * @tc.name: UpdateMultiTokenPermissionState002
+ * @tc.desc: Return token-not-exist when the target HAP token cannot be queried.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionManagerTest, UpdateMultiTokenPermissionState002, TestSize.Level0)
+{
+    HapInfoParams info = {
+        .userID = USER_ID,
+        .bundleName = "permission_manager_invalid_token_test",
+        .instIndex = INST_INDEX,
+        .appIDDesc = "permission_manager_invalid_token_test"
+    };
+    HapPolicy policy = {
+        .apl = APL_NORMAL,
+        .domain = "domain"
+    };
+    AccessTokenIDEx tokenIdEx = {0};
+    std::vector<GenericValues> undefValues;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(info, policy, tokenIdEx,
+        undefValues));
+
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    auto infoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId);
+    ASSERT_NE(nullptr, infoPtr);
+    EXPECT_EQ(ERR_TOKENID_NOT_EXIST, PermissionManager::GetInstance().UpdateMultiTokenPermissionState(
+        infoPtr, INVALID_TOKENID, {}, false, 0, false));
+
+    EXPECT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId));
+}
+
  /**
  * @tc.name: PermissionCallbackTest001
  * @tc.desc: Test nullptr input for callback

@@ -70,15 +70,15 @@ napi_value NapiQueryPermissionStatus::QueryStatusByPermission(napi_env env, napi
     }
 
     napi_value result = nullptr;
-    napi_create_promise(env, &(asyncContext->deferred), &result);
+    NAPI_CALL(env, napi_create_promise(env, &(asyncContext->deferred), &result));
 
     napi_value resource = nullptr;
-    napi_create_string_utf8(env, "QueryStatusByPermission", NAPI_AUTO_LENGTH, &resource);
+    NAPI_CALL(env, napi_create_string_utf8(env, "QueryStatusByPermission", NAPI_AUTO_LENGTH, &resource));
 
-    napi_create_async_work(env, nullptr, resource, QueryPermissionStatusExecute,
-        QueryPermissionStatusComplete, asyncContext, &(asyncContext->work));
+    NAPI_CALL(env, napi_create_async_work(env, nullptr, resource, QueryPermissionStatusExecute,
+        QueryPermissionStatusComplete, asyncContext, &(asyncContext->work)));
 
-    napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_default);
+    NAPI_CALL(env, napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_default));
 
     context.release();
     return result;
@@ -114,15 +114,15 @@ napi_value NapiQueryPermissionStatus::QueryStatusByTokenID(napi_env env, napi_ca
     }
 
     napi_value result = nullptr;
-    napi_create_promise(env, &(asyncContext->deferred), &result);
+    NAPI_CALL(env, napi_create_promise(env, &(asyncContext->deferred), &result));
 
     napi_value resource = nullptr;
-    napi_create_string_utf8(env, "QueryStatusByTokenID", NAPI_AUTO_LENGTH, &resource);
+    NAPI_CALL(env, napi_create_string_utf8(env, "QueryStatusByTokenID", NAPI_AUTO_LENGTH, &resource));
 
-    napi_create_async_work(env, nullptr, resource, QueryPermissionStatusExecute,
-        QueryPermissionStatusComplete, asyncContext, &(asyncContext->work));
+    NAPI_CALL(env, napi_create_async_work(env, nullptr, resource, QueryPermissionStatusExecute,
+        QueryPermissionStatusComplete, asyncContext, &(asyncContext->work)));
 
-    napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_default);
+    NAPI_CALL(env, napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_default));
 
     context.release();
     return result;

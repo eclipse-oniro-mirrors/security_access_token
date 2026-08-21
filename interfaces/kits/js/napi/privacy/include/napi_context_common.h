@@ -58,6 +58,12 @@ struct PermActiveStatusWorker {
     std::shared_ptr<PermActiveStatusPtr> subscriber = nullptr; // this
 };
 
+enum class PermActiveChangeRegisterState {
+    REGISTERING,
+    ACTIVE,
+    UNREGISTERING,
+};
+
 struct PermActiveChangeContext {
     virtual ~PermActiveChangeContext();
 
@@ -66,6 +72,7 @@ struct PermActiveChangeContext {
     std::string type;
     std::shared_ptr<PermActiveStatusPtr> subscriber = nullptr;
     std::thread::id threadId_;
+    PermActiveChangeRegisterState registerState = PermActiveChangeRegisterState::REGISTERING;
 };
 
 bool ConvertActiveChangeResponse(napi_env env, napi_value value, const ActiveChangeResponse& result);

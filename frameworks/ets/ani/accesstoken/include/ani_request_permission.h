@@ -105,6 +105,12 @@ private:
     ani_ref ref_ = nullptr;
 };
 
+enum class PermStateChangeRegisterState {
+    REGISTERING,
+    ACTIVE,
+    UNREGISTERING,
+};
+
 struct RegisterPermStateChangeInf {
     ani_env* env = nullptr;
     ani_ref callbackRef = nullptr;
@@ -113,6 +119,7 @@ struct RegisterPermStateChangeInf {
     std::thread::id threadId;
     std::shared_ptr<RegisterPermStateChangeScopePtr> subscriber = nullptr;
     PermStateChangeScope scopeInfo;
+    PermStateChangeRegisterState registerState = PermStateChangeRegisterState::REGISTERING;
 };
 } // namespace AccessToken
 } // namespace Security
