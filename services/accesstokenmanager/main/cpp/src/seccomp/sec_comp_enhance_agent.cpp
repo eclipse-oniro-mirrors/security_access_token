@@ -120,9 +120,12 @@ SecCompEnhanceAgent::SecCompEnhanceAgent()
 
 SecCompEnhanceAgent::~SecCompEnhanceAgent()
 {
-    if (observer_ != nullptr) {
-        AppManagerAccessClient::GetInstance().UnregisterApplicationStateObserver(observer_);
-        observer_ = nullptr;
+    {
+        std::lock_guard<std::mutex> lock(secCompEnhanceMutex_);
+        if (observer_ != nullptr) {
+            AppManagerAccessClient::GetInstance().UnregisterApplicationStateObserver(observer_);
+            observer_ = nullptr;
+        }
     }
     std::lock_guard<std::mutex> lock(secCompEnhanceKeyMutex_);
     ClearSecCompEnhanceKey(secCompEnhanceKey_);

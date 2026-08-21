@@ -80,9 +80,10 @@ RegisterPermStateChangeScopePtr::~RegisterPermStateChangeScopePtr()
         ani_status status;
         if ((status = env->GlobalReference_Delete(ref_)) != ANI_OK) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Failed to GlobalReference_Delete: %{public}u.", status);
+        } else {
+            ref_ = nullptr;
         }
     }
-    ref_ = nullptr;
 
     if (!isSameThread) {
         if (DetachCurrentEnv(vm_) != ANI_OK) {

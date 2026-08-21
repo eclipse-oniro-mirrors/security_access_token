@@ -977,9 +977,6 @@ int32_t AccessTokenInfoManager::RemoveHapTokenInfoInner(std::shared_ptr<HapToken
     AccessTokenID id, bool isTokenReserved)
 {
     std::unique_lock<std::shared_mutex> infoGuard(this->hapTokenInfoLock_);
-    PermissionKernelUtils::RemovePermFromKernel(id); // remove hap to kernel
-    AccessTokenIDManager::GetInstance().ReleaseTokenId(id);
-
     if (hapTokenInfoMap_.count(id) == 0) {
         LOGC(ATM_DOMAIN, ATM_TAG, "Hap token %{public}u no exist.", id);
         return ERR_TOKENID_NOT_EXIST;
@@ -994,6 +991,10 @@ int32_t AccessTokenInfoManager::RemoveHapTokenInfoInner(std::shared_ptr<HapToken
         LOGC(ATM_DOMAIN, ATM_TAG, "Remote hap token %{public}u can not delete.", id);
         return ERR_IDENTITY_CHECK_FAILED;
     }
+
+    PermissionKernelUtils::RemovePermFromKernel(id); // remove hap to kernel
+    AccessTokenIDManager::GetInstance().ReleaseTokenId(id);
+
     std::string hapUniqueKey = AccessTokenInfoUtils::GetHapUniqueStr(info);
     auto iter = hapTokenIdMap_.find(hapUniqueKey);
     if ((iter != hapTokenIdMap_.end()) && (iter->second == id)) {
@@ -1862,10 +1863,11 @@ AccessTokenID AccessTokenInfoManager::GetNativeTokenId(const std::string& proces
     return tokenID;
 }
 
-void AccessTokenInfoManager::ClearUserGrantedPermissionState(AccessTokenID tokenID)
+int32_t AccessTokenInfoManager::ClearUserGrantedPermissionState(AccessTokenID tokenID)
 {
-    if (ClearUserGrantedPermission(tokenID) != RET_SUCCESS) {
-        return;
+    int32_t ret = RET_SUCCESS;
+    if ((ret = ClearUserGrantedPermission(tokenID)) != RET_SUCCESS) {
+        return ret;
     }
     std::vector<AccessTokenID> tokenIdList;
     GetRelatedSandBoxHapList(tokenID, tokenIdList);
@@ -1874,6 +1876,7 @@ void AccessTokenInfoManager::ClearUserGrantedPermissionState(AccessTokenID token
     }
     // DFX
     ReportClearUserPermStateEvent(tokenID, static_cast<uint32_t>(tokenIdList.size()));
+    return ret;
 }
 
 int32_t AccessTokenInfoManager::ClearUserGrantedPermission(AccessTokenID id)

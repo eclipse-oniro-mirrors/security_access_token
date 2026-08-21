@@ -620,7 +620,7 @@ int32_t PermissionDataBrief::ResetUserGrantPermissionStatus(AccessTokenID tokenI
     auto iter = requestedPermData_.find(tokenID);
     if (iter == requestedPermData_.end()) {
         LOGE(ATM_DOMAIN, ATM_TAG, "TokenID %{public}d is not exist.", tokenID);
-        return ERR_TOKEN_INVALID;
+        return ERR_TOKENID_NOT_EXIST;
     }
     // Admin fixed and user policy restricted states are not user grant states, so keep both status and flag.
     // Admin policy cancel is clearable and resets to default like normal user grant state.

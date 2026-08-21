@@ -1190,10 +1190,12 @@ HWTEST_F(TokenInfoManagerTest, RemoveHapTokenInfo001, TestSize.Level0)
     ASSERT_EQ(RET_SUCCESS, AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, TOKEN_HAP));
     // hapTokenInfoMap_.count(id) == 0
     ASSERT_EQ(ERR_TOKENID_NOT_EXIST, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId));
+    AccessTokenIDManager::GetInstance().ReleaseTokenId(tokenId);
 
     ASSERT_EQ(RET_SUCCESS, AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, TOKEN_HAP));
     AccessTokenInfoManager::GetInstance().hapTokenInfoMap_[tokenId] = nullptr;
     ASSERT_EQ(ERR_TOKEN_INVALID, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId)); // info == nullptr
+    AccessTokenIDManager::GetInstance().ReleaseTokenId(tokenId);
     AccessTokenInfoManager::GetInstance().hapTokenInfoMap_.erase(tokenId);
 
     std::shared_ptr<HapTokenInfoInner> info = std::make_shared<HapTokenInfoInner>();

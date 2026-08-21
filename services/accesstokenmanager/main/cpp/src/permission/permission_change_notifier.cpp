@@ -79,11 +79,15 @@ void PermissionChangeNotifier::ParamUpdate(const std::string& permissionName, ui
 
 void PermissionChangeNotifier::ParamFlagUpdate()
 {
-    std::unique_lock<std::shared_mutex> infoGuard(this->permFlagParamSetLock_);
-    paramFlagValue_++;
+    uint64_t currentValue = 0;
+    {
+        std::unique_lock<std::shared_mutex> infoGuard(this->permFlagParamSetLock_);
+        paramFlagValue_++;
+        currentValue = paramFlagValue_;
+    }
     LOGD(ATM_DOMAIN, ATM_TAG, "paramFlagValue_ change %{public}llu",
-        static_cast<unsigned long long>(paramFlagValue_));
-    int32_t res = SetParameter(PERMISSION_STATUS_FLAG_CHANGE_KEY, std::to_string(paramFlagValue_).c_str());
+        static_cast<unsigned long long>(currentValue));
+    int32_t res = SetParameter(PERMISSION_STATUS_FLAG_CHANGE_KEY, std::to_string(currentValue).c_str());
     if (res != 0) {
         LOGE(ATM_DOMAIN, ATM_TAG, "SetParameter failed %{public}d", res);
     }
