@@ -92,7 +92,7 @@ static AccessTokenID GetNativeTokenIdFromProcess(const std::string& processName)
 
     pos += std::string("\"tokenID\": ").length();
     std::string numStr;
-    while (pos < dumpInfo.length() && std::isdigit(dumpInfo[pos])) {
+    while (pos < dumpInfo.length() && std::isdigit(static_cast<unsigned char>(dumpInfo[pos]))) {
         numStr += dumpInfo[pos];
         ++pos;
     }
@@ -674,6 +674,54 @@ HWTEST_F(AtmCommandTest, atm_dump_token_test013, TestSize.Level1)
     EXPECT_TRUE(IsOutputContain(result, "usage: atm dump"));
 }
 
+/**
+ * @tc.name: atm_dump_token_test014
+ * @tc.desc: Query token rejects malformed and overflowing IDs
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AtmCommandTest, atm_dump_token_test014, TestSize.Level2)
+{
+    const char* invalidTokenIds[] = { "-1", "+1", " 123", "123abc", "4294967296" };
+    for (const char* tokenId : invalidTokenIds) {
+        const char* argv[] = { "atm", "dump", "-t", "-i", tokenId };
+        int32_t argc = sizeof(argv) / sizeof(argv[0]);
+        std::string result = ExecAtmCommand(argc, const_cast<char**>(argv));
+        EXPECT_TRUE(IsOutputContain(result, "TokenID is invalid."));
+    }
+}
+
+/**
+ * @tc.name: ParseTokenId_001
+ * @tc.desc: Query token accepts the maximum AccessTokenID without truncation
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AtmCommandTest, ParseTokenId_001, TestSize.Level2)
+{
+    const char* argv[] = { "atm", "dump", "-t", "-i", "4294967295" };
+    int32_t argc = sizeof(argv) / sizeof(argv[0]);
+    std::string result = ExecAtmCommand(argc, const_cast<char**>(argv));
+
+    EXPECT_FALSE(IsOutputContain(result, "TokenID is invalid."));
+    EXPECT_TRUE(IsOutputContain(result, "TokenID does not exist."));
+}
+
+/**
+ * @tc.name: ParseTokenId_002
+ * @tc.desc: Query token rejects an empty token ID argument
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AtmCommandTest, ParseTokenId_002, TestSize.Level2)
+{
+    const char* argv[] = { "atm", "dump", "-t", "-i", "" };
+    int32_t argc = sizeof(argv) / sizeof(argv[0]);
+    std::string result = ExecAtmCommand(argc, const_cast<char**>(argv));
+
+    EXPECT_TRUE(IsOutputContain(result, "Option requires a value"));
+}
+
 #ifndef ATM_BUILD_VARIANT_USER_ENABLE
 /**
  * @tc.name: atm_dump_record_test001
@@ -1073,7 +1121,7 @@ HWTEST_F(AtmCommandTest, atm_boundary_test003, TestSize.Level2)
     const char* argv[] = {"atm", "dump", "-t", "-i", "-1"};
     int32_t argc = sizeof(argv) / sizeof(argv[0]);
     std::string result = ExecAtmCommand(argc, const_cast<char**>(argv));
-    EXPECT_TRUE(IsOutputContain(result, "TokenID does not exist."));
+    EXPECT_TRUE(IsOutputContain(result, "TokenID is invalid."));
 }
 
 #ifndef ATM_BUILD_VARIANT_USER_ENABLE

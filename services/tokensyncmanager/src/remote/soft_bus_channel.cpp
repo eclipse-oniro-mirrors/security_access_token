@@ -14,6 +14,7 @@
  */
 #include "soft_bus_channel.h"
 
+#include <atomic>
 #include <climits>
 #include <securec.h>
 
@@ -33,6 +34,7 @@ namespace {
 static const std::string REQUEST_TYPE = "request";
 static const std::string RESPONSE_TYPE = "response";
 static const std::string TASK_NAME_CLOSE_SESSION = "atm_soft_bus_channel_close_session";
+std::atomic_uint64_t g_closeTaskSequence = 0;
 static const int32_t EXECUTE_COMMAND_TIME_OUT = 3000;
 static const int32_t WAIT_SESSION_CLOSE_MILLISECONDS = 5 * 1000;
 // send buf size for header
@@ -41,7 +43,10 @@ static const int RPC_TRANSFER_HEAD_BYTES_LENGTH = 1024 * 256;
 static const int RPC_TRANSFER_BYTES_MAX_LENGTH = 1024 * 1024;
 } // namespace
 SoftBusChannel::SoftBusChannel(const std::string &deviceId)
-    : deviceId_(deviceId), mutex_(), callbacks_(), responseResult_(""), loadedCond_()
+    : deviceId_(deviceId),
+      closeTaskName_(TASK_NAME_CLOSE_SESSION + "_" +
+          std::to_string(g_closeTaskSequence.fetch_add(1, std::memory_order_relaxed))),
+      callbacks_(), responseResult_(""), loadedCond_()
 {
     LOGD(ATM_DOMAIN, ATM_TAG, "SoftBusChannel(deviceId)");
     isDelayClosing_ = false;
@@ -59,21 +64,19 @@ int SoftBusChannel::BuildConnection()
     CancelCloseConnectionIfNeeded();
 
     std::unique_lock<std::mutex> lock(socketMutex_);
-    if (socketFd_ != Constant::INVALID_SOCKET_FD) {
+    if (socketFd_ > Constant::INVALID_SOCKET_FD) {
         LOGI(ATM_DOMAIN, ATM_TAG, "Socket is exist, no need open again.");
         return Constant::SUCCESS;
     }
 
-    if (socketFd_ == Constant::INVALID_SOCKET_FD) {
-        LOGI(ATM_DOMAIN, ATM_TAG, "Bind service with device: %{public}s",
-            ConstantCommon::EncryptDevId(deviceId_).c_str());
-        int socket = SoftBusManager::GetInstance().BindService(deviceId_);
-        if (socket == Constant::INVALID_SOCKET_FD) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "Bind service failed.");
-            return Constant::FAILURE;
-        }
-        socketFd_ = socket;
+    LOGI(ATM_DOMAIN, ATM_TAG, "Bind service with device: %{public}s",
+        ConstantCommon::EncryptDevId(deviceId_).c_str());
+    int socket = SoftBusManager::GetInstance().BindService(deviceId_);
+    if (socket <= Constant::INVALID_SOCKET_FD) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Bind service failed.");
+        return Constant::FAILURE;
     }
+    socketFd_ = socket;
     return Constant::SUCCESS;
 }
 
@@ -98,11 +101,6 @@ static bool GetSendEventHandler(std::shared_ptr<AccessEventHandler>& handler)
 void SoftBusChannel::CloseConnection()
 {
     LOGD(ATM_DOMAIN, ATM_TAG, "Close connection");
-    std::unique_lock<std::mutex> lock(mutex_);
-    if (isDelayClosing_) {
-        return;
-    }
-
 #ifdef EVENTHANDLER_ENABLE
     std::shared_ptr<AccessEventHandler> handler = nullptr;
     if (!GetSendEventHandler(handler)) {
@@ -110,6 +108,11 @@ void SoftBusChannel::CloseConnection()
         return;
     }
 #endif
+    std::unique_lock<std::mutex> lock(socketMutex_);
+    if (isDelayClosing_) {
+        return;
+    }
+
     std::weak_ptr<SoftBusChannel> weakPtr = shared_from_this();
     std::function<void()> delayed = ([weakPtr]() {
         auto self = weakPtr.lock();
@@ -118,11 +121,15 @@ void SoftBusChannel::CloseConnection()
             return;
         }
         std::unique_lock<std::mutex> lock(self->socketMutex_);
+        if (!self->isDelayClosing_) {
+            LOGD(ATM_DOMAIN, ATM_TAG, "Socket close task is canceled");
+            return;
+        }
         if (self->isSocketUsing_) {
             LOGD(ATM_DOMAIN, ATM_TAG, "Socket is in using, cancel close socket");
         } else {
             SoftBusManager::GetInstance().CloseSocket(self->socketFd_);
-            self->socketFd_ = Constant::INVALID_SESSION;
+            self->socketFd_ = Constant::INVALID_SOCKET_FD;
             LOGI(ATM_DOMAIN, ATM_TAG, "Close socket for device: %{public}s",
                 ConstantCommon::EncryptDevId(self->deviceId_).c_str());
         }
@@ -131,7 +138,7 @@ void SoftBusChannel::CloseConnection()
 
     LOGD(ATM_DOMAIN, ATM_TAG, "Close socket after %{public}d ms", WAIT_SESSION_CLOSE_MILLISECONDS);
 #ifdef EVENTHANDLER_ENABLE
-    handler->ProxyPostTask(delayed, TASK_NAME_CLOSE_SESSION, WAIT_SESSION_CLOSE_MILLISECONDS);
+    handler->ProxyPostTask(delayed, closeTaskName_, WAIT_SESSION_CLOSE_MILLISECONDS);
 #endif
 
     isDelayClosing_ = true;
@@ -145,7 +152,7 @@ void SoftBusChannel::Release()
         LOGE(ATM_DOMAIN, ATM_TAG, "Fail to get EventHandler");
         return;
     }
-    handler->ProxyRemoveTask(TASK_NAME_CLOSE_SESSION);
+    handler->ProxyRemoveTask(closeTaskName_);
 #endif
 }
 
@@ -296,17 +303,22 @@ int SoftBusChannel::PrepareBytes(const std::string &type, const std::string &id,
 
 int SoftBusChannel::Compress(const std::string &json, const unsigned char* compressedBytes, int &compressedLength)
 {
-    uLong len = compressBound(json.size());
+    if (compressedBytes == nullptr || compressedLength <= 0) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Invalid compression buffer.");
+        return Constant::FAILURE;
+    }
+    uLong sourceLength = static_cast<uLong>(json.size() + 1);
+    uLong len = compressBound(sourceLength);
     // length will not so that long
-    if (compressedLength > 0 && static_cast<int32_t>(len) > compressedLength) {
+    if (len > static_cast<uLong>(compressedLength)) {
         LOGE(ATM_DOMAIN, ATM_TAG,
-            "compress error. data length overflow, bound length: %{public}d, buffer length: %{public}d",
-            static_cast<int32_t>(len), compressedLength);
+            "compress error. data length overflow, bound length: %{public}lu, buffer length: %{public}d",
+            len, compressedLength);
         return Constant::FAILURE;
     }
 
     int result = compress(const_cast<Byte*>(compressedBytes), &len,
-        reinterpret_cast<unsigned char*>(const_cast<char*>(json.c_str())), json.size() + 1);
+        reinterpret_cast<unsigned char*>(const_cast<char*>(json.c_str())), sourceLength);
     if (result != Z_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Compress failed! error code: %{public}d", result);
         return result;
@@ -374,7 +386,7 @@ int SoftBusChannel::CheckSessionMayReopenLocked()
         return Constant::SUCCESS;
     }
     int socket = SoftBusManager::GetInstance().BindService(deviceId_);
-    if (socket != Constant::INVALID_SESSION) {
+    if (socket > Constant::INVALID_SOCKET_FD) {
         socketFd_ = socket;
         return Constant::SUCCESS;
     }
@@ -383,19 +395,20 @@ int SoftBusChannel::CheckSessionMayReopenLocked()
 
 bool SoftBusChannel::IsSessionAvailable()
 {
-    return socketFd_ > Constant::INVALID_SESSION;
+    return socketFd_ > Constant::INVALID_SOCKET_FD;
 }
 
 void SoftBusChannel::CancelCloseConnectionIfNeeded()
 {
-    std::unique_lock<std::mutex> lock(mutex_);
+    std::unique_lock<std::mutex> lock(socketMutex_);
     if (!isDelayClosing_) {
         return;
     }
     LOGD(ATM_DOMAIN, ATM_TAG, "Cancel close connection");
 
-    Release();
     isDelayClosing_ = false;
+    lock.unlock();
+    Release();
 }
 
 void SoftBusChannel::HandleRequestInvalidCommand(int socket, const std::string &id, const std::string &commandName,

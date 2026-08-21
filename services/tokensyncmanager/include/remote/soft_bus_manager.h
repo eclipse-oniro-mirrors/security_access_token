@@ -128,6 +128,7 @@ private:
     int DeviceInit();
     bool CheckAndCopyStr(char* dest, uint32_t destLen, const std::string& src);
     int32_t InitSocketAndListener(const std::string& networkId, ISocketListener& listener);
+    int32_t BindClientSocket(int32_t socketFd, ISocketListener& listener);
     int32_t ServiceSocketInit();
 
     /**

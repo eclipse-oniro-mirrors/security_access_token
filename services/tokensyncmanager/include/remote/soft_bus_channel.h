@@ -16,7 +16,6 @@
 #ifndef SOFT_BUS_CHANNEL_H
 #define SOFT_BUS_CHANNEL_H
 
-#include <atomic>
 #include <condition_variable>
 #include <mutex>
 #include <memory>
@@ -275,6 +274,7 @@ private:
                     }
                     break;
             }
+            bufSize -= blen;
             p += blen;
             if (n == index3 || n == index5 || n == index7 || n == index9) {
                 *p++ = '-';
@@ -291,8 +291,8 @@ private:
     // bind device id for this channel
     std::string deviceId_;
 
-    // channel mutex
-    std::mutex mutex_;
+    // unique delayed close task name for this channel instance
+    std::string closeTaskName_;
 
     // connection closing state. true: in closing, false: otherwise
     bool isDelayClosing_;
