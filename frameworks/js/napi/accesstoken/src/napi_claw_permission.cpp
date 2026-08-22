@@ -400,6 +400,9 @@ napi_value NapiClawPermission::GetCliPermissionRequestInfo(napi_env env, napi_ca
     }
     asyncContext->apiType = ClawPermissionApiType::GET_CLI_PERMISSION_DIALOG_INFO;
     napi_value result = CreatePromiseWork(env, asyncContext, "GetCliPermissionRequestInfo");
+    if (result == nullptr) {
+        return nullptr;
+    }
     context.release();
     return result;
 }
@@ -433,6 +436,9 @@ napi_value NapiClawPermission::GetCliPermissions(napi_env env, napi_callback_inf
     }
     asyncContext->apiType = ClawPermissionApiType::GET_CLI_PERMISSIONS;
     napi_value result = CreatePromiseWork(env, asyncContext, "GetCliPermissions");
+    if (result == nullptr) {
+        return nullptr;
+    }
     context.release();
     return result;
 }
@@ -465,6 +471,9 @@ napi_value NapiClawPermission::GenerateCliAuthResult(napi_env env, napi_callback
     }
     asyncContext->apiType = ClawPermissionApiType::GENERATE_CLI_AUTH_RESULT;
     napi_value result = CreatePromiseWork(env, asyncContext, "GenerateCliAuthResult");
+    if (result == nullptr) {
+        return nullptr;
+    }
     context.release();
     return result;
 }

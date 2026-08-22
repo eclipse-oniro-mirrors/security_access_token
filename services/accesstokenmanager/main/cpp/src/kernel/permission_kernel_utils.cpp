@@ -25,7 +25,7 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-void PermissionKernelUtils::AddNativePermToKernel(AccessTokenID tokenID,
+int32_t PermissionKernelUtils::AddNativePermToKernel(AccessTokenID tokenID,
     const std::vector<uint32_t>& opCodeList, const std::vector<bool>& statusList)
 {
     std::vector<uint32_t> grantedPermList;
@@ -39,6 +39,7 @@ void PermissionKernelUtils::AddNativePermToKernel(AccessTokenID tokenID,
         LOGE(ATM_DOMAIN, ATM_TAG, "AddPermissionToKernel(token=%{public}d), size=%{public}zu, err=%{public}d",
             tokenID, grantedPermList.size(), ret);
     }
+    return ret;
 }
 
 int32_t PermissionKernelUtils::AddHapPermToKernel(AccessTokenID tokenID, const std::vector<uint32_t>& opCodeList)
@@ -56,11 +57,12 @@ int32_t PermissionKernelUtils::GetPermFromKernel(AccessTokenID tokenID, uint32_t
     return GetPermissionFromKernel(tokenID, static_cast<int32_t>(permCode), isGranted);
 }
 
-void PermissionKernelUtils::RemovePermFromKernel(AccessTokenID tokenID)
+int32_t PermissionKernelUtils::RemovePermFromKernel(AccessTokenID tokenID)
 {
     int32_t ret = RemovePermissionFromKernel(tokenID);
     LOGI(ATM_DOMAIN, ATM_TAG,
         "RemovePermissionFromKernel(token=%{public}d), err=%{public}d", tokenID, ret);
+    return ret;
 }
 
 void PermissionKernelUtils::SetPermToKernel(AccessTokenID tokenID, const std::string& permissionName, bool isGranted)

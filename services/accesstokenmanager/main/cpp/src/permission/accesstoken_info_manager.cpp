@@ -790,6 +790,11 @@ int AccessTokenInfoManager::AddHapTokenInfo(const std::shared_ptr<HapTokenInfoIn
 
 std::shared_ptr<HapTokenInfoInner> AccessTokenInfoManager::GetHapTokenInfoInnerFromDb(AccessTokenID id)
 {
+    size_t mapSize = 0;
+    {
+        std::shared_lock<std::shared_mutex> infoGuard(this->hapTokenInfoLock_);
+        mapSize = hapTokenInfoMap_.size();
+    }
     GenericValues conditionValue;
     conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(id));
 
@@ -797,7 +802,7 @@ std::shared_ptr<HapTokenInfoInner> AccessTokenInfoManager::GetHapTokenInfoInnerF
     int32_t ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, conditionValue, hapTokenResults);
     if (ret != RET_SUCCESS || hapTokenResults.empty()) {
         LOGC(ATM_DOMAIN, ATM_TAG, "Failed to find Id(%{public}u) from hap_token_table, err: %{public}d, "
-            "hapSize: %{public}zu, mapSize: %{public}zu.", id, ret, hapTokenResults.size(), hapTokenInfoMap_.size());
+            "hapSize: %{public}zu, mapSize: %{public}zu.", id, ret, hapTokenResults.size(), mapSize);
         return nullptr;
     }
 
@@ -809,7 +814,7 @@ std::shared_ptr<HapTokenInfoInner> AccessTokenInfoManager::GetHapTokenInfoInnerF
     ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_PERMISSION_STATE, conditionValue, permStateRes);
     if (ret != RET_SUCCESS) {
         LOGC(ATM_DOMAIN, ATM_TAG, "Failed to find Id(%{public}u) from perm_state_table, err: %{public}d, "
-            "mapSize: %{public}zu.", id, ret, hapTokenInfoMap_.size());
+            "mapSize: %{public}zu.", id, ret, mapSize);
         return nullptr;
     }
 
@@ -818,7 +823,7 @@ std::shared_ptr<HapTokenInfoInner> AccessTokenInfoManager::GetHapTokenInfoInnerF
         extendedPermRes);
     if (ret != RET_SUCCESS) { // extendedPermRes may be empty
         LOGC(ATM_DOMAIN, ATM_TAG, "Failed to find Id(%{public}u) from perm_extend_value_table, err: %{public}d, "
-            "mapSize: %{public}zu.", id, ret, hapTokenInfoMap_.size());
+            "mapSize: %{public}zu.", id, ret, mapSize);
         return nullptr;
     }
 
@@ -826,11 +831,15 @@ std::shared_ptr<HapTokenInfoInner> AccessTokenInfoManager::GetHapTokenInfoInnerF
     ret = hap->RestoreHapTokenInfo(id, hapTokenResults[0], permStateRes, extendedPermRes);
     if (ret != RET_SUCCESS) {
         LOGC(ATM_DOMAIN, ATM_TAG, "Id %{public}u restore failed, err: %{public}d, mapSize: %{public}zu.",
-            id, ret, hapTokenInfoMap_.size());
+            id, ret, mapSize);
         return nullptr;
     }
 
     std::unique_lock<std::shared_mutex> infoGuard(this->hapTokenInfoLock_);
+    auto iter = hapTokenInfoMap_.find(id);
+    if (iter != hapTokenInfoMap_.end()) {
+        return iter->second;
+    }
     (void)AccessTokenIDManager::GetInstance().RegisterTokenId(id, TOKEN_HAP);
     hapTokenIdMap_[AccessTokenInfoUtils::GetHapUniqueStr(hap)] = id;
     hapTokenInfoMap_[id] = hap;
@@ -1129,6 +1138,7 @@ int32_t AccessTokenInfoManager::CheckHapInfoParam(const HapInfoParams& info, con
 {
     if ((!DataValidator::IsUserIdValid(info.userID)) || (!DataValidator::IsBundleNameValid(info.bundleName)) ||
         (!DataValidator::IsAppIDDescValid(info.appIDDesc)) || (!DataValidator::IsDomainValid(policy.domain)) ||
+        (!DataValidator::IsAplNumValid(policy.apl)) ||
         (!DataValidator::IsDlpTypeValid(info.dlpType)) || (info.isRestore && info.tokenID == INVALID_TOKENID) ||
         (!DataValidator::IsAclExtendedMapSizeValid(policy.aclExtendedMap)) ||
         (!DataValidator::IsAppProvisionTypeValid(info.appProvisionType))) {
@@ -1493,6 +1503,11 @@ int AccessTokenInfoManager::UpdateRemoteHapTokenInfo(AccessTokenID mapID, HapTok
         return ERR_IDENTITY_CHECK_FAILED;
     }
     std::unique_lock<std::shared_mutex> infoGuard(this->hapTokenInfoLock_);
+    auto iter = hapTokenInfoMap_.find(mapID);
+    if (iter == hapTokenInfoMap_.end() || iter->second != infoPtr || !iter->second->IsRemote()) {
+        LOGI(ATM_DOMAIN, ATM_TAG, "Token %{public}u is removed or no longer remote, can not update!", mapID);
+        return ERR_IDENTITY_CHECK_FAILED;
+    }
     infoPtr->UpdateRemoteHapTokenInfo(mapID, hapSync.baseInfo, hapSync.permStateList);
     // update remote hap to kernel
     std::vector<uint32_t> opCodeList;

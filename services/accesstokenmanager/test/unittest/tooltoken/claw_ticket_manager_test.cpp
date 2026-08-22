@@ -739,6 +739,32 @@ HWTEST_F(ClawTicketManagerTest, VerifyCliClawTicketTest013, TestSize.Level0)
     DeleteTestHapToken(tokenId);
 }
 
+/**
+ * @tc.name: VerifyCliClawTicketTest014
+ * @tc.desc: Test VerifyCliClawTicket rejects a ticket with mismatched permission result sizes.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(ClawTicketManagerTest, VerifyCliClawTicketTest014, TestSize.Level0)
+{
+    AccessTokenID tokenId = CreateTestHapToken();
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+
+    std::string challenge = "test_challenge_014";
+    InsertTestTicket(tokenId, challenge,
+        CreateTestCliAuth("test_cli", {"ohos.permission.CAMERA", "ohos.permission.MICROPHONE"}, {true}));
+    testChallenges_.push_back(challenge);
+
+    CliInfo cliInfo = {"test_cli", "test_sub"};
+    std::vector<PermissionStatus> permList;
+    int32_t ret = ClawTicketManager::GetInstance().VerifyCliClawTicket(tokenId, challenge, cliInfo, permList);
+
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
+    EXPECT_TRUE(permList.empty());
+
+    DeleteTestHapToken(tokenId);
+}
+
 #ifdef SAF_AGENT_FENCE_ENABLE
 /**
  * @tc.name: VerifyCliClawTicketByVerifyInfoTest001

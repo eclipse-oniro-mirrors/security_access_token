@@ -52,6 +52,7 @@ public:
     static bool IsDescValid(const std::string& desc);
     static bool IsPermissionFlagValid(uint32_t flag);
     static bool IsPermissionFlagValidForAdmin(uint32_t flag);
+    static bool IsAdminPermissionFlag(uint32_t flag);
     static bool IsPermissionStatusValid(int32_t status);
     static bool IsDcapValid(const std::string& dcap);
     static bool IsTokenIDValid(AccessTokenID id);

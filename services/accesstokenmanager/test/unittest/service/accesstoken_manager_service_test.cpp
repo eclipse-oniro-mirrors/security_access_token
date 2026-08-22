@@ -1221,6 +1221,24 @@ HWTEST_F(AccessTokenManagerServiceTest, UpdateHapTokenWithProvisionTypeTest006, 
 }
 
 /**
+ * @tc.name: GrantPermissionInvalidParameter001
+ * @tc.desc: Verify that the service rejects invalid GrantPermission IPC parameters.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, GrantPermissionInvalidParameter001, TestSize.Level0)
+{
+    EXPECT_EQ(ERR_PARAM_INVALID, atManagerService_->GrantPermission(
+        INVALID_TOKENID, "ohos.permission.CAMERA", PERMISSION_USER_FIXED, USER_GRANTED_PERM));
+    EXPECT_EQ(ERR_PARAM_INVALID, atManagerService_->GrantPermission(
+        1, "", PERMISSION_USER_FIXED, USER_GRANTED_PERM));
+    EXPECT_EQ(ERR_PARAM_INVALID, atManagerService_->GrantPermission(
+        1, "ohos.permission.CAMERA", PERMISSION_FIXED_BY_ADMIN_POLICY, USER_GRANTED_PERM));
+    EXPECT_EQ(ERR_PARAM_INVALID, atManagerService_->GrantPermission(
+        1, "ohos.permission.CAMERA", PERMISSION_USER_FIXED, 2));
+}
+
+/**
  * @tc.name: UpdateHapTokenWithProvisionTypeTest007
  * @tc.desc: test update hap from debug with isDebugGrant true to release
  * @tc.type: FUNC

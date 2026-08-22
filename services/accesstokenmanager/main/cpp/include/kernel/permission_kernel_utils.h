@@ -37,13 +37,13 @@ struct SpmDataParam final {
 
 class PermissionKernelUtils final {
 public:
-    static void AddNativePermToKernel(
+    static int32_t AddNativePermToKernel(
         AccessTokenID tokenID, const std::vector<uint32_t>& opCodeList, const std::vector<bool>& statusList);
     static int32_t AddHapPermToKernel(AccessTokenID tokenID, const std::vector<uint32_t>& opCodeList);
     static int32_t GetBundleInfoFromKernel(AccessTokenID tokenId, BundleNoCachedInfo& noCachedInfo,
         std::vector<PermissionWithValue>& permList);
     static int32_t GetPermFromKernel(AccessTokenID tokenID, uint32_t permCode, bool& isGranted);
-    static void RemovePermFromKernel(AccessTokenID tokenID);
+    static int32_t RemovePermFromKernel(AccessTokenID tokenID);
     static void SetPermToKernel(AccessTokenID tokenID, const std::string& permissionName, bool isGranted);
     static bool IsKernelSupportSpm();
 

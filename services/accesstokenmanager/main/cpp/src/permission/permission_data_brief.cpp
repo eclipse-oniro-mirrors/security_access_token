@@ -155,7 +155,7 @@ int32_t PermissionDataBrief::GetKernelPermissions(
     int32_t ret = GetBriefPermDataByTokenIdInner(tokenId, list);
     if (ret != RET_SUCCESS) {
         LOGE(ATM_DOMAIN, ATM_TAG,
-            "GetBriefPermDataByTokenIdInner failed, tokenId: %{public}d, ret is  %{public}d", tokenId, ret);
+            "GetBriefPermDataByTokenIdInner failed, tokenId: %{public}u, ret is  %{public}d", tokenId, ret);
         return ret;
     }
     for (const auto& data : list) {
@@ -194,7 +194,7 @@ int32_t PermissionDataBrief::GetReqPermissionByName(
     if (tokenIdCheck) {
         auto iter = requestedPermData_.find(tokenId);
         if (iter == requestedPermData_.end()) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "TokenID %{public}d is not exist.", tokenId);
+            LOGE(ATM_DOMAIN, ATM_TAG, "TokenID %{public}u is not exist.", tokenId);
             return ERR_TOKEN_INVALID;
         }
     }
@@ -485,7 +485,7 @@ int32_t PermissionDataBrief::UpdatePermStateList(
     std::unique_lock<std::shared_mutex> infoGuard(this->permissionStateDataLock_);
     auto iterPermData = requestedPermData_.find(tokenId);
     if (iterPermData == requestedPermData_.end()) {
-        LOGC(ATM_DOMAIN, ATM_TAG, "TokenID %{public}d is not exist.", tokenId);
+        LOGC(ATM_DOMAIN, ATM_TAG, "TokenID %{public}u is not exist.", tokenId);
         return ERR_TOKEN_INVALID;
     }
     std::vector<BriefPermData>& permBriefDatalist = requestedPermData_[tokenId];
@@ -516,7 +516,7 @@ int32_t PermissionDataBrief::UpdatePermStateList(
     }
     iter->flag = UpdateWithNewFlag(iter->flag, flag);
     LOGI(ATM_DOMAIN, ATM_TAG,
-        "Update perm state list, id: %{public}d, perm: %{public}s, status: %{public}d, flag: %{public}d",
+        "Update perm state list, id: %{public}u, perm: %{public}s, status: %{public}d, flag: %{public}d",
         tokenId, permission.c_str(), iter->status, iter->flag);
     return RET_SUCCESS;
 }
@@ -669,7 +669,7 @@ int32_t PermissionDataBrief::DeleteBriefPermDataByTokenId(AccessTokenID tokenID)
     std::unique_lock<std::shared_mutex> infoGuard(this->permissionStateDataLock_);
     auto iter = requestedPermData_.find(tokenID);
     if (iter == requestedPermData_.end()) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "TokenID %{public}d is not exist.", tokenID);
+        LOGE(ATM_DOMAIN, ATM_TAG, "TokenID %{public}u is not exist.", tokenID);
         return ERR_TOKEN_INVALID;
     }
     requestedPermData_.erase(tokenID);
@@ -690,7 +690,7 @@ int32_t PermissionDataBrief::GetBriefPermDataByTokenIdInner(AccessTokenID tokenI
 {
     auto iter = requestedPermData_.find(tokenID);
     if (iter == requestedPermData_.end()) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "TokenID %{public}d is not exist.", tokenID);
+        LOGE(ATM_DOMAIN, ATM_TAG, "TokenID %{public}u is not exist.", tokenID);
         return ERR_TOKEN_INVALID;
     }
     for (const auto& data : iter->second) {
@@ -754,7 +754,7 @@ void PermissionDataBrief::GetGrantedPermCodeList(AccessTokenID tokenID,
     std::shared_lock<std::shared_mutex> infoGuard(this->permissionStateDataLock_);
     auto iter = requestedPermData_.find(tokenID);
     if (iter == requestedPermData_.end()) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "TokenID %{public}d is not exist.", tokenID);
+        LOGE(ATM_DOMAIN, ATM_TAG, "TokenID %{public}u is not exist.", tokenID);
         return;
     }
     for (const auto& data : iter->second) {
@@ -782,7 +782,7 @@ PermUsedTypeEnum PermissionDataBrief::GetPermissionUsedType(AccessTokenID tokenI
     std::shared_lock<std::shared_mutex> infoGuard(this->permissionStateDataLock_);
     auto iter = requestedPermData_.find(tokenID);
     if (iter == requestedPermData_.end()) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "TokenID is not exist %{public}d.", tokenID);
+        LOGE(ATM_DOMAIN, ATM_TAG, "TokenID is not exist %{public}u.", tokenID);
         return PermUsedTypeEnum::INVALID_USED_TYPE;
     }
     auto it = std::find_if(iter->second.begin(), iter->second.end(), [opCode](const BriefPermData& data) {
@@ -793,7 +793,7 @@ PermUsedTypeEnum PermissionDataBrief::GetPermissionUsedType(AccessTokenID tokenI
             return PermUsedTypeEnum::SEC_COMPONENT_TYPE;
         }
         if (it->status == PERMISSION_DENIED) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "Permission of %{public}d is requested, but not granted.", tokenID);
+            LOGE(ATM_DOMAIN, ATM_TAG, "Permission of %{public}u is requested, but not granted.", tokenID);
             return PermUsedTypeEnum::INVALID_USED_TYPE;
         }
         return PermUsedTypeEnum::NORMAL_TYPE;
@@ -811,7 +811,7 @@ int32_t PermissionDataBrief::VerifyPermissionStatus(AccessTokenID tokenID, uint3
     std::shared_lock<std::shared_mutex> infoGuard(this->permissionStateDataLock_);
     auto iter = requestedPermData_.find(tokenID);
     if (iter == requestedPermData_.end()) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "TokenID is not exist %{public}d.", tokenID);
+        LOGE(ATM_DOMAIN, ATM_TAG, "TokenID is not exist %{public}u.", tokenID);
         return PERMISSION_DENIED;
     }
     auto it = std::find_if(iter->second.begin(), iter->second.end(), [permCode](const BriefPermData& data) {
@@ -824,7 +824,7 @@ int32_t PermissionDataBrief::VerifyPermissionStatus(AccessTokenID tokenID, uint3
     for (const auto& secCompData : secCompList_) {
         if ((secCompData.tokenId == tokenID) && (secCompData.permCode == permCode)) {
             LOGD(ATM_DOMAIN, ATM_TAG,
-                "TokenID: %{public}d, permission is not requested. While it is granted by secComp", tokenID);
+                "TokenID: %{public}u, permission is not requested. While it is granted by secComp", tokenID);
             return PERMISSION_GRANTED;
         }
     }
@@ -833,7 +833,7 @@ int32_t PermissionDataBrief::VerifyPermissionStatus(AccessTokenID tokenID, uint3
 
 int32_t PermissionDataBrief::VerifyPermissionStatus(AccessTokenID tokenID, const std::string& permission)
 {
-    LOGD(ATM_DOMAIN, ATM_TAG, "tokenID %{public}d, permissionName %{public}s.", tokenID, permission.c_str());
+    LOGD(ATM_DOMAIN, ATM_TAG, "tokenID %{public}u, permissionName %{public}s.", tokenID, permission.c_str());
     uint32_t opCode;
     if (!TransferPermissionToOpcode(permission, opCode)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "PermissionName is invalid %{public}s.", permission.c_str());
@@ -852,7 +852,7 @@ bool PermissionDataBrief::IsPermissionGrantedWithSecComp(AccessTokenID tokenID, 
     std::shared_lock<std::shared_mutex> infoGuard(this->permissionStateDataLock_);
     auto iter = requestedPermData_.find(tokenID);
     if (iter == requestedPermData_.end()) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "TokenID is not exist %{public}d.", tokenID);
+        LOGE(ATM_DOMAIN, ATM_TAG, "TokenID is not exist %{public}u.", tokenID);
         return false;
     }
     auto it = std::find_if(iter->second.begin(), iter->second.end(), [opCode](const BriefPermData& data) {
@@ -867,7 +867,7 @@ bool PermissionDataBrief::IsPermissionGrantedWithSecComp(AccessTokenID tokenID, 
         return false;
     }
     if (ConstantCommon::IsPermGrantedBySecComp(it->flag)) {
-        LOGI(ATM_DOMAIN, ATM_TAG, "TokenID: %{public}d, permission is granted by secComp", tokenID);
+        LOGI(ATM_DOMAIN, ATM_TAG, "TokenID: %{public}u, permission is granted by secComp", tokenID);
         return true;
     }
     return false;
@@ -911,7 +911,7 @@ int32_t PermissionDataBrief::QueryPermissionStatusAndFlagInner(AccessTokenID tok
     std::shared_lock<std::shared_mutex> infoGuard(this->permissionStateDataLock_);
     auto iter = requestedPermData_.find(tokenID);
     if (iter == requestedPermData_.end()) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "TokenID is not exist %{public}d.", tokenID);
+        LOGE(ATM_DOMAIN, ATM_TAG, "TokenID is not exist %{public}u.", tokenID);
         return AccessTokenError::ERR_TOKENID_NOT_EXIST;
     }
     auto it = std::find_if(iter->second.begin(), iter->second.end(), [permCode](BriefPermData data) {
@@ -1017,6 +1017,7 @@ int32_t PermissionDataBrief::AddBriefPermData(AccessTokenID tokenID, const std::
     std::vector<BriefPermData> list;
     int32_t res = GetBriefPermDataByTokenIdInner(tokenID, list);
     if (res != RET_SUCCESS) {
+        DeleteExtendedValue(tokenID);
         return res;
     }
 

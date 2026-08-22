@@ -172,6 +172,44 @@ HWTEST_F(SecCompEnhanceAgentTest, ProcessFromForegroundList002, TestSize.Level1)
 }
 
 /**
+ * @tc.name: ProcessFromForegroundList003
+ * @tc.desc: Test removing a record preserves the other sec comp enhance record.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(SecCompEnhanceAgentTest, ProcessFromForegroundList003, TestSize.Level1)
+{
+    auto& agent = SecCompEnhanceAgent::GetInstance();
+    agent.OnAppMgrRemoteDiedHandle();
+
+    SecCompEnhanceData first = {};
+    first.pid = 1;
+    first.token = 1;
+    first.count = 1;
+    ASSERT_EQ(EOK, memset_s(first.key, AES_KEY_STORAGE_LEN, 0x11, AES_KEY_STORAGE_LEN));
+    SecCompEnhanceData second = {};
+    second.pid = 2;
+    second.token = 2;
+    second.count = 1;
+    ASSERT_EQ(EOK, memset_s(second.key, AES_KEY_STORAGE_LEN, 0x22, AES_KEY_STORAGE_LEN));
+    {
+        std::lock_guard<std::mutex> lock(agent.secCompEnhanceMutex_);
+        agent.secCompEnhanceData_.emplace_back(first);
+        agent.secCompEnhanceData_.emplace_back(second);
+    }
+
+    agent.RemoveSecCompEnhance(first.pid, first.token);
+    {
+        std::lock_guard<std::mutex> lock(agent.secCompEnhanceMutex_);
+        ASSERT_EQ(1u, agent.secCompEnhanceData_.size());
+        EXPECT_EQ(second.pid, agent.secCompEnhanceData_[0].pid);
+        EXPECT_EQ(second.token, agent.secCompEnhanceData_[0].token);
+        EXPECT_EQ(0, memcmp(second.key, agent.secCompEnhanceData_[0].key, AES_KEY_STORAGE_LEN));
+    }
+    agent.RemoveSecCompEnhance(second.pid, second.token);
+}
+
+/**
  * @tc.name: SecCompEnhanceKey001
  * @tc.desc: Store and repeatedly get a stable enhance key
  * @tc.type: FUNC

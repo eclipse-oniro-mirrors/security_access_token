@@ -121,7 +121,7 @@ static void NotifyPermStateChanged(RegisterPermStateChangeWorker* registerPermSt
 
 static bool IsPermissionFlagValid(uint32_t flag)
 {
-    LOGD(ATM_DOMAIN, ATM_TAG, "Permission flag is %{public}d", flag);
+    LOGD(ATM_DOMAIN, ATM_TAG, "Permission flag is %{public}u", flag);
     return (flag == PermissionFlag::PERMISSION_USER_SET) || (flag == PermissionFlag::PERMISSION_USER_FIXED) ||
         (flag == PermissionFlag::PERMISSION_ALLOW_THIS_TIME);
 };
@@ -402,7 +402,7 @@ bool NapiAtManager::ParseInputVerifyPermissionOrGetFlag(const napi_env env, cons
         return false;
     }
 
-    LOGD(ATM_DOMAIN, ATM_TAG, "TokenID = %{public}d, permissionName = %{public}s", asyncContext.tokenId,
+    LOGD(ATM_DOMAIN, ATM_TAG, "TokenID = %{public}u, permissionName = %{public}s", asyncContext.tokenId,
         asyncContext.permissionName.c_str());
     return true;
 }
@@ -439,7 +439,7 @@ bool NapiAtManager::ParseInputVerifyPermissionSync(const napi_env env, const nap
         return false;
     }
 
-    LOGD(ATM_DOMAIN, ATM_TAG, "TokenID = %{public}d, permissionName = %{public}s", syncContext.tokenId,
+    LOGD(ATM_DOMAIN, ATM_TAG, "TokenID = %{public}u, permissionName = %{public}s", syncContext.tokenId,
         syncContext.permissionName.c_str());
     return true;
 }
@@ -473,7 +473,7 @@ void NapiAtManager::VerifyAccessTokenComplete(napi_env env, napi_status status, 
     std::unique_ptr<AtManagerAsyncContext> context {asyncContext};
     napi_value result;
 
-    LOGD(ATM_DOMAIN, ATM_TAG, "TokenId = %{public}d, permissionName = %{public}s, verify result = %{public}d.",
+    LOGD(ATM_DOMAIN, ATM_TAG, "TokenId = %{public}u, permissionName = %{public}s, verify result = %{public}d.",
         asyncContext->tokenId, asyncContext->permissionName.c_str(), asyncContext->result);
 
     NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, asyncContext->result, &result)); // verify result
@@ -774,7 +774,7 @@ bool NapiAtManager::ParseInputGrantOrRevokePermission(const napi_env env, const 
     }
 
     LOGD(ATM_DOMAIN, ATM_TAG,
-        "TokenID = %{public}d, permissionName = %{public}s, flag = %{public}d, killProcess = %{public}d",
+        "TokenID = %{public}u, permissionName = %{public}s, flag = %{public}u, killProcess = %{public}d",
         asyncContext.tokenId, asyncContext.permissionName.c_str(), asyncContext.flag, asyncContext.killProcess);
     return true;
 }
@@ -816,7 +816,7 @@ void NapiAtManager::GrantUserGrantedPermissionExecute(napi_env env, void* data)
         asyncContext->errorCode = ERR_PERMISSION_NOT_EXIST;
     }
     LOGD(ATM_DOMAIN, ATM_TAG,
-        "tokenId = %{public}d, permissionName = %{public}s, flag = %{public}d, grant result = %{public}d.",
+        "tokenId = %{public}u, permissionName = %{public}s, flag = %{public}u, grant result = %{public}d.",
         asyncContext->tokenId, asyncContext->permissionName.c_str(), asyncContext->flag, asyncContext->errorCode);
 }
 
@@ -969,7 +969,7 @@ void NapiAtManager::RevokeUserGrantedPermissionExecute(napi_env env, void* data)
         asyncContext->errorCode = ERR_PERMISSION_NOT_EXIST;
     }
     LOGD(ATM_DOMAIN, ATM_TAG,
-        "tokenId = %{public}d, permissionName = %{public}s, flag = %{public}d, revoke errorCode = %{public}d.",
+        "tokenId = %{public}u, permissionName = %{public}s, flag = %{public}u, revoke errorCode = %{public}d.",
         asyncContext->tokenId, asyncContext->permissionName.c_str(), asyncContext->flag, asyncContext->errorCode);
 }
 
@@ -1030,7 +1030,7 @@ void NapiAtManager::GrantPermissionExecute(napi_env env, void *data)
     }
 
     LOGI(ATM_DOMAIN, ATM_TAG,
-        "tokenId = %{public}d, permissionName = %{public}s, flag = %{public}d.",
+        "tokenId = %{public}u, permissionName = %{public}s, flag = %{public}u.",
         asyncContext->tokenId, asyncContext->permissionName.c_str(), asyncContext->flag);
 
     if (!DataValidator::IsTokenIDValid(asyncContext->tokenId) ||
@@ -1113,7 +1113,7 @@ void NapiAtManager::RevokePermissionExecute(napi_env env, void *data)
     }
 
     LOGI(ATM_DOMAIN, ATM_TAG,
-        "tokenId = %{public}d, permissionName = %{public}s, flag = %{public}d.",
+        "tokenId = %{public}u, permissionName = %{public}s, flag = %{public}u.",
         asyncContext->tokenId, asyncContext->permissionName.c_str(), asyncContext->flag);
 
     if (!DataValidator::IsTokenIDValid(asyncContext->tokenId) ||

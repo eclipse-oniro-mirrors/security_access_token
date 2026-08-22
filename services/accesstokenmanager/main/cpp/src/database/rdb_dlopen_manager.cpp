@@ -187,7 +187,6 @@ AccessTokenDbLoaderInterface* RdbDlopenManager::GetDbInstance()
         if (instance_ == nullptr) {
             Create(handle_);
         }
-
         if (instance_ != nullptr) {
             ++taskNum_;
         }

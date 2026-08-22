@@ -572,7 +572,7 @@ int AccessTokenKit::GrantPermission(
     if (!DataValidator::IsPermissionNameValid(permissionName)) {
         return AccessTokenError::ERR_PARAM_INVALID;
     }
-    if (!DataValidator::IsPermissionFlagValid(flag) || DataValidator::IsPermissionFlagValidForAdmin(flag)) {
+    if (!DataValidator::IsPermissionFlagValid(flag) || DataValidator::IsAdminPermissionFlag(flag)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Flag is invalid");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
@@ -597,7 +597,7 @@ int AccessTokenKit::RevokePermission(
     if (!DataValidator::IsPermissionNameValid(permissionName)) {
         return AccessTokenError::ERR_PARAM_INVALID;
     }
-    if (!DataValidator::IsPermissionFlagValid(flag) || DataValidator::IsPermissionFlagValidForAdmin(flag)) {
+    if (!DataValidator::IsPermissionFlagValid(flag) || DataValidator::IsAdminPermissionFlag(flag)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Invalid flag");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
