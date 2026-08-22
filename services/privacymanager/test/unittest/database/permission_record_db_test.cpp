@@ -1058,7 +1058,7 @@ HWTEST_F(PermissionRecordDBTest, OnUpdate007, TestSize.Level0)
     while (stmt.Step() == Statement::State::ROW) {
         if (stmt.GetColumnString(1) == PrivacyFiledConst::FIELD_ENHANCED_IDENTITY) {
             foundEnhancedIdentity = true;
-            EXPECT_EQ("", stmt.GetColumnString(4));
+            EXPECT_EQ("''", stmt.GetColumnString(4));
         }
     }
     EXPECT_TRUE(foundEnhancedIdentity);

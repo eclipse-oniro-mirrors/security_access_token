@@ -87,7 +87,7 @@ private:
     int32_t CreatePermissionUsedRecordToggleStatusTable() const;
     int32_t InsertLockScreenStatusColumn() const;
     int32_t InsertPermissionUsedTypeColumn() const;
-    int32_t UpdatePermissionRecordTablePrimaryKey() const;
+    int32_t UpdatePermissionRecordTablePrimaryKey(bool withEnhancedIdentity) const;
     int32_t CreatePermissionDisablePolicyTable() const;
     int32_t InsertEnhancedIdentityColumn() const;
 
