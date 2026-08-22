@@ -1340,12 +1340,16 @@ void AccessTokenInfoManager::GetNativePermissionList(const NativeTokenInfoBase& 
 {
     // need to process aclList
     for (const auto& state : native.permStateList) {
+        std::string permission = state.permissionName;
         PermissionBriefDef briefDef;
         uint32_t code;
-        if (!GetPermissionBriefDef(state.permissionName, briefDef, code) || !briefDef.isEnable) {
+        if (!GetPermissionBriefDef(permission, briefDef, code) || !briefDef.isEnable) {
             continue;
         }
-        // add IsPermissionReqValid to filter invalid permission
+        if ((native.apl < briefDef.availableLevel) &&
+            std::find(native.nativeAcls.begin(), native.nativeAcls.end(), permission) == native.nativeAcls.end()) {
+            continue;
+        }
         opCodeList.emplace_back(code);
         statusList.emplace_back(state.grantStatus == PERMISSION_GRANTED);
     }
