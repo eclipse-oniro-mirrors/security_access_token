@@ -34,7 +34,7 @@ namespace AccessToken {
 namespace {
 constexpr const char* FIELD_COUNT_NUMBER = "count";
 constexpr const char* INTEGER_STR = " integer not null,";
-constexpr const char* TEXT_STR = " text not null,";
+constexpr const char* TEXT_NOT_NULL_DEFAULT_EMPTY_STR = " text not null default '',";
 constexpr const char* CREATE_TABLE_STR = "create table if not exists ";
 constexpr const char* WHERE_1_STR = " where 1 = 1";
 constexpr int32_t SLEEP_RETRY_MS = 300;
@@ -90,7 +90,7 @@ void PermissionUsedRecordDb::OnUpdate(int32_t version)
             CreatePermissionUsedTypeTable();
             [[fallthrough]];
         case DataBaseVersion::VERISION_3: // 3->4
-            UpdatePermissionRecordTablePrimaryKey();
+            UpdatePermissionRecordTablePrimaryKey(false);
             [[fallthrough]];
         case DataBaseVersion::VERISION_4: // 4->5
             CreatePermissionUsedRecordToggleStatusTable();
@@ -100,7 +100,7 @@ void PermissionUsedRecordDb::OnUpdate(int32_t version)
             [[fallthrough]];
         case DataBaseVersion::VERISION_6: // 6->7
             InsertEnhancedIdentityColumn();
-            UpdatePermissionRecordTablePrimaryKey();
+            UpdatePermissionRecordTablePrimaryKey(true);
             [[fallthrough]];
         case 7: // 7->8
             ExecuteSql("alter table " + std::string(PERMISSION_USED_RECORD_TOGGLE_STATUS_TABLE) + " add column " +
@@ -830,7 +830,7 @@ int32_t PermissionUsedRecordDb::CreatePermissionRecordTable() const
         .append(PrivacyFiledConst::FIELD_USED_TYPE)
         .append(INTEGER_STR)
         .append(PrivacyFiledConst::FIELD_ENHANCED_IDENTITY)
-        .append(TEXT_STR)
+        .append(TEXT_NOT_NULL_DEFAULT_EMPTY_STR)
         .append("primary key(")
         .append(PrivacyFiledConst::FIELD_TOKEN_ID)
         .append(",")
@@ -988,7 +988,8 @@ int32_t PermissionUsedRecordDb::InsertEnhancedIdentityColumn() const
     return insertResult;
 }
 
-static void CreateNewPermissionRecordTable(std::string& newTableName, std::string& createNewSql)
+static void CreateNewPermissionRecordTable(std::string& newTableName, std::string& createNewSql,
+    bool withEnhancedIdentity)
 {
     createNewSql = CREATE_TABLE_STR;
     createNewSql.append(newTableName + " (")
@@ -1009,10 +1010,12 @@ static void CreateNewPermissionRecordTable(std::string& newTableName, std::strin
         .append(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS)
         .append(INTEGER_STR)
         .append(PrivacyFiledConst::FIELD_USED_TYPE)
-        .append(INTEGER_STR)
-        .append(PrivacyFiledConst::FIELD_ENHANCED_IDENTITY)
-        .append(TEXT_STR)
-        .append("primary key(")
+        .append(INTEGER_STR);
+    if (withEnhancedIdentity) {
+        createNewSql.append(PrivacyFiledConst::FIELD_ENHANCED_IDENTITY)
+            .append(TEXT_NOT_NULL_DEFAULT_EMPTY_STR);
+    }
+    createNewSql.append("primary key(")
         .append(PrivacyFiledConst::FIELD_TOKEN_ID)
         .append(",")
         .append(PrivacyFiledConst::FIELD_OP_CODE)
@@ -1021,13 +1024,15 @@ static void CreateNewPermissionRecordTable(std::string& newTableName, std::strin
         .append(",")
         .append(PrivacyFiledConst::FIELD_TIMESTAMP)
         .append(",")
-        .append(PrivacyFiledConst::FIELD_USED_TYPE)
-        .append(",")
-        .append(PrivacyFiledConst::FIELD_ENHANCED_IDENTITY)
-        .append("))");
+        .append(PrivacyFiledConst::FIELD_USED_TYPE);
+    if (withEnhancedIdentity) {
+        createNewSql.append(",")
+            .append(PrivacyFiledConst::FIELD_ENHANCED_IDENTITY);
+    }
+    createNewSql.append("))");
 }
 
-int32_t PermissionUsedRecordDb::UpdatePermissionRecordTablePrimaryKey() const
+int32_t PermissionUsedRecordDb::UpdatePermissionRecordTablePrimaryKey(bool withEnhancedIdentity) const
 {
     auto it = dataTypeToSqlTable_.find(DataType::PERMISSION_RECORD);
     if (it == dataTypeToSqlTable_.end()) {
@@ -1038,7 +1043,7 @@ int32_t PermissionUsedRecordDb::UpdatePermissionRecordTablePrimaryKey() const
     std::string tableName = it->second.tableName_;
     std::string newTableName = it->second.tableName_ + "_new";
     std::string createNewSql;
-    CreateNewPermissionRecordTable(newTableName, createNewSql);
+    CreateNewPermissionRecordTable(newTableName, createNewSql, withEnhancedIdentity);
 
     int32_t createNewRes = ExecuteSql(createNewSql); // 1、create new table with new primary key
     if (createNewRes != 0) {
