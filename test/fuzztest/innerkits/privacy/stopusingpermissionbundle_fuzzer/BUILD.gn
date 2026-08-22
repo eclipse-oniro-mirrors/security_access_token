@@ -24,9 +24,7 @@ ohos_fuzztest("StopUsingPermissionBundleFuzzTest") {
   cflags = privacy_fuzzer_cflags
   sources = [ "stopusingpermissionbundle_fuzzer.cpp" ]
 
-  deps = [
-    "${access_token_path}/frameworks/common:accesstoken_common_cxx",
-  ]
+  deps = [ "${access_token_path}/frameworks/common:accesstoken_common_cxx" ]
   deps += privacy_fuzzer_deps
 
   configs = privacy_fuzzer_configs

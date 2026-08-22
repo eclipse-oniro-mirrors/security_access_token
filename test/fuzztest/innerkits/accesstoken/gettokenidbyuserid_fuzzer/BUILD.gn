@@ -39,6 +39,7 @@ ohos_fuzztest("GetTokenIDByUserIDFuzzTest") {
   configs = [ "${access_token_path}/config:coverage_flags" ]
 
   external_deps = [
+    "bounds_checking_function:libsec_shared",
     "c_utils:utils",
     "ipc:ipc_single",
   ]
