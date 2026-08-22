@@ -278,11 +278,11 @@ bool DataValidator::IsHapCaller(AccessTokenID id)
     return true;
 }
 
-bool DataValidator::IsListSizeValid(uint32_t size)
+bool DataValidator::IsListSizeValid(size_t size)
 {
     // param is unsigned
     if (size == 0 || size > MAX_LIST_SIZE) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Size is invalid(%{public}u).", size);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Size is invalid(%{public}zu).", size);
         return false;
     }
     return true;

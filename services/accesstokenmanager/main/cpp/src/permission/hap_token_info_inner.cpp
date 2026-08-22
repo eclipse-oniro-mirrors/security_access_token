@@ -432,6 +432,7 @@ int32_t HapTokenInfoInner::UpdatePermissionStatus(
         GenericValues conditions;
         conditions.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenInfoBasic_.tokenID));
         conditions.Put(TokenFiledConst::FIELD_PERMISSION_NAME, permissionName);
+
         (void)AccessTokenDbOperator::Modify(AtmDataType::ACCESSTOKEN_PERMISSION_STATE, permStateValues[i], conditions);
     }
     return RET_SUCCESS;

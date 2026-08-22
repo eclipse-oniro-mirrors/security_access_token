@@ -394,7 +394,10 @@ int32_t PermissionManager::UpdateMultiTokenPermissionState(const std::shared_ptr
     AccessTokenID tokenID, const std::vector<std::string> &permissionList, bool isGranted, uint32_t flag, bool needKill)
 {
     HapTokenInfo hapInfo;
-    AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenID, hapInfo);
+    if (AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenID, hapInfo) != RET_SUCCESS) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get hap token info, tokenId=%{public}u.", tokenID);
+        return AccessTokenError::ERR_TOKENID_NOT_EXIST;
+    }
     ClearThreadErrorMsg();
 
     int32_t ret = RET_SUCCESS;
@@ -617,8 +620,8 @@ int32_t PermissionManager::UpdatePermission(AccessTokenID tokenID, const std::st
     return RET_SUCCESS;
 }
 
-int32_t PermissionManager::CheckAndUpdatePermission(AccessTokenID tokenID, const std::string& permissionName,
-    bool isGranted, uint32_t flag, bool killProcess)
+int32_t PermissionManager::CheckPermissionParams(
+    AccessTokenID tokenID, const std::string& permissionName, uint32_t flag)
 {
     if (!PermissionValidator::IsPermissionNameValid(permissionName)) {
         return AccessTokenError::ERR_PARAM_INVALID;
@@ -631,6 +634,12 @@ int32_t PermissionManager::CheckAndUpdatePermission(AccessTokenID tokenID, const
             flag, permissionName.c_str(), tokenID);
         return AccessTokenError::ERR_PARAM_INVALID;
     }
+    return RET_SUCCESS;
+}
+
+int32_t PermissionManager::CheckAndUpdatePermission(AccessTokenID tokenID, const std::string& permissionName,
+    bool isGranted, uint32_t flag, bool killProcess)
+{
     bool needKill = false;
     // To kill process when perm is revoke
     if (!isGranted && flag != PERMISSION_COMPONENT_SET) {
@@ -645,8 +654,16 @@ int32_t PermissionManager::CheckAndUpdatePermission(AccessTokenID tokenID, const
 int32_t PermissionManager::CheckAndUpdatePermissionInner(AccessTokenID tokenID, const std::string& permissionName,
     bool isGranted, uint32_t flag, bool killProcess)
 {
+    int32_t ret = CheckPermissionParams(tokenID, permissionName, flag);
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
+
     HapTokenInfo hapInfo;
-    AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenID, hapInfo);
+    if (AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenID, hapInfo) != RET_SUCCESS) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get hap token info for token %{public}u.", tokenID);
+        return AccessTokenError::ERR_TOKENID_NOT_EXIST;
+    }
     ClearThreadErrorMsg();
 
     UpdatePermissionInfo updateInfo;
@@ -660,7 +677,7 @@ int32_t PermissionManager::CheckAndUpdatePermissionInner(AccessTokenID tokenID, 
     updateInfo.grantedFlag = isGranted;
     ReportUpdatePermissionEvent(updateInfo);
 
-    int32_t ret = CheckAndUpdatePermission(tokenID, permissionName, isGranted, flag, killProcess);
+    ret = CheckAndUpdatePermission(tokenID, permissionName, isGranted, flag, killProcess);
 
     uint32_t newFlag = flag;
     if (ret == RET_SUCCESS && GetPermissionFlag(tokenID, permissionName, newFlag) == RET_SUCCESS) {

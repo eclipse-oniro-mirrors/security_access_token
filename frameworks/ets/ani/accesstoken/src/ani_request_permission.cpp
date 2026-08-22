@@ -426,7 +426,9 @@ static bool ParseParameter(ani_env* env, ani_object aniContext, ani_array aniPer
             GetParamErrorMsg("context", "UIAbility or UIExtension Context"));
         return false;
     }
-    asyncContext->permissionList = ParseAniStringVector(env, aniPermissionList);
+    if (!ParseAniStringVector(env, aniPermissionList, asyncContext->permissionList)) {
+        return false;
+    }
     if (!AniParseCallback(env, reinterpret_cast<ani_ref>(callback), asyncContext->callbackRef_)) {
         return false;
     }

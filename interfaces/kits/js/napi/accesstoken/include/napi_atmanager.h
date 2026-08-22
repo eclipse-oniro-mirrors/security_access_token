@@ -61,6 +61,12 @@ struct RegisterPermStateChangeWorker {
     std::shared_ptr<RegisterPermStateChangeScopePtr> subscriber = nullptr;
 };
 
+enum class PermStateChangeRegisterState {
+    REGISTERING,
+    ACTIVE,
+    UNREGISTERING,
+};
+
 struct PermStateChangeContext {
     virtual ~PermStateChangeContext();
     napi_env env = nullptr;
@@ -70,6 +76,7 @@ struct PermStateChangeContext {
     AccessTokenKit* accessTokenKit = nullptr;
     std::thread::id threadId_;
     std::shared_ptr<RegisterPermStateChangeScopePtr> subscriber = nullptr;
+    PermStateChangeRegisterState registerState = PermStateChangeRegisterState::REGISTERING;
 };
 
 typedef PermStateChangeContext RegisterPermStateChangeInfo;
@@ -191,18 +198,19 @@ private:
     static bool ParseInputToRegister(const napi_env env, const napi_callback_info cbInfo,
         RegisterPermStateChangeInfo& registerPermStateChangeInfo);
     static napi_value RegisterPermStateChangeCallback(napi_env env, napi_callback_info cbInfo);
-    static bool IsExistRegister(const napi_env env, const RegisterPermStateChangeInfo* registerPermStateChangeInfo);
+    static bool IsExistRegister(const napi_env env, const std::shared_ptr<RegisterPermStateChangeInfo>& registerInfo);
+    static void FinishRegister(const std::shared_ptr<RegisterPermStateChangeInfo>& registerInfo, bool success);
     static bool FillPermStateChangeScope(const napi_env env, const napi_value* argv,
         const std::string& type, PermStateChangeScope& scopeInfo);
     static bool ParseInputToUnregister(const napi_env env, napi_callback_info cbInfo,
         UnregisterPermStateChangeInfo& unregisterPermStateChangeInfo);
     static napi_value UnregisterPermStateChangeCallback(napi_env env, napi_callback_info cbInfo);
     static bool FindAndGetSubscriberInVector(UnregisterPermStateChangeInfo* unregisterPermStateChangeInfo,
-        std::vector<RegisterPermStateChangeInfo*>& batchPermStateChangeRegisters, const napi_env env);
-    static void DeleteRegisterFromVector(const PermStateChangeScope& scopeInfo, const napi_env env,
-        napi_ref subscriberRef);
+        std::vector<std::shared_ptr<RegisterPermStateChangeInfo>>& batchPermStateChangeRegisters, const napi_env env);
+    static void FinishUnregister(const std::shared_ptr<RegisterPermStateChangeInfo>& registerInfo, bool success);
     static std::string GetPermParamValue(PermissionParamCache& paramCache, const char* paramKey);
     static void UpdatePermissionCache(AtManagerSyncContext* syncContext);
+    static void UpdatePermStatusCache(AtManagerSyncContext* syncContext);
 };
 } // namespace AccessToken
 } // namespace Security

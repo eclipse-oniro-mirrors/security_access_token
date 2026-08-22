@@ -25,6 +25,8 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+constexpr bool OPTIONAL_PROPERTY = true;
+
 bool AniFindNameSpace(ani_env* env, const std::string& namespaceDescriptor, ani_namespace& out);
 bool AniFindClass(ani_env* env, const std::string&  classDescriptor, ani_class& out);
 bool AniClassFindMethod(
@@ -37,13 +39,19 @@ bool AniIsRefUndefined(ani_env* env, const ani_ref& ref);
 bool AniParseUint32(ani_env* env, const ani_int& aniInt, uint32_t& out);
 bool AniParseAccessTokenIDArray(ani_env* env, const ani_array& array, std::vector<uint32_t>& out);
 
-bool GetBoolProperty(ani_env* env, const ani_object& object, const std::string& property, bool& value);
-bool GetIntProperty(ani_env* env, const ani_object& object, const std::string& property, int32_t& value);
-bool GetLongProperty(ani_env* env, const ani_object& object, const std::string& property, int64_t& value);
-bool GetStringProperty(ani_env* env, const ani_object& object, const std::string& property, std::string& value);
-bool GetEnumProperty(ani_env* env, const ani_object& object, const std::string& property, int32_t& value);
+bool GetBoolProperty(ani_env* env, const ani_object& object, const std::string& property, bool& value,
+    bool isPropertyOptional);
+bool GetIntProperty(ani_env* env, const ani_object& object, const std::string& property, int32_t& value,
+    bool isPropertyOptional);
+bool GetLongProperty(ani_env* env, const ani_object& object, const std::string& property, int64_t& value,
+    bool isPropertyOptional);
+bool GetStringProperty(ani_env* env, const ani_object& object, const std::string& property, std::string& value,
+    bool isPropertyOptional);
+bool GetEnumProperty(ani_env* env, const ani_object& object, const std::string& property, int32_t& value,
+    bool isPropertyOptional);
 bool GetStringVecProperty(
-    ani_env* env, const ani_object& object, const std::string& property, std::vector<std::string>& value);
+    ani_env* env, const ani_object& object, const std::string& property, std::vector<std::string>& value,
+    bool isPropertyOptional);
 
 bool SetBoolProperty(ani_env* env, ani_object& object, const std::string& property, bool in);
 bool SetIntProperty(ani_env* env, ani_object& object, const std::string& property, int32_t in);
@@ -57,13 +65,13 @@ bool SetOptionalIntProperty(ani_env* env, ani_object& aniObject, const std::stri
 bool SetOptionalLongProperty(ani_env* env, ani_object& aniObject, const std::string& property, int64_t in);
 
 bool IsCurrentThread(std::thread::id threadId);
-bool AniIsCallbackRefEqual(ani_env* env, const ani_ref& compareRef, const ani_ref& targetRref, std::thread::id threadId,
+bool CompareAniCallbackRef(ani_env* env, const ani_ref& compareRef, const ani_ref& targetRref, std::thread::id threadId,
     bool& isEqual);
 bool AniFunctionalObjectCall(ani_env *env, const ani_fn_object& fn, ani_size size, ani_ref* argv, ani_ref& result);
 
 // ani to naitive
 bool ParseAniString(ani_env* env, const ani_string& aniStr, std::string& inputStr);
-std::vector<std::string> ParseAniStringVector(ani_env* env, const ani_array& aniStrArr);
+bool ParseAniStringVector(ani_env* env, const ani_array& aniStrArr, std::vector<std::string>& out);
 
 // native to ani
 ani_string CreateAniString(ani_env *env, const std::string& str);
