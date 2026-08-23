@@ -86,7 +86,7 @@ void PermissionRecordSet::GetInActiveUniqueRecord(const std::set<ContinuousPermi
     }
 
     removedList = std::move(uniqueRemovedList);
-    LOGI(PRI_DOMAIN, PRI_TAG, "Get inactive list size = %{public}zu", removedList.size());
+    LOGD(PRI_DOMAIN, PRI_TAG, "Get inactive list size = %{public}zu", removedList.size());
 }
 
 void PermissionRecordSet::GetUnusedCameraRecords(const std::set<ContinuousPermissionRecord>& recordList,

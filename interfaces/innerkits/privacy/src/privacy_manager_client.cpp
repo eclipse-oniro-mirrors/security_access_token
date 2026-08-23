@@ -103,7 +103,7 @@ int32_t PrivacyManagerClient::SetPermissionUsedRecordToggleStatus(int32_t userID
 
     int32_t ret = proxy->SetPermissionUsedRecordToggleStatus(userID, status, subProfileId);
     ret = ConvertResult(ret);
-    LOGI(PRI_DOMAIN, PRI_TAG, "Result is %{public}d.", ret);
+    LOGI(PRI_DOMAIN, PRI_TAG, "Ret is %{public}d.", ret);
     return ret;
 }
 
@@ -117,7 +117,7 @@ int32_t PrivacyManagerClient::GetPermissionUsedRecordToggleStatus(int32_t userID
 
     int32_t ret = proxy->GetPermissionUsedRecordToggleStatus(userID, status, subProfileId);
     ret = ConvertResult(ret);
-    LOGI(PRI_DOMAIN, PRI_TAG, "Result is %{public}d.", ret);
+    LOGI(PRI_DOMAIN, PRI_TAG, "Ret is %{public}d.", ret);
     return ret;
 }
 
@@ -259,7 +259,7 @@ int32_t PrivacyManagerClient::StartUsingPermission(
 
     int32_t ret = proxy->StartUsingPermission(parcel, anonyStub->AsObject());
     ret = ConvertResult(ret);
-    LOGI(PRI_DOMAIN, PRI_TAG, "Result is %{public}d.", ret);
+    LOGI(PRI_DOMAIN, PRI_TAG, "Ret is %{public}d.", ret);
     if (ret == RET_SUCCESS) {
         SetInputCache(parcel.info, false);
     }
@@ -355,7 +355,7 @@ int32_t PrivacyManagerClient::StopUsingPermission(
 
     int32_t ret = proxy->StopUsingPermission(tokenID, pid, permissionName, enhancedIdentity);
     ret = ConvertResult(ret);
-    LOGI(PRI_DOMAIN, PRI_TAG, "Result is %{public}d.", ret);
+    LOGI(PRI_DOMAIN, PRI_TAG, "Ret is %{public}d.", ret);
     return ret;
 }
 
@@ -426,7 +426,7 @@ int32_t PrivacyManagerClient::StartRemoteUsingPermission(
 
     int32_t ret = proxy->StartRemoteUsingPermission(parcel, anonyStub->AsObject());
     ret = ConvertResult(ret);
-    LOGI(PRI_DOMAIN, PRI_TAG, "Result is %{public}d.", ret);
+    LOGI(PRI_DOMAIN, PRI_TAG, "Ret is %{public}d.", ret);
     if (ret == RET_SUCCESS) {
         SetRemoteInputCache(usedInfo);
     }
@@ -445,7 +445,7 @@ int32_t PrivacyManagerClient::StopRemoteUsingPermission(const RemoteCallerInfo& 
 
     int32_t ret = proxy->StopRemoteUsingPermission(info.remoteDeviceId, info.remoteDeviceName, permissionName);
     ret = ConvertResult(ret);
-    LOGI(PRI_DOMAIN, PRI_TAG, "Result is %{public}d.", ret);
+    LOGI(PRI_DOMAIN, PRI_TAG, "Ret is %{public}d.", ret);
     return ret;
 }
 
@@ -472,7 +472,7 @@ int32_t PrivacyManagerClient::AddRemotePermissionUsedRecord(const RemoteCallerIn
         ret = proxy->AddRemotePermissionUsedRecord(infoParcel);
     }
     ret = ConvertResult(ret);
-    LOGI(PRI_DOMAIN, PRI_TAG, "Result is %{public}d.", ret);
+    LOGI(PRI_DOMAIN, PRI_TAG, "Ret is %{public}d.", ret);
     return ret;
 }
 
@@ -494,7 +494,7 @@ int32_t PrivacyManagerClient::GetRemotePermissionUsedRecords(const PermissionUse
     } else {
         ret = ConvertResult(ret);
     }
-    LOGI(PRI_DOMAIN, PRI_TAG, "Result is %{public}d.", ret);
+    LOGI(PRI_DOMAIN, PRI_TAG, "Ret is %{public}d.", ret);
     return ret;
 }
 #endif
@@ -561,7 +561,7 @@ int32_t PrivacyManagerClient::StartUsingPermission(const std::string& bundleName
 
     int32_t ret = proxy->StartUsingPermission(bundleName, permissionName, anonyStub->AsObject());
     ret = ConvertResult(ret);
-    LOGI(PRI_DOMAIN, PRI_TAG, "Bundle start ret=%{public}d.", ret);
+    LOGI(PRI_DOMAIN, PRI_TAG, "Ret=%{public}d.", ret);
     if (ret == RET_SUCCESS) {
         SetBundleInputCache(bundleName, permissionName);
     }
@@ -580,7 +580,7 @@ int32_t PrivacyManagerClient::StopUsingPermission(const std::string& bundleName,
 
     int32_t ret = proxy->StopUsingPermission(bundleName, permissionName);
     ret = ConvertResult(ret);
-    LOGI(PRI_DOMAIN, PRI_TAG, "Bundle stop ret=%{public}d.", ret);
+    LOGI(PRI_DOMAIN, PRI_TAG, "Ret=%{public}d.", ret);
     return ret;
 }
 #endif
@@ -595,7 +595,7 @@ int32_t PrivacyManagerClient::RemovePermissionUsedRecords(
     }
     int32_t ret = proxy->RemovePermissionUsedRecords(tokenID, enhancedIdentity);
     ret = ConvertResult(ret);
-    LOGI(PRI_DOMAIN, PRI_TAG, "Result is %{public}d, enhancedIdentity=%{public}s.",
+    LOGI(PRI_DOMAIN, PRI_TAG, "Ret is %{public}d, enhanced=%{public}s.",
         ret, enhancedIdentity.c_str());
     return ret;
 }
@@ -618,7 +618,7 @@ int32_t PrivacyManagerClient::GetPermissionUsedRecords(
     } else {
         ret = ConvertResult(ret);
     }
-    LOGI(PRI_DOMAIN, PRI_TAG, "Result is %{public}d.", ret);
+    LOGI(PRI_DOMAIN, PRI_TAG, "Ret is %{public}d.", ret);
     return ret;
 }
 
@@ -635,7 +635,7 @@ int32_t PrivacyManagerClient::GetPermissionUsedRecords(const PermissionUsedReque
     requestParcel.request = request;
     int32_t ret = proxy->GetPermissionUsedRecordsAsync(requestParcel, callback);
     ret = ConvertResult(ret);
-    LOGI(PRI_DOMAIN, PRI_TAG, "Result is %{public}d.", ret);
+    LOGI(PRI_DOMAIN, PRI_TAG, "Ret is %{public}d.", ret);
     return ret;
 }
 
@@ -696,7 +696,7 @@ int32_t PrivacyManagerClient::RegisterPermActiveStatusCallback(
         std::lock_guard<std::mutex> lock(activeCbkMutex_);
         activeCbkMap_.erase(callback);
     }
-    LOGI(PRI_DOMAIN, PRI_TAG, "Result is %{public}d.", result);
+    LOGI(PRI_DOMAIN, PRI_TAG, "Ret is %{public}d.", result);
     return result;
 }
 
@@ -734,7 +734,7 @@ int32_t PrivacyManagerClient::UnRegisterPermActiveStatusCallback(
     } else {
         result = ConvertResult(result);
     }
-    LOGI(PRI_DOMAIN, PRI_TAG, "Result is %{public}d.", result);
+    LOGI(PRI_DOMAIN, PRI_TAG, "Ret is %{public}d.", result);
     return result;
 }
 
@@ -765,7 +765,7 @@ int32_t PrivacyManagerClient::GetPermissionUsedTypeInfos(const AccessTokenID tok
     int32_t res = proxy->GetPermissionUsedTypeInfos(tokenId, permissionName, resultsParcel);
     if (res != RET_SUCCESS) {
         res = ConvertResult(res);
-        LOGI(PRI_DOMAIN, PRI_TAG, "Result is %{public}d.", res);
+        LOGI(PRI_DOMAIN, PRI_TAG, "Ret is %{public}d.", res);
         return res;
     }
 
@@ -797,7 +797,7 @@ int32_t PrivacyManagerClient::SetHapWithFGReminder(uint32_t tokenId, bool isAllo
     }
     int32_t ret = proxy->SetHapWithFGReminder(tokenId, isAllowed);
     ret = ConvertResult(ret);
-    LOGI(PRI_DOMAIN, PRI_TAG, "Result is %{public}d.", ret);
+    LOGI(PRI_DOMAIN, PRI_TAG, "Ret is %{public}d.", ret);
     return ret;
 }
 
@@ -810,7 +810,7 @@ int32_t PrivacyManagerClient::SetDisablePolicy(const std::string& permissionName
     }
     int32_t ret = proxy->SetDisablePolicy(permissionName, isDisable);
     ret = ConvertResult(ret);
-    LOGI(PRI_DOMAIN, PRI_TAG, "Result is %{public}d.", ret);
+    LOGI(PRI_DOMAIN, PRI_TAG, "Ret is %{public}d.", ret);
     return ret;
 }
 
@@ -823,7 +823,12 @@ int32_t PrivacyManagerClient::GetDisablePolicy(const std::string& permissionName
     }
     int32_t ret = proxy->GetDisablePolicy(permissionName, isDisable);
     ret = ConvertResult(ret);
-    LOGI(PRI_DOMAIN, PRI_TAG, "Result is %{public}d.", ret);
+    if (ret == RET_SUCCESS) {
+        LOGI(PRI_DOMAIN, PRI_TAG,
+            "Perm %{public}s, disable %{public}d, ret is %{public}d.", permissionName.c_str(), isDisable, ret);
+    } else {
+        LOGI(PRI_DOMAIN, PRI_TAG, "Perm %{public}s, ret is %{public}d.", permissionName.c_str(), ret);
+    }
     return ret;
 }
 
@@ -858,7 +863,7 @@ int32_t PrivacyManagerClient::CheckPermissionInUse(const std::string& permission
 
     int32_t ret = proxy->CheckPermissionInUse(permissionName, isUsing);
     ret = ConvertResult(ret);
-    LOGI(PRI_DOMAIN, PRI_TAG, "CheckPermissionInUse Result is %{public}d, isUsing: %{public}d.", ret, isUsing);
+    LOGI(PRI_DOMAIN, PRI_TAG, "Ret is %{public}d, isUsing: %{public}d.", ret, isUsing);
     return ret;
 }
 
@@ -924,7 +929,7 @@ int32_t PrivacyManagerClient::RegisterPermDisablePolicyCallback(
         std::lock_guard<std::mutex> lock(disableCbkMutex_);
         disableCbkMap_.erase(callback);
     }
-    LOGI(PRI_DOMAIN, PRI_TAG, "Result is %{public}d.", result);
+    LOGI(PRI_DOMAIN, PRI_TAG, "Ret is %{public}d.", result);
     return result;
 }
 
@@ -959,7 +964,7 @@ int32_t PrivacyManagerClient::UnRegisterPermDisablePolicyCallback(
     } else {
         result = ConvertResult(result);
     }
-    LOGI(PRI_DOMAIN, PRI_TAG, "Result is %{public}d.", result);
+    LOGI(PRI_DOMAIN, PRI_TAG, "Ret is %{public}d.", result);
     return result;
 }
 

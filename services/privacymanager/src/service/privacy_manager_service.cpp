@@ -692,8 +692,6 @@ int32_t PrivacyManagerService::SetDisablePolicy(const std::string& permissionNam
 
 int32_t PrivacyManagerService::GetDisablePolicy(const std::string& permissionName, bool& isDisable)
 {
-    LOGI(PRI_DOMAIN, PRI_TAG, "Perm %{public}s.", permissionName.c_str());
-
     if (!VerifyPermission(GET_PERMISSION_POLICY)) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Caller without permission ohos.permission.GET_PERMISSION_POLICY!");
         return PrivacyError::ERR_PERMISSION_DENIED;

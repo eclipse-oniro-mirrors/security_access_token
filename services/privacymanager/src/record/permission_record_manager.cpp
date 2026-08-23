@@ -463,7 +463,6 @@ int32_t PermissionRecordManager::GetPermissionRecord(const AddPermParamInfo& inf
     }
     int32_t opCode;
     if (!Constant::TransferPermissionToOpcode(info.permissionName, opCode)) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Invalid perm(%{public}s)", info.permissionName.c_str());
         return PrivacyError::ERR_PERMISSION_NOT_EXIST;
     }
     if (IsEdmMuteOrDisable(info.permissionName)) {
@@ -1785,7 +1784,7 @@ void PermissionRecordManager::ExecuteDeletePermissionRecordTask()
 #ifdef REMOTE_PRIVACY_ENABLE
         (void)DeleteRemotePermissionRecord(recordAgingTime_);
 #endif
-        LOGI(PRI_DOMAIN, PRI_TAG, "Delete record end.");
+        LOGD(PRI_DOMAIN, PRI_TAG, "Delete record end.");
         // Sleep for one minute to avoid frequent refresh of the file.
         std::this_thread::sleep_for(std::chrono::minutes(1));
         ReduceDeleteTaskNum();
