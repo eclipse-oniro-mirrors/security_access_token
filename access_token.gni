@@ -32,6 +32,7 @@ declare_args() {
   access_token_enhance_capability = true
   access_token_enable_manual_test = false
   access_token_support_subprofile = false
+  access_token_privacy_bundle_start_stop_enable = false
 }
 
 # External dependencies for each feature flag
@@ -236,12 +237,8 @@ if ("${target_platform}" == "pc" || "${target_platform}" == "tablet" ||
   access_token_manage_user_policy_enable = false
 }
 
-if ("${target_platform}" == "phone" || "${target_platform}" == "tablet" ||
-    "${target_platform}" == "pc") {
-  privacy_bundle_start_stop_enable = true
+if (access_token_privacy_bundle_start_stop_enable) {
   access_token_cflags_cc += [ "-DPRIVACY_BUNDLE_START_STOP_ENABLE" ]
-} else {
-  privacy_bundle_start_stop_enable = false
 }
 
 if (is_emulator) {
