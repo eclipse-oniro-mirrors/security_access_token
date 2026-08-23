@@ -21,6 +21,9 @@ config("accesstoken_ndk_config") {
 ohos_shared_library("libability_access_control") {
   innerapi_tags = [ "ndk" ]
   output_extension = "so"
+  if (!use_clang_coverage) {
+    version_script = "libability_access_control.map"
+  }
   public_configs = [ ":accesstoken_ndk_config" ]
 
   sanitize = {

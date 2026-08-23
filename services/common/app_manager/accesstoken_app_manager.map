@@ -1,0 +1,15 @@
+1.0 {
+  global:
+    extern "C++" {
+      OHOS::Security::AccessToken::AppManagerAccessClient::*;
+      OHOS::Security::AccessToken::ApplicationStateObserverStub::*;
+      OHOS::Security::AccessToken::AppStateData::*;
+      OHOS::Security::AccessToken::ProcessData::*;
+      "vtable for OHOS::Security::AccessToken::AppStateData";
+      "VTT for OHOS::Security::AccessToken::AppStateData";
+      "vtable for OHOS::Security::AccessToken::ProcessData";
+      "VTT for OHOS::Security::AccessToken::ProcessData";
+    };
+  local:
+    *;
+};

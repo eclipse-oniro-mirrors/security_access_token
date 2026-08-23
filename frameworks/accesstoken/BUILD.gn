@@ -34,6 +34,9 @@ ohos_shared_library("accesstoken_communication_adapter_cxx") {
   }
   branch_protector_ret = "pac_ret"
   branch_protector_frt = "bti"
+  if (!use_clang_coverage) {
+    version_script = "accesstoken_communication_adapter_cxx.map"
+  }
 
   public_configs = [ ":accesstoken_communication_adapter_cxx_public_config" ]
   configs = [

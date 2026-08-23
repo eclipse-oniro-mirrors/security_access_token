@@ -18,6 +18,9 @@ import("//build/ohos/ace/ace.gni")
 
 ohos_shared_library("accesstoken_ani") {
   shlib_type = "ani"
+  if (!use_clang_coverage) {
+    version_script = "accesstoken_ani.map"
+  }
   sanitize = {
     cfi = true
     cfi_cross_dso = true

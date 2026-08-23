@@ -29,6 +29,9 @@ ohos_shared_library("accesstoken_screenlock_manager") {
       debug = false
     }
     branch_protector_ret = "pac_ret"
+    if (!use_clang_coverage) {
+      version_script = "accesstoken_screenlock_manager.map"
+    }
 
     include_dirs = [ "include" ]
 

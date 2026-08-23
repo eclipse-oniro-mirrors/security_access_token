@@ -21,6 +21,9 @@ ohos_shared_library("libabilityaccessctrl") {
     debug = false
   }
   branch_protector_ret = "pac_ret"
+  if (!use_clang_coverage) {
+    version_script = "libabilityaccessctrl.map"
+  }
   include_dirs = [
     "${access_token_path}/frameworks/common/include",
     "${access_token_path}/interfaces/innerkits/accesstoken/include",

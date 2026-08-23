@@ -1,0 +1,31 @@
+1.0 {
+  global:
+    extern "C" {
+      GetThreadErrorMsgLen;
+      GetThreadErrorMsg;
+      ClearThreadErrorMsg;
+      AddEventMessage;
+    };
+    extern "C++" {
+      OHOS::Security::AccessToken::ConstantCommon::*;
+      OHOS::Security::AccessToken::DataValidator::*;
+      OHOS::Security::AccessToken::PermissionValidator::*;
+      OHOS::Security::AccessToken::TimeUtil::*;
+      OHOS::Security::AccessToken::TokenIDAttributes::*;
+      OHOS::Security::AccessToken::TransferPermissionToOpcode*;
+      OHOS::Security::AccessToken::TransferOpcodeToPermission*;
+      OHOS::Security::AccessToken::QueryRequredPermissions*;
+      OHOS::Security::AccessToken::QueryMappedPermissionsByCliPermission*;
+      OHOS::Security::AccessToken::IsUserGrantPermission*;
+      OHOS::Security::AccessToken::IsOperablePermission*;
+      OHOS::Security::AccessToken::IsDefinedPermissionInner*;
+      OHOS::Security::AccessToken::GetPermissionBriefDef*;
+      OHOS::Security::AccessToken::ConvertPermissionBriefToDef*;
+      OHOS::Security::AccessToken::IsPermissionValidForHap*;
+      OHOS::Security::AccessToken::GetDefPermissionsSize*;
+      OHOS::Security::AccessToken::GetPermDefVersion*;
+      OHOS::Security::AccessToken::SetPermissionBriefEnabled*;
+    };
+  local:
+    *;
+};
