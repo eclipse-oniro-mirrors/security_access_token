@@ -1,0 +1,26 @@
+1.0 {
+  global:
+    extern "C++" {
+      OHOS::Security::AccessToken::CreateJson*;
+      OHOS::Security::AccessToken::FreeJson*;
+      OHOS::Security::AccessToken::PackJsonToString*;
+      OHOS::Security::AccessToken::JsonToStringFormatted*;
+      OHOS::Security::AccessToken::GetObjFromJson*;
+      OHOS::Security::AccessToken::GetArrayFromJson*;
+      OHOS::Security::AccessToken::GetStringFromJson*;
+      OHOS::Security::AccessToken::GetIntFromJson*;
+      OHOS::Security::AccessToken::GetUnsignedIntFromJson*;
+      OHOS::Security::AccessToken::GetBoolFromJson*;
+      OHOS::Security::AccessToken::AddObjToJson*;
+      OHOS::Security::AccessToken::AddObjToArray*;
+      OHOS::Security::AccessToken::AddStringToJson*;
+      OHOS::Security::AccessToken::AddBoolToJson*;
+      OHOS::Security::AccessToken::AddIntToJson*;
+      OHOS::Security::AccessToken::AddUnsignedIntToJson*;
+      OHOS::Security::AccessToken::AddInt64ToJson*;
+      OHOS::Security::AccessToken::AddUnsignedIntToArray*;
+      OHOS::Security::AccessToken::AddStringToArray*;
+    };
+  local:
+    *;
+};

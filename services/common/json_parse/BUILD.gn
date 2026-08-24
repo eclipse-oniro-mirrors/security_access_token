@@ -29,6 +29,9 @@ ohos_shared_library("accesstoken_json_parse") {
       debug = false
     }
     branch_protector_ret = "pac_ret"
+    if (!use_clang_coverage) {
+      version_script = "accesstoken_json_parse.map"
+    }
 
     include_dirs = [
       "include",

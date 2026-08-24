@@ -75,6 +75,9 @@ if (is_standard_system && lite_device_enable) {
       debug = false
     }
     branch_protector_ret = "pac_ret"
+    if (!use_clang_coverage) {
+      version_script = "accesstoken_db_loader.map"
+    }
 
     configs = [
       "${access_token_path}/config:access_token_compile_flags",

@@ -110,6 +110,9 @@ if (is_standard_system) {
       "platformsdk",
       "sasdk",
     ]
+    if (!use_clang_coverage) {
+      version_script = "libtokenid_sdk.map"
+    }
 
     output_name = "libtokenid_sdk"
     public_configs = [ ":accesstoken" ]

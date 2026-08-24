@@ -23,6 +23,9 @@ ohos_shared_library("accesstoken_app_manager") {
     debug = false
   }
   branch_protector_ret = "pac_ret"
+  if (!use_clang_coverage) {
+    version_script = "accesstoken_app_manager.map"
+  }
 
   include_dirs = [
     "${access_token_path}/frameworks/common/include",

@@ -1,0 +1,51 @@
+1.0 {
+  global:
+    extern "C++" {
+      OHOS::Security::AccessToken::ActiveChangeResponseParcel::Marshalling*;
+      OHOS::Security::AccessToken::ActiveChangeResponseParcel::Unmarshalling*;
+      OHOS::Security::AccessToken::AddPermParamInfoParcel::Marshalling*;
+      OHOS::Security::AccessToken::AddPermParamInfoParcel::Unmarshalling*;
+      OHOS::Security::AccessToken::BundleUsedRecordParcel::Marshalling*;
+      OHOS::Security::AccessToken::BundleUsedRecordParcel::Unmarshalling*;
+      OHOS::Security::AccessToken::PermDisablePolicyParcel::Marshalling*;
+      OHOS::Security::AccessToken::PermDisablePolicyParcel::Unmarshalling*;
+      OHOS::Security::AccessToken::PermissionUsedRecordParcel::Marshalling*;
+      OHOS::Security::AccessToken::PermissionUsedRecordParcel::Unmarshalling*;
+      OHOS::Security::AccessToken::PermissionUsedRequestParcel::Marshalling*;
+      OHOS::Security::AccessToken::PermissionUsedRequestParcel::Unmarshalling*;
+      OHOS::Security::AccessToken::PermissionUsedResultParcel::Marshalling*;
+      OHOS::Security::AccessToken::PermissionUsedResultParcel::Unmarshalling*;
+      OHOS::Security::AccessToken::PermissionUsedTypeInfoParcel::Marshalling*;
+      OHOS::Security::AccessToken::PermissionUsedTypeInfoParcel::Unmarshalling*;
+      OHOS::Security::AccessToken::RemoteAddPermParamInfoParcel::Marshalling*;
+      OHOS::Security::AccessToken::RemoteAddPermParamInfoParcel::Unmarshalling*;
+      OHOS::Security::AccessToken::RemotePermissionUsedInfoParcel::Marshalling*;
+      OHOS::Security::AccessToken::RemotePermissionUsedInfoParcel::Unmarshalling*;
+      OHOS::Security::AccessToken::UsedRecordDetailParcel::Marshalling*;
+      OHOS::Security::AccessToken::UsedRecordDetailParcel::Unmarshalling*;
+      "vtable for OHOS::Security::AccessToken::ActiveChangeResponseParcel";
+      "VTT for OHOS::Security::AccessToken::ActiveChangeResponseParcel";
+      "vtable for OHOS::Security::AccessToken::AddPermParamInfoParcel";
+      "VTT for OHOS::Security::AccessToken::AddPermParamInfoParcel";
+      "vtable for OHOS::Security::AccessToken::BundleUsedRecordParcel";
+      "VTT for OHOS::Security::AccessToken::BundleUsedRecordParcel";
+      "vtable for OHOS::Security::AccessToken::PermDisablePolicyParcel";
+      "VTT for OHOS::Security::AccessToken::PermDisablePolicyParcel";
+      "vtable for OHOS::Security::AccessToken::PermissionUsedRecordParcel";
+      "VTT for OHOS::Security::AccessToken::PermissionUsedRecordParcel";
+      "vtable for OHOS::Security::AccessToken::PermissionUsedRequestParcel";
+      "VTT for OHOS::Security::AccessToken::PermissionUsedRequestParcel";
+      "vtable for OHOS::Security::AccessToken::PermissionUsedResultParcel";
+      "VTT for OHOS::Security::AccessToken::PermissionUsedResultParcel";
+      "vtable for OHOS::Security::AccessToken::PermissionUsedTypeInfoParcel";
+      "VTT for OHOS::Security::AccessToken::PermissionUsedTypeInfoParcel";
+      "vtable for OHOS::Security::AccessToken::RemoteAddPermParamInfoParcel";
+      "VTT for OHOS::Security::AccessToken::RemoteAddPermParamInfoParcel";
+      "vtable for OHOS::Security::AccessToken::RemotePermissionUsedInfoParcel";
+      "VTT for OHOS::Security::AccessToken::RemotePermissionUsedInfoParcel";
+      "vtable for OHOS::Security::AccessToken::UsedRecordDetailParcel";
+      "VTT for OHOS::Security::AccessToken::UsedRecordDetailParcel";
+    };
+  local:
+    *;
+};

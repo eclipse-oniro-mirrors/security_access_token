@@ -25,6 +25,9 @@ ohos_shared_library("privacy_communication_adapter_cxx") {
   }
   branch_protector_ret = "pac_ret"
   branch_protector_frt = "bti"
+  if (!use_clang_coverage) {
+    version_script = "privacy_communication_adapter_cxx.map"
+  }
 
   include_dirs = [
     "${access_token_path}/frameworks/common/include",

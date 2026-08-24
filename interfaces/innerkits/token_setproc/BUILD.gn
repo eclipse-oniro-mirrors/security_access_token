@@ -50,6 +50,9 @@ if (is_standard_system) {
     }
     branch_protector_ret = "pac_ret"
     innerapi_tags = [ "platformsdk" ]
+    if (!use_clang_coverage) {
+      version_script = "libtokensetproc_shared.map"
+    }
     public_configs = [ ":setproc_config" ]
 
     cflags = [ "-Wall" ]
@@ -135,6 +138,9 @@ if (is_standard_system) {
     }
     innerapi_tags = [ "platformsdk" ]
     branch_protector_ret = "pac_ret"
+    if (!use_clang_coverage) {
+      version_script = "libpermsetproc_shared.map"
+    }
 
     public_configs = [ ":setproc_config" ]
 
