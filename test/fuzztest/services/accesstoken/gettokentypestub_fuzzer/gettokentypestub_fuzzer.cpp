@@ -29,31 +29,32 @@
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
+static constexpr int32_t SLEEP_TIME = 5;
 
 namespace OHOS {
-    bool GetTokenTypeStubFuzzTest(const uint8_t* data, size_t size)
-    {
-        if ((data == nullptr) || (size == 0)) {
-            return false;
-        }
-
-        FuzzedDataProvider provider(data, size);
-        AccessTokenID tokenId = ConsumeTokenId(provider);
-        MessageParcel in;
-        in.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
-        if (!in.WriteUint32(tokenId)) {
-            return false;
-        }
-
-        uint32_t code = static_cast<uint32_t>(
-            IAccessTokenManagerIpcCode::COMMAND_GET_TOKEN_TYPE);
-
-        MessageParcel reply;
-        MessageOption option;
-        DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, in, reply, option);
-
-        return true;
+bool GetTokenTypeStubFuzzTest(const uint8_t* data, size_t size)
+{
+    if ((data == nullptr) || (size == 0)) {
+        return false;
     }
+
+    FuzzedDataProvider provider(data, size);
+    AccessTokenID tokenId = ConsumeTokenId(provider);
+    MessageParcel in;
+    in.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
+    if (!in.WriteUint32(tokenId)) {
+        return false;
+    }
+
+    uint32_t code = static_cast<uint32_t>(
+        IAccessTokenManagerIpcCode::COMMAND_GET_TOKEN_TYPE);
+
+    MessageParcel reply;
+    MessageOption option;
+    DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, in, reply, option);
+
+    return true;
+}
 
 void Initialize()
 {
@@ -61,9 +62,15 @@ void Initialize()
 }
 } // namespace OHOS
 
+void BeforeExit()
+{
+    std::this_thread::sleep_for(std::chrono::seconds(SLEEP_TIME));
+}
+
 extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv)
 {
     OHOS::Initialize();
+    (void)atexit(BeforeExit);
     return 0;
 }
 
