@@ -32,6 +32,7 @@
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
+static constexpr int32_t SLEEP_TIME = 5;
 namespace OHOS {
 namespace {
 #ifdef TOKEN_SYNC_ENABLE
@@ -139,44 +140,44 @@ AccessTokenID EnsureRemoteMapTokenId()
 }
 #endif
 
-    bool GetHapTokenInfoFromRemoteStubFuzzTest(const uint8_t* data, size_t size)
-    {
-    #ifdef TOKEN_SYNC_ENABLE
-        if ((data == nullptr) || (size == 0)) {
-            return false;
-        }
-        if (!SetTokenSyncToken()) {
-            return false;
-        }
-
-        FuzzedDataProvider provider(data, size);
-        AccessTokenID validTokenId = EnsureRemoteMapTokenId();
-        if (validTokenId == INVALID_TOKENID) {
-            return false;
-        }
-        AccessTokenID tokenId = provider.ConsumeBool() ? validTokenId : ConsumeTokenId(provider);
-
-        MessageParcel datas;
-        datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
-        if (!datas.WriteUint32(tokenId)) {
-            return false;
-        }
-
-        uint32_t code = static_cast<uint32_t>(
-            IAccessTokenManagerIpcCode::COMMAND_GET_HAP_TOKEN_INFO_FROM_REMOTE);
-
-        MessageParcel reply;
-        MessageOption option;
-        DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
-        if (g_hdcdTokenId != INVALID_TOKENID) {
-            (void)SetSelfTokenID(g_hdcdTokenId);
-        }
-
-        return true;
-    #else
-        return true;
-    #endif
+bool GetHapTokenInfoFromRemoteStubFuzzTest(const uint8_t* data, size_t size)
+{
+#ifdef TOKEN_SYNC_ENABLE
+    if ((data == nullptr) || (size == 0)) {
+        return false;
     }
+    if (!SetTokenSyncToken()) {
+        return false;
+    }
+
+    FuzzedDataProvider provider(data, size);
+    AccessTokenID validTokenId = EnsureRemoteMapTokenId();
+    if (validTokenId == INVALID_TOKENID) {
+        return false;
+    }
+    AccessTokenID tokenId = provider.ConsumeBool() ? validTokenId : ConsumeTokenId(provider);
+
+    MessageParcel datas;
+    datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
+    if (!datas.WriteUint32(tokenId)) {
+        return false;
+    }
+
+    uint32_t code = static_cast<uint32_t>(
+        IAccessTokenManagerIpcCode::COMMAND_GET_HAP_TOKEN_INFO_FROM_REMOTE);
+
+    MessageParcel reply;
+    MessageOption option;
+    DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
+    if (g_hdcdTokenId != INVALID_TOKENID) {
+        (void)SetSelfTokenID(g_hdcdTokenId);
+    }
+
+    return true;
+#else
+    return true;
+#endif
+}
 
 void Initialize()
 {
@@ -184,9 +185,15 @@ void Initialize()
 }
 } // namespace OHOS
 
+void BeforeExit()
+{
+    std::this_thread::sleep_for(std::chrono::seconds(SLEEP_TIME));
+}
+
 extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv)
 {
     OHOS::Initialize();
+    (void)atexit(BeforeExit);
     return 0;
 }
 
