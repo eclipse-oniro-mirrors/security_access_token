@@ -1923,6 +1923,104 @@ HWTEST_F(TokenInfoManagerTest, DeleteRemoteToken002, TestSize.Level0)
 }
 
 /**
+ * @tc.name: GetNativePermissionList001
+ * @tc.desc: Verify native permissions are filtered by APL and native ACLs.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenInfoManagerTest, GetNativePermissionList001, TestSize.Level0)
+{
+    const std::string normalPermission = "ohos.permission.CAMERA";
+    const std::string systemBasicPermission = "ohos.permission.MANAGE_SECURE_SETTINGS";
+    const std::string aclPermission = "ohos.permission.UPDATE_SYSTEM";
+    uint32_t normalCode = 0;
+    uint32_t aclCode = 0;
+    ASSERT_TRUE(TransferPermissionToOpcode(normalPermission, normalCode));
+    ASSERT_TRUE(TransferPermissionToOpcode(aclPermission, aclCode));
+    PermissionBriefDef systemBasicDef;
+    ASSERT_TRUE(GetPermissionBriefDef(systemBasicPermission, systemBasicDef));
+    EXPECT_EQ(APL_SYSTEM_BASIC, systemBasicDef.availableLevel);
+
+    PermissionStatus normalState = {};
+    normalState.permissionName = normalPermission;
+    normalState.grantStatus = PermissionState::PERMISSION_GRANTED;
+    PermissionStatus systemBasicState = {};
+    systemBasicState.permissionName = systemBasicPermission;
+    systemBasicState.grantStatus = PermissionState::PERMISSION_GRANTED;
+    PermissionStatus aclState = {};
+    aclState.permissionName = aclPermission;
+    aclState.grantStatus = PermissionState::PERMISSION_DENIED;
+
+    NativeTokenInfoBase native;
+    native.apl = APL_NORMAL;
+    native.nativeAcls = { aclPermission };
+    native.permStateList = { normalState, systemBasicState, aclState };
+
+    std::vector<uint32_t> opCodeList;
+    std::vector<bool> statusList;
+    AccessTokenInfoManager::GetInstance().GetNativePermissionList(native, opCodeList, statusList);
+
+    ASSERT_EQ(2U, opCodeList.size());
+    ASSERT_EQ(2U, statusList.size());
+    EXPECT_EQ(normalCode, opCodeList[0]);
+    EXPECT_EQ(aclCode, opCodeList[1]);
+    EXPECT_TRUE(statusList[0]);
+    EXPECT_FALSE(statusList[1]);
+}
+
+/**
+ * @tc.name: GetNativePermissionList002
+ * @tc.desc: Verify native permissions at the same APL remain and higher APL permissions need ACLs.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenInfoManagerTest, GetNativePermissionList002, TestSize.Level0)
+{
+    const std::string sameAplPermission = "ohos.permission.MANAGE_SECURE_SETTINGS";
+    const std::string higherAplPermission = "ohos.permission.POWER_MANAGER";
+    const std::string aclHigherAplPermission = "ohos.permission.CAPTURE_SCREEN";
+    uint32_t sameAplCode = 0;
+    uint32_t aclHigherAplCode = 0;
+    ASSERT_TRUE(TransferPermissionToOpcode(sameAplPermission, sameAplCode));
+    ASSERT_TRUE(TransferPermissionToOpcode(aclHigherAplPermission, aclHigherAplCode));
+    PermissionBriefDef sameAplDef;
+    PermissionBriefDef higherAplDef;
+    PermissionBriefDef aclHigherAplDef;
+    ASSERT_TRUE(GetPermissionBriefDef(sameAplPermission, sameAplDef));
+    ASSERT_TRUE(GetPermissionBriefDef(higherAplPermission, higherAplDef));
+    ASSERT_TRUE(GetPermissionBriefDef(aclHigherAplPermission, aclHigherAplDef));
+    EXPECT_EQ(APL_SYSTEM_BASIC, sameAplDef.availableLevel);
+    EXPECT_EQ(APL_SYSTEM_CORE, higherAplDef.availableLevel);
+    EXPECT_EQ(APL_SYSTEM_CORE, aclHigherAplDef.availableLevel);
+
+    PermissionStatus sameAplState = {};
+    sameAplState.permissionName = sameAplPermission;
+    sameAplState.grantStatus = PermissionState::PERMISSION_GRANTED;
+    PermissionStatus higherAplState = {};
+    higherAplState.permissionName = higherAplPermission;
+    higherAplState.grantStatus = PermissionState::PERMISSION_GRANTED;
+    PermissionStatus aclHigherAplState = {};
+    aclHigherAplState.permissionName = aclHigherAplPermission;
+    aclHigherAplState.grantStatus = PermissionState::PERMISSION_GRANTED;
+
+    NativeTokenInfoBase native;
+    native.apl = APL_SYSTEM_BASIC;
+    native.nativeAcls = { aclHigherAplPermission };
+    native.permStateList = { sameAplState, higherAplState, aclHigherAplState };
+
+    std::vector<uint32_t> opCodeList;
+    std::vector<bool> statusList;
+    AccessTokenInfoManager::GetInstance().GetNativePermissionList(native, opCodeList, statusList);
+
+    ASSERT_EQ(2U, opCodeList.size());
+    ASSERT_EQ(2U, statusList.size());
+    EXPECT_EQ(sameAplCode, opCodeList[0]);
+    EXPECT_EQ(aclHigherAplCode, opCodeList[1]);
+    EXPECT_TRUE(statusList[0]);
+    EXPECT_TRUE(statusList[1]);
+}
+
+/**
  * @tc.name: DeleteRemoteToken003
  * @tc.desc: DeleteRemoteToken removes an existing remote native token.
  * @tc.type: FUNC
