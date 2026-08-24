@@ -192,16 +192,16 @@ void ActiveStatusCallbackManager::ExecuteCallbackAsync(ActiveChangeResponse& inf
         taskName += "_" + std::to_string(std::chrono::duration_cast<std::chrono::microseconds>(
             std::chrono::system_clock::now().time_since_epoch()).count());
     }
-    LOGI(PRI_DOMAIN, PRI_TAG, "Add callback task name:%{public}s", taskName.c_str());
+    LOGI(PRI_DOMAIN, PRI_TAG, "Add task:%{public}s", taskName.c_str());
     std::function<void()> task = ([info, sourceType]() mutable {
         ActiveStatusCallbackManager::GetInstance().ActiveStatusChange(info, sourceType);
-        LOGI(PRI_DOMAIN, PRI_TAG, "DeviceId: %{public}s, "
-            "token: %{public}u, pid: %{public}d, %{public}s, type: %{public}d, Change end",
+        LOGI(PRI_DOMAIN, PRI_TAG, "DevId: %{public}s, "
+            "id: %{public}u, pid: %{public}d, %{public}s, type: %{public}d end",
             ConstantCommon::EncryptDevId(info.deviceId).c_str(),
             info.tokenID, info.pid, info.permissionName.c_str(), info.type);
     });
     eventHandler->ProxyPostTask(task, taskName);
-    LOGI(PRI_DOMAIN, PRI_TAG, "The callback execution is complete");
+    LOGI(PRI_DOMAIN, PRI_TAG, "Callback is complete");
     return;
 #else
     LOGI(PRI_DOMAIN, PRI_TAG, "Event handler is unenabled");
