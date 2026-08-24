@@ -805,7 +805,6 @@ void NapiAtManager::GrantUserGrantedPermissionExecute(napi_env env, void* data)
 
     if (!IsPermissionFlagValid(asyncContext->flag)) {
         asyncContext->errorCode = ERR_PARAM_INVALID;
-        return;
     }
     // only user_grant permission can use innerkit class method to grant permission
     // system_grant or manual_settings return failed
@@ -958,7 +957,6 @@ void NapiAtManager::RevokeUserGrantedPermissionExecute(napi_env env, void* data)
 
     if (!IsPermissionFlagValid(asyncContext->flag)) {
         asyncContext->errorCode = ERR_PARAM_INVALID;
-        return;
     }
     // only user_grant permission can use innerkit class method to grant permission
     // system_grant or manual_settings return failed
