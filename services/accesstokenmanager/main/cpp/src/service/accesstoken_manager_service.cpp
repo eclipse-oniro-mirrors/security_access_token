@@ -94,9 +94,6 @@ namespace {
 static const char* ACCESS_TOKEN_SERVICE_INIT_KEY = "accesstoken.permission.init";
 static const char* ACCESS_TOKEN_DB_EMPTY_KEY = "persist.accesstoken.permission.dberror";
 static const char* ACCESS_TOKEN_DB_DIR_PATH = "/data/service/el1/public/access_token/";
-const std::string BMS_DB_DIR_PATH = "/data/service/el1/public/bms/bundle_manager_service/";
-const std::string BMS_DB_FILE_NAME = "bmsdb.db";
-const std::string BMS_SLAVE_DB_FILE_NAME = "bmsdb_slave.db";
 constexpr int32_t ERROR = -1;
 const char* GRANT_ABILITY_BUNDLE_NAME = "com.ohos.permissionmanager";
 const char* GRANT_ABILITY_ABILITY_NAME = "com.ohos.permissionmanager.GrantAbility";
@@ -2583,29 +2580,6 @@ void AccessTokenManagerService::CheckAccessTokenDbDir(const char* dbDirPath) con
     ReportAccessTokenRdbFileInfoAsync();
 }
 
-void AccessTokenManagerService::CheckHapDataEmpty(
-    uint32_t hapSize, const std::vector<std::string>& bmsDbPathList) const
-{
-    bool isBmsDbExisted = false;
-    for (const auto& dbPath : bmsDbPathList) {
-        if (access(dbPath.c_str(), F_OK) == 0) {
-            isBmsDbExisted = true;
-            break;
-        }
-    }
-    if (hapSize == 0 && isBmsDbExisted) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Access token database is empty and BMS database exists.");
-        ReportSysEventDbException(AccessTokenDbSceneCode::AT_DB_HAP_DATA_EMPTY, EIO,
-            "hap_token_info_table: empty");
-        int32_t setParamRet = SetParameter(ACCESS_TOKEN_DB_EMPTY_KEY, "1");
-        if (setParamRet != 0) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "Set database empty parameter failed, ret=%{public}d.", setParamRet);
-            ReportSysEventServiceStartError(INIT_HAP_RECOVERY_PARAM_ERROR,
-                "Set database recovery parameter failed.", setParamRet);
-        }
-    }
-}
-
 bool AccessTokenManagerService::Initialize()
 {
     MemoryGuard guard;
@@ -2618,9 +2592,6 @@ bool AccessTokenManagerService::Initialize()
     uint32_t dlpSize = 0;
     std::map<int32_t, TokenIdInfo> tokenIdAplMap;
     AccessTokenInfoManager::GetInstance().Init(hapSize, nativeSize, pefDefSize, dlpSize, tokenIdAplMap);
-    std::vector<std::string> bmsDbPathList =
-        {BMS_DB_DIR_PATH + BMS_DB_FILE_NAME, BMS_DB_DIR_PATH + BMS_SLAVE_DB_FILE_NAME};
-    CheckHapDataEmpty(hapSize, bmsDbPathList);
 #ifdef SUPPORT_MANAGE_USER_POLICY
     std::thread loadPersistedPolicies([]() {
         int32_t ret = UserPolicyManager::GetInstance().LoadPersistedPolicies();

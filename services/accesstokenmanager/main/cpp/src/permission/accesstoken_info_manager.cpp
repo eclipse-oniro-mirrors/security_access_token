@@ -18,6 +18,7 @@
 #include <cinttypes>
 #include <cstdint>
 #include <cstdio>
+#include <cerrno>
 #include <fcntl.h>
 #include <map>
 #include <unistd.h>
@@ -55,6 +56,8 @@
 #include "permission_manager.h"
 #include "permission_validator.h"
 #include "permission_data_brief.h"
+#include "parameter.h"
+#include "parameters.h"
 #include "idl_common.h"
 #include "perm_setproc.h"
 #include "spm_setproc.h"
@@ -83,6 +86,10 @@ static const char* ACCESS_TOKEN_PACKAGE_NAME = "ohos.security.distributed_token_
 static constexpr uint32_t TOKEN_ID_LOWMASK = 0xffffffff;
 static constexpr int32_t DEFAULT_MAX_QUERY_RESULT_SIZE = ACCESS_TOKEN_DEFAULT_MAX_QUERY_RESULT_SIZE;
 static constexpr int32_t DEFAULT_SUBPROFILE_INDEX = -1;
+static const char* ACCESS_TOKEN_DB_EMPTY_KEY = "persist.accesstoken.permission.dberror";
+const std::string BMS_DB_DIR_PATH = "/data/service/el1/public/bms/bundle_manager_service/";
+const std::string BMS_DB_FILE_NAME = "bmsdb.db";
+const std::string BMS_SLAVE_DB_FILE_NAME = "bmsdb_slave.db";
 
 void ClearNonPersistedUserPolicyFlags(std::vector<GenericValues>& permStateValues)
 {
@@ -729,15 +736,18 @@ void AccessTokenInfoManager::InitHapTokenInfos(uint32_t& hapSize, std::map<int32
     int32_t ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, conditionValue, hapTokenRes);
     if (ret != RET_SUCCESS) {
         ReportSysEventServiceStartError(INIT_HAP_TOKENINFO_ERROR, "Load hap from db fail.", ret);
+        return;
     }
     ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_PERMISSION_STATE, conditionValue, permStateRes);
     if (ret != RET_SUCCESS) {
         ReportSysEventServiceStartError(INIT_HAP_TOKENINFO_ERROR, "Load perm state from db fail.", ret);
+        return;
     }
     ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_PERMISSION_EXTEND_VALUE, conditionValue,
         extendedPermRes);
-    if (ret != RET_SUCCESS) { // extendedPermRes may be empty
+    if (ret != RET_SUCCESS) {
         ReportSysEventServiceStartError(INIT_HAP_TOKENINFO_ERROR, "Load exetended value from db fail.", ret);
+        return;
     }
     for (const GenericValues& tokenValue : hapTokenRes) {
         int32_t tokenId = tokenValue.GetInt(TokenFiledConst::FIELD_TOKEN_ID);
@@ -751,6 +761,34 @@ void AccessTokenInfoManager::InitHapTokenInfos(uint32_t& hapSize, std::map<int32
         }
         hapSize++;
         tokenIdAplMap[tokenId] = tokenIdInfo;
+    }
+    CheckHapDataEmpty(hapSize, {BMS_DB_DIR_PATH + BMS_DB_FILE_NAME, BMS_DB_DIR_PATH + BMS_SLAVE_DB_FILE_NAME});
+}
+
+void AccessTokenInfoManager::CheckHapDataEmpty(
+    uint32_t hapSize, const std::vector<std::string>& bmsDbPathList) const
+{
+    if (hapSize != 0) {
+        return;
+    }
+    bool isBmsDbExisted = false;
+    for (const auto& dbPath : bmsDbPathList) {
+        if (access(dbPath.c_str(), F_OK) == 0) {
+            isBmsDbExisted = true;
+            break;
+        }
+    }
+    if (!isBmsDbExisted) {
+        return;
+    }
+    LOGE(ATM_DOMAIN, ATM_TAG, "Access token database is empty and BMS database exists.");
+    ReportSysEventDbException(AccessTokenDbSceneCode::AT_DB_HAP_DATA_EMPTY, EIO,
+        "hap_token_info_table: empty");
+    int32_t setParamRet = SetParameter(ACCESS_TOKEN_DB_EMPTY_KEY, "1");
+    if (setParamRet != 0) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Set database empty parameter failed, ret=%{public}d.", setParamRet);
+        ReportSysEventServiceStartError(INIT_HAP_RECOVERY_PARAM_ERROR,
+            "Set database recovery parameter failed.", setParamRet);
     }
 }
 
