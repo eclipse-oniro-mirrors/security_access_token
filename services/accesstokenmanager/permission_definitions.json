@@ -1631,6 +1631,17 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.REQUEST_LOCAL_ACCOUNT_AUTHORIZATION",
+            "grantMode": "system_grant",
+            "availableLevel": "normal",
+            "availableType": "NORMAL",
+            "since": "26.1.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "wearable", "tablet", "2in1", "tv", "car"]
+        },
+        {
             "name": "ohos.permission.radio.ACCESS_FM_AM",
             "grantMode": "system_grant",
             "availableLevel": "system_core",
