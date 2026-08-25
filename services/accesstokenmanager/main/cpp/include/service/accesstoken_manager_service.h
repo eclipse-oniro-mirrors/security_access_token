@@ -172,7 +172,6 @@ private:
     void SetFlagIfNeed(const AccessTokenServiceConfig& atConfig, int32_t& cancelTime, uint32_t& parseConfigFlag);
     void GetConfigValue(uint32_t& parseConfigFlag);
     void CheckAccessTokenDbDir(const char* dbDirPath) const;
-    void CheckHapDataEmpty(uint32_t hapSize, const std::vector<std::string>& bmsDbPathList) const;
     bool Initialize();
     void AccessTokenServiceParamSet() const;
     bool IsLocationPermSpecialHandle(std::string permissionName, int32_t apiVersion);

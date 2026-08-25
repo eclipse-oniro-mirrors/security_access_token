@@ -176,6 +176,7 @@ private:
     int32_t AddHapInfoToCache(const GenericValues& tokenValue, const std::vector<GenericValues>& permStateRes,
         const std::vector<GenericValues>& extendedPermRes);
     void InitHapTokenInfos(uint32_t& hapSize, std::map<int32_t, TokenIdInfo>& tokenIdAplMap);
+    void CheckHapDataEmpty(uint32_t hapSize, const std::vector<std::string>& bmsDbPathList) const;
     void ReportAddHapIdChange(const std::shared_ptr<HapTokenInfoInner>& hapInfo, AccessTokenID oriTokenId);
     int AddHapTokenInfo(const std::shared_ptr<HapTokenInfoInner>& info, AccessTokenID& oriTokenId);
     int32_t RestoreReservedHapTokenToCache(const GenericValues& tokenValue);

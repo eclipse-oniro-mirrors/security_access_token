@@ -2749,9 +2749,9 @@ HWTEST_F(AccessTokenManagerServiceTest, InitializeHelperCoverageTest001, TestSiz
 
     atManagerService_->CheckAccessTokenDbDir(INVALID_DB_PATH);
     atManagerService_->CheckAccessTokenDbDir(regularFile.c_str());
-    atManagerService_->CheckHapDataEmpty(1, {regularFile});
-    atManagerService_->CheckHapDataEmpty(0, {INVALID_DB_PATH});
-    atManagerService_->CheckHapDataEmpty(0, {regularFile});
+    AccessTokenInfoManager::GetInstance().CheckHapDataEmpty(1, {regularFile});
+    AccessTokenInfoManager::GetInstance().CheckHapDataEmpty(0, {INVALID_DB_PATH});
+    AccessTokenInfoManager::GetInstance().CheckHapDataEmpty(0, {regularFile});
 
     EXPECT_EQ(remove(regularFile.c_str()), 0);
 }
