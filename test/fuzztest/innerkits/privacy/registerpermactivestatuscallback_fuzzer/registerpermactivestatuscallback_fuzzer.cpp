@@ -66,7 +66,7 @@ bool RegisterPermActiveStatusCallbackFuzzTest(const uint8_t* data, size_t size)
     if (callbackWrap == nullptr) {
         return false;
     }
-    PrivacyManagerClient::GetInstance().activeCbkMap_[callback] = callbackWrap;
+    PrivacyManagerClient::GetInstance().activeCbkMap_[callback] = {callbackWrap, CallbackRegisterType::ALL};
     (void)PrivacyKit::UnRegisterPermActiveStatusCallback(callback);
     return true;
 }

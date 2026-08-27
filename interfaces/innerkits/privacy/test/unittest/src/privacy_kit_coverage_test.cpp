@@ -457,3 +457,142 @@ HWTEST_F(PrivacyKitTest, BundleClientRetry003, TestSize.Level0)
     EXPECT_EQ(0, PrivacyManagerClient::GetInstance().bundleCacheList_.size());
 }
 #endif
+
+class CbActiveTest : public PermActiveStatusCustomizedCbk {
+public:
+    explicit CbActiveTest(const std::vector<std::string>& permList) : PermActiveStatusCustomizedCbk(permList) {}
+    ~CbActiveTest() {}
+    void ActiveStatusChangeCallback(ActiveChangeResponse& result) override {}
+};
+
+class CbDisableTest : public DisablePolicyChangeCallback {
+public:
+    explicit CbDisableTest(const std::vector<std::string>& permList) : DisablePolicyChangeCallback(permList) {}
+    ~CbDisableTest() {}
+    void PermDisablePolicyCallback(const PermDisablePolicyInfo& info) override {}
+};
+
+/**
+ * @tc.name: ReRegisterPermActiveStatusCallback001
+ * @tc.desc: ReRegisterPermActiveStatusCallback with empty activeCbkMap_.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, ReRegisterPermActiveStatusCallback001, TestSize.Level0)
+{
+    PrivacyManagerClient::GetInstance().activeCbkMap_.clear();
+    // empty map: loop body not executed
+    PrivacyManagerClient::GetInstance().ReRegisterPermActiveStatusCallback();
+    EXPECT_EQ(0, PrivacyManagerClient::GetInstance().activeCbkMap_.size());
+}
+
+/**
+ * @tc.name: ReRegisterPermActiveStatusCallback002
+ * @tc.desc: ReRegisterPermActiveStatusCallback with a valid callback entry.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, ReRegisterPermActiveStatusCallback002, TestSize.Level0)
+{
+    std::vector<std::string> permList = {"ohos.permission.CAMERA"};
+    auto callbackPtr = std::make_shared<CbActiveTest>(permList);
+    ASSERT_NE(nullptr, callbackPtr);
+    EXPECT_EQ(0, PrivacyKit::RegisterPermActiveStatusCallback(callbackPtr, CallbackRegisterType::ALL));
+    EXPECT_EQ(1, PrivacyManagerClient::GetInstance().activeCbkMap_.size());
+
+    // re-register path executes; server rejects duplicate via death-recipient, client maps unchanged
+    PrivacyManagerClient::GetInstance().ReRegisterPermActiveStatusCallback();
+    EXPECT_EQ(1, PrivacyManagerClient::GetInstance().activeCbkMap_.size());
+
+    EXPECT_EQ(0, PrivacyKit::UnRegisterPermActiveStatusCallback(callbackPtr));
+    EXPECT_EQ(0, PrivacyManagerClient::GetInstance().activeCbkMap_.size());
+}
+
+/**
+ * @tc.name: ReRegisterPermActiveStatusCallback003
+ * @tc.desc: ReRegisterPermActiveStatusCallback skips null callback entry.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, ReRegisterPermActiveStatusCallback003, TestSize.Level0)
+{
+    // first null: (entry.first == nullptr) short-circuits the ||
+    std::shared_ptr<PermActiveStatusCustomizedCbk> nullKey = nullptr;
+    PrivacyManagerClient::GetInstance().activeCbkMap_[nullKey] = {nullptr, CallbackRegisterType::ALL};
+
+    // first non-null but second.callback null: covers (entry.second.callback == nullptr)
+    std::vector<std::string> permList = {"ohos.permission.CAMERA"};
+    auto validKey = std::make_shared<CbActiveTest>(permList);
+    PrivacyManagerClient::GetInstance().activeCbkMap_[validKey] = {nullptr, CallbackRegisterType::ALL};
+    EXPECT_EQ(2, PrivacyManagerClient::GetInstance().activeCbkMap_.size());
+
+    // both null-callback entries skipped via continue
+    PrivacyManagerClient::GetInstance().ReRegisterPermActiveStatusCallback();
+    EXPECT_EQ(2, PrivacyManagerClient::GetInstance().activeCbkMap_.size());
+
+    PrivacyManagerClient::GetInstance().activeCbkMap_.erase(nullKey);
+    PrivacyManagerClient::GetInstance().activeCbkMap_.erase(validKey);
+    EXPECT_EQ(0, PrivacyManagerClient::GetInstance().activeCbkMap_.size());
+}
+
+/**
+ * @tc.name: ReRegisterPermDisablePolicyCallback001
+ * @tc.desc: ReRegisterPermDisablePolicyCallback with empty disableCbkMap_.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, ReRegisterPermDisablePolicyCallback001, TestSize.Level0)
+{
+    PrivacyManagerClient::GetInstance().disableCbkMap_.clear();
+    PrivacyManagerClient::GetInstance().ReRegisterPermDisablePolicyCallback();
+    EXPECT_EQ(0, PrivacyManagerClient::GetInstance().disableCbkMap_.size());
+}
+
+/**
+ * @tc.name: ReRegisterPermDisablePolicyCallback002
+ * @tc.desc: ReRegisterPermDisablePolicyCallback with a valid callback entry.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, ReRegisterPermDisablePolicyCallback002, TestSize.Level0)
+{
+    MockNativeToken mock("accesstoken_service");
+    std::vector<std::string> permList = {"ohos.permission.CAMERA"};
+    auto callbackPtr = std::make_shared<CbDisableTest>(permList);
+    ASSERT_NE(nullptr, callbackPtr);
+    EXPECT_EQ(0, PrivacyKit::RegisterPermDisablePolicyCallback(callbackPtr));
+    EXPECT_EQ(1, PrivacyManagerClient::GetInstance().disableCbkMap_.size());
+
+    PrivacyManagerClient::GetInstance().ReRegisterPermDisablePolicyCallback();
+    EXPECT_EQ(1, PrivacyManagerClient::GetInstance().disableCbkMap_.size());
+
+    EXPECT_EQ(0, PrivacyKit::UnRegisterPermDisablePolicyCallback(callbackPtr));
+    EXPECT_EQ(0, PrivacyManagerClient::GetInstance().disableCbkMap_.size());
+}
+
+/**
+ * @tc.name: ReRegisterPermDisablePolicyCallback003
+ * @tc.desc: ReRegisterPermDisablePolicyCallback skips null callback entry.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, ReRegisterPermDisablePolicyCallback003, TestSize.Level0)
+{
+    // first null: (entry.first == nullptr) short-circuits the ||
+    std::shared_ptr<DisablePolicyChangeCallback> nullKey = nullptr;
+    OHOS::sptr<PermDisablePolicyChangeCallback> nullVal = nullptr;
+    PrivacyManagerClient::GetInstance().disableCbkMap_[nullKey] = nullVal;
+
+    // first non-null but second null: covers (entry.second == nullptr)
+    std::vector<std::string> permList = {"ohos.permission.CAMERA"};
+    auto validKey = std::make_shared<CbDisableTest>(permList);
+    PrivacyManagerClient::GetInstance().disableCbkMap_[validKey] = nullptr;
+    EXPECT_EQ(2, PrivacyManagerClient::GetInstance().disableCbkMap_.size());
+
+    PrivacyManagerClient::GetInstance().ReRegisterPermDisablePolicyCallback();
+    EXPECT_EQ(2, PrivacyManagerClient::GetInstance().disableCbkMap_.size());
+
+    PrivacyManagerClient::GetInstance().disableCbkMap_.erase(nullKey);
+    PrivacyManagerClient::GetInstance().disableCbkMap_.erase(validKey);
+    EXPECT_EQ(0, PrivacyManagerClient::GetInstance().disableCbkMap_.size());
+}

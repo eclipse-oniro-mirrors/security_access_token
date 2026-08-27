@@ -87,6 +87,8 @@ public:
         const sptr<IRemoteObject>& callback) override;
     int32_t UnRegisterPermDisablePolicyCallback(const sptr<IRemoteObject>& callback) override;
     bool RetryPublishInner();
+    int32_t CallbackEnter(uint32_t code) override;
+    int32_t CallbackExit(uint32_t code, int32_t result) override;
 private:
     void OnAddSystemAbility(int32_t systemAbilityId, const std::string& deviceId) override;
     int32_t ResponseDumpCommand(int32_t fd,  const std::vector<std::u16string>& args);

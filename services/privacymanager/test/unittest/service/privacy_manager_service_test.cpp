@@ -200,6 +200,33 @@ HWTEST_F(PrivacyManagerServiceTest, Dump001, TestSize.Level0)
 }
 
 /**
+ * @tc.name: CallbackEnterAndExitTest001
+ * @tc.desc: CallbackEnter & CallbackExit test.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyManagerServiceTest, CallbackEnterAndExitTest001, TestSize.Level0)
+{
+    // stack empty
+    int32_t ret = privacyManagerService_->CallbackExit(0, 0);
+    EXPECT_EQ(ERR_OK, ret);
+    // normal
+    ret = privacyManagerService_->CallbackEnter(0);
+    EXPECT_EQ(ERR_OK, ret);
+    ret = privacyManagerService_->CallbackExit(0, 0);
+    EXPECT_EQ(ERR_OK, ret);
+    // ipc twice
+    ret = privacyManagerService_->CallbackEnter(0);
+    EXPECT_EQ(ERR_OK, ret);
+    ret = privacyManagerService_->CallbackEnter(0);
+    EXPECT_EQ(ERR_OK, ret);
+    ret = privacyManagerService_->CallbackExit(0, 0);
+    EXPECT_EQ(ERR_OK, ret);
+    ret = privacyManagerService_->CallbackExit(0, 0);
+    EXPECT_EQ(ERR_OK, ret);
+}
+
+/**
  * @tc.name: Dump002
  * @tc.desc: Dump record info.
  * @tc.type: FUNC
