@@ -161,6 +161,8 @@ void PrivacyManagerClient::OnAddPrivacySa(void)
 #ifdef REMOTE_PRIVACY_ENABLE
     ReStartRemoteUsing();
 #endif
+    ReRegisterPermActiveStatusCallback();
+    ReRegisterPermDisablePolicyCallback();
 }
 
 void PrivacyManagerClient::ReStartUsing()
@@ -199,6 +201,49 @@ void PrivacyManagerClient::ReStartUsing()
             ret = ConvertResult(ret);
             LOGI(PRI_DOMAIN, PRI_TAG, "Recover StartUsingPermission result is %{public}d.", ret);
         }
+    }
+}
+
+void PrivacyManagerClient::ReRegisterPermActiveStatusCallback()
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Proxy is null.");
+        return;
+    }
+    std::lock_guard<std::mutex> lock(activeCbkMutex_);
+    LOGI(PRI_DOMAIN, PRI_TAG, "ActiveCbkMap size %{public}zu.", activeCbkMap_.size());
+    for (const auto &entry : activeCbkMap_) {
+        if ((entry.first == nullptr) || (entry.second.callback == nullptr)) {
+            continue;
+        }
+        std::vector<std::string> permList;
+        entry.first->GetPermList(permList);
+        int32_t type = static_cast<int32_t>(entry.second.type);
+        int32_t ret = proxy->RegisterPermActiveStatusCallback(permList, entry.second.callback->AsObject(), type);
+        ret = ConvertResult(ret);
+        LOGI(PRI_DOMAIN, PRI_TAG, "Recover RegisterPermActiveStatusCallback result is %{public}d.", ret);
+    }
+}
+
+void PrivacyManagerClient::ReRegisterPermDisablePolicyCallback()
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Proxy is null.");
+        return;
+    }
+    std::lock_guard<std::mutex> lock(disableCbkMutex_);
+    LOGI(PRI_DOMAIN, PRI_TAG, "DisableCbkMap size %{public}zu.", disableCbkMap_.size());
+    for (const auto &entry : disableCbkMap_) {
+        if ((entry.first == nullptr) || (entry.second == nullptr)) {
+            continue;
+        }
+        std::vector<std::string> permList;
+        entry.first->GetPermList(permList);
+        int32_t ret = proxy->RegisterPermDisablePolicyCallback(permList, entry.second->AsObject());
+        ret = ConvertResult(ret);
+        LOGI(PRI_DOMAIN, PRI_TAG, "Recover RegisterPermDisablePolicyCallback result is %{public}d.", ret);
     }
 }
 
@@ -640,7 +685,8 @@ int32_t PrivacyManagerClient::GetPermissionUsedRecords(const PermissionUsedReque
 }
 
 int32_t PrivacyManagerClient::CreateActiveStatusChangeCbk(
-    const std::shared_ptr<PermActiveStatusCustomizedCbk>& callback, sptr<PermActiveStatusChangeCallback>& callbackWrap)
+    const std::shared_ptr<PermActiveStatusCustomizedCbk>& callback,
+    sptr<PermActiveStatusChangeCallback>& callbackWrap, CallbackRegisterType type)
 {
     std::lock_guard<std::mutex> lock(activeCbkMutex_);
 
@@ -657,7 +703,7 @@ int32_t PrivacyManagerClient::CreateActiveStatusChangeCbk(
         if (!callbackWrap) {
             return PrivacyError::ERR_MALLOC_FAILED;
         }
-        activeCbkMap_[callback] = callbackWrap;
+        activeCbkMap_[callback] = {callbackWrap, type};
     }
     return RET_SUCCESS;
 }
@@ -682,7 +728,7 @@ int32_t PrivacyManagerClient::RegisterPermActiveStatusCallback(
     }
 
     sptr<PermActiveStatusChangeCallback> callbackWrap = nullptr;
-    int32_t result = CreateActiveStatusChangeCbk(callback, callbackWrap);
+    int32_t result = CreateActiveStatusChangeCbk(callback, callbackWrap, type);
     if (result != RET_SUCCESS) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Failed to create callback, err: %{public}d.", result);
         return result;
@@ -717,18 +763,18 @@ int32_t PrivacyManagerClient::UnRegisterPermActiveStatusCallback(
             LOGE(PRI_DOMAIN, PRI_TAG, "GoalCallback already is not exist.");
             return PrivacyError::ERR_CALLBACK_NOT_EXIST;
         }
-        if (goalCallback->second == nullptr) {
+        if (goalCallback->second.callback == nullptr) {
             LOGE(PRI_DOMAIN, PRI_TAG, "GoalCallback is null.");
             return PrivacyError::ERR_CALLBACK_NOT_EXIST;
         }
-        callbackWrap = goalCallback->second;
+        callbackWrap = goalCallback->second.callback;
     }
 
     int32_t result = proxy->UnRegisterPermActiveStatusCallback(callbackWrap->AsObject());
     if (result == RET_SUCCESS) {
         std::lock_guard<std::mutex> lock(activeCbkMutex_);
         auto goalCallback = activeCbkMap_.find(callback);
-        if (goalCallback != activeCbkMap_.end() && goalCallback->second == callbackWrap) {
+        if (goalCallback != activeCbkMap_.end() && goalCallback->second.callback == callbackWrap) {
             activeCbkMap_.erase(goalCallback);
         }
     } else {

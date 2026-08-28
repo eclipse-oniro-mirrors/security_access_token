@@ -24,6 +24,8 @@ sequenceable OHOS.Security.AccessToken.PermissionUsedResultParcel;
 sequenceable OHOS.Security.AccessToken.ActiveChangeResponseParcel;
 sequenceable OHOS.Security.AccessToken.RemotePermissionUsedInfoParcel;
 
+option_stub_hooks on;
+
 interface OHOS.Security.AccessToken.IPrivacyManager {
     [ipccode 1] void AddPermissionUsedRecord([in] AddPermParamInfoParcel infoParcel);
     [ipccode 2, oneway] void AddPermissionUsedRecordAsync([in] AddPermParamInfoParcel infoParcel);

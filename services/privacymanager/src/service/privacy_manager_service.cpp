@@ -17,6 +17,7 @@
 
 #include <cinttypes>
 #include <cstring>
+#include <stack>
 
 #include "access_token.h"
 #include "accesstoken_kit.h"
@@ -43,6 +44,10 @@
 #include "hitrace_meter.h"
 #define PRIVACY_SYNC_TRACE HITRACE_METER_NAME(HITRACE_TAG_ACCESS_CONTROL, __PRETTY_FUNCTION__)
 #endif
+
+#ifdef HICOLLIE_ENABLE
+#include "xcollie/xcollie.h"
+#endif // HICOLLIE_ENABLE
 
 namespace OHOS {
 namespace Security {
@@ -73,6 +78,12 @@ static const int32_t ASYNC_RETRY_DFX_COUNT = 60;
 static const int32_t PUBLISH_ERROR_CODE = -1;
 std::mutex g_accessTokenRunningMutex;
 bool g_isAccessTokenRunning = false;
+
+#ifdef HICOLLIE_ENABLE
+constexpr uint32_t TIMEOUT = 40; // 40s
+thread_local std::stack<int32_t> g_timerIdStack;
+const std::string PRIVACY_TIMER_NAME = "PrivacyTimer";
+#endif // HICOLLIE_ENABLE
 
 bool IsCliTokenSelfRecordCalling(AccessTokenID callingTokenID, AccessTokenID infoTokenId)
 {
@@ -870,6 +881,26 @@ bool PrivacyManagerService::VerifyPermission(const std::string& permission) cons
         return false;
     }
     return true;
+}
+
+int32_t PrivacyManagerService::CallbackEnter(uint32_t code)
+{
+#ifdef HICOLLIE_ENABLE
+    g_timerIdStack.push(HiviewDFX::XCollie::GetInstance().SetTimer(PRIVACY_TIMER_NAME, TIMEOUT,
+        nullptr, nullptr, HiviewDFX::XCOLLIE_FLAG_LOG));
+#endif // HICOLLIE_ENABLE
+    return ERR_OK;
+}
+
+int32_t PrivacyManagerService::CallbackExit(uint32_t code, int32_t result)
+{
+#ifdef HICOLLIE_ENABLE
+    if (!g_timerIdStack.empty()) {
+        HiviewDFX::XCollie::GetInstance().CancelTimer(g_timerIdStack.top());
+        g_timerIdStack.pop();
+    }
+#endif // HICOLLIE_ENABLE
+    return ERR_OK;
 }
 } // namespace AccessToken
 } // namespace Security

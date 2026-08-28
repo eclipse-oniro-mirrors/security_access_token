@@ -45,6 +45,11 @@ struct StartUsingPermInputInfo {
     bool hasCbk;
 };
 
+struct ActiveCallbackEntry {
+    sptr<PermActiveStatusChangeCallback> callback;
+    CallbackRegisterType type = CallbackRegisterType::ALL;
+};
+
 #ifdef PRIVACY_BUNDLE_START_STOP_ENABLE
 struct StartUsingBundlePermInputInfo {
     std::string bundleName;
@@ -91,7 +96,7 @@ public:
     int32_t UnRegisterPermActiveStatusCallback(const std::shared_ptr<PermActiveStatusCustomizedCbk>& callback);
     int32_t CreateActiveStatusChangeCbk(
         const std::shared_ptr<PermActiveStatusCustomizedCbk>& callback,
-        sptr<PermActiveStatusChangeCallback>& callbackWrap);
+        sptr<PermActiveStatusChangeCallback>& callbackWrap, CallbackRegisterType type);
     bool IsAllowedUsingPermission(AccessTokenID tokenID, const std::string& permissionName, int32_t pid);
     void OnRemoteDiedHandle();
     int32_t GetPermissionUsedTypeInfos(const AccessTokenID tokenId, const std::string& permissionName,
@@ -106,6 +111,8 @@ public:
     int32_t UnRegisterPermDisablePolicyCallback(const std::shared_ptr<DisablePolicyChangeCallback>& callback);
     void OnAddPrivacySa(void);
     void ReStartUsing();
+    void ReRegisterPermActiveStatusCallback();
+    void ReRegisterPermDisablePolicyCallback();
 
 private:
     PrivacyManagerClient();
@@ -137,7 +144,7 @@ private:
 
 private:
     std::mutex activeCbkMutex_;
-    std::map<std::shared_ptr<PermActiveStatusCustomizedCbk>, sptr<PermActiveStatusChangeCallback>> activeCbkMap_;
+    std::map<std::shared_ptr<PermActiveStatusCustomizedCbk>, ActiveCallbackEntry> activeCbkMap_;
     std::mutex disableCbkMutex_;
     std::map<std::shared_ptr<DisablePolicyChangeCallback>, sptr<PermDisablePolicyChangeCallback>> disableCbkMap_;
     std::mutex stateCbkMutex_;
