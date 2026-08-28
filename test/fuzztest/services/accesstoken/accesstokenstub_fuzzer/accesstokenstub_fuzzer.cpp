@@ -638,6 +638,21 @@ bool VerifyAccessTokenStubFuzzTest(FuzzedDataProvider &provider)
     return true;
 }
 
+bool ResetDatabaseRecoveryStatusStubFuzzTest()
+{
+    MessageParcel sendData;
+    if (!sendData.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
+        return false;
+    }
+
+    MessageParcel reply;
+    MessageOption option;
+    MockToken mock({ "ohos.permission.MANAGE_HAP_TOKENID" }, false);
+    uint32_t code = static_cast<uint32_t>(IAccessTokenManagerIpcCode::COMMAND_RESET_DATABASE_RECOVERY_STATUS);
+    (void)DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, sendData, reply, option);
+    return true;
+}
+
 void TokenSyncStubFuzzTest()
 {
     RegisterTokenSyncCallback();
@@ -651,6 +666,7 @@ void AccessTokenStubFuzzTest(FuzzedDataProvider &provider)
 {
     GetVersion();
     GetPermissionManagerInfo();
+    (void)ResetDatabaseRecoveryStatusStubFuzzTest();
     (void)InitHapTokenStubFuzzTest(provider);
     (void)UpdateHapTokenStubFuzzTest(provider);
     (void)DeleteTokenStubFuzzTest(provider);

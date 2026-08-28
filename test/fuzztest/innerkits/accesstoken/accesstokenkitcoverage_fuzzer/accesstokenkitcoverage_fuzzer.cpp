@@ -49,6 +49,7 @@ bool AccessTokenKitCoverageFuzzTest(const uint8_t* data, size_t size)
     AccessTokenKit::GetVersion(version);
     PermissionGrantInfo grantInfo;
     AccessTokenKit::GetPermissionManagerInfo(grantInfo);
+    (void)AccessTokenKit::ResetDatabaseRecoveryStatus();
     
     return true;
 }
