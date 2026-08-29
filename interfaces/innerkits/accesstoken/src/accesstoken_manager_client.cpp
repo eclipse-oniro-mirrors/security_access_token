@@ -51,6 +51,7 @@ static constexpr int32_t MAX_USER_POLICY_SIZE = 200;
 static constexpr int32_t MAX_EXTENDED_VALUE_LIST_SIZE = 512;
 static constexpr uint32_t MAX_CALLBACK_MAP_SIZE = 200;
 static constexpr uint32_t ERR_SERVICE_DIED = 29189;
+static constexpr int32_t ERR_DEAD_OBJECT = 32;
 
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
 bool IsEnhanceKeySizeValid(size_t size)
@@ -232,14 +233,16 @@ AccessTokenManagerClient::~AccessTokenManagerClient()
     ReleaseProxy();
 }
 
-static int32_t ConvertResult(int32_t ret)
+int32_t AccessTokenManagerClient::ConvertResult(int32_t ret)
 {
     switch (ret) {
         case ERR_INVALID_DATA:
             ret = ERR_WRITE_PARCEL_FAILED;
             break;
-        case ERR_TRANSACTION_FAILED:
+        case ERR_DEAD_OBJECT:
         case ERR_SERVICE_DIED:
+            OnRemoteDiedHandle();
+        case ERR_TRANSACTION_FAILED:
             ret = ERR_SERVICE_ABNORMAL;
             break;
         default:

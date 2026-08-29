@@ -167,6 +167,7 @@ private:
     void InitProxy();
     sptr<IAccessTokenManager> GetProxy();
     void ReleaseProxy();
+    int32_t ConvertResult(int32_t ret);
     std::mutex callbackMutex_;
     std::map<std::shared_ptr<PermStateChangeCallbackCustomize>, sptr<PermissionStateChangeCallback>> callbackMap_;
 

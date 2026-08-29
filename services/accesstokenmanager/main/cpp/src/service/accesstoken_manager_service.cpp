@@ -2582,6 +2582,11 @@ void AccessTokenManagerService::CheckAccessTokenDbDir(const char* dbDirPath) con
 
 bool AccessTokenManagerService::Initialize()
 {
+#ifdef HICOLLIE_ENABLE
+    std::string name = "AtmInitTimer";
+    int32_t timerId = HiviewDFX::XCollie::GetInstance().SetTimer(name, TIMEOUT, nullptr, nullptr,
+        HiviewDFX::XCOLLIE_FLAG_RECOVERY);
+#endif // HICOLLIE_ENABLE
     MemoryGuard guard;
     ReportSysEventPerformance();
     CheckAccessTokenDbDir(ACCESS_TOKEN_DB_DIR_PATH);
@@ -2620,6 +2625,9 @@ bool AccessTokenManagerService::Initialize()
     ReportSysEventServiceStart(dfxInfo);
     ReportAccessTokenRdbFileInfoAsync();
     LOGI(ATM_DOMAIN, ATM_TAG, "Initialize success.");
+#ifdef HICOLLIE_ENABLE
+    HiviewDFX::XCollie::GetInstance().CancelTimer(timerId);
+#endif // HICOLLIE_ENABLE
     return true;
 }
 
