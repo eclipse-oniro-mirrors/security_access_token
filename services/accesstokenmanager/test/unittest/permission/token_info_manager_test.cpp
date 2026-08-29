@@ -1444,6 +1444,111 @@ HWTEST_F(TokenInfoManagerTest, UpdateHapToken004, TestSize.Level0)
     ASSERT_EQ(RET_SUCCESS, atManagerService_->DeleteToken(tokenID, false));
 }
 
+/**
+ * @tc.name: UpdateHapTokenPreAuthorization001
+ * @tc.desc: Verify pre-authorization permission state is synchronized to cache and database.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenInfoManagerTest, UpdateHapTokenPreAuthorization001, TestSize.Level0)
+{
+    const std::string permissionName = "ohos.permission.CAMERA";
+    uint32_t permCode = 0;
+    ASSERT_TRUE(TransferPermissionToOpcode(permissionName, permCode));
+
+    HapInfoParams info = g_infoManagerTestInfoParms;
+    HapPolicy oldPolicy = {
+        .apl = APL_NORMAL,
+        .domain = "test.domain",
+        .permStateList = { g_permState }
+    };
+    AccessTokenIDEx tokenIdEx = {0};
+    std::vector<GenericValues> undefValues;
+    ASSERT_EQ(RET_SUCCESS,
+        AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(info, oldPolicy, tokenIdEx, undefValues));
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+
+    PermissionStatus preAuthorizedState = g_permState;
+    preAuthorizedState.grantStatus = PERMISSION_GRANTED;
+    preAuthorizedState.grantFlag = PERMISSION_SYSTEM_FIXED;
+    HapPolicy newPolicy = oldPolicy;
+    newPolicy.permStateList = { preAuthorizedState };
+    UpdateHapInfoParams updateInfo;
+    updateInfo.appIDDesc = "updateAppId";
+    updateInfo.apiVersion = DEFAULT_API_VERSION;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().UpdateHapToken(
+        tokenIdEx, updateInfo, newPolicy.permStateList, newPolicy, undefValues));
+
+    ExpectCacheAndDbPermissionState(tokenId, permCode, permissionName, PERMISSION_GRANTED,
+        PERMISSION_SYSTEM_FIXED, PERMISSION_SYSTEM_FIXED);
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId));
+}
+
+/**
+ * @tc.name: UpdateHapTokenPreAuthorization002
+ * @tc.desc: Verify cancelable pre-authorization update succeeds in manager path.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenInfoManagerTest, UpdateHapTokenPreAuthorization002, TestSize.Level0)
+{
+    const std::string permissionName = "ohos.permission.CAMERA";
+    uint32_t permCode = 0;
+    ASSERT_TRUE(TransferPermissionToOpcode(permissionName, permCode));
+    HapPolicy policy = { .apl = APL_NORMAL, .domain = "test.domain", .permStateList = { g_permState } };
+    AccessTokenIDEx tokenIdEx = {0};
+    std::vector<GenericValues> undefValues;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(
+        g_infoManagerTestInfoParms, policy, tokenIdEx, undefValues));
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+
+    PermissionStatus newState = g_permState;
+    newState.grantStatus = PERMISSION_GRANTED;
+    newState.grantFlag = PERMISSION_PRE_AUTHORIZED_CANCELABLE;
+    policy.permStateList = { newState };
+    UpdateHapInfoParams updateInfo = { .appIDDesc = "updateAppId", .apiVersion = DEFAULT_API_VERSION };
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().UpdateHapToken(
+        tokenIdEx, updateInfo, policy.permStateList, policy, undefValues));
+
+    ExpectCacheAndDbPermissionState(tokenId, permCode, permissionName, PERMISSION_GRANTED,
+        PERMISSION_DEFAULT_FLAG, PERMISSION_PRE_AUTHORIZED_CANCELABLE);
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId));
+}
+
+/**
+ * @tc.name: UpdateHapTokenPreAuthorization003
+ * @tc.desc: Verify removing pre-authorization restores default user-grant state.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenInfoManagerTest, UpdateHapTokenPreAuthorization003, TestSize.Level0)
+{
+    const std::string permissionName = "ohos.permission.CAMERA";
+    uint32_t permCode = 0;
+    ASSERT_TRUE(TransferPermissionToOpcode(permissionName, permCode));
+    HapPolicy policy = { .apl = APL_NORMAL, .domain = "test.domain", .permStateList = { g_permState } };
+    AccessTokenIDEx tokenIdEx = {0};
+    std::vector<GenericValues> undefValues;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(
+        g_infoManagerTestInfoParms, policy, tokenIdEx, undefValues));
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+
+    PermissionStatus newState = g_permState;
+    newState.grantStatus = PERMISSION_GRANTED;
+    newState.grantFlag = PERMISSION_PRE_AUTHORIZED_CANCELABLE;
+    policy.permStateList = { newState };
+    UpdateHapInfoParams updateInfo = { .appIDDesc = "updateAppId", .apiVersion = DEFAULT_API_VERSION };
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().UpdateHapToken(
+        tokenIdEx, updateInfo, policy.permStateList, policy, undefValues));
+
+    policy.permStateList = { g_permState };
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().UpdateHapToken(
+        tokenIdEx, updateInfo, policy.permStateList, policy, undefValues));
+    ExpectCacheAndDbPermissionState(tokenId, permCode, permissionName, PERMISSION_DENIED,
+        PERMISSION_DEFAULT_FLAG, PERMISSION_DEFAULT_FLAG);
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId));
+}
+
 
 #ifdef TOKEN_SYNC_ENABLE
 /**
@@ -2331,6 +2436,43 @@ HWTEST_F(TokenInfoManagerTest, UpdatePermissionStatus001, TestSize.Level0)
 }
 
 /**
+ * @tc.name: UpdatePermissionStatus002
+ * @tc.desc: Verify UpdatePermissionStatus reports correct change types.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenInfoManagerTest, UpdatePermissionStatus002, TestSize.Level0)
+{
+    PermissionStatus state = g_permState;
+    auto& brief = PermissionDataBrief::GetInstance();
+    brief.AddPermToBriefPermission(790, { state }, true);
+    brief.AddPermToBriefPermission(791, { state }, true);
+    brief.AddPermToBriefPermission(792, { state }, true);
+    state.grantStatus = PERMISSION_GRANTED;
+    state.grantFlag = PERMISSION_PRE_AUTHORIZED_CANCELABLE;
+    brief.AddPermToBriefPermission(793, { state }, true);
+
+    PermissionDataBrief::PermissionStatusChangeType changed;
+    ASSERT_EQ(RET_SUCCESS, brief.UpdatePermissionStatus(
+        790, "ohos.permission.CAMERA", false, PERMISSION_DEFAULT_FLAG, changed));
+    EXPECT_EQ(PermissionDataBrief::PermissionStatusChangeType::NO_CHANGE, changed);
+    ASSERT_EQ(RET_SUCCESS, brief.UpdatePermissionStatus(
+        791, "ohos.permission.CAMERA", false, PERMISSION_FIXED_BY_ADMIN_POLICY, changed));
+    EXPECT_EQ(PermissionDataBrief::PermissionStatusChangeType::FLAG_ONLY, changed);
+    ASSERT_EQ(RET_SUCCESS, brief.UpdatePermissionStatus(
+        792, "ohos.permission.CAMERA", true, PERMISSION_PRE_AUTHORIZED_CANCELABLE, changed));
+    EXPECT_EQ(PermissionDataBrief::PermissionStatusChangeType::STATUS_AND_FLAG, changed);
+    ASSERT_EQ(RET_SUCCESS, brief.UpdatePermissionStatus(
+        793, "ohos.permission.CAMERA", false, PERMISSION_PRE_AUTHORIZED_CANCELABLE, changed));
+    EXPECT_EQ(PermissionDataBrief::PermissionStatusChangeType::STATUS_ONLY, changed);
+
+    EXPECT_EQ(RET_SUCCESS, brief.DeleteBriefPermDataByTokenId(790));
+    EXPECT_EQ(RET_SUCCESS, brief.DeleteBriefPermDataByTokenId(791));
+    EXPECT_EQ(RET_SUCCESS, brief.DeleteBriefPermDataByTokenId(792));
+    EXPECT_EQ(RET_SUCCESS, brief.DeleteBriefPermDataByTokenId(793));
+}
+
+/**
  * @tc.name: AddPermToBriefPermission001
  * @tc.desc: Verify remote permission states with invalid grant flags are filtered.
  * @tc.type: FUNC
@@ -2380,53 +2522,76 @@ HWTEST_F(TokenInfoManagerTest, AddBriefPermData001, TestSize.Level0)
  */
 HWTEST_F(TokenInfoManagerTest, UpdatePermStatus001, TestSize.Level0)
 {
-    BriefPermData permOld;
-    BriefPermData permNew;
+    BriefPermData oldData;
+    BriefPermData newData;
+    oldData.status = PERMISSION_DENIED;
+    newData.status = PERMISSION_GRANTED;
 
-    permOld.flag = PermissionFlag::PERMISSION_FIXED_BY_ADMIN_POLICY;
-    permOld.status = PERMISSION_DENIED;
+    oldData.flag = PERMISSION_FIXED_BY_ADMIN_POLICY;
+    newData.flag = PERMISSION_SYSTEM_FIXED;
+    PermissionDataBrief::GetInstance().UpdatePermStatus(oldData, newData);
+    EXPECT_EQ(PERMISSION_GRANTED, newData.status);
+    EXPECT_EQ(PERMISSION_SYSTEM_FIXED, newData.flag);
 
-    permNew.flag = PermissionFlag::PERMISSION_SYSTEM_FIXED;
-    permNew.status = PERMISSION_GRANTED;
-    PermissionDataBrief::GetInstance().UpdatePermStatus(permOld, permNew);
-    ASSERT_NE(permOld.status, permNew.status);
+    oldData.flag = PERMISSION_ADMIN_POLICIES_CANCEL;
+    newData.flag = PERMISSION_SYSTEM_FIXED;
+    PermissionDataBrief::GetInstance().UpdatePermStatus(oldData, newData);
+    EXPECT_EQ(PERMISSION_GRANTED, newData.status);
+    EXPECT_EQ(PERMISSION_SYSTEM_FIXED, newData.flag);
 
-    permOld.flag = PermissionFlag::PERMISSION_ADMIN_POLICIES_CANCEL;
-    PermissionDataBrief::GetInstance().UpdatePermStatus(permOld, permNew);
-    ASSERT_NE(permOld.status, permNew.status);
+    oldData.flag = PERMISSION_ADMIN_POLICIES_CANCEL;
+    newData.flag = PERMISSION_PRE_AUTHORIZED_CANCELABLE;
+    PermissionDataBrief::GetInstance().UpdatePermStatus(oldData, newData);
+    EXPECT_EQ(PERMISSION_GRANTED, newData.status);
+    EXPECT_EQ(PERMISSION_PRE_AUTHORIZED_CANCELABLE, newData.flag);
 
-    permOld.flag = PermissionFlag::PERMISSION_ADMIN_POLICIES_CANCEL;
-    permNew.flag = PermissionFlag::PERMISSION_PRE_AUTHORIZED_CANCELABLE;
-    PermissionDataBrief::GetInstance().UpdatePermStatus(permOld, permNew);
-    ASSERT_NE(permOld.status, permNew.status);
+    oldData.flag = PERMISSION_DEFAULT_FLAG;
+    oldData.status = PERMISSION_DENIED;
+    newData.flag = PERMISSION_SYSTEM_FIXED;
+    newData.status = PERMISSION_GRANTED;
+    PermissionDataBrief::GetInstance().UpdatePermStatus(oldData, newData);
+    EXPECT_EQ(PERMISSION_GRANTED, newData.status);
+    EXPECT_EQ(PERMISSION_SYSTEM_FIXED, newData.flag);
+}
 
-    permOld.flag = PermissionFlag::PERMISSION_SYSTEM_FIXED;
-    PermissionDataBrief::GetInstance().UpdatePermStatus(permOld, permNew);
-    ASSERT_NE(permOld.status, permNew.status);
+/**
+ * @tc.name: UpdatePermStatus002
+ * @tc.desc: Verify fixed pre-authorization and restricted flag merge rules.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenInfoManagerTest, UpdatePermStatus002, TestSize.Level0)
+{
+    BriefPermData oldData;
+    BriefPermData newData;
+    oldData.status = PERMISSION_GRANTED;
+    oldData.flag = PERMISSION_USER_FIXED | PERMISSION_RESTRICTED_BY_ADMIN;
+    newData.status = PERMISSION_DENIED;
+    newData.flag = PERMISSION_SYSTEM_FIXED | PERMISSION_RESTRICTED_BY_ADMIN;
 
-    permOld.flag = PermissionFlag::PERMISSION_PRE_AUTHORIZED_CANCELABLE;
-    PermissionDataBrief::GetInstance().UpdatePermStatus(permOld, permNew);
-    ASSERT_NE(permOld.status, permNew.status);
+    PermissionDataBrief::GetInstance().UpdatePermStatus(oldData, newData);
+    EXPECT_EQ(PERMISSION_GRANTED, newData.status);
+    EXPECT_EQ(PERMISSION_USER_FIXED | PERMISSION_RESTRICTED_BY_ADMIN, newData.flag);
 
-    permOld.flag = PERMISSION_PRE_AUTHORIZED_CANCELABLE | PERMISSION_USER_FIXED;
-    permOld.status = PERMISSION_DENIED;
-    permNew.flag = PERMISSION_DEFAULT_FLAG;
-    permNew.status = PERMISSION_GRANTED;
-    PermissionDataBrief::GetInstance().UpdatePermStatus(permOld, permNew);
-    EXPECT_EQ(PERMISSION_DENIED, permNew.status);
-    EXPECT_EQ(PERMISSION_PRE_AUTHORIZED_CANCELABLE | PERMISSION_USER_FIXED, permNew.flag);
-    permOld.flag = PERMISSION_SYSTEM_FIXED | PERMISSION_RESTRICTED_BY_ADMIN;
-    permOld.status = PERMISSION_GRANTED;
-    permNew.flag = PERMISSION_DEFAULT_FLAG;
-    permNew.status = PERMISSION_DENIED;
-    PermissionDataBrief::GetInstance().UpdatePermStatus(permOld, permNew);
-    EXPECT_EQ(PERMISSION_GRANTED, permNew.status);
-    EXPECT_EQ(PERMISSION_SYSTEM_FIXED, permNew.flag);
+    oldData.flag = PERMISSION_SYSTEM_FIXED | PERMISSION_RESTRICTED_BY_ADMIN;
+    newData.flag = PERMISSION_DEFAULT_FLAG;
+    newData.status = PERMISSION_DENIED;
+    PermissionDataBrief::GetInstance().UpdatePermStatus(oldData, newData);
+    EXPECT_EQ(PERMISSION_GRANTED, newData.status);
+    EXPECT_EQ(PERMISSION_SYSTEM_FIXED, newData.flag);
 
-    permOld.flag = PERMISSION_PRE_AUTHORIZED_CANCELABLE | PERMISSION_RESTRICTED_BY_ADMIN;
-    PermissionDataBrief::GetInstance().UpdatePermStatus(permOld, permNew);
-    EXPECT_EQ(PERMISSION_GRANTED, permNew.status);
-    EXPECT_EQ(PERMISSION_PRE_AUTHORIZED_CANCELABLE, permNew.flag);
+    oldData.flag = PERMISSION_PRE_AUTHORIZED_CANCELABLE | PERMISSION_RESTRICTED_BY_ADMIN;
+    PermissionDataBrief::GetInstance().UpdatePermStatus(oldData, newData);
+    EXPECT_EQ(PERMISSION_GRANTED, newData.status);
+    EXPECT_EQ(PERMISSION_PRE_AUTHORIZED_CANCELABLE, newData.flag);
+
+    oldData.status = PERMISSION_DENIED;
+    oldData.flag = PERMISSION_USER_FIXED | PERMISSION_RESTRICTED_BY_ADMIN;
+    newData.status = PERMISSION_GRANTED;
+    newData.flag = PERMISSION_PRE_AUTHORIZED_CANCELABLE;
+    PermissionDataBrief::GetInstance().UpdatePermStatus(oldData, newData);
+    EXPECT_EQ(PERMISSION_DENIED, newData.status);
+    EXPECT_EQ(PERMISSION_USER_FIXED, newData.flag);
 }
 
 #ifdef TOKEN_SYNC_ENABLE
@@ -2685,6 +2850,85 @@ HWTEST_F(TokenInfoManagerTest, ClearUserGrantedPermissionStateAdminFlag001, Test
     EXPECT_EQ(PERMISSION_DEFAULT_FLAG, permData->flag);
     EXPECT_EQ(0u, permData->flag & PERMISSION_USER_SET);
 
+    ASSERT_EQ(RET_SUCCESS, PermissionDataBrief::GetInstance().DeleteBriefPermDataByTokenId(tokenId));
+}
+
+/**
+ * @tc.name: ResetUserGrantPermissionStatus001
+ * @tc.desc: ResetUserGrantPermissionStatus keeps fixed and cancelable pre-authorization states.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenInfoManagerTest, ResetUserGrantPermissionStatus001, TestSize.Level0)
+{
+    AccessTokenID tokenId = RANDOM_TOKENID + 10;
+    std::vector<PermissionStatus> permStateList = {{
+        .permissionName = "ohos.permission.CAMERA",
+        .grantStatus = PERMISSION_GRANTED,
+        .grantFlag = PERMISSION_SYSTEM_FIXED
+    }, {
+        .permissionName = "ohos.permission.MICROPHONE",
+        .grantStatus = PERMISSION_DENIED,
+        .grantFlag = PERMISSION_PRE_AUTHORIZED_CANCELABLE
+    }, {
+        .permissionName = "ohos.permission.LOCATION",
+        .grantStatus = PERMISSION_GRANTED,
+        .grantFlag = PERMISSION_USER_FIXED
+    }};
+    PermissionDataBrief::GetInstance().AddPermToBriefPermission(tokenId, permStateList, true);
+    ASSERT_EQ(RET_SUCCESS, PermissionDataBrief::GetInstance().ResetUserGrantPermissionStatus(tokenId));
+
+    std::vector<BriefPermData> permDataList;
+    ASSERT_EQ(RET_SUCCESS, PermissionDataBrief::GetInstance().GetBriefPermDataByTokenId(tokenId, permDataList));
+    EXPECT_NE(permDataList.end(), std::find_if(permDataList.begin(), permDataList.end(), [](const BriefPermData& data) {
+        return TransferOpcodeToPermission(data.permCode) == "ohos.permission.CAMERA" &&
+            data.status == PERMISSION_GRANTED && data.flag == PERMISSION_SYSTEM_FIXED;
+    }));
+    EXPECT_NE(permDataList.end(), std::find_if(permDataList.begin(), permDataList.end(), [](const BriefPermData& data) {
+        return TransferOpcodeToPermission(data.permCode) == "ohos.permission.MICROPHONE" &&
+            data.status == PERMISSION_GRANTED && data.flag == PERMISSION_PRE_AUTHORIZED_CANCELABLE;
+    }));
+    EXPECT_NE(permDataList.end(), std::find_if(permDataList.begin(), permDataList.end(), [](const BriefPermData& data) {
+        return TransferOpcodeToPermission(data.permCode) == "ohos.permission.LOCATION" &&
+            data.status == PERMISSION_DENIED && data.flag == PERMISSION_DEFAULT_FLAG;
+    }));
+    ASSERT_EQ(RET_SUCCESS, PermissionDataBrief::GetInstance().DeleteBriefPermDataByTokenId(tokenId));
+}
+
+/**
+ * @tc.name: GetGrantedPermList001
+ * @tc.desc: GetGrantedPermList and GetGrantedPermCodeList only return effectively granted permissions.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenInfoManagerTest, GetGrantedPermList001, TestSize.Level0)
+{
+    AccessTokenID tokenId = RANDOM_TOKENID + 11;
+    uint32_t cameraCode = 0;
+    ASSERT_TRUE(TransferPermissionToOpcode("ohos.permission.CAMERA", cameraCode));
+    std::vector<PermissionStatus> permStateList = {{
+        .permissionName = "ohos.permission.CAMERA",
+        .grantStatus = PERMISSION_GRANTED,
+        .grantFlag = PERMISSION_DEFAULT_FLAG
+    }, {
+        .permissionName = "ohos.permission.MICROPHONE",
+        .grantStatus = PERMISSION_DENIED,
+        .grantFlag = PERMISSION_DEFAULT_FLAG
+    }, {
+        .permissionName = "ohos.permission.LOCATION",
+        .grantStatus = PERMISSION_GRANTED,
+        .grantFlag = PERMISSION_RESTRICTED_BY_ADMIN
+    }};
+    PermissionDataBrief::GetInstance().AddPermToBriefPermission(tokenId, permStateList, true);
+
+    std::vector<uint32_t> opCodeList;
+    std::vector<std::string> permissionList;
+    PermissionDataBrief::GetInstance().GetGrantedPermCodeList(tokenId, opCodeList);
+    PermissionDataBrief::GetInstance().GetGrantedPermList(tokenId, permissionList);
+    ASSERT_EQ(1u, opCodeList.size());
+    ASSERT_EQ(1u, permissionList.size());
+    EXPECT_EQ(cameraCode, opCodeList[0]);
+    EXPECT_EQ("ohos.permission.CAMERA", permissionList[0]);
     ASSERT_EQ(RET_SUCCESS, PermissionDataBrief::GetInstance().DeleteBriefPermDataByTokenId(tokenId));
 }
 
