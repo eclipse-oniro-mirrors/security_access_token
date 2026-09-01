@@ -61,6 +61,7 @@ if (is_standard_system) {
       "src/accesstoken_kit.cpp",
       "src/accesstoken_manager_client.cpp",
       "src/perm_state_change_callback_customize.cpp",
+      "src/system_ability_status_change_listener.cpp",
     ]
 
     deps = [

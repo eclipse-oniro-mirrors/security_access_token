@@ -31,6 +31,7 @@
 #include "permission_grant_info_parcel.h"
 #include "permission_map.h"
 #include "permission_status_parcel.h"
+#include "system_ability_status_change_listener.h"
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
 #include "sec_comp_enhance_data_parcel.h"
 #include "securec.h"
@@ -44,7 +45,8 @@ static constexpr int32_t VALUE_MAX_LEN = 32;
 static constexpr const char* ACCESS_TOKEN_SERVICE_INIT_KEY = "accesstoken.permission.init";
 std::recursive_mutex g_instanceMutex;
 static constexpr int32_t SA_ID_ACCESSTOKEN_MANAGER_SERVICE = 3503;
-static constexpr int MAX_PERMISSION_SIZE = 1024;
+static constexpr int32_t MAX_SUBSCRIBE_RETRY_TIMES = 3;
+static constexpr int32_t MAX_PERMISSION_SIZE = 1024;
 #ifdef SUPPORT_MANAGE_USER_POLICY
 static constexpr int32_t MAX_USER_POLICY_SIZE = 200;
 #endif
@@ -642,7 +644,7 @@ int32_t AccessTokenManagerClient::RequestAppPermOnSetting(AccessTokenID tokenID)
 }
 
 int32_t AccessTokenManagerClient::CreatePermStateChangeCallback(
-    const std::shared_ptr<PermStateChangeCallbackCustomize>& customizedCb,
+    const std::shared_ptr<PermStateChangeCallbackCustomize>& customizedCb, RegisterPermChangeType type,
     sptr<PermissionStateChangeCallback>& callback)
 {
     std::lock_guard<std::mutex> lock(callbackMutex_);
@@ -661,7 +663,7 @@ int32_t AccessTokenManagerClient::CreatePermStateChangeCallback(
             LOGE(ATM_DOMAIN, ATM_TAG, "Memory allocation for callback failed!");
             return AccessTokenError::ERR_SERVICE_ABNORMAL;
         }
-        callbackMap_[customizedCb] = callback;
+        callbackMap_[customizedCb] = { callback, type };
     }
     return RET_SUCCESS;
 }
@@ -675,7 +677,7 @@ int32_t AccessTokenManagerClient::RegisterPermStateChangeCallback(
     }
 
     sptr<PermissionStateChangeCallback> callback = nullptr;
-    int32_t result = CreatePermStateChangeCallback(customizedCb, callback);
+    int32_t result = CreatePermStateChangeCallback(customizedCb, type, callback);
     if (result != RET_SUCCESS) {
         return result;
     }
@@ -738,11 +740,11 @@ int32_t AccessTokenManagerClient::UnRegisterPermStateChangeCallback(
             LOGE(ATM_DOMAIN, ATM_TAG, "GoalCallback already is not exist");
             return AccessTokenError::ERR_INTERFACE_NOT_USED_TOGETHER;
         }
-        if (goalCallback->second == nullptr) {
+        if (goalCallback->second.callback == nullptr) {
             LOGE(ATM_DOMAIN, ATM_TAG, "GoalCallback is null");
             return AccessTokenError::ERR_INTERFACE_NOT_USED_TOGETHER;
         }
-        callback = goalCallback->second;
+        callback = goalCallback->second.callback;
     }
     int32_t result;
     if (type == SYSTEM_REGISTER_TYPE) {
@@ -753,7 +755,7 @@ int32_t AccessTokenManagerClient::UnRegisterPermStateChangeCallback(
     if (result == RET_SUCCESS) {
         std::lock_guard<std::mutex> lock(callbackMutex_);
         auto goalCallback = callbackMap_.find(customizedCb);
-        if (goalCallback != callbackMap_.end() && goalCallback->second == callback) {
+        if (goalCallback != callbackMap_.end() && goalCallback->second.callback == callback) {
             callbackMap_.erase(goalCallback);
         }
     }
@@ -1298,12 +1300,102 @@ void AccessTokenManagerClient::InitProxy()
     }
 }
 
+std::function<void(int32_t, const std::string&)> AtmSaAddCallback()
+{
+    return [](int32_t systemAbilityId, const std::string &deviceId) {
+        if (systemAbilityId == SA_ID_ACCESSTOKEN_MANAGER_SERVICE) {
+            AccessTokenManagerClient::GetInstance().OnAddAccessTokenSa();
+        }
+    };
+}
+
+bool AccessTokenManagerClient::SubscribeSystemAbility(
+    const std::function<void(int32_t, const std::string&)>& callbackFunc)
+{
+    sptr<AtmSystemAbilityStatusChangeListener> statusChangeListener =
+        new (std::nothrow) AtmSystemAbilityStatusChangeListener(callbackFunc);
+    if (statusChangeListener == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "StatusChangeListener is nullptr.");
+        return false;
+    }
+    for (int32_t i = 0; i < MAX_SUBSCRIBE_RETRY_TIMES; i++) {
+        auto saProxy = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+        if (saProxy == nullptr) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "SaProxy is NULL, retry times %{public}d.", i + 1);
+            continue;
+        }
+        int32_t ret = saProxy->SubscribeSystemAbility(
+            SA_ID_ACCESSTOKEN_MANAGER_SERVICE, statusChangeListener);
+        if (ret == ERR_OK) {
+            LOGI(ATM_DOMAIN, ATM_TAG, "SubscribeSystemAbility success.");
+            return true;
+        }
+        LOGE(ATM_DOMAIN, ATM_TAG, "SubscribeSystemAbility failed, ret %{public}d, retry times %{public}d.",
+            ret, i + 1);
+    }
+    return false;
+}
+
+void AccessTokenManagerClient::OnAddAccessTokenSa(void)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "Enter.");
+    ReregisterPermStateChangeCallback();
+}
+
+void AccessTokenManagerClient::ReregisterPermStateChangeCallback()
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
+        return;
+    }
+    std::vector<std::pair<std::shared_ptr<PermStateChangeCallbackCustomize>, PermStateChangeCallbackInfo>>
+        callbackInfos;
+    {
+        std::lock_guard<std::mutex> lock(callbackMutex_);
+        LOGI(ATM_DOMAIN, ATM_TAG, "callbackMap_ size %{public}zu.", callbackMap_.size());
+        callbackInfos.reserve(callbackMap_.size());
+        for (const auto& item : callbackMap_) {
+            callbackInfos.emplace_back(item.first, item.second);
+        }
+    }
+    for (const auto& item : callbackInfos) {
+        sptr<PermissionStateChangeCallback> callback = item.second.callback;
+        if (callback == nullptr) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Callback is null.");
+            continue;
+        }
+        PermStateChangeScopeParcel scopeParcel;
+        item.first->GetScope(scopeParcel.scope);
+        int32_t result;
+        if (item.second.type == SYSTEM_REGISTER_TYPE) {
+            result = proxy->RegisterPermStateChangeCallback(scopeParcel, callback->AsObject());
+        } else {
+            result = proxy->RegisterSelfPermStateChangeCallback(scopeParcel, callback->AsObject());
+        }
+        if (result != RET_SUCCESS) {
+            result = ConvertResult(result);
+            LOGE(ATM_DOMAIN, ATM_TAG, "Reregister callback failed, result: %{public}d, type is %{public}d",
+                result, static_cast<int32_t>(item.second.type));
+        }
+    }
+}
+
 void AccessTokenManagerClient::OnRemoteDiedHandle()
 {
     {
         std::lock_guard<std::mutex> lock(proxyMutex_);
         ReleaseProxy();
         InitProxy();
+    }
+    // Subscribe once; SAM keeps the subscription across service restarts.
+    // CAS makes the check-and-set atomic, so only one thread subscribes.
+    // Roll back to false on failure, allowing a retry on the next restart.
+    bool expected = false;
+    if (isSubscribeSA_.compare_exchange_strong(expected, true)) {
+        if (!SubscribeSystemAbility(AtmSaAddCallback())) {
+            isSubscribeSA_.store(false);
+        }
     }
 
 #ifdef TOKEN_SYNC_ENABLE
