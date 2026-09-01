@@ -67,7 +67,8 @@ namespace OHOS {
         if (callback == nullptr) {
             return true;
         }
-        AccessTokenManagerClient::GetInstance().callbackMap_[callbackPtr] = callback;
+        AccessTokenManagerClient::GetInstance().callbackMap_[callbackPtr] = {
+            sptr<PermissionStateChangeCallback>(callback), SYSTEM_REGISTER_TYPE };
         AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr);
         auto callbackPtr2 = std::make_shared<CbCustomizeTest2>(scopeInfo);
         AccessTokenKit::RegisterSelfPermStateChangeCallback(callbackPtr2);

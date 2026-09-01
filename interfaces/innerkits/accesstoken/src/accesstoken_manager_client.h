@@ -16,6 +16,8 @@
 #ifndef ACCESSTOKEN_MANAGER_CLIENT_H
 #define ACCESSTOKEN_MANAGER_CLIENT_H
 
+#include <atomic>
+#include <functional>
 #include <map>
 #include <mutex>
 #include <string>
@@ -46,6 +48,11 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+struct PermStateChangeCallbackInfo {
+    sptr<PermissionStateChangeCallback> callback;
+    RegisterPermChangeType type;
+};
+
 class AccessTokenManagerClient final {
 public:
     static AccessTokenManagerClient& GetInstance();
@@ -127,6 +134,7 @@ public:
     int32_t GetVersion(uint32_t& version);
     bool IsSupportPermission(const std::string& permissionName);
     void OnRemoteDiedHandle();
+    void OnAddAccessTokenSa();
     int32_t SetPermDialogCap(const HapBaseInfo& hapBaseInfo, bool enable);
     void GetPermissionManagerInfo(PermissionGrantInfo& info);
 #ifdef SUPPORT_MANAGE_USER_POLICY
@@ -156,9 +164,11 @@ public:
 private:
     AccessTokenManagerClient();
     int32_t CreatePermStateChangeCallback(
-        const std::shared_ptr<PermStateChangeCallbackCustomize>& customizedCb,
+        const std::shared_ptr<PermStateChangeCallbackCustomize>& customizedCb, RegisterPermChangeType type,
         sptr<PermissionStateChangeCallback>& callback);
     void ReregisterTokenSyncCallback();
+    bool SubscribeSystemAbility(const std::function<void(int32_t, const std::string&)>& callbackFunc);
+    void ReregisterPermStateChangeCallback();
 
     DISALLOW_COPY_AND_MOVE(AccessTokenManagerClient);
     std::mutex proxyMutex_;
@@ -168,7 +178,8 @@ private:
     sptr<IAccessTokenManager> GetProxy();
     void ReleaseProxy();
     std::mutex callbackMutex_;
-    std::map<std::shared_ptr<PermStateChangeCallbackCustomize>, sptr<PermissionStateChangeCallback>> callbackMap_;
+    std::map<std::shared_ptr<PermStateChangeCallbackCustomize>, PermStateChangeCallbackInfo> callbackMap_;
+    std::atomic<bool> isSubscribeSA_ = false;
 
 #ifdef TOKEN_SYNC_ENABLE
     std::mutex tokenSyncCallbackMutex_;

@@ -24,6 +24,8 @@
 #include "ipc_object_stub.h"
 #include "permission_map.h"
 #include "permission_grant_info.h"
+#include "perm_state_change_scope_parcel.h"
+#include "system_ability_status_change_listener.h"
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
 #include "securec.h"
 #endif
@@ -32,8 +34,13 @@
 using namespace testing::ext;
 
 namespace OHOS {
+void SetMockSystemAbilityManager(const sptr<ISystemAbilityManager>& sam);
+} // namespace OHOS
+
+namespace OHOS {
 namespace Security {
 namespace AccessToken {
+std::function<void(int32_t, const std::string&)> AtmSaAddCallback();
 #if defined(SECURITY_COMPONENT_ENHANCE_ENABLE) && defined(ACCESSTOKEN_MANAGER_CLIENT_TEST_ENABLE)
 bool TestClientIsEnhanceKeySizeValid(size_t size);
 void TestClientClearSecCompEnhanceKey(SecCompEnhanceKey& enhanceKey);
@@ -44,6 +51,7 @@ bool TestClientConvertSecCompEnhanceKeyFromIdl(const SecCompEnhanceKeyIdl& enhan
 
 namespace {
 static AccessTokenID g_testTokenId = 123;  // 123: tokenId
+static constexpr int32_t TEST_AT_SA_ID = 3503;
 static constexpr int32_t DEFAULT_API_VERSION = 8;
 static const std::string DEFAULT_AGENT_ID = "1001";
 static constexpr size_t INVALID_LIST_SIZE = 1025;
@@ -213,6 +221,327 @@ class TokenSyncCallbackImpl : public TokenSyncKitInterface {
     };
 };
 #endif
+
+class PermStateChangeCallbackRemoteObject final : public IPCObjectStub {
+public:
+    PermStateChangeCallbackRemoteObject() : IPCObjectStub(u"PermStateChangeCallbackRemoteObject") {}
+
+    int OnRemoteRequest(uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option) override
+    {
+        (void)option;
+        (void)data.ReadInterfaceToken();
+        if (code == static_cast<uint32_t>(IAccessTokenManagerIpcCode::COMMAND_REGISTER_PERM_STATE_CHANGE_CALLBACK)) {
+            ++registerCount_;
+            PermStateChangeScopeParcel* scope = data.ReadParcelable<PermStateChangeScopeParcel>();
+            if (scope != nullptr) {
+                registerPerms_ = scope->scope.permList;
+                registerTokens_ = scope->scope.tokenIDs;
+                delete scope;
+            }
+            registerCb_ = data.ReadRemoteObject();
+            (void)reply.WriteInt32(registerResult_);
+            return ERR_NONE;
+        }
+        if (code == static_cast<uint32_t>(
+            IAccessTokenManagerIpcCode::COMMAND_REGISTER_SELF_PERM_STATE_CHANGE_CALLBACK)) {
+            ++registerSelfCount_;
+            PermStateChangeScopeParcel* scope = data.ReadParcelable<PermStateChangeScopeParcel>();
+            if (scope != nullptr) {
+                selfPerms_ = scope->scope.permList;
+                selfTokens_ = scope->scope.tokenIDs;
+                delete scope;
+            }
+            selfCb_ = data.ReadRemoteObject();
+            (void)reply.WriteInt32(registerResult_);
+            return ERR_NONE;
+        }
+        if (code == static_cast<uint32_t>(
+            IAccessTokenManagerIpcCode::COMMAND_UN_REGISTER_PERM_STATE_CHANGE_CALLBACK)) {
+            ++unregisterCount_;
+            (void)data.ReadRemoteObject();
+            (void)reply.WriteInt32(unregisterResult_);
+            return ERR_NONE;
+        }
+        if (code == static_cast<uint32_t>(
+            IAccessTokenManagerIpcCode::COMMAND_UN_REGISTER_SELF_PERM_STATE_CHANGE_CALLBACK)) {
+            ++unregisterSelfCount_;
+            (void)data.ReadRemoteObject();
+            (void)reply.WriteInt32(unregisterResult_);
+            return ERR_NONE;
+        }
+        (void)reply.WriteInt32(ERR_INVALID_DATA);
+        return ERR_NONE;
+    }
+
+    int32_t registerResult_ = RET_SUCCESS;
+    int32_t unregisterResult_ = RET_SUCCESS;
+    uint32_t registerCount_ = 0;
+    uint32_t registerSelfCount_ = 0;
+    uint32_t unregisterCount_ = 0;
+    uint32_t unregisterSelfCount_ = 0;
+    std::vector<std::string> registerPerms_;
+    std::vector<AccessTokenID> registerTokens_;
+    std::vector<std::string> selfPerms_;
+    std::vector<AccessTokenID> selfTokens_;
+    sptr<IRemoteObject> registerCb_ = nullptr;
+    sptr<IRemoteObject> selfCb_ = nullptr;
+};
+
+sptr<PermStateChangeCallbackRemoteObject> InstallPermStateChangeCallbackRemoteObject()
+{
+    AccessTokenManagerClient::GetInstance().ReleaseProxy();
+    sptr<PermStateChangeCallbackRemoteObject> remote =
+        new (std::nothrow) PermStateChangeCallbackRemoteObject();
+    if (remote == nullptr) {
+        return nullptr;
+    }
+    sptr<AccessTokenManagerProxy> proxy = new (std::nothrow) AccessTokenManagerProxy(remote);
+    if (proxy == nullptr) {
+        return nullptr;
+    }
+    AccessTokenManagerClient::GetInstance().proxy_ = proxy;
+    return remote;
+}
+
+class MockSystemAbilityManager final : public ISystemAbilityManager {
+public:
+    sptr<IRemoteObject> AsObject() override
+    {
+        return nullptr;
+    }
+
+    std::vector<std::u16string> ListSystemAbilities(unsigned int dumpFlags) override
+    {
+        (void)dumpFlags;
+        return {};
+    }
+
+    sptr<IRemoteObject> GetSystemAbility(int32_t systemAbilityId) override
+    {
+        (void)systemAbilityId;
+        return systemAbility_;
+    }
+
+    sptr<IRemoteObject> CheckSystemAbility(int32_t systemAbilityId) override
+    {
+        (void)systemAbilityId;
+        return nullptr;
+    }
+
+    int32_t RemoveSystemAbility(int32_t systemAbilityId) override
+    {
+        (void)systemAbilityId;
+        return 0;
+    }
+
+    int32_t SubscribeSystemAbility(int32_t systemAbilityId,
+        const sptr<ISystemAbilityStatusChange>& listener) override
+    {
+        ++subscribeCount_;
+        subscribedSaId_ = systemAbilityId;
+        if (subscribeResult_ == ERR_OK) {
+            listener_ = listener;
+        }
+        return subscribeResult_;
+    }
+
+    int32_t UnSubscribeSystemAbility(int32_t systemAbilityId,
+        const sptr<ISystemAbilityStatusChange>& listener) override
+    {
+        (void)systemAbilityId;
+        (void)listener;
+        return 0;
+    }
+
+    sptr<IRemoteObject> GetSystemAbility(int32_t systemAbilityId, const std::string& deviceId) override
+    {
+        (void)systemAbilityId;
+        (void)deviceId;
+        return nullptr;
+    }
+
+    sptr<IRemoteObject> CheckSystemAbility(int32_t systemAbilityId, const std::string& deviceId) override
+    {
+        (void)systemAbilityId;
+        (void)deviceId;
+        return nullptr;
+    }
+
+    int32_t AddOnDemandSystemAbilityInfo(int32_t systemAbilityId,
+        const std::u16string& localAbilityManagerName) override
+    {
+        (void)systemAbilityId;
+        (void)localAbilityManagerName;
+        return 0;
+    }
+
+    sptr<IRemoteObject> CheckSystemAbility(int32_t systemAbilityId, bool& isExist) override
+    {
+        (void)systemAbilityId;
+        isExist = false;
+        return nullptr;
+    }
+
+    int32_t AddSystemAbility(int32_t systemAbilityId, const sptr<IRemoteObject>& ability,
+        const SAExtraProp& extraProp) override
+    {
+        (void)systemAbilityId;
+        (void)ability;
+        (void)extraProp;
+        return 0;
+    }
+
+    int32_t AddSystemProcess(const std::u16string& procName, const sptr<IRemoteObject>& procObject) override
+    {
+        (void)procName;
+        (void)procObject;
+        return 0;
+    }
+
+    sptr<IRemoteObject> LoadSystemAbility(int32_t systemAbilityId, int32_t timeout) override
+    {
+        (void)systemAbilityId;
+        (void)timeout;
+        return nullptr;
+    }
+
+    int32_t LoadSystemAbility(int32_t systemAbilityId, const sptr<ISystemAbilityLoadCallback>& callback) override
+    {
+        (void)systemAbilityId;
+        (void)callback;
+        return 0;
+    }
+
+    int32_t LoadSystemAbility(int32_t systemAbilityId, const std::string& deviceId,
+        const sptr<ISystemAbilityLoadCallback>& callback) override
+    {
+        (void)systemAbilityId;
+        (void)deviceId;
+        (void)callback;
+        return 0;
+    }
+
+    int32_t UnloadSystemAbility(int32_t systemAbilityId) override
+    {
+        (void)systemAbilityId;
+        return 0;
+    }
+
+    int32_t CancelUnloadSystemAbility(int32_t systemAbilityId) override
+    {
+        (void)systemAbilityId;
+        return 0;
+    }
+
+    int32_t UnloadAllIdleSystemAbility() override
+    {
+        return 0;
+    }
+
+    int32_t GetSystemProcessInfo(int32_t systemAbilityId, SystemProcessInfo& systemProcessInfo) override
+    {
+        (void)systemAbilityId;
+        (void)systemProcessInfo;
+        return 0;
+    }
+
+    int32_t GetRunningSystemProcess(std::list<SystemProcessInfo>& systemProcessInfos) override
+    {
+        (void)systemProcessInfos;
+        return 0;
+    }
+
+    int32_t SubscribeSystemProcess(const sptr<ISystemProcessStatusChange>& listener) override
+    {
+        (void)listener;
+        return 0;
+    }
+
+    int32_t SendStrategy(int32_t type, std::vector<int32_t>& systemAbilityIds,
+        int32_t level, std::string& action) override
+    {
+        (void)type;
+        (void)systemAbilityIds;
+        (void)level;
+        (void)action;
+        return 0;
+    }
+
+    int32_t UnSubscribeSystemProcess(const sptr<ISystemProcessStatusChange>& listener) override
+    {
+        (void)listener;
+        return 0;
+    }
+
+    int32_t GetExtensionSaIds(const std::string& extension, std::vector<int32_t>& saIds) override
+    {
+        (void)extension;
+        (void)saIds;
+        return 0;
+    }
+
+    int32_t GetExtensionRunningSaList(const std::string& extension,
+        std::vector<sptr<IRemoteObject>>& saList) override
+    {
+        (void)extension;
+        (void)saList;
+        return 0;
+    }
+
+    int32_t GetRunningSaExtensionInfoList(const std::string& extension,
+        std::vector<SaExtensionInfo>& infoList) override
+    {
+        (void)extension;
+        (void)infoList;
+        return 0;
+    }
+
+    int32_t GetCommonEventExtraDataIdlist(int32_t saId, std::vector<int64_t>& extraDataIdList,
+        const std::string& eventName = "") override
+    {
+        (void)saId;
+        (void)extraDataIdList;
+        (void)eventName;
+        return 0;
+    }
+
+    int32_t GetOnDemandReasonExtraData(int64_t extraDataId, MessageParcel& extraDataParcel) override
+    {
+        (void)extraDataId;
+        (void)extraDataParcel;
+        return 0;
+    }
+
+    int32_t GetOnDemandPolicy(int32_t systemAbilityId, OnDemandPolicyType type,
+        std::vector<SystemAbilityOnDemandEvent>& abilityOnDemandEvents) override
+    {
+        (void)systemAbilityId;
+        (void)type;
+        (void)abilityOnDemandEvents;
+        return 0;
+    }
+
+    int32_t UpdateOnDemandPolicy(int32_t systemAbilityId, OnDemandPolicyType type,
+        const std::vector<SystemAbilityOnDemandEvent>& abilityOnDemandEvents) override
+    {
+        (void)systemAbilityId;
+        (void)type;
+        (void)abilityOnDemandEvents;
+        return 0;
+    }
+
+    int32_t GetOnDemandSystemAbilityIds(std::vector<int32_t>& systemAbilityIds) override
+    {
+        (void)systemAbilityIds;
+        return 0;
+    }
+
+    int32_t subscribeResult_ = ERR_OK;
+    int32_t subscribedSaId_ = 0;
+    int32_t subscribeCount_ = 0;
+    sptr<IRemoteObject> systemAbility_ = nullptr;
+    sptr<ISystemAbilityStatusChange> listener_ = nullptr;
+};
 }
 void AccessTokenMockTest::SetUpTestCase()
 {
@@ -229,6 +558,9 @@ void AccessTokenMockTest::SetUp()
 void AccessTokenMockTest::TearDown()
 {
     AccessTokenManagerClient::GetInstance().ReleaseProxy();
+    AccessTokenManagerClient::GetInstance().isSubscribeSA_.store(false);
+    std::lock_guard<std::mutex> lock(AccessTokenManagerClient::GetInstance().callbackMutex_);
+    AccessTokenManagerClient::GetInstance().callbackMap_.clear();
 }
 
 /**
@@ -1419,6 +1751,425 @@ HWTEST_F(AccessTokenMockTest, GetHostTokenIdClient001, TestSize.Level4)
     AccessTokenID hostTokenId = INVALID_TOKENID;
     ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL,
         AccessTokenKit::GetHostTokenId(BuildFakeCliToolTokenId(), hostTokenId));
+}
+
+/**
+ * @tc.name: AtmSystemAbilityStatusChangeListener001
+ * @tc.desc: Listener invokes the callback on OnAddSystemAbility and ignores OnRemoveSystemAbility.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, AtmSystemAbilityStatusChangeListener001, TestSize.Level4)
+{
+    int32_t addCount = 0;
+    int32_t lastSaId = 0;
+    std::string lastDeviceId;
+    SubscribeSACallbackFunc callback = [&addCount, &lastSaId, &lastDeviceId](
+        int32_t saId, const std::string& deviceId) {
+        ++addCount;
+        lastSaId = saId;
+        lastDeviceId = deviceId;
+    };
+    sptr<AtmSystemAbilityStatusChangeListener> listener =
+        new (std::nothrow) AtmSystemAbilityStatusChangeListener(callback);
+    ASSERT_NE(nullptr, listener);
+    listener->OnAddSystemAbility(TEST_AT_SA_ID, "device");
+    EXPECT_EQ(1, addCount);
+    EXPECT_EQ(TEST_AT_SA_ID, lastSaId);
+    EXPECT_EQ("device", lastDeviceId);
+    listener->OnRemoveSystemAbility(TEST_AT_SA_ID, "device");
+    EXPECT_EQ(1, addCount);
+}
+
+/**
+ * @tc.name: AtmSystemAbilityStatusChangeListener002
+ * @tc.desc: Listener with null callback does not crash.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, AtmSystemAbilityStatusChangeListener002, TestSize.Level4)
+{
+    sptr<AtmSystemAbilityStatusChangeListener> listener =
+        new (std::nothrow) AtmSystemAbilityStatusChangeListener(nullptr);
+    ASSERT_NE(nullptr, listener);
+    listener->OnAddSystemAbility(TEST_AT_SA_ID, "device");
+    listener->OnRemoveSystemAbility(TEST_AT_SA_ID, "device");
+}
+
+/**
+ * @tc.name: OnRemoteDiedHandle001
+ * @tc.desc: OnRemoteDiedHandle releases the proxy and subscribes the SA only once.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, OnRemoteDiedHandle001, TestSize.Level4)
+{
+    auto remote = InstallPermStateChangeCallbackRemoteObject();
+    ASSERT_NE(nullptr, remote);
+    sptr<MockSystemAbilityManager> sam = new (std::nothrow) MockSystemAbilityManager();
+    ASSERT_NE(nullptr, sam);
+    sam->subscribeResult_ = ERR_OK;
+    SetMockSystemAbilityManager(sam);
+
+    auto& client = AccessTokenManagerClient::GetInstance();
+    client.isSubscribeSA_.store(false);
+    client.OnRemoteDiedHandle();
+    EXPECT_TRUE(client.isSubscribeSA_.load());
+    EXPECT_EQ(nullptr, client.proxy_);
+    EXPECT_EQ(TEST_AT_SA_ID, sam->subscribedSaId_);
+
+    client.OnRemoteDiedHandle();
+    EXPECT_TRUE(client.isSubscribeSA_.load());
+    EXPECT_EQ(1, sam->subscribeCount_);
+
+    SetMockSystemAbilityManager(nullptr);
+}
+
+/**
+ * @tc.name: ReregisterPermStateChangeCallback002
+ * @tc.desc: Reregister with empty callback map performs no IPC.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, ReregisterPermStateChangeCallback002, TestSize.Level4)
+{
+    auto remote = InstallPermStateChangeCallbackRemoteObject();
+    ASSERT_NE(nullptr, remote);
+    auto& client = AccessTokenManagerClient::GetInstance();
+    client.callbackMap_.clear();
+    client.ReregisterPermStateChangeCallback();
+    EXPECT_EQ(0U, remote->registerCount_);
+    EXPECT_EQ(0U, remote->registerSelfCount_);
+}
+
+/**
+ * @tc.name: ReregisterPermStateChangeCallback003
+ * @tc.desc: Reregister re-registers SYSTEM and SELF callbacks with their original scopes.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, ReregisterPermStateChangeCallback003, TestSize.Level4)
+{
+    auto remote = InstallPermStateChangeCallbackRemoteObject();
+    ASSERT_NE(nullptr, remote);
+    auto& client = AccessTokenManagerClient::GetInstance();
+    client.callbackMap_.clear();
+
+    PermStateChangeScope systemScope;
+    systemScope.permList = {"ohos.permission.CAMERA", "ohos.permission.MICROPHONE"};
+    systemScope.tokenIDs = {100, 200};  // 100, 200: tokenId
+    auto systemCb = std::make_shared<CbCustomizeTest>(systemScope);
+    sptr<PermissionStateChangeCallback> systemCallback =
+        new (std::nothrow) PermissionStateChangeCallback(systemCb);
+    ASSERT_NE(nullptr, systemCallback);
+    client.callbackMap_[systemCb] = { systemCallback, SYSTEM_REGISTER_TYPE };
+
+    PermStateChangeScope selfScope;
+    selfScope.permList = {"ohos.permission.LOCATION"};
+    selfScope.tokenIDs = {GetSelfTokenID()};
+    auto selfCb = std::make_shared<CbCustomizeTest>(selfScope);
+    sptr<PermissionStateChangeCallback> selfCallback =
+        new (std::nothrow) PermissionStateChangeCallback(selfCb);
+    ASSERT_NE(nullptr, selfCallback);
+    client.callbackMap_[selfCb] = { selfCallback, SELF_REGISTER_TYPE };
+
+    client.ReregisterPermStateChangeCallback();
+
+    EXPECT_EQ(1U, remote->registerCount_);
+    EXPECT_EQ(1U, remote->registerSelfCount_);
+    EXPECT_EQ(systemScope.permList, remote->registerPerms_);
+    EXPECT_EQ(systemScope.tokenIDs, remote->registerTokens_);
+    EXPECT_EQ(selfScope.permList, remote->selfPerms_);
+    EXPECT_EQ(selfScope.tokenIDs, remote->selfTokens_);
+}
+
+/**
+ * @tc.name: ReregisterPermStateChangeCallback004
+ * @tc.desc: Reregister skips null callback entries.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, ReregisterPermStateChangeCallback004, TestSize.Level4)
+{
+    auto remote = InstallPermStateChangeCallbackRemoteObject();
+    ASSERT_NE(nullptr, remote);
+    auto& client = AccessTokenManagerClient::GetInstance();
+    client.callbackMap_.clear();
+
+    PermStateChangeScope scopeInfo;
+    scopeInfo.permList = {"ohos.permission.CAMERA"};
+    scopeInfo.tokenIDs = {100};  // 100: tokenId
+    auto validCb = std::make_shared<CbCustomizeTest>(scopeInfo);
+    sptr<PermissionStateChangeCallback> validCallback =
+        new (std::nothrow) PermissionStateChangeCallback(validCb);
+    ASSERT_NE(nullptr, validCallback);
+    client.callbackMap_[validCb] = { validCallback, SYSTEM_REGISTER_TYPE };
+    client.callbackMap_[std::make_shared<CbCustomizeTest>(scopeInfo)] = { nullptr, SYSTEM_REGISTER_TYPE };
+
+    client.ReregisterPermStateChangeCallback();
+
+    EXPECT_EQ(1U, remote->registerCount_);
+    EXPECT_EQ(0U, remote->registerSelfCount_);
+}
+
+/**
+ * @tc.name: OnAddAccessTokenSa001
+ * @tc.desc: OnAddAccessTokenSa re-registers all callbacks when the SA comes back.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, OnAddAccessTokenSa001, TestSize.Level4)
+{
+    auto remote = InstallPermStateChangeCallbackRemoteObject();
+    ASSERT_NE(nullptr, remote);
+    auto& client = AccessTokenManagerClient::GetInstance();
+    client.callbackMap_.clear();
+
+    PermStateChangeScope scopeInfo;
+    scopeInfo.permList = {"ohos.permission.CAMERA"};
+    scopeInfo.tokenIDs = {100};  // 100: tokenId
+    auto callbackPtr = std::make_shared<CbCustomizeTest>(scopeInfo);
+    sptr<PermissionStateChangeCallback> callback =
+        new (std::nothrow) PermissionStateChangeCallback(callbackPtr);
+    ASSERT_NE(nullptr, callback);
+    client.callbackMap_[callbackPtr] = { callback, SYSTEM_REGISTER_TYPE };
+
+    client.OnAddAccessTokenSa();
+    EXPECT_EQ(1U, remote->registerCount_);
+    EXPECT_EQ(0U, remote->registerSelfCount_);
+}
+
+/**
+ * @tc.name: RegisterPermStateChangeCallback002
+ * @tc.desc: SYSTEM registration stores callback and type in callbackMap_ and forwards IPC.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, RegisterPermStateChangeCallback002, TestSize.Level4)
+{
+    auto remote = InstallPermStateChangeCallbackRemoteObject();
+    ASSERT_NE(nullptr, remote);
+    auto& client = AccessTokenManagerClient::GetInstance();
+    client.callbackMap_.clear();
+
+    PermStateChangeScope scopeInfo;
+    scopeInfo.permList = {"ohos.permission.CAMERA"};
+    scopeInfo.tokenIDs = {100, 200};  // 100, 200: tokenId
+    auto callbackPtr = std::make_shared<CbCustomizeTest>(scopeInfo);
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr));
+    EXPECT_EQ(1U, remote->registerCount_);
+    EXPECT_EQ(0U, remote->registerSelfCount_);
+
+    auto it = client.callbackMap_.find(callbackPtr);
+    ASSERT_NE(client.callbackMap_.end(), it);
+    EXPECT_EQ(SYSTEM_REGISTER_TYPE, it->second.type);
+    EXPECT_NE(nullptr, it->second.callback);
+    EXPECT_EQ(scopeInfo.permList, remote->registerPerms_);
+    EXPECT_EQ(scopeInfo.tokenIDs, remote->registerTokens_);
+
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr));
+    EXPECT_EQ(client.callbackMap_.end(), client.callbackMap_.find(callbackPtr));
+    EXPECT_EQ(1U, remote->unregisterCount_);
+}
+
+/**
+ * @tc.name: RegisterPermStateChangeCallback003
+ * @tc.desc: Register failure removes the entry from callbackMap_.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, RegisterPermStateChangeCallback003, TestSize.Level4)
+{
+    auto remote = InstallPermStateChangeCallbackRemoteObject();
+    ASSERT_NE(nullptr, remote);
+    remote->registerResult_ = ERR_PERMISSION_DENIED;
+    auto& client = AccessTokenManagerClient::GetInstance();
+    client.callbackMap_.clear();
+
+    PermStateChangeScope scopeInfo;
+    scopeInfo.permList = {"ohos.permission.CAMERA"};
+    scopeInfo.tokenIDs = {100};  // 100: tokenId
+    auto callbackPtr = std::make_shared<CbCustomizeTest>(scopeInfo);
+    EXPECT_NE(RET_SUCCESS, AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr));
+    EXPECT_EQ(client.callbackMap_.end(), client.callbackMap_.find(callbackPtr));
+}
+
+/**
+ * @tc.name: RegisterSelfPermStateChangeCallback002
+ * @tc.desc: SELF registration stores callback and type in callbackMap_ and forwards IPC.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, RegisterSelfPermStateChangeCallback002, TestSize.Level4)
+{
+    auto remote = InstallPermStateChangeCallbackRemoteObject();
+    ASSERT_NE(nullptr, remote);
+    auto& client = AccessTokenManagerClient::GetInstance();
+    client.callbackMap_.clear();
+
+    PermStateChangeScope scopeInfo;
+    scopeInfo.permList = {"ohos.permission.LOCATION"};
+    scopeInfo.tokenIDs = {GetSelfTokenID()};
+    auto callbackPtr = std::make_shared<CbCustomizeTest>(scopeInfo);
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::RegisterSelfPermStateChangeCallback(callbackPtr));
+    EXPECT_EQ(0U, remote->registerCount_);
+    EXPECT_EQ(1U, remote->registerSelfCount_);
+
+    auto it = client.callbackMap_.find(callbackPtr);
+    ASSERT_NE(client.callbackMap_.end(), it);
+    EXPECT_EQ(SELF_REGISTER_TYPE, it->second.type);
+    EXPECT_NE(nullptr, it->second.callback);
+    EXPECT_EQ(scopeInfo.permList, remote->selfPerms_);
+    EXPECT_EQ(scopeInfo.tokenIDs, remote->selfTokens_);
+
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::UnRegisterSelfPermStateChangeCallback(callbackPtr));
+    EXPECT_EQ(client.callbackMap_.end(), client.callbackMap_.find(callbackPtr));
+    EXPECT_EQ(1U, remote->unregisterSelfCount_);
+}
+
+/**
+ * @tc.name: AtmSaAddCallback001
+ * @tc.desc: AtmSaAddCallback triggers re-registration only for the access token SA id.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, AtmSaAddCallback001, TestSize.Level4)
+{
+    auto remote = InstallPermStateChangeCallbackRemoteObject();
+    ASSERT_NE(nullptr, remote);
+    auto& client = AccessTokenManagerClient::GetInstance();
+    client.callbackMap_.clear();
+
+    PermStateChangeScope scopeInfo;
+    scopeInfo.permList = {"ohos.permission.CAMERA"};
+    scopeInfo.tokenIDs = {100};  // 100: tokenId
+    auto callbackPtr = std::make_shared<CbCustomizeTest>(scopeInfo);
+    sptr<PermissionStateChangeCallback> callback =
+        new (std::nothrow) PermissionStateChangeCallback(callbackPtr);
+    ASSERT_NE(nullptr, callback);
+    client.callbackMap_[callbackPtr] = { callback, SYSTEM_REGISTER_TYPE };
+
+    auto saAddCallback = AtmSaAddCallback();
+    // non-matching system ability id must not trigger re-registration
+    saAddCallback(TEST_AT_SA_ID + 1, "device");
+    EXPECT_EQ(0U, remote->registerCount_);
+    EXPECT_EQ(0U, remote->registerSelfCount_);
+    // matching system ability id triggers re-registration
+    saAddCallback(TEST_AT_SA_ID, "device");
+    EXPECT_EQ(1U, remote->registerCount_);
+    EXPECT_EQ(0U, remote->registerSelfCount_);
+}
+
+/**
+ * @tc.name: SubscribeSystemAbility001
+ * @tc.desc: SubscribeSystemAbility returns false when GetSystemAbilityManager returns null.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, SubscribeSystemAbility001, TestSize.Level4)
+{
+    SetMockSystemAbilityManager(nullptr);
+    auto& client = AccessTokenManagerClient::GetInstance();
+    EXPECT_FALSE(client.SubscribeSystemAbility([](int32_t, const std::string&) {}));
+}
+
+/**
+ * @tc.name: SubscribeSystemAbility002
+ * @tc.desc: SubscribeSystemAbility failure (ret != ERR_OK) does not capture the listener.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, SubscribeSystemAbility002, TestSize.Level4)
+{
+    sptr<MockSystemAbilityManager> sam = new (std::nothrow) MockSystemAbilityManager();
+    ASSERT_NE(nullptr, sam);
+    sam->subscribeResult_ = AccessTokenError::ERR_SERVICE_ABNORMAL;
+    SetMockSystemAbilityManager(sam);
+
+    auto& client = AccessTokenManagerClient::GetInstance();
+    EXPECT_FALSE(client.SubscribeSystemAbility([](int32_t, const std::string&) {}));
+    EXPECT_EQ(TEST_AT_SA_ID, sam->subscribedSaId_);
+    EXPECT_EQ(3, sam->subscribeCount_);
+    EXPECT_EQ(nullptr, sam->listener_);
+
+    SetMockSystemAbilityManager(nullptr);
+}
+
+/**
+ * @tc.name: SubscribeSystemAbility003
+ * @tc.desc: SubscribeSystemAbility success captures the listener and the status change invokes it.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, SubscribeSystemAbility003, TestSize.Level4)
+{
+    sptr<MockSystemAbilityManager> sam = new (std::nothrow) MockSystemAbilityManager();
+    ASSERT_NE(nullptr, sam);
+    sam->subscribeResult_ = ERR_OK;
+    SetMockSystemAbilityManager(sam);
+
+    int32_t invoked = 0;
+    auto& client = AccessTokenManagerClient::GetInstance();
+    client.SubscribeSystemAbility([&invoked](int32_t saId, const std::string& deviceId) {
+        (void)saId;
+        (void)deviceId;
+        ++invoked;
+    });
+    EXPECT_EQ(TEST_AT_SA_ID, sam->subscribedSaId_);
+    ASSERT_NE(nullptr, sam->listener_);
+    sam->listener_->OnAddSystemAbility(TEST_AT_SA_ID, "device");
+    EXPECT_EQ(1, invoked);
+
+    SetMockSystemAbilityManager(nullptr);
+}
+
+/**
+ * @tc.name: ReregisterPermStateChangeCallback001
+ * @tc.desc: Reregister with null proxy returns without crash.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, ReregisterPermStateChangeCallback001, TestSize.Level4)
+{
+    auto& client = AccessTokenManagerClient::GetInstance();
+    client.proxy_ = nullptr;
+    client.callbackMap_.clear();
+    client.ReregisterPermStateChangeCallback();
+    EXPECT_EQ(client.proxy_, nullptr);
+}
+
+/**
+ * @tc.name: ReregisterPermStateChangeCallback005
+ * @tc.desc: Reregister keeps iterating when an IPC registration fails.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, ReregisterPermStateChangeCallback005, TestSize.Level4)
+{
+    auto remote = InstallPermStateChangeCallbackRemoteObject();
+    ASSERT_NE(nullptr, remote);
+    remote->registerResult_ = ERR_PERMISSION_DENIED;
+    auto& client = AccessTokenManagerClient::GetInstance();
+    client.callbackMap_.clear();
+
+    PermStateChangeScope scopeInfo;
+    scopeInfo.permList = {"ohos.permission.CAMERA"};
+    scopeInfo.tokenIDs = {100};  // 100: tokenId
+    auto callbackPtr = std::make_shared<CbCustomizeTest>(scopeInfo);
+    sptr<PermissionStateChangeCallback> callback =
+        new (std::nothrow) PermissionStateChangeCallback(callbackPtr);
+    ASSERT_NE(nullptr, callback);
+    client.callbackMap_[callbackPtr] = { callback, SYSTEM_REGISTER_TYPE };
+    auto callbackPtr2 = std::make_shared<CbCustomizeTest>(scopeInfo);
+    sptr<PermissionStateChangeCallback> callback2 =
+        new (std::nothrow) PermissionStateChangeCallback(callbackPtr2);
+    ASSERT_NE(nullptr, callback2);
+    client.callbackMap_[callbackPtr2] = { callback2, SYSTEM_REGISTER_TYPE };
+
+    client.ReregisterPermStateChangeCallback();
+    // both entries are still attempted despite failures
+    EXPECT_EQ(2U, remote->registerCount_);
+    EXPECT_EQ(2U, client.callbackMap_.size());
 }
 
 }  // namespace AccessToken

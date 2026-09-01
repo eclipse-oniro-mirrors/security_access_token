@@ -16,6 +16,15 @@
 #include "iservice_registry.h"
 
 namespace OHOS {
+namespace {
+sptr<ISystemAbilityManager> g_mockSystemAbilityManager = nullptr;
+} // namespace
+
+void SetMockSystemAbilityManager(const sptr<ISystemAbilityManager>& sam)
+{
+    g_mockSystemAbilityManager = sam;
+}
+
 SystemAbilityManagerClient& SystemAbilityManagerClient::GetInstance()
 {
     static auto instance = new (std::nothrow) SystemAbilityManagerClient();
@@ -24,7 +33,7 @@ SystemAbilityManagerClient& SystemAbilityManagerClient::GetInstance()
 
 sptr<ISystemAbilityManager> SystemAbilityManagerClient::GetSystemAbilityManager()
 {
-    return nullptr;
+    return g_mockSystemAbilityManager;
 }
 
 void SystemAbilityManagerClient::DestroySystemAbilityManagerObject()

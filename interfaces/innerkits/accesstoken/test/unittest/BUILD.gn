@@ -151,6 +151,7 @@ ohos_unittest("accesstoken_mock_test") {
     "${access_token_innerkit_path}/src/accesstoken_kit.cpp",
     "${access_token_innerkit_path}/src/accesstoken_manager_client.cpp",
     "${access_token_innerkit_path}/src/perm_state_change_callback_customize.cpp",
+    "${access_token_innerkit_path}/src/system_ability_status_change_listener.cpp",
     "../mock/src/iservice_registry.cpp",
     "ProxyMockTest/accesstoken_mock_test.cpp",
   ]
