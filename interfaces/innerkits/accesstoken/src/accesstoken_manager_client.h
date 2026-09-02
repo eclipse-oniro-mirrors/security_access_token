@@ -169,6 +169,7 @@ private:
     void ReregisterTokenSyncCallback();
     bool SubscribeSystemAbility(const std::function<void(int32_t, const std::string&)>& callbackFunc);
     void ReregisterPermStateChangeCallback();
+    bool GetNativeTokenInfoFromSpm(AccessTokenID tokenID, NativeTokenInfo& nativeTokenInfoRes);
 
     DISALLOW_COPY_AND_MOVE(AccessTokenManagerClient);
     std::mutex proxyMutex_;
@@ -181,6 +182,7 @@ private:
     std::mutex callbackMutex_;
     std::map<std::shared_ptr<PermStateChangeCallbackCustomize>, PermStateChangeCallbackInfo> callbackMap_;
     std::atomic<bool> isSubscribeSA_ = false;
+    std::atomic<bool> nativeTokenSpmSupport_ = true;
 
 #ifdef TOKEN_SYNC_ENABLE
     std::mutex tokenSyncCallbackMutex_;

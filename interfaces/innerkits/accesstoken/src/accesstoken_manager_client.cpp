@@ -15,7 +15,10 @@
 
 #include "accesstoken_manager_client.h"
 
+#include <atomic>
+#include <cerrno>
 #include <cinttypes>
+#include <cstring>
 #include <map>
 #include "access_token_error.h"
 #include "access_token_manager_proxy.h"
@@ -31,11 +34,12 @@
 #include "permission_grant_info_parcel.h"
 #include "permission_map.h"
 #include "permission_status_parcel.h"
-#include "system_ability_status_change_listener.h"
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
 #include "sec_comp_enhance_data_parcel.h"
 #include "securec.h"
 #endif
+#include "spm_setproc.h"
+#include "system_ability_status_change_listener.h"
 
 namespace OHOS {
 namespace Security {
@@ -54,6 +58,9 @@ static constexpr int32_t MAX_EXTENDED_VALUE_LIST_SIZE = 512;
 static constexpr uint32_t MAX_CALLBACK_MAP_SIZE = 200;
 static constexpr uint32_t ERR_SERVICE_DIED = 29189;
 static constexpr int32_t ERR_DEAD_OBJECT = 32;
+static constexpr uint32_t MAX_PERMISSION_BITMAP_WORDS = 64;
+static constexpr uint32_t DEFAULT_NATIVE_EXTENDED_PERMS = 8;
+static constexpr uint32_t SPM_NAME_BUF_SIZE = 256;
 
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
 bool IsEnhanceKeySizeValid(size_t size)
@@ -985,8 +992,49 @@ int AccessTokenManagerClient::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInf
     return res;
 }
 
+bool AccessTokenManagerClient::GetNativeTokenInfoFromSpm(
+    AccessTokenID tokenID, NativeTokenInfo& nativeTokenInfoRes)
+{
+    // SpmDataNew/SpmGetEntry/SpmDataFree are reentrant (per-call fd, no shared state), so the
+    // hot path runs lock-free. Once ENOTSUP is observed, the atomic flag makes later calls
+    // fall back to IPC directly without touching SPM.
+    if (!nativeTokenSpmSupport_.load(std::memory_order_acquire)) {
+        return false;
+    }
+    SpmData *spmData = SpmDataNew(MAX_PERMISSION_BITMAP_WORDS * sizeof(uint32_t),
+        DEFAULT_NATIVE_EXTENDED_PERMS, SPM_NAME_BUF_SIZE);
+    if (spmData == nullptr) {
+        LOGW(ATM_DOMAIN, ATM_TAG, "SpmDataNew failed, fallback to ipc.");
+        return false;
+    }
+    int ret = SpmGetEntry(static_cast<uint32_t>(tokenID), spmData);
+    if (ret == RET_SUCCESS) {
+        uint16_t apl = spmData->apl;
+        if (apl < static_cast<uint16_t>(APL_NORMAL) || apl > static_cast<uint16_t>(APL_SYSTEM_CORE)) {
+            LOGW(ATM_DOMAIN, ATM_TAG, "SpmGetEntry returned invalid apl %{public}u, fallback to ipc.", apl);
+            SpmDataFree(spmData);
+            return false;
+        }
+        nativeTokenInfoRes.apl = static_cast<ATokenAplEnum>(apl);
+        nativeTokenInfoRes.processName.assign(
+            spmData->name.buf, strnlen(spmData->name.buf, spmData->name.bufSize));
+        SpmDataFree(spmData);
+        return true;
+    }
+    if (ret == ENOTSUP) {
+        nativeTokenSpmSupport_.store(false, std::memory_order_release);
+    }
+    LOGD(ATM_DOMAIN, ATM_TAG, "SpmGetEntry failed (error=%{public}d), fallback to ipc.", ret);
+    SpmDataFree(spmData);
+    return false;
+}
+
 int AccessTokenManagerClient::GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfo& nativeTokenInfoRes)
 {
+    if (GetNativeTokenInfoFromSpm(tokenID, nativeTokenInfoRes)) {
+        return RET_SUCCESS;
+    }
+
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");

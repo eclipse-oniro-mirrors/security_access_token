@@ -154,6 +154,7 @@ ohos_unittest("accesstoken_mock_test") {
     "${access_token_innerkit_path}/src/system_ability_status_change_listener.cpp",
     "../mock/src/iservice_registry.cpp",
     "ProxyMockTest/accesstoken_mock_test.cpp",
+    "ProxyMockTest/mock_spm.cpp",
   ]
 
   cflags_cc = access_token_cflags_cc

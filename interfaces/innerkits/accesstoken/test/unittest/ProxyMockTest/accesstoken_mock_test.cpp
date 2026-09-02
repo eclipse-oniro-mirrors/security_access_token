@@ -14,6 +14,7 @@
  */
 
 #include "accesstoken_mock_test.h"
+#include <cerrno>
 #include <cstring>
 #include <thread>
 #include "access_token_error.h"
@@ -22,6 +23,7 @@
 #include "accesstoken_manager_client.h"
 #undef private
 #include "ipc_object_stub.h"
+#include "native_token_info_parcel.h"
 #include "permission_map.h"
 #include "permission_grant_info.h"
 #include "perm_state_change_scope_parcel.h"
@@ -48,6 +50,13 @@ SecCompEnhanceKeyIdl TestClientConvertSecCompEnhanceKeyToIdl(const SecCompEnhanc
 bool TestClientConvertSecCompEnhanceKeyFromIdl(const SecCompEnhanceKeyIdl& enhanceKeyIdl,
     SecCompEnhanceKey& enhanceKey);
 #endif
+void ResetMockSpm();
+void SetMockSpmGetEntryRet(int32_t ret);
+void SetMockSpmDataNewReturnNull(bool returnNull);
+void SetMockSpmName(const char* name);
+void SetMockSpmApl(uint16_t apl);
+uint32_t GetMockSpmGetEntryCallCount();
+uint32_t GetMockSpmDataNewCallCount();
 
 namespace {
 static AccessTokenID g_testTokenId = 123;  // 123: tokenId
@@ -91,6 +100,54 @@ sptr<ResetDatabaseRecoveryStatusRemoteObject> InstallResetDatabaseRecoveryStatus
 {
     AccessTokenManagerClient::GetInstance().ReleaseProxy();
     sptr<ResetDatabaseRecoveryStatusRemoteObject> remote = new (std::nothrow) ResetDatabaseRecoveryStatusRemoteObject();
+    if (remote == nullptr) {
+        return nullptr;
+    }
+    sptr<AccessTokenManagerProxy> proxy = new (std::nothrow) AccessTokenManagerProxy(remote);
+    if (proxy == nullptr) {
+        return nullptr;
+    }
+    AccessTokenManagerClient::GetInstance().proxy_ = proxy;
+    return remote;
+}
+
+class NativeTokenInfoRemoteObject final : public IPCObjectStub {
+public:
+    NativeTokenInfoRemoteObject() : IPCObjectStub(u"NativeTokenInfoRemoteObject") {}
+
+    int OnRemoteRequest(uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option) override
+    {
+        (void)option;
+        (void)data.ReadInterfaceToken();
+        if (code != static_cast<uint32_t>(IAccessTokenManagerIpcCode::COMMAND_GET_NATIVE_TOKEN_INFO)) {
+            return ERR_INVALID_DATA;
+        }
+        (void)data.ReadUint32();
+        if (!reply.WriteInt32(result_)) {
+            return ERR_INVALID_DATA;
+        }
+        if (result_ == RET_SUCCESS) {
+            NativeTokenInfoParcel infoParcel;
+            infoParcel.nativeTokenInfoParams.apl = static_cast<ATokenAplEnum>(apl_);
+            infoParcel.nativeTokenInfoParams.processName = processName_;
+            if (!reply.WriteParcelable(&infoParcel)) {
+                return ERR_INVALID_DATA;
+            }
+        }
+        ++callCount_;
+        return ERR_NONE;
+    }
+
+    int32_t result_ = RET_SUCCESS;
+    int32_t apl_ = APL_SYSTEM_BASIC;
+    std::string processName_ = "ipc_mock_native_process";
+    uint32_t callCount_ = 0;
+};
+
+sptr<NativeTokenInfoRemoteObject> InstallNativeTokenInfoRemoteObject()
+{
+    AccessTokenManagerClient::GetInstance().ReleaseProxy();
+    sptr<NativeTokenInfoRemoteObject> remote = new (std::nothrow) NativeTokenInfoRemoteObject();
     if (remote == nullptr) {
         return nullptr;
     }
@@ -553,6 +610,8 @@ void AccessTokenMockTest::TearDownTestCase()
 
 void AccessTokenMockTest::SetUp()
 {
+    ResetMockSpm();
+    AccessTokenManagerClient::GetInstance().nativeTokenSpmSupport_.store(true);
 }
 
 void AccessTokenMockTest::TearDown()
@@ -749,6 +808,164 @@ HWTEST_F(AccessTokenMockTest, GetNativeTokenInfo001, TestSize.Level4)
     AccessTokenID tokenId = 805920561; //805920561 is a native tokenId.
     NativeTokenInfo tokenInfo;
     ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::GetNativeTokenInfo(tokenId, tokenInfo));
+}
+
+/**
+ * @tc.name: GetNativeTokenInfoSpmSuccess001
+ * @tc.desc: GetNativeTokenInfo returns native token info from kernel SPM when SPM is supported.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, GetNativeTokenInfoSpmSuccess001, TestSize.Level4)
+{
+    AccessTokenID tokenId = 805920561; //805920561 is a native tokenId.
+    NativeTokenInfo tokenInfo;
+    SetMockSpmGetEntryRet(RET_SUCCESS);
+    SetMockSpmApl(APL_SYSTEM_CORE);
+    SetMockSpmName("mock_spm_native_process");
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetNativeTokenInfo(tokenId, tokenInfo));
+    EXPECT_EQ(APL_SYSTEM_CORE, tokenInfo.apl);
+    EXPECT_EQ(std::string("mock_spm_native_process"), tokenInfo.processName);
+    EXPECT_EQ(1U, GetMockSpmDataNewCallCount());
+    EXPECT_EQ(1U, GetMockSpmGetEntryCallCount());
+}
+
+/**
+ * @tc.name: GetNativeTokenInfoSpmDataNewNull001
+ * @tc.desc: GetNativeTokenInfo falls back to IPC when SpmDataNew fails.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, GetNativeTokenInfoSpmDataNewNull001, TestSize.Level4)
+{
+    AccessTokenID tokenId = 805920561; //805920561 is a native tokenId.
+    NativeTokenInfo tokenInfo;
+    SetMockSpmDataNewReturnNull(true);
+
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::GetNativeTokenInfo(tokenId, tokenInfo));
+    EXPECT_EQ(1U, GetMockSpmDataNewCallCount());
+    EXPECT_EQ(0U, GetMockSpmGetEntryCallCount());
+}
+
+/**
+ * @tc.name: GetNativeTokenInfoSpmGetEntryOtherError001
+ * @tc.desc: GetNativeTokenInfo falls back to IPC on non-ENOTSUP error and keeps SPM enabled.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, GetNativeTokenInfoSpmGetEntryOtherError001, TestSize.Level4)
+{
+    AccessTokenID tokenId = 805920561; //805920561 is a native tokenId.
+    NativeTokenInfo tokenInfo;
+    SetMockSpmGetEntryRet(-1);
+
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::GetNativeTokenInfo(tokenId, tokenInfo));
+
+    // Non-ENOTSUP error does not disable SPM, so the next call still goes through SPM.
+    SetMockSpmGetEntryRet(RET_SUCCESS);
+    SetMockSpmApl(APL_SYSTEM_BASIC);
+    SetMockSpmName("mock_spm_second");
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetNativeTokenInfo(tokenId, tokenInfo));
+    EXPECT_EQ(APL_SYSTEM_BASIC, tokenInfo.apl);
+    EXPECT_EQ(std::string("mock_spm_second"), tokenInfo.processName);
+    EXPECT_EQ(2U, GetMockSpmGetEntryCallCount());
+}
+
+/**
+ * @tc.name: GetNativeTokenInfoSpmGetEntryEnotsup001
+ * @tc.desc: GetNativeTokenInfo disables SPM on ENOTSUP and falls back to IPC afterwards.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, GetNativeTokenInfoSpmGetEntryEnotsup001, TestSize.Level4)
+{
+    AccessTokenID tokenId = 805920561; //805920561 is a native tokenId.
+    NativeTokenInfo tokenInfo;
+    SetMockSpmGetEntryRet(ENOTSUP);
+
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::GetNativeTokenInfo(tokenId, tokenInfo));
+
+    // After ENOTSUP the SPM path is skipped even if SpmGetEntry would succeed.
+    SetMockSpmGetEntryRet(RET_SUCCESS);
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::GetNativeTokenInfo(tokenId, tokenInfo));
+    EXPECT_EQ(1U, GetMockSpmGetEntryCallCount());
+}
+
+/**
+ * @tc.name: GetNativeTokenInfoSpmInvalidApl001
+ * @tc.desc: GetNativeTokenInfo falls back to IPC when kernel SPM returns an out-of-range apl.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, GetNativeTokenInfoSpmInvalidApl001, TestSize.Level4)
+{
+    AccessTokenID tokenId = 805920561; //805920561 is a native tokenId.
+    NativeTokenInfo tokenInfo;
+    SetMockSpmGetEntryRet(RET_SUCCESS);
+    SetMockSpmApl(0);
+
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::GetNativeTokenInfo(tokenId, tokenInfo));
+    EXPECT_EQ(1U, GetMockSpmGetEntryCallCount());
+    EXPECT_EQ(1U, GetMockSpmDataNewCallCount());
+}
+
+/**
+ * @tc.name: GetNativeTokenInfoIpcProxyNull001
+ * @tc.desc: GetNativeTokenInfo returns service abnormal when SPM is skipped and proxy is null.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, GetNativeTokenInfoIpcProxyNull001, TestSize.Level4)
+{
+    AccessTokenID tokenId = 805920561; //805920561 is a native tokenId.
+    NativeTokenInfo tokenInfo;
+    AccessTokenManagerClient::GetInstance().nativeTokenSpmSupport_.store(false);
+    SetMockSpmGetEntryRet(RET_SUCCESS);
+
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::GetNativeTokenInfo(tokenId, tokenInfo));
+    EXPECT_EQ(0U, GetMockSpmGetEntryCallCount());
+}
+
+/**
+ * @tc.name: GetNativeTokenInfoIpcProxyError001
+ * @tc.desc: GetNativeTokenInfo returns the converted result when the IPC service returns an error.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, GetNativeTokenInfoIpcProxyError001, TestSize.Level4)
+{
+    AccessTokenID tokenId = 805920561; //805920561 is a native tokenId.
+    NativeTokenInfo tokenInfo;
+    AccessTokenManagerClient::GetInstance().nativeTokenSpmSupport_.store(false);
+    auto remote = InstallNativeTokenInfoRemoteObject();
+    ASSERT_NE(nullptr, remote);
+    remote->result_ = AccessTokenError::ERR_PERMISSION_DENIED;
+
+    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::GetNativeTokenInfo(tokenId, tokenInfo));
+    EXPECT_EQ(1U, remote->callCount_);
+    EXPECT_EQ(0U, GetMockSpmGetEntryCallCount());
+}
+
+/**
+ * @tc.name: GetNativeTokenInfoIpcProxySuccess001
+ * @tc.desc: GetNativeTokenInfo returns IPC data when SPM is skipped and the IPC service succeeds.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, GetNativeTokenInfoIpcProxySuccess001, TestSize.Level4)
+{
+    AccessTokenID tokenId = 805920561; //805920561 is a native tokenId.
+    NativeTokenInfo tokenInfo;
+    AccessTokenManagerClient::GetInstance().nativeTokenSpmSupport_.store(false);
+    auto remote = InstallNativeTokenInfoRemoteObject();
+    ASSERT_NE(nullptr, remote);
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetNativeTokenInfo(tokenId, tokenInfo));
+    EXPECT_EQ(APL_SYSTEM_BASIC, tokenInfo.apl);
+    EXPECT_EQ(std::string("ipc_mock_native_process"), tokenInfo.processName);
+    EXPECT_EQ(1U, remote->callCount_);
+    EXPECT_EQ(0U, GetMockSpmGetEntryCallCount());
 }
 
 /**
