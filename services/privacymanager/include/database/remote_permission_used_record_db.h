@@ -16,6 +16,7 @@
 #ifndef REMOTE_PERMISSION_USED_RECORD_DB_H
 #define REMOTE_PERMISSION_USED_RECORD_DB_H
 
+#include <functional>
 #include <set>
 #include <shared_mutex>
 #include <unordered_set>
@@ -56,6 +57,7 @@ private:
     int32_t UpdateLocked(const GenericValues& modifyValue, const GenericValues& conditionValue);
     int32_t DeleteExpireRecordsLocked(const GenericValues& andConditions);
     int32_t DeleteExcessiveRecordsLocked(uint32_t excessiveSize);
+    int32_t RetryOnCorrupt(std::function<int32_t()> lockedAction);
 
     int32_t CreateRemotePermissionRecordTable() const;
     int32_t AddSubProfileIdColumn();
