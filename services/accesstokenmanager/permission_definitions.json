@@ -12273,7 +12273,7 @@
             "deviceTypes": ["car"]
         },
         {
-            "name": "ohos.permission.vehicle.License_READ",
+            "name": "ohos.permission.vehicle.LICENSE_READ",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
