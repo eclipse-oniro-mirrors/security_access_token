@@ -1203,6 +1203,18 @@
             "deviceTypes": ["car"]
         },
         {
+            "name": "ohos.permission.kernel.LOAD_CERTSIGN_LIBRARY",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "NORMAL",
+            "since": "26.1.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "isKernelEffect": true,
+            "deviceTypes": ["2in1"]
+        },
+        {
             "name": "ohos.permission.vehicle.SMARTKEY_INFO",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
