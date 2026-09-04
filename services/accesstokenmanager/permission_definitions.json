@@ -12140,6 +12140,17 @@
             "deviceTypes": ["car"]
         },
         {
+            "name": "ohos.permission.kernel.ALLOW_PTRACE_READ",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "NORMAL",
+            "since": "26.1.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1"]
+        },
+        {
             "name": "ohos.permission.MANAGE_SHARE_PHOTO",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
