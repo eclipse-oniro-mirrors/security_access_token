@@ -12205,6 +12205,17 @@
             "provisionEnable": true,
             "distributedSceneEnable": false,
             "deviceTypes": ["phone", "2in1", "tablet", "car", "tv", "wearable"]
+        },
+        {
+            "name": "ohos.permission.ACCESS_USER_PASSIVE_RECOGNITION",
+            "grantMode": "system_grant",
+            "availableLevel": "normal",
+            "availableType": "NORMAL",
+            "since": "26.1.0",
+            "deprecated": "",
+            "provisionEnable": false,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "2in1", "tablet", "car"]
         }
     ]
 }
