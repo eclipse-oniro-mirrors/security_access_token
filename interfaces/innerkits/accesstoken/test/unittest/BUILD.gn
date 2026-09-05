@@ -16,6 +16,7 @@ import("//build/test.gni")
 
 ohos_unittest("libaccesstoken_sdk_test") {
   subsystem_name = "accesscontrol"
+  resource_config_file = "resource/ohos_test.xml"
   module_out_path = module_output_path_unittest_accesstoken
   sanitize = {
     cfi = true
@@ -104,9 +105,15 @@ ohos_unittest("libaccesstoken_sdk_test") {
     "hilog:libhilog",
     "init:libbegetutil",
     "ipc:ipc_single",
+    "samgr:samgr_proxy",
   ]
 
   external_deps += access_token_external_deps
+
+  if (relational_store_enable) {
+    sources += [ "SaTest/undefined_permission_update_test.cpp" ]
+    external_deps += [ "relational_store:native_rdb" ]
+  }
 
   if (dlp_permission_enable == true) {
     sources += [
