@@ -8997,7 +8997,7 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
-            "deviceTypes": ["phone", "2in1", "tablet"]
+            "deviceTypes": ["phone", "2in1", "tablet", "car"]
         },
         {
             "name": "ohos.permission.FILE_ACCESS_FOR_PRIVATE_SPACE",
