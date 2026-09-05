@@ -261,3 +261,10 @@ if (defined(global_parts_info) && defined(global_parts_info.security_asset)) {
 } else {
   saf_agent_fence_enable = false
 }
+
+if (!defined(global_parts_info) ||
+    defined(global_parts_info.distributeddatamgr_relational_store)) {
+  relational_store_enable = true
+} else {
+  relational_store_enable = false
+}
