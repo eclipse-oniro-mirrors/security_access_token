@@ -52,7 +52,7 @@ void El5FilekeyManagerServiceAbility::OnStart(const SystemAbilityOnDemandReason 
     }
 
     service_ = DelayedSingleton<El5FilekeyManagerService>::GetInstance();
-    int32_t ret = service_->Init();
+    int32_t ret = service_->Init(reasonName);
     if (ret != EFM_SUCCESS) {
         LOG_ERROR("Failed to init the El5FilekeyManagerService instance.");
         return;

@@ -128,6 +128,11 @@ public:
     {
         GTEST_LOG_(INFO) << "UnInit.";
     }
+
+    void SetStartReason(const std::string& reason)
+    {
+        GTEST_LOG_(INFO) << "SetStartReason.";
+    }
 };
 
 /**
