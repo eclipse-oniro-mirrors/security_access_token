@@ -67,7 +67,7 @@ El5FilekeyManagerService::~El5FilekeyManagerService()
     LOG_INFO("Instance destroyed.");
 }
 
-int32_t El5FilekeyManagerService::Init()
+int32_t El5FilekeyManagerService::Init(const std::string& startReason)
 {
     LOG_INFO("Ready to init.");
     serviceRunningState_ = ServiceRunningState::STATE_RUNNING;
@@ -94,6 +94,7 @@ int32_t El5FilekeyManagerService::Init()
         LOG_ERROR("Ext instance is null.");
         return EFM_ERR_CALL_POLICY_ERROR;
     }
+    service_->SetStartReason(startReason);
 
     return EFM_SUCCESS;
 }
