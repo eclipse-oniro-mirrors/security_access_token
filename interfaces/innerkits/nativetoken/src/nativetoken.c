@@ -708,35 +708,55 @@ static uint32_t AddNewTokenToListAndFile(const NativeTokenInfoParams *tokenInfo,
     return SaveTokenIdToCfg(tokenNode);
 }
 
-static int32_t CompareTokenInfo(const NativeTokenList *tokenNode,
-                                const char **dcapsIn, int32_t dcapNumIn, int32_t aplIn)
+static bool IsTokenInfoSame(const NativeTokenList *tokenNode,
+                            const char **dcapsIn, int32_t dcapNumIn, int32_t aplIn)
 {
     if (tokenNode->apl != aplIn) {
-        return 1;
+        return false;
     }
     if (tokenNode->dcapsNum != dcapNumIn) {
-        return 1;
+        return false;
     }
     for (int32_t i = 0; i < dcapNumIn; i++) {
         if (strcmp(tokenNode->dcaps[i], dcapsIn[i]) != 0) {
-            return 1;
+            return false;
         }
     }
-    return 0;
+    return true;
 }
 
-static int32_t ComparePermsInfo(const NativeTokenList *tokenNode,
-                                const char **permsIn, int32_t permsNumIn)
+static bool IsPermsInfoSame(const NativeTokenList *tokenNode,
+                            const char **permsIn, int32_t permsNumIn)
 {
     if (tokenNode->permsNum != permsNumIn) {
-        return 1;
+        return false;
     }
     for (int32_t i = 0; i < permsNumIn; i++) {
         if (strcmp(tokenNode->perms[i], permsIn[i]) != 0) {
-            return 1;
+            return false;
         }
     }
-    return 0;
+    return true;
+}
+
+static bool IsAclsInfoSame(const NativeTokenList *tokenNode,
+                           const char **aclsIn, int32_t aclsNumIn)
+{
+    if (tokenNode->aclsNum != aclsNumIn) {
+        return false;
+    }
+    if (aclsNumIn == 0) {
+        return true;
+    }
+    if ((tokenNode->acls == NULL) || (aclsIn == NULL)) {
+        return false;
+    }
+    for (int32_t i = 0; i < aclsNumIn; i++) {
+        if (strcmp(tokenNode->acls[i], aclsIn[i]) != 0) {
+            return false;
+        }
+    }
+    return true;
 }
 
 static uint32_t UpdateStrArrayInList(char **strArr[], int32_t *strNum,
@@ -882,11 +902,10 @@ static void UnlockNativeTokenFile(int32_t lockFileFd)
 static uint32_t UpdateNewTokenToListAndFile(NativeTokenInfoParams *tokenInfo, NativeTokenList *tokenNode, int32_t apl)
 {
     uint32_t ret = ATRET_SUCCESS;
-    int32_t needTokenUpdate = CompareTokenInfo(tokenNode, tokenInfo->dcaps, tokenInfo->dcapsNum, apl);
-    int32_t needPermUpdate = ComparePermsInfo(tokenNode, tokenInfo->perms, tokenInfo->permsNum);
-    int32_t needUidUpdate = (tokenNode->uid != tokenInfo->uid);
-
-    if ((needTokenUpdate != 0) || (needPermUpdate != 0) || (needUidUpdate != 0)) {
+    if (!IsTokenInfoSame(tokenNode, tokenInfo->dcaps, tokenInfo->dcapsNum, apl) ||
+        !IsPermsInfoSame(tokenNode, tokenInfo->perms, tokenInfo->permsNum) ||
+        !IsAclsInfoSame(tokenNode, tokenInfo->acls, tokenInfo->aclsNum) ||
+        (tokenNode->uid != tokenInfo->uid)) {
         ret = UpdateTokenInfoInList(tokenNode, tokenInfo);
         if (ret != ATRET_SUCCESS) {
             LOGC("Failed to UpdateTokenInfoInList, ret=%u.", ret);

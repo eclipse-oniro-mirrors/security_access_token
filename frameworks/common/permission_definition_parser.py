@@ -98,6 +98,7 @@ CONVERT_TARGET_PLATFORM = {
     "pc": "2in1",
     "tv": "tv",
     "car": "car",
+    "smarthomehost": "smarthomehost",
 }
 
 MAX_PERMISSION_DEFINITION_COUNT = 1800
