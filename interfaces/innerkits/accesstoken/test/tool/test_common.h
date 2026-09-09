@@ -27,7 +27,8 @@ void BuildHapPolicyParams(const std::vector<std::string>& reqPerm,
 OHOS::Security::AccessToken::FullTokenID GetHapTokenId(
     const std::string& bundle, const std::vector<std::string>& reqPerm,
     const std::vector<std::string>& preAuthPerm = {}, bool isSystemApp = true, int32_t userId = 0,
-    int32_t instIndex = 0);
+    int32_t instIndex = 0, OHOS::Security::AccessToken::MultipleMode mode =
+        OHOS::Security::AccessToken::MultipleMode::DEFAULT_MODE);
 int32_t DeleteHapTokenID(const std::string& bundleName, bool isReservedTokenId);
 
 #endif  // TEST_TOOL_COMMON_H

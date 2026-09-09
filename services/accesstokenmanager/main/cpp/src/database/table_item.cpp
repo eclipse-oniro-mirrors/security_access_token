@@ -116,6 +116,7 @@ void HapTokenInfoItem::BuildAddValue(std::vector<GenericValues>& addValues) cons
     addValue.Put(TokenFiledConst::FIELD_TOKEN_VERSION, static_cast<int32_t>(version));
     addValue.Put(TokenFiledConst::FIELD_TOKEN_ATTR, static_cast<int32_t>(tokenAttr));
     addValue.Put(TokenFiledConst::FIELD_API_VERSION, apiVersion);
+    addValue.Put(TokenFiledConst::FIELD_MODE, mode);
     addValue.Put(TokenFiledConst::FIELD_FORBID_PERM_DIALOG, static_cast<int32_t>(permDialogCapState));
 #ifdef SPM_DATA_ENABLE
     addValue.Put(TokenFiledConst::FIELD_UID, uid);
@@ -157,6 +158,7 @@ void HapTokenInfoItem::LoadFromDB(const std::vector<GenericValues>& values, std:
         item.version = static_cast<uint32_t>(value.GetInt(TokenFiledConst::FIELD_TOKEN_VERSION));
         item.tokenAttr = static_cast<uint32_t>(value.GetInt(TokenFiledConst::FIELD_TOKEN_ATTR));
         item.apiVersion = value.GetInt(TokenFiledConst::FIELD_API_VERSION);
+        item.mode = value.GetInt(TokenFiledConst::FIELD_MODE);
         item.permDialogCapState = value.GetInt(TokenFiledConst::FIELD_FORBID_PERM_DIALOG) != 0;
 #ifdef SPM_DATA_ENABLE
         item.uid = value.GetInt(TokenFiledConst::FIELD_UID);

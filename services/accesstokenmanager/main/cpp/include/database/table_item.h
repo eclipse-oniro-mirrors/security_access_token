@@ -74,6 +74,7 @@ struct HapTokenInfoItem final : public TableItem {
     uint32_t version = 0;
     uint32_t tokenAttr = 0;
     int32_t apiVersion = 0;
+    int32_t mode = static_cast<int32_t>(MultipleMode::DEFAULT_MODE);
     bool permDialogCapState = false;
     int32_t uid = -1;
     bool migrated = false;

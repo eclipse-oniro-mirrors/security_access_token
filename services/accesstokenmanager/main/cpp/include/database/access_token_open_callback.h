@@ -37,6 +37,7 @@ static constexpr const int32_t DATABASE_VERSION_8 = 8;
 static constexpr const int32_t DATABASE_VERSION_9 = 9;
 static constexpr const int32_t DATABASE_VERSION_10 = 10;
 static constexpr const int32_t DATABASE_VERSION_11 = 11;
+static constexpr const int32_t DATABASE_VERSION_12 = 12;
 
 class AccessTokenOpenCallback : public NativeRdb::RdbOpenCallback {
 public:
@@ -83,6 +84,7 @@ private:
     int32_t AddKernelEffectAndHasValueColumn(NativeRdb::RdbStore& rdbStore);
     int32_t AddTimestampColumn(NativeRdb::RdbStore& rdbStore);
     int32_t AddUidMigratedReservedColumns(NativeRdb::RdbStore& rdbStore);
+    int32_t AddModeColumn(NativeRdb::RdbStore& rdbStore);
     int32_t UpgradeFromVersion1(NativeRdb::RdbStore& rdbStore);
     int32_t UpgradeFromVersion2(NativeRdb::RdbStore& rdbStore);
     int32_t UpgradeFromVersion3(NativeRdb::RdbStore& rdbStore);
@@ -93,6 +95,7 @@ private:
     int32_t UpgradeFromVersion8(NativeRdb::RdbStore& rdbStore);
     int32_t UpgradeFromVersion9(NativeRdb::RdbStore& rdbStore);
     int32_t UpgradeFromVersion10(NativeRdb::RdbStore& rdbStore);
+    int32_t UpgradeFromVersion11(NativeRdb::RdbStore& rdbStore);
 };
 } // namespace AccessToken
 } // namespace Security

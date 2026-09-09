@@ -31,15 +31,18 @@ struct CreateHapTokenOptions final {
     bool isSystemApp = true;
     int32_t userId = 0;
     int32_t instIndex = 0;
+    MultipleMode mode = MultipleMode::DEFAULT_MODE;
 };
 
 void PrintCreateHapTokenHelp()
 {
     std::cout << "Usage: ./CreateHapToken <bundleName> [userId] [--user <userId>] [--inst-index <index>] "
-        << "[--system-app <true|false>] "
+        << "[--system-app <true|false>] [--mode <-1|0|1>] "
         << "<reqPermission...> [--preauth <permission...>]\n"
         << "Example: ./CreateHapToken com.example.demo --user 100 ohos.permission.CAMERA\n"
         << "Example: ./CreateHapToken com.example.demo.clone --user 100 --inst-index 1 "
+        << "ohos.permission.CAMERA\n"
+        << "Example: ./CreateHapToken com.example.demo.sub --user 100 --inst-index 10001 --mode 1 "
         << "ohos.permission.CAMERA\n"
         << "Note: --preauth permissions must also appear in req permissions.\n"
         << std::endl;
@@ -80,6 +83,18 @@ bool ParseInt32Arg(const std::string& value, int32_t& result)
         return false;
     }
     result = static_cast<int32_t>(parsedValue);
+    return true;
+}
+
+bool ParseModeArg(const std::string& value, MultipleMode& mode)
+{
+    int32_t modeValue = 0;
+    if (!ParseInt32Arg(value, modeValue) ||
+        modeValue < static_cast<int32_t>(MultipleMode::DEFAULT_MODE) ||
+        modeValue > static_cast<int32_t>(MultipleMode::MAX_MODE)) {
+        return false;
+    }
+    mode = static_cast<MultipleMode>(modeValue);
     return true;
 }
 
@@ -131,6 +146,18 @@ bool ParseCreateHapTokenArgs(int argc, char* argv[], CreateHapTokenOptions& opti
             ++i;
             continue;
         }
+        if (arg == "--mode") {
+            if ((i + 1) >= argc) {
+                std::cout << "CreateHapToken failed, missing value for --mode" << std::endl;
+                return false;
+            }
+            if (!ParseModeArg(argv[i + 1], options.mode)) {
+                std::cout << "CreateHapToken failed, invalid --mode value: " << argv[i + 1] << std::endl;
+                return false;
+            }
+            ++i;
+            continue;
+        }
         if (!arg.empty() && arg[0] == '-') {
             std::cout << "CreateHapToken failed, unsupported option: " << arg << std::endl;
             return false;
@@ -154,7 +181,7 @@ int32_t RunCreateHapToken(const CreateHapTokenOptions& options)
 {
     FullTokenID tokenId = GetHapTokenId(
         options.bundleName, options.reqPerm, options.preAuthPerm, options.isSystemApp, options.userId,
-        options.instIndex);
+        options.instIndex, options.mode);
     if (tokenId == INVALID_TOKENID) {
         std::cout << "CreateHapToken ret=" << RET_FAILED << ", bundleName=" << options.bundleName << std::endl;
         return RET_FAILED;
@@ -163,7 +190,8 @@ int32_t RunCreateHapToken(const CreateHapTokenOptions& options)
         << ", tokenId=" << tokenId
         << ", bundleName=" << options.bundleName
         << ", userId=" << options.userId
-        << ", instIndex=" << options.instIndex << std::endl;
+        << ", instIndex=" << options.instIndex
+        << ", mode=" << static_cast<int32_t>(options.mode) << std::endl;
     return RET_SUCCESS;
 }
 }

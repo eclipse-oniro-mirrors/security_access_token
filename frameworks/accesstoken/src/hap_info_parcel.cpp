@@ -36,6 +36,7 @@ bool HapInfoParcel::Marshalling(Parcel& out) const
     RETURN_IF_FALSE(out.WriteBool(this->hapInfoParameter.isAtomicService));
     RETURN_IF_FALSE(out.WriteString(this->hapInfoParameter.appProvisionType));
     RETURN_IF_FALSE(out.WriteBool(this->hapInfoParameter.isSkillHap));
+    RETURN_IF_FALSE(out.WriteInt32(static_cast<int32_t>(this->hapInfoParameter.mode)));
     return true;
 }
 
@@ -60,6 +61,9 @@ HapInfoParcel* HapInfoParcel::Unmarshalling(Parcel& in)
     RELEASE_IF_FALSE(in.ReadBool(hapInfoParcel->hapInfoParameter.isAtomicService), hapInfoParcel);
     RELEASE_IF_FALSE(in.ReadString(hapInfoParcel->hapInfoParameter.appProvisionType), hapInfoParcel);
     RELEASE_IF_FALSE(in.ReadBool(hapInfoParcel->hapInfoParameter.isSkillHap), hapInfoParcel);
+    int32_t mode = static_cast<int32_t>(MultipleMode::DEFAULT_MODE);
+    RELEASE_IF_FALSE(in.ReadInt32(mode), hapInfoParcel);
+    hapInfoParcel->hapInfoParameter.mode = static_cast<MultipleMode>(mode);
     return hapInfoParcel;
 }
 } // namespace AccessToken
