@@ -12171,6 +12171,7 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
+            "isKernelEffect": true,
             "deviceTypes": ["2in1"]
         },
         {
