@@ -2028,6 +2028,70 @@ HWTEST_F(TokenInfoManagerTest, DeleteRemoteToken002, TestSize.Level0)
 }
 
 /**
+ * @tc.name: DeleteRemoteToken003
+ * @tc.desc: DeleteRemoteToken removes an existing remote native token.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenInfoManagerTest, DeleteRemoteToken003, TestSize.Level0)
+{
+    const std::string deviceId = "remote_native_device";
+    NativeTokenInfoBase nativeTokenInfo;
+    nativeTokenInfo.tokenID = MAX_NATIVE_TOKEN_ID;
+    nativeTokenInfo.processName = "remote_native_token";
+    AccessTokenInfoManager::GetInstance().InitNativeTokenInfos({ nativeTokenInfo });
+    ASSERT_NE(AccessTokenInfoManager::GetInstance().nativeTokenInfoMap_.end(),
+        AccessTokenInfoManager::GetInstance().nativeTokenInfoMap_.find(MAX_NATIVE_TOKEN_ID));
+
+    AccessTokenRemoteDevice device;
+    device.deviceID_ = deviceId;
+    device.MappingTokenIDPairMap_[RANDOM_TOKENID] = MAX_NATIVE_TOKEN_ID;
+    AccessTokenRemoteTokenManager::GetInstance().remoteDeviceMap_[deviceId] = device;
+
+    EXPECT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().DeleteRemoteToken(deviceId, RANDOM_TOKENID));
+    EXPECT_EQ(AccessTokenInfoManager::GetInstance().nativeTokenInfoMap_.end(),
+        AccessTokenInfoManager::GetInstance().nativeTokenInfoMap_.find(MAX_NATIVE_TOKEN_ID));
+    AccessTokenRemoteTokenManager::GetInstance().remoteDeviceMap_.erase(deviceId);
+    AccessTokenIDManager::GetInstance().ReleaseTokenId(MAX_NATIVE_TOKEN_ID);
+}
+
+/**
+ * @tc.name: AllocLocalTokenID001
+ * @tc.desc: AccessTokenInfoManager::AllocLocalTokenID function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenInfoManagerTest, AllocLocalTokenID001, TestSize.Level0)
+{
+    std::string remoteDeviceID;
+    AccessTokenID remoteTokenID = 0;
+
+    ASSERT_EQ(static_cast<uint64_t>(0), AccessTokenInfoManager::GetInstance().AllocLocalTokenID(remoteDeviceID,
+        remoteTokenID)); // remoteDeviceID invalid
+
+    // deviceID invalid + tokenID == 0
+    ASSERT_EQ(static_cast<AccessTokenID>(0),
+        AccessTokenInfoManager::GetInstance().GetRemoteNativeTokenID(remoteDeviceID, remoteTokenID));
+
+    // deviceID invalid
+    ASSERT_EQ(ERR_PARAM_INVALID, AccessTokenInfoManager::GetInstance().DeleteRemoteDeviceTokens(remoteDeviceID));
+
+    remoteDeviceID = "dev-001";
+    ASSERT_EQ(static_cast<uint64_t>(0), AccessTokenInfoManager::GetInstance().AllocLocalTokenID(remoteDeviceID,
+        remoteTokenID)); // remoteTokenID invalid
+
+    // deviceID valid + tokenID == 0
+    ASSERT_EQ(static_cast<AccessTokenID>(0),
+        AccessTokenInfoManager::GetInstance().GetRemoteNativeTokenID(remoteDeviceID, remoteTokenID));
+
+    remoteTokenID = 537919487; // 537919487 is max hap tokenId: 001 00 0 000000 11111111111111111111
+    // deviceID valid + tokenID != 0 + type != native + type != shell
+    ASSERT_EQ(static_cast<AccessTokenID>(0),
+        AccessTokenInfoManager::GetInstance().GetRemoteNativeTokenID(remoteDeviceID, remoteTokenID));
+}
+#endif
+
+/**
  * @tc.name: GetNativePermissionList001
  * @tc.desc: Verify native permissions are filtered by APL and native ACLs.
  * @tc.type: FUNC
@@ -2124,70 +2188,6 @@ HWTEST_F(TokenInfoManagerTest, GetNativePermissionList002, TestSize.Level0)
     EXPECT_TRUE(statusList[0]);
     EXPECT_TRUE(statusList[1]);
 }
-
-/**
- * @tc.name: DeleteRemoteToken003
- * @tc.desc: DeleteRemoteToken removes an existing remote native token.
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(TokenInfoManagerTest, DeleteRemoteToken003, TestSize.Level0)
-{
-    const std::string deviceId = "remote_native_device";
-    NativeTokenInfoBase nativeTokenInfo;
-    nativeTokenInfo.tokenID = MAX_NATIVE_TOKEN_ID;
-    nativeTokenInfo.processName = "remote_native_token";
-    AccessTokenInfoManager::GetInstance().InitNativeTokenInfos({ nativeTokenInfo });
-    ASSERT_NE(AccessTokenInfoManager::GetInstance().nativeTokenInfoMap_.end(),
-        AccessTokenInfoManager::GetInstance().nativeTokenInfoMap_.find(MAX_NATIVE_TOKEN_ID));
-
-    AccessTokenRemoteDevice device;
-    device.deviceID_ = deviceId;
-    device.MappingTokenIDPairMap_[RANDOM_TOKENID] = MAX_NATIVE_TOKEN_ID;
-    AccessTokenRemoteTokenManager::GetInstance().remoteDeviceMap_[deviceId] = device;
-
-    EXPECT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().DeleteRemoteToken(deviceId, RANDOM_TOKENID));
-    EXPECT_EQ(AccessTokenInfoManager::GetInstance().nativeTokenInfoMap_.end(),
-        AccessTokenInfoManager::GetInstance().nativeTokenInfoMap_.find(MAX_NATIVE_TOKEN_ID));
-    AccessTokenRemoteTokenManager::GetInstance().remoteDeviceMap_.erase(deviceId);
-    AccessTokenIDManager::GetInstance().ReleaseTokenId(MAX_NATIVE_TOKEN_ID);
-}
-
-/**
- * @tc.name: AllocLocalTokenID001
- * @tc.desc: AccessTokenInfoManager::AllocLocalTokenID function test
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(TokenInfoManagerTest, AllocLocalTokenID001, TestSize.Level0)
-{
-    std::string remoteDeviceID;
-    AccessTokenID remoteTokenID = 0;
-
-    ASSERT_EQ(static_cast<uint64_t>(0), AccessTokenInfoManager::GetInstance().AllocLocalTokenID(remoteDeviceID,
-        remoteTokenID)); // remoteDeviceID invalid
-
-    // deviceID invalid + tokenID == 0
-    ASSERT_EQ(static_cast<AccessTokenID>(0),
-        AccessTokenInfoManager::GetInstance().GetRemoteNativeTokenID(remoteDeviceID, remoteTokenID));
-
-    // deviceID invalid
-    ASSERT_EQ(ERR_PARAM_INVALID, AccessTokenInfoManager::GetInstance().DeleteRemoteDeviceTokens(remoteDeviceID));
-
-    remoteDeviceID = "dev-001";
-    ASSERT_EQ(static_cast<uint64_t>(0), AccessTokenInfoManager::GetInstance().AllocLocalTokenID(remoteDeviceID,
-        remoteTokenID)); // remoteTokenID invalid
-
-    // deviceID valid + tokenID == 0
-    ASSERT_EQ(static_cast<AccessTokenID>(0),
-        AccessTokenInfoManager::GetInstance().GetRemoteNativeTokenID(remoteDeviceID, remoteTokenID));
-
-    remoteTokenID = 537919487; // 537919487 is max hap tokenId: 001 00 0 000000 11111111111111111111
-    // deviceID valid + tokenID != 0 + type != native + type != shell
-    ASSERT_EQ(static_cast<AccessTokenID>(0),
-        AccessTokenInfoManager::GetInstance().GetRemoteNativeTokenID(remoteDeviceID, remoteTokenID));
-}
-#endif
 
 /**
  * @tc.name: AccessTokenInfoManager001
