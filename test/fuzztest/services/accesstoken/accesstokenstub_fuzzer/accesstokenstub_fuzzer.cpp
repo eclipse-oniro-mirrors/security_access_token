@@ -745,7 +745,11 @@ static void TriggerPermDefUpdateForFuzz()
     map<int32_t, TokenIdInfo> tokenIdAplMap;
     TokenIdInfo tokenInfo = { APL_SYSTEM_BASIC, true };
     tokenIdAplMap[UNDEFINED_INFO_TOKEN_ID] = tokenInfo;
-    DelayedSingleton<AccessTokenManagerService>::GetInstance()->HandlePermDefUpdate(tokenIdAplMap);
+    std::vector<DelInfo> delInfoVec;
+    std::vector<AddInfo> addInfoVec;
+    bool needUpdateDb = false;
+    DelayedSingleton<AccessTokenManagerService>::GetInstance()->HandlePermDefUpdate(
+        tokenIdAplMap, delInfoVec, addInfoVec, needUpdateDb);
 
     sleep(ASYNC_DB_WAIT_SECONDS); // wait for UpdateDatabaseAsync to write the current version back
     ClearUndefinedInfoLeftovers(UNDEFINED_INFO_TOKEN_ID);

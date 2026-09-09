@@ -18,6 +18,7 @@
 
 #include <map>
 #include <set>
+#include <shared_mutex>
 #include <string>
 #include <unordered_set>
 #include <vector>
@@ -45,6 +46,7 @@ namespace Security {
 namespace AccessToken {
 enum class ServiceRunningState { STATE_NOT_START, STATE_RUNNING };
 struct PolicyWhiteListUpdateInfo;
+struct InitDfxInfo;
 class AccessTokenManagerService final : public SystemAbility, public AccessTokenManagerStub {
     DECLARE_DELAYED_SINGLETON(AccessTokenManagerService);
     DECLEAR_SYSTEM_ABILITY(AccessTokenManagerService);
@@ -190,8 +192,10 @@ private:
         std::vector<GenericValues>& stateValues, std::vector<GenericValues>& extendValues);
     void HandleHapUndefinedInfo(const std::map<int32_t, TokenIdInfo>& tokenIdAplMap, std::vector<DelInfo>& delInfoVec,
         std::vector<AddInfo>& addInfoVec);
-    void UpdateDatabaseAsync(const std::vector<DelInfo>& delInfoVec, const std::vector<AddInfo>& addInfoVec);
-    void HandlePermDefUpdate(const std::map<int32_t, TokenIdInfo>& tokenIdAplMap);
+    void HandlePermDefUpdate(const std::map<int32_t, TokenIdInfo>& tokenIdAplMap,
+        std::vector<DelInfo>& delInfoVec, std::vector<AddInfo>& addInfoVec, bool& needUpdateDb);
+    void DoAsyncInitializingTasks(const std::vector<DelInfo>& delInfoVec,
+        const std::vector<AddInfo>& addInfoVec, bool needUpdateDb, const InitDfxInfo& dfxInfo);
 #ifdef SUPPORT_MANAGE_USER_POLICY
     void RollbackPolicyWhiteList(const PolicyWhiteListUpdateInfo& context);
     int32_t HandlePolicyWhiteListUpdate(const PolicyWhiteListUpdateInfo& policyContext);
@@ -203,6 +207,7 @@ private:
 
     std::mutex stateMutex_;
     ServiceRunningState state_;
+    std::shared_mutex configMutex_;
     std::string grantBundleName_;
     std::string grantAbilityName_;
     std::string grantServiceAbilityName_;
