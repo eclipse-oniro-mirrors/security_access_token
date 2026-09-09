@@ -22,6 +22,7 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <vector>
 #include "securec.h"
 #include "nativetoken.h"
 #include "nativetoken_json_oper.h"
@@ -952,6 +953,230 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId008, TestSize.Level0)
 
     delete[] perms;
     delete[] dcaps;
+    delete[] acls;
+}
+
+static void ParseAclsFromJson(cJSON *aclsJson, std::vector<std::string>& acls)
+{
+    if (!cJSON_IsArray(aclsJson)) {
+        return;
+    }
+    cJSON *aclJson = nullptr;
+    cJSON_ArrayForEach(aclJson, aclsJson) {
+        if (cJSON_IsString(aclJson) && (aclJson->valuestring != nullptr)) {
+            acls.emplace_back(aclJson->valuestring);
+        }
+    }
+}
+
+static bool GetAclsFromCfgFileByProcessName(const char *processName, std::vector<std::string>& acls)
+{
+    acls.clear();
+    char *fileBuff = nullptr;
+    if (GetFileBuff(TOKEN_ID_CFG_FILE_PATH, &fileBuff) != ATRET_SUCCESS) {
+        return false;
+    }
+
+    cJSON *record = nullptr;
+    if (fileBuff == nullptr) {
+        return false;
+    }
+    record = cJSON_Parse(fileBuff);
+    free(fileBuff);
+    fileBuff = nullptr;
+    if (record == nullptr) {
+        return false;
+    }
+
+    bool found = false;
+    cJSON *rec = nullptr;
+    cJSON_ArrayForEach(rec, record) {
+        cJSON *processNameJson = cJSON_GetObjectItemCaseSensitive(rec, PROCESS_KEY_NAME);
+        if (!cJSON_IsString(processNameJson) || (processNameJson->valuestring == nullptr)) {
+            continue;
+        }
+        if (strcmp(processNameJson->valuestring, processName) != 0) {
+            continue;
+        }
+
+        cJSON *aclsJson = cJSON_GetObjectItemCaseSensitive(rec, ACLS_KEY_NAME);
+        ParseAclsFromJson(aclsJson, acls);
+        found = true;
+        break;
+    }
+    cJSON_Delete(record);
+    return found;
+}
+
+/**
+ * @tc.name: GetAccessTokenIdAclUpdate001
+ * @tc.desc: update token info in list and cfg file when only acls are changed.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenLibKitTest, GetAccessTokenIdAclUpdate001, TestSize.Level0)
+{
+    const char **perms = new (std::nothrow) const char *[2];
+    ASSERT_NE(perms, nullptr);
+    perms[0] = "ohos.permission.test1";
+    perms[1] = "ohos.permission.test2";
+    const char **acls = new (std::nothrow) const char *[1];
+    ASSERT_NE(acls, nullptr);
+    acls[0] = "ohos.permission.test1";
+
+    NativeTokenInfoParams infoInstance = {
+        .dcapsNum = 0,
+        .permsNum = 2,
+        .aclsNum = 0,
+        .dcaps = nullptr,
+        .perms = perms,
+        .acls = nullptr,
+        .processName = "GetAccessTokenIdAclUpdate001",
+        .aplStr = "system_core",
+    };
+    uint64_t tokenId = GetAccessTokenId(&infoInstance);
+    ASSERT_NE(tokenId, 0);
+
+    /* only acls are changed: apl, dcaps, perms and uid keep the same */
+    infoInstance.aclsNum = 1;
+    infoInstance.acls = acls;
+    uint64_t tokenIdUpdated = GetAccessTokenId(&infoInstance);
+    ASSERT_EQ(tokenIdUpdated, tokenId);
+
+    NativeTokenList *tokenNode = FindTokenNodeByProcessName("GetAccessTokenIdAclUpdate001");
+    ASSERT_NE(tokenNode, nullptr);
+    ASSERT_EQ(tokenNode->aclsNum, 1);
+    ASSERT_STREQ(tokenNode->acls[0], "ohos.permission.test1");
+
+    std::vector<std::string> aclsInFile;
+    ASSERT_TRUE(GetAclsFromCfgFileByProcessName("GetAccessTokenIdAclUpdate001", aclsInFile));
+    ASSERT_EQ(aclsInFile.size(), static_cast<size_t>(1));
+    ASSERT_EQ(aclsInFile[0], "ohos.permission.test1");
+
+    ASSERT_EQ(DeleteAccessTokenId("GetAccessTokenIdAclUpdate001"), 0);
+
+    delete[] perms;
+    delete[] acls;
+}
+
+/**
+ * @tc.name: GetAccessTokenIdAclUpdate002
+ * @tc.desc: update token info when acl content changes with the same count, or acls are removed.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenLibKitTest, GetAccessTokenIdAclUpdate002, TestSize.Level0)
+{
+    const char **perms = new (std::nothrow) const char *[2];
+    ASSERT_NE(perms, nullptr);
+    perms[0] = "ohos.permission.test1";
+    perms[1] = "ohos.permission.test2";
+    const char **acls = new (std::nothrow) const char *[1];
+    ASSERT_NE(acls, nullptr);
+    acls[0] = "ohos.permission.test1";
+
+    NativeTokenInfoParams infoInstance = {
+        .dcapsNum = 0,
+        .permsNum = 2,
+        .aclsNum = 1,
+        .dcaps = nullptr,
+        .perms = perms,
+        .acls = acls,
+        .processName = "GetAccessTokenIdAclUpdate002",
+        .aplStr = "system_core",
+    };
+    uint64_t tokenId = GetAccessTokenId(&infoInstance);
+    ASSERT_NE(tokenId, 0);
+
+    /* acl content changes, count keeps the same */
+    acls[0] = "ohos.permission.test2";
+    uint64_t tokenIdUpdated = GetAccessTokenId(&infoInstance);
+    ASSERT_EQ(tokenIdUpdated, tokenId);
+
+    NativeTokenList *tokenNode = FindTokenNodeByProcessName("GetAccessTokenIdAclUpdate002");
+    ASSERT_NE(tokenNode, nullptr);
+    ASSERT_EQ(tokenNode->aclsNum, 1);
+    ASSERT_STREQ(tokenNode->acls[0], "ohos.permission.test2");
+
+    std::vector<std::string> aclsInFile;
+    ASSERT_TRUE(GetAclsFromCfgFileByProcessName("GetAccessTokenIdAclUpdate002", aclsInFile));
+    ASSERT_EQ(aclsInFile.size(), static_cast<size_t>(1));
+    ASSERT_EQ(aclsInFile[0], "ohos.permission.test2");
+
+    /* acls are removed */
+    infoInstance.aclsNum = 0;
+    infoInstance.acls = nullptr;
+    tokenIdUpdated = GetAccessTokenId(&infoInstance);
+    ASSERT_EQ(tokenIdUpdated, tokenId);
+
+    tokenNode = FindTokenNodeByProcessName("GetAccessTokenIdAclUpdate002");
+    ASSERT_NE(tokenNode, nullptr);
+    ASSERT_EQ(tokenNode->aclsNum, 0);
+
+    ASSERT_TRUE(GetAclsFromCfgFileByProcessName("GetAccessTokenIdAclUpdate002", aclsInFile));
+    ASSERT_TRUE(aclsInFile.empty());
+
+    ASSERT_EQ(DeleteAccessTokenId("GetAccessTokenIdAclUpdate002"), 0);
+
+    delete[] perms;
+    delete[] acls;
+}
+
+/**
+ * @tc.name: GetAccessTokenIdAclUpdate003
+ * @tc.desc: cfg file is not rewritten when token info keeps unchanged.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenLibKitTest, GetAccessTokenIdAclUpdate003, TestSize.Level0)
+{
+    const char **perms = new (std::nothrow) const char *[2];
+    ASSERT_NE(perms, nullptr);
+    perms[0] = "ohos.permission.test1";
+    perms[1] = "ohos.permission.test2";
+    const char **acls = new (std::nothrow) const char *[1];
+    ASSERT_NE(acls, nullptr);
+    acls[0] = "ohos.permission.test1";
+
+    /* process with non-empty acls: identical info should not rewrite cfg file */
+    NativeTokenInfoParams infoInstance = {
+        .dcapsNum = 0,
+        .permsNum = 2,
+        .aclsNum = 1,
+        .dcaps = nullptr,
+        .perms = perms,
+        .acls = acls,
+        .processName = "GetAccessTokenIdAclUpdate003",
+        .aplStr = "system_core",
+    };
+    uint64_t tokenId = GetAccessTokenId(&infoInstance);
+    ASSERT_NE(tokenId, 0);
+
+    struct stat statBefore = {0};
+    ASSERT_EQ(stat(TOKEN_ID_CFG_FILE_PATH, &statBefore), 0);
+    ASSERT_EQ(GetAccessTokenId(&infoInstance), tokenId);
+    struct stat statAfter = {0};
+    ASSERT_EQ(stat(TOKEN_ID_CFG_FILE_PATH, &statAfter), 0);
+    ASSERT_EQ(statBefore.st_mtim.tv_sec, statAfter.st_mtim.tv_sec);
+    ASSERT_EQ(statBefore.st_mtim.tv_nsec, statAfter.st_mtim.tv_nsec);
+
+    /* process with no acls: identical info should not rewrite cfg file */
+    infoInstance.aclsNum = 0;
+    infoInstance.acls = nullptr;
+    infoInstance.processName = "GetAccessTokenIdAclUpdate003_00";
+    uint64_t tokenIdNoAcl = GetAccessTokenId(&infoInstance);
+    ASSERT_NE(tokenIdNoAcl, 0);
+
+    ASSERT_EQ(stat(TOKEN_ID_CFG_FILE_PATH, &statBefore), 0);
+    ASSERT_EQ(GetAccessTokenId(&infoInstance), tokenIdNoAcl);
+    ASSERT_EQ(stat(TOKEN_ID_CFG_FILE_PATH, &statAfter), 0);
+    ASSERT_EQ(statBefore.st_mtim.tv_sec, statAfter.st_mtim.tv_sec);
+    ASSERT_EQ(statBefore.st_mtim.tv_nsec, statAfter.st_mtim.tv_nsec);
+
+    ASSERT_EQ(DeleteAccessTokenId("GetAccessTokenIdAclUpdate003"), 0);
+    ASSERT_EQ(DeleteAccessTokenId("GetAccessTokenIdAclUpdate003_00"), 0);
+
+    delete[] perms;
     delete[] acls;
 }
 
