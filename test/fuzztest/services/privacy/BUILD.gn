@@ -20,6 +20,9 @@ group("fuzztest") {
     deps += [
       "addpermissionusedrecordasyncstub_fuzzer:AddPermissionUsedRecordAsyncStubFuzzTest",
       "addpermissionusedrecordstub_fuzzer:AddPermissionUsedRecordStubFuzzTest",
+      "checkpermissioninusestub_fuzzer:CheckPermissionInUseStubFuzzTest",
+      "getcurrusingperminfostub_fuzzer:GetCurrUsingPermInfoStubFuzzTest",
+      "getdisablepolicystub_fuzzer:GetDisablePolicyStubFuzzTest",
       "getpermissionusedrecordsasyncstub_fuzzer:GetPermissionUsedRecordsAsyncStubFuzzTest",
       "getpermissionusedrecordsstub_fuzzer:GetPermissionUsedRecordsStubFuzzTest",
       "getpermissionusedrecordtogglestatusstub_fuzzer:GetPermissionUsedRecordToggleStatusStubFuzzTest",
@@ -28,6 +31,7 @@ group("fuzztest") {
       "privacystub_fuzzer:PrivacyStubFuzzTest",
       "registerpermactivestatuscallbackstub_fuzzer:RegisterPermActiveStatusCallbackStubFuzzTest",
       "removepermissionusedrecordsstub_fuzzer:RemovePermissionUsedRecordsStubFuzzTest",
+      "setdisablepolicystub_fuzzer:SetDisablePolicyStubFuzzTest",
       "sethapwithfgreminderstub_fuzzer:SetHapWithFGReminderStubFuzzTest",
       "setmutepolicystub_fuzzer:SetMutePolicyStubFuzzTest",
       "setpermissionusedrecordtogglestatusstub_fuzzer:SetPermissionUsedRecordToggleStatusStubFuzzTest",
