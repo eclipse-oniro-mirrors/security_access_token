@@ -21,6 +21,7 @@
 #include "access_token_db.h"
 #include "accesstoken_kit.h"
 #include "access_token_error.h"
+#include "hisysevent_adapter.h"
 #define private public
 #include "accesstoken_info_manager.h"
 #include "accesstoken_manager_service.h"
@@ -617,7 +618,11 @@ HWTEST_F(PermissionManagerCoverageTest, HandlePermDefUpdate001, TestSize.Level4)
     EXPECT_NE(nullptr, atManagerService);
  
     std::map<int32_t, TokenIdInfo> tokenIdAplMap;
-    atManagerService->HandlePermDefUpdate(tokenIdAplMap); // dbPermDefVersion is empty
+    std::vector<DelInfo> delInfoVec;
+    std::vector<AddInfo> addInfoVec;
+    bool needUpdateDb = false;
+    // dbPermDefVersion is empty
+    atManagerService->HandlePermDefUpdate(tokenIdAplMap, delInfoVec, addInfoVec, needUpdateDb);
 
     DelTestDataAndRestoreOri(type, oriData);
     sleep(2);
@@ -654,10 +659,82 @@ HWTEST_F(PermissionManagerCoverageTest, HandlePermDefUpdate002, TestSize.Level4)
     EXPECT_NE(nullptr, atManagerService);
  
     std::map<int32_t, TokenIdInfo> tokenIdAplMap;
-    atManagerService->HandlePermDefUpdate(tokenIdAplMap); // dbPermDefVersion is not empty
+    std::vector<DelInfo> outDelInfoVec;
+    std::vector<AddInfo> outAddInfoVec;
+    bool outNeedUpdateDb = false;
+    // dbPermDefVersion is not empty
+    atManagerService->HandlePermDefUpdate(tokenIdAplMap, outDelInfoVec, outAddInfoVec, outNeedUpdateDb);
 
     DelTestDataAndRestoreOri(type, oriData);
     sleep(2);
+    atManagerService = nullptr;
+}
+
+/**
+ * @tc.name: DoAsyncInitializingTasks001
+ * @tc.desc: AccessTokenManagerService::DoAsyncInitializingTasks function test when db update is needed
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionManagerCoverageTest, DoAsyncInitializingTasks001, TestSize.Level4)
+{
+    AtmDataType type = AtmDataType::ACCESSTOKEN_SYSTEM_CONFIG;
+    std::vector<GenericValues> oriData;
+    BackupAndDelOriData(type, oriData);
+
+    std::shared_ptr<AccessTokenManagerService> atManagerService =
+        DelayedSingleton<AccessTokenManagerService>::GetInstance();
+    EXPECT_NE(nullptr, atManagerService);
+
+    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
+    std::vector<DelInfo> delInfoVec;
+    std::vector<AddInfo> addInfoVec;
+    bool needUpdateDb = false;
+    atManagerService->HandlePermDefUpdate(tokenIdAplMap, delInfoVec, addInfoVec, needUpdateDb);
+    EXPECT_TRUE(needUpdateDb);
+    InitDfxInfo dfxInfo{};
+    atManagerService->DoAsyncInitializingTasks(delInfoVec, addInfoVec, needUpdateDb, dfxInfo);
+    sleep(2);
+
+    GenericValues cond;
+    cond.Put(TokenFiledConst::FIELD_NAME, PERM_DEF_VERSION);
+    std::vector<GenericValues> results;
+    EXPECT_EQ(RET_SUCCESS, AccessTokenDb::GetInstance()->Find(type, cond, results));
+    EXPECT_TRUE(results.empty());
+
+    DelTestDataAndRestoreOri(type, oriData);
+    atManagerService = nullptr;
+}
+
+/**
+ * @tc.name: DoAsyncInitializingTasks002
+ * @tc.desc: AccessTokenManagerService::DoAsyncInitializingTasks function test when no db update is needed
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionManagerCoverageTest, DoAsyncInitializingTasks002, TestSize.Level4)
+{
+    AtmDataType type = AtmDataType::ACCESSTOKEN_SYSTEM_CONFIG;
+    std::vector<GenericValues> oriData;
+    BackupAndDelOriData(type, oriData);
+
+    std::shared_ptr<AccessTokenManagerService> atManagerService =
+        DelayedSingleton<AccessTokenManagerService>::GetInstance();
+    EXPECT_NE(nullptr, atManagerService);
+
+    std::vector<DelInfo> delInfoVec;
+    std::vector<AddInfo> addInfoVec;
+    InitDfxInfo dfxInfo{};
+    atManagerService->DoAsyncInitializingTasks(delInfoVec, addInfoVec, false, dfxInfo);
+    sleep(2);
+
+    GenericValues cond;
+    cond.Put(TokenFiledConst::FIELD_NAME, PERM_DEF_VERSION);
+    std::vector<GenericValues> results;
+    EXPECT_EQ(RET_SUCCESS, AccessTokenDb::GetInstance()->Find(type, cond, results));
+    EXPECT_TRUE(results.empty());
+
+    DelTestDataAndRestoreOri(type, oriData);
     atManagerService = nullptr;
 }
 

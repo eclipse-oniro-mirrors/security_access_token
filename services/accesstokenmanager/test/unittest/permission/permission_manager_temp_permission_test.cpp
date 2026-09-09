@@ -13,7 +13,11 @@
  * limitations under the License.
  */
 
-#include "permission_manager_test.h"
+#include <gtest/gtest.h>
+#define private public
+#include "accesstoken_manager_service.h"
+#include "permission_manager.h"
+#undef private
 
 #include "access_token.h"
 #include "access_token_error.h"
@@ -33,6 +37,71 @@ using namespace OHOS;
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+
+class PermissionManagerTempPermissionTest : public testing::Test {
+public:
+    static void SetUpTestCase()
+    {
+        static auto svc = DelayedSingleton<AccessTokenManagerService>::GetInstance();
+        if (svc == nullptr) {
+            return;
+        }
+        svc->Initialize();
+        sleep(1);
+    }
+
+    static void TearDownTestCase()
+    {
+        DelayedSingleton<AccessTokenManagerService>::DestroyInstance();
+    }
+
+    void SetUp() override
+    {
+        if (accessTokenService_ != nullptr) {
+            return;
+        }
+        accessTokenService_ = DelayedSingleton<AccessTokenManagerService>::GetInstance();
+        ASSERT_NE(nullptr, accessTokenService_);
+        if (appStateObserver_ != nullptr) {
+            return;
+        }
+        appStateObserver_ = std::make_shared<PermissionAppStateObserver>();
+#ifdef BGTASKMGR_CONTINUOUS_TASK_ENABLE
+        if (backgroundTaskObserver_ != nullptr) {
+            return;
+        }
+        backgroundTaskObserver_ = std::make_shared<PermissionBackgroundTaskObserver>();
+#endif
+        if (formStateObserver_ != nullptr) {
+            return;
+        }
+        formStateObserver_ = std::make_shared<PermissionFormStateObserver>();
+    }
+
+    void TearDown() override
+    {
+        auto& observer = TempPermissionObserver::GetInstance();
+        observer.OnAppMgrRemoteDiedHandle();
+        {
+            std::lock_guard<std::mutex> lock(observer.formTokenMutex_);
+            observer.formTokenMap_.clear();
+        }
+        accessTokenService_ = nullptr;
+        appStateObserver_ = nullptr;
+#ifdef BGTASKMGR_CONTINUOUS_TASK_ENABLE
+        backgroundTaskObserver_ = nullptr;
+#endif
+        formStateObserver_ = nullptr;
+    }
+
+    std::shared_ptr<AccessTokenManagerService> accessTokenService_ = nullptr;
+    std::shared_ptr<PermissionAppStateObserver> appStateObserver_ = nullptr;
+#ifdef BGTASKMGR_CONTINUOUS_TASK_ENABLE
+    std::shared_ptr<PermissionBackgroundTaskObserver> backgroundTaskObserver_ = nullptr;
+#endif
+    std::shared_ptr<PermissionFormStateObserver> formStateObserver_ = nullptr;
+};
+
 namespace {
 static constexpr int32_t USER_ID = 100;
 
@@ -108,10 +177,9 @@ static std::shared_ptr<ContinuousTaskCallbackInfo> CreateContinuousTaskInfo(
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GrantTempPermission001, TestSize.Level0)
+HWTEST_F(PermissionManagerTempPermissionTest, GrantTempPermission001, TestSize.Level0)
 {
     accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
-    accessTokenService_->Initialize();
     AccessTokenID tokenID = CreateTempHapTokenInfo();
     TempPermissionObserver::GetInstance().RegisterCallback();
     // change to foreground
@@ -143,10 +211,9 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission001, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GrantTempPermission002, TestSize.Level0)
+HWTEST_F(PermissionManagerTempPermissionTest, GrantTempPermission002, TestSize.Level0)
 {
     accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
-    accessTokenService_->Initialize();
     AccessTokenID tokenID = CreateTempHapTokenInfo();
     EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GrantPermission(tokenID,
         "ohos.permission.APPROXIMATELY_LOCATION", PERMISSION_ALLOW_THIS_TIME));
@@ -177,10 +244,9 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission002, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GrantTempPermission003, TestSize.Level0)
+HWTEST_F(PermissionManagerTempPermissionTest, GrantTempPermission003, TestSize.Level0)
 {
     accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
-    accessTokenService_->Initialize();
     AccessTokenID tokenID = CreateTempHapTokenInfo();
     EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GrantPermission(tokenID,
         "ohos.permission.APPROXIMATELY_LOCATION", PERMISSION_ALLOW_THIS_TIME));
@@ -217,10 +283,9 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission003, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GrantTempPermission004, TestSize.Level0)
+HWTEST_F(PermissionManagerTempPermissionTest, GrantTempPermission004, TestSize.Level0)
 {
     accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
-    accessTokenService_->Initialize();
     AccessTokenID tokenID = CreateTempHapTokenInfo();
     EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GrantPermission(tokenID,
         "ohos.permission.APPROXIMATELY_LOCATION", PERMISSION_ALLOW_THIS_TIME));
@@ -257,10 +322,9 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission004, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GrantTempPermission005, TestSize.Level0)
+HWTEST_F(PermissionManagerTempPermissionTest, GrantTempPermission005, TestSize.Level0)
 {
     accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
-    accessTokenService_->Initialize();
     AccessTokenID tokenID = CreateTempHapTokenInfo();
     EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GrantPermission(tokenID,
         "ohos.permission.APPROXIMATELY_LOCATION", PERMISSION_ALLOW_THIS_TIME));
@@ -305,10 +369,9 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission005, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GrantTempPermission006, TestSize.Level0)
+HWTEST_F(PermissionManagerTempPermissionTest, GrantTempPermission006, TestSize.Level0)
 {
     accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
-    accessTokenService_->Initialize();
     AccessTokenID tokenID = CreateTempHapTokenInfo();
     EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GrantPermission(tokenID,
         "ohos.permission.APPROXIMATELY_LOCATION", PERMISSION_ALLOW_THIS_TIME));
@@ -339,10 +402,9 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission006, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GrantTempPermission007, TestSize.Level0)
+HWTEST_F(PermissionManagerTempPermissionTest, GrantTempPermission007, TestSize.Level0)
 {
     accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
-    accessTokenService_->Initialize();
     AccessTokenID tokenID = CreateTempHapTokenInfo();
     EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GrantPermission(tokenID,
         "ohos.permission.APPROXIMATELY_LOCATION", PERMISSION_ALLOW_THIS_TIME));
@@ -373,10 +435,9 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission007, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GrantTempPermission008, TestSize.Level0)
+HWTEST_F(PermissionManagerTempPermissionTest, GrantTempPermission008, TestSize.Level0)
 {
     accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
-    accessTokenService_->Initialize();
     AccessTokenID tokenID = CreateTempHapTokenInfo();
     EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GrantPermission(tokenID,
         "ohos.permission.APPROXIMATELY_LOCATION", PERMISSION_ALLOW_THIS_TIME));
@@ -409,10 +470,9 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission008, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GrantTempPermission009, TestSize.Level0)
+HWTEST_F(PermissionManagerTempPermissionTest, GrantTempPermission009, TestSize.Level0)
 {
     accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
-    accessTokenService_->Initialize();
     AccessTokenID tokenID = CreateTempHapTokenInfo();
     EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GrantPermission(tokenID,
         "ohos.permission.APPROXIMATELY_LOCATION", PERMISSION_ALLOW_THIS_TIME));
@@ -452,10 +512,9 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission009, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GrantTempPermission010, TestSize.Level0)
+HWTEST_F(PermissionManagerTempPermissionTest, GrantTempPermission010, TestSize.Level0)
 {
     accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
-    accessTokenService_->Initialize();
     AccessTokenID tokenID = CreateTempHapTokenInfo();
     EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GrantPermission(tokenID,
         "ohos.permission.APPROXIMATELY_LOCATION", PERMISSION_ALLOW_THIS_TIME));
@@ -500,10 +559,9 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission010, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GrantTempPermission011, TestSize.Level0)
+HWTEST_F(PermissionManagerTempPermissionTest, GrantTempPermission011, TestSize.Level0)
 {
     accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
-    accessTokenService_->Initialize();
     AccessTokenID tokenID = CreateTempHapTokenInfo();
     EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GrantPermission(tokenID,
         "ohos.permission.APPROXIMATELY_LOCATION", PERMISSION_ALLOW_THIS_TIME));
@@ -545,10 +603,9 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission011, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GrantTempPermission012, TestSize.Level0)
+HWTEST_F(PermissionManagerTempPermissionTest, GrantTempPermission012, TestSize.Level0)
 {
     accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
-    accessTokenService_->Initialize();
     AccessTokenID tokenID = CreateTempHapTokenInfo();
     EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GrantPermission(tokenID,
         "ohos.permission.APPROXIMATELY_LOCATION", PERMISSION_ALLOW_THIS_TIME));
@@ -598,10 +655,9 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission012, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GrantTempPermission013, TestSize.Level0)
+HWTEST_F(PermissionManagerTempPermissionTest, GrantTempPermission013, TestSize.Level0)
 {
     accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
-    accessTokenService_->Initialize();
     AccessTokenID tokenID = CreateTempHapTokenInfo();
     EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GrantPermission(tokenID,
         "ohos.permission.APPROXIMATELY_LOCATION", PERMISSION_ALLOW_THIS_TIME));
@@ -644,10 +700,9 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission013, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GrantTempPermission014, TestSize.Level0)
+HWTEST_F(PermissionManagerTempPermissionTest, GrantTempPermission014, TestSize.Level0)
 {
     accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
-    accessTokenService_->Initialize();
     AccessTokenID tokenID = CreateTempHapTokenInfo();
     EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GrantPermission(tokenID,
         "ohos.permission.APPROXIMATELY_LOCATION", PERMISSION_ALLOW_THIS_TIME));
@@ -690,10 +745,9 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission014, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GrantTempPermission015, TestSize.Level0)
+HWTEST_F(PermissionManagerTempPermissionTest, GrantTempPermission015, TestSize.Level0)
 {
     accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
-    accessTokenService_->Initialize();
     AccessTokenID tokenID = CreateTempHapTokenInfo();
     EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GrantPermission(tokenID,
         "ohos.permission.APPROXIMATELY_LOCATION", PERMISSION_ALLOW_THIS_TIME));
@@ -741,10 +795,9 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission015, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GrantTempPermission016, TestSize.Level0)
+HWTEST_F(PermissionManagerTempPermissionTest, GrantTempPermission016, TestSize.Level0)
 {
     accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
-    accessTokenService_->Initialize();
     AccessTokenID tokenID = CreateTempHapTokenInfo();
     EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GrantPermission(tokenID,
         "ohos.permission.APPROXIMATELY_LOCATION", PERMISSION_SYSTEM_FIXED));
@@ -776,10 +829,9 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission016, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GrantTempPermission017, TestSize.Level0)
+HWTEST_F(PermissionManagerTempPermissionTest, GrantTempPermission017, TestSize.Level0)
 {
     accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
-    accessTokenService_->Initialize();
     AccessTokenID tokenID = CreateTempHapTokenInfo();
     EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GrantPermission(tokenID,
         "ohos.permission.APPROXIMATELY_LOCATION", PERMISSION_ALLOW_THIS_TIME));
@@ -803,10 +855,9 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission017, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GrantTempPermission018, TestSize.Level0)
+HWTEST_F(PermissionManagerTempPermissionTest, GrantTempPermission018, TestSize.Level0)
 {
     accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
-    accessTokenService_->Initialize();
     AccessTokenID tokenID = CreateTempHapTokenInfo();
     EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GrantPermission(tokenID,
         "ohos.permission.APPROXIMATELY_LOCATION", PERMISSION_ALLOW_THIS_TIME));
@@ -828,10 +879,9 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission018, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GrantTempPermission019, TestSize.Level0)
+HWTEST_F(PermissionManagerTempPermissionTest, GrantTempPermission019, TestSize.Level0)
 {
     accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
-    accessTokenService_->Initialize();
     AccessTokenID tokenID = CreateTempHapTokenInfo();
     setuid(100);
     EXPECT_EQ(ERR_IDENTITY_CHECK_FAILED, PermissionManager::GetInstance().GrantPermission(tokenID,
@@ -849,10 +899,9 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission019, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GrantTempPermission020, TestSize.Level0)
+HWTEST_F(PermissionManagerTempPermissionTest, GrantTempPermission020, TestSize.Level0)
 {
     accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
-    accessTokenService_->Initialize();
     AccessTokenID tokenID = CreateTempHapTokenInfo();
     EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GrantPermission(tokenID,
         "ohos.permission.APPROXIMATELY_LOCATION", PERMISSION_SYSTEM_FIXED));
@@ -893,10 +942,9 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission020, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GrantTempPermission021, TestSize.Level0)
+HWTEST_F(PermissionManagerTempPermissionTest, GrantTempPermission021, TestSize.Level0)
 {
     accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
-    accessTokenService_->Initialize();
     AccessTokenID tokenID = CreateTempHapTokenInfo();
     EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GrantPermission(tokenID,
         "ohos.permission.MICROPHONE", PERMISSION_ALLOW_THIS_TIME));
@@ -915,10 +963,9 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission021, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GrantTempPermission022, TestSize.Level0)
+HWTEST_F(PermissionManagerTempPermissionTest, GrantTempPermission022, TestSize.Level0)
 {
     accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
-    accessTokenService_->Initialize();
     TempPermissionObserver::GetInstance().SetCancelTime(200);
     AccessTokenID tokenID = CreateTempHapTokenInfo();
     EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GrantPermission(tokenID,
@@ -943,10 +990,9 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission022, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GrantTempPermission023, TestSize.Level0)
+HWTEST_F(PermissionManagerTempPermissionTest, GrantTempPermission023, TestSize.Level0)
 {
     accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
-    accessTokenService_->Initialize();
     TempPermissionObserver::GetInstance().SetCancelTime(200);
     AccessTokenID tokenID = CreateTempHapTokenInfo();
     EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GrantPermission(tokenID,
@@ -980,10 +1026,9 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission023, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GrantTempPermission039, TestSize.Level0)
+HWTEST_F(PermissionManagerTempPermissionTest, GrantTempPermission039, TestSize.Level0)
 {
     accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
-    accessTokenService_->Initialize();
     TempPermissionObserver::GetInstance().SetCancelTime(200);
     AccessTokenID tokenID = CreateTempHapTokenInfo();
     EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GrantPermission(tokenID,
@@ -1014,10 +1059,9 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission039, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GrantTempPermission024, TestSize.Level0)
+HWTEST_F(PermissionManagerTempPermissionTest, GrantTempPermission024, TestSize.Level0)
 {
     accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
-    accessTokenService_->Initialize();
     TempPermissionObserver::GetInstance().SetCancelTime(200);
     AccessTokenID tokenID = CreateTempHapTokenInfo();
     EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GrantPermission(tokenID,
@@ -1047,10 +1091,9 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission024, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GrantTempPermission025, TestSize.Level0)
+HWTEST_F(PermissionManagerTempPermissionTest, GrantTempPermission025, TestSize.Level0)
 {
     accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
-    accessTokenService_->Initialize();
     TempPermissionObserver::GetInstance().SetCancelTime(200);
     AccessTokenID tokenID = CreateTempHapTokenInfo();
     EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GrantPermission(tokenID,
@@ -1098,10 +1141,9 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission025, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GrantTempPermission026, TestSize.Level0)
+HWTEST_F(PermissionManagerTempPermissionTest, GrantTempPermission026, TestSize.Level0)
 {
     accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
-    accessTokenService_->Initialize();
     TempPermissionObserver::GetInstance().SetCancelTime(200);
     AccessTokenID tokenID = CreateTempHapTokenInfo();
     EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GrantPermission(tokenID,
@@ -1131,10 +1173,9 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission026, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GrantTempPermission027, TestSize.Level0)
+HWTEST_F(PermissionManagerTempPermissionTest, GrantTempPermission027, TestSize.Level0)
 {
     accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
-    accessTokenService_->Initialize();
     TempPermissionObserver::GetInstance().SetCancelTime(200);
     AccessTokenID tokenID = CreateTempHapTokenInfo();
     EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GrantPermission(tokenID,
@@ -1164,10 +1205,9 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission027, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GrantTempPermission028, TestSize.Level0)
+HWTEST_F(PermissionManagerTempPermissionTest, GrantTempPermission028, TestSize.Level0)
 {
     accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
-    accessTokenService_->Initialize();
     TempPermissionObserver::GetInstance().SetCancelTime(200);
     AccessTokenID tokenID = CreateTempHapTokenInfo();
     EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GrantPermission(tokenID,
@@ -1204,10 +1244,9 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission028, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GrantTempPermission029, TestSize.Level0)
+HWTEST_F(PermissionManagerTempPermissionTest, GrantTempPermission029, TestSize.Level0)
 {
     accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
-    accessTokenService_->Initialize();
     TempPermissionObserver::GetInstance().SetCancelTime(200);
     AccessTokenID tokenID = CreateTempHapTokenInfo();
     EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GrantPermission(tokenID,
@@ -1243,10 +1282,9 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission029, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GrantTempPermission030, TestSize.Level0)
+HWTEST_F(PermissionManagerTempPermissionTest, GrantTempPermission030, TestSize.Level0)
 {
     accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
-    accessTokenService_->Initialize();
     TempPermissionObserver::GetInstance().SetCancelTime(200);
     AccessTokenID tokenID = CreateTempHapTokenInfo();
     EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GrantPermission(tokenID,
@@ -1270,10 +1308,9 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission030, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GrantTempPermission031, TestSize.Level0)
+HWTEST_F(PermissionManagerTempPermissionTest, GrantTempPermission031, TestSize.Level0)
 {
     accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
-    accessTokenService_->Initialize();
     TempPermissionObserver::GetInstance().SetCancelTime(200);
     AccessTokenID tokenID = CreateTempHapTokenInfo();
     EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GrantPermission(tokenID,
@@ -1316,10 +1353,9 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission031, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GrantTempPermission032, TestSize.Level0)
+HWTEST_F(PermissionManagerTempPermissionTest, GrantTempPermission032, TestSize.Level0)
 {
     accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
-    accessTokenService_->Initialize();
     TempPermissionObserver::GetInstance().SetCancelTime(200);
     AccessTokenID tokenID = CreateTempHapTokenInfo();
     EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GrantPermission(tokenID,
@@ -1350,10 +1386,9 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission032, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GrantTempPermission033, TestSize.Level0)
+HWTEST_F(PermissionManagerTempPermissionTest, GrantTempPermission033, TestSize.Level0)
 {
     accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
-    accessTokenService_->Initialize();
     TempPermissionObserver::GetInstance().SetCancelTime(200);
     AccessTokenID tokenID = CreateTempHapTokenInfo();
     EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GrantPermission(tokenID,
@@ -1398,10 +1433,9 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission033, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GrantTempPermission034, TestSize.Level0)
+HWTEST_F(PermissionManagerTempPermissionTest, GrantTempPermission034, TestSize.Level0)
 {
     accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
-    accessTokenService_->Initialize();
     TempPermissionObserver::GetInstance().SetCancelTime(200);
     AccessTokenID tokenID = CreateTempHapTokenInfo();
     EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GrantPermission(tokenID,
@@ -1431,10 +1465,9 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission034, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GrantTempPermission035, TestSize.Level0)
+HWTEST_F(PermissionManagerTempPermissionTest, GrantTempPermission035, TestSize.Level0)
 {
     accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
-    accessTokenService_->Initialize();
     AccessTokenID tokenID = CreateTempHapTokenInfo();
     EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GrantPermission(tokenID,
         "ohos.permission.MICROPHONE", PERMISSION_ALLOW_THIS_TIME));
@@ -1458,10 +1491,9 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission035, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GrantTempPermission036, TestSize.Level0)
+HWTEST_F(PermissionManagerTempPermissionTest, GrantTempPermission036, TestSize.Level0)
 {
     accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
-    accessTokenService_->Initialize();
     AccessTokenID tokenID = CreateTempHapTokenInfo();
 
     // Use a fixed test-only continuous task id to verify callbacks ignore tokens without temp permission state.
@@ -1485,10 +1517,9 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission036, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GrantTempPermission037, TestSize.Level0)
+HWTEST_F(PermissionManagerTempPermissionTest, GrantTempPermission037, TestSize.Level0)
 {
     accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
-    accessTokenService_->Initialize();
     TempPermissionObserver::GetInstance().SetCancelTime(200);
     AccessTokenID tokenID = CreateTempHapTokenInfo();
     EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GrantPermission(tokenID,
@@ -1522,10 +1553,9 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission037, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GrantTempPermission038, TestSize.Level0)
+HWTEST_F(PermissionManagerTempPermissionTest, GrantTempPermission038, TestSize.Level0)
 {
     accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
-    accessTokenService_->Initialize();
     TempPermissionObserver::GetInstance().SetCancelTime(200);
     AccessTokenID tokenID = CreateTempHapTokenInfo();
     EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GrantPermission(tokenID,
@@ -1573,10 +1603,9 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission038, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GrantTempPermission040, TestSize.Level0)
+HWTEST_F(PermissionManagerTempPermissionTest, GrantTempPermission040, TestSize.Level0)
 {
     accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
-    accessTokenService_->Initialize();
     AccessTokenID tokenID = CreateTempHapTokenInfo();
     auto& observer = TempPermissionObserver::GetInstance();
     EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GrantPermission(tokenID,
@@ -1600,10 +1629,9 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission040, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, RegisterBackgroundCallback001, TestSize.Level0)
+HWTEST_F(PermissionManagerTempPermissionTest, RegisterBackgroundCallback001, TestSize.Level0)
 {
     accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
-    accessTokenService_->Initialize();
     AccessTokenID tokenID = CreateTempHapTokenInfo();
     EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GrantPermission(tokenID,
         "ohos.permission.APPROXIMATELY_LOCATION", PERMISSION_ALLOW_THIS_TIME));
@@ -1630,10 +1658,9 @@ HWTEST_F(PermissionManagerTest, RegisterBackgroundCallback001, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, RegisterFormVisibleCallback001, TestSize.Level0)
+HWTEST_F(PermissionManagerTempPermissionTest, RegisterFormVisibleCallback001, TestSize.Level0)
 {
     accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
-    accessTokenService_->Initialize();
     AccessTokenID tokenID = CreateTempHapTokenInfo();
     EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GrantPermission(tokenID,
         "ohos.permission.READ_PASTEBOARD", PERMISSION_ALLOW_THIS_TIME));
@@ -1663,10 +1690,9 @@ HWTEST_F(PermissionManagerTest, RegisterFormVisibleCallback001, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, RegisterFormVisibleCallback002, TestSize.Level0)
+HWTEST_F(PermissionManagerTempPermissionTest, RegisterFormVisibleCallback002, TestSize.Level0)
 {
     accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
-    accessTokenService_->Initialize();
 
     // Register both form callbacks
     TempPermissionObserver::GetInstance().RegisterFormVisibleCallback();
@@ -1698,10 +1724,9 @@ HWTEST_F(PermissionManagerTest, RegisterFormVisibleCallback002, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, TempPermissionObserverRegisterCallback001, TestSize.Level0)
+HWTEST_F(PermissionManagerTempPermissionTest, TempPermissionObserverRegisterCallback001, TestSize.Level0)
 {
     accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
-    accessTokenService_->Initialize();
 
     // RegisterCallback should register background, form visibility,
     // and app status callbacks.

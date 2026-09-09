@@ -901,13 +901,16 @@ int32_t AccessTokenManagerService::GetSelfPermissionsState(std::vector<Permissio
         permOper = INVALID_OPER;
         return ERR_OK;
     }
-    LOGI(ATM_DOMAIN, ATM_TAG,
-        "Bundle %{public}s, uiExAbility %{public}s, serExAbility %{public}s, callerPid %{public}d.",
-        grantBundleName_.c_str(), grantAbilityName_.c_str(), grantServiceAbilityName_.c_str(),
-        IPCSkeleton::GetCallingPid());
-    infoParcel.info.grantBundleName = grantBundleName_;
-    infoParcel.info.grantAbilityName = grantAbilityName_;
-    infoParcel.info.grantServiceAbilityName = grantServiceAbilityName_;
+    {
+        std::shared_lock<std::shared_mutex> lock(configMutex_);
+        LOGI(ATM_DOMAIN, ATM_TAG,
+            "Bundle %{public}s, uiExAbility %{public}s, serExAbility %{public}s, callerPid %{public}d.",
+            grantBundleName_.c_str(), grantAbilityName_.c_str(), grantServiceAbilityName_.c_str(),
+            IPCSkeleton::GetCallingPid());
+        infoParcel.info.grantBundleName = grantBundleName_;
+        infoParcel.info.grantAbilityName = grantAbilityName_;
+        infoParcel.info.grantServiceAbilityName = grantServiceAbilityName_;
+    }
     AccessTokenID callingTokenID = IPCSkeleton::GetCallingTokenID();
     permOper = GetPermissionsState(callingTokenID, reqPermList);
     return ERR_OK;
@@ -1142,8 +1145,15 @@ int32_t AccessTokenManagerService::RequestAppPermOnSetting(AccessTokenID tokenID
         LOGE(ATM_DOMAIN, ATM_TAG, "GetHapTokenInfo failed, err %{public}d.", ret);
         return ret;
     }
+    std::string grantBundleName;
+    std::string applicationSettingAbilityName;
+    {
+        std::shared_lock<std::shared_mutex> lock(configMutex_);
+        grantBundleName = grantBundleName_;
+        applicationSettingAbilityName = applicationSettingAbilityName_;
+    }
     return PermissionManager::GetInstance().RequestAppPermOnSetting(hapInfo,
-        grantBundleName_, applicationSettingAbilityName_);
+        grantBundleName, applicationSettingAbilityName);
 }
 
 int AccessTokenManagerService::GrantPermission(
@@ -2009,6 +2019,7 @@ int32_t AccessTokenManagerService::SetPermDialogCap(const HapBaseInfoParcel& hap
 
 int32_t AccessTokenManagerService::GetPermissionManagerInfo(PermissionGrantInfoParcel& infoParcel)
 {
+    std::shared_lock<std::shared_mutex> lock(configMutex_);
     infoParcel.info.grantBundleName = grantBundleName_;
     infoParcel.info.grantAbilityName = grantAbilityName_;
     infoParcel.info.grantServiceAbilityName = grantServiceAbilityName_;
@@ -2225,6 +2236,7 @@ void AccessTokenManagerService::AccessTokenServiceParamSet() const
 void AccessTokenManagerService::SetFlagIfNeed(const AccessTokenServiceConfig& atConfig,
     int32_t& cancelTime, uint32_t& parseConfigFlag)
 {
+    std::unique_lock<std::shared_mutex> lock(configMutex_);
     parseConfigFlag = 0;
     // set value from config
     if (!atConfig.grantBundleName.empty()) {
@@ -2263,14 +2275,17 @@ void AccessTokenManagerService::SetFlagIfNeed(const AccessTokenServiceConfig& at
 
 void AccessTokenManagerService::GetConfigValue(uint32_t& parseConfigFlag)
 {
-    grantBundleName_ = GRANT_ABILITY_BUNDLE_NAME;
-    grantAbilityName_ = GRANT_ABILITY_ABILITY_NAME;
-    grantServiceAbilityName_ = GRANT_ABILITY_ABILITY_NAME;
-    permStateAbilityName_ = PERMISSION_STATE_SHEET_ABILITY_NAME;
-    globalSwitchAbilityName_ = GLOBAL_SWITCH_SHEET_ABILITY_NAME;
+    {
+        std::unique_lock<std::shared_mutex> lock(configMutex_);
+        grantBundleName_ = GRANT_ABILITY_BUNDLE_NAME;
+        grantAbilityName_ = GRANT_ABILITY_ABILITY_NAME;
+        grantServiceAbilityName_ = GRANT_ABILITY_ABILITY_NAME;
+        permStateAbilityName_ = PERMISSION_STATE_SHEET_ABILITY_NAME;
+        globalSwitchAbilityName_ = GLOBAL_SWITCH_SHEET_ABILITY_NAME;
+        applicationSettingAbilityName_ = APPLICATION_SETTING_ABILITY_NAME;
+        openSettingAbilityName_ = OPEN_SETTING_ABILITY_NAME;
+    }
     int32_t cancelTime = 0;
-    applicationSettingAbilityName_ = APPLICATION_SETTING_ABILITY_NAME;
-    openSettingAbilityName_ = OPEN_SETTING_ABILITY_NAME;
     LibraryLoader loader(CONFIG_PARSE_LIBPATH);
     ConfigPolicyLoaderInterface* policy = loader.GetObject<ConfigPolicyLoaderInterface>();
     if (policy == nullptr) {
@@ -2282,13 +2297,16 @@ void AccessTokenManagerService::GetConfigValue(uint32_t& parseConfigFlag)
         SetFlagIfNeed(value.atConfig, cancelTime, parseConfigFlag);
     }
     TempPermissionObserver::GetInstance().SetCancelTime(cancelTime);
-    LOGI(ATM_DOMAIN, ATM_TAG, "GrantBundleName_ is %{public}s, grantAbilityName_ is %{public}s, "
-        "grantServiceAbilityName_ is %{public}s, permStateAbilityName_ is %{public}s, "
-        "globalSwitchAbilityName_ is %{public}s, applicationSettingAbilityName_ is %{public}s, "
-        "openSettingAbilityName_ is %{public}s.",
-        grantBundleName_.c_str(), grantAbilityName_.c_str(), grantServiceAbilityName_.c_str(),
-        permStateAbilityName_.c_str(), globalSwitchAbilityName_.c_str(), applicationSettingAbilityName_.c_str(),
-        openSettingAbilityName_.c_str());
+    {
+        std::shared_lock<std::shared_mutex> lock(configMutex_);
+        LOGI(ATM_DOMAIN, ATM_TAG, "GrantBundleName_ is %{public}s, grantAbilityName_ is %{public}s, "
+            "grantServiceAbilityName_ is %{public}s, permStateAbilityName_ is %{public}s, "
+            "globalSwitchAbilityName_ is %{public}s, applicationSettingAbilityName_ is %{public}s, "
+            "openSettingAbilityName_ is %{public}s.",
+            grantBundleName_.c_str(), grantAbilityName_.c_str(), grantServiceAbilityName_.c_str(),
+            permStateAbilityName_.c_str(), globalSwitchAbilityName_.c_str(), applicationSettingAbilityName_.c_str(),
+            openSettingAbilityName_.c_str());
+    }
 }
 
 void AccessTokenManagerService::FilterPermFeature(bool isSystemApp, HapPolicy& policy)
@@ -2503,22 +2521,10 @@ void AccessTokenManagerService::HandleHapUndefinedInfo(const std::map<int32_t, T
     addInfoVec.emplace_back(addInfo);
 }
 
-void AccessTokenManagerService::UpdateDatabaseAsync(const std::vector<DelInfo>& delInfoVec,
-    const std::vector<AddInfo>& addInfoVec)
+void AccessTokenManagerService::HandlePermDefUpdate(const std::map<int32_t, TokenIdInfo>& tokenIdAplMap,
+    std::vector<DelInfo>& delInfoVec, std::vector<AddInfo>& addInfoVec, bool& needUpdateDb)
 {
-    auto task = [delInfoVec, addInfoVec]() {
-        LOGI(ATM_DOMAIN, ATM_TAG, "Entry!");
-        int32_t ret = AccessTokenDbOperator::DeleteAndInsertValues(delInfoVec, addInfoVec);
-        if (ret != RET_SUCCESS) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "Update permission definition database failed, ret=%{public}d.", ret);
-        }
-    };
-    std::thread updateDbThread(task);
-    updateDbThread.detach();
-}
-
-void AccessTokenManagerService::HandlePermDefUpdate(const std::map<int32_t, TokenIdInfo>& tokenIdAplMap)
-{
+    needUpdateDb = false;
     std::string dbPermDefVersion;
     GenericValues conditionValue;
     conditionValue.Put(TokenFiledConst::FIELD_NAME, PERM_DEF_VERSION);
@@ -2552,17 +2558,40 @@ void AccessTokenManagerService::HandlePermDefUpdate(const std::map<int32_t, Toke
         addInfo.addValues.emplace_back(addValue);
 
         // update or insert permission define version to db
-        std::vector<DelInfo> delInfoVec;
         delInfoVec.emplace_back(delInfo);
-        std::vector<AddInfo> addInfoVec;
         addInfoVec.emplace_back(addInfo);
 
         if (!dbPermDefVersion.empty()) { // dbPermDefVersion empty means undefine table is empty
             HandleHapUndefinedInfo(tokenIdAplMap, delInfoVec, addInfoVec);
         }
-
-        UpdateDatabaseAsync(delInfoVec, addInfoVec);
+        needUpdateDb = true;
     }
+}
+
+void AccessTokenManagerService::DoAsyncInitializingTasks(const std::vector<DelInfo>& delInfoVec,
+    const std::vector<AddInfo>& addInfoVec, bool needUpdateDb, const InitDfxInfo& dfxInfo)
+{
+    std::thread initAsyncThread([delInfoVec, addInfoVec, needUpdateDb, dfxInfo]() {
+        auto svc = DelayedSingleton<AccessTokenManagerService>::GetInstance();
+        InitDfxInfo info = dfxInfo;
+        svc->GetConfigValue(info.parseConfigFlag);
+        ReportSysEventServiceStart(info);
+        if (needUpdateDb) {
+            LOGI(ATM_DOMAIN, ATM_TAG, "Update undefined permissions.");
+            int32_t ret = AccessTokenDbOperator::DeleteAndInsertValues(delInfoVec, addInfoVec);
+            if (ret != RET_SUCCESS) {
+                LOGE(ATM_DOMAIN, ATM_TAG, "Update permission definition database failed, ret=%{public}d.", ret);
+            }
+        }
+#ifdef SUPPORT_MANAGE_USER_POLICY
+        int32_t policyRet = UserPolicyManager::GetInstance().LoadPersistedPolicies();
+        if (policyRet != RET_SUCCESS) {
+            ReportSysEventServiceStartError(INIT_USER_POLICY_ERROR, "Load user policy from db fail.", policyRet);
+        }
+#endif
+        ReportAccessTokenRdbFileInfo();
+    });
+    initAsyncThread.detach();
 }
 
 void AccessTokenManagerService::CheckAccessTokenDbDir(const char* dbDirPath) const
@@ -2597,33 +2626,21 @@ bool AccessTokenManagerService::Initialize()
     uint32_t dlpSize = 0;
     std::map<int32_t, TokenIdInfo> tokenIdAplMap;
     AccessTokenInfoManager::GetInstance().Init(hapSize, nativeSize, pefDefSize, dlpSize, tokenIdAplMap);
-#ifdef SUPPORT_MANAGE_USER_POLICY
-    std::thread loadPersistedPolicies([]() {
-        int32_t ret = UserPolicyManager::GetInstance().LoadPersistedPolicies();
-        if (ret != RET_SUCCESS) {
-            ReportSysEventServiceStartError(INIT_USER_POLICY_ERROR, "Load user policy from db fail.", ret);
-        }
-    });
-    loadPersistedPolicies.detach();
-#endif
-    HandlePermDefUpdate(tokenIdAplMap);
+    std::vector<DelInfo> delInfoVec;
+    std::vector<AddInfo> addInfoVec;
+    bool needUpdateDb = false;
+    HandlePermDefUpdate(tokenIdAplMap, delInfoVec, addInfoVec, needUpdateDb);
 
-#ifdef EVENTHANDLER_ENABLE
-    TempPermissionObserver::GetInstance().InitEventHandler();
-    ShortGrantManager::GetInstance().InitEventHandler();
-#endif
     InitDfxInfo dfxInfo = {0};
     dfxInfo.pid = getpid();
     dfxInfo.hapSize = hapSize;
     dfxInfo.nativeSize = nativeSize;
     dfxInfo.permDefSize = pefDefSize;
     dfxInfo.dlpSize = dlpSize;
-    GetConfigValue(dfxInfo.parseConfigFlag);
 
     isInitialize_ = true;
 
-    ReportSysEventServiceStart(dfxInfo);
-    ReportAccessTokenRdbFileInfoAsync();
+    DoAsyncInitializingTasks(delInfoVec, addInfoVec, needUpdateDb, dfxInfo);
     LOGI(ATM_DOMAIN, ATM_TAG, "Initialize success.");
 #ifdef HICOLLIE_ENABLE
     HiviewDFX::XCollie::GetInstance().CancelTimer(timerId);
