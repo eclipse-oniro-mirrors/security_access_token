@@ -278,12 +278,14 @@ int PermissionManager::GetPermissionFlag(AccessTokenID tokenID, const std::strin
 std::shared_ptr<LibraryLoader> PermissionManager::GetAbilityManager()
 {
 #ifdef DYNAMIC_CLOSE_LIBS
-    return std::make_shared<LibraryLoader>(ABILITY_MANAGER_LIBPATH);
+    return std::make_shared<LibraryLoader>(ABILITY_MANAGER_LIBPATH, ABILITY_MANAGER_CREATE_SYMBOL,
+        ABILITY_MANAGER_DESTROY_SYMBOL);
 #endif
     if (abilityManagerLoader_ == nullptr) {
         std::lock_guard<std::mutex> lock(abilityManagerMutex_);
         if (abilityManagerLoader_ == nullptr) {
-            abilityManagerLoader_ = std::make_shared<LibraryLoader>(ABILITY_MANAGER_LIBPATH);
+            abilityManagerLoader_ = std::make_shared<LibraryLoader>(ABILITY_MANAGER_LIBPATH,
+                ABILITY_MANAGER_CREATE_SYMBOL, ABILITY_MANAGER_DESTROY_SYMBOL);
         }
     }
     return abilityManagerLoader_;
