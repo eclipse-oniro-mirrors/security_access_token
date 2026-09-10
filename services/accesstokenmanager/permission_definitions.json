@@ -12327,6 +12327,17 @@
             "provisionEnable": true,
             "distributedSceneEnable": false,
             "deviceTypes": ["car"]
+        },
+        {
+            "name": "ohos.permission.SOFTBUS_MANAGER_RESOURCE",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.1.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": true,
+            "deviceTypes": ["2in1", "car", "phone", "tablet", "tv", "wearable"]
         }
     ]
 }
