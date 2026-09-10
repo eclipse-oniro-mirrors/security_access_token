@@ -24,12 +24,12 @@ bool ScreenLockManagerAccessLoader::IsScreenLocked()
 }
 
 extern "C" {
-void* Create()
+void* CreateScreenLockManagerAccessLoader()
 {
     return reinterpret_cast<void*>(new ScreenLockManagerAccessLoader);
 }
 
-void Destroy(void* loaderPtr)
+void DestroyScreenLockManagerAccessLoader(void* loaderPtr)
 {
     ScreenLockManagerAccessLoaderInterface* loader =
         reinterpret_cast<ScreenLockManagerAccessLoaderInterface*>(loaderPtr);

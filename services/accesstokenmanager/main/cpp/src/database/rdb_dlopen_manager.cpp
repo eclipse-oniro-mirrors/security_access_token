@@ -25,8 +25,8 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-constexpr const char* RDB_SYMBOL_CREATE = "Create";
-constexpr const char* RDB_SYMBOL_DESTROY = "Destroy";
+constexpr const char* RDB_SYMBOL_CREATE = "CreateAccessTokenDbLoader";
+constexpr const char* RDB_SYMBOL_DESTROY = "DestroyAccessTokenDbLoader";
 constexpr const char* DELAY_DLCLOSE_TASK_NAME = "DelayDlclose";
 constexpr int64_t DELAY_DLCLOSE_TIME_MILLISECONDS = 180 * 1000;
 

@@ -24,6 +24,8 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 const static std::string ABILITY_MANAGER_LIBPATH = "libaccesstoken_ability_manager_adapter.z.so";
+const static std::string ABILITY_MANAGER_CREATE_SYMBOL = "CreateAbilityManagerAccessLoader";
+const static std::string ABILITY_MANAGER_DESTROY_SYMBOL = "DestroyAbilityManagerAccessLoader";
 
 struct InnerWant {
     std::optional<std::string> bundleName;
@@ -51,8 +53,8 @@ class AbilityManagerAccessLoader final: public AbilityManagerAccessLoaderInterfa
 #ifdef __cplusplus
 extern "C" {
 #endif
-    __attribute__((visibility("default"))) void* Create();
-    __attribute__((visibility("default"))) void Destroy(void* loaderPtr);
+    __attribute__((visibility("default"))) void* CreateAbilityManagerAccessLoader();
+    __attribute__((visibility("default"))) void DestroyAbilityManagerAccessLoader(void* loaderPtr);
 #ifdef __cplusplus
 }
 #endif

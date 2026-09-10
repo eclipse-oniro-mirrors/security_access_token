@@ -578,7 +578,7 @@ std::string HapTokenInfoInner::ToString() const
 {
     std::vector<PermissionStatus> permStateList;
     std::vector<NativeTokenInfoBase> tokenInfos;
-    LibraryLoader loader(CONFIG_PARSE_LIBPATH);
+    LibraryLoader loader(CONFIG_PARSE_LIBPATH, CONFIG_PARSE_CREATE_SYMBOL, CONFIG_PARSE_DESTROY_SYMBOL);
     ConfigPolicyLoaderInterface* policy = loader.GetObject<ConfigPolicyLoaderInterface>();
     if (policy == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Dlopen libaccesstoken_json_parse failed.");

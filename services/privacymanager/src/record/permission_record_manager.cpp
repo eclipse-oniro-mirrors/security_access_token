@@ -2038,7 +2038,8 @@ int32_t PermissionRecordManager::GetLockScreenStatus(bool isIpc)
     int32_t lockScreenStatus = LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED;
 
     if (isIpc) {
-        LibraryLoader loader(SCREENLOCK_MANAGER_LIBPATH);
+        LibraryLoader loader(SCREENLOCK_MANAGER_LIBPATH, "CreateScreenLockManagerAccessLoader",
+            "DestroyScreenLockManagerAccessLoader");
         ScreenLockManagerAccessLoaderInterface* screenlockManagerLoader =
             loader.GetObject<ScreenLockManagerAccessLoaderInterface>();
         if (screenlockManagerLoader != nullptr) {
@@ -2328,7 +2329,8 @@ bool PermissionRecordManager::ShowGlobalDialog(const std::string& permissionName
 
     std::lock_guard<std::mutex> lock(abilityManagerMutex_);
     if (abilityManagerLoader_ == nullptr) {
-        abilityManagerLoader_ = std::make_shared<LibraryLoader>(ABILITY_MANAGER_LIBPATH);
+        abilityManagerLoader_ = std::make_shared<LibraryLoader>(
+            ABILITY_MANAGER_LIBPATH, ABILITY_MANAGER_CREATE_SYMBOL, ABILITY_MANAGER_DESTROY_SYMBOL);
     }
 
     AbilityManagerAccessLoaderInterface* abilityManager =
@@ -3279,7 +3281,7 @@ void PermissionRecordManager::SetDefaultConfigValue()
 
 void PermissionRecordManager::GetConfigValue()
 {
-    LibraryLoader loader(CONFIG_PARSE_LIBPATH);
+    LibraryLoader loader(CONFIG_PARSE_LIBPATH, CONFIG_PARSE_CREATE_SYMBOL, CONFIG_PARSE_DESTROY_SYMBOL);
     ConfigPolicyLoaderInterface* policy = loader.GetObject<ConfigPolicyLoaderInterface>();
     if (policy == nullptr) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Dlopen libaccesstoken_json_parse failed.");

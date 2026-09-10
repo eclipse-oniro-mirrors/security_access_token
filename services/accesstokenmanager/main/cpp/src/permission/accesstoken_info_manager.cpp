@@ -568,7 +568,7 @@ void AccessTokenInfoManager::Init(uint32_t& hapSize, uint32_t& nativeSize, uint3
     }
 
     LOGI(ATM_DOMAIN, ATM_TAG, "Init begin!");
-    LibraryLoader loader(CONFIG_PARSE_LIBPATH);
+    LibraryLoader loader(CONFIG_PARSE_LIBPATH, CONFIG_PARSE_CREATE_SYMBOL, CONFIG_PARSE_DESTROY_SYMBOL);
     ConfigPolicyLoaderInterface* policy = loader.GetObject<ConfigPolicyLoaderInterface>();
     if (policy == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Dlopen libaccesstoken_json_parse failed.");

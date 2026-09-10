@@ -28,6 +28,8 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 const static std::string CONFIG_PARSE_LIBPATH = "libaccesstoken_json_parse.z.so";
+const static std::string CONFIG_PARSE_CREATE_SYMBOL = "CreateConfigPolicLoader";
+const static std::string CONFIG_PARSE_DESTROY_SYMBOL = "DestroyConfigPolicLoader";
 struct AccessTokenServiceConfig final {
     std::string grantBundleName;
     std::string grantAbilityName;
@@ -109,8 +111,8 @@ private:
 #ifdef __cplusplus
 extern "C" {
 #endif
-    void* Create();
-    void Destroy(void* loaderPtr);
+    void* CreateConfigPolicLoader();
+    void DestroyConfigPolicLoader(void* loaderPtr);
 #ifdef __cplusplus
 }
 #endif

@@ -3066,10 +3066,10 @@ HWTEST_F(TokenInfoManagerTest, OnStart001, TestSize.Level0)
  */
 HWTEST_F(TokenInfoManagerTest, Dlopen001, TestSize.Level0)
 {
-    LibraryLoader loader1("libnotexist.z.so"); // is a not exist path
+    LibraryLoader loader1("libnotexist.z.so", "Create", "Destroy"); // is a not exist path
     EXPECT_EQ(nullptr, loader1.handle_);
 
-    LibraryLoader loader2("libaccesstoken_sdk.z.so"); // is a exist lib without create func
+    LibraryLoader loader2("libaccesstoken_sdk.z.so", "Create", "Destroy"); // is a exist lib without create func
     EXPECT_EQ(nullptr, loader2.instance_);
     EXPECT_NE(nullptr, loader2.handle_);
 }
@@ -3083,7 +3083,7 @@ HWTEST_F(TokenInfoManagerTest, Dlopen001, TestSize.Level0)
  */
 HWTEST_F(TokenInfoManagerTest, Dlopen002, TestSize.Level0)
 {
-    LibraryLoader loader(TOKEN_SYNC_LIBPATH);
+    LibraryLoader loader(TOKEN_SYNC_LIBPATH, TOKEN_SYNC_CREATE_SYMBOL, TOKEN_SYNC_DESTROY_SYMBOL);
     TokenSyncKitInterface* tokenSyncKit = loader.GetObject<TokenSyncKitInterface>();
     EXPECT_NE(nullptr, loader.handle_);
     EXPECT_NE(nullptr, tokenSyncKit);

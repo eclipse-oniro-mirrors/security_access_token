@@ -39,8 +39,8 @@ class ScreenLockManagerAccessLoader final: public ScreenLockManagerAccessLoaderI
 #ifdef __cplusplus
 extern "C" {
 #endif
-    void* Create();
-    void Destroy(void* loaderPtr);
+    void* CreateScreenLockManagerAccessLoader();
+    void DestroyScreenLockManagerAccessLoader(void* loaderPtr);
 #ifdef __cplusplus
 }
 #endif

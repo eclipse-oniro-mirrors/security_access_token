@@ -644,12 +644,12 @@ std::string ConfigPolicLoader::DumpNativeTokenInfo(const NativeTokenInfoBase& na
 }
 
 extern "C" {
-void* Create()
+void* CreateConfigPolicLoader()
 {
     return reinterpret_cast<void*>(new ConfigPolicLoader);
 }
 
-void Destroy(void* loaderPtr)
+void DestroyConfigPolicLoader(void* loaderPtr)
 {
     ConfigPolicyLoaderInterface* loader = reinterpret_cast<ConfigPolicyLoaderInterface*>(loaderPtr);
     if (loader != nullptr) {

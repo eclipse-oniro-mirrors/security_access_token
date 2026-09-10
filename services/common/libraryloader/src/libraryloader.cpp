@@ -28,7 +28,9 @@ typedef void* (*FUNC_CREATE) (void);
 typedef void (*FUNC_DESTROY) (void*);
 }
 
-LibraryLoader::LibraryLoader(const std::string& path)
+LibraryLoader::LibraryLoader(const std::string& path, const std::string& createSymbol,
+    const std::string& destroySymbol)
+    : createSymbol_(createSymbol), destroySymbol_(destroySymbol)
 {
     handle_ = dlopen(path.c_str(), RTLD_LAZY);
     if (handle_ == nullptr) {
@@ -61,9 +63,9 @@ void LibraryLoader::PrintErrorLog(const std::string& targetName)
 
 void LibraryLoader::Create()
 {
-    void* (*create)(void) = reinterpret_cast<FUNC_CREATE>(dlsym(handle_, "Create"));
+    void* (*create)(void) = reinterpret_cast<FUNC_CREATE>(dlsym(handle_, createSymbol_.c_str()));
     if (create == nullptr) {
-        PrintErrorLog("Create");
+        PrintErrorLog(createSymbol_);
         return;
     }
     instance_ = create();
@@ -71,9 +73,9 @@ void LibraryLoader::Create()
 
 void LibraryLoader::Destroy()
 {
-    void (*destroy)(void*) = reinterpret_cast<FUNC_DESTROY>(dlsym(handle_, "Destroy"));
+    void (*destroy)(void*) = reinterpret_cast<FUNC_DESTROY>(dlsym(handle_, destroySymbol_.c_str()));
     if (destroy == nullptr) {
-        PrintErrorLog("Destroy");
+        PrintErrorLog(destroySymbol_);
         return;
     }
     destroy(instance_);
