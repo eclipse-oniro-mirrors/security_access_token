@@ -145,7 +145,8 @@ int32_t AccessTokenKit::InitHapToken(const HapInfoParams& info, HapPolicyParams&
         !DataValidator::IsAppIDDescValid(info.appIDDesc) || !DataValidator::IsBundleNameValid(info.bundleName) ||
         !DataValidator::IsAplNumValid(policy.apl) || !DataValidator::IsDomainValid(policy.domain) ||
         !DataValidator::IsDlpTypeValid(info.dlpType) ||
-        !DataValidator::IsAclExtendedMapSizeValid(policy.aclExtendedMap))) {
+        !DataValidator::IsAclExtendedMapSizeValid(policy.aclExtendedMap) ||
+        !DataValidator::IsMultipleModeValid(static_cast<int32_t>(info.mode)))) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Input param failed");
         return AccessTokenError::ERR_PARAM_INVALID;
     }

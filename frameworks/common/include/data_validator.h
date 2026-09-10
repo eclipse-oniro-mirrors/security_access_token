@@ -71,6 +71,7 @@ public:
     static bool IsAppProvisionTypeValid(const std::string& appProvisionType);
     static bool IsListSizeValid(size_t size);
     static bool IsPermFeatureValid(const std::string& feature);
+    static bool IsMultipleModeValid(int32_t mode);
 
 private:
     const static int MAX_LENGTH = 256;

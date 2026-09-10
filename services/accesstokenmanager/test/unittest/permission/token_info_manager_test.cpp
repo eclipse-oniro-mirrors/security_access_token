@@ -447,6 +447,67 @@ HWTEST_F(TokenInfoManagerTest, HapTokenInfoInner001, TestSize.Level0)
     ASSERT_EQ(static_cast<int32_t>(608), version);
 }
 
+/**
+ * @tc.name: HapTokenInfoInnerMode001
+ * @tc.desc: HapTokenInfoInner keeps mode in hap token database values after application update.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenInfoManagerTest, HapTokenInfoInnerMode001, TestSize.Level0)
+{
+    AccessTokenID id = 0x20240907;
+    HapInfoParams info = g_infoManagerTestInfoParms;
+    info.mode = MultipleMode::SUB_MODE;
+    HapPolicy policy = g_infoManagerTestPolicyPrams1;
+    std::shared_ptr<HapTokenInfoInner> hap = std::make_shared<HapTokenInfoInner>(id, info, policy);
+    ASSERT_NE(nullptr, hap);
+
+    UpdateHapInfoParams updateInfo;
+    updateInfo.appIDDesc = "updateAppId";
+    updateInfo.apiVersion = DEFAULT_API_VERSION;
+    updateInfo.isSystemApp = info.isSystemApp;
+    updateInfo.appDistributionType = info.appDistributionType;
+    hap->Update(updateInfo, policy.permStateList, policy);
+
+    std::vector<GenericValues> valueList;
+    hap->GenerateHapInfoValues("test", APL_NORMAL, valueList);
+    ASSERT_EQ(1U, valueList.size());
+    EXPECT_EQ(static_cast<int32_t>(MultipleMode::SUB_MODE), valueList[0].GetInt(TokenFiledConst::FIELD_MODE));
+}
+
+/**
+ * @tc.name: RestoreHapTokenInfoMode001
+ * @tc.desc: HapTokenInfoInner uses default mode when restoring a legacy hap token database row.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenInfoManagerTest, RestoreHapTokenInfoMode001, TestSize.Level0)
+{
+    AccessTokenID id = 0x20240908;
+    GenericValues tokenValue;
+    tokenValue.Put(TokenFiledConst::FIELD_USER_ID, USER_ID);
+    tokenValue.Put(TokenFiledConst::FIELD_BUNDLE_NAME, "restore_mode_test");
+    tokenValue.Put(TokenFiledConst::FIELD_API_VERSION, DEFAULT_API_VERSION);
+    tokenValue.Put(TokenFiledConst::FIELD_INST_INDEX, INST_INDEX);
+    tokenValue.Put(TokenFiledConst::FIELD_DLP_TYPE, DLP_COMMON);
+    tokenValue.Put(TokenFiledConst::FIELD_TOKEN_VERSION, DEFAULT_TOKEN_VERSION);
+    tokenValue.Put(TokenFiledConst::FIELD_TOKEN_ATTR, 0);
+    tokenValue.Put(TokenFiledConst::FIELD_FORBID_PERM_DIALOG, 0);
+#ifdef SPM_DATA_ENABLE
+    tokenValue.Put(TokenFiledConst::FIELD_UID, -1);
+    tokenValue.Put(TokenFiledConst::FIELD_MIGRATED, 0);
+#endif
+
+    std::shared_ptr<HapTokenInfoInner> hap = std::make_shared<HapTokenInfoInner>();
+    ASSERT_NE(nullptr, hap);
+    ASSERT_EQ(RET_SUCCESS, hap->RestoreHapTokenInfo(id, tokenValue, {}, {}));
+
+    std::vector<GenericValues> valueList;
+    hap->GenerateHapInfoValues("test", APL_NORMAL, valueList);
+    ASSERT_EQ(1U, valueList.size());
+    EXPECT_EQ(static_cast<int32_t>(MultipleMode::DEFAULT_MODE), valueList[0].GetInt(TokenFiledConst::FIELD_MODE));
+}
+
 #ifdef SUPPORT_SANDBOX_APP
 /**
  * @tc.name: IsPermissionAvailableToDlpHap001

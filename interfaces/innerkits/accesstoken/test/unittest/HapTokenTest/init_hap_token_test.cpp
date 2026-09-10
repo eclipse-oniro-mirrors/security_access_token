@@ -44,6 +44,10 @@ static uint64_t g_selfTokenId = 0;
 static constexpr int32_t THIRTY_TIME_CYCLES = 30;
 static constexpr int32_t MAX_EXTENDED_MAP_SIZE = 512;
 static constexpr int32_t MAX_VALUE_LENGTH = 1024;
+static constexpr int32_t INVALID_MULTIPLE_MODE = 3;
+static constexpr int32_t SUB_MODE_MAIN_APP_INDEX = 10000;
+static constexpr int32_t NEXT_SUB_MODE_MAIN_APP_INDEX = 20000;
+static constexpr int32_t SUB_MODE_CLONE_APP_INDEX = 10001;
 const std::string APP_DISTRIBUTION_TYPE_ENTERPRISE_MDM = "enterprise_mdm";
 const std::string APP_DISTRIBUTION_TYPE_ENTERPRISE_NORMAL = "enterprise_normal";
 const std::string APP_DISTRIBUTION_TYPE_NONE = "none";
@@ -1591,6 +1595,142 @@ HWTEST_F(InitHapTokenTest, InitHapTokenWithFeatureTest001, TestSize.Level0)
     int32_t ret = AccessTokenKit::InitHapToken(infoManagerTestInfoParms1, infoManagerTestPolicyPrams, tokenIdEx);
     EXPECT_EQ(ret, RET_SUCCESS);
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenIdEx.tokenIdExStruct.tokenID));
+}
+
+/**
+ * @tc.name: InitHapTokenModeTest001
+ * @tc.desc: InitHapToken rejects invalid mode value.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(InitHapTokenTest, InitHapTokenModeTest001, TestSize.Level0)
+{
+    MockNativeToken mock("foundation");
+
+    HapInfoParams infoParams = g_testHapInfoParams;
+    HapPolicyParams policyParams = g_testPolicyParams;
+    infoParams.mode = static_cast<MultipleMode>(INVALID_MULTIPLE_MODE);
+
+    AccessTokenIDEx fullTokenId;
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId));
+}
+
+/**
+ * @tc.name: InitHapTokenModeTest002
+ * @tc.desc: InitHapToken keeps the passed instIndex unchanged in sub mode.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(InitHapTokenTest, InitHapTokenModeTest002, TestSize.Level0)
+{
+    MockNativeToken mock("foundation");
+
+    HapInfoParams infoParams = g_testHapInfoParams;
+    HapPolicyParams policyParams = g_testPolicyParams;
+    infoParams.instIndex = 3;
+    infoParams.mode = MultipleMode::SUB_MODE;
+
+    AccessTokenIDEx fullTokenId;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId));
+
+    HapTokenInfo hapInfo;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetHapTokenInfo(fullTokenId.tokenIdExStruct.tokenID, hapInfo));
+    EXPECT_EQ(infoParams.instIndex, hapInfo.instIndex);
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(fullTokenId.tokenIdExStruct.tokenID));
+}
+
+/**
+ * @tc.name: InitHapTokenModeTest003
+ * @tc.desc: InitHapToken does not mark sub mode main app as clone.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(InitHapTokenTest, InitHapTokenModeTest003, TestSize.Level0)
+{
+    MockNativeToken mock("foundation");
+
+    HapInfoParams infoParams = g_testHapInfoParams;
+    HapPolicyParams policyParams = g_testPolicyParams;
+    infoParams.instIndex = SUB_MODE_MAIN_APP_INDEX;
+    infoParams.mode = MultipleMode::SUB_MODE;
+
+    AccessTokenIDEx fullTokenId;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId));
+
+    auto *idInner = reinterpret_cast<AccessTokenIDInner *>(&fullTokenId.tokenIdExStruct.tokenID);
+    ASSERT_NE(nullptr, idInner);
+    EXPECT_EQ(0U, idInner->cloneFlag);
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(fullTokenId.tokenIdExStruct.tokenID));
+
+    infoParams.instIndex = NEXT_SUB_MODE_MAIN_APP_INDEX;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId));
+
+    idInner = reinterpret_cast<AccessTokenIDInner *>(&fullTokenId.tokenIdExStruct.tokenID);
+    ASSERT_NE(nullptr, idInner);
+    EXPECT_EQ(0U, idInner->cloneFlag);
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(fullTokenId.tokenIdExStruct.tokenID));
+}
+
+/**
+ * @tc.name: InitHapTokenModeTest004
+ * @tc.desc: InitHapToken marks sub mode non-main app as clone.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(InitHapTokenTest, InitHapTokenModeTest004, TestSize.Level0)
+{
+    MockNativeToken mock("foundation");
+
+    HapInfoParams infoParams = g_testHapInfoParams;
+    HapPolicyParams policyParams = g_testPolicyParams;
+    infoParams.instIndex = SUB_MODE_CLONE_APP_INDEX;
+    infoParams.mode = MultipleMode::SUB_MODE;
+
+    AccessTokenIDEx fullTokenId;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId));
+
+    auto *idInner = reinterpret_cast<AccessTokenIDInner *>(&fullTokenId.tokenIdExStruct.tokenID);
+    ASSERT_NE(nullptr, idInner);
+    EXPECT_EQ(1U, idInner->cloneFlag);
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(fullTokenId.tokenIdExStruct.tokenID));
+}
+
+/**
+ * @tc.name: InitHapTokenModeTest005
+ * @tc.desc: InitHapToken does not mark sub mode dlp token as clone.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(InitHapTokenTest, InitHapTokenModeTest005, TestSize.Level0)
+{
+    MockNativeToken mock("foundation");
+
+    HapInfoParams infoParams = g_testHapInfoParams;
+    HapPolicyParams policyParams = g_testPolicyParams;
+    infoParams.instIndex = SUB_MODE_CLONE_APP_INDEX;
+    infoParams.mode = MultipleMode::SUB_MODE;
+    infoParams.dlpType = DLP_FULL_CONTROL;
+
+    HapInfoParams masterInfoParams = infoParams;
+    masterInfoParams.instIndex = 0;
+    masterInfoParams.mode = MultipleMode::MAIN_MODE;
+    masterInfoParams.dlpType = DLP_COMMON;
+    AccessTokenIDEx masterTokenId;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::InitHapToken(masterInfoParams, policyParams, masterTokenId));
+
+    AccessTokenIDEx fullTokenId;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId));
+
+    auto *idInner = reinterpret_cast<AccessTokenIDInner *>(&fullTokenId.tokenIdExStruct.tokenID);
+    ASSERT_NE(nullptr, idInner);
+    EXPECT_EQ(0U, idInner->cloneFlag);
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(fullTokenId.tokenIdExStruct.tokenID));
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(masterTokenId.tokenIdExStruct.tokenID));
 }
 } // namespace AccessToken
 } // namespace Security

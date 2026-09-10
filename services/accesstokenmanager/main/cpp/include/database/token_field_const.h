@@ -41,6 +41,7 @@ public:
     const static std::string FIELD_TOKEN_VERSION;
     const static std::string FIELD_TOKEN_ATTR;
     const static std::string FIELD_API_VERSION;
+    const static std::string FIELD_MODE;
     const static std::string FIELD_FORBID_PERM_DIALOG;
     const static std::string FIELD_RESERVED;
     const static std::string FIELD_PROCESS_NAME;

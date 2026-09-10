@@ -88,6 +88,7 @@ HapTokenInfoInner::HapTokenInfoInner(AccessTokenID id,
         tokenInfoBasic_.instIndex = info.instIndex;
         tokenInfoBasic_.dlpType = info.dlpType;
         tokenInfoBasic_.uid = INVALID_UID;
+        mode_ = static_cast<int32_t>(info.mode);
     }
     PermissionDataBrief::GetInstance().AddPermToBriefPermission(id, policy.permStateList, policy.aclExtendedMap, true);
 }
@@ -114,6 +115,8 @@ HapTokenInfoInner::HapTokenInfoInner(const HapTokenInfoItem& item) : permUpdateT
     tokenInfoBasic_.instIndex = static_cast<int>(item.instIndex);
     tokenInfoBasic_.dlpType = item.dlpType;
     tokenInfoBasic_.uid = item.uid;
+    mode_ = DataValidator::IsMultipleModeValid(item.mode) ? item.mode :
+        static_cast<int32_t>(MultipleMode::DEFAULT_MODE);
     tokenInfoBasic_.bundleName = item.bundleName;
     isPermDialogForbidden_ = item.permDialogCapState;
     isMigrated_ = item.migrated;
@@ -202,6 +205,8 @@ int HapTokenInfoInner::RestoreHapTokenBasicInfo(const GenericValues& inGenericVa
     tokenInfoBasic_.apiVersion = GetApiVersion(inGenericValues.GetInt(TokenFiledConst::FIELD_API_VERSION));
     tokenInfoBasic_.instIndex = inGenericValues.GetInt(TokenFiledConst::FIELD_INST_INDEX);
     tokenInfoBasic_.dlpType = inGenericValues.GetInt(TokenFiledConst::FIELD_DLP_TYPE);
+    int32_t mode = inGenericValues.GetInt(TokenFiledConst::FIELD_MODE);
+    mode_ = DataValidator::IsMultipleModeValid(mode) ? mode : static_cast<int32_t>(MultipleMode::DEFAULT_MODE);
 
     tokenInfoBasic_.ver = (char)inGenericValues.GetInt(TokenFiledConst::FIELD_TOKEN_VERSION);
     if (tokenInfoBasic_.ver != DEFAULT_TOKEN_VERSION) {
@@ -250,6 +255,7 @@ void HapTokenInfoInner::GenerateHapInfoValues(const std::string& appId, ATokenAp
     genericValues.Put(TokenFiledConst::FIELD_APP_ID, appId);
     genericValues.Put(TokenFiledConst::FIELD_APL, static_cast<int32_t>(apl));
     genericValues.Put(TokenFiledConst::FIELD_DEVICE_ID, "0");
+    genericValues.Put(TokenFiledConst::FIELD_MODE, mode_);
     valueList.emplace_back(genericValues);
 }
 

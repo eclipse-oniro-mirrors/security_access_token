@@ -20,6 +20,7 @@
 #include "access_token_error.h"
 #include "access_token.h"
 #include "accesstoken_common_log.h"
+#include "hap_token_info.h"
 #include "hisysevent_adapter.h"
 #include "time_util.h"
 #include "token_field_const.h"
@@ -93,6 +94,10 @@ int32_t AccessTokenOpenCallback::CreateHapTokenInfoTable(NativeRdb::RdbStore& rd
         .append(INTEGER_STR)
         .append(TokenFiledConst::FIELD_API_VERSION)
         .append(INTEGER_STR)
+        .append(TokenFiledConst::FIELD_MODE)
+        .append(" integer not null default ")
+        .append(std::to_string(static_cast<int32_t>(MultipleMode::DEFAULT_MODE)))
+        .append(",")
         .append(TokenFiledConst::FIELD_FORBID_PERM_DIALOG)
         .append(INTEGER_STR)
     #ifdef SPM_DATA_ENABLE
@@ -727,6 +732,21 @@ int32_t AccessTokenOpenCallback::AddUidMigratedReservedColumns(NativeRdb::RdbSto
     return NativeRdb::E_OK;
 }
 
+int32_t AccessTokenOpenCallback::AddModeColumn(NativeRdb::RdbStore& rdbStore)
+{
+    std::string tableName;
+    AccessTokenDbUtil::GetTableNameByType(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, tableName);
+    std::vector<std::string> columnList;
+    int32_t res = GetTableColumnList(rdbStore, tableName, columnList);
+    if (res != NativeRdb::E_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get column list for table %{public}s, errCode is %{public}d.",
+            tableName.c_str(), res);
+        return res;
+    }
+    return AddColumn(columnList, rdbStore, tableName, TokenFiledConst::FIELD_MODE,
+        "integer not null default " + std::to_string(static_cast<int32_t>(MultipleMode::DEFAULT_MODE)));
+}
+
 int32_t AccessTokenOpenCallback::UpgradeFromVersion1(NativeRdb::RdbStore& rdbStore)
 {
     int32_t res = AddAvailableTypeColumn(rdbStore);
@@ -875,6 +895,18 @@ int32_t AccessTokenOpenCallback::UpgradeFromVersion10(NativeRdb::RdbStore& rdbSt
     return NativeRdb::E_OK;
 }
 
+int32_t AccessTokenOpenCallback::UpgradeFromVersion11(NativeRdb::RdbStore& rdbStore)
+{
+    int32_t res = AddModeColumn(rdbStore);
+    if (res != NativeRdb::E_OK) {
+        ReportUpgradeError(res, DATABASE_VERSION_11, "AddModeColumn");
+        return res;
+    }
+
+    LOGI(ATM_DOMAIN, ATM_TAG, "Success to upgrade from version 11 to version 12.");
+    return NativeRdb::E_OK;
+}
+
 int32_t AccessTokenOpenCallback::OnUpgrade(NativeRdb::RdbStore& rdbStore, int32_t currentVersion, int32_t targetVersion)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "DB OnUpgrade from Ver %{public}d to Ver %{public}d.", currentVersion, targetVersion);
@@ -936,6 +968,12 @@ int32_t AccessTokenOpenCallback::OnUpgrade(NativeRdb::RdbStore& rdbStore, int32_
             [[fallthrough]];
         case DATABASE_VERSION_10: // 10->11
             (void)UpgradeFromVersion10(rdbStore);
+            [[fallthrough]];
+        case DATABASE_VERSION_11: // 11->12
+            res = UpgradeFromVersion11(rdbStore);
+            if (res != NativeRdb::E_OK) {
+                return res;
+            }
             [[fallthrough]];
         default:
             return NativeRdb::E_OK;
