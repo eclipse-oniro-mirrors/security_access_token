@@ -42,6 +42,8 @@ public:
 
     std::vector<std::string> GetAllKeys() const;
 
+    bool IsEmpty() const;
+
     VariantValue Get(const std::string& key) const;
 
     int32_t GetInt(const std::string& key) const;

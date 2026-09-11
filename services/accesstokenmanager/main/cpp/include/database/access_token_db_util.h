@@ -39,7 +39,8 @@ public:
     static void ToRdbPredicates(const GenericValues& conditionValue, NativeRdb::RdbPredicates& predicates);
     static void ToRdbPredicates(const std::string& column, const std::vector<VariantValue>& values,
         NativeRdb::RdbPredicates& predicates);
-    static void ResultToGenericValues(const std::shared_ptr<NativeRdb::ResultSet>& resultSet, GenericValues& value);
+    static void ResultToGenericValues(const std::vector<NativeRdb::ValueObject>& row,
+        const std::vector<std::string>& columnNames, GenericValues& value);
 };
 } // namespace AccessToken
 } // namespace Security

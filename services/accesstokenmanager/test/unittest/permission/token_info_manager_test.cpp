@@ -2780,8 +2780,8 @@ HWTEST_F(TokenInfoManagerTest, RestoreHapTokenInfo001, TestSize.Level0)
 
     AccessTokenID tokenId = 0;
     GenericValues tokenValue;
-    std::vector<GenericValues> permStateRes;
-    std::vector<GenericValues> extendedPermRes;
+    std::unordered_map<AccessTokenID, std::vector<GenericValues>> permStateRes;
+    std::unordered_map<AccessTokenID, std::vector<GenericValues>> extendedPermRes;
     std::string bundleName;
     std::string appIDDesc;
     std::string deviceID;

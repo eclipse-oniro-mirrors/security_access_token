@@ -52,10 +52,56 @@ enum ColumnType {
 
 class ValueObject {
 public:
+    enum TypeId {
+        TYPE_INT,
+        TYPE_STRING,
+        TYPE_BLOB,
+    };
+
     ValueObject() = default;
-    explicit ValueObject(int32_t val) {}
-    explicit ValueObject(int64_t val) {}
-    explicit ValueObject(std::string val) {}
+    explicit ValueObject(int32_t val) : type_(TYPE_INT), intVal_(static_cast<int64_t>(val)) {}
+    explicit ValueObject(int64_t val) : type_(TYPE_INT), intVal_(val) {}
+    explicit ValueObject(std::string val) : type_(TYPE_STRING), strVal_(std::move(val)) {}
+    explicit ValueObject(const std::vector<uint8_t>& blob) : type_(TYPE_BLOB), blobVal_(blob) {}
+    TypeId GetType() const { return type_; }
+    int GetInt(int32_t& val) const
+    {
+        if (type_ != TYPE_INT) {
+            return 1;
+        }
+        val = static_cast<int32_t>(intVal_);
+        return 0;
+    }
+    int GetLong(int64_t& val) const
+    {
+        if (type_ != TYPE_INT) {
+            return 1;
+        }
+        val = intVal_;
+        return 0;
+    }
+    int GetString(std::string& val) const
+    {
+        if (type_ != TYPE_STRING) {
+            return 1;
+        }
+        val = strVal_;
+        return 0;
+    }
+    int GetBlob(std::vector<uint8_t>& val) const
+    {
+        if (type_ != TYPE_BLOB) {
+            return 1;
+        }
+        val = blobVal_;
+        return 0;
+    }
+
+private:
+    TypeId type_ = TYPE_INT;
+    int64_t intVal_ = 0;
+    std::string strVal_;
+    std::vector<uint8_t> blobVal_;
 };
 
 class ValuesBucket {
@@ -82,12 +128,19 @@ public:
     void GetLong(int32_t a, int64_t& b);
     void GetString(int32_t a, std::string& b);
     void GetBlob(int32_t a, std::vector<uint8_t>& b);
+    std::pair<int32_t, std::vector<std::string>> GetWholeColumnNames();
+    std::pair<int32_t, std::vector<std::vector<NativeRdb::ValueObject>>> GetRowsData(int32_t maxCount,
+        int32_t position);
 
     std::vector<std::string> columnNames_;
     NativeRdb::ColumnType columnType_ = TYPE_INTEGER;
     std::vector<uint8_t> blobData_;
     std::vector<std::vector<std::string>> rowData_;
     size_t currentRowIndex_ = 0;
+    std::vector<std::vector<NativeRdb::ValueObject>> rowsData_;
+    size_t rowsIndex_ = 0;
+    int32_t rowsDataErr_ = 0;
+    int32_t columnNamesErr_ = 0;
 };
 
 typedef ResultSet AbsSharedResultSet;
@@ -150,6 +203,8 @@ public:
     int32_t Restore(std::string a);
     int32_t Update(int32_t a, const NativeRdb::ValuesBucket& b, const NativeRdb::RdbPredicates& c);
     std::shared_ptr<ResultSet> Query(const NativeRdb::RdbPredicates& a, const std::vector<std::string>& b);
+    std::shared_ptr<ResultSet> QueryByStep(const NativeRdb::RdbPredicates& a, const std::vector<std::string>& b,
+        bool preCount);
     std::pair<int32_t, std::shared_ptr<OHOS::NativeRdb::Transaction>> CreateTransaction(
         OHOS::NativeRdb::Transaction::TransactionType type);
     int32_t ExecuteSql(const std::string& a);
@@ -169,6 +224,10 @@ public:
     std::vector<uint8_t> queryBlobData_;
     std::vector<std::vector<std::vector<std::string>>> querySqlResults_;
     size_t querySqlIndex_ = 0;
+    std::vector<std::vector<NativeRdb::ValueObject>> queryByStepRowsData_;
+    int32_t queryByStepRowsDataErr_ = 0;
+    int32_t queryByStepRowsDataErrOnce_ = 0;
+    int32_t queryByStepColumnNamesErr_ = 0;
 };
 
 class RdbOpenCallback {

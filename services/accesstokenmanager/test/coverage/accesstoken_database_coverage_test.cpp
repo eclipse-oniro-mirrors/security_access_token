@@ -60,6 +60,10 @@ void AccessTokenDatabaseCoverageTest::SetUp()
     db->queryColumnNames_.clear();
     db->queryColumnType_ = NativeRdb::ColumnType::TYPE_INTEGER;
     db->queryBlobData_.clear();
+    db->queryByStepRowsData_.clear();
+    db->queryByStepRowsDataErr_ = 0;
+    db->queryByStepRowsDataErrOnce_ = 0;
+    db->queryByStepColumnNamesErr_ = 0;
     if (db->transaction_ != nullptr) {
         db->transaction_->commitFlag_ = 0;
         db->transaction_->insertFlag_ = 0;
@@ -69,7 +73,18 @@ void AccessTokenDatabaseCoverageTest::SetUp()
     }
 }
 
-void AccessTokenDatabaseCoverageTest::TearDown() {}
+void AccessTokenDatabaseCoverageTest::TearDown()
+{
+    std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance()->GetRdb();
+    if (db == nullptr) {
+        return;
+    }
+    db->queryByStepRowsData_.clear();
+    db->queryByStepRowsDataErr_ = 0;
+    db->queryByStepRowsDataErrOnce_ = 0;
+    db->queryByStepColumnNamesErr_ = 0;
+    db->queryColumnNames_.clear();
+}
 
 /*
  * @tc.name: ToRdbValueBuckets001
@@ -1010,6 +1025,159 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, UpgradeFromVersionErrorBranches001, Te
     db->executeSqlIndex_ = 0;
     EXPECT_EQ(NativeRdb::E_SQLITE_CORRUPT, callback.UpgradeFromVersion7(*(db.get())));
 }
+/*
+ * @tc.name: FindByStep001
+ * @tc.desc: AccessTokenDb::Find reads batched rows and translates int/string/timestamp columns
+ * @tc.type: FUNC
+ */
+HWTEST_F(AccessTokenDatabaseCoverageTest, FindByStep001, TestSize.Level4)
+{
+    std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance()->GetRdb();
+    db->queryColumnNames_ = {TokenFiledConst::FIELD_TOKEN_ID,
+        TokenFiledConst::FIELD_BUNDLE_NAME, TokenFiledConst::FIELD_TIMESTAMP};
+    db->queryByStepRowsData_ = {{
+        NativeRdb::ValueObject(static_cast<int32_t>(15)),
+        NativeRdb::ValueObject(std::string("test_bundle")),
+        NativeRdb::ValueObject(static_cast<int64_t>(999)),
+    }};
+
+    std::vector<GenericValues> results;
+    GenericValues conditionValue;
+    ASSERT_EQ(NativeRdb::E_OK, AccessTokenDb::GetInstance()->Find(
+        AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, conditionValue, results));
+    ASSERT_EQ(1U, results.size());
+    ASSERT_EQ(15, results[0].GetInt(TokenFiledConst::FIELD_TOKEN_ID));
+    ASSERT_EQ("test_bundle", results[0].GetString(TokenFiledConst::FIELD_BUNDLE_NAME));
+    ASSERT_EQ(static_cast<int64_t>(999), results[0].GetInt64(TokenFiledConst::FIELD_TIMESTAMP));
+}
+
+/*
+ * @tc.name: FindByStep002
+ * @tc.desc: AccessTokenDb::Find translates string and blob columns
+ * @tc.type: FUNC
+ */
+HWTEST_F(AccessTokenDatabaseCoverageTest, FindByStep002, TestSize.Level4)
+{
+    std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance()->GetRdb();
+    db->queryColumnNames_ = {TokenFiledConst::FIELD_BUNDLE_NAME, TokenFiledConst::FIELD_PERSIST_DATA};
+    std::vector<uint8_t> blob = {0x01, 0x02, 0x03};
+    db->queryByStepRowsData_ = {{
+        NativeRdb::ValueObject(std::string("blob_bundle")),
+        NativeRdb::ValueObject(blob),
+    }};
+
+    std::vector<GenericValues> results;
+    GenericValues conditionValue;
+    ASSERT_EQ(NativeRdb::E_OK, AccessTokenDb::GetInstance()->Find(
+        AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, conditionValue, results));
+    ASSERT_EQ(1U, results.size());
+    ASSERT_EQ("blob_bundle", results[0].GetString(TokenFiledConst::FIELD_BUNDLE_NAME));
+    ASSERT_EQ(blob, results[0].GetBlob(TokenFiledConst::FIELD_PERSIST_DATA));
+}
+
+/*
+ * @tc.name: FindByStep003
+ * @tc.desc: AccessTokenDb::Find fails when GetWholeColumnNames returns error
+ * @tc.type: FUNC
+ */
+HWTEST_F(AccessTokenDatabaseCoverageTest, FindByStep003, TestSize.Level4)
+{
+    std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance()->GetRdb();
+    db->queryByStepColumnNamesErr_ = NativeRdb::E_SQLITE_CORRUPT;
+    std::vector<GenericValues> results;
+    GenericValues conditionValue;
+    ASSERT_EQ(AccessTokenError::ERR_DATABASE_OPERATE_FAILED, AccessTokenDb::GetInstance()->Find(
+        AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, conditionValue, results));
+}
+
+/*
+ * @tc.name: FindByStep004
+ * @tc.desc: AccessTokenDb::Find fails when GetRowsData returns a non-corrupt error
+ * @tc.type: FUNC
+ */
+HWTEST_F(AccessTokenDatabaseCoverageTest, FindByStep004, TestSize.Level4)
+{
+    std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance()->GetRdb();
+    db->queryByStepRowsDataErr_ = 999;
+    std::vector<GenericValues> results;
+    GenericValues conditionValue;
+    ASSERT_EQ(AccessTokenError::ERR_DATABASE_OPERATE_FAILED, AccessTokenDb::GetInstance()->Find(
+        AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, conditionValue, results));
+}
+
+/*
+ * @tc.name: FindByStep005
+ * @tc.desc: AccessTokenDb::Find restores on corrupt and fails after retries exhausted
+ * @tc.type: FUNC
+ */
+HWTEST_F(AccessTokenDatabaseCoverageTest, FindByStep005, TestSize.Level4)
+{
+    std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance()->GetRdb();
+    db->queryByStepRowsDataErr_ = NativeRdb::E_SQLITE_CORRUPT;
+    db->restoreFlag_ = 0;
+    std::vector<GenericValues> results;
+    GenericValues conditionValue;
+    ASSERT_EQ(AccessTokenError::ERR_DATABASE_OPERATE_FAILED, AccessTokenDb::GetInstance()->Find(
+        AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, conditionValue, results));
+}
+
+/*
+ * @tc.name: FindByStep006
+ * @tc.desc: AccessTokenDb::Find propagates restore failure on corrupt
+ * @tc.type: FUNC
+ */
+HWTEST_F(AccessTokenDatabaseCoverageTest, FindByStep006, TestSize.Level4)
+{
+    std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance()->GetRdb();
+    db->queryByStepRowsDataErr_ = NativeRdb::E_SQLITE_CORRUPT;
+    db->restoreFlag_ = NativeRdb::RdbStore::RdbStoreOperationResult::RESULT_FAIL;
+    std::vector<GenericValues> results;
+    GenericValues conditionValue;
+    ASSERT_EQ(NativeRdb::E_SQLITE_CORRUPT, AccessTokenDb::GetInstance()->Find(
+        AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, conditionValue, results));
+}
+
+/*
+ * @tc.name: FindByStep007
+ * @tc.desc: AccessTokenDb::Find reads more than one batch (over BATCH_QUERY_SIZE rows)
+ * @tc.type: FUNC
+ */
+HWTEST_F(AccessTokenDatabaseCoverageTest, FindByStep007, TestSize.Level4)
+{
+    std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance()->GetRdb();
+    db->queryColumnNames_ = {TokenFiledConst::FIELD_TOKEN_ID};
+    constexpr int32_t rowCount = 600;
+    for (int32_t i = 0; i < rowCount; ++i) {
+        db->queryByStepRowsData_.push_back({NativeRdb::ValueObject(i)});
+    }
+    std::vector<GenericValues> results;
+    GenericValues conditionValue;
+    ASSERT_EQ(NativeRdb::E_OK, AccessTokenDb::GetInstance()->Find(
+        AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, conditionValue, results));
+    ASSERT_EQ(static_cast<size_t>(rowCount), results.size());
+}
+
+/*
+ * @tc.name: FindByStep008
+ * @tc.desc: AccessTokenDb::Find restores on corrupt and succeeds on retry
+ * @tc.type: FUNC
+ */
+HWTEST_F(AccessTokenDatabaseCoverageTest, FindByStep008, TestSize.Level4)
+{
+    std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance()->GetRdb();
+    db->queryColumnNames_ = {TokenFiledConst::FIELD_TOKEN_ID};
+    db->queryByStepRowsData_ = {{NativeRdb::ValueObject(static_cast<int32_t>(7))}};
+    db->queryByStepRowsDataErrOnce_ = NativeRdb::E_SQLITE_CORRUPT;
+    db->restoreFlag_ = 0;
+
+    std::vector<GenericValues> results;
+    GenericValues conditionValue;
+    ASSERT_EQ(NativeRdb::E_OK, AccessTokenDb::GetInstance()->Find(
+        AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, conditionValue, results));
+    ASSERT_EQ(1U, results.size());
+    ASSERT_EQ(7, results[0].GetInt(TokenFiledConst::FIELD_TOKEN_ID));
+}
+
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

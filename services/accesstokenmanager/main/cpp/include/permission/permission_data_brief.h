@@ -23,6 +23,7 @@
 #include <map>
 #include <shared_mutex>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "access_token.h"
@@ -94,7 +95,8 @@ public:
         AccessTokenID tokenId, const std::vector<PermissionStatus>& permStateList,
         const std::map<std::string, std::string>& aclExtendedMap, bool needUpdatePermByProvision);
     void RestorePermissionBriefData(AccessTokenID tokenId,
-        const std::vector<GenericValues>& permStateRes, const std::vector<GenericValues> extendedPermRes);
+        const std::unordered_map<AccessTokenID, std::vector<GenericValues>>& permStateRes,
+        const std::unordered_map<AccessTokenID, std::vector<GenericValues>>& extendedPermRes);
     int32_t BuildPermissionStateValues(AccessTokenID tokenId, const std::vector<GenericValues>& oldPermStateValues,
         std::vector<GenericValues>& permStateValueList);
     int32_t UpdatePermissionStatus(AccessTokenID tokenId,
@@ -127,7 +129,8 @@ private:
     void ClearAllSecCompGrantedPermById(AccessTokenID tokenID);
     void SecCompGrantedPermListUpdated(AccessTokenID tokenID, const std::string& permissionName, bool isAdded);
     int32_t GetBriefPermDataByTokenIdInner(AccessTokenID tokenID, std::vector<BriefPermData>& list);
-    int32_t TranslationIntoAclExtendedMap(AccessTokenID tokenId, const std::vector<GenericValues>& extendedPermRes,
+    int32_t TranslationIntoAclExtendedMap(AccessTokenID tokenId,
+        const std::unordered_map<AccessTokenID, std::vector<GenericValues>>& extendedPermRes,
         std::map<std::string, std::string>& aclExtendedMap);
     void GetExtendedValueListInner(AccessTokenID tokenId, std::vector<PermissionWithValue>& extendedPermList);
     void DeleteExtendedValue(AccessTokenID tokenID);
