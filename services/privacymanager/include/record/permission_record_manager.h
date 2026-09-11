@@ -154,6 +154,7 @@ private:
     int32_t ResolveAddRecordSubProfileId(const HapTokenInfo& tokenInfo, int32_t& subProfileId) const;
     bool VerifyNativeRecordPermission(const std::string& permissionName, const AccessTokenID& tokenId);
     int32_t NormalizeRecordTokenId(AccessTokenID inputTokenId, AccessTokenID& outputTokenId);
+    int32_t NormalizeBinRecordTokenId(AccessTokenID inputTokenId, AccessTokenID& outputTokenId);
     bool UpdatePermUsedRecToggleStatusMap(int32_t userID, int32_t subProfileId, bool status);
     int32_t DeletePermUsedRecToggleStatus(int32_t userID, int32_t subProfileId);
     void UpdatePermUsedRecToggleStatusMapFromDb();

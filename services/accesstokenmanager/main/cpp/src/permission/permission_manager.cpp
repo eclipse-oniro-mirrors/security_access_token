@@ -107,6 +107,9 @@ PermUsedTypeEnum PermissionManager::GetPermissionUsedType(
         LOGE(ATM_DOMAIN, ATM_TAG, "TokenID: %{public}d is invalid.", tokenID);
         return PermUsedTypeEnum::INVALID_USED_TYPE;
     }
+    if (TokenIDAttributes::IsBinTokenId(tokenID)) {
+        return PermUsedTypeEnum::NORMAL_TYPE;
+    }
     PermUsedTypeEnum ret = HapTokenInfoInner::GetPermissionUsedType(tokenID, permissionName);
     LOGI(ATM_DOMAIN, ATM_TAG,
         "Application %{public}u apply for %{public}s for type %{public}d.", tokenID, permissionName.c_str(), ret);
