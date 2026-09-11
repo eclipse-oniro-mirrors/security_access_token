@@ -130,7 +130,7 @@ int32_t ResolveRequestToggleUserId(int32_t userID)
 }
 
 #ifdef HICOLLIE_ENABLE
-constexpr uint32_t TIMEOUT = 40; // 40s
+constexpr uint32_t TIMEOUT = 60; // 60s
 thread_local std::stack<int32_t> g_timerIdStack;
 #endif // HICOLLIE_ENABLE
 

@@ -19,6 +19,7 @@
 #include <memory>
 #include <shared_mutex>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "access_token.h"
@@ -66,7 +67,8 @@ public:
     void GeneratePermStateValues(const std::vector<GenericValues>& oldPermStateValues,
         std::vector<GenericValues>& permStateValues) const;
     int RestoreHapTokenInfo(AccessTokenID tokenId, const GenericValues& tokenValue,
-        const std::vector<GenericValues>& permStateRes, const std::vector<GenericValues> extendedPermRes);
+        const std::unordered_map<AccessTokenID, std::vector<GenericValues>>& permStateRes,
+        const std::unordered_map<AccessTokenID, std::vector<GenericValues>>& extendedPermRes);
 
     uint32_t GetReqPermissionSize();
     HapTokenInfo GetHapInfoBasic() const;

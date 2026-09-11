@@ -51,11 +51,13 @@ ValueType VariantValue::GetType() const
 
 int32_t VariantValue::GetInt() const
 {
-    if (type_ != ValueType::TYPE_INT) {
-        return DEFAULT_VALUE;
+    if (type_ == ValueType::TYPE_INT) {
+        return std::get<int32_t>(value_);
     }
-
-    return std::get<int32_t>(value_);
+    if (type_ == ValueType::TYPE_INT64) {
+        return static_cast<int32_t>(std::get<int64_t>(value_));
+    }
+    return DEFAULT_VALUE;
 }
 
 int64_t VariantValue::GetInt64() const

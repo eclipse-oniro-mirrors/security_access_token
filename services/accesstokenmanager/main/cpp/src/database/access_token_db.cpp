@@ -16,8 +16,12 @@
 #include "access_token_db.h"
 
 #include <algorithm>
+#include <chrono>
 #include <cinttypes>
 #include <mutex>
+#include <thread>
+#include <tuple>
+#include <utility>
 
 #include "accesstoken_common_log.h"
 #include "access_token_error.h"
@@ -25,7 +29,6 @@
 #include "hisysevent_adapter.h"
 #include "rdb_helper.h"
 #include "time_util.h"
-#include "token_field_const.h"
 
 namespace OHOS {
 namespace Security {
@@ -34,6 +37,50 @@ namespace {
 constexpr const char* DATABASE_NAME = "access_token.db";
 constexpr const char* DATABASE_BUNDLE_NAME = "access_token";
 static constexpr int32_t ACCESSTOKEN_CLEAR_MEMORY_SIZE = 4;
+static constexpr int32_t BATCH_QUERY_SIZE = 512;
+static constexpr int32_t INIT_POS = -1;
+static constexpr int32_t QUERY_MAX_RETRY_TIMES = 2;
+static constexpr int32_t QUERY_RETRY_SLEEP_TIME_MS = 300;
+
+int32_t ReadResultSetByStep(const std::shared_ptr<NativeRdb::ResultSet>& resultSet,
+    const std::vector<std::string>& columnNames, std::vector<GenericValues>& results)
+{
+    int32_t code = NativeRdb::E_OK;
+    std::vector<std::vector<NativeRdb::ValueObject>> rowsData;
+    do {
+        std::tie(code, rowsData) = resultSet->GetRowsData(BATCH_QUERY_SIZE, INIT_POS);
+        if (code != NativeRdb::E_OK || rowsData.empty()) {
+            break;
+        }
+        for (const auto& rowData : rowsData) {
+            GenericValues value;
+            AccessTokenDbUtil::ResultToGenericValues(rowData, columnNames, value);
+            if (!value.IsEmpty()) {
+                results.emplace_back(std::move(value));
+            }
+        }
+    } while (static_cast<int32_t>(rowsData.size()) == BATCH_QUERY_SIZE);
+    return code;
+}
+
+int32_t QueryByStepAndRead(const std::shared_ptr<NativeRdb::RdbStore>& db,
+    const NativeRdb::RdbPredicates& predicates, const std::vector<std::string>& columns,
+    std::vector<GenericValues>& results)
+{
+    std::shared_ptr<NativeRdb::ResultSet> resultSet = db->QueryByStep(predicates, columns, false);
+    if (resultSet == nullptr) {
+        return AccessTokenError::ERR_DATABASE_OPERATE_FAILED;
+    }
+    auto [nameErrCode, names] = resultSet->GetWholeColumnNames();
+    if (nameErrCode != NativeRdb::E_OK) {
+        resultSet->Close();
+        LOGC(ATM_DOMAIN, ATM_TAG, "Failed to get column names, res is %{public}d.", nameErrCode);
+        return AccessTokenError::ERR_DATABASE_OPERATE_FAILED;
+    }
+    int32_t errCode = ReadResultSetByStep(resultSet, names, results);
+    resultSet->Close();
+    return errCode;
+}
 }
 
 AccessTokenDb::AccessTokenDb()
@@ -152,41 +199,6 @@ int32_t AccessTokenDb::Modify(const AtmDataType type, const GenericValues& modif
     return 0;
 }
 
-int32_t AccessTokenDb::RestoreAndQueryIfCorrupt(const NativeRdb::RdbPredicates& predicates,
-    const std::vector<std::string>& columns, std::shared_ptr<NativeRdb::AbsSharedResultSet>& queryResultSet,
-    const std::shared_ptr<NativeRdb::RdbStore>& db)
-{
-    int32_t count = 0;
-    int32_t res = queryResultSet->GetRowCount(count);
-    if (res != NativeRdb::E_OK) {
-        if (res == NativeRdb::E_SQLITE_CORRUPT) {
-            queryResultSet->Close();
-            queryResultSet = nullptr;
-
-            LOGW(ATM_DOMAIN, ATM_TAG, "Detech database corrupt, restore from backup!");
-            ReportSysEventDbException(AccessTokenDbSceneCode::AT_DB_QUERY_RESTORE, res, predicates.GetTableName());
-            res = db->Restore("");
-            if (res != NativeRdb::E_OK) {
-                LOGC(ATM_DOMAIN, ATM_TAG, "Db restore failed, res is %{public}d.", res);
-                return res;
-            }
-            LOGI(ATM_DOMAIN, ATM_TAG, "Database restore success, try query again!");
-
-            queryResultSet = db->Query(predicates, columns);
-            if (queryResultSet == nullptr) {
-                LOGC(ATM_DOMAIN, ATM_TAG, "Failed to find records from table %{public}s again.",
-                    predicates.GetTableName().c_str());
-                return AccessTokenError::ERR_DATABASE_OPERATE_FAILED;
-            }
-        } else {
-            LOGC(ATM_DOMAIN, ATM_TAG, "Failed to get result count.");
-            return AccessTokenError::ERR_DATABASE_OPERATE_FAILED;
-        }
-    }
-
-    return 0;
-}
-
 int32_t AccessTokenDb::Find(AtmDataType type, const GenericValues& conditionValue,
     std::vector<GenericValues>& results)
 {
@@ -220,7 +232,7 @@ int32_t AccessTokenDb::QueryByPredicates(const std::string& tableName, const Nat
 {
     int64_t beginTime = TimeUtil::GetCurrentTimestamp();
     std::vector<std::string> columns; // empty columns means query all columns
-    int count = 0;
+    int32_t res = AccessTokenError::ERR_DATABASE_OPERATE_FAILED;
     {
         std::shared_lock<std::shared_mutex> lock(this->rwLock_);
         auto db = GetRdb();
@@ -229,36 +241,61 @@ int32_t AccessTokenDb::QueryByPredicates(const std::string& tableName, const Nat
             return AccessTokenError::ERR_DATABASE_OPERATE_FAILED;
         }
 
-        auto queryResultSet = db->Query(predicates, columns);
-        if (queryResultSet == nullptr) {
-            LOGC(ATM_DOMAIN, ATM_TAG, "Failed to find records from table %{public}s.",
-                tableName.c_str());
-            return AccessTokenError::ERR_DATABASE_OPERATE_FAILED;
-        }
-
-        int32_t res = RestoreAndQueryIfCorrupt(predicates, columns, queryResultSet, db);
-        if (res != 0) {
-            LOGC(ATM_DOMAIN, ATM_TAG, "Restore and query failed!");
-            return res;
-        }
-
-        while (queryResultSet->GoToNextRow() == NativeRdb::E_OK) {
-            GenericValues value;
-            AccessTokenDbUtil::ResultToGenericValues(queryResultSet, value);
-            if (value.GetAllKeys().empty()) {
-                continue;
-            }
-
-            results.emplace_back(value);
-            count++;
-        }
+        res = FindByStep(predicates, columns, results, db);
+    }
+    if (res != NativeRdb::E_OK) {
+        return res;
     }
 
     int64_t endTime = TimeUtil::GetCurrentTimestamp();
     LOGI(ATM_DOMAIN, ATM_TAG, "Find cost %{public}" PRId64
-        ", query %{public}d records from table %{public}s.", endTime - beginTime, count, tableName.c_str());
+        ", query %{public}d records from table %{public}s.", endTime - beginTime,
+        static_cast<int32_t>(results.size()), tableName.c_str());
 
     return 0;
+}
+
+int32_t AccessTokenDb::FindByStep(const NativeRdb::RdbPredicates& predicates,
+    const std::vector<std::string>& columns, std::vector<GenericValues>& results,
+    const std::shared_ptr<NativeRdb::RdbStore>& db)
+{
+    const std::string tableName = predicates.GetTableName();
+    int32_t errCode = AccessTokenError::ERR_DATABASE_OPERATE_FAILED;
+    for (int32_t attempt = 0; attempt < QUERY_MAX_RETRY_TIMES; ++attempt) {
+        results.clear();
+        errCode = QueryByStepAndRead(db, predicates, columns, results);
+        if (errCode == NativeRdb::E_OK) {
+            return NativeRdb::E_OK;
+        }
+        if (errCode == NativeRdb::E_SQLITE_CORRUPT) {
+            break;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(QUERY_RETRY_SLEEP_TIME_MS));
+        continue;
+    }
+
+    if (errCode != NativeRdb::E_SQLITE_CORRUPT) {
+        LOGC(ATM_DOMAIN, ATM_TAG, "Failed to find records from table %{public}s after retry.", tableName.c_str());
+        return AccessTokenError::ERR_DATABASE_OPERATE_FAILED;
+    }
+
+    results.clear();
+    LOGW(ATM_DOMAIN, ATM_TAG, "Detech database corrupt, restore from backup!");
+    ReportSysEventDbException(AccessTokenDbSceneCode::AT_DB_QUERY_RESTORE, errCode, tableName);
+    int32_t res = db->Restore("");
+    if (res != NativeRdb::E_OK) {
+        LOGC(ATM_DOMAIN, ATM_TAG, "Db restore failed, res is %{public}d.", res);
+        return res;
+    }
+    LOGI(ATM_DOMAIN, ATM_TAG, "Database restore success, try query again!");
+
+    errCode = QueryByStepAndRead(db, predicates, columns, results);
+    if (errCode != NativeRdb::E_OK) {
+        LOGC(ATM_DOMAIN, ATM_TAG, "Failed to find records from table %{public}s after restore, res is %{public}d.",
+            tableName.c_str(), errCode);
+        return AccessTokenError::ERR_DATABASE_OPERATE_FAILED;
+    }
+    return NativeRdb::E_OK;
 }
 
 int32_t AccessTokenDb::DeleteAndInsertValues(const std::vector<DelInfo>& delInfoVec,

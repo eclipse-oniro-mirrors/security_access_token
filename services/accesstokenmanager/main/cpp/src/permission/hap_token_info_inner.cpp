@@ -221,8 +221,8 @@ int HapTokenInfoInner::RestoreHapTokenBasicInfo(const GenericValues& inGenericVa
 
 int HapTokenInfoInner::RestoreHapTokenInfo(AccessTokenID tokenId,
     const GenericValues& tokenValue,
-    const std::vector<GenericValues>& permStateRes,
-    const std::vector<GenericValues> extendedPermRes)
+    const std::unordered_map<AccessTokenID, std::vector<GenericValues>>& permStateRes,
+    const std::unordered_map<AccessTokenID, std::vector<GenericValues>>& extendedPermRes)
 {
     {
         std::unique_lock<std::shared_mutex> infoGuard(this->policySetLock_);
