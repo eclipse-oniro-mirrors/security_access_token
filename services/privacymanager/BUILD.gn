@@ -147,6 +147,7 @@ if (is_standard_system && ability_base_enable == true) {
     sources = privacy_manager_base_config.sources
     include_dirs = privacy_manager_base_config.include_dirs
     deps = privacy_manager_base_config.deps
+    deps += [ "${access_token_path}/interfaces/innerkits/token_setproc:libtokensetproc_shared" ]
     external_deps = privacy_manager_base_config.external_deps
 
     cflags_cc = privacy_manager_base_config.cflags_cc

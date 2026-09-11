@@ -16,6 +16,7 @@
 #include "permission_record_manager.h"
 
 #include <algorithm>
+#include <cerrno>
 #include <cinttypes>
 #include <numeric>
 #include <unordered_set>
@@ -53,6 +54,7 @@
 #include "state_change_callback_proxy.h"
 #include "system_ability_definition.h"
 #include "time_util.h"
+#include "token_setproc.h"
 #include "tokenid_attributes.h"
 #ifdef ACCESS_TOKEN_SUPPORT_SUBPROFILE
 #include "account_error_no.h"
@@ -647,21 +649,52 @@ int32_t PermissionRecordManager::AddPermissionUsedRecord(const AddPermParamInfo&
 int32_t PermissionRecordManager::NormalizeRecordTokenId(AccessTokenID inputTokenId, AccessTokenID& outputTokenId)
 {
     outputTokenId = inputTokenId;
-    if (!TokenIDAttributes::IsToolTokenId(inputTokenId)) {
-        LOGD(ATM_DOMAIN, PRI_TAG,
-            "Token is not a tool token, inputTokenId=%{public}u, tokenType=%{public}u.",
-            inputTokenId, static_cast<uint32_t>(TokenIDAttributes::GetTokenIdTypeEnum(inputTokenId)));
+    if (TokenIDAttributes::IsToolTokenId(inputTokenId)) {
+        int32_t ret = AccessTokenKit::GetHostTokenId(inputTokenId, outputTokenId);
+        if (ret != RET_SUCCESS) {
+            LOGE(PRI_DOMAIN, PRI_TAG, "GetHostTokenId failed, toolTokenId=%{public}u, ret=%{public}d.",
+                inputTokenId, ret);
+            return PrivacyError::ERR_PARAM_INVALID;
+        }
+        LOGI(PRI_DOMAIN, PRI_TAG, "toolTokenId=%{public}u, hostTokenId=%{public}u.",
+            inputTokenId, outputTokenId);
         return RET_SUCCESS;
     }
 
-    int32_t ret = AccessTokenKit::GetHostTokenId(inputTokenId, outputTokenId);
-    if (ret != RET_SUCCESS) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "GetHostTokenId failed, toolTokenId=%{public}u, ret=%{public}d.",
-            inputTokenId, ret);
-        return ret;
+    if (TokenIDAttributes::IsBinTokenId(inputTokenId)) {
+        return NormalizeBinRecordTokenId(inputTokenId, outputTokenId);
     }
-    LOGI(PRI_DOMAIN, PRI_TAG, "toolTokenId=%{public}u, hostTokenId=%{public}u.",
-        inputTokenId, outputTokenId);
+
+    LOGD(ATM_DOMAIN, PRI_TAG,
+        "Token is not a tool or bin token, inputTokenId=%{public}u, tokenType=%{public}u.",
+        inputTokenId, static_cast<uint32_t>(TokenIDAttributes::GetTokenIdTypeEnum(inputTokenId)));
+    return RET_SUCCESS;
+}
+
+int32_t PermissionRecordManager::NormalizeBinRecordTokenId(AccessTokenID inputTokenId,
+    AccessTokenID& outputTokenId)
+{
+    uint64_t parent = INVALID_TOKENID;
+    int32_t ret = GetParentHapTokenID(inputTokenId, &parent);
+    if (ret == ENOTSUP) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Parent hap ioctl unsupported, binTokenId=%{public}u, ret=%{public}d.",
+            inputTokenId, ret);
+        return PrivacyError::ERR_TOKENID_NOT_EXIST;
+    }
+    if (ret != ACCESS_TOKEN_OK) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Parent hap query failed, binTokenId=%{public}u, ret=%{public}d.",
+            inputTokenId, ret);
+        return PrivacyError::ERR_TOKENID_NOT_EXIST;
+    }
+    if (parent == INVALID_TOKENID) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Parent hap token invalid, binTokenId=%{public}u.", inputTokenId);
+        return PrivacyError::ERR_TOKENID_NOT_EXIST;
+    }
+
+    AccessTokenIDEx parentTokenIdEx = {0};
+    parentTokenIdEx.tokenIDEx = parent;
+    outputTokenId = parentTokenIdEx.tokenIdExStruct.tokenID;
+    LOGI(PRI_DOMAIN, PRI_TAG, "binTokenId=%{public}u, parentTokenId=%{public}u.", inputTokenId, outputTokenId);
     return RET_SUCCESS;
 }
 
@@ -2700,19 +2733,31 @@ bool PermissionRecordManager::IsAllowedUsingMicrophone(AccessTokenID tokenId, in
 bool PermissionRecordManager::IsAllowedUsingPermission(AccessTokenID tokenId, const std::string& permissionName,
     int32_t pid)
 {
-    if (AccessTokenKit::GetTokenTypeFlag(tokenId) == TOKEN_NATIVE) {
-        return VerifyNativeRecordPermission(permissionName, tokenId);
+    AccessTokenID normalizedTokenId = tokenId;
+    int32_t normalizedPid = pid;
+    if (TokenIDAttributes::IsBinTokenId(tokenId)) {
+        int32_t ret = NormalizeBinRecordTokenId(tokenId, normalizedTokenId);
+        if (ret != RET_SUCCESS) {
+            LOGE(PRI_DOMAIN, PRI_TAG, "Bin token normalize failed, tokenId=%{public}u, ret=%{public}d.",
+                tokenId, ret);
+            return false;
+        }
+        normalizedPid = -1;
     }
 
-    if (AccessTokenKit::GetTokenTypeFlag(tokenId) != TOKEN_HAP) {
-        LOGD(PRI_DOMAIN, PRI_TAG, "Id(%{public}d) is not hap.", tokenId);
+    if (AccessTokenKit::GetTokenTypeFlag(normalizedTokenId) == TOKEN_NATIVE) {
+        return VerifyNativeRecordPermission(permissionName, normalizedTokenId);
+    }
+
+    if (AccessTokenKit::GetTokenTypeFlag(normalizedTokenId) != TOKEN_HAP) {
+        LOGD(PRI_DOMAIN, PRI_TAG, "Id(%{public}d) is not hap.", normalizedTokenId);
         return false;
     }
 
     if (permissionName == CAMERA_PERMISSION_NAME) {
-        return IsAllowedUsingCamera(tokenId, pid);
+        return IsAllowedUsingCamera(normalizedTokenId, normalizedPid);
     } else if (permissionName == MICROPHONE_PERMISSION_NAME) {
-        return IsAllowedUsingMicrophone(tokenId, pid);
+        return IsAllowedUsingMicrophone(normalizedTokenId, normalizedPid);
     }
     LOGE(PRI_DOMAIN, PRI_TAG, "Invalid permission(%{public}s).", permissionName.c_str());
     return false;

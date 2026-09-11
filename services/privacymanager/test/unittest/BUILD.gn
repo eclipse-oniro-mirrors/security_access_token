@@ -37,16 +37,19 @@ if (is_standard_system && ability_base_enable == true) {
       "${access_token_path}/interfaces/innerkits/privacy/test/unittest/src",
       "${access_token_path}/interfaces/innerkits/privacy/src",
       "${access_token_path}/interfaces/innerkits/proxy_death/include",
+      "${access_token_path}/services/privacymanager/test/unittest/common",
     ]
 
     sources = privacy_manager_base_config.sources
     sources += account_mock_sources
     sources += [
       "${access_token_path}/interfaces/innerkits/privacy/test/unittest/src/privacy_test_common.cpp",
+      "common/fake_parent_hap_tokenid.cpp",
       "active/active_status_callback_manager_test.cpp",
       "database/permission_record_db_test.cpp",
       "proxy/privacy_manager_proxy_death_test.cpp",
       "record/permission_record_manager_test.cpp",
+      "record/permission_record_manager_bin_test.cpp",
       "record/privacy_toggle_record_test.cpp",
       "record/permission_record_set_test.cpp",
       "sensitive/sensitive_manager_test.cpp",

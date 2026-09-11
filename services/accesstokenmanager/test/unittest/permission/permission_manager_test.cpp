@@ -1452,6 +1452,39 @@ HWTEST_F(PermissionManagerTest, RevokePermissionWithKill006, TestSize.Level1)
     EXPECT_EQ(RET_SUCCESS,
         AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId));
 }
+
+/**
+ * @tc.name: GetPermissionUsedTypeBinToken001
+ * @tc.desc: Bin token returns normal used type directly, non-bin behavior unchanged.
+ * @tc.type: FUNC
+ * @tc.require: 20260805885509
+ */
+HWTEST_F(PermissionManagerTest, GetPermissionUsedTypeBinToken001, TestSize.Level0)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+    std::vector<GenericValues> undefValues;
+    AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_infoManagerTestInfoParms,
+        g_infoManagerTestPolicyPrams1, tokenIdEx, undefValues);
+    tokenIdEx = AccessTokenInfoManager::GetInstance().GetHapTokenID(g_infoManagerTestInfoParms.userID,
+        g_infoManagerTestInfoParms.bundleName, g_infoManagerTestInfoParms.instIndex);
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+
+    AccessTokenIDInner innerId = *reinterpret_cast<AccessTokenIDInner*>(&tokenId);
+    innerId.type_ext = 1;
+    AccessTokenID binTokenId = *reinterpret_cast<AccessTokenID*>(&innerId);
+
+    // bin token: normal used type is returned directly, permission name is not involved
+    EXPECT_EQ(PermUsedTypeEnum::NORMAL_TYPE,
+        PermissionManager::GetInstance().GetPermissionUsedType(binTokenId, "ohos.permission.CAMERA"));
+
+    // non-bin sentinel: unrequested permission of hap token still returns invalid used type
+    EXPECT_EQ(PermUsedTypeEnum::INVALID_USED_TYPE,
+        PermissionManager::GetInstance().GetPermissionUsedType(tokenId, "ohos.permission.CAMERA"));
+
+    EXPECT_EQ(RET_SUCCESS,
+        AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId));
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
