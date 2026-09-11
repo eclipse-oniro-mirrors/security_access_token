@@ -10483,6 +10483,17 @@
             "deviceTypes": ["2in1"]
         },
         {
+            "name": "ohos.permission.SWITCH_KIOSK_MODE",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SERVICE",
+            "since": "26.1.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "tablet", "2in1"]
+        },
+        {
             "name": "ohos.permission.QUERY_CLI_TOOL",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
