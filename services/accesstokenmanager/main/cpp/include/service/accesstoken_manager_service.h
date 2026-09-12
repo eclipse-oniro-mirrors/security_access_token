@@ -56,6 +56,7 @@ public:
     void OnStop() override;
     void OnAddSystemAbility(int32_t systemAbilityId, const std::string& deviceId) override;
     void OnRemoveSystemAbility(int32_t systemAbilityId, const std::string& deviceId) override;
+    bool RetryPublishInner();
 
     int32_t AllocHapToken(const HapInfoParcel& info, const HapPolicyParcel& policy, uint64_t& fullTokenId) override;
     int32_t GetPermissionUsedType(
@@ -175,6 +176,8 @@ private:
     void GetConfigValue(uint32_t& parseConfigFlag);
     void CheckAccessTokenDbDir(const char* dbDirPath) const;
     bool Initialize();
+    void AfterPublishSuccessLocked();
+    void RetryPublishLoop();
     void AccessTokenServiceParamSet() const;
     bool IsLocationPermSpecialHandle(std::string permissionName, int32_t apiVersion);
     int VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName);

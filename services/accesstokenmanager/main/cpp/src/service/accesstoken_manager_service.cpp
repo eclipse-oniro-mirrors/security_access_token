@@ -16,10 +16,12 @@
 #include "accesstoken_manager_service.h"
 
 #include <cstring>
+#include <chrono>
 #include <memory>
 #include <mutex>
 #include <stack>
 #include <sys/stat.h>
+#include <thread>
 #include <unordered_map>
 #include <unordered_set>
 #include <unistd.h>
@@ -121,6 +123,10 @@ const std::string MANAGE_TOOL_TOKENID = "ohos.permission.MANAGE_TOOL_TOKENID";
 
 static constexpr int32_t SA_ID_ACCESSTOKEN_MANAGER_SERVICE = 3503;
 std::mutex g_userPolicyUpdateMutex;
+static const int32_t RETRY_TIMES_MS = 100; // 0.1s
+static const int32_t RETRY_COUNT = 50;
+static const int32_t ASYNC_RETRY_INTERVAL_MS = 1000; // 1s
+static const int32_t ASYNC_RETRY_COUNT = 300; // 5min / 1s
 
 int32_t ResolveRequestToggleUserId(int32_t userID)
 {
@@ -659,30 +665,86 @@ AccessTokenManagerService::~AccessTokenManagerService()
 
 void AccessTokenManagerService::OnStart()
 {
+    {
+        std::lock_guard<std::mutex> lock(stateMutex_);
+        if (state_ == ServiceRunningState::STATE_RUNNING) {
+            LOGI(ATM_DOMAIN, ATM_TAG, "AccessTokenManagerService has already started!");
+            return;
+        }
+
+        LOGI(ATM_DOMAIN, ATM_TAG, "AccessTokenManagerService is starting.");
+        if (!Initialize()) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to initialize.");
+            return;
+        }
+
+        bool ret = Publish(DelayedSingleton<AccessTokenManagerService>::GetInstance().get());
+        (void)AddSystemAbilityListener(SECURITY_COMPONENT_SERVICE_ID);
+#ifdef TOKEN_SYNC_ENABLE
+        (void)AddSystemAbilityListener(DISTRIBUTED_HARDWARE_DEVICEMANAGER_SA_ID);
+#endif
+        if (ret) {
+            AfterPublishSuccessLocked();
+            return;
+        }
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to publish service!");
+        ReportSysEventServiceStartError(SA_PUBLISH_FAILED, "Publish accesstoken_service fail.", ERROR);
+    }
+    RetryPublishLoop();
+}
+
+void AccessTokenManagerService::AfterPublishSuccessLocked()
+{
+    state_ = ServiceRunningState::STATE_RUNNING;
+    AccessTokenServiceParamSet();
+    LOGI(ATM_DOMAIN, ATM_TAG, "Congratulations, ATM start successfully!");
+}
+
+bool AccessTokenManagerService::RetryPublishInner()
+{
     std::lock_guard<std::mutex> lock(stateMutex_);
     if (state_ == ServiceRunningState::STATE_RUNNING) {
-        LOGI(ATM_DOMAIN, ATM_TAG, "AccessTokenManagerService has already started!");
-        return;
-    }
-
-    LOGI(ATM_DOMAIN, ATM_TAG, "AccessTokenManagerService is starting.");
-    if (!Initialize()) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to initialize.");
-        return;
+        return true;
     }
     bool ret = Publish(DelayedSingleton<AccessTokenManagerService>::GetInstance().get());
     if (!ret) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to publish service!");
-        ReportSysEventServiceStartError(SA_PUBLISH_FAILED, "Publish accesstoken_service fail.", ERROR);
-        return;
+        return false;
     }
-    state_ = ServiceRunningState::STATE_RUNNING;
-    AccessTokenServiceParamSet();
-    (void)AddSystemAbilityListener(SECURITY_COMPONENT_SERVICE_ID);
-#ifdef TOKEN_SYNC_ENABLE
-    (void)AddSystemAbilityListener(DISTRIBUTED_HARDWARE_DEVICEMANAGER_SA_ID);
-#endif
-    LOGI(ATM_DOMAIN, ATM_TAG, "Congratulations, AccessTokenManagerService start successfully!");
+    AfterPublishSuccessLocked();
+    return true;
+}
+
+static void RetryPublish()
+{
+    for (int32_t i = 0; i < ASYNC_RETRY_COUNT; i++) {
+        if (DelayedSingleton<AccessTokenManagerService>::GetInstance()->RetryPublishInner()) {
+            return;
+        }
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to publish service, retry!");
+        std::this_thread::sleep_for(std::chrono::milliseconds(ASYNC_RETRY_INTERVAL_MS));
+    }
+    ReportSysEventServiceStartError(SA_PUBLISH_FAILED, "Publish accesstoken_service fail.", ERROR);
+}
+
+void AccessTokenManagerService::RetryPublishLoop()
+{
+    for (int32_t i = 1; i <= RETRY_COUNT; i++) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(RETRY_TIMES_MS * i));
+        std::lock_guard<std::mutex> lock(stateMutex_);
+        if (state_ == ServiceRunningState::STATE_RUNNING) {
+            return;
+        }
+        bool ret = Publish(DelayedSingleton<AccessTokenManagerService>::GetInstance().get());
+        if (ret) {
+            AfterPublishSuccessLocked();
+            return;
+        }
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to publish service, retry!");
+    }
+    LOGE(ATM_DOMAIN, ATM_TAG, "Publish retry all failed!");
+    ReportSysEventServiceStartError(SA_PUBLISH_FAILED, "Publish accesstoken_service fail.", ERROR);
+    std::thread publishThread(RetryPublish);
+    publishThread.detach();
 }
 
 void AccessTokenManagerService::OnStop()
