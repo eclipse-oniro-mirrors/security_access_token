@@ -3120,6 +3120,36 @@ HWTEST_F(TokenInfoManagerTest, OnStart001, TestSize.Level0)
 }
 
 /**
+ * @tc.name: AfterPublishSuccessLocked001
+ * @tc.desc: AfterPublishSuccessLocked transitions state to RUNNING.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenInfoManagerTest, AfterPublishSuccessLocked001, TestSize.Level1)
+{
+    ServiceRunningState state = atManagerService_->state_;
+    atManagerService_->state_ = ServiceRunningState::STATE_NOT_START;
+    atManagerService_->AfterPublishSuccessLocked();
+    ASSERT_EQ(ServiceRunningState::STATE_RUNNING, atManagerService_->state_);
+    atManagerService_->state_ = state;
+}
+
+/**
+ * @tc.name: RetryPublishInner001
+ * @tc.desc: RetryPublishInner returns true when service is already running.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenInfoManagerTest, RetryPublishInner001, TestSize.Level1)
+{
+    ServiceRunningState state = atManagerService_->state_;
+    atManagerService_->state_ = ServiceRunningState::STATE_RUNNING;
+    bool ret = atManagerService_->RetryPublishInner();
+    ASSERT_EQ(true, ret);
+    atManagerService_->state_ = state;
+}
+
+/**
  * @tc.name: Dlopen001
  * @tc.desc: Open a not exist lib & not exist func
  * @tc.type: FUNC
