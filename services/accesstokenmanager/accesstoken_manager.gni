@@ -92,6 +92,14 @@ accesstoken_manager_base_config = {
     sources += [ "${access_token_path}/services/accesstokenmanager/main/cpp/src/seccomp/sec_comp_enhance_agent.cpp" ]
   }
 
+  if (access_token_enable_spm && access_token_manager_hapverify_enable) {
+    sources += [
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/app_verify_adapter.cpp",
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/hap_sign_verify_helper.cpp",
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/hap_sign_verify_manager.cpp",
+    ]
+  }
+
   # ========== Include Dirs ==========
   # Base include dirs (always included)
   include_dirs = [
@@ -171,6 +179,10 @@ accesstoken_manager_base_config = {
 
   if (access_token_support_subprofile == true) {
     external_deps += [ "os_account:os_account_innerkits_lite" ]
+  }
+
+  if (access_token_enable_spm && access_token_manager_hapverify_enable) {
+    external_deps += [ "bundle_framework:spm_module_parser" ]
   }
   # ========== lite_device_enable: Complete Configuration ==========
   # Light device: use dlopen database (smaller footprint)
