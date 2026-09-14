@@ -40,33 +40,17 @@
 #ifndef ACCESSTOKEN_HAP_TOKEN_INFO_H
 #define ACCESSTOKEN_HAP_TOKEN_INFO_H
 
-#include <cstdint>
-#include <map>
-#include <string>
-#include <vector>
-
 #include "access_token.h"
 #include "permission_def.h"
 #include "permission_state_full.h"
 #include "permission_status.h"
+#include <map>
+#include <string>
+#include <vector>
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-/**
- * @brief Declares multiple mode type.
- */
-enum class MultipleMode : int32_t {
-    /** No mode distinction */
-    DEFAULT_MODE = -1,
-    /** Main mode */
-    MAIN_MODE = 0,
-    /** Non-main mode */
-    SUB_MODE = 1,
-    /** Max mode value */
-    MAX_MODE = SUB_MODE,
-};
-
 /**
  * @brief Declares hap info params class
  */
@@ -96,8 +80,6 @@ public:
     std::string appProvisionType = "release";
     /** Whether hap is a skill */
     bool isSkillHap = false;
-    /** App mode */
-    MultipleMode mode = MultipleMode::DEFAULT_MODE;
 };
 
 /**

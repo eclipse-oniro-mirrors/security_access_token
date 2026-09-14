@@ -115,7 +115,6 @@ private:
     int32_t GetPermissionStateListInner(std::vector<PermissionStatus>& permList) const;
 
     HapTokenInfo tokenInfoBasic_;
-    int32_t mode_ = static_cast<int32_t>(MultipleMode::DEFAULT_MODE);
 
     // true means sync from remote.
     bool isRemote_ = false;
