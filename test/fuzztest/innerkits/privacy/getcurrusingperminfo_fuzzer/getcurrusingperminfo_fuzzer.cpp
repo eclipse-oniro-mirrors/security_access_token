@@ -36,11 +36,21 @@ namespace OHOS {
 
         MockToken mock({ "ohos.permission.PERMISSION_USED_STATS" }, false, false);
         FuzzedDataProvider provider(data, size);
-        (void)provider;
+        AccessTokenID tokenID = ConsumeTokenId(provider);
+        std::string permissionName = ConsumePermissionName(provider);
+        int32_t pid = provider.ConsumeIntegral<int32_t>();
+        PermissionUsedType type = static_cast<PermissionUsedType>(provider.ConsumeIntegralInRange<uint32_t>(
+            0, static_cast<uint32_t>(PermissionUsedType::PERM_USED_TYPE_BUTT)));
+        std::string enhancedIdentity = provider.ConsumeRandomLengthString(
+            provider.ConsumeIntegralInRange<size_t>(0, MAX_ENHANCED_IDENTITY_LENGTH + 1));
+
+        (void)PrivacyKit::StartUsingPermission(tokenID, permissionName, pid, type, enhancedIdentity);
 
         std::vector<CurrUsingPermInfo> infoList;
         int32_t ret = PrivacyKit::GetCurrUsingPermInfo(infoList);
         (void)ret;
+
+        (void)PrivacyKit::StopUsingPermission(tokenID, permissionName, pid, enhancedIdentity);
         return true;
     }
 } // namespace OHOS
