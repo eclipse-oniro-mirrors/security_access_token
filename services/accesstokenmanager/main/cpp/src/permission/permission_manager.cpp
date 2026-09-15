@@ -427,12 +427,12 @@ int32_t PermissionManager::UpdateMultiTokenPermissionState(const std::shared_ptr
 
         isUpdateSuccess = true;
 
+        updateInfo.permissionFlag = flag;
         uint32_t newFlag = flag;
         if (GetPermissionFlag(tokenID, permissionName, newFlag) == RET_SUCCESS) {
-            flag = newFlag;
+            updateInfo.permissionFlag = newFlag;
         }
         updateInfo.sceneCode = CommonSceneCode::AT_COMMON_FINISH;
-        updateInfo.permissionFlag = flag;
         ReportUpdatePermissionEvent(updateInfo);
         ReportSysCommonEventError(static_cast<int32_t>(isGranted ?
             IAccessTokenManagerIpcCode::COMMAND_GRANT_PERMISSION :
