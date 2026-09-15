@@ -244,6 +244,29 @@ public:
 };
 
 /**
+ * @brief Declares the result of signed profile data
+ */
+struct ProfileData {
+    std::string provisionRaw;
+    int32_t profileBlockLength = 0;
+    std::vector<uint8_t> profileBlock;
+    std::string appId;
+    std::string fingerprint;
+    std::string organization;
+    bool isOpenHarmony = false;
+    bool isEnterpriseResigned = false;
+};
+
+/**
+ * @brief Declares the result of trusted bundle info
+ */
+struct TrustedBundleInfo {
+    ProfileData profileData;
+    std::string moduleInfo;
+    std::string sharedFiles;
+};
+
+/**
  * @brief Declares hap policy params class
  */
 class HapPolicy final {

@@ -33,6 +33,7 @@ declare_args() {
   access_token_enable_manual_test = false
   access_token_support_subprofile = false
   access_token_privacy_bundle_start_stop_enable = false
+  access_token_enable_spm = false
 }
 
 # External dependencies for each feature flag

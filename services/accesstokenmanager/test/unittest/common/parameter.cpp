@@ -15,8 +15,22 @@
 
 #include "parameter.h"
 
+#include <cstring>
+#include <securec.h>
+
 int GetParameter(const char *key, const char *def, char *value, uint32_t len)
 {
+    if (key != nullptr && strcmp(key, "const.cust.config_dir_layer") == 0) {
+        const char* dirs = "/data/cust:/system/cust";
+        size_t dirsLen = strlen(dirs);
+        if (value != nullptr && len > dirsLen) {
+            if (strncpy_s(value, len - 1, dirs, dirsLen) != EOK) {
+                return 0;
+            }
+            value[len - 1] = '\0';
+        }
+        return static_cast<int>(dirsLen);
+    }
     return 0;
 }
 
