@@ -32,6 +32,7 @@
 #include "perm_setproc_c.h"
 #include "securec.h"
 #include "spm_setproc.h"
+#include "accesstoken_file_util.h"
 
 NativeTokenList *g_tokenListHead;
 int32_t g_isNativeTokenInited = 0;
@@ -281,33 +282,76 @@ static uint32_t GetTokenList(const cJSON *object)
     return ATRET_SUCCESS;
 }
 
-static uint32_t ParseTokenInfo(void)
+static uint32_t ReadAndParseFile(cJSON **record)
 {
     char *fileBuff = NULL;
-    cJSON *record = NULL;
-    uint32_t ret;
+    *record = NULL;
 
-    ret = GetFileBuff(TOKEN_ID_CFG_FILE_PATH, &fileBuff);
-    if (ret != ATRET_SUCCESS) {
-        LOGC("Failed to read nativetoken.json to buffer, ret=%u.", ret);
-        return ret;
-    }
-    if (fileBuff == NULL) {
+    uint32_t ret = GetFileBuff(TOKEN_ID_CFG_FILE_PATH, &fileBuff);
+    if (ret == ATRET_SUCCESS && fileBuff == NULL) {
         return ATRET_SUCCESS;
     }
-    record = cJSON_Parse(fileBuff);
+    if (ret == ATRET_SUCCESS && fileBuff != NULL) {
+        *record = cJSON_Parse(fileBuff);
+        free(fileBuff);
+        fileBuff = NULL;
+        if (*record != NULL) {
+            return ATRET_SUCCESS;
+        }
+        LOGC("Failed to parse main nativetoken.json, trying backup.");
+        ret = GET_FILE_BUFF_FAILED;
+    } else {
+        LOGC("Failed to read main nativetoken.json, ret=%d.", ret);
+    }
+
+    char bakPath[PATH_MAX_LEN + 1] = {0};
+    if (GetBakFilePath(TOKEN_ID_CFG_FILE_PATH, bakPath, sizeof(bakPath)) != 0) {
+        LOGC("Failed to construct backup path.");
+        return ret;
+    }
+    uint32_t bakRet = GetFileBuff(bakPath, &fileBuff);
+    if (bakRet != ATRET_SUCCESS || fileBuff == NULL) {
+        LOGC("Failed to read backup nativetoken.json, bakRet=%d.", bakRet);
+        return ret;
+    }
+    *record = cJSON_Parse(fileBuff);
+    if (*record == NULL) {
+        free(fileBuff);
+        fileBuff = NULL;
+        LOGC("Failed to parse both main and backup nativetoken.json.");
+        return ret;
+    }
+
+    TryRemoveInvalidConfigPath(TOKEN_ID_CFG_FILE_PATH);
+    int32_t utilRet = AtomicWriteFile(TOKEN_ID_CFG_FILE_PATH, fileBuff, strlen(fileBuff),
+        S_IRUSR | S_IWUSR | S_IRGRP);
+    LOGC("Restore main nativetoken.json from backup, ret=%d.", utilRet);
     free(fileBuff);
     fileBuff = NULL;
+    return ATRET_SUCCESS;
+}
 
+static uint32_t ParseTokenInfo(void)
+{
+    cJSON *record = NULL;
+    uint32_t ret = ReadAndParseFile(&record);
+    if (record == NULL) {
+        return ret;
+    }
     ret = GetTokenList(record);
     cJSON_Delete(record);
-
     return ret;
 }
 
 static uint32_t ClearOrCreateCfgFile(void)
 {
     TryRemoveInvalidConfigPath(TOKEN_ID_CFG_FILE_PATH);
+    char bakPath[PATH_MAX_LEN + 1] = {0};
+    if (GetBakFilePath(TOKEN_ID_CFG_FILE_PATH, bakPath, sizeof(bakPath)) == 0) {
+        if (unlink(bakPath) != 0) {
+            (void)rmdir(bakPath);
+        }
+    }
     int32_t fd = open(TOKEN_ID_CFG_FILE_PATH, O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP);
     if (fd < 0) {
         LOGC("Failed to open file, errno=%d.", errno);
@@ -474,27 +518,12 @@ static uint32_t WriteToFile(const cJSON *root)
     }
     uint32_t ret = ATRET_SUCCESS;
 
-    do {
-        int32_t fd = open(TOKEN_ID_CFG_FILE_PATH, O_RDWR | O_CREAT | O_TRUNC,
-                          S_IRUSR | S_IWUSR | S_IRGRP);
-        if (fd < 0) {
-            LOGC("Failed to open file, errno(%d).", errno);
-            ret = ATRET_FAILED;
-            break;
-        }
-        fdsan_exchange_owner_tag(fd, 0, g_nativeFdTag);
-        size_t strLen = strlen(jsonStr);
-        ssize_t writtenLen = write(fd, (void *)jsonStr, (size_t)strLen);
-        if (fsync(fd) != 0) {
-            LOGE("Failed to fsync, errno=%d.", errno);
-        }
-        (void)fdsan_close_with_tag(fd, g_nativeFdTag);
-        if (writtenLen < 0 || (size_t)writtenLen != strLen) {
-            LOGC("Failed to write, writtenLen=%zu.", writtenLen);
-            ret = ATRET_FAILED;
-            break;
-        }
-    } while (0);
+    int32_t utilRet = AtomicWriteFile(TOKEN_ID_CFG_FILE_PATH, jsonStr, strlen(jsonStr),
+        S_IRUSR | S_IWUSR | S_IRGRP);
+    if (utilRet != 0) {
+        LOGC("Failed to AtomicWriteFile, ret=%d.", utilRet);
+        ret = ATRET_FAILED;
+    }
 
     cJSON_free(jsonStr);
     return ret;
@@ -502,27 +531,15 @@ static uint32_t WriteToFile(const cJSON *root)
 
 static uint32_t SaveTokenIdToCfg(const NativeTokenList *curr)
 {
-    char *fileBuff = NULL;
     cJSON *record = NULL;
-    uint32_t ret;
-
-    ret = GetFileBuff(TOKEN_ID_CFG_FILE_PATH, &fileBuff);
-    if (ret != ATRET_SUCCESS) {
-        LOGC("Failed to GetFileBuff, ret=%d.", ret);
-        return ret;
-    }
-
-    if (fileBuff == NULL) {
-        record = cJSON_CreateArray();
-    } else {
-        record = cJSON_Parse(fileBuff);
-        free(fileBuff);
-        fileBuff = NULL;
-    }
-
+    uint32_t ret = ReadAndParseFile(&record);
     if (record == NULL) {
-        LOGC("Failed to get record.");
-        return SAVE_CONTENT_TO_CFG_FAILED;
+        if (ret == ATRET_SUCCESS) {
+            record = cJSON_CreateArray();
+        } else {
+            LOGC("Failed to read token config, ret=%d.", ret);
+            return SAVE_CONTENT_TO_CFG_FAILED;
+        }
     }
 
     cJSON *node = CreateNativeTokenJsonObject(curr);
@@ -807,25 +824,14 @@ static uint32_t UpdateTokenInfoInList(NativeTokenList *tokenNode,
 static uint32_t UpdateInfoInCfgFile(const NativeTokenList *tokenNode)
 {
     cJSON *record = NULL;
-    char *fileBuffer = NULL;
-    uint32_t ret;
-    ret = GetFileBuff(TOKEN_ID_CFG_FILE_PATH, &fileBuffer);
-    if (ret != ATRET_SUCCESS) {
-        LOGC("Failed to GetFileBuff, ret=%d.", ret);
-        return ret;
-    }
-
-    if (fileBuffer == NULL) {
-        record = cJSON_CreateArray();
-    } else {
-        record = cJSON_Parse(fileBuffer);
-        free(fileBuffer);
-        fileBuffer = NULL;
-    }
-
+    uint32_t ret = ReadAndParseFile(&record);
     if (record == NULL) {
-        LOGC("Failed to get record.");
-        return SAVE_CONTENT_TO_CFG_FAILED;
+        if (ret == ATRET_SUCCESS) {
+            record = cJSON_CreateArray();
+        } else {
+            LOGC("Failed to read token config, ret=%d.", ret);
+            return SAVE_CONTENT_TO_CFG_FAILED;
+        }
     }
 
     ret = UpdateGoalItemFromRecord(tokenNode, record);

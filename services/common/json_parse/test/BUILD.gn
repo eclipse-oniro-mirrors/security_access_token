@@ -51,6 +51,7 @@ ohos_unittest("libjsonparse_test") {
 
   deps = [
     "${access_token_path}/frameworks/common:accesstoken_common_cxx",
+    "${access_token_path}/interfaces/innerkits/accesstoken_file_util:accesstoken_file_util_static",
     "${access_token_path}/frameworks/json_adapter:accesstoken_cjson_utils",
   ]
 
@@ -63,6 +64,11 @@ ohos_unittest("libjsonparse_test") {
 
   if (customization_config_policy_enable) {
     external_deps += [ "config_policy:configpolicy_util" ]
+  }
+  cflags = []
+  if (build_selinux) {
+    external_deps += [ "selinux_adapter:librestorecon" ]
+    cflags += [ "-DWITH_SELINUX" ]
   }
 }
 

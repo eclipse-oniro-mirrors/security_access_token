@@ -1,9 +1,9 @@
-# Copyright (c) 2022-2023 Huawei Device Co., Ltd.
+# Copyright (c) 2026 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#     http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,17 +14,7 @@
 import("//base/security/access_token/access_token.gni")
 import("//build/test.gni")
 
-config("accesstoken_test_config") {
-  include_dirs = [
-    "${access_token_path}/interfaces/innerkits/accesstoken/include",
-    "${access_token_path}/interfaces/innerkits/privacy/include",
-    "../../accesstoken/include",
-    "../../common/include",
-    "../../privacy/include",
-  ]
-}
-
-ohos_unittest("libaccesstoken_framework_test") {
+ohos_unittest("accesstoken_file_util_test") {
   subsystem_name = "accesscontrol"
   module_out_path = module_output_path_unittest_accesstoken
   sanitize = {
@@ -34,33 +24,24 @@ ohos_unittest("libaccesstoken_framework_test") {
   }
   branch_protector_ret = "pac_ret"
 
-  sources = [
-    "accesstoken_parcel_test.cpp",
-    "common_test.cpp",
-    "privacy_parcel_test.cpp",
-  ]
+  sources = [ "accesstoken_file_util_test.cpp" ]
 
   configs = [
-    ":accesstoken_test_config",
     "${access_token_path}/config:coverage_flags",
   ]
 
   deps = [
-    "../../accesstoken:accesstoken_communication_adapter_cxx",
-    "../../common:accesstoken_common_cxx",
-    "../../privacy:privacy_communication_adapter_cxx",
+    "//base/security/access_token/interfaces/innerkits/accesstoken_file_util:accesstoken_file_util_static",
   ]
 
   external_deps = [
     "bounds_checking_function:libsec_shared",
     "c_utils:utils",
     "hilog:libhilog",
-    "ipc:ipc_single",
-    "openssl:libcrypto_shared",
   ]
 }
 
 group("unittest") {
   testonly = true
-  deps = [ ":libaccesstoken_framework_test" ]
+  deps = [ ":accesstoken_file_util_test" ]
 }

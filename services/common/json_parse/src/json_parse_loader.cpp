@@ -29,6 +29,7 @@
 #ifdef CUSTOMIZATION_CONFIG_POLICY_ENABLE
 #include "config_policy_utils.h"
 #endif
+#include "accesstoken_file_util.h"
 #include "data_validator.h"
 #include "permission_map.h"
 
@@ -495,18 +496,30 @@ bool ConfigPolicLoader::ParserNativeRawData(
 
 int32_t ConfigPolicLoader::GetAllNativeTokenInfo(std::vector<NativeTokenInfoBase>& tokenInfos)
 {
-    std::string nativeRawData;
-    int32_t ret = ReadCfgFile(NATIVE_TOKEN_CONFIG_FILE, nativeRawData);
-    if (ret != RET_SUCCESS) {
-        LOGE(ATM_DOMAIN, ATM_TAG,
-            "Read native token json file failed, err = %{public}d.", ret);
-        return ret;
+    auto readAndParse = [this, &tokenInfos](const std::string& path) -> int32_t {
+        std::string rawData;
+        int32_t ret = ReadCfgFile(path, rawData);
+        if (ret != RET_SUCCESS) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Read native token file failed, err = %{public}d.", ret);
+            return ret;
+        }
+        if (!ParserNativeRawData(rawData, tokenInfos)) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "ParserNativeRawData failed.");
+            return ERR_PRASE_RAW_DATA_FAILED;
+        }
+        return RET_SUCCESS;
+    };
+
+    int32_t ret = readAndParse(NATIVE_TOKEN_CONFIG_FILE);
+    if (ret == RET_SUCCESS) {
+        return RET_SUCCESS;
     }
-    if (!ParserNativeRawData(nativeRawData, tokenInfos)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "ParserNativeRawData failed.");
-        return ERR_PRASE_RAW_DATA_FAILED;
+    // backup fallback (read-only, no restore — service has no write permission)
+    char bakPath[PATH_MAX] = {0};
+    if (GetBakFilePath(NATIVE_TOKEN_CONFIG_FILE, bakPath, sizeof(bakPath)) != 0) {
+        return ERR_FILE_OPERATE_FAILED;
     }
-    return RET_SUCCESS;
+    return readAndParse(bakPath);
 }
 
 static void JsonFromPermissionDlpMode(const CJson* j, PermissionDlpMode& p)

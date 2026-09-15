@@ -52,6 +52,7 @@ ohos_shared_library("accesstoken_json_parse") {
 
     deps = [
       "${access_token_path}/frameworks/common:accesstoken_common_cxx",
+      "${access_token_path}/interfaces/innerkits/accesstoken_file_util:accesstoken_file_util_static",
       "${access_token_path}/frameworks/json_adapter:accesstoken_cjson_utils",
     ]
 
