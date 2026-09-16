@@ -717,6 +717,13 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, OnUpgrade005, TestSize.Level4)
             "user_id,permission_name,-1,status from permission_request_toggle_status_table_backup",
         "drop table permission_request_toggle_status_table_backup",
         "delete from hap_info_table",
+#ifdef SPM_DATA_ENABLE
+        "create table if not exists hap_info_table (bundle_name text not null,module_name text not null,"
+            "path text not null,bundle_type integer not null,persist_data blob not null,"
+            "is_preinstalled integer not null,mode integer not null default -1,"
+            "primary key(bundle_name,module_name))",
+        "alter table hap_info_table add column mode integer not null default -1",
+#endif
     };
     EXPECT_EQ(expectedSqls, db->executedSqls_);
 }
@@ -851,8 +858,19 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, OnUpgrade008, TestSize.Level4)
     // ignore the failure
     EXPECT_EQ(NativeRdb::E_OK,
         callback.OnUpgrade(*(db.get()), DATABASE_VERSION_10, DATABASE_VERSION_11));
+#ifdef SPM_DATA_ENABLE
+    // UpgradeFromVersion10 failure is ignored; fallthrough runs UpgradeFromVersion11
+    ASSERT_EQ(3U, db->executedSqls_.size());
+    EXPECT_EQ("delete from hap_info_table", db->executedSqls_[0]);
+    EXPECT_EQ("create table if not exists hap_info_table (bundle_name text not null,module_name text not null,"
+        "path text not null,bundle_type integer not null,persist_data blob not null,"
+        "is_preinstalled integer not null,mode integer not null default -1,"
+        "primary key(bundle_name,module_name))", db->executedSqls_[1]);
+    EXPECT_EQ("alter table hap_info_table add column mode integer not null default -1", db->executedSqls_[2]);
+#else
     ASSERT_EQ(1U, db->executedSqls_.size());
     EXPECT_EQ("delete from hap_info_table", db->executedSqls_[0]);
+#endif
 }
 
 /*

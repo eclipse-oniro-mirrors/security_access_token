@@ -65,6 +65,7 @@ const std::string TokenFiledConst::FIELD_APP_DISTRIBUTION_TYPE = "app_distributi
 const std::string TokenFiledConst::FIELD_CONTROLLER_TOKENID = "controller_tokenid";
 const std::string TokenFiledConst::FIELD_RESTRICTED_USER = "restricted_user";
 const std::string TokenFiledConst::FIELD_WHITELIST = "whitelist";
+const std::string TokenFiledConst::FIELD_MODE = "mode";
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

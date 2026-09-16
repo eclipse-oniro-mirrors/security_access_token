@@ -20,6 +20,7 @@
 #include "access_token_error.h"
 #include "access_token.h"
 #include "accesstoken_common_log.h"
+#include "hap_token_info.h"
 #include "hisysevent_adapter.h"
 #include "time_util.h"
 #include "token_field_const.h"
@@ -427,6 +428,11 @@ int32_t AccessTokenOpenCallback::CreateHapInfoTable(NativeRdb::RdbStore& rdbStor
         .append(" blob not null,")
         .append(TokenFiledConst::FIELD_IS_PREINSTALLED)
         .append(INTEGER_STR)
+#ifdef SPM_DATA_ENABLE
+        .append(TokenFiledConst::FIELD_MODE)
+        .append(" integer not null default "
+            + std::to_string(static_cast<int32_t>(MultipleMode::DEFAULT_MODE)) + ",")
+#endif
         .append("primary key(")
         .append(TokenFiledConst::FIELD_BUNDLE_NAME)
         .append(",")
@@ -436,7 +442,7 @@ int32_t AccessTokenOpenCallback::CreateHapInfoTable(NativeRdb::RdbStore& rdbStor
     return rdbStore.ExecuteSql(sql);
 }
 
-int32_t AccessTokenOpenCallback::CreateVersionNineTable(NativeRdb::RdbStore& rdbStore)
+int32_t AccessTokenOpenCallback::CreateVersionTwelveTable(NativeRdb::RdbStore& rdbStore)
 {
     int32_t res = CreateHapInfoTable(rdbStore);
     if (res != NativeRdb::E_OK) {
@@ -482,9 +488,9 @@ int32_t AccessTokenOpenCallback::OnCreate(NativeRdb::RdbStore& rdbStore)
         return res;
     }
 #ifdef SPM_DATA_ENABLE
-    res = CreateVersionNineTable(rdbStore);
+    res = CreateVersionTwelveTable(rdbStore);
     if (res != NativeRdb::E_OK) {
-        ReportSysEventDbException(AccessTokenDbSceneCode::AT_DB_CREATE_ERROR, res, "version 9 tables");
+        ReportSysEventDbException(AccessTokenDbSceneCode::AT_DB_CREATE_ERROR, res, "version 12 tables");
         return res;
     }
 #endif
@@ -727,6 +733,21 @@ int32_t AccessTokenOpenCallback::AddUidMigratedReservedColumns(NativeRdb::RdbSto
     return NativeRdb::E_OK;
 }
 
+int32_t AccessTokenOpenCallback::AddModeColumn(NativeRdb::RdbStore& rdbStore, AtmDataType type)
+{
+    std::string tableName;
+    AccessTokenDbUtil::GetTableNameByType(type, tableName);
+    std::vector<std::string> columnList;
+    int32_t res = GetTableColumnList(rdbStore, tableName, columnList);
+    if (res != NativeRdb::E_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get column list for table %{public}s, errCode is %{public}d.",
+            tableName.c_str(), res);
+        return res;
+    }
+    return AddColumn(columnList, rdbStore, tableName, TokenFiledConst::FIELD_MODE,
+        "integer not null default " + std::to_string(static_cast<int32_t>(MultipleMode::DEFAULT_MODE)));
+}
+
 int32_t AccessTokenOpenCallback::UpgradeFromVersion1(NativeRdb::RdbStore& rdbStore)
 {
     int32_t res = AddAvailableTypeColumn(rdbStore);
@@ -875,6 +896,27 @@ int32_t AccessTokenOpenCallback::UpgradeFromVersion10(NativeRdb::RdbStore& rdbSt
     return NativeRdb::E_OK;
 }
 
+#ifdef SPM_DATA_ENABLE
+int32_t AccessTokenOpenCallback::UpgradeFromVersion11(NativeRdb::RdbStore& rdbStore)
+{
+    int32_t res = CreateHapInfoTable(rdbStore);
+    if (res != NativeRdb::E_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to create hap_info_table during upgrade from version 12.");
+        ReportUpgradeError(res, DATABASE_VERSION_12, "CreateHapInfoTable");
+        return res;
+    }
+
+    res = AddModeColumn(rdbStore, AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO);
+    if (res != NativeRdb::E_OK) {
+        ReportUpgradeError(res, DATABASE_VERSION_12, "AddModeColumn");
+        return res;
+    }
+
+    LOGI(ATM_DOMAIN, ATM_TAG, "Success to upgrade from version 12 to version 13.");
+    return NativeRdb::E_OK;
+}
+#endif
+
 int32_t AccessTokenOpenCallback::OnUpgrade(NativeRdb::RdbStore& rdbStore, int32_t currentVersion, int32_t targetVersion)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "DB OnUpgrade from Ver %{public}d to Ver %{public}d.", currentVersion, targetVersion);
@@ -937,6 +979,14 @@ int32_t AccessTokenOpenCallback::OnUpgrade(NativeRdb::RdbStore& rdbStore, int32_
         case DATABASE_VERSION_10: // 10->11
             (void)UpgradeFromVersion10(rdbStore);
             [[fallthrough]];
+#ifdef SPM_DATA_ENABLE
+        case DATABASE_VERSION_11: // 12->13
+            res = UpgradeFromVersion11(rdbStore);
+            if (res != NativeRdb::E_OK) {
+                return res;
+            }
+            [[fallthrough]];
+#endif
         default:
             return NativeRdb::E_OK;
     }
