@@ -11972,7 +11972,8 @@
             "since": "26.0.1",
             "deprecated": "",
             "provisionEnable": true,
-            "distributedSceneEnable": false
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "tablet", "2in1", "wearable", "tv", "car"]
         },
         {
             "name": "ohos.permission.MULTI_SCREEN_MANAGER",
