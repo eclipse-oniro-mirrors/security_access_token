@@ -11965,6 +11965,16 @@
             "deviceTypes": ["phone", "wearable"]
         },
         {
+            "name": "ohos.permission.ACCESS_BOARD_INFO",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "NORMAL",
+            "since": "26.0.1",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
             "name": "ohos.permission.MULTI_SCREEN_MANAGER",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
