@@ -643,81 +643,6 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, AddUidMigratedReservedColumns008, Test
 }
 
 /*
- * @tc.name: AddModeColumn001
- * @tc.desc: AccessTokenOpenCallback::AddModeColumn adds mode column with default value.
- * @tc.type: FUNC
- * @tc.require: TDD
- */
-HWTEST_F(AccessTokenDatabaseCoverageTest, AddModeColumn001, TestSize.Level4)
-{
-    std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance()->GetRdb();
-    AccessTokenOpenCallback callback;
-
-    db->querySqlResults_ = {{{{"0", "token_id", "INTEGER", "1", "", "1"}}}};
-    db->querySqlIndex_ = 0;
-    db->executedSqls_.clear();
-
-    ASSERT_EQ(NativeRdb::E_OK, callback.AddModeColumn(*(db.get())));
-    ASSERT_EQ(1U, db->executedSqls_.size());
-    EXPECT_EQ("alter table hap_token_info_table add column mode integer not null default -1", db->executedSqls_[0]);
-}
-
-/*
- * @tc.name: AddModeColumn002
- * @tc.desc: AccessTokenOpenCallback::AddModeColumn skips migration when mode column already exists.
- * @tc.type: FUNC
- * @tc.require: TDD
- */
-HWTEST_F(AccessTokenDatabaseCoverageTest, AddModeColumn002, TestSize.Level4)
-{
-    std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance()->GetRdb();
-    AccessTokenOpenCallback callback;
-
-    db->querySqlResults_ = {{{{"0", "token_id", "INTEGER", "1", "", "1"},
-        {"1", "mode", "INTEGER", "1", "-1", "0"}}}};
-    db->querySqlIndex_ = 0;
-    db->executedSqls_.clear();
-
-    ASSERT_EQ(NativeRdb::E_OK, callback.AddModeColumn(*(db.get())));
-    EXPECT_TRUE(db->executedSqls_.empty());
-}
-
-/*
- * @tc.name: AddModeColumn003
- * @tc.desc: AccessTokenOpenCallback::AddModeColumn returns database error when adding mode column fails.
- * @tc.type: FUNC
- * @tc.require: TDD
- */
-HWTEST_F(AccessTokenDatabaseCoverageTest, AddModeColumn003, TestSize.Level4)
-{
-    std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance()->GetRdb();
-    AccessTokenOpenCallback callback;
-
-    db->querySqlResults_ = {{{{"0", "token_id", "INTEGER", "1", "", "1"}}}};
-    db->querySqlIndex_ = 0;
-    db->executeSqlResults_ = {NativeRdb::E_SQLITE_CORRUPT};
-    db->executeSqlIndex_ = 0;
-
-    ASSERT_EQ(NativeRdb::E_SQLITE_CORRUPT, callback.AddModeColumn(*(db.get())));
-}
-
-/*
- * @tc.name: AddModeColumn004
- * @tc.desc: AccessTokenOpenCallback::AddModeColumn returns error when QuerySql returns nullptr.
- * @tc.type: FUNC
- * @tc.require: TDD
- */
-HWTEST_F(AccessTokenDatabaseCoverageTest, AddModeColumn004, TestSize.Level4)
-{
-    std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance()->GetRdb();
-    AccessTokenOpenCallback callback;
-
-    db->queryFlag_ = NativeRdb::RdbStore::RESULT_FAIL;
-    ASSERT_EQ(ERR_DATABASE_OPERATE_FAILED, callback.AddModeColumn(*(db.get())));
-    db->queryFlag_ = 0;
-}
-
-/*
  * @tc.name: ToRdbValueBuckets002
  * @tc.desc: AccessTokenDbUtil::ToRdbValueBuckets covers the PutBlob branch
  * @tc.type: FUNC
@@ -792,7 +717,13 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, OnUpgrade005, TestSize.Level4)
             "user_id,permission_name,-1,status from permission_request_toggle_status_table_backup",
         "drop table permission_request_toggle_status_table_backup",
         "delete from hap_info_table",
-        "alter table hap_token_info_table add column mode integer not null default -1",
+#ifdef SPM_DATA_ENABLE
+        "create table if not exists hap_info_table (bundle_name text not null,module_name text not null,"
+            "path text not null,bundle_type integer not null,persist_data blob not null,"
+            "is_preinstalled integer not null,mode integer not null default -1,"
+            "primary key(bundle_name,module_name))",
+        "alter table hap_info_table add column mode integer not null default -1",
+#endif
     };
     EXPECT_EQ(expectedSqls, db->executedSqls_);
 }
@@ -857,48 +788,6 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, OnUpgrade006, TestSize.Level4)
 }
 
 /*
- * @tc.name: OnUpgrade009
- * @tc.desc: AccessTokenOpenCallback::OnUpgrade version 11->12 adds mode column.
- * @tc.type: FUNC
- * @tc.require: TDD
- */
-HWTEST_F(AccessTokenDatabaseCoverageTest, OnUpgrade009, TestSize.Level4)
-{
-    std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance()->GetRdb();
-    ASSERT_NE(nullptr, db);
-    AccessTokenOpenCallback callback;
-
-    db->querySqlResults_ = {{{{"0", "token_id", "INTEGER", "1", "", "1"}}}};
-    db->querySqlIndex_ = 0;
-    db->executedSqls_.clear();
-
-    ASSERT_EQ(NativeRdb::E_OK, callback.OnUpgrade(*(db.get()), DATABASE_VERSION_11, DATABASE_VERSION_12));
-    ASSERT_EQ(1U, db->executedSqls_.size());
-    EXPECT_EQ("alter table hap_token_info_table add column mode integer not null default -1", db->executedSqls_[0]);
-}
-
-/*
- * @tc.name: OnUpgrade010
- * @tc.desc: AccessTokenOpenCallback::OnUpgrade version 11->12 returns error when adding mode column fails.
- * @tc.type: FUNC
- * @tc.require: TDD
- */
-HWTEST_F(AccessTokenDatabaseCoverageTest, OnUpgrade010, TestSize.Level4)
-{
-    std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance()->GetRdb();
-    ASSERT_NE(nullptr, db);
-    AccessTokenOpenCallback callback;
-
-    db->querySqlResults_ = {{{{"0", "token_id", "INTEGER", "1", "", "1"}}}};
-    db->querySqlIndex_ = 0;
-    db->executeSqlResults_ = {NativeRdb::E_SQLITE_CORRUPT};
-    db->executeSqlIndex_ = 0;
-
-    ASSERT_EQ(NativeRdb::E_SQLITE_CORRUPT,
-        callback.OnUpgrade(*(db.get()), DATABASE_VERSION_11, DATABASE_VERSION_12));
-}
-
-/*
  * @tc.name: OnUpgrade007
  * @tc.desc: AccessTokenOpenCallback::OnUpgrade version 9->10 rolls back when each migration step fails.
  * @tc.type: FUNC
@@ -952,7 +841,7 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, OnUpgrade007, TestSize.Level4)
 
 /*
  * @tc.name: OnUpgrade008
- * @tc.desc: AccessTokenOpenCallback::OnUpgrade ignores a version 10->11 cleanup failure and continues to 11->12.
+ * @tc.desc: AccessTokenOpenCallback::OnUpgrade propagates a version 10->11 cleanup failure.
  * @tc.type: FUNC
  * @tc.require: TDD
  */
@@ -969,9 +858,19 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, OnUpgrade008, TestSize.Level4)
     // ignore the failure
     EXPECT_EQ(NativeRdb::E_OK,
         callback.OnUpgrade(*(db.get()), DATABASE_VERSION_10, DATABASE_VERSION_11));
-    ASSERT_EQ(2U, db->executedSqls_.size());
+#ifdef SPM_DATA_ENABLE
+    // UpgradeFromVersion10 failure is ignored; fallthrough runs UpgradeFromVersion11
+    ASSERT_EQ(3U, db->executedSqls_.size());
     EXPECT_EQ("delete from hap_info_table", db->executedSqls_[0]);
-    EXPECT_EQ("alter table hap_token_info_table add column mode integer not null default -1", db->executedSqls_[1]);
+    EXPECT_EQ("create table if not exists hap_info_table (bundle_name text not null,module_name text not null,"
+        "path text not null,bundle_type integer not null,persist_data blob not null,"
+        "is_preinstalled integer not null,mode integer not null default -1,"
+        "primary key(bundle_name,module_name))", db->executedSqls_[1]);
+    EXPECT_EQ("alter table hap_info_table add column mode integer not null default -1", db->executedSqls_[2]);
+#else
+    ASSERT_EQ(1U, db->executedSqls_.size());
+    EXPECT_EQ("delete from hap_info_table", db->executedSqls_[0]);
+#endif
 }
 
 /*

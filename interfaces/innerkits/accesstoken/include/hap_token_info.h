@@ -96,8 +96,6 @@ public:
     std::string appProvisionType = "release";
     /** Whether hap is a skill */
     bool isSkillHap = false;
-    /** App mode */
-    MultipleMode mode = MultipleMode::DEFAULT_MODE;
 };
 
 /**
@@ -241,6 +239,29 @@ public:
      * permission detail after failing to install or update hap
      */
     PermissionInfoCheckResult permCheckResult;
+};
+
+/**
+ * @brief Declares the result of signed profile data
+ */
+struct ProfileData {
+    std::string provisionRaw;
+    int32_t profileBlockLength = 0;
+    std::vector<uint8_t> profileBlock;
+    std::string appId;
+    std::string fingerprint;
+    std::string organization;
+    bool isOpenHarmony = false;
+    bool isEnterpriseResigned = false;
+};
+
+/**
+ * @brief Declares the result of trusted bundle info
+ */
+struct TrustedBundleInfo {
+    ProfileData profileData;
+    std::string moduleInfo;
+    std::string sharedFiles;
 };
 
 /**

@@ -194,6 +194,10 @@ HWTEST_F(AccessTokenIdManagerCoverageTest, TranslateUid002, TestSize.Level4)
  */
 HWTEST_F(AccessTokenIdManagerCoverageTest, AllocUid001, TestSize.Level4)
 {
+#ifdef SPM_DATA_ENABLE
+    // AllocUid checks migrationDone_ first; must be true to reach bundleId exhaustion path
+    AccessTokenIDManager::GetInstance().migrationDone_ = true;
+#endif
     // Fill the entire bundleId range [10000, 65535]; AllocUid skips kernel call for occupied entries
     for (int32_t bundleId = 10000; bundleId <= 65535; ++bundleId) {
         AccessTokenIDManager::GetInstance().bundleIdSet_.insert(bundleId);

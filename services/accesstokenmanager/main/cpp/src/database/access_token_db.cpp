@@ -107,7 +107,11 @@ void AccessTokenDb::InitRdb()
     AccessTokenOpenCallback callback;
     int32_t res = NativeRdb::E_OK;
     // pragma user_version will done by rdb, they store path and db_ as pair in RdbStoreManager
+#ifdef SPM_DATA_ENABLE
     db_ = NativeRdb::RdbHelper::GetRdbStore(config, DATABASE_VERSION_12, callback, res);
+#else
+    db_ = NativeRdb::RdbHelper::GetRdbStore(config, DATABASE_VERSION_11, callback, res);
+#endif
     if ((res != NativeRdb::E_OK) || (db_ == nullptr)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to init rdb, res is %{public}d.", res);
     }

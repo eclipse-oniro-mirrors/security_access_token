@@ -17,7 +17,6 @@
 
 #include "access_token.h"
 #include "accesstoken_common_log.h"
-#include "hap_token_info.h"
 #include "permission_used_request.h"
 #include "permission_used_type.h"
 #include "privacy_param.h"
@@ -198,12 +197,6 @@ bool DataValidator::IsDlpTypeValid(int dlpType)
     return ((dlpType == DLP_COMMON) || (dlpType == DLP_READ) ||
         (dlpType == DLP_FULL_CONTROL) || (dlpType == DLP_READ_PERM) ||
         (dlpType == DLP_FULL_PERM));
-}
-
-bool DataValidator::IsMultipleModeValid(int32_t mode)
-{
-    return (mode >= static_cast<int32_t>(MultipleMode::DEFAULT_MODE)) &&
-        (mode <= static_cast<int32_t>(MultipleMode::MAX_MODE));
 }
 
 bool DataValidator::IsPermissionUsedFlagValid(uint32_t flag)

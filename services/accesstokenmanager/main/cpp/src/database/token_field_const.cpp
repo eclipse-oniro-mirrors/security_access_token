@@ -35,7 +35,6 @@ const std::string TokenFiledConst::FIELD_APL = "apl";
 const std::string TokenFiledConst::FIELD_TOKEN_VERSION = "token_version";
 const std::string TokenFiledConst::FIELD_TOKEN_ATTR = "token_attr";
 const std::string TokenFiledConst::FIELD_API_VERSION = "api_version";
-const std::string TokenFiledConst::FIELD_MODE = "mode";
 const std::string TokenFiledConst::FIELD_FORBID_PERM_DIALOG = "perm_dialog_cap_state";
 const std::string TokenFiledConst::FIELD_RESERVED = "reserved";
 const std::string TokenFiledConst::FIELD_PROCESS_NAME = "process_name";
@@ -66,6 +65,7 @@ const std::string TokenFiledConst::FIELD_APP_DISTRIBUTION_TYPE = "app_distributi
 const std::string TokenFiledConst::FIELD_CONTROLLER_TOKENID = "controller_tokenid";
 const std::string TokenFiledConst::FIELD_RESTRICTED_USER = "restricted_user";
 const std::string TokenFiledConst::FIELD_WHITELIST = "whitelist";
+const std::string TokenFiledConst::FIELD_MODE = "mode";
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
