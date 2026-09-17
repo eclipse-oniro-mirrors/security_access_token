@@ -299,7 +299,7 @@ static uint32_t ReadAndParseFile(cJSON **record)
             return ATRET_SUCCESS;
         }
         LOGC("Failed to parse main nativetoken.json, trying backup.");
-        ret = GET_FILE_BUFF_FAILED;
+        ret = GET_TOKEN_LIST_FAILED;
     } else {
         LOGC("Failed to read main nativetoken.json, ret=%d.", ret);
     }

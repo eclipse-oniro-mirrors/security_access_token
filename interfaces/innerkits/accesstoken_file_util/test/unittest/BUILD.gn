@@ -31,7 +31,7 @@ ohos_unittest("accesstoken_file_util_test") {
   ]
 
   deps = [
-    "//base/security/access_token/interfaces/innerkits/accesstoken_file_util:accesstoken_file_util_static",
+    "//base/security/access_token/interfaces/innerkits/accesstoken_file_util:accesstoken_file_util",
   ]
 
   external_deps = [

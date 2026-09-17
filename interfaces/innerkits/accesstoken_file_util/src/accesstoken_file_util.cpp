@@ -36,6 +36,7 @@
 #endif
 
 namespace {
+constexpr int32_t FILE_UTIL_FAILED = -1;
 constexpr uint64_t FD_TAG = 0xD005A01;
 
 int32_t GetParentDir(const char* filePath, char* parentDir, size_t parentDirLen)
@@ -43,16 +44,16 @@ int32_t GetParentDir(const char* filePath, char* parentDir, size_t parentDirLen)
     const char* lastSlash = strrchr(filePath, '/');
     if (lastSlash == nullptr || lastSlash == filePath) {
         LOGE(ATM_DOMAIN, ATM_TAG, "GetParentDir: no slash in path or root path.");
-        return -1;
+        return FILE_UTIL_FAILED;
     }
     size_t dirLen = static_cast<size_t>(lastSlash - filePath);
     if (dirLen >= parentDirLen) {
         LOGE(ATM_DOMAIN, ATM_TAG, "GetParentDir: parent dir path too long.");
-        return -1;
+        return FILE_UTIL_FAILED;
     }
     if (memcpy_s(parentDir, parentDirLen, filePath, dirLen) != EOK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "GetParentDir: memcpy_s failed.");
-        return -1;
+        return FILE_UTIL_FAILED;
     }
     parentDir[dirLen] = '\0';
     return 0;
@@ -77,7 +78,7 @@ int32_t WriteAndSync(const char* path, const char* data, size_t dataLen, int32_t
     int32_t fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, static_cast<mode_t>(mode));
     if (fd < 0) {
         LOGE(ATM_DOMAIN, ATM_TAG, "open failed, errno=%d.", errno);
-        return -1;
+        return FILE_UTIL_FAILED;
     }
     fdsan_exchange_owner_tag(fd, 0, FD_TAG);
     bool failed = false;
@@ -95,7 +96,7 @@ int32_t WriteAndSync(const char* path, const char* data, size_t dataLen, int32_t
         if (unlink(path) != 0 && errno != ENOENT) {
             LOGE(ATM_DOMAIN, ATM_TAG, "WriteAndSync: unlink failed, path=%s, errno=%d.", path, errno);
         }
-        return -1;
+        return FILE_UTIL_FAILED;
     }
     return 0;
 }
@@ -106,7 +107,7 @@ int32_t WriteAndRename(const char* filePath, const char* data, size_t dataLen, i
     int32_t newRet = snprintf_s(newPath, sizeof(newPath), sizeof(newPath) - 1, "%s.new", filePath);
     if (newRet < 0) {
         LOGE(ATM_DOMAIN, ATM_TAG, "newPath too long.");
-        return -1;
+        return FILE_UTIL_FAILED;
     }
     if (unlink(newPath) != 0 && errno != ENOENT) {
         LOGE(ATM_DOMAIN, ATM_TAG, "WriteAndRename: unlink stale .new failed, path=%s, errno=%d.", newPath, errno);
@@ -114,7 +115,7 @@ int32_t WriteAndRename(const char* filePath, const char* data, size_t dataLen, i
 
     if (WriteAndSync(newPath, data, dataLen, mode) != 0) {
         LOGE(ATM_DOMAIN, ATM_TAG, "WriteAndRename: WriteAndSync failed, path=%s.", newPath);
-        return -1;
+        return FILE_UTIL_FAILED;
     }
 
     char parentDir[PATH_MAX];
@@ -133,7 +134,7 @@ int32_t WriteAndRename(const char* filePath, const char* data, size_t dataLen, i
 
     if (rename(newPath, filePath) != 0) {
         LOGE(ATM_DOMAIN, ATM_TAG, "rename failed, errno=%d.", errno);
-        return -1;
+        return FILE_UTIL_FAILED;
     }
 
 #ifdef WITH_SELINUX
@@ -150,12 +151,12 @@ int32_t GetBakFilePath(const char* filePath, char* bakPath, size_t bakPathLen)
 {
     if (filePath == nullptr || bakPath == nullptr || bakPathLen == 0) {
         LOGE(ATM_DOMAIN, ATM_TAG, "GetBakFilePath: invalid argument.");
-        return -1;
+        return FILE_UTIL_FAILED;
     }
     const char* lastSlash = strrchr(filePath, '/');
     if (lastSlash == nullptr || lastSlash == filePath) {
         LOGE(ATM_DOMAIN, ATM_TAG, "GetBakFilePath: no slash in path or root path.");
-        return -1;
+        return FILE_UTIL_FAILED;
     }
     size_t parentLen = static_cast<size_t>(lastSlash - filePath);
     const char* fileName = lastSlash + 1;
@@ -164,7 +165,7 @@ int32_t GetBakFilePath(const char* filePath, char* bakPath, size_t bakPathLen)
         parentLenInt, filePath, fileName);
     if (ret < 0) {
         LOGE(ATM_DOMAIN, ATM_TAG, "GetBakFilePath: snprintf_s failed or truncated.");
-        return -1;
+        return FILE_UTIL_FAILED;
     }
     return 0;
 }
@@ -173,12 +174,12 @@ int32_t AtomicWriteFile(const char* filePath, const char* data, size_t dataLen, 
 {
     if (filePath == nullptr || data == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "AtomicWriteFile: invalid argument.");
-        return -1;
+        return FILE_UTIL_FAILED;
     }
 
     if (WriteAndRename(filePath, data, dataLen, mode) != 0) {
         LOGE(ATM_DOMAIN, ATM_TAG, "AtomicWriteFile: WriteAndRename main failed, path=%s.", filePath);
-        return -1;
+        return FILE_UTIL_FAILED;
     }
 
     char bakPath[PATH_MAX];

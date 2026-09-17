@@ -21,7 +21,7 @@ config("accesstoken_file_util_public_config") {
   ]
 }
 
-ohos_static_library("accesstoken_file_util_static") {
+ohos_source_set("accesstoken_file_util") {
   subsystem_name = "security"
   part_name = "access_token"
   sanitize = {

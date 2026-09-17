@@ -496,7 +496,7 @@ bool ConfigPolicLoader::ParserNativeRawData(
 
 int32_t ConfigPolicLoader::GetAllNativeTokenInfo(std::vector<NativeTokenInfoBase>& tokenInfos)
 {
-    auto readAndParse = [this, &tokenInfos](const std::string& path) -> int32_t {
+    auto ReadAndParse = [this, &tokenInfos](const std::string& path) -> int32_t {
         std::string rawData;
         int32_t ret = ReadCfgFile(path, rawData);
         if (ret != RET_SUCCESS) {
@@ -510,7 +510,7 @@ int32_t ConfigPolicLoader::GetAllNativeTokenInfo(std::vector<NativeTokenInfoBase
         return RET_SUCCESS;
     };
 
-    int32_t ret = readAndParse(NATIVE_TOKEN_CONFIG_FILE);
+    int32_t ret = ReadAndParse(NATIVE_TOKEN_CONFIG_FILE);
     if (ret == RET_SUCCESS) {
         return RET_SUCCESS;
     }
@@ -519,7 +519,7 @@ int32_t ConfigPolicLoader::GetAllNativeTokenInfo(std::vector<NativeTokenInfoBase
     if (GetBakFilePath(NATIVE_TOKEN_CONFIG_FILE, bakPath, sizeof(bakPath)) != 0) {
         return ERR_FILE_OPERATE_FAILED;
     }
-    return readAndParse(bakPath);
+    return ReadAndParse(bakPath);
 }
 
 static void JsonFromPermissionDlpMode(const CJson* j, PermissionDlpMode& p)

@@ -41,7 +41,7 @@ ohos_unittest("libnativetoken_test") {
   configs = [ "${access_token_path}/config:coverage_flags" ]
 
   deps = [
-    "${access_token_path}/interfaces/innerkits/accesstoken_file_util:accesstoken_file_util_static",
+    "${access_token_path}/interfaces/innerkits/accesstoken_file_util:accesstoken_file_util",
     "${access_token_path}/interfaces/innerkits/token_setproc:libpermsetproc_shared",
     "${access_token_path}/interfaces/innerkits/token_setproc:libtokensetproc_shared",
     "../:libnativetoken",
@@ -92,7 +92,7 @@ ohos_unittest("libnativetoken_mock_test") {
   configs = [ "${access_token_path}/config:coverage_flags" ]
 
   deps = [
-    "${access_token_path}/interfaces/innerkits/accesstoken_file_util:accesstoken_file_util_static",
+    "${access_token_path}/interfaces/innerkits/accesstoken_file_util:accesstoken_file_util",
     "${access_token_path}/frameworks/common:accesstoken_permission_map_static",
     "${access_token_path}/frameworks/common:accesstoken_static_log_for_nativetoken",
     "${access_token_path}/interfaces/innerkits/token_setproc:libpermsetproc_shared",
