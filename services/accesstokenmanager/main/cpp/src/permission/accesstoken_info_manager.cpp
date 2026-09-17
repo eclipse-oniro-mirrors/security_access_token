@@ -87,6 +87,7 @@ static const char* ACCESS_TOKEN_PACKAGE_NAME = "ohos.security.distributed_token_
 static constexpr uint32_t TOKEN_ID_LOWMASK = 0xffffffff;
 static constexpr int32_t DEFAULT_MAX_QUERY_RESULT_SIZE = ACCESS_TOKEN_DEFAULT_MAX_QUERY_RESULT_SIZE;
 static constexpr int32_t DEFAULT_SUBPROFILE_INDEX = -1;
+static constexpr int32_t MAIN_CLONE_INDEX_BASE = 10000;
 static const char* ACCESS_TOKEN_DB_EMPTY_KEY = "persist.accesstoken.permission.dberror";
 const std::string BMS_DB_DIR_PATH = "/data/service/el1/public/bms/bundle_manager_service/";
 const std::string BMS_DB_FILE_NAME = "bmsdb.db";
@@ -1247,7 +1248,7 @@ int32_t AccessTokenInfoManager::RegisterTokenId(const HapInfoParams& info, Acces
         tokenId = info.tokenID;
     } else {
         int32_t dlpFlag = (info.dlpType > DLP_COMMON) ? 1 : 0;
-        int32_t cloneFlag = ((dlpFlag == 0) && (info.instIndex) > 0) ? 1 : 0;
+        int32_t cloneFlag = ((dlpFlag == 0) && (info.instIndex % MAIN_CLONE_INDEX_BASE != 0)) ? 1 : 0;
         tokenId = AccessTokenIDManager::GetInstance().CreateAndRegisterTokenId(TOKEN_HAP, dlpFlag, cloneFlag, 0);
         if (tokenId == 0) {
             LOGC(ATM_DOMAIN, ATM_TAG, "Token Id create failed");

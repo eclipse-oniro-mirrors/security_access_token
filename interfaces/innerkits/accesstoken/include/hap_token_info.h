@@ -96,8 +96,6 @@ public:
     std::string appProvisionType = "release";
     /** Whether hap is a skill */
     bool isSkillHap = false;
-    /** App mode */
-    MultipleMode mode = MultipleMode::DEFAULT_MODE;
 };
 
 /**
