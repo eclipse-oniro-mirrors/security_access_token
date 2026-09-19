@@ -80,6 +80,21 @@ typedef enum AccessTokenDbSceneCode {
     AT_DB_RESTORE_ERROR = 1010,
     AT_DB_RESET_RECOVERY_PARAM_ERROR = 1011,
 } AccessTokenDbSceneCode;
+
+typedef enum AccessTokenExceptionSceneCode {
+    // 0~0xFFF reserved for ipc code of access token manager
+
+    // 0x1000~0x1FFF reserved for native token
+
+    // 0x2000~ used in service
+
+    KERNEL_PERM_DATA_ADD = 10000,
+    KERNEL_PERM_DATA_DELETE = 10001,
+    KERNEL_PERM_DATA_ROLLBACK = 10002,
+    KERNEL_SPM_DATA_ADD = 10003,
+    KERNEL_SPM_DATA_UPDATE = 10004,
+    KERNEL_SPM_DATA_ROLLBACK = 10005,
+} AccessTokenExceptionSceneCode;
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

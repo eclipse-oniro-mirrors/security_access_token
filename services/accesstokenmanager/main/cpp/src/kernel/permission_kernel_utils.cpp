@@ -15,11 +15,14 @@
 
 #include "permission_kernel_utils.h"
 
+#include <atomic>
 #include <mutex>
+#include "access_token_error.h"
 #include "accesstoken_common_log.h"
-#include "perm_setproc.h"
 #include "permission_map.h"
+#include "perm_setproc.h"
 #include "spm_setproc.h"
+#include "spm_data_kernel_common.h"
 #include "token_setproc.h"
 
 namespace OHOS {
@@ -28,6 +31,11 @@ namespace AccessToken {
 int32_t PermissionKernelUtils::AddNativePermToKernel(AccessTokenID tokenID,
     const std::vector<uint32_t>& opCodeList, const std::vector<bool>& statusList)
 {
+    if (opCodeList.size() != statusList.size()) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Invalid param, tokenID=%{public}u, opCodeList size=%{public}zu, "
+            "statusList size=%{public}zu.", tokenID, opCodeList.size(), statusList.size());
+        return ERR_PARAM_INVALID;
+    }
     std::vector<uint32_t> grantedPermList;
     for (size_t i = 0; i < opCodeList.size(); ++i) {
         if (statusList[i]) {
@@ -35,6 +43,10 @@ int32_t PermissionKernelUtils::AddNativePermToKernel(AccessTokenID tokenID,
         }
     }
     int32_t ret = AddPermissionToKernel(tokenID, grantedPermList);
+    if (ret != ACCESS_TOKEN_OK) {
+        // retry once for transient kernel failure
+        ret = AddPermissionToKernel(tokenID, grantedPermList);
+    }
     if (ret != ACCESS_TOKEN_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "AddPermissionToKernel(token=%{public}d), size=%{public}zu, err=%{public}d",
             tokenID, grantedPermList.size(), ret);
@@ -46,10 +58,46 @@ int32_t PermissionKernelUtils::AddHapPermToKernel(AccessTokenID tokenID, const s
 {
     int32_t ret = AddPermissionToKernel(tokenID, opCodeList);
     if (ret != ACCESS_TOKEN_OK) {
+        // retry once for transient kernel failure
+        ret = AddPermissionToKernel(tokenID, opCodeList);
+    }
+    if (ret != ACCESS_TOKEN_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "AddPermissionToKernel(token=%{public}d), size=%{public}zu, err=%{public}d",
             tokenID, opCodeList.size(), ret);
     }
     return ret;
+}
+
+int32_t PermissionKernelUtils::AddHapPermToKernel(AccessTokenID tokenID,
+    const std::vector<BriefPermData>& permBriefDataList)
+{
+    std::vector<uint32_t> opCodeList;
+    for (const auto& permData : permBriefDataList) {
+        if (permData.status == PERMISSION_GRANTED) {
+            opCodeList.emplace_back(permData.permCode);
+        }
+    }
+    return AddHapPermToKernel(tokenID, opCodeList);
+}
+
+int32_t PermissionKernelUtils::GetBundleInfoFromKernel(AccessTokenID tokenId, BundleNoCachedInfo& noCachedInfo,
+    std::vector<PermissionWithValue>& permList)
+{
+#ifdef SPM_DATA_ENABLE
+    SpmDataPtr spmData = nullptr;
+    int32_t ret = KernelDetail::LoadSpmDataFromKernel(tokenId, spmData);
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
+
+    noCachedInfo.apl = static_cast<ATokenAplEnum>(spmData->apl);
+    noCachedInfo.distributionType = spmData->distributionType;
+    noCachedInfo.idType = spmData->idType;
+    noCachedInfo.ownerid = spmData->ownerid;
+    return KernelDetail::ParseExtendedPermissionBuffer(spmData->extendPerms, permList);
+#else
+    return AccessTokenError::ERR_IOCTL_UNSUPPORT;
+#endif
 }
 
 int32_t PermissionKernelUtils::GetPermFromKernel(AccessTokenID tokenID, uint32_t permCode, bool& isGranted)
@@ -60,8 +108,15 @@ int32_t PermissionKernelUtils::GetPermFromKernel(AccessTokenID tokenID, uint32_t
 int32_t PermissionKernelUtils::RemovePermFromKernel(AccessTokenID tokenID)
 {
     int32_t ret = RemovePermissionFromKernel(tokenID);
-    LOGI(ATM_DOMAIN, ATM_TAG,
-        "RemovePermissionFromKernel(token=%{public}d), err=%{public}d", tokenID, ret);
+    if (ret == RET_SUCCESS) {
+        return ret;
+    }
+    // retry
+    ret = RemovePermissionFromKernel(tokenID);
+    if (ret != RET_SUCCESS) {
+        LOGE(ATM_DOMAIN, ATM_TAG,
+            "RemovePermissionFromKernel(token=%{public}d), err=%{public}d", tokenID, ret);
+    }
     return ret;
 }
 
@@ -96,13 +151,33 @@ bool PermissionKernelUtils::IsKernelSupportSpm()
 
     uint32_t version = 0;
     int ret = SpmGetVersion(&version);
+    bool isSupported = (ret == RET_SUCCESS);
+    if (ret == ENOTSUP) {
+        LOGW(ATM_DOMAIN, ATM_TAG, "Spm is not supported.");
+    } else if (ret != RET_SUCCESS) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "SpmGetVersion failed, ret=%{public}d.", ret);
+    } else {
+        LOGI(ATM_DOMAIN, ATM_TAG, "Spm is supported, version=%{public}u.", version);
+    }
 #ifndef ATM_TEST_ENABLE
-    isSupportSpm.store(ret != ENOTSUP, std::memory_order_release);
+    if (ret != RET_SUCCESS && ret != ENOTSUP) {
+        // transient failure, do not cache the result and retry on next check
+        return isSupported;
+    }
+    isSupportSpm.store(isSupported, std::memory_order_release);
     hasChecked.store(true, std::memory_order_release);
 #endif
-    LOGI(ATM_DOMAIN, ATM_TAG,
-        "Spm is %{public}s", ret != ENOTSUP ? "supported" : "not supported");
-    return ret != ENOTSUP;
+    return isSupported;
+}
+
+int32_t PermissionKernelUtils::RemoveSpmEntryFromKernel(AccessTokenID tokenId)
+{
+#ifdef SPM_DATA_ENABLE
+    return KernelDetail::RemoveSpmEntryFromKernel(tokenId);
+#else
+    (void)tokenId;
+    return AccessTokenError::ERR_IOCTL_UNSUPPORT;
+#endif
 }
 } // namespace AccessToken
 } // namespace Security
