@@ -88,6 +88,7 @@ public:
     void SetPermDialogForbidden(bool isForbidden);
     bool IsMigrated() const;
     void SetMigrated(bool isMigrated);
+    bool IsSideloadApp() const;
 
     int32_t UpdatePermissionStatus(
         const std::string& permissionName, bool isGranted, uint32_t flag, bool& statusChanged);
@@ -122,6 +123,9 @@ private:
     bool isPermDialogForbidden_ = false;
     /** migrated flag */
     bool isMigrated_ = false;
+    /** whether hap is a sideload app, set by bundle manager per install source;
+     *  normalized by NormalizeSideloadParams: sideload must be developer_id distributed */
+    bool isSideloadApp_ = false;
 
     mutable std::shared_mutex policySetLock_;
 };

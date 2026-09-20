@@ -1153,39 +1153,6 @@ bool PermissionManager::InitPermissionList(const BundleParam& param, const HapPo
     LOGI(ATM_DOMAIN, ATM_TAG, "After, request perm list size: %{public}zu.", initializedList.size());
     return true;
 }
-
-bool PermissionManager::InitPermissionList(const BundleParam& param, const HapPolicy& policy,
-    std::vector<PermissionStatus>& initializedList, HapInfoCheckResult& result)
-{
-    LOGI(ATM_DOMAIN, ATM_TAG, "Before, request perm list size: %{public}zu, preAuthorizationInfo size %{public}zu, "
-        "ACLRequestedList size %{public}zu.", policy.permStateList.size(),
-        policy.preAuthorizationInfo.size(), policy.aclRequestedList.size());
-
-    PermissionStatus state;
-    bool needGrantForDebug = param.isDebug && policy.isDebugGrant;
-    for (const auto& status : policy.permStateList) {
-        state = status;
-        PermissionBriefDef briefDef;
-        if (!GetPermissionBriefDef(state.permissionName, briefDef) || !briefDef.isEnable) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "Get definition of %{public}s failed.",
-                state.permissionName.c_str());
-            continue;
-        }
-
-        result.permCheckResult.permissionName = state.permissionName;
-        if (!PermissionConstraintCheck::AclAndEdmCheck(param, briefDef, policy, result)) {
-            return false;
-        }
-
-        state.grantFlag = PERMISSION_DEFAULT_FLAG;
-        state.grantStatus = PERMISSION_DENIED;
-
-        InitPermState(policy, briefDef, needGrantForDebug, state);
-        initializedList.emplace_back(state);
-    }
-    LOGI(ATM_DOMAIN, ATM_TAG, "After, request perm list size: %{public}zu.", initializedList.size());
-    return true;
-}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

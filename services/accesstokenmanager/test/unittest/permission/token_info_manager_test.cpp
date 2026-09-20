@@ -1485,6 +1485,49 @@ HWTEST_F(TokenInfoManagerTest, UpdateHapTokenPreAuthorization001, TestSize.Level
 }
 
 /**
+ * @tc.name: DeveloperIdNotDebugFlag0001
+ * @tc.desc: Verify developer_id distribution is not treated as debug: no DEBUG_APP_FLAG in
+ *           tokenAttr and user_grant permission is not auto-granted even if isDebugGrant is set.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenInfoManagerTest, DeveloperIdNotDebugFlag0001, TestSize.Level0)
+{
+    constexpr uint32_t DEBUG_APP_FLAG = 0x0008;
+    const std::string permissionName = "ohos.permission.CAMERA";
+    uint32_t permCode = 0;
+    ASSERT_TRUE(TransferPermissionToOpcode(permissionName, permCode));
+
+    HapInfoParams info = g_infoManagerTestInfoParms;
+    info.bundleName = "com.ohos.developer.id.not.debug";
+    info.appIDDesc = info.bundleName;
+    info.appDistributionType = "developer_id";
+    info.appProvisionType = "release";
+    info.isSideloadApp = true;
+    HapPolicy policy = {
+        .apl = APL_NORMAL,
+        .domain = "test.domain",
+        .permStateList = { g_permState }
+    };
+    policy.isDebugGrant = true;
+
+    AccessTokenIDEx tokenIdEx = {0};
+    std::vector<GenericValues> undefValues;
+    ASSERT_EQ(RET_SUCCESS,
+        AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(info, policy, tokenIdEx, undefValues));
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+
+    HapTokenInfo hapInfo;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenId, hapInfo));
+    EXPECT_EQ(0u, hapInfo.tokenAttr & DEBUG_APP_FLAG);
+
+    ExpectBriefPermissionState(tokenId, permCode, PERMISSION_DENIED, PERMISSION_DEFAULT_FLAG);
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId));
+}
+
+/**
  * @tc.name: UpdateHapTokenPreAuthorization002
  * @tc.desc: Verify cancelable pre-authorization update succeeds in manager path.
  * @tc.type: FUNC

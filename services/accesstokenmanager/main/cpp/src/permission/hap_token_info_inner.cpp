@@ -26,6 +26,7 @@
 #include "json_parse_loader.h"
 #include "libraryloader.h"
 #include "short_grant_manager.h"
+#include "table_item.h"
 #include "token_field_const.h"
 #include "permission_map.h"
 #include "permission_data_brief.h"
@@ -88,6 +89,7 @@ HapTokenInfoInner::HapTokenInfoInner(AccessTokenID id,
         tokenInfoBasic_.instIndex = info.instIndex;
         tokenInfoBasic_.dlpType = info.dlpType;
         tokenInfoBasic_.uid = INVALID_UID;
+        isSideloadApp_ = info.isSideloadApp;
     }
     PermissionDataBrief::GetInstance().AddPermToBriefPermission(id, policy.permStateList, policy.aclExtendedMap, true);
 }
@@ -117,6 +119,7 @@ HapTokenInfoInner::HapTokenInfoInner(const HapTokenInfoItem& item) : permUpdateT
     tokenInfoBasic_.bundleName = item.bundleName;
     isPermDialogForbidden_ = item.permDialogCapState;
     isMigrated_ = item.migrated;
+    isSideloadApp_ = item.isSideload;
 }
 
 HapTokenInfoInner::HapTokenInfoInner(AccessTokenID id,
@@ -162,6 +165,7 @@ void HapTokenInfoInner::Update(const UpdateHapInfoParams& info, const std::vecto
     } else if (info.appProvisionType == "debug") {
         tokenInfoBasic_.tokenAttr |= DEBUG_APP_FLAG;
     }
+    isSideloadApp_ = info.isSideloadApp;
 }
 
 void HapTokenInfoInner::TranslateToHapTokenInfo(HapTokenInfo& infoParcel) const
@@ -181,6 +185,7 @@ void HapTokenInfoInner::TranslationIntoGenericValues(GenericValues& outGenericVa
     outGenericValues.Put(TokenFiledConst::FIELD_TOKEN_VERSION, tokenInfoBasic_.ver);
     outGenericValues.Put(TokenFiledConst::FIELD_TOKEN_ATTR, static_cast<int32_t>(tokenInfoBasic_.tokenAttr));
     outGenericValues.Put(TokenFiledConst::FIELD_FORBID_PERM_DIALOG, isPermDialogForbidden_);
+    outGenericValues.Put(TokenFiledConst::FIELD_IS_SIDELOAD, isSideloadApp_ ? 1 : 0);
 #ifdef SPM_DATA_ENABLE
     outGenericValues.Put(TokenFiledConst::FIELD_UID, tokenInfoBasic_.uid);
     outGenericValues.Put(TokenFiledConst::FIELD_RESERVED,
@@ -212,6 +217,7 @@ int HapTokenInfoInner::RestoreHapTokenBasicInfo(const GenericValues& inGenericVa
     }
     tokenInfoBasic_.tokenAttr = (uint32_t)inGenericValues.GetInt(TokenFiledConst::FIELD_TOKEN_ATTR);
     isPermDialogForbidden_ = inGenericValues.GetInt(TokenFiledConst::FIELD_FORBID_PERM_DIALOG);
+    isSideloadApp_ = inGenericValues.GetInt(TokenFiledConst::FIELD_IS_SIDELOAD) != 0;
 #ifdef SPM_DATA_ENABLE
     tokenInfoBasic_.uid = inGenericValues.GetInt(TokenFiledConst::FIELD_UID);
     isMigrated_ = inGenericValues.GetInt(TokenFiledConst::FIELD_MIGRATED) != 0;
@@ -373,6 +379,13 @@ void HapTokenInfoInner::SetMigrated(bool isMigrated)
     std::unique_lock<std::shared_mutex> infoGuard(this->policySetLock_);
     isMigrated_ = isMigrated;
 }
+
+bool HapTokenInfoInner::IsSideloadApp() const
+{
+    std::shared_lock<std::shared_mutex> infoGuard(this->policySetLock_);
+    return isSideloadApp_;
+}
+
 int32_t HapTokenInfoInner::GetApiVersion(int32_t apiVersion)
 {
     uint32_t apiSize = 3; // 3: api version length

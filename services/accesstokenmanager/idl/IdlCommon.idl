@@ -115,6 +115,8 @@ struct UpdateHapInfoParamsIdl {
     String appProvisionType;
     /** Whether hap is a skill */
     boolean isSkillHap;
+    /** Whether hap is a sideload app, set by bundle manager per install source */
+    boolean isSideloadApp;
 };
 
 enum PermissionRulesEnumIdl {

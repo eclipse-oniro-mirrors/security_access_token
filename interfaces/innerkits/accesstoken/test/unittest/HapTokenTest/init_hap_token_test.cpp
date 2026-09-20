@@ -1592,6 +1592,82 @@ HWTEST_F(InitHapTokenTest, InitHapTokenWithFeatureTest001, TestSize.Level0)
     EXPECT_EQ(ret, RET_SUCCESS);
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenIdEx.tokenIdExStruct.tokenID));
 }
+
+/**
+ * @tc.name: InitHapSideloadDefaultFail001
+ * @tc.desc: default (non-sideload) app requesting a sideload-available acl perm without acl
+ *           declaration fails via kit entry: ERR_PERM_REQUEST_CFG_FAILED with acl rule report,
+ *           no token created
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(InitHapTokenTest, InitHapSideloadDefaultFail001, TestSize.Level0)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "InitHapSideloadDefaultFail001");
+    MockNativeToken mock("foundation");
+
+    HapInfoParams infoParams;
+    HapPolicyParams policyParams;
+    TestCommon::GetHapParams(infoParams, policyParams);
+    infoParams.appDistributionType = "developer_id"; // isSideloadApp 缺省 false → 非侧载
+    policyParams.apl = APL_NORMAL;
+    PermissionStateFull kernelState = {
+        .permissionName = "ohos.permission.KERNEL_ATM_SELF_USE",
+        .isGeneral = true,
+        .resDeviceID = {"local2"},
+        .grantStatus = {PermissionState::PERMISSION_DENIED},
+        .grantFlags = {0}
+    };
+    policyParams.permStateList = {kernelState};
+
+    AccessTokenIDEx fullTokenId;
+    HapInfoCheckResult result;
+    EXPECT_EQ(ERR_PERM_REQUEST_CFG_FAILED,
+        AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId, result));
+    EXPECT_EQ(INVALID_TOKENID, fullTokenId.tokenIdExStruct.tokenID);
+    EXPECT_EQ(kernelState.permissionName, result.permCheckResult.permissionName);
+    EXPECT_EQ(PERMISSION_ACL_RULE, result.permCheckResult.rule);
+}
+
+/**
+ * @tc.name: InitHapSideloadExempt001
+ * @tc.desc: sideload app (developer_id + isSideloadApp=true) requesting a sideload-available
+ *           acl perm without acl declaration is exempted via kit entry: token created and
+ *           the system_grant perm is granted
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(InitHapTokenTest, InitHapSideloadExempt001, TestSize.Level0)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "InitHapSideloadExempt001");
+    MockNativeToken mock("foundation");
+
+    HapInfoParams infoParams;
+    HapPolicyParams policyParams;
+    TestCommon::GetHapParams(infoParams, policyParams);
+    infoParams.appDistributionType = "developer_id";
+    infoParams.isSideloadApp = true;
+    policyParams.apl = APL_NORMAL;
+    PermissionStateFull kernelState = {
+        .permissionName = "ohos.permission.KERNEL_ATM_SELF_USE",
+        .isGeneral = true,
+        .resDeviceID = {"local2"},
+        .grantStatus = {PermissionState::PERMISSION_DENIED},
+        .grantFlags = {0}
+    };
+    policyParams.permStateList = {kernelState};
+
+    AccessTokenIDEx fullTokenId;
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId));
+    AccessTokenID tokenID = fullTokenId.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+
+    // sideload exemption passes the acl check: system_grant perm initialized as granted
+    EXPECT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(tokenID,
+        kernelState.permissionName));
+
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

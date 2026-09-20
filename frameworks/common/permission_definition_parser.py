@@ -77,7 +77,8 @@ PERMISSION_BRIEF_DEFINE_PATTERN = '''
     .distributedSceneEnable = %s,
     .isKernelEffect = %s,
     .hasValue = %s,
-    .isEnable = %s
+    .isEnable = %s,
+    .provisionBypassForSideload = %s
 },'''
 
 JSON_VALUE_CONVERT_TO_CPP_DICT = {
@@ -142,6 +143,11 @@ class PermissionDef(object):
         else:
             self.has_value = "false"
 
+        if "provisionBypassForSideload" in permission_def_dict and permission_def_dict["provisionBypassForSideload"]:
+            self.provision_bypass_for_sideload = "true"
+        else:
+            self.provision_bypass_for_sideload = "false"
+
         if self.is_support_device_types(permission_def_dict["since"]) and not "deviceTypes" in permission_def_dict:
             raise Exception("No deviceTypes in permission difinition of {}".format(self.name))
 
@@ -178,7 +184,7 @@ class PermissionDef(object):
         entry = PERMISSION_BRIEF_DEFINE_PATTERN % (
             self.code, self.grant_mode, self.available_level,
             self.available_type, self.provision_enable, self.distributed_scene_enable,
-            self.is_kernel_effect, self.has_value, self.is_enable
+            self.is_kernel_effect, self.has_value, self.is_enable, self.provision_bypass_for_sideload
         )
         return entry
 
@@ -201,7 +207,8 @@ def parse_json(path, platform):
         'provisionEnable': True,
         'distributedSceneEnable': True,
         'isKernelEffect': True,
-        'hasValue': True
+        'hasValue': True,
+        'provisionBypassForSideload': True
     }
 
     manual_perm = {

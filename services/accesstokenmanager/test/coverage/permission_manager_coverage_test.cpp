@@ -31,6 +31,7 @@
 #include "callback_death_recipients.h"
 #include "parameters.h"
 #include "permission_data_brief.h"
+#include "permission_map.h"
 #include "token_field_const.h"
 #include "token_setproc.h"
 
@@ -829,6 +830,176 @@ HWTEST_F(PermissionManagerCoverageTest, AddHapTokenInfoToDb002, TestSize.Level4)
 
     int32_t ret = AccessTokenInfoManager::GetInstance().AddHapTokenInfoToDb(hapInfo, context);
     EXPECT_EQ(ERR_TOKENID_NOT_EXIST, ret);
+}
+
+/**
+ * @tc.name: RecheckUndefinedPermsSideload001
+ * @tc.desc: AccessTokenManagerService::RecheckUndefinedPerms recheck path with sideload flag:
+ *           acl row of sideload app is valid, unmarked cross-apl row keeps fail-closed
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionManagerCoverageTest, RecheckUndefinedPermsSideload001, TestSize.Level4)
+{
+    // sideload app: flag true + developer_id distribution
+    HapInfoParams sideloadInfo = g_info;
+    sideloadInfo.bundleName = "RecheckUndefinedPermsSideload001";
+    sideloadInfo.isSideloadApp = true;
+    sideloadInfo.appDistributionType = "developer_id";
+    AccessTokenIDEx tokenIdEx = {0};
+    std::vector<GenericValues> undefValues;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(
+        sideloadInfo, g_policy, tokenIdEx, undefValues));
+    AccessTokenID sideloadTokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, sideloadTokenId);
+
+    auto inner = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(sideloadTokenId);
+    ASSERT_NE(nullptr, inner);
+    ASSERT_TRUE(inner->IsSideloadApp()); // cache flag ready for recheck
+
+    // control app: developer_id distribution but not sideload
+    HapInfoParams normalInfo = g_info;
+    normalInfo.bundleName = "RecheckUndefinedPermsSideload001Ctrl";
+    AccessTokenIDEx tokenIdEx2 = {0};
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(
+        normalInfo, g_policy, tokenIdEx2, undefValues));
+    AccessTokenID normalTokenId = tokenIdEx2.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, normalTokenId);
+
+    TokenIdInfo tokenInfo;
+    tokenInfo.apl = g_policy.apl;
+    tokenInfo.isSystemApp = false;
+    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
+    tokenIdAplMap[static_cast<int32_t>(sideloadTokenId)] = tokenInfo;
+    tokenIdAplMap[static_cast<int32_t>(normalTokenId)] = tokenInfo;
+
+    // acl row: valid for both apps regardless of sideload flag
+    GenericValues sideloadAclRow;
+    sideloadAclRow.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(sideloadTokenId));
+    sideloadAclRow.Put(TokenFiledConst::FIELD_PERMISSION_NAME, "ohos.permission.READ_SCREEN_SAVER");
+    sideloadAclRow.Put(TokenFiledConst::FIELD_ACL, 1);
+    sideloadAclRow.Put(TokenFiledConst::FIELD_APP_DISTRIBUTION_TYPE, "developer_id");
+    sideloadAclRow.Put(TokenFiledConst::FIELD_VALUE, "");
+
+    // cross-apl row without acl: fail-closed, sideload flag can not exempt unmarked permission
+    GenericValues sideloadNoAclRow;
+    sideloadNoAclRow.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(sideloadTokenId));
+    sideloadNoAclRow.Put(TokenFiledConst::FIELD_PERMISSION_NAME, "ohos.permission.READ_SCREEN_SAVER");
+    sideloadNoAclRow.Put(TokenFiledConst::FIELD_ACL, 0);
+    sideloadNoAclRow.Put(TokenFiledConst::FIELD_APP_DISTRIBUTION_TYPE, "developer_id");
+    sideloadNoAclRow.Put(TokenFiledConst::FIELD_VALUE, "");
+
+    // control app cross-apl row without acl: invalid, same as sideload app
+    GenericValues normalNoAclRow;
+    normalNoAclRow.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(normalTokenId));
+    normalNoAclRow.Put(TokenFiledConst::FIELD_PERMISSION_NAME, "ohos.permission.READ_SCREEN_SAVER");
+    normalNoAclRow.Put(TokenFiledConst::FIELD_ACL, 0);
+    normalNoAclRow.Put(TokenFiledConst::FIELD_APP_DISTRIBUTION_TYPE, "developer_id");
+    normalNoAclRow.Put(TokenFiledConst::FIELD_VALUE, "");
+
+    // mdm permission row: developer_id sideload app is not a debug app, edm rule rejects it
+    GenericValues sideloadMdmRow;
+    sideloadMdmRow.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(sideloadTokenId));
+    sideloadMdmRow.Put(TokenFiledConst::FIELD_PERMISSION_NAME, "ohos.permission.SET_ENTERPRISE_INFO");
+    sideloadMdmRow.Put(TokenFiledConst::FIELD_ACL, 1);
+    sideloadMdmRow.Put(TokenFiledConst::FIELD_APP_DISTRIBUTION_TYPE, "developer_id");
+    sideloadMdmRow.Put(TokenFiledConst::FIELD_VALUE, "");
+
+    std::vector<GenericValues> results = {sideloadAclRow, sideloadNoAclRow, normalNoAclRow, sideloadMdmRow};
+    std::vector<GenericValues> validValueList;
+    std::shared_ptr<AccessTokenManagerService> atManagerService =
+        DelayedSingleton<AccessTokenManagerService>::GetInstance();
+    ASSERT_NE(nullptr, atManagerService);
+    atManagerService->RecheckUndefinedPerms(results, tokenIdAplMap, validValueList);
+
+    // only the acl row is valid; unmarked cross-apl rows stay invalid (kept in db)
+    ASSERT_EQ(1, validValueList.size());
+    EXPECT_EQ(static_cast<int32_t>(sideloadTokenId), validValueList[0].GetInt(TokenFiledConst::FIELD_TOKEN_ID));
+    EXPECT_EQ("ohos.permission.READ_SCREEN_SAVER", validValueList[0].GetString(TokenFiledConst::FIELD_PERMISSION_NAME));
+
+    EXPECT_EQ(RET_SUCCESS, atManagerService->DeleteToken(sideloadTokenId, false));
+    EXPECT_EQ(RET_SUCCESS, atManagerService->DeleteToken(normalTokenId, false));
+    atManagerService = nullptr;
+}
+
+/**
+ * @tc.name: IsPermissionValidSideloadExempt001
+ * @tc.desc: AccessTokenManagerService::IsPermissionValid recheck exemption is consistent with
+ *           install-time IsSideloadAclExempt: only marked permission of sideload app is exempted
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionManagerCoverageTest, IsPermissionValidSideloadExempt001, TestSize.Level4)
+{
+    std::shared_ptr<AccessTokenManagerService> atManagerService =
+        DelayedSingleton<AccessTokenManagerService>::GetInstance();
+    ASSERT_NE(nullptr, atManagerService);
+
+    // marked permission: cross-apl sideload app is exempted without acl
+    PermissionBriefDef markedDef = {};
+    markedDef.permissionName = const_cast<char *>("ohos.permission.TEST_SIDELOAD_RECHECK");
+    markedDef.availableLevel = APL_SYSTEM_BASIC;
+    markedDef.provisionEnable = true;
+    markedDef.provisionBypassForSideload = true;
+    EXPECT_TRUE(atManagerService->IsPermissionValid(true, APL_NORMAL, markedDef, "", false));
+    EXPECT_FALSE(atManagerService->IsPermissionValid(false, APL_NORMAL, markedDef, "", false));
+
+    // unmarked permission: fail-closed even for sideload app
+    PermissionBriefDef unmarkedDef = markedDef;
+    unmarkedDef.provisionBypassForSideload = false;
+    EXPECT_FALSE(atManagerService->IsPermissionValid(true, APL_NORMAL, unmarkedDef, "", false));
+
+    // provision disabled permission: fail-closed even for sideload app
+    PermissionBriefDef provisionOffDef = markedDef;
+    provisionOffDef.provisionEnable = false;
+    EXPECT_FALSE(atManagerService->IsPermissionValid(true, APL_NORMAL, provisionOffDef, "", false));
+
+    // acl path unchanged and not-cross-apl path unchanged
+    EXPECT_TRUE(atManagerService->IsPermissionValid(true, APL_NORMAL, markedDef, "", true));
+    EXPECT_TRUE(atManagerService->IsPermissionValid(true, APL_SYSTEM_BASIC, markedDef, "", false));
+
+    atManagerService = nullptr;
+}
+
+/**
+ * @tc.name: InitPermissionListSideloadUpdate001
+ * @tc.desc: update follows the same acl rule as install for non-sideload apps: cross-apl perm
+ *           without acl is intercepted (original rules, no recycle branch), no undefined record
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionManagerCoverageTest, InitPermissionListSideloadUpdate001, TestSize.Level4)
+{
+    BundleParam param;
+    param.bundleName = "InitPermissionListSideloadUpdate001";
+    param.isSideloadApp = false; // normalized non-sideload result after update
+    param.isDebug = false;
+
+    // cross-apl permission without acl: not exempted for non-sideload app
+    HapPolicy policy;
+    policy.apl = APL_NORMAL;
+    policy.domain = "test.domain";
+    PermissionStatus state;
+    state.permissionName = "ohos.permission.READ_SCREEN_SAVER";
+    state.grantStatus = PermissionState::PERMISSION_DENIED;
+    state.grantFlag = PermissionFlag::PERMISSION_DEFAULT_FLAG;
+    policy.permStateList.emplace_back(state);
+
+    HapInfoCheckResult result;
+    std::vector<PermissionStatus> initializedList;
+    std::vector<GenericValues> undefValues;
+
+    // install path: interception as-is
+    EXPECT_FALSE(PermissionManager::GetInstance().InitPermissionList(
+        param, policy, initializedList, result, undefValues));
+    EXPECT_TRUE(undefValues.empty());
+
+    // update path: same rule as install (no recycle branch), no undefined record
+    std::vector<PermissionStatus> initializedListUpdate;
+    std::vector<GenericValues> undefValuesUpdate;
+    EXPECT_FALSE(PermissionManager::GetInstance().InitPermissionList(
+        param, policy, initializedListUpdate, result, undefValuesUpdate, false));
+    EXPECT_TRUE(undefValuesUpdate.empty());
 }
 } // namespace AccessToken
 } // namespace Security

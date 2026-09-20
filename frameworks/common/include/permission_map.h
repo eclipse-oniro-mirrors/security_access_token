@@ -37,6 +37,7 @@ struct PermissionBriefDef {
     bool isKernelEffect;
     bool hasValue;
     bool isEnable;
+    bool provisionBypassForSideload = false;
 };
 
 bool TransferPermissionToOpcode(const std::string& permissionName, uint32_t& opCode);

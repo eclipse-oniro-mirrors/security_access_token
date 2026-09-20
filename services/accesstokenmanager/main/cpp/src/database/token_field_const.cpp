@@ -62,6 +62,7 @@ const std::string TokenFiledConst::FIELD_VALUE = "value";
 const std::string TokenFiledConst::FIELD_ACL = "acl";
 const std::string TokenFiledConst::FIELD_NAME = "name";
 const std::string TokenFiledConst::FIELD_APP_DISTRIBUTION_TYPE = "app_distribution_type";
+const std::string TokenFiledConst::FIELD_IS_SIDELOAD = "is_sideload";
 const std::string TokenFiledConst::FIELD_CONTROLLER_TOKENID = "controller_tokenid";
 const std::string TokenFiledConst::FIELD_RESTRICTED_USER = "restricted_user";
 const std::string TokenFiledConst::FIELD_WHITELIST = "whitelist";

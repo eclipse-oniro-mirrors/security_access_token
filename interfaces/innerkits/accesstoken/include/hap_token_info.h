@@ -96,6 +96,8 @@ public:
     std::string appProvisionType = "release";
     /** Whether hap is a skill */
     bool isSkillHap = false;
+    /** Whether hap is a sideload app, set by bundle manager per install source */
+    bool isSideloadApp = false;
 };
 
 /**
@@ -118,6 +120,8 @@ public:
     std::string appProvisionType = "release";
     /** Whether hap is a skill */
     bool isSkillHap = false;
+    /** Whether hap is a sideload app, set by bundle manager per install source */
+    bool isSideloadApp = false;
 };
 
 /**

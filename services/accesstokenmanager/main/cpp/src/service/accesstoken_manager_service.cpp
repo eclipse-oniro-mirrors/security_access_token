@@ -280,6 +280,12 @@ void FillPermissionCheckResultIdl(const HapInfoCheckResult& permCheckResult, Hap
     resultInfoIdl.rule = static_cast<PermissionRulesEnumIdl>(permCheckResult.permCheckResult.rule);
 }
 
+bool NormalizeSideloadParams(bool isSideloadApp, const std::string& appDistributionType)
+{
+    // sideload app must be developer_id distributed, developer_id distribution may not be sideload
+    return isSideloadApp && appDistributionType == "developer_id";
+}
+
 void BuildBundleParam(const HapInfoParams& info, BundleParam& bundleParam)
 {
     bundleParam.bundleName = info.bundleName;
@@ -291,6 +297,7 @@ void BuildBundleParam(const HapInfoParams& info, BundleParam& bundleParam)
     bundleParam.isSystem = info.isSystemApp;
     bundleParam.isAtomicService = info.isAtomicService;
     bundleParam.isDebug = (info.appProvisionType == "debug" || info.appDistributionType == "none");
+    bundleParam.isSideloadApp = NormalizeSideloadParams(info.isSideloadApp, info.appDistributionType);
 }
 
 void BuildBundleParam(const UpdateHapInfoParams& info, const std::string& bundleName, BundleParam& bundleParam)
@@ -304,6 +311,7 @@ void BuildBundleParam(const UpdateHapInfoParams& info, const std::string& bundle
     bundleParam.isSystem = info.isSystemApp;
     bundleParam.isAtomicService = info.isAtomicService;
     bundleParam.isDebug = (info.appProvisionType == "debug" || info.appDistributionType == "none");
+    bundleParam.isSideloadApp = NormalizeSideloadParams(info.isSideloadApp, info.appDistributionType);
 }
 
 PermissionDecisionStatusIdl ConvertPermissionDecisionStatus(PermissionDecisionStatus status)
@@ -1449,12 +1457,15 @@ int32_t AccessTokenManagerService::AllocHapToken(const HapInfoParcel& info, cons
         return ERR_OK;
     }
 
+    HapInfoParams hapInfoParam = info.hapInfoParameter;
+    hapInfoParam.isSideloadApp = NormalizeSideloadParams(hapInfoParam.isSideloadApp, hapInfoParam.appDistributionType);
+
     HapPolicy filteredPolicy = policy.hapPolicy;
-    FilterPermFeature(info.hapInfoParameter.isSystemApp, filteredPolicy);
+    FilterPermFeature(hapInfoParam.isSystemApp, filteredPolicy);
 
     std::vector<GenericValues> undefValues;
     int ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(
-        info.hapInfoParameter, filteredPolicy, tokenIdEx, undefValues);
+        hapInfoParam, filteredPolicy, tokenIdEx, undefValues);
     if (ret != RET_SUCCESS) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Hap token info create failed.");
     }
@@ -1566,6 +1577,8 @@ int32_t AccessTokenManagerService::InitHapToken(const HapInfoParcel& info, const
     HapPolicy policyCopy;
     TransferHapPolicy(policy, policyCopy);
     FilterPermFeature(info.hapInfoParameter.isSystemApp, policyCopy);
+
+    hapInfoParm.isSideloadApp = NormalizeSideloadParams(hapInfoParm.isSideloadApp, hapInfoParm.appDistributionType);
 
     resultInfoIdl.realResult = ERR_OK;
     std::vector<PermissionStatus> initializedList;
@@ -1704,6 +1717,7 @@ void TransferUpdateHapInfo(const UpdateHapInfoParamsIdl& infoIdl, UpdateHapInfoP
     info.dataRefresh = infoIdl.dataRefresh;
     info.appProvisionType = infoIdl.appProvisionType;
     info.isSkillHap = infoIdl.isSkillHap;
+    info.isSideloadApp = infoIdl.isSideloadApp;
 }
 
 int32_t AccessTokenManagerService::UpdateHapToken(uint64_t& fullTokenId, const UpdateHapInfoParamsIdl& infoIdl,
@@ -1722,6 +1736,7 @@ int32_t AccessTokenManagerService::UpdateHapToken(uint64_t& fullTokenId, const U
     int64_t beginTime = TimeUtil::GetCurrentTimestamp();
     UpdateHapInfoParams info;
     TransferUpdateHapInfo(infoIdl, info);
+    info.isSideloadApp = NormalizeSideloadParams(info.isSideloadApp, info.appDistributionType);
     HapPolicy policy = policyParcel.hapPolicy;
     FilterPermFeature(info.isSystemApp, policy);
     resultInfoIdl.realResult = ERR_OK;
@@ -2417,7 +2432,7 @@ int32_t AccessTokenManagerService::GetReqPermissionByName(
         tokenId, permissionName, value);
 }
 
-void AccessTokenManagerService::FilterInvalidData(const std::vector<GenericValues>& results,
+void AccessTokenManagerService::RecheckUndefinedPerms(const std::vector<GenericValues>& results,
     const std::map<int32_t, TokenIdInfo>& tokenIdAplMap, std::vector<GenericValues>& validValueList)
 {
     int32_t tokenId = 0;
@@ -2451,13 +2466,15 @@ void AccessTokenManagerService::FilterInvalidData(const std::vector<GenericValue
 #endif
         bundleParam.isSystem = iter->second.isSystemApp;
         bundleParam.isDebug = (appDistributionType == "none"); // only debug hap can use none type
+        auto hapInfoInner = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId);
+        bundleParam.isSideloadApp = hapInfoInner != nullptr && hapInfoInner->IsSideloadApp();
         if (!PermissionConstraintCheck::IsPermAvailableRangeSatisfied(bundleParam, data, rule)) {
             continue;
         }
 
         acl = result.GetInt(TokenFiledConst::FIELD_ACL);
         value = result.GetString(TokenFiledConst::FIELD_VALUE);
-        if (!IsPermissionValid(iter->second.apl, data, value, (acl == 1))) {
+        if (!IsPermissionValid(bundleParam.isSideloadApp, iter->second.apl, data, value, (acl == 1))) {
             // hap apl less than perm apl without acl is invalid now, keep them in db, maybe valid someday
             continue;
         }
@@ -2524,15 +2541,15 @@ void AccessTokenManagerService::UpdateUndefinedInfoCache(const std::vector<Gener
     }
 }
 
-bool AccessTokenManagerService::IsPermissionValid(int32_t hapApl, const PermissionBriefDef& data,
+bool AccessTokenManagerService::IsPermissionValid(bool isSideloadApp, int32_t hapApl, const PermissionBriefDef& data,
     const std::string& value, bool isAcl)
 {
     if (hapApl >= static_cast<int32_t>(data.availableLevel)) {
         return true; // not cross apl, this is valid
     }
 
-    if (isAcl) {
-        return true; // cross apl but request by acl, this is valid
+    if (isAcl || PermissionConstraintCheck::IsSideloadAclExempt(isSideloadApp, data)) {
+        return true; // cross apl but requested by acl or sideload exemption, this is valid
     } else {
         if (data.hasValue) {
             return !value.empty(); // permission hasValue is true and request with value, this is valid
@@ -2559,9 +2576,9 @@ void AccessTokenManagerService::HandleHapUndefinedInfo(const std::map<int32_t, T
         return;
     }
 
-    // filter invalid data
+    // recheck undefined perms and keep the ones valid under current rules
     std::vector<GenericValues> validValueList;
-    FilterInvalidData(results, tokenIdAplMap, validValueList);
+    RecheckUndefinedPerms(results, tokenIdAplMap, validValueList);
 
     std::vector<GenericValues> stateValues;
     std::vector<GenericValues> extendValues;

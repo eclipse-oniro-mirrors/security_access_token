@@ -141,6 +141,7 @@ uint64_t EnsureValidFullTokenId()
             .appDistributionType = provider.ConsumeRandomLengthString(),
             .isAtomicService = provider.ConsumeBool(),
             .dataRefresh = provider.ConsumeBool(),
+            .isSideloadApp = provider.ConsumeBool(),
         };
 
         HapPolicyParcel hapPolicyParcel;

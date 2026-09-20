@@ -46,7 +46,7 @@ HWTEST_F(PermissionConstraintCheckTest, IsAclSatisfied001, TestSize.Level0)
     HapPolicy policy = {};
     policy.apl = APL_NORMAL;
 
-    EXPECT_FALSE(PermissionConstraintCheck::IsAclSatisfied(briefDef, policy));
+    EXPECT_FALSE(PermissionConstraintCheck::IsAclSatisfied(false, briefDef, policy));
 }
 
 /**
@@ -66,7 +66,7 @@ HWTEST_F(PermissionConstraintCheckTest, IsAclSatisfied002, TestSize.Level0)
     policy.apl = APL_NORMAL;
     policy.aclExtendedMap[briefDef.permissionName] = "true";
 
-    EXPECT_TRUE(PermissionConstraintCheck::IsAclSatisfied(briefDef, policy));
+    EXPECT_TRUE(PermissionConstraintCheck::IsAclSatisfied(false, briefDef, policy));
 }
 
 /**
@@ -85,7 +85,36 @@ HWTEST_F(PermissionConstraintCheckTest, IsAclSatisfied003, TestSize.Level0)
     policy.apl = APL_NORMAL;
     policy.aclRequestedList = {briefDef.permissionName};
 
-    EXPECT_TRUE(PermissionConstraintCheck::IsAclSatisfied(briefDef, policy));
+    EXPECT_TRUE(PermissionConstraintCheck::IsAclSatisfied(false, briefDef, policy));
+}
+
+HWTEST_F(PermissionConstraintCheckTest, IsAclSatisfiedSideload001, TestSize.Level0)
+{
+    PermissionBriefDef briefDef = {};
+    briefDef.permissionName = const_cast<char *>("ohos.permission.SIDELOAD_ACL");
+    briefDef.availableLevel = APL_SYSTEM_BASIC;
+    briefDef.provisionEnable = true;
+    briefDef.provisionBypassForSideload = true;
+
+    HapPolicy policy = {};
+    policy.apl = APL_NORMAL;
+
+    EXPECT_TRUE(PermissionConstraintCheck::IsAclSatisfied(true, briefDef, policy));
+    EXPECT_FALSE(PermissionConstraintCheck::IsAclSatisfied(false, briefDef, policy));
+}
+
+HWTEST_F(PermissionConstraintCheckTest, IsAclSatisfiedSideloadConditions001, TestSize.Level0)
+{
+    PermissionBriefDef briefDef = {};
+    briefDef.permissionName = const_cast<char *>("ohos.permission.SIDELOAD_ACL");
+    briefDef.availableLevel = APL_SYSTEM_BASIC;
+    briefDef.provisionEnable = false;
+    briefDef.provisionBypassForSideload = true;
+
+    HapPolicy policy = {};
+    policy.apl = APL_NORMAL;
+
+    EXPECT_FALSE(PermissionConstraintCheck::IsAclSatisfied(true, briefDef, policy));
 }
 
 /**
