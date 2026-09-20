@@ -68,6 +68,7 @@ public:
     const static std::string FIELD_ACL;
     const static std::string FIELD_NAME;
     const static std::string FIELD_APP_DISTRIBUTION_TYPE;
+    const static std::string FIELD_IS_SIDELOAD;
     const static std::string FIELD_CONTROLLER_TOKENID;
     const static std::string FIELD_RESTRICTED_USER;
     const static std::string FIELD_WHITELIST;

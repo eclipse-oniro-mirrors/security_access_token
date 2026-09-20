@@ -29,14 +29,26 @@ namespace {
 struct UpdateHapTokenOptions final {
     uint64_t tokenId = 0;
     std::vector<std::string> reqPerm;
+    std::string appDistributionType;
+    bool isSideloadApp = false;
+    bool dataRefresh = false;
 };
 
 void PrintUpdateHapTokenHelp()
 {
-    std::cout << "Help: ./UpdateHapToken tokenId [requestPermission ...]\n"
+    std::cout << "Help: ./UpdateHapToken tokenId [--dist-type <distributionType>] "
+        << "[--sideload <true|false>] [--data-refresh <true|false>] [requestPermission ...]\n"
         << "Example1: ./UpdateHapToken 281475008495616 ohos.permission.CAMERA\n"
         << "Example2: ./UpdateHapToken 281475008495616 "
         << "ohos.permission.CAMERA ohos.permission.MICROPHONE\n"
+        << "Example3: ./UpdateHapToken 281475008495616 --dist-type developer_id --sideload true "
+        << "ohos.permission.CAMERA\n"
+        << "Example4: ./UpdateHapToken 281475008495616 --data-refresh true ohos.permission.CAMERA "
+        << "ohos.permission.MANAGE_LOCAL_ACCOUNTS\n"
+        << "Note: --sideload defaults to false; sideload app must be developer_id distributed, "
+        << "inconsistent input is normalized to non-sideload.\n"
+        << "Note: --data-refresh is the BMS OTA refresh entry, failed perms are recorded into "
+        << "the undefined table for later recheck.\n"
         << std::endl;
 }
 
@@ -54,6 +66,19 @@ bool ParseUint64Arg(const std::string& value, uint64_t& result)
     return true;
 }
 
+bool ParseBoolArg(const std::string& value, bool& result)
+{
+    if ((value == "true") || (value == "1")) {
+        result = true;
+        return true;
+    }
+    if ((value == "false") || (value == "0")) {
+        result = false;
+        return true;
+    }
+    return false;
+}
+
 bool ParseUpdateHapTokenArgs(int argc, char* argv[], UpdateHapTokenOptions& options)
 {
     if (!ParseUint64Arg(argv[1], options.tokenId)) {
@@ -62,6 +87,41 @@ bool ParseUpdateHapTokenArgs(int argc, char* argv[], UpdateHapTokenOptions& opti
     }
     for (int32_t i = 2; i < argc; ++i) { // 2: start index
         std::string arg = argv[i];
+        if ((arg == "--dist-type") || (arg == "--distribution-type")) {
+            if ((i + 1) >= argc) {
+                std::cout << "UpdateHapToken failed, missing value for " << arg << std::endl << std::endl;
+                return false;
+            }
+            options.appDistributionType = argv[i + 1];
+            ++i;
+            continue;
+        }
+        if ((arg == "--sideload") || (arg == "--is-sideload")) {
+            if ((i + 1) >= argc) {
+                std::cout << "UpdateHapToken failed, missing value for " << arg << std::endl << std::endl;
+                return false;
+            }
+            if (!ParseBoolArg(argv[i + 1], options.isSideloadApp)) {
+                std::cout << "UpdateHapToken failed, invalid " << arg << " value: " << argv[i + 1]
+                    << std::endl << std::endl;
+                return false;
+            }
+            ++i;
+            continue;
+        }
+        if ((arg == "--data-refresh") || (arg == "--dataRefresh")) {
+            if ((i + 1) >= argc) {
+                std::cout << "UpdateHapToken failed, missing value for " << arg << std::endl << std::endl;
+                return false;
+            }
+            if (!ParseBoolArg(argv[i + 1], options.dataRefresh)) {
+                std::cout << "UpdateHapToken failed, invalid " << arg << " value: " << argv[i + 1]
+                    << std::endl << std::endl;
+                return false;
+            }
+            ++i;
+            continue;
+        }
         if (!arg.empty() && arg[0] == '-') {
             std::cout << "UpdateHapToken failed, unsupported option: " << arg << std::endl << std::endl;
             return false;
@@ -119,6 +179,9 @@ int32_t RunUpdateHapToken(const UpdateHapTokenOptions& options)
     if (!LoadUpdateContext(tokenIdEx, bundleName, updateInfoParams)) {
         return RET_FAILED;
     }
+    updateInfoParams.appDistributionType = options.appDistributionType;
+    updateInfoParams.isSideloadApp = options.isSideloadApp;
+    updateInfoParams.dataRefresh = options.dataRefresh;
 
     HapPolicyParams policyParams;
     BuildHapPolicyParams(options.reqPerm, {}, policyParams);
@@ -128,6 +191,9 @@ int32_t RunUpdateHapToken(const UpdateHapTokenOptions& options)
 
     std::cout << "UpdateHapToken end, bundleName=" << bundleName
         << ", apiVersion=" << updateInfoParams.apiVersion
+        << ", distType=" << updateInfoParams.appDistributionType
+        << ", sideload=" << updateInfoParams.isSideloadApp
+        << ", dataRefresh=" << updateInfoParams.dataRefresh
         << ", permissionCount=" << options.reqPerm.size()
         << ", tokenId=" << tokenIdEx.tokenIDEx
         << ", ret=" << ret << std::endl << std::endl;

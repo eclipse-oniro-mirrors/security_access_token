@@ -122,6 +122,7 @@ void HapTokenInfoItem::BuildAddValue(std::vector<GenericValues>& addValues) cons
     addValue.Put(TokenFiledConst::FIELD_MIGRATED, static_cast<int32_t>(migrated));
     addValue.Put(TokenFiledConst::FIELD_RESERVED, static_cast<int32_t>(reserved));
 #endif
+    addValue.Put(TokenFiledConst::FIELD_IS_SIDELOAD, static_cast<int32_t>(isSideload));
     addValues.emplace_back(addValue);
 }
 
@@ -163,6 +164,7 @@ void HapTokenInfoItem::LoadFromDB(const std::vector<GenericValues>& values, std:
         item.migrated = value.GetInt(TokenFiledConst::FIELD_MIGRATED) != 0;
         item.reserved = static_cast<ReservedType>(value.GetInt(TokenFiledConst::FIELD_RESERVED));
 #endif
+        item.isSideload = value.GetInt(TokenFiledConst::FIELD_IS_SIDELOAD) != 0;
         items.emplace_back(item);
     }
 }

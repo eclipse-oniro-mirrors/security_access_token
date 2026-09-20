@@ -49,6 +49,7 @@ static constexpr int32_t API_VERSION_EIGHT = 8;
 const std::string APP_DISTRIBUTION_TYPE_ENTERPRISE_MDM = "enterprise_mdm";
 const std::string APP_DISTRIBUTION_TYPE_ENTERPRISE_NORMAL = "enterprise_normal";
 const std::string APP_DISTRIBUTION_TYPE_NONE = "none";
+const std::string APP_DISTRIBUTION_TYPE_DEVELOPER_ID = "developer_id";
 const std::string OVER_SIZE_STR =
     "AAANSUhEUgAAABUAAAAXCAIAAABrvZPKAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAEXRFWHRTb2Z0d2FyZQBTbmlwYXN0ZV0Xzt0A"
     "FBSURBVDiN7ZQ/S8NQFMVPxU/QCx06GBzrkqUZ42rBbHWUBDqYxSnUoTxXydCSycVsgltfBiFDR8HNdHGxY4nQQAPvMzwHsWn+KM"
@@ -2362,6 +2363,140 @@ HWTEST_F(UpdateHapTokenTest, UpdateHapTokenWithFeatureTest001, TestSize.Level0)
     };
     EXPECT_EQ(RET_SUCCESS, AccessTokenKit::UpdateHapToken(tokenIdEx, updateInfoParams, infoManagerTestPolicyPrams2));
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenIdEx.tokenIdExStruct.tokenID));
+}
+
+/**
+ * @tc.name: UpdateHapSideloadStateFollow0001
+ * @tc.desc: test update hap token follows the post-update sideload state, no mutual exclusion:
+ *           1. install with isSideloadApp=true, update with false: update succeeds, kept
+ *              permissions preserve their own grant state.
+ *           2. switch back to isSideloadApp=true: update succeeds.
+ *           3. consistent isSideloadApp update success.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(UpdateHapTokenTest, UpdateHapSideloadStateFollow0001, TestSize.Level0)
+{
+    HapInfoParams infoParams = {
+        .userID = TEST_USER_ID,
+        .bundleName = "UpdateHapSideloadTest",
+        .instIndex = 0,
+        .appIDDesc = "UpdateHapSideloadTest",
+        .apiVersion = TestCommon::DEFAULT_API_VERSION,
+        .isSystemApp = false,
+        .appDistributionType = "developer_id",
+        .isSideloadApp = true,
+    };
+    HapPolicyParams policyParams = {
+        .apl = APL_NORMAL,
+        .domain = "test.domain",
+        .permStateList = {g_infoManagerCameraState, g_infoManagerMicrophoneState},
+    };
+    AccessTokenIDEx fullTokenId;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId));
+    AccessTokenID tokenID = fullTokenId.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+
+    // grant user permissions first so the state-kept assertion below is meaningful
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GrantPermission(tokenID,
+        g_infoManagerCameraState.permissionName, PERMISSION_USER_FIXED));
+    EXPECT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(tokenID,
+        g_infoManagerCameraState.permissionName));
+
+    // case 1: sideload flag switch (true -> false): update succeeds without mutual exclusion,
+    // kept permissions preserve their own grant state
+    UpdateHapInfoParams updateInfoParams = {
+        .appIDDesc = infoParams.appIDDesc,
+        .apiVersion = infoParams.apiVersion,
+        .isSystemApp = false,
+        .appDistributionType = "developer_id",
+    };
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::UpdateHapToken(fullTokenId, updateInfoParams, policyParams));
+    EXPECT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.CAMERA"));
+
+    // case 2: switch back to sideload (false -> true): update succeeds
+    UpdateHapInfoParams updateInfoParams2 = {
+        .appIDDesc = infoParams.appIDDesc,
+        .apiVersion = infoParams.apiVersion,
+        .isSystemApp = false,
+        .appDistributionType = "developer_id",
+        .isSideloadApp = true,
+    };
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::UpdateHapToken(fullTokenId, updateInfoParams2, policyParams));
+
+    // case 3: consistent sideload flag update success
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::UpdateHapToken(fullTokenId, updateInfoParams2, policyParams));
+
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
+}
+
+/**
+ * @tc.name: HapSideloadDistributionConsistency0001
+ * @tc.desc: test consistency between isSideloadApp and appDistributionType is handled by
+ *           normalization instead of param rejection:
+ *           1. developer_id distribution with isSideloadApp=false is legal on init and update.
+ *           2. isSideloadApp=true with non-developer_id distribution is normalized to
+ *              non-sideload: init and update succeed without exemption and without rejection.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(UpdateHapTokenTest, HapSideloadDistributionConsistency0001, TestSize.Level0)
+{
+    // case 1: developer_id + isSideloadApp=false is a legal combination, init succeeds
+    HapInfoParams infoParams = {
+        .userID = TEST_USER_ID,
+        .bundleName = "SideloadDistConsistency",
+        .instIndex = 0,
+        .appIDDesc = "SideloadDistConsistency",
+        .apiVersion = API_VERSION_EIGHT,
+        .isSystemApp = false,
+        .appDistributionType = APP_DISTRIBUTION_TYPE_DEVELOPER_ID,
+        .isSideloadApp = false,
+    };
+    HapPolicyParams policyParams = {
+        .apl = APL_NORMAL,
+        .domain = "test.domain",
+        .permStateList = {g_infoManagerCameraState, g_infoManagerMicrophoneState},
+    };
+    AccessTokenIDEx fullTokenId;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId));
+    AccessTokenID tokenID = fullTokenId.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+
+    // case 2: isSideloadApp=true with non-developer_id distribution is normalized to
+    // non-sideload (fail-closed without exemption), init succeeds without rejection
+    HapInfoParams infoParams2 = infoParams;
+    infoParams2.bundleName = "SideloadDistConsistency2";
+    infoParams2.appIDDesc = infoParams2.bundleName;
+    infoParams2.appDistributionType = APP_DISTRIBUTION_TYPE_NONE;
+    infoParams2.isSideloadApp = true;
+    AccessTokenIDEx fullTokenId2;
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::InitHapToken(infoParams2, policyParams, fullTokenId2));
+    EXPECT_NE(INVALID_TOKENID, fullTokenId2.tokenIdExStruct.tokenID);
+
+    // case 3: isSideloadApp=true with non-developer_id distribution is normalized on update
+    // as well, update succeeds without rejection
+    UpdateHapInfoParams updateInfoParams = {
+        .appIDDesc = infoParams.appIDDesc,
+        .apiVersion = infoParams.apiVersion,
+        .isSystemApp = false,
+        .appDistributionType = APP_DISTRIBUTION_TYPE_NONE,
+        .isSideloadApp = true,
+    };
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::UpdateHapToken(fullTokenId, updateInfoParams, policyParams));
+
+    // case 4: consistent update with developer_id + isSideloadApp=false succeeds
+    UpdateHapInfoParams updateInfoParams2 = {
+        .appIDDesc = infoParams.appIDDesc,
+        .apiVersion = infoParams.apiVersion,
+        .isSystemApp = false,
+        .appDistributionType = APP_DISTRIBUTION_TYPE_DEVELOPER_ID,
+        .isSideloadApp = false,
+    };
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::UpdateHapToken(fullTokenId, updateInfoParams2, policyParams));
+
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(fullTokenId2.tokenIdExStruct.tokenID));
 }
 } // namespace AccessToken
 } // namespace Security

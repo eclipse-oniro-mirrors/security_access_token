@@ -188,8 +188,9 @@ private:
         const HapPolicy& policy, int64_t beginTime, int32_t errorCode);
     int32_t PreCheckPermissionStatusDetails(
         AccessTokenID tokenID, const std::vector<std::string>& permissionList);
-    bool IsPermissionValid(int32_t hapApl, const PermissionBriefDef& data, const std::string& value, bool isAcl);
-    void FilterInvalidData(const std::vector<GenericValues>& results,
+    bool IsPermissionValid(bool isSideloadApp, int32_t hapApl, const PermissionBriefDef& data,
+        const std::string& value, bool isAcl);
+    void RecheckUndefinedPerms(const std::vector<GenericValues>& results,
         const std::map<int32_t, TokenIdInfo>& tokenIdAplMap, std::vector<GenericValues>& validValueList);
     void UpdateUndefinedInfoCache(const std::vector<GenericValues>& validValueList,
         std::vector<GenericValues>& stateValues, std::vector<GenericValues>& extendValues);

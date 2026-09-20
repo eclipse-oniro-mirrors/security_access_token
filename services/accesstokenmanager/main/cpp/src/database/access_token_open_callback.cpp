@@ -31,6 +31,8 @@ namespace AccessToken {
 namespace {
 constexpr const char*  INTEGER_STR = " integer not null,";
 constexpr const char*  TEXT_STR = " text not null,";
+// INTEGER_DEFAULT_ZERO_STR is shared by create table and alter table upgrade, keep them consistent.
+constexpr const char*  INTEGER_DEFAULT_ZERO_STR = " integer not null default 0";
 // back up name is xxx_slave fixed, can not be changed
 constexpr const char* DATABASE_NAME_BACK = "access_token_slave.db";
 constexpr int32_t LEGACY_SUBPROFILE_ID = -1;
@@ -96,6 +98,9 @@ int32_t AccessTokenOpenCallback::CreateHapTokenInfoTable(NativeRdb::RdbStore& rd
         .append(INTEGER_STR)
         .append(TokenFiledConst::FIELD_FORBID_PERM_DIALOG)
         .append(INTEGER_STR)
+        .append(TokenFiledConst::FIELD_IS_SIDELOAD)
+        .append(INTEGER_DEFAULT_ZERO_STR)
+        .append(",")
     #ifdef SPM_DATA_ENABLE
         .append(TokenFiledConst::FIELD_UID)
         .append(" integer not null default -1,")
@@ -896,8 +901,22 @@ int32_t AccessTokenOpenCallback::UpgradeFromVersion10(NativeRdb::RdbStore& rdbSt
     return NativeRdb::E_OK;
 }
 
-#ifdef SPM_DATA_ENABLE
 int32_t AccessTokenOpenCallback::UpgradeFromVersion11(NativeRdb::RdbStore& rdbStore)
+{
+    std::string tableName;
+    AccessTokenDbUtil::GetTableNameByType(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, tableName);
+    int32_t res = rdbStore.ExecuteSql("alter table " + tableName + " add column " +
+        TokenFiledConst::FIELD_IS_SIDELOAD + INTEGER_DEFAULT_ZERO_STR);
+    if (res != NativeRdb::E_OK) {
+        ReportUpgradeError(res, DATABASE_VERSION_12, "AddIsSideloadColumn");
+        return res;
+    }
+    LOGI(ATM_DOMAIN, ATM_TAG, "Success to upgrade from version 11 to version 12.");
+    return NativeRdb::E_OK;
+}
+
+#ifdef SPM_DATA_ENABLE
+int32_t AccessTokenOpenCallback::UpgradeFromVersion12(NativeRdb::RdbStore& rdbStore)
 {
     int32_t res = CreateHapInfoTable(rdbStore);
     if (res != NativeRdb::E_OK) {
@@ -979,9 +998,15 @@ int32_t AccessTokenOpenCallback::OnUpgrade(NativeRdb::RdbStore& rdbStore, int32_
         case DATABASE_VERSION_10: // 10->11
             (void)UpgradeFromVersion10(rdbStore);
             [[fallthrough]];
-#ifdef SPM_DATA_ENABLE
-        case DATABASE_VERSION_11: // 12->13
+        case DATABASE_VERSION_11: // 11->12
             res = UpgradeFromVersion11(rdbStore);
+            if (res != NativeRdb::E_OK) {
+                return res;
+            }
+            [[fallthrough]];
+#ifdef SPM_DATA_ENABLE
+        case DATABASE_VERSION_12: // 12->13
+            res = UpgradeFromVersion12(rdbStore);
             if (res != NativeRdb::E_OK) {
                 return res;
             }

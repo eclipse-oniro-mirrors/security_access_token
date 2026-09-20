@@ -935,6 +935,7 @@ int32_t AccessTokenManagerClient::UpdateHapToken(AccessTokenIDEx& tokenIdEx, con
     infoIdl.dataRefresh = info.dataRefresh;
     infoIdl.appProvisionType = info.appProvisionType;
     infoIdl.isSkillHap = info.isSkillHap;
+    infoIdl.isSideloadApp = info.isSideloadApp;
     HapInfoCheckResultIdl resultInfoIdl;
     uint64_t fullTokenId = tokenIdEx.tokenIDEx;
     int32_t res = proxy->UpdateHapToken(fullTokenId, infoIdl, hapPolicyParcel, resultInfoIdl);

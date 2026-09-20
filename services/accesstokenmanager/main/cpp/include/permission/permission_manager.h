@@ -102,8 +102,6 @@ public:
     void InitPermState(const HapPolicy& policy,
         const PermissionBriefDef& briefDef, bool needGrantForDebug, PermissionStatus& state);
     bool InitPermissionList(const BundleParam& param, const HapPolicy& policy,
-        std::vector<PermissionStatus>& initializedList, HapInfoCheckResult& result);
-    bool InitPermissionList(const BundleParam& param, const HapPolicy& policy,
         std::vector<PermissionStatus>& initializedList, HapInfoCheckResult& result,
         std::vector<GenericValues>& undefValues, bool dataRefresh = false);
     bool InitDlpPermissionList(const HapInfoParams& initInfo,

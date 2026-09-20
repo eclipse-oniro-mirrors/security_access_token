@@ -39,6 +39,7 @@ struct BundleParam final {
     bool isSystem = false;
     bool isAtomicService = false;
     bool isDebug = false;
+    bool isSideloadApp = false;
 };
 
 class BundleNoCachedInfo final {

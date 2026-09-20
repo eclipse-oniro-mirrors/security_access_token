@@ -96,6 +96,7 @@ namespace OHOS {
             .appDistributionType = provider.ConsumeRandomLengthString(),
             .isAtomicService = provider.ConsumeBool(),
             .dataRefresh = provider.ConsumeBool(),
+            .isSideloadApp = provider.ConsumeBool(),
         };
 
         HapPolicyParams policy;

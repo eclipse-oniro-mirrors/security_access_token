@@ -36,7 +36,13 @@ constexpr uint32_t PROCESS_OWNERID_COMPAT = 5;
 constexpr uint32_t PROCESS_OWNERID_APP_TEMP_ALLOW = 10;
 }
 
-bool PermissionConstraintCheck::IsAclSatisfied(const PermissionBriefDef& briefDef, const HapPolicy& policy)
+bool PermissionConstraintCheck::IsSideloadAclExempt(bool isSideloadApp, const PermissionBriefDef& briefDef)
+{
+    return isSideloadApp && briefDef.provisionEnable && briefDef.provisionBypassForSideload;
+}
+
+bool PermissionConstraintCheck::IsAclSatisfied(bool isSideloadApp, const PermissionBriefDef& briefDef,
+    const HapPolicy& policy)
 {
 #ifdef X86_EMULATOR_MODE
     if (policy.checkIgnore == HapPolicyCheckIgnore::ACL_IGNORE_CHECK) {
@@ -48,6 +54,11 @@ bool PermissionConstraintCheck::IsAclSatisfied(const PermissionBriefDef& briefDe
         if (!briefDef.provisionEnable) {
             LOGC(ATM_DOMAIN, ATM_TAG, "The provisionEnable of %{public}s is false.", briefDef.permissionName);
             return false;
+        }
+        if (IsSideloadAclExempt(isSideloadApp, briefDef)) {
+            LOGI(ATM_DOMAIN, ATM_TAG, "Sideload ACL exempt is satisfied for %{public}s.",
+                briefDef.permissionName);
+            return true;
         }
         bool isAclExist = false;
         if (briefDef.hasValue) {
@@ -112,7 +123,7 @@ bool PermissionConstraintCheck::IsPermAvailableRangeSatisfied(const BundleParam&
 bool PermissionConstraintCheck::AclAndEdmCheck(const BundleParam& param, const PermissionBriefDef& briefDef,
     const HapPolicy& policy, HapInfoCheckResult& result)
 {
-    if (!IsAclSatisfied(briefDef, policy)) {
+    if (!IsAclSatisfied(param.isSideloadApp, briefDef, policy)) {
         result.permCheckResult.permissionName = briefDef.permissionName;
         result.permCheckResult.rule = PERMISSION_ACL_RULE;
         LOGC(ATM_DOMAIN, ATM_TAG, "Acl of %{public}s is invalid.", briefDef.permissionName);
