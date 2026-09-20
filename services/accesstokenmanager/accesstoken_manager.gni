@@ -100,6 +100,14 @@ accesstoken_manager_base_config = {
     ]
   }
 
+  if (access_token_enable_spm == true) {
+    sources += [
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/kernel/add_spm_data_task.cpp",
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/kernel/spm_data_kernel_common.cpp",
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/kernel/update_spm_data_task.cpp",
+    ]
+  }
+
   # ========== Include Dirs ==========
   # Base include dirs (always included)
   include_dirs = [

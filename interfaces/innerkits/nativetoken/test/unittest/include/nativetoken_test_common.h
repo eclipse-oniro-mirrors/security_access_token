@@ -17,6 +17,15 @@
 #define NATIVE_TOKEN_TEST_COMMON_H
 
 #include <cerrno>
+#include <fcntl.h>
+#include <iostream>
+#include <sys/stat.h>
+#include <unistd.h>
+#include "securec.h"
+
+#ifdef WITH_SELINUX
+#include <policycoreutils.h>
+#endif
 
 #include "nativetoken.h"
 #include "spm_setproc.h"
@@ -37,6 +46,56 @@ static bool IsKernelSupportSpm()
     hasChecked = true;
     std::cout << "IsKernelSupportSpm: " << isSupportSpm << std::endl;
     return isSupportSpm;
+}
+
+static void CopyFileContent(int32_t srcFd, int32_t dstFd)
+{
+    char buf[4096];
+    ssize_t n;
+    while ((n = read(srcFd, buf, sizeof(buf))) > 0) {
+        ssize_t written = write(dstFd, buf, n);
+        if (written < 0 || written != n) {
+            break;
+        }
+    }
+}
+
+static void FixFileMetadata(const char* destPath)
+{
+    struct stat dirStat;
+    if (stat(TOKEN_ID_CFG_DIR_PATH, &dirStat) == 0) {
+        chown(destPath, dirStat.st_uid, dirStat.st_gid);
+        chmod(destPath, S_IRUSR | S_IWUSR | S_IRGRP);
+    }
+#ifdef WITH_SELINUX
+    Restorecon(destPath);
+#endif
+}
+
+static inline void BackupTokenFile(const char* srcPath, const char* backupPath)
+{
+    int32_t srcFd = open(srcPath, O_RDONLY);
+    if (srcFd < 0) { return; }
+    int32_t dstFd = open(backupPath, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+    if (dstFd >= 0) {
+        CopyFileContent(srcFd, dstFd);
+        close(dstFd);
+    }
+    close(srcFd);
+}
+
+static inline void RestoreTokenFile(const char* backupPath, const char* destPath)
+{
+    int32_t srcFd = open(backupPath, O_RDONLY);
+    if (srcFd < 0) { return; }
+    int32_t dstFd = open(destPath, O_WRONLY | O_TRUNC);
+    if (dstFd < 0) { dstFd = open(destPath, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR); }
+    if (dstFd >= 0) {
+        CopyFileContent(srcFd, dstFd);
+        close(dstFd);
+    }
+    close(srcFd);
+    FixFileMetadata(destPath);
 }
 
 #endif // NATIVE_TOKEN_TEST_COMMON_H

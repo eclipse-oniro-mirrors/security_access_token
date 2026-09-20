@@ -17,6 +17,14 @@
 #include <fcntl.h>
 #include <memory>
 #include <string>
+#include <sys/stat.h>
+#include <unistd.h>
+#include "securec.h"
+#include "accesstoken_file_util.h"
+
+#ifdef WITH_SELINUX
+#include <policycoreutils.h>
+#endif
 
 #define private public
 #include "json_parse_loader.h"
@@ -31,6 +39,8 @@ namespace {
 constexpr const char* TEST_FILE_PATH = "/data/test/abcdefg.txt";
 constexpr const char* PERMISSION_DEFINITION_EXT_FILE =
     "/etc/access_token/accesstoken_permission_definition_ext.txt";
+constexpr const char* NATIVE_TOKEN_FILE = "/data/service/el0/access_token/nativetoken.json";
+constexpr const char* NATIVE_TOKEN_DIR = "/data/service/el0/access_token";
 }
 
 class JsonParseLoaderTest : public testing::Test  {
@@ -42,10 +52,85 @@ public:
     void TearDown();
 };
 
-void JsonParseLoaderTest::SetUpTestCase() {}
-void JsonParseLoaderTest::TearDownTestCase() {}
+static void BackupAndRestoreHelper(const char* filePath, const char* backupPath, bool isBackup)
+{
+    if (isBackup) {
+        int srcFd = open(filePath, O_RDONLY);
+        if (srcFd < 0) {
+            return;
+        }
+        struct stat srcStat;
+        fstat(srcFd, &srcStat);
+        int dstFd = open(backupPath, O_WRONLY | O_CREAT | O_TRUNC, srcStat.st_mode & 0777);
+        if (dstFd >= 0) {
+            char buf[4096];
+            ssize_t n;
+            while ((n = read(srcFd, buf, sizeof(buf))) > 0) {
+                write(dstFd, buf, n);
+            }
+            close(dstFd);
+        }
+        close(srcFd);
+    } else {
+        int srcFd = open(backupPath, O_RDONLY);
+        if (srcFd < 0) {
+            return;
+        }
+        int dstFd = open(filePath, O_WRONLY | O_TRUNC);
+        if (dstFd < 0) {
+            dstFd = open(filePath, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP);
+        }
+        if (dstFd >= 0) {
+            char buf[4096];
+            ssize_t n;
+            while ((n = read(srcFd, buf, sizeof(buf))) > 0) {
+                write(dstFd, buf, n);
+            }
+            close(dstFd);
+        }
+        close(srcFd);
+        struct stat dirStat;
+        if (stat(NATIVE_TOKEN_DIR, &dirStat) == 0) {
+            chown(filePath, dirStat.st_uid, dirStat.st_gid);
+            chmod(filePath, S_IRUSR | S_IWUSR | S_IRGRP);
+        }
+#ifdef WITH_SELINUX
+        Restorecon(filePath);
+#endif
+    }
+}
+
+void JsonParseLoaderTest::SetUpTestCase()
+{
+    std::string backupPath = std::string(NATIVE_TOKEN_FILE) + ".testbak";
+    BackupAndRestoreHelper(NATIVE_TOKEN_FILE, backupPath.c_str(), true);
+    char bakPath[PATH_MAX] = {0};
+    if (GetBakFilePath(NATIVE_TOKEN_FILE, bakPath, sizeof(bakPath)) == 0) {
+        std::string bakBackup = std::string(bakPath) + ".testbak";
+        BackupAndRestoreHelper(bakPath, bakBackup.c_str(), true);
+    }
+}
+
+void JsonParseLoaderTest::TearDownTestCase()
+{
+    char bakPath[PATH_MAX] = {0};
+    if (GetBakFilePath(NATIVE_TOKEN_FILE, bakPath, sizeof(bakPath)) == 0) {
+        std::string bakBackup = std::string(bakPath) + ".testbak";
+        BackupAndRestoreHelper(bakBackup.c_str(), bakPath, false);
+        unlink(bakBackup.c_str());
+    }
+    std::string backupPath = std::string(NATIVE_TOKEN_FILE) + ".testbak";
+    BackupAndRestoreHelper(backupPath.c_str(), NATIVE_TOKEN_FILE, false);
+    unlink(backupPath.c_str());
+}
+
 void JsonParseLoaderTest::SetUp() {}
-void JsonParseLoaderTest::TearDown() {}
+
+void JsonParseLoaderTest::TearDown()
+{
+    std::string backupPath = std::string(NATIVE_TOKEN_FILE) + ".testbak";
+    BackupAndRestoreHelper(NATIVE_TOKEN_FILE, backupPath.c_str(), false);
+}
 
 /*
  * @tc.name: IsDirExsit
@@ -626,6 +711,133 @@ HWTEST_F(JsonParseLoaderTest, GetPermissionDefinitionExt002, TestSize.Level4)
 #else
     EXPECT_TRUE(permissions.empty());
 #endif
+}
+
+/*
+ * @tc.name: GetAllNativeTokenInfoTest001
+ * @tc.desc: GetAllNativeTokenInfo with valid main file → success
+ * @tc.type: FUNC
+ * @tc.require: TDD coverage
+ */
+HWTEST_F(JsonParseLoaderTest, GetAllNativeTokenInfoTest001, TestSize.Level4)
+{
+    // Write valid JSON to NATIVE_TOKEN_CONFIG_FILE
+    const char* validJson = "[{\"processName\":\"test_proc\",\"APL\":3,\"version\":1,"
+        "\"tokenId\":672000000,\"tokenAttr\":0,\"dcaps\":[],\"nativeAcls\":[],\"permissions\":[]}]";
+    int32_t fd = open("/data/service/el0/access_token/nativetoken.json",
+        O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+    ASSERT_GE(fd, 0);
+    write(fd, validJson, strlen(validJson));
+    close(fd);
+
+    ConfigPolicLoader loader;
+    std::vector<NativeTokenInfoBase> tokenInfos;
+    int32_t ret = loader.GetAllNativeTokenInfo(tokenInfos);
+    EXPECT_EQ(ret, RET_SUCCESS);
+    EXPECT_FALSE(tokenInfos.empty());
+}
+
+/*
+ * @tc.name: GetAllNativeTokenInfoTest002
+ * @tc.desc: GetAllNativeTokenInfo main file missing → backup fallback → success
+ * @tc.type: FUNC
+ * @tc.require: TDD coverage
+ */
+HWTEST_F(JsonParseLoaderTest, GetAllNativeTokenInfoTest002, TestSize.Level4)
+{
+    unlink("/data/service/el0/access_token/nativetoken.json");
+    char bakPath[PATH_MAX] = {0};
+    GetBakFilePath("/data/service/el0/access_token/nativetoken.json", bakPath, sizeof(bakPath));
+    const char* validJson = "[{\"processName\":\"bak_proc\",\"APL\":3,\"version\":1,"
+        "\"tokenId\":672000001,\"tokenAttr\":0,\"dcaps\":[],\"nativeAcls\":[],\"permissions\":[]}]";
+    int32_t fd = open(bakPath, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+    ASSERT_GE(fd, 0);
+    write(fd, validJson, strlen(validJson));
+    close(fd);
+
+    ConfigPolicLoader loader;
+    std::vector<NativeTokenInfoBase> tokenInfos;
+    int32_t ret = loader.GetAllNativeTokenInfo(tokenInfos);
+    EXPECT_EQ(ret, RET_SUCCESS);
+    EXPECT_FALSE(tokenInfos.empty());
+}
+
+/*
+ * @tc.name: GetAllNativeTokenInfoTest003
+ * @tc.desc: GetAllNativeTokenInfo both files missing → error
+ * @tc.type: FUNC
+ * @tc.require: TDD coverage
+ */
+HWTEST_F(JsonParseLoaderTest, GetAllNativeTokenInfoTest003, TestSize.Level4)
+{
+    unlink("/data/service/el0/access_token/nativetoken.json");
+    char bakPath[PATH_MAX] = {0};
+    GetBakFilePath("/data/service/el0/access_token/nativetoken.json", bakPath, sizeof(bakPath));
+    unlink(bakPath);
+
+    ConfigPolicLoader loader;
+    std::vector<NativeTokenInfoBase> tokenInfos;
+    int32_t ret = loader.GetAllNativeTokenInfo(tokenInfos);
+    EXPECT_NE(ret, RET_SUCCESS);
+}
+
+/*
+ * @tc.name: GetAllNativeTokenInfoTest004
+ * @tc.desc: GetAllNativeTokenInfo main file invalid JSON → backup fallback → success
+ * @tc.type: FUNC
+ * @tc.require: TDD coverage
+ */
+HWTEST_F(JsonParseLoaderTest, GetAllNativeTokenInfoTest004, TestSize.Level4)
+{
+    int32_t fd = open("/data/service/el0/access_token/nativetoken.json", O_WRONLY | O_CREAT | O_TRUNC,
+        S_IRUSR | S_IWUSR);
+    ASSERT_GE(fd, 0);
+    write(fd, "invalid_json", 12);
+    close(fd);
+
+    char bakPath[PATH_MAX] = {0};
+    GetBakFilePath("/data/service/el0/access_token/nativetoken.json", bakPath, sizeof(bakPath));
+    const char* validJson = "[{\"processName\":\"bak_proc2\",\"APL\":3,\"version\":1,"
+        "\"tokenId\":672000002,\"tokenAttr\":0,\"dcaps\":[],\"nativeAcls\":[],\"permissions\":[]}]";
+    fd = open(bakPath, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+    ASSERT_GE(fd, 0);
+    write(fd, validJson, strlen(validJson));
+    close(fd);
+
+    ConfigPolicLoader loader;
+    std::vector<NativeTokenInfoBase> tokenInfos;
+    int32_t ret = loader.GetAllNativeTokenInfo(tokenInfos);
+    EXPECT_EQ(ret, RET_SUCCESS);
+    EXPECT_FALSE(tokenInfos.empty());
+}
+
+/*
+ * @tc.name: GetAllNativeTokenInfoTest005
+ * @tc.desc: GetAllNativeTokenInfo main empty → backup fallback → success
+ * @tc.type: FUNC
+ * @tc.require: TDD coverage
+ */
+HWTEST_F(JsonParseLoaderTest, GetAllNativeTokenInfoTest005, TestSize.Level4)
+{
+    int32_t fd = open("/data/service/el0/access_token/nativetoken.json", O_WRONLY | O_CREAT | O_TRUNC,
+        S_IRUSR | S_IWUSR);
+    ASSERT_GE(fd, 0);
+    close(fd);
+
+    char bakPath[PATH_MAX] = {0};
+    GetBakFilePath("/data/service/el0/access_token/nativetoken.json", bakPath, sizeof(bakPath));
+    const char* validJson = "[{\"processName\":\"bak_proc3\",\"APL\":3,\"version\":1,"
+        "\"tokenId\":672000003,\"tokenAttr\":0,\"dcaps\":[],\"nativeAcls\":[],\"permissions\":[]}]";
+    fd = open(bakPath, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+    ASSERT_GE(fd, 0);
+    write(fd, validJson, strlen(validJson));
+    close(fd);
+
+    ConfigPolicLoader loader;
+    std::vector<NativeTokenInfoBase> tokenInfos;
+    int32_t ret = loader.GetAllNativeTokenInfo(tokenInfos);
+    EXPECT_EQ(ret, RET_SUCCESS);
+    EXPECT_FALSE(tokenInfos.empty());
 }
 } // namespace AccessToken
 } // namespace Security
