@@ -9104,7 +9104,7 @@
             "grantMode": "system_grant",
             "availableLevel": "normal",
             "availableType": "NORMAL",
-            "since": "26.1.0",
+            "since": "26.0.1",
             "deprecated": "",
             "provisionEnable": false,
             "distributedSceneEnable": false,
