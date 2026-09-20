@@ -63,12 +63,12 @@ void FsyncDir(const char* dirPath)
 {
     int32_t fd = open(dirPath, O_RDONLY | O_DIRECTORY);
     if (fd < 0) {
-        LOGE("open dir failed, errno=%d.", errno);
+        LOGE("Open dir failed, errno=%d.", errno);
         return;
     }
     fdsan_exchange_owner_tag(fd, 0, FD_TAG);
     if (fsync(fd) != 0) {
-        LOGE("fsync dir failed, errno=%d.", errno);
+        LOGE("Fsync dir failed, errno=%d.", errno);
     }
     (void)fdsan_close_with_tag(fd, FD_TAG);
 }
@@ -77,18 +77,18 @@ int32_t WriteAndSync(const char* path, const char* data, size_t dataLen, int32_t
 {
     int32_t fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, static_cast<mode_t>(mode));
     if (fd < 0) {
-        LOGE("open failed, errno=%d.", errno);
+        LOGE("Open failed, errno=%d.", errno);
         return FILE_UTIL_FAILED;
     }
     fdsan_exchange_owner_tag(fd, 0, FD_TAG);
     bool failed = false;
     ssize_t written = write(fd, data, dataLen);
     if (written < 0 || static_cast<size_t>(written) != dataLen) {
-        LOGE("write failed, written=%zd, errno=%d.", written, errno);
+        LOGE("Write failed, written=%zd, errno=%d.", written, errno);
         failed = true;
     }
     if (!failed && fsync(fd) != 0) {
-        LOGE("fsync failed, errno=%d.", errno);
+        LOGE("Fsync failed, errno=%d.", errno);
         failed = true;
     }
     (void)fdsan_close_with_tag(fd, FD_TAG);
@@ -106,7 +106,7 @@ int32_t WriteAndRename(const char* filePath, const char* data, size_t dataLen, i
     char newPath[PATH_MAX];
     int32_t newRet = snprintf_s(newPath, sizeof(newPath), sizeof(newPath) - 1, "%s.new", filePath);
     if (newRet < 0) {
-        LOGE("newPath too long.");
+        LOGE("NewPath too long.");
         return FILE_UTIL_FAILED;
     }
     if (unlink(newPath) != 0 && errno != ENOENT) {
@@ -129,11 +129,11 @@ int32_t WriteAndRename(const char* filePath, const char* data, size_t dataLen, i
     Restorecon(newPath);
 #endif
     if (hasParentStat && chown(newPath, dirStat.st_uid, dirStat.st_gid) != 0) {
-        LOGE("chown newPath failed, errno=%d.", errno);
+        LOGE("Chown newPath failed, errno=%d.", errno);
     }
 
     if (rename(newPath, filePath) != 0) {
-        LOGE("rename failed, errno=%d.", errno);
+        LOGE("Rename failed, errno=%d.", errno);
         return FILE_UTIL_FAILED;
     }
 
