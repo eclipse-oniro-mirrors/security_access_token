@@ -1789,6 +1789,21 @@ int32_t AccessTokenManagerClient::GetSecCompEnhanceKey(SecCompEnhanceKey& enhanc
 }
 #endif // SECURITY_COMPONENT_ENHANCE_ENABLE
 
+int32_t AccessTokenManagerClient::SetSecCompEnhanceStatus(bool isEnable)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+    int32_t errCode = proxy->SetSecCompEnhanceStatus(isEnable);
+    if (errCode != RET_SUCCESS) {
+        errCode = ConvertResult(errCode);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Request fail, result: %{public}d", errCode);
+    }
+    return errCode;
+}
+
 int32_t AccessTokenManagerClient::QueryStatusByPermission(const std::vector<uint32_t>& permCodeList,
     std::vector<PermissionStatus>& permissionInfoList, bool onlyHap)
 {

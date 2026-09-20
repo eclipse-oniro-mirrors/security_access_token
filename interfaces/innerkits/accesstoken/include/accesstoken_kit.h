@@ -665,6 +665,14 @@ public:
      */
     static int32_t GetSecCompEnhanceKey(SecCompEnhanceKey& enhanceKey);
 #endif
+
+    /**
+     * @brief Set security component enhance service running status.
+     * @param isEnable true when security component service is started, false when it is stopped
+     * @return error code, see access_token_error.h
+     */
+    static int32_t SetSecCompEnhanceStatus(bool isEnable);
+
     /**
      * Whether it is a atomic service
      * @param tokenId token id.

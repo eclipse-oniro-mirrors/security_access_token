@@ -123,6 +123,7 @@ public:
     int32_t StoreSecCompEnhanceKey(const SecCompEnhanceKeyIdl& enhanceKey) override;
     int32_t GetSecCompEnhanceKey(SecCompEnhanceKeyIdl& enhanceKey) override;
 #endif
+    int32_t SetSecCompEnhanceStatus(bool isEnable) override;
 
 #ifdef TOKEN_SYNC_ENABLE
     int GetHapTokenInfoFromRemote(AccessTokenID tokenID, HapTokenInfoForSyncParcel& hapSyncParcel) override;
