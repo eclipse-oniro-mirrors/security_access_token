@@ -37,10 +37,9 @@ ohos_source_set("accesstoken_file_util") {
 
   sources = [ "src/accesstoken_file_util.cpp" ]
 
-  external_deps = [
-    "bounds_checking_function:libsec_shared",
-    "hilog:libhilog",
-  ]
+  deps = [ "${access_token_path}/frameworks/common:accesstoken_static_log_for_nativetoken" ]
+
+  external_deps = [ "bounds_checking_function:libsec_shared" ]
 
   configs = [
     "${access_token_path}/config:access_token_compile_flags",
