@@ -16,32 +16,39 @@
 #include "undefined_permission_update_test.h"
 
 #include <unistd.h>
+#include <cerrno>
 #include <chrono>
 #include <cstdio>
+#include <cstdlib>
+#include <dirent.h>
+#include <fcntl.h>
 #include <fstream>
 #include <memory>
+#include <sched.h>
+#include <csignal>
 #include <sstream>
+#include <sys/mount.h>
+#include <sys/stat.h>
+#include <sys/wait.h>
 #include <thread>
 
 #include "access_token.h"
 #include "access_token_basic_type.h"
+#include "access_token_db_operator.h"
 #include "access_token_error.h"
 #include "accesstoken_common_log.h"
 #include "accesstoken_kit.h"
+#include "atm_data_type.h"
+#include "generic_values.h"
 #include "hap_token_info.h"
 #include "iservice_registry.h"
 #include "permission_def.h"
 #include "permission_map.h"
 #include "permission_state_full.h"
-#include "rdb_helper.h"
-#include "rdb_open_callback.h"
-#include "rdb_predicates.h"
-#include "rdb_store.h"
 #include "system_ability_definition.h"
 #include "test_common.h"
+#include "token_field_const.h"
 #include "token_setproc.h"
-#include "transaction.h"
-#include "values_bucket.h"
 
 using namespace testing::ext;
 
@@ -49,34 +56,26 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
+constexpr const char* ACCESSTOKEN_SERVICE_PROCESS_NAME = "accesstoken_service";
 constexpr const char* PERM_DEFINITION_EXT_FILE = "/system/etc/access_token/accesstoken_permission_definition_ext.txt";
-constexpr const char* ACCESS_TOKEN_DB_PATH = "/data/service/el1/public/access_token/access_token.db";
-constexpr const char* PERM_DEF_VERSION_NAME = "permission_definition_version";
-constexpr const char* SYSTEM_CONFIG_TABLE = "system_config_table";
+constexpr const char* ACCESS_TOKEN_CONFIG_DIR = "/system/etc/access_token";
+constexpr const char* RESET_PERM_DEF_VERSION = "0";
 constexpr const char* TEST_BUNDLE_NAME = "perm_definition_ext_test_bundle";
-constexpr int32_t ACCESS_TOKEN_DB_VERSION = 12;
-constexpr int32_t ACCESS_TOKEN_DB_CLEAR_MEMORY_SIZE = 4;
 constexpr int32_t LOAD_SA_TIMEOUT_MS = 10000;
 constexpr uint32_t WAIT_SLEEP_MS = 200;
 constexpr uint32_t MAX_WAIT_MS = 20 * 1000;
+constexpr uint32_t WAIT_SERVICE_START_MS = 3 * 1000;
+constexpr uint32_t WAIT_KILL_CHECK_MS = 100;
+constexpr uint32_t TRY_KILL_TIMES = 4;
+constexpr int32_t CHILD_EXIT_OPEN_NS_FAILED = 1;
+constexpr int32_t CHILD_EXIT_SETNS_FAILED = 2;
+constexpr int32_t CHILD_EXIT_MOUNT_FAILED = 3;
+constexpr mode_t STAGING_DIR_MODE = S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH;
+
+constexpr const char* STAGING_DIR = "/data/service/el1/public/access_token/at_test_cfg";
+constexpr const char* STAGING_EXT_FILE =
+    "/data/service/el1/public/access_token/at_test_cfg/accesstoken_permission_definition_ext.txt";
 }
-
-class TestRdbOpenCallback : public NativeRdb::RdbOpenCallback {
-public:
-    int32_t OnCreate(NativeRdb::RdbStore& rdbStore) override
-    {
-        (void)rdbStore;
-        return NativeRdb::E_OK;
-    }
-
-    int32_t OnUpgrade(NativeRdb::RdbStore& rdbStore, int32_t currentVersion, int32_t targetVersion) override
-    {
-        (void)rdbStore;
-        (void)currentVersion;
-        (void)targetVersion;
-        return NativeRdb::E_OK;
-    }
-};
 
 static uint64_t g_selfTokenId = 0;
 static AccessTokenID g_installedTokenId = INVALID_TOKENID;
@@ -106,6 +105,94 @@ static bool IsFileExist(const std::string& path)
     return access(path.c_str(), F_OK) == 0;
 }
 
+static pid_t GetAccessTokenServicePid()
+{
+    DIR* dir = opendir("/proc");
+    if (dir == nullptr) {
+        return -1;
+    }
+    struct dirent* entry;
+    while ((entry = readdir(dir)) != nullptr) {
+        if (entry->d_type != DT_DIR) {
+            continue;
+        }
+        int pid = atoi(entry->d_name);
+        if (pid <= 0) {
+            continue;
+        }
+        std::string cmdlinePath = "/proc/" + std::to_string(pid) + "/cmdline";
+        std::ifstream file(cmdlinePath);
+        std::string cmdline;
+        std::getline(file, cmdline, '\0');
+        file.close();
+        if (cmdline == ACCESSTOKEN_SERVICE_PROCESS_NAME) {
+            closedir(dir);
+            return static_cast<pid_t>(pid);
+        }
+    }
+    closedir(dir);
+    return -1;
+}
+
+static std::string GetProcRootPath(const std::string& basePath)
+{
+    pid_t pid = GetAccessTokenServicePid();
+    if (pid > 0) {
+        return "/proc/" + std::to_string(pid) + "/root" + basePath;
+    }
+    return basePath;
+}
+
+static bool BindMountInServiceNs(pid_t pid, const std::string& src, const std::string& dst, bool doMount)
+{
+    if (pid <= 0) {
+        return false;
+    }
+    std::string nsPath = "/proc/" + std::to_string(pid) + "/ns/mnt";
+    const char* nsPathC = nsPath.c_str();
+    const char* srcC = src.c_str();
+    const char* dstC = dst.c_str();
+
+    pid_t child = fork();
+    if (child < 0) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "fork failed, errno=%{public}d.", errno);
+        return false;
+    }
+    if (child == 0) {
+        int targetFd = open(nsPathC, O_RDONLY | O_CLOEXEC);
+        if (targetFd < 0) {
+            LOGW(ATM_DOMAIN, ATM_TAG, "open ns failed: %{public}s, errno=%{public}d", nsPathC, errno);
+            _exit(CHILD_EXIT_OPEN_NS_FAILED);
+        }
+        int setnsRet = setns(targetFd, CLONE_NEWNS);
+        close(targetFd);
+        if (setnsRet != 0) {
+            LOGW(ATM_DOMAIN, ATM_TAG, "setns failed: %{public}s, errno=%{public}d", nsPathC, errno);
+            _exit(CHILD_EXIT_SETNS_FAILED);
+        }
+        int ret;
+        if (doMount) {
+            ret = ::mount(srcC, dstC, nullptr, MS_BIND, nullptr);
+            if (ret != 0) {
+                LOGW(ATM_DOMAIN, ATM_TAG, "Bind mount failed: %{public}s -> %{public}s, errno=%{public}d",
+                    srcC, dstC, errno);
+            }
+        } else {
+            ret = umount(dstC);
+            if (ret != 0) {
+                LOGW(ATM_DOMAIN, ATM_TAG, "Unmount failed: %{public}s, errno=%{public}d", dstC, errno);
+            }
+        }
+        _exit(ret == 0 ? EXIT_SUCCESS : CHILD_EXIT_MOUNT_FAILED);
+    }
+    int status = 0;
+    if (waitpid(child, &status, 0) < 0) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "waitpid failed, errno=%{public}d.", errno);
+        return false;
+    }
+    return WIFEXITED(status) && WEXITSTATUS(status) == 0;
+}
+
 static bool ReadFileContent(const std::string& path, std::string& content)
 {
     std::ifstream file(path);
@@ -131,13 +218,84 @@ static bool WriteFileContent(const std::string& path, const std::string& content
     return success;
 }
 
+static bool CopyDirFlat(const std::string& srcDir, const std::string& dstDir)
+{
+    DIR* dir = opendir(srcDir.c_str());
+    if (dir == nullptr) {
+        return false;
+    }
+    struct dirent* entry;
+    bool ok = true;
+    while ((entry = readdir(dir)) != nullptr) {
+        if (entry->d_type != DT_REG) {
+            continue;
+        }
+        std::string srcFile = srcDir + "/" + entry->d_name;
+        std::string dstFile = dstDir + "/" + entry->d_name;
+        std::string content;
+        if (!ReadFileContent(srcFile, content)) {
+            ok = false;
+            continue;
+        }
+        if (!WriteFileContent(dstFile, content)) {
+            ok = false;
+        }
+    }
+    closedir(dir);
+    return ok;
+}
+
+static void CleanDirFlat(const std::string& dirPath)
+{
+    DIR* dir = opendir(dirPath.c_str());
+    if (dir == nullptr) {
+        return;
+    }
+    struct dirent* entry;
+    while ((entry = readdir(dir)) != nullptr) {
+        if (entry->d_type != DT_REG) {
+            continue;
+        }
+        std::string filePath = dirPath + "/" + entry->d_name;
+        if (remove(filePath.c_str()) != 0 && errno != ENOENT) {
+            LOGW(ATM_DOMAIN, ATM_TAG, "CleanDirFlat remove failed: %{public}s, errno=%{public}d.",
+                filePath.c_str(), errno);
+        }
+    }
+    closedir(dir);
+}
+
 class PermDefinitionExtFileGuard {
 public:
-    explicit PermDefinitionExtFileGuard(const std::string& path) : path_(path)
+    explicit PermDefinitionExtFileGuard(const std::string& extFilePath) : extFilePath_(extFilePath)
     {
-        existed_ = IsFileExist(path_);
+        targetDir_ = ACCESS_TOKEN_CONFIG_DIR;
+        stagingDir_ = STAGING_DIR;
+        stagingExtFile_ = STAGING_EXT_FILE;
+
+        std::string svcPath = GetProcRootPath(extFilePath_);
+        existed_ = IsFileExist(svcPath);
         if (existed_) {
-            existed_ = ReadFileContent(path_, originalContent_);
+            existed_ = ReadFileContent(svcPath, originalContent_);
+        }
+
+        std::string svcDir = GetProcRootPath(targetDir_);
+        if (remove(stagingDir_.c_str()) != 0 && errno != ENOENT) {
+            LOGW(ATM_DOMAIN, ATM_TAG, "remove staging dir failed: %{public}s, errno=%{public}d.",
+                stagingDir_.c_str(), errno);
+        }
+        if (mkdir(stagingDir_.c_str(), STAGING_DIR_MODE) != 0 && errno != EEXIST) {
+            LOGW(ATM_DOMAIN, ATM_TAG, "mkdir staging dir failed: %{public}s, errno=%{public}d.",
+                stagingDir_.c_str(), errno);
+        }
+        CopyDirFlat(svcDir, stagingDir_);
+        WriteFileContent(stagingExtFile_, existed_ ? originalContent_ : std::string());
+
+        pid_t pid = GetAccessTokenServicePid();
+        mounted_ = BindMountInServiceNs(pid, stagingDir_, targetDir_, true);
+        if (!mounted_) {
+            LOGW(ATM_DOMAIN, ATM_TAG, "Failed to bind mount %{public}s to %{public}s in service namespace",
+                stagingDir_.c_str(), targetDir_.c_str());
         }
     }
 
@@ -151,16 +309,31 @@ public:
         return originalContent_;
     }
 
+    bool IsMounted() const
+    {
+        return mounted_;
+    }
+
+    bool Write(const std::string& content)
+    {
+        return WriteFileContent(stagingExtFile_, content);
+    }
+
     bool Restore()
     {
         if (restored_) {
             return true;
         }
-        if (existed_) {
-            restored_ = WriteFileContent(path_, originalContent_);
-        } else {
-            restored_ = (remove(path_.c_str()) == 0);
+        WriteFileContent(stagingExtFile_, existed_ ? originalContent_ : std::string());
+        if (mounted_) {
+            pid_t pid = GetAccessTokenServicePid();
+            mounted_ = !BindMountInServiceNs(pid, std::string(), targetDir_, false);
         }
+        if (!mounted_) {
+            CleanDirFlat(stagingDir_);
+            rmdir(stagingDir_.c_str());
+        }
+        restored_ = !mounted_;
         return restored_;
     }
 
@@ -168,65 +341,48 @@ public:
     PermDefinitionExtFileGuard& operator=(const PermDefinitionExtFileGuard&) = delete;
 
 private:
-    std::string path_;
+    std::string extFilePath_;
+    std::string targetDir_;
+    std::string stagingDir_;
+    std::string stagingExtFile_;
     bool existed_ = false;
     std::string originalContent_;
+    bool mounted_ = false;
     bool restored_ = false;
 };
 
 static bool SetPermissionDefinitionVersion(const std::string& version)
 {
-    NativeRdb::RdbStoreConfig config(ACCESS_TOKEN_DB_PATH);
-    (void)config.SetBundleName("access_token");
-    config.SetLocalOnly(true);
-    config.SetSecurityLevel(NativeRdb::SecurityLevel::S3);
-    config.SetAllowRebuild(true);
-    config.SetHaMode(NativeRdb::HAMode::MAIN_REPLICA);
-    config.SetClearMemorySize(ACCESS_TOKEN_DB_CLEAR_MEMORY_SIZE);
-
-    int32_t errCode = NativeRdb::E_OK;
-    TestRdbOpenCallback callback;
-    std::shared_ptr<NativeRdb::RdbStore> store =
-        NativeRdb::RdbHelper::GetRdbStore(config, ACCESS_TOKEN_DB_VERSION, callback, errCode);
-    if (store == nullptr || errCode != NativeRdb::E_OK) {
-        return false;
-    }
-
-    NativeRdb::RdbPredicates deletePredicates(SYSTEM_CONFIG_TABLE);
-    deletePredicates.EqualTo("name", PERM_DEF_VERSION_NAME);
-    NativeRdb::ValuesBucket addValue;
-    addValue.PutString("name", PERM_DEF_VERSION_NAME);
-    addValue.PutString("value", version);
-
-    auto transactionResult = store->CreateTransaction(NativeRdb::Transaction::DEFERRED);
-    if (transactionResult.second == nullptr || transactionResult.first != NativeRdb::E_OK) {
-        return false;
-    }
-    auto deleteResult = transactionResult.second->Delete(deletePredicates);
-    if (deleteResult.first != NativeRdb::E_OK) {
-        transactionResult.second->Rollback();
-        return false;
-    }
-    std::vector<NativeRdb::ValuesBucket> buckets;
-    buckets.emplace_back(addValue);
-    auto insertResult = transactionResult.second->BatchInsert(SYSTEM_CONFIG_TABLE, buckets);
-    if (insertResult.first != NativeRdb::E_OK || insertResult.second <= 0) {
-        transactionResult.second->Rollback();
-        return false;
-    }
-    return transactionResult.second->Commit() == NativeRdb::E_OK;
+    GenericValues delValue;
+    delValue.Put(TokenFiledConst::FIELD_NAME, PERM_DEF_VERSION);
+    GenericValues addValue;
+    addValue.Put(TokenFiledConst::FIELD_NAME, PERM_DEF_VERSION);
+    addValue.Put(TokenFiledConst::FIELD_VALUE, version);
+    DelInfo delInfo;
+    delInfo.delType = AtmDataType::ACCESSTOKEN_SYSTEM_CONFIG;
+    delInfo.delValue = delValue;
+    AddInfo addInfo;
+    addInfo.addType = AtmDataType::ACCESSTOKEN_SYSTEM_CONFIG;
+    addInfo.addValues.emplace_back(addValue);
+    return AccessTokenDbOperator::DeleteAndInsertValues({ delInfo }, { addInfo }) == RET_SUCCESS;
 }
 
 static bool RestartAccesstokenService()
 {
-    MockNativeToken mock("accesstoken_service");
+    MockNativeToken mock(ACCESSTOKEN_SERVICE_PROCESS_NAME);
     sptr<ISystemAbilityManager> samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     if (samgr == nullptr) {
         return false;
     }
-    int32_t unloadRet = samgr->UnloadSystemAbility(ACCESS_TOKEN_MANAGER_SERVICE_ID);
-    if (unloadRet != 0) {
-        LOGW(ATM_DOMAIN, ATM_TAG, "UnloadSystemAbility failed, ret=%{public}d.", unloadRet);
+    pid_t svcPid = GetAccessTokenServicePid();
+    if (svcPid > 0) {
+        kill(svcPid, SIGKILL);
+        for (uint32_t i = 0; i < TRY_KILL_TIMES; ++i) {
+            if (GetAccessTokenServicePid() != svcPid) {
+                break;
+            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(WAIT_KILL_CHECK_MS));
+        }
     }
     sptr<IRemoteObject> object = samgr->LoadSystemAbility(ACCESS_TOKEN_MANAGER_SERVICE_ID, LOAD_SA_TIMEOUT_MS);
     return object != nullptr;
@@ -238,7 +394,7 @@ static bool WaitForAccessTokenServiceReady()
     while (elapsedMs < MAX_WAIT_MS) {
         std::this_thread::sleep_for(std::chrono::milliseconds(WAIT_SLEEP_MS));
         elapsedMs += WAIT_SLEEP_MS;
-        if (TestCommon::GetNativeTokenIdFromProcess("accesstoken_service") != INVALID_TOKENID) {
+        if (TestCommon::GetNativeTokenIdFromProcess(ACCESSTOKEN_SERVICE_PROCESS_NAME) != INVALID_TOKENID) {
             return true;
         }
     }
@@ -327,6 +483,7 @@ HWTEST_F(UndefinedPermissionUpdateTest, UndefinedPermissionUpdateTest001, TestSi
     EXPECT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(g_installedTokenId, permissionA));
 
     PermDefinitionExtFileGuard fileGuard(PERM_DEFINITION_EXT_FILE);
+    ASSERT_TRUE(fileGuard.IsMounted()) << "bind mount failed, service cannot see staging file edits";
 
     std::string newContent = fileGuard.GetOriginalContent();
     if (!newContent.empty() && newContent.back() != '\n') {
@@ -334,12 +491,14 @@ HWTEST_F(UndefinedPermissionUpdateTest, UndefinedPermissionUpdateTest001, TestSi
     }
     newContent.append(permissionA);
     newContent.push_back('\n');
-    ASSERT_TRUE(WriteFileContent(PERM_DEFINITION_EXT_FILE, newContent));
+    ASSERT_TRUE(fileGuard.Write(newContent));
 
-    ASSERT_TRUE(SetPermissionDefinitionVersion("0"));
+    ASSERT_TRUE(SetPermissionDefinitionVersion(RESET_PERM_DEF_VERSION));
 
     ASSERT_TRUE(RestartAccesstokenService());
     ASSERT_TRUE(WaitForAccessTokenServiceReady());
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(WAIT_SERVICE_START_MS));
     EXPECT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(g_installedTokenId, permissionA));
 
     ASSERT_TRUE(fileGuard.Restore());

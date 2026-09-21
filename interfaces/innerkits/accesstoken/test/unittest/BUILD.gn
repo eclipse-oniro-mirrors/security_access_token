@@ -147,11 +147,22 @@ if (!use_clang_coverage && relational_store_enable) {
       "${access_token_path}/interfaces/innerkits/nativetoken/include",
       "${access_token_path}/interfaces/innerkits/token_setproc/include",
       "${access_token_path}/interfaces/innerkits/proxy_death/include",
+      "${access_token_path}/services/accesstokenmanager/main/cpp/include/database",
+      "${access_token_path}/services/accesstokenmanager/main/cpp/include/dfx",
+      "${access_token_path}/services/common/database/include",
     ]
 
     sources = [
       "SaTest/undefined_permission_update_test.cpp",
       "common/test_common.cpp",
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/access_token_db.cpp",
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/access_token_db_operator.cpp",
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/access_token_db_util.cpp",
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/access_token_open_callback.cpp",
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/token_field_const.cpp",
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/dfx/hisysevent_adapter.cpp",
+      "${access_token_path}/services/common/database/src/generic_values.cpp",
+      "${access_token_path}/services/common/database/src/variant_value.cpp",
     ]
 
     cflags_cc = access_token_cflags_cc
@@ -170,6 +181,7 @@ if (!use_clang_coverage && relational_store_enable) {
     external_deps = [
       "c_utils:utils",
       "hilog:libhilog",
+      "hisysevent:libhisysevent",
       "init:libbegetutil",
       "ipc:ipc_single",
       "relational_store:native_rdb",
