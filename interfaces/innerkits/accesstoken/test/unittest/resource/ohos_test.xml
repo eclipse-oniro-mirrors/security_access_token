@@ -16,8 +16,6 @@
 <configuration ver="2.0">
     <target name="libundefined_permission_update_test">
         <preparer>
-            <option name="shell" value="reboot"/>
-            <option name="wait" value=""/>
             <option name="target" value="mount"/>
         </preparer>
         <cleaner>
