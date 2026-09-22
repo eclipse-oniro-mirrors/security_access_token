@@ -88,6 +88,7 @@ group("fuzztest") {
       "getseccompenhancestub_fuzzer:GetSecCompEnhanceStubFuzzTest",
       "getseccompenhancekeystub_fuzzer:GetSecCompEnhanceKeyStubFuzzTest",
       "registerseccompenhancestub_fuzzer:RegisterSecCompEnhanceStubFuzzTest",
+      "setseccompenhancestatusstub_fuzzer:SetSecCompEnhanceStatusStubFuzzTest",
       "storeseccompenhancekeystub_fuzzer:StoreSecCompEnhanceKeyStubFuzzTest",
       "updateseccompenhancestub_fuzzer:UpdateSecCompEnhanceStubFuzzTest",
     ]

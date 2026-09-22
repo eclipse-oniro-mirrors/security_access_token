@@ -2956,6 +2956,15 @@ int32_t AccessTokenManagerService::GetSecCompEnhanceKey(SecCompEnhanceKeyIdl& en
 }
 #endif
 
+int32_t AccessTokenManagerService::SetSecCompEnhanceStatus([[maybe_unused]] bool isEnable)
+{
+#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
+    return SecCompEnhanceAgent::GetInstance().SetSecCompEnhanceStatus(isEnable);
+#else
+    return RET_SUCCESS;
+#endif
+}
+
 ErrCode AccessTokenManagerService::QueryStatusByPermission(const std::vector<uint32_t>& permCodeList,
     std::vector<PermissionStatusIdl>& permissionInfoList, bool onlyHap)
 {

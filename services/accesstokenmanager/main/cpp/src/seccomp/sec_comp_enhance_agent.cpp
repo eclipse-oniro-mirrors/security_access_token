@@ -22,6 +22,7 @@
 #include "accesstoken_common_log.h"
 #include "app_manager_access_client.h"
 #include "ipc_skeleton.h"
+#include "parameter.h"
 #include "securec.h"
 
 namespace OHOS {
@@ -29,6 +30,7 @@ namespace Security {
 namespace AccessToken {
 namespace {
 std::recursive_mutex g_instanceMutex;
+const char* SEC_COMP_ENHANCE_STATUS_KEY = "accesstoken.permission.sec.comp.status";
 
 bool IsEnhanceKeySizeValid(uint32_t size)
 {
@@ -302,6 +304,16 @@ int32_t SecCompEnhanceAgent::GetSecCompEnhanceKey(SecCompEnhanceKey& enhanceKey)
     }
     LOGI(ATM_DOMAIN, ATM_TAG, "Get enhance key, epoch=%{public}" PRIu64
         ", size=%{public}u.", enhanceKey.epoch, enhanceKey.key.size);
+    return RET_SUCCESS;
+}
+
+int32_t SecCompEnhanceAgent::SetSecCompEnhanceStatus(bool isEnable)
+{
+    int32_t ret = SetParameter(SEC_COMP_ENHANCE_STATUS_KEY, isEnable ? "1" : "0");
+    if (ret != 0) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "SetParameter failed, ret=%{public}d, isEnable=%{public}d.", ret, isEnable);
+        return AccessTokenError::ERR_UTIL_OPER_FAILED;
+    }
     return RET_SUCCESS;
 }
 

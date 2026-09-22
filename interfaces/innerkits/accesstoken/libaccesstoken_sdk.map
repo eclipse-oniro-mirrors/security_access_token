@@ -96,6 +96,7 @@
         "OHOS::Security::AccessToken::AccessTokenKit::GetSecCompEnhance(int, OHOS::Security::AccessToken::SecCompEnhanceData&)";
         "OHOS::Security::AccessToken::AccessTokenKit::StoreSecCompEnhanceKey(OHOS::Security::AccessToken::SecCompEnhanceKey const&)";
         "OHOS::Security::AccessToken::AccessTokenKit::GetSecCompEnhanceKey(OHOS::Security::AccessToken::SecCompEnhanceKey&)";
+        "OHOS::Security::AccessToken::AccessTokenKit::SetSecCompEnhanceStatus(bool)";
         "OHOS::Security::AccessToken::AccessTokenKit::GetKernelPermissions(unsigned int, std::__h::vector<OHOS::Security::AccessToken::PermissionWithValue, std::__h::allocator<OHOS::Security::AccessToken::PermissionWithValue>>&)";
         "OHOS::Security::AccessToken::AccessTokenKit::InitCliToken(OHOS::Security::AccessToken::CliInitInfo const&, OHOS::Security::AccessToken::AccessTokenIDEx&, std::__h::vector<OHOS::Security::AccessToken::PermissionWithValue, std::__h::allocator<OHOS::Security::AccessToken::PermissionWithValue>>&)";
         "OHOS::Security::AccessToken::AccessTokenKit::GetHostTokenId(unsigned int, unsigned int&)";

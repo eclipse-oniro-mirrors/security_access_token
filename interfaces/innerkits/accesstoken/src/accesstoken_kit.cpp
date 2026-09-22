@@ -1011,6 +1011,11 @@ int32_t AccessTokenKit::GetSecCompEnhanceKey(SecCompEnhanceKey& enhanceKey)
 }
 #endif
 
+int32_t AccessTokenKit::SetSecCompEnhanceStatus(bool isEnable)
+{
+    return AccessTokenManagerClient::GetInstance().SetSecCompEnhanceStatus(isEnable);
+}
+
 bool AccessTokenKit::IsAtomicServiceByFullTokenID(uint64_t tokenId)
 {
     LOGD(ATM_DOMAIN, ATM_TAG, "Called, tokenId=%{public}" PRId64, tokenId);

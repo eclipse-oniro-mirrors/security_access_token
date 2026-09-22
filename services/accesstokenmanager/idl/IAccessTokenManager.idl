@@ -117,4 +117,5 @@ interface OHOS.Security.AccessToken.IAccessTokenManager{
     [ipccode 206] void GetCliPermissions([in] unsigned int hostTokenID, [in] String agentID, [in] List<CliInfoIdl> cliInfoList, [out] CliPermissionsResultIdl resultIdl);
     [ipccode 208] void GenerateCliAuthResult([in] unsigned int hostTokenID, [in] String agentID, [in] List<CliAuthInfoIdl> authInfoList, [out] ToolAuthResultIdl resultIdl);
     [ipccode 210] void IsSupportPermission([in] String permission, [out] boolean isSupported);
+    [ipccode 211] void SetSecCompEnhanceStatus([in] boolean isEnable);
 }
