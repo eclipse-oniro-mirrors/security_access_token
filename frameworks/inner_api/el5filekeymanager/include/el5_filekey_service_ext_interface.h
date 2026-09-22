@@ -38,6 +38,7 @@ public:
     virtual int32_t QueryAppKeyState(DataLockType type, bool isApp) = 0;
     virtual void OnAddSystemAbility(int32_t systemAbilityId, const std::string& deviceId) = 0;
     virtual void UnInit() = 0;
+    virtual void SetStartReason(const std::string& reason) = 0;
 };
 }  // namespace AccessToken
 }  // namespace Security
