@@ -37,6 +37,9 @@ constexpr const char*  INTEGER_DEFAULT_ZERO_STR = " integer not null default 0";
 constexpr const char* DATABASE_NAME_BACK = "access_token_slave.db";
 constexpr int32_t LEGACY_SUBPROFILE_ID = -1;
 constexpr const char* BACKUP_SUFFIX = "_backup";
+#ifdef SPM_DATA_ENABLE
+constexpr const char* BMS_MIGRATE_COMPLETED = "bms_migrate_completed";
+#endif
 }
 
 static int32_t GetTableColumnList(NativeRdb::RdbStore& rdbStore, const std::string& tableName,
@@ -702,6 +705,22 @@ static int32_t AddColumn(const std::vector<std::string>& columnList, NativeRdb::
     return NativeRdb::E_OK;
 }
 
+static int32_t IsColumnExist(NativeRdb::RdbStore& rdbStore, AtmDataType type,
+    const std::string& columnName, bool& exist, std::string& tableName)
+{
+    exist = false;
+    AccessTokenDbUtil::GetTableNameByType(type, tableName);
+    std::vector<std::string> columnList;
+    int32_t res = GetTableColumnList(rdbStore, tableName, columnList);
+    if (res != NativeRdb::E_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get column list for table %{public}s, errCode is %{public}d.",
+            tableName.c_str(), res);
+        return res;
+    }
+    exist = std::find(columnList.begin(), columnList.end(), columnName) != columnList.end();
+    return NativeRdb::E_OK;
+}
+
 int32_t AccessTokenOpenCallback::AddUidMigratedReservedColumns(NativeRdb::RdbStore& rdbStore)
 {
     std::string tableName;
@@ -740,17 +759,22 @@ int32_t AccessTokenOpenCallback::AddUidMigratedReservedColumns(NativeRdb::RdbSto
 
 int32_t AccessTokenOpenCallback::AddModeColumn(NativeRdb::RdbStore& rdbStore, AtmDataType type)
 {
+    bool modeExist = false;
     std::string tableName;
-    AccessTokenDbUtil::GetTableNameByType(type, tableName);
-    std::vector<std::string> columnList;
-    int32_t res = GetTableColumnList(rdbStore, tableName, columnList);
+    int32_t res = IsColumnExist(rdbStore, type, TokenFiledConst::FIELD_MODE, modeExist, tableName);
     if (res != NativeRdb::E_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get column list for table %{public}s, errCode is %{public}d.",
-            tableName.c_str(), res);
         return res;
     }
-    return AddColumn(columnList, rdbStore, tableName, TokenFiledConst::FIELD_MODE,
-        "integer not null default " + std::to_string(static_cast<int32_t>(MultipleMode::DEFAULT_MODE)));
+    if (modeExist) {
+        return NativeRdb::E_OK;
+    }
+    int32_t ret = rdbStore.ExecuteSql("alter table " + tableName + " add column " + TokenFiledConst::FIELD_MODE +
+        " integer not null default " + std::to_string(static_cast<int32_t>(MultipleMode::DEFAULT_MODE)));
+    if (ret != NativeRdb::E_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to add column %{public}s to table %{public}s, errCode is %{public}d.",
+            TokenFiledConst::FIELD_MODE.c_str(), tableName.c_str(), ret);
+    }
+    return ret;
 }
 
 int32_t AccessTokenOpenCallback::UpgradeFromVersion1(NativeRdb::RdbStore& rdbStore)
@@ -930,8 +954,52 @@ int32_t AccessTokenOpenCallback::UpgradeFromVersion12(NativeRdb::RdbStore& rdbSt
         ReportUpgradeError(res, DATABASE_VERSION_12, "AddModeColumn");
         return res;
     }
-
+    res = ResetUidAndMigrateCompleted(rdbStore);
+    if (res != NativeRdb::E_OK) {
+        ReportUpgradeError(res, DATABASE_VERSION_12, "ResetUidAndMigrateCompleted");
+        return res;
+    }
+    res = AddUidMigratedReservedColumns(rdbStore);
+    if (res != NativeRdb::E_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to add uid/migrated/reserved columns during upgrade from version 12.");
+        ReportUpgradeError(res, DATABASE_VERSION_12, "AddUidMigratedReservedColumns");
+        return res;
+    }
     LOGI(ATM_DOMAIN, ATM_TAG, "Success to upgrade from version 12 to version 13.");
+    return NativeRdb::E_OK;
+}
+
+int32_t AccessTokenOpenCallback::ResetUidAndMigrateCompleted(NativeRdb::RdbStore& rdbStore)
+{
+    const int32_t hapInvalidUid = -1;
+    bool uidExist = false;
+    std::string hapTokenInfoTableName;
+    int32_t res = IsColumnExist(rdbStore, AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, TokenFiledConst::FIELD_UID,
+        uidExist, hapTokenInfoTableName);
+    if (res != NativeRdb::E_OK) {
+        return res;
+    }
+    if (uidExist) {
+        res = rdbStore.ExecuteSql("update " + hapTokenInfoTableName + " set " + TokenFiledConst::FIELD_UID +
+            "=" + std::to_string(hapInvalidUid));
+        if (res != NativeRdb::E_OK) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to reset uid in table %{public}s, errCode is %{public}d.",
+                hapTokenInfoTableName.c_str(), res);
+            return res;
+        }
+    }
+
+    std::string systemConfigTableName;
+    AccessTokenDbUtil::GetTableNameByType(AtmDataType::ACCESSTOKEN_SYSTEM_CONFIG, systemConfigTableName);
+    res = rdbStore.ExecuteSql("update " + systemConfigTableName + " set " + TokenFiledConst::FIELD_VALUE +
+        "='0' where " + TokenFiledConst::FIELD_NAME + "='" + BMS_MIGRATE_COMPLETED + "'");
+    if (res != NativeRdb::E_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to reset %{public}s in table %{public}s, errCode is %{public}d.",
+            BMS_MIGRATE_COMPLETED, systemConfigTableName.c_str(), res);
+        return res;
+    }
+
+    LOGI(ATM_DOMAIN, ATM_TAG, "Success to reset uid and migrate_completed flag.");
     return NativeRdb::E_OK;
 }
 #endif

@@ -18,7 +18,7 @@
 #include <algorithm>
 #include <cstdlib>
 #include <cstring>
-#include <errno.h>
+#include <cerrno>
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
@@ -225,13 +225,25 @@ extern "C" int SpmDecUidRefCnt(uint32_t uid, uint32_t spawnid)
     return ACCESS_TOKEN_OK;
 }
 
+// Test-only hooks to control SpmGetUidRefCnt behavior from test code
+int g_spmRefCntForceRet = -1;         // -1 = normal, other = forced return code
+uint64_t g_spmRefCntForceValue = 0;   // forced refcnt value when ret is ACCESS_TOKEN_OK
+int g_spmRefCntFailRemaining = 0;     // remaining failure calls (decremented each call)
+
 extern "C" int SpmGetUidRefCnt(uint32_t uid, uint64_t *refcnt)
 {
     (void)uid;
-    if (refcnt != nullptr) {
-        *refcnt = 0;
+    if (g_spmRefCntFailRemaining > 0) {
+        g_spmRefCntFailRemaining--;
+        if (refcnt != nullptr) {
+            *refcnt = 0;
+        }
+        return -1; // generic failure (non-ACCESS_TOKEN_OK, non-ENOTSUP)
     }
-    return ACCESS_TOKEN_OK;
+    if (refcnt != nullptr) {
+        *refcnt = g_spmRefCntForceValue;
+    }
+    return (g_spmRefCntForceRet != -1) ? g_spmRefCntForceRet : ACCESS_TOKEN_OK;
 }
 
 extern "C" int SpmIncTokenidRefCnt(uint32_t tokenid, uint32_t spawnid)
@@ -269,6 +281,24 @@ extern "C" int SpmGetVersion(uint32_t *version)
         *version = 1;
     }
     return ACCESS_TOKEN_OK;
+}
+
+namespace {
+constexpr int32_t SPM_REFCNT_MAX_RETRY = 3;
+}
+
+extern "C" int SpmGetUidRefCntWithRetry(uint32_t uid, uint64_t *refcnt)
+{
+    if (refcnt == nullptr) {
+        return EINVAL;
+    }
+    for (int i = 0; i < SPM_REFCNT_MAX_RETRY; i++) {
+        int ret = SpmGetUidRefCnt(uid, refcnt);
+        if (ret == ACCESS_TOKEN_OK) {
+            return ACCESS_TOKEN_OK;
+        }
+    }
+    return -1;
 }
 
 extern "C" SpmData* SpmDataNew(uint32_t permBufSize, uint32_t extendPermBufSize, uint32_t nameBufSize)

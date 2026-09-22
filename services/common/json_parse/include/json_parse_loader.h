@@ -16,6 +16,7 @@
 #ifndef ACCESSTOKEN_CONFIG_POLICY_LOADER_H
 #define ACCESSTOKEN_CONFIG_POLICY_LOADER_H
 
+#include <set>
 #include <string>
 #include <unordered_set>
 #include <vector>
@@ -85,6 +86,8 @@ public:
     virtual std::string DumpNativeTokenInfo(const NativeTokenInfoBase& native);
     virtual std::string DumpHapTokenInfo(const HapTokenInfo& hapInfo, bool isRemote, bool isPermDialogForbidden,
         const std::vector<PermissionStatus>& permStateList);
+    virtual int32_t GetReservedBundleIdList(const std::string& value, std::set<int32_t>& bundleList);
+    virtual std::string BuildReservedBundleIdList(const std::set<int32_t>& bundleList);
 };
 
 class ConfigPolicLoader final: public ConfigPolicyLoaderInterface {
@@ -96,6 +99,8 @@ public:
     std::string DumpNativeTokenInfo(const NativeTokenInfoBase& native);
     std::string DumpHapTokenInfo(const HapTokenInfo& hapInfo, bool isRemote, bool isPermDialogForbidden,
         const std::vector<PermissionStatus>& permStateList);
+    int32_t GetReservedBundleIdList(const std::string& value, std::set<int32_t>& bundleList);
+    std::string BuildReservedBundleIdList(const std::set<int32_t>& bundleList);
 private:
 #ifdef CUSTOMIZATION_CONFIG_POLICY_ENABLE
     void GetConfigFilePathList(std::vector<std::string>& pathList);

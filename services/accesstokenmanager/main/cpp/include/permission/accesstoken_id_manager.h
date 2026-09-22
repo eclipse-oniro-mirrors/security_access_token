@@ -16,12 +16,15 @@
 #ifndef ACCESSTOKEN_TOKEN_ID_MANAGER_H
 #define ACCESSTOKEN_TOKEN_ID_MANAGER_H
 
+#include <memory>
 #include <mutex>
 #include <set>
 #include <shared_mutex>
+#include <string>
 #include <vector>
 
 #include "access_token.h"
+#include "atm_data_type.h"
 #include "nocopyable.h"
 
 namespace OHOS {
@@ -55,14 +58,26 @@ public:
     // Identity bundleId management
     // Note: Callers are responsible for determining whether to add or remove bundleId based on their own logic.
     // This class only provides the underlying management capabilities.
-    void InitSingleBundleIdCache(int32_t uid);
+    int32_t InitSingleBundleIdCache(int32_t uid);
     int32_t ImportInitialUids(const std::vector<int32_t>& uids);
     int32_t AllocUid(int32_t localId, int32_t& outUid);
-    int32_t RemoveBundleId(int32_t uid);
+    int32_t RemoveBundleId(int32_t uid, bool rollbackScanStart = false);
     int32_t TranslateUid(int32_t srcUid, int32_t dstLocalId, int32_t& outUid);
+    int32_t GetReservedBundleIdSetPersistInfo(int32_t bundleId, std::vector<DelInfo>& delInfoVec,
+        std::vector<AddInfo>& addInfoVec);
+    int32_t GetBundleIdMin();
+    int32_t IsUidReusable(int32_t uid, bool& reusable);
+    int32_t InitBundleIdConfig();
+    int32_t InitReservedBundleIdSet();
+    int32_t RefreshReservedBundleIdSet(const std::set<int32_t>& bundleList);
+
+    // Reserved uid management
+    int32_t RemoveReservedBundleId(int32_t uid);
+    bool IsReservedBundleId(int32_t uid);
 
     // Migration control
     void SetMigrationDone();
+    bool IsMigrationDone();
     bool ExtractBundleId(int32_t uid, int32_t &bundleId) const;
     int32_t GetTokenIdStatus(AccessTokenID id, TokenIdStatus& status);
 private:
@@ -70,14 +85,24 @@ private:
     DISALLOW_COPY_AND_MOVE(AccessTokenIDManager);
     AccessTokenID CreateTokenId(ATokenTypeEnum type, int32_t dlpFlag, int32_t cloneFlag, int32_t toolFlag) const;
     int32_t GetTokenIdStatusLocked(AccessTokenID id, TokenIdStatus& status) const;
+    int32_t ReservedBundleIdSetFromJson(const std::string& value, std::set<int32_t>& bundleList);
+    int32_t ReservedBundleIdSetToJson(const std::set<int32_t>& bundleList, std::string& value);
+    int32_t PersistReservedBundleIdSetLocked(const std::set<int32_t>& bundleList);
+    int32_t LoadReservedBundleIdSetFromDb(std::set<int32_t>& bundleList);
+    int32_t InitScanStartBundleIdFromCache();
+    int32_t GetScanStartLocked();
 
     std::shared_mutex tokenIdLock_;
     std::set<AccessTokenID> tokenIdSet_;
     std::set<AccessTokenID> reservedTokenIdSet_;
     std::set<AccessTokenID> untrustedTokenIdSet_;
-    std::mutex bundleIdLock_;
+    std::shared_mutex bundleIdLock_;
     std::set<int32_t> bundleIdSet_;
-    std::mutex migrationLock_;
+    std::set<int32_t> reservedBundleIdSet_;
+    // Scan start hint for AllocUid, persisted best-effort. Allocation correctness
+    // relies on bundleIdSet_ and SpmGetUidRefCnt, not on this value.
+    int32_t scanStartBundleId_ = -1;
+    std::shared_mutex migrationLock_;
     bool migrationDone_ = false;
 };
 } // namespace AccessToken

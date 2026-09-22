@@ -31,6 +31,18 @@ namespace Security {
 namespace AccessToken {
 namespace {
 static constexpr uint32_t NOT_EXSIT_ATM_TYPE = 999;
+static constexpr int64_t TEST_TIMESTAMP = 999;
+static constexpr int32_t TEST_TOKEN_ID_VALUE = 15;
+static constexpr int32_t TEST_TOKEN_ID_ALT = 7;
+static constexpr int32_t GENERIC_DB_ERROR_CODE = 999;
+static constexpr size_t UPGRADE_V9_STEP_SQL_COUNT = 4;
+static constexpr size_t UPGRADE_V3_FAIL_SQL_COUNT = 2;
+#ifdef SPM_DATA_ENABLE
+static constexpr int32_t UPGRADE_V11_TO_V12_SPM_SQL_COUNT = 8;
+static constexpr size_t UPGRADE_V10_TO_V11_SPM_SQL_COUNT = 9;
+#else
+static constexpr size_t UPGRADE_V10_TO_V11_NON_SPM_SQL_COUNT = 2;
+#endif
 }
 class AccessTokenDatabaseCoverageTest : public testing::Test {
 public:
@@ -198,7 +210,7 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, OnUpgradeIsSideloadColumn001, TestSize
     ASSERT_EQ(NativeRdb::E_OK, callback.OnUpgrade(*(db.get()), DATABASE_VERSION_11, DATABASE_VERSION_12));
 #ifdef SPM_DATA_ENABLE
     // fallthrough continues into the spm 12->13 steps
-    ASSERT_EQ(3, static_cast<int32_t>(db->executedSqls_.size()));
+    ASSERT_EQ(UPGRADE_V11_TO_V12_SPM_SQL_COUNT, static_cast<int32_t>(db->executedSqls_.size()));
     EXPECT_EQ("alter table hap_token_info_table add column " + columnDef, db->executedSqls_[0]);
 #else
     ASSERT_EQ(1, static_cast<int32_t>(db->executedSqls_.size()));
@@ -300,7 +312,7 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, UpgradeFromVersion9001, TestSize.Level
     db->executedSqls_.clear();
 
     ASSERT_EQ(NativeRdb::E_OK, callback.UpgradeFromVersion9(*(db.get())));
-    ASSERT_EQ(4U, db->executedSqls_.size());
+    ASSERT_EQ(UPGRADE_V9_STEP_SQL_COUNT, db->executedSqls_.size());
 }
 
 /*
@@ -517,6 +529,91 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, AddUidMigratedReservedColumns003, Test
     db->executeSqlIndex_ = 0;
     ASSERT_EQ(NativeRdb::E_SQLITE_CORRUPT, callback.AddUidMigratedReservedColumns(*(db.get())));
 }
+
+#ifdef SPM_DATA_ENABLE
+/*
+ * @tc.name: ResetUidAndMigrateCompleted001
+ * @tc.desc: AccessTokenOpenCallback::ResetUidAndMigrateCompleted runs update SQLs when columns exist.
+ * @tc.type: FUNC
+ * @tc.require: TDD
+ */
+HWTEST_F(AccessTokenDatabaseCoverageTest, ResetUidAndMigrateCompleted001, TestSize.Level4)
+{
+    std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance()->GetRdb();
+    AccessTokenOpenCallback callback;
+    db->executedSqls_.clear();
+    db->executeSqlResults_.clear();
+    db->executeSqlIndex_ = 0;
+    // PRAGMA table_info rows: [1]=column name. uid present (system_config value/name are core columns, not checked).
+    db->querySqlResults_ = {
+        { {"0", "uid", "INTEGER", "1", "-1", "0"} }
+    };
+    db->querySqlIndex_ = 0;
+    ASSERT_EQ(NativeRdb::E_OK, callback.ResetUidAndMigrateCompleted(*(db.get())));
+    bool hapReset = false;
+    bool sysReset = false;
+    for (const auto& sql : db->executedSqls_) {
+        if (sql.find(TokenFiledConst::FIELD_UID + "=-1") != std::string::npos) {
+            hapReset = true;
+        }
+        if (sql.find("bms_migrate_completed") != std::string::npos) {
+            sysReset = true;
+        }
+    }
+    EXPECT_TRUE(hapReset);
+    EXPECT_TRUE(sysReset);
+}
+
+/*
+ * @tc.name: ResetUidAndMigrateCompleted002
+ * @tc.desc: AccessTokenOpenCallback::ResetUidAndMigrateCompleted skips hap uid reset when uid column absent;
+ *           system_config reset still runs (value/name are core columns, not checked).
+ * @tc.type: FUNC
+ * @tc.require: TDD
+ */
+HWTEST_F(AccessTokenDatabaseCoverageTest, ResetUidAndMigrateCompleted002, TestSize.Level4)
+{
+    std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance()->GetRdb();
+    AccessTokenOpenCallback callback;
+    db->executedSqls_.clear();
+    db->executeSqlResults_.clear();
+    db->executeSqlIndex_ = 0;
+    // uid absent in hap_token_info -> hap reset skipped.
+    db->querySqlResults_ = {
+        { {"0", "token_id", "INTEGER", "1", "", "1"} }
+    };
+    db->querySqlIndex_ = 0;
+    ASSERT_EQ(NativeRdb::E_OK, callback.ResetUidAndMigrateCompleted(*(db.get())));
+    bool hapReset = false;
+    bool sysReset = false;
+    for (const auto& sql : db->executedSqls_) {
+        if (sql.find(TokenFiledConst::FIELD_UID + "=-1") != std::string::npos) {
+            hapReset = true;
+        }
+        if (sql.find("bms_migrate_completed") != std::string::npos) {
+            sysReset = true;
+        }
+    }
+    EXPECT_FALSE(hapReset);
+    EXPECT_TRUE(sysReset);
+}
+
+/*
+ * @tc.name: ResetUidAndMigrateCompleted003
+ * @tc.desc: AccessTokenOpenCallback::ResetUidAndMigrateCompleted propagates GetTableColumnList failure.
+ * @tc.type: FUNC
+ * @tc.require: TDD
+ */
+HWTEST_F(AccessTokenDatabaseCoverageTest, ResetUidAndMigrateCompleted003, TestSize.Level4)
+{
+    std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance()->GetRdb();
+    AccessTokenOpenCallback callback;
+    db->executedSqls_.clear();
+    db->queryFlag_ = NativeRdb::RdbStore::RdbStoreOperationResult::RESULT_FAIL;
+    ASSERT_EQ(ERR_DATABASE_OPERATE_FAILED, callback.ResetUidAndMigrateCompleted(*(db.get())));
+    db->queryFlag_ = 0;
+}
+#endif
 
 /*
  * @tc.name: CreateHapInfoTable001
@@ -762,6 +859,11 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, OnUpgrade005, TestSize.Level4)
             "is_preinstalled integer not null,mode integer not null default -1,"
             "primary key(bundle_name,module_name))",
         "alter table hap_info_table add column mode integer not null default -1",
+        "update system_config_table set value='0' where name='bms_migrate_completed'",
+        "alter table hap_token_info_table add column uid integer not null default -1",
+        "alter table hap_token_info_table add column migrated integer not null default 0",
+        "alter table hap_token_info_table add column reserved integer not null default 0",
+        "update hap_token_info_table set reserved= 1 where token_attr & 0x0004 != 0",
 #endif
     };
     EXPECT_EQ(expectedSqls, db->executedSqls_);
@@ -783,7 +885,7 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, UpgradeFromVersion10001, TestSize.Leve
     db->executedSqls_.clear();
 
     ASSERT_EQ(NativeRdb::E_OK, callback.UpgradeFromVersion10(*(db.get())));
-    ASSERT_EQ(1u, db->executedSqls_.size());
+    ASSERT_EQ(1U, db->executedSqls_.size());
     EXPECT_EQ("delete from hap_info_table", db->executedSqls_[0]);
 }
 
@@ -803,7 +905,7 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, UpgradeFromVersion10002, TestSize.Leve
     db->executedSqls_.clear();
 
     ASSERT_EQ(NativeRdb::E_SQLITE_CORRUPT, callback.UpgradeFromVersion10(*(db.get())));
-    ASSERT_EQ(1u, db->executedSqls_.size());
+    ASSERT_EQ(1U, db->executedSqls_.size());
     EXPECT_EQ("delete from hap_info_table", db->executedSqls_[0]);
 }
 
@@ -837,7 +939,7 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, OnUpgrade007, TestSize.Level4)
     std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance()->GetRdb();
     ASSERT_NE(nullptr, db);
     AccessTokenOpenCallback callback;
-    constexpr size_t migrationStepCount = 4;
+    constexpr size_t migrationStepCount = UPGRADE_V9_STEP_SQL_COUNT;
 
     for (size_t failedStep = 0; failedStep < migrationStepCount; ++failedStep) {
         db->executeSqlResults_.assign(failedStep, NativeRdb::E_OK);
@@ -900,7 +1002,7 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, OnUpgrade008, TestSize.Level4)
         callback.OnUpgrade(*(db.get()), DATABASE_VERSION_10, DATABASE_VERSION_11));
 #ifdef SPM_DATA_ENABLE
     // UpgradeFromVersion10 failure is ignored; fallthrough runs 11->12 (is_sideload) and 12->13 (spm)
-    ASSERT_EQ(4U, db->executedSqls_.size());
+    ASSERT_EQ(UPGRADE_V10_TO_V11_SPM_SQL_COUNT, db->executedSqls_.size());
     EXPECT_EQ("delete from hap_info_table", db->executedSqls_[0]);
     EXPECT_EQ("alter table hap_token_info_table add column is_sideload integer not null default 0",
         db->executedSqls_[1]);
@@ -909,9 +1011,14 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, OnUpgrade008, TestSize.Level4)
         "is_preinstalled integer not null,mode integer not null default -1,"
         "primary key(bundle_name,module_name))", db->executedSqls_[2]);
     EXPECT_EQ("alter table hap_info_table add column mode integer not null default -1", db->executedSqls_[3]);
+    EXPECT_EQ("update system_config_table set value='0' where name='bms_migrate_completed'", db->executedSqls_[4]);
+    EXPECT_EQ("alter table hap_token_info_table add column uid integer not null default -1", db->executedSqls_[5]);
+    EXPECT_EQ("alter table hap_token_info_table add column migrated integer not null default 0", db->executedSqls_[6]);
+    EXPECT_EQ("alter table hap_token_info_table add column reserved integer not null default 0", db->executedSqls_[7]);
+    EXPECT_EQ("update hap_token_info_table set reserved= 1 where token_attr & 0x0004 != 0", db->executedSqls_[8]);
 #else
     // UpgradeFromVersion10 failure is ignored; fallthrough runs UpgradeFromVersion11 (is_sideload)
-    ASSERT_EQ(2U, db->executedSqls_.size());
+    ASSERT_EQ(UPGRADE_V10_TO_V11_NON_SPM_SQL_COUNT, db->executedSqls_.size());
     EXPECT_EQ("delete from hap_info_table", db->executedSqls_[0]);
     EXPECT_EQ("alter table hap_token_info_table add column is_sideload integer not null default 0",
         db->executedSqls_[1]);
@@ -930,7 +1037,7 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, UpgradeFromVersionErrorBranches001, Te
     ASSERT_NE(nullptr, db);
     AccessTokenOpenCallback callback;
 
-    db->executeSqlResults_.assign(4, NativeRdb::E_SQLITE_CORRUPT);
+    db->executeSqlResults_.assign(UPGRADE_V9_STEP_SQL_COUNT, NativeRdb::E_SQLITE_CORRUPT);
     db->executeSqlIndex_ = 0;
     EXPECT_EQ(NativeRdb::E_SQLITE_CORRUPT, callback.UpgradeFromVersion1(*(db.get())));
 
@@ -945,7 +1052,7 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, UpgradeFromVersionErrorBranches001, Te
     db->executeSqlIndex_ = 0;
     EXPECT_EQ(NativeRdb::E_SQLITE_CORRUPT, callback.UpgradeFromVersion2(*(db.get())));
 
-    db->executeSqlResults_.assign(2, NativeRdb::E_SQLITE_CORRUPT);
+    db->executeSqlResults_.assign(UPGRADE_V3_FAIL_SQL_COUNT, NativeRdb::E_SQLITE_CORRUPT);
     db->executeSqlIndex_ = 0;
     EXPECT_EQ(NativeRdb::E_SQLITE_CORRUPT, callback.UpgradeFromVersion3(*(db.get())));
 
@@ -980,9 +1087,9 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, FindByStep001, TestSize.Level4)
     db->queryColumnNames_ = {TokenFiledConst::FIELD_TOKEN_ID,
         TokenFiledConst::FIELD_BUNDLE_NAME, TokenFiledConst::FIELD_TIMESTAMP};
     db->queryByStepRowsData_ = {{
-        NativeRdb::ValueObject(static_cast<int32_t>(15)),
+        NativeRdb::ValueObject(static_cast<int32_t>(TEST_TOKEN_ID_VALUE)),
         NativeRdb::ValueObject(std::string("test_bundle")),
-        NativeRdb::ValueObject(static_cast<int64_t>(999)),
+        NativeRdb::ValueObject(TEST_TIMESTAMP),
     }};
 
     std::vector<GenericValues> results;
@@ -990,9 +1097,9 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, FindByStep001, TestSize.Level4)
     ASSERT_EQ(NativeRdb::E_OK, AccessTokenDb::GetInstance()->Find(
         AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, conditionValue, results));
     ASSERT_EQ(1U, results.size());
-    ASSERT_EQ(15, results[0].GetInt(TokenFiledConst::FIELD_TOKEN_ID));
+    ASSERT_EQ(TEST_TOKEN_ID_VALUE, results[0].GetInt(TokenFiledConst::FIELD_TOKEN_ID));
     ASSERT_EQ("test_bundle", results[0].GetString(TokenFiledConst::FIELD_BUNDLE_NAME));
-    ASSERT_EQ(static_cast<int64_t>(999), results[0].GetInt64(TokenFiledConst::FIELD_TIMESTAMP));
+    ASSERT_EQ(TEST_TIMESTAMP, results[0].GetInt64(TokenFiledConst::FIELD_TIMESTAMP));
 }
 
 /*
@@ -1042,7 +1149,7 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, FindByStep003, TestSize.Level4)
 HWTEST_F(AccessTokenDatabaseCoverageTest, FindByStep004, TestSize.Level4)
 {
     std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance()->GetRdb();
-    db->queryByStepRowsDataErr_ = 999;
+    db->queryByStepRowsDataErr_ = GENERIC_DB_ERROR_CODE;
     std::vector<GenericValues> results;
     GenericValues conditionValue;
     ASSERT_EQ(AccessTokenError::ERR_DATABASE_OPERATE_FAILED, AccessTokenDb::GetInstance()->Find(
@@ -1110,7 +1217,7 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, FindByStep008, TestSize.Level4)
 {
     std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance()->GetRdb();
     db->queryColumnNames_ = {TokenFiledConst::FIELD_TOKEN_ID};
-    db->queryByStepRowsData_ = {{NativeRdb::ValueObject(static_cast<int32_t>(7))}};
+    db->queryByStepRowsData_ = {{NativeRdb::ValueObject(static_cast<int32_t>(TEST_TOKEN_ID_ALT))}};
     db->queryByStepRowsDataErrOnce_ = NativeRdb::E_SQLITE_CORRUPT;
     db->restoreFlag_ = 0;
 
@@ -1119,7 +1226,7 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, FindByStep008, TestSize.Level4)
     ASSERT_EQ(NativeRdb::E_OK, AccessTokenDb::GetInstance()->Find(
         AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, conditionValue, results));
     ASSERT_EQ(1U, results.size());
-    ASSERT_EQ(7, results[0].GetInt(TokenFiledConst::FIELD_TOKEN_ID));
+    ASSERT_EQ(TEST_TOKEN_ID_ALT, results[0].GetInt(TokenFiledConst::FIELD_TOKEN_ID));
 }
 
 } // namespace AccessToken

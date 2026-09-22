@@ -16,15 +16,21 @@
 #include "accesstoken_id_manager.h"
 #include <atomic>
 #include <cinttypes>
+#include <climits>
 #include <cstdlib>
 #include <mutex>
 #include "securec.h"
+#include "access_token_db_operator.h"
 #include "access_token_error.h"
 #include "accesstoken_common_log.h"
 #include "data_validator.h"
+#include "generic_values.h"
+#include "json_parse_loader.h"
+#include "libraryloader.h"
 #include "parameter.h"
 #include "random.h"
 #include "spm_setproc.h"
+#include "token_field_const.h"
 #include "tokenid_attributes.h"
 
 namespace OHOS {
@@ -35,10 +41,11 @@ std::recursive_mutex g_instanceMutex;
 constexpr int32_t BUNDLE_ID_MIN = 10000;
 constexpr int32_t BUNDLE_ID_MAX = 65535;
 constexpr int32_t UID_TRANSFORM_DIVISOR = 200000;
+const std::string RESERVED_BUNDLE_ID_LIST_KEY = "reserved_bundle_id_list";
 static std::atomic<int32_t> g_bundleIdMin = -1;
 }
 
-static int32_t GetBundleIdMin()
+int32_t AccessTokenIDManager::GetBundleIdMin()
 {
     int32_t expectedValue = g_bundleIdMin.load();
     if (expectedValue != -1) {
@@ -158,6 +165,13 @@ bool AccessTokenIDManager::IsReservedTokenId(AccessTokenID id)
 void AccessTokenIDManager::AddReservedTokenId(AccessTokenID id)
 {
     std::unique_lock<std::shared_mutex> idGuard(this->tokenIdLock_);
+    // Reject if id already exists in any set to maintain mutual exclusivity:
+    // each TokenID belongs to exactly one of tokenIdSet_ / reservedTokenIdSet_ / untrustedTokenIdSet_.
+    TokenIdStatus status;
+    if (GetTokenIdStatusLocked(id, status) == RET_SUCCESS) {
+        LOGW(ATM_DOMAIN, ATM_TAG, "Id %{public}u already exist as %{public}d", id, static_cast<int32_t>(status));
+        return;
+    }
     reservedTokenIdSet_.insert(id);
 }
 
@@ -275,57 +289,208 @@ bool AccessTokenIDManager::ExtractBundleId(int32_t uid, int32_t& bundleId) const
     return true;
 }
 
-void AccessTokenIDManager::InitSingleBundleIdCache(int32_t uid)
+int32_t AccessTokenIDManager::IsUidReusable(int32_t uid, bool& reusable)
+{
+    reusable = false;
+    int32_t bundleId = 0;
+    if (!ExtractBundleId(uid, bundleId)) {
+        return ERR_PARAM_INVALID;
+    }
+    std::shared_lock<std::shared_mutex> lock(bundleIdLock_);
+    if (bundleIdSet_.count(bundleId) > 0 && reservedBundleIdSet_.count(bundleId) == 0) {
+        return RET_SUCCESS;
+    }
+    uint64_t refcnt = 0;
+    int32_t ret = SpmGetUidRefCntWithRetry(static_cast<uint32_t>(uid), &refcnt);
+    if (ret != RET_SUCCESS) {
+        return ERR_KERNEL_COMMON_FAILED;
+    }
+    if (refcnt != 0) {
+        return RET_SUCCESS;
+    }
+    reusable = true;
+    return RET_SUCCESS;
+}
+
+int32_t AccessTokenIDManager::InitSingleBundleIdCache(int32_t uid)
 {
     int32_t bundleId = 0;
     if (!ExtractBundleId(uid, bundleId)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Invalid uid=%{public}d.", uid);
-        return;
+        return ERR_PARAM_INVALID;
     }
-    std::unique_lock<std::mutex> lock(bundleIdLock_);
+    std::unique_lock<std::shared_mutex> lock(bundleIdLock_);
     bundleIdSet_.insert(bundleId);
+    return RET_SUCCESS;
+}
+
+int32_t AccessTokenIDManager::InitScanStartBundleIdFromCache()
+{
+    std::unique_lock<std::shared_mutex> lock(bundleIdLock_);
+    if (bundleIdSet_.empty()) {
+        return GetBundleIdMin();
+    }
+    int32_t nextBundleId = *bundleIdSet_.rbegin() + 1;
+    if (nextBundleId < GetBundleIdMin() || nextBundleId > BUNDLE_ID_MAX) {
+        return GetBundleIdMin();
+    }
+    return nextBundleId;
+}
+
+int32_t AccessTokenIDManager::LoadReservedBundleIdSetFromDb(std::set<int32_t>& bundleList)
+{
+    bundleList.clear();
+    GenericValues conditionValue;
+    conditionValue.Put(TokenFiledConst::FIELD_NAME, RESERVED_BUNDLE_ID_LIST_KEY);
+    std::vector<GenericValues> results;
+    int32_t ret = AccessTokenDbOperator::Find(
+        AtmDataType::ACCESSTOKEN_SYSTEM_CONFIG, conditionValue, results);
+    if (ret != RET_SUCCESS) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Load reserved bundle id list failed, ret=%{public}d.", ret);
+        return ret;
+    }
+    if (results.empty()) {
+        return RET_SUCCESS;
+    }
+    return ReservedBundleIdSetFromJson(results[0].GetString(TokenFiledConst::FIELD_VALUE), bundleList);
+}
+
+int32_t AccessTokenIDManager::ReservedBundleIdSetFromJson(const std::string& value, std::set<int32_t>& bundleList)
+{
+    if (value.empty()) {
+        return RET_SUCCESS;
+    }
+    LibraryLoader loader(CONFIG_PARSE_LIBPATH, CONFIG_PARSE_CREATE_SYMBOL, CONFIG_PARSE_DESTROY_SYMBOL);
+    ConfigPolicyLoaderInterface* policy = loader.GetObject<ConfigPolicyLoaderInterface>();
+    if (policy == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Load json parse loader failed.");
+        return ERR_LOAD_SO_FAILED;
+    }
+    return policy->GetReservedBundleIdList(value, bundleList);
+}
+
+int32_t AccessTokenIDManager::ReservedBundleIdSetToJson(const std::set<int32_t>& bundleList, std::string& value)
+{
+    value.clear();
+    if (bundleList.empty()) {
+        return RET_SUCCESS;
+    }
+    LibraryLoader loader(CONFIG_PARSE_LIBPATH, CONFIG_PARSE_CREATE_SYMBOL, CONFIG_PARSE_DESTROY_SYMBOL);
+    ConfigPolicyLoaderInterface* policy = loader.GetObject<ConfigPolicyLoaderInterface>();
+    if (policy == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Load json parse loader failed.");
+        return ERR_LOAD_SO_FAILED;
+    }
+    value = policy->BuildReservedBundleIdList(bundleList);
+    if (value.empty()) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Build reserved bundle id list failed.");
+        return ERR_PARSE_RAW_DATA_FAILED;
+    }
+    return RET_SUCCESS;
+}
+
+int32_t AccessTokenIDManager::InitBundleIdConfig()
+{
+    int32_t ret = InitReservedBundleIdSet();
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
+    scanStartBundleId_ = InitScanStartBundleIdFromCache();
+    return RET_SUCCESS;
+}
+
+int32_t AccessTokenIDManager::InitReservedBundleIdSet()
+{
+    std::set<int32_t> reservedSet;
+    int32_t ret = LoadReservedBundleIdSetFromDb(reservedSet);
+    if (ret != RET_SUCCESS) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Load reserved bundle id set failed, ret=%{public}d.", ret);
+        return ret;
+    }
+    std::unique_lock<std::shared_mutex> lock(bundleIdLock_);
+    bundleIdSet_.insert(reservedSet.begin(), reservedSet.end());
+    reservedBundleIdSet_ = reservedSet;
+    return RET_SUCCESS;
+}
+
+int32_t AccessTokenIDManager::PersistReservedBundleIdSetLocked(const std::set<int32_t>& bundleList)
+{
+    std::string value;
+    int32_t ret = ReservedBundleIdSetToJson(bundleList, value);
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
+
+    GenericValues delValue;
+    delValue.Put(TokenFiledConst::FIELD_NAME, RESERVED_BUNDLE_ID_LIST_KEY);
+    DelInfo delInfo = { AtmDataType::ACCESSTOKEN_SYSTEM_CONFIG, delValue };
+
+    GenericValues addValue;
+    addValue.Put(TokenFiledConst::FIELD_NAME, RESERVED_BUNDLE_ID_LIST_KEY);
+    addValue.Put(TokenFiledConst::FIELD_VALUE, value);
+    AddInfo addInfo;
+    addInfo.addType = AtmDataType::ACCESSTOKEN_SYSTEM_CONFIG;
+    addInfo.addValues.emplace_back(addValue);
+    return AccessTokenDbOperator::DeleteAndInsertValues({ delInfo }, { addInfo });
+}
+
+int32_t AccessTokenIDManager::RefreshReservedBundleIdSet(const std::set<int32_t>& bundleList)
+{
+    std::unique_lock<std::shared_mutex> lock(bundleIdLock_);
+    int32_t ret = PersistReservedBundleIdSetLocked(bundleList);
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
+    for (int32_t id : reservedBundleIdSet_) {
+        bundleIdSet_.erase(id);
+    }
+    bundleIdSet_.insert(bundleList.begin(), bundleList.end());
+    reservedBundleIdSet_ = bundleList;
+    return RET_SUCCESS;
+}
+
+int32_t AccessTokenIDManager::GetScanStartLocked()
+{
+    if (scanStartBundleId_ < GetBundleIdMin()) {
+        scanStartBundleId_ = GetBundleIdMin();
+    }
+    if (scanStartBundleId_ > BUNDLE_ID_MAX) {
+        return GetBundleIdMin();
+    }
+    return scanStartBundleId_;
 }
 
 int32_t AccessTokenIDManager::AllocUid(int32_t localId, int32_t& outUid)
 {
-#ifdef SPM_DATA_ENABLE
-    {
-        std::unique_lock<std::mutex> lock(migrationLock_);
-        if (!migrationDone_) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "AllocUid failed, migration not completed.");
-            return AccessTokenError::ERR_PARAM_INVALID;
-        }
+    if (!IsMigrationDone()) {
+        return AccessTokenError::ERR_PARAM_INVALID;
     }
-#endif
-    std::unique_lock<std::mutex> lock(bundleIdLock_);
-    int32_t startId = bundleIdSet_.empty() ? GetBundleIdMin() : (*bundleIdSet_.rbegin() + 1);
-    if (startId > BUNDLE_ID_MAX) {
-        startId = GetBundleIdMin();
-    }
-
+    std::unique_lock<std::shared_mutex> lock(bundleIdLock_);
+    int32_t startId = GetScanStartLocked();
     // Two-pass scan: [startId, BUNDLE_ID_MAX] then wrap [BUNDLE_ID_MIN, startId-1]
     int32_t ranges[2][2] = {{startId, BUNDLE_ID_MAX}, {GetBundleIdMin(), startId - 1}};
     int rangeSize = 2; // size of ranges
-    for (int p = 0; p < rangeSize; p++) {
+    for (int32_t p = 0; p < rangeSize; ++p) {
         for (int32_t candidate = ranges[p][0]; candidate <= ranges[p][1]; ++candidate) {
             if (bundleIdSet_.count(candidate) > 0) {
                 continue;
             }
             int32_t uid = localId * UID_TRANSFORM_DIVISOR + candidate % UID_TRANSFORM_DIVISOR;
             uint64_t refcnt = 0;
-            int32_t ret = SpmGetUidRefCnt(static_cast<uint32_t>(uid), &refcnt);
-            if (ret != RET_SUCCESS && ret != ENOTSUP) {
-                LOGE(ATM_DOMAIN, ATM_TAG, "SpmGetUidRefCnt failed, bundleId=%{public}d, ret=%{public}d.", candidate,
-                    ret);
-                return RET_FAILED;
+            int32_t ret = SpmGetUidRefCntWithRetry(static_cast<uint32_t>(uid), &refcnt);
+            if (ret != RET_SUCCESS) {
+                LOGE(ATM_DOMAIN, ATM_TAG, "SpmGetUidRefCntWithRetry failed, bundleId=%{public}d, ret=%{public}d.",
+                    candidate, ret);
+                return ERR_KERNEL_COMMON_FAILED;
             }
-            if (ret == RET_SUCCESS && refcnt != 0) {
-                LOGW(ATM_DOMAIN, ATM_TAG, "BundleId=%{public}d has active refcnt %{public}" PRIu64 ", skip.", candidate,
-                    refcnt);
+            if (refcnt != 0) {
+                LOGW(ATM_DOMAIN, ATM_TAG, "BundleId=%{public}d has active refcnt %{public}" PRIu64 ", skip.",
+                    candidate, refcnt);
                 continue;
             }
             bundleIdSet_.insert(candidate);
             outUid = uid;
+            scanStartBundleId_ = candidate + 1;
             return RET_SUCCESS;
         }
     }
@@ -333,19 +498,18 @@ int32_t AccessTokenIDManager::AllocUid(int32_t localId, int32_t& outUid)
     return ERR_OVERSIZE;
 }
 
-int32_t AccessTokenIDManager::RemoveBundleId(int32_t uid)
+int32_t AccessTokenIDManager::RemoveBundleId(int32_t uid, bool rollbackScanStart)
 {
     int32_t bundleId = 0;
     if (!ExtractBundleId(uid, bundleId)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Invalid uid=%{public}d.", uid);
         return ERR_PARAM_INVALID;
     }
-    std::unique_lock<std::mutex> lock(bundleIdLock_);
-    if (bundleIdSet_.count(bundleId) == 0) {
-        LOGW(ATM_DOMAIN, ATM_TAG, "BundleId=%{public}d not in cache.", bundleId);
-        return RET_SUCCESS;
-    }
+    std::unique_lock<std::shared_mutex> lock(bundleIdLock_);
     bundleIdSet_.erase(bundleId);
+    if (rollbackScanStart && bundleId < scanStartBundleId_ && scanStartBundleId_ - bundleId == 1) {
+        scanStartBundleId_ = bundleId;
+    }
     return RET_SUCCESS;
 }
 
@@ -362,7 +526,7 @@ int32_t AccessTokenIDManager::TranslateUid(int32_t srcUid, int32_t dstLocalId, i
 
 int32_t AccessTokenIDManager::ImportInitialUids(const std::vector<int32_t>& uids)
 {
-    std::unique_lock<std::mutex> lock(bundleIdLock_);
+    std::unique_lock<std::shared_mutex> lock(bundleIdLock_);
     for (int32_t uid : uids) {
         int32_t bundleId = 0;
         if (ExtractBundleId(uid, bundleId)) {
@@ -374,11 +538,84 @@ int32_t AccessTokenIDManager::ImportInitialUids(const std::vector<int32_t>& uids
     return RET_SUCCESS;
 }
 
+int32_t AccessTokenIDManager::RemoveReservedBundleId(int32_t uid)
+{
+    int32_t bundleId = 0;
+    if (!ExtractBundleId(uid, bundleId)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Invalid uid=%{public}d.", uid);
+        return ERR_PARAM_INVALID;
+    }
+    std::unique_lock<std::shared_mutex> lock(bundleIdLock_);
+    bundleIdSet_.erase(bundleId);
+    reservedBundleIdSet_.erase(bundleId);
+    return RET_SUCCESS;
+}
+// Memory update (reservedBundleIdSet_ + bundleIdSet_) is deferred to RemoveReservedBundleId.
+// Caller must invoke RemoveReservedBundleId after the DB transaction (DeleteAndInsertValues)
+// succeeds, to maintain the DB -> Cache consistency order and allow rollback on failure.
+int32_t AccessTokenIDManager::GetReservedBundleIdSetPersistInfo(int32_t bundleId,
+    std::vector<DelInfo>& delInfoVec, std::vector<AddInfo>& addInfoVec)
+{
+    std::unique_lock<std::shared_mutex> lock(bundleIdLock_);
+    if (reservedBundleIdSet_.count(bundleId) == 0) {
+        return RET_SUCCESS;
+    }
+
+    std::set<int32_t> updatedSet = reservedBundleIdSet_;
+    updatedSet.erase(bundleId);
+
+    GenericValues delValue;
+    delValue.Put(TokenFiledConst::FIELD_NAME, RESERVED_BUNDLE_ID_LIST_KEY);
+    DelInfo delInfo = { AtmDataType::ACCESSTOKEN_SYSTEM_CONFIG, delValue };
+    delInfoVec.push_back(delInfo);
+
+    if (updatedSet.empty()) {
+        return RET_SUCCESS;
+    }
+
+    std::string value;
+    int32_t ret = ReservedBundleIdSetToJson(updatedSet, value);
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
+    GenericValues addValue;
+    addValue.Put(TokenFiledConst::FIELD_NAME, RESERVED_BUNDLE_ID_LIST_KEY);
+    addValue.Put(TokenFiledConst::FIELD_VALUE, value);
+    AddInfo addInfo;
+    addInfo.addType = AtmDataType::ACCESSTOKEN_SYSTEM_CONFIG;
+    addInfo.addValues.emplace_back(addValue);
+    addInfoVec.push_back(addInfo);
+    return RET_SUCCESS;
+}
+
+bool AccessTokenIDManager::IsReservedBundleId(int32_t uid)
+{
+    int32_t bundleId = 0;
+    if (!ExtractBundleId(uid, bundleId)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Invalid uid=%{public}d.", uid);
+        return false;
+    }
+    std::shared_lock<std::shared_mutex> lock(bundleIdLock_);
+    return reservedBundleIdSet_.count(bundleId) > 0;
+}
+
 void AccessTokenIDManager::SetMigrationDone()
 {
-    std::unique_lock<std::mutex> lock(migrationLock_);
+    std::unique_lock<std::shared_mutex> lock(migrationLock_);
     migrationDone_ = true;
     LOGI(ATM_DOMAIN, ATM_TAG, "Migration done flag set to true.");
+}
+
+bool AccessTokenIDManager::IsMigrationDone()
+{
+#ifdef SPM_DATA_ENABLE
+    std::shared_lock<std::shared_mutex> lock(migrationLock_);
+    if (!migrationDone_) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "AllocUid failed, migration not completed.");
+        return false;
+    }
+#endif
+    return true;
 }
 
 } // namespace AccessToken
