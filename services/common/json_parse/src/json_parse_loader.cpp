@@ -102,6 +102,18 @@ int32_t ConfigPolicyLoaderInterface::GetPermissionDefinitionExt(std::vector<std:
     return RET_SUCCESS;
 }
 
+int32_t ConfigPolicyLoaderInterface::GetReservedBundleIdList(
+    const std::string& value, std::set<int32_t>& bundleList)
+{
+    bundleList.clear();
+    return RET_SUCCESS;
+}
+
+std::string ConfigPolicyLoaderInterface::BuildReservedBundleIdList(const std::set<int32_t>& bundleList)
+{
+    return std::string();
+}
+
 int32_t ConfigPolicLoader::ReadCfgFile(const std::string& file, std::string& rawData)
 {
     char filePath[PATH_MAX] = {0};
@@ -505,7 +517,7 @@ int32_t ConfigPolicLoader::GetAllNativeTokenInfo(std::vector<NativeTokenInfoBase
         }
         if (!ParserNativeRawData(rawData, tokenInfos)) {
             LOGE(ATM_DOMAIN, ATM_TAG, "ParserNativeRawData failed.");
-            return ERR_PRASE_RAW_DATA_FAILED;
+            return ERR_PARSE_RAW_DATA_FAILED;
         }
         return RET_SUCCESS;
     };
@@ -580,7 +592,7 @@ int32_t ConfigPolicLoader::GetDlpPermissions(std::vector<PermissionDlpMode>& dlp
     }
     if (!ParserDlpPermsRawData(dlpPermsRawData, dlpPerms)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "ParserDlpPermsRawData failed.");
-        return ERR_PRASE_RAW_DATA_FAILED;
+        return ERR_PARSE_RAW_DATA_FAILED;
     }
     return RET_SUCCESS;
 }
@@ -654,6 +666,55 @@ std::string ConfigPolicLoader::DumpNativeTokenInfo(const NativeTokenInfoBase& na
     (void)AddObjToJson(j, "permStateList", permStateListJson);
     (void)AddObjToJson(j, "invalidPermList", invalidPermStringJson);
     return JsonToStringFormatted(j.get());
+}
+
+int32_t ConfigPolicLoader::GetReservedBundleIdList(const std::string& value, std::set<int32_t>& bundleList)
+{
+    bundleList.clear();
+    if (value.empty()) {
+        return RET_SUCCESS;
+    }
+
+    CJsonUnique json = CreateJsonFromString(value);
+    if (json == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Parse reserved bundle id list failed.");
+        return ERR_PARAM_INVALID;
+    }
+    CJson* listJson = GetArrayFromJson(json, "list");
+    if (listJson == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Reserved bundle id list json missing list.");
+        return ERR_PARAM_INVALID;
+    }
+
+    int32_t size = cJSON_GetArraySize(listJson);
+    for (int32_t i = 0; i < size; ++i) {
+        CJson* item = cJSON_GetArrayItem(listJson, i);
+        if ((item == nullptr) || !cJSON_IsNumber(item)) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Reserved bundle id item invalid.");
+            return ERR_PARAM_INVALID;
+        }
+        bundleList.insert(static_cast<int>(cJSON_GetNumberValue(item)));
+    }
+    return RET_SUCCESS;
+}
+
+std::string ConfigPolicLoader::BuildReservedBundleIdList(const std::set<int32_t>& bundleList)
+{
+    CJsonUnique json = CreateJson();
+    CJsonUnique listJson = CreateJsonArray();
+    if ((json == nullptr) || (listJson == nullptr)) {
+        return std::string();
+    }
+    for (int32_t bundleId : bundleList) {
+        CJsonUnique item(cJSON_CreateNumber(bundleId), FreeJson);
+        if ((item == nullptr) || !AddObjToArray(listJson, item)) {
+            return std::string();
+        }
+    }
+    if (!AddObjToJson(json, "list", listJson)) {
+        return std::string();
+    }
+    return PackJsonToString(json);
 }
 
 extern "C" {

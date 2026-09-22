@@ -101,6 +101,7 @@ private:
     int32_t UpgradeFromVersion11(NativeRdb::RdbStore& rdbStore);
 #ifdef SPM_DATA_ENABLE
     int32_t UpgradeFromVersion12(NativeRdb::RdbStore& rdbStore);
+    int32_t ResetUidAndMigrateCompleted(NativeRdb::RdbStore& rdbStore);
 #endif
 };
 } // namespace AccessToken
