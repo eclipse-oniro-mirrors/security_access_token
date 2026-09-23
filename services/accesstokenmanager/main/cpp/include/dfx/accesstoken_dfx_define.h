@@ -93,7 +93,10 @@ typedef enum AccessTokenExceptionSceneCode {
     KERNEL_PERM_DATA_ROLLBACK = 10002,
     KERNEL_SPM_DATA_ADD = 10003,
     KERNEL_SPM_DATA_UPDATE = 10004,
-    KERNEL_SPM_DATA_ROLLBACK = 10005,
+    KERNEL_SPM_DATA_LOAD = 10005,
+    KERNEL_SPM_DATA_ROLLBACK = 10006,
+    KERNEL_AND_DB_TXN_ROLLBACK = 10007,
+    KERNEL_SPM_DATA_DELETE = 10008,
 } AccessTokenExceptionSceneCode;
 } // namespace AccessToken
 } // namespace Security

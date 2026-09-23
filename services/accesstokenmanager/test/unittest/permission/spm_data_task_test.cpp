@@ -406,7 +406,7 @@ HWTEST_F(SpmDataTaskTest, UpdateSpmDataTask003, TestSize.Level0)
 
 /**
  * @tc.name: UpdateSpmDataTask004
- * @tc.desc: Verify updateWithPerm requires old permission data.
+ * @tc.desc: Verify nullptr oldPerm builds, and a new token rolls back by removal.
  * @tc.type: FUNC
  */
 HWTEST_F(SpmDataTaskTest, UpdateSpmDataTask004, TestSize.Level0)
@@ -418,12 +418,25 @@ HWTEST_F(SpmDataTaskTest, UpdateSpmDataTask004, TestSize.Level0)
     std::vector<SpmDataParam> params = {
         { hapInfo, noCached, brief, extendPerms, nullptr, true },
     };
+    // new token (converged install): kernel has no entry and no old perms
+    GetFakeSpmKernelState().getRetSequence = { ENODATA };
 
     UpdateSpmDataTask task(params);
     uint32_t errIndex = 99;
-    EXPECT_EQ(ERR_PARAM_INVALID, task.Update(errIndex));
-    EXPECT_EQ(0, GetFakeSpmKernelState().getCallCount);
-    EXPECT_EQ(0, GetFakeSpmKernelState().setCallCount);
+    EXPECT_EQ(RET_SUCCESS, task.Update(errIndex));
+    EXPECT_EQ(0u, errIndex);
+    EXPECT_EQ(1, GetFakeSpmKernelState().getCallCount);
+    EXPECT_EQ(1, GetFakeSpmKernelState().setCallCount);     // upsert created the entry
+    EXPECT_EQ(1, GetFakeSpmKernelState().addPermCallCount);
+
+    // rollback of a no-old-perm token removes the entry and perm bitmap
+    EXPECT_EQ(RET_SUCCESS, task.Rollback());
+    ASSERT_EQ(1u, GetFakeSpmKernelState().removedTokenIds.size());
+    EXPECT_EQ(static_cast<AccessTokenID>(0x111), GetFakeSpmKernelState().removedTokenIds[0]);
+    ASSERT_EQ(1u, GetFakeSpmKernelState().removePermTokenIds.size());
+    EXPECT_EQ(static_cast<AccessTokenID>(0x111), GetFakeSpmKernelState().removePermTokenIds[0]);
+    EXPECT_EQ(1, GetFakeSpmKernelState().setCallCount);     // no restore set batch
+    EXPECT_EQ(1, GetFakeSpmKernelState().addPermCallCount); // no restore perm call
 }
 
 /**
@@ -474,6 +487,142 @@ HWTEST_F(SpmDataTaskTest, UpdateSpmDataTask006, TestSize.Level0)
     EXPECT_EQ(0u, errIndex);
     EXPECT_EQ(1, GetFakeSpmKernelState().addPermCallCount);
     EXPECT_EQ(0, GetFakeSpmKernelState().setCallCount);
+}
+
+/**
+ * @tc.name: UpdateSpmDataTask007
+ * @tc.desc: Verify mixed batch rollback restores known old perms and removes unknown ones.
+ * @tc.type: FUNC
+ */
+HWTEST_F(SpmDataTaskTest, UpdateSpmDataTask007, TestSize.Level0)
+{
+    HapTokenInfo hapInfo1 = BuildHapInfo(0x203, "bundle.one");
+    HapTokenInfo hapInfo2 = BuildHapInfo(0x204, "bundle.two");
+    BundleNoCachedInfo noCached1 = BuildNoCached();
+    BundleNoCachedInfo noCached2 = BuildNoCached();
+    std::vector<BriefPermData> brief1 = BuildBriefList(1);
+    std::vector<BriefPermData> brief2 = BuildBriefList(2);
+    std::vector<PermissionWithValue> extendPerms;
+    std::vector<SpmDataParam> params = {
+        { hapInfo1, noCached1, brief1, extendPerms, &brief1, true },
+        { hapInfo2, noCached2, brief2, extendPerms, nullptr, true },
+    };
+    // token 0x203 has old data in kernel, token 0x204 is new (converged install)
+    GetFakeSpmKernelState().getRetSequence = { RET_SUCCESS, ENODATA };
+
+    UpdateSpmDataTask task(params);
+    uint32_t errIndex = 99;
+    EXPECT_EQ(RET_SUCCESS, task.Update(errIndex));
+    EXPECT_EQ(0u, errIndex);
+    EXPECT_EQ(1, GetFakeSpmKernelState().setCallCount);
+    EXPECT_EQ(2, GetFakeSpmKernelState().addPermCallCount);
+
+    EXPECT_EQ(RET_SUCCESS, task.Rollback());
+    // entry phase: old data of 0x203 restored by set, new entry of 0x204 removed
+    ASSERT_EQ(2u, GetFakeSpmKernelState().setTokenBatches.size());
+    ASSERT_EQ(1u, GetFakeSpmKernelState().setTokenBatches[1].size());
+    EXPECT_EQ(static_cast<AccessTokenID>(0x203), GetFakeSpmKernelState().setTokenBatches[1][0]);
+    ASSERT_EQ(1u, GetFakeSpmKernelState().removedTokenIds.size());
+    EXPECT_EQ(static_cast<AccessTokenID>(0x204), GetFakeSpmKernelState().removedTokenIds[0]);
+    // perm phase: 0x203 restored (3rd add perm call), 0x204 removed
+    EXPECT_EQ(3, GetFakeSpmKernelState().addPermCallCount);
+    ASSERT_EQ(1u, GetFakeSpmKernelState().removePermTokenIds.size());
+    EXPECT_EQ(static_cast<AccessTokenID>(0x204), GetFakeSpmKernelState().removePermTokenIds[0]);
+}
+
+/**
+ * @tc.name: UpdateSpmDataTask008
+ * @tc.desc: Verify existing entry with unknown old perms restores the entry and removes perms.
+ * @tc.type: FUNC
+ */
+HWTEST_F(SpmDataTaskTest, UpdateSpmDataTask008, TestSize.Level0)
+{
+    HapTokenInfo hapInfo = BuildHapInfo(0x205, "bundle.one");
+    BundleNoCachedInfo noCached = BuildNoCached();
+    std::vector<BriefPermData> brief = BuildBriefList(1);
+    std::vector<PermissionWithValue> extendPerms;
+    std::vector<SpmDataParam> params = {
+        { hapInfo, noCached, brief, extendPerms, nullptr, true },
+    };
+    // entry exists but old perms are unknown (data gap): degraded compensation
+    GetFakeSpmKernelState().getRetSequence = { RET_SUCCESS };
+
+    UpdateSpmDataTask task(params);
+    uint32_t errIndex = 99;
+    EXPECT_EQ(RET_SUCCESS, task.Update(errIndex));
+    EXPECT_EQ(0u, errIndex);
+    EXPECT_EQ(1, GetFakeSpmKernelState().setCallCount);
+    EXPECT_EQ(1, GetFakeSpmKernelState().addPermCallCount);
+
+    // rollback restores the entry but removes the written perm bitmap
+    EXPECT_EQ(RET_SUCCESS, task.Rollback());
+    EXPECT_EQ(2, GetFakeSpmKernelState().setCallCount);
+    EXPECT_EQ(0u, GetFakeSpmKernelState().removedTokenIds.size());
+    ASSERT_EQ(1u, GetFakeSpmKernelState().removePermTokenIds.size());
+    EXPECT_EQ(static_cast<AccessTokenID>(0x205), GetFakeSpmKernelState().removePermTokenIds[0]);
+    EXPECT_EQ(1, GetFakeSpmKernelState().addPermCallCount); // no restore perm call
+}
+
+/**
+ * @tc.name: UpdateSpmDataTask009
+ * @tc.desc: Verify perm failure rollback removes perms of nullptr items written before it.
+ * @tc.type: FUNC
+ */
+HWTEST_F(SpmDataTaskTest, UpdateSpmDataTask009, TestSize.Level0)
+{
+    HapTokenInfo hapInfo1 = BuildHapInfo(0x206, "bundle.one");
+    HapTokenInfo hapInfo2 = BuildHapInfo(0x207, "bundle.two");
+    BundleNoCachedInfo noCached1 = BuildNoCached();
+    BundleNoCachedInfo noCached2 = BuildNoCached();
+    std::vector<BriefPermData> brief1 = BuildBriefList(1);
+    std::vector<BriefPermData> brief2 = BuildBriefList(2);
+    std::vector<PermissionWithValue> extendPerms;
+    std::vector<SpmDataParam> params = {
+        { hapInfo1, noCached1, brief1, extendPerms, nullptr, true },
+        { hapInfo2, noCached2, brief2, extendPerms, &brief2, true },
+    };
+    // item 0 perms applied, item 1 fails even after retry
+    GetFakeSpmKernelState().addPermRetSequence = { RET_SUCCESS, RET_FAILED, RET_FAILED };
+
+    UpdateSpmDataTask task(params);
+    uint32_t errIndex = 99;
+    EXPECT_EQ(RET_FAILED, task.Update(errIndex));
+    EXPECT_EQ(1u, errIndex);
+    // internal rollback restored both entries (both loaded old data)
+    ASSERT_EQ(2u, GetFakeSpmKernelState().setTokenBatches.size());
+    ASSERT_EQ(2u, GetFakeSpmKernelState().setTokenBatches[1].size());
+    // only the nullptr item written before the failure is perm-removed
+    EXPECT_EQ(3, GetFakeSpmKernelState().addPermCallCount);
+    ASSERT_EQ(1u, GetFakeSpmKernelState().removePermTokenIds.size());
+    EXPECT_EQ(static_cast<AccessTokenID>(0x206), GetFakeSpmKernelState().removePermTokenIds[0]);
+}
+
+/**
+ * @tc.name: UpdateSpmDataTask010
+ * @tc.desc: Verify perm removal failure during nullptr rollback is reported.
+ * @tc.type: FUNC
+ */
+HWTEST_F(SpmDataTaskTest, UpdateSpmDataTask010, TestSize.Level0)
+{
+    HapTokenInfo hapInfo = BuildHapInfo(0x208, "bundle.one");
+    BundleNoCachedInfo noCached = BuildNoCached();
+    std::vector<BriefPermData> brief = BuildBriefList(1);
+    std::vector<PermissionWithValue> extendPerms;
+    std::vector<SpmDataParam> params = {
+        { hapInfo, noCached, brief, extendPerms, nullptr, true },
+    };
+    GetFakeSpmKernelState().getRetSequence = { ENODATA };
+    GetFakeSpmKernelState().removePermRet = RET_FAILED;
+
+    UpdateSpmDataTask task(params);
+    uint32_t errIndex = 99;
+    EXPECT_EQ(RET_SUCCESS, task.Update(errIndex));
+    EXPECT_EQ(0u, errIndex);
+
+    // entry removal succeeds, perm removal fails even after retry
+    EXPECT_EQ(RET_FAILED, task.Rollback());
+    ASSERT_EQ(1u, GetFakeSpmKernelState().removedTokenIds.size());
+    EXPECT_EQ(2, GetFakeSpmKernelState().removePermCallCount);
 }
 
 /**
