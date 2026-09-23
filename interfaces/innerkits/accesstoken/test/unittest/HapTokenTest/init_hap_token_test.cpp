@@ -1668,6 +1668,51 @@ HWTEST_F(InitHapTokenTest, InitHapSideloadExempt001, TestSize.Level0)
 
     EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
 }
+
+/**
+ * @tc.name: SideloadMixedAclPartialExempt_0001
+ * @tc.desc: sideload app requesting both a sideload-available perm and an unmarked high-apl
+ *           perm without acl declaration fails as a whole via kit entry:
+ *           ERR_PERM_REQUEST_CFG_FAILED reports the unmarked perm, no partial install
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(InitHapTokenTest, SideloadMixedAclPartialExempt_0001, TestSize.Level0)
+{
+    MockNativeToken mock("foundation");
+
+    HapInfoParams infoParams;
+    HapPolicyParams policyParams;
+    TestCommon::GetHapParams(infoParams, policyParams);
+    infoParams.appDistributionType = "developer_id";
+    infoParams.isSideloadApp = true;
+    policyParams.apl = APL_NORMAL;
+    PermissionStateFull kernelState = {
+        .permissionName = "ohos.permission.KERNEL_ATM_SELF_USE",
+        .isGeneral = true,
+        .resDeviceID = {"local2"},
+        .grantStatus = {PermissionState::PERMISSION_DENIED},
+        .grantFlags = {0}
+    };
+    PermissionStateFull manageState = {
+        .permissionName = "ohos.permission.MANAGE_LOCAL_ACCOUNTS",
+        .isGeneral = true,
+        .resDeviceID = {"local2"},
+        .grantStatus = {PermissionState::PERMISSION_DENIED},
+        .grantFlags = {0}
+    };
+    policyParams.permStateList = {kernelState, manageState};
+
+    AccessTokenIDEx fullTokenId;
+    HapInfoCheckResult result;
+    EXPECT_EQ(ERR_PERM_REQUEST_CFG_FAILED,
+        AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId, result));
+    // whole install fails, no partial install: no token created
+    EXPECT_EQ(INVALID_TOKENID, fullTokenId.tokenIdExStruct.tokenID);
+    // the unmarked perm is reported instead of the sideload-exempt one
+    EXPECT_EQ(manageState.permissionName, result.permCheckResult.permissionName);
+    EXPECT_EQ(PERMISSION_ACL_RULE, result.permCheckResult.rule);
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
