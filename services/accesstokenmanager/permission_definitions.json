@@ -9111,6 +9111,18 @@
             "deviceTypes": ["general"]
         },
         {
+            "name": "ohos.permission.kernel.USB_CAPTURE",
+            "grantMode": "system_grant",
+            "availableLevel": "normal",
+            "availableType": "NORMAL",
+            "since": "26.0.1",
+            "deprecated": "",
+            "provisionEnable": false,
+            "distributedSceneEnable": false,
+            "isKernelEffect": true,
+            "deviceTypes": ["2in1"]
+        },
+        {
             "name": "ohos.permission.kernel.NET_RAW",
             "grantMode": "system_grant",
             "availableLevel": "normal",
