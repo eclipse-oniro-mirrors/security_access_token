@@ -34,12 +34,14 @@ struct FakeSpmKernelState final {
     int32_t removeRet = 0;
     int32_t addPermRet = 0;
     int32_t removePermRet = 0;
+    int32_t getPermsRet = 0;
     int32_t addCallCount = 0;
     int32_t setCallCount = 0;
     int32_t getCallCount = 0;
     int32_t removeCallCount = 0;
     int32_t addPermCallCount = 0;
     int32_t removePermCallCount = 0;
+    int32_t getPermsCallCount = 0;
     std::vector<int32_t> addPermRetSequence;
     std::vector<int32_t> addRetSequence;
     std::vector<int32_t> setRetSequence;
@@ -47,6 +49,8 @@ struct FakeSpmKernelState final {
     std::vector<int32_t> removeRetSequence;
     std::vector<AccessTokenID> addPermTokenIds;
     std::vector<AccessTokenID> removePermTokenIds;
+    std::vector<AccessTokenID> getPermsTokenIds;
+    std::vector<uint32_t> getPermsOpCodes;
     std::vector<std::vector<AccessTokenID>> setTokenBatches;
     std::vector<std::vector<AccessTokenID>> addTokenBatches;
     std::vector<std::vector<uint32_t>> addPermOpCodeBatches;

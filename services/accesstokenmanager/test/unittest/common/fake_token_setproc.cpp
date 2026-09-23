@@ -80,8 +80,14 @@ int32_t GetPermissionFromKernel(uint32_t tokenID, int32_t opCode, bool& isGrante
 
 int32_t GetPermissionsFromKernel(uint32_t tokenID, std::vector<uint32_t>& opCodeList)
 {
-    (void)tokenID;
-    opCodeList.clear();
+    auto& state = g_fakeSpmKernelState;
+    state.getPermsCallCount++;
+    state.getPermsTokenIds.emplace_back(tokenID);
+    if (state.getPermsRet != 0) {
+        opCodeList.clear();
+        return state.getPermsRet;
+    }
+    opCodeList = state.getPermsOpCodes;
     return 0;
 }
 

@@ -52,11 +52,10 @@ UpdateSpmDataTask::UpdateSpmDataTask(const std::vector<SpmDataParam>& params)
         item.tokenId = hapInfo.tokenID;
         item.permBriefDataList = permBriefDataList;
         item.oldPermBriefDataList = param.oldPermBriefDataList;
-        if (updateWithPerm_ && param.oldPermBriefDataList == nullptr) {
-            isBuildSuccess_ = false;
-            LOGE(ATM_DOMAIN, ATM_TAG, "UpdateSpmDataTask need oldPermBriefDataList with permission update.");
-            break;
-        }
+        // oldPermBriefDataList == nullptr is valid: "no known old perms" (new
+        // token or data gap). Rollback removes the written bitmap for such
+        // tokens instead of restoring, so install can converge add and update
+        // routing into a single update task.
         if (KernelDetail::BuildSpmData(hapInfo, noCachedInfo, permBriefDataList, extendPermList,
             item.newSpmData) != RET_SUCCESS) {
             isBuildSuccess_ = false;
@@ -192,18 +191,23 @@ static int32_t RollbackPermData(const std::vector<SpmDataTaskItem>& items, size_
 {
     int32_t result = RET_SUCCESS;
     for (size_t i = 0; i < permDataSuccessCount; ++i) {
+        int32_t ret;
         if (items[i].oldPermBriefDataList == nullptr) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "No oldPermBriefDataList token=%{public}u.", items[i].tokenId);
-            result = RET_FAILED;
-            break;  // no possible to reach here
+            if (items[i].oldSpmData != nullptr) {
+                // entry existed but its old perms are unknown: degraded compensation
+                LOGE(ATM_DOMAIN, ATM_TAG, "No oldPermBriefDataList token=%{public}u.", items[i].tokenId);
+            }
+            // no known old perms (new token or data gap): remove the written
+            // bitmap instead of restoring, symmetric to AddSpmDataTask rollback
+            ret = PermissionKernelUtils::RemovePermFromKernel(items[i].tokenId);
+        } else {
+            ret = PermissionKernelUtils::AddHapPermToKernel(items[i].tokenId, *(items[i].oldPermBriefDataList));
         }
-        int32_t ret = PermissionKernelUtils::AddHapPermToKernel(items[i].tokenId, *(items[i].oldPermBriefDataList));
         if (ret == RET_SUCCESS) {
             continue;
         }
         LOGC(ATM_DOMAIN, ATM_TAG,
-            "Rollback AddHapPermToKernel failed for token=%{public}u, ret=%{public}d.",
-            items[i].tokenId, ret);
+            "Rollback perm data failed for token=%{public}u, ret=%{public}d.", items[i].tokenId, ret);
         ReportSysCommonEventError(KERNEL_PERM_DATA_ROLLBACK, ret);
         result = ret;
     }

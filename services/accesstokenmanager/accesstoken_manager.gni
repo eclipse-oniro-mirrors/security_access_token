@@ -103,8 +103,11 @@ accesstoken_manager_base_config = {
   if (access_token_enable_spm == true) {
     sources += [
       "${access_token_path}/services/accesstokenmanager/main/cpp/src/kernel/add_spm_data_task.cpp",
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/kernel/kernel_and_db_lock.cpp",
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/kernel/remove_spm_data_task.cpp",
       "${access_token_path}/services/accesstokenmanager/main/cpp/src/kernel/spm_data_kernel_common.cpp",
       "${access_token_path}/services/accesstokenmanager/main/cpp/src/kernel/update_spm_data_task.cpp",
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/transaction/kernel_and_db_transaction.cpp",
     ]
   }
 
@@ -137,6 +140,7 @@ accesstoken_manager_base_config = {
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/permission",
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/seccomp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/service",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/include/transaction",
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/clawtoken",
   ]
 
