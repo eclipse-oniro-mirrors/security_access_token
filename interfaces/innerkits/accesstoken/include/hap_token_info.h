@@ -269,6 +269,16 @@ struct TrustedBundleInfo {
 };
 
 /**
+ * @brief Declares which parts of sign info should be returned,
+ * callers get only the requested fields
+ */
+enum SignInfoQueryFlag : uint32_t {
+    QUERY_PROFILE = 1 << 0, // return ProfileData only
+    QUERY_MODULE_INFO = 1 << 1, // return module.json only
+    QUERY_SHARED_FILES = 1 << 2, // return sharedfiles.json only
+};
+
+/**
  * @brief Declares hap policy params class
  */
 class HapPolicy final {
@@ -337,7 +347,7 @@ struct BundleHapList final {
     std::vector<std::string> hapPaths;
     bool isPreInstalled = false;
     int32_t userId;
-    int32_t mode = -1;
+    int32_t mode = 0;
 };
 
 struct MigratedInfo final {

@@ -813,12 +813,13 @@ public:
     /**
      * @brief Check hap sign info.
      * @param list hap list to be checked
+     * @param flag sign info query flag, see SignInfoQueryFlag in hap_token_info.h
      * @param sessionId session id
      * @param bundleInfo trusted bundle info list
      * @param resultInfo hap verify result info
      * @return error code, see access_token_error.h
      */
-    static int32_t CheckHapSignInfo(const BundleHapList& list, int32_t& sessionId,
+    static int32_t CheckHapSignInfo(const BundleHapList& list, uint32_t flag, int32_t& sessionId,
         std::vector<TrustedBundleInfo>& bundleInfo, HapVerifyResultInfo& resultInfo);
     /**
      * @brief Check hap sign info.
@@ -857,24 +858,28 @@ public:
     static int32_t FinishInstall(int32_t sessionId, bool isPersistent,
         const std::map<std::string, std::string>& modulePathMap);
     /**
-     * @brief Get cache sign info by session id.
-     * @param sessionId session id
+     * @brief Get sign info by bundle name.
+     * @param bundleName bundle name
+     * @param flag sign info query flag, see SignInfoQueryFlag in hap_token_info.h
      * @param bundleInfo trusted bundle info list
      * @return error code, see access_token_error.h
      */
-    static int32_t GetHapSignInfo(const std::string& bundleName, std::vector<TrustedBundleInfo>& bundleInfo);
+    static int32_t GetHapSignInfo(const std::string& bundleName, uint32_t flag,
+        std::vector<TrustedBundleInfo>& bundleInfo);
+    /**
+     * @brief Get cache sign info by session id.
+     * @param sessionId session id
+     * @param flag sign info query flag, see SignInfoQueryFlag in hap_token_info.h
+     * @param bundleInfo trusted bundle info list
+     * @return error code, see access_token_error.h
+     */
+    static int32_t GetCacheSignInfoBySessionId(int32_t sessionId, uint32_t flag,
+        std::vector<TrustedBundleInfo>& bundleInfo);
     /**
      * @brief Get cache BundlePolicyInfo by session id.
      * @param sessionId session id
      * @param bundleName bundle name
      * @param bundlePolicyInfo bundle policy info
-     * @return error code, see access_token_error.h
-     */
-    static int32_t GetCacheSignInfoBySessionId(int32_t sessionId, std::vector<TrustedBundleInfo>& bundleInfo);
-    /**
-     * @brief Get cache sign info by bundle name.
-     * @param bundleName bundle name
-     * @param bundleInfo trusted bundle info list
      * @return error code, see access_token_error.h
      */
     static int32_t GetCachePolicyBySessionId(int32_t sessionId, const std::string& bundleName,

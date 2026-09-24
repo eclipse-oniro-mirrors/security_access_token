@@ -61,8 +61,8 @@ interface OHOS.Security.AccessToken.IAccessTokenManager{
     [ipccode 22] void UpdateHapToken([inout] unsigned long fullTokenId, [in] UpdateHapInfoParamsIdl infoIdl, [in] HapPolicyParcel policyParcel, [out] HapInfoCheckResultIdl resultInfoIdl);
     [ipccode 23] void GetTokenIDByUserID([in] int userID, [out] List<unsigned int> tokenIdList,
         [in] int subProfileId);
-    [ipccode 24, macrodef SPM_DATA_ENABLE] void GetHapIdentity([in] HapBaseInfoParcel hapBaseInfoParcel, [out] IdentityIdl identityIdl);
-    [ipccode 25, macrodef SPM_DATA_ENABLE] void GetHapBaseInfoByUid([in] int uid, [out] HapBaseInfoParcel hapBaseInfoParcel);
+    // [ipccode 24, macrodef SPM_DATA_ENABLE] void GetHapIdentity([in] HapBaseInfoParcel hapBaseInfoParcel, [out] IdentityIdl identityIdl);
+    // [ipccode 25, macrodef SPM_DATA_ENABLE] void GetHapBaseInfoByUid([in] int uid, [out] HapBaseInfoParcel hapBaseInfoParcel);
     [macrodef TOKEN_SYNC_ENABLE, ipccode 32] void GetHapTokenInfoFromRemote([in] unsigned int tokenID, [out] HapTokenInfoForSyncParcel hapSyncParcel);
 
     [macrodef TOKEN_SYNC_ENABLE, ipccode 34] void SetRemoteHapTokenInfo([in] String deviceID, [in] HapTokenInfoForSyncParcel hapSyncParcel);
@@ -100,23 +100,23 @@ interface OHOS.Security.AccessToken.IAccessTokenManager{
     [ipccode 70] void ResetDatabaseRecoveryStatus();
     [ipccode 71] void DeleteToolTokenByPid([in] int pid);
     [ipccode 74] void GetHostTokenId([in] unsigned int toolTokenId, [out] unsigned int hostTokenId);
-    [ipccode 76, macrodef SPM_DATA_ENABLE] void MigrateInstalledBundles([in] List<MigratedInfoIdl> migratedInfoList, [out] List<BundleMigrateResultIdl> results);
-    [ipccode 77, macrodef SPM_DATA_ENABLE] void FinishMigration();
-    [ipccode 78, macrodef SPM_DATA_ENABLE] void CheckMigratedUidSet([in] Set<int> totalUids, [out] Set<int> unreceivedUids);
+    // [ipccode 76, macrodef SPM_DATA_ENABLE] void MigrateInstalledBundles([in] List<MigratedInfoIdl> migratedInfoList, [out] List<BundleMigrateResultIdl> results);
+    // [ipccode 77, macrodef SPM_DATA_ENABLE] void FinishMigration();
+    // [ipccode 78, macrodef SPM_DATA_ENABLE] void CheckMigratedUidSet([in] Set<int> totalUids, [out] Set<int> unreceivedUids);
     [ipccode 80] void VerifyAccessToken([in] unsigned int tokenID, [in] List<String> permissionList, [out] List<int> permStateList);  
     [ipccode 81] void GetSelfPermissionStatus([in] String permissionName, [out] int status);
-    [ipccode 82, macrodef SPM_DATA_ENABLE] void PrepareHapIdentity([inout] int sessionId, [in] HapBaseInfoIdl info, [in] BundlePolicyIdl policy, [in] IRemoteObject cb, [out] IdentityIdl identity);
-    [ipccode 83, macrodef SPM_DATA_ENABLE] void UpdateHapPolicy([in] int sessionId, [in] unsigned int tokenId, [in] BundlePolicyIdl policy, [inout] int uid);
-    [ipccode 84, macrodef SPM_DATA_ENABLE] void FinishInstall([in] int sessionId, [in] boolean isPersistent, [in] OrderedMap<String, String> modulePathMap);
-    [ipccode 85, macrodef SPM_DATA_ENABLE] void CheckHapPermissionInfo([in] int sessionId, [in] InstallTypeEnumIdl type, [out] HapInfoCheckResultIdl resultInfoIdl);
-    [ipccode 86, macrodef SPM_DATA_ENABLE] void GetCachePolicyBySessionId([in] int sessionId, [in] String bundleName, [out] BundlePolicyInfoIdl bundlePolicyInfoIdl);
-    [ipccode 87, macrodef SPM_DATA_ENABLE] void DeleteIdentity([in] unsigned int tokenID, [in] String bundleName, [in] ReservedTypeIdl type);
+    // [ipccode 82, macrodef SPM_DATA_ENABLE] void PrepareHapIdentity([inout] int sessionId, [in] HapBaseInfoIdl info, [in] BundlePolicyIdl policy, [in] IRemoteObject cb, [out] IdentityIdl identity);
+    // [ipccode 83, macrodef SPM_DATA_ENABLE] void UpdateHapPolicy([in] int sessionId, [in] unsigned int tokenId, [in] BundlePolicyIdl policy, [inout] int uid);
+    // [ipccode 84, macrodef SPM_DATA_ENABLE] void FinishInstall([in] int sessionId, [in] boolean isPersistent, [in] OrderedMap<String, String> modulePathMap);
+    // [ipccode 85, macrodef SPM_DATA_ENABLE] void CheckHapPermissionInfo([in] int sessionId, [in] InstallTypeEnumIdl type, [out] HapInfoCheckResultIdl resultInfoIdl);
+    // [ipccode 86, macrodef SPM_DATA_ENABLE] void GetCachePolicyBySessionId([in] int sessionId, [in] String bundleName, [out] BundlePolicyInfoIdl bundlePolicyInfoIdl);
+    // [ipccode 87, macrodef SPM_DATA_ENABLE] void DeleteIdentity([in] unsigned int tokenID, [in] String bundleName, [in] ReservedTypeIdl type);
     // Reserved ipccodes for install service, to be enabled with rawdata support:
     // rawdata OHOS.Security.AccessToken.BundleInfosRawdata;
     // rawdata OHOS.Security.AccessToken.CheckHapSignResultRawdata;
     // [ipccode 88, macrodef SPM_DATA_ENABLE] void CheckHapSignInfo([in] BundleHapListIdl list, [in] IRemoteObject cb, [out] CheckHapSignResultRawdata checkResult);
-    // [ipccode 89, macrodef SPM_DATA_ENABLE] void GetCacheSignInfoBySessionId([in] int sessionId, [out] BundleInfosRawdata bundleInfos);
-    // [ipccode 90, macrodef SPM_DATA_ENABLE] void GetHapSignInfo([in] String bundleName, [out] BundleInfosRawdata bundleInfos);
+    // [ipccode 89, macrodef SPM_DATA_ENABLE] void GetCacheSignInfoBySessionId([in] int sessionId, [in] unsigned int flag, [out] BundleInfosRawdata bundleInfos);
+    // [ipccode 90, macrodef SPM_DATA_ENABLE] void GetHapSignInfo([in] String bundleName, [in] unsigned int flag, [out] BundleInfosRawdata bundleInfos);
 
     [ipccode 101, macrodef SECURITY_COMPONENT_ENHANCE_ENABLE, oneway, customMsgOption flags=MessageOption::TF_IMAGE] void RegisterSecCompEnhance([in] SecCompEnhanceDataParcel enhanceParcel);
     [ipccode 102, macrodef SECURITY_COMPONENT_ENHANCE_ENABLE] void UpdateSecCompEnhance([in] int pid, [in] unsigned int seqNum);

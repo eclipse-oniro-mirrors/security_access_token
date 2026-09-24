@@ -1189,7 +1189,7 @@ int32_t AccessTokenKit::GenerateCliAuthResult(AccessTokenID hostTokenID, const s
         hostTokenID, agentID, authInfoList, result);
 }
 
-int32_t AccessTokenKit::CheckHapSignInfo(const BundleHapList& list, int32_t& sessionId,
+int32_t AccessTokenKit::CheckHapSignInfo(const BundleHapList& list, uint32_t flag, int32_t& sessionId,
     std::vector<TrustedBundleInfo>& bundleInfo, HapVerifyResultInfo& resultInfo)
 {
     return ERR_OK;
@@ -1217,12 +1217,14 @@ int32_t AccessTokenKit::FinishInstall(int32_t sessionId, bool isPersistent,
     return ERR_OK;
 }
 
-int32_t AccessTokenKit::GetCacheSignInfoBySessionId(int32_t sessionId, std::vector<TrustedBundleInfo>& bundleInfo)
+int32_t AccessTokenKit::GetCacheSignInfoBySessionId(int32_t sessionId, uint32_t flag,
+    std::vector<TrustedBundleInfo>& bundleInfo)
 {
     return ERR_OK;
 }
 
-int32_t AccessTokenKit::GetHapSignInfo(const std::string& bundleName, std::vector<TrustedBundleInfo>& bundleInfo)
+int32_t AccessTokenKit::GetHapSignInfo(const std::string& bundleName, uint32_t flag,
+    std::vector<TrustedBundleInfo>& bundleInfo)
 {
     return ERR_OK;
 }
