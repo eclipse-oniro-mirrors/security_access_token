@@ -305,6 +305,54 @@ public:
     std::string permissionName;
     std::string value;
 };
+
+/**
+ * @brief Declares the result of bundle policy info
+ */
+struct BundlePolicyInfo {
+    std::vector<std::string> reqPermissions;
+};
+
+/**
+ * @brief Declares the result of hap verify result info
+ */
+struct HapVerifyResultInfo {
+    uint32_t index = 0;
+    int32_t errorCode = 0;
+};
+
+/**
+ * @brief Declares install type
+ */
+enum InstallTypeEnum {
+    TYPE_INSTALL = 0,
+    TYPE_REPLACE,
+    TYPE_MERGE
+};
+
+/**
+ * @brief Declares bundle hap list
+ */
+struct BundleHapList final {
+    std::vector<std::string> hapPaths;
+    bool isPreInstalled = false;
+    int32_t userId;
+    int32_t mode = -1;
+};
+
+struct MigratedInfo final {
+    std::string bundleName;
+    BundleHapList pathList;
+    std::vector<HapBaseInfo> hapBaseInfoList;
+    std::vector<int32_t> uidList;
+    std::vector<ReservedType> reservedTypeList;
+};
+
+struct BundleMigrateResult final {
+    std::vector<AccessTokenIDEx> tokenIdList;
+    std::vector<ReservedType> reservedTypeList;
+    int32_t errcode = 0;
+};
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

@@ -194,6 +194,24 @@ isAtomicService: %{public}d",
     return AccessTokenManagerClient::GetInstance().UpdateHapToken(tokenIdEx, info, newPolicy, result);
 }
 
+int32_t AccessTokenKit::MigrateInstalledBundles(const std::vector<MigratedInfo>& migratedInfoList,
+    std::vector<BundleMigrateResult>& results)
+{
+    return ERR_OK;
+}
+
+int32_t AccessTokenKit::FinishMigration()
+{
+    return ERR_OK;
+}
+
+int32_t AccessTokenKit::CheckMigratedUidSet(
+    const std::set<int32_t>& totalUids, std::set<int32_t>& unreceivedUids)
+{
+    return ERR_OK;
+}
+
+
 int AccessTokenKit::DeleteToken(AccessTokenID tokenID)
 {
     return DeleteToken(tokenID, false);
@@ -206,6 +224,11 @@ int AccessTokenKit::DeleteToken(AccessTokenID tokenID, bool isTokenReserved)
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     return AccessTokenManagerClient::GetInstance().DeleteToken(tokenID, isTokenReserved);
+}
+
+int32_t AccessTokenKit::DeleteIdentity(AccessTokenID tokenID, const std::string& bundleName, ReservedType type)
+{
+    return ERR_OK;
 }
 
 int32_t AccessTokenKit::DeleteToolTokenByPid(int32_t pid)
@@ -297,6 +320,16 @@ AccessTokenIDEx AccessTokenKit::GetHapTokenIDEx(int32_t userID, const std::strin
         return tokenIdEx;
     }
     return AccessTokenManagerClient::GetInstance().GetHapTokenID(userID, bundleName, instIndex);
+}
+
+int32_t AccessTokenKit::GetHapIdentity(const HapBaseInfo& info, Identity& identity)
+{
+    return ERR_OK;
+}
+
+int32_t AccessTokenKit::GetHapBaseInfoByUid(int32_t uid, HapBaseInfo& info)
+{
+    return ERR_OK;
 }
 
 int32_t AccessTokenKit::GetTokenIDByUserID(
@@ -1154,6 +1187,50 @@ int32_t AccessTokenKit::GenerateCliAuthResult(AccessTokenID hostTokenID, const s
     }
     return AccessTokenManagerClient::GetInstance().GenerateCliAuthResult(
         hostTokenID, agentID, authInfoList, result);
+}
+
+int32_t AccessTokenKit::CheckHapSignInfo(const BundleHapList& list, int32_t& sessionId,
+    std::vector<TrustedBundleInfo>& bundleInfo, HapVerifyResultInfo& resultInfo)
+{
+    return ERR_OK;
+}
+
+int32_t AccessTokenKit::CheckHapPermissionInfo(int32_t sessionId, InstallTypeEnum type, HapInfoCheckResult& result)
+{
+    return ERR_OK;
+}
+
+int32_t AccessTokenKit::PrepareHapIdentity(int32_t& sessionId, const HapBaseInfo& info,
+    const BundlePolicy& policy, Identity& identity)
+{
+    return ERR_OK;
+}
+
+int32_t AccessTokenKit::UpdateHapPolicy(int32_t sessionId, int32_t tokenId, const BundlePolicy& policy, int32_t& uid)
+{
+    return ERR_OK;
+}
+
+int32_t AccessTokenKit::FinishInstall(int32_t sessionId, bool isPersistent,
+    const std::map<std::string, std::string>& modulePathMap)
+{
+    return ERR_OK;
+}
+
+int32_t AccessTokenKit::GetCacheSignInfoBySessionId(int32_t sessionId, std::vector<TrustedBundleInfo>& bundleInfo)
+{
+    return ERR_OK;
+}
+
+int32_t AccessTokenKit::GetHapSignInfo(const std::string& bundleName, std::vector<TrustedBundleInfo>& bundleInfo)
+{
+    return ERR_OK;
+}
+
+int32_t AccessTokenKit::GetCachePolicyBySessionId(int32_t sessionId, const std::string& bundleName,
+    BundlePolicyInfo& bundlePolicyInfo)
+{
+    return ERR_OK;
 }
 
 } // namespace AccessToken
