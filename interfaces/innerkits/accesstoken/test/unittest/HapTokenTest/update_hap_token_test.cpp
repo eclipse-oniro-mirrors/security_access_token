@@ -2498,6 +2498,90 @@ HWTEST_F(UpdateHapTokenTest, HapSideloadDistributionConsistency0001, TestSize.Le
     EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
     EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(fullTokenId2.tokenIdExStruct.tokenID));
 }
+
+/**
+ * @tc.name: SideloadMixedAclPartialExempt_0001
+ * @tc.desc: sideload app update requesting both a sideload-available perm and an unmarked
+ *           high-apl perm without acl declaration fails as a whole via kit entry:
+ *           ERR_PERM_REQUEST_CFG_FAILED reports the unmarked perm, stored state unchanged
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(UpdateHapTokenTest, SideloadMixedAclPartialExempt_0001, TestSize.Level0)
+{
+    HapInfoParams infoParams = {
+        .userID = TEST_USER_ID,
+        .bundleName = "SideloadMixedAclTest",
+        .instIndex = 0,
+        .appIDDesc = "SideloadMixedAclTest",
+        .apiVersion = TestCommon::DEFAULT_API_VERSION,
+        .isSystemApp = false,
+        .appDistributionType = APP_DISTRIBUTION_TYPE_DEVELOPER_ID,
+        .isSideloadApp = true,
+    };
+    HapPolicyParams policyParams = {
+        .apl = APL_NORMAL,
+        .domain = "test.domain",
+        .permStateList = {g_infoManagerCameraState, g_infoManagerMicrophoneState},
+    };
+    AccessTokenIDEx fullTokenId;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::InitHapToken(infoParams, policyParams, fullTokenId));
+    AccessTokenID tokenID = fullTokenId.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+
+    // grant a user permission first so the unchanged-state assertion below is meaningful
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GrantPermission(tokenID,
+        g_infoManagerCameraState.permissionName, PERMISSION_USER_FIXED));
+    EXPECT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(tokenID,
+        g_infoManagerCameraState.permissionName));
+
+    // update requests both a sideload-available perm and an unmarked high-apl perm without acl:
+    // the whole update fails and the unmarked perm is reported
+    PermissionStateFull kernelState = {
+        .permissionName = "ohos.permission.KERNEL_ATM_SELF_USE",
+        .isGeneral = true,
+        .resDeviceID = {"local3"},
+        .grantStatus = {PermissionState::PERMISSION_DENIED},
+        .grantFlags = {0}
+    };
+    PermissionStateFull manageState = {
+        .permissionName = "ohos.permission.MANAGE_LOCAL_ACCOUNTS",
+        .isGeneral = true,
+        .resDeviceID = {"local3"},
+        .grantStatus = {PermissionState::PERMISSION_DENIED},
+        .grantFlags = {0}
+    };
+    HapPolicyParams updatePolicyParams = {
+        .apl = APL_NORMAL,
+        .domain = "test.domain",
+        .permStateList = {kernelState, manageState},
+    };
+    UpdateHapInfoParams updateInfoParams = {
+        .appIDDesc = infoParams.appIDDesc,
+        .apiVersion = infoParams.apiVersion,
+        .isSystemApp = false,
+        .appDistributionType = APP_DISTRIBUTION_TYPE_DEVELOPER_ID,
+        .isSideloadApp = true,
+    };
+    HapInfoCheckResult result;
+    EXPECT_EQ(ERR_PERM_REQUEST_CFG_FAILED,
+        AccessTokenKit::UpdateHapToken(fullTokenId, updateInfoParams, updatePolicyParams, result));
+    EXPECT_EQ(manageState.permissionName, result.permCheckResult.permissionName);
+    EXPECT_EQ(PERMISSION_ACL_RULE, result.permCheckResult.rule);
+
+    // failed update keeps prior state: token alive, kept permission grant unchanged,
+    // the sideload-exempt perm is not partially granted
+    HapTokenInfo hapInfo;
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetHapTokenInfo(tokenID, hapInfo));
+    EXPECT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(tokenID,
+        g_infoManagerCameraState.permissionName));
+    EXPECT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenID,
+        kernelState.permissionName));
+    EXPECT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenID,
+        manageState.permissionName));
+
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
