@@ -945,24 +945,24 @@ int32_t AccessTokenOpenCallback::UpgradeFromVersion12(NativeRdb::RdbStore& rdbSt
     int32_t res = CreateHapInfoTable(rdbStore);
     if (res != NativeRdb::E_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to create hap_info_table during upgrade from version 12.");
-        ReportUpgradeError(res, DATABASE_VERSION_12, "CreateHapInfoTable");
+        ReportUpgradeError(res, DATABASE_VERSION_13, "CreateHapInfoTable");
         return res;
     }
 
     res = AddModeColumn(rdbStore, AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO);
     if (res != NativeRdb::E_OK) {
-        ReportUpgradeError(res, DATABASE_VERSION_12, "AddModeColumn");
+        ReportUpgradeError(res, DATABASE_VERSION_13, "AddModeColumn");
         return res;
     }
     res = ResetUidAndMigrateCompleted(rdbStore);
     if (res != NativeRdb::E_OK) {
-        ReportUpgradeError(res, DATABASE_VERSION_12, "ResetUidAndMigrateCompleted");
+        ReportUpgradeError(res, DATABASE_VERSION_13, "ResetUidAndMigrateCompleted");
         return res;
     }
     res = AddUidMigratedReservedColumns(rdbStore);
     if (res != NativeRdb::E_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to add uid/migrated/reserved columns during upgrade from version 12.");
-        ReportUpgradeError(res, DATABASE_VERSION_12, "AddUidMigratedReservedColumns");
+        ReportUpgradeError(res, DATABASE_VERSION_13, "AddUidMigratedReservedColumns");
         return res;
     }
     LOGI(ATM_DOMAIN, ATM_TAG, "Success to upgrade from version 12 to version 13.");
