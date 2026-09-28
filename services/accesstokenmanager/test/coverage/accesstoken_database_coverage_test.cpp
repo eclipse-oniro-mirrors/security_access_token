@@ -1003,6 +1003,96 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, UpgradeFromVersion10002, TestSize.Leve
 }
 
 /*
+* @tc.name: UpgradeFromVersion11001
+* @tc.desc: AccessTokenOpenCallback::UpgradeFromVersion11 skips alter when is_sideload already exists.
+* @tc.type: FUNC
+* @tc.require: TDD
+*/
+HWTEST_F(AccessTokenDatabaseCoverageTest, UpgradeFromVersion11001, TestSize.Level4)
+{
+    std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance()->GetRdb();
+    AccessTokenOpenCallback callback;
+
+    db->executedSqls_.clear();
+    db->executeSqlResults_.clear();
+    db->executeSqlIndex_ = 0;
+    // PRAGMA table_info: is_sideload already present (retry after interrupted upgrade)
+    db->querySqlResults_ = {{{
+        {"0", "token_id", "INTEGER", "1", "", "1"},
+        {"1", "is_sideload", "INTEGER", "1", "0", "0"}
+    }}};
+    db->querySqlIndex_ = 0;
+    ASSERT_EQ(NativeRdb::E_OK, callback.UpgradeFromVersion11(*(db.get())));
+    ASSERT_TRUE(db->executedSqls_.empty());
+}
+
+/*
+* @tc.name: UpgradeFromVersion11002
+* @tc.desc: AccessTokenOpenCallback::UpgradeFromVersion11 adds is_sideload column when missing.
+* @tc.type: FUNC
+* @tc.require: TDD
+*/
+HWTEST_F(AccessTokenDatabaseCoverageTest, UpgradeFromVersion11002, TestSize.Level4)
+{
+    std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance()->GetRdb();
+    AccessTokenOpenCallback callback;
+
+    db->executedSqls_.clear();
+    db->executeSqlResults_.clear();
+    db->executeSqlIndex_ = 0;
+    // PRAGMA table_info: is_sideload absent
+    db->querySqlResults_ = {{{
+        {"0", "token_id", "INTEGER", "1", "", "1"}
+    }}};
+    db->querySqlIndex_ = 0;
+    ASSERT_EQ(NativeRdb::E_OK, callback.UpgradeFromVersion11(*(db.get())));
+    ASSERT_EQ(1U, db->executedSqls_.size());
+    EXPECT_EQ("alter table hap_token_info_table add column is_sideload integer not null default 0",
+        db->executedSqls_[0]);
+}
+
+/*
+* @tc.name: UpgradeFromVersion11003
+* @tc.desc: AccessTokenOpenCallback::UpgradeFromVersion11 propagates probe failure (QuerySql nullptr).
+* @tc.type: FUNC
+* @tc.require: TDD
+*/
+HWTEST_F(AccessTokenDatabaseCoverageTest, UpgradeFromVersion11003, TestSize.Level4)
+{
+    std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance()->GetRdb();
+    AccessTokenOpenCallback callback;
+
+    db->executedSqls_.clear();
+    db->queryFlag_ = NativeRdb::RdbStore::RESULT_FAIL;
+    ASSERT_EQ(ERR_DATABASE_OPERATE_FAILED, callback.UpgradeFromVersion11(*(db.get())));
+    ASSERT_TRUE(db->executedSqls_.empty());
+    db->queryFlag_ = 0;
+}
+
+/*
+* @tc.name: UpgradeFromVersion11004
+* @tc.desc: AccessTokenOpenCallback::UpgradeFromVersion11 returns error when alter table fails.
+* @tc.type: FUNC
+* @tc.require: TDD
+*/
+HWTEST_F(AccessTokenDatabaseCoverageTest, UpgradeFromVersion11004, TestSize.Level4)
+{
+    std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance()->GetRdb();
+    AccessTokenOpenCallback callback;
+
+    db->executedSqls_.clear();
+    db->executeSqlResults_ = {NativeRdb::E_SQLITE_CORRUPT};
+    db->executeSqlIndex_ = 0;
+    // PRAGMA table_info: is_sideload absent
+    db->querySqlResults_ = {{{
+        {"0", "token_id", "INTEGER", "1", "", "1"}
+    }}};
+    db->querySqlIndex_ = 0;
+    ASSERT_EQ(NativeRdb::E_SQLITE_CORRUPT, callback.UpgradeFromVersion11(*(db.get())));
+    ASSERT_EQ(1U, db->executedSqls_.size());
+}
+
+/*
 * @tc.name: OnUpgrade006
 * @tc.desc: AccessTokenOpenCallback::OnUpgrade version 10->11
 * @tc.type: FUNC
