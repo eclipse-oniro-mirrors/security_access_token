@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -31,7 +31,7 @@ namespace AccessToken {
 namespace {
 constexpr const char*  INTEGER_STR = " integer not null,";
 constexpr const char*  TEXT_STR = " text not null,";
-// INTEGER_DEFAULT_ZERO_STR is shared by create table and alter table upgrade, keep them consistent.
+// INTEGER_DEFAULT_ZERO_STR is used by create table, keep column definitions consistent with alter table upgrades.
 constexpr const char*  INTEGER_DEFAULT_ZERO_STR = " integer not null default 0";
 // back up name is xxx_slave fixed, can not be changed
 constexpr const char* DATABASE_NAME_BACK = "access_token_slave.db";
@@ -929,8 +929,16 @@ int32_t AccessTokenOpenCallback::UpgradeFromVersion11(NativeRdb::RdbStore& rdbSt
 {
     std::string tableName;
     AccessTokenDbUtil::GetTableNameByType(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, tableName);
-    int32_t res = rdbStore.ExecuteSql("alter table " + tableName + " add column " +
-        TokenFiledConst::FIELD_IS_SIDELOAD + INTEGER_DEFAULT_ZERO_STR);
+    std::vector<std::string> columnList;
+    int32_t res = GetTableColumnList(rdbStore, tableName, columnList);
+    if (res != NativeRdb::E_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get column list for table %{public}s, errCode is %{public}d.",
+            tableName.c_str(), res);
+        ReportUpgradeError(res, DATABASE_VERSION_12, "GetTableColumnList");
+        return res;
+    }
+    res = AddColumn(columnList, rdbStore, tableName, TokenFiledConst::FIELD_IS_SIDELOAD,
+        "integer not null default " + std::to_string(0));
     if (res != NativeRdb::E_OK) {
         ReportUpgradeError(res, DATABASE_VERSION_12, "AddIsSideloadColumn");
         return res;
@@ -945,24 +953,24 @@ int32_t AccessTokenOpenCallback::UpgradeFromVersion12(NativeRdb::RdbStore& rdbSt
     int32_t res = CreateHapInfoTable(rdbStore);
     if (res != NativeRdb::E_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to create hap_info_table during upgrade from version 12.");
-        ReportUpgradeError(res, DATABASE_VERSION_12, "CreateHapInfoTable");
+        ReportUpgradeError(res, DATABASE_VERSION_13, "CreateHapInfoTable");
         return res;
     }
 
     res = AddModeColumn(rdbStore, AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO);
     if (res != NativeRdb::E_OK) {
-        ReportUpgradeError(res, DATABASE_VERSION_12, "AddModeColumn");
+        ReportUpgradeError(res, DATABASE_VERSION_13, "AddModeColumn");
         return res;
     }
     res = ResetUidAndMigrateCompleted(rdbStore);
     if (res != NativeRdb::E_OK) {
-        ReportUpgradeError(res, DATABASE_VERSION_12, "ResetUidAndMigrateCompleted");
+        ReportUpgradeError(res, DATABASE_VERSION_13, "ResetUidAndMigrateCompleted");
         return res;
     }
     res = AddUidMigratedReservedColumns(rdbStore);
     if (res != NativeRdb::E_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to add uid/migrated/reserved columns during upgrade from version 12.");
-        ReportUpgradeError(res, DATABASE_VERSION_12, "AddUidMigratedReservedColumns");
+        ReportUpgradeError(res, DATABASE_VERSION_13, "AddUidMigratedReservedColumns");
         return res;
     }
     LOGI(ATM_DOMAIN, ATM_TAG, "Success to upgrade from version 12 to version 13.");

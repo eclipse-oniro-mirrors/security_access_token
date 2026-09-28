@@ -81,6 +81,7 @@ ohos_unittest("libaccesstoken_sdk_test") {
     "SaTest/get_native_token_info_test.cpp",
     "SaTest/get_version_test.cpp",
     "SecurityComponentTest/security_component_grant_test.cpp",
+    "SpmKitTest/spm_kit_test.cpp",
     "common/mock_permission.cpp",
     "common/test_common.cpp",
   ]

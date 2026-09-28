@@ -1291,6 +1291,93 @@ HWTEST_F(AccessTokenIdManagerCoverageTest, ConfigPolicyLoaderDefault001, TestSiz
     ASSERT_TRUE(bundleList.empty());
     ASSERT_TRUE(loader.ConfigPolicyLoaderInterface::BuildReservedBundleIdList({ 10000 }).empty());
 }
+
+/*
+ * @tc.name: SetScanStartBundleId004
+ * @tc.desc: nextBundleId below GetBundleIdMin() wraps to GetBundleIdMin() (line 334 left sub-branch)
+ * @tc.type: FUNC
+ * @tc.require: TDD
+ */
+HWTEST_F(AccessTokenIdManagerCoverageTest, SetScanStartBundleId004, TestSize.Level4)
+{
+    auto& manager = AccessTokenIDManager::GetInstance();
+    // Insert a bundleId below BUNDLE_ID_MIN so rbegin()+1 < GetBundleIdMin()
+    manager.bundleIdSet_.insert(INVALID_BUNDLE_ID_BELOW_MIN);
+    manager.scanStartBundleId_ = manager.InitScanStartBundleIdFromCache();
+    ASSERT_EQ(manager.GetBundleIdMin(), manager.scanStartBundleId_);
+}
+
+/*
+ * @tc.name: IsUidReusable008
+ * @tc.desc: bundleId in both bundleIdSet_ and reservedBundleIdSet_ falls through to SPM check (line 300 branch)
+ * @tc.type: FUNC
+ * @tc.require: TDD
+ */
+HWTEST_F(AccessTokenIdManagerCoverageTest, IsUidReusable008, TestSize.Level4)
+{
+    auto& manager = AccessTokenIDManager::GetInstance();
+    // bundleId=10000 present in BOTH sets: count(bundleIdSet_)>0 && count(reserved)==0 is false
+    manager.bundleIdSet_.insert(TEST_BUNDLE_ID_BASE);
+    manager.reservedBundleIdSet_.insert(TEST_BUNDLE_ID_BASE);
+    bool reusable = false;
+    ASSERT_EQ(RET_SUCCESS, manager.IsUidReusable(TEST_UID_BASE, reusable));
+    ASSERT_TRUE(reusable);
+}
+
+/*
+ * @tc.name: InitBundleIdConfig004
+ * @tc.desc: DB Find failure in LoadReservedBundleIdSetFromDb returns error (line 349 branch)
+ * @tc.type: FUNC
+ * @tc.require: TDD
+ */
+HWTEST_F(AccessTokenIdManagerCoverageTest, InitBundleIdConfig004, TestSize.Level4)
+{
+    std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance()->GetRdb();
+    ASSERT_NE(nullptr, db);
+    db->queryFlag_ = NativeRdb::RdbStore::RdbStoreOperationResult::RESULT_FAIL;
+    auto& manager = AccessTokenIDManager::GetInstance();
+    EXPECT_NE(RET_SUCCESS, manager.InitBundleIdConfig());
+    db->queryFlag_ = 0; // restore for subsequent tests
+}
+
+/*
+ * @tc.name: ReservedBundleIdSetFromJson001
+ * @tc.desc: Empty value returns RET_SUCCESS without parsing (line 361 branch)
+ * @tc.type: FUNC
+ * @tc.require: TDD
+ */
+HWTEST_F(AccessTokenIdManagerCoverageTest, ReservedBundleIdSetFromJson001, TestSize.Level4)
+{
+    auto& manager = AccessTokenIDManager::GetInstance();
+    std::set<int32_t> bundleList;
+    ASSERT_EQ(RET_SUCCESS, manager.ReservedBundleIdSetFromJson("", bundleList));
+    ASSERT_TRUE(bundleList.empty());
+}
+
+/*
+ * @tc.name: RefreshReservedBundleIdSet004
+ * @tc.desc: Non-empty reservedBundleIdSet_ exercises erase loop body (line 445)
+ * @tc.type: FUNC
+ * @tc.require: TDD
+ */
+HWTEST_F(AccessTokenIdManagerCoverageTest, RefreshReservedBundleIdSet004, TestSize.Level4)
+{
+    auto& manager = AccessTokenIDManager::GetInstance();
+    manager.reservedBundleIdSet_.insert(TEST_BUNDLE_ID_BASE);
+    manager.reservedBundleIdSet_.insert(TEST_BUNDLE_ID_1);
+    manager.bundleIdSet_.insert(TEST_BUNDLE_ID_BASE);
+    manager.bundleIdSet_.insert(TEST_BUNDLE_ID_1);
+    std::set<int32_t> newSet = { TEST_BUNDLE_ID_2 };
+    ASSERT_EQ(RET_SUCCESS, manager.RefreshReservedBundleIdSet(newSet));
+    ASSERT_EQ(0U, manager.bundleIdSet_.count(TEST_BUNDLE_ID_BASE));
+    ASSERT_EQ(0U, manager.bundleIdSet_.count(TEST_BUNDLE_ID_1));
+    ASSERT_EQ(1U, manager.bundleIdSet_.count(TEST_BUNDLE_ID_2));
+    ASSERT_EQ(1U, manager.reservedBundleIdSet_.count(TEST_BUNDLE_ID_2));
+    ASSERT_EQ(1U, manager.reservedBundleIdSet_.size());
+    DelInfo delInfo;
+    delInfo.delType = AtmDataType::ACCESSTOKEN_SYSTEM_CONFIG;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenDbOperator::DeleteAndInsertValues({ delInfo }, {}));
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

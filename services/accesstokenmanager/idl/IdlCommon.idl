@@ -150,3 +150,69 @@ struct SecCompEnhanceKeyIdl {
     unsigned long epoch;
     List<unsigned char> key;
 };
+
+
+enum ReservedTypeIdl {
+    NONE = 0,
+    RESERVED_IDENTITY = 1,
+    RESERVED_DATA = 2
+};
+
+struct HapBaseInfoIdl {
+    int userID;
+    String bundleName;
+    int instIndex;
+};
+
+struct IdentityIdl {
+    int uid;
+    unsigned long tokenId;
+};
+
+struct BundleHapListIdl {
+    List<String> hapPaths;
+    boolean isPreInstalled;
+    int userId;
+    int mode;
+};
+
+struct MigratedInfoIdl {
+    String bundleName;
+    BundleHapListIdl pathList;
+    List<HapBaseInfoIdl> hapBaseInfoList;
+    List<int> uidList;
+    List<ReservedTypeIdl> reservedTypeList;
+};
+
+struct BundleMigrateResultIdl {
+    List<unsigned long> tokenIdList;
+    List<ReservedTypeIdl> reservedTypeList;
+    int errcode;
+};
+
+enum InstallTypeEnumIdl {
+    TYPE_INSTALL = 0,
+    TYPE_REPLACE,
+    TYPE_MERGE
+};
+
+enum DlpTypeIdl {
+    DLP_COMMON = 0,
+    DLP_READ = 1,
+    DLP_FULL_CONTROL = 2
+};
+
+struct PreAuthorizationInfoIdl {
+    String permissionName;
+    boolean userCancelable;
+};
+
+struct BundlePolicyIdl {
+    List<PreAuthorizationInfoIdl> preAuthorizationInfo;
+    DlpTypeIdl dlpType;
+    boolean isDebugGrant;
+};
+
+struct BundlePolicyInfoIdl {
+    List<String> reqPermissions;
+};

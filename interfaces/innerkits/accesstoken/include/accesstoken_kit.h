@@ -40,6 +40,7 @@
 #ifndef INTERFACES_INNER_KITS_ACCESSTOKEN_KIT_H
 #define INTERFACES_INNER_KITS_ACCESSTOKEN_KIT_H
 
+#include <set>
 #include <string>
 #include <unordered_set>
 #include <vector>
@@ -154,6 +155,14 @@ public:
      * @return error code, see access_token_error.h
      */
     static int DeleteToken(AccessTokenID tokenID, bool isTokenReserved);
+    /**
+     * @brief Delete identity with differentiated uninstall policy.
+     * @param tokenID token id (0 means clean all bundle info)
+     * @param bundleName bundle name of the app
+     * @param type reserved mode, see ReservedType in hap_token_info.h
+     * @return error code, see access_token_error.h
+     */
+    static int32_t DeleteIdentity(AccessTokenID tokenID, const std::string& bundleName, ReservedType type);
     /**
      * @brief Delete claw token info.
      * @param pid caller pid
@@ -780,6 +789,115 @@ public:
      */
     static int32_t GenerateCliAuthResult(AccessTokenID hostTokenID, const std::string& agentID,
         const std::vector<CliAuthInfo>& authInfoList, ToolAuthResult& result);
+    /**
+     * @brief Migrate installed bundles.
+     * @param migratedInfoList migrated bundle information list.
+     * @param results migration result for each migrated bundle.
+     * @return error code, see access_token_error.h
+     */
+    static int32_t MigrateInstalledBundles(const std::vector<MigratedInfo>& migratedInfoList,
+        std::vector<BundleMigrateResult>& results);
+    /**
+     * @brief Finish installed-bundle migration.
+     * @return error code, see access_token_error.h
+     */
+    static int32_t FinishMigration();
+    /**
+     * @brief Check migrated uid set and reserve missing bundle ids.
+     * @param totalUids total migrated uid set from caller.
+     * @param unreceivedUids uid set that does not exist on service side.
+     * @return error code, see access_token_error.h
+     */
+    static int32_t CheckMigratedUidSet(
+        const std::set<int32_t>& totalUids, std::set<int32_t>& unreceivedUids);
+    /**
+     * @brief Check hap sign info.
+     * @param list hap list to be checked
+     * @param flag sign info query flag, see SignInfoQueryFlag in hap_token_info.h
+     * @param sessionId session id
+     * @param bundleInfo trusted bundle info list
+     * @param resultInfo hap verify result info
+     * @return error code, see access_token_error.h
+     */
+    static int32_t CheckHapSignInfo(const BundleHapList& list, uint32_t flag, int32_t& sessionId,
+        std::vector<TrustedBundleInfo>& bundleInfo, HapVerifyResultInfo& resultInfo);
+    /**
+     * @brief Check hap sign info.
+     * @param sessionId session id
+     * @param type install type
+     * @param result hap info check result
+     * @return error code, see access_token_error.h
+     */
+    static int32_t CheckHapPermissionInfo(int32_t sessionId, InstallTypeEnum type, HapInfoCheckResult& result);
+    /**
+     * @brief Prepare hap identity.
+     * @param sessionId session id
+     * @param info hap base info
+     * @param policy bundle policy
+     * @param identity hap identity
+     * @return error code, see access_token_error.h
+     */
+    static int32_t PrepareHapIdentity(int32_t& sessionId, const HapBaseInfo& info,
+        const BundlePolicy& policy, Identity& identity);
+    /**
+     * @brief Update hap policy.
+     * @param sessionId session id
+     * @param tokenId token id
+     * @param policy bundle policy
+     * @param uid uid
+     * @return error code, see access_token_error.h
+     */
+    static int32_t UpdateHapPolicy(int32_t sessionId, int32_t tokenId, const BundlePolicy& policy, int32_t& uid);
+    /**
+     * @brief Finish install.
+     * @param sessionId session id
+     * @param isPersistent is need persistent
+     * @param modulePathMap module path map
+     * @return error code, see access_token_error.h
+     */
+    static int32_t FinishInstall(int32_t sessionId, bool isPersistent,
+        const std::map<std::string, std::string>& modulePathMap);
+    /**
+     * @brief Get sign info by bundle name.
+     * @param bundleName bundle name
+     * @param flag sign info query flag, see SignInfoQueryFlag in hap_token_info.h
+     * @param bundleInfo trusted bundle info list
+     * @return error code, see access_token_error.h
+     */
+    static int32_t GetHapSignInfo(const std::string& bundleName, uint32_t flag,
+        std::vector<TrustedBundleInfo>& bundleInfo);
+    /**
+     * @brief Get cache sign info by session id.
+     * @param sessionId session id
+     * @param flag sign info query flag, see SignInfoQueryFlag in hap_token_info.h
+     * @param bundleInfo trusted bundle info list
+     * @return error code, see access_token_error.h
+     */
+    static int32_t GetCacheSignInfoBySessionId(int32_t sessionId, uint32_t flag,
+        std::vector<TrustedBundleInfo>& bundleInfo);
+    /**
+     * @brief Get cache BundlePolicyInfo by session id.
+     * @param sessionId session id
+     * @param bundleName bundle name
+     * @param bundlePolicyInfo bundle policy info
+     * @return error code, see access_token_error.h
+     */
+    static int32_t GetCachePolicyBySessionId(int32_t sessionId, const std::string& bundleName,
+        BundlePolicyInfo& bundlePolicyInfo);
+        /**
+     * @brief Get hap identity by hap base info.
+     * @param info hap base info
+     * @param identity hap identity
+     * @return error code, see access_token_error.h
+     */
+    static int32_t GetHapIdentity(const HapBaseInfo& info, Identity& identity);
+    /**
+     * @brief Get hap base info by uid.
+     * @param uid hap uid
+     * @param info hap base info
+     * @return error code, see access_token_error.h
+     */
+    static int32_t GetHapBaseInfoByUid(int32_t uid, HapBaseInfo& info);
 };
 } // namespace AccessToken
 } // namespace Security
