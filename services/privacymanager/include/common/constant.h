@@ -117,6 +117,8 @@ public:
         OP_AGENT_FILE_ACCESS_WRITE_AUDIO = 117,
         OP_AGENT_FILE_ACCESS_READ_MEDIA = 118,
         OP_AGENT_FILE_ACCESS_WRITE_MEDIA = 119,
+        // 虚拟权限：无实体权限，不进 permission_definitions.json，仅作隐私使用记录载体
+        OP_DVRCAMERA = 120,
     };
 
     enum ErrorCode {
@@ -131,6 +133,7 @@ public:
     static bool TransferPermissionToOpcode(const std::string& permissionName, int32_t& opCode);
     static bool TransferOpcodeToPermission(int32_t opCode, std::string& permissionName);
     static bool IsPrivacyPermission(const std::string& permissionName);
+    static bool IsCameraPermission(const std::string& permissionName);
 };
 } // namespace AccessToken
 } // namespace Security
