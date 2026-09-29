@@ -269,11 +269,13 @@ public:
     {
         GTEST_LOG_(INFO) << "PermissionRecordManagerTestCb1 isShow" << isShow;
         isShow_ = isShow;
+        notifyCount_++;
     }
 
     void Stop() {}
 
     bool isShow_ = true;
+    int32_t notifyCount_ = 0;
 };
 
 static PermissionUsedTypeInfo MakeInfo(AccessTokenID tokenId, int32_t pid, const std::string &permission,
@@ -3338,6 +3340,438 @@ HWTEST_F(PermissionRecordManagerTest, RegisterPermDisablePolicyCallback001, Test
     }
 }
 #endif
+
+namespace {
+static const std::string CAMERA_PERMISSION_NAME = "ohos.permission.CAMERA";
+static const std::string DVR_CAMERA_PERMISSION_NAME = "ohos.permission.DVRCAMERA";
+static const std::string CAMERA_BACKGROUND_PERMISSION_NAME = "ohos.permission.CAMERA_BACKGROUND";
+
+static PermissionStateFull g_cameraBackgroundState = {
+    .permissionName = "ohos.permission.CAMERA_BACKGROUND",
+    .isGeneral = true,
+    .resDeviceID = {"local"},
+    .grantStatus = {PermissionState::PERMISSION_GRANTED},
+    .grantFlags = {1}
+};
+
+static HapPolicyParams g_PolicyPramsCameraBackground = {
+    .apl = APL_SYSTEM_CORE,
+    .domain = "test.domain.camera.background",
+    .permList = {},
+    .permStateList = {g_cameraBackgroundState}
+};
+
+static HapInfoParams g_InfoParmsCameraBackground = {
+    .userID = 1,
+    .bundleName = "ohos.privacy_test.camerabackground",
+    .instIndex = 0,
+    .appIDDesc = "privacy_test.camerabackground"
+};
+
+static AppStateData MakeAppStateData(AccessTokenID tokenId, int32_t pid, ApplicationState state)
+{
+    AppStateData appStateData;
+    appStateData.accessTokenId = tokenId;
+    appStateData.pid = pid;
+    appStateData.state = static_cast<int32_t>(state);
+    return appStateData;
+}
+
+static int32_t GetStartRecordStatus(AccessTokenID tokenId, int32_t pid, int32_t opCode)
+{
+    for (const auto& record : PermissionRecordManager::GetInstance().startRecordList_) {
+        if ((record.tokenId == tokenId) && (record.pid == pid) && (record.opCode == opCode)) {
+            return record.status;
+        }
+    }
+    return PERM_INACTIVE;
+}
+
+static bool HasStartRecord(AccessTokenID tokenId, int32_t pid, int32_t opCode)
+{
+    for (const auto& record : PermissionRecordManager::GetInstance().startRecordList_) {
+        if ((record.tokenId == tokenId) && (record.pid == pid) && (record.opCode == opCode)) {
+            return true;
+        }
+    }
+    return false;
+}
+}
+
+/**
+ * @tc.name: DvrOpcodeRegistered001
+ * @tc.desc: DVRCAMERA is registered in the permission opcode map bidirectionally.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, DvrOpcodeRegistered001, TestSize.Level0)
+{
+    int32_t opCode = Constant::OP_INVALID;
+    ASSERT_TRUE(Constant::TransferPermissionToOpcode(DVR_CAMERA_PERMISSION_NAME, opCode));
+    EXPECT_EQ(Constant::OP_DVRCAMERA, opCode);
+
+    std::string permissionName;
+    ASSERT_TRUE(Constant::TransferOpcodeToPermission(Constant::OP_DVRCAMERA, permissionName));
+    EXPECT_EQ(DVR_CAMERA_PERMISSION_NAME, permissionName);
+
+    EXPECT_TRUE(Constant::IsPrivacyPermission(DVR_CAMERA_PERMISSION_NAME));
+}
+
+/**
+ * @tc.name: IsCameraPermission001
+ * @tc.desc: only CAMERA and DVRCAMERA belong to camera type permission.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, IsCameraPermission001, TestSize.Level0)
+{
+    EXPECT_TRUE(Constant::IsCameraPermission(CAMERA_PERMISSION_NAME));
+    EXPECT_TRUE(Constant::IsCameraPermission(DVR_CAMERA_PERMISSION_NAME));
+    EXPECT_FALSE(Constant::IsCameraPermission("ohos.permission.MICROPHONE"));
+    EXPECT_FALSE(Constant::IsCameraPermission("ohos.permission.READ_CALENDAR"));
+    EXPECT_FALSE(Constant::IsCameraPermission(""));
+}
+
+/**
+ * @tc.name: DvrBackgroundNoPermDenied001
+ * @tc.desc: hap without CAMERA_BACKGROUND is denied to use dvr camera in background.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, DvrBackgroundNoPermDenied001, TestSize.Level0)
+{
+    AccessTokenID tokenId = GetBundleATokenId();
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+    // test hap is never in foreground, GetAppStatus returns background by default
+    EXPECT_FALSE(PermissionRecordManager::GetInstance().IsAllowedUsingPermission(
+        tokenId, DVR_CAMERA_PERMISSION_NAME, TEST_PID_1));
+}
+
+/**
+ * @tc.name: DvrBackgroundWithPermAllowed001
+ * @tc.desc: hap granted CAMERA_BACKGROUND is allowed to use dvr camera in background,
+ *           same rule as CAMERA.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, DvrBackgroundWithPermAllowed001, TestSize.Level0)
+{
+    AccessTokenIDEx tokenIdEx = PrivacyTestCommon::AllocTestHapToken(
+        g_InfoParmsCameraBackground, g_PolicyPramsCameraBackground);
+    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIdExStruct.tokenID);
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+
+    EXPECT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(tokenId, CAMERA_BACKGROUND_PERMISSION_NAME));
+    EXPECT_TRUE(PermissionRecordManager::GetInstance().IsAllowedUsingPermission(
+        tokenId, DVR_CAMERA_PERMISSION_NAME, TEST_PID_1));
+    EXPECT_TRUE(PermissionRecordManager::GetInstance().IsAllowedUsingPermission(
+        tokenId, CAMERA_PERMISSION_NAME, TEST_PID_1));
+
+    PrivacyTestCommon::DeleteTestHapToken(tokenId);
+    PermissionRecordManager::GetInstance().RemovePermissionUsedRecords(tokenId);
+}
+
+/**
+ * @tc.name: DvrNativeDenied001
+ * @tc.desc: native target is denied for dvr camera permission.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, DvrNativeDenied001, TestSize.Level0)
+{
+    EXPECT_FALSE(PermissionRecordManager::GetInstance().IsAllowedUsingPermission(
+        g_nativeToken, DVR_CAMERA_PERMISSION_NAME, TEST_PID_1));
+}
+
+/**
+ * @tc.name: DvrStartStopRecord001
+ * @tc.desc: start and stop using dvr camera records active state correctly.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, DvrStartStopRecord001, TestSize.Level0)
+{
+    AccessTokenID tokenId = GetBundleATokenId();
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
+        MakeInfo(tokenId, TEST_PID_1, DVR_CAMERA_PERMISSION_NAME), CALLER_PID));
+    EXPECT_TRUE(HasStartRecord(tokenId, TEST_PID_1, Constant::OP_DVRCAMERA));
+
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StopUsingPermission(
+        tokenId, TEST_PID_1, DVR_CAMERA_PERMISSION_NAME, CALLER_PID));
+    EXPECT_FALSE(HasStartRecord(tokenId, TEST_PID_1, Constant::OP_DVRCAMERA));
+}
+
+/**
+ * @tc.name: DvrUsedType001
+ * @tc.desc: add used record with security component type persists used type by opCode.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, DvrUsedType001, TestSize.Level0)
+{
+    AccessTokenID tokenId = GetBundleATokenId();
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+    // used type is persisted on the AddPermissionUsedRecord path, StartUsingPermission only registers active state
+    AddPermParamInfo info = {
+        .tokenId = tokenId,
+        .permissionName = DVR_CAMERA_PERMISSION_NAME,
+        .successCount = 1,
+        .type = PermissionUsedType::SECURITY_COMPONENT_TYPE,
+    };
+    ASSERT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().AddPermissionUsedRecord(info));
+
+    GenericValues conditionValue;
+    conditionValue.Put(PrivacyFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
+    conditionValue.Put(PrivacyFiledConst::FIELD_PERMISSION_CODE, static_cast<int32_t>(Constant::OP_DVRCAMERA));
+    std::vector<GenericValues> results;
+    EXPECT_EQ(PermissionUsedRecordDb::SUCCESS, PermissionUsedRecordDb::GetInstance().Query(
+        PermissionUsedRecordDb::DataType::PERMISSION_USED_TYPE, conditionValue, results));
+    EXPECT_FALSE(results.empty());
+}
+
+/**
+ * @tc.name: DvrCallbackNoOverwrite001
+ * @tc.desc: callbacks of CAMERA and DVRCAMERA for same token+pid are registered independently
+ *           and both receive the lock screen notification.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, DvrCallbackNoOverwrite001, TestSize.Level0)
+{
+    AccessTokenID tokenId = GetBundleATokenId();
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+
+    auto cameraCb = std::make_shared<PermissionRecordManagerTestCb1>();
+    auto cameraWrap = new (std::nothrow) StateChangeCallback(cameraCb);
+    ASSERT_NE(nullptr, cameraWrap);
+    auto dvrCb = std::make_shared<PermissionRecordManagerTestCb1>();
+    auto dvrWrap = new (std::nothrow) StateChangeCallback(dvrCb);
+    ASSERT_NE(nullptr, dvrWrap);
+
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
+        MakeInfo(tokenId, TEST_PID_1, CAMERA_PERMISSION_NAME), cameraWrap->AsObject(), CALLER_PID));
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
+        MakeInfo(tokenId, TEST_PID_1, DVR_CAMERA_PERMISSION_NAME), dvrWrap->AsObject(), CALLER_PID));
+
+    PermissionRecordManager::GetInstance().ExecuteAllCameraExecuteCallback();
+    EXPECT_FALSE(cameraCb->isShow_);
+    EXPECT_FALSE(dvrCb->isShow_);
+    EXPECT_EQ(1, cameraCb->notifyCount_);
+    EXPECT_EQ(1, dvrCb->notifyCount_);
+
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StopUsingPermission(
+        tokenId, TEST_PID_1, CAMERA_PERMISSION_NAME, CALLER_PID));
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StopUsingPermission(
+        tokenId, TEST_PID_1, DVR_CAMERA_PERMISSION_NAME, CALLER_PID));
+}
+
+/**
+ * @tc.name: DvrStopCameraKeepsDvrCallback001
+ * @tc.desc: stopping CAMERA does not erase the DVRCAMERA callback of the same token+pid.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, DvrStopCameraKeepsDvrCallback001, TestSize.Level0)
+{
+    AccessTokenID tokenId = GetBundleATokenId();
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+
+    auto cameraCb = std::make_shared<PermissionRecordManagerTestCb1>();
+    auto cameraWrap = new (std::nothrow) StateChangeCallback(cameraCb);
+    ASSERT_NE(nullptr, cameraWrap);
+    auto dvrCb = std::make_shared<PermissionRecordManagerTestCb1>();
+    auto dvrWrap = new (std::nothrow) StateChangeCallback(dvrCb);
+    ASSERT_NE(nullptr, dvrWrap);
+
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
+        MakeInfo(tokenId, TEST_PID_1, CAMERA_PERMISSION_NAME), cameraWrap->AsObject(), CALLER_PID));
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
+        MakeInfo(tokenId, TEST_PID_1, DVR_CAMERA_PERMISSION_NAME), dvrWrap->AsObject(), CALLER_PID));
+
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StopUsingPermission(
+        tokenId, TEST_PID_1, CAMERA_PERMISSION_NAME, CALLER_PID));
+
+    cameraCb->isShow_ = true;
+    dvrCb->isShow_ = true;
+    PermissionRecordManager::GetInstance().ExecuteAllCameraExecuteCallback();
+    EXPECT_TRUE(cameraCb->isShow_); // camera callback is erased, no more notification
+    EXPECT_FALSE(dvrCb->isShow_);   // dvr callback is kept and still notified
+
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StopUsingPermission(
+        tokenId, TEST_PID_1, DVR_CAMERA_PERMISSION_NAME, CALLER_PID));
+}
+
+/**
+ * @tc.name: DvrStopCleansOwnCallback001
+ * @tc.desc: stopping DVRCAMERA erases its own callback registration.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, DvrStopCleansOwnCallback001, TestSize.Level0)
+{
+    AccessTokenID tokenId = GetBundleATokenId();
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+
+    auto dvrCb = std::make_shared<PermissionRecordManagerTestCb1>();
+    auto dvrWrap = new (std::nothrow) StateChangeCallback(dvrCb);
+    ASSERT_NE(nullptr, dvrWrap);
+
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
+        MakeInfo(tokenId, TEST_PID_1, DVR_CAMERA_PERMISSION_NAME), dvrWrap->AsObject(), CALLER_PID));
+    PermissionRecordManager::GetInstance().ExecuteAllCameraExecuteCallback();
+    EXPECT_FALSE(dvrCb->isShow_);
+
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StopUsingPermission(
+        tokenId, TEST_PID_1, DVR_CAMERA_PERMISSION_NAME, CALLER_PID));
+
+    dvrCb->isShow_ = true;
+    PermissionRecordManager::GetInstance().ExecuteAllCameraExecuteCallback();
+    EXPECT_TRUE(dvrCb->isShow_); // no more notification after stop
+}
+
+/**
+ * @tc.name: DvrBackgroundExempt001
+ * @tc.desc: hap granted CAMERA_BACKGROUND keeps using dvr camera after switching to background:
+ *           record transits to background status and no stop notification is sent.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, DvrBackgroundExempt001, TestSize.Level0)
+{
+    AccessTokenIDEx tokenIdEx = PrivacyTestCommon::AllocTestHapToken(
+        g_InfoParmsCameraBackground, g_PolicyPramsCameraBackground);
+    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIdExStruct.tokenID);
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+
+    auto dvrCb = std::make_shared<PermissionRecordManagerTestCb1>();
+    auto dvrWrap = new (std::nothrow) StateChangeCallback(dvrCb);
+    ASSERT_NE(nullptr, dvrWrap);
+
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
+        MakeInfo(tokenId, TEST_PID_1, DVR_CAMERA_PERMISSION_NAME), dvrWrap->AsObject(), CALLER_PID));
+    appStateObserver_->OnAppStateChanged(
+        MakeAppStateData(tokenId, TEST_PID_1, ApplicationState::APP_STATE_FOREGROUND));
+    usleep(500000); // 500000us = 0.5s
+    ASSERT_EQ(PERM_ACTIVE_IN_FOREGROUND, GetStartRecordStatus(tokenId, TEST_PID_1, Constant::OP_DVRCAMERA));
+
+    appStateObserver_->OnAppStateChanged(
+        MakeAppStateData(tokenId, TEST_PID_1, ApplicationState::APP_STATE_BACKGROUND));
+    usleep(500000); // 500000us = 0.5s
+    EXPECT_EQ(PERM_ACTIVE_IN_BACKGROUND, GetStartRecordStatus(tokenId, TEST_PID_1, Constant::OP_DVRCAMERA));
+    EXPECT_TRUE(dvrCb->isShow_); // no stop notification with CAMERA_BACKGROUND granted
+    EXPECT_EQ(0, dvrCb->notifyCount_);
+
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StopUsingPermission(
+        tokenId, TEST_PID_1, DVR_CAMERA_PERMISSION_NAME, CALLER_PID));
+    PrivacyTestCommon::DeleteTestHapToken(tokenId);
+    PermissionRecordManager::GetInstance().RemovePermissionUsedRecords(tokenId);
+}
+
+/**
+ * @tc.name: DvrBackgroundStopNotify001
+ * @tc.desc: hap without CAMERA_BACKGROUND receives stop notification when switching to background.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, DvrBackgroundStopNotify001, TestSize.Level0)
+{
+    AccessTokenID tokenId = GetBundleATokenId();
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+
+    auto dvrCb = std::make_shared<PermissionRecordManagerTestCb1>();
+    auto dvrWrap = new (std::nothrow) StateChangeCallback(dvrCb);
+    ASSERT_NE(nullptr, dvrWrap);
+
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
+        MakeInfo(tokenId, TEST_PID_1, DVR_CAMERA_PERMISSION_NAME), dvrWrap->AsObject(), CALLER_PID));
+    appStateObserver_->OnAppStateChanged(
+        MakeAppStateData(tokenId, TEST_PID_1, ApplicationState::APP_STATE_FOREGROUND));
+    usleep(500000); // 500000us = 0.5s
+    ASSERT_EQ(PERM_ACTIVE_IN_FOREGROUND, GetStartRecordStatus(tokenId, TEST_PID_1, Constant::OP_DVRCAMERA));
+
+    appStateObserver_->OnAppStateChanged(
+        MakeAppStateData(tokenId, TEST_PID_1, ApplicationState::APP_STATE_BACKGROUND));
+    usleep(500000); // 500000us = 0.5s
+    EXPECT_FALSE(dvrCb->isShow_); // stop notification sent
+    EXPECT_EQ(1, dvrCb->notifyCount_);
+    EXPECT_NE(PERM_ACTIVE_IN_BACKGROUND, GetStartRecordStatus(tokenId, TEST_PID_1, Constant::OP_DVRCAMERA));
+
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StopUsingPermission(
+        tokenId, TEST_PID_1, DVR_CAMERA_PERMISSION_NAME, CALLER_PID));
+}
+
+/**
+ * @tc.name: CameraBackgroundExemptRegression001
+ * @tc.desc: hap granted CAMERA_BACKGROUND keeps using CAMERA after switching to background,
+ *           regression of the exemption removed by 7f338e159 and restored.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, CameraBackgroundExemptRegression001, TestSize.Level0)
+{
+    AccessTokenIDEx tokenIdEx = PrivacyTestCommon::AllocTestHapToken(
+        g_InfoParmsCameraBackground, g_PolicyPramsCameraBackground);
+    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIdExStruct.tokenID);
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+
+    auto cameraCb = std::make_shared<PermissionRecordManagerTestCb1>();
+    auto cameraWrap = new (std::nothrow) StateChangeCallback(cameraCb);
+    ASSERT_NE(nullptr, cameraWrap);
+
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
+        MakeInfo(tokenId, TEST_PID_1, CAMERA_PERMISSION_NAME), cameraWrap->AsObject(), CALLER_PID));
+    appStateObserver_->OnAppStateChanged(
+        MakeAppStateData(tokenId, TEST_PID_1, ApplicationState::APP_STATE_FOREGROUND));
+    usleep(500000); // 500000us = 0.5s
+
+    appStateObserver_->OnAppStateChanged(
+        MakeAppStateData(tokenId, TEST_PID_1, ApplicationState::APP_STATE_BACKGROUND));
+    usleep(500000); // 500000us = 0.5s
+    EXPECT_EQ(PERM_ACTIVE_IN_BACKGROUND, GetStartRecordStatus(tokenId, TEST_PID_1, Constant::OP_CAMERA));
+    EXPECT_TRUE(cameraCb->isShow_); // no stop notification with CAMERA_BACKGROUND granted
+    EXPECT_EQ(0, cameraCb->notifyCount_);
+
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StopUsingPermission(
+        tokenId, TEST_PID_1, CAMERA_PERMISSION_NAME, CALLER_PID));
+    PrivacyTestCommon::DeleteTestHapToken(tokenId);
+    PermissionRecordManager::GetInstance().RemovePermissionUsedRecords(tokenId);
+}
+
+/**
+ * @tc.name: DvrMuteSwitchNotAffect001
+ * @tc.desc: camera global switch off does not affect dvr camera start.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, DvrMuteSwitchNotAffect001, TestSize.Level0)
+{
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().SetMutePolicy(
+        PolicyType::PRIVACY, CallerType::CAMERA, true, RANDOM_TOKENID));
+
+    AccessTokenID tokenId = GetBundleATokenId();
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+    // dvr camera is not controlled by the camera switch
+    EXPECT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
+        MakeInfo(tokenId, TEST_PID_1, DVR_CAMERA_PERMISSION_NAME), CALLER_PID));
+    EXPECT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StopUsingPermission(
+        tokenId, TEST_PID_1, DVR_CAMERA_PERMISSION_NAME, CALLER_PID));
+
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().SetMutePolicy(
+        PolicyType::PRIVACY, CallerType::CAMERA, false, RANDOM_TOKENID));
+}
+
+/**
+ * @tc.name: DvrDisablePolicyRejected001
+ * @tc.desc: edm disable policy can not be set on dvr camera permission.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, DvrDisablePolicyRejected001, TestSize.Level0)
+{
+    EXPECT_EQ(PrivacyError::ERR_PERMISSION_NOT_SUPPORT,
+        PermissionRecordManager::GetInstance().SetDisablePolicy(DVR_CAMERA_PERMISSION_NAME, true));
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
