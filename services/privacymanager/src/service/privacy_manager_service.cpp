@@ -134,6 +134,7 @@ void PrivacyManagerService::OnStart()
     AddSystemAbilityListener(ACCESS_TOKEN_MANAGER_SERVICE_ID);
     AddSystemAbilityListener(COMMON_EVENT_SERVICE_ID);
     AddSystemAbilityListener(SCREENLOCK_SERVICE_ID);
+    AddSystemAbilityListener(POWER_MANAGER_SERVICE_ID);
 }
 
 void PrivacyManagerService::OnStop()
@@ -818,6 +819,12 @@ void PrivacyManagerService::OnAddSystemAbility(int32_t systemAbilityId, const st
     if (systemAbilityId == SCREENLOCK_SERVICE_ID) {
         int32_t lockScreenStatus = PermissionRecordManager::GetInstance().GetLockScreenStatus(true);
         PermissionRecordManager::GetInstance().SetLockScreenStatus(lockScreenStatus);
+        return;
+    }
+
+    if (systemAbilityId == POWER_MANAGER_SERVICE_ID) {
+        bool isScreenOn = PermissionRecordManager::GetInstance().IsScreenOn(true);
+        PermissionRecordManager::GetInstance().SetScreenOn(isScreenOn);
         return;
     }
 

@@ -175,6 +175,15 @@ if (!defined(global_parts_info) ||
 }
 
 if (!defined(global_parts_info) ||
+    defined(global_parts_info.powermgr_power_manager)) {
+  power_manager_client_enable = true
+  access_token_cflags_cc += [ "-DPOWER_MANAGER_CLIENT_ENABLE" ]
+  access_token_external_deps += [ "power_manager:powermgr_client" ]
+} else {
+  power_manager_client_enable = false
+}
+
+if (!defined(global_parts_info) ||
     defined(global_parts_info.notification_common_event_service)) {
   common_event_service_enable = true
   access_token_cflags_cc += [ "-DCOMMON_EVENT_SERVICE_ENABLE" ]

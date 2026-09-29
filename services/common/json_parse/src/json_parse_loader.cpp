@@ -57,6 +57,9 @@ static constexpr const char* RECORD_AGING_TIME_KEY = "permission_used_record_agi
 static constexpr const char* GLOBAL_DIALOG_BUNDLE_NAME_KEY = "global_dialog_bundle_name";
 static constexpr const char* GLOBAL_DIALOG_ABILITY_NAME_KEY = "global_dialog_ability_name";
 
+static constexpr const char* CUSTOMIZED_CONFIG_FILE = "/etc/access_token/accesstoken_customized_config.json";
+static constexpr const char* CAMERA_PRIVACY_CONTROL_ENHANCE_KEY = "camera_privacy_control_enhance";
+
 static constexpr const char* SEND_REQUEST_REPEAT_TIMES_KEY = "send_request_repeat_times";
 
 static constexpr const char* PERMISSION_FEATURES_CONFIG_FILE = "/etc/access_token/accesstoken_permission_features.json";
@@ -251,6 +254,19 @@ bool GetPrivacyCfgFromJson(const CJson* j, PrivacyServiceConfig& p)
     return true;
 }
 
+bool GetCustomizedCfgFromJson(const CJson* j, CustomizedServiceConfig& c)
+{
+    // section is required to count as a hit, keys inside are optional
+    CJson* privacyJson = GetObjFromJson(j, "privacy");
+    if (privacyJson == nullptr) {
+        return false;
+    }
+    c.pCustomConfig.cameraPrivacyControlEnhanceEnable = false;
+    GetBoolFromJson(privacyJson, CAMERA_PRIVACY_CONTROL_ENHANCE_KEY,
+        c.pCustomConfig.cameraPrivacyControlEnhanceEnable);
+    return true;
+}
+
 bool GetTokenSyncCfgFromJson(const CJson* j, TokenSyncServiceConfig& t)
 {
     if (!GetIntFromJson(j, SEND_REQUEST_REPEAT_TIMES_KEY, t.sendRequestRepeatTimes)) {
@@ -311,6 +327,8 @@ bool ConfigPolicLoader::GetConfigValueFromFile(const ConfigType& type, const std
         return GetTokenSyncCfgFromJson(toSyncJson, config.tsConfig);
     } else if (type == ConfigType::PERMISSION_FEATURES) {
         return GetPermissionFeaturesFromJson(jsonRes, config.permissionFeatures);
+    } else if (type == ConfigType::CUSTOMIZED_CONFIG) {
+        return GetCustomizedCfgFromJson(jsonRes.get(), config.customConfig);
     }
     return false;
 }
@@ -326,6 +344,8 @@ bool ConfigPolicLoader::GetConfigValue(const ConfigType& type, AccessTokenConfig
     const char* configFile = nullptr;
     if (type == ConfigType::PERMISSION_FEATURES) {
         configFile = PERMISSION_FEATURES_CONFIG_FILE;
+    } else if (type == ConfigType::CUSTOMIZED_CONFIG) {
+        configFile = CUSTOMIZED_CONFIG_FILE;
     } else {
         configFile = ACCESSTOKEN_CONFIG_FILE;
     }
@@ -341,8 +361,8 @@ bool ConfigPolicLoader::GetConfigValue(const ConfigType& type, AccessTokenConfig
         if (GetConfigValueFromFile(type, fileContent, config)) {
             LOGI(ATM_DOMAIN, ATM_TAG, "Get valid config value from file [%{public}s]!", filePath.c_str());
             successFlag = true;
-            if (type != ConfigType::PERMISSION_FEATURES) {
-                break; // once get the config value, break the loop, except feature
+            if ((type != ConfigType::PERMISSION_FEATURES) && (type != ConfigType::CUSTOMIZED_CONFIG)) {
+                break; // once get the config value, break the loop, except feature and customized
             }
         }
     }
