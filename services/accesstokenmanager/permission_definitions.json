@@ -9111,6 +9111,18 @@
             "deviceTypes": ["general"]
         },
         {
+            "name": "ohos.permission.kernel.USB_CAPTURE",
+            "grantMode": "system_grant",
+            "availableLevel": "normal",
+            "availableType": "NORMAL",
+            "since": "26.0.1",
+            "deprecated": "",
+            "provisionEnable": false,
+            "distributedSceneEnable": false,
+            "isKernelEffect": true,
+            "deviceTypes": ["2in1"]
+        },
+        {
             "name": "ohos.permission.kernel.NET_RAW",
             "grantMode": "system_grant",
             "availableLevel": "normal",
@@ -11977,6 +11989,17 @@
             "deviceTypes": ["phone", "wearable"]
         },
         {
+            "name": "ohos.permission.ACCESS_BOARD_INFO",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "NORMAL",
+            "since": "26.0.1",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1"]
+        },
+        {
             "name": "ohos.permission.MULTI_SCREEN_MANAGER",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
@@ -12515,6 +12538,28 @@
             "provisionEnable": true,
             "distributedSceneEnable": false,
             "deviceTypes": ["2in1", "tablet"]
+        },
+        {
+            "name": "ohos.permission.ALLOW_INSTALL_DEBUG_HAP",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.1",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1"]
+        },
+        {
+            "name": "ohos.permission.ENTERPRISE_EXTERNAL_READ",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "MDM",
+            "since": "26.0.1",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1"]
         },
         {
             "name": "ohos.permission.vehicle.HIMA_COOPERATE",

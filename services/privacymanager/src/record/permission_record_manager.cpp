@@ -2004,6 +2004,15 @@ int32_t PermissionRecordManager::CheckPermissionInUse(const std::string& permiss
 void PermissionRecordManager::ExecuteAndUpdateRecord(uint32_t tokenId, int32_t pid, ActiveChangeType status)
 {
     std::vector<std::string> camPermList;
+#ifdef CAMERA_FLOAT_WINDOW_ENABLE
+    // app holding CAMERA_BACKGROUND is allowed to keep using camera in background,
+    // verify it before startRecordListMutex_ is locked to avoid ipc under lock
+    bool hasCameraBackground = false;
+    if (status == ActiveChangeType::PERM_ACTIVE_IN_BACKGROUND) {
+        hasCameraBackground = (AccessTokenKit::VerifyAccessToken(tokenId, CAMERA_BACKGROUND_PERMISSION_NAME) ==
+            PERMISSION_GRANTED);
+    }
+#endif
     std::lock_guard<std::mutex> lock(startRecordListMutex_);
     std::set<ContinuousPermissionRecord> updateList;
     for (auto it = startRecordList_.begin(); it != startRecordList_.end();) {
@@ -2016,7 +2025,8 @@ void PermissionRecordManager::ExecuteAndUpdateRecord(uint32_t tokenId, int32_t p
             }
 
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
-            if ((perm == CAMERA_PERMISSION_NAME) && (status == PERM_ACTIVE_IN_BACKGROUND)) {
+            if (Constant::IsCameraPermission(perm) && (status == PERM_ACTIVE_IN_BACKGROUND) &&
+                !hasCameraBackground) {
                 LOGI(PRI_DOMAIN, PRI_TAG, "Camera float window is close!");
                 camPermList.emplace_back(perm);
                 ++it;
@@ -2202,13 +2212,18 @@ bool PermissionRecordManager::ToRemoveRecord(const ContinuousPermissionRecord& t
             return true;
         }
         PermissionRecordSet::GetUnusedCameraRecords(startRecordList_, removeList, unusedCameraRecord);
+        std::vector<ContinuousPermissionRecord> unusedDvrCamRecord;
+        PermissionRecordSet::GetUnusedCameraRecords(startRecordList_, removeList, unusedDvrCamRecord,
+            Constant::OP_DVRCAMERA);
+        unusedCameraRecord.insert(unusedCameraRecord.end(), unusedDvrCamRecord.begin(), unusedDvrCamRecord.end());
     }
 
     for (const auto& record: unusedCameraRecord) {
-        cameraCallbackMap_.Erase(GetUniqueId(record.tokenId, record.pid));
+        auto& callbackMap = (record.opCode == Constant::OP_CAMERA) ? cameraCallbackMap_ : dvrCameraCallbackMap_;
+        callbackMap.Erase(GetUniqueId(record.tokenId, record.pid));
     }
-    LOGD(PRI_DOMAIN, PRI_TAG, "CameraCallbackMap size = %{public}d after clearing",
-        cameraCallbackMap_.Size());
+    LOGD(PRI_DOMAIN, PRI_TAG, "CameraCallbackMap size = %{public}d, dvr size = %{public}d after clearing",
+        cameraCallbackMap_.Size(), dvrCameraCallbackMap_.Size());
     return true;
 }
 
@@ -2394,6 +2409,7 @@ void PermissionRecordManager::ExecuteAllCameraExecuteCallback()
         }
     };
     this->cameraCallbackMap_.Iterate(it);
+    this->dvrCameraCallbackMap_.Iterate(it);
 }
 
 void PermissionRecordManager::ExecuteCameraCallbackAsync(AccessTokenID callbackTokenId, int32_t pid)
@@ -2411,6 +2427,7 @@ void PermissionRecordManager::ExecuteCameraCallbackAsync(AccessTokenID callbackT
             }
         };
         this->cameraCallbackMap_.Iterate(it);
+        this->dvrCameraCallbackMap_.Iterate(it);
     };
     std::thread executeThread(task);
     executeThread.detach();
@@ -2483,7 +2500,8 @@ int32_t PermissionRecordManager::StartUsingPermission(const PermissionUsedTypeIn
             permissionName, tokenId) ? Constant::SUCCESS : PrivacyError::ERR_PARAM_INVALID;
     }
 
-    if ((permissionName != CAMERA_PERMISSION_NAME) || (AccessTokenKit::GetTokenTypeFlag(tokenId) != TOKEN_HAP)) {
+    if ((!Constant::IsCameraPermission(permissionName)) ||
+        (AccessTokenKit::GetTokenTypeFlag(tokenId) != TOKEN_HAP)) {
         LOGD(PRI_DOMAIN, PRI_TAG, "Token(%{public}u), perm(%{public}s).", tokenId, permissionName.c_str());
         return PrivacyError::ERR_PARAM_INVALID;
     }
@@ -2506,11 +2524,13 @@ int32_t PermissionRecordManager::StartUsingPermission(const PermissionUsedTypeIn
         status = PERM_INACTIVE;
     }
 #endif
+    SafeMap<uint64_t, sptr<IRemoteObject>>& callbackMap =
+        (permissionName == CAMERA_PERMISSION_NAME) ? cameraCallbackMap_ : dvrCameraCallbackMap_;
     uint64_t id = GetUniqueId(tokenId, normalizedInfo.pid);
-    cameraCallbackMap_.EnsureInsert(id, callback);
+    callbackMap.EnsureInsert(id, callback);
     ret = AddRecordToStartList(normalizedInfo, status, callerPid);
     if (ret != RET_SUCCESS) {
-        cameraCallbackMap_.Erase(id);
+        callbackMap.Erase(id);
     }
     return ret;
 }
@@ -2710,7 +2730,7 @@ bool PermissionRecordManager::IsAllowedUsingCamera(AccessTokenID tokenId, int32_
         return true;
     }
 
-    return (AccessTokenKit::VerifyAccessToken(tokenId, "ohos.permission.CAMERA_BACKGROUND") == PERMISSION_GRANTED);
+    return (AccessTokenKit::VerifyAccessToken(tokenId, CAMERA_BACKGROUND_PERMISSION_NAME) == PERMISSION_GRANTED);
 }
 
 bool PermissionRecordManager::IsAllowedUsingMicrophone(AccessTokenID tokenId, int32_t pid)
@@ -2727,7 +2747,7 @@ bool PermissionRecordManager::IsAllowedUsingMicrophone(AccessTokenID tokenId, in
         return true;
     }
 
-    return (AccessTokenKit::VerifyAccessToken(tokenId, "ohos.permission.MICROPHONE_BACKGROUND") == PERMISSION_GRANTED);
+    return (AccessTokenKit::VerifyAccessToken(tokenId, MICROPHONE_BACKGROUND_PERMISSION_NAME) == PERMISSION_GRANTED);
 }
 
 bool PermissionRecordManager::IsAllowedUsingPermission(AccessTokenID tokenId, const std::string& permissionName,
@@ -2754,7 +2774,7 @@ bool PermissionRecordManager::IsAllowedUsingPermission(AccessTokenID tokenId, co
         return false;
     }
 
-    if (permissionName == CAMERA_PERMISSION_NAME) {
+    if (Constant::IsCameraPermission(permissionName)) {
         return IsAllowedUsingCamera(normalizedTokenId, normalizedPid);
     } else if (permissionName == MICROPHONE_PERMISSION_NAME) {
         return IsAllowedUsingMicrophone(normalizedTokenId, normalizedPid);

@@ -1671,7 +1671,12 @@ int AccessTokenManagerService::GetTokenType(AccessTokenID tokenID)
 int AccessTokenManagerService::GetTokenType(AccessTokenID tokenID, int32_t& tokenType)
 {
     LOGD(ATM_DOMAIN, ATM_TAG, "Id %{public}d.", tokenID);
-    tokenType = AccessTokenIDManager::GetInstance().GetTokenIdType(tokenID);
+    AccessTokenID callingTokenID = IPCSkeleton::GetCallingTokenID();
+    if (TokenIDAttributes::GetTokenIdTypeEnum(callingTokenID) != TOKEN_HAP) {
+        tokenType = AccessTokenIDManager::GetInstance().GetTokenIdType(tokenID);
+        return ERR_OK;
+    }
+    tokenType = TokenIDAttributes::GetTokenIdTypeEnum(tokenID);
     return ERR_OK;
 }
 

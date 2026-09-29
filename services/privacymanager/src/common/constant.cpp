@@ -163,6 +163,7 @@ const std::map<std::string, int32_t> Constant::PERMISSION_OPCODE_MAP = {
         Constant::OP_AGENT_FILE_ACCESS_WRITE_MEDIA),
     std::map<std::string, int32_t>::value_type("ohos.permission.GET_ALL_BUNDLE_INFO",
         Constant::OP_GET_ALL_BUNDLE_INFO),
+    std::map<std::string, int32_t>::value_type("ohos.permission.DVRCAMERA", Constant::OP_DVRCAMERA),
 };
 
 bool Constant::TransferPermissionToOpcode(const std::string& permissionName, int32_t& opCode)
@@ -190,6 +191,11 @@ bool Constant::TransferOpcodeToPermission(int32_t opCode, std::string& permissio
 bool Constant::IsPrivacyPermission(const std::string& permissionName)
 {
     return PERMISSION_OPCODE_MAP.count(permissionName) != 0;
+}
+
+bool Constant::IsCameraPermission(const std::string& permissionName)
+{
+    return permissionName == "ohos.permission.CAMERA" || permissionName == "ohos.permission.DVRCAMERA";
 }
 } // namespace AccessToken
 } // namespace Security

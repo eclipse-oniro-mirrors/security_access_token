@@ -32,6 +32,12 @@ public:
      * extendPermList and oldPermBriefDataList) must stay alive from task construction
      * until Update()/Rollback() completes, because the task keeps references or pointers
      * to them for later kernel sync and rollback.
+     * oldPermBriefDataList may be nullptr: "no known old perms" (new token whose kernel
+     * entry is absent, or a data gap). Such tokens are upserted by Set like any other,
+     * and Rollback removes their written permission bitmap instead of restoring it
+     * (symmetric to AddSpmDataTask rollback). This lets the install flow converge its
+     * add/update routing into a single update task: the kernel-side entry handling of
+     * "no old entry" is already ENODATA-tolerated and rolls back by removal.
      */
     explicit UpdateSpmDataTask(const std::vector<SpmDataParam>& params);
     ~UpdateSpmDataTask();

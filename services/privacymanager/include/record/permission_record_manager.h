@@ -266,6 +266,7 @@ private:
     std::mutex startRecordListMutex_;
     std::set<ContinuousPermissionRecord> startRecordList_;
     SafeMap<uint64_t, sptr<IRemoteObject>> cameraCallbackMap_;
+    SafeMap<uint64_t, sptr<IRemoteObject>> dvrCameraCallbackMap_;
 
     // microphone
     std::mutex micMuteMutex_;
