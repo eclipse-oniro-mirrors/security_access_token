@@ -12077,6 +12077,17 @@
             "deviceTypes": ["2in1"]
         },
         {
+            "name": "ohos.permission.kernel.ACCESS_DISK_USERDATA",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "MDM",
+            "since": "26.2.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1"]
+        },
+        {
             "name": "ohos.permission.vehicle.FACTORYRESET_WRITE_CONFIG",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
