@@ -75,6 +75,8 @@ ohos_shared_library("cj_ability_access_ctrl_ffi") {
     external_deps = [ "napi:cj_bind_ffi" ]
   }
 
+  version_script = "libcj_ability_access_ctrl_ffi.map"
+
   cflags_cc = [ "-DHILOG_ENABLE" ]
   public_configs = [ ":cj_ability_access_ctrl_ffi_config" ]
   configs = [
