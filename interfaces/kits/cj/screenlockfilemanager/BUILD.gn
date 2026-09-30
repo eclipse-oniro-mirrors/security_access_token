@@ -46,6 +46,8 @@ ohos_shared_library("cj_screen_lock_file_manager_ffi") {
     "napi:cj_bind_ffi",
   ]
 
+  version_script = "libcj_screen_lock_file_manager_ffi.map"
+
   cflags_cc = [ "-DHILOG_ENABLE" ]
   public_configs = [ ":cj_screen_lock_file_manager_ffi_config" ]
   configs = [
