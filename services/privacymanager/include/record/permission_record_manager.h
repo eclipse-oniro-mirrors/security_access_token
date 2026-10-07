@@ -131,6 +131,9 @@ public:
     void NotifyAppStateChange(AccessTokenID tokenId, int32_t pid, ActiveChangeType status);
     void SetLockScreenStatus(int32_t lockScreenStatus);
     int32_t GetLockScreenStatus(bool isIpc = false);
+    void SetScreenOn(bool isScreenOn);
+    bool IsScreenOn(bool isIpc = false);
+    bool IsCameraPrivacyControlEnhanceEnabled() const;
 
     void OnAppMgrRemoteDiedHandle();
     void OnAudioMgrRemoteDiedHandle();
@@ -292,6 +295,10 @@ private:
     std::mutex lockScreenStateMutex_;
     int32_t lockScreenStatus_ = LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED;
 
+    // screenState
+    std::mutex screenStateMutex_;
+    bool isScreenOn_ = true;
+
     // foreground reminder
     std::mutex foreReminderMutex_;
     std::vector<uint32_t> foreTokenIdList_;
@@ -299,6 +306,7 @@ private:
     // record config
     int32_t recordSizeMaximum_ = 0;
     int32_t recordAgingTime_ = 0;
+    bool cameraPrivacyControlEnhanceEnable_ = false;
 #ifndef APP_SECURITY_PRIVACY_SERVICE
     std::string globalDialogBundleName_;
     std::string globalDialogAbilityName_;

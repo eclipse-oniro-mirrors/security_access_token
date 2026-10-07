@@ -13,17 +13,22 @@
  * limitations under the License.
  */
 #include "screenlock_manager_loader.h"
+#ifdef THEME_SCREENLOCK_MGR_ENABLE
 #include "screenlock_manager.h"
+#endif
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+#ifdef THEME_SCREENLOCK_MGR_ENABLE
 bool ScreenLockManagerAccessLoader::IsScreenLocked()
 {
     return ScreenLock::ScreenLockManager::GetInstance()->IsScreenLocked();
 }
+#endif
 
 extern "C" {
+#ifdef THEME_SCREENLOCK_MGR_ENABLE
 void* CreateScreenLockManagerAccessLoader()
 {
     return reinterpret_cast<void*>(new ScreenLockManagerAccessLoader);
@@ -37,6 +42,7 @@ void DestroyScreenLockManagerAccessLoader(void* loaderPtr)
         delete loader;
     }
 }
+#endif
 }
 } // namespace AccessToken
 } // namespace Security
