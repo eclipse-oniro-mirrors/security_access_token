@@ -445,6 +445,10 @@ int32_t AccessTokenOpenCallback::CreateHapInfoTable(NativeRdb::RdbStore& rdbStor
         .append(TokenFiledConst::FIELD_BUNDLE_NAME)
         .append(",")
         .append(TokenFiledConst::FIELD_MODULE_NAME)
+#ifdef SPM_DATA_ENABLE
+        .append(",")
+        .append(TokenFiledConst::FIELD_MODE)
+#endif
         .append("))");
 
     return rdbStore.ExecuteSql(sql);
@@ -768,13 +772,26 @@ int32_t AccessTokenOpenCallback::AddModeColumn(NativeRdb::RdbStore& rdbStore, At
     if (modeExist) {
         return NativeRdb::E_OK;
     }
-    int32_t ret = rdbStore.ExecuteSql("alter table " + tableName + " add column " + TokenFiledConst::FIELD_MODE +
-        " integer not null default " + std::to_string(static_cast<int32_t>(MultipleMode::DEFAULT_MODE)));
-    if (ret != NativeRdb::E_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to add column %{public}s to table %{public}s, errCode is %{public}d.",
-            TokenFiledConst::FIELD_MODE.c_str(), tableName.c_str(), ret);
+    // Table does not have mode column: drop and recreate so mode is part of the primary key.
+    // SQLite ALTER TABLE ADD COLUMN cannot add a column to an existing PRIMARY KEY.
+    auto [errCode, transaction] = rdbStore.CreateTransaction(OHOS::NativeRdb::Transaction::DEFERRED);
+    if (errCode != NativeRdb::E_OK || transaction == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to create transaction, errCode is %{public}d.", errCode);
+        return errCode == NativeRdb::E_OK ? ERR_DATABASE_OPERATE_FAILED : errCode;
     }
-    return ret;
+    int32_t ret = rdbStore.ExecuteSql("drop table if exists " + tableName);
+    if (ret != NativeRdb::E_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to drop table %{public}s, errCode is %{public}d.",
+            tableName.c_str(), ret);
+        (void)transaction->Rollback();
+        return ret;
+    }
+    ret = CreateHapInfoTable(rdbStore);
+    if (ret != NativeRdb::E_OK) {
+        (void)transaction->Rollback();
+        return ret;
+    }
+    return transaction->Commit();
 }
 
 int32_t AccessTokenOpenCallback::UpgradeFromVersion1(NativeRdb::RdbStore& rdbStore)

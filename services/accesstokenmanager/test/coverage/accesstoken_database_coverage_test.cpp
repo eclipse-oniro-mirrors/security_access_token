@@ -37,9 +37,11 @@ static constexpr int32_t TEST_TOKEN_ID_ALT = 7;
 static constexpr int32_t GENERIC_DB_ERROR_CODE = 999;
 static constexpr size_t UPGRADE_V9_STEP_SQL_COUNT = 4;
 static constexpr size_t UPGRADE_V3_FAIL_SQL_COUNT = 2;
+static constexpr size_t ADD_MODE_COLUMN_RECREATE_SQL_COUNT = 2; // drop + create
+static constexpr size_t ADD_MODE_COLUMN_DROP_FAIL_SQL_COUNT = 1; // drop only
 #ifdef SPM_DATA_ENABLE
-static constexpr int32_t UPGRADE_V11_TO_V12_SPM_SQL_COUNT = 8;
-static constexpr size_t UPGRADE_V10_TO_V11_SPM_SQL_COUNT = 9;
+static constexpr int32_t UPGRADE_V11_TO_V12_SPM_SQL_COUNT = 9;
+static constexpr size_t UPGRADE_V10_TO_V11_SPM_SQL_COUNT = 10;
 #else
 static constexpr size_t UPGRADE_V10_TO_V11_NON_SPM_SQL_COUNT = 2;
 #endif
@@ -779,7 +781,7 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, AddUidMigratedReservedColumns008, Test
 
 /*
  * @tc.name: AddModeColumn001
- * @tc.desc: AccessTokenOpenCallback::AddModeColumn skips alter when mode column already exists.
+ * @tc.desc: AccessTokenOpenCallback::AddModeColumn skips when mode column already exists.
  * @tc.type: FUNC
  * @tc.require: TDD
  */
@@ -804,7 +806,7 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, AddModeColumn001, TestSize.Level4)
 
 /*
  * @tc.name: AddModeColumn002
- * @tc.desc: AccessTokenOpenCallback::AddModeColumn adds column when missing, alter succeeds.
+ * @tc.desc: AccessTokenOpenCallback::AddModeColumn drops and recreates table when mode column missing.
  * @tc.type: FUNC
  * @tc.require: TDD
  */
@@ -814,7 +816,7 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, AddModeColumn002, TestSize.Level4)
     AccessTokenOpenCallback callback;
 
     db->executedSqls_.clear();
-    db->executeSqlResults_ = {NativeRdb::E_OK};
+    db->executeSqlResults_.clear();
     db->executeSqlIndex_ = 0;
     // PRAGMA table_info: mode column absent
     db->querySqlResults_ = {{{
@@ -823,8 +825,8 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, AddModeColumn002, TestSize.Level4)
     db->querySqlIndex_ = 0;
     ASSERT_EQ(NativeRdb::E_OK,
         callback.AddModeColumn(*(db.get()), AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO));
-    ASSERT_EQ(1U, db->executedSqls_.size());
-    EXPECT_EQ("alter table hap_info_table add column mode integer not null default 0", db->executedSqls_[0]);
+    ASSERT_EQ(ADD_MODE_COLUMN_RECREATE_SQL_COUNT, db->executedSqls_.size());
+    EXPECT_EQ("drop table if exists hap_info_table", db->executedSqls_[0]);
 }
 
 /*
@@ -848,7 +850,7 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, AddModeColumn003, TestSize.Level4)
 
 /*
  * @tc.name: AddModeColumn004
- * @tc.desc: AccessTokenOpenCallback::AddModeColumn returns error when alter table fails.
+ * @tc.desc: AccessTokenOpenCallback::AddModeColumn returns error when drop table fails.
  * @tc.type: FUNC
  * @tc.require: TDD
  */
@@ -867,7 +869,7 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, AddModeColumn004, TestSize.Level4)
     db->querySqlIndex_ = 0;
     ASSERT_EQ(NativeRdb::E_SQLITE_CORRUPT,
         callback.AddModeColumn(*(db.get()), AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO));
-    ASSERT_EQ(1U, db->executedSqls_.size());
+    ASSERT_EQ(ADD_MODE_COLUMN_DROP_FAIL_SQL_COUNT, db->executedSqls_.size());
 }
 
 /*
@@ -950,8 +952,12 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, OnUpgrade005, TestSize.Level4)
         "create table if not exists hap_info_table (bundle_name text not null,module_name text not null,"
             "path text not null,bundle_type integer not null,persist_data blob not null,"
             "is_preinstalled integer not null,mode integer not null default 0,"
-            "primary key(bundle_name,module_name))",
-        "alter table hap_info_table add column mode integer not null default 0",
+            "primary key(bundle_name,module_name,mode))",
+        "drop table if exists hap_info_table",
+        "create table if not exists hap_info_table (bundle_name text not null,module_name text not null,"
+            "path text not null,bundle_type integer not null,persist_data blob not null,"
+            "is_preinstalled integer not null,mode integer not null default 0,"
+            "primary key(bundle_name,module_name,mode))",
         "update system_config_table set value='0' where name='bms_migrate_completed'",
         "alter table hap_token_info_table add column uid integer not null default -1",
         "alter table hap_token_info_table add column migrated integer not null default 0",
@@ -1185,6 +1191,7 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, OnUpgrade008, TestSize.Level4)
         callback.OnUpgrade(*(db.get()), DATABASE_VERSION_10, DATABASE_VERSION_11));
 #ifdef SPM_DATA_ENABLE
     // UpgradeFromVersion10 failure is ignored; fallthrough runs 11->12 (is_sideload) and 12->13 (spm)
+    // AddModeColumn drops and recreates the table so mode is part of the primary key.
     ASSERT_EQ(UPGRADE_V10_TO_V11_SPM_SQL_COUNT, db->executedSqls_.size());
     EXPECT_EQ("delete from hap_info_table", db->executedSqls_[0]);
     EXPECT_EQ("alter table hap_token_info_table add column is_sideload integer not null default 0",
@@ -1192,13 +1199,18 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, OnUpgrade008, TestSize.Level4)
     EXPECT_EQ("create table if not exists hap_info_table (bundle_name text not null,module_name text not null,"
         "path text not null,bundle_type integer not null,persist_data blob not null,"
         "is_preinstalled integer not null,mode integer not null default 0,"
-        "primary key(bundle_name,module_name))", db->executedSqls_[2]);
-    EXPECT_EQ("alter table hap_info_table add column mode integer not null default 0", db->executedSqls_[3]);
-    EXPECT_EQ("update system_config_table set value='0' where name='bms_migrate_completed'", db->executedSqls_[4]);
-    EXPECT_EQ("alter table hap_token_info_table add column uid integer not null default -1", db->executedSqls_[5]);
-    EXPECT_EQ("alter table hap_token_info_table add column migrated integer not null default 0", db->executedSqls_[6]);
-    EXPECT_EQ("alter table hap_token_info_table add column reserved integer not null default 0", db->executedSqls_[7]);
-    EXPECT_EQ("update hap_token_info_table set reserved= 1 where token_attr & 0x0004 != 0", db->executedSqls_[8]);
+        "primary key(bundle_name,module_name,mode))", db->executedSqls_[2]);
+    EXPECT_EQ("drop table if exists hap_info_table", db->executedSqls_[3]);
+    EXPECT_EQ("create table if not exists hap_info_table (bundle_name text not null,module_name text not null,"
+        "path text not null,bundle_type integer not null,persist_data blob not null,"
+        "is_preinstalled integer not null,mode integer not null default 0,"
+        "primary key(bundle_name,module_name,mode))", db->executedSqls_[4]);
+    EXPECT_EQ("update system_config_table set value='0' where name='bms_migrate_completed'", db->executedSqls_[5]);
+    EXPECT_EQ("alter table hap_token_info_table add column uid integer not null default -1", db->executedSqls_[6]);
+    EXPECT_EQ("alter table hap_token_info_table add column migrated integer not null default 0", db->executedSqls_[7]);
+    EXPECT_EQ("alter table hap_token_info_table add column reserved integer not null default 0",
+        db->executedSqls_[8]);
+    EXPECT_EQ("update hap_token_info_table set reserved= 1 where token_attr & 0x0004 != 0", db->executedSqls_[9]);
 #else
     // UpgradeFromVersion10 failure is ignored; fallthrough runs UpgradeFromVersion11 (is_sideload)
     ASSERT_EQ(UPGRADE_V10_TO_V11_NON_SPM_SQL_COUNT, db->executedSqls_.size());
