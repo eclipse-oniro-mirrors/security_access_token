@@ -47,6 +47,9 @@
 #include "permission_map.h"
 #include "permission_record_set.h"
 #include "permission_used_record_db.h"
+#ifdef POWER_MANAGER_CLIENT_ENABLE
+#include "power_mgr_client.h"
+#endif
 #include "privacy_error.h"
 #include "privacy_field_const.h"
 #include "refbase.h"
@@ -2098,6 +2101,35 @@ int32_t PermissionRecordManager::GetLockScreenStatus(bool isIpc)
     return lockScreenStatus;
 }
 
+void PermissionRecordManager::SetScreenOn(bool isScreenOn)
+{
+    LOGI(PRI_DOMAIN, PRI_TAG, "SetScreenOn %{public}d", isScreenOn);
+    std::lock_guard<std::mutex> lock(screenStateMutex_);
+    isScreenOn_ = isScreenOn;
+}
+
+bool PermissionRecordManager::IsScreenOn(bool isIpc)
+{
+    // default screen on, deny is only taken when positively known screen off
+    bool isScreenOn = true;
+
+    if (isIpc) {
+#ifdef POWER_MANAGER_CLIENT_ENABLE
+        isScreenOn = PowerMgr::PowerMgrClient::GetInstance().IsScreenOn();
+#endif
+    } else {
+        std::lock_guard<std::mutex> lock(screenStateMutex_);
+        isScreenOn = isScreenOn_;
+    }
+
+    return isScreenOn;
+}
+
+bool PermissionRecordManager::IsCameraPrivacyControlEnhanceEnabled() const
+{
+    return cameraPrivacyControlEnhanceEnable_;
+}
+
 int32_t PermissionRecordManager::RemoveRecordFromStartList(
     AccessTokenID tokenId, int32_t pid, const std::string& permissionName, int32_t callerPid,
     const std::string& enhancedIdentity)
@@ -2722,6 +2754,20 @@ int32_t PermissionRecordManager::PermissionListFilter(
 
 bool PermissionRecordManager::IsAllowedUsingCamera(AccessTokenID tokenId, int32_t pid)
 {
+    // camera privacy control enhancement: deny camera usage while the screen is locked or off
+    if (IsCameraPrivacyControlEnhanceEnabled()) {
+        if (GetLockScreenStatus() == LockScreenStatusChangeType::PERM_ACTIVE_IN_LOCKED) {
+            LOGI(PRI_DOMAIN, PRI_TAG, "Id %{public}d, pid %{public}d denied by screen lock control.",
+                tokenId, pid);
+            return false;
+        }
+        if (!IsScreenOn()) {
+            LOGI(PRI_DOMAIN, PRI_TAG, "Id %{public}d, pid %{public}d denied by screen off control.",
+                tokenId, pid);
+            return false;
+        }
+    }
+
     // allow foregound application or background application with CAMERA_BACKGROUND permission use camera
     int32_t status = GetAppStatus(tokenId, pid);
 
@@ -3369,8 +3415,15 @@ void PermissionRecordManager::GetConfigValue()
         SetDefaultConfigValue();
     }
 
-    LOGI(PRI_DOMAIN, PRI_TAG, "RecordSizeMaximum_ is %{public}d, recordAgingTime_ is %{public}d",
-        recordSizeMaximum_, recordAgingTime_);
+    AccessTokenConfigValue config;
+    if (policy->GetConfigValue(ConfigType::CUSTOMIZED_CONFIG, config)) {
+        cameraPrivacyControlEnhanceEnable_ =
+            config.customConfig.pCustomConfig.cameraPrivacyControlEnhanceEnable;
+    }
+
+    LOGI(PRI_DOMAIN, PRI_TAG, "RecordSizeMaximum_ is %{public}d, recordAgingTime_ is %{public}d, "
+        "cameraPrivacyControlEnhanceEnable_ is %{public}d",
+        recordSizeMaximum_, recordAgingTime_, cameraPrivacyControlEnhanceEnable_);
 }
 
 uint64_t PermissionRecordManager::GetUniqueId(uint32_t tokenId, int32_t pid) const

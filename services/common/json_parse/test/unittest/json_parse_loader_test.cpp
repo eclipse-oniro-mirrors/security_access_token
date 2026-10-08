@@ -373,6 +373,70 @@ HWTEST_F(JsonParseLoaderTest, GetPrivacyCfgFromJsonTest004, TestSize.Level4)
 }
 
 /*
+ * @tc.name: GetCustomizedCfgFromJson
+ * @tc.desc: GetCustomizedCfgFromJson with privacy camera_privacy_control_enhance true
+ * @tc.type: FUNC
+ * @tc.require: TDD coverage
+ */
+HWTEST_F(JsonParseLoaderTest, GetCustomizedCfgFromJsonTest001, TestSize.Level4)
+{
+    ConfigPolicLoader loader;
+    AccessTokenConfigValue config;
+    std::string testJson = "{\"accesstoken\":{},\"privacy\":{"
+        "\"camera_privacy_control_enhance\":true}}";
+    EXPECT_TRUE(loader.GetConfigValueFromFile(ConfigType::CUSTOMIZED_CONFIG, testJson, config));
+    EXPECT_TRUE(config.customConfig.pCustomConfig.cameraPrivacyControlEnhanceEnable);
+}
+
+/*
+ * @tc.name: GetCustomizedCfgFromJson
+ * @tc.desc: GetCustomizedCfgFromJson with privacy section but without the switch, default false
+ * @tc.type: FUNC
+ * @tc.require: TDD coverage
+ */
+HWTEST_F(JsonParseLoaderTest, GetCustomizedCfgFromJsonTest002, TestSize.Level4)
+{
+    ConfigPolicLoader loader;
+    AccessTokenConfigValue config;
+    config.customConfig.pCustomConfig.cameraPrivacyControlEnhanceEnable = true;
+    std::string testJson = "{\"accesstoken\":{},\"privacy\":{}}";
+    EXPECT_TRUE(loader.GetConfigValueFromFile(ConfigType::CUSTOMIZED_CONFIG, testJson, config));
+    EXPECT_FALSE(config.customConfig.pCustomConfig.cameraPrivacyControlEnhanceEnable);
+}
+
+/*
+ * @tc.name: GetCustomizedCfgFromJson
+ * @tc.desc: GetCustomizedCfgFromJson without privacy section, layer not hit
+ * @tc.type: FUNC
+ * @tc.require: TDD coverage
+ */
+HWTEST_F(JsonParseLoaderTest, GetCustomizedCfgFromJsonTest003, TestSize.Level4)
+{
+    ConfigPolicLoader loader;
+    AccessTokenConfigValue config;
+    config.customConfig.pCustomConfig.cameraPrivacyControlEnhanceEnable = true;
+    std::string testJson = "{\"accesstoken\":{}}";
+    EXPECT_FALSE(loader.GetConfigValueFromFile(ConfigType::CUSTOMIZED_CONFIG, testJson, config));
+    EXPECT_TRUE(config.customConfig.pCustomConfig.cameraPrivacyControlEnhanceEnable);
+}
+
+/*
+ * @tc.name: GetCustomizedCfgFromJson
+ * @tc.desc: GetCustomizedCfgFromJson with non-bool switch value, hit with default false
+ * @tc.type: FUNC
+ * @tc.require: TDD coverage
+ */
+HWTEST_F(JsonParseLoaderTest, GetCustomizedCfgFromJsonTest004, TestSize.Level4)
+{
+    ConfigPolicLoader loader;
+    AccessTokenConfigValue config;
+    config.customConfig.pCustomConfig.cameraPrivacyControlEnhanceEnable = true;
+    std::string testJson = "{\"privacy\":{\"camera_privacy_control_enhance\":\"true\"}}";
+    EXPECT_TRUE(loader.GetConfigValueFromFile(ConfigType::CUSTOMIZED_CONFIG, testJson, config));
+    EXPECT_FALSE(config.customConfig.pCustomConfig.cameraPrivacyControlEnhanceEnable);
+}
+
+/*
  * @tc.name: GetTokenSyncCfgFromJson
  * @tc.desc: GetTokenSyncCfgFromJson without send_request_repeat_times
  * @tc.type: FUNC

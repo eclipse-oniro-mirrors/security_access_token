@@ -54,10 +54,19 @@ struct TokenSyncServiceConfig final {
     int32_t sendRequestRepeatTimes;
 };
 
+struct PrivacyCustomizedConfig final {
+    bool cameraPrivacyControlEnhanceEnable = false;
+};
+
+struct CustomizedServiceConfig final {
+    PrivacyCustomizedConfig pCustomConfig;
+};
+
 struct AccessTokenConfigValue {
     AccessTokenServiceConfig atConfig;
     PrivacyServiceConfig pConfig;
     TokenSyncServiceConfig tsConfig;
+    CustomizedServiceConfig customConfig;
     std::unordered_set<std::string> permissionFeatures;
 };
 
@@ -66,6 +75,7 @@ enum ConfigType {
     PRIVACY_SERVICE,
     TOKENSYNC_SERVICE,
     PERMISSION_FEATURES,
+    CUSTOMIZED_CONFIG,
     // NOTE: Add new types above INVALID_AT_CONFIG_TYPE
     INVALID_AT_CONFIG_TYPE,
 };

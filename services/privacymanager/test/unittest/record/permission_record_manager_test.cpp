@@ -48,6 +48,11 @@
 #include "state_change_callback.h"
 #include "time_util.h"
 #include "token_setproc.h"
+#ifdef COMMON_EVENT_SERVICE_ENABLE
+#include "common_event_subscribe_info.h"
+#include "privacy_common_event_subscriber.h"
+#include "want.h"
+#endif
 #ifdef ACCESS_TOKEN_SUPPORT_SUBPROFILE
 #include "account_error_no.h"
 #include "os_account_manager_lite.h"
@@ -3470,6 +3475,146 @@ HWTEST_F(PermissionRecordManagerTest, DvrBackgroundWithPermAllowed001, TestSize.
     PrivacyTestCommon::DeleteTestHapToken(tokenId);
     PermissionRecordManager::GetInstance().RemovePermissionUsedRecords(tokenId);
 }
+
+/**
+ * @tc.name: CameraPrivacyControlEnhance001
+ * @tc.desc: camera usage is denied when lock/off-screen privacy control is enabled
+ *           and screen is locked or off, allowed when switch off or screen unlocked/on.
+ * @tc.type: FUNC
+ * @tc.require: TDD coverage
+ */
+HWTEST_F(PermissionRecordManagerTest, CameraPrivacyControlEnhance001, TestSize.Level0)
+{
+    AccessTokenIDEx tokenIdEx = PrivacyTestCommon::AllocTestHapToken(
+        g_InfoParmsCameraBackground, g_PolicyPramsCameraBackground);
+    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIdExStruct.tokenID);
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    auto& recordManager = PermissionRecordManager::GetInstance();
+
+    // keep original lock/screen state to restore after test
+    int32_t originLockStatus = recordManager.GetLockScreenStatus();
+    bool originScreenOn = recordManager.IsScreenOn();
+
+    // switch off: camera allowed even when screen locked and off
+    recordManager.cameraPrivacyControlEnhanceEnable_ = false;
+    recordManager.SetLockScreenStatus(LockScreenStatusChangeType::PERM_ACTIVE_IN_LOCKED);
+    recordManager.SetScreenOn(false);
+    EXPECT_TRUE(recordManager.IsAllowedUsingPermission(tokenId, CAMERA_PERMISSION_NAME, TEST_PID_1));
+
+    // switch on, screen locked: denied
+    recordManager.cameraPrivacyControlEnhanceEnable_ = true;
+    EXPECT_FALSE(recordManager.IsAllowedUsingPermission(tokenId, CAMERA_PERMISSION_NAME, TEST_PID_1));
+
+    // switch on, screen off but unlocked: denied
+    recordManager.SetLockScreenStatus(LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED);
+    EXPECT_FALSE(recordManager.IsAllowedUsingPermission(tokenId, CAMERA_PERMISSION_NAME, TEST_PID_1));
+
+    // switch on, screen unlocked and on: allowed
+    recordManager.SetScreenOn(true);
+    EXPECT_TRUE(recordManager.IsAllowedUsingPermission(tokenId, CAMERA_PERMISSION_NAME, TEST_PID_1));
+
+    // restore states
+    recordManager.cameraPrivacyControlEnhanceEnable_ = false;
+    recordManager.SetLockScreenStatus(originLockStatus);
+    recordManager.SetScreenOn(originScreenOn);
+
+    PrivacyTestCommon::DeleteTestHapToken(tokenId);
+    PermissionRecordManager::GetInstance().RemovePermissionUsedRecords(tokenId);
+}
+
+/**
+ * @tc.name: CameraPrivacyControlEnhance002
+ * @tc.desc: SetScreenOn/IsScreenOn cache and direct query work as expected.
+ * @tc.type: FUNC
+ * @tc.require: TDD coverage
+ */
+HWTEST_F(PermissionRecordManagerTest, CameraPrivacyControlEnhance002, TestSize.Level0)
+{
+    auto& recordManager = PermissionRecordManager::GetInstance();
+    bool originScreenOn = recordManager.IsScreenOn();
+    bool originSwitch = recordManager.cameraPrivacyControlEnhanceEnable_;
+
+    recordManager.SetScreenOn(false);
+    EXPECT_FALSE(recordManager.IsScreenOn());
+    recordManager.SetScreenOn(true);
+    EXPECT_TRUE(recordManager.IsScreenOn());
+
+    // direct query branch, power manager IPC on device
+    bool ipcScreenOn = recordManager.IsScreenOn(true);
+    GTEST_LOG_(INFO) << "IsScreenOn(true) result: " << ipcScreenOn;
+
+    // no customized config file deployed, reload keeps current switch value
+    recordManager.cameraPrivacyControlEnhanceEnable_ = true;
+    recordManager.GetConfigValue();
+    EXPECT_TRUE(recordManager.cameraPrivacyControlEnhanceEnable_);
+
+    recordManager.cameraPrivacyControlEnhanceEnable_ = originSwitch;
+    recordManager.SetScreenOn(originScreenOn);
+}
+
+#ifdef COMMON_EVENT_SERVICE_ENABLE
+/**
+ * @tc.name: CameraPrivacyControlEnhance003
+ * @tc.desc: SCREEN_OFF/SCREEN_ON events update screen cache, camera stream cut
+ *           callback is executed only when enhancement switch is on.
+ * @tc.type: FUNC
+ * @tc.require: TDD coverage
+ */
+HWTEST_F(PermissionRecordManagerTest, CameraPrivacyControlEnhance003, TestSize.Level0)
+{
+    auto& recordManager = PermissionRecordManager::GetInstance();
+    int32_t originLockStatus = recordManager.GetLockScreenStatus();
+    bool originScreenOn = recordManager.IsScreenOn();
+    bool originSwitch = recordManager.cameraPrivacyControlEnhanceEnable_;
+
+    EventFwk::MatchingSkills skills;
+    skills.AddEvent(EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_OFF);
+    skills.AddEvent(EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_ON);
+    EventFwk::CommonEventSubscribeInfo info(skills);
+    PrivacyCommonEventSubscriber subscriber(info);
+
+    EventFwk::CommonEventData dataOff;
+    AAFwk::Want wantOff;
+    wantOff.SetAction(EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_OFF);
+    dataOff.SetWant(wantOff);
+    EventFwk::CommonEventData dataOn;
+    AAFwk::Want wantOn;
+    wantOn.SetAction(EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_ON);
+    dataOn.SetWant(wantOn);
+
+    // switch off: SCREEN_OFF only updates cache, no camera callback
+    auto cameraCallbackMap = recordManager.cameraCallbackMap_; // backup
+    auto callbackPtr = std::make_shared<PermissionRecordManagerTestCb1>();
+    auto callbackWrap = new (std::nothrow) StateChangeCallback(callbackPtr);
+    ASSERT_NE(nullptr, callbackPtr);
+    ASSERT_NE(nullptr, callbackWrap);
+    recordManager.cameraCallbackMap_.EnsureInsert(
+        recordManager.GetUniqueId(RANDOM_TOKENID, -1), callbackWrap->AsObject());
+
+    recordManager.cameraPrivacyControlEnhanceEnable_ = false;
+    recordManager.SetScreenOn(true);
+    subscriber.OnReceiveEvent(dataOff);
+    EXPECT_FALSE(recordManager.IsScreenOn());
+    EXPECT_EQ(0, callbackPtr->notifyCount_);
+
+    // SCREEN_ON restores cache
+    subscriber.OnReceiveEvent(dataOn);
+    EXPECT_TRUE(recordManager.IsScreenOn());
+
+    // switch on: SCREEN_OFF cuts camera stream
+    recordManager.cameraPrivacyControlEnhanceEnable_ = true;
+    subscriber.OnReceiveEvent(dataOff);
+    EXPECT_FALSE(recordManager.IsScreenOn());
+    EXPECT_EQ(1, callbackPtr->notifyCount_);
+    EXPECT_FALSE(callbackPtr->isShow_);
+
+    // restore
+    recordManager.cameraCallbackMap_ = cameraCallbackMap; // recovery
+    recordManager.cameraPrivacyControlEnhanceEnable_ = originSwitch;
+    recordManager.SetLockScreenStatus(originLockStatus);
+    recordManager.SetScreenOn(originScreenOn);
+}
+#endif
 
 /**
  * @tc.name: DvrNativeDenied001

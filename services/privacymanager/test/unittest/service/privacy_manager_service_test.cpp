@@ -71,6 +71,7 @@ constexpr const char* LOCATION_PERMISSION_NAME = "ohos.permission.LOCATION";
 static const uint32_t PERM_LIST_SIZE_MAX = 1024;
 static constexpr int32_t COMMON_EVENT_SERVICE_ID = 3299;
 static constexpr int32_t SCREENLOCK_SERVICE_ID = 3704;
+static constexpr int32_t POWER_MANAGER_SERVICE_ID = 3010;
 static constexpr int32_t INVALID_CODE = 999;
 static PermissionStateFull g_testState = {
     .permissionName = "ohos.permission.CAMERA",
@@ -1765,6 +1766,7 @@ HWTEST_F(PrivacyManagerServiceTest, GetProxyDeathHandle001, TestSize.Level0)
 
     privacyManagerService_->OnAddSystemAbility(COMMON_EVENT_SERVICE_ID, "123");
     privacyManagerService_->OnAddSystemAbility(SCREENLOCK_SERVICE_ID, "123");
+    privacyManagerService_->OnAddSystemAbility(POWER_MANAGER_SERVICE_ID, "123");
     privacyManagerService_->OnAddSystemAbility(INVALID_CODE, "123");
 }
 
