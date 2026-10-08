@@ -11115,7 +11115,7 @@
             "name": "ohos.permission.GET_AUDIO_ADAPTER_INFO",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
-            "availableType": "NORMAL",
+            "availableType": "ENTERPRISE_NORMAL",
             "since": "26.2.0",
             "deprecated": "",
             "provisionEnable": true,
