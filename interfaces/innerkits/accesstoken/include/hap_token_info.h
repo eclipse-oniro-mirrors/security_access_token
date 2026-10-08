@@ -57,10 +57,8 @@ namespace AccessToken {
  * @brief Declares multiple mode type.
  */
 enum class MultipleMode : int32_t {
-    /** Default mode, includes MAIN_MODE */
-    DEFAULT_MODE = 0,
-    /** Main mode */
-    MAIN_MODE = 0,
+    /** Default mode or main mode */
+    DEFAULT_OR_MAIN_MODE = 0,
     /** Non-main mode */
     SUB_MODE = 1,
     /** Max mode value */
