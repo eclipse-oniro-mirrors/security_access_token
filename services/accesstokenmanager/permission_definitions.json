@@ -12648,6 +12648,17 @@
             "provisionEnable": true,
             "distributedSceneEnable": false,
             "deviceTypes": ["car"]
+        },
+        {
+            "name": "ohos.permission.DIRECT_CALL",
+            "grantMode": "user_grant",
+            "availableLevel": "system_basic",
+            "availableType": "NORMAL",
+            "since": "26.0.1",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone"]
         }
     ]
 }
