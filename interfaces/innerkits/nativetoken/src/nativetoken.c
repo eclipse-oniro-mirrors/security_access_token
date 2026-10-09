@@ -290,7 +290,7 @@ static uint32_t ReadAndParseFile(cJSON **record)
     bool mainMissingOrEmpty = false;
     uint32_t ret = GetFileBuff(TOKEN_ID_CFG_FILE_PATH, &fileBuff);
     if (ret == ATRET_SUCCESS && fileBuff == NULL) {
-        LOGC("Main nativetoken.json is missing or empty, trying backup.");
+        LOGI("Main nativetoken.json is missing or empty, trying backup.");
         ret = GET_FILE_BUFF_FAILED;
         mainMissingOrEmpty = true;
     }
