@@ -164,6 +164,7 @@ const std::map<std::string, int32_t> Constant::PERMISSION_OPCODE_MAP = {
     std::map<std::string, int32_t>::value_type("ohos.permission.GET_ALL_BUNDLE_INFO",
         Constant::OP_GET_ALL_BUNDLE_INFO),
     std::map<std::string, int32_t>::value_type("ohos.permission.DVRCAMERA", Constant::OP_DVRCAMERA),
+    std::map<std::string, int32_t>::value_type("ohos.permission.DIRECT_CALL", Constant::OP_DIRECT_CALL),
 };
 
 bool Constant::TransferPermissionToOpcode(const std::string& permissionName, int32_t& opCode)
