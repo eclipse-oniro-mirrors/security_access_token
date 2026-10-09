@@ -12639,6 +12639,28 @@
             "deviceTypes": ["2in1"]
         },
         {
+            "name": "ohos.permission.vehicle.GET_DRIVING_HABIT",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.1",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["car"]
+        },
+        {
+            "name": "ohos.permission.vehicle.MANAGE_DRIVING_HABIT",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.1",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["car"]
+        },
+        {
             "name": "ohos.permission.vehicle.INNER_NETWORK",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
@@ -12648,6 +12670,17 @@
             "provisionEnable": true,
             "distributedSceneEnable": false,
             "deviceTypes": ["car"]
+        },
+        {
+            "name": "ohos.permission.DIRECT_CALL",
+            "grantMode": "user_grant",
+            "availableLevel": "system_basic",
+            "availableType": "NORMAL",
+            "since": "26.0.1",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone"]
         },
         {
             "name": "ohos.permission.vehicle.LOGIN_TSP",
