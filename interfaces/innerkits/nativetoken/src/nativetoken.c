@@ -287,9 +287,12 @@ static uint32_t ReadAndParseFile(cJSON **record)
     char *fileBuff = NULL;
     *record = NULL;
 
+    bool mainMissingOrEmpty = false;
     uint32_t ret = GetFileBuff(TOKEN_ID_CFG_FILE_PATH, &fileBuff);
     if (ret == ATRET_SUCCESS && fileBuff == NULL) {
-        return ATRET_SUCCESS;
+        LOGI("Main nativetoken.json is missing or empty, trying backup.");
+        ret = GET_FILE_BUFF_FAILED;
+        mainMissingOrEmpty = true;
     }
     if (ret == ATRET_SUCCESS && fileBuff != NULL) {
         *record = cJSON_Parse(fileBuff);
@@ -300,7 +303,7 @@ static uint32_t ReadAndParseFile(cJSON **record)
         }
         LOGC("Failed to parse main nativetoken.json, trying backup.");
         ret = GET_TOKEN_LIST_FAILED;
-    } else {
+    } else if (!mainMissingOrEmpty) {
         LOGC("Failed to read main nativetoken.json, ret=%d.", ret);
     }
 
@@ -311,6 +314,10 @@ static uint32_t ReadAndParseFile(cJSON **record)
     }
     uint32_t bakRet = GetFileBuff(bakPath, &fileBuff);
     if (bakRet != ATRET_SUCCESS || fileBuff == NULL) {
+        if (mainMissingOrEmpty && bakRet == ATRET_SUCCESS && fileBuff == NULL) {
+            // Both main and backup are missing/empty — empty config (first install)
+            return ATRET_SUCCESS;
+        }
         LOGC("Failed to read backup nativetoken.json, bakRet=%d.", bakRet);
         return ret;
     }
