@@ -35,6 +35,7 @@ using namespace OHOS::Security::AccessToken;
 
 namespace OHOS {
 namespace {
+static constexpr int32_t SLEEP_TIME = 5;
 const std::string DEFAULT_AGENT_ID = "1001";
 const std::string DEFAULT_CALLER_BUNDLE = "generatecliauthresultstub.fuzzer";
 const std::string DEFAULT_HOST_BUNDLE = "generatecliauthresultstub.host";
@@ -191,9 +192,15 @@ bool GenerateCliAuthResultStubFuzzTest(const uint8_t* data, size_t size)
 }
 }
 
+void BeforeExit()
+{
+    std::this_thread::sleep_for(std::chrono::seconds(OHOS::SLEEP_TIME));
+}
+
 extern "C" int LLVMFuzzerInitialize(int* argc, char*** argv)
 {
     OHOS::InitializeClawPermissionStubFuzz();
+    (void)atexit(BeforeExit);
     return 0;
 }
 
