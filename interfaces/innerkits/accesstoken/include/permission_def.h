@@ -76,6 +76,11 @@ public:
     ATokenAvailableTypeEnum availableType = NORMAL;
     bool isKernelEffect = false;
     bool hasValue = false;
+    /**
+     * indicates whether BIN can obtain this permission independently,
+     * without the parent HAP declaring it
+     */
+    bool binIndependentUsable = false;
 };
 
 /**
