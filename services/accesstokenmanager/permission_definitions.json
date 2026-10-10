@@ -12628,6 +12628,17 @@
             "deviceTypes": ["car"]
         },
         {
+            "name": "ohos.permission.HIDDEN_CAMERA_DETECTION",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "NORMAL",
+            "since": "26.0.1",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone"]
+        },
+        {
             "name": "ohos.permission.AUTH_SERVICE_ACCESS",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
