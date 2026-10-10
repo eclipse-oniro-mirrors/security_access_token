@@ -106,7 +106,7 @@ void TokenModifyNotifier::NotifyTokenSyncTask()
 
     std::unique_lock<std::shared_mutex> infoGuard(this->notifyLock_);
     LOGI(ATM_DOMAIN, ATM_TAG, "Start execution!");
-    LibraryLoader loader(TOKEN_SYNC_LIBPATH);
+    LibraryLoader loader(TOKEN_SYNC_LIBPATH, TOKEN_SYNC_CREATE_SYMBOL, TOKEN_SYNC_DESTROY_SYMBOL);
     TokenSyncKitInterface* tokenSyncKit = loader.GetObject<TokenSyncKitInterface>();
     if (tokenSyncKit == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Dlopen libtokensync_sdk failed.");
@@ -163,7 +163,7 @@ int32_t TokenModifyNotifier::GetRemoteHapTokenInfo(const std::string& deviceID, 
         }
     }
 
-    LibraryLoader loader(TOKEN_SYNC_LIBPATH);
+    LibraryLoader loader(TOKEN_SYNC_LIBPATH, TOKEN_SYNC_CREATE_SYMBOL, TOKEN_SYNC_DESTROY_SYMBOL);
     TokenSyncKitInterface* tokenSyncKit = loader.GetObject<TokenSyncKitInterface>();
     if (tokenSyncKit == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Dlopen libtokensync_sdk failed.");

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -40,17 +40,33 @@
 #ifndef ACCESSTOKEN_HAP_TOKEN_INFO_H
 #define ACCESSTOKEN_HAP_TOKEN_INFO_H
 
-#include "access_token.h"
-#include "permission_def.h"
-#include "permission_state_full.h"
-#include "permission_status.h"
+#include <cstdint>
 #include <map>
 #include <string>
 #include <vector>
 
+#include "access_token.h"
+#include "permission_def.h"
+#include "permission_state_full.h"
+#include "permission_status.h"
+
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+/**
+ * @brief Declares multiple mode type.
+ */
+enum class MultipleMode : int32_t {
+    /** Default mode, includes MAIN_MODE */
+    DEFAULT_MODE = 0,
+    /** Main mode */
+    MAIN_MODE = 0,
+    /** Non-main mode */
+    SUB_MODE = 1,
+    /** Max mode value */
+    MAX_MODE = SUB_MODE,
+};
+
 /**
  * @brief Declares hap info params class
  */
@@ -80,6 +96,8 @@ public:
     std::string appProvisionType = "release";
     /** Whether hap is a skill */
     bool isSkillHap = false;
+    /** Whether hap is a sideload app, set by bundle manager per install source */
+    bool isSideloadApp = false;
 };
 
 /**
@@ -102,6 +120,8 @@ public:
     std::string appProvisionType = "release";
     /** Whether hap is a skill */
     bool isSkillHap = false;
+    /** Whether hap is a sideload app, set by bundle manager per install source */
+    bool isSideloadApp = false;
 };
 
 /**
@@ -226,6 +246,39 @@ public:
 };
 
 /**
+ * @brief Declares the result of signed profile data
+ */
+struct ProfileData {
+    std::string provisionRaw;
+    int32_t profileBlockLength = 0;
+    std::vector<uint8_t> profileBlock;
+    std::string appId;
+    std::string fingerprint;
+    std::string organization;
+    bool isOpenHarmony = false;
+    bool isEnterpriseResigned = false;
+};
+
+/**
+ * @brief Declares the result of trusted bundle info
+ */
+struct TrustedBundleInfo {
+    ProfileData profileData;
+    std::string moduleInfo;
+    std::string sharedFiles;
+};
+
+/**
+ * @brief Declares which parts of sign info should be returned,
+ * callers get only the requested fields
+ */
+enum SignInfoQueryFlag : uint32_t {
+    QUERY_PROFILE = 1 << 0, // return ProfileData only
+    QUERY_MODULE_INFO = 1 << 1, // return module.json only
+    QUERY_SHARED_FILES = 1 << 2, // return sharedfiles.json only
+};
+
+/**
  * @brief Declares hap policy params class
  */
 class HapPolicy final {
@@ -261,6 +314,54 @@ class PermissionWithValue final {
 public:
     std::string permissionName;
     std::string value;
+};
+
+/**
+ * @brief Declares the result of bundle policy info
+ */
+struct BundlePolicyInfo {
+    std::vector<std::string> reqPermissions;
+};
+
+/**
+ * @brief Declares the result of hap verify result info
+ */
+struct HapVerifyResultInfo {
+    uint32_t index = 0;
+    int32_t errorCode = 0;
+};
+
+/**
+ * @brief Declares install type
+ */
+enum InstallTypeEnum {
+    TYPE_INSTALL = 0,
+    TYPE_REPLACE,
+    TYPE_MERGE
+};
+
+/**
+ * @brief Declares bundle hap list
+ */
+struct BundleHapList final {
+    std::vector<std::string> hapPaths;
+    bool isPreInstalled = false;
+    int32_t userId;
+    int32_t mode = 0;
+};
+
+struct MigratedInfo final {
+    std::string bundleName;
+    BundleHapList pathList;
+    std::vector<HapBaseInfo> hapBaseInfoList;
+    std::vector<int32_t> uidList;
+    std::vector<ReservedType> reservedTypeList;
+};
+
+struct BundleMigrateResult final {
+    std::vector<AccessTokenIDEx> tokenIdList;
+    std::vector<ReservedType> reservedTypeList;
+    int32_t errcode = 0;
 };
 } // namespace AccessToken
 } // namespace Security

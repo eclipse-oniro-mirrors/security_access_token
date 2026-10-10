@@ -18,6 +18,7 @@
 
 #include <map>
 #include <set>
+#include <shared_mutex>
 #include <string>
 #include <unordered_set>
 #include <vector>
@@ -45,6 +46,7 @@ namespace Security {
 namespace AccessToken {
 enum class ServiceRunningState { STATE_NOT_START, STATE_RUNNING };
 struct PolicyWhiteListUpdateInfo;
+struct InitDfxInfo;
 class AccessTokenManagerService final : public SystemAbility, public AccessTokenManagerStub {
     DECLARE_DELAYED_SINGLETON(AccessTokenManagerService);
     DECLEAR_SYSTEM_ABILITY(AccessTokenManagerService);
@@ -54,6 +56,7 @@ public:
     void OnStop() override;
     void OnAddSystemAbility(int32_t systemAbilityId, const std::string& deviceId) override;
     void OnRemoveSystemAbility(int32_t systemAbilityId, const std::string& deviceId) override;
+    bool RetryPublishInner();
 
     int32_t AllocHapToken(const HapInfoParcel& info, const HapPolicyParcel& policy, uint64_t& fullTokenId) override;
     int32_t GetPermissionUsedType(
@@ -120,6 +123,7 @@ public:
     int32_t StoreSecCompEnhanceKey(const SecCompEnhanceKeyIdl& enhanceKey) override;
     int32_t GetSecCompEnhanceKey(SecCompEnhanceKeyIdl& enhanceKey) override;
 #endif
+    int32_t SetSecCompEnhanceStatus(bool isEnable) override;
 
 #ifdef TOKEN_SYNC_ENABLE
     int GetHapTokenInfoFromRemote(AccessTokenID tokenID, HapTokenInfoForSyncParcel& hapSyncParcel) override;
@@ -173,6 +177,8 @@ private:
     void GetConfigValue(uint32_t& parseConfigFlag);
     void CheckAccessTokenDbDir(const char* dbDirPath) const;
     bool Initialize();
+    void AfterPublishSuccessLocked();
+    void RetryPublishLoop();
     void AccessTokenServiceParamSet() const;
     bool IsLocationPermSpecialHandle(std::string permissionName, int32_t apiVersion);
     int VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName);
@@ -183,15 +189,18 @@ private:
         const HapPolicy& policy, int64_t beginTime, int32_t errorCode);
     int32_t PreCheckPermissionStatusDetails(
         AccessTokenID tokenID, const std::vector<std::string>& permissionList);
-    bool IsPermissionValid(int32_t hapApl, const PermissionBriefDef& data, const std::string& value, bool isAcl);
-    void FilterInvalidData(const std::vector<GenericValues>& results,
+    bool IsPermissionValid(bool isSideloadApp, int32_t hapApl, const PermissionBriefDef& data,
+        const std::string& value, bool isAcl);
+    void RecheckUndefinedPerms(const std::vector<GenericValues>& results,
         const std::map<int32_t, TokenIdInfo>& tokenIdAplMap, std::vector<GenericValues>& validValueList);
     void UpdateUndefinedInfoCache(const std::vector<GenericValues>& validValueList,
         std::vector<GenericValues>& stateValues, std::vector<GenericValues>& extendValues);
     void HandleHapUndefinedInfo(const std::map<int32_t, TokenIdInfo>& tokenIdAplMap, std::vector<DelInfo>& delInfoVec,
         std::vector<AddInfo>& addInfoVec);
-    void UpdateDatabaseAsync(const std::vector<DelInfo>& delInfoVec, const std::vector<AddInfo>& addInfoVec);
-    void HandlePermDefUpdate(const std::map<int32_t, TokenIdInfo>& tokenIdAplMap);
+    void HandlePermDefUpdate(const std::map<int32_t, TokenIdInfo>& tokenIdAplMap,
+        std::vector<DelInfo>& delInfoVec, std::vector<AddInfo>& addInfoVec, bool& needUpdateDb);
+    void DoAsyncInitializingTasks(const std::vector<DelInfo>& delInfoVec,
+        const std::vector<AddInfo>& addInfoVec, bool needUpdateDb, const InitDfxInfo& dfxInfo);
 #ifdef SUPPORT_MANAGE_USER_POLICY
     void RollbackPolicyWhiteList(const PolicyWhiteListUpdateInfo& context);
     int32_t HandlePolicyWhiteListUpdate(const PolicyWhiteListUpdateInfo& policyContext);
@@ -203,6 +212,7 @@ private:
 
     std::mutex stateMutex_;
     ServiceRunningState state_;
+    std::shared_mutex configMutex_;
     std::string grantBundleName_;
     std::string grantAbilityName_;
     std::string grantServiceAbilityName_;

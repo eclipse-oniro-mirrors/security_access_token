@@ -39,7 +39,7 @@ public:
     El5FilekeyManagerService();
     virtual ~El5FilekeyManagerService();
 
-    int32_t Init();
+    int32_t Init(const std::string& startReason = "");
     void UnInit();
 
     int32_t AcquireAccess(DataLockType type) override;

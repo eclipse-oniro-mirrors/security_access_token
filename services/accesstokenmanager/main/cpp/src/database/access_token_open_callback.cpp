@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -20,6 +20,7 @@
 #include "access_token_error.h"
 #include "access_token.h"
 #include "accesstoken_common_log.h"
+#include "hap_token_info.h"
 #include "hisysevent_adapter.h"
 #include "time_util.h"
 #include "token_field_const.h"
@@ -30,10 +31,15 @@ namespace AccessToken {
 namespace {
 constexpr const char*  INTEGER_STR = " integer not null,";
 constexpr const char*  TEXT_STR = " text not null,";
+// INTEGER_DEFAULT_ZERO_STR is used by create table, keep column definitions consistent with alter table upgrades.
+constexpr const char*  INTEGER_DEFAULT_ZERO_STR = " integer not null default 0";
 // back up name is xxx_slave fixed, can not be changed
 constexpr const char* DATABASE_NAME_BACK = "access_token_slave.db";
 constexpr int32_t LEGACY_SUBPROFILE_ID = -1;
 constexpr const char* BACKUP_SUFFIX = "_backup";
+#ifdef SPM_DATA_ENABLE
+constexpr const char* BMS_MIGRATE_COMPLETED = "bms_migrate_completed";
+#endif
 }
 
 static int32_t GetTableColumnList(NativeRdb::RdbStore& rdbStore, const std::string& tableName,
@@ -95,6 +101,9 @@ int32_t AccessTokenOpenCallback::CreateHapTokenInfoTable(NativeRdb::RdbStore& rd
         .append(INTEGER_STR)
         .append(TokenFiledConst::FIELD_FORBID_PERM_DIALOG)
         .append(INTEGER_STR)
+        .append(TokenFiledConst::FIELD_IS_SIDELOAD)
+        .append(INTEGER_DEFAULT_ZERO_STR)
+        .append(",")
     #ifdef SPM_DATA_ENABLE
         .append(TokenFiledConst::FIELD_UID)
         .append(" integer not null default -1,")
@@ -427,16 +436,25 @@ int32_t AccessTokenOpenCallback::CreateHapInfoTable(NativeRdb::RdbStore& rdbStor
         .append(" blob not null,")
         .append(TokenFiledConst::FIELD_IS_PREINSTALLED)
         .append(INTEGER_STR)
+#ifdef SPM_DATA_ENABLE
+        .append(TokenFiledConst::FIELD_MODE)
+        .append(" integer not null default "
+            + std::to_string(static_cast<int32_t>(MultipleMode::DEFAULT_MODE)) + ",")
+#endif
         .append("primary key(")
         .append(TokenFiledConst::FIELD_BUNDLE_NAME)
         .append(",")
         .append(TokenFiledConst::FIELD_MODULE_NAME)
+#ifdef SPM_DATA_ENABLE
+        .append(",")
+        .append(TokenFiledConst::FIELD_MODE)
+#endif
         .append("))");
 
     return rdbStore.ExecuteSql(sql);
 }
 
-int32_t AccessTokenOpenCallback::CreateVersionNineTable(NativeRdb::RdbStore& rdbStore)
+int32_t AccessTokenOpenCallback::CreateVersionTwelveTable(NativeRdb::RdbStore& rdbStore)
 {
     int32_t res = CreateHapInfoTable(rdbStore);
     if (res != NativeRdb::E_OK) {
@@ -482,9 +500,9 @@ int32_t AccessTokenOpenCallback::OnCreate(NativeRdb::RdbStore& rdbStore)
         return res;
     }
 #ifdef SPM_DATA_ENABLE
-    res = CreateVersionNineTable(rdbStore);
+    res = CreateVersionTwelveTable(rdbStore);
     if (res != NativeRdb::E_OK) {
-        ReportSysEventDbException(AccessTokenDbSceneCode::AT_DB_CREATE_ERROR, res, "version 9 tables");
+        ReportSysEventDbException(AccessTokenDbSceneCode::AT_DB_CREATE_ERROR, res, "version 12 tables");
         return res;
     }
 #endif
@@ -691,6 +709,22 @@ static int32_t AddColumn(const std::vector<std::string>& columnList, NativeRdb::
     return NativeRdb::E_OK;
 }
 
+static int32_t IsColumnExist(NativeRdb::RdbStore& rdbStore, AtmDataType type,
+    const std::string& columnName, bool& exist, std::string& tableName)
+{
+    exist = false;
+    AccessTokenDbUtil::GetTableNameByType(type, tableName);
+    std::vector<std::string> columnList;
+    int32_t res = GetTableColumnList(rdbStore, tableName, columnList);
+    if (res != NativeRdb::E_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get column list for table %{public}s, errCode is %{public}d.",
+            tableName.c_str(), res);
+        return res;
+    }
+    exist = std::find(columnList.begin(), columnList.end(), columnName) != columnList.end();
+    return NativeRdb::E_OK;
+}
+
 int32_t AccessTokenOpenCallback::AddUidMigratedReservedColumns(NativeRdb::RdbStore& rdbStore)
 {
     std::string tableName;
@@ -725,6 +759,39 @@ int32_t AccessTokenOpenCallback::AddUidMigratedReservedColumns(NativeRdb::RdbSto
     }
     LOGI(ATM_DOMAIN, ATM_TAG, "Success to refresh reserved column in hap_token_info_table.");
     return NativeRdb::E_OK;
+}
+
+int32_t AccessTokenOpenCallback::AddModeColumn(NativeRdb::RdbStore& rdbStore, AtmDataType type)
+{
+    bool modeExist = false;
+    std::string tableName;
+    int32_t res = IsColumnExist(rdbStore, type, TokenFiledConst::FIELD_MODE, modeExist, tableName);
+    if (res != NativeRdb::E_OK) {
+        return res;
+    }
+    if (modeExist) {
+        return NativeRdb::E_OK;
+    }
+    // Table does not have mode column: drop and recreate so mode is part of the primary key.
+    // SQLite ALTER TABLE ADD COLUMN cannot add a column to an existing PRIMARY KEY.
+    auto [errCode, transaction] = rdbStore.CreateTransaction(OHOS::NativeRdb::Transaction::DEFERRED);
+    if (errCode != NativeRdb::E_OK || transaction == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to create transaction, errCode is %{public}d.", errCode);
+        return errCode == NativeRdb::E_OK ? ERR_DATABASE_OPERATE_FAILED : errCode;
+    }
+    int32_t ret = rdbStore.ExecuteSql("drop table if exists " + tableName);
+    if (ret != NativeRdb::E_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to drop table %{public}s, errCode is %{public}d.",
+            tableName.c_str(), ret);
+        (void)transaction->Rollback();
+        return ret;
+    }
+    ret = CreateHapInfoTable(rdbStore);
+    if (ret != NativeRdb::E_OK) {
+        (void)transaction->Rollback();
+        return ret;
+    }
+    return transaction->Commit();
 }
 
 int32_t AccessTokenOpenCallback::UpgradeFromVersion1(NativeRdb::RdbStore& rdbStore)
@@ -875,6 +942,93 @@ int32_t AccessTokenOpenCallback::UpgradeFromVersion10(NativeRdb::RdbStore& rdbSt
     return NativeRdb::E_OK;
 }
 
+int32_t AccessTokenOpenCallback::UpgradeFromVersion11(NativeRdb::RdbStore& rdbStore)
+{
+    std::string tableName;
+    AccessTokenDbUtil::GetTableNameByType(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, tableName);
+    std::vector<std::string> columnList;
+    int32_t res = GetTableColumnList(rdbStore, tableName, columnList);
+    if (res != NativeRdb::E_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get column list for table %{public}s, errCode is %{public}d.",
+            tableName.c_str(), res);
+        ReportUpgradeError(res, DATABASE_VERSION_12, "GetTableColumnList");
+        return res;
+    }
+    res = AddColumn(columnList, rdbStore, tableName, TokenFiledConst::FIELD_IS_SIDELOAD,
+        "integer not null default " + std::to_string(0));
+    if (res != NativeRdb::E_OK) {
+        ReportUpgradeError(res, DATABASE_VERSION_12, "AddIsSideloadColumn");
+        return res;
+    }
+    LOGI(ATM_DOMAIN, ATM_TAG, "Success to upgrade from version 11 to version 12.");
+    return NativeRdb::E_OK;
+}
+
+#ifdef SPM_DATA_ENABLE
+int32_t AccessTokenOpenCallback::UpgradeFromVersion12(NativeRdb::RdbStore& rdbStore)
+{
+    int32_t res = CreateHapInfoTable(rdbStore);
+    if (res != NativeRdb::E_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to create hap_info_table during upgrade from version 12.");
+        ReportUpgradeError(res, DATABASE_VERSION_13, "CreateHapInfoTable");
+        return res;
+    }
+
+    res = AddModeColumn(rdbStore, AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO);
+    if (res != NativeRdb::E_OK) {
+        ReportUpgradeError(res, DATABASE_VERSION_13, "AddModeColumn");
+        return res;
+    }
+    res = ResetUidAndMigrateCompleted(rdbStore);
+    if (res != NativeRdb::E_OK) {
+        ReportUpgradeError(res, DATABASE_VERSION_13, "ResetUidAndMigrateCompleted");
+        return res;
+    }
+    res = AddUidMigratedReservedColumns(rdbStore);
+    if (res != NativeRdb::E_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to add uid/migrated/reserved columns during upgrade from version 12.");
+        ReportUpgradeError(res, DATABASE_VERSION_13, "AddUidMigratedReservedColumns");
+        return res;
+    }
+    LOGI(ATM_DOMAIN, ATM_TAG, "Success to upgrade from version 12 to version 13.");
+    return NativeRdb::E_OK;
+}
+
+int32_t AccessTokenOpenCallback::ResetUidAndMigrateCompleted(NativeRdb::RdbStore& rdbStore)
+{
+    const int32_t hapInvalidUid = -1;
+    bool uidExist = false;
+    std::string hapTokenInfoTableName;
+    int32_t res = IsColumnExist(rdbStore, AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, TokenFiledConst::FIELD_UID,
+        uidExist, hapTokenInfoTableName);
+    if (res != NativeRdb::E_OK) {
+        return res;
+    }
+    if (uidExist) {
+        res = rdbStore.ExecuteSql("update " + hapTokenInfoTableName + " set " + TokenFiledConst::FIELD_UID +
+            "=" + std::to_string(hapInvalidUid));
+        if (res != NativeRdb::E_OK) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to reset uid in table %{public}s, errCode is %{public}d.",
+                hapTokenInfoTableName.c_str(), res);
+            return res;
+        }
+    }
+
+    std::string systemConfigTableName;
+    AccessTokenDbUtil::GetTableNameByType(AtmDataType::ACCESSTOKEN_SYSTEM_CONFIG, systemConfigTableName);
+    res = rdbStore.ExecuteSql("update " + systemConfigTableName + " set " + TokenFiledConst::FIELD_VALUE +
+        "='0' where " + TokenFiledConst::FIELD_NAME + "='" + BMS_MIGRATE_COMPLETED + "'");
+    if (res != NativeRdb::E_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to reset %{public}s in table %{public}s, errCode is %{public}d.",
+            BMS_MIGRATE_COMPLETED, systemConfigTableName.c_str(), res);
+        return res;
+    }
+
+    LOGI(ATM_DOMAIN, ATM_TAG, "Success to reset uid and migrate_completed flag.");
+    return NativeRdb::E_OK;
+}
+#endif
+
 int32_t AccessTokenOpenCallback::OnUpgrade(NativeRdb::RdbStore& rdbStore, int32_t currentVersion, int32_t targetVersion)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "DB OnUpgrade from Ver %{public}d to Ver %{public}d.", currentVersion, targetVersion);
@@ -937,6 +1091,20 @@ int32_t AccessTokenOpenCallback::OnUpgrade(NativeRdb::RdbStore& rdbStore, int32_
         case DATABASE_VERSION_10: // 10->11
             (void)UpgradeFromVersion10(rdbStore);
             [[fallthrough]];
+        case DATABASE_VERSION_11: // 11->12
+            res = UpgradeFromVersion11(rdbStore);
+            if (res != NativeRdb::E_OK) {
+                return res;
+            }
+            [[fallthrough]];
+#ifdef SPM_DATA_ENABLE
+        case DATABASE_VERSION_12: // 12->13
+            res = UpgradeFromVersion12(rdbStore);
+            if (res != NativeRdb::E_OK) {
+                return res;
+            }
+            [[fallthrough]];
+#endif
         default:
             return NativeRdb::E_OK;
     }

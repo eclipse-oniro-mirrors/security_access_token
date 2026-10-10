@@ -28,7 +28,8 @@ bool AppStateData::Marshalling(Parcel &parcel) const
         parcel.WriteString(callerBundleName) && parcel.WriteBool(isSplitScreenMode) && parcel.WriteInt32(callerUid) &&
         parcel.WriteBool(isFloatingWindowMode) && parcel.WriteInt32(appIndex) && parcel.WriteBool(isPreloadModule) &&
         parcel.WriteBool(isFromWindowFocusChanged) && parcel.WriteInt32(preloadMode) &&
-        parcel.WriteInt32(byCallStatus);
+        parcel.WriteInt32(byCallStatus) && parcel.WriteInt32(lastUIAbilityCallerUid) &&
+        parcel.WriteString(lastUIAbilityCallerName);
 }
 
 AppStateData *AppStateData::Unmarshalling(Parcel &parcel)
@@ -54,6 +55,8 @@ AppStateData *AppStateData::Unmarshalling(Parcel &parcel)
     RELEASE_IF_FALSE(parcel.ReadBool(appStateData->isFromWindowFocusChanged), appStateData);
     RELEASE_IF_FALSE(parcel.ReadInt32(appStateData->preloadMode), appStateData);
     RELEASE_IF_FALSE(parcel.ReadInt32(appStateData->byCallStatus), appStateData);
+    RELEASE_IF_FALSE(parcel.ReadInt32(appStateData->lastUIAbilityCallerUid), appStateData);
+    RELEASE_IF_FALSE(parcel.ReadString(appStateData->lastUIAbilityCallerName), appStateData);
     return appStateData;
 }
 }  // namespace AccessToken

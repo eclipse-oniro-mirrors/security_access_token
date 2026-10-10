@@ -24,6 +24,7 @@ if (is_standard_system) {
     "src/nativetoken.c",
     "src/nativetoken_hisysevent.c",
     "src/nativetoken_json_oper.c",
+    "${access_token_path}/interfaces/innerkits/accesstoken_file_util/src/accesstoken_file_util.cpp",
   ]
   ohos_static_library("libnativetoken") {
     subsystem_name = "security"
@@ -42,6 +43,7 @@ if (is_standard_system) {
 
     include_dirs = [
       "${access_token_path}/frameworks/common/include",
+      "${access_token_path}/interfaces/innerkits/accesstoken_file_util/include",
       "${access_token_path}/interfaces/innerkits/token_setproc/include",
     ]
 
@@ -87,6 +89,7 @@ if (is_standard_system) {
 
     include_dirs = [
       "${access_token_path}/frameworks/common/include",
+      "${access_token_path}/interfaces/innerkits/accesstoken_file_util/include",
       "${access_token_path}/interfaces/innerkits/token_setproc/include",
     ]
 

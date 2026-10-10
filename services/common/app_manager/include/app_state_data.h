@@ -56,6 +56,8 @@ struct AppStateData : public Parcelable {
     bool isPreloadModule = false;
     bool isFromWindowFocusChanged = false;
     int32_t byCallStatus = 0;
+    int32_t lastUIAbilityCallerUid = -1;
+    std::string lastUIAbilityCallerName;
 };
 }  // namespace AccessToken
 }  // namespace Security

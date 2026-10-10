@@ -96,6 +96,32 @@ void ResultSet::GetBlob(int32_t a, std::vector<uint8_t>& b)
     b = blobData_;
 }
 
+std::pair<int32_t, std::vector<std::string>> ResultSet::GetWholeColumnNames()
+{
+    if (columnNamesErr_ != NativeRdb::E_OK) {
+        return std::make_pair(columnNamesErr_, std::vector<std::string>());
+    }
+    return std::make_pair(NativeRdb::E_OK, columnNames_);
+}
+
+std::pair<int32_t, std::vector<std::vector<NativeRdb::ValueObject>>> ResultSet::GetRowsData(int32_t maxCount,
+    int32_t position)
+{
+    if (rowsDataErr_ != NativeRdb::E_OK) {
+        return std::make_pair(rowsDataErr_, std::vector<std::vector<NativeRdb::ValueObject>>());
+    }
+    if (rowsIndex_ >= rowsData_.size()) {
+        return std::make_pair(NativeRdb::E_OK, std::vector<std::vector<NativeRdb::ValueObject>>());
+    }
+    size_t end = std::min(rowsIndex_ + static_cast<size_t>(maxCount), rowsData_.size());
+    std::vector<std::vector<NativeRdb::ValueObject>> batch;
+    for (size_t i = rowsIndex_; i < end; ++i) {
+        batch.emplace_back(rowsData_[i]);
+    }
+    rowsIndex_ = end;
+    return std::make_pair(NativeRdb::E_OK, std::move(batch));
+}
+
 RdbPredicates::RdbPredicates()
 {}
 
@@ -221,6 +247,25 @@ std::shared_ptr<ResultSet> RdbStore::Query(const NativeRdb::RdbPredicates& a, co
         return nullptr;
     }
     auto rs = std::make_shared<ResultSet>();
+    return rs;
+}
+
+std::shared_ptr<ResultSet> RdbStore::QueryByStep(const NativeRdb::RdbPredicates& a, const std::vector<std::string>& b,
+    bool preCount)
+{
+    if (queryFlag_ == RdbStore::RdbStoreOperationResult::RESULT_FAIL) {
+        return nullptr;
+    }
+    auto rs = std::make_shared<ResultSet>();
+    rs->columnNames_ = queryColumnNames_;
+    rs->rowsData_ = queryByStepRowsData_;
+    if (queryByStepRowsDataErrOnce_ != 0) {
+        rs->rowsDataErr_ = queryByStepRowsDataErrOnce_;
+        queryByStepRowsDataErrOnce_ = 0;
+    } else {
+        rs->rowsDataErr_ = queryByStepRowsDataErr_;
+    }
+    rs->columnNamesErr_ = queryByStepColumnNamesErr_;
     return rs;
 }
 

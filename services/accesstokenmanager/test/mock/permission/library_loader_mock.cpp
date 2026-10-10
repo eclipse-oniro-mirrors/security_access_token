@@ -44,7 +44,8 @@ int32_t AbilityManagerAccessLoaderMock::KillProcessForPermissionUpdate(uint32_t 
     return ERR_OK;
 }
 
-LibraryLoader::LibraryLoader(const std::string& path)
+LibraryLoader::LibraryLoader(const std::string& path, const std::string& createSymbol,
+    const std::string& destroySymbol)
 {
     instance_ = new (std::nothrow) AbilityManagerAccessLoaderMock();
     handle_ = nullptr;

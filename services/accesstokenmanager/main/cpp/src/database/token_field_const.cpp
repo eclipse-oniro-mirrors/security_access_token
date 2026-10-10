@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -62,9 +62,11 @@ const std::string TokenFiledConst::FIELD_VALUE = "value";
 const std::string TokenFiledConst::FIELD_ACL = "acl";
 const std::string TokenFiledConst::FIELD_NAME = "name";
 const std::string TokenFiledConst::FIELD_APP_DISTRIBUTION_TYPE = "app_distribution_type";
+const std::string TokenFiledConst::FIELD_IS_SIDELOAD = "is_sideload";
 const std::string TokenFiledConst::FIELD_CONTROLLER_TOKENID = "controller_tokenid";
 const std::string TokenFiledConst::FIELD_RESTRICTED_USER = "restricted_user";
 const std::string TokenFiledConst::FIELD_WHITELIST = "whitelist";
+const std::string TokenFiledConst::FIELD_MODE = "mode";
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

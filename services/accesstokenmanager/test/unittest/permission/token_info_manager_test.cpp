@@ -1485,6 +1485,49 @@ HWTEST_F(TokenInfoManagerTest, UpdateHapTokenPreAuthorization001, TestSize.Level
 }
 
 /**
+ * @tc.name: DeveloperIdNotDebugFlag0001
+ * @tc.desc: Verify developer_id distribution is not treated as debug: no DEBUG_APP_FLAG in
+ *           tokenAttr and user_grant permission is not auto-granted even if isDebugGrant is set.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenInfoManagerTest, DeveloperIdNotDebugFlag0001, TestSize.Level0)
+{
+    constexpr uint32_t DEBUG_APP_FLAG = 0x0008;
+    const std::string permissionName = "ohos.permission.CAMERA";
+    uint32_t permCode = 0;
+    ASSERT_TRUE(TransferPermissionToOpcode(permissionName, permCode));
+
+    HapInfoParams info = g_infoManagerTestInfoParms;
+    info.bundleName = "com.ohos.developer.id.not.debug";
+    info.appIDDesc = info.bundleName;
+    info.appDistributionType = "developer_id";
+    info.appProvisionType = "release";
+    info.isSideloadApp = true;
+    HapPolicy policy = {
+        .apl = APL_NORMAL,
+        .domain = "test.domain",
+        .permStateList = { g_permState }
+    };
+    policy.isDebugGrant = true;
+
+    AccessTokenIDEx tokenIdEx = {0};
+    std::vector<GenericValues> undefValues;
+    ASSERT_EQ(RET_SUCCESS,
+        AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(info, policy, tokenIdEx, undefValues));
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+
+    HapTokenInfo hapInfo;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenId, hapInfo));
+    EXPECT_EQ(0u, hapInfo.tokenAttr & DEBUG_APP_FLAG);
+
+    ExpectBriefPermissionState(tokenId, permCode, PERMISSION_DENIED, PERMISSION_DEFAULT_FLAG);
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId));
+}
+
+/**
  * @tc.name: UpdateHapTokenPreAuthorization002
  * @tc.desc: Verify cancelable pre-authorization update succeeds in manager path.
  * @tc.type: FUNC
@@ -2028,6 +2071,70 @@ HWTEST_F(TokenInfoManagerTest, DeleteRemoteToken002, TestSize.Level0)
 }
 
 /**
+ * @tc.name: DeleteRemoteToken003
+ * @tc.desc: DeleteRemoteToken removes an existing remote native token.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenInfoManagerTest, DeleteRemoteToken003, TestSize.Level0)
+{
+    const std::string deviceId = "remote_native_device";
+    NativeTokenInfoBase nativeTokenInfo;
+    nativeTokenInfo.tokenID = MAX_NATIVE_TOKEN_ID;
+    nativeTokenInfo.processName = "remote_native_token";
+    AccessTokenInfoManager::GetInstance().InitNativeTokenInfos({ nativeTokenInfo });
+    ASSERT_NE(AccessTokenInfoManager::GetInstance().nativeTokenInfoMap_.end(),
+        AccessTokenInfoManager::GetInstance().nativeTokenInfoMap_.find(MAX_NATIVE_TOKEN_ID));
+
+    AccessTokenRemoteDevice device;
+    device.deviceID_ = deviceId;
+    device.MappingTokenIDPairMap_[RANDOM_TOKENID] = MAX_NATIVE_TOKEN_ID;
+    AccessTokenRemoteTokenManager::GetInstance().remoteDeviceMap_[deviceId] = device;
+
+    EXPECT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().DeleteRemoteToken(deviceId, RANDOM_TOKENID));
+    EXPECT_EQ(AccessTokenInfoManager::GetInstance().nativeTokenInfoMap_.end(),
+        AccessTokenInfoManager::GetInstance().nativeTokenInfoMap_.find(MAX_NATIVE_TOKEN_ID));
+    AccessTokenRemoteTokenManager::GetInstance().remoteDeviceMap_.erase(deviceId);
+    AccessTokenIDManager::GetInstance().ReleaseTokenId(MAX_NATIVE_TOKEN_ID);
+}
+
+/**
+ * @tc.name: AllocLocalTokenID001
+ * @tc.desc: AccessTokenInfoManager::AllocLocalTokenID function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenInfoManagerTest, AllocLocalTokenID001, TestSize.Level0)
+{
+    std::string remoteDeviceID;
+    AccessTokenID remoteTokenID = 0;
+
+    ASSERT_EQ(static_cast<uint64_t>(0), AccessTokenInfoManager::GetInstance().AllocLocalTokenID(remoteDeviceID,
+        remoteTokenID)); // remoteDeviceID invalid
+
+    // deviceID invalid + tokenID == 0
+    ASSERT_EQ(static_cast<AccessTokenID>(0),
+        AccessTokenInfoManager::GetInstance().GetRemoteNativeTokenID(remoteDeviceID, remoteTokenID));
+
+    // deviceID invalid
+    ASSERT_EQ(ERR_PARAM_INVALID, AccessTokenInfoManager::GetInstance().DeleteRemoteDeviceTokens(remoteDeviceID));
+
+    remoteDeviceID = "dev-001";
+    ASSERT_EQ(static_cast<uint64_t>(0), AccessTokenInfoManager::GetInstance().AllocLocalTokenID(remoteDeviceID,
+        remoteTokenID)); // remoteTokenID invalid
+
+    // deviceID valid + tokenID == 0
+    ASSERT_EQ(static_cast<AccessTokenID>(0),
+        AccessTokenInfoManager::GetInstance().GetRemoteNativeTokenID(remoteDeviceID, remoteTokenID));
+
+    remoteTokenID = 537919487; // 537919487 is max hap tokenId: 001 00 0 000000 11111111111111111111
+    // deviceID valid + tokenID != 0 + type != native + type != shell
+    ASSERT_EQ(static_cast<AccessTokenID>(0),
+        AccessTokenInfoManager::GetInstance().GetRemoteNativeTokenID(remoteDeviceID, remoteTokenID));
+}
+#endif
+
+/**
  * @tc.name: GetNativePermissionList001
  * @tc.desc: Verify native permissions are filtered by APL and native ACLs.
  * @tc.type: FUNC
@@ -2124,70 +2231,6 @@ HWTEST_F(TokenInfoManagerTest, GetNativePermissionList002, TestSize.Level0)
     EXPECT_TRUE(statusList[0]);
     EXPECT_TRUE(statusList[1]);
 }
-
-/**
- * @tc.name: DeleteRemoteToken003
- * @tc.desc: DeleteRemoteToken removes an existing remote native token.
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(TokenInfoManagerTest, DeleteRemoteToken003, TestSize.Level0)
-{
-    const std::string deviceId = "remote_native_device";
-    NativeTokenInfoBase nativeTokenInfo;
-    nativeTokenInfo.tokenID = MAX_NATIVE_TOKEN_ID;
-    nativeTokenInfo.processName = "remote_native_token";
-    AccessTokenInfoManager::GetInstance().InitNativeTokenInfos({ nativeTokenInfo });
-    ASSERT_NE(AccessTokenInfoManager::GetInstance().nativeTokenInfoMap_.end(),
-        AccessTokenInfoManager::GetInstance().nativeTokenInfoMap_.find(MAX_NATIVE_TOKEN_ID));
-
-    AccessTokenRemoteDevice device;
-    device.deviceID_ = deviceId;
-    device.MappingTokenIDPairMap_[RANDOM_TOKENID] = MAX_NATIVE_TOKEN_ID;
-    AccessTokenRemoteTokenManager::GetInstance().remoteDeviceMap_[deviceId] = device;
-
-    EXPECT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().DeleteRemoteToken(deviceId, RANDOM_TOKENID));
-    EXPECT_EQ(AccessTokenInfoManager::GetInstance().nativeTokenInfoMap_.end(),
-        AccessTokenInfoManager::GetInstance().nativeTokenInfoMap_.find(MAX_NATIVE_TOKEN_ID));
-    AccessTokenRemoteTokenManager::GetInstance().remoteDeviceMap_.erase(deviceId);
-    AccessTokenIDManager::GetInstance().ReleaseTokenId(MAX_NATIVE_TOKEN_ID);
-}
-
-/**
- * @tc.name: AllocLocalTokenID001
- * @tc.desc: AccessTokenInfoManager::AllocLocalTokenID function test
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(TokenInfoManagerTest, AllocLocalTokenID001, TestSize.Level0)
-{
-    std::string remoteDeviceID;
-    AccessTokenID remoteTokenID = 0;
-
-    ASSERT_EQ(static_cast<uint64_t>(0), AccessTokenInfoManager::GetInstance().AllocLocalTokenID(remoteDeviceID,
-        remoteTokenID)); // remoteDeviceID invalid
-
-    // deviceID invalid + tokenID == 0
-    ASSERT_EQ(static_cast<AccessTokenID>(0),
-        AccessTokenInfoManager::GetInstance().GetRemoteNativeTokenID(remoteDeviceID, remoteTokenID));
-
-    // deviceID invalid
-    ASSERT_EQ(ERR_PARAM_INVALID, AccessTokenInfoManager::GetInstance().DeleteRemoteDeviceTokens(remoteDeviceID));
-
-    remoteDeviceID = "dev-001";
-    ASSERT_EQ(static_cast<uint64_t>(0), AccessTokenInfoManager::GetInstance().AllocLocalTokenID(remoteDeviceID,
-        remoteTokenID)); // remoteTokenID invalid
-
-    // deviceID valid + tokenID == 0
-    ASSERT_EQ(static_cast<AccessTokenID>(0),
-        AccessTokenInfoManager::GetInstance().GetRemoteNativeTokenID(remoteDeviceID, remoteTokenID));
-
-    remoteTokenID = 537919487; // 537919487 is max hap tokenId: 001 00 0 000000 11111111111111111111
-    // deviceID valid + tokenID != 0 + type != native + type != shell
-    ASSERT_EQ(static_cast<AccessTokenID>(0),
-        AccessTokenInfoManager::GetInstance().GetRemoteNativeTokenID(remoteDeviceID, remoteTokenID));
-}
-#endif
 
 /**
  * @tc.name: AccessTokenInfoManager001
@@ -2719,8 +2762,8 @@ HWTEST_F(TokenInfoManagerTest, RestoreHapTokenInfo001, TestSize.Level0)
 
     AccessTokenID tokenId = 0;
     GenericValues tokenValue;
-    std::vector<GenericValues> permStateRes;
-    std::vector<GenericValues> extendedPermRes;
+    std::unordered_map<AccessTokenID, std::vector<GenericValues>> permStateRes;
+    std::unordered_map<AccessTokenID, std::vector<GenericValues>> extendedPermRes;
     std::string bundleName;
     std::string appIDDesc;
     std::string deviceID;
@@ -3059,6 +3102,36 @@ HWTEST_F(TokenInfoManagerTest, OnStart001, TestSize.Level0)
 }
 
 /**
+ * @tc.name: AfterPublishSuccessLocked001
+ * @tc.desc: AfterPublishSuccessLocked transitions state to RUNNING.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenInfoManagerTest, AfterPublishSuccessLocked001, TestSize.Level1)
+{
+    ServiceRunningState state = atManagerService_->state_;
+    atManagerService_->state_ = ServiceRunningState::STATE_NOT_START;
+    atManagerService_->AfterPublishSuccessLocked();
+    ASSERT_EQ(ServiceRunningState::STATE_RUNNING, atManagerService_->state_);
+    atManagerService_->state_ = state;
+}
+
+/**
+ * @tc.name: RetryPublishInner001
+ * @tc.desc: RetryPublishInner returns true when service is already running.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenInfoManagerTest, RetryPublishInner001, TestSize.Level1)
+{
+    ServiceRunningState state = atManagerService_->state_;
+    atManagerService_->state_ = ServiceRunningState::STATE_RUNNING;
+    bool ret = atManagerService_->RetryPublishInner();
+    ASSERT_EQ(true, ret);
+    atManagerService_->state_ = state;
+}
+
+/**
  * @tc.name: Dlopen001
  * @tc.desc: Open a not exist lib & not exist func
  * @tc.type: FUNC
@@ -3066,10 +3139,10 @@ HWTEST_F(TokenInfoManagerTest, OnStart001, TestSize.Level0)
  */
 HWTEST_F(TokenInfoManagerTest, Dlopen001, TestSize.Level0)
 {
-    LibraryLoader loader1("libnotexist.z.so"); // is a not exist path
+    LibraryLoader loader1("libnotexist.z.so", "Create", "Destroy"); // is a not exist path
     EXPECT_EQ(nullptr, loader1.handle_);
 
-    LibraryLoader loader2("libaccesstoken_sdk.z.so"); // is a exist lib without create func
+    LibraryLoader loader2("libaccesstoken_sdk.z.so", "Create", "Destroy"); // is a exist lib without create func
     EXPECT_EQ(nullptr, loader2.instance_);
     EXPECT_NE(nullptr, loader2.handle_);
 }
@@ -3083,7 +3156,7 @@ HWTEST_F(TokenInfoManagerTest, Dlopen001, TestSize.Level0)
  */
 HWTEST_F(TokenInfoManagerTest, Dlopen002, TestSize.Level0)
 {
-    LibraryLoader loader(TOKEN_SYNC_LIBPATH);
+    LibraryLoader loader(TOKEN_SYNC_LIBPATH, TOKEN_SYNC_CREATE_SYMBOL, TOKEN_SYNC_DESTROY_SYMBOL);
     TokenSyncKitInterface* tokenSyncKit = loader.GetObject<TokenSyncKitInterface>();
     EXPECT_NE(nullptr, loader.handle_);
     EXPECT_NE(nullptr, tokenSyncKit);

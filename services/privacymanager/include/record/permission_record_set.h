@@ -17,6 +17,7 @@
 #define PERMISSION_RECORD_SET_H
 
 #include <set>
+#include "constant.h"
 #include "permission_record.h"
 
 namespace OHOS {
@@ -33,7 +34,8 @@ public:
     static void GetInActiveUniqueRecord(const std::set<ContinuousPermissionRecord>& recordList,
         std::set<ContinuousPermissionRecord>& removedList);
     static void GetUnusedCameraRecords(const std::set<ContinuousPermissionRecord>& recordList,
-        const std::vector<ContinuousPermissionRecord>& removedList, std::vector<ContinuousPermissionRecord>& retList);
+        const std::vector<ContinuousPermissionRecord>& removedList, std::vector<ContinuousPermissionRecord>& retList,
+        int32_t filterOpCode = Constant::OP_CAMERA);
     static void RemoveByKey(std::set<ContinuousPermissionRecord>& recordList,
         const ContinuousPermissionRecord& record, const IsEqualFunc& isEqualFunc,
         std::vector<ContinuousPermissionRecord>& retList);

@@ -107,6 +107,9 @@ PermUsedTypeEnum PermissionManager::GetPermissionUsedType(
         LOGE(ATM_DOMAIN, ATM_TAG, "TokenID: %{public}d is invalid.", tokenID);
         return PermUsedTypeEnum::INVALID_USED_TYPE;
     }
+    if (TokenIDAttributes::IsBinTokenId(tokenID)) {
+        return PermUsedTypeEnum::NORMAL_TYPE;
+    }
     PermUsedTypeEnum ret = HapTokenInfoInner::GetPermissionUsedType(tokenID, permissionName);
     LOGI(ATM_DOMAIN, ATM_TAG,
         "Application %{public}u apply for %{public}s for type %{public}d.", tokenID, permissionName.c_str(), ret);
@@ -278,12 +281,14 @@ int PermissionManager::GetPermissionFlag(AccessTokenID tokenID, const std::strin
 std::shared_ptr<LibraryLoader> PermissionManager::GetAbilityManager()
 {
 #ifdef DYNAMIC_CLOSE_LIBS
-    return std::make_shared<LibraryLoader>(ABILITY_MANAGER_LIBPATH);
+    return std::make_shared<LibraryLoader>(ABILITY_MANAGER_LIBPATH, ABILITY_MANAGER_CREATE_SYMBOL,
+        ABILITY_MANAGER_DESTROY_SYMBOL);
 #endif
     if (abilityManagerLoader_ == nullptr) {
         std::lock_guard<std::mutex> lock(abilityManagerMutex_);
         if (abilityManagerLoader_ == nullptr) {
-            abilityManagerLoader_ = std::make_shared<LibraryLoader>(ABILITY_MANAGER_LIBPATH);
+            abilityManagerLoader_ = std::make_shared<LibraryLoader>(ABILITY_MANAGER_LIBPATH,
+                ABILITY_MANAGER_CREATE_SYMBOL, ABILITY_MANAGER_DESTROY_SYMBOL);
         }
     }
     return abilityManagerLoader_;
@@ -422,12 +427,12 @@ int32_t PermissionManager::UpdateMultiTokenPermissionState(const std::shared_ptr
 
         isUpdateSuccess = true;
 
+        updateInfo.permissionFlag = flag;
         uint32_t newFlag = flag;
         if (GetPermissionFlag(tokenID, permissionName, newFlag) == RET_SUCCESS) {
-            flag = newFlag;
+            updateInfo.permissionFlag = newFlag;
         }
         updateInfo.sceneCode = CommonSceneCode::AT_COMMON_FINISH;
-        updateInfo.permissionFlag = flag;
         ReportUpdatePermissionEvent(updateInfo);
         ReportSysCommonEventError(static_cast<int32_t>(isGranted ?
             IAccessTokenManagerIpcCode::COMMAND_GRANT_PERMISSION :
@@ -1136,39 +1141,6 @@ bool PermissionManager::InitPermissionList(const BundleParam& param, const HapPo
 #endif
                 continue;
             }
-            return false;
-        }
-
-        state.grantFlag = PERMISSION_DEFAULT_FLAG;
-        state.grantStatus = PERMISSION_DENIED;
-
-        InitPermState(policy, briefDef, needGrantForDebug, state);
-        initializedList.emplace_back(state);
-    }
-    LOGI(ATM_DOMAIN, ATM_TAG, "After, request perm list size: %{public}zu.", initializedList.size());
-    return true;
-}
-
-bool PermissionManager::InitPermissionList(const BundleParam& param, const HapPolicy& policy,
-    std::vector<PermissionStatus>& initializedList, HapInfoCheckResult& result)
-{
-    LOGI(ATM_DOMAIN, ATM_TAG, "Before, request perm list size: %{public}zu, preAuthorizationInfo size %{public}zu, "
-        "ACLRequestedList size %{public}zu.", policy.permStateList.size(),
-        policy.preAuthorizationInfo.size(), policy.aclRequestedList.size());
-
-    PermissionStatus state;
-    bool needGrantForDebug = param.isDebug && policy.isDebugGrant;
-    for (const auto& status : policy.permStateList) {
-        state = status;
-        PermissionBriefDef briefDef;
-        if (!GetPermissionBriefDef(state.permissionName, briefDef) || !briefDef.isEnable) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "Get definition of %{public}s failed.",
-                state.permissionName.c_str());
-            continue;
-        }
-
-        result.permCheckResult.permissionName = state.permissionName;
-        if (!PermissionConstraintCheck::AclAndEdmCheck(param, briefDef, policy, result)) {
             return false;
         }
 

@@ -121,6 +121,39 @@ HWTEST_F(AccessTokenParcelTest, HapInfoParcel001, TestSize.Level1)
 }
 
 /**
+ * @tc.name: HapInfoParcelSideload001
+ * @tc.desc: Test HapInfo sideload flag Marshalling/Unmarshalling roundtrip.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenParcelTest, HapInfoParcelSideload001, TestSize.Level1)
+{
+    HapInfoParcel hapinfoParcel;
+    hapinfoParcel.hapInfoParameter = {
+        .userID = 1,
+        .bundleName = "accesstoken_sideload_test",
+        .instIndex = 0,
+        .appIDDesc = "testtesttesttest",
+        .apiVersion = DEFAULT_API_VERSION,
+        .isSystemApp = false,
+        .appDistributionType = "developer_id",
+        .isSideloadApp = true,
+    };
+
+    Parcel parcel;
+    EXPECT_EQ(true, hapinfoParcel.Marshalling(parcel));
+
+    std::shared_ptr<HapInfoParcel> readedData(HapInfoParcel::Unmarshalling(parcel));
+    EXPECT_NE(nullptr, readedData);
+    ASSERT_NE(nullptr, readedData);
+
+    EXPECT_EQ(true, hapinfoParcel.hapInfoParameter.bundleName == readedData->hapInfoParameter.bundleName);
+    EXPECT_EQ(true, hapinfoParcel.hapInfoParameter.appDistributionType ==
+        readedData->hapInfoParameter.appDistributionType);
+    EXPECT_EQ(hapinfoParcel.hapInfoParameter.isSideloadApp, readedData->hapInfoParameter.isSideloadApp);
+}
+
+/**
  * @tc.name: HapPolicyParcel001
  * @tc.desc: Test HapPolicy Marshalling/Unmarshalling.
  * @tc.type: FUNC

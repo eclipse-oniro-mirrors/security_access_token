@@ -78,6 +78,7 @@ struct HapTokenInfoItem final : public TableItem {
     int32_t uid = -1;
     bool migrated = false;
     ReservedType reserved = ReservedType::NONE;
+    bool isSideload = false;
 
     inline static constexpr AtmDataType type_ = ACCESSTOKEN_HAP_TOKEN_INFO;
 

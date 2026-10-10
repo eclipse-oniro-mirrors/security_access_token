@@ -1511,6 +1511,92 @@ HWTEST_F(PermissionRecordSetTest, GetInActiveUniqueRecord0007, TestSize.Level0)
     ASSERT_EQ(1, static_cast<int32_t>(inactiveList.size()));
     EXPECT_EQ("agentA", inactiveList.begin()->enhancedIdentity);
 }
+
+/**
+ * @tc.name: GetUnusedCameraRecordsDvr001
+ * @tc.desc: removed CAMERA and DVRCAMERA records of same token+pid are dispatched to their own
+ *           unused record function by opCode, neither function returns the other's record.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordSetTest, GetUnusedCameraRecordsDvr001, TestSize.Level0)
+{
+    int32_t recordArray[][RECORD_ITEM_SIZE] = {
+        { HAP_TOKEN_ID[0], Constant::OP_CAMERA, ACTIVE, HAP_PID[0], CALLER_PID[0] },
+        { HAP_TOKEN_ID[0], Constant::OP_DVRCAMERA, ACTIVE, HAP_PID[0], CALLER_PID[1] },
+    };
+    int32_t size = sizeof(recordArray) / sizeof(recordArray[0]);
+    std::vector<ContinuousPermissionRecord> removedList;
+    MakeRecordList(recordArray, size, removedList);
+    std::set<ContinuousPermissionRecord> remainSet; // no remaining active records
+
+    std::vector<ContinuousPermissionRecord> dvrRetList;
+    PermissionRecordSet::GetUnusedCameraRecords(remainSet, removedList, dvrRetList, Constant::OP_DVRCAMERA);
+    ASSERT_EQ(1, static_cast<int32_t>(dvrRetList.size()));
+    EXPECT_EQ(Constant::OP_DVRCAMERA, dvrRetList[0].opCode);
+
+    std::vector<ContinuousPermissionRecord> cameraRetList;
+    PermissionRecordSet::GetUnusedCameraRecords(remainSet, removedList, cameraRetList);
+    ASSERT_EQ(1, static_cast<int32_t>(cameraRetList.size()));
+    EXPECT_EQ(Constant::OP_CAMERA, cameraRetList[0].opCode);
+}
+
+/**
+ * @tc.name: GetUnusedCameraRecordsDvr002
+ * @tc.desc: removed DVRCAMERA record with same token, opCode and pid still active is not unused.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordSetTest, GetUnusedCameraRecordsDvr002, TestSize.Level0)
+{
+    int32_t removedArray[][RECORD_ITEM_SIZE] = {
+        { HAP_TOKEN_ID[0], Constant::OP_DVRCAMERA, ACTIVE, HAP_PID[0], CALLER_PID[0] },
+    };
+    int32_t removedSize = sizeof(removedArray) / sizeof(removedArray[0]);
+    std::vector<ContinuousPermissionRecord> removedList;
+    MakeRecordList(removedArray, removedSize, removedList);
+
+    int32_t remainArray[][RECORD_ITEM_SIZE] = {
+        { HAP_TOKEN_ID[0], Constant::OP_DVRCAMERA, ACTIVE, HAP_PID[0], CALLER_PID[1] },
+    };
+    int32_t remainSize = sizeof(remainArray) / sizeof(remainArray[0]);
+    std::set<ContinuousPermissionRecord> remainSet;
+    MakeRecordSet(remainArray, remainSize, remainSet);
+
+    std::vector<ContinuousPermissionRecord> retList;
+    PermissionRecordSet::GetUnusedCameraRecords(remainSet, removedList, retList, Constant::OP_DVRCAMERA);
+    // same (tokenId, opCode, pid) still active, dvr callback is kept
+    EXPECT_EQ(0, static_cast<int32_t>(retList.size()));
+}
+
+/**
+ * @tc.name: GetUnusedCameraRecordsDvr003
+ * @tc.desc: remaining CAMERA record does not keep the removed DVRCAMERA entry from being unused.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordSetTest, GetUnusedCameraRecordsDvr003, TestSize.Level0)
+{
+    int32_t removedArray[][RECORD_ITEM_SIZE] = {
+        { HAP_TOKEN_ID[0], Constant::OP_DVRCAMERA, ACTIVE, HAP_PID[0], CALLER_PID[0] },
+    };
+    int32_t removedSize = sizeof(removedArray) / sizeof(removedArray[0]);
+    std::vector<ContinuousPermissionRecord> removedList;
+    MakeRecordList(removedArray, removedSize, removedList);
+
+    int32_t remainArray[][RECORD_ITEM_SIZE] = {
+        { HAP_TOKEN_ID[0], Constant::OP_CAMERA, ACTIVE, HAP_PID[0], CALLER_PID[1] },
+    };
+    int32_t remainSize = sizeof(remainArray) / sizeof(remainArray[0]);
+    std::set<ContinuousPermissionRecord> remainSet;
+    MakeRecordSet(remainArray, remainSize, remainSet);
+
+    std::vector<ContinuousPermissionRecord> retList;
+    PermissionRecordSet::GetUnusedCameraRecords(remainSet, removedList, retList, Constant::OP_DVRCAMERA);
+    // CAMERA remaining has a different key, removed DVRCAMERA is still unused
+    ASSERT_EQ(1, static_cast<int32_t>(retList.size()));
+    EXPECT_EQ(Constant::OP_DVRCAMERA, retList[0].opCode);
+}
 }
 }
 }

@@ -118,7 +118,7 @@ HWTEST_F(DatabaseTest, VariantValue64002, TestSize.Level0)
     EXPECT_EQ(DEFAULT_VALUE, Ntest.GetInt64());
     int64_t testValue = 1;
     VariantValue Test(testValue);
-    EXPECT_EQ(DEFAULT_VALUE, Test.GetInt());
+    EXPECT_EQ(static_cast<int32_t>(testValue), Test.GetInt());
 }
 
 /**

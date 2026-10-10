@@ -29,6 +29,7 @@
 #ifdef CUSTOMIZATION_CONFIG_POLICY_ENABLE
 #include "config_policy_utils.h"
 #endif
+#include "accesstoken_file_util.h"
 #include "data_validator.h"
 #include "permission_map.h"
 
@@ -55,6 +56,9 @@ static constexpr const char* RECORD_SIZE_MAXIMUM_KEY = "permission_used_record_s
 static constexpr const char* RECORD_AGING_TIME_KEY = "permission_used_record_aging_time";
 static constexpr const char* GLOBAL_DIALOG_BUNDLE_NAME_KEY = "global_dialog_bundle_name";
 static constexpr const char* GLOBAL_DIALOG_ABILITY_NAME_KEY = "global_dialog_ability_name";
+
+static constexpr const char* CUSTOMIZED_CONFIG_FILE = "/etc/access_token/accesstoken_customized_config.json";
+static constexpr const char* CAMERA_PRIVACY_CONTROL_ENHANCE_KEY = "camera_privacy_control_enhance";
 
 static constexpr const char* SEND_REQUEST_REPEAT_TIMES_KEY = "send_request_repeat_times";
 
@@ -99,6 +103,18 @@ int32_t ConfigPolicyLoaderInterface::GetPermissionDefinitionExt(std::vector<std:
 {
     permissions.clear();
     return RET_SUCCESS;
+}
+
+int32_t ConfigPolicyLoaderInterface::GetReservedBundleIdList(
+    const std::string& value, std::set<int32_t>& bundleList)
+{
+    bundleList.clear();
+    return RET_SUCCESS;
+}
+
+std::string ConfigPolicyLoaderInterface::BuildReservedBundleIdList(const std::set<int32_t>& bundleList)
+{
+    return std::string();
 }
 
 int32_t ConfigPolicLoader::ReadCfgFile(const std::string& file, std::string& rawData)
@@ -238,6 +254,19 @@ bool GetPrivacyCfgFromJson(const CJson* j, PrivacyServiceConfig& p)
     return true;
 }
 
+bool GetCustomizedCfgFromJson(const CJson* j, CustomizedServiceConfig& c)
+{
+    // section is required to count as a hit, keys inside are optional
+    CJson* privacyJson = GetObjFromJson(j, "privacy");
+    if (privacyJson == nullptr) {
+        return false;
+    }
+    c.pCustomConfig.cameraPrivacyControlEnhanceEnable = false;
+    GetBoolFromJson(privacyJson, CAMERA_PRIVACY_CONTROL_ENHANCE_KEY,
+        c.pCustomConfig.cameraPrivacyControlEnhanceEnable);
+    return true;
+}
+
 bool GetTokenSyncCfgFromJson(const CJson* j, TokenSyncServiceConfig& t)
 {
     if (!GetIntFromJson(j, SEND_REQUEST_REPEAT_TIMES_KEY, t.sendRequestRepeatTimes)) {
@@ -298,6 +327,8 @@ bool ConfigPolicLoader::GetConfigValueFromFile(const ConfigType& type, const std
         return GetTokenSyncCfgFromJson(toSyncJson, config.tsConfig);
     } else if (type == ConfigType::PERMISSION_FEATURES) {
         return GetPermissionFeaturesFromJson(jsonRes, config.permissionFeatures);
+    } else if (type == ConfigType::CUSTOMIZED_CONFIG) {
+        return GetCustomizedCfgFromJson(jsonRes.get(), config.customConfig);
     }
     return false;
 }
@@ -313,6 +344,8 @@ bool ConfigPolicLoader::GetConfigValue(const ConfigType& type, AccessTokenConfig
     const char* configFile = nullptr;
     if (type == ConfigType::PERMISSION_FEATURES) {
         configFile = PERMISSION_FEATURES_CONFIG_FILE;
+    } else if (type == ConfigType::CUSTOMIZED_CONFIG) {
+        configFile = CUSTOMIZED_CONFIG_FILE;
     } else {
         configFile = ACCESSTOKEN_CONFIG_FILE;
     }
@@ -328,8 +361,8 @@ bool ConfigPolicLoader::GetConfigValue(const ConfigType& type, AccessTokenConfig
         if (GetConfigValueFromFile(type, fileContent, config)) {
             LOGI(ATM_DOMAIN, ATM_TAG, "Get valid config value from file [%{public}s]!", filePath.c_str());
             successFlag = true;
-            if (type != ConfigType::PERMISSION_FEATURES) {
-                break; // once get the config value, break the loop, except feature
+            if ((type != ConfigType::PERMISSION_FEATURES) && (type != ConfigType::CUSTOMIZED_CONFIG)) {
+                break; // once get the config value, break the loop, except feature and customized
             }
         }
     }
@@ -495,18 +528,30 @@ bool ConfigPolicLoader::ParserNativeRawData(
 
 int32_t ConfigPolicLoader::GetAllNativeTokenInfo(std::vector<NativeTokenInfoBase>& tokenInfos)
 {
-    std::string nativeRawData;
-    int32_t ret = ReadCfgFile(NATIVE_TOKEN_CONFIG_FILE, nativeRawData);
-    if (ret != RET_SUCCESS) {
-        LOGE(ATM_DOMAIN, ATM_TAG,
-            "Read native token json file failed, err = %{public}d.", ret);
-        return ret;
+    auto ReadAndParse = [this, &tokenInfos](const std::string& path) -> int32_t {
+        std::string rawData;
+        int32_t ret = ReadCfgFile(path, rawData);
+        if (ret != RET_SUCCESS) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Read native token file failed, err = %{public}d.", ret);
+            return ret;
+        }
+        if (!ParserNativeRawData(rawData, tokenInfos)) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "ParserNativeRawData failed.");
+            return ERR_PARSE_RAW_DATA_FAILED;
+        }
+        return RET_SUCCESS;
+    };
+
+    int32_t ret = ReadAndParse(NATIVE_TOKEN_CONFIG_FILE);
+    if (ret == RET_SUCCESS) {
+        return RET_SUCCESS;
     }
-    if (!ParserNativeRawData(nativeRawData, tokenInfos)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "ParserNativeRawData failed.");
-        return ERR_PRASE_RAW_DATA_FAILED;
+    // backup fallback (read-only, no restore — service has no write permission)
+    char bakPath[PATH_MAX] = {0};
+    if (GetBakFilePath(NATIVE_TOKEN_CONFIG_FILE, bakPath, sizeof(bakPath)) != 0) {
+        return ERR_FILE_OPERATE_FAILED;
     }
-    return RET_SUCCESS;
+    return ReadAndParse(bakPath);
 }
 
 static void JsonFromPermissionDlpMode(const CJson* j, PermissionDlpMode& p)
@@ -567,7 +612,7 @@ int32_t ConfigPolicLoader::GetDlpPermissions(std::vector<PermissionDlpMode>& dlp
     }
     if (!ParserDlpPermsRawData(dlpPermsRawData, dlpPerms)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "ParserDlpPermsRawData failed.");
-        return ERR_PRASE_RAW_DATA_FAILED;
+        return ERR_PARSE_RAW_DATA_FAILED;
     }
     return RET_SUCCESS;
 }
@@ -643,13 +688,62 @@ std::string ConfigPolicLoader::DumpNativeTokenInfo(const NativeTokenInfoBase& na
     return JsonToStringFormatted(j.get());
 }
 
+int32_t ConfigPolicLoader::GetReservedBundleIdList(const std::string& value, std::set<int32_t>& bundleList)
+{
+    bundleList.clear();
+    if (value.empty()) {
+        return RET_SUCCESS;
+    }
+
+    CJsonUnique json = CreateJsonFromString(value);
+    if (json == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Parse reserved bundle id list failed.");
+        return ERR_PARAM_INVALID;
+    }
+    CJson* listJson = GetArrayFromJson(json, "list");
+    if (listJson == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Reserved bundle id list json missing list.");
+        return ERR_PARAM_INVALID;
+    }
+
+    int32_t size = cJSON_GetArraySize(listJson);
+    for (int32_t i = 0; i < size; ++i) {
+        CJson* item = cJSON_GetArrayItem(listJson, i);
+        if ((item == nullptr) || !cJSON_IsNumber(item)) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Reserved bundle id item invalid.");
+            return ERR_PARAM_INVALID;
+        }
+        bundleList.insert(static_cast<int>(cJSON_GetNumberValue(item)));
+    }
+    return RET_SUCCESS;
+}
+
+std::string ConfigPolicLoader::BuildReservedBundleIdList(const std::set<int32_t>& bundleList)
+{
+    CJsonUnique json = CreateJson();
+    CJsonUnique listJson = CreateJsonArray();
+    if ((json == nullptr) || (listJson == nullptr)) {
+        return std::string();
+    }
+    for (int32_t bundleId : bundleList) {
+        CJsonUnique item(cJSON_CreateNumber(bundleId), FreeJson);
+        if ((item == nullptr) || !AddObjToArray(listJson, item)) {
+            return std::string();
+        }
+    }
+    if (!AddObjToJson(json, "list", listJson)) {
+        return std::string();
+    }
+    return PackJsonToString(json);
+}
+
 extern "C" {
-void* Create()
+void* CreateConfigPolicLoader()
 {
     return reinterpret_cast<void*>(new ConfigPolicLoader);
 }
 
-void Destroy(void* loaderPtr)
+void DestroyConfigPolicLoader(void* loaderPtr)
 {
     ConfigPolicyLoaderInterface* loader = reinterpret_cast<ConfigPolicyLoaderInterface*>(loaderPtr);
     if (loader != nullptr) {

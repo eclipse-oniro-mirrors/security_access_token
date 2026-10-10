@@ -23,6 +23,7 @@
 #include "nativetoken.h"
 #include "nativetoken_json_oper.h"
 #include "nativetoken_kit.h"
+#include "accesstoken_file_util.h"
 #include "nativetoken_test_common.h"
 #include "perm_setproc.h"
 #include "token_setproc.h"
@@ -39,10 +40,20 @@ void TokenOperTest::TearDownTestCase()
 {}
 
 void TokenOperTest::SetUp()
-{}
+{
+    char bakPath[PATH_MAX_LEN + 1] = {0};
+    if (GetBakFilePath(TOKEN_ID_CFG_FILE_PATH, bakPath, sizeof(bakPath)) == 0) {
+        unlink(bakPath);
+    }
+}
 
 void TokenOperTest::TearDown()
-{}
+{
+    char bakPath[PATH_MAX_LEN + 1] = {0};
+    if (GetBakFilePath(TOKEN_ID_CFG_FILE_PATH, bakPath, sizeof(bakPath)) == 0) {
+        unlink(bakPath);
+    }
+}
 static const int32_t VALID_TIME = 100;
 static const int32_t DEFAULT_TIME = -1;
 static const char *TOKEN_ID_CFG_FILE_COPY_PATH = "/data/service/el0/access_token/nativetoken_copy.json";

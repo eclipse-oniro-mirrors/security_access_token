@@ -205,6 +205,12 @@ public:
             }
             return ERR_NONE;
         }
+        if (code == static_cast<uint32_t>(IAccessTokenManagerIpcCode::COMMAND_SET_SEC_COMP_ENHANCE_STATUS)) {
+            ++setStatusCallCount_;
+            setStatusIsEnable_ = data.ReadInt32() == 1;
+            (void)reply.WriteInt32(setStatusResult_);
+            return ERR_NONE;
+        }
         (void)reply.WriteInt32(ERR_INVALID_DATA);
         return ERR_NONE;
     }
@@ -213,6 +219,9 @@ public:
     SecCompEnhanceKeyIdl outputKey_;
     int32_t storeResult_ = RET_SUCCESS;
     int32_t getResult_ = RET_SUCCESS;
+    int32_t setStatusResult_ = RET_SUCCESS;
+    bool setStatusIsEnable_ = false;
+    uint32_t setStatusCallCount_ = 0;
     uint32_t storeCallCount_ = 0;
     uint32_t getCallCount_ = 0;
 };
@@ -1722,6 +1731,43 @@ HWTEST_F(AccessTokenMockTest, GetSecCompEnhanceKey002, TestSize.Level4)
     EXPECT_EQ(remote->outputKey_.epoch, output.epoch);
     EXPECT_EQ(remote->outputKey_.key.size(), output.key.size);
     EXPECT_EQ(0, memcmp(remote->outputKey_.key.data(), output.key.data, output.key.size));
+}
+
+/**
+ * @tc.name: SetSecCompEnhanceStatus001
+ * @tc.desc: SetSecCompEnhanceStatus with proxy is null
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, SetSecCompEnhanceStatus001, TestSize.Level4)
+{
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::SetSecCompEnhanceStatus(true));
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::SetSecCompEnhanceStatus(false));
+}
+
+/**
+ * @tc.name: SetSecCompEnhanceStatus002
+ * @tc.desc: SetSecCompEnhanceStatus sends the enable flag and converts remote errors.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, SetSecCompEnhanceStatus002, TestSize.Level4)
+{
+    auto remote = InstallSecCompEnhanceKeyRemoteObject();
+    ASSERT_NE(nullptr, remote);
+
+    EXPECT_EQ(RET_SUCCESS, AccessTokenManagerClient::GetInstance().SetSecCompEnhanceStatus(true));
+    EXPECT_EQ(1u, remote->setStatusCallCount_);
+    EXPECT_TRUE(remote->setStatusIsEnable_);
+
+    EXPECT_EQ(RET_SUCCESS, AccessTokenManagerClient::GetInstance().SetSecCompEnhanceStatus(false));
+    EXPECT_EQ(2u, remote->setStatusCallCount_);
+    EXPECT_FALSE(remote->setStatusIsEnable_);
+
+    remote->setStatusResult_ = AccessTokenError::ERR_PERMISSION_DENIED;
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
+        AccessTokenManagerClient::GetInstance().SetSecCompEnhanceStatus(true));
+    EXPECT_EQ(3u, remote->setStatusCallCount_);
 }
 
 #ifdef ACCESSTOKEN_MANAGER_CLIENT_TEST_ENABLE

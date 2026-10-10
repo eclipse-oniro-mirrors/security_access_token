@@ -95,6 +95,7 @@ public:
         OP_ONSCREEN_AWARENESS = 66,
         OP_CLI_INSTALL_BUNDLE = 67,
         OP_GET_ALL_BUNDLE_INFO = 68,
+        OP_DIRECT_CALL = 69,
         // 以下声明仅用于文件夹权限的访问记录使用,需要和普通权限做区分
         OP_READ_WRITE_DOWNLOAD_DIRECTORY_MEDIA_READ = 100,
         OP_READ_WRITE_DOWNLOAD_DIRECTORY_MEDIA_WRITE = 101,
@@ -117,6 +118,8 @@ public:
         OP_AGENT_FILE_ACCESS_WRITE_AUDIO = 117,
         OP_AGENT_FILE_ACCESS_READ_MEDIA = 118,
         OP_AGENT_FILE_ACCESS_WRITE_MEDIA = 119,
+        // 虚拟权限：无实体权限，不进 permission_definitions.json，仅作隐私使用记录载体
+        OP_DVRCAMERA = 120,
     };
 
     enum ErrorCode {
@@ -131,6 +134,7 @@ public:
     static bool TransferPermissionToOpcode(const std::string& permissionName, int32_t& opCode);
     static bool TransferOpcodeToPermission(int32_t opCode, std::string& permissionName);
     static bool IsPrivacyPermission(const std::string& permissionName);
+    static bool IsCameraPermission(const std::string& permissionName);
 };
 } // namespace AccessToken
 } // namespace Security

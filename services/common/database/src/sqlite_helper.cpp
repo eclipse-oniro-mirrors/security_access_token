@@ -52,11 +52,15 @@ void SqliteHelper::Open(bool skipCheck) __attribute__((no_sanitize("cfi")))
     int32_t res = sqlite3_open_v2(fileName.c_str(), &db_, flags, NULL);
     if (res != SQLITE_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to open db res=%{public}d, msg: %{public}s", res, sqlite3_errmsg(db_));
+        if (!skipCheck && IsCorruptCode(res)) {
+            LOGW(ATM_DOMAIN, ATM_TAG, "Open failed with corrupt code=%{public}d, rebuild", res);
+            (void)Rebuild();
+        }
         return;
     }
     SetWal();
 
-    if (!skipCheck && NeedRebuild()) {
+    if (!skipCheck && NeedRebuild(true)) {
         LOGW(ATM_DOMAIN, ATM_TAG, "integrity_check failed, rebuild!");
         (void)Rebuild();
         return;
@@ -77,7 +81,7 @@ void SqliteHelper::Open(bool skipCheck) __attribute__((no_sanitize("cfi")))
     }
     SetVersion();
     CommitTransaction();
-    if (!skipCheck && NeedRebuild()) {
+    if (!skipCheck && NeedRebuild(true)) {
         LOGW(ATM_DOMAIN, ATM_TAG, "integrity_check failed after open, rebuild!");
         (void)Rebuild();
     }
@@ -224,7 +228,7 @@ bool SqliteHelper::IsCorruptCode(int32_t code) const
     return code == SQLITE_CORRUPT || code == SQLITE_NOTADB;
 }
 
-bool SqliteHelper::NeedRebuild() const
+bool SqliteHelper::NeedRebuild(bool fullCheck) const
 {
     if (db_ == nullptr) {
         return false;
@@ -235,30 +239,24 @@ bool SqliteHelper::NeedRebuild() const
             sqlite3_errmsg(db_));
         return true;
     }
-    char** table = nullptr;
-    int32_t nrow = 0;
-    int32_t ncol = 0;
-    char* errMsg = nullptr;
-    int32_t ret = sqlite3_get_table(db_, "PRAGMA integrity_check;", &table, &nrow, &ncol, &errMsg);
-    code = sqlite3_errcode(db_);
-    sqlite3_free(errMsg);
-    if (ret != SQLITE_OK) {
-        ReportDbException(DB_INTEGRITY_CHECK_FAILED, code, dbPath_ + dbName_);
-        bool corrupt = IsCorruptCode(code);
+    if (!fullCheck) {
+        return false;
+    }
+    auto statement = Prepare("PRAGMA integrity_check;");
+    Statement::State state = statement.Step();
+    int32_t checkCode = sqlite3_errcode(db_);
+    if (state != Statement::State::ROW) {
+        ReportDbException(DB_INTEGRITY_CHECK_FAILED, checkCode, dbPath_ + dbName_);
+        bool corrupt = IsCorruptCode(checkCode);
         if (corrupt) {
-            LOGW(ATM_DOMAIN, ATM_TAG, "integrity_check exec failed, code=%{public}d, msg=%{public}s", code,
+            LOGW(ATM_DOMAIN, ATM_TAG, "integrity_check exec failed, code=%{public}d, msg=%{public}s", checkCode,
                 sqlite3_errmsg(db_));
         }
-        sqlite3_free_table(table);
         return corrupt;
     }
-    std::string result;
-    if (nrow > 0 && ncol > 0 && table != nullptr) {
-        result = table[ncol];
-    }
-    sqlite3_free_table(table);
+    std::string result = statement.GetColumnString(0);
     if (result != "ok") {
-        LOGW(ATM_DOMAIN, ATM_TAG, "integrity_check not ok: %{public}s", result.c_str());
+        LOGW(ATM_DOMAIN, ATM_TAG, "integrity_check not ok");
         return true;
     }
     return false;

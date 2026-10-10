@@ -178,29 +178,32 @@ void GetDirFileSize(
     }
 }
 
+void ReportAccessTokenRdbFileInfo()
+{
+    struct stat dirInfo = {};
+    int32_t statResult = lstat(DATABASE_DIR_PATH, &dirInfo);
+    if (statResult != 0 || !S_ISDIR(dirInfo.st_mode)) {
+        return;
+    }
+    std::vector<std::string> filePaths = { NATIVE_CFG_FILE_PATH };
+    std::vector<uint64_t> fileSizes = { GetFileSize(NATIVE_CFG_FILE_PATH) };
+    GetDirFileSize(DATABASE_DIR_PATH, filePaths, fileSizes, INITIAL_DEPTH);
+    std::vector<std::string> fileNames = { CURRENT_FOLDER };
+    GetCurrentDirFileNames(DATABASE_DIR_PATH, fileNames);
+    ReportDataUsageFileInfo(NATIVE_CFG_DIR_PATH, { CURRENT_FOLDER, NATIVE_CFG_FILE_NAME });
+    ReportDataUsageFileInfo(DATABASE_DIR_PATH, fileNames);
+    (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::FILEMANAGEMENT, "USER_DATA_SIZE",
+        HiviewDFX::HiSysEvent::EventType::STATISTIC,
+        "COMPONENT_NAME", ACCESSTOKEN_NAME,
+        "PARTITION_NAME", DATA_FOLDER,
+        "REMAIN_PARTITION_SIZE", GetUserDataRemainSize(),
+        "FILE_OR_FOLDER_PATH", filePaths,
+        "FILE_OR_FOLDER_SIZE", fileSizes);
+}
+
 void ReportAccessTokenRdbFileInfoAsync()
 {
-    std::thread reportThread([]() {
-        struct stat dirInfo = {};
-        int32_t statResult = lstat(DATABASE_DIR_PATH, &dirInfo);
-        if (statResult != 0 || !S_ISDIR(dirInfo.st_mode)) {
-            return;
-        }
-        std::vector<std::string> filePaths = { NATIVE_CFG_FILE_PATH };
-        std::vector<uint64_t> fileSizes = { GetFileSize(NATIVE_CFG_FILE_PATH) };
-        GetDirFileSize(DATABASE_DIR_PATH, filePaths, fileSizes, INITIAL_DEPTH);
-        std::vector<std::string> fileNames = { CURRENT_FOLDER };
-        GetCurrentDirFileNames(DATABASE_DIR_PATH, fileNames);
-        ReportDataUsageFileInfo(NATIVE_CFG_DIR_PATH, { CURRENT_FOLDER, NATIVE_CFG_FILE_NAME });
-        ReportDataUsageFileInfo(DATABASE_DIR_PATH, fileNames);
-        (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::FILEMANAGEMENT, "USER_DATA_SIZE",
-            HiviewDFX::HiSysEvent::EventType::STATISTIC,
-            "COMPONENT_NAME", ACCESSTOKEN_NAME,
-            "PARTITION_NAME", DATA_FOLDER,
-            "REMAIN_PARTITION_SIZE", GetUserDataRemainSize(),
-            "FILE_OR_FOLDER_PATH", filePaths,
-            "FILE_OR_FOLDER_SIZE", fileSizes);
-    });
+    std::thread reportThread([]() { ReportAccessTokenRdbFileInfo(); });
     reportThread.detach();
 }
 

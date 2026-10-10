@@ -38,12 +38,12 @@ int32_t TokenSyncManagerLoader::UpdateRemoteHapTokenInfo(const HapTokenInfoForSy
 }
 
 extern "C" {
-void* Create()
+void* CreateTokenSyncManagerLoader()
 {
     return reinterpret_cast<void*>(new TokenSyncManagerLoader);
 }
 
-void Destroy(void* loaderPtr)
+void DestroyTokenSyncManagerLoader(void* loaderPtr)
 {
     delete reinterpret_cast<TokenSyncKitInterface*>(loaderPtr);
 }

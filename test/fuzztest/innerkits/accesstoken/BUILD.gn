@@ -73,6 +73,7 @@ group("fuzztest") {
       "getseccompenhance_fuzzer:GetSecCompEnhanceFuzzTest",
       "getseccompenhancekey_fuzzer:GetSecCompEnhanceKeyFuzzTest",
       "registerseccompenhance_fuzzer:RegisterSecCompEnhanceFuzzTest",
+      "setseccompenhancestatus_fuzzer:SetSecCompEnhanceStatusFuzzTest",
       "storeseccompenhancekey_fuzzer:StoreSecCompEnhanceKeyFuzzTest",
       "updateseccompenhance_fuzzer:UpdateSecCompEnhanceFuzzTest",
     ]

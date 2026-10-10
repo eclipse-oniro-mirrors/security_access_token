@@ -81,6 +81,7 @@ ohos_unittest("libaccesstoken_sdk_test") {
     "SaTest/get_native_token_info_test.cpp",
     "SaTest/get_version_test.cpp",
     "SecurityComponentTest/security_component_grant_test.cpp",
+    "SpmKitTest/spm_kit_test.cpp",
     "common/mock_permission.cpp",
     "common/test_common.cpp",
   ]
@@ -104,6 +105,7 @@ ohos_unittest("libaccesstoken_sdk_test") {
     "hilog:libhilog",
     "init:libbegetutil",
     "ipc:ipc_single",
+    "samgr:samgr_proxy",
   ]
 
   external_deps += access_token_external_deps
@@ -120,6 +122,74 @@ ohos_unittest("libaccesstoken_sdk_test") {
   }
   if (access_token_enable_manual_test == true) {
     sources += [ "ToolTokenTest/tool_token_test.cpp" ]
+  }
+}
+
+if (!use_clang_coverage && relational_store_enable) {
+  ohos_unittest("libundefined_permission_update_test") {
+    subsystem_name = "accesscontrol"
+    module_out_path = module_output_path_unittest_accesstoken
+    sanitize = {
+      cfi = true
+      cfi_cross_dso = true
+      debug = false
+    }
+    branch_protector_ret = "pac_ret"
+
+    resource_config_file = "resource/ohos_test.xml"
+
+    include_dirs = [
+      "${access_token_path}/frameworks/accesstoken/include",
+      "${access_token_path}/frameworks/common/include",
+      "${access_token_path}/frameworks/tokensync/include",
+      "${access_token_innerkit_path}/include",
+      "${access_token_innerkit_path}/src",
+      "common",
+      "${access_token_path}/interfaces/innerkits/nativetoken/include",
+      "${access_token_path}/interfaces/innerkits/token_setproc/include",
+      "${access_token_path}/interfaces/innerkits/proxy_death/include",
+      "${access_token_path}/services/accesstokenmanager/main/cpp/include/database",
+      "${access_token_path}/services/accesstokenmanager/main/cpp/include/dfx",
+      "${access_token_path}/services/common/database/include",
+    ]
+
+    sources = [
+      "SaTest/undefined_permission_update_test.cpp",
+      "common/test_common.cpp",
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/access_token_db.cpp",
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/access_token_db_operator.cpp",
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/access_token_db_util.cpp",
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/access_token_open_callback.cpp",
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/token_field_const.cpp",
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/dfx/hisysevent_adapter.cpp",
+      "${access_token_path}/services/common/database/src/generic_values.cpp",
+      "${access_token_path}/services/common/database/src/variant_value.cpp",
+    ]
+
+    cflags_cc = access_token_cflags_cc
+    configs = [ "${access_token_path}/config:coverage_flags" ]
+
+    deps = [
+      "${access_token_path}/frameworks/accesstoken:accesstoken_communication_adapter_cxx",
+      "${access_token_path}/frameworks/common:accesstoken_common_cxx",
+      "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
+      "${access_token_path}/interfaces/innerkits/accesstoken:libtokenid_sdk",
+      "${access_token_path}/interfaces/innerkits/nativetoken:libnativetoken_shared",
+      "${access_token_path}/interfaces/innerkits/token_setproc:libpermsetproc_shared",
+      "${access_token_path}/interfaces/innerkits/token_setproc:libtokensetproc_shared",
+    ]
+
+    external_deps = [
+      "c_utils:utils",
+      "hilog:libhilog",
+      "hisysevent:libhisysevent",
+      "init:libbegetutil",
+      "ipc:ipc_single",
+      "relational_store:native_rdb",
+      "samgr:samgr_proxy",
+    ]
+
+    external_deps += access_token_external_deps
   }
 }
 

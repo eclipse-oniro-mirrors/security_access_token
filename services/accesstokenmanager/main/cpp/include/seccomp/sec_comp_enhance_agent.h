@@ -54,6 +54,7 @@ public:
     int32_t GetSecCompEnhance(int32_t pid, SecCompEnhanceData& enhanceData);
     int32_t StoreSecCompEnhanceKey(const SecCompEnhanceKey& enhanceKey);
     int32_t GetSecCompEnhanceKey(SecCompEnhanceKey& enhanceKey);
+    int32_t SetSecCompEnhanceStatus(bool isEnable);
     void RemoveSecCompEnhance(int pid, uint32_t tokenId);
     void OnAppMgrRemoteDiedHandle();
 

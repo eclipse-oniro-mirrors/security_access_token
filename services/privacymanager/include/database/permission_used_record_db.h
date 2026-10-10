@@ -16,6 +16,7 @@
 #ifndef PERMISSION_USED_RECORD_DB_H
 #define PERMISSION_USED_RECORD_DB_H
 
+#include <functional>
 #include <set>
 #include <shared_mutex>
 #include <unordered_set>
@@ -81,6 +82,7 @@ private:
     int32_t DeleteHistoryRecordsInTablesLocked(std::vector<DataType> dateTypes,
         const std::unordered_set<AccessTokenID>& tokenIDList);
     int32_t DeleteExcessiveRecordsLocked(DataType type, uint32_t excessiveSize);
+    int32_t RetryOnCorrupt(std::function<int32_t()> lockedAction);
 
     int32_t CreatePermissionRecordTable() const;
     int32_t CreatePermissionUsedTypeTable() const;

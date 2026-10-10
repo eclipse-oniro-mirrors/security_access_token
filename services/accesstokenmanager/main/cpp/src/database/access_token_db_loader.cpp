@@ -91,12 +91,12 @@ bool AccessTokenDbLoader::DestroyRdbHelper()
 }
 
 extern "C" {
-void* Create()
+void* CreateAccessTokenDbLoader()
 {
     return reinterpret_cast<void*>(new AccessTokenDbLoader);
 }
 
-void Destroy(void* loaderPtr)
+void DestroyAccessTokenDbLoader(void* loaderPtr)
 {
     AccessTokenDbLoaderInterface* loader = reinterpret_cast<AccessTokenDbLoaderInterface*>(loaderPtr);
     if (loader != nullptr) {

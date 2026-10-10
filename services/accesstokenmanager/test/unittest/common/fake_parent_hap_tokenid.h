@@ -38,6 +38,10 @@ void ResetFakeParentHapTokenIdState();
 } // namespace Security
 } // namespace OHOS
 
+extern int g_spmRefCntForceRet;
+extern uint64_t g_spmRefCntForceValue;
+extern int g_spmRefCntFailRemaining;
+
 #ifdef __cplusplus
 extern "C" {
 #endif

@@ -11,10 +11,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-1.0 {
+{
   global:
-    Create;
-    Destroy;
+    CreateTokenSyncManagerLoader;
+    DestroyTokenSyncManagerLoader;
     extern "C++" {
       OHOS::Security::AccessToken::TokenSyncManagerClient::GetInstance*;
       OHOS::Security::AccessToken::TokenSyncManagerClient::GetRemoteHapTokenInfo*;

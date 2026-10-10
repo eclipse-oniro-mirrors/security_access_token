@@ -45,6 +45,7 @@ void PrivacyCommonEventSubscriber::RegisterEvent()
     skill->AddEvent(EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_UNLOCKED);
     skill->AddEvent(EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_LOCKED);
     skill->AddEvent(EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_OFF);
+    skill->AddEvent(EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_ON);
     skill->AddEvent(EventFwk::CommonEventSupport::COMMON_EVENT_PACKAGE_REMOVED);
     skill->AddEvent(EventFwk::CommonEventSupport::COMMON_EVENT_PACKAGE_FULLY_REMOVED);
     skill->AddEvent(EventFwk::CommonEventSupport::COMMON_EVENT_SHUTDOWN);
@@ -80,7 +81,14 @@ void PrivacyCommonEventSubscriber::OnReceiveEvent(const EventFwk::CommonEventDat
         PermissionRecordManager::GetInstance().SetLockScreenStatus(LockScreenStatusChangeType::PERM_ACTIVE_IN_LOCKED);
         PermissionRecordManager::GetInstance().ExecuteAllCameraExecuteCallback();
     } else if (action == EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_OFF) {
+        PermissionRecordManager::GetInstance().SetScreenOn(false);
+        if (PermissionRecordManager::GetInstance().IsCameraPrivacyControlEnhanceEnabled()) {
+            // camera privacy control enhancement enabled, notify camera to cut off stream
+            PermissionRecordManager::GetInstance().ExecuteAllCameraExecuteCallback();
+        }
         PermissionRecordManager::GetInstance().ExecuteDeletePermissionRecordTask();
+    } else if (action == EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_ON) {
+        PermissionRecordManager::GetInstance().SetScreenOn(true);
     } else if (action == EventFwk::CommonEventSupport::COMMON_EVENT_PACKAGE_REMOVED ||
         action == EventFwk::CommonEventSupport::COMMON_EVENT_PACKAGE_FULLY_REMOVED) {
         uint32_t tokenId = static_cast<uint32_t>(want.GetParams().GetIntParam("accessTokenId", 0));

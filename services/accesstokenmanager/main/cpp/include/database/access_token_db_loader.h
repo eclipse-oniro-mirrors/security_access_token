@@ -60,8 +60,8 @@ public:
 #ifdef __cplusplus
 extern "C" {
 #endif
-    void* Create();
-    void Destroy(void* loaderPtr);
+    void* CreateAccessTokenDbLoader();
+    void DestroyAccessTokenDbLoader(void* loaderPtr);
 #ifdef __cplusplus
 }
 #endif

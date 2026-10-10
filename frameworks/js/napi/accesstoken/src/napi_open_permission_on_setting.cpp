@@ -615,8 +615,7 @@ bool NapiOpenPermissionOnSetting::ParseOpenPermissionOnSetting(const napi_env& e
     LOGI(ATM_DOMAIN, ATM_TAG, "AsyncContext.uiAbilityFlag is: %{public}d.", asyncContext->uiAbilityFlag);
 
     // argv[1] : permissionName
-    if (!ParseString(env, argv[1], asyncContext->permissionName) ||
-        (asyncContext->permissionName.empty())) {
+    if (!ParseString(env, argv[1], asyncContext->permissionName)) {
         errMsg = GetParamErrorMsg("permission", "Permissions");
         NAPI_CALL_BASE(
             env, napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg)), false);

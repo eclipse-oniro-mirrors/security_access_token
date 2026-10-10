@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -68,9 +68,11 @@ public:
     const static std::string FIELD_ACL;
     const static std::string FIELD_NAME;
     const static std::string FIELD_APP_DISTRIBUTION_TYPE;
+    const static std::string FIELD_IS_SIDELOAD;
     const static std::string FIELD_CONTROLLER_TOKENID;
     const static std::string FIELD_RESTRICTED_USER;
     const static std::string FIELD_WHITELIST;
+    const static std::string FIELD_MODE;
 };
 } // namespace AccessToken
 } // namespace Security

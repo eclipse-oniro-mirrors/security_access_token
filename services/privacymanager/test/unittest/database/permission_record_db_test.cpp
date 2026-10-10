@@ -1438,12 +1438,12 @@ static void MakeDbCorrupt(const std::string& dbPath, const std::string& dbName)
 HWTEST_F(PermissionRecordDBTest, NeedRebuild_NormalThenCorrupt, TestSize.Level0)
 {
     auto& db = PermissionUsedRecordDb::GetInstance();
-    EXPECT_FALSE(db.NeedRebuild());
+    EXPECT_FALSE(db.NeedRebuild(true));
     db.ExecuteSql("PRAGMA wal_checkpoint(TRUNCATE)");
     db.Close();
     MakeDbCorrupt(db.dbPath_, db.dbName_);
     db.Open(true);
-    EXPECT_TRUE(db.NeedRebuild());
+    EXPECT_TRUE(db.NeedRebuild(true));
     db.Rebuild();
 }
 

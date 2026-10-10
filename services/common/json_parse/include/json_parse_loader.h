@@ -16,6 +16,7 @@
 #ifndef ACCESSTOKEN_CONFIG_POLICY_LOADER_H
 #define ACCESSTOKEN_CONFIG_POLICY_LOADER_H
 
+#include <set>
 #include <string>
 #include <unordered_set>
 #include <vector>
@@ -28,6 +29,8 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 const static std::string CONFIG_PARSE_LIBPATH = "libaccesstoken_json_parse.z.so";
+const static std::string CONFIG_PARSE_CREATE_SYMBOL = "CreateConfigPolicLoader";
+const static std::string CONFIG_PARSE_DESTROY_SYMBOL = "DestroyConfigPolicLoader";
 struct AccessTokenServiceConfig final {
     std::string grantBundleName;
     std::string grantAbilityName;
@@ -51,10 +54,19 @@ struct TokenSyncServiceConfig final {
     int32_t sendRequestRepeatTimes;
 };
 
+struct PrivacyCustomizedConfig final {
+    bool cameraPrivacyControlEnhanceEnable = false;
+};
+
+struct CustomizedServiceConfig final {
+    PrivacyCustomizedConfig pCustomConfig;
+};
+
 struct AccessTokenConfigValue {
     AccessTokenServiceConfig atConfig;
     PrivacyServiceConfig pConfig;
     TokenSyncServiceConfig tsConfig;
+    CustomizedServiceConfig customConfig;
     std::unordered_set<std::string> permissionFeatures;
 };
 
@@ -63,6 +75,7 @@ enum ConfigType {
     PRIVACY_SERVICE,
     TOKENSYNC_SERVICE,
     PERMISSION_FEATURES,
+    CUSTOMIZED_CONFIG,
     // NOTE: Add new types above INVALID_AT_CONFIG_TYPE
     INVALID_AT_CONFIG_TYPE,
 };
@@ -83,6 +96,8 @@ public:
     virtual std::string DumpNativeTokenInfo(const NativeTokenInfoBase& native);
     virtual std::string DumpHapTokenInfo(const HapTokenInfo& hapInfo, bool isRemote, bool isPermDialogForbidden,
         const std::vector<PermissionStatus>& permStateList);
+    virtual int32_t GetReservedBundleIdList(const std::string& value, std::set<int32_t>& bundleList);
+    virtual std::string BuildReservedBundleIdList(const std::set<int32_t>& bundleList);
 };
 
 class ConfigPolicLoader final: public ConfigPolicyLoaderInterface {
@@ -94,6 +109,8 @@ public:
     std::string DumpNativeTokenInfo(const NativeTokenInfoBase& native);
     std::string DumpHapTokenInfo(const HapTokenInfo& hapInfo, bool isRemote, bool isPermDialogForbidden,
         const std::vector<PermissionStatus>& permStateList);
+    int32_t GetReservedBundleIdList(const std::string& value, std::set<int32_t>& bundleList);
+    std::string BuildReservedBundleIdList(const std::set<int32_t>& bundleList);
 private:
 #ifdef CUSTOMIZATION_CONFIG_POLICY_ENABLE
     void GetConfigFilePathList(std::vector<std::string>& pathList);
@@ -109,8 +126,8 @@ private:
 #ifdef __cplusplus
 extern "C" {
 #endif
-    void* Create();
-    void Destroy(void* loaderPtr);
+    void* CreateConfigPolicLoader();
+    void DestroyConfigPolicLoader(void* loaderPtr);
 #ifdef __cplusplus
 }
 #endif

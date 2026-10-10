@@ -150,6 +150,7 @@ public:
     int32_t StoreSecCompEnhanceKey(const SecCompEnhanceKey& enhanceKey);
     int32_t GetSecCompEnhanceKey(SecCompEnhanceKey& enhanceKey);
 #endif // SECURITY_COMPONENT_ENHANCE_ENABLE
+    int32_t SetSecCompEnhanceStatus(bool isEnable);
     int32_t QueryStatusByPermission(const std::vector<uint32_t>& permCodeList,
         std::vector<PermissionStatus>& permissionInfoList, bool onlyHap);
     int32_t QueryStatusByTokenID(const std::vector<AccessTokenID>& tokenIDList,

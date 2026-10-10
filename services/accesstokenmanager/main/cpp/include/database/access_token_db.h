@@ -49,11 +49,10 @@ private:
     int32_t RestoreAndUpdateIfCorrupt(const int32_t resultCode, int32_t& changedRows,
         const NativeRdb::ValuesBucket& bucket, const NativeRdb::RdbPredicates& predicates,
         const std::shared_ptr<NativeRdb::RdbStore>& db);
-    int32_t RestoreAndQueryIfCorrupt(const NativeRdb::RdbPredicates& predicates,
-        const std::vector<std::string>& columns, std::shared_ptr<NativeRdb::AbsSharedResultSet>& queryResultSet,
-        const std::shared_ptr<NativeRdb::RdbStore>& db);
     int32_t QueryByPredicates(const std::string& tableName, const NativeRdb::RdbPredicates& predicates,
         std::vector<GenericValues>& results);
+    int32_t FindByStep(const NativeRdb::RdbPredicates& predicates, const std::vector<std::string>& columns,
+        std::vector<GenericValues>& results, const std::shared_ptr<NativeRdb::RdbStore>& db);
 
     int32_t DeleteAndInsertValuesInner(const std::vector<DelInfo>& delInfoVec, const std::vector<AddInfo>& addInfoVec);
     void RestoreDatabase(int32_t errCode);

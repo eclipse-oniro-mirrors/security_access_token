@@ -935,6 +935,7 @@ int32_t AccessTokenManagerClient::UpdateHapToken(AccessTokenIDEx& tokenIdEx, con
     infoIdl.dataRefresh = info.dataRefresh;
     infoIdl.appProvisionType = info.appProvisionType;
     infoIdl.isSkillHap = info.isSkillHap;
+    infoIdl.isSideloadApp = info.isSideloadApp;
     HapInfoCheckResultIdl resultInfoIdl;
     uint64_t fullTokenId = tokenIdEx.tokenIDEx;
     int32_t res = proxy->UpdateHapToken(fullTokenId, infoIdl, hapPolicyParcel, resultInfoIdl);
@@ -1788,6 +1789,21 @@ int32_t AccessTokenManagerClient::GetSecCompEnhanceKey(SecCompEnhanceKey& enhanc
     return RET_SUCCESS;
 }
 #endif // SECURITY_COMPONENT_ENHANCE_ENABLE
+
+int32_t AccessTokenManagerClient::SetSecCompEnhanceStatus(bool isEnable)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+    int32_t errCode = proxy->SetSecCompEnhanceStatus(isEnable);
+    if (errCode != RET_SUCCESS) {
+        errCode = ConvertResult(errCode);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Request fail, result: %{public}d", errCode);
+    }
+    return errCode;
+}
 
 int32_t AccessTokenManagerClient::QueryStatusByPermission(const std::vector<uint32_t>& permCodeList,
     std::vector<PermissionStatus>& permissionInfoList, bool onlyHap)

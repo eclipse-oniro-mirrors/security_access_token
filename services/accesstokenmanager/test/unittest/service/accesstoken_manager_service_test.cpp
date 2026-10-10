@@ -510,6 +510,65 @@ HWTEST_F(AccessTokenManagerServiceTest, ResetDatabaseRecoveryStatusServiceTest00
 }
 
 /**
+ * @tc.name: GetTokenTypeServiceTest001
+ * @tc.desc: GetTokenType returns db type for non-hap callers and hides registration state for hap callers.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, GetTokenTypeServiceTest001, TestSize.Level1)
+{
+    atManagerService_->Initialize();
+
+    HapInfoParams info = g_info;
+    info.bundleName = "GetTokenTypeServiceTest001";
+    info.appIDDesc = "GetTokenTypeServiceTest001";
+    HapInfoParcel infoParcel;
+    infoParcel.hapInfoParameter = info;
+    HapPolicyParcel policyParcel;
+    policyParcel.hapPolicy = g_policy;
+
+    uint64_t fullTokenId = RANDOM_TOKENID;
+    HapInfoCheckResultIdl result;
+    ASSERT_EQ(RET_SUCCESS, atManagerService_->InitHapToken(infoParcel, policyParcel, fullTokenId, result));
+    AccessTokenIDEx tokenIdEx;
+    tokenIdEx.tokenIDEx = fullTokenId;
+    AccessTokenID hapTokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, hapTokenId);
+
+    AccessTokenIDInner innerId = {0};
+    innerId.version = DEFAULT_TOKEN_VERSION;
+    innerId.type = TOKEN_NATIVE;
+    innerId.tokenUniqueID = 0x54321;
+    AccessTokenID unregisteredId = 0;
+    ASSERT_EQ(EOK, memcpy_s(&unregisteredId, sizeof(unregisteredId), &innerId, sizeof(innerId)));
+    ASSERT_EQ(TOKEN_INVALID, AccessTokenIDManager::GetInstance().GetTokenIdType(unregisteredId));
+
+    int32_t registeredType = TOKEN_HAP;
+    int32_t unregisteredType = TOKEN_HAP;
+    ASSERT_EQ(ERR_OK, atManagerService_->GetTokenType(hapTokenId, registeredType));
+    ASSERT_EQ(ERR_OK, atManagerService_->GetTokenType(unregisteredId, unregisteredType));
+    EXPECT_EQ(TOKEN_HAP, registeredType);
+    EXPECT_EQ(TOKEN_INVALID, unregisteredType);
+
+    uint64_t selfTokenId = GetSelfTokenID();
+    int32_t setRet = SetSelfTokenID(tokenIdEx.tokenIDEx);
+    int32_t hapCallerRegisteredType = TOKEN_INVALID;
+    int32_t hapCallerUnregisteredType = TOKEN_INVALID;
+    int32_t hapCallerRegisteredRet = atManagerService_->GetTokenType(hapTokenId, hapCallerRegisteredType);
+    int32_t hapCallerUnregisteredRet = atManagerService_->GetTokenType(unregisteredId, hapCallerUnregisteredType);
+    int32_t restoreRet = SetSelfTokenID(selfTokenId);
+
+    ASSERT_EQ(RET_SUCCESS, setRet);
+    ASSERT_EQ(RET_SUCCESS, restoreRet);
+    ASSERT_EQ(ERR_OK, hapCallerRegisteredRet);
+    ASSERT_EQ(ERR_OK, hapCallerUnregisteredRet);
+    EXPECT_EQ(TOKEN_HAP, hapCallerRegisteredType);
+    EXPECT_EQ(TOKEN_NATIVE, hapCallerUnregisteredType);
+
+    ASSERT_EQ(RET_SUCCESS, atManagerService_->DeleteToken(hapTokenId, false));
+}
+
+/**
  * @tc.name: DumpTokenInfoFuncTest001
  * @tc.desc: test DumpTokenInfo with DEVELOPER_MODE_STATE
  * @tc.type: FUNC

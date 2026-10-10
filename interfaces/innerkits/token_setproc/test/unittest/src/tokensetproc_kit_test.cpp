@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -1257,6 +1257,82 @@ HWTEST_F(TokensetprocKitTest, SpmGetUidRefCnt002, TestSize.Level0)
     setuid(ACCESS_TOKEN_UID);
     int ret = SpmGetUidRefCnt(1002, nullptr);
     EXPECT_EQ(ret, EINVAL);
+    setuid(g_selfUid);
+}
+
+/**
+ * @tc.name: SpmGetUidRefCntWithRetry001
+ * @tc.desc: Test SpmGetUidRefCntWithRetry with valid parameters on supported kernel.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokensetprocKitTest, SpmGetUidRefCntWithRetry001, TestSize.Level0)
+{
+    setuid(ACCESS_TOKEN_UID);
+    uint64_t refcnt = 0;
+    int ret = SpmGetUidRefCntWithRetry(1002, &refcnt);
+    if (ret == ENOTSUP) {
+        GTEST_LOG_(INFO) << "Kernel doesn't support SPM CMD, skip test";
+        setuid(g_selfUid);
+        return;
+    }
+    EXPECT_EQ(ret, 0);
+    setuid(g_selfUid);
+}
+
+/**
+ * @tc.name: SpmGetUidRefCntWithRetry002
+ * @tc.desc: Test SpmGetUidRefCntWithRetry with nullptr refcnt returns EINVAL.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokensetprocKitTest, SpmGetUidRefCntWithRetry002, TestSize.Level0)
+{
+    setuid(ACCESS_TOKEN_UID);
+    int ret = SpmGetUidRefCntWithRetry(1002, nullptr);
+    EXPECT_EQ(ret, EINVAL);
+    setuid(g_selfUid);
+}
+
+/**
+ * @tc.name: SpmGetUidRefCntWithRetry003
+ * @tc.desc: Test SpmGetUidRefCntWithRetry returns consistent result on repeated calls, covering the cached
+ *          IsKernelSupportSpm return path (spm_setproc.c:418).
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokensetprocKitTest, SpmGetUidRefCntWithRetry003, TestSize.Level0)
+{
+    setuid(ACCESS_TOKEN_UID);
+    uint64_t refcnt1 = 0;
+    int ret1 = SpmGetUidRefCntWithRetry(1002, &refcnt1);
+    uint64_t refcnt2 = 0;
+    int ret2 = SpmGetUidRefCntWithRetry(1002, &refcnt2);
+    EXPECT_EQ(ret1, ret2);
+    if (ret1 == ACCESS_TOKEN_OK) {
+        EXPECT_EQ(refcnt1, refcnt2);
+    }
+    setuid(g_selfUid);
+}
+
+/**
+ * @tc.name: SpmGetUidRefCntWithRetry004
+ * @tc.desc: Test SpmGetUidRefCntWithRetry returns ACCESS_TOKEN_OK with refcnt zeroed when kernel doesn't
+ *          support SPM, covering the fallback path (spm_setproc.c:433).
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokensetprocKitTest, SpmGetUidRefCntWithRetry004, TestSize.Level0)
+{
+    if (IsKernelSupportSpm()) {
+        GTEST_LOG_(INFO) << "Kernel supports SPM, fallback path is unreachable, skip test";
+        return;
+    }
+    setuid(ACCESS_TOKEN_UID);
+    uint64_t refcnt = 1;
+    int ret = SpmGetUidRefCntWithRetry(1002, &refcnt);
+    EXPECT_EQ(ACCESS_TOKEN_OK, ret);
+    EXPECT_EQ(0u, refcnt);
     setuid(g_selfUid);
 }
 

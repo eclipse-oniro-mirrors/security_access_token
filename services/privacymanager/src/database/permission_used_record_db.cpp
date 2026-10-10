@@ -190,23 +190,45 @@ PermissionUsedRecordDb::PermissionUsedRecordDb() : SqliteHelper(DATABASE_NAME, D
     Open();
 }
 
-int32_t PermissionUsedRecordDb::Add(DataType type, const std::vector<GenericValues>& values)
+int32_t PermissionUsedRecordDb::RetryOnCorrupt(std::function<int32_t()> lockedAction)
 {
-    std::unique_lock<std::shared_mutex> lock(this->rwLock_);
-    int32_t ret = AddLocked(type, values);
+    std::unique_lock<std::shared_mutex> lock(rwLock_);
+    BeginTransaction();
+    int32_t ret = lockedAction();
     if (ret == SUCCESS) {
+        CommitTransaction();
         return ret;
     }
-    if (!NeedRebuild()) {
+    bool corrupt = NeedRebuild();
+    RollbackTransaction();
+    if (!corrupt) {
         LOGW(PRI_DOMAIN, PRI_TAG, "Db operate failed but not corrupt, retry after 300ms");
         std::this_thread::sleep_for(std::chrono::milliseconds(SLEEP_RETRY_MS));
-        return AddLocked(type, values);
+        BeginTransaction();
+        ret = lockedAction();
+        if (ret == SUCCESS) {
+            CommitTransaction();
+        } else {
+            RollbackTransaction();
+        }
+        return ret;
     }
-    LOGW(PRI_DOMAIN, PRI_TAG, "Detech db corrupt, rebuild!");
+    LOGW(PRI_DOMAIN, PRI_TAG, "Detect db corrupt, rebuild!");
     if (Rebuild() == SUCCESS) {
-        ret = AddLocked(type, values);
+        BeginTransaction();
+        ret = lockedAction();
+        if (ret == SUCCESS) {
+            CommitTransaction();
+        } else {
+            RollbackTransaction();
+        }
     }
     return ret;
+}
+
+int32_t PermissionUsedRecordDb::Add(DataType type, const std::vector<GenericValues>& values)
+{
+    return RetryOnCorrupt([this, &values, &type] { return AddLocked(type, values); });
 }
 
 int32_t PermissionUsedRecordDb::AddLocked(DataType type, const std::vector<GenericValues>& values)
@@ -221,7 +243,6 @@ int32_t PermissionUsedRecordDb::AddLocked(DataType type, const std::vector<Gener
     LOGD(PRI_DOMAIN, PRI_TAG, "Add sql is %{public}s.", prepareSql.c_str());
 
     auto statement = Prepare(prepareSql);
-    BeginTransaction();
     bool isAddSuccessfully = true;
     for (const auto& value : values) {
         std::vector<std::string> columnNames = value.GetAllKeys();
@@ -236,12 +257,8 @@ int32_t PermissionUsedRecordDb::AddLocked(DataType type, const std::vector<Gener
         statement.Reset();
     }
     if (!isAddSuccessfully) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Rollback transaction.");
-        RollbackTransaction();
         return PrivacyError::ERR_DATABASE_OPERATE_FAILED;
     }
-    LOGD(PRI_DOMAIN, PRI_TAG, "Commit transaction.");
-    CommitTransaction();
 
     int64_t endTime = TimeUtil::GetCurrentTimestamp();
     LogCost("Add", endTime - beginTime);
@@ -251,21 +268,7 @@ int32_t PermissionUsedRecordDb::AddLocked(DataType type, const std::vector<Gener
 
 int32_t PermissionUsedRecordDb::Remove(DataType type, const GenericValues& conditions)
 {
-    std::unique_lock<std::shared_mutex> lock(this->rwLock_);
-    int32_t ret = RemoveLocked(type, conditions);
-    if (ret == SUCCESS) {
-        return ret;
-    }
-    if (!NeedRebuild()) {
-        LOGW(PRI_DOMAIN, PRI_TAG, "Db operate failed but not corrupt, retry after 300ms");
-        std::this_thread::sleep_for(std::chrono::milliseconds(SLEEP_RETRY_MS));
-        return RemoveLocked(type, conditions);
-    }
-    LOGW(PRI_DOMAIN, PRI_TAG, "Detech db corrupt, rebuild!");
-    if (Rebuild() == SUCCESS) {
-        ret = RemoveLocked(type, conditions);
-    }
-    return ret;
+    return RetryOnCorrupt([this, &conditions, &type] { return RemoveLocked(type, conditions); });
 }
 
 int32_t PermissionUsedRecordDb::RemoveLocked(DataType type, const GenericValues& conditions)
@@ -361,21 +364,9 @@ int32_t PermissionUsedRecordDb::Count(DataType type)
 int32_t PermissionUsedRecordDb::DeleteExpireRecords(DataType type,
     const GenericValues& andConditions)
 {
-    std::unique_lock<std::shared_mutex> lock(this->rwLock_);
-    int32_t ret = DeleteExpireRecordsLocked(type, andConditions);
-    if (ret == SUCCESS) {
-        return ret;
-    }
-    if (!NeedRebuild()) {
-        LOGW(PRI_DOMAIN, PRI_TAG, "Db operate failed but not corrupt, retry after 300ms");
-        std::this_thread::sleep_for(std::chrono::milliseconds(SLEEP_RETRY_MS));
+    return RetryOnCorrupt([this, &andConditions, &type] {
         return DeleteExpireRecordsLocked(type, andConditions);
-    }
-    LOGW(PRI_DOMAIN, PRI_TAG, "Detech db corrupt, rebuild!");
-    if (Rebuild() == SUCCESS) {
-        ret = DeleteExpireRecordsLocked(type, andConditions);
-    }
-    return ret;
+    });
 }
 
 int32_t PermissionUsedRecordDb::DeleteExpireRecordsLocked(DataType type,
@@ -406,21 +397,9 @@ int32_t PermissionUsedRecordDb::DeleteExpireRecordsLocked(DataType type,
 int32_t PermissionUsedRecordDb::DeleteHistoryRecordsInTables(std::vector<DataType> dateTypes,
     const std::unordered_set<AccessTokenID>& tokenIDList)
 {
-    std::unique_lock<std::shared_mutex> lock(this->rwLock_);
-    int32_t ret = DeleteHistoryRecordsInTablesLocked(dateTypes, tokenIDList);
-    if (ret == SUCCESS) {
-        return ret;
-    }
-    if (!NeedRebuild()) {
-        LOGW(PRI_DOMAIN, PRI_TAG, "Db operate failed but not corrupt, retry after 300ms");
-        std::this_thread::sleep_for(std::chrono::milliseconds(SLEEP_RETRY_MS));
+    return RetryOnCorrupt([this, &dateTypes, &tokenIDList] {
         return DeleteHistoryRecordsInTablesLocked(dateTypes, tokenIDList);
-    }
-    LOGW(PRI_DOMAIN, PRI_TAG, "Detech db corrupt, rebuild!");
-    if (Rebuild() == SUCCESS) {
-        ret = DeleteHistoryRecordsInTablesLocked(dateTypes, tokenIDList);
-    }
-    return ret;
+    });
 }
 
 int32_t PermissionUsedRecordDb::DeleteHistoryRecordsInTablesLocked(std::vector<DataType> dateTypes,
@@ -428,20 +407,15 @@ int32_t PermissionUsedRecordDb::DeleteHistoryRecordsInTablesLocked(std::vector<D
 {
     int64_t beginTime = TimeUtil::GetCurrentTimestamp();
 
-    BeginTransaction();
     for (const auto& type : dateTypes) {
         std::string deleteHistorySql = CreateDeleteHistoryRecordsPrepareSqlCmd(type, tokenIDList);
         LOGD(PRI_DOMAIN, PRI_TAG, "DeleteHistoryRecordsInTables sql is %{public}s.", deleteHistorySql.c_str());
         auto deleteHistoryStatement = Prepare(deleteHistorySql);
         if (deleteHistoryStatement.Step() != Statement::State::DONE) {
-            LOGE(PRI_DOMAIN, PRI_TAG, "Rollback transaction.");
-            RollbackTransaction();
+            LOGE(PRI_DOMAIN, PRI_TAG, "Step failed, errMsg is %{public}s.", SpitError().c_str());
             return PrivacyError::ERR_DATABASE_OPERATE_FAILED;
         }
     }
-
-    LOGD(PRI_DOMAIN, PRI_TAG, "Commit transaction.");
-    CommitTransaction();
 
     int64_t endTime = TimeUtil::GetCurrentTimestamp();
     LogCost("DeleteHistoryRecordsInTables", endTime - beginTime);
@@ -451,21 +425,9 @@ int32_t PermissionUsedRecordDb::DeleteHistoryRecordsInTablesLocked(std::vector<D
 
 int32_t PermissionUsedRecordDb::DeleteExcessiveRecords(DataType type, uint32_t excessiveSize)
 {
-    std::unique_lock<std::shared_mutex> lock(this->rwLock_);
-    int32_t ret = DeleteExcessiveRecordsLocked(type, excessiveSize);
-    if (ret == SUCCESS) {
-        return ret;
-    }
-    if (!NeedRebuild()) {
-        LOGW(PRI_DOMAIN, PRI_TAG, "Db operate failed but not corrupt, retry after 300ms");
-        std::this_thread::sleep_for(std::chrono::milliseconds(SLEEP_RETRY_MS));
+    return RetryOnCorrupt([this, &type, &excessiveSize] {
         return DeleteExcessiveRecordsLocked(type, excessiveSize);
-    }
-    LOGW(PRI_DOMAIN, PRI_TAG, "Detech db corrupt, rebuild!");
-    if (Rebuild() == SUCCESS) {
-        ret = DeleteExcessiveRecordsLocked(type, excessiveSize);
-    }
-    return ret;
+    });
 }
 
 int32_t PermissionUsedRecordDb::DeleteExcessiveRecordsLocked(DataType type, uint32_t excessiveSize)
@@ -489,21 +451,9 @@ int32_t PermissionUsedRecordDb::DeleteExcessiveRecordsLocked(DataType type, uint
 int32_t PermissionUsedRecordDb::Update(DataType type, const GenericValues& modifyValue,
     const GenericValues& conditionValue)
 {
-    std::unique_lock<std::shared_mutex> lock(this->rwLock_);
-    int32_t ret = UpdateLocked(type, modifyValue, conditionValue);
-    if (ret == SUCCESS) {
-        return ret;
-    }
-    if (!NeedRebuild()) {
-        LOGW(PRI_DOMAIN, PRI_TAG, "Db operate failed but not corrupt, retry after 300ms");
-        std::this_thread::sleep_for(std::chrono::milliseconds(SLEEP_RETRY_MS));
+    return RetryOnCorrupt([this, &modifyValue, &conditionValue, &type] {
         return UpdateLocked(type, modifyValue, conditionValue);
-    }
-    LOGW(PRI_DOMAIN, PRI_TAG, "Detech db corrupt, rebuild!");
-    if (Rebuild() == SUCCESS) {
-        ret = UpdateLocked(type, modifyValue, conditionValue);
-    }
-    return ret;
+    });
 }
 
 int32_t PermissionUsedRecordDb::UpdateLocked(DataType type, const GenericValues& modifyValue,

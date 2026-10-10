@@ -1,0 +1,131 @@
+/*
+ * Copyright (c) 2026 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include "getcurrusingperminfostub_fuzzer.h"
+
+#include <string>
+
+#undef private
+#include "accesstoken_fuzzdata.h"
+#include "add_perm_param_info.h"
+#include "constant.h"
+#include "fuzzer/FuzzedDataProvider.h"
+#include "iprivacy_manager.h"
+#include "mock_permission.h"
+#include "permission_used_type.h"
+#include "privacy_manager_service.h"
+#include "proxy_death_callback_stub.h"
+
+using namespace std;
+using namespace OHOS::Security::AccessToken;
+static int32_t g_permSize = static_cast<int32_t>(Constant::PERMISSION_OPCODE_MAP.size());
+
+namespace OHOS {
+    void StartUsingPermissionStub(AccessTokenID tokenID, int32_t pid, const std::string& permissionName,
+        const std::string& enhancedIdentity)
+    {
+        MessageParcel data;
+        if (!data.WriteInterfaceToken(IPrivacyManager::GetDescriptor())) {
+            return;
+        }
+
+        PermissionUsedTypeInfoParcel infoParcel;
+        infoParcel.info.tokenId = tokenID;
+        infoParcel.info.pid = pid;
+        infoParcel.info.permissionName = permissionName;
+        infoParcel.info.type = NORMAL_TYPE;
+        infoParcel.info.enhancedIdentity = enhancedIdentity;
+
+        auto anonyStub = sptr<ProxyDeathCallBackStub>::MakeSptr();
+        if (!data.WriteParcelable(&infoParcel)) {
+            return;
+        }
+        if (!data.WriteRemoteObject(anonyStub)) {
+            return;
+        }
+
+        MessageParcel reply;
+        MessageOption option(MessageOption::TF_SYNC);
+        DelayedSingleton<PrivacyManagerService>::GetInstance()->OnRemoteRequest(
+            static_cast<uint32_t>(IPrivacyManagerIpcCode::COMMAND_START_USING_PERMISSION), data, reply, option);
+    }
+
+    void StopUsingPermissionStub(AccessTokenID tokenID, int32_t pid, const std::string& permissionName,
+        const std::string& enhancedIdentity)
+    {
+        MessageParcel datas;
+        if (!datas.WriteInterfaceToken(IPrivacyManager::GetDescriptor())) {
+            return;
+        }
+        if (!datas.WriteUint32(tokenID)) {
+            return;
+        }
+        if (!datas.WriteInt32(pid)) {
+            return;
+        }
+        if (!datas.WriteString(permissionName)) {
+            return;
+        }
+        if (!datas.WriteString(enhancedIdentity)) {
+            return;
+        }
+
+        MessageParcel reply;
+        MessageOption option(MessageOption::TF_SYNC);
+        DelayedSingleton<PrivacyManagerService>::GetInstance()->OnRemoteRequest(
+            static_cast<uint32_t>(IPrivacyManagerIpcCode::COMMAND_STOP_USING_PERMISSION), datas, reply, option);
+    }
+
+    bool GetCurrUsingPermInfoStubFuzzTest(const uint8_t* data, size_t size)
+    {
+        if ((data == nullptr) || (size == 0)) {
+            return false;
+        }
+
+        FuzzedDataProvider provider(data, size);
+        AccessTokenID tokenID = ConsumeTokenId(provider);
+        int32_t pid = provider.ConsumeIntegral<int32_t>();
+        std::string permissionName;
+        int32_t opCode = provider.ConsumeIntegral<int32_t>() % g_permSize;
+        (void)Constant::TransferOpcodeToPermission(opCode, permissionName);
+        std::string enhancedIdentity = provider.ConsumeRandomLengthString(
+            provider.ConsumeIntegralInRange<size_t>(0, MAX_ENHANCED_IDENTITY_LENGTH + 1));
+
+        MockToken mock({ "ohos.permission.PERMISSION_USED_STATS" }, false, false);
+        StartUsingPermissionStub(tokenID, pid, permissionName, enhancedIdentity);
+
+        MessageParcel datas;
+        if (!datas.WriteInterfaceToken(IPrivacyManager::GetDescriptor())) {
+            return false;
+        }
+        uint32_t code = static_cast<uint32_t>(
+            IPrivacyManagerIpcCode::COMMAND_GET_CURR_USING_PERM_INFO);
+
+        MessageParcel reply;
+        MessageOption option;
+        (void)DelayedSingleton<PrivacyManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
+
+        StopUsingPermissionStub(tokenID, pid, permissionName, enhancedIdentity);
+        return true;
+    }
+} // namespace OHOS
+
+/* Fuzzer entry point */
+extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
+{
+    /* Run your code on data */
+    OHOS::GetCurrUsingPermInfoStubFuzzTest(data, size);
+    return 0;
+}

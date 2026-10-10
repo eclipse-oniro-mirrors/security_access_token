@@ -92,6 +92,25 @@ accesstoken_manager_base_config = {
     sources += [ "${access_token_path}/services/accesstokenmanager/main/cpp/src/seccomp/sec_comp_enhance_agent.cpp" ]
   }
 
+  if (access_token_enable_spm && access_token_manager_hapverify_enable) {
+    sources += [
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/app_verify_adapter.cpp",
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/hap_sign_verify_helper.cpp",
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/hap_sign_verify_manager.cpp",
+    ]
+  }
+
+  if (access_token_enable_spm == true) {
+    sources += [
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/kernel/add_spm_data_task.cpp",
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/kernel/kernel_and_db_lock.cpp",
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/kernel/remove_spm_data_task.cpp",
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/kernel/spm_data_kernel_common.cpp",
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/kernel/update_spm_data_task.cpp",
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/transaction/kernel_and_db_transaction.cpp",
+    ]
+  }
+
   # ========== Include Dirs ==========
   # Base include dirs (always included)
   include_dirs = [
@@ -121,6 +140,7 @@ accesstoken_manager_base_config = {
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/permission",
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/seccomp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/service",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/include/transaction",
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/clawtoken",
   ]
 
@@ -171,6 +191,10 @@ accesstoken_manager_base_config = {
 
   if (access_token_support_subprofile == true) {
     external_deps += [ "os_account:os_account_innerkits_lite" ]
+  }
+
+  if (access_token_enable_spm && access_token_manager_hapverify_enable) {
+    external_deps += [ "bundle_framework:spm_module_parser" ]
   }
   # ========== lite_device_enable: Complete Configuration ==========
   # Light device: use dlopen database (smaller footprint)

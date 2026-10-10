@@ -36,15 +36,22 @@ constexpr const char* RESOURCE_KEY = "ohos.sensitive.resource";
 using namespace AAFwk;
 AbilityManagerAdapter& AbilityManagerAdapter::GetInstance()
 {
-    static AbilityManagerAdapter *instance = new (std::nothrow) AbilityManagerAdapter();
-    return *instance;
+    static AbilityManagerAdapter instance;
+    return instance;
 }
 
 AbilityManagerAdapter::AbilityManagerAdapter()
 {}
 
 AbilityManagerAdapter::~AbilityManagerAdapter()
-{}
+{
+    std::lock_guard<std::mutex> lock(proxyMutex_);
+    if (proxy_ != nullptr && deathRecipient_ != nullptr) {
+        proxy_->RemoveDeathRecipient(deathRecipient_);
+    }
+    proxy_ = nullptr;
+    deathRecipient_ = nullptr;
+}
 
 static void AbilityManagerConvertWant(const InnerWant &innerWant, AAFwk::Want &want)
 {

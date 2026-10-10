@@ -39,7 +39,11 @@ ohos_unittest("libaccesstoken_manager_service_coverage_test") {
   ]
 
   sources = [
+    "${access_token_path}/frameworks/common/src/accesstoken_klog.cpp",
+    "${access_token_path}/services/common/json_parse/src/json_parse_loader.cpp",
     "../mock/database/rdb_store.cpp",
+    "../mock/permission/library_loader_config_mock.cpp",
+    "../unittest/common/fake_parent_hap_tokenid.cpp",
     "../unittest/common/parameter.cpp",
     "../unittest/common/parameters.cpp",
     "accesstoken_database_coverage_test.cpp",
@@ -54,7 +58,10 @@ ohos_unittest("libaccesstoken_manager_service_coverage_test") {
 
   configs = accesstoken_manager_base_config.configs
 
-  deps = [ "${access_token_path}/interfaces/innerkits/nativetoken:libnativetoken_shared" ]
+  deps = [
+    "${access_token_path}/interfaces/innerkits/accesstoken_file_util:accesstoken_file_util",
+    "${access_token_path}/interfaces/innerkits/nativetoken:libnativetoken_shared",
+  ]
   deps += accesstoken_manager_base_config.deps
 
   external_deps = [

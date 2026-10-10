@@ -347,15 +347,15 @@ uint32_t PermissionDataBrief::GetFlagWroteToDb(uint32_t grantFlag)
     return ConstantCommon::GetFlagWithoutSpecifiedElement(grantFlag, PERMISSION_COMPONENT_SET);
 }
 
-int32_t PermissionDataBrief::TranslationIntoAclExtendedMap(
-    AccessTokenID tokenId,
-    const std::vector<GenericValues>& extendedPermRes,
+int32_t PermissionDataBrief::TranslationIntoAclExtendedMap(AccessTokenID tokenId,
+    const std::unordered_map<AccessTokenID, std::vector<GenericValues>>& extendedPermRes,
     std::map<std::string, std::string>& aclExtendedMap)
 {
-    for (const GenericValues& permValue : extendedPermRes) {
-        if ((AccessTokenID)permValue.GetInt(TokenFiledConst::FIELD_TOKEN_ID) != tokenId) {
-            continue;
-        }
+    auto iter = extendedPermRes.find(tokenId);
+    if (iter == extendedPermRes.end()) {
+        return RET_SUCCESS;
+    }
+    for (const GenericValues& permValue : iter->second) {
         PermissionWithValue perm;
         int ret = DataTranslator::TranslationIntoExtendedPermission(permValue, perm);
         if (ret != RET_SUCCESS) {
@@ -367,7 +367,8 @@ int32_t PermissionDataBrief::TranslationIntoAclExtendedMap(
 }
 
 void PermissionDataBrief::RestorePermissionBriefData(AccessTokenID tokenId,
-    const std::vector<GenericValues>& permStateRes, const std::vector<GenericValues> extendedPermRes)
+    const std::unordered_map<AccessTokenID, std::vector<GenericValues>>& permStateRes,
+    const std::unordered_map<AccessTokenID, std::vector<GenericValues>>& extendedPermRes)
 {
     std::unique_lock<std::shared_mutex> infoGuard(this->permissionStateDataLock_);
     std::vector<BriefPermData> list;
@@ -376,20 +377,20 @@ void PermissionDataBrief::RestorePermissionBriefData(AccessTokenID tokenId,
     if (result != RET_SUCCESS) {
         return;
     }
-    for (const GenericValues& stateValue : permStateRes) {
-        if ((AccessTokenID)stateValue.GetInt(TokenFiledConst::FIELD_TOKEN_ID) != tokenId) {
-            continue;
-        }
-        PermissionStatus state;
-        int ret = DataTranslator::TranslationIntoPermissionStatus(stateValue, state);
-        if (ret == RET_SUCCESS) {
+    auto stateIter = permStateRes.find(tokenId);
+    if (stateIter != permStateRes.end()) {
+        for (const GenericValues& stateValue : stateIter->second) {
+            PermissionStatus state;
+            int ret = DataTranslator::TranslationIntoPermissionStatus(stateValue, state);
+            if (ret != RET_SUCCESS) {
+                LOGE(ATM_DOMAIN, ATM_TAG, "TokenId 0x%{public}x permState is wrong.", tokenId);
+                continue;
+            }
             BriefPermData data = {0};
             if (!GetPermissionBriefData(tokenId, state, aclExtendedMap, data)) {
                 continue;
             }
             MergePermBriefData(list, data);
-        } else {
-            LOGE(ATM_DOMAIN, ATM_TAG, "TokenId 0x%{public}x permState is wrong.", tokenId);
         }
     }
     AddBriefPermDataByTokenId(tokenId, list);

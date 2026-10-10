@@ -16,10 +16,12 @@
 #include "accesstoken_manager_service.h"
 
 #include <cstring>
+#include <chrono>
 #include <memory>
 #include <mutex>
 #include <stack>
 #include <sys/stat.h>
+#include <thread>
 #include <unordered_map>
 #include <unordered_set>
 #include <unistd.h>
@@ -121,6 +123,10 @@ const std::string MANAGE_TOOL_TOKENID = "ohos.permission.MANAGE_TOOL_TOKENID";
 
 static constexpr int32_t SA_ID_ACCESSTOKEN_MANAGER_SERVICE = 3503;
 std::mutex g_userPolicyUpdateMutex;
+static const int32_t RETRY_TIMES_MS = 100; // 0.1s
+static const int32_t RETRY_COUNT = 50;
+static const int32_t ASYNC_RETRY_INTERVAL_MS = 1000; // 1s
+static const int32_t ASYNC_RETRY_COUNT = 300; // 5min / 1s
 
 int32_t ResolveRequestToggleUserId(int32_t userID)
 {
@@ -130,7 +136,7 @@ int32_t ResolveRequestToggleUserId(int32_t userID)
 }
 
 #ifdef HICOLLIE_ENABLE
-constexpr uint32_t TIMEOUT = 40; // 40s
+constexpr uint32_t TIMEOUT = 60; // 60s
 thread_local std::stack<int32_t> g_timerIdStack;
 #endif // HICOLLIE_ENABLE
 
@@ -274,6 +280,12 @@ void FillPermissionCheckResultIdl(const HapInfoCheckResult& permCheckResult, Hap
     resultInfoIdl.rule = static_cast<PermissionRulesEnumIdl>(permCheckResult.permCheckResult.rule);
 }
 
+bool NormalizeSideloadParams(bool isSideloadApp, const std::string& appDistributionType)
+{
+    // sideload app must be developer_id distributed, developer_id distribution may not be sideload
+    return isSideloadApp && appDistributionType == "developer_id";
+}
+
 void BuildBundleParam(const HapInfoParams& info, BundleParam& bundleParam)
 {
     bundleParam.bundleName = info.bundleName;
@@ -285,6 +297,7 @@ void BuildBundleParam(const HapInfoParams& info, BundleParam& bundleParam)
     bundleParam.isSystem = info.isSystemApp;
     bundleParam.isAtomicService = info.isAtomicService;
     bundleParam.isDebug = (info.appProvisionType == "debug" || info.appDistributionType == "none");
+    bundleParam.isSideloadApp = NormalizeSideloadParams(info.isSideloadApp, info.appDistributionType);
 }
 
 void BuildBundleParam(const UpdateHapInfoParams& info, const std::string& bundleName, BundleParam& bundleParam)
@@ -298,6 +311,7 @@ void BuildBundleParam(const UpdateHapInfoParams& info, const std::string& bundle
     bundleParam.isSystem = info.isSystemApp;
     bundleParam.isAtomicService = info.isAtomicService;
     bundleParam.isDebug = (info.appProvisionType == "debug" || info.appDistributionType == "none");
+    bundleParam.isSideloadApp = NormalizeSideloadParams(info.isSideloadApp, info.appDistributionType);
 }
 
 PermissionDecisionStatusIdl ConvertPermissionDecisionStatus(PermissionDecisionStatus status)
@@ -659,30 +673,86 @@ AccessTokenManagerService::~AccessTokenManagerService()
 
 void AccessTokenManagerService::OnStart()
 {
+    {
+        std::lock_guard<std::mutex> lock(stateMutex_);
+        if (state_ == ServiceRunningState::STATE_RUNNING) {
+            LOGI(ATM_DOMAIN, ATM_TAG, "AccessTokenManagerService has already started!");
+            return;
+        }
+
+        LOGI(ATM_DOMAIN, ATM_TAG, "AccessTokenManagerService is starting.");
+        if (!Initialize()) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to initialize.");
+            return;
+        }
+
+        bool ret = Publish(DelayedSingleton<AccessTokenManagerService>::GetInstance().get());
+        (void)AddSystemAbilityListener(SECURITY_COMPONENT_SERVICE_ID);
+#ifdef TOKEN_SYNC_ENABLE
+        (void)AddSystemAbilityListener(DISTRIBUTED_HARDWARE_DEVICEMANAGER_SA_ID);
+#endif
+        if (ret) {
+            AfterPublishSuccessLocked();
+            return;
+        }
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to publish service!");
+        ReportSysEventServiceStartError(SA_PUBLISH_FAILED, "Publish accesstoken_service fail.", ERROR);
+    }
+    RetryPublishLoop();
+}
+
+void AccessTokenManagerService::AfterPublishSuccessLocked()
+{
+    state_ = ServiceRunningState::STATE_RUNNING;
+    AccessTokenServiceParamSet();
+    LOGI(ATM_DOMAIN, ATM_TAG, "Congratulations, ATM start successfully!");
+}
+
+bool AccessTokenManagerService::RetryPublishInner()
+{
     std::lock_guard<std::mutex> lock(stateMutex_);
     if (state_ == ServiceRunningState::STATE_RUNNING) {
-        LOGI(ATM_DOMAIN, ATM_TAG, "AccessTokenManagerService has already started!");
-        return;
-    }
-
-    LOGI(ATM_DOMAIN, ATM_TAG, "AccessTokenManagerService is starting.");
-    if (!Initialize()) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to initialize.");
-        return;
+        return true;
     }
     bool ret = Publish(DelayedSingleton<AccessTokenManagerService>::GetInstance().get());
     if (!ret) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to publish service!");
-        ReportSysEventServiceStartError(SA_PUBLISH_FAILED, "Publish accesstoken_service fail.", ERROR);
-        return;
+        return false;
     }
-    state_ = ServiceRunningState::STATE_RUNNING;
-    AccessTokenServiceParamSet();
-    (void)AddSystemAbilityListener(SECURITY_COMPONENT_SERVICE_ID);
-#ifdef TOKEN_SYNC_ENABLE
-    (void)AddSystemAbilityListener(DISTRIBUTED_HARDWARE_DEVICEMANAGER_SA_ID);
-#endif
-    LOGI(ATM_DOMAIN, ATM_TAG, "Congratulations, AccessTokenManagerService start successfully!");
+    AfterPublishSuccessLocked();
+    return true;
+}
+
+static void RetryPublish()
+{
+    for (int32_t i = 0; i < ASYNC_RETRY_COUNT; i++) {
+        if (DelayedSingleton<AccessTokenManagerService>::GetInstance()->RetryPublishInner()) {
+            return;
+        }
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to publish service, retry!");
+        std::this_thread::sleep_for(std::chrono::milliseconds(ASYNC_RETRY_INTERVAL_MS));
+    }
+    ReportSysEventServiceStartError(SA_PUBLISH_FAILED, "Publish accesstoken_service fail.", ERROR);
+}
+
+void AccessTokenManagerService::RetryPublishLoop()
+{
+    for (int32_t i = 1; i <= RETRY_COUNT; i++) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(RETRY_TIMES_MS * i));
+        std::lock_guard<std::mutex> lock(stateMutex_);
+        if (state_ == ServiceRunningState::STATE_RUNNING) {
+            return;
+        }
+        bool ret = Publish(DelayedSingleton<AccessTokenManagerService>::GetInstance().get());
+        if (ret) {
+            AfterPublishSuccessLocked();
+            return;
+        }
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to publish service, retry!");
+    }
+    LOGE(ATM_DOMAIN, ATM_TAG, "Publish retry all failed!");
+    ReportSysEventServiceStartError(SA_PUBLISH_FAILED, "Publish accesstoken_service fail.", ERROR);
+    std::thread publishThread(RetryPublish);
+    publishThread.detach();
 }
 
 void AccessTokenManagerService::OnStop()
@@ -901,13 +971,16 @@ int32_t AccessTokenManagerService::GetSelfPermissionsState(std::vector<Permissio
         permOper = INVALID_OPER;
         return ERR_OK;
     }
-    LOGI(ATM_DOMAIN, ATM_TAG,
-        "Bundle %{public}s, uiExAbility %{public}s, serExAbility %{public}s, callerPid %{public}d.",
-        grantBundleName_.c_str(), grantAbilityName_.c_str(), grantServiceAbilityName_.c_str(),
-        IPCSkeleton::GetCallingPid());
-    infoParcel.info.grantBundleName = grantBundleName_;
-    infoParcel.info.grantAbilityName = grantAbilityName_;
-    infoParcel.info.grantServiceAbilityName = grantServiceAbilityName_;
+    {
+        std::shared_lock<std::shared_mutex> lock(configMutex_);
+        LOGI(ATM_DOMAIN, ATM_TAG,
+            "Bundle %{public}s, uiExAbility %{public}s, serExAbility %{public}s, callerPid %{public}d.",
+            grantBundleName_.c_str(), grantAbilityName_.c_str(), grantServiceAbilityName_.c_str(),
+            IPCSkeleton::GetCallingPid());
+        infoParcel.info.grantBundleName = grantBundleName_;
+        infoParcel.info.grantAbilityName = grantAbilityName_;
+        infoParcel.info.grantServiceAbilityName = grantServiceAbilityName_;
+    }
     AccessTokenID callingTokenID = IPCSkeleton::GetCallingTokenID();
     permOper = GetPermissionsState(callingTokenID, reqPermList);
     return ERR_OK;
@@ -1142,8 +1215,15 @@ int32_t AccessTokenManagerService::RequestAppPermOnSetting(AccessTokenID tokenID
         LOGE(ATM_DOMAIN, ATM_TAG, "GetHapTokenInfo failed, err %{public}d.", ret);
         return ret;
     }
+    std::string grantBundleName;
+    std::string applicationSettingAbilityName;
+    {
+        std::shared_lock<std::shared_mutex> lock(configMutex_);
+        grantBundleName = grantBundleName_;
+        applicationSettingAbilityName = applicationSettingAbilityName_;
+    }
     return PermissionManager::GetInstance().RequestAppPermOnSetting(hapInfo,
-        grantBundleName_, applicationSettingAbilityName_);
+        grantBundleName, applicationSettingAbilityName);
 }
 
 int AccessTokenManagerService::GrantPermission(
@@ -1377,12 +1457,15 @@ int32_t AccessTokenManagerService::AllocHapToken(const HapInfoParcel& info, cons
         return ERR_OK;
     }
 
+    HapInfoParams hapInfoParam = info.hapInfoParameter;
+    hapInfoParam.isSideloadApp = NormalizeSideloadParams(hapInfoParam.isSideloadApp, hapInfoParam.appDistributionType);
+
     HapPolicy filteredPolicy = policy.hapPolicy;
-    FilterPermFeature(info.hapInfoParameter.isSystemApp, filteredPolicy);
+    FilterPermFeature(hapInfoParam.isSystemApp, filteredPolicy);
 
     std::vector<GenericValues> undefValues;
     int ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(
-        info.hapInfoParameter, filteredPolicy, tokenIdEx, undefValues);
+        hapInfoParam, filteredPolicy, tokenIdEx, undefValues);
     if (ret != RET_SUCCESS) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Hap token info create failed.");
     }
@@ -1495,6 +1578,8 @@ int32_t AccessTokenManagerService::InitHapToken(const HapInfoParcel& info, const
     TransferHapPolicy(policy, policyCopy);
     FilterPermFeature(info.hapInfoParameter.isSystemApp, policyCopy);
 
+    hapInfoParm.isSideloadApp = NormalizeSideloadParams(hapInfoParm.isSideloadApp, hapInfoParm.appDistributionType);
+
     resultInfoIdl.realResult = ERR_OK;
     std::vector<PermissionStatus> initializedList;
     std::vector<GenericValues> undefValues;
@@ -1586,7 +1671,12 @@ int AccessTokenManagerService::GetTokenType(AccessTokenID tokenID)
 int AccessTokenManagerService::GetTokenType(AccessTokenID tokenID, int32_t& tokenType)
 {
     LOGD(ATM_DOMAIN, ATM_TAG, "Id %{public}d.", tokenID);
-    tokenType = AccessTokenIDManager::GetInstance().GetTokenIdType(tokenID);
+    AccessTokenID callingTokenID = IPCSkeleton::GetCallingTokenID();
+    if (TokenIDAttributes::GetTokenIdTypeEnum(callingTokenID) != TOKEN_HAP) {
+        tokenType = AccessTokenIDManager::GetInstance().GetTokenIdType(tokenID);
+        return ERR_OK;
+    }
+    tokenType = TokenIDAttributes::GetTokenIdTypeEnum(tokenID);
     return ERR_OK;
 }
 
@@ -1632,6 +1722,7 @@ void TransferUpdateHapInfo(const UpdateHapInfoParamsIdl& infoIdl, UpdateHapInfoP
     info.dataRefresh = infoIdl.dataRefresh;
     info.appProvisionType = infoIdl.appProvisionType;
     info.isSkillHap = infoIdl.isSkillHap;
+    info.isSideloadApp = infoIdl.isSideloadApp;
 }
 
 int32_t AccessTokenManagerService::UpdateHapToken(uint64_t& fullTokenId, const UpdateHapInfoParamsIdl& infoIdl,
@@ -1650,6 +1741,7 @@ int32_t AccessTokenManagerService::UpdateHapToken(uint64_t& fullTokenId, const U
     int64_t beginTime = TimeUtil::GetCurrentTimestamp();
     UpdateHapInfoParams info;
     TransferUpdateHapInfo(infoIdl, info);
+    info.isSideloadApp = NormalizeSideloadParams(info.isSideloadApp, info.appDistributionType);
     HapPolicy policy = policyParcel.hapPolicy;
     FilterPermFeature(info.isSystemApp, policy);
     resultInfoIdl.realResult = ERR_OK;
@@ -1803,7 +1895,7 @@ int32_t AccessTokenManagerService::ReloadNativeTokenInfo()
         LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", IPCSkeleton::GetCallingTokenID());
         return AccessTokenError::ERR_PERMISSION_DENIED;
     }
-    LibraryLoader loader(CONFIG_PARSE_LIBPATH);
+    LibraryLoader loader(CONFIG_PARSE_LIBPATH, CONFIG_PARSE_CREATE_SYMBOL, CONFIG_PARSE_DESTROY_SYMBOL);
     ConfigPolicyLoaderInterface* policy = loader.GetObject<ConfigPolicyLoaderInterface>();
     if (policy == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Dlopen libaccesstoken_json_parse failed.");
@@ -2009,6 +2101,7 @@ int32_t AccessTokenManagerService::SetPermDialogCap(const HapBaseInfoParcel& hap
 
 int32_t AccessTokenManagerService::GetPermissionManagerInfo(PermissionGrantInfoParcel& infoParcel)
 {
+    std::shared_lock<std::shared_mutex> lock(configMutex_);
     infoParcel.info.grantBundleName = grantBundleName_;
     infoParcel.info.grantAbilityName = grantAbilityName_;
     infoParcel.info.grantServiceAbilityName = grantServiceAbilityName_;
@@ -2225,6 +2318,7 @@ void AccessTokenManagerService::AccessTokenServiceParamSet() const
 void AccessTokenManagerService::SetFlagIfNeed(const AccessTokenServiceConfig& atConfig,
     int32_t& cancelTime, uint32_t& parseConfigFlag)
 {
+    std::unique_lock<std::shared_mutex> lock(configMutex_);
     parseConfigFlag = 0;
     // set value from config
     if (!atConfig.grantBundleName.empty()) {
@@ -2263,15 +2357,18 @@ void AccessTokenManagerService::SetFlagIfNeed(const AccessTokenServiceConfig& at
 
 void AccessTokenManagerService::GetConfigValue(uint32_t& parseConfigFlag)
 {
-    grantBundleName_ = GRANT_ABILITY_BUNDLE_NAME;
-    grantAbilityName_ = GRANT_ABILITY_ABILITY_NAME;
-    grantServiceAbilityName_ = GRANT_ABILITY_ABILITY_NAME;
-    permStateAbilityName_ = PERMISSION_STATE_SHEET_ABILITY_NAME;
-    globalSwitchAbilityName_ = GLOBAL_SWITCH_SHEET_ABILITY_NAME;
+    {
+        std::unique_lock<std::shared_mutex> lock(configMutex_);
+        grantBundleName_ = GRANT_ABILITY_BUNDLE_NAME;
+        grantAbilityName_ = GRANT_ABILITY_ABILITY_NAME;
+        grantServiceAbilityName_ = GRANT_ABILITY_ABILITY_NAME;
+        permStateAbilityName_ = PERMISSION_STATE_SHEET_ABILITY_NAME;
+        globalSwitchAbilityName_ = GLOBAL_SWITCH_SHEET_ABILITY_NAME;
+        applicationSettingAbilityName_ = APPLICATION_SETTING_ABILITY_NAME;
+        openSettingAbilityName_ = OPEN_SETTING_ABILITY_NAME;
+    }
     int32_t cancelTime = 0;
-    applicationSettingAbilityName_ = APPLICATION_SETTING_ABILITY_NAME;
-    openSettingAbilityName_ = OPEN_SETTING_ABILITY_NAME;
-    LibraryLoader loader(CONFIG_PARSE_LIBPATH);
+    LibraryLoader loader(CONFIG_PARSE_LIBPATH, CONFIG_PARSE_CREATE_SYMBOL, CONFIG_PARSE_DESTROY_SYMBOL);
     ConfigPolicyLoaderInterface* policy = loader.GetObject<ConfigPolicyLoaderInterface>();
     if (policy == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Dlopen libaccesstoken_json_parse failed.");
@@ -2282,13 +2379,16 @@ void AccessTokenManagerService::GetConfigValue(uint32_t& parseConfigFlag)
         SetFlagIfNeed(value.atConfig, cancelTime, parseConfigFlag);
     }
     TempPermissionObserver::GetInstance().SetCancelTime(cancelTime);
-    LOGI(ATM_DOMAIN, ATM_TAG, "GrantBundleName_ is %{public}s, grantAbilityName_ is %{public}s, "
-        "grantServiceAbilityName_ is %{public}s, permStateAbilityName_ is %{public}s, "
-        "globalSwitchAbilityName_ is %{public}s, applicationSettingAbilityName_ is %{public}s, "
-        "openSettingAbilityName_ is %{public}s.",
-        grantBundleName_.c_str(), grantAbilityName_.c_str(), grantServiceAbilityName_.c_str(),
-        permStateAbilityName_.c_str(), globalSwitchAbilityName_.c_str(), applicationSettingAbilityName_.c_str(),
-        openSettingAbilityName_.c_str());
+    {
+        std::shared_lock<std::shared_mutex> lock(configMutex_);
+        LOGI(ATM_DOMAIN, ATM_TAG, "GrantBundleName_ is %{public}s, grantAbilityName_ is %{public}s, "
+            "grantServiceAbilityName_ is %{public}s, permStateAbilityName_ is %{public}s, "
+            "globalSwitchAbilityName_ is %{public}s, applicationSettingAbilityName_ is %{public}s, "
+            "openSettingAbilityName_ is %{public}s.",
+            grantBundleName_.c_str(), grantAbilityName_.c_str(), grantServiceAbilityName_.c_str(),
+            permStateAbilityName_.c_str(), globalSwitchAbilityName_.c_str(), applicationSettingAbilityName_.c_str(),
+            openSettingAbilityName_.c_str());
+    }
 }
 
 void AccessTokenManagerService::FilterPermFeature(bool isSystemApp, HapPolicy& policy)
@@ -2337,7 +2437,7 @@ int32_t AccessTokenManagerService::GetReqPermissionByName(
         tokenId, permissionName, value);
 }
 
-void AccessTokenManagerService::FilterInvalidData(const std::vector<GenericValues>& results,
+void AccessTokenManagerService::RecheckUndefinedPerms(const std::vector<GenericValues>& results,
     const std::map<int32_t, TokenIdInfo>& tokenIdAplMap, std::vector<GenericValues>& validValueList)
 {
     int32_t tokenId = 0;
@@ -2371,13 +2471,15 @@ void AccessTokenManagerService::FilterInvalidData(const std::vector<GenericValue
 #endif
         bundleParam.isSystem = iter->second.isSystemApp;
         bundleParam.isDebug = (appDistributionType == "none"); // only debug hap can use none type
+        auto hapInfoInner = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId);
+        bundleParam.isSideloadApp = hapInfoInner != nullptr && hapInfoInner->IsSideloadApp();
         if (!PermissionConstraintCheck::IsPermAvailableRangeSatisfied(bundleParam, data, rule)) {
             continue;
         }
 
         acl = result.GetInt(TokenFiledConst::FIELD_ACL);
         value = result.GetString(TokenFiledConst::FIELD_VALUE);
-        if (!IsPermissionValid(iter->second.apl, data, value, (acl == 1))) {
+        if (!IsPermissionValid(bundleParam.isSideloadApp, iter->second.apl, data, value, (acl == 1))) {
             // hap apl less than perm apl without acl is invalid now, keep them in db, maybe valid someday
             continue;
         }
@@ -2444,15 +2546,15 @@ void AccessTokenManagerService::UpdateUndefinedInfoCache(const std::vector<Gener
     }
 }
 
-bool AccessTokenManagerService::IsPermissionValid(int32_t hapApl, const PermissionBriefDef& data,
+bool AccessTokenManagerService::IsPermissionValid(bool isSideloadApp, int32_t hapApl, const PermissionBriefDef& data,
     const std::string& value, bool isAcl)
 {
     if (hapApl >= static_cast<int32_t>(data.availableLevel)) {
         return true; // not cross apl, this is valid
     }
 
-    if (isAcl) {
-        return true; // cross apl but request by acl, this is valid
+    if (isAcl || PermissionConstraintCheck::IsSideloadAclExempt(isSideloadApp, data)) {
+        return true; // cross apl but requested by acl or sideload exemption, this is valid
     } else {
         if (data.hasValue) {
             return !value.empty(); // permission hasValue is true and request with value, this is valid
@@ -2479,9 +2581,9 @@ void AccessTokenManagerService::HandleHapUndefinedInfo(const std::map<int32_t, T
         return;
     }
 
-    // filter invalid data
+    // recheck undefined perms and keep the ones valid under current rules
     std::vector<GenericValues> validValueList;
-    FilterInvalidData(results, tokenIdAplMap, validValueList);
+    RecheckUndefinedPerms(results, tokenIdAplMap, validValueList);
 
     std::vector<GenericValues> stateValues;
     std::vector<GenericValues> extendValues;
@@ -2503,22 +2605,10 @@ void AccessTokenManagerService::HandleHapUndefinedInfo(const std::map<int32_t, T
     addInfoVec.emplace_back(addInfo);
 }
 
-void AccessTokenManagerService::UpdateDatabaseAsync(const std::vector<DelInfo>& delInfoVec,
-    const std::vector<AddInfo>& addInfoVec)
+void AccessTokenManagerService::HandlePermDefUpdate(const std::map<int32_t, TokenIdInfo>& tokenIdAplMap,
+    std::vector<DelInfo>& delInfoVec, std::vector<AddInfo>& addInfoVec, bool& needUpdateDb)
 {
-    auto task = [delInfoVec, addInfoVec]() {
-        LOGI(ATM_DOMAIN, ATM_TAG, "Entry!");
-        int32_t ret = AccessTokenDbOperator::DeleteAndInsertValues(delInfoVec, addInfoVec);
-        if (ret != RET_SUCCESS) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "Update permission definition database failed, ret=%{public}d.", ret);
-        }
-    };
-    std::thread updateDbThread(task);
-    updateDbThread.detach();
-}
-
-void AccessTokenManagerService::HandlePermDefUpdate(const std::map<int32_t, TokenIdInfo>& tokenIdAplMap)
-{
+    needUpdateDb = false;
     std::string dbPermDefVersion;
     GenericValues conditionValue;
     conditionValue.Put(TokenFiledConst::FIELD_NAME, PERM_DEF_VERSION);
@@ -2552,17 +2642,40 @@ void AccessTokenManagerService::HandlePermDefUpdate(const std::map<int32_t, Toke
         addInfo.addValues.emplace_back(addValue);
 
         // update or insert permission define version to db
-        std::vector<DelInfo> delInfoVec;
         delInfoVec.emplace_back(delInfo);
-        std::vector<AddInfo> addInfoVec;
         addInfoVec.emplace_back(addInfo);
 
         if (!dbPermDefVersion.empty()) { // dbPermDefVersion empty means undefine table is empty
             HandleHapUndefinedInfo(tokenIdAplMap, delInfoVec, addInfoVec);
         }
-
-        UpdateDatabaseAsync(delInfoVec, addInfoVec);
+        needUpdateDb = true;
     }
+}
+
+void AccessTokenManagerService::DoAsyncInitializingTasks(const std::vector<DelInfo>& delInfoVec,
+    const std::vector<AddInfo>& addInfoVec, bool needUpdateDb, const InitDfxInfo& dfxInfo)
+{
+    std::thread initAsyncThread([delInfoVec, addInfoVec, needUpdateDb, dfxInfo]() {
+        auto svc = DelayedSingleton<AccessTokenManagerService>::GetInstance();
+        InitDfxInfo info = dfxInfo;
+        svc->GetConfigValue(info.parseConfigFlag);
+        ReportSysEventServiceStart(info);
+        if (needUpdateDb) {
+            LOGI(ATM_DOMAIN, ATM_TAG, "Update undefined permissions.");
+            int32_t ret = AccessTokenDbOperator::DeleteAndInsertValues(delInfoVec, addInfoVec);
+            if (ret != RET_SUCCESS) {
+                LOGE(ATM_DOMAIN, ATM_TAG, "Update permission definition database failed, ret=%{public}d.", ret);
+            }
+        }
+#ifdef SUPPORT_MANAGE_USER_POLICY
+        int32_t policyRet = UserPolicyManager::GetInstance().LoadPersistedPolicies();
+        if (policyRet != RET_SUCCESS) {
+            ReportSysEventServiceStartError(INIT_USER_POLICY_ERROR, "Load user policy from db fail.", policyRet);
+        }
+#endif
+        ReportAccessTokenRdbFileInfo();
+    });
+    initAsyncThread.detach();
 }
 
 void AccessTokenManagerService::CheckAccessTokenDbDir(const char* dbDirPath) const
@@ -2597,33 +2710,21 @@ bool AccessTokenManagerService::Initialize()
     uint32_t dlpSize = 0;
     std::map<int32_t, TokenIdInfo> tokenIdAplMap;
     AccessTokenInfoManager::GetInstance().Init(hapSize, nativeSize, pefDefSize, dlpSize, tokenIdAplMap);
-#ifdef SUPPORT_MANAGE_USER_POLICY
-    std::thread loadPersistedPolicies([]() {
-        int32_t ret = UserPolicyManager::GetInstance().LoadPersistedPolicies();
-        if (ret != RET_SUCCESS) {
-            ReportSysEventServiceStartError(INIT_USER_POLICY_ERROR, "Load user policy from db fail.", ret);
-        }
-    });
-    loadPersistedPolicies.detach();
-#endif
-    HandlePermDefUpdate(tokenIdAplMap);
+    std::vector<DelInfo> delInfoVec;
+    std::vector<AddInfo> addInfoVec;
+    bool needUpdateDb = false;
+    HandlePermDefUpdate(tokenIdAplMap, delInfoVec, addInfoVec, needUpdateDb);
 
-#ifdef EVENTHANDLER_ENABLE
-    TempPermissionObserver::GetInstance().InitEventHandler();
-    ShortGrantManager::GetInstance().InitEventHandler();
-#endif
     InitDfxInfo dfxInfo = {0};
     dfxInfo.pid = getpid();
     dfxInfo.hapSize = hapSize;
     dfxInfo.nativeSize = nativeSize;
     dfxInfo.permDefSize = pefDefSize;
     dfxInfo.dlpSize = dlpSize;
-    GetConfigValue(dfxInfo.parseConfigFlag);
 
     isInitialize_ = true;
 
-    ReportSysEventServiceStart(dfxInfo);
-    ReportAccessTokenRdbFileInfoAsync();
+    DoAsyncInitializingTasks(delInfoVec, addInfoVec, needUpdateDb, dfxInfo);
     LOGI(ATM_DOMAIN, ATM_TAG, "Initialize success.");
 #ifdef HICOLLIE_ENABLE
     HiviewDFX::XCollie::GetInstance().CancelTimer(timerId);
@@ -2859,6 +2960,15 @@ int32_t AccessTokenManagerService::GetSecCompEnhanceKey(SecCompEnhanceKeyIdl& en
     return RET_SUCCESS;
 }
 #endif
+
+int32_t AccessTokenManagerService::SetSecCompEnhanceStatus([[maybe_unused]] bool isEnable)
+{
+#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
+    return SecCompEnhanceAgent::GetInstance().SetSecCompEnhanceStatus(isEnable);
+#else
+    return RET_SUCCESS;
+#endif
+}
 
 ErrCode AccessTokenManagerService::QueryStatusByPermission(const std::vector<uint32_t>& permCodeList,
     std::vector<PermissionStatusIdl>& permissionInfoList, bool onlyHap)

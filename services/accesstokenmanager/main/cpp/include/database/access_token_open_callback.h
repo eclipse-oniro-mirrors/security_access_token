@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -37,6 +37,10 @@ static constexpr const int32_t DATABASE_VERSION_8 = 8;
 static constexpr const int32_t DATABASE_VERSION_9 = 9;
 static constexpr const int32_t DATABASE_VERSION_10 = 10;
 static constexpr const int32_t DATABASE_VERSION_11 = 11;
+static constexpr const int32_t DATABASE_VERSION_12 = 12;
+#ifdef SPM_DATA_ENABLE
+static constexpr const int32_t DATABASE_VERSION_13 = 13;
+#endif
 
 class AccessTokenOpenCallback : public NativeRdb::RdbOpenCallback {
 public:
@@ -74,7 +78,7 @@ private:
     int32_t CreateUserPolicyTable(NativeRdb::RdbStore& rdbStore);
     int32_t CreateVersionEightTable(NativeRdb::RdbStore& rdbStore);
     int32_t CreateHapInfoTable(NativeRdb::RdbStore& rdbStore);
-    int32_t CreateVersionNineTable(NativeRdb::RdbStore& rdbStore);
+    int32_t CreateVersionTwelveTable(NativeRdb::RdbStore& rdbStore);
 
     // OnUpgrade
     int32_t AddAvailableTypeColumn(NativeRdb::RdbStore& rdbStore);
@@ -83,6 +87,7 @@ private:
     int32_t AddKernelEffectAndHasValueColumn(NativeRdb::RdbStore& rdbStore);
     int32_t AddTimestampColumn(NativeRdb::RdbStore& rdbStore);
     int32_t AddUidMigratedReservedColumns(NativeRdb::RdbStore& rdbStore);
+    int32_t AddModeColumn(NativeRdb::RdbStore& rdbStore, AtmDataType type);
     int32_t UpgradeFromVersion1(NativeRdb::RdbStore& rdbStore);
     int32_t UpgradeFromVersion2(NativeRdb::RdbStore& rdbStore);
     int32_t UpgradeFromVersion3(NativeRdb::RdbStore& rdbStore);
@@ -93,6 +98,11 @@ private:
     int32_t UpgradeFromVersion8(NativeRdb::RdbStore& rdbStore);
     int32_t UpgradeFromVersion9(NativeRdb::RdbStore& rdbStore);
     int32_t UpgradeFromVersion10(NativeRdb::RdbStore& rdbStore);
+    int32_t UpgradeFromVersion11(NativeRdb::RdbStore& rdbStore);
+#ifdef SPM_DATA_ENABLE
+    int32_t UpgradeFromVersion12(NativeRdb::RdbStore& rdbStore);
+    int32_t ResetUidAndMigrateCompleted(NativeRdb::RdbStore& rdbStore);
+#endif
 };
 } // namespace AccessToken
 } // namespace Security

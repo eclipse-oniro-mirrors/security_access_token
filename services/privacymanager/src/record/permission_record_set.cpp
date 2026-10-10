@@ -90,7 +90,8 @@ void PermissionRecordSet::GetInActiveUniqueRecord(const std::set<ContinuousPermi
 }
 
 void PermissionRecordSet::GetUnusedCameraRecords(const std::set<ContinuousPermissionRecord>& recordList,
-    const std::vector<ContinuousPermissionRecord>& removedList, std::vector<ContinuousPermissionRecord>& retList)
+    const std::vector<ContinuousPermissionRecord>& removedList, std::vector<ContinuousPermissionRecord>& retList,
+    int32_t filterOpCode)
 {
     if (removedList.empty()) {
         return;
@@ -98,7 +99,7 @@ void PermissionRecordSet::GetUnusedCameraRecords(const std::set<ContinuousPermis
     // filtering irrelevant records
     uint64_t lastUniqueKey = 0;
     for (auto iter = removedList.begin(); iter != removedList.end(); ++iter) {
-        if (iter->opCode != Constant::OP_CAMERA) {
+        if (iter->opCode != filterOpCode) {
             continue;
         }
         uint64_t curUniqueKey = iter->GetTokenIdAndPid();

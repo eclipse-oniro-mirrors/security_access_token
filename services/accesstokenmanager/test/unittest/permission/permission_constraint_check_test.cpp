@@ -46,7 +46,7 @@ HWTEST_F(PermissionConstraintCheckTest, IsAclSatisfied001, TestSize.Level0)
     HapPolicy policy = {};
     policy.apl = APL_NORMAL;
 
-    EXPECT_FALSE(PermissionConstraintCheck::IsAclSatisfied(briefDef, policy));
+    EXPECT_FALSE(PermissionConstraintCheck::IsAclSatisfied(false, briefDef, policy));
 }
 
 /**
@@ -66,7 +66,7 @@ HWTEST_F(PermissionConstraintCheckTest, IsAclSatisfied002, TestSize.Level0)
     policy.apl = APL_NORMAL;
     policy.aclExtendedMap[briefDef.permissionName] = "true";
 
-    EXPECT_TRUE(PermissionConstraintCheck::IsAclSatisfied(briefDef, policy));
+    EXPECT_TRUE(PermissionConstraintCheck::IsAclSatisfied(false, briefDef, policy));
 }
 
 /**
@@ -85,7 +85,72 @@ HWTEST_F(PermissionConstraintCheckTest, IsAclSatisfied003, TestSize.Level0)
     policy.apl = APL_NORMAL;
     policy.aclRequestedList = {briefDef.permissionName};
 
-    EXPECT_TRUE(PermissionConstraintCheck::IsAclSatisfied(briefDef, policy));
+    EXPECT_TRUE(PermissionConstraintCheck::IsAclSatisfied(false, briefDef, policy));
+}
+
+/**
+ * @tc.name: IsAclSatisfiedSideload001
+ * @tc.desc: Verify sideload app is exempted from acl check for a sideload-available
+ *           permission while non-sideload app is not.
+ * @tc.type: FUNC
+ */
+HWTEST_F(PermissionConstraintCheckTest, IsAclSatisfiedSideload001, TestSize.Level0)
+{
+    PermissionBriefDef briefDef = {};
+    briefDef.permissionName = const_cast<char *>("ohos.permission.SIDELOAD_ACL");
+    briefDef.availableLevel = APL_SYSTEM_BASIC;
+    briefDef.provisionEnable = true;
+    briefDef.provisionBypassForSideload = true;
+
+    HapPolicy policy = {};
+    policy.apl = APL_NORMAL;
+
+    EXPECT_TRUE(PermissionConstraintCheck::IsAclSatisfied(true, briefDef, policy));
+    EXPECT_FALSE(PermissionConstraintCheck::IsAclSatisfied(false, briefDef, policy));
+}
+
+/**
+ * @tc.name: IsAclSatisfiedSideloadConditions001
+ * @tc.desc: Verify the sideload exemption requires the permission to support acl request:
+ *           provisionEnable=false breaks the exemption even for sideload app.
+ * @tc.type: FUNC
+ */
+HWTEST_F(PermissionConstraintCheckTest, IsAclSatisfiedSideloadConditions001, TestSize.Level0)
+{
+    PermissionBriefDef briefDef = {};
+    briefDef.permissionName = const_cast<char *>("ohos.permission.SIDELOAD_ACL");
+    briefDef.availableLevel = APL_SYSTEM_BASIC;
+    briefDef.provisionEnable = false;
+    briefDef.provisionBypassForSideload = true;
+
+    HapPolicy policy = {};
+    policy.apl = APL_NORMAL;
+
+    EXPECT_FALSE(PermissionConstraintCheck::IsAclSatisfied(true, briefDef, policy));
+}
+
+/**
+ * @tc.name: AclNotExemptProvisionDisabled_0001
+ * @tc.desc: Verify a permission that does not support acl request is not exempted for
+ *           sideload app even if it is marked sideload-available.
+ * @tc.type: FUNC
+ */
+HWTEST_F(PermissionConstraintCheckTest, AclNotExemptProvisionDisabled_0001, TestSize.Level0)
+{
+    PermissionBriefDef briefDef = {};
+    briefDef.permissionName = const_cast<char *>("ohos.permission.SIDELOAD_NO_PROVISION");
+    briefDef.availableLevel = APL_SYSTEM_BASIC;
+    briefDef.provisionEnable = false;
+    briefDef.provisionBypassForSideload = true;
+
+    HapPolicy policy = {};
+    policy.apl = APL_NORMAL;
+
+    EXPECT_FALSE(PermissionConstraintCheck::IsAclSatisfied(true, briefDef, policy));
+    EXPECT_FALSE(PermissionConstraintCheck::IsAclSatisfied(false, briefDef, policy));
+
+    briefDef.provisionEnable = true;
+    EXPECT_TRUE(PermissionConstraintCheck::IsAclSatisfied(true, briefDef, policy));
 }
 
 /**

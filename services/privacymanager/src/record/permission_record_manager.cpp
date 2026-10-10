@@ -16,6 +16,7 @@
 #include "permission_record_manager.h"
 
 #include <algorithm>
+#include <cerrno>
 #include <cinttypes>
 #include <numeric>
 #include <unordered_set>
@@ -46,6 +47,9 @@
 #include "permission_map.h"
 #include "permission_record_set.h"
 #include "permission_used_record_db.h"
+#ifdef POWER_MANAGER_CLIENT_ENABLE
+#include "power_mgr_client.h"
+#endif
 #include "privacy_error.h"
 #include "privacy_field_const.h"
 #include "refbase.h"
@@ -53,6 +57,7 @@
 #include "state_change_callback_proxy.h"
 #include "system_ability_definition.h"
 #include "time_util.h"
+#include "token_setproc.h"
 #include "tokenid_attributes.h"
 #ifdef ACCESS_TOKEN_SUPPORT_SUBPROFILE
 #include "account_error_no.h"
@@ -647,21 +652,52 @@ int32_t PermissionRecordManager::AddPermissionUsedRecord(const AddPermParamInfo&
 int32_t PermissionRecordManager::NormalizeRecordTokenId(AccessTokenID inputTokenId, AccessTokenID& outputTokenId)
 {
     outputTokenId = inputTokenId;
-    if (!TokenIDAttributes::IsToolTokenId(inputTokenId)) {
-        LOGD(ATM_DOMAIN, PRI_TAG,
-            "Token is not a tool token, inputTokenId=%{public}u, tokenType=%{public}u.",
-            inputTokenId, static_cast<uint32_t>(TokenIDAttributes::GetTokenIdTypeEnum(inputTokenId)));
+    if (TokenIDAttributes::IsToolTokenId(inputTokenId)) {
+        int32_t ret = AccessTokenKit::GetHostTokenId(inputTokenId, outputTokenId);
+        if (ret != RET_SUCCESS) {
+            LOGE(PRI_DOMAIN, PRI_TAG, "GetHostTokenId failed, toolTokenId=%{public}u, ret=%{public}d.",
+                inputTokenId, ret);
+            return PrivacyError::ERR_PARAM_INVALID;
+        }
+        LOGI(PRI_DOMAIN, PRI_TAG, "toolTokenId=%{public}u, hostTokenId=%{public}u.",
+            inputTokenId, outputTokenId);
         return RET_SUCCESS;
     }
 
-    int32_t ret = AccessTokenKit::GetHostTokenId(inputTokenId, outputTokenId);
-    if (ret != RET_SUCCESS) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "GetHostTokenId failed, toolTokenId=%{public}u, ret=%{public}d.",
-            inputTokenId, ret);
-        return ret;
+    if (TokenIDAttributes::IsBinTokenId(inputTokenId)) {
+        return NormalizeBinRecordTokenId(inputTokenId, outputTokenId);
     }
-    LOGI(PRI_DOMAIN, PRI_TAG, "toolTokenId=%{public}u, hostTokenId=%{public}u.",
-        inputTokenId, outputTokenId);
+
+    LOGD(ATM_DOMAIN, PRI_TAG,
+        "Token is not a tool or bin token, inputTokenId=%{public}u, tokenType=%{public}u.",
+        inputTokenId, static_cast<uint32_t>(TokenIDAttributes::GetTokenIdTypeEnum(inputTokenId)));
+    return RET_SUCCESS;
+}
+
+int32_t PermissionRecordManager::NormalizeBinRecordTokenId(AccessTokenID inputTokenId,
+    AccessTokenID& outputTokenId)
+{
+    uint64_t parent = INVALID_TOKENID;
+    int32_t ret = GetParentHapTokenID(inputTokenId, &parent);
+    if (ret == ENOTSUP) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Parent hap ioctl unsupported, binTokenId=%{public}u, ret=%{public}d.",
+            inputTokenId, ret);
+        return PrivacyError::ERR_TOKENID_NOT_EXIST;
+    }
+    if (ret != ACCESS_TOKEN_OK) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Parent hap query failed, binTokenId=%{public}u, ret=%{public}d.",
+            inputTokenId, ret);
+        return PrivacyError::ERR_TOKENID_NOT_EXIST;
+    }
+    if (parent == INVALID_TOKENID) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Parent hap token invalid, binTokenId=%{public}u.", inputTokenId);
+        return PrivacyError::ERR_TOKENID_NOT_EXIST;
+    }
+
+    AccessTokenIDEx parentTokenIdEx = {0};
+    parentTokenIdEx.tokenIDEx = parent;
+    outputTokenId = parentTokenIdEx.tokenIdExStruct.tokenID;
+    LOGI(PRI_DOMAIN, PRI_TAG, "binTokenId=%{public}u, parentTokenId=%{public}u.", inputTokenId, outputTokenId);
     return RET_SUCCESS;
 }
 
@@ -1971,6 +2007,15 @@ int32_t PermissionRecordManager::CheckPermissionInUse(const std::string& permiss
 void PermissionRecordManager::ExecuteAndUpdateRecord(uint32_t tokenId, int32_t pid, ActiveChangeType status)
 {
     std::vector<std::string> camPermList;
+#ifdef CAMERA_FLOAT_WINDOW_ENABLE
+    // app holding CAMERA_BACKGROUND is allowed to keep using camera in background,
+    // verify it before startRecordListMutex_ is locked to avoid ipc under lock
+    bool hasCameraBackground = false;
+    if (status == ActiveChangeType::PERM_ACTIVE_IN_BACKGROUND) {
+        hasCameraBackground = (AccessTokenKit::VerifyAccessToken(tokenId, CAMERA_BACKGROUND_PERMISSION_NAME) ==
+            PERMISSION_GRANTED);
+    }
+#endif
     std::lock_guard<std::mutex> lock(startRecordListMutex_);
     std::set<ContinuousPermissionRecord> updateList;
     for (auto it = startRecordList_.begin(); it != startRecordList_.end();) {
@@ -1983,7 +2028,8 @@ void PermissionRecordManager::ExecuteAndUpdateRecord(uint32_t tokenId, int32_t p
             }
 
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
-            if ((perm == CAMERA_PERMISSION_NAME) && (status == PERM_ACTIVE_IN_BACKGROUND)) {
+            if (Constant::IsCameraPermission(perm) && (status == PERM_ACTIVE_IN_BACKGROUND) &&
+                !hasCameraBackground) {
                 LOGI(PRI_DOMAIN, PRI_TAG, "Camera float window is close!");
                 camPermList.emplace_back(perm);
                 ++it;
@@ -2038,7 +2084,8 @@ int32_t PermissionRecordManager::GetLockScreenStatus(bool isIpc)
     int32_t lockScreenStatus = LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED;
 
     if (isIpc) {
-        LibraryLoader loader(SCREENLOCK_MANAGER_LIBPATH);
+        LibraryLoader loader(SCREENLOCK_MANAGER_LIBPATH, "CreateScreenLockManagerAccessLoader",
+            "DestroyScreenLockManagerAccessLoader");
         ScreenLockManagerAccessLoaderInterface* screenlockManagerLoader =
             loader.GetObject<ScreenLockManagerAccessLoaderInterface>();
         if (screenlockManagerLoader != nullptr) {
@@ -2052,6 +2099,35 @@ int32_t PermissionRecordManager::GetLockScreenStatus(bool isIpc)
     }
 
     return lockScreenStatus;
+}
+
+void PermissionRecordManager::SetScreenOn(bool isScreenOn)
+{
+    LOGI(PRI_DOMAIN, PRI_TAG, "SetScreenOn %{public}d", isScreenOn);
+    std::lock_guard<std::mutex> lock(screenStateMutex_);
+    isScreenOn_ = isScreenOn;
+}
+
+bool PermissionRecordManager::IsScreenOn(bool isIpc)
+{
+    // default screen on, deny is only taken when positively known screen off
+    bool isScreenOn = true;
+
+    if (isIpc) {
+#ifdef POWER_MANAGER_CLIENT_ENABLE
+        isScreenOn = PowerMgr::PowerMgrClient::GetInstance().IsScreenOn();
+#endif
+    } else {
+        std::lock_guard<std::mutex> lock(screenStateMutex_);
+        isScreenOn = isScreenOn_;
+    }
+
+    return isScreenOn;
+}
+
+bool PermissionRecordManager::IsCameraPrivacyControlEnhanceEnabled() const
+{
+    return cameraPrivacyControlEnhanceEnable_;
 }
 
 int32_t PermissionRecordManager::RemoveRecordFromStartList(
@@ -2168,13 +2244,18 @@ bool PermissionRecordManager::ToRemoveRecord(const ContinuousPermissionRecord& t
             return true;
         }
         PermissionRecordSet::GetUnusedCameraRecords(startRecordList_, removeList, unusedCameraRecord);
+        std::vector<ContinuousPermissionRecord> unusedDvrCamRecord;
+        PermissionRecordSet::GetUnusedCameraRecords(startRecordList_, removeList, unusedDvrCamRecord,
+            Constant::OP_DVRCAMERA);
+        unusedCameraRecord.insert(unusedCameraRecord.end(), unusedDvrCamRecord.begin(), unusedDvrCamRecord.end());
     }
 
     for (const auto& record: unusedCameraRecord) {
-        cameraCallbackMap_.Erase(GetUniqueId(record.tokenId, record.pid));
+        auto& callbackMap = (record.opCode == Constant::OP_CAMERA) ? cameraCallbackMap_ : dvrCameraCallbackMap_;
+        callbackMap.Erase(GetUniqueId(record.tokenId, record.pid));
     }
-    LOGD(PRI_DOMAIN, PRI_TAG, "CameraCallbackMap size = %{public}d after clearing",
-        cameraCallbackMap_.Size());
+    LOGD(PRI_DOMAIN, PRI_TAG, "CameraCallbackMap size = %{public}d, dvr size = %{public}d after clearing",
+        cameraCallbackMap_.Size(), dvrCameraCallbackMap_.Size());
     return true;
 }
 
@@ -2328,7 +2409,8 @@ bool PermissionRecordManager::ShowGlobalDialog(const std::string& permissionName
 
     std::lock_guard<std::mutex> lock(abilityManagerMutex_);
     if (abilityManagerLoader_ == nullptr) {
-        abilityManagerLoader_ = std::make_shared<LibraryLoader>(ABILITY_MANAGER_LIBPATH);
+        abilityManagerLoader_ = std::make_shared<LibraryLoader>(
+            ABILITY_MANAGER_LIBPATH, ABILITY_MANAGER_CREATE_SYMBOL, ABILITY_MANAGER_DESTROY_SYMBOL);
     }
 
     AbilityManagerAccessLoaderInterface* abilityManager =
@@ -2359,6 +2441,7 @@ void PermissionRecordManager::ExecuteAllCameraExecuteCallback()
         }
     };
     this->cameraCallbackMap_.Iterate(it);
+    this->dvrCameraCallbackMap_.Iterate(it);
 }
 
 void PermissionRecordManager::ExecuteCameraCallbackAsync(AccessTokenID callbackTokenId, int32_t pid)
@@ -2376,6 +2459,7 @@ void PermissionRecordManager::ExecuteCameraCallbackAsync(AccessTokenID callbackT
             }
         };
         this->cameraCallbackMap_.Iterate(it);
+        this->dvrCameraCallbackMap_.Iterate(it);
     };
     std::thread executeThread(task);
     executeThread.detach();
@@ -2448,7 +2532,8 @@ int32_t PermissionRecordManager::StartUsingPermission(const PermissionUsedTypeIn
             permissionName, tokenId) ? Constant::SUCCESS : PrivacyError::ERR_PARAM_INVALID;
     }
 
-    if ((permissionName != CAMERA_PERMISSION_NAME) || (AccessTokenKit::GetTokenTypeFlag(tokenId) != TOKEN_HAP)) {
+    if ((!Constant::IsCameraPermission(permissionName)) ||
+        (AccessTokenKit::GetTokenTypeFlag(tokenId) != TOKEN_HAP)) {
         LOGD(PRI_DOMAIN, PRI_TAG, "Token(%{public}u), perm(%{public}s).", tokenId, permissionName.c_str());
         return PrivacyError::ERR_PARAM_INVALID;
     }
@@ -2471,11 +2556,13 @@ int32_t PermissionRecordManager::StartUsingPermission(const PermissionUsedTypeIn
         status = PERM_INACTIVE;
     }
 #endif
+    SafeMap<uint64_t, sptr<IRemoteObject>>& callbackMap =
+        (permissionName == CAMERA_PERMISSION_NAME) ? cameraCallbackMap_ : dvrCameraCallbackMap_;
     uint64_t id = GetUniqueId(tokenId, normalizedInfo.pid);
-    cameraCallbackMap_.EnsureInsert(id, callback);
+    callbackMap.EnsureInsert(id, callback);
     ret = AddRecordToStartList(normalizedInfo, status, callerPid);
     if (ret != RET_SUCCESS) {
-        cameraCallbackMap_.Erase(id);
+        callbackMap.Erase(id);
     }
     return ret;
 }
@@ -2667,6 +2754,20 @@ int32_t PermissionRecordManager::PermissionListFilter(
 
 bool PermissionRecordManager::IsAllowedUsingCamera(AccessTokenID tokenId, int32_t pid)
 {
+    // camera privacy control enhancement: deny camera usage while the screen is locked or off
+    if (IsCameraPrivacyControlEnhanceEnabled()) {
+        if (GetLockScreenStatus() == LockScreenStatusChangeType::PERM_ACTIVE_IN_LOCKED) {
+            LOGI(PRI_DOMAIN, PRI_TAG, "Id %{public}d, pid %{public}d denied by screen lock control.",
+                tokenId, pid);
+            return false;
+        }
+        if (!IsScreenOn()) {
+            LOGI(PRI_DOMAIN, PRI_TAG, "Id %{public}d, pid %{public}d denied by screen off control.",
+                tokenId, pid);
+            return false;
+        }
+    }
+
     // allow foregound application or background application with CAMERA_BACKGROUND permission use camera
     int32_t status = GetAppStatus(tokenId, pid);
 
@@ -2675,7 +2776,7 @@ bool PermissionRecordManager::IsAllowedUsingCamera(AccessTokenID tokenId, int32_
         return true;
     }
 
-    return (AccessTokenKit::VerifyAccessToken(tokenId, "ohos.permission.CAMERA_BACKGROUND") == PERMISSION_GRANTED);
+    return (AccessTokenKit::VerifyAccessToken(tokenId, CAMERA_BACKGROUND_PERMISSION_NAME) == PERMISSION_GRANTED);
 }
 
 bool PermissionRecordManager::IsAllowedUsingMicrophone(AccessTokenID tokenId, int32_t pid)
@@ -2692,25 +2793,37 @@ bool PermissionRecordManager::IsAllowedUsingMicrophone(AccessTokenID tokenId, in
         return true;
     }
 
-    return (AccessTokenKit::VerifyAccessToken(tokenId, "ohos.permission.MICROPHONE_BACKGROUND") == PERMISSION_GRANTED);
+    return (AccessTokenKit::VerifyAccessToken(tokenId, MICROPHONE_BACKGROUND_PERMISSION_NAME) == PERMISSION_GRANTED);
 }
 
 bool PermissionRecordManager::IsAllowedUsingPermission(AccessTokenID tokenId, const std::string& permissionName,
     int32_t pid)
 {
-    if (AccessTokenKit::GetTokenTypeFlag(tokenId) == TOKEN_NATIVE) {
-        return VerifyNativeRecordPermission(permissionName, tokenId);
+    AccessTokenID normalizedTokenId = tokenId;
+    int32_t normalizedPid = pid;
+    if (TokenIDAttributes::IsBinTokenId(tokenId)) {
+        int32_t ret = NormalizeBinRecordTokenId(tokenId, normalizedTokenId);
+        if (ret != RET_SUCCESS) {
+            LOGE(PRI_DOMAIN, PRI_TAG, "Bin token normalize failed, tokenId=%{public}u, ret=%{public}d.",
+                tokenId, ret);
+            return false;
+        }
+        normalizedPid = -1;
     }
 
-    if (AccessTokenKit::GetTokenTypeFlag(tokenId) != TOKEN_HAP) {
-        LOGD(PRI_DOMAIN, PRI_TAG, "Id(%{public}d) is not hap.", tokenId);
+    if (AccessTokenKit::GetTokenTypeFlag(normalizedTokenId) == TOKEN_NATIVE) {
+        return VerifyNativeRecordPermission(permissionName, normalizedTokenId);
+    }
+
+    if (AccessTokenKit::GetTokenTypeFlag(normalizedTokenId) != TOKEN_HAP) {
+        LOGD(PRI_DOMAIN, PRI_TAG, "Id(%{public}d) is not hap.", normalizedTokenId);
         return false;
     }
 
-    if (permissionName == CAMERA_PERMISSION_NAME) {
-        return IsAllowedUsingCamera(tokenId, pid);
+    if (Constant::IsCameraPermission(permissionName)) {
+        return IsAllowedUsingCamera(normalizedTokenId, normalizedPid);
     } else if (permissionName == MICROPHONE_PERMISSION_NAME) {
-        return IsAllowedUsingMicrophone(tokenId, pid);
+        return IsAllowedUsingMicrophone(normalizedTokenId, normalizedPid);
     }
     LOGE(PRI_DOMAIN, PRI_TAG, "Invalid permission(%{public}s).", permissionName.c_str());
     return false;
@@ -3279,7 +3392,7 @@ void PermissionRecordManager::SetDefaultConfigValue()
 
 void PermissionRecordManager::GetConfigValue()
 {
-    LibraryLoader loader(CONFIG_PARSE_LIBPATH);
+    LibraryLoader loader(CONFIG_PARSE_LIBPATH, CONFIG_PARSE_CREATE_SYMBOL, CONFIG_PARSE_DESTROY_SYMBOL);
     ConfigPolicyLoaderInterface* policy = loader.GetObject<ConfigPolicyLoaderInterface>();
     if (policy == nullptr) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Dlopen libaccesstoken_json_parse failed.");
@@ -3302,8 +3415,15 @@ void PermissionRecordManager::GetConfigValue()
         SetDefaultConfigValue();
     }
 
-    LOGI(PRI_DOMAIN, PRI_TAG, "RecordSizeMaximum_ is %{public}d, recordAgingTime_ is %{public}d",
-        recordSizeMaximum_, recordAgingTime_);
+    AccessTokenConfigValue config;
+    if (policy->GetConfigValue(ConfigType::CUSTOMIZED_CONFIG, config)) {
+        cameraPrivacyControlEnhanceEnable_ =
+            config.customConfig.pCustomConfig.cameraPrivacyControlEnhanceEnable;
+    }
+
+    LOGI(PRI_DOMAIN, PRI_TAG, "RecordSizeMaximum_ is %{public}d, recordAgingTime_ is %{public}d, "
+        "cameraPrivacyControlEnhanceEnable_ is %{public}d",
+        recordSizeMaximum_, recordAgingTime_, cameraPrivacyControlEnhanceEnable_);
 }
 
 uint64_t PermissionRecordManager::GetUniqueId(uint32_t tokenId, int32_t pid) const

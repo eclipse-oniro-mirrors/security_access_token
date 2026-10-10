@@ -22,6 +22,7 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <vector>
 #include "securec.h"
 #include "nativetoken.h"
 #include "nativetoken_json_oper.h"
@@ -31,6 +32,7 @@
 #include "perm_setproc.h"
 #include "perm_setproc_c.h"
 #include "spm_setproc.h"
+#include "accesstoken_file_util.h"
 
 using namespace testing::ext;
 using namespace OHOS::Security;
@@ -146,6 +148,10 @@ private:
         if (unlink(TOKEN_ID_CFG_FILE_PATH) != 0) {
             (void)rmdir(TOKEN_ID_CFG_FILE_PATH);
         }
+        char bakPath[PATH_MAX_LEN + 1] = {0};
+        if (GetBakFilePath(TOKEN_ID_CFG_FILE_PATH, bakPath, sizeof(bakPath)) == 0) {
+            unlink(bakPath);
+        }
         if (hasBackup_) {
             (void)rename(TOKEN_ID_CFG_FILE_BACKUP_PATH, TOKEN_ID_CFG_FILE_PATH);
             hasBackup_ = false;
@@ -161,51 +167,100 @@ private:
 };
 
 void TokenLibKitTest::SetUpTestCase()
-{}
+{
+    char bakPath[PATH_MAX_LEN + 1] = {0};
+    BackupTokenFile(TOKEN_ID_CFG_FILE_PATH, TOKEN_ID_CFG_FILE_PATH ".testbak");
+    if (GetBakFilePath(TOKEN_ID_CFG_FILE_PATH, bakPath, sizeof(bakPath)) == 0) {
+        char bakBackup[PATH_MAX_LEN + 1 + 8] = {0};
+        int32_t ret = snprintf_s(bakBackup, sizeof(bakBackup), sizeof(bakBackup) - 1,
+            "%s.testbak", bakPath);
+        if (ret < 0) {
+            return;
+        }
+        BackupTokenFile(bakPath, bakBackup);
+    }
+}
 
 void TokenLibKitTest::TearDownTestCase()
-{}
+{
+    char bakPath[PATH_MAX_LEN + 1] = {0};
+    if (GetBakFilePath(TOKEN_ID_CFG_FILE_PATH, bakPath, sizeof(bakPath)) == 0) {
+        char bakBackup[PATH_MAX_LEN + 1 + 8] = {0};
+        int32_t ret = snprintf_s(bakBackup, sizeof(bakBackup), sizeof(bakBackup) - 1,
+            "%s.testbak", bakPath);
+        if (ret < 0) {
+            return;
+        }
+        RestoreTokenFile(bakBackup, bakPath);
+        unlink(bakBackup);
+    }
+    RestoreTokenFile(TOKEN_ID_CFG_FILE_PATH ".testbak", TOKEN_ID_CFG_FILE_PATH);
+    unlink(TOKEN_ID_CFG_FILE_PATH ".testbak");
+}
 
 void TokenLibKitTest::SetUp()
 {
     g_isNativeTokenInited = 0;
+    char bakPath[PATH_MAX_LEN + 1] = {0};
+    if (GetBakFilePath(TOKEN_ID_CFG_FILE_PATH, bakPath, sizeof(bakPath)) == 0) {
+        unlink(bakPath);
+    }
 }
 
 void TokenLibKitTest::TearDown()
 {
-    ASSERT_NE(g_tokenListHead, nullptr);
-    while (g_tokenListHead->next != nullptr) {
-        NativeTokenList *tmp = g_tokenListHead->next;
-        g_tokenListHead->next = tmp->next;
-        free(tmp);
-        tmp = nullptr;
+    if (g_tokenListHead != nullptr) {
+        while (g_tokenListHead->next != nullptr) {
+            NativeTokenList *tmp = g_tokenListHead->next;
+            g_tokenListHead->next = tmp->next;
+            free(tmp);
+            tmp = nullptr;
+        }
+    }
+    int cleanupFd = open(TOKEN_ID_CFG_FILE_PATH, O_WRONLY | O_TRUNC | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP);
+    if (cleanupFd >= 0) {
+        close(cleanupFd);
+    }
+    char bakPath[PATH_MAX_LEN + 1] = {0};
+    if (GetBakFilePath(TOKEN_ID_CFG_FILE_PATH, bakPath, sizeof(bakPath)) == 0) {
+        unlink(bakPath);
     }
 }
 
 static void WriteContentToFile(const cJSON *root)
 {
-    char *jsonString = nullptr;
-    jsonString = cJSON_PrintUnformatted(root);
+    char *jsonString = cJSON_PrintUnformatted(root);
     if (jsonString == nullptr) {
         return;
     }
-
-    do {
-        int32_t fd = open(TOKEN_ID_CFG_FILE_PATH, O_RDWR | O_CREAT | O_TRUNC,
-                          S_IRUSR | S_IWUSR | S_IRGRP);
-        if (fd < 0) {
-            break;
-        }
-        size_t strLen = strlen(jsonString);
-        ssize_t writtenLen = write(fd, static_cast<void *>(jsonString), strLen);
-        close(fd);
-        if (writtenLen < 0 || static_cast<size_t>(writtenLen) != strLen) {
-            break;
-        }
-    } while (0);
-
+    int32_t writeRet = AtomicWriteFile(TOKEN_ID_CFG_FILE_PATH, jsonString, strlen(jsonString),
+                                       S_IRUSR | S_IWUSR | S_IRGRP);
+    ASSERT_EQ(writeRet, 0);
     cJSON_free(jsonString);
-    return;
+}
+
+static void FreeTokenListNode()
+{
+    if (g_tokenListHead != nullptr && g_tokenListHead->next != nullptr) {
+        NativeTokenList *tmp = g_tokenListHead->next;
+        while (tmp != nullptr) {
+            NativeTokenList *toFree = tmp;
+            tmp = tmp->next;
+            free(toFree);
+        }
+        g_tokenListHead->next = nullptr;
+    }
+}
+
+static void VerifyFileHasValidJson(const char *path)
+{
+    char *buff = nullptr;
+    EXPECT_EQ(GetFileBuff(path, &buff), ATRET_SUCCESS);
+    if (buff == nullptr) { return; }
+    cJSON *root = cJSON_Parse(buff);
+    EXPECT_NE(root, nullptr);
+    cJSON_Delete(root);
+    free(buff);
 }
 
 static void DeleteGoalItemFromRecord(const char *processName, cJSON *record)
@@ -428,7 +483,7 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenIdJsonDirectory001, TestSize.Level0)
 
 /**
  * @tc.name: GetAccessTokenIdJsonDirectoryDataLoss001
- * @tc.desc: Verify that recovering a directory config changes persisted native token IDs after a restart.
+ * @tc.desc: Verify that a directory config is recovered from backup, preserving native token IDs after a restart.
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -450,7 +505,7 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenIdJsonDirectoryDataLoss001, TestSize.Lev
         if (pid == 0) {
             g_isNativeTokenInited = 0;
             uint64_t recoveredTokenId = Start(processName);
-            _exit((recoveredTokenId != 0) && (recoveredTokenId != originalTokenId) ? 0 : 1);
+            _exit((recoveredTokenId != 0) && (recoveredTokenId == originalTokenId) ? 0 : 1);
         }
         int32_t status = 0;
         ASSERT_EQ(waitpid(pid, &status, 0), pid);
@@ -952,6 +1007,230 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId008, TestSize.Level0)
 
     delete[] perms;
     delete[] dcaps;
+    delete[] acls;
+}
+
+static void ParseAclsFromJson(cJSON *aclsJson, std::vector<std::string>& acls)
+{
+    if (!cJSON_IsArray(aclsJson)) {
+        return;
+    }
+    cJSON *aclJson = nullptr;
+    cJSON_ArrayForEach(aclJson, aclsJson) {
+        if (cJSON_IsString(aclJson) && (aclJson->valuestring != nullptr)) {
+            acls.emplace_back(aclJson->valuestring);
+        }
+    }
+}
+
+static bool GetAclsFromCfgFileByProcessName(const char *processName, std::vector<std::string>& acls)
+{
+    acls.clear();
+    char *fileBuff = nullptr;
+    if (GetFileBuff(TOKEN_ID_CFG_FILE_PATH, &fileBuff) != ATRET_SUCCESS) {
+        return false;
+    }
+
+    cJSON *record = nullptr;
+    if (fileBuff == nullptr) {
+        return false;
+    }
+    record = cJSON_Parse(fileBuff);
+    free(fileBuff);
+    fileBuff = nullptr;
+    if (record == nullptr) {
+        return false;
+    }
+
+    bool found = false;
+    cJSON *rec = nullptr;
+    cJSON_ArrayForEach(rec, record) {
+        cJSON *processNameJson = cJSON_GetObjectItemCaseSensitive(rec, PROCESS_KEY_NAME);
+        if (!cJSON_IsString(processNameJson) || (processNameJson->valuestring == nullptr)) {
+            continue;
+        }
+        if (strcmp(processNameJson->valuestring, processName) != 0) {
+            continue;
+        }
+
+        cJSON *aclsJson = cJSON_GetObjectItemCaseSensitive(rec, ACLS_KEY_NAME);
+        ParseAclsFromJson(aclsJson, acls);
+        found = true;
+        break;
+    }
+    cJSON_Delete(record);
+    return found;
+}
+
+/**
+ * @tc.name: GetAccessTokenIdAclUpdate001
+ * @tc.desc: update token info in list and cfg file when only acls are changed.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenLibKitTest, GetAccessTokenIdAclUpdate001, TestSize.Level0)
+{
+    const char **perms = new (std::nothrow) const char *[2];
+    ASSERT_NE(perms, nullptr);
+    perms[0] = "ohos.permission.test1";
+    perms[1] = "ohos.permission.test2";
+    const char **acls = new (std::nothrow) const char *[1];
+    ASSERT_NE(acls, nullptr);
+    acls[0] = "ohos.permission.test1";
+
+    NativeTokenInfoParams infoInstance = {
+        .dcapsNum = 0,
+        .permsNum = 2,
+        .aclsNum = 0,
+        .dcaps = nullptr,
+        .perms = perms,
+        .acls = nullptr,
+        .processName = "GetAccessTokenIdAclUpdate001",
+        .aplStr = "system_core",
+    };
+    uint64_t tokenId = GetAccessTokenId(&infoInstance);
+    ASSERT_NE(tokenId, 0);
+
+    /* only acls are changed: apl, dcaps, perms and uid keep the same */
+    infoInstance.aclsNum = 1;
+    infoInstance.acls = acls;
+    uint64_t tokenIdUpdated = GetAccessTokenId(&infoInstance);
+    ASSERT_EQ(tokenIdUpdated, tokenId);
+
+    NativeTokenList *tokenNode = FindTokenNodeByProcessName("GetAccessTokenIdAclUpdate001");
+    ASSERT_NE(tokenNode, nullptr);
+    ASSERT_EQ(tokenNode->aclsNum, 1);
+    ASSERT_STREQ(tokenNode->acls[0], "ohos.permission.test1");
+
+    std::vector<std::string> aclsInFile;
+    ASSERT_TRUE(GetAclsFromCfgFileByProcessName("GetAccessTokenIdAclUpdate001", aclsInFile));
+    ASSERT_EQ(aclsInFile.size(), static_cast<size_t>(1));
+    ASSERT_EQ(aclsInFile[0], "ohos.permission.test1");
+
+    ASSERT_EQ(DeleteAccessTokenId("GetAccessTokenIdAclUpdate001"), 0);
+
+    delete[] perms;
+    delete[] acls;
+}
+
+/**
+ * @tc.name: GetAccessTokenIdAclUpdate002
+ * @tc.desc: update token info when acl content changes with the same count, or acls are removed.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenLibKitTest, GetAccessTokenIdAclUpdate002, TestSize.Level0)
+{
+    const char **perms = new (std::nothrow) const char *[2];
+    ASSERT_NE(perms, nullptr);
+    perms[0] = "ohos.permission.test1";
+    perms[1] = "ohos.permission.test2";
+    const char **acls = new (std::nothrow) const char *[1];
+    ASSERT_NE(acls, nullptr);
+    acls[0] = "ohos.permission.test1";
+
+    NativeTokenInfoParams infoInstance = {
+        .dcapsNum = 0,
+        .permsNum = 2,
+        .aclsNum = 1,
+        .dcaps = nullptr,
+        .perms = perms,
+        .acls = acls,
+        .processName = "GetAccessTokenIdAclUpdate002",
+        .aplStr = "system_core",
+    };
+    uint64_t tokenId = GetAccessTokenId(&infoInstance);
+    ASSERT_NE(tokenId, 0);
+
+    /* acl content changes, count keeps the same */
+    acls[0] = "ohos.permission.test2";
+    uint64_t tokenIdUpdated = GetAccessTokenId(&infoInstance);
+    ASSERT_EQ(tokenIdUpdated, tokenId);
+
+    NativeTokenList *tokenNode = FindTokenNodeByProcessName("GetAccessTokenIdAclUpdate002");
+    ASSERT_NE(tokenNode, nullptr);
+    ASSERT_EQ(tokenNode->aclsNum, 1);
+    ASSERT_STREQ(tokenNode->acls[0], "ohos.permission.test2");
+
+    std::vector<std::string> aclsInFile;
+    ASSERT_TRUE(GetAclsFromCfgFileByProcessName("GetAccessTokenIdAclUpdate002", aclsInFile));
+    ASSERT_EQ(aclsInFile.size(), static_cast<size_t>(1));
+    ASSERT_EQ(aclsInFile[0], "ohos.permission.test2");
+
+    /* acls are removed */
+    infoInstance.aclsNum = 0;
+    infoInstance.acls = nullptr;
+    tokenIdUpdated = GetAccessTokenId(&infoInstance);
+    ASSERT_EQ(tokenIdUpdated, tokenId);
+
+    tokenNode = FindTokenNodeByProcessName("GetAccessTokenIdAclUpdate002");
+    ASSERT_NE(tokenNode, nullptr);
+    ASSERT_EQ(tokenNode->aclsNum, 0);
+
+    ASSERT_TRUE(GetAclsFromCfgFileByProcessName("GetAccessTokenIdAclUpdate002", aclsInFile));
+    ASSERT_TRUE(aclsInFile.empty());
+
+    ASSERT_EQ(DeleteAccessTokenId("GetAccessTokenIdAclUpdate002"), 0);
+
+    delete[] perms;
+    delete[] acls;
+}
+
+/**
+ * @tc.name: GetAccessTokenIdAclUpdate003
+ * @tc.desc: cfg file is not rewritten when token info keeps unchanged.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenLibKitTest, GetAccessTokenIdAclUpdate003, TestSize.Level0)
+{
+    const char **perms = new (std::nothrow) const char *[2];
+    ASSERT_NE(perms, nullptr);
+    perms[0] = "ohos.permission.test1";
+    perms[1] = "ohos.permission.test2";
+    const char **acls = new (std::nothrow) const char *[1];
+    ASSERT_NE(acls, nullptr);
+    acls[0] = "ohos.permission.test1";
+
+    /* process with non-empty acls: identical info should not rewrite cfg file */
+    NativeTokenInfoParams infoInstance = {
+        .dcapsNum = 0,
+        .permsNum = 2,
+        .aclsNum = 1,
+        .dcaps = nullptr,
+        .perms = perms,
+        .acls = acls,
+        .processName = "GetAccessTokenIdAclUpdate003",
+        .aplStr = "system_core",
+    };
+    uint64_t tokenId = GetAccessTokenId(&infoInstance);
+    ASSERT_NE(tokenId, 0);
+
+    struct stat statBefore = {0};
+    ASSERT_EQ(stat(TOKEN_ID_CFG_FILE_PATH, &statBefore), 0);
+    ASSERT_EQ(GetAccessTokenId(&infoInstance), tokenId);
+    struct stat statAfter = {0};
+    ASSERT_EQ(stat(TOKEN_ID_CFG_FILE_PATH, &statAfter), 0);
+    ASSERT_EQ(statBefore.st_mtim.tv_sec, statAfter.st_mtim.tv_sec);
+    ASSERT_EQ(statBefore.st_mtim.tv_nsec, statAfter.st_mtim.tv_nsec);
+
+    /* process with no acls: identical info should not rewrite cfg file */
+    infoInstance.aclsNum = 0;
+    infoInstance.acls = nullptr;
+    infoInstance.processName = "GetAccessTokenIdAclUpdate003_00";
+    uint64_t tokenIdNoAcl = GetAccessTokenId(&infoInstance);
+    ASSERT_NE(tokenIdNoAcl, 0);
+
+    ASSERT_EQ(stat(TOKEN_ID_CFG_FILE_PATH, &statBefore), 0);
+    ASSERT_EQ(GetAccessTokenId(&infoInstance), tokenIdNoAcl);
+    ASSERT_EQ(stat(TOKEN_ID_CFG_FILE_PATH, &statAfter), 0);
+    ASSERT_EQ(statBefore.st_mtim.tv_sec, statAfter.st_mtim.tv_sec);
+    ASSERT_EQ(statBefore.st_mtim.tv_nsec, statAfter.st_mtim.tv_nsec);
+
+    ASSERT_EQ(DeleteAccessTokenId("GetAccessTokenIdAclUpdate003"), 0);
+    ASSERT_EQ(DeleteAccessTokenId("GetAccessTokenIdAclUpdate003_00"), 0);
+
+    delete[] perms;
     delete[] acls;
 }
 
@@ -1558,4 +1837,510 @@ HWTEST_F(TokenLibKitTest, PermissionMapForC001, TestSize.Level0)
     EXPECT_STREQ("ohos.permission.CAMERA", permissionName);
     EXPECT_FALSE(::TransferOpCodeToPermission(opcode, nullptr, sizeof(permissionName)));
     EXPECT_FALSE(::TransferOpCodeToPermission(opcode, permissionName, 1));
+}
+
+/**
+ * @tc.name: AtomicWriteBackup_BakExists
+ * @tc.desc: Verify AtomicWriteFile creates backup with content matching main file.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenLibKitTest, AtomicWriteBackup_BakExists, TestSize.Level1)
+{
+    g_isNativeTokenInited = 0;
+    NativeTokenInfoParams tokenInfo = {
+        .dcapsNum = 0,
+        .permsNum = 0,
+        .aclsNum = 0,
+        .perms = nullptr,
+        .dcaps = nullptr,
+        .acls = nullptr,
+        .processName = "test_bak_exists_proc",
+        .aplStr = "system_core",
+        .uid = 9999,
+    };
+    uint64_t tokenId = GetAccessTokenId(&tokenInfo);
+    EXPECT_NE(tokenId, INVALID_TOKEN_ID);
+
+    char *mainBuff = nullptr;
+    char *bakBuff = nullptr;
+    ASSERT_EQ(GetFileBuff(TOKEN_ID_CFG_FILE_PATH, &mainBuff), ATRET_SUCCESS);
+    ASSERT_NE(mainBuff, nullptr);
+    char bakPath[PATH_MAX_LEN + 1] = {0};
+    ASSERT_EQ(GetBakFilePath(TOKEN_ID_CFG_FILE_PATH, bakPath, sizeof(bakPath)), 0);
+    ASSERT_EQ(GetFileBuff(bakPath, &bakBuff), ATRET_SUCCESS);
+    ASSERT_NE(bakBuff, nullptr);
+    EXPECT_STREQ(mainBuff, bakBuff);
+    free(mainBuff);
+    free(bakBuff);
+    ASSERT_EQ(DeleteAccessTokenId("test_bak_exists_proc"), 0);
+}
+
+/**
+ * @tc.name: BakFallback_MainCorrupt
+ * @tc.desc: Verify backup fallback restores token data when main file is corrupted.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenLibKitTest, BakFallback_MainCorrupt, TestSize.Level1)
+{
+    g_isNativeTokenInited = 0;
+    NativeTokenInfoParams tokenInfo = {
+        .dcapsNum = 0,
+        .permsNum = 0,
+        .aclsNum = 0,
+        .perms = nullptr,
+        .dcaps = nullptr,
+        .acls = nullptr,
+        .processName = "test_bak_corrupt_proc",
+        .aplStr = "system_core",
+        .uid = 8888,
+    };
+    uint64_t tokenId = GetAccessTokenId(&tokenInfo);
+    EXPECT_NE(tokenId, INVALID_TOKEN_ID);
+
+    int32_t fd = open(TOKEN_ID_CFG_FILE_PATH, O_WRONLY | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP);
+    ASSERT_GE(fd, 0);
+    ASSERT_EQ(write(fd, "CORRUPTED_DATA_NOT_JSON", 23), 23);
+    close(fd);
+
+    g_isNativeTokenInited = 0;
+    if (g_tokenListHead != nullptr && g_tokenListHead->next != nullptr) {
+        NativeTokenList *tmp = g_tokenListHead->next;
+        while (tmp != nullptr) {
+            NativeTokenList *toFree = tmp;
+            tmp = tmp->next;
+            free(toFree);
+        }
+        g_tokenListHead->next = nullptr;
+    }
+
+    NativeTokenInfoParams tokenInfo2 = {
+        .dcapsNum = 0,
+        .permsNum = 0,
+        .aclsNum = 0,
+        .perms = nullptr,
+        .dcaps = nullptr,
+        .acls = nullptr,
+        .processName = "test_bak_corrupt_proc",
+        .aplStr = "system_core",
+        .uid = 8888,
+    };
+    uint64_t tokenId2 = GetAccessTokenId(&tokenInfo2);
+    EXPECT_NE(tokenId2, INVALID_TOKEN_ID);
+    EXPECT_EQ(tokenId, tokenId2);
+    ASSERT_EQ(DeleteAccessTokenId("test_bak_corrupt_proc"), 0);
+}
+
+/**
+ * @tc.name: BakFallback_MainEmpty
+ * @tc.desc: Verify backup fallback restores token data when main file is empty (st_size==0).
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenLibKitTest, BakFallback_MainEmpty, TestSize.Level1)
+{
+    g_isNativeTokenInited = 0;
+    NativeTokenInfoParams tokenInfo = {
+        .dcapsNum = 0,
+        .permsNum = 0,
+        .aclsNum = 0,
+        .perms = nullptr,
+        .dcaps = nullptr,
+        .acls = nullptr,
+        .processName = "test_bak_empty_proc",
+        .aplStr = "system_core",
+        .uid = 8889,
+    };
+    uint64_t tokenId = GetAccessTokenId(&tokenInfo);
+    EXPECT_NE(tokenId, INVALID_TOKEN_ID);
+
+    int32_t fd = open(TOKEN_ID_CFG_FILE_PATH, O_WRONLY | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP);
+    ASSERT_GE(fd, 0);
+    close(fd);
+
+    g_isNativeTokenInited = 0;
+    if (g_tokenListHead != nullptr && g_tokenListHead->next != nullptr) {
+        NativeTokenList *tmp = g_tokenListHead->next;
+        while (tmp != nullptr) {
+            NativeTokenList *toFree = tmp;
+            tmp = tmp->next;
+            free(toFree);
+        }
+        g_tokenListHead->next = nullptr;
+    }
+
+    NativeTokenInfoParams tokenInfo2 = {
+        .dcapsNum = 0,
+        .permsNum = 0,
+        .aclsNum = 0,
+        .perms = nullptr,
+        .dcaps = nullptr,
+        .acls = nullptr,
+        .processName = "test_bak_empty_proc",
+        .aplStr = "system_core",
+        .uid = 8889,
+    };
+    uint64_t tokenId2 = GetAccessTokenId(&tokenInfo2);
+    EXPECT_NE(tokenId2, INVALID_TOKEN_ID);
+    EXPECT_EQ(tokenId, tokenId2);
+    ASSERT_EQ(DeleteAccessTokenId("test_bak_empty_proc"), 0);
+}
+
+/**
+ * @tc.name: BakFallback_MainMissing
+ * @tc.desc: Verify backup fallback restores token data when main file is missing (ENOENT).
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenLibKitTest, BakFallback_MainMissing, TestSize.Level1)
+{
+    g_isNativeTokenInited = 0;
+    NativeTokenInfoParams tokenInfo = {
+        .dcapsNum = 0,
+        .permsNum = 0,
+        .aclsNum = 0,
+        .perms = nullptr,
+        .dcaps = nullptr,
+        .acls = nullptr,
+        .processName = "test_bak_missing_proc",
+        .aplStr = "system_core",
+        .uid = 8890,
+    };
+    uint64_t tokenId = GetAccessTokenId(&tokenInfo);
+    EXPECT_NE(tokenId, INVALID_TOKEN_ID);
+
+    ASSERT_EQ(unlink(TOKEN_ID_CFG_FILE_PATH), 0);
+
+    g_isNativeTokenInited = 0;
+    if (g_tokenListHead != nullptr && g_tokenListHead->next != nullptr) {
+        NativeTokenList *tmp = g_tokenListHead->next;
+        while (tmp != nullptr) {
+            NativeTokenList *toFree = tmp;
+            tmp = tmp->next;
+            free(toFree);
+        }
+        g_tokenListHead->next = nullptr;
+    }
+
+    NativeTokenInfoParams tokenInfo2 = {
+        .dcapsNum = 0,
+        .permsNum = 0,
+        .aclsNum = 0,
+        .perms = nullptr,
+        .dcaps = nullptr,
+        .acls = nullptr,
+        .processName = "test_bak_missing_proc",
+        .aplStr = "system_core",
+        .uid = 8890,
+    };
+    uint64_t tokenId2 = GetAccessTokenId(&tokenInfo2);
+    EXPECT_NE(tokenId2, INVALID_TOKEN_ID);
+    EXPECT_EQ(tokenId, tokenId2);
+    ASSERT_EQ(DeleteAccessTokenId("test_bak_missing_proc"), 0);
+}
+
+/**
+ * @tc.name: BakFallback_MainParseFail
+ * @tc.desc: Verify backup fallback restores token data when main file has invalid JSON.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenLibKitTest, BakFallback_MainParseFail, TestSize.Level1)
+{
+    g_isNativeTokenInited = 0;
+    NativeTokenInfoParams tokenInfo = {
+        .dcapsNum = 0,
+        .permsNum = 0,
+        .aclsNum = 0,
+        .perms = nullptr,
+        .dcaps = nullptr,
+        .acls = nullptr,
+        .processName = "test_parse_fail_proc",
+        .aplStr = "system_core",
+        .uid = 7777,
+    };
+    uint64_t tokenId = GetAccessTokenId(&tokenInfo);
+    EXPECT_NE(tokenId, INVALID_TOKEN_ID);
+
+    int32_t fd = open(TOKEN_ID_CFG_FILE_PATH, O_WRONLY | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP);
+    ASSERT_GE(fd, 0);
+    ASSERT_EQ(write(fd, "{not valid json", 15), 15);
+    close(fd);
+
+    g_isNativeTokenInited = 0;
+    if (g_tokenListHead != nullptr && g_tokenListHead->next != nullptr) {
+        NativeTokenList *tmp = g_tokenListHead->next;
+        while (tmp != nullptr) {
+            NativeTokenList *toFree = tmp;
+            tmp = tmp->next;
+            free(toFree);
+        }
+        g_tokenListHead->next = nullptr;
+    }
+
+    NativeTokenInfoParams tokenInfo2 = {
+        .dcapsNum = 0,
+        .permsNum = 0,
+        .aclsNum = 0,
+        .perms = nullptr,
+        .dcaps = nullptr,
+        .acls = nullptr,
+        .processName = "test_parse_fail_proc",
+        .aplStr = "system_core",
+        .uid = 7777,
+    };
+    uint64_t tokenId2 = GetAccessTokenId(&tokenInfo2);
+    EXPECT_NE(tokenId2, INVALID_TOKEN_ID);
+    EXPECT_EQ(tokenId, tokenId2);
+    ASSERT_EQ(DeleteAccessTokenId("test_parse_fail_proc"), 0);
+}
+
+/**
+ * @tc.name: BakFallback_BothCorrupt
+ * @tc.desc: Both main and backup corrupted → AtlibInit calls ClearOrCreateCfgFile
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenLibKitTest, BakFallback_BothCorrupt, TestSize.Level1)
+{
+    NativeTokenConfigFileGuard configFileGuard;
+    ASSERT_TRUE(configFileGuard.ReplaceWithInvalidJson());
+
+    // Also corrupt backup if it exists
+    char bakPath[PATH_MAX_LEN + 1] = {0};
+    if (GetBakFilePath(TOKEN_ID_CFG_FILE_PATH, bakPath, sizeof(bakPath)) == 0) {
+        int32_t fd = open(bakPath, O_WRONLY | O_TRUNC | O_CREAT, S_IRUSR | S_IWUSR);
+        if (fd >= 0) {
+            write(fd, "corrupted_bak", 12);
+            close(fd);
+        }
+    }
+
+    g_isNativeTokenInited = 0;
+    if (g_tokenListHead != nullptr) {
+        free(g_tokenListHead);
+        g_tokenListHead = nullptr;
+    }
+    uint32_t ret = AtlibInit();
+    // Should recover via ClearOrCreateCfgFile
+    EXPECT_EQ(ret, ATRET_SUCCESS);
+
+    struct stat fileStat = {};
+    ASSERT_EQ(lstat(TOKEN_ID_CFG_FILE_PATH, &fileStat), 0);
+    EXPECT_TRUE(S_ISREG(fileStat.st_mode));
+}
+
+/**
+ * @tc.name: BakFallback_BakNotExists
+ * @tc.desc: Main file corrupted, backup doesn't exist → first boot recovery
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenLibKitTest, BakFallback_BakNotExists, TestSize.Level1)
+{
+    NativeTokenConfigFileGuard configFileGuard;
+    ASSERT_TRUE(configFileGuard.ReplaceWithInvalidJson());
+
+    // Ensure backup doesn't exist
+    char bakPath[PATH_MAX_LEN + 1] = {0};
+    if (GetBakFilePath(TOKEN_ID_CFG_FILE_PATH, bakPath, sizeof(bakPath)) == 0) {
+        unlink(bakPath);
+    }
+
+    g_isNativeTokenInited = 0;
+    if (g_tokenListHead != nullptr) {
+        free(g_tokenListHead);
+        g_tokenListHead = nullptr;
+    }
+    uint32_t ret = AtlibInit();
+    EXPECT_EQ(ret, ATRET_SUCCESS);
+
+    struct stat fileStat = {};
+    ASSERT_EQ(lstat(TOKEN_ID_CFG_FILE_PATH, &fileStat), 0);
+    EXPECT_TRUE(S_ISREG(fileStat.st_mode));
+}
+
+/**
+ * @tc.name: BakFallback_MainNotExists
+ * @tc.desc: Main file doesn't exist (ENOENT, first boot) → AtlibInit SUCCESS,
+ *           ClearOrCreateCfgFile creates empty main. Backup is NOT read (BR-4).
+ * @tc.type: FUNC
+ * @tc.require: AC-2.2
+ */
+HWTEST_F(TokenLibKitTest, BakFallback_MainNotExists, TestSize.Level1)
+{
+    NativeTokenConfigFileGuard configFileGuard;
+    ASSERT_TRUE(configFileGuard.ReplaceWithInvalidJson());
+    unlink(TOKEN_ID_CFG_FILE_PATH);
+    (void)rmdir(TOKEN_ID_CFG_FILE_PATH);
+
+    char bakPath[PATH_MAX_LEN + 1] = {0};
+    ASSERT_EQ(GetBakFilePath(TOKEN_ID_CFG_FILE_PATH, bakPath, sizeof(bakPath)), 0);
+    unlink(bakPath);
+
+    g_isNativeTokenInited = 0;
+    if (g_tokenListHead != nullptr) {
+        free(g_tokenListHead);
+        g_tokenListHead = nullptr;
+    }
+    uint32_t ret = AtlibInit();
+    EXPECT_EQ(ret, ATRET_SUCCESS);
+
+    struct stat fileStat = {};
+    ASSERT_EQ(lstat(TOKEN_ID_CFG_FILE_PATH, &fileStat), 0);
+    EXPECT_TRUE(S_ISREG(fileStat.st_mode));
+}
+
+/**
+ * @tc.name: BakFallback_MainReadFail_DirBackupOk
+ * @tc.desc: Main file is a directory (read failure) + valid backup → restore from backup.
+ * @tc.type: FUNC
+ * @tc.require: AC-2.4
+ */
+HWTEST_F(TokenLibKitTest, BakFallback_MainReadFail_DirBackupOk, TestSize.Level1)
+{
+    g_isNativeTokenInited = 0;
+    if (g_tokenListHead != nullptr) {
+        free(g_tokenListHead);
+        g_tokenListHead = nullptr;
+    }
+
+    NativeTokenInfoParams tokenInfo = {
+        .dcapsNum = 0, .permsNum = 0, .aclsNum = 0,
+        .perms = nullptr, .dcaps = nullptr, .acls = nullptr,
+        .processName = "test_readfail_dir_proc",
+        .aplStr = "system_core",
+        .uid = 6666,
+    };
+    uint64_t tokenId = GetAccessTokenId(&tokenInfo);
+    ASSERT_NE(tokenId, INVALID_TOKEN_ID);
+
+    NativeTokenConfigFileGuard configFileGuard;
+    ASSERT_TRUE(configFileGuard.ReplaceWithDirectory());
+
+    g_isNativeTokenInited = 0;
+    if (g_tokenListHead != nullptr && g_tokenListHead->next != nullptr) {
+        NativeTokenList *tmp = g_tokenListHead->next;
+        while (tmp != nullptr) {
+            NativeTokenList *toFree = tmp;
+            tmp = tmp->next;
+            free(toFree);
+        }
+        g_tokenListHead->next = nullptr;
+    }
+
+    NativeTokenInfoParams tokenInfo2 = {
+        .dcapsNum = 0, .permsNum = 0, .aclsNum = 0,
+        .perms = nullptr, .dcaps = nullptr, .acls = nullptr,
+        .processName = "test_readfail_dir_proc",
+        .aplStr = "system_core",
+        .uid = 6666,
+    };
+    uint64_t tokenId2 = GetAccessTokenId(&tokenInfo2);
+    EXPECT_NE(tokenId2, INVALID_TOKEN_ID);
+    EXPECT_EQ(tokenId, tokenId2);
+
+    struct stat fileStat = {};
+    EXPECT_EQ(lstat(TOKEN_ID_CFG_FILE_PATH, &fileStat), 0);
+    EXPECT_TRUE(S_ISREG(fileStat.st_mode));
+
+    DeleteAccessTokenId("test_readfail_dir_proc");
+}
+
+/**
+ * @tc.name: BakFallback_MainReadFail_SymlinkBackupOk
+ * @tc.desc: Main file is a symlink (read failure) + valid backup → restore from backup.
+ * @tc.type: FUNC
+ * @tc.require: AC-2.4
+ */
+HWTEST_F(TokenLibKitTest, BakFallback_MainReadFail_SymlinkBackupOk, TestSize.Level1)
+{
+    g_isNativeTokenInited = 0;
+    if (g_tokenListHead != nullptr) {
+        free(g_tokenListHead);
+        g_tokenListHead = nullptr;
+    }
+
+    NativeTokenInfoParams tokenInfo = {
+        .dcapsNum = 0, .permsNum = 0, .aclsNum = 0,
+        .perms = nullptr, .dcaps = nullptr, .acls = nullptr,
+        .processName = "test_readfail_sym_proc",
+        .aplStr = "system_core",
+        .uid = 6677,
+    };
+    uint64_t tokenId = GetAccessTokenId(&tokenInfo);
+    ASSERT_NE(tokenId, INVALID_TOKEN_ID);
+
+    NativeTokenConfigFileGuard configFileGuard;
+    ASSERT_TRUE(configFileGuard.ReplaceWithSymbolicLink());
+
+    g_isNativeTokenInited = 0;
+    if (g_tokenListHead != nullptr && g_tokenListHead->next != nullptr) {
+        NativeTokenList *tmp = g_tokenListHead->next;
+        while (tmp != nullptr) {
+            NativeTokenList *toFree = tmp;
+            tmp = tmp->next;
+            free(toFree);
+        }
+        g_tokenListHead->next = nullptr;
+    }
+
+    NativeTokenInfoParams tokenInfo2 = {
+        .dcapsNum = 0, .permsNum = 0, .aclsNum = 0,
+        .perms = nullptr, .dcaps = nullptr, .acls = nullptr,
+        .processName = "test_readfail_sym_proc",
+        .aplStr = "system_core",
+        .uid = 6677,
+    };
+    uint64_t tokenId2 = GetAccessTokenId(&tokenInfo2);
+    EXPECT_NE(tokenId2, INVALID_TOKEN_ID);
+    EXPECT_EQ(tokenId, tokenId2);
+
+    struct stat fileStat = {};
+    EXPECT_EQ(lstat(TOKEN_ID_CFG_FILE_PATH, &fileStat), 0);
+    EXPECT_TRUE(S_ISREG(fileStat.st_mode));
+
+    DeleteAccessTokenId("test_readfail_sym_proc");
+}
+
+/**
+ * @tc.name: BakFallback_WriteAfterRecovery
+ * @tc.desc: After backup recovery, UpdateInfoInCfgFile writes using ReadAndParseFile.
+ *           Different uid triggers update → write succeeds, main+backup have valid JSON.
+ * @tc.type: FUNC
+ * @tc.require: AC-2.6
+ */
+HWTEST_F(TokenLibKitTest, BakFallback_WriteAfterRecovery, TestSize.Level1)
+{
+    g_isNativeTokenInited = 0;
+    if (g_tokenListHead != nullptr) { free(g_tokenListHead); g_tokenListHead = nullptr; }
+
+    NativeTokenInfoParams tokenInfo = { .dcapsNum = 0, .permsNum = 0, .aclsNum = 0,
+        .perms = nullptr, .dcaps = nullptr, .acls = nullptr,
+        .processName = "test_write_recovery_proc", .aplStr = "system_core", .uid = 5555 };
+    uint64_t tokenId = GetAccessTokenId(&tokenInfo);
+    ASSERT_NE(tokenId, INVALID_TOKEN_ID);
+
+    int32_t fd = open(TOKEN_ID_CFG_FILE_PATH, O_WRONLY | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP);
+    ASSERT_GE(fd, 0);
+    ASSERT_EQ(write(fd, "CORRUPTED_DATA", 14), 14);
+    close(fd);
+
+    g_isNativeTokenInited = 0;
+    FreeTokenListNode();
+
+    NativeTokenInfoParams tokenInfo2 = { .dcapsNum = 0, .permsNum = 0, .aclsNum = 0,
+        .perms = nullptr, .dcaps = nullptr, .acls = nullptr,
+        .processName = "test_write_recovery_proc", .aplStr = "system_core", .uid = 5556 };
+    uint64_t tokenId2 = GetAccessTokenId(&tokenInfo2);
+    EXPECT_NE(tokenId2, INVALID_TOKEN_ID);
+    EXPECT_EQ(tokenId, tokenId2);
+
+    VerifyFileHasValidJson(TOKEN_ID_CFG_FILE_PATH);
+    char bakPath[PATH_MAX_LEN + 1] = {0};
+    ASSERT_EQ(GetBakFilePath(TOKEN_ID_CFG_FILE_PATH, bakPath, sizeof(bakPath)), 0);
+    VerifyFileHasValidJson(bakPath);
+
+    DeleteAccessTokenId("test_write_recovery_proc");
 }

@@ -795,3 +795,60 @@ HWTEST_F(CloneAppPermissionTest, CloneApp05, TestSize.Level0)
     ret = TestCommon::DeleteTestHapToken(tokenClone2);
     EXPECT_EQ(RET_SUCCESS, ret);
 }
+
+/**
+ * @tc.name: CloneApp06
+ * @tc.desc: test cloneFlag with large instIndex, instIndex % 10000 == 0 means the main app
+ * @tc.type: FUNC
+ * @tc.require:Issue Number
+ */
+HWTEST_F(CloneAppPermissionTest, CloneApp06, TestSize.Level0)
+{
+    int ret;
+    auto policyParams = g_policyParams;
+    int32_t cloneFlag;
+    int32_t dlpFlag;
+    AccessTokenIDInner *idInner = nullptr;
+
+    HapInfoParams infoParmsMainBase = g_infoParmsCommon;
+    infoParmsMainBase.instIndex = 10000; // instIndex % 10000 == 0, main app
+    AccessTokenID tokenMainBase = AllocHapTokenId(infoParmsMainBase, policyParams);
+
+    HapInfoParams infoParmsCloneBase = g_infoParmsCommon;
+    infoParmsCloneBase.instIndex = 10001; // instIndex % 10000 != 0, clone app
+    AccessTokenID tokenCloneBase = AllocHapTokenId(infoParmsCloneBase, policyParams);
+
+    // dlp app inherits permission states from the original app whose instIndex is 0
+    AccessTokenID tokenOriginal = AllocHapTokenId(g_infoParmsCommon, policyParams);
+
+    HapInfoParams infoParmsDlpCloneBase = g_infoParmsFullControl;
+    infoParmsDlpCloneBase.instIndex = 10002; // instIndex % 10000 != 0, but dlp app is never a clone app
+    AccessTokenID tokenDlpCloneBase = AllocHapTokenId(infoParmsDlpCloneBase, policyParams);
+
+    idInner = reinterpret_cast<AccessTokenIDInner *>(&tokenMainBase);
+    cloneFlag = static_cast<int32_t>(idInner->cloneFlag);
+    EXPECT_EQ(cloneFlag, 0);
+    dlpFlag = static_cast<int32_t>(idInner->dlpFlag);
+    EXPECT_EQ(dlpFlag, 0);
+
+    idInner = reinterpret_cast<AccessTokenIDInner *>(&tokenCloneBase);
+    cloneFlag = static_cast<int32_t>(idInner->cloneFlag);
+    EXPECT_EQ(cloneFlag, 1);
+    dlpFlag = static_cast<int32_t>(idInner->dlpFlag);
+    EXPECT_EQ(dlpFlag, 0);
+
+    idInner = reinterpret_cast<AccessTokenIDInner *>(&tokenDlpCloneBase);
+    cloneFlag = static_cast<int32_t>(idInner->cloneFlag);
+    EXPECT_EQ(cloneFlag, 0);
+    dlpFlag = static_cast<int32_t>(idInner->dlpFlag);
+    EXPECT_EQ(dlpFlag, 1);
+
+    ret = TestCommon::DeleteTestHapToken(tokenMainBase);
+    EXPECT_EQ(RET_SUCCESS, ret);
+    ret = TestCommon::DeleteTestHapToken(tokenCloneBase);
+    EXPECT_EQ(RET_SUCCESS, ret);
+    ret = TestCommon::DeleteTestHapToken(tokenOriginal);
+    EXPECT_EQ(RET_SUCCESS, ret);
+    ret = TestCommon::DeleteTestHapToken(tokenDlpCloneBase);
+    EXPECT_EQ(RET_SUCCESS, ret);
+}

@@ -127,6 +127,16 @@ int SpmDecUidRefCnt(uint32_t uid, uint32_t spawnid);
 int SpmGetUidRefCnt(uint32_t uid, uint64_t *refcnt);
 
 /**
+ * @brief Get uid active process refcount with kernel SPM check and retry.
+ *        If kernel doesn't support SPM, returns success with refcnt=0.
+ *        If SpmGetUidRefCnt fails, retries up to 3 times.
+ * @param uid Target uid.
+ * @param refcnt Output: refcount value.
+ * @return 0 on success; errno on failure after retries.
+ */
+int SpmGetUidRefCntWithRetry(uint32_t uid, uint64_t *refcnt);
+
+/**
  * @brief Increment tokenid active process refcount.
  * @param tokenid Target tokenid.
  * @param spawnid Spawn ID of the process being tracked.

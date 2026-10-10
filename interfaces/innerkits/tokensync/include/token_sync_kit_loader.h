@@ -22,6 +22,8 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 const static std::string TOKEN_SYNC_LIBPATH = "libtokensync_sdk.z.so";
+const static std::string TOKEN_SYNC_CREATE_SYMBOL = "CreateTokenSyncManagerLoader";
+const static std::string TOKEN_SYNC_DESTROY_SYMBOL = "DestroyTokenSyncManagerLoader";
 
 class TokenSyncManagerLoader final : public TokenSyncKitInterface {
     int32_t GetRemoteHapTokenInfo(const std::string& deviceID, AccessTokenID tokenID) const override;
@@ -30,8 +32,8 @@ class TokenSyncManagerLoader final : public TokenSyncKitInterface {
 };
 
 extern "C" {
-    void* Create();
-    void Destroy(void* loaderPtr);
+    void* CreateTokenSyncManagerLoader();
+    void DestroyTokenSyncManagerLoader(void* loaderPtr);
 };
 } // namespace AccessToken
 } // namespace Security

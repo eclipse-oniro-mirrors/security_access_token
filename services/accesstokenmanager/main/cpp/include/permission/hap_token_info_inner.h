@@ -19,6 +19,7 @@
 #include <memory>
 #include <shared_mutex>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "access_token.h"
@@ -66,7 +67,8 @@ public:
     void GeneratePermStateValues(const std::vector<GenericValues>& oldPermStateValues,
         std::vector<GenericValues>& permStateValues) const;
     int RestoreHapTokenInfo(AccessTokenID tokenId, const GenericValues& tokenValue,
-        const std::vector<GenericValues>& permStateRes, const std::vector<GenericValues> extendedPermRes);
+        const std::unordered_map<AccessTokenID, std::vector<GenericValues>>& permStateRes,
+        const std::unordered_map<AccessTokenID, std::vector<GenericValues>>& extendedPermRes);
 
     uint32_t GetReqPermissionSize();
     HapTokenInfo GetHapInfoBasic() const;
@@ -86,6 +88,7 @@ public:
     void SetPermDialogForbidden(bool isForbidden);
     bool IsMigrated() const;
     void SetMigrated(bool isMigrated);
+    bool IsSideloadApp() const;
 
     int32_t UpdatePermissionStatus(
         const std::string& permissionName, bool isGranted, uint32_t flag, bool& statusChanged);
@@ -120,6 +123,9 @@ private:
     bool isPermDialogForbidden_ = false;
     /** migrated flag */
     bool isMigrated_ = false;
+    /** whether hap is a sideload app, set by bundle manager per install source;
+     *  normalized by NormalizeSideloadParams: sideload must be developer_id distributed */
+    bool isSideloadApp_ = false;
 
     mutable std::shared_mutex policySetLock_;
 };

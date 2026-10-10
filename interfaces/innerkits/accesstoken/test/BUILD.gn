@@ -11,6 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import("//base/security/access_token/access_token.gni")
 import("//build/test.gni")
 
 group("unittest") {
@@ -21,4 +22,7 @@ group("unittest") {
     "unittest:libaccesstoken_sdk_test",
     "unittest/CompatSdkTest:unittest",
   ]
+  if (!use_clang_coverage && relational_store_enable) {
+    deps += [ "unittest:libundefined_permission_update_test" ]
+  }
 }

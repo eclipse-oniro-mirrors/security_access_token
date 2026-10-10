@@ -24,7 +24,7 @@ namespace AccessToken {
 
 class LibraryLoader {
 public:
-    LibraryLoader(const std::string& path);
+    LibraryLoader(const std::string& path, const std::string& createSymbol, const std::string& destroySymbol);
     ~LibraryLoader();
     template<typename T> T* GetObject()
     {
@@ -34,6 +34,8 @@ public:
 private:
     void* handle_ = nullptr;
     void* instance_ = nullptr;
+    std::string createSymbol_;
+    std::string destroySymbol_;
     void Create();
     void Destroy();
     void PrintErrorLog(const std::string& targetName);

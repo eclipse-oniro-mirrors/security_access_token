@@ -21,6 +21,7 @@
 #include "access_token_error.h"
 #include "constant_common.h"
 #include "data_validator.h"
+#include "hap_token_info.h"
 #define private public
 #include "permission_map.h"
 #undef private
@@ -102,6 +103,24 @@ HWTEST_F(CommonTest, TokenIDAttributesTest001, TestSize.Level1)
     EXPECT_FALSE(TokenIDAttributes::IsSystemApp(0));
     EXPECT_FALSE(TokenIDAttributes::IsDebugApp(0));
     EXPECT_FALSE(TokenIDAttributes::IsDebugAppAttr(0));
+}
+
+/*
+ * @tc.name: HapInfoParamsSideloadDefault001
+ * @tc.desc: Default isSideloadApp value of install/update params and existing error code test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(CommonTest, HapInfoParamsSideloadDefault001, TestSize.Level1)
+{
+    HapInfoParams info;
+    EXPECT_FALSE(info.isSideloadApp);
+
+    UpdateHapInfoParams updateInfo;
+    EXPECT_FALSE(updateInfo.isSideloadApp);
+
+    EXPECT_EQ(static_cast<int32_t>(AccessTokenError::ERR_PARAM_INVALID), 12100001);
+    EXPECT_EQ(static_cast<int32_t>(AccessTokenError::ERR_CAPABILITY_NOT_SUPPORT), 12110000);
 }
 
 /*

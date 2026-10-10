@@ -20,27 +20,27 @@ namespace Security {
 namespace AccessToken {
 void GenericValues::Put(const std::string& key, int32_t value)
 {
-    map_.insert(std::make_pair(key, VariantValue(value)));
+    map_.emplace(key, VariantValue(value));
 }
 
 void GenericValues::Put(const std::string& key, int64_t value)
 {
-    map_.insert(std::make_pair(key, VariantValue(value)));
+    map_.emplace(key, VariantValue(value));
 }
 
 void GenericValues::Put(const std::string& key, const std::string& value)
 {
-    map_.insert(std::make_pair(key, VariantValue(value)));
+    map_.emplace(key, VariantValue(value));
 }
 
 void GenericValues::PutBlob(const std::string& key, const std::vector<uint8_t>& value)
 {
-    map_.insert(std::make_pair(key, VariantValue(value)));
+    map_.emplace(key, VariantValue(value));
 }
 
 void GenericValues::Put(const std::string& key, const VariantValue& value)
 {
-    map_.insert(std::make_pair(key, value));
+    map_.emplace(key, value);
 }
 
 VariantValue GenericValues::Get(const std::string& key) const
@@ -95,6 +95,11 @@ std::vector<std::string> GenericValues::GetAllKeys() const
         keys.emplace_back(it->first);
     }
     return keys;
+}
+
+bool GenericValues::IsEmpty() const
+{
+    return map_.empty();
 }
 
 void GenericValues::Remove(const std::string& key)

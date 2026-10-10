@@ -50,7 +50,7 @@ public:
     int32_t ExecuteSql(const std::string& sql) const;
     std::string SpitError() const;
 
-    bool NeedRebuild() const;
+    bool NeedRebuild(bool fullCheck = false) const;
     int32_t Rebuild();
 
     virtual void OnCreate() = 0;

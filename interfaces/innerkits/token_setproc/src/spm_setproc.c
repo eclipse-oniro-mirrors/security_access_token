@@ -16,6 +16,7 @@
 #include "spm_setproc.h"
 
 #include <errno.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -45,6 +46,8 @@ const uint64_t SET_SPM_FD_TAG = 0xD005A01;
 #define SPM_REFCNT_OP_INC 1
 #define SPM_REFCNT_OP_DEC 2
 #define SPM_DATA_VERSION 1
+
+static const int32_t SPM_GET_UID_REFCNT_MAX_RETRY = 3;
 
 struct IoctlSpmData {
     uint32_t version;
@@ -405,6 +408,39 @@ int SpmGetUidRefCnt(uint32_t uid, uint64_t* refcnt)
     *refcnt = query.refcnt;
     (void)fdsan_close_with_tag(fd, SET_SPM_FD_TAG);
     return ACCESS_TOKEN_OK;
+}
+
+static bool IsKernelSupportSpm()
+{
+    static bool isSupportSpm = false;
+    static bool hasChecked = false;
+    if (hasChecked) {
+        return isSupportSpm;
+    }
+    uint32_t version = 0;
+    int32_t ret = SpmGetVersion(&version);
+    isSupportSpm = (ret != ENOTSUP) ? true : false;
+    hasChecked = true;
+    return isSupportSpm;
+}
+
+int SpmGetUidRefCntWithRetry(uint32_t uid, uint64_t* refcnt)
+{
+    if (refcnt == NULL) {
+        return EINVAL;
+    }
+    if (!IsKernelSupportSpm()) {
+        *refcnt = 0;
+        return ACCESS_TOKEN_OK;
+    }
+    int ret = 0;
+    for (int32_t i = 0; i < SPM_GET_UID_REFCNT_MAX_RETRY; i++) {
+        ret = SpmGetUidRefCnt(uid, refcnt);
+        if (ret == ACCESS_TOKEN_OK) {
+            return ACCESS_TOKEN_OK;
+        }
+    }
+    return ret;
 }
 
 static int SpmSetTokenidRefCnt(uint32_t tokenid, uint32_t spawnid, int32_t opt)

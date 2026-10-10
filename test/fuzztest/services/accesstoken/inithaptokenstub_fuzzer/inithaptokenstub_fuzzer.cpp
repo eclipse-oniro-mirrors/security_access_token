@@ -44,6 +44,7 @@ namespace OHOS {
         param.isRestore = provider.ConsumeBool();
         param.tokenID = ConsumeTokenId(provider);
         param.isAtomicService = provider.ConsumeBool();
+        param.isSideloadApp = provider.ConsumeBool();
     }
 
     void InitHapPolicy(const std::string& permissionName, const std::string& bundleName, FuzzedDataProvider& provider,

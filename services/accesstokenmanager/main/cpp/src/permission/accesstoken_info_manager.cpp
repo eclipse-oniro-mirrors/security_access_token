@@ -23,6 +23,7 @@
 #include <map>
 #include <unistd.h>
 #include <securec.h>
+#include <utility>
 #include "access_token.h"
 #include "accesstoken_dfx_define.h"
 #include "accesstoken_id_manager.h"
@@ -86,6 +87,7 @@ static const char* ACCESS_TOKEN_PACKAGE_NAME = "ohos.security.distributed_token_
 static constexpr uint32_t TOKEN_ID_LOWMASK = 0xffffffff;
 static constexpr int32_t DEFAULT_MAX_QUERY_RESULT_SIZE = ACCESS_TOKEN_DEFAULT_MAX_QUERY_RESULT_SIZE;
 static constexpr int32_t DEFAULT_SUBPROFILE_INDEX = -1;
+static constexpr int32_t MAIN_CLONE_INDEX_BASE = 10000;
 static const char* ACCESS_TOKEN_DB_EMPTY_KEY = "persist.accesstoken.permission.dberror";
 const std::string BMS_DB_DIR_PATH = "/data/service/el1/public/bms/bundle_manager_service/";
 const std::string BMS_DB_FILE_NAME = "bmsdb.db";
@@ -284,6 +286,16 @@ void ReportRestoredHapToken(const std::shared_ptr<HapTokenInfoInner>& hap, Acces
     dfxInfo.bundleName = hap->GetBundleName();
     dfxInfo.instIndex = hap->GetInstIndex();
     ReportSysEventAddHap(RET_SUCCESS, dfxInfo, false);
+}
+
+void GroupValuesByTokenId(std::vector<GenericValues>& values,
+    std::unordered_map<AccessTokenID, std::vector<GenericValues>>& groupedMap)
+{
+    for (GenericValues& value : values) {
+        AccessTokenID tokenId = static_cast<AccessTokenID>(value.GetInt(TokenFiledConst::FIELD_TOKEN_ID));
+        groupedMap[tokenId].emplace_back(std::move(value));
+    }
+    values.clear();
 }
 }
 
@@ -568,7 +580,7 @@ void AccessTokenInfoManager::Init(uint32_t& hapSize, uint32_t& nativeSize, uint3
     }
 
     LOGI(ATM_DOMAIN, ATM_TAG, "Init begin!");
-    LibraryLoader loader(CONFIG_PARSE_LIBPATH);
+    LibraryLoader loader(CONFIG_PARSE_LIBPATH, CONFIG_PARSE_CREATE_SYMBOL, CONFIG_PARSE_DESTROY_SYMBOL);
     ConfigPolicyLoaderInterface* policy = loader.GetObject<ConfigPolicyLoaderInterface>();
     if (policy == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Dlopen libaccesstoken_json_parse failed.");
@@ -668,7 +680,8 @@ void AccessTokenInfoManager::InitDmCallback(void)
 #endif
 
 int32_t AccessTokenInfoManager::AddHapInfoToCache(const GenericValues& tokenValue,
-    const std::vector<GenericValues>& permStateRes, const std::vector<GenericValues>& extendedPermRes)
+    const std::unordered_map<AccessTokenID, std::vector<GenericValues>>& permStateRes,
+    const std::unordered_map<AccessTokenID, std::vector<GenericValues>>& extendedPermRes)
 {
     if (AccessTokenInfoUtils::CheckSpecifiedFlag(
         tokenValue.GetInt(TokenFiledConst::FIELD_TOKEN_ATTR), TOKEN_RESERVED_FLAG)) {
@@ -691,7 +704,8 @@ int32_t AccessTokenInfoManager::RestoreReservedHapTokenToCache(const GenericValu
 }
 
 int32_t AccessTokenInfoManager::RestoreActiveHapTokenToCache(const GenericValues& tokenValue,
-    const std::vector<GenericValues>& permStateRes, const std::vector<GenericValues>& extendedPermRes)
+    const std::unordered_map<AccessTokenID, std::vector<GenericValues>>& permStateRes,
+    const std::unordered_map<AccessTokenID, std::vector<GenericValues>>& extendedPermRes)
 {
     AccessTokenID tokenId = static_cast<AccessTokenID>(tokenValue.GetInt(TokenFiledConst::FIELD_TOKEN_ID));
     std::string bundle = tokenValue.GetString(TokenFiledConst::FIELD_BUNDLE_NAME);
@@ -749,13 +763,18 @@ void AccessTokenInfoManager::InitHapTokenInfos(uint32_t& hapSize, std::map<int32
         ReportSysEventServiceStartError(INIT_HAP_TOKENINFO_ERROR, "Load exetended value from db fail.", ret);
         return;
     }
+    // group perm state and extended values by token id once, avoid full table scan for each token
+    std::unordered_map<AccessTokenID, std::vector<GenericValues>> permStateMap;
+    GroupValuesByTokenId(permStateRes, permStateMap);
+    std::unordered_map<AccessTokenID, std::vector<GenericValues>> extendedPermMap;
+    GroupValuesByTokenId(extendedPermRes, extendedPermMap);
     for (const GenericValues& tokenValue : hapTokenRes) {
         int32_t tokenId = tokenValue.GetInt(TokenFiledConst::FIELD_TOKEN_ID);
         TokenIdInfo tokenIdInfo;
         tokenIdInfo.apl = tokenValue.GetInt(TokenFiledConst::FIELD_APL);
         tokenIdInfo.isSystemApp = AccessTokenInfoUtils::CheckSpecifiedFlag(
             tokenValue.GetInt(TokenFiledConst::FIELD_TOKEN_ATTR), SYSTEM_APP_FLAG);
-        ret = AddHapInfoToCache(tokenValue, permStateRes, extendedPermRes);
+        ret = AddHapInfoToCache(tokenValue, permStateMap, extendedPermMap);
         if (ret != RET_SUCCESS) {
             continue;
         }
@@ -864,9 +883,13 @@ std::shared_ptr<HapTokenInfoInner> AccessTokenInfoManager::GetHapTokenInfoInnerF
             "mapSize: %{public}zu.", id, ret, mapSize);
         return nullptr;
     }
+    std::unordered_map<AccessTokenID, std::vector<GenericValues>> permStateMap;
+    GroupValuesByTokenId(permStateRes, permStateMap);
+    std::unordered_map<AccessTokenID, std::vector<GenericValues>> extendedPermMap;
+    GroupValuesByTokenId(extendedPermRes, extendedPermMap);
 
     std::shared_ptr<HapTokenInfoInner> hap = std::make_shared<HapTokenInfoInner>();
-    ret = hap->RestoreHapTokenInfo(id, hapTokenResults[0], permStateRes, extendedPermRes);
+    ret = hap->RestoreHapTokenInfo(id, hapTokenResults[0], permStateMap, extendedPermMap);
     if (ret != RET_SUCCESS) {
         LOGC(ATM_DOMAIN, ATM_TAG, "Id %{public}u restore failed, err: %{public}d, mapSize: %{public}zu.",
             id, ret, mapSize);
@@ -1225,7 +1248,7 @@ int32_t AccessTokenInfoManager::RegisterTokenId(const HapInfoParams& info, Acces
         tokenId = info.tokenID;
     } else {
         int32_t dlpFlag = (info.dlpType > DLP_COMMON) ? 1 : 0;
-        int32_t cloneFlag = ((dlpFlag == 0) && (info.instIndex) > 0) ? 1 : 0;
+        int32_t cloneFlag = ((dlpFlag == 0) && (info.instIndex % MAIN_CLONE_INDEX_BASE != 0)) ? 1 : 0;
         tokenId = AccessTokenIDManager::GetInstance().CreateAndRegisterTokenId(TOKEN_HAP, dlpFlag, cloneFlag, 0);
         if (tokenId == 0) {
             LOGC(ATM_DOMAIN, ATM_TAG, "Token Id create failed");

@@ -23,6 +23,7 @@ group("accesstoken_build_module_test") {
       "frameworks/test/unittest:unittest",
       "interfaces/inner_api/el5filekeymanager/test:unittest",
       "interfaces/innerkits/accesstoken/test:unittest",
+      "interfaces/innerkits/accesstoken_file_util/test/unittest:unittest",
       "interfaces/innerkits/analysis_model/test:unittest",
       "interfaces/innerkits/nativetoken/test:unittest",
       "interfaces/innerkits/privacy/test:unittest",

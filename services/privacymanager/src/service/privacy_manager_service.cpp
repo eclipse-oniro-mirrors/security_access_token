@@ -64,14 +64,14 @@ static constexpr int32_t BASE_USER_RANGE = 200000;
 static const int32_t SA_ID_PRIVACY_MANAGER_SERVICE = 3505;
 static constexpr int32_t MAX_PERMISSION_NAME_LENGTH = 256;
 static const uint32_t PERM_LIST_SIZE_MAX = 1024;
-static const int32_t RETRY_COUNT = 128;
+static const int32_t RETRY_COUNT = 50;
 bool IsValidCallbackRegisterType(int32_t type)
 {
     return (type == static_cast<int32_t>(CallbackRegisterType::ALL)) ||
         (type == static_cast<int32_t>(CallbackRegisterType::TOKEN_ONLY));
 }
 
-static const int32_t RETRY_TIMES_MS = 500; // 0.5s
+static const int32_t RETRY_TIMES_MS = 100; // 0.1s
 static const int32_t ASYNC_RETRY_COUNT = 43200; // 30d * 24h * 60m
 static const int32_t ASYNC_RETRY_TIMES_MS = 60 * 1000; // 1min
 static const int32_t ASYNC_RETRY_DFX_COUNT = 60;
@@ -134,6 +134,7 @@ void PrivacyManagerService::OnStart()
     AddSystemAbilityListener(ACCESS_TOKEN_MANAGER_SERVICE_ID);
     AddSystemAbilityListener(COMMON_EVENT_SERVICE_ID);
     AddSystemAbilityListener(SCREENLOCK_SERVICE_ID);
+    AddSystemAbilityListener(POWER_MANAGER_SERVICE_ID);
 }
 
 void PrivacyManagerService::OnStop()
@@ -821,6 +822,12 @@ void PrivacyManagerService::OnAddSystemAbility(int32_t systemAbilityId, const st
         return;
     }
 
+    if (systemAbilityId == POWER_MANAGER_SERVICE_ID) {
+        bool isScreenOn = PermissionRecordManager::GetInstance().IsScreenOn(true);
+        PermissionRecordManager::GetInstance().SetScreenOn(isScreenOn);
+        return;
+    }
+
     std::lock_guard<std::mutex> lock(stateMutex_);
     if (systemAbilityId == ACCESS_TOKEN_MANAGER_SERVICE_ID && state_ != ServiceRunningState::STATE_RUNNING) {
         {
@@ -830,14 +837,14 @@ void PrivacyManagerService::OnAddSystemAbility(int32_t systemAbilityId, const st
             }
             g_isAccessTokenRunning = true;
         }
-        for (int32_t i = 0; i < RETRY_COUNT; i++) {
+        for (int32_t i = 1; i <= RETRY_COUNT; i++) {
             bool ret = Publish(DelayedSingleton<PrivacyManagerService>::GetInstance().get());
             if (ret) {
                 state_ = ServiceRunningState::STATE_RUNNING;
                 break;
             }
             LOGE(PRI_DOMAIN, PRI_TAG, "Failed to publish service, retry!");
-            std::this_thread::sleep_for(std::chrono::milliseconds(RETRY_TIMES_MS));
+            std::this_thread::sleep_for(std::chrono::milliseconds(RETRY_TIMES_MS * i));
         }
         if (state_ != ServiceRunningState::STATE_RUNNING) {
             LOGE(PRI_DOMAIN, PRI_TAG, "Publish retry all failed!");

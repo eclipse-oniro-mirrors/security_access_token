@@ -333,6 +333,19 @@ HWTEST_F(SecCompEnhanceAgentTest, SecCompEnhanceKey005, TestSize.Level1)
     EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, agent.GetSecCompEnhanceKey(result));
 }
 
+/**
+ * @tc.name: SetSecCompEnhanceStatus001
+ * @tc.desc: SetSecCompEnhanceStatus sets parameter value according to the enable flag.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(SecCompEnhanceAgentTest, SetSecCompEnhanceStatus001, TestSize.Level1)
+{
+    auto& agent = SecCompEnhanceAgent::GetInstance();
+    EXPECT_EQ(RET_SUCCESS, agent.SetSecCompEnhanceStatus(true));
+    EXPECT_EQ(RET_SUCCESS, agent.SetSecCompEnhanceStatus(false));
+}
+
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

@@ -87,6 +87,8 @@ struct ProcessData : public Parcelable {
     bool isPreloadModule = false;
     int32_t preloadMode = -1;
     bool isFromWindowFocusChanged = false;
+    int32_t byCallStatus = 0;
+    std::string callerBundleName;
 };
 }  // namespace AccessToken
 }  // namespace Security

@@ -178,6 +178,7 @@ ohos_executable("QuerySubProfileInfo") {
   ]
 
   external_deps = [
+    "c_utils:utils",
     "os_account:os_account_innerkits_lite",
   ]
 }

@@ -31,17 +31,23 @@ struct CreateHapTokenOptions final {
     bool isSystemApp = true;
     int32_t userId = 0;
     int32_t instIndex = 0;
+    std::string appDistributionType;
+    bool isSideloadApp = false;
 };
 
 void PrintCreateHapTokenHelp()
 {
     std::cout << "Usage: ./CreateHapToken <bundleName> [userId] [--user <userId>] [--inst-index <index>] "
-        << "[--system-app <true|false>] "
+        << "[--system-app <true|false>] [--dist-type <distributionType>] [--sideload <true|false>] "
         << "<reqPermission...> [--preauth <permission...>]\n"
         << "Example: ./CreateHapToken com.example.demo --user 100 ohos.permission.CAMERA\n"
         << "Example: ./CreateHapToken com.example.demo.clone --user 100 --inst-index 1 "
         << "ohos.permission.CAMERA\n"
+        << "Example: ./CreateHapToken com.example.sideload --user 100 --dist-type developer_id "
+        << "--sideload true ohos.permission.CAMERA\n"
         << "Note: --preauth permissions must also appear in req permissions.\n"
+        << "Note: sideload app must be developer_id distributed; inconsistent input is normalized "
+        << "to non-sideload.\n"
         << std::endl;
 }
 
@@ -106,6 +112,27 @@ bool ParseCreateHapTokenArgs(int argc, char* argv[], CreateHapTokenOptions& opti
             ++i;
             continue;
         }
+        if ((arg == "--dist-type") || (arg == "--distribution-type")) {
+            if ((i + 1) >= argc) {
+                std::cout << "CreateHapToken failed, missing value for " << arg << std::endl;
+                return false;
+            }
+            options.appDistributionType = argv[i + 1];
+            ++i;
+            continue;
+        }
+        if ((arg == "--sideload") || (arg == "--is-sideload")) {
+            if ((i + 1) >= argc) {
+                std::cout << "CreateHapToken failed, missing value for " << arg << std::endl;
+                return false;
+            }
+            if (!ParseBoolArg(argv[i + 1], options.isSideloadApp)) {
+                std::cout << "CreateHapToken failed, invalid " << arg << " value: " << argv[i + 1] << std::endl;
+                return false;
+            }
+            ++i;
+            continue;
+        }
         if ((arg == "--user") || (arg == "--user-id")) {
             if ((i + 1) >= argc) {
                 std::cout << "CreateHapToken failed, missing value for " << arg << std::endl;
@@ -154,7 +181,7 @@ int32_t RunCreateHapToken(const CreateHapTokenOptions& options)
 {
     FullTokenID tokenId = GetHapTokenId(
         options.bundleName, options.reqPerm, options.preAuthPerm, options.isSystemApp, options.userId,
-        options.instIndex);
+        options.instIndex, options.appDistributionType, options.isSideloadApp);
     if (tokenId == INVALID_TOKENID) {
         std::cout << "CreateHapToken ret=" << RET_FAILED << ", bundleName=" << options.bundleName << std::endl;
         return RET_FAILED;
@@ -163,7 +190,9 @@ int32_t RunCreateHapToken(const CreateHapTokenOptions& options)
         << ", tokenId=" << tokenId
         << ", bundleName=" << options.bundleName
         << ", userId=" << options.userId
-        << ", instIndex=" << options.instIndex << std::endl;
+        << ", instIndex=" << options.instIndex
+        << ", distType=" << options.appDistributionType
+        << ", sideload=" << options.isSideloadApp << std::endl;
     return RET_SUCCESS;
 }
 }
