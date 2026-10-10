@@ -12702,8 +12702,6 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
-            "isKernelEffect": false,
-            "hasValue": false,
             "deviceTypes": ["2in1", "car", "phone", "tablet", "tv", "wearable"]
         }
     ]
