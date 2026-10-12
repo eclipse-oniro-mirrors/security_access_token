@@ -235,10 +235,12 @@ HWTEST_F(GetPermissionTest, GetDefPermissionFuncTest001, TestSize.Level0)
     // get user grant permission define
     ASSERT_EQ(0, AccessTokenKit::GetDefPermission("ohos.permission.CAMERA", permDef));
     ASSERT_EQ("ohos.permission.CAMERA", permDef.permissionName);
+    ASSERT_FALSE(permDef.binIndependentUsable);
 
     // get system grant permission define
     ASSERT_EQ(0, AccessTokenKit::GetDefPermission("ohos.permission.PERMISSION_USED_STATS", permDef));
     ASSERT_EQ("ohos.permission.PERMISSION_USED_STATS", permDef.permissionName);
+    ASSERT_FALSE(permDef.binIndependentUsable);
 }
 
 /**

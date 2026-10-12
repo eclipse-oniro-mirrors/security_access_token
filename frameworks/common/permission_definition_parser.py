@@ -78,7 +78,8 @@ PERMISSION_BRIEF_DEFINE_PATTERN = '''
     .isKernelEffect = %s,
     .hasValue = %s,
     .isEnable = %s,
-    .provisionBypassForSideload = %s
+    .provisionBypassForSideload = %s,
+    .binIndependentUsable = %s
 },'''
 
 JSON_VALUE_CONVERT_TO_CPP_DICT = {
@@ -112,6 +113,12 @@ def check_permission_definition_count(permission_list):
                 len(permission_list), MAX_PERMISSION_DEFINITION_COUNT))
 
 
+def convert_bool_flag(permission_def_dict, key):
+    if key in permission_def_dict and permission_def_dict[key]:
+        return "true"
+    return "false"
+
+
 class PermissionDef(object):
     def __init__(self, permission_def_dict, code):
         self.name = permission_def_dict["name"]
@@ -123,30 +130,12 @@ class PermissionDef(object):
         ]
         self.available_type = permission_def_dict["availableType"]
 
-        if "provisionEnable" in permission_def_dict and permission_def_dict["provisionEnable"]:
-            self.provision_enable = "true"
-        else:
-            self.provision_enable = "false"
-
-        if "distributedSceneEnable" in permission_def_dict and permission_def_dict["distributedSceneEnable"]:
-            self.distributed_scene_enable = "true"
-        else:
-            self.distributed_scene_enable = "false"
-
-        if "isKernelEffect" in permission_def_dict and permission_def_dict["isKernelEffect"]:
-            self.is_kernel_effect = "true"
-        else:
-            self.is_kernel_effect = "false"
-
-        if "hasValue" in permission_def_dict and permission_def_dict["hasValue"]:
-            self.has_value = "true"
-        else:
-            self.has_value = "false"
-
-        if "provisionBypassForSideload" in permission_def_dict and permission_def_dict["provisionBypassForSideload"]:
-            self.provision_bypass_for_sideload = "true"
-        else:
-            self.provision_bypass_for_sideload = "false"
+        self.provision_enable = convert_bool_flag(permission_def_dict, "provisionEnable")
+        self.distributed_scene_enable = convert_bool_flag(permission_def_dict, "distributedSceneEnable")
+        self.is_kernel_effect = convert_bool_flag(permission_def_dict, "isKernelEffect")
+        self.bin_independent_usable = convert_bool_flag(permission_def_dict, "binIndependentUsable")
+        self.has_value = convert_bool_flag(permission_def_dict, "hasValue")
+        self.provision_bypass_for_sideload = convert_bool_flag(permission_def_dict, "provisionBypassForSideload")
 
         if self.is_support_device_types(permission_def_dict["since"]) and not "deviceTypes" in permission_def_dict:
             raise Exception("No deviceTypes in permission difinition of {}".format(self.name))
@@ -184,7 +173,8 @@ class PermissionDef(object):
         entry = PERMISSION_BRIEF_DEFINE_PATTERN % (
             self.code, self.grant_mode, self.available_level,
             self.available_type, self.provision_enable, self.distributed_scene_enable,
-            self.is_kernel_effect, self.has_value, self.is_enable, self.provision_bypass_for_sideload
+            self.is_kernel_effect, self.has_value, self.is_enable,
+            self.provision_bypass_for_sideload, self.bin_independent_usable
         )
         return entry
 

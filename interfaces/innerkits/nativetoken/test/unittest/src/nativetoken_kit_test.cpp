@@ -2041,6 +2041,55 @@ HWTEST_F(TokenLibKitTest, BakFallback_MainMissing, TestSize.Level1)
 }
 
 /**
+ * @tc.name: BakFallback_MainEmpty_BakCorrupt
+ * @tc.desc: Main file empty (st_size==0) + backup corrupt (symlink) → ClearOrCreateCfgFile recovery.
+ *           Covers the return-ret branch: mainMissingOrEmpty=1 but bakRet != SUCCESS.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenLibKitTest, BakFallback_MainEmpty_BakCorrupt, TestSize.Level1)
+{
+    g_isNativeTokenInited = 0;
+    NativeTokenInfoParams tokenInfo = {
+        .dcapsNum = 0,
+        .permsNum = 0,
+        .aclsNum = 0,
+        .perms = nullptr,
+        .dcaps = nullptr,
+        .acls = nullptr,
+        .processName = "test_bak_empty_bakcorrupt_proc",
+        .aplStr = "system_core",
+        .uid = 8891,
+    };
+    uint64_t tokenId = GetAccessTokenId(&tokenInfo);
+    EXPECT_NE(tokenId, INVALID_TOKEN_ID);
+
+    int32_t fd = open(TOKEN_ID_CFG_FILE_PATH, O_WRONLY | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP);
+    ASSERT_GE(fd, 0);
+    close(fd);
+
+    char bakPath[PATH_MAX_LEN + 1] = {0};
+    ASSERT_EQ(GetBakFilePath(TOKEN_ID_CFG_FILE_PATH, bakPath, sizeof(bakPath)), 0);
+    ASSERT_EQ(unlink(bakPath), 0);
+    ASSERT_EQ(symlink("/dev/null", bakPath), 0);
+
+    g_isNativeTokenInited = 0;
+    if (g_tokenListHead != nullptr) {
+        free(g_tokenListHead);
+        g_tokenListHead = nullptr;
+    }
+    uint32_t ret = AtlibInit();
+    EXPECT_EQ(ret, ATRET_SUCCESS);
+
+    struct stat fileStat = {};
+    ASSERT_EQ(lstat(TOKEN_ID_CFG_FILE_PATH, &fileStat), 0);
+    EXPECT_TRUE(S_ISREG(fileStat.st_mode));
+
+    unlink(bakPath);
+    ASSERT_EQ(DeleteAccessTokenId("test_bak_empty_bakcorrupt_proc"), 0);
+}
+
+/**
  * @tc.name: BakFallback_MainParseFail
  * @tc.desc: Verify backup fallback restores token data when main file has invalid JSON.
  * @tc.type: FUNC

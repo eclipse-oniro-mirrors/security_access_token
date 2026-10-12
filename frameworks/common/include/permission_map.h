@@ -38,6 +38,7 @@ struct PermissionBriefDef {
     bool hasValue;
     bool isEnable;
     bool provisionBypassForSideload = false;
+    bool binIndependentUsable;
 };
 
 bool TransferPermissionToOpcode(const std::string& permissionName, uint32_t& opCode);

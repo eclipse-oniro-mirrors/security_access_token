@@ -117,7 +117,7 @@ HWTEST_F(AccessTokenOpenCallbackTest, HapInfoTableSchema001, TestSize.Level0)
 
 /**
  * @tc.name: ModeColumnDefaultValue001
- * @tc.desc: Verify mode column default value equals MultipleMode::DEFAULT_MODE after OnCreate.
+ * @tc.desc: Verify mode column default value equals MultipleMode::DEFAULT_OR_MAIN_MODE after OnCreate.
  * @tc.type: FUNC
  * @tc.require: TDD
  */
@@ -130,7 +130,7 @@ HWTEST_F(AccessTokenOpenCallbackTest, ModeColumnDefaultValue001, TestSize.Level1
     AccessTokenDbUtil::GetTableNameByType(AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO, tableName);
 #ifdef SPM_DATA_ENABLE
     std::string dflt = GetColumnDefaultValue(*rdbStore, tableName, TokenFiledConst::FIELD_MODE);
-    EXPECT_EQ(std::to_string(static_cast<int32_t>(MultipleMode::DEFAULT_MODE)), dflt);
+    EXPECT_EQ(std::to_string(static_cast<int32_t>(MultipleMode::DEFAULT_OR_MAIN_MODE)), dflt);
 #else
     auto columns = GetTableColumnNames(*rdbStore, tableName);
     EXPECT_TRUE(columns.find(TokenFiledConst::FIELD_MODE) == columns.end());
@@ -210,7 +210,7 @@ HWTEST_F(AccessTokenOpenCallbackTest, UpgradeFromVersion11SafeOnUpgradedDb001, T
     auto columns = GetTableColumnNames(*rdbStore, tableName);
     EXPECT_TRUE(columns.find(TokenFiledConst::FIELD_MODE) != columns.end());
     std::string dflt = GetColumnDefaultValue(*rdbStore, tableName, TokenFiledConst::FIELD_MODE);
-    EXPECT_EQ(std::to_string(static_cast<int32_t>(MultipleMode::DEFAULT_MODE)), dflt);
+    EXPECT_EQ(std::to_string(static_cast<int32_t>(MultipleMode::DEFAULT_OR_MAIN_MODE)), dflt);
 #endif
 }
 } // namespace AccessToken

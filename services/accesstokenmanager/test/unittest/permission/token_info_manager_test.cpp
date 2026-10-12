@@ -2152,6 +2152,7 @@ HWTEST_F(TokenInfoManagerTest, GetNativePermissionList001, TestSize.Level0)
     PermissionBriefDef systemBasicDef;
     ASSERT_TRUE(GetPermissionBriefDef(systemBasicPermission, systemBasicDef));
     EXPECT_EQ(APL_SYSTEM_BASIC, systemBasicDef.availableLevel);
+    EXPECT_FALSE(systemBasicDef.binIndependentUsable);
 
     PermissionStatus normalState = {};
     normalState.permissionName = normalPermission;

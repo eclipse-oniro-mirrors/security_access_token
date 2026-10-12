@@ -439,7 +439,7 @@ int32_t AccessTokenOpenCallback::CreateHapInfoTable(NativeRdb::RdbStore& rdbStor
 #ifdef SPM_DATA_ENABLE
         .append(TokenFiledConst::FIELD_MODE)
         .append(" integer not null default "
-            + std::to_string(static_cast<int32_t>(MultipleMode::DEFAULT_MODE)) + ",")
+            + std::to_string(static_cast<int32_t>(MultipleMode::DEFAULT_OR_MAIN_MODE)) + ",")
 #endif
         .append("primary key(")
         .append(TokenFiledConst::FIELD_BUNDLE_NAME)
