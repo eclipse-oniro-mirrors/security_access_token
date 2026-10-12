@@ -12780,6 +12780,17 @@
             "provisionEnable": true,
             "distributedSceneEnable": false,
             "deviceTypes": ["2in1", "phone", "tablet"]
+        },
+        {
+            "name": "ohos.permission.WINDOW_CAPTURE",
+            "grantMode": "user_grant",
+            "availableLevel": "normal",
+            "availableType": "NORMAL",
+            "since": "26.2.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1", "tablet"]
         }
     ]
 }
