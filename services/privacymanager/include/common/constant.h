@@ -120,6 +120,7 @@ public:
         OP_AGENT_FILE_ACCESS_WRITE_MEDIA = 119,
         // 虚拟权限：无实体权限，不进 permission_definitions.json，仅作隐私使用记录载体
         OP_DVRCAMERA = 120,
+        OP_WINDOW_CAPTURE = 121,
     };
 
     enum ErrorCode {
