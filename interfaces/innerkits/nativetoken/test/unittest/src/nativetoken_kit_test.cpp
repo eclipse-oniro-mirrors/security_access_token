@@ -2393,3 +2393,172 @@ HWTEST_F(TokenLibKitTest, BakFallback_WriteAfterRecovery, TestSize.Level1)
 
     DeleteAccessTokenId("test_write_recovery_proc");
 }
+
+namespace {
+constexpr const char *FIX_PERM_DIR = "/data/local/tmp";
+constexpr const char *FIX_PERM_FILE = "/data/local/tmp/test_fixperm.json";
+constexpr mode_t FIX_PERM_EXPECT_MODE = S_IRUSR | S_IWUSR | S_IRGRP;
+constexpr mode_t FIX_PERM_WRONG_MODE = 0600;
+constexpr uid_t TEST_WRONG_UID_A = 1;
+constexpr uid_t TEST_WRONG_UID_B = 2;
+constexpr gid_t TEST_WRONG_GID_A = 1;
+constexpr gid_t TEST_WRONG_GID_B = 2;
+
+bool CreateFileWithPerm(const char *path, uid_t uid, gid_t gid, mode_t mode, const char *content)
+{
+    int32_t fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, mode);
+    if (fd < 0) {
+        return false;
+    }
+    ssize_t len = static_cast<ssize_t>(strlen(content));
+    ssize_t written = write(fd, content, static_cast<size_t>(len));
+    close(fd);
+    if (written != len) {
+        return false;
+    }
+    return chown(path, uid, gid) == 0 && chmod(path, mode) == 0;
+}
+
+uid_t GetWrongUid(uid_t correctUid)
+{
+    return (correctUid == TEST_WRONG_UID_A) ? TEST_WRONG_UID_B : TEST_WRONG_UID_A;
+}
+
+gid_t GetWrongGid(gid_t correctGid)
+{
+    return (correctGid == TEST_WRONG_GID_A) ? TEST_WRONG_GID_B : TEST_WRONG_GID_A;
+}
+}
+
+/**
+ * @tc.name: FixPerm_AllMatch
+ * @tc.desc: owner/group/mode all match → no fix → SUCCESS
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenLibKitTest, FixPerm_AllMatch, TestSize.Level1)
+{
+    struct stat dirStat;
+    ASSERT_EQ(stat(FIX_PERM_DIR, &dirStat), 0);
+    ASSERT_TRUE(CreateFileWithPerm(FIX_PERM_FILE, dirStat.st_uid, dirStat.st_gid, FIX_PERM_EXPECT_MODE, "[]"));
+    char *buff = nullptr;
+    EXPECT_EQ(GetFileBuff(FIX_PERM_FILE, &buff), ATRET_SUCCESS);
+    EXPECT_NE(buff, nullptr);
+    free(buff);
+    unlink(FIX_PERM_FILE);
+}
+
+/**
+ * @tc.name: FixPerm_OwnerMismatch
+ * @tc.desc: owner mismatch → chown fix → SUCCESS
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenLibKitTest, FixPerm_OwnerMismatch, TestSize.Level1)
+{
+    struct stat dirStat;
+    ASSERT_EQ(stat(FIX_PERM_DIR, &dirStat), 0);
+    ASSERT_TRUE(CreateFileWithPerm(FIX_PERM_FILE, GetWrongUid(dirStat.st_uid), dirStat.st_gid,
+        FIX_PERM_EXPECT_MODE, "[]"));
+    char *buff = nullptr;
+    EXPECT_EQ(GetFileBuff(FIX_PERM_FILE, &buff), ATRET_SUCCESS);
+    EXPECT_NE(buff, nullptr);
+    free(buff);
+    struct stat fileStat;
+    ASSERT_EQ(stat(FIX_PERM_FILE, &fileStat), 0);
+    EXPECT_EQ(fileStat.st_uid, dirStat.st_uid);
+    unlink(FIX_PERM_FILE);
+}
+
+/**
+ * @tc.name: FixPerm_GroupMismatch
+ * @tc.desc: group mismatch → chown fix → SUCCESS
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenLibKitTest, FixPerm_GroupMismatch, TestSize.Level1)
+{
+    struct stat dirStat;
+    ASSERT_EQ(stat(FIX_PERM_DIR, &dirStat), 0);
+    ASSERT_TRUE(CreateFileWithPerm(FIX_PERM_FILE, dirStat.st_uid, GetWrongGid(dirStat.st_gid),
+        FIX_PERM_EXPECT_MODE, "[]"));
+    char *buff = nullptr;
+    EXPECT_EQ(GetFileBuff(FIX_PERM_FILE, &buff), ATRET_SUCCESS);
+    EXPECT_NE(buff, nullptr);
+    free(buff);
+    struct stat fileStat;
+    ASSERT_EQ(stat(FIX_PERM_FILE, &fileStat), 0);
+    EXPECT_EQ(fileStat.st_gid, dirStat.st_gid);
+    unlink(FIX_PERM_FILE);
+}
+
+/**
+ * @tc.name: FixPerm_ModeMismatch
+ * @tc.desc: mode mismatch → chmod fix → SUCCESS
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenLibKitTest, FixPerm_ModeMismatch, TestSize.Level1)
+{
+    struct stat dirStat;
+    ASSERT_EQ(stat(FIX_PERM_DIR, &dirStat), 0);
+    ASSERT_TRUE(CreateFileWithPerm(FIX_PERM_FILE, dirStat.st_uid, dirStat.st_gid, FIX_PERM_WRONG_MODE, "[]"));
+    char *buff = nullptr;
+    EXPECT_EQ(GetFileBuff(FIX_PERM_FILE, &buff), ATRET_SUCCESS);
+    EXPECT_NE(buff, nullptr);
+    free(buff);
+    struct stat fileStat;
+    ASSERT_EQ(stat(FIX_PERM_FILE, &fileStat), 0);
+    EXPECT_EQ(fileStat.st_mode & 0777, FIX_PERM_EXPECT_MODE);
+    unlink(FIX_PERM_FILE);
+}
+
+/**
+ * @tc.name: FixPerm_AllMismatch
+ * @tc.desc: owner + group + mode all mismatch → chown + chmod fix → SUCCESS
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenLibKitTest, FixPerm_AllMismatch, TestSize.Level1)
+{
+    struct stat dirStat;
+    ASSERT_EQ(stat(FIX_PERM_DIR, &dirStat), 0);
+    ASSERT_TRUE(CreateFileWithPerm(FIX_PERM_FILE, GetWrongUid(dirStat.st_uid), GetWrongGid(dirStat.st_gid),
+        FIX_PERM_WRONG_MODE, "[]"));
+    char *buff = nullptr;
+    EXPECT_EQ(GetFileBuff(FIX_PERM_FILE, &buff), ATRET_SUCCESS);
+    EXPECT_NE(buff, nullptr);
+    free(buff);
+    struct stat fileStat;
+    ASSERT_EQ(stat(FIX_PERM_FILE, &fileStat), 0);
+    EXPECT_EQ(fileStat.st_uid, dirStat.st_uid);
+    EXPECT_EQ(fileStat.st_gid, dirStat.st_gid);
+    EXPECT_EQ(fileStat.st_mode & 0777, FIX_PERM_EXPECT_MODE);
+    unlink(FIX_PERM_FILE);
+}
+
+/**
+ * @tc.name: FixPerm_EmptyFileMismatch
+ * @tc.desc: empty file + permission mismatch → FixFilePermission runs on empty-file path → SUCCESS + buff NULL
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenLibKitTest, FixPerm_EmptyFileMismatch, TestSize.Level1)
+{
+    struct stat dirStat;
+    ASSERT_EQ(stat(FIX_PERM_DIR, &dirStat), 0);
+    int32_t fd = open(FIX_PERM_FILE, O_WRONLY | O_CREAT | O_TRUNC, FIX_PERM_WRONG_MODE);
+    ASSERT_GE(fd, 0);
+    close(fd);
+    ASSERT_EQ(chown(FIX_PERM_FILE, GetWrongUid(dirStat.st_uid), GetWrongGid(dirStat.st_gid)), 0);
+    ASSERT_EQ(chmod(FIX_PERM_FILE, FIX_PERM_WRONG_MODE), 0);
+    char *buff = nullptr;
+    EXPECT_EQ(GetFileBuff(FIX_PERM_FILE, &buff), ATRET_SUCCESS);
+    EXPECT_EQ(buff, nullptr);
+    struct stat fileStat;
+    ASSERT_EQ(stat(FIX_PERM_FILE, &fileStat), 0);
+    EXPECT_EQ(fileStat.st_uid, dirStat.st_uid);
+    EXPECT_EQ(fileStat.st_gid, dirStat.st_gid);
+    EXPECT_EQ(fileStat.st_mode & 0777, FIX_PERM_EXPECT_MODE);
+    unlink(FIX_PERM_FILE);
+}

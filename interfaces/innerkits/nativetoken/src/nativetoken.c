@@ -40,6 +40,7 @@ const uint64_t g_nativeFdTag = 0xD005A01;
 static const uint32_t SPM_PERM_ARRAY_SIZE = 64;
 static const uint32_t UINT32_BITS_NUM = 32;
 static const int32_t MAX_KERNEL_OPERATE_TRY_TIMES = 2;
+static const mode_t FILE_DAC_MASK = 0777;
 
 #define BREAK_IF_TRUE(cond) \
     if (cond) { \
@@ -67,6 +68,56 @@ static void TryRemoveInvalidConfigPath(const char *path)
         return;
     }
     LOGC("Failed to remove non-regular config node, errno=%d.", errno);
+}
+
+static uint32_t FixFilePermission(const char *filePath, const struct stat *fileStat)
+{
+    // nativetoken.json has two readers: init (root) and accesstoken (non-root).
+    // Fix owner/group/DAC so accesstoken can read after init.
+    const char *lastSlash = strrchr(filePath, '/');
+    if (lastSlash == NULL || lastSlash == filePath) {
+        LOGC("Invalid file path, no parent dir.");
+        return GET_FILE_BUFF_FAILED;
+    }
+    char parentDir[PATH_MAX_LEN + 1] = {0};
+    size_t dirLen = (size_t)(lastSlash - filePath);
+    if (dirLen >= sizeof(parentDir) - 1) {
+        LOGC("Parent dir path too long.");
+        return GET_FILE_BUFF_FAILED;
+    }
+    if (memcpy_s(parentDir, sizeof(parentDir), filePath, dirLen) != EOK) {
+        LOGC("Failed to copy parent dir.");
+        return GET_FILE_BUFF_FAILED;
+    }
+    parentDir[dirLen] = '\0';
+
+    struct stat dirStat;
+    if (stat(parentDir, &dirStat) != 0) {
+        LOGC("Failed to stat parent dir, errno=%d.", errno);
+        return GET_FILE_BUFF_FAILED;
+    }
+    if (fileStat->st_uid != dirStat.st_uid || fileStat->st_gid != dirStat.st_gid) {
+        LOGC("Config file owner/group mismatch with parent dir, fixing. uid=%u/%u, gid=%u/%u.",
+             fileStat->st_uid, dirStat.st_uid, fileStat->st_gid, dirStat.st_gid);
+        if (chown(filePath, dirStat.st_uid, dirStat.st_gid) != 0) {
+            LOGC("Failed to chown config file, errno=%d.", errno);
+            return GET_FILE_BUFF_FAILED;
+        }
+    }
+    mode_t expectMode = S_IRUSR | S_IWUSR | S_IRGRP;
+    if ((fileStat->st_mode & FILE_DAC_MASK) != expectMode) {
+        LOGC("Config file DAC mode mismatch, fixing. mode=%o/%o.",
+             fileStat->st_mode & FILE_DAC_MASK, expectMode);
+        if (chmod(filePath, expectMode) != 0) {
+            LOGC("Failed to chmod config file, errno=%d.", errno);
+            return GET_FILE_BUFF_FAILED;
+        }
+    }
+    if (GetThreadErrorMsgLen() > 0) {
+        ReportNativeTokenExceptionEvent(NATIVE_TOKEN_INIT, GET_FILE_BUFF_FAILED, GetThreadErrorMsg());
+        ClearThreadErrorMsg();
+    }
+    return ATRET_SUCCESS;
 }
 
 uint32_t GetFileBuff(const char *cfg, char **retBuff)
@@ -99,6 +150,9 @@ uint32_t GetFileBuff(const char *cfg, char **retBuff)
     }
     if (!S_ISREG(fileStat.st_mode)) {
         LOGC("Config path is not a regular file.");
+        return GET_FILE_BUFF_FAILED;
+    }
+    if (FixFilePermission(filePath, &fileStat) != ATRET_SUCCESS) {
         return GET_FILE_BUFF_FAILED;
     }
     if (fileStat.st_size == 0) {
