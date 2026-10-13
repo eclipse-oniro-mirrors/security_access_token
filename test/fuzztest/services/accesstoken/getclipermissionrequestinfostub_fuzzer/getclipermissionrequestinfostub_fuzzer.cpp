@@ -16,6 +16,7 @@
 #include "getclipermissionrequestinfostub_fuzzer.h"
 
 #include <new>
+#include <thread>
 #include <vector>
 
 #include "claw_permission_fuzzdata.h"
@@ -123,9 +124,17 @@ bool GetCliPermissionRequestInfoStubFuzzTest(const uint8_t* data, size_t size)
 }
 }
 
+static constexpr int32_t SLEEP_TIME = 5;
+
+void BeforeExit()
+{
+    std::this_thread::sleep_for(std::chrono::seconds(SLEEP_TIME));
+}
+
 extern "C" int LLVMFuzzerInitialize(int* argc, char*** argv)
 {
     OHOS::InitializeClawPermissionStubFuzz();
+    (void)atexit(BeforeExit);
     return 0;
 }
 

@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 
+#include <thread>
 #include "gettokenidbyuseridstub_fuzzer.h"
 
 #undef private
@@ -60,9 +61,17 @@ void Initialize()
 }
 } // namespace OHOS
 
+static constexpr int32_t SLEEP_TIME = 5;
+
+void BeforeExit()
+{
+    std::this_thread::sleep_for(std::chrono::seconds(SLEEP_TIME));
+}
+
 extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv)
 {
     OHOS::Initialize();
+    (void)atexit(BeforeExit);
     return 0;
 }
 

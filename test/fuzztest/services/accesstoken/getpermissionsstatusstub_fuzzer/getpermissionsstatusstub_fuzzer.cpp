@@ -139,10 +139,18 @@ AccessTokenID EnsureValidTokenId()
     }
 }
 
+static constexpr int32_t SLEEP_TIME = 5;
+
+void BeforeExit()
+{
+    std::this_thread::sleep_for(std::chrono::seconds(SLEEP_TIME));
+}
+
 extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv)
 {
     g_mockToken.reset(new MockToken({ "ohos.permission.GET_SENSITIVE_PERMISSIONS" }, true, true));
     OHOS::Initialize();
+    (void)atexit(BeforeExit);
     return 0;
 }
 

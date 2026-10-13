@@ -1,3 +1,4 @@
+#include <thread>
 /*
  * Copyright (c) 2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -130,9 +131,17 @@ bool GetCliPermissionsStubFuzzTest(const uint8_t* data, size_t size)
 }
 }
 
+static constexpr int32_t SLEEP_TIME = 5;
+
+void BeforeExit()
+{
+    std::this_thread::sleep_for(std::chrono::seconds(SLEEP_TIME));
+}
+
 extern "C" int LLVMFuzzerInitialize(int* argc, char*** argv)
 {
     OHOS::InitializeClawPermissionStubFuzz();
+    (void)atexit(BeforeExit);
     return 0;
 }
 
