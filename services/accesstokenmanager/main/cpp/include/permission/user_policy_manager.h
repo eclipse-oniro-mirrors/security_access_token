@@ -59,6 +59,19 @@ public:
     int32_t UpdatePolicyWhiteList(const PolicyWhiteListUpdateInfo& context);
     int32_t UpdatePolicyWhiteList(const PolicyWhiteListUpdateInfo& context, bool& isPersist);
     int32_t RemoveTokenFromPolicyWhiteList(AccessTokenID tokenId);
+    /**
+     * Build (not execute) the db ops dropping tokenIds from every persistent
+     * policy whitelist record; the caller merges them into its own transaction.
+     * Publish the in-memory removal via CommitPolicyWhiteListRemoval after
+     * its CommitDb succeeds.
+     */
+    int32_t BuildRemoveTokensFromPolicyWhiteListOps(const std::vector<AccessTokenID>& tokenIds,
+        std::vector<DelInfo>& delInfoVec, std::vector<AddInfo>& addInfoVec);
+    /**
+     * Publish the in-memory half of BuildRemoveTokensFromPolicyWhiteListOps
+     * after the caller's CommitDb succeeded.
+     */
+    void CommitPolicyWhiteListRemoval(const std::vector<AccessTokenID>& tokenIds);
     int32_t GetPolicyWhiteList(uint32_t permCode, std::vector<AccessTokenID>& tokenIdList) const;
     void UpdatePermissionStatusListForUserPolicy(
         AccessTokenID tokenId, int32_t userId, std::vector<PermissionStatus>& permStateList) const;

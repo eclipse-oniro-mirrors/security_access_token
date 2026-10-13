@@ -156,6 +156,14 @@ void AccessTokenIDManager::ReleaseTokenId(AccessTokenID id)
     tokenIdSet_.erase(id);
 }
 
+void AccessTokenIDManager::ReleaseTokenIdForce(AccessTokenID id)
+{
+    std::unique_lock<std::shared_mutex> idGuard(this->tokenIdLock_);
+    tokenIdSet_.erase(id);
+    reservedTokenIdSet_.erase(id);
+    untrustedTokenIdSet_.erase(id);
+}
+
 bool AccessTokenIDManager::IsReservedTokenId(AccessTokenID id)
 {
     std::shared_lock<std::shared_mutex> idGuard(this->tokenIdLock_);

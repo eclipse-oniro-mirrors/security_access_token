@@ -49,6 +49,10 @@ public:
         int32_t toolFlag);
     int RegisterTokenId(AccessTokenID id, ATokenTypeEnum type);
     void ReleaseTokenId(AccessTokenID id);
+    // Force release: the id leaves whichever of the three id sets holds it
+    // (set-agnostic cleanup for complete deletes); ReleaseTokenId stays
+    // ACTIVE-strict.
+    void ReleaseTokenIdForce(AccessTokenID id);
     void AddReservedTokenId(AccessTokenID id);
     void RemoveReservedTokenId(AccessTokenID id);
     bool IsReservedTokenId(AccessTokenID id);

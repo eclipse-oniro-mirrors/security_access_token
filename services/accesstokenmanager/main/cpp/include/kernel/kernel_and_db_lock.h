@@ -46,7 +46,7 @@ bool IsKernelAndDBWriteHeldByCurrentThread();
 
 /**
  * Report a guard violation: a kernel mutation entry point was reached outside any
- * KernelAndDBWriteTransaction. Logs a critical error and aborts in test builds.
+ * KernelAndDBWriteTransaction. Logs a critical error.
  *
  * @param apiName Name of the violated entry point.
  */

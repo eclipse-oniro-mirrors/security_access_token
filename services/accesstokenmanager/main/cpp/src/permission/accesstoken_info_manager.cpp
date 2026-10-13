@@ -930,6 +930,44 @@ std::shared_ptr<HapTokenInfoInner> AccessTokenInfoManager::GetHapTokenInfoInner(
     return GetHapTokenInfoInnerFromDb(id);
 }
 
+std::shared_ptr<HapTokenInfoInner> AccessTokenInfoManager::GetHapTokenInfoAndStatus(
+    AccessTokenID id, TokenIdStatus& status)
+{
+    // Not-found keeps the caller on the not-exist path (never the reserved
+    // defensive rejection).
+    status = TokenIdStatus::ACTIVE;
+    if (AccessTokenIDManager::GetInstance().GetTokenIdStatus(id, status) != RET_SUCCESS) {
+        return nullptr;
+    }
+    if (status == TokenIdStatus::ACTIVE) {
+        return GetHapTokenInfoInner(id);
+    }
+    // UNTRUSTED / RESERVED: pure db snapshot without memory side effects;
+    // the caller owns the status-based decisions (the reserved defense lives
+    // in the delete entry).
+    return LoadHapTokenInfoFromDbAndNoCache(id);
+}
+
+std::shared_ptr<HapTokenInfoInner> AccessTokenInfoManager::LoadHapTokenInfoFromDbAndNoCache(AccessTokenID id)
+{
+    GenericValues conditionValue;
+    conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(id));
+    std::vector<GenericValues> hapTokenResults;
+    int32_t ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, conditionValue,
+        hapTokenResults);
+    if (ret != RET_SUCCESS || hapTokenResults.empty()) {
+        return nullptr;
+    }
+    // Reuse the db-layer item translation + the pure field-copy constructor:
+    // no permission brief registration, no id-set mutation, no cache writes.
+    std::vector<HapTokenInfoItem> items;
+    HapTokenInfoItem::LoadFromDB(hapTokenResults, items);
+    if (items.empty()) {
+        return nullptr;
+    }
+    return std::make_shared<HapTokenInfoInner>(items[0]);
+}
+
 int32_t AccessTokenInfoManager::GetHapTokenDlpType(AccessTokenID id)
 {
     std::shared_lock<std::shared_mutex> infoGuard(this->hapTokenInfoLock_);
@@ -1282,6 +1320,13 @@ AccessTokenInfoManager::HapTokenDbContext::HapTokenDbContext(const std::string& 
 void AccessTokenInfoManager::RemoveReservedHapTokenId(int32_t userID,
     const std::string& bundleName, int32_t instIndex)
 {
+#ifdef SPM_DATA_ENABLE
+    // SPM: resolve through the db, then release the id-set entry.
+    AccessTokenID reservedTokenId = GetReservedHapTokenId(userID, bundleName, instIndex);
+    if (reservedTokenId != 0) {
+        AccessTokenIDManager::GetInstance().RemoveReservedTokenId(reservedTokenId);
+    }
+#else
     std::unique_lock<std::shared_mutex> infoGuard(this->reservedHapTokenInfoLock_);
     std::string hapUniqueKey = AccessTokenInfoUtils::GetHapUniqueStr(userID, bundleName, instIndex);
     auto it = reservedHapTokenIdMap_.find(hapUniqueKey);
@@ -1291,11 +1336,34 @@ void AccessTokenInfoManager::RemoveReservedHapTokenId(int32_t userID,
     AccessTokenIDManager::GetInstance().RemoveReservedTokenId(it->second);
     reservedHapTokenIdMap_.erase(it);
     return;
+#endif
 }
 
 AccessTokenID AccessTokenInfoManager::GetReservedHapTokenId(int32_t userID,
     const std::string& bundleName, int32_t instIndex)
 {
+#ifdef SPM_DATA_ENABLE
+    // SPM: db lookup by identity triple (FIELD_USER_ID survives the uid
+    // rewrite); TOKEN_ATTR bit covers legacy old-path rows.
+    GenericValues condition;
+    condition.Put(TokenFiledConst::FIELD_USER_ID, userID);
+    condition.Put(TokenFiledConst::FIELD_BUNDLE_NAME, bundleName);
+    condition.Put(TokenFiledConst::FIELD_INST_INDEX, instIndex);
+    std::vector<GenericValues> results;
+    int32_t ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, condition, results);
+    if (ret != RET_SUCCESS) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to query reserved token for bundle %{public}s.", bundleName.c_str());
+        return 0;
+    }
+    for (const auto& row : results) {
+        bool isReserved = AccessTokenInfoUtils::CheckSpecifiedFlag(
+            row.GetInt(TokenFiledConst::FIELD_TOKEN_ATTR), TOKEN_RESERVED_FLAG);
+        if (isReserved) {
+            return static_cast<AccessTokenID>(row.GetInt(TokenFiledConst::FIELD_TOKEN_ID));
+        }
+    }
+    return 0;
+#else
     std::shared_lock<std::shared_mutex> infoGuard(this->reservedHapTokenInfoLock_);
     std::string hapUniqueKey = AccessTokenInfoUtils::GetHapUniqueStr(userID, bundleName, instIndex);
     auto it = reservedHapTokenIdMap_.find(hapUniqueKey);
@@ -1303,11 +1371,19 @@ AccessTokenID AccessTokenInfoManager::GetReservedHapTokenId(int32_t userID,
         return 0;
     }
     return it->second;
+#endif
 }
 
 void AccessTokenInfoManager::AddReservedHapTokenId(int32_t userID,
     const std::string& bundleName, int32_t instIndex, AccessTokenID tokenID)
 {
+#ifdef SPM_DATA_ENABLE
+    // SPM: reserved state lives in the db row; only id-set registration remains.
+    (void)userID;
+    (void)bundleName;
+    (void)instIndex;
+    AccessTokenIDManager::GetInstance().AddReservedTokenId(tokenID);
+#else
     std::unique_lock<std::shared_mutex> infoGuard(this->reservedHapTokenInfoLock_);
     std::string hapUniqueKey = AccessTokenInfoUtils::GetHapUniqueStr(userID, bundleName, instIndex);
     auto it = reservedHapTokenIdMap_.find(hapUniqueKey);
@@ -1316,6 +1392,7 @@ void AccessTokenInfoManager::AddReservedHapTokenId(int32_t userID,
     }
     reservedHapTokenIdMap_[hapUniqueKey] = tokenID;
     AccessTokenIDManager::GetInstance().AddReservedTokenId(tokenID);
+#endif
 }
 
 int AccessTokenInfoManager::CreateHapTokenInfo(const HapInfoParams& info, const HapPolicy& policy,

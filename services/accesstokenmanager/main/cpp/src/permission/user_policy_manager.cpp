@@ -187,6 +187,50 @@ GenericValues BuildUserPolicyValue(const std::string& permissionName, const User
     return value;
 }
 
+/**
+ * Shared core of the whitelist removal: erases tokenIds from every record of
+ * the given map and, for persist records that actually contained one of them,
+ * emits the USER_POLICY row delete + re-insert pair. The caller owns the map
+ * (a private staging copy) plus locking, db execution and memory publication.
+ * Returns whether any whitelist contained one of the tokens.
+ */
+bool BuildWhiteListRemovalOps(std::map<uint32_t, UserPolicyRecord>& records,
+    const std::vector<AccessTokenID>& tokenIds, std::vector<DelInfo>& delInfoVec,
+    std::vector<AddInfo>& addInfoVec)
+{
+    bool hasChanged = false;
+    for (auto& [permCode, record] : records) {
+        bool hasToken = false;
+        for (const auto& tokenId : tokenIds) {
+            if (record.whiteList.erase(tokenId) > 0) {
+                hasToken = true;
+            }
+        }
+        if (!hasToken) {
+            continue;
+        }
+        hasChanged = true;
+        if (!record.isPersist) {
+            continue;
+        }
+        std::string permissionName = TransferOpcodeToPermission(permCode);
+        if (permissionName.empty()) {
+            // The code is not resolvable any more; writing a row with an
+            // empty permission name would corrupt the table, so skip it.
+            continue;
+        }
+        delInfoVec.emplace_back(DelInfo {
+            .delType = AtmDataType::ACCESSTOKEN_USER_POLICY,
+            .delValue = BuildUserPolicyCondition(permissionName)
+        });
+        addInfoVec.emplace_back(AddInfo {
+            .addType = AtmDataType::ACCESSTOKEN_USER_POLICY,
+            .addValues = { BuildUserPolicyValue(permissionName, record) }
+        });
+    }
+    return hasChanged;
+}
+
 std::set<int32_t> UpdateRestrictedUserList(
     const std::vector<UserPolicy>& requestedUserPolicies, std::vector<int32_t>& restrictedUserList)
 {
@@ -570,29 +614,7 @@ int32_t UserPolicyManager::RemoveTokenFromPolicyWhiteList(AccessTokenID tokenId)
     std::map<uint32_t, UserPolicyRecord> stagedRecords = userPolicyRecords_;
     std::vector<DelInfo> delInfoVec;
     std::vector<AddInfo> addInfoVec;
-    bool hasChanged = false;
-
-    for (auto& [permCode, record] : stagedRecords) {
-        if (record.whiteList.erase(tokenId) == 0) {
-            continue;
-        }
-        hasChanged = true;
-        if (!record.isPersist) {
-            continue;
-        }
-
-        std::string permissionName = TransferOpcodeToPermission(permCode);
-        delInfoVec.emplace_back(DelInfo {
-            .delType = AtmDataType::ACCESSTOKEN_USER_POLICY,
-            .delValue = BuildUserPolicyCondition(permissionName)
-        });
-
-        addInfoVec.emplace_back(AddInfo {
-            .addType = AtmDataType::ACCESSTOKEN_USER_POLICY,
-            .addValues = { BuildUserPolicyValue(permissionName, record) }
-        });
-    }
-
+    bool hasChanged = BuildWhiteListRemovalOps(stagedRecords, { tokenId }, delInfoVec, addInfoVec);
     if (!hasChanged) {
         return RET_SUCCESS;
     }
@@ -604,6 +626,33 @@ int32_t UserPolicyManager::RemoveTokenFromPolicyWhiteList(AccessTokenID tokenId)
     }
     userPolicyRecords_ = std::move(stagedRecords);
     return RET_SUCCESS;
+}
+
+int32_t UserPolicyManager::BuildRemoveTokensFromPolicyWhiteListOps(const std::vector<AccessTokenID>& tokenIds,
+    std::vector<DelInfo>& delInfoVec, std::vector<AddInfo>& addInfoVec)
+{
+    if (tokenIds.empty()) {
+        return RET_SUCCESS;
+    }
+    std::shared_lock<std::shared_mutex> infoGuard(this->userPolicyLock_);
+    // A staging copy keeps this a pure build: the live records stay untouched
+    // until the caller publishes them via CommitPolicyWhiteListRemoval.
+    std::map<uint32_t, UserPolicyRecord> stagedRecords = userPolicyRecords_;
+    (void)BuildWhiteListRemovalOps(stagedRecords, tokenIds, delInfoVec, addInfoVec);
+    return RET_SUCCESS;
+}
+
+void UserPolicyManager::CommitPolicyWhiteListRemoval(const std::vector<AccessTokenID>& tokenIds)
+{
+    if (tokenIds.empty()) {
+        return;
+    }
+    std::unique_lock<std::shared_mutex> infoGuard(this->userPolicyLock_);
+    for (auto& [permCode, record] : userPolicyRecords_) {
+        for (const auto& tokenId : tokenIds) {
+            record.whiteList.erase(tokenId);
+        }
+    }
 }
 
 int32_t UserPolicyManager::GetPolicyWhiteList(uint32_t permCode, std::vector<AccessTokenID>& tokenIdList) const
@@ -749,6 +798,14 @@ int32_t UserPolicyManager::RemoveTokenFromPolicyWhiteList(AccessTokenID)
 {
     return RET_SUCCESS;
 }
+
+int32_t UserPolicyManager::BuildRemoveTokensFromPolicyWhiteListOps(const std::vector<AccessTokenID>&,
+    std::vector<DelInfo>&, std::vector<AddInfo>&)
+{
+    return RET_SUCCESS;
+}
+
+void UserPolicyManager::CommitPolicyWhiteListRemoval(const std::vector<AccessTokenID>&) {}
 
 int32_t UserPolicyManager::GetPolicyWhiteList(uint32_t, std::vector<AccessTokenID>& tokenIdList) const
 {

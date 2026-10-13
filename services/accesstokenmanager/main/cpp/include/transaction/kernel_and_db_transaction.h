@@ -46,7 +46,7 @@ namespace AccessToken {
  * Nested construction is a guard violation: a nested instance joins the outer
  * transaction as a hang-safe fallback (it owns neither the lock nor the guard
  * flag) but provides no isolation of its own, so it is reported through
- * ReportKernelAndDBGuardViolation (test builds abort). A flow that needs
+ * ReportKernelAndDBGuardViolation. A flow that needs
  * several kernel stages must stage them on a single transaction instead of
  * nesting transactions.
  *

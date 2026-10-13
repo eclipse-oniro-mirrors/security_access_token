@@ -81,10 +81,16 @@ ohos_unittest("libaccesstoken_sdk_test") {
     "SaTest/get_native_token_info_test.cpp",
     "SaTest/get_version_test.cpp",
     "SecurityComponentTest/security_component_grant_test.cpp",
-    "SpmKitTest/spm_kit_test.cpp",
     "common/mock_permission.cpp",
     "common/test_common.cpp",
   ]
+
+  # The suite asserts the kit stub contract (always ERR_OK); with SPM enabled
+  # DeleteIdentity goes through the real chain, so compile it only when the
+  # switch is off.
+  if (!access_token_enable_spm) {
+    sources += [ "SpmKitTest/spm_kit_test.cpp" ]
+  }
 
   cflags_cc = access_token_cflags_cc
 

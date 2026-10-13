@@ -27,6 +27,7 @@
 
 #include "access_token_db.h"
 #include "access_token.h"
+#include "accesstoken_id_manager.h"
 #include "iaccess_token_manager.h"
 #ifdef TOKEN_SYNC_ENABLE
 #include "device_manager.h"
@@ -81,6 +82,11 @@ public:
     int32_t GetHapTokenIdListByBundleName(const std::string& bundleName, std::vector<AccessTokenID>& tokenIdList);
     void GetAllNativeTokenId(std::unordered_set<AccessTokenID>& tokenIdList);
     std::shared_ptr<HapTokenInfoInner> GetHapTokenInfoInner(AccessTokenID id);
+    // Status-first resolution: ACTIVE -> live object; UNTRUSTED / RESERVED ->
+    // pure db snapshot without memory side effects (the caller owns the
+    // status-based decisions); unknown -> nullptr (status stays ACTIVE so
+    // callers take the not-exist path).
+    std::shared_ptr<HapTokenInfoInner> GetHapTokenInfoAndStatus(AccessTokenID id, TokenIdStatus& status);
     int GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo& infoParcel);
     int GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfoBase& info);
     int AllocAccessTokenIDEx(const HapInfoParams& info, AccessTokenID tokenId, AccessTokenIDEx& tokenIdEx);
@@ -223,6 +229,9 @@ private:
     int32_t CheckHapInfoParam(const HapInfoParams& info, const HapPolicy& policy);
     int32_t ResolveQueryTokenID(AccessTokenID tokenID, AccessTokenID& queryTokenID);
     std::shared_ptr<HapTokenInfoInner> GetHapTokenInfoInnerFromDb(AccessTokenID id);
+    // Pure db snapshot: basic row restore only - no permission brief
+    // registration, no reserved-id registration, no cache writes.
+    std::shared_ptr<HapTokenInfoInner> LoadHapTokenInfoFromDbAndNoCache(AccessTokenID id);
     void RemoveReservedHapTokenId(int32_t userID, const std::string& bundleName, int32_t instIndex);
     void AddReservedHapTokenId(int32_t userID, const std::string& bundleName,
         int32_t instIndex, AccessTokenID tokenID);
@@ -237,7 +246,10 @@ private:
     bool hasInited_;
 
     std::shared_mutex hapTokenInfoLock_;
+#ifndef SPM_DATA_ENABLE
     std::shared_mutex reservedHapTokenInfoLock_;
+    std::map<std::string, AccessTokenID> reservedHapTokenIdMap_;
+#endif
     std::shared_mutex nativeTokenInfoLock_;
     std::shared_mutex managerLock_;
     std::shared_mutex modifyLock_;
@@ -245,7 +257,6 @@ private:
     std::map<int, std::shared_ptr<HapTokenInfoInner>> hapTokenInfoMap_;
     std::map<std::string, AccessTokenID> hapTokenIdMap_;
     std::map<std::string, std::shared_ptr<BundleInfoInner>> bundleInfoMap_;
-    std::map<std::string, AccessTokenID> reservedHapTokenIdMap_;
     std::map<uint32_t, NativeTokenInfoCache> nativeTokenInfoMap_;
     std::shared_ptr<VerifyAccessTokenMonitor> tokenMonitor_;
     std::shared_mutex monitorLock_;

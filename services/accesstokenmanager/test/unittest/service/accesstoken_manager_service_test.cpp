@@ -568,6 +568,56 @@ HWTEST_F(AccessTokenManagerServiceTest, GetTokenTypeServiceTest001, TestSize.Lev
     ASSERT_EQ(RET_SUCCESS, atManagerService_->DeleteToken(hapTokenId, false));
 }
 
+#ifdef SPM_DATA_ENABLE
+/**
+ * @tc.name: DeleteIdentityKitParamCheck001
+ * @tc.desc: The kit layer rejects an empty bundleName and out-of-range reserved
+ *           types (V1) before any ipc attempt; hosted here because the delete
+ *           suite does not link the sdk (fake_token_setproc conflict).
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, DeleteIdentityKitParamCheck001, TestSize.Level1)
+{
+    const AccessTokenID tokenId = 0x20100001; // hap-shaped id, never dispatched
+    // V1: empty bundleName.
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
+        AccessTokenKit::DeleteIdentity(tokenId, "", ReservedType::NONE));
+    // V1: type below the range.
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
+        AccessTokenKit::DeleteIdentity(tokenId, "com.example.kitparam", static_cast<ReservedType>(-1)));
+    // V1: type above the range.
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
+        AccessTokenKit::DeleteIdentity(tokenId, "com.example.kitparam", static_cast<ReservedType>(3)));
+}
+
+/**
+ * @tc.name: DeleteIdentityServiceRecheck001
+ * @tc.desc: With the permission granted, the service entry rechecks the
+ *           untrusted parcel: an empty bundleName (V4) and out-of-range types
+ *           (V5) are rejected before the dispatch.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, DeleteIdentityServiceRecheck001, TestSize.Level1)
+{
+    MockToken mock(g_selfShellTokenId, "accesstoken_service", false);
+    mock.Grant(MANAGE_HAP_TOKENID);
+
+    const AccessTokenID tokenId = 0x20100001; // hap-shaped id, never dispatched
+    const std::string bundleName = "com.example.service.recheck";
+    // V4: empty bundleName rejected after the permission check.
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
+        atManagerService_->DeleteIdentity(tokenId, "", ReservedTypeIdl::NONE));
+    // V5: type below the range.
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
+        atManagerService_->DeleteIdentity(tokenId, bundleName, static_cast<ReservedTypeIdl>(-1)));
+    // V5: type above the range.
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
+        atManagerService_->DeleteIdentity(tokenId, bundleName, static_cast<ReservedTypeIdl>(3)));
+}
+#endif
+
 /**
  * @tc.name: DumpTokenInfoFuncTest001
  * @tc.desc: test DumpTokenInfo with DEVELOPER_MODE_STATE

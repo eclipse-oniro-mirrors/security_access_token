@@ -107,6 +107,7 @@ accesstoken_manager_base_config = {
       "${access_token_path}/services/accesstokenmanager/main/cpp/src/kernel/remove_spm_data_task.cpp",
       "${access_token_path}/services/accesstokenmanager/main/cpp/src/kernel/spm_data_kernel_common.cpp",
       "${access_token_path}/services/accesstokenmanager/main/cpp/src/kernel/update_spm_data_task.cpp",
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/install_manager/delete_bundle_manager.cpp",
       "${access_token_path}/services/accesstokenmanager/main/cpp/src/transaction/kernel_and_db_transaction.cpp",
     ]
   }
@@ -136,6 +137,7 @@ accesstoken_manager_base_config = {
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/database",
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/dfx",
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/form_manager",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/include/install_manager",
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/kernel",
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/permission",
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/seccomp",

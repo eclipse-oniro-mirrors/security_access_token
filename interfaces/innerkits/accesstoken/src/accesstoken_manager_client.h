@@ -92,6 +92,9 @@ public:
         AccessTokenIDEx& fullTokenId, HapInfoCheckResult& result);
     int DeleteToken(AccessTokenID tokenID, bool isTokenReserved);
     int32_t DeleteToolTokenByPid(int32_t pid);
+#ifdef SPM_DATA_ENABLE
+    int32_t DeleteIdentity(AccessTokenID tokenID, const std::string& bundleName, ReservedType type);
+#endif
     ATokenTypeEnum GetTokenType(AccessTokenID tokenID);
     AccessTokenIDEx GetHapTokenID(int32_t userID, const std::string& bundleName, int32_t instIndex);
     FullTokenID AllocLocalTokenID(const std::string& remoteDeviceID, AccessTokenID remoteTokenID);

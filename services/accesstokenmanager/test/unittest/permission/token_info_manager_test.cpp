@@ -110,7 +110,6 @@ private:
 };
 #endif
 static constexpr int32_t INVALID_GRANT_MODE = 1000;
-static const int32_t TOKEN_ATTR_RESERVED = 0x4;
 static AccessTokenID g_selfTokenId = 0;
 
 static PermissionDef g_infoManagerTestPermDef1 = {
@@ -4701,6 +4700,8 @@ HWTEST_F(TokenInfoManagerTest, UserPolicyConcurrency001, TestSize.Level0)
 }
 #endif
 
+#ifndef SPM_DATA_ENABLE
+static const int32_t TOKEN_ATTR_RESERVED = 0x4;
 /**
  * @tc.name: ReservedHapInfo001
  * @tc.desc: RemoveReservedHapInfo
@@ -4869,6 +4870,7 @@ HWTEST_F(TokenInfoManagerTest, ReservedHapInfo004, TestSize.Level0)
     AccessTokenID tokenID1 = tokenIdEx1.tokenIdExStruct.tokenID;
     ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID1));
 }
+#endif
 
 /**
  * @tc.name: ReservedHapInfo005

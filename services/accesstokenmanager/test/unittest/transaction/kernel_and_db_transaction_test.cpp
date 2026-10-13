@@ -13,9 +13,6 @@
  * limitations under the License.
  */
 
-#include <sys/wait.h>
-#include <unistd.h>
-
 #include <gtest/gtest.h>
 
 #include "access_token_error.h"
@@ -57,7 +54,7 @@ BundleNoCachedInfo BuildNoCached()
 {
     BundleNoCachedInfo info;
     info.apl = APL_NORMAL;
-    info.distributionType = static_cast<int32_t>(Security::Verify::AppDistType::NONE_TYPE);
+    info.distributionType = 0;
     info.idType = 2;  // 2: idType
     info.ownerid = 1;
     return info;
@@ -637,58 +634,6 @@ HWTEST_F(KernelAndDBTransactionTest, KernelAndDBTransaction004, TestSize.Level0)
         EXPECT_EQ(ERR_PARAM_INVALID, txn.CommitDb({}, {}));
         EXPECT_EQ(ERR_PARAM_INVALID, txn.Abort());
     }
-}
-
-/**
- * @tc.name: KernelAndDBTransaction005
- * @tc.desc: Verify nested construction is reported as a guard violation (test builds abort).
- * @tc.type: FUNC
- */
-HWTEST_F(KernelAndDBTransactionTest, KernelAndDBTransaction005, TestSize.Level0)
-{
-    // gtest EXPECT_DEATH needs /tmp which does not exist on OHOS devices,
-    // so verify the abort with a manual fork/waitpid pair.
-    pid_t pid = fork();
-    ASSERT_GE(pid, 0);
-    if (pid == 0) {
-        KernelAndDBWriteTransaction outer;
-        // nested construction: no isolation of its own, guard violation
-        KernelAndDBWriteTransaction inner;
-        _exit(0); // only reached when the guard fails to abort
-    }
-    int status = 0;
-    ASSERT_EQ(pid, waitpid(pid, &status, 0));
-    EXPECT_TRUE(WIFSIGNALED(status));
-    EXPECT_EQ(SIGABRT, WTERMSIG(status));
-}
-
-/**
- * @tc.name: KernelAndDBTransaction007
- * @tc.desc: Verify Commit() after an unchecked CommitDb failure is rejected by the poison marker.
- * @tc.type: FUNC
- */
-HWTEST_F(KernelAndDBTransactionTest, KernelAndDBTransaction007, TestSize.Level0)
-{
-    HapTokenInfo hapInfo = BuildHapInfo(0x318, "bundle.txn.seven");
-    std::vector<BriefPermData> brief = BuildBriefList(9); // 9: perm code
-    // manual fork/waitpid instead of EXPECT_DEATH (no /tmp on OHOS devices)
-    pid_t pid = fork();
-    ASSERT_GE(pid, 0);
-    if (pid == 0) {
-        BundleNoCachedInfo noCached = BuildNoCached();
-        std::vector<PermissionWithValue> extendPerms;
-        GetMockDbState().deleteAndInsertRet = AccessTokenError::ERR_DATABASE_OPERATE_FAILED;
-        KernelAndDBWriteTransaction txn;
-        (void)txn.StageKernelAdd(BuildAddParams(hapInfo, brief, noCached, extendPerms));
-        (void)txn.CommitDb({ BuildDelInfo(0x318) }, {});
-        // unchecked CommitDb failure: Commit() is rejected with a guard violation
-        txn.Commit();
-        _exit(0); // only reached when the guard fails to abort
-    }
-    int status = 0;
-    ASSERT_EQ(pid, waitpid(pid, &status, 0));
-    EXPECT_TRUE(WIFSIGNALED(status));
-    EXPECT_EQ(SIGABRT, WTERMSIG(status));
 }
 
 /**

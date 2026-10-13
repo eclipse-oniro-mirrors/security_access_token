@@ -64,7 +64,12 @@ typedef enum AddHapSceneCode {
 } AddHapSceneCode;
 
 typedef enum DeleteHapSceneCode {
+    AT_DELETE_COMMON_FINISH = 1,
     AT_DELETE_KEEP_TOKEN_FINISH = 2,
+    AT_DELETE_KEEP_DATA = 3,
+    AT_DELETE_NORMAL = 4,
+    AT_DELETE_ALL_BUNDLE = 5,
+    AT_DELETE_RESERVED_TOKEN = 6
 } DeleteHapSceneCode;
 
 typedef enum AccessTokenDbSceneCode {
@@ -97,6 +102,10 @@ typedef enum AccessTokenExceptionSceneCode {
     KERNEL_SPM_DATA_ROLLBACK = 10006,
     KERNEL_AND_DB_TXN_ROLLBACK = 10007,
     KERNEL_SPM_DATA_DELETE = 10008,
+
+
+    // used for deleting
+    DELETE_BRIEF_MISSING = 10100,
 } AccessTokenExceptionSceneCode;
 } // namespace AccessToken
 } // namespace Security

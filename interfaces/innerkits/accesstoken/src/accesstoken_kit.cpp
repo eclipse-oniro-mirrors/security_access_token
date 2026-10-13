@@ -228,7 +228,17 @@ int AccessTokenKit::DeleteToken(AccessTokenID tokenID, bool isTokenReserved)
 
 int32_t AccessTokenKit::DeleteIdentity(AccessTokenID tokenID, const std::string& bundleName, ReservedType type)
 {
+#ifdef SPM_DATA_ENABLE
+    LOGI(ATM_DOMAIN, ATM_TAG, "TokenID=%{public}u, bundle=%{public}s, type=%{public}d.",
+        tokenID, bundleName.c_str(), static_cast<int32_t>(type));
+    if (bundleName.empty() || (type < ReservedType::NONE) || (type > ReservedType::RESERVED_DATA)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Invalid param.");
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    return AccessTokenManagerClient::GetInstance().DeleteIdentity(tokenID, bundleName, type);
+#else
     return ERR_OK;
+#endif
 }
 
 int32_t AccessTokenKit::DeleteToolTokenByPid(int32_t pid)
