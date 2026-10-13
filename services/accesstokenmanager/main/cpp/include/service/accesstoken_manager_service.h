@@ -90,6 +90,9 @@ public:
     int32_t SetPermissionStatusWithPolicy(
         AccessTokenID tokenID, const std::vector<std::string>& permissionList, int32_t status, uint32_t flag) override;
     int DeleteToken(AccessTokenID tokenID, bool isTokenReserved) override;
+#ifdef SPM_DATA_ENABLE
+    int32_t DeleteIdentity(AccessTokenID tokenID, const std::string& bundleName, ReservedTypeIdl type) override;
+#endif
     int GetTokenType(AccessTokenID tokenID);
     int GetTokenType(AccessTokenID tokenID, int32_t& tokenType) override;
     int32_t GetHapTokenID(

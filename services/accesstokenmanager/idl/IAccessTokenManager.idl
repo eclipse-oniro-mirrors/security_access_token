@@ -110,7 +110,7 @@ interface OHOS.Security.AccessToken.IAccessTokenManager{
     // [ipccode 84, macrodef SPM_DATA_ENABLE] void FinishInstall([in] int sessionId, [in] boolean isPersistent, [in] OrderedMap<String, String> modulePathMap);
     // [ipccode 85, macrodef SPM_DATA_ENABLE] void CheckHapPermissionInfo([in] int sessionId, [in] InstallTypeEnumIdl type, [out] HapInfoCheckResultIdl resultInfoIdl);
     // [ipccode 86, macrodef SPM_DATA_ENABLE] void GetCachePolicyBySessionId([in] int sessionId, [in] String bundleName, [out] BundlePolicyInfoIdl bundlePolicyInfoIdl);
-    // [ipccode 87, macrodef SPM_DATA_ENABLE] void DeleteIdentity([in] unsigned int tokenID, [in] String bundleName, [in] ReservedTypeIdl type);
+    [ipccode 87, macrodef SPM_DATA_ENABLE] void DeleteIdentity([in] unsigned int tokenID, [in] String bundleName, [in] ReservedTypeIdl type);
     // Reserved ipccodes for install service, to be enabled with rawdata support:
     // rawdata OHOS.Security.AccessToken.BundleInfosRawdata;
     // rawdata OHOS.Security.AccessToken.CheckHapSignResultRawdata;

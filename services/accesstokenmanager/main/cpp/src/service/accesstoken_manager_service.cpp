@@ -71,6 +71,10 @@
 #include "permission_status_parcel.h"
 #include "permission_validator.h"
 #include "random.h"
+#ifdef SPM_DATA_ENABLE
+#include "delete_bundle_manager.h"
+#include "kernel_and_db_transaction.h"
+#endif
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
 #include "sec_comp_enhance_agent.h"
 #include "securec.h"
@@ -1661,6 +1665,48 @@ int AccessTokenManagerService::DeleteToken(AccessTokenID tokenID, bool isTokenRe
     ReportSysEventDelHap(errorCode, sceneCode, dfxInfo);
     return errorCode;
 }
+
+#ifdef SPM_DATA_ENABLE
+int32_t AccessTokenManagerService::DeleteIdentity(
+    AccessTokenID tokenID, const std::string& bundleName, ReservedTypeIdl type)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "Id %{public}u, bundle %{public}s, type %{public}d, callerPid %{public}d.",
+        tokenID, bundleName.c_str(), static_cast<int32_t>(type), IPCSkeleton::GetCallingPid());
+    AccessTokenID callingTokenID = IPCSkeleton::GetCallingTokenID();
+    if (VerifyAccessToken(callingTokenID, MANAGE_HAP_TOKENID_PERMISSION) == PERMISSION_DENIED) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", callingTokenID);
+        return AccessTokenError::ERR_PERMISSION_DENIED;
+    }
+    if (bundleName.empty()) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Invalid param: bundle empty.");
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    // The parcel enum is untrusted: reject out-of-range values before they can
+    // pollute the reserved-state semantics of the re-inserted db row.
+    if ((type < ReservedTypeIdl::NONE) || (type > ReservedTypeIdl::RESERVED_DATA)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Invalid param: reserved type %{public}d out of range.",
+            static_cast<int32_t>(type));
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+
+    HapDfxInfo dfxInfo = {};
+    dfxInfo.tokenId = tokenID;
+    dfxInfo.ipcCode = static_cast<int32_t>(IAccessTokenManagerIpcCode::COMMAND_DELETE_IDENTITY);
+    dfxInfo.bundleName = bundleName;
+    ReservedType reservedType = static_cast<ReservedType>(type);
+    DeleteDfxInfo deleteDfx = {};
+    int64_t beginTime = TimeUtil::GetCurrentTimestamp();
+    // user/instance coordinates and the scene code are carried out by the
+    // dispatch itself - no extra token lookup on the entry path.
+    int32_t ret = DeleteBundleManager::GetInstance().DeleteIdentityWithDfx(tokenID, bundleName, reservedType,
+        deleteDfx);
+    dfxInfo.userID = deleteDfx.userId;
+    dfxInfo.instIndex = deleteDfx.instIndex;
+    dfxInfo.duration = TimeUtil::GetCurrentTimestamp() - beginTime;
+    ReportSysEventDelHap(ret, deleteDfx.sceneCode, dfxInfo);
+    return ret;
+}
+#endif
 
 int AccessTokenManagerService::GetTokenType(AccessTokenID tokenID)
 {

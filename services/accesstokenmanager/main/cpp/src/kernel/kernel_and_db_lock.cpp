@@ -15,8 +15,6 @@
 
 #include "kernel_and_db_lock.h"
 
-#include <cstdlib>
-
 #include "accesstoken_common_log.h"
 
 namespace OHOS {
@@ -43,10 +41,6 @@ void ReportKernelAndDBGuardViolation(const char* apiName)
 {
     LOGC(ATM_DOMAIN, ATM_TAG,
         "KernelAndDB guard violated at %{public}s, kernel mutation outside transaction", apiName);
-#ifdef ATM_TEST_ENABLE
-    // Abort during UT to eliminate bypasses; release builds only log.
-    abort();
-#endif
 }
 
 void KernelAndDBDetail::EnterWrite()

@@ -78,6 +78,9 @@ group("fuzztest") {
       "updateseccompenhance_fuzzer:UpdateSecCompEnhanceFuzzTest",
     ]
   }
+  if (access_token_enable_spm) {
+    deps += [ "deleteidentity_fuzzer:DeleteIdentityFuzzTest" ]
+  }
   if (is_standard_system && token_sync_enable) {
     deps += [
       "deleteremotedevicetokens_fuzzer:DeleteRemoteDeviceTokensFuzzTest",
