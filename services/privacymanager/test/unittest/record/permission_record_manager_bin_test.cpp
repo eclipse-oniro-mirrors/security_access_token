@@ -13,10 +13,12 @@
  * limitations under the License.
  */
 
+#include <atomic>
 #include <cerrno>
 #include <chrono>
 #include <cstdint>
 #include <mutex>
+#include <set>
 #include <thread>
 
 #include <gtest/gtest.h>
@@ -52,10 +54,14 @@ static constexpr int32_t BIN_PID_B = 200;
 static constexpr int32_t PARENT_HAP_PID = 999;
 static constexpr int32_t INVALID_BIN_PID = -1;
 static constexpr int32_t CALLER_PID = 11;
-static constexpr int32_t SLEEP_TIME_MILLISECONDS = 200;
+static constexpr int32_t CALLBACK_WAIT_INTERVAL_MILLISECONDS = 20;
+static constexpr int32_t CALLBACK_WAIT_TIMEOUT_MILLISECONDS = 3000;
 static constexpr int32_t EIO_ERR = EIO;
 static constexpr uint64_t FULL_TOKEN_HIGH_BIT = (1ULL << 32);
 static constexpr const char* CONTACTS_PERMISSION_NAME = "ohos.permission.READ_CONTACTS";
+
+// the callback registered by the running case, unregistered in TearDown
+static sptr<IRemoteObject> g_binCallbackObject;
 
 static HapInfoParams g_binInfoParms = {
     .userID = 1,
@@ -102,6 +108,13 @@ void PermissionRecordManagerBinTest::TearDown()
 {
     AccessTokenIDEx tokenIdEx = PrivacyTestCommon::GetHapTokenIdFromBundle(
         g_binInfoParms.userID, g_binInfoParms.bundleName, g_binInfoParms.instIndex);
+    // unregister the callback and clear start list residue, so a failed case cannot poison the next one
+    if (g_binCallbackObject != nullptr) {
+        PermissionRecordManager::GetInstance().UnRegisterPermActiveStatusCallback(g_binCallbackObject);
+        g_binCallbackObject = nullptr;
+    }
+    PermissionRecordManager::GetInstance().RemoveRecordFromStartListByTokenAndIdentity(
+        tokenIdEx.tokenIdExStruct.tokenID);
     PrivacyTestCommon::DeleteTestHapToken(tokenIdEx.tokenIdExStruct.tokenID);
     PermissionRecordManager::GetInstance().RemovePermissionUsedRecords(tokenIdEx.tokenIdExStruct.tokenID);
     ResetFakeParentHapTokenIdState();
@@ -191,14 +204,30 @@ public:
 
     void ActiveStatusChangeCallback(ActiveChangeResponse& result) override
     {
-        type_ = result.type;
-        tokenId_ = result.tokenID;
-        pid_ = result.pid;
+        type_.store(result.type);
+        tokenId_.store(result.tokenID);
+        pid_.store(result.pid);
+        std::lock_guard<std::mutex> lock(receivedTypesMutex_);
+        receivedTypes_.insert(result.type);
     }
 
-    ActiveChangeType type_ = PERM_INACTIVE;
-    AccessTokenID tokenId_ = 0;
-    int32_t pid_ = INVALID_BIN_PID;
+    /*
+     * Callbacks are dispatched asynchronously and their relative order is not guaranteed,
+     * so assertions must rely on "type has been received" rather than "type is current".
+     */
+    bool HasReceived(ActiveChangeType type)
+    {
+        std::lock_guard<std::mutex> lock(receivedTypesMutex_);
+        return receivedTypes_.find(type) != receivedTypes_.end();
+    }
+
+    std::atomic<ActiveChangeType> type_ {PERM_INACTIVE};
+    std::atomic<AccessTokenID> tokenId_ {0};
+    std::atomic<int32_t> pid_ {INVALID_BIN_PID};
+
+private:
+    std::mutex receivedTypesMutex_;
+    std::set<ActiveChangeType> receivedTypes_;
 };
 
 static sptr<BinPermActiveStatusChangeCallback> RegisterBinActiveStatusCallback(
@@ -208,7 +237,34 @@ static sptr<BinPermActiveStatusChangeCallback> RegisterBinActiveStatusCallback(
     EXPECT_NE(nullptr, callback);
     EXPECT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().RegisterPermActiveStatusCallback(
         GetSelfTokenID(), permList, callback->AsObject(), static_cast<int32_t>(CallbackRegisterType::TOKEN_ONLY)));
+    g_binCallbackObject = callback->AsObject();
     return callback;
+}
+
+/*
+ * Active change callbacks are dispatched asynchronously by the event runner,
+ * so poll for the expected state instead of relying on a fixed sleep.
+ */
+template <typename Predicate>
+static bool WaitForCallbackCondition(Predicate condition)
+{
+    auto deadline = std::chrono::steady_clock::now() +
+        std::chrono::milliseconds(CALLBACK_WAIT_TIMEOUT_MILLISECONDS);
+    do {
+        if (condition()) {
+            return true;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(CALLBACK_WAIT_INTERVAL_MILLISECONDS));
+    } while (std::chrono::steady_clock::now() < deadline);
+    return condition();
+}
+
+static bool WaitForCallbackType(const sptr<BinPermActiveStatusChangeCallback>& callback, ActiveChangeType expected)
+{
+    if (callback == nullptr) {
+        return false;
+    }
+    return WaitForCallbackCondition([&callback, expected]() { return callback->HasReceived(expected); });
 }
 
 static PermissionUsedResult QueryBinUsedRecords(AccessTokenID tokenId)
@@ -287,7 +343,9 @@ HWTEST_F(PermissionRecordManagerBinTest, BinStartRecordPayload001, TestSize.Leve
     ASSERT_NE(nullptr, callback);
     ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
         MakeBinStartInfo(binTokenId, BIN_PID), CALLER_PID));
-    std::this_thread::sleep_for(std::chrono::milliseconds(SLEEP_TIME_MILLISECONDS));
+    ASSERT_TRUE(WaitForCallbackCondition([&callback, &parentTokenId]() {
+        return (callback->tokenId_.load() == parentTokenId) && (callback->pid_.load() == BIN_PID);
+    }));
     EXPECT_EQ(parentTokenId, callback->tokenId_);
     EXPECT_EQ(BIN_PID, callback->pid_);
 
@@ -316,8 +374,7 @@ HWTEST_F(PermissionRecordManagerBinTest, BinStartStatusBackground001, TestSize.L
     ASSERT_NE(nullptr, callback);
     ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
         MakeBinStartInfo(binTokenId, BIN_PID), CALLER_PID));
-    std::this_thread::sleep_for(std::chrono::milliseconds(SLEEP_TIME_MILLISECONDS));
-    EXPECT_EQ(PERM_ACTIVE_IN_BACKGROUND, callback->type_);
+    ASSERT_TRUE(WaitForCallbackType(callback, PERM_ACTIVE_IN_BACKGROUND));
 
     ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StopUsingPermission(
         binTokenId, BIN_PID, "ohos.permission.CAMERA", CALLER_PID, ""));
@@ -593,13 +650,12 @@ HWTEST_F(PermissionRecordManagerBinTest, BinAppStateLinkedFg001, TestSize.Level0
     ASSERT_NE(nullptr, callback);
     ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
         MakeBinStartInfo(binTokenId, BIN_PID, "ohos.permission.MICROPHONE"), CALLER_PID));
-    std::this_thread::sleep_for(std::chrono::milliseconds(SLEEP_TIME_MILLISECONDS));
-    EXPECT_EQ(PERM_ACTIVE_IN_BACKGROUND, callback->type_);
+    ASSERT_TRUE(WaitForCallbackType(callback, PERM_ACTIVE_IN_BACKGROUND));
 
     PermissionRecordManager::GetInstance().NotifyAppStateChange(parentTokenId, PARENT_HAP_PID,
         PERM_ACTIVE_IN_FOREGROUND);
     EXPECT_EQ(PERM_ACTIVE_IN_FOREGROUND, GetRecordStatusInStartList(parentTokenId, BIN_PID));
-    EXPECT_NE(PERM_INACTIVE, callback->type_);
+    EXPECT_TRUE(callback->HasReceived(PERM_ACTIVE_IN_BACKGROUND));
 
     ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StopUsingPermission(
         binTokenId, BIN_PID, "ohos.permission.MICROPHONE", CALLER_PID, ""));
@@ -626,7 +682,7 @@ HWTEST_F(PermissionRecordManagerBinTest, BinAppStateLinkedBg001, TestSize.Level0
     ASSERT_NE(nullptr, callback);
     ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
         MakeBinStartInfo(binTokenId, BIN_PID, "ohos.permission.MICROPHONE"), CALLER_PID));
-    std::this_thread::sleep_for(std::chrono::milliseconds(SLEEP_TIME_MILLISECONDS));
+    ASSERT_TRUE(WaitForCallbackType(callback, PERM_ACTIVE_IN_BACKGROUND));
 
     PermissionRecordManager::GetInstance().NotifyAppStateChange(parentTokenId, PARENT_HAP_PID,
         PERM_ACTIVE_IN_FOREGROUND);
@@ -635,7 +691,7 @@ HWTEST_F(PermissionRecordManagerBinTest, BinAppStateLinkedBg001, TestSize.Level0
     PermissionRecordManager::GetInstance().NotifyAppStateChange(parentTokenId, PARENT_HAP_PID,
         PERM_ACTIVE_IN_BACKGROUND);
     EXPECT_EQ(PERM_ACTIVE_IN_BACKGROUND, GetRecordStatusInStartList(parentTokenId, BIN_PID));
-    EXPECT_NE(PERM_INACTIVE, callback->type_);
+    EXPECT_TRUE(callback->HasReceived(PERM_ACTIVE_IN_BACKGROUND));
 
     ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StopUsingPermission(
         binTokenId, BIN_PID, "ohos.permission.MICROPHONE", CALLER_PID, ""));
@@ -662,8 +718,7 @@ HWTEST_F(PermissionRecordManagerBinTest, BinExitResidue001, TestSize.Level0)
     ASSERT_NE(nullptr, callback);
     ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
         MakeBinStartInfo(binTokenId, BIN_PID, "ohos.permission.MICROPHONE"), CALLER_PID));
-    std::this_thread::sleep_for(std::chrono::milliseconds(SLEEP_TIME_MILLISECONDS));
-    ASSERT_EQ(PERM_ACTIVE_IN_BACKGROUND, callback->type_);
+    ASSERT_TRUE(WaitForCallbackType(callback, PERM_ACTIVE_IN_BACKGROUND));
 
     // bin process dies here: no death recipient and no appmgr notification is delivered by design,
     // so nothing is done to simulate it. The record must remain and keep notifying.
@@ -672,7 +727,7 @@ HWTEST_F(PermissionRecordManagerBinTest, BinExitResidue001, TestSize.Level0)
     PermissionRecordManager::GetInstance().NotifyAppStateChange(parentTokenId, PARENT_HAP_PID,
         PERM_ACTIVE_IN_FOREGROUND);
     EXPECT_EQ(PERM_ACTIVE_IN_FOREGROUND, GetRecordStatusInStartList(parentTokenId, BIN_PID));
-    EXPECT_NE(PERM_INACTIVE, callback->type_);
+    EXPECT_TRUE(callback->HasReceived(PERM_ACTIVE_IN_BACKGROUND));
 
     ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StopUsingPermission(
         binTokenId, BIN_PID, "ohos.permission.MICROPHONE", CALLER_PID, ""));
@@ -705,10 +760,9 @@ HWTEST_F(PermissionRecordManagerBinTest, BinParentTerminatedCleanup001, TestSize
         MakeBinAddInfo(binTokenId)));
 
     PermissionRecordManager::GetInstance().RemoveRecordFromStartListByTokenAndIdentity(parentTokenId);
-    std::this_thread::sleep_for(std::chrono::milliseconds(SLEEP_TIME_MILLISECONDS));
     EXPECT_FALSE(HasRecordInStartList(parentTokenId, BIN_PID_A));
     EXPECT_FALSE(HasRecordInStartList(parentTokenId, BIN_PID_B));
-    EXPECT_EQ(PERM_INACTIVE, callback->type_);
+    EXPECT_TRUE(WaitForCallbackType(callback, PERM_INACTIVE));
 
     PermissionUsedResult result = QueryBinUsedRecords(parentTokenId);
     EXPECT_FALSE(result.bundleRecords.empty());
