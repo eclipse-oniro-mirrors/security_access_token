@@ -293,6 +293,7 @@ public:
     std::vector<PreAuthorizationInfo> preAuthorizationInfo;
     HapPolicyCheckIgnore checkIgnore = HapPolicyCheckIgnore::NONE;
     std::map<std::string, std::string> aclExtendedMap;
+    DlpType dlpType = DlpType::DLP_COMMON;
     bool isDebugGrant = false;
 };
 
@@ -345,7 +346,7 @@ struct BundleHapList final {
     std::vector<std::string> hapPaths;
     bool isPreInstalled = false;
     int32_t userId;
-    int32_t mode = 0;
+    MultipleMode mode = MultipleMode::DEFAULT_OR_MAIN_MODE;
 };
 
 struct MigratedInfo final {

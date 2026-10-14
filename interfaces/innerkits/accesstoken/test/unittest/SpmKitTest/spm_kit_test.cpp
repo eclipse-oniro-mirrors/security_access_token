@@ -69,7 +69,7 @@ static BundleHapList BuildBundleHapList()
     list.hapPaths = {TEST_HAP_PATH};
     list.isPreInstalled = false;
     list.userId = TEST_USER_ID;
-    list.mode = 0;
+    list.mode = MultipleMode::DEFAULT_OR_MAIN_MODE;
     return list;
 }
 
