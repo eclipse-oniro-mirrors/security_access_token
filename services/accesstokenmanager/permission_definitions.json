@@ -12694,6 +12694,17 @@
             "deviceTypes": ["phone"]
         },
         {
+            "name": "ohos.permission.AUDIO_USER_MICROPHONE_INDICATOR",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "availableType": "SYSTEM",
+            "since": "26.2.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1", "car", "phone", "tablet", "tv", "wearable"]
+        },
+        {
             "name": "ohos.permission.vehicle.LOGIN_TSP",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
