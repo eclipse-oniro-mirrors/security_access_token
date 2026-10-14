@@ -76,7 +76,8 @@ static BundleHapList ConsumeBundleHapList(FuzzedDataProvider& provider)
     }
     list.isPreInstalled = provider.ConsumeBool();
     list.userId = provider.ConsumeIntegral<int32_t>();
-    list.mode = provider.ConsumeIntegralInRange<int32_t>(MODE_FUZZ_MIN, MODE_FUZZ_MAX);
+    list.mode = static_cast<MultipleMode>(
+        provider.ConsumeIntegralInRange<int32_t>(MODE_FUZZ_MIN, MODE_FUZZ_MAX));
     return list;
 }
 
