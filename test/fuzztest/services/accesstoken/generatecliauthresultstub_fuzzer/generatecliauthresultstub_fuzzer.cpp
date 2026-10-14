@@ -15,6 +15,7 @@
 
 #include "generatecliauthresultstub_fuzzer.h"
 
+#include <thread>
 #include <vector>
 
 #include "accesstoken_fuzzdata.h"
