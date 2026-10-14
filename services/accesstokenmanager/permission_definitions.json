@@ -4427,6 +4427,17 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.INPUT_RECORDING",
+            "grantMode": "manual_settings",
+            "availableLevel": "system_basic",
+            "availableType": "NORMAL",
+            "since": "26.2.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1"]
+        },
+        {
             "name": "ohos.permission.LAUNCH_SPAMSHIELD_PAGE",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
