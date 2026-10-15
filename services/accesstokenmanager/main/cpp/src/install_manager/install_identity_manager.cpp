@@ -138,7 +138,6 @@ void InstallIdentityManager::RestoreIdentityFromReservedData(
     cache.oldAttr = oldAttr;
 }
 
-
 int32_t InstallIdentityManager::ResolveExistingTokenReuse(InstallCache& cache, const GenericValues& tokenValue)
 {
     AccessTokenID tokenId = static_cast<AccessTokenID>(tokenValue.GetInt(TokenFiledConst::FIELD_TOKEN_ID));

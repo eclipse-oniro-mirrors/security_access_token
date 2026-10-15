@@ -22,7 +22,6 @@
 #include "access_token.h"
 #include "atm_data_type.h"
 #include "generic_values.h"
-#include "hap_data_structure.h"
 #include "hap_token_info.h"
 #include "nocopyable.h"
 #include "permission_status.h"
@@ -47,6 +46,7 @@ public:
 
 struct BundleInfoItems final : public TableItem {
     std::string bundleName;
+    MultipleMode mode = MultipleMode::DEFAULT_OR_MAIN_MODE;
     bool isPreInstalled = false;
     std::vector<ModuleInfoItem> moduleInfoItems;
 

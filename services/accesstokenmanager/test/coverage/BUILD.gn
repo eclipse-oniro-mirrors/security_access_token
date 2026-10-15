@@ -36,6 +36,7 @@ ohos_unittest("libaccesstoken_manager_service_coverage_test") {
   include_dirs += accesstoken_manager_base_config.include_dirs
   include_dirs += [
     "${access_token_path}/services/accesstokenmanager/test/unittest/common",
+    "${access_token_path}/interfaces/innerkits/accesstoken_file_util/include",
   ]
 
   sources = [

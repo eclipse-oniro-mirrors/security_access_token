@@ -53,6 +53,7 @@ public:
 class BundleInfoInner final {
 public:
     std::vector<uint16_t> permCodeList;
+    std::vector<AccessTokenID> tokenIds;
 };
 
 // Session-level bits the hap cache commit needs; deliberately free of any

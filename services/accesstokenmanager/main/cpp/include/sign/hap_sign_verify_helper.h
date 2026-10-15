@@ -22,7 +22,9 @@
 
 #include "access_token.h"
 #include "hap_sign_verify_manager.h"
-#include "hap_token_info_inner.h"
+#include "permission_data_brief.h"
+#include "permission_def.h"
+#include "permission_status.h"
 
 namespace OHOS {
 namespace Security {

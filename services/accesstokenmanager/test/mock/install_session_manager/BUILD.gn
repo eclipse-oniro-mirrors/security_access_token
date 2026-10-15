@@ -33,7 +33,7 @@ ohos_unittest("libinstall_session_manager_mock_test") {
   ]
   sources += accesstoken_manager_base_config.sources
   sources -= [
-    "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/hap_sign_verify_manager.cpp",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/src/sign/hap_sign_verify_manager.cpp",
   ]
 
   cflags_cc = accesstoken_manager_base_config.cflags_cc

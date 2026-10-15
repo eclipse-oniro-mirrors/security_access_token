@@ -310,6 +310,21 @@ bool DataValidator::IsListSizeValid(size_t size)
     return true;
 }
 
+bool DataValidator::IsStringListValid(const std::vector<std::string>& valueList)
+{
+    if (!IsListSizeValid(valueList.size())) {
+        return false;
+    }
+    for (const auto& value : valueList) {
+        if (value.empty() || value.length() > MAX_LENGTH) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "String list item %{public}s is invalid.",
+                value.substr(0, MAX_LENGTH).c_str());
+            return false;
+        }
+    }
+    return true;
+}
+
 bool DataValidator::IsPermFeatureValid(const std::string& feature)
 {
     if (feature.size() > MAX_FEATURE_SIZE) {

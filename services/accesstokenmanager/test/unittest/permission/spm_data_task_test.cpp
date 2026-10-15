@@ -53,7 +53,11 @@ BundleNoCachedInfo BuildNoCached()
 {
     BundleNoCachedInfo info;
     info.apl = APL_NORMAL;
+#ifdef IS_SUPPORT_HAP_RUNNING
+    info.distributionType = static_cast<int32_t>(Security::Verify::AppDistType::NONE_TYPE);
+#else
     info.distributionType = 0;
+#endif
     info.idType = 2;  // 2: idType
     info.ownerid = 1;
     return info;

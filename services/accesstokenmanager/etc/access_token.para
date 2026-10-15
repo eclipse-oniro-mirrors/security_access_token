@@ -15,4 +15,6 @@
 accesstoken.permission.change = 0
 accesstoken.permission.init = 0
 accesstoken.permission.flagchange = 0
+accesstoken.permission.appverified = 0
+accesstoken.permission.spm.enforcing = 0
 persist.accesstoken.permission.dberror = 0

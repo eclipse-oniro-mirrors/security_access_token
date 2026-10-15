@@ -199,6 +199,17 @@ PermissionStatusDetail ConvertPermissionStatusDetail(const PermissionStatusDetai
     result.resultType = ConvertPermissionResultType(resultIdl.resultType);
     return result;
 }
+#ifdef SPM_DATA_ENABLE
+ReservedTypeIdl ConvertReservedType(ReservedType reserved)
+{
+    return static_cast<ReservedTypeIdl>(reserved);
+}
+
+ReservedType ConvertReservedType(ReservedTypeIdl reserved)
+{
+    return static_cast<ReservedType>(reserved);
+}
+#endif
 } // namespace
 
 #if defined(SECURITY_COMPONENT_ENHANCE_ENABLE) && defined(ACCESSTOKEN_MANAGER_CLIENT_TEST_ENABLE)
@@ -881,7 +892,6 @@ int32_t AccessTokenManagerClient::DeleteIdentity(
     LOGI(ATM_DOMAIN, ATM_TAG, "Result is %{public}d, id is %{public}u.", result, tokenID);
     return result;
 }
-
 namespace {
 void TransferHapBaseInfoToIdl(const HapBaseInfo& info, HapBaseInfoIdl& infoIdl)
 {
@@ -920,7 +930,7 @@ int32_t AccessTokenManagerClient::CheckHapSignInfo(const BundleHapList& list, ui
     listIdl.hapPaths = list.hapPaths;
     listIdl.isPreInstalled = list.isPreInstalled;
     listIdl.userId = list.userId;
-    listIdl.mode = static_cast<int32_t>(list.mode);
+    listIdl.mode = static_cast<MultipleModeEnumIdl>(list.mode);
 
     CheckHapSignResultRawdata resultRawData;
     int32_t res = proxy->CheckHapSignInfo(listIdl, anonyStub->AsObject(), flag, resultRawData);
@@ -1131,6 +1141,133 @@ sptr<ProxyDeathCallBack> AccessTokenManagerClient::GetAnonyStub()
         anonyStub_ = sptr<ProxyDeathCallBackStub>::MakeSptr();
     }
     return anonyStub_;
+}
+
+int32_t AccessTokenManagerClient::GetHapIdentity(const HapBaseInfo& info, Identity& identity)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+    HapBaseInfoParcel infoParcel;
+    infoParcel.hapBaseInfo = info;
+    IdentityIdl identityIdl;
+    int32_t errCode = proxy->GetHapIdentity(infoParcel, identityIdl);
+    if (errCode != RET_SUCCESS) {
+        errCode = ConvertResult(errCode);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Request fail, result: %{public}d", errCode);
+        return errCode;
+    }
+    identity.uid = identityIdl.uid;
+    identity.tokenId = identityIdl.tokenId;
+    return RET_SUCCESS;
+}
+
+int32_t AccessTokenManagerClient::GetHapBaseInfoByUid(int32_t uid, HapBaseInfo& info)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+    HapBaseInfoParcel infoParcel;
+    int32_t errCode = proxy->GetHapBaseInfoByUid(uid, infoParcel);
+    if (errCode != RET_SUCCESS) {
+        errCode = ConvertResult(errCode);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Request fail, result: %{public}d", errCode);
+        return errCode;
+    }
+    info = infoParcel.hapBaseInfo;
+    return RET_SUCCESS;
+}
+
+int32_t AccessTokenManagerClient::MigrateInstalledBundles(const std::vector<MigratedInfo>& migratedInfoList,
+    std::vector<BundleMigrateResult>& results)
+{
+    results.clear();
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+
+    std::vector<MigratedInfoIdl> migratedInfoIdlList;
+    for (const auto& migratedInfo : migratedInfoList) {
+        MigratedInfoIdl migratedInfoIdl;
+        migratedInfoIdl.bundleName = migratedInfo.bundleName;
+        migratedInfoIdl.pathList.hapPaths = migratedInfo.pathList.hapPaths;
+        migratedInfoIdl.pathList.isPreInstalled = migratedInfo.pathList.isPreInstalled;
+        migratedInfoIdl.pathList.mode = static_cast<MultipleModeEnumIdl>(migratedInfo.pathList.mode);
+        for (const auto& hapBaseInfo : migratedInfo.hapBaseInfoList) {
+            HapBaseInfoIdl hapBaseInfoIdl;
+            hapBaseInfoIdl.userID = hapBaseInfo.userID;
+            hapBaseInfoIdl.bundleName = hapBaseInfo.bundleName;
+            hapBaseInfoIdl.instIndex = hapBaseInfo.instIndex;
+            migratedInfoIdl.hapBaseInfoList.emplace_back(hapBaseInfoIdl);
+        }
+        migratedInfoIdl.uidList = migratedInfo.uidList;
+        for (const auto& reserved : migratedInfo.reservedTypeList) {
+            migratedInfoIdl.reservedTypeList.emplace_back(ConvertReservedType(reserved));
+        }
+        migratedInfoIdlList.emplace_back(migratedInfoIdl);
+    }
+
+    std::vector<BundleMigrateResultIdl> resultsIdl;
+    int32_t result = proxy->MigrateInstalledBundles(migratedInfoIdlList, resultsIdl);
+    if (result != RET_SUCCESS) {
+        return ConvertResult(result);
+    }
+
+    results.reserve(resultsIdl.size());
+    for (const auto& resultIdl : resultsIdl) {
+        BundleMigrateResult resultItem;
+        resultItem.errcode = resultIdl.errcode;
+        resultItem.tokenIdList.reserve(resultIdl.tokenIdList.size());
+        for (const auto tokenId : resultIdl.tokenIdList) {
+            AccessTokenIDEx tidEx;
+            tidEx.tokenIDEx = tokenId;
+            resultItem.tokenIdList.emplace_back(tidEx);
+        }
+        resultItem.reservedTypeList.reserve(resultIdl.reservedTypeList.size());
+        for (const auto& reserved : resultIdl.reservedTypeList) {
+            resultItem.reservedTypeList.emplace_back(ConvertReservedType(reserved));
+        }
+        results.emplace_back(std::move(resultItem));
+    }
+    return RET_SUCCESS;
+}
+
+int32_t AccessTokenManagerClient::FinishMigration()
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+
+    int32_t result = proxy->FinishMigration();
+    if (result != RET_SUCCESS) {
+        result = ConvertResult(result);
+    }
+    return result;
+}
+
+int32_t AccessTokenManagerClient::CheckMigratedUidSet(
+    const std::set<int32_t>& totalUids, std::set<int32_t>& unreceivedUids)
+{
+    unreceivedUids.clear();
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+
+    int32_t result = proxy->CheckMigratedUidSet(totalUids, unreceivedUids);
+    if (result != RET_SUCCESS) {
+        return ConvertResult(result);
+    }
+    return RET_SUCCESS;
 }
 #endif
 
@@ -1483,7 +1620,7 @@ int32_t AccessTokenManagerClient::RegisterTokenSyncCallback(
         LOGE(ATM_DOMAIN, ATM_TAG, "Input callback is null.");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
-    
+
     sptr<TokenSyncCallback> callback = sptr<TokenSyncCallback>(new (std::nothrow) TokenSyncCallback(syncCallback));
     if (callback == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Memory allocation for callback failed!");
@@ -2209,7 +2346,6 @@ int32_t AccessTokenManagerClient::GenerateCliAuthResult(
     result = ConvertToolAuthResult(resultIdl);
     return RET_SUCCESS;
 }
-
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

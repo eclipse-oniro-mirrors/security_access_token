@@ -17,6 +17,7 @@
 #define ACCESS_TOKEN_MOCK_ACCESS_TOKEN_DB_OPERATOR_H
 
 #include <map>
+#include <string>
 #include <vector>
 
 #include "access_token_db_operator.h"

@@ -130,7 +130,7 @@ void AccessTokenInfoUtils::BuildBundleFullInfo(const BundleParam& param, const H
             continue;
         }
         PermissionBriefDef briefDef;
-        if (!GetPermissionBriefDef(status.permissionName, briefDef)) {
+        if (!GetPermissionBriefDef(status.permissionName, briefDef) || !briefDef.isEnable) {
             continue;
         }
         if (!PermissionConstraintCheck::IsAclSatisfied(param.isSideloadApp, briefDef, policy)) {
@@ -164,6 +164,41 @@ ReservedType AccessTokenInfoUtils::GetReservedTokenTypeDBValue(const GenericValu
     }
     return ReservedType::NONE;
 #endif
+}
+
+void AccessTokenInfoUtils::AccessTokenServiceAppVerifyParamSet()
+{
+    int32_t res = SetParameter(ACCESS_TOKEN_SERVICE_APP_VERIFY_KEY, "1");
+    if (res != 0) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "SetParameter ACCESS_TOKEN_SERVICE_APP_VERIFY_KEY failed %{public}d.", res);
+    }
+}
+
+bool AccessTokenInfoUtils::IsSystemAppVerified()
+{
+    constexpr int NAME_BUFFER_LEN = 32;
+    char value[NAME_BUFFER_LEN] = {0};
+    int32_t ret = GetParameter(ACCESS_TOKEN_SERVICE_APP_VERIFY_KEY, "", value, NAME_BUFFER_LEN - 1);
+    if (ret < 0) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "GetParameter ACCESS_TOKEN_SERVICE_APP_VERIFY_KEY failed, ret=%{public}d.", ret);
+        return false;
+    }
+    return std::atoi(value) > 0;
+}
+
+bool AccessTokenInfoUtils::IsSystemSpmEnforcing()
+{
+    constexpr int NAME_BUFFER_LEN = 32;
+    static bool isEnforcing = false;
+    char value[NAME_BUFFER_LEN] = {0};
+    int32_t ret = GetParameter(ACCESS_TOKEN_SERVICE_SPM_ENFORCING_KEY, "", value, NAME_BUFFER_LEN - 1);
+    if (ret < 0) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "GetParameter ACCESS_TOKEN_SERVICE_SPM_ENFORCING_KEY failed, ret=%{public}d.",
+            ret);
+        return false;
+    }
+    isEnforcing = std::atoi(value) > 0;
+    return isEnforcing;
 }
 } // namespace AccessToken
 } // namespace Security
