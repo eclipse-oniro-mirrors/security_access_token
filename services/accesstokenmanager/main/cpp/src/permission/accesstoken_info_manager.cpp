@@ -87,7 +87,6 @@ static const char* ACCESS_TOKEN_PACKAGE_NAME = "ohos.security.distributed_token_
 static constexpr uint32_t TOKEN_ID_LOWMASK = 0xffffffff;
 static constexpr int32_t DEFAULT_MAX_QUERY_RESULT_SIZE = ACCESS_TOKEN_DEFAULT_MAX_QUERY_RESULT_SIZE;
 static constexpr int32_t DEFAULT_SUBPROFILE_INDEX = -1;
-static constexpr int32_t MAIN_CLONE_INDEX_BASE = 10000;
 static const char* ACCESS_TOKEN_DB_EMPTY_KEY = "persist.accesstoken.permission.dberror";
 const std::string BMS_DB_DIR_PATH = "/data/service/el1/public/bms/bundle_manager_service/";
 const std::string BMS_DB_FILE_NAME = "bmsdb.db";
@@ -549,8 +548,7 @@ AccessTokenInfoManager::~AccessTokenInfoManager()
     this->tokenMonitor_ = nullptr;
 }
 
-void AccessTokenInfoManager::Init(uint32_t& hapSize, uint32_t& nativeSize, uint32_t& pefDefSize, uint32_t& dlpSize,
-    std::map<int32_t, TokenIdInfo>& tokenIdAplMap)
+void AccessTokenInfoManager::Init(uint32_t& nativeSize, uint32_t& pefDefSize, uint32_t& dlpSize)
 {
     std::unique_lock<std::shared_mutex> lk(this->managerLock_);
     if (hasInited_) {
@@ -589,14 +587,13 @@ void AccessTokenInfoManager::Init(uint32_t& hapSize, uint32_t& nativeSize, uint3
     }
 
     LoadPermissionDefinitionExt(*policy);
-    InitHapTokenInfos(hapSize, tokenIdAplMap);
     nativeSize = tokenInfos.size();
     InitNativeTokenInfos(tokenInfos);
     pefDefSize = GetDefPermissionsSize();
 
     LOGI(ATM_DOMAIN, ATM_TAG,
-        "Init success, hapSize %{public}u, nativeSize %{public}u, pefDefSize %{public}u, dlpSize %{public}u.",
-        hapSize, nativeSize, pefDefSize, dlpSize);
+        "Init success, nativeSize %{public}u, pefDefSize %{public}u, dlpSize %{public}u.",
+        nativeSize, pefDefSize, dlpSize);
 
     hasInited_ = true;
     {
@@ -623,18 +620,18 @@ void AccessTokenInfoManager::LoadPermissionDefinitionExt(ConfigPolicyLoaderInter
     }
 }
 
-bool AccessTokenInfoManager::AddReservedHapInfoFromDbValues(const GenericValues& tokenValue)
+void AccessTokenInfoManager::AddReservedHapInfoFromDbValues(const GenericValues& tokenValue, bool& isReservedToken)
 {
+    isReservedToken = false;
     AccessTokenID tokenId = static_cast<AccessTokenID>(tokenValue.GetInt(TokenFiledConst::FIELD_TOKEN_ID));
     std::string bundle = tokenValue.GetString(TokenFiledConst::FIELD_BUNDLE_NAME);
     ReservedType type = AccessTokenInfoUtils::GetReservedTokenTypeDBValue(tokenValue);
     if (type != ReservedType::NONE) {
+        isReservedToken = true;
         AccessTokenIDManager::GetInstance().AddReservedTokenId(tokenId);
         LOGI(ATM_DOMAIN, ATM_TAG, "Restore reserved hap token %{public}u bundle name %{public}s ",
             tokenId, bundle.c_str());
-        return true;
     }
-    return false;
 }
 
 #ifdef TOKEN_SYNC_ENABLE
@@ -929,10 +926,8 @@ std::shared_ptr<HapTokenInfoInner> AccessTokenInfoManager::GetHapTokenInfoAndSta
     return LoadHapTokenInfoFromDbAndNoCache(id);
 }
 
-std::shared_ptr<HapTokenInfoInner> AccessTokenInfoManager::LoadHapTokenInfoFromDbAndNoCache(AccessTokenID id)
+static std::shared_ptr<HapTokenInfoInner> LoadHapTokenInfoFromDbByCondition(const GenericValues& conditionValue)
 {
-    GenericValues conditionValue;
-    conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(id));
     std::vector<GenericValues> hapTokenResults;
     int32_t ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, conditionValue,
         hapTokenResults);
@@ -947,6 +942,23 @@ std::shared_ptr<HapTokenInfoInner> AccessTokenInfoManager::LoadHapTokenInfoFromD
         return nullptr;
     }
     return std::make_shared<HapTokenInfoInner>(items[0]);
+}
+
+std::shared_ptr<HapTokenInfoInner> AccessTokenInfoManager::LoadHapTokenInfoFromDbAndNoCache(AccessTokenID id)
+{
+    GenericValues conditionValue;
+    conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(id));
+    return LoadHapTokenInfoFromDbByCondition(conditionValue);
+}
+
+std::shared_ptr<HapTokenInfoInner> AccessTokenInfoManager::LoadHapTokenInfoFromDbAndNoCache(
+    int32_t userID, const std::string& bundleName, int32_t instIndex)
+{
+    GenericValues conditionValue;
+    conditionValue.Put(TokenFiledConst::FIELD_USER_ID, userID);
+    conditionValue.Put(TokenFiledConst::FIELD_BUNDLE_NAME, bundleName);
+    conditionValue.Put(TokenFiledConst::FIELD_INST_INDEX, instIndex);
+    return LoadHapTokenInfoFromDbByCondition(conditionValue);
 }
 
 int32_t AccessTokenInfoManager::GetHapTokenDlpType(AccessTokenID id)
@@ -1488,6 +1500,50 @@ int32_t AccessTokenInfoManager::GetHapAppIdByTokenId(AccessTokenID tokenID, std:
     }
     appId = result;
     return RET_SUCCESS;
+}
+
+int32_t AccessTokenInfoManager::GetHapIdentity(const HapBaseInfo& info, Identity& identity)
+{
+    AccessTokenIDEx tokenIdEx = GetHapTokenID(info.userID, info.bundleName, info.instIndex);
+    if (tokenIdEx.tokenIdExStruct.tokenID == INVALID_TOKENID) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Hap info not exist, userId=%{public}d, bundleName=%{public}s, instIndex=%{public}d.",
+            info.userID, info.bundleName.c_str(), info.instIndex);
+        return AccessTokenError::ERR_TOKENID_NOT_EXIST;
+    }
+
+    HapTokenInfo hapInfo;
+    int32_t ret = GetHapTokenInfo(tokenIdEx.tokenIdExStruct.tokenID, hapInfo);
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
+    identity.uid = hapInfo.uid;
+    identity.tokenId = tokenIdEx.tokenIDEx;
+    return RET_SUCCESS;
+}
+
+int32_t AccessTokenInfoManager::GetHapBaseInfoByUid(int32_t uid, HapBaseInfo& info)
+{
+    if (uid <= 0) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Uid %{public}d is invalid.", uid);
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+
+    std::shared_lock<std::shared_mutex> infoGuard(this->hapTokenInfoLock_);
+    for (const auto& [tokenId, hapInfoPtr] : hapTokenInfoMap_) {
+        if (hapInfoPtr == nullptr) {
+            continue;
+        }
+        HapTokenInfo hapInfo = hapInfoPtr->GetHapInfoBasic();
+        if (hapInfo.uid != uid) {
+            continue;
+        }
+        info.userID = hapInfo.userID;
+        info.bundleName = hapInfo.bundleName;
+        info.instIndex = hapInfo.instIndex;
+        return RET_SUCCESS;
+    }
+    LOGE(ATM_DOMAIN, ATM_TAG, "Uid %{public}d is not exist.", uid);
+    return AccessTokenError::ERR_UID_NOT_EXIST;
 }
 
 void AccessTokenInfoManager::GetNativePermissionList(const NativeTokenInfoBase& native,

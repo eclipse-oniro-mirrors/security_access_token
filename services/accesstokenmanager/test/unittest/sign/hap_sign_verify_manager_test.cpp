@@ -200,23 +200,6 @@ HWTEST_F(HapSignVerifyManagerTest, CheckHapsSignInfo006, TestSize.Level1)
 }
 
 /**
- * @tc.name: CheckMultipleHaps001
- * @tc.desc: Mismatched appIdentifier across haps returns ERR_PARAM_INVALID.
- * @tc.type: FUNC
- */
-HWTEST_F(HapSignVerifyManagerTest, CheckMultipleHaps001, TestSize.Level1)
-{
-    HapSignVerifyManager& manager = HapSignVerifyManager::GetInstance();
-    TrustedBundleInfoInner info1 = BuildTrustedBundleInfo("bundle");
-
-    TrustedBundleInfoInner info2 = info1;
-    info2.provisionInfo.bundleInfo.appIdentifier = "identifier2";
-    info2.provisionInfo.appId = "app-id-desc2";
-    std::vector<TrustedBundleInfoInner> infos_mismatch = {info1, info2};
-    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, manager.CheckMultipleHaps(infos_mismatch));
-}
-
-/**
  * @tc.name: CheckMultipleHaps002
  * @tc.desc: Empty infos returns ERR_PARAM_INVALID; identical infos returns RET_SUCCESS.
  * @tc.type: FUNC
@@ -248,17 +231,12 @@ HWTEST_F(HapSignVerifyManagerTest, CheckMultipleHaps003, TestSize.Level1)
     EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, manager.CheckMultipleHaps(infos));
 
     info2 = info1;
-    info2.provisionInfo.bundleInfo.apl = "system_basic";
-    infos = {info1, info2};
-    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, manager.CheckMultipleHaps(infos));
-
-    info2 = info1;
     info2.provisionInfo.bundleInfo.appFeature = "hos_system_app";
     infos = {info1, info2};
     EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, manager.CheckMultipleHaps(infos));
 
     info2 = info1;
-    info2.provisionInfo.distributionType = Security::Verify::ENTERPRISE;
+    info2.provisionInfo.distributionType = Security::Verify::APP_GALLERY;
     infos = {info1, info2};
     EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, manager.CheckMultipleHaps(infos));
 
@@ -270,16 +248,17 @@ HWTEST_F(HapSignVerifyManagerTest, CheckMultipleHaps003, TestSize.Level1)
 
 /**
  * @tc.name: CheckMultipleHaps004
- * @tc.desc: Different distributionType values within the same class (enterprise or non-enterprise)
- *           are allowed and return RET_SUCCESS.
+ * @tc.desc: Different distributionType values within the same class (app gallery / os integration,
+ *           or non-app-gallery) are allowed and return RET_SUCCESS.
  * @tc.type: FUNC
  */
 HWTEST_F(HapSignVerifyManagerTest, CheckMultipleHaps004, TestSize.Level1)
 {
     HapSignVerifyManager& manager = HapSignVerifyManager::GetInstance();
     TrustedBundleInfoInner info1 = BuildTrustedBundleInfo("bundle");
+    info1.provisionInfo.distributionType = Security::Verify::APP_GALLERY;
     TrustedBundleInfoInner info2 = info1;
-    info2.provisionInfo.distributionType = Security::Verify::APP_GALLERY;
+    info2.provisionInfo.distributionType = Security::Verify::OS_INTEGRATION;
     std::vector<TrustedBundleInfoInner> infos = {info1, info2};
     EXPECT_EQ(RET_SUCCESS, manager.CheckMultipleHaps(infos));
 
@@ -998,83 +977,6 @@ HWTEST_F(HapSignVerifyManagerTest, BuildIdType001, TestSize.Level1)
     // Case 4: Normal app → PROCESS_OWNERID_APP
     EXPECT_EQ(PROCESS_OWNERID_APP,
         HapSignVerifyHelper::BuildIdType(false, "12345", {}));
-}
-
-/**
- * @tc.name: CheckAppIdentifier001
- * @tc.desc: CheckAppIdentifier covers all branches:
- *           (1) same non-empty appIdentifier → true
- *           (2) different appIdentifier, same appId → true
- *           (3) different appIdentifier, different appId → false
- *           (4) old appIdentifier empty, same appId → true
- *           (5) old appIdentifier empty, different appId → false
- *           (6) new appIdentifier empty, same appId → true
- *           (7) both appIdentifier empty, same appId → true
- *           (8) both appIdentifier empty, different appId → false
- * @tc.type: FUNC
- */
-HWTEST_F(HapSignVerifyManagerTest, CheckAppIdentifier001, TestSize.Level1)
-{
-    HapSignVerifyManager& manager = HapSignVerifyManager::GetInstance();
-
-    TrustedBundleInfoInner oldInfo;
-    TrustedBundleInfoInner newInfo;
-
-    // (1) Both appIdentifiers non-empty and equal → true (versionCode update path)
-    oldInfo.provisionInfo.bundleInfo.appIdentifier = "12345";
-    newInfo.provisionInfo.bundleInfo.appIdentifier = "12345";
-    oldInfo.provisionInfo.appId = "old-app-id";
-    newInfo.provisionInfo.appId = "new-app-id";
-    EXPECT_TRUE(manager.CheckAppIdentifier(oldInfo, newInfo));
-
-    // (2) Different appIdentifier, same appId → true (appId fallback path)
-    oldInfo.provisionInfo.bundleInfo.appIdentifier = "11111";
-    newInfo.provisionInfo.bundleInfo.appIdentifier = "22222";
-    oldInfo.provisionInfo.appId = "same-app-id";
-    newInfo.provisionInfo.appId = "same-app-id";
-    EXPECT_TRUE(manager.CheckAppIdentifier(oldInfo, newInfo));
-
-    // (3) Different appIdentifier, different appId → false
-    oldInfo.provisionInfo.bundleInfo.appIdentifier = "11111";
-    newInfo.provisionInfo.bundleInfo.appIdentifier = "22222";
-    oldInfo.provisionInfo.appId = "old-app-id";
-    newInfo.provisionInfo.appId = "new-app-id";
-    EXPECT_FALSE(manager.CheckAppIdentifier(oldInfo, newInfo));
-
-    // (4) Old appIdentifier empty, same appId → true
-    oldInfo.provisionInfo.bundleInfo.appIdentifier = "";
-    newInfo.provisionInfo.bundleInfo.appIdentifier = "22222";
-    oldInfo.provisionInfo.appId = "same-app-id";
-    newInfo.provisionInfo.appId = "same-app-id";
-    EXPECT_TRUE(manager.CheckAppIdentifier(oldInfo, newInfo));
-
-    // (5) Old appIdentifier empty, different appId → false
-    oldInfo.provisionInfo.bundleInfo.appIdentifier = "";
-    newInfo.provisionInfo.bundleInfo.appIdentifier = "22222";
-    oldInfo.provisionInfo.appId = "old-app-id";
-    newInfo.provisionInfo.appId = "new-app-id";
-    EXPECT_FALSE(manager.CheckAppIdentifier(oldInfo, newInfo));
-
-    // (6) New appIdentifier empty, same appId → true
-    oldInfo.provisionInfo.bundleInfo.appIdentifier = "11111";
-    newInfo.provisionInfo.bundleInfo.appIdentifier = "";
-    oldInfo.provisionInfo.appId = "same-app-id";
-    newInfo.provisionInfo.appId = "same-app-id";
-    EXPECT_TRUE(manager.CheckAppIdentifier(oldInfo, newInfo));
-
-    // (7) Both appIdentifiers empty, same appId → true
-    oldInfo.provisionInfo.bundleInfo.appIdentifier = "";
-    newInfo.provisionInfo.bundleInfo.appIdentifier = "";
-    oldInfo.provisionInfo.appId = "same-app-id";
-    newInfo.provisionInfo.appId = "same-app-id";
-    EXPECT_TRUE(manager.CheckAppIdentifier(oldInfo, newInfo));
-
-    // (8) Both appIdentifiers empty, different appId → false
-    oldInfo.provisionInfo.bundleInfo.appIdentifier = "";
-    newInfo.provisionInfo.bundleInfo.appIdentifier = "";
-    oldInfo.provisionInfo.appId = "old-app-id";
-    newInfo.provisionInfo.appId = "new-app-id";
-    EXPECT_FALSE(manager.CheckAppIdentifier(oldInfo, newInfo));
 }
 
 /**

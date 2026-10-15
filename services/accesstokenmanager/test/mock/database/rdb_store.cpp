@@ -191,6 +191,15 @@ std::pair<int32_t, int32_t> Transaction::Delete(const NativeRdb::RdbPredicates& 
     return std::make_pair(NativeRdb::E_OK, INT_ONE);
 }
 
+std::pair<int32_t, int32_t> Transaction::Update(
+    const NativeRdb::ValuesBucket& values, const NativeRdb::RdbPredicates& predicates)
+{
+    if (updateFlag_ == Transaction::TransactionOperationResult::OPERATION_FAIL) {
+        return std::make_pair(NativeRdb::E_SQLITE_CORRUPT, INT_ZERO);
+    }
+    return std::make_pair(NativeRdb::E_OK, INT_ONE);
+}
+
 RdbStoreConfig::RdbStoreConfig()
 {}
 

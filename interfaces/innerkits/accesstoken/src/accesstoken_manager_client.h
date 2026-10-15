@@ -19,6 +19,7 @@
 #include <atomic>
 #include <functional>
 #include <map>
+#include <set>
 #include <mutex>
 #include <string>
 #include <unordered_set>
@@ -90,6 +91,10 @@ public:
     AccessTokenIDEx AllocHapToken(const HapInfoParams& info, const HapPolicy& policy);
     int32_t InitHapToken(const HapInfoParams& info, HapPolicy& policy,
         AccessTokenIDEx& fullTokenId, HapInfoCheckResult& result);
+    int32_t MigrateInstalledBundles(const std::vector<MigratedInfo>& migratedInfoList,
+        std::vector<BundleMigrateResult>& results);
+    int32_t FinishMigration();
+    int32_t CheckMigratedUidSet(const std::set<int32_t>& totalUids, std::set<int32_t>& unreceivedUids);
     int DeleteToken(AccessTokenID tokenID, bool isTokenReserved);
     int32_t DeleteToolTokenByPid(int32_t pid);
 #ifdef SPM_DATA_ENABLE
@@ -111,6 +116,8 @@ public:
 #endif
     ATokenTypeEnum GetTokenType(AccessTokenID tokenID);
     AccessTokenIDEx GetHapTokenID(int32_t userID, const std::string& bundleName, int32_t instIndex);
+    int32_t GetHapIdentity(const HapBaseInfo& info, Identity& identity);
+    int32_t GetHapBaseInfoByUid(int32_t uid, HapBaseInfo& info);
     FullTokenID AllocLocalTokenID(const std::string& remoteDeviceID, AccessTokenID remoteTokenID);
     int32_t UpdateHapToken(AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info,
         const HapPolicy& policy, HapInfoCheckResult& result);

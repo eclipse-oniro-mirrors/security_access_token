@@ -73,8 +73,14 @@ public:
     int32_t TranslateUid(int32_t srcUid, int32_t dstLocalId, int32_t& outUid);
     int32_t GetReservedBundleIdsPersistInfo(const std::vector<int32_t>& uids,
         std::vector<DelInfo>& delInfoVec, std::vector<AddInfo>& addInfoVec);
+    int32_t GetReservedBundleIdSetPersistInfo(int32_t bundleId, std::vector<DelInfo>& delInfoVec,
+        std::vector<AddInfo>& addInfoVec);
+    int32_t BuildReservedBundleIdsPersistInfo(const std::set<int32_t>& bundleIds,
+        std::vector<DelInfo>& delInfoVec, std::vector<AddInfo>& addInfoVec);
     int32_t GetBundleIdMin();
     int32_t IsUidReusable(int32_t uid, bool& reusable);
+
+    // Migration control
     int32_t InitBundleIdConfig();
     int32_t InitReservedBundleIdSet();
     int32_t RefreshReservedBundleIdSet(const std::set<int32_t>& bundleList);
@@ -84,7 +90,9 @@ public:
     // Remove the bundleId carried by this uid from reservedBundleIdSet_ only
     // (keep bundleIdSet_ intact); install-chain API for adopted reserved uids
     void RemoveBundleIdFromReservedSet(int32_t uid);
+    int32_t RemoveReservedBundleIds(const std::set<int32_t>& bundleIds);
     bool IsReservedBundleId(int32_t uid);
+    bool IsBundleIdOccupied(int32_t bundleId);
 
     // Migration control
     void SetMigrationDone();

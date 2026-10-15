@@ -29,6 +29,9 @@ namespace Security {
 namespace AccessToken {
 namespace {
 constexpr const char* ENTERPRISE_NORMAL_CHECK = "accesstoken.enterprise_normal_check";
+constexpr uint32_t SYSTEM_APP_FLAG = 0x0001;
+constexpr uint32_t ATOMIC_SERVICE_FLAG = 0x0002;
+constexpr uint32_t DEBUG_APP_FLAG = 0x0008;
 constexpr const char* TEMP_JIT_ALLOW_PERMISSION = "TEMPJITALLOW";
 constexpr uint32_t PROCESS_OWNERID_APP = 2;
 constexpr uint32_t PROCESS_OWNERID_DEBUG = 3;
@@ -156,6 +159,50 @@ int PermissionConstraintCheck::BuildIdType(const BundleParam& param, const HapPo
         idType = PROCESS_OWNERID_APP_TEMP_ALLOW;
     }
     return idType;
+}
+
+void PermissionConstraintCheck::FixPersistentHapInfo(
+    const BundleParam& param, const HapPolicy& policy, HapTokenInfoItem& hapTokenInfoItem, bool& isFixed)
+{
+    isFixed = false;
+    if (hapTokenInfoItem.bundleName != param.bundleName) {
+        hapTokenInfoItem.bundleName = param.bundleName;
+        isFixed = true;
+    }
+    if (hapTokenInfoItem.apiVersion != param.apiVersion) {
+        hapTokenInfoItem.apiVersion = param.apiVersion;
+        isFixed = true;
+    }
+    if (hapTokenInfoItem.apl != policy.apl) {
+        hapTokenInfoItem.apl = policy.apl;
+        isFixed = true;
+    }
+    bool isSystem = (hapTokenInfoItem.tokenAttr & SYSTEM_APP_FLAG) != 0;
+    if (isSystem != param.isSystem) {
+        hapTokenInfoItem.tokenAttr = param.isSystem ?
+            (hapTokenInfoItem.tokenAttr | SYSTEM_APP_FLAG) :
+            (hapTokenInfoItem.tokenAttr & ~SYSTEM_APP_FLAG);
+        isFixed = true;
+    }
+    bool isAtomicService = (hapTokenInfoItem.tokenAttr & ATOMIC_SERVICE_FLAG) != 0;
+    if (isAtomicService != param.isAtomicService) {
+        hapTokenInfoItem.tokenAttr = param.isAtomicService ?
+            (hapTokenInfoItem.tokenAttr | ATOMIC_SERVICE_FLAG) :
+            (hapTokenInfoItem.tokenAttr & ~ATOMIC_SERVICE_FLAG);
+        isFixed = true;
+    }
+    bool isDebug = (hapTokenInfoItem.tokenAttr & DEBUG_APP_FLAG) != 0;
+    if (isDebug != param.isDebug) {
+        hapTokenInfoItem.tokenAttr = param.isDebug ?
+            (hapTokenInfoItem.tokenAttr | DEBUG_APP_FLAG) :
+            (hapTokenInfoItem.tokenAttr & ~DEBUG_APP_FLAG);
+        isFixed = true;
+    }
+
+    if (hapTokenInfoItem.isSideload != param.isSideloadApp) {
+        hapTokenInfoItem.isSideload = param.isSideloadApp;
+        isFixed = true;
+    }
 }
 
 void PermissionConstraintCheck::FixBriefPermData(

@@ -32,6 +32,7 @@
 #ifdef TOKEN_SYNC_ENABLE
 #include "device_manager.h"
 #endif
+#include "hap_data_structure.h"
 #include "hap_token_info.h"
 #include "hap_token_info_inner.h"
 #include "native_token_info_base.h"
@@ -65,7 +66,9 @@ typedef struct {
     bool isSystemApp;
 } TokenIdInfo;
 
+class AccessTokenMigrationManager;
 class AccessTokenInfoManager final {
+    friend class AccessTokenMigrationManager;
 public:
     struct HapTokenRestoreData {
         HapTokenInfoItem hapTokenInfoItem;
@@ -75,8 +78,7 @@ public:
 
     static AccessTokenInfoManager& GetInstance();
     ~AccessTokenInfoManager();
-    void Init(uint32_t& hapSize, uint32_t& nativeSize, uint32_t& pefDefSize, uint32_t& dlpSize,
-        std::map<int32_t, TokenIdInfo>& tokenIdAplMap);
+    void Init(uint32_t& nativeSize, uint32_t& pefDefSize, uint32_t& dlpSize);
     void InitNativeTokenInfos(const std::vector<NativeTokenInfoBase>& tokenInfos);
     void GetTokenIDByUserID(
         int32_t userID, int32_t subProfileId, std::unordered_set<AccessTokenID>& tokenIdList);
@@ -103,6 +105,8 @@ public:
     AccessTokenIDEx GetHapTokenID(int32_t userID, const std::string& bundleName, int32_t instIndex);
     // Query appId of the token directly from the hap token db table.
     int32_t GetHapAppIdByTokenId(AccessTokenID tokenID, std::string& appId);
+    int32_t GetHapIdentity(const HapBaseInfo& info, Identity& identity);
+    int32_t GetHapBaseInfoByUid(int32_t uid, HapBaseInfo& info);
     FullTokenID AllocLocalTokenID(const std::string& remoteDeviceID, AccessTokenID remoteTokenID);
     int32_t UpdateHapToken(AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info,
         const std::vector<PermissionStatus>& permStateList, const HapPolicy& hapPolicy,
@@ -159,7 +163,7 @@ public:
         const std::shared_ptr<BundleInfoInner>& bundleInfo,
         const HapCommitContext& commitContext);
     void CommitDeleteHapCache(AccessTokenID tokenID, const std::string& bundleName);
-    bool AddReservedHapInfoFromDbValues(const GenericValues& tokenValue);
+    void AddReservedHapInfoFromDbValues(const GenericValues& tokenValue, bool& isReservedToken);
 
     int32_t QueryStatusByPermission(const std::vector<uint32_t>& permCodeList,
         std::vector<PermissionStatusIdl>& permissionInfoList, bool onlyHap);
@@ -241,6 +245,8 @@ private:
     // Pure db snapshot: basic row restore only - no permission brief
     // registration, no reserved-id registration, no cache writes.
     std::shared_ptr<HapTokenInfoInner> LoadHapTokenInfoFromDbAndNoCache(AccessTokenID id);
+    std::shared_ptr<HapTokenInfoInner> LoadHapTokenInfoFromDbAndNoCache(
+        int32_t userID, const std::string& bundleName, int32_t instIndex);
     void RemoveReservedHapTokenId(int32_t userID, const std::string& bundleName, int32_t instIndex);
     void AddReservedHapTokenId(int32_t userID, const std::string& bundleName,
         int32_t instIndex, AccessTokenID tokenID);

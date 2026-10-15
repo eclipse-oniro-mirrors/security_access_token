@@ -17,6 +17,7 @@
 
 #define private public
 #include "accesstoken_info_manager.h"
+#include "boot_verify_scheduler.h"
 #include "permission_manager.h"
 #include "verify_accesstoken_monitor.h"
 #undef private
@@ -119,7 +120,9 @@ void AccessTokenMonitorTest::SetUpTestCase()
     uint32_t pefDefSize = 0;
     uint32_t dlpSize = 0;
     std::map<int32_t, TokenIdInfo> tokenIdAplMap;
-    AccessTokenInfoManager::GetInstance().Init(hapSize, nativeSize, pefDefSize, dlpSize, tokenIdAplMap);
+    AccessTokenInfoManager::GetInstance().Init(nativeSize, pefDefSize, dlpSize);
+    (void)BootVerifyScheduler::GetInstance().VerifyBundleSignInfoWhenStart(hapSize, tokenIdAplMap);
+    BootVerifyScheduler::GetInstance().StartVerifyNormalBundleListAsync();
 }
 
 void AccessTokenMonitorTest::TearDownTestCase()

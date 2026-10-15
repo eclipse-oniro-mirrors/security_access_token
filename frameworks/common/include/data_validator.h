@@ -72,6 +72,7 @@ public:
     static bool IsHapListSizeValid(uint32_t size);
     static bool IsSignInfoQueryFlagValid(uint32_t flag);
     static bool IsListSizeValid(size_t size);
+    static bool IsStringListValid(const std::vector<std::string>& valueList);
     static bool IsPermFeatureValid(const std::string& feature);
 
 private:

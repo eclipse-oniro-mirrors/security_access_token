@@ -106,7 +106,6 @@ private:
     int32_t BuildTrustedBundleInfo(
         const std::shared_ptr<Security::Verify::BootstrapInfo>& bootstrapInfo,
         const Security::Verify::ProvisionInfo& provisionInfo, TrustedBundleInfoInner& info) const;
-    bool CheckAppIdentifier(const TrustedBundleInfoInner &oldInfo, const TrustedBundleInfoInner &newInfo) const;
 };
 
 class RdDeviceChecker final {

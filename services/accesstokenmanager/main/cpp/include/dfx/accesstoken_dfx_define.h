@@ -61,6 +61,7 @@ typedef enum AddHapSceneCode {
     INIT,
     MAP,
     INSTALL_FINISH,
+    PRE_VERIFY,
 } AddHapSceneCode;
 
 typedef enum AccessTokenServiceStartSceneCode {

@@ -33,6 +33,7 @@
 #include "accesstoken_info_utils.h"
 #include "accesstoken_info_manager.h"
 #include "accesstoken_remote_token_manager.h"
+#include "boot_verify_scheduler.h"
 #include "dlp_permission_set_manager.h"
 #include "libraryloader.h"
 #include "token_field_const.h"
@@ -392,7 +393,9 @@ void TokenInfoManagerTest::SetUpTestCase()
     uint32_t pefDefSize = 0;
     uint32_t dlpSize = 0;
     std::map<int32_t, TokenIdInfo> tokenIdAplMap;
-    AccessTokenInfoManager::GetInstance().Init(hapSize, nativeSize, pefDefSize, dlpSize, tokenIdAplMap);
+    AccessTokenInfoManager::GetInstance().Init(nativeSize, pefDefSize, dlpSize);
+    (void)BootVerifyScheduler::GetInstance().VerifyBundleSignInfoWhenStart(hapSize, tokenIdAplMap);
+    BootVerifyScheduler::GetInstance().StartVerifyNormalBundleListAsync();
 }
 
 void TokenInfoManagerTest::TearDownTestCase()
@@ -2239,12 +2242,10 @@ HWTEST_F(TokenInfoManagerTest, GetNativePermissionList002, TestSize.Level0)
 HWTEST_F(TokenInfoManagerTest, AccessTokenInfoManager001, TestSize.Level0)
 {
     AccessTokenInfoManager::GetInstance().hasInited_ = true;
-    uint32_t hapSize = 0;
     uint32_t nativeSize = 0;
     uint32_t pefDefSize = 0;
     uint32_t dlpSize = 0;
-    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
-    AccessTokenInfoManager::GetInstance().Init(hapSize, nativeSize, pefDefSize, dlpSize, tokenIdAplMap);
+    AccessTokenInfoManager::GetInstance().Init(nativeSize, pefDefSize, dlpSize);
     AccessTokenInfoManager::GetInstance().hasInited_ = false;
     ASSERT_EQ(false, AccessTokenInfoManager::GetInstance().hasInited_);
 }
@@ -4777,7 +4778,12 @@ HWTEST_F(TokenInfoManagerTest, ReservedHapInfo002, TestSize.Level0)
     genericValues.Put(TokenFiledConst::FIELD_APL, ATokenAplEnum::APL_NORMAL);
     genericValues.Put(TokenFiledConst::FIELD_TOKEN_VERSION, 0);
     genericValues.Put(TokenFiledConst::FIELD_TOKEN_ATTR, TOKEN_ATTR_RESERVED);
-    genericValues.Put(TokenFiledConst::FIELD_FORBID_PERM_DIALOG, "test_perm_dialog_cap_state");
+    genericValues.Put(TokenFiledConst::FIELD_FORBID_PERM_DIALOG, 0);
+#ifdef SPM_DATA_ENABLE
+    genericValues.Put(TokenFiledConst::FIELD_UID, 0);
+    genericValues.Put(TokenFiledConst::FIELD_MIGRATED, 0);
+    genericValues.Put(TokenFiledConst::FIELD_RESERVED, 1);
+#endif
     AddInfo addInfo;
     addInfo.addType = AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO;
     addInfo.addValues.emplace_back(genericValues);
@@ -4792,12 +4798,13 @@ HWTEST_F(TokenInfoManagerTest, ReservedHapInfo002, TestSize.Level0)
     uint32_t pefDefSize = 0;
     uint32_t dlpSize = 0;
     std::map<int32_t, TokenIdInfo> tokenIdAplMap;
-    AccessTokenInfoManager::GetInstance().Init(hapSize, nativeSize, pefDefSize, dlpSize, tokenIdAplMap);
-    std::string HapUniqueKey = AccessTokenInfoUtils::GetHapUniqueStr(100, "test_bundle_name", 0);
-    auto it = AccessTokenInfoManager::GetInstance().reservedHapTokenIdMap_.find(HapUniqueKey);
-    EXPECT_NE(it, AccessTokenInfoManager::GetInstance().reservedHapTokenIdMap_.end());
 
-    AccessTokenInfoManager::GetInstance().reservedHapTokenIdMap_.erase(HapUniqueKey);
+    AccessTokenInfoManager::GetInstance().Init(nativeSize, pefDefSize, dlpSize);
+    (void)BootVerifyScheduler::GetInstance().VerifyBundleSignInfoWhenStart(hapSize, tokenIdAplMap);
+    BootVerifyScheduler::GetInstance().StartVerifyNormalBundleListAsync();
+    sleep(3);
+    EXPECT_TRUE(AccessTokenIDManager::GetInstance().IsReservedTokenId(123));
+    AccessTokenIDManager::GetInstance().RemoveReservedTokenId(123);
     addInfoVec.clear();
     DelInfo delInfo;
     delInfo.delType = AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO;

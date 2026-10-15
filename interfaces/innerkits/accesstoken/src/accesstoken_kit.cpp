@@ -197,20 +197,40 @@ isAtomicService: %{public}d",
 int32_t AccessTokenKit::MigrateInstalledBundles(const std::vector<MigratedInfo>& migratedInfoList,
     std::vector<BundleMigrateResult>& results)
 {
+#ifdef SPM_DATA_ENABLE
+    results.clear();
+    constexpr size_t MAX_MIGRATED_INFO_SIZE = 50;
+    LOGI(ATM_DOMAIN, ATM_TAG, "MigrateInstalledBundles size=%{public}zu.", migratedInfoList.size());
+    if (migratedInfoList.size() > MAX_MIGRATED_INFO_SIZE) {
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+
+    return AccessTokenManagerClient::GetInstance().MigrateInstalledBundles(migratedInfoList, results);
+#else
     return ERR_OK;
+#endif
 }
 
 int32_t AccessTokenKit::FinishMigration()
 {
+#ifdef SPM_DATA_ENABLE
+    LOGI(ATM_DOMAIN, ATM_TAG, "FinishMigration.");
+    return AccessTokenManagerClient::GetInstance().FinishMigration();
+#else
     return ERR_OK;
+#endif
 }
 
 int32_t AccessTokenKit::CheckMigratedUidSet(
     const std::set<int32_t>& totalUids, std::set<int32_t>& unreceivedUids)
 {
+#ifdef SPM_DATA_ENABLE
+    LOGI(ATM_DOMAIN, ATM_TAG, "CheckMigratedUidSet size=%{public}zu.", totalUids.size());
+    return AccessTokenManagerClient::GetInstance().CheckMigratedUidSet(totalUids, unreceivedUids);
+#else
     return ERR_OK;
+#endif
 }
-
 
 int AccessTokenKit::DeleteToken(AccessTokenID tokenID)
 {
@@ -334,12 +354,30 @@ AccessTokenIDEx AccessTokenKit::GetHapTokenIDEx(int32_t userID, const std::strin
 
 int32_t AccessTokenKit::GetHapIdentity(const HapBaseInfo& info, Identity& identity)
 {
+#ifdef SPM_DATA_ENABLE
+    LOGD(ATM_DOMAIN, ATM_TAG, "UserID=%{public}d, bundleName=%{public}s, instIndex=%{public}d.",
+        info.userID, info.bundleName.c_str(), info.instIndex);
+    if ((!DataValidator::IsUserIdValid(info.userID)) || (!DataValidator::IsBundleNameValid(info.bundleName))) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Hap base info param check failed");
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    return AccessTokenManagerClient::GetInstance().GetHapIdentity(info, identity);
+#else
     return ERR_OK;
+#endif
 }
 
 int32_t AccessTokenKit::GetHapBaseInfoByUid(int32_t uid, HapBaseInfo& info)
 {
+#ifdef SPM_DATA_ENABLE
+    if (uid <= 0) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Uid=%{public}d is invalid.", uid);
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    return AccessTokenManagerClient::GetInstance().GetHapBaseInfoByUid(uid, info);
+#else
     return ERR_OK;
+#endif
 }
 
 int32_t AccessTokenKit::GetTokenIDByUserID(

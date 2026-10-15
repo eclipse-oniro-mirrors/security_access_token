@@ -136,10 +136,9 @@ void SortTrustedBundles(std::vector<TrustedBundleInfoInner>& infos)
     });
 }
 
-bool IsEnterpriseDistributionType(Security::Verify::AppDistType type)
+bool IsAppGalleryOrOsIntegrationType(Security::Verify::AppDistType type)
 {
-    return type == Security::Verify::ENTERPRISE || type == Security::Verify::ENTERPRISE_NORMAL ||
-        type == Security::Verify::ENTERPRISE_MDM;
+    return type == Security::Verify::APP_GALLERY || type == Security::Verify::OS_INTEGRATION;
 }
 
 bool IsSideloadFromSignature(const TrustedBundleInfoInner& info)
@@ -427,26 +426,6 @@ int32_t HapSignVerifyManager::CheckHapsSignInfo(Security::Verify::VerifyParams p
     return ret;
 }
 
-bool HapSignVerifyManager::CheckAppIdentifier(const TrustedBundleInfoInner &oldInfo,
-    const TrustedBundleInfoInner &newInfo) const
-{
-    const auto &oldAppIdentifier = oldInfo.GetAppIdentifier();
-    const auto &newAppIdentifier = newInfo.GetAppIdentifier();
-    const auto &oldAppId = oldInfo.GetAppId();
-    const auto &newAppId = newInfo.GetAppId();
-
-    // for versionCode update
-    if (!oldAppIdentifier.empty() &&
-        !newAppIdentifier.empty() &&
-        oldAppIdentifier == newAppIdentifier) {
-        return true;
-    }
-    if (oldAppId == newAppId) {
-        return true;
-    }
-    return false;
-}
-
 int32_t HapSignVerifyManager::CheckMultipleHaps(const std::vector<TrustedBundleInfoInner>& infos) const
 {
     LOGD(ATM_DOMAIN, ATM_TAG, "Check multiple trusted haps.");
@@ -465,25 +444,17 @@ int32_t HapSignVerifyManager::CheckMultipleHaps(const std::vector<TrustedBundleI
 #endif
 
     const TrustedBundleInfoInner& baseline = infos.front();
-    bool isInvalid = std::any_of(infos.begin(), infos.end(), [&baseline, this](const auto& info) {
+    bool isInvalid = std::any_of(infos.begin(), infos.end(), [&baseline](const auto& info) {
         if (baseline.GetBundleName() != info.GetBundleName()) {
             LOGC(ATM_DOMAIN, ATM_TAG, "Check multiple haps failed, hap files have different bundleName.");
-            return true;
-        }
-        if (!CheckAppIdentifier(baseline, info)) {
-            LOGC(ATM_DOMAIN, ATM_TAG, "Check multiple haps failed, hap files have different appId and appIdentifier.");
-            return true;
-        }
-        if (baseline.GetApl() != info.GetApl()) {
-            LOGC(ATM_DOMAIN, ATM_TAG, "Check multiple haps failed, hap files have different apl.");
             return true;
         }
         if (baseline.GetAppFeature() != info.GetAppFeature()) {
             LOGC(ATM_DOMAIN, ATM_TAG, "Check multiple haps failed, hap files have different appFeature.");
             return true;
         }
-        if (IsEnterpriseDistributionType(baseline.provisionInfo.distributionType) !=
-            IsEnterpriseDistributionType(info.provisionInfo.distributionType)) {
+        if (IsAppGalleryOrOsIntegrationType(baseline.provisionInfo.distributionType) !=
+            IsAppGalleryOrOsIntegrationType(info.provisionInfo.distributionType)) {
             LOGC(ATM_DOMAIN, ATM_TAG,
                 "Check multiple haps failed, hap files have different appDistributionType class.");
             return true;

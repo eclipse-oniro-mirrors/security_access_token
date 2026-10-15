@@ -14,5 +14,7 @@
 accesstoken.permission.change="access_token:access_token:0774"
 accesstoken.permission.init="access_token:access_token:0774"
 accesstoken.permission.flagchange="access_token:access_token:0774"
+accesstoken.permission.appverified="access_token:access_token:0774"
+accesstoken.permission.spm.enforcing="access_token:access_token:0774"
 persist.accesstoken.permission.dberror="access_token:access_token:0774"
 accesstoken.permission.sec.comp.status="access_token:access_token:0775"

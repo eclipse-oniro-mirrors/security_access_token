@@ -169,11 +169,16 @@ struct IdentityIdl {
     unsigned long tokenId;
 };
 
+enum MultipleModeEnumIdl {
+    DEFAULT_OR_MAIN_MODE = 0,
+    SUB_MODE = 1,
+};
+
 struct BundleHapListIdl {
     List<String> hapPaths;
     boolean isPreInstalled;
     int userId;
-    int mode;
+    MultipleModeEnumIdl mode;
 };
 
 struct MigratedInfoIdl {

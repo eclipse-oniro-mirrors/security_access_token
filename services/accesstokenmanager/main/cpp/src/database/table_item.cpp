@@ -39,6 +39,7 @@ void BundleInfoItems::BuildAddValue(std::vector<GenericValues>& addValues) const
         moduleInfo.BuildAddValue(moduleValues);
         for (auto& addValue : moduleValues) {
             addValue.Put(TokenFiledConst::FIELD_BUNDLE_NAME, bundleName);
+            addValue.Put(TokenFiledConst::FIELD_MODE, static_cast<int32_t>(mode));
             addValue.Put(TokenFiledConst::FIELD_IS_PREINSTALLED, static_cast<int32_t>(isPreInstalled));
             addValues.emplace_back(addValue);
         }
@@ -48,6 +49,7 @@ void BundleInfoItems::BuildAddValue(std::vector<GenericValues>& addValues) const
 void BundleInfoItems::BuildDeleteValues(GenericValues& deleteValue) const
 {
     deleteValue.Put(TokenFiledConst::FIELD_BUNDLE_NAME, bundleName);
+    deleteValue.Put(TokenFiledConst::FIELD_MODE, static_cast<int32_t>(mode));
 }
 
 void BundleInfoItems::BuildUpdateValues(GenericValues& deleteValue, std::vector<GenericValues>& addValues) const
@@ -59,21 +61,29 @@ void BundleInfoItems::BuildUpdateValues(GenericValues& deleteValue, std::vector<
 void BundleInfoItems::BuildFindValues(GenericValues& findValue) const
 {
     findValue.Put(TokenFiledConst::FIELD_BUNDLE_NAME, bundleName);
+    findValue.Put(TokenFiledConst::FIELD_MODE, static_cast<int32_t>(mode));
 }
 
 void BundleInfoItems::LoadFromDB(const std::vector<GenericValues>& values, std::vector<BundleInfoItems>& items)
 {
     items.clear();
-    std::map<std::string, size_t> bundleIndexMap;
+    std::map<std::pair<std::string, int32_t>, size_t> bundleIndexMap;
     for (const auto& value : values) {
         std::string bundleName = value.GetString(TokenFiledConst::FIELD_BUNDLE_NAME);
-        auto iter = bundleIndexMap.find(bundleName);
+        int32_t mode = value.GetInt(TokenFiledConst::FIELD_MODE);
+        if (mode < static_cast<int32_t>(MultipleMode::DEFAULT_OR_MAIN_MODE) ||
+            mode > static_cast<int32_t>(MultipleMode::MAX_MODE)) {
+            mode = static_cast<int32_t>(MultipleMode::DEFAULT_OR_MAIN_MODE);
+        }
+        auto key = std::make_pair(bundleName, mode);
+        auto iter = bundleIndexMap.find(key);
         if (iter == bundleIndexMap.end()) {
             BundleInfoItems item;
             item.bundleName = bundleName;
+            item.mode = static_cast<MultipleMode>(mode);
             item.isPreInstalled = static_cast<bool>(value.GetInt(TokenFiledConst::FIELD_IS_PREINSTALLED));
             items.emplace_back(item);
-            iter = bundleIndexMap.emplace(bundleName, items.size() - 1).first;
+            iter = bundleIndexMap.emplace(key, items.size() - 1).first;
         }
 
         ModuleInfoItem moduleInfo;
