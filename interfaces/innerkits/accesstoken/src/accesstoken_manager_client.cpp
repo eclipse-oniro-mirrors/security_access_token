@@ -40,6 +40,11 @@
 #endif
 #include "spm_setproc.h"
 #include "system_ability_status_change_listener.h"
+#ifdef SPM_DATA_ENABLE
+#include "bundle_infos_rawdata_helper.h"
+#include "check_hap_sign_result_rawdata_helper.h"
+#include "proxy_death_callback_stub.h"
+#endif
 
 namespace OHOS {
 namespace Security {
@@ -875,6 +880,257 @@ int32_t AccessTokenManagerClient::DeleteIdentity(
     }
     LOGI(ATM_DOMAIN, ATM_TAG, "Result is %{public}d, id is %{public}u.", result, tokenID);
     return result;
+}
+
+namespace {
+void TransferHapBaseInfoToIdl(const HapBaseInfo& info, HapBaseInfoIdl& infoIdl)
+{
+    infoIdl.userID = info.userID;
+    infoIdl.bundleName = info.bundleName;
+    infoIdl.instIndex = info.instIndex;
+}
+
+void TransferBundlePolicyToIdl(const BundlePolicy& policy, BundlePolicyIdl& policyIdl)
+{
+    for (const auto& preInfo : policy.preAuthorizationInfo) {
+        PreAuthorizationInfoIdl preInfoIdl;
+        preInfoIdl.permissionName = preInfo.permissionName;
+        preInfoIdl.userCancelable = preInfo.userCancelable;
+        policyIdl.preAuthorizationInfo.emplace_back(preInfoIdl);
+    }
+    policyIdl.dlpType = static_cast<DlpTypeIdl>(policy.dlpType);
+    policyIdl.isDebugGrant = policy.isDebugGrant;
+}
+}
+
+int32_t AccessTokenManagerClient::CheckHapSignInfo(const BundleHapList& list, uint32_t flag, int32_t& sessionId,
+    std::vector<TrustedBundleInfo>& bundleInfo, HapVerifyResultInfo& resultInfo)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+    auto anonyStub = GetAnonyStub();
+    if (anonyStub == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "anonyStub is null.");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+    BundleHapListIdl listIdl;
+    listIdl.hapPaths = list.hapPaths;
+    listIdl.isPreInstalled = list.isPreInstalled;
+    listIdl.userId = list.userId;
+    listIdl.mode = static_cast<int32_t>(list.mode);
+
+    CheckHapSignResultRawdata resultRawData;
+    int32_t res = proxy->CheckHapSignInfo(listIdl, anonyStub->AsObject(), flag, resultRawData);
+    if (res != RET_SUCCESS) {
+        res = ConvertResult(res);
+        LOGE(ATM_DOMAIN, ATM_TAG, "CheckHapSignInfo failed, err=%{public}d.", res);
+        return res;
+    }
+
+    if (!CheckHapSignResultRawdataHelper::ReadFromRawData(
+        resultRawData, res, sessionId, bundleInfo, resultInfo)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "ReadFromRawData failed.");
+        bundleInfo.clear();
+        return AccessTokenError::ERR_READ_PARCEL_FAILED;
+    }
+
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result %{public}d, sessionId %{public}d", res, sessionId);
+    return res;
+}
+
+int32_t AccessTokenManagerClient::CheckHapPermissionInfo(int32_t sessionId, InstallTypeEnum type,
+    HapInfoCheckResult& result)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+
+    HapInfoCheckResultIdl resultInfoIdl;
+    int32_t res = proxy->CheckHapPermissionInfo(sessionId, static_cast<InstallTypeEnumIdl>(type), resultInfoIdl);
+    if (res != RET_SUCCESS) {
+        res = ConvertResult(res);
+        LOGE(ATM_DOMAIN, ATM_TAG, "CheckHapPermissionInfo failed, err=%{public}d.", res);
+        return res;
+    }
+
+    res = resultInfoIdl.realResult;
+    if (res != RET_SUCCESS) {
+        PermissionInfoCheckResult permCheckResult;
+        permCheckResult.permissionName = resultInfoIdl.permissionName;
+        int32_t rule = static_cast<int32_t>(resultInfoIdl.rule);
+        permCheckResult.rule = static_cast<PermissionRulesEnum>(rule);
+        result.permCheckResult = permCheckResult;
+    }
+
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result %{public}d", res);
+    return res;
+}
+
+int32_t AccessTokenManagerClient::PrepareHapIdentity(int32_t& sessionId, const HapBaseInfo& info,
+    const BundlePolicy& policy, Identity& identity)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+    auto anonyStub = GetAnonyStub();
+    if (anonyStub == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "anonyStub is null.");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+
+    HapBaseInfoIdl infoIdl;
+    TransferHapBaseInfoToIdl(info, infoIdl);
+    BundlePolicyIdl policyIdl;
+    TransferBundlePolicyToIdl(policy, policyIdl);
+
+    IdentityIdl identityIdl;
+    identityIdl.uid = identity.uid;
+    identityIdl.tokenId = identity.tokenId;
+    int32_t res = proxy->PrepareHapIdentity(sessionId, infoIdl, policyIdl, anonyStub->AsObject(), identityIdl);
+    if (res != RET_SUCCESS) {
+        res = ConvertResult(res);
+        LOGE(ATM_DOMAIN, ATM_TAG, "PrepareHapIdentity failed, err=%{public}d.", res);
+        return res;
+    }
+    identity.uid = identityIdl.uid;
+    identity.tokenId = identityIdl.tokenId;
+
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result=%{public}d, sessionId=%{public}d, uid=%{public}d, "
+        "fulltokenId=%{public}" PRIu64 ", tokenId=%{public}u",
+        res, sessionId, identity.uid, identity.tokenId, static_cast<uint32_t>(identity.tokenId));
+    return res;
+}
+
+int32_t AccessTokenManagerClient::UpdateHapPolicy(
+    int32_t sessionId, int32_t tokenId, const BundlePolicy& policy, int32_t& uid)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+
+    BundlePolicyIdl policyIdl;
+    TransferBundlePolicyToIdl(policy, policyIdl);
+
+    int32_t res = proxy->UpdateHapPolicy(sessionId, tokenId, policyIdl, uid);
+    if (res != RET_SUCCESS) {
+        res = ConvertResult(res);
+        LOGE(ATM_DOMAIN, ATM_TAG, "UpdateHapPolicy failed, err=%{public}d.", res);
+        return res;
+    }
+
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result=%{public}d, uid=%{public}d", res, uid);
+    return res;
+}
+
+int32_t AccessTokenManagerClient::FinishInstall(int32_t sessionId, bool isPersistent,
+    const std::map<std::string, std::string>& modulePathMap)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+
+    int32_t res = proxy->FinishInstall(sessionId, isPersistent, modulePathMap);
+    if (res != RET_SUCCESS) {
+        res = ConvertResult(res);
+        LOGE(ATM_DOMAIN, ATM_TAG, "FinishInstall failed, err=%{public}d.", res);
+        return res;
+    }
+
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result=%{public}d", res);
+    return res;
+}
+
+int32_t AccessTokenManagerClient::GetCacheSignInfoBySessionId(int32_t sessionId, uint32_t flag,
+    std::vector<TrustedBundleInfo>& bundleInfo)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+
+    BundleInfosRawdata bundleInfosRawdata;
+    int32_t res = proxy->GetCacheSignInfoBySessionId(sessionId, flag, bundleInfosRawdata);
+    if (res != RET_SUCCESS) {
+        res = ConvertResult(res);
+        LOGE(ATM_DOMAIN, ATM_TAG, "GetCacheSignInfoBySessionId failed, err=%{public}d.", res);
+        return res;
+    }
+    if (!BundleInfosRawdataHelper::ReadFromRawData(bundleInfosRawdata, bundleInfo)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "ReadFromRawData failed.");
+        bundleInfo.clear();
+        return AccessTokenError::ERR_READ_PARCEL_FAILED;
+    }
+
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result=%{public}d", res);
+    return res;
+}
+
+int32_t AccessTokenManagerClient::GetHapSignInfo(const std::string& bundleName, uint32_t flag,
+    std::vector<TrustedBundleInfo>& bundleInfo)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+
+    BundleInfosRawdata bundleInfosRawdata;
+    int32_t res = proxy->GetHapSignInfo(bundleName, flag, bundleInfosRawdata);
+    if (res != RET_SUCCESS) {
+        res = ConvertResult(res);
+        LOGE(ATM_DOMAIN, ATM_TAG, "GetHapSignInfo failed, err=%{public}d.", res);
+        return res;
+    }
+    if (!BundleInfosRawdataHelper::ReadFromRawData(bundleInfosRawdata, bundleInfo)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "ReadFromRawData failed.");
+        bundleInfo.clear();
+        return AccessTokenError::ERR_READ_PARCEL_FAILED;
+    }
+
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result=%{public}d", res);
+    return res;
+}
+
+int32_t AccessTokenManagerClient::GetCachePolicyBySessionId(int32_t sessionId, const std::string& bundleName,
+    BundlePolicyInfo& bundlePolicyInfo)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+
+    BundlePolicyInfoIdl bundlePolicyInfoIdl;
+    int32_t res = proxy->GetCachePolicyBySessionId(sessionId, bundleName, bundlePolicyInfoIdl);
+    if (res != RET_SUCCESS) {
+        res = ConvertResult(res);
+        LOGE(ATM_DOMAIN, ATM_TAG, "GetCachePolicyBySessionId failed, err=%{public}d.", res);
+        return res;
+    }
+    bundlePolicyInfo.reqPermissions = bundlePolicyInfoIdl.reqPermissions;
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result=%{public}d", res);
+    return res;
+}
+
+sptr<ProxyDeathCallBack> AccessTokenManagerClient::GetAnonyStub()
+{
+    std::lock_guard<std::mutex> lock(stubMutex_);
+    if (anonyStub_ == nullptr) {
+        anonyStub_ = sptr<ProxyDeathCallBackStub>::MakeSptr();
+    }
+    return anonyStub_;
 }
 #endif
 

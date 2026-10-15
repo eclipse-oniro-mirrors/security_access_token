@@ -54,13 +54,6 @@ public:
         const std::vector<PermissionStatus>& permStateList);
 
     /**
-     * @brief Extract the token ID from a 64-bit token ID.
-     * @param tokenIdEx The 64-bit token ID.
-     * @return The lower 32-bit token ID.
-     */
-    static AccessTokenID GetTokenId(uint64_t tokenIdEx);
-
-    /**
      * @brief Convert the APL string to the ATokenAplEnum.
      * @param apl APL string, whose valid values are "system_core" and "system_basic".
      * @return The corresponding ATokenAplEnum, or APL_NORMAL for unknown values.

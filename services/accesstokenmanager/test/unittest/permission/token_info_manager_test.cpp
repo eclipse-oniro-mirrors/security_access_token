@@ -33,9 +33,7 @@
 #include "accesstoken_info_utils.h"
 #include "accesstoken_info_manager.h"
 #include "accesstoken_remote_token_manager.h"
-#ifdef SUPPORT_SANDBOX_APP
 #include "dlp_permission_set_manager.h"
-#endif
 #include "libraryloader.h"
 #include "token_field_const.h"
 #include "user_policy_manager.h"
@@ -534,16 +532,16 @@ HWTEST_F(TokenInfoManagerTest, UpsertBundleInfoInnerCache001, TestSize.Level0)
     manager.bundleInfoMap_.erase(bundleName);
 
     auto first = std::make_shared<BundleInfoInner>();
-    first->tokenIds = { 1 };
+    first->permCodeList = { 1 };
     manager.UpsertBundleInfoInnerCache(bundleName, first);
     ASSERT_NE(manager.bundleInfoMap_.end(), manager.bundleInfoMap_.find(bundleName));
     EXPECT_EQ(first, manager.bundleInfoMap_[bundleName]);
 
     auto second = std::make_shared<BundleInfoInner>();
-    second->tokenIds = { 2, 3 };
+    second->permCodeList = { 2, 3 };
     manager.UpsertBundleInfoInnerCache(bundleName, second);
     EXPECT_EQ(second, manager.bundleInfoMap_[bundleName]);
-    ASSERT_EQ(2u, manager.bundleInfoMap_[bundleName]->tokenIds.size());
+    ASSERT_EQ(2u, manager.bundleInfoMap_[bundleName]->permCodeList.size());
 
     manager.bundleInfoMap_.erase(bundleName);
 }
@@ -3249,6 +3247,7 @@ HWTEST_F(TokenInfoManagerTest, VerifyAccessToken002, TestSize.Level0)
     ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId));
 }
 
+#ifndef SPM_DATA_ENABLE
 /**
  * @tc.name: GetAppId001
  * @tc.desc: TokenInfoManagerTest::VerifyAccessToken function test
@@ -3272,11 +3271,13 @@ HWTEST_F(TokenInfoManagerTest, GetAppId001, TestSize.Level0)
     ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(info, policy, tokenIdEx,
         undefValues));
     std::string appId;
-    int ret = AccessTokenInfoManager::GetInstance().GetHapAppIdByTokenId(tokenIdEx.tokenIdExStruct.tokenID, appId);
+    int ret = AccessTokenInfoManager::GetInstance().GetHapAppIdByTokenId(tokenIdEx.tokenIdExStruct.tokenID,
+        appId);
     ASSERT_EQ(ret, RET_SUCCESS);
     ASSERT_EQ(appId, "token_info_manager_test");
     ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenIdEx.tokenIdExStruct.tokenID));
 }
+#endif
 
 /**
  * @tc.name: GetApiVersionByTokenId002
@@ -4874,7 +4875,8 @@ HWTEST_F(TokenInfoManagerTest, ReservedHapInfo004, TestSize.Level0)
 
 /**
  * @tc.name: ReservedHapInfo005
- * @tc.desc: coverage test
+ * @tc.desc: Verify the ACTIVE-only query contract: a token erased from the
+ *           active cache is not visible to GetHapTokenInfo.
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -4885,14 +4887,14 @@ HWTEST_F(TokenInfoManagerTest, ReservedHapInfo005, TestSize.Level0)
     int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_infoManagerTestInfoParms,
         g_infoManagerTestPolicyPrams1, tokenIdEx, undefValues);
     ASSERT_EQ(RET_SUCCESS, ret);
-    GTEST_LOG_(INFO) << "add a normal hap token";
 
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
     AccessTokenInfoManager::GetInstance().hapTokenInfoMap_.erase(tokenID);
     HapTokenInfo info;
-    EXPECT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenID, info));
-
-    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID));
+    EXPECT_EQ(AccessTokenError::ERR_TOKENID_NOT_EXIST,
+        AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenID, info));
+    EXPECT_EQ(AccessTokenError::ERR_TOKENID_NOT_EXIST,
+        AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID));
 }
 
 #ifdef TOKEN_SYNC_ENABLE

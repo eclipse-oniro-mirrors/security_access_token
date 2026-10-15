@@ -1153,6 +1153,24 @@ bool PermissionManager::InitPermissionList(const BundleParam& param, const HapPo
     LOGI(ATM_DOMAIN, ATM_TAG, "After, request perm list size: %{public}zu.", initializedList.size());
     return true;
 }
+
+bool PermissionManager::CheckAclAndEdm(const BundleParam& param, const HapPolicy& policy,
+    HapInfoCheckResult& result)
+{
+    for (const auto& status : policy.permStateList) {
+        PermissionBriefDef briefDef;
+        if (!GetPermissionBriefDef(status.permissionName, briefDef) || !briefDef.isEnable) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Get definition of %{public}s failed or permission is undefined.",
+                status.permissionName.c_str());
+            continue;
+        }
+        result.permCheckResult.permissionName = status.permissionName;
+        if (!PermissionConstraintCheck::AclAndEdmCheck(param, briefDef, policy, result)) {
+            return false;
+        }
+    }
+    return true;
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

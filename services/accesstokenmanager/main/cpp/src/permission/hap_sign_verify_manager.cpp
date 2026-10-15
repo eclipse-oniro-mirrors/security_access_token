@@ -141,6 +141,17 @@ bool IsEnterpriseDistributionType(Security::Verify::AppDistType type)
     return type == Security::Verify::ENTERPRISE || type == Security::Verify::ENTERPRISE_NORMAL ||
         type == Security::Verify::ENTERPRISE_MDM;
 }
+
+bool IsSideloadFromSignature(const TrustedBundleInfoInner& info)
+{
+#ifdef X86_EMULATOR_MODE
+    if (IsIgnoredTrustedBundleInfo(info)) {
+        return false;
+    }
+#endif
+    return info.GetAppDistributionType() == "developer_id" &&
+        info.GetBundleType() == static_cast<int32_t>(AppExecFwk::Spm::BundleType::APP);
+}
 }
 
 int32_t RdDeviceChecker::isRdDevice = RdDeviceChecker::NOT_INITIALIZE;
@@ -532,6 +543,7 @@ int32_t HapSignVerifyManager::BuildHapPolicy(
     param.isSystem = baseline.IsSystemApp();
     param.isAtomicService = baseline.IsAtomicService();
     param.isDebug = (baseline.GetAppProvisionType() == "debug");
+    param.isSideloadApp = IsSideloadFromSignature(baseline);
     param.appIdentifier = HapSignVerifyHelper::BuildOwnerId(
         baseline.GetAppIdentifier());
 
@@ -549,6 +561,7 @@ int32_t HapSignVerifyManager::CheckPermissionRequestValid(
     bundleParam.distributionType = info.provisionInfo.distributionType;
     bundleParam.isSystem = info.IsSystemApp();
     bundleParam.isDebug = (info.GetAppProvisionType() == "debug");
+    bundleParam.isSideloadApp = IsSideloadFromSignature(info);
 
     std::vector<PermissionStatus> initializedList;
     std::vector<GenericValues> undefValues;
@@ -559,25 +572,38 @@ int32_t HapSignVerifyManager::CheckPermissionRequestValid(
     return RET_SUCCESS;
 }
 
-void HapSignVerifyManager::ConvertTrustedBundleInfo(
-    const std::vector<TrustedBundleInfoInner>& bundleInfos, std::vector<TrustedBundleInfo>& bundleInfo) const
+void HapSignVerifyManager::FillProfileData(const TrustedBundleInfoInner& infoInner,
+    TrustedBundleInfo& info) const
+{
+    info.profileData.provisionRaw = infoInner.bootstrapInfo->profileJsonRaw;
+    info.profileData.profileBlockLength = infoInner.provisionInfo.profileBlockLength;
+    if (infoInner.provisionInfo.profileBlock != nullptr &&
+        infoInner.provisionInfo.profileBlockLength > 0) {
+        info.profileData.profileBlock.assign(infoInner.provisionInfo.profileBlock.get(),
+            infoInner.provisionInfo.profileBlock.get() + infoInner.provisionInfo.profileBlockLength);
+    }
+    info.profileData.appId = infoInner.provisionInfo.appId;
+    info.profileData.fingerprint = infoInner.provisionInfo.fingerprint;
+    info.profileData.organization = infoInner.provisionInfo.organization;
+    info.profileData.isOpenHarmony = infoInner.provisionInfo.isOpenHarmony;
+    info.profileData.isEnterpriseResigned = infoInner.provisionInfo.isEnterpriseResigned;
+}
+
+void HapSignVerifyManager::ConvertTrustedBundleInfo(const std::vector<TrustedBundleInfoInner>& bundleInfos,
+    std::vector<TrustedBundleInfo>& bundleInfo, uint32_t flag) const
 {
     for (const auto& infoInner : bundleInfos) {
         if (infoInner.bootstrapInfo != nullptr) {
             TrustedBundleInfo info;
-            info.profileData.provisionRaw = infoInner.bootstrapInfo->profileJsonRaw;
-            info.profileData.profileBlockLength = infoInner.provisionInfo.profileBlockLength;
-            if (infoInner.provisionInfo.profileBlock != nullptr && infoInner.provisionInfo.profileBlockLength > 0) {
-                info.profileData.profileBlock.assign(infoInner.provisionInfo.profileBlock.get(),
-                    infoInner.provisionInfo.profileBlock.get() + infoInner.provisionInfo.profileBlockLength);
+            if ((flag & QUERY_PROFILE) != 0) {
+                FillProfileData(infoInner, info);
             }
-            info.profileData.appId = infoInner.provisionInfo.appId;
-            info.profileData.fingerprint = infoInner.provisionInfo.fingerprint;
-            info.profileData.organization = infoInner.provisionInfo.organization;
-            info.profileData.isOpenHarmony = infoInner.provisionInfo.isOpenHarmony;
-            info.profileData.isEnterpriseResigned = infoInner.provisionInfo.isEnterpriseResigned;
-            info.moduleInfo = infoInner.bootstrapInfo->moduleRaw;
-            info.sharedFiles = infoInner.bootstrapInfo->shareFilesRaw;
+            if ((flag & QUERY_MODULE_INFO) != 0) {
+                info.moduleInfo = infoInner.bootstrapInfo->moduleRaw;
+            }
+            if ((flag & QUERY_SHARED_FILES) != 0) {
+                info.sharedFiles = infoInner.bootstrapInfo->shareFilesRaw;
+            }
             bundleInfo.emplace_back(info);
         }
     }

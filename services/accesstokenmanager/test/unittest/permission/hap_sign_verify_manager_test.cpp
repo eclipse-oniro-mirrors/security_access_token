@@ -21,6 +21,7 @@
 #include <filesystem>
 
 #include "access_token_error.h"
+#include "accesstoken_id_manager.h"
 #include "app_verify_adapter.h"
 #define private public
 #include "hap_sign_verify_manager.h"
@@ -39,6 +40,9 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
+
+// local aggregate of SignInfoQueryFlag: query every section in one call
+constexpr uint32_t QUERY_ALL_SIGN_INFO = QUERY_PROFILE | QUERY_MODULE_INFO | QUERY_SHARED_FILES;
 const std::string TEST_DIR = "/data/app/el1/bundle/public/access_token_test";
 const std::string TEST_PATH = "/data/app/el1/bundle/public/access_token_test/camera.hap";
 }
@@ -790,13 +794,13 @@ HWTEST_F(HapSignVerifyManagerTest, BuildTrustedBundleInfo001, TestSize.Level1)
 }
 
 /**
- * @tc.name: GetTokenId001
- * @tc.desc: GetTokenId masks to lower 32 bits of tokenIdEx.
+ * @tc.name: ParseTokenId001
+ * @tc.desc: ParseTokenId masks to lower 32 bits of a full token id.
  * @tc.type: FUNC
  */
-HWTEST_F(HapSignVerifyManagerTest, GetTokenId001, TestSize.Level1)
+HWTEST_F(HapSignVerifyManagerTest, ParseTokenId001, TestSize.Level1)
 {
-    EXPECT_EQ(0xABCDu, HapSignVerifyHelper::GetTokenId(0x123456780000ABCDull));
+    EXPECT_EQ(0xABCDu, AccessTokenIDManager::ParseTokenId(0x123456780000ABCDull));
 }
 
 /**
@@ -1190,7 +1194,7 @@ HWTEST_F(HapSignVerifyManagerTest, ConvertTrustedBundleInfo001, TestSize.Level1)
     inner.provisionInfo.isEnterpriseResigned = true;
 
     std::vector<TrustedBundleInfo> infos;
-    manager.ConvertTrustedBundleInfo({inner}, infos);
+    manager.ConvertTrustedBundleInfo({inner}, infos, QUERY_ALL_SIGN_INFO);
     ASSERT_EQ(1u, infos.size());
     EXPECT_EQ("module-raw", infos[0].moduleInfo);
     EXPECT_EQ("share-files", infos[0].sharedFiles);
@@ -1208,14 +1212,14 @@ HWTEST_F(HapSignVerifyManagerTest, ConvertTrustedBundleInfo001, TestSize.Level1)
 
     TrustedBundleInfoInner emptyInner;
     std::vector<TrustedBundleInfo> emptyInfos;
-    manager.ConvertTrustedBundleInfo({emptyInner}, emptyInfos);
+    manager.ConvertTrustedBundleInfo({emptyInner}, emptyInfos, QUERY_ALL_SIGN_INFO);
     EXPECT_TRUE(emptyInfos.empty());
 
     TrustedBundleInfoInner nullBlock;
     nullBlock.bootstrapInfo = std::make_shared<Security::Verify::BootstrapInfo>();
     nullBlock.provisionInfo.profileBlockLength = 5;
     std::vector<TrustedBundleInfo> nullBlockInfos;
-    manager.ConvertTrustedBundleInfo({nullBlock}, nullBlockInfos);
+    manager.ConvertTrustedBundleInfo({nullBlock}, nullBlockInfos, QUERY_ALL_SIGN_INFO);
     ASSERT_EQ(1u, nullBlockInfos.size());
     EXPECT_EQ(5, nullBlockInfos[0].profileData.profileBlockLength);
     EXPECT_TRUE(nullBlockInfos[0].profileData.profileBlock.empty());
@@ -1462,6 +1466,101 @@ HWTEST_F(HapSignVerifyManagerTest, AppVerifyAdapter003, TestSize.Level1)
     })";
     EXPECT_EQ(Security::Verify::PROVISION_OK, Security::Verify::ParseProfile(validProvision, info));
     EXPECT_EQ(RET_SUCCESS, adapter.ParseProfile(validProvision, info));
+}
+
+/**
+ * @tc.name: SideloadDerivationMatrix_BuildHapPolicy001
+ * @tc.desc: AC-9.1/BR-20: isSideloadApp is derived as true only for the whitelist combo
+ *           developer_id x APP; every other distribution-type/bundle-type combination is
+ *           fail-closed false at the BuildHapPolicy construction point.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HapSignVerifyManagerTest, SideloadDerivationMatrix_BuildHapPolicy001, TestSize.Level1)
+{
+    const std::vector<std::pair<Security::Verify::AppDistType, AppExecFwk::Spm::BundleType>> matrix = {
+        {Security::Verify::AppDistType::DEVELOPER, AppExecFwk::Spm::BundleType::APP},
+        {Security::Verify::AppDistType::DEVELOPER, AppExecFwk::Spm::BundleType::APP_PLUGIN},
+        {Security::Verify::AppDistType::DEVELOPER, AppExecFwk::Spm::BundleType::SHARED},
+        {Security::Verify::AppDistType::DEVELOPER, AppExecFwk::Spm::BundleType::ATOMIC_SERVICE},
+        {Security::Verify::AppDistType::DEVELOPER, AppExecFwk::Spm::BundleType::APP_SERVICE_FWK},
+        {Security::Verify::AppDistType::DEVELOPER, AppExecFwk::Spm::BundleType::SKILL},
+        {Security::Verify::AppDistType::APP_GALLERY, AppExecFwk::Spm::BundleType::APP},
+        {Security::Verify::AppDistType::ENTERPRISE, AppExecFwk::Spm::BundleType::APP},
+        {Security::Verify::AppDistType::ENTERPRISE_NORMAL, AppExecFwk::Spm::BundleType::APP},
+        {Security::Verify::AppDistType::ENTERPRISE_MDM, AppExecFwk::Spm::BundleType::APP},
+        {Security::Verify::AppDistType::NONE_TYPE, AppExecFwk::Spm::BundleType::APP},
+    };
+
+    HapSignVerifyManager& manager = HapSignVerifyManager::GetInstance();
+    for (const auto& combo : matrix) {
+        TrustedBundleInfoInner info = BuildTrustedBundleInfo("SideloadMatrixBundle");
+        info.provisionInfo.distributionType = combo.first;
+        info.moduleData.bundleType = combo.second;
+
+        HapPolicy policy;
+        BundleParam param;
+        EXPECT_EQ(RET_SUCCESS, manager.BuildHapPolicy({info}, policy, param));
+        bool expectSideload = (combo.first == Security::Verify::AppDistType::DEVELOPER) &&
+            (combo.second == AppExecFwk::Spm::BundleType::APP);
+        EXPECT_EQ(expectSideload, param.isSideloadApp)
+            << "dist=" << static_cast<int32_t>(combo.first)
+            << " bundleType=" << static_cast<int32_t>(combo.second);
+    }
+}
+
+/**
+ * @tc.name: SideloadDerivationMatrix_CheckPermRequestValid001
+ * @tc.desc: AC-9.1/9.2/BR-20: the same whitelist drives the CheckPermissionRequestValid
+ *           construction point — only developer_id x APP activates the KERNEL_ATM_SELF_USE
+ *           sideload ACL exemption; every other combination is rejected (12100024, ACL rule).
+ * @tc.type: FUNC
+ */
+HWTEST_F(HapSignVerifyManagerTest, SideloadDerivationMatrix_CheckPermRequestValid001, TestSize.Level1)
+{
+    HapSignVerifyManager& manager = HapSignVerifyManager::GetInstance();
+
+    auto buildPolicy = []() {
+        HapPolicy policy;
+        policy.apl = APL_NORMAL;
+        PermissionStatus status;
+        status.permissionName = "ohos.permission.KERNEL_ATM_SELF_USE";
+        status.grantStatus = PERMISSION_DENIED;
+        status.grantFlag = PERMISSION_DEFAULT_FLAG;
+        policy.permStateList.emplace_back(status);
+        return policy;
+    };
+
+    const std::vector<std::pair<Security::Verify::AppDistType, AppExecFwk::Spm::BundleType>> falseCombos = {
+        {Security::Verify::AppDistType::DEVELOPER, AppExecFwk::Spm::BundleType::APP_PLUGIN},
+        {Security::Verify::AppDistType::DEVELOPER, AppExecFwk::Spm::BundleType::SHARED},
+        {Security::Verify::AppDistType::DEVELOPER, AppExecFwk::Spm::BundleType::ATOMIC_SERVICE},
+        {Security::Verify::AppDistType::DEVELOPER, AppExecFwk::Spm::BundleType::APP_SERVICE_FWK},
+        {Security::Verify::AppDistType::DEVELOPER, AppExecFwk::Spm::BundleType::SKILL},
+        {Security::Verify::AppDistType::APP_GALLERY, AppExecFwk::Spm::BundleType::APP},
+        {Security::Verify::AppDistType::ENTERPRISE, AppExecFwk::Spm::BundleType::APP},
+        {Security::Verify::AppDistType::NONE_TYPE, AppExecFwk::Spm::BundleType::APP},
+    };
+
+    // whitelist combo: the sideload exemption lets the cross-APL request pass
+    TrustedBundleInfoInner sideloadInfo = BuildTrustedBundleInfo("SideloadMatrixPermBundle");
+    sideloadInfo.provisionInfo.distributionType = Security::Verify::AppDistType::DEVELOPER;
+    sideloadInfo.moduleData.bundleType = AppExecFwk::Spm::BundleType::APP;
+    HapInfoCheckResult result;
+    EXPECT_EQ(RET_SUCCESS, manager.CheckPermissionRequestValid(sideloadInfo, buildPolicy(), result));
+
+    // every other combo: fail-closed, the request is rejected by the ACL rule
+    for (const auto& combo : falseCombos) {
+        TrustedBundleInfoInner info = BuildTrustedBundleInfo("SideloadMatrixPermBundle");
+        info.provisionInfo.distributionType = combo.first;
+        info.moduleData.bundleType = combo.second;
+        HapInfoCheckResult denyResult;
+        EXPECT_EQ(AccessTokenError::ERR_PERM_REQUEST_CFG_FAILED,
+            manager.CheckPermissionRequestValid(info, buildPolicy(), denyResult))
+            << "dist=" << static_cast<int32_t>(combo.first)
+            << " bundleType=" << static_cast<int32_t>(combo.second);
+        EXPECT_EQ(PermissionRulesEnum::PERMISSION_ACL_RULE, denyResult.permCheckResult.rule);
+        EXPECT_EQ("ohos.permission.KERNEL_ATM_SELF_USE", denyResult.permCheckResult.permissionName);
+    }
 }
 } // namespace AccessToken
 } // namespace Security

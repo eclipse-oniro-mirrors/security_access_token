@@ -13,9 +13,25 @@
  * limitations under the License.
  */
 
-#ifndef TEST_FUZZTEST_DELETEIDENTITYSTUB_FUZZER_H
-#define TEST_FUZZTEST_DELETEIDENTITYSTUB_FUZZER_H
+#ifndef INSTALL_SESSION_MANAGER_MOCK_TEST_H
+#define INSTALL_SESSION_MANAGER_MOCK_TEST_H
 
-#define FUZZ_PROJECT_NAME "deleteidentitystub_fuzzer"
+#include <gtest/gtest.h>
 
-#endif // TEST_FUZZTEST_DELETEIDENTITYSTUB_FUZZER_H
+namespace OHOS {
+namespace Security {
+namespace AccessToken {
+class InstallSessionManagerMockTest : public testing::Test {
+public:
+    static void SetUpTestCase();
+
+    static void TearDownTestCase();
+
+    void SetUp();
+
+    void TearDown();
+};
+} // namespace AccessToken
+} // namespace Security
+} // namespace OHOS
+#endif // INSTALL_SESSION_MANAGER_MOCK_TEST_H

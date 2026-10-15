@@ -91,13 +91,15 @@ public:
         BundleParam& param) const;
     int32_t CheckPermissionRequestValid(const TrustedBundleInfoInner& info, const HapPolicy& policy,
         HapInfoCheckResult& result) const;
-    void ConvertTrustedBundleInfo(
-        const std::vector<TrustedBundleInfoInner>& bundleInfos, std::vector<TrustedBundleInfo>& bundleInfo) const;
+    void ConvertTrustedBundleInfo(const std::vector<TrustedBundleInfoInner>& bundleInfos,
+        std::vector<TrustedBundleInfo>& bundleInfo, uint32_t flag) const;
 
 private:
     HapSignVerifyManager();
 
     const IAppVerifyAdapter* adapter_;
+
+    void FillProfileData(const TrustedBundleInfoInner& infoInner, TrustedBundleInfo& info) const;
 
     int32_t VerifyFailed(int32_t ret, bool& isChanged, TrustedBundleInfoInner& info,
         Security::Verify::ProvisionInfo& provisionInfo) const;

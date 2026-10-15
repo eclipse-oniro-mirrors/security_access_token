@@ -60,6 +60,7 @@ int32_t AddSpmEntriesToKernel(const std::vector<SpmData*>& entries, uint8_t& idx
 int32_t SetSpmEntriesToKernel(const std::vector<SpmData*>& entries, uint8_t& idxErr);
 int32_t LoadSpmDataFromKernel(AccessTokenID tokenId, SpmDataPtr& spmData);
 int32_t RemoveSpmEntryFromKernel(AccessTokenID tokenId);
+bool IsSpmDataExists(AccessTokenID tokenId);
 } // namespace KernelDetail
 } // namespace AccessToken
 } // namespace Security

@@ -42,7 +42,6 @@ constexpr uint32_t PROCESS_OWNERID_COMPAT = 5;
 constexpr uint32_t PROCESS_OWNERID_APP_TEMP_ALLOW = 10;
 constexpr const char* GRANT_MODE_MANUAL_SETTINGS = "manual_settings";
 constexpr const char* AVAILABLE_TYPE_MDM = "mdm";
-static constexpr uint64_t TOKEN_ID_MASK = 0xffffffff;
 constexpr const int BASE_10 = 10;
 static constexpr uint8_t IS_KERNEL_EFFECT = (1U << 0);
 static constexpr uint8_t HAS_VALUE = (1U << 1);
@@ -129,11 +128,6 @@ uint32_t HapSignVerifyHelper::BuildIdType(bool isDebug, const std::string& appId
         return PROCESS_OWNERID_APP_TEMP_ALLOW;
     }
     return PROCESS_OWNERID_APP;
-}
-
-AccessTokenID HapSignVerifyHelper::GetTokenId(uint64_t tokenIdEx)
-{
-    return static_cast<AccessTokenID>(tokenIdEx & TOKEN_ID_MASK);
 }
 
 ATokenAplEnum HapSignVerifyHelper::ConvertApl(const std::string& apl)

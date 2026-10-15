@@ -146,6 +146,24 @@ public:
     int32_t DeleteToolTokenByPid(int32_t pid) override;
     int32_t GetHostTokenId(AccessTokenID toolTokenId, AccessTokenID& hostTokenId) override;
     int32_t ResetDatabaseRecoveryStatus() override;
+#ifdef SPM_DATA_ENABLE
+    int32_t CheckHapSignInfo(const BundleHapListIdl& list, const sptr<IRemoteObject>& cb, uint32_t flag,
+        CheckHapSignResultRawdata& result) override;
+    int32_t CheckHapPermissionInfo(int32_t sessionId, InstallTypeEnumIdl type,
+        HapInfoCheckResultIdl& resultInfoIdl) override;
+    int32_t PrepareHapIdentity(int32_t& sessionId, const HapBaseInfoIdl& info, const BundlePolicyIdl& policy,
+        const sptr<IRemoteObject>& cb, IdentityIdl& identity) override;
+    int32_t UpdateHapPolicy(
+        int32_t sessionId, AccessTokenID tokenId, const BundlePolicyIdl& policy, int32_t& uid) override;
+    int32_t FinishInstall(int32_t sessionId, bool isPersistent,
+        const std::map<std::string, std::string>& modulePathMap) override;
+    int32_t GetCacheSignInfoBySessionId(int32_t sessionId, uint32_t flag,
+        BundleInfosRawdata& bundleInfos) override;
+    int32_t GetHapSignInfo(const std::string& bundleName, uint32_t flag,
+        BundleInfosRawdata& bundleInfos) override;
+    int32_t GetCachePolicyBySessionId(int32_t sessionId, const std::string& bundleName,
+        BundlePolicyInfoIdl& bundlePolicyInfoIdl) override;
+#endif
     int SetPermDialogCap(const HapBaseInfoParcel& hapBaseInfoParcel, bool enable) override;
     int32_t GetPermissionManagerInfo(PermissionGrantInfoParcel& infoParcel) override;
 #ifdef SUPPORT_MANAGE_USER_POLICY

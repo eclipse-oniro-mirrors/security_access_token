@@ -75,7 +75,7 @@ int32_t DlpPermissionSetManager::GetPermDlpMode(const std::string& permissionNam
     return dlpPermissionModeMap_[permissionName];
 }
 
-void DlpPermissionSetManager::UpdatePermStateWithDlpInfo(int32_t hapDlpType,
+void DlpPermissionSetManager::FilterPermState(int32_t hapDlpType,
     std::vector<PermissionStatus>& permStateList)
 {
     LOGD(ATM_DOMAIN, ATM_TAG, "DlpType: %{public}d", hapDlpType);

@@ -386,6 +386,12 @@ bool HapTokenInfoInner::IsSideloadApp() const
     return isSideloadApp_;
 }
 
+void HapTokenInfoInner::SetSideloadApp(bool isSideloadApp)
+{
+    std::unique_lock<std::shared_mutex> infoGuard(this->policySetLock_);
+    isSideloadApp_ = isSideloadApp;
+}
+
 int32_t HapTokenInfoInner::GetApiVersion(int32_t apiVersion)
 {
     uint32_t apiSize = 3; // 3: api version length
@@ -518,7 +524,7 @@ int32_t HapTokenInfoInner::ResetUserGrantPermissionStatus(void)
 
 #ifdef SUPPORT_SANDBOX_APP
     // update permission status with dlp permission rule.
-    DlpPermissionSetManager::GetInstance().UpdatePermStateWithDlpInfo(tokenInfoBasic_.dlpType, permListOfHap);
+    DlpPermissionSetManager::GetInstance().FilterPermState(tokenInfoBasic_.dlpType, permListOfHap);
     std::vector<PermissionWithValue> extendedPermList;
     PermissionDataBrief::GetInstance().GetExtendedValueList(tokenInfoBasic_.tokenID, extendedPermList);
     std::map<std::string, std::string> aclExtendedMap;

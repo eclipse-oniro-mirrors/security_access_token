@@ -276,6 +276,16 @@ int32_t RemoveSpmEntryFromKernel(AccessTokenID tokenId)
     LOGE(ATM_DOMAIN, ATM_TAG, "SpmRemoveEntry(token=%{public}u) failed, ret=%{public}d.", tokenId, ret);
     return ERR_KERNEL_COMMON_FAILED;
 }
+
+bool IsSpmDataExists(AccessTokenID tokenId)
+{
+    SpmDataPtr spmData = nullptr;
+    int32_t ret = LoadSpmDataFromKernel(tokenId, spmData);
+    if (ret != RET_SUCCESS) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Load spm data failed, ret=%{public}d.", ret);
+    }
+    return ret == RET_SUCCESS;
+}
 } // namespace KernelDetail
 } // namespace AccessToken
 } // namespace Security

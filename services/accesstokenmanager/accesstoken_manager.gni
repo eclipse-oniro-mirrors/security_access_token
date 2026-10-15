@@ -112,6 +112,16 @@ accesstoken_manager_base_config = {
     ]
   }
 
+  if (access_token_enable_spm && access_token_manager_hapverify_enable) {
+    sources += [
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/install_manager/install_db_repository.cpp",
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/install_manager/install_identity_manager.cpp",
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/install_manager/install_session_manager.cpp",
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/install_manager/install_sysevent_reporter.cpp",
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/proxy/install_session_proxy_death_param.cpp",
+    ]
+  }
+
   # ========== Include Dirs ==========
   # Base include dirs (always included)
   include_dirs = [
@@ -129,6 +139,7 @@ accesstoken_manager_base_config = {
     "${access_token_path}/services/common/dfx/include",
     "${access_token_path}/services/common/handler/include",
     "${access_token_path}/services/common/libraryloader/include",
+    "${access_token_path}/services/common/proxy_death/include",
     "${access_token_path}/services/common/random/include",
     "${access_token_path}/services/common/utils/include",
     "${access_token_path}/services/common/background_task_manager/include",
@@ -140,6 +151,7 @@ accesstoken_manager_base_config = {
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/install_manager",
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/kernel",
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/permission",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/include/proxy",
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/seccomp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/service",
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/transaction",
@@ -197,6 +209,7 @@ accesstoken_manager_base_config = {
 
   if (access_token_enable_spm && access_token_manager_hapverify_enable) {
     external_deps += [ "bundle_framework:spm_module_parser" ]
+    deps += [ "${access_token_path}/services/common/proxy_death:proxy_death_handler" ]
   }
   # ========== lite_device_enable: Complete Configuration ==========
   # Light device: use dlopen database (smaller footprint)

@@ -44,6 +44,10 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+
+// 前置声明：避免引入完整头文件破坏测试文件的 #define private public 注入模式
+enum class TokenIdStatus : uint32_t;
+
 #ifdef TOKEN_SYNC_ENABLE
 class AccessTokenDmInitCallback final : public DistributedHardware::DmInitCallback {
     void OnRemoteDied() override
@@ -87,15 +91,18 @@ public:
     // status-based decisions); unknown -> nullptr (status stays ACTIVE so
     // callers take the not-exist path).
     std::shared_ptr<HapTokenInfoInner> GetHapTokenInfoAndStatus(AccessTokenID id, TokenIdStatus& status);
+    int32_t RestoreInstallPolicyFromKernel(
+        const std::string& bundleName, const BundlePolicy& bundlePolicy, BundleParam& param, HapPolicy& policy);
     int GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo& infoParcel);
     int GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfoBase& info);
     int AllocAccessTokenIDEx(const HapInfoParams& info, AccessTokenID tokenId, AccessTokenIDEx& tokenIdEx);
     int RemoveHapTokenInfo(AccessTokenID id, bool isTokenReserved = false);
     int RemoveNativeTokenInfo(AccessTokenID id);
-    int32_t GetHapAppIdByTokenId(AccessTokenID tokenID, std::string& appId);
     int CreateHapTokenInfo(const HapInfoParams& info, const HapPolicy& policy, AccessTokenIDEx& tokenIdEx,
         std::vector<GenericValues>& undefValues);
     AccessTokenIDEx GetHapTokenID(int32_t userID, const std::string& bundleName, int32_t instIndex);
+    // Query appId of the token directly from the hap token db table.
+    int32_t GetHapAppIdByTokenId(AccessTokenID tokenID, std::string& appId);
     FullTokenID AllocLocalTokenID(const std::string& remoteDeviceID, AccessTokenID remoteTokenID);
     int32_t UpdateHapToken(AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info,
         const std::vector<PermissionStatus>& permStateList, const HapPolicy& hapPolicy,
@@ -144,12 +151,15 @@ public:
     void CommitCreateHapCache(const HapTokenInfo& hapInfo,
         const std::vector<BriefPermData>& briefPermData,
         const std::vector<PermissionWithValue>& aclExtendedList,
-        const std::shared_ptr<BundleInfoInner>& bundleInfo);
+        const std::shared_ptr<BundleInfoInner>& bundleInfo,
+        const HapCommitContext& commitContext);
     void CommitUpdateHapCache(const HapTokenInfo& hapInfo,
         const std::vector<BriefPermData>& briefPermData,
         const std::vector<PermissionWithValue>& aclExtendedList,
-        const std::shared_ptr<BundleInfoInner>& bundleInfo);
+        const std::shared_ptr<BundleInfoInner>& bundleInfo,
+        const HapCommitContext& commitContext);
     void CommitDeleteHapCache(AccessTokenID tokenID, const std::string& bundleName);
+    bool AddReservedHapInfoFromDbValues(const GenericValues& tokenValue);
 
     int32_t QueryStatusByPermission(const std::vector<uint32_t>& permCodeList,
         std::vector<PermissionStatusIdl>& permissionInfoList, bool onlyHap);
@@ -228,7 +238,6 @@ private:
         std::vector<UserPolicyRefreshSnapshot>& appliedSnapshots);
     int32_t CheckHapInfoParam(const HapInfoParams& info, const HapPolicy& policy);
     int32_t ResolveQueryTokenID(AccessTokenID tokenID, AccessTokenID& queryTokenID);
-    std::shared_ptr<HapTokenInfoInner> GetHapTokenInfoInnerFromDb(AccessTokenID id);
     // Pure db snapshot: basic row restore only - no permission brief
     // registration, no reserved-id registration, no cache writes.
     std::shared_ptr<HapTokenInfoInner> LoadHapTokenInfoFromDbAndNoCache(AccessTokenID id);
@@ -239,10 +248,7 @@ private:
     void UpdateTokenAttr(const UpdateHapInfoParams& info, AccessTokenIDEx& tokenIdEx);
     void UpsertBundleInfoInnerCacheWithoutLock(const std::string& bundleName,
         const std::shared_ptr<BundleInfoInner>& bundleInfo);
-    void AddTokenIdToBundleInfoInner(const std::shared_ptr<BundleInfoInner>& bundleInfo, AccessTokenID tokenId);
-    void RemoveTokenIdFromBundleInfoInner(const std::shared_ptr<BundleInfoInner>& bundleInfo, AccessTokenID tokenId);
     void LoadPermissionDefinitionExt(ConfigPolicyLoaderInterface& policy);
-    bool AddReservedHapInfoFromDbValues(const GenericValues& tokenValue);
     bool hasInited_;
 
     std::shared_mutex hapTokenInfoLock_;
