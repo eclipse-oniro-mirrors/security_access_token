@@ -709,6 +709,17 @@ public:
  	 */
     static bool IsSupportPermission(const std::string& permissionName);
  	 
+    /**
+ 	 * @brief Query whether permission is supported.
+ 	 * @note When the local permission definition is enabled, this returns success with result=true directly
+ 	 *       without IPC. Only when local isEnable is false will it query service side.
+ 	 *       Besides, this returns an error code to distinguish failure from "not supported".
+ 	 * @param permissionName permissionName
+ 	 * @param result output: true if the permission is supported, false otherwise
+ 	 * @return Returns RET_SUCCESS(0) on success, returns corresponding error code on failure
+ 	 */
+    static int32_t IsSupportedPermission(const std::string& permissionName, bool& result);
+ 	 
  	/**
  	 * @brief Transfer permission to permCode.
      * @param permissionName permissionName

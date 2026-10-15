@@ -1304,22 +1304,21 @@ int32_t AccessTokenManagerClient::GetVersion(uint32_t& version)
     return errCode;
 }
 
-bool AccessTokenManagerClient::IsSupportPermission(const std::string& permissionName)
+int32_t AccessTokenManagerClient::IsSupportedPermission(const std::string& permissionName, bool& result)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
-        return false;
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
 
-    bool isSupported = false;
-    int32_t errCode = proxy->IsSupportPermission(permissionName, isSupported);
+    int32_t errCode = proxy->IsSupportPermission(permissionName, result);
     if (errCode != RET_SUCCESS) {
         errCode = ConvertResult(errCode);
-        LOGE(ATM_DOMAIN, ATM_TAG, "Request fail, result: %{public}d", errCode);
-        return false;
+        LOGE(ATM_DOMAIN, ATM_TAG, "Request fail, errcode: %{public}d", errCode);
+        return errCode;
     }
-    return isSupported;
+    return RET_SUCCESS;
 }
 
 void AccessTokenManagerClient::InitProxy()

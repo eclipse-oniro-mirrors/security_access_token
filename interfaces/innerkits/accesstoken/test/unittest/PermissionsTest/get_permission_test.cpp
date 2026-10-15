@@ -644,6 +644,74 @@ HWTEST_F(GetPermissionTest, IsSupportPermission003, TestSize.Level0)
 }
 
 /*
+ * @tc.name: IsSupportedPermission001
+ * @tc.desc: IsSupportedPermission returns RET_SUCCESS with result=false for unsupported permission
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(GetPermissionTest, IsSupportedPermission001, TestSize.Level0)
+{
+    bool result = true;
+    int32_t ret = AccessTokenKit::IsSupportedPermission("ohos.permission.TTTTT", result);
+    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_FALSE(result);
+}
+
+/*
+ * @tc.name: IsSupportedPermission002
+ * @tc.desc: IsSupportedPermission returns RET_SUCCESS with result=true for enabled permission
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(GetPermissionTest, IsSupportedPermission002, TestSize.Level0)
+{
+    std::string permissionName = "ohos.permission.CAMERA";
+    bool result = false;
+    int32_t ret = AccessTokenKit::IsSupportedPermission(permissionName, result);
+    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_TRUE(result);
+}
+
+/*
+ * @tc.name: IsSupportedPermission003
+ * @tc.desc: IsSupportedPermission returns RET_SUCCESS with result=false for empty permission name
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(GetPermissionTest, IsSupportedPermission003, TestSize.Level0)
+{
+    bool result = true;
+    int32_t ret = AccessTokenKit::IsSupportedPermission("", result);
+    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_FALSE(result);
+}
+
+/*
+ * @tc.name: IsSupportedPermission004
+ * @tc.desc: IsSupportedPermission returns correct result when isEnable is toggled
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(GetPermissionTest, IsSupportedPermission004, TestSize.Level0)
+{
+    std::string permissionName = "ohos.permission.CAMERA";
+
+    EXPECT_TRUE(SetPermissionBriefEnabled(permissionName, true));
+    bool result = false;
+    int32_t ret = AccessTokenKit::IsSupportedPermission(permissionName, result);
+    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_TRUE(result);
+
+    EXPECT_TRUE(SetPermissionBriefEnabled(permissionName, false));
+    result = false;
+    ret = AccessTokenKit::IsSupportedPermission(permissionName, result);
+    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_TRUE(result);
+
+    EXPECT_TRUE(SetPermissionBriefEnabled(permissionName, true));
+}
+
+/*
  * @tc.name: GetDefPermission002
  * @tc.desc: GetDefPermission should return success for SYSTEM_GRANT permission locally
  * @tc.type: FUNC

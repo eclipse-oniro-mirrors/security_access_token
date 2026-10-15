@@ -275,6 +275,7 @@ napi_value NapiAtManager::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("requestGlobalSwitch", NapiRequestGlobalSwitch::RequestGlobalSwitch),
         DECLARE_NAPI_FUNCTION("requestPermissionOnApplicationSetting", RequestAppPermOnSetting),
         DECLARE_NAPI_FUNCTION("getSelfPermissionStatus", GetSelfPermissionStatusSync),
+        DECLARE_NAPI_FUNCTION("isPermissionSupported", IsPermissionSupported),
         DECLARE_NAPI_FUNCTION("openPermissionOnSetting", NapiOpenPermissionOnSetting::OpenPermissionOnSetting),
         DECLARE_NAPI_FUNCTION("queryStatusByPermission", NapiQueryPermissionStatus::QueryStatusByPermission),
         DECLARE_NAPI_FUNCTION("queryStatusByTokenID", NapiQueryPermissionStatus::QueryStatusByTokenID),
@@ -1648,6 +1649,47 @@ napi_value NapiAtManager::GetSelfPermissionStatusSync(napi_env env, napi_callbac
     napi_value result = nullptr;
     NAPI_CALL(env, napi_create_int32(env, static_cast<int32_t>(syncContext->permissionsState), &result));
     return result;
+}
+
+napi_value NapiAtManager::IsPermissionSupported(napi_env env, napi_callback_info info)
+{
+    size_t argc = MAX_PARAMS_ONE;
+    napi_value argv[MAX_PARAMS_ONE] = { nullptr };
+    napi_value thisVar = nullptr;
+    void* data = nullptr;
+    NAPI_CALL_BASE(env, napi_get_cb_info(env, info, &argc, argv, &thisVar, &data), nullptr);
+    if (argc < MAX_PARAMS_ONE) {
+        NAPI_CALL_BASE(env, napi_throw(env, GenerateBusinessError(env,
+            JsErrorCode::JS_ERROR_PARAM_ILLEGAL, "Parameter is missing.")), nullptr);
+        return nullptr;
+    }
+
+    std::string permissionName;
+    if (!ParseString(env, argv[0], permissionName)) {
+        std::string errMsg = GetParamErrorMsg("permissionName", "Permissions");
+        NAPI_CALL_BASE(env,
+            napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg)), nullptr);
+        return nullptr;
+    }
+
+    if (!DataValidator::IsPermissionNameValid(permissionName)) {
+        std::string errMsg = GetErrorMessage(
+            JS_ERROR_PARAM_INVALID, "The permissionName is empty or exceeds 256 characters.");
+        NAPI_CALL_BASE(env, napi_throw(env, GenerateBusinessError(env, JS_ERROR_PARAM_INVALID, errMsg)), nullptr);
+        return nullptr;
+    }
+
+    bool result = false;
+    int32_t errCode = AccessTokenKit::IsSupportedPermission(permissionName, result);
+    if (errCode != RET_SUCCESS) {
+        int32_t jsCode = GetJsErrorCode(errCode);
+        NAPI_CALL_BASE(env, napi_throw(env, GenerateBusinessError(env, jsCode, GetErrorMessage(jsCode))), nullptr);
+        return nullptr;
+    }
+
+    napi_value resultValue = nullptr;
+    NAPI_CALL(env, napi_get_boolean(env, result, &resultValue));
+    return resultValue;
 }
 
 bool NapiAtManager::FillPermStateChangeInfo(const napi_env env, const napi_value* argv, const std::string& type,

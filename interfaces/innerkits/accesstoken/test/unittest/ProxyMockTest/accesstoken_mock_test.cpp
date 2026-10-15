@@ -159,6 +159,50 @@ sptr<NativeTokenInfoRemoteObject> InstallNativeTokenInfoRemoteObject()
     return remote;
 }
 
+class IsSupportPermissionRemoteObject final : public IPCObjectStub {
+public:
+    IsSupportPermissionRemoteObject() : IPCObjectStub(u"IsSupportPermissionRemoteObject") {}
+
+    int OnRemoteRequest(uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option) override
+    {
+        (void)option;
+        (void)data.ReadInterfaceToken();
+        if (code != static_cast<uint32_t>(IAccessTokenManagerIpcCode::COMMAND_IS_SUPPORT_PERMISSION)) {
+            return ERR_INVALID_DATA;
+        }
+        (void)data.ReadString16();
+        if (!reply.WriteInt32(errCode_)) {
+            return ERR_INVALID_DATA;
+        }
+        if (errCode_ == RET_SUCCESS) {
+            if (!reply.WriteInt32(isSupported_ ? 1 : 0)) {
+                return ERR_INVALID_DATA;
+            }
+        }
+        ++callCount_;
+        return ERR_NONE;
+    }
+
+    int32_t errCode_ = RET_SUCCESS;
+    bool isSupported_ = true;
+    uint32_t callCount_ = 0;
+};
+
+sptr<IsSupportPermissionRemoteObject> InstallIsSupportPermissionRemoteObject()
+{
+    AccessTokenManagerClient::GetInstance().ReleaseProxy();
+    sptr<IsSupportPermissionRemoteObject> remote = new (std::nothrow) IsSupportPermissionRemoteObject();
+    if (remote == nullptr) {
+        return nullptr;
+    }
+    sptr<AccessTokenManagerProxy> proxy = new (std::nothrow) AccessTokenManagerProxy(remote);
+    if (proxy == nullptr) {
+        return nullptr;
+    }
+    AccessTokenManagerClient::GetInstance().proxy_ = proxy;
+    return remote;
+}
+
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
 SecCompEnhanceKey CreateEnhanceKey(uint64_t epoch, uint32_t size, uint8_t value)
 {
@@ -761,6 +805,95 @@ HWTEST_F(AccessTokenMockTest, TransferPermissionToOpcode001, TestSize.Level4)
     EXPECT_FALSE(AccessTokenKit::IsSupportPermission(permissionName));
     EXPECT_FALSE(AccessTokenKit::TransferPermissionToOpcode(permissionName, opCode));
     EXPECT_TRUE(SetPermissionBriefEnabled(permissionName, true));
+}
+
+/**
+ * @tc.name: IsSupportedPermissionClient001
+ * @tc.desc: IsSupportedPermission returns ERR_SERVICE_ABNORMAL when proxy is null
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, IsSupportedPermissionClient001, TestSize.Level4)
+{
+    auto& client = AccessTokenManagerClient::GetInstance();
+    client.ReleaseProxy();
+    client.proxy_ = nullptr;
+
+    bool result = true;
+    int32_t ret = client.IsSupportedPermission("ohos.permission.CAMERA", result);
+    EXPECT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, ret);
+}
+
+/**
+ * @tc.name: IsSupportedPermissionClient002
+ * @tc.desc: IsSupportedPermission returns RET_SUCCESS with result=true when IPC succeeds and permission is supported
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, IsSupportedPermissionClient002, TestSize.Level4)
+{
+    auto remote = InstallIsSupportPermissionRemoteObject();
+    ASSERT_NE(nullptr, remote);
+
+    remote->errCode_ = RET_SUCCESS;
+    remote->isSupported_ = true;
+
+    bool result = false;
+    int32_t ret = AccessTokenManagerClient::GetInstance().IsSupportedPermission(
+        "ohos.permission.CAMERA", result);
+    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_TRUE(result);
+    EXPECT_EQ(1U, remote->callCount_);
+
+    AccessTokenManagerClient::GetInstance().ReleaseProxy();
+}
+
+/**
+ * @tc.name: IsSupportedPermissionClient003
+ * @tc.desc: IsSupportedPermission returns RET_SUCCESS with result=false
+ *     when IPC succeeds and permission is not supported
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, IsSupportedPermissionClient003, TestSize.Level4)
+{
+    auto remote = InstallIsSupportPermissionRemoteObject();
+    ASSERT_NE(nullptr, remote);
+
+    remote->errCode_ = RET_SUCCESS;
+    remote->isSupported_ = false;
+
+    bool result = true;
+    int32_t ret = AccessTokenManagerClient::GetInstance().IsSupportedPermission(
+        "ohos.permission.INVALID", result);
+    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_FALSE(result);
+    EXPECT_EQ(1U, remote->callCount_);
+
+    AccessTokenManagerClient::GetInstance().ReleaseProxy();
+}
+
+/**
+ * @tc.name: IsSupportedPermissionClient004
+ * @tc.desc: IsSupportedPermission returns error code when IPC returns error
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, IsSupportedPermissionClient004, TestSize.Level4)
+{
+    auto remote = InstallIsSupportPermissionRemoteObject();
+    ASSERT_NE(nullptr, remote);
+
+    remote->errCode_ = AccessTokenError::ERR_PERMISSION_NOT_EXIST;
+
+    bool result = true;
+    int32_t ret = AccessTokenManagerClient::GetInstance().IsSupportedPermission(
+        "ohos.permission.CAMERA", result);
+    EXPECT_NE(RET_SUCCESS, ret);
+    EXPECT_TRUE(result);
+    EXPECT_EQ(1U, remote->callCount_);
+
+    AccessTokenManagerClient::GetInstance().ReleaseProxy();
 }
 
 /**
