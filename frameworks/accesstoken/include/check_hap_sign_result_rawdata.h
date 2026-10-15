@@ -13,9 +13,19 @@
  * limitations under the License.
  */
 
-#ifndef TEST_FUZZTEST_DELETEIDENTITY_FUZZER_H
-#define TEST_FUZZTEST_DELETEIDENTITY_FUZZER_H
+#ifndef ACCESSTOKEN_CHECK_HAP_SIGN_RESULT_RAWDATA_H
+#define ACCESSTOKEN_CHECK_HAP_SIGN_RESULT_RAWDATA_H
 
-#define FUZZ_PROJECT_NAME "deleteidentity_fuzzer"
+#include "rawdata_buffer.h"
 
-#endif // TEST_FUZZTEST_DELETEIDENTITY_FUZZER_H
+namespace OHOS {
+namespace Security {
+namespace AccessToken {
+
+class CheckHapSignResultRawdata : public RawdataBuffer {};
+
+} // namespace AccessToken
+} // namespace Security
+} // namespace OHOS
+
+#endif // ACCESSTOKEN_CHECK_HAP_SIGN_RESULT_RAWDATA_H

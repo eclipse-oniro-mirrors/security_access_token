@@ -17,6 +17,7 @@
 
 #include "access_token.h"
 #include "accesstoken_common_log.h"
+#include "hap_token_info.h"
 #include "permission_used_request.h"
 #include "permission_used_type.h"
 #include "privacy_param.h"
@@ -282,6 +283,21 @@ bool DataValidator::IsHapCaller(AccessTokenID id)
         return false;
     }
     return true;
+}
+
+bool DataValidator::IsHapListSizeValid(uint32_t size)
+{
+    if (size == 0 || size > MAX_HAP_LIST_SIZE) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Size is invalid(%{public}u).", size);
+        return false;
+    }
+    return true;
+}
+
+bool DataValidator::IsSignInfoQueryFlagValid(uint32_t flag)
+{
+    uint32_t validFlags = QUERY_PROFILE | QUERY_MODULE_INFO | QUERY_SHARED_FILES;
+    return (flag != 0) && ((flag & ~validFlags) == 0);
 }
 
 bool DataValidator::IsListSizeValid(size_t size)

@@ -17,6 +17,9 @@
 
 #include <unordered_set>
 
+#include "accesstoken_common_log.h"
+#include "accesstoken_id_manager.h"
+#include "parameter.h"
 #include "permission_constraint_check.h"
 #include "permission_feature_manager.h"
 #include "permission_map.h"
@@ -89,7 +92,7 @@ void AccessTokenInfoUtils::BuildHapTokenInfo(const Identity& id, const BundlePar
     uint32_t inputSize = apiStr.length();
 
     info = {};
-    info.tokenID = static_cast<AccessTokenID>(id.tokenId & 0xffffffff);
+    info.tokenID = AccessTokenIDManager::ParseTokenId(id.tokenId);
     info.userID = id.uid / BASE_USER_RANGE;
     info.ver = DEFAULT_TOKEN_VERSION;
     info.tokenAttr = 0;
@@ -116,7 +119,6 @@ void AccessTokenInfoUtils::BuildBundleFullInfo(const BundleParam& param, const H
         innerInfo = std::make_shared<BundleInfoInner>();
     }
     innerInfo->permCodeList.clear();
-    innerInfo->tokenIds.clear();
     noCached.apl = policy.apl;
     noCached.distributionType = param.distributionType;
     noCached.idType = static_cast<uint32_t>(PermissionConstraintCheck::BuildIdType(param, policy));

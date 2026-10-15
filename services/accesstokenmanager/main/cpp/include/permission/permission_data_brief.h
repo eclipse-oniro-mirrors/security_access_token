@@ -70,6 +70,11 @@ public:
     int32_t AddBriefPermData(AccessTokenID tokenID, const std::string& permissionName, PermissionState grantStatus,
         PermissionFlag grantFlag, const std::string& value);
     int32_t GetBriefPermDataByTokenId(AccessTokenID tokenID, std::vector<BriefPermData>& data);
+    static bool BuildPermissionBriefData(const PermissionStatus& permState, BriefPermData& briefPermData);
+    static void BuildPermissionBriefDataList(const std::vector<PermissionStatus>& permStateList,
+        std::vector<BriefPermData>& permBriefDataList);
+    static PermissionStatus BuildPermissionStatusFromBrief(const BriefPermData& briefPermData);
+    void UpdatePermStatus(const BriefPermData& permOld, BriefPermData& permNew);
     void ReplaceBriefPermDataByTokenId(AccessTokenID tokenID, const std::vector<BriefPermData>& data,
         const std::vector<PermissionWithValue>& aclExtendedList = {});
     void ToString(std::string& info);
@@ -117,7 +122,6 @@ private:
         const std::map<std::string, std::string>& aclExtendedMap,
         std::vector<BriefPermData>& list);
     void AddBriefPermDataByTokenId(AccessTokenID tokenID, const std::vector<BriefPermData>& listInput);
-    void UpdatePermStatus(const BriefPermData& permOld, BriefPermData& permNew);
     uint32_t GetFlagWroteToDb(uint32_t grantFlag);
     void MergePermBriefData(std::vector<BriefPermData>& permBriefDataList, BriefPermData& data);
     bool IsRestrictedPermission(uint32_t oldFlag, uint32_t newFlag);

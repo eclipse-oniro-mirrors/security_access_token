@@ -56,19 +56,30 @@ void ProxyDeathHandler::HandleRemoteDied(const sptr<IRemoteObject>& object)
     if (object == nullptr) {
         return;
     }
-    std::lock_guard lock(proxyLock_);
-    auto iter = proxyStubAndRecipientMap_.find(object);
-    if (iter == proxyStubAndRecipientMap_.end()) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Cannot find object in map");
-        return;
+    std::shared_ptr<ProxyDeathParam> param = nullptr;
+    {
+        std::lock_guard lock(proxyLock_);
+        auto iter = proxyStubAndRecipientMap_.find(object);
+        if (iter == proxyStubAndRecipientMap_.end()) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Cannot find object in map");
+            return;
+        }
+        object->RemoveDeathRecipient(iter->second.first);
+        param = iter->second.second;
+        proxyStubAndRecipientMap_.erase(iter);
     }
-    object->RemoveDeathRecipient(iter->second.first);
-    ProcessProxyData(iter->second.second);
-    proxyStubAndRecipientMap_.erase(iter);
+    // ProcessParam may re-enter InstallSessionManager and take cacheMutex_,
+    // while the rollback path takes cacheMutex_ then proxyLock_; calling it
+    // under proxyLock_ inverts the lock order and deadlocks. Run it unlocked.
+    ProcessProxyData(param);
 }
 
 void ProxyDeathHandler::ProcessProxyData(const std::shared_ptr<ProxyDeathParam>& param)
 {
+    if (param == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Param is nullptr");
+        return;
+    }
     LOGI(ATM_DOMAIN, ATM_TAG, "called");
     param->ProcessParam();
 }

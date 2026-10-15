@@ -94,6 +94,20 @@ public:
     int32_t DeleteToolTokenByPid(int32_t pid);
 #ifdef SPM_DATA_ENABLE
     int32_t DeleteIdentity(AccessTokenID tokenID, const std::string& bundleName, ReservedType type);
+    int32_t CheckHapSignInfo(const BundleHapList& list, uint32_t flag, int32_t& sessionId,
+        std::vector<TrustedBundleInfo>& bundleInfo, HapVerifyResultInfo& resultInfo);
+    int32_t CheckHapPermissionInfo(int32_t sessionId, InstallTypeEnum type, HapInfoCheckResult& result);
+    int32_t PrepareHapIdentity(int32_t& sessionId, const HapBaseInfo& info,
+        const BundlePolicy& policy, Identity& identity);
+    int32_t UpdateHapPolicy(int32_t sessionId, int32_t tokenId, const BundlePolicy& policy, int32_t& uid);
+    int32_t FinishInstall(
+        int32_t sessionId, bool isPersistent, const std::map<std::string, std::string>& modulePathMap);
+    int32_t GetCacheSignInfoBySessionId(int32_t sessionId, uint32_t flag,
+        std::vector<TrustedBundleInfo>& bundleInfo);
+    int32_t GetHapSignInfo(const std::string& bundleName, uint32_t flag,
+        std::vector<TrustedBundleInfo>& bundleInfo);
+    int32_t GetCachePolicyBySessionId(int32_t sessionId, const std::string& bundleName,
+        BundlePolicyInfo& bundlePolicyInfo);
 #endif
     ATokenTypeEnum GetTokenType(AccessTokenID tokenID);
     AccessTokenIDEx GetHapTokenID(int32_t userID, const std::string& bundleName, int32_t instIndex);
@@ -174,6 +188,9 @@ private:
     bool SubscribeSystemAbility(const std::function<void(int32_t, const std::string&)>& callbackFunc);
     void ReregisterPermStateChangeCallback();
     bool GetNativeTokenInfoFromSpm(AccessTokenID tokenID, NativeTokenInfo& nativeTokenInfoRes);
+#ifdef SPM_DATA_ENABLE
+    sptr<ProxyDeathCallBack> GetAnonyStub();
+#endif
 
     DISALLOW_COPY_AND_MOVE(AccessTokenManagerClient);
     std::mutex proxyMutex_;
@@ -193,6 +210,11 @@ private:
     std::shared_ptr<TokenSyncKitInterface> syncCallbackImpl_ = nullptr;
     sptr<TokenSyncCallback> tokenSyncCallback_ = nullptr;
 #endif // TOKEN_SYNC_ENABLE
+
+#ifdef SPM_DATA_ENABLE
+    sptr<ProxyDeathCallBack> anonyStub_ = nullptr;
+    std::mutex stubMutex_;
+#endif
 };
 } // namespace AccessToken
 } // namespace Security

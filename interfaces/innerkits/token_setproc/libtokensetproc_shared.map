@@ -28,6 +28,7 @@
       SpmGetEntry;
       SpmGetTokenidRefCnt;
       SpmGetUidRefCnt;
+      SpmGetUidRefCntWithRetry;
       SpmGetVersion;
       SpmIncTokenidRefCnt;
       SpmIncUidRefCnt;

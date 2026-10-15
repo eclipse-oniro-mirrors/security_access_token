@@ -93,7 +93,4 @@ group("fuzztest") {
       "updateseccompenhancestub_fuzzer:UpdateSecCompEnhanceStubFuzzTest",
     ]
   }
-  if (access_token_enable_spm) {
-    deps += [ "deleteidentitystub_fuzzer:DeleteIdentityStubFuzzTest" ]
-  }
 }

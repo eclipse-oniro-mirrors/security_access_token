@@ -104,6 +104,7 @@ public:
     bool InitPermissionList(const BundleParam& param, const HapPolicy& policy,
         std::vector<PermissionStatus>& initializedList, HapInfoCheckResult& result,
         std::vector<GenericValues>& undefValues, bool dataRefresh = false);
+    bool CheckAclAndEdm(const BundleParam& param, const HapPolicy& policy, HapInfoCheckResult& result);
     bool InitDlpPermissionList(const HapInfoParams& initInfo,
         std::vector<PermissionStatus>& initializedList, std::vector<GenericValues>& undefValues);
 

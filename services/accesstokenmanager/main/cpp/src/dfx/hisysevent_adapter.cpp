@@ -107,7 +107,7 @@ void ReportSysEventAddHap(int32_t errorCode, const HapDfxInfo& info, bool needRe
     }
 }
 
-void ReportSysEventUpdateHap(int32_t errorCode, const HapDfxInfo& info)
+void ReportSysEventUpdateHap(int32_t errorCode, const HapDfxInfo& info, bool needReportFault)
 {
     if (!IsUEEnable()) {
         LOGW(ATM_DOMAIN, ATM_TAG, "UE is not enable.");
@@ -119,7 +119,7 @@ void ReportSysEventUpdateHap(int32_t errorCode, const HapDfxInfo& info)
         "USERID", info.userID,
         "BUNDLENAME", info.bundleName,
         "INSTINDEX", info.instIndex,
-        "SCENE_CODE", CommonSceneCode::AT_COMMON_FINISH,
+        "SCENE_CODE", info.sceneCode,
         "ERROR_CODE", errorCode,
         "TOKENIDEX", static_cast<uint64_t>(info.tokenIdEx.tokenIDEx),
         "PERM_INFO", info.permInfo,
@@ -127,7 +127,9 @@ void ReportSysEventUpdateHap(int32_t errorCode, const HapDfxInfo& info)
         "PREAUTH_INFO", info.preauthInfo,
         "EXTEND_INFO", info.extendInfo,
         "DURATION", info.duration);
-    ReportSysCommonEventError(info.ipcCode, errorCode);
+    if (needReportFault) {
+        ReportSysCommonEventError(info.ipcCode, errorCode);
+    }
 }
 
 void ReportSysEventDelHap(int32_t errorCode, int32_t sceneCode, const HapDfxInfo& info)

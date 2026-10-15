@@ -36,7 +36,7 @@ static const int MAX_CREATE_TOKEN_ID_RETRY = 1000;
 enum class TokenIdStatus : uint32_t {
     ACTIVE = 0,      // tokenId in tokenIdSet_
     RESERVED = 1,    // tokenId in reservedTokenIdSet_
-    UNTRUSTED = 2    // tokenId in untrustedTokenIdSet_
+    UNTRUSTED = 2,   // tokenId in untrustedTokenIdSet_
 };
 
 class AccessTokenIDManager final {
@@ -58,6 +58,10 @@ public:
     bool IsReservedTokenId(AccessTokenID id);
     ATokenTypeEnum GetTokenIdType(AccessTokenID id);
     int32_t ChangeTokenIdStatus(AccessTokenID id, TokenIdStatus targetStatus);
+    // Parse the plain 32-bit token id out of a full 64-bit token id.
+    static AccessTokenID ParseTokenId(FullTokenID fullTokenId);
+    // Splice the plain 32-bit token id and the attr bits into a full 64-bit token id.
+    static FullTokenID BuildFullTokenId(AccessTokenID tokenId, AccessTokenAttr tokenAttr);
 
     // Identity bundleId management
     // Note: Callers are responsible for determining whether to add or remove bundleId based on their own logic.
@@ -67,8 +71,8 @@ public:
     int32_t AllocUid(int32_t localId, int32_t& outUid);
     int32_t RemoveBundleId(int32_t uid, bool rollbackScanStart = false);
     int32_t TranslateUid(int32_t srcUid, int32_t dstLocalId, int32_t& outUid);
-    int32_t GetReservedBundleIdSetPersistInfo(int32_t bundleId, std::vector<DelInfo>& delInfoVec,
-        std::vector<AddInfo>& addInfoVec);
+    int32_t GetReservedBundleIdsPersistInfo(const std::vector<int32_t>& uids,
+        std::vector<DelInfo>& delInfoVec, std::vector<AddInfo>& addInfoVec);
     int32_t GetBundleIdMin();
     int32_t IsUidReusable(int32_t uid, bool& reusable);
     int32_t InitBundleIdConfig();
@@ -77,12 +81,16 @@ public:
 
     // Reserved uid management
     int32_t RemoveReservedBundleId(int32_t uid);
+    // Remove the bundleId carried by this uid from reservedBundleIdSet_ only
+    // (keep bundleIdSet_ intact); install-chain API for adopted reserved uids
+    void RemoveBundleIdFromReservedSet(int32_t uid);
     bool IsReservedBundleId(int32_t uid);
 
     // Migration control
     void SetMigrationDone();
     bool IsMigrationDone();
     bool ExtractBundleId(int32_t uid, int32_t &bundleId) const;
+    static int32_t ExtractUserId(int32_t uid);
     int32_t GetTokenIdStatus(AccessTokenID id, TokenIdStatus& status);
 private:
     AccessTokenIDManager() = default;
