@@ -40,6 +40,8 @@ constexpr const char* WHERE_1_STR = " where 1 = 1";
 constexpr int32_t SLEEP_RETRY_MS = 300;
 constexpr const size_t TOKEN_ID_LENGTH = 11;
 constexpr int64_t COST_TIME_LOG_THRESHOLD = 5;
+constexpr int32_t LEGACY_SUBPROFILE_ID = -1;
+constexpr const char* BACKUP_TABLE_SUFFIX = "_backup";
 
 static void LogCost(const char* func, int64_t cost)
 {
@@ -103,8 +105,7 @@ void PermissionUsedRecordDb::OnUpdate(int32_t version)
             UpdatePermissionRecordTablePrimaryKey(true);
             [[fallthrough]];
         case 7: // 7->8
-            ExecuteSql("alter table " + std::string(PERMISSION_USED_RECORD_TOGGLE_STATUS_TABLE) + " add column " +
-                PrivacyFiledConst::FIELD_SUB_PROFILE_ID + " integer default -1");
+            UpdateToggleStatusTablePrimaryKey();
             [[fallthrough]];
         default:
             return;
@@ -841,6 +842,47 @@ int32_t PermissionUsedRecordDb::CreatePermissionUsedRecordToggleStatusTable() co
         .append(PrivacyFiledConst::FIELD_SUB_PROFILE_ID)
         .append("))");
     return ExecuteSql(sql);
+}
+
+int32_t PermissionUsedRecordDb::UpdateToggleStatusTablePrimaryKey() const
+{
+    auto it = dataTypeToSqlTable_.find(DataType::PERMISSION_USED_RECORD_TOGGLE_STATUS);
+    if (it == dataTypeToSqlTable_.end()) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Table type not found.");
+        return PrivacyError::ERR_DATABASE_OPERATE_FAILED;
+    }
+
+    std::string tableName = it->second.tableName_;
+    std::string backupTableName = tableName + BACKUP_TABLE_SUFFIX;
+    std::string copyDataSql = "insert into " + tableName + " (" + PrivacyFiledConst::FIELD_USER_ID + "," +
+        PrivacyFiledConst::FIELD_SUB_PROFILE_ID + "," + PrivacyFiledConst::FIELD_STATUS + ") select " +
+        PrivacyFiledConst::FIELD_USER_ID + "," + std::to_string(LEGACY_SUBPROFILE_ID) + "," +
+        PrivacyFiledConst::FIELD_STATUS + " from " + backupTableName;
+
+    int32_t res = SUCCESS;
+    const std::vector<std::function<int32_t()>> migrationSteps = {
+        // 1、rename legacy table to backup, so the rebuilt table keeps same schema as fresh install
+        [&]() { return ExecuteSql("alter table " + tableName + " rename to " + backupTableName); },
+        // 2、create new table with primary key(user_id, sub_profile_id)
+        [&]() { return CreatePermissionUsedRecordToggleStatusTable(); },
+        // 3、copy records from backup, legacy records use default sub_profile_id
+        [&]() { return ExecuteSql(copyDataSql); },
+        // 4、drop backup table
+        [&]() { return ExecuteSql("drop table " + backupTableName); },
+    };
+    for (const auto& step : migrationSteps) {
+        res = step();
+        if (res != SUCCESS) {
+            LOGE(PRI_DOMAIN, PRI_TAG, "Migrate toggle table failed, errCode is %{public}d, errMsg is %{public}s.",
+                res, SpitError().c_str());
+            break;
+        }
+    }
+    if (res != SUCCESS) {
+        RollbackTransaction();
+        return PrivacyError::ERR_DATABASE_OPERATE_FAILED;
+    }
+    return SUCCESS;
 }
 
 int32_t PermissionUsedRecordDb::CreatePermissionDisablePolicyTable() const
