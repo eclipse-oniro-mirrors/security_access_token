@@ -67,12 +67,6 @@ public:
         int32_t sessionId, bool isPersistent, const std::map<std::string, std::string>& modulePathMap);
     int32_t GetCacheSignInfoBySessionId(int32_t sessionId, std::vector<TrustedBundleInfo>& bundleInfo,
         uint32_t flag);
-    int32_t GetHapSignInfo(const std::string& bundleName, std::vector<TrustedBundleInfo>& bundleInfo,
-        uint32_t flag);
-    // AppId query for the GetHapTokenInfo extension chain; reuses the
-    // GetHapSignInfo channel (kept here so permission-layer code stays free
-    // of install-repository dependencies).
-    int32_t GetHapAppIdByTokenId(AccessTokenID tokenID, std::string& appId);
     void ClearSessionByPid(int32_t pid);
     int32_t GetCachePolicyBySessionId(int32_t sessionId, const std::string& bundleName,
         BundlePolicyInfo& bundlePolicyInfo);
@@ -90,8 +84,6 @@ private:
     int32_t PrepareSessionIdentity(int32_t sessionId, const HapBaseInfo& info,
         const BundlePolicy& policy, Identity& identity);
     int32_t CheckInstallType(std::vector<std::string>& installedPaths, InstallTypeEnum type);
-    int32_t FastVerify(std::vector<std::string>& paths, std::vector<std::vector<uint8_t>>& persistDatas,
-        std::vector<TrustedBundleInfoInner>& bundleInfos, int32_t userId = -1);
 
     void InitPermissionList(const BundleParam& bundleParam, HapPolicy& policy);
     std::vector<BriefPermData> BuildUpdatedPermList(const BundleParam& bundleParam,

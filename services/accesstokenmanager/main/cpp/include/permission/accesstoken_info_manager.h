@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <atomic>
 #include <map>
+#include <set>
 #include <memory>
 #include <shared_mutex>
 #include <unordered_map>
@@ -146,23 +147,15 @@ public:
     bool UpdateCapStateToDatabase(AccessTokenID tokenID, bool enable);
     int32_t GetKernelPermissions(AccessTokenID tokenId, std::vector<PermissionWithValue>& kernelPermList);
     int32_t GetReqPermissionByName(AccessTokenID tokenId, const std::string& permissionName, std::string& value);
-    std::shared_ptr<BundleInfoInner> GetBundleInfoInner(const std::string& bundleName);
-    void UpsertBundleInfoInnerCache(const std::string& bundleName, const std::shared_ptr<BundleInfoInner>& bundleInfo);
-    void RestoreHapCache(const std::string& bundleName,
-        const std::shared_ptr<BundleInfoInner>& bundleInfo,
-        const std::vector<HapTokenRestoreData>& tokenRestoreDataList);
+    void RestoreHapCache(const std::vector<HapTokenRestoreData>& tokenRestoreDataList);
 
-    void CommitCreateHapCache(const HapTokenInfo& hapInfo,
+    void CommitCreateHapCache(const HapTokenInfoItem& hapInfoItem,
         const std::vector<BriefPermData>& briefPermData,
-        const std::vector<PermissionWithValue>& aclExtendedList,
-        const std::shared_ptr<BundleInfoInner>& bundleInfo,
-        const HapCommitContext& commitContext);
-    void CommitUpdateHapCache(const HapTokenInfo& hapInfo,
+        const std::vector<PermissionWithValue>& aclExtendedList);
+    void CommitUpdateHapCache(const HapTokenInfoItem& hapInfoItem,
         const std::vector<BriefPermData>& briefPermData,
-        const std::vector<PermissionWithValue>& aclExtendedList,
-        const std::shared_ptr<BundleInfoInner>& bundleInfo,
-        const HapCommitContext& commitContext);
-    void CommitDeleteHapCache(AccessTokenID tokenID, const std::string& bundleName);
+        const std::vector<PermissionWithValue>& aclExtendedList);
+    void CommitDeleteHapCache(AccessTokenID tokenID);
     void AddReservedHapInfoFromDbValues(const GenericValues& tokenValue, bool& isReservedToken);
 
     int32_t QueryStatusByPermission(const std::vector<uint32_t>& permCodeList,
@@ -252,8 +245,9 @@ private:
         int32_t instIndex, AccessTokenID tokenID);
     AccessTokenID GetReservedHapTokenId(int32_t userID, const std::string& bundleName, int32_t instIndex);
     void UpdateTokenAttr(const UpdateHapInfoParams& info, AccessTokenIDEx& tokenIdEx);
-    void UpsertBundleInfoInnerCacheWithoutLock(const std::string& bundleName,
-        const std::shared_ptr<BundleInfoInner>& bundleInfo);
+    void UpsertHapTokenCacheLocked(const HapTokenInfoItem& hapInfoItem,
+        const std::vector<BriefPermData>& briefPermData,
+        const std::vector<PermissionWithValue>& aclExtendedList);
     void LoadPermissionDefinitionExt(ConfigPolicyLoaderInterface& policy);
     bool hasInited_;
 
@@ -268,7 +262,8 @@ private:
 
     std::map<int, std::shared_ptr<HapTokenInfoInner>> hapTokenInfoMap_;
     std::map<std::string, AccessTokenID> hapTokenIdMap_;
-    std::map<std::string, std::shared_ptr<BundleInfoInner>> bundleInfoMap_;
+    // userIds that may exist on the device
+    std::set<int32_t> userIdSet_;
     std::map<uint32_t, NativeTokenInfoCache> nativeTokenInfoMap_;
     std::shared_ptr<VerifyAccessTokenMonitor> tokenMonitor_;
     std::shared_mutex monitorLock_;

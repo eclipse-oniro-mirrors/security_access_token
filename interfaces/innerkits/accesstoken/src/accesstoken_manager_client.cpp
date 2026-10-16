@@ -1088,7 +1088,7 @@ int32_t AccessTokenManagerClient::GetCacheSignInfoBySessionId(int32_t sessionId,
 }
 
 int32_t AccessTokenManagerClient::GetHapSignInfo(const std::string& bundleName, uint32_t flag,
-    std::vector<TrustedBundleInfo>& bundleInfo)
+    MultipleMode mode, std::vector<TrustedBundleInfo>& bundleInfo)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
@@ -1097,7 +1097,7 @@ int32_t AccessTokenManagerClient::GetHapSignInfo(const std::string& bundleName, 
     }
 
     BundleInfosRawdata bundleInfosRawdata;
-    int32_t res = proxy->GetHapSignInfo(bundleName, flag, bundleInfosRawdata);
+    int32_t res = proxy->GetHapSignInfo(bundleName, flag, static_cast<int32_t>(mode), bundleInfosRawdata);
     if (res != RET_SUCCESS) {
         res = ConvertResult(res);
         LOGE(ATM_DOMAIN, ATM_TAG, "GetHapSignInfo failed, err=%{public}d.", res);

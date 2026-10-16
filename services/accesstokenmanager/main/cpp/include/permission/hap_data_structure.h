@@ -55,14 +55,6 @@ public:
     std::vector<uint16_t> permCodeList;
     std::vector<AccessTokenID> tokenIds;
 };
-
-// Session-level bits the hap cache commit needs; deliberately free of any
-// install-manager dependency so InfoManager headers stay layer-neutral.
-struct HapCommitContext {
-    bool isSideloadApp = false;
-    // uid adopted from the caller input marks the token migrated
-    bool uidFromCaller = false;
-};
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

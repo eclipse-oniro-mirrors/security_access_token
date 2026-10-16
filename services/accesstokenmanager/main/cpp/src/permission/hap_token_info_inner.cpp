@@ -343,6 +343,23 @@ void HapTokenInfoInner::SetTokenBaseInfo(const HapTokenInfo& baseInfo)
     tokenInfoBasic_ = baseInfo;
 }
 
+void HapTokenInfoInner::UpdateHapInfo(const HapTokenInfoItem& item)
+{
+    std::unique_lock<std::shared_mutex> infoGuard(this->policySetLock_);
+    tokenInfoBasic_.ver = DEFAULT_TOKEN_VERSION;
+    tokenInfoBasic_.tokenID = item.tokenId;
+    tokenInfoBasic_.tokenAttr = item.tokenAttr;
+    tokenInfoBasic_.userID = static_cast<int>(item.userId);
+    tokenInfoBasic_.apiVersion = item.apiVersion;
+    tokenInfoBasic_.instIndex = static_cast<int>(item.instIndex);
+    tokenInfoBasic_.dlpType = item.dlpType;
+    tokenInfoBasic_.uid = item.uid;
+    tokenInfoBasic_.bundleName = item.bundleName;
+    isPermDialogForbidden_ = item.permDialogCapState;
+    isMigrated_ = item.migrated;
+    isSideloadApp_ = item.isSideload;
+}
+
 bool HapTokenInfoInner::IsRemote() const
 {
     std::shared_lock<std::shared_mutex> infoGuard(this->policySetLock_);

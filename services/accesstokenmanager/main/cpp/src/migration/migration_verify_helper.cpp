@@ -32,6 +32,7 @@
 #include "hap_sign_verify_manager.h"
 #include "hap_sign_verify_helper.h"
 #include "hap_token_info_inner.h"
+#include "multiple_mode_utils.h"
 #include "permission_constraint_check.h"
 #include "permission_data_brief.h"
 #include "permission_kernel_utils.h"
@@ -295,7 +296,8 @@ bool MigrationVerifyHelper::BuildCachedInfos(const BundleInfoItems& bundleInfo,
             continue;
         }
         // filter by mode
-        if ((infoPtr->GetInstIndex() / MAIN_CLONE_INDEX_BASE) != static_cast<int32_t>(bundleInfo.mode)) {
+        if (static_cast<int32_t>(MultipleModeUtils::GetTokenMode(infoPtr->GetInstIndex())) !=
+            static_cast<int32_t>(bundleInfo.mode)) {
             continue;
         }
         cachedInfos.emplace_back(infoPtr);
@@ -487,8 +489,7 @@ int32_t MigrationVerifyHelper::HandleMigratedBundleTask(const BundleInfoItems& b
         if (isSpmEnforce) {
             for (const auto& infoPtr : cachedInfos) {
                 HapTokenInfo hapInfo = infoPtr->GetHapInfoBasic();
-                AccessTokenInfoManager::GetInstance().CommitDeleteHapCache(
-                    hapInfo.tokenID, bundleInfo.bundleName);
+                AccessTokenInfoManager::GetInstance().CommitDeleteHapCache(hapInfo.tokenID);
                 PermissionKernelUtils::RemovePermFromKernel(hapInfo.tokenID);
                 AccessTokenIDManager::GetInstance().ChangeTokenIdStatus(hapInfo.tokenID, TokenIdStatus::UNTRUSTED);
             }

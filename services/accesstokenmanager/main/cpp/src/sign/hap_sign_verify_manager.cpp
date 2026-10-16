@@ -381,6 +381,34 @@ int32_t HapSignVerifyManager::VerifyFailed(int32_t ret, bool& isChanged, Trusted
 #endif
 }
 
+int32_t HapSignVerifyManager::FastVerify(std::vector<std::string>& paths,
+    std::vector<std::vector<uint8_t>>& persistDatas, std::vector<TrustedBundleInfoInner>& bundleInfos,
+    int32_t userId)
+{
+    for (size_t i = 0; i < paths.size() && i < persistDatas.size(); ++i) {
+        TrustedBundleInfoInner infoInner;
+        infoInner.bootstrapInfo = std::make_shared<Security::Verify::BootstrapInfo>();
+        infoInner.bootstrapInfo->Load(persistDatas[i].data(), persistDatas[i].size());
+        bool isChanged = false;
+        int32_t ret = GetInstance().CheckHapsSignInfo(
+            MakeVerifyParams(paths[i], Security::Verify::VerifyType::Fast, userId),
+            false, infoInner, isChanged);
+        if (ret != RET_SUCCESS) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Sign check failed ret=%{public}d, path=%{public}s.", ret, paths[i].c_str());
+            if (ret == ERR_VERIFY_FILE_NOT_EXIST) {
+                LOGE(ATM_DOMAIN, ATM_TAG, "File not exist, continue.");
+                paths.erase(paths.begin() + i);
+                persistDatas.erase(persistDatas.begin() + i);
+                --i;
+                continue;
+            }
+            return ERR_HAP_SIGN_VERIFY_FAILED;
+        }
+        bundleInfos.emplace_back(infoInner);
+    }
+    return RET_SUCCESS;
+}
+
 int32_t HapSignVerifyManager::CheckHapsSignInfo(Security::Verify::VerifyParams params, bool booting,
     TrustedBundleInfoInner& info, bool& isChanged) const
 {

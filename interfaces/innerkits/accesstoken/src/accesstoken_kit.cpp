@@ -1348,6 +1348,12 @@ int32_t AccessTokenKit::GetCacheSignInfoBySessionId(int32_t sessionId, uint32_t 
 int32_t AccessTokenKit::GetHapSignInfo(const std::string& bundleName, uint32_t flag,
     std::vector<TrustedBundleInfo>& bundleInfo)
 {
+    return GetHapSignInfo(bundleName, flag, MultipleMode::CURRENT_MODE, bundleInfo);
+}
+
+int32_t AccessTokenKit::GetHapSignInfo(const std::string& bundleName, uint32_t flag, MultipleMode mode,
+    std::vector<TrustedBundleInfo>& bundleInfo)
+{
 #ifdef SPM_DATA_ENABLE
     LOGI(ATM_DOMAIN, ATM_TAG, "GetHapSignInfo called, bundleName=%{public}s.", bundleName.c_str());
     if (!DataValidator::IsBundleNameValid(bundleName)) {
@@ -1358,7 +1364,11 @@ int32_t AccessTokenKit::GetHapSignInfo(const std::string& bundleName, uint32_t f
         LOGE(ATM_DOMAIN, ATM_TAG, "Query flag is invalid.");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
-    return AccessTokenManagerClient::GetInstance().GetHapSignInfo(bundleName, flag, bundleInfo);
+    if (!DataValidator::IsQueryModeValid(mode)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Query mode is invalid.");
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    return AccessTokenManagerClient::GetInstance().GetHapSignInfo(bundleName, flag, mode, bundleInfo);
 #else
     LOGW(ATM_DOMAIN, ATM_TAG, "Not support.");
     return RET_SUCCESS;

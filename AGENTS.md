@@ -98,9 +98,14 @@
 
 构建命令从 OpenHarmony 源码根目录执行，不在本子目录执行。
 
+**加速构建**：若 gn 配置未发生变化（未改动 `BUILD.gn`、`*.gni`、产品配置、`--gn-args` 参数），必须使用 `--fast-rebuild` 跳过 gn 重新生成，显著缩短构建时间；改动过 gn 配置则禁止使用（会因构建图过期导致莫名失败或误报）。
+
 ```bash
 # 构建功能代码
 ./build.sh --product-name rk3568 --build-target access_token
+
+# 构建功能代码（gn 未变化时，加速）
+./build.sh --product-name rk3568 --build-target access_token --fast-rebuild
 
 # 构建单元测试
 ./build.sh --product-name rk3568 --build-target base/security/access_token:accesstoken_build_module_test
