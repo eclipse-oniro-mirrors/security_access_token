@@ -149,6 +149,7 @@ private:
     static napi_value GetPermissionRequestToggleStatus(napi_env env, napi_callback_info info);
     static napi_value RequestAppPermOnSetting(napi_env env, napi_callback_info info);
     static napi_value GetSelfPermissionStatusSync(napi_env env, napi_callback_info info);
+    static napi_value IsPermissionSupported(napi_env env, napi_callback_info info);
 
     static bool ParseInputVerifyPermissionOrGetFlag(const napi_env env, const napi_callback_info info,
         AtManagerAsyncContext& asyncContext);

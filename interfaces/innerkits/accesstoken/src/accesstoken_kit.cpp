@@ -1137,15 +1137,24 @@ int32_t AccessTokenKit::SetPermissionStatusWithPolicy(
 
 bool AccessTokenKit::IsSupportPermission(const std::string& permissionName)
 {
+    bool isSupported = false;
+    (void)IsSupportedPermission(permissionName, isSupported);
+    return isSupported;
+}
+
+int32_t AccessTokenKit::IsSupportedPermission(const std::string& permissionName, bool& result)
+{
+    result = false;
     uint32_t permCode = 0;
     PermissionBriefDef permissionBriefDef;
     if (!AccessToken::GetPermissionBriefDef(permissionName, permissionBriefDef, permCode)) {
-        return false;
+        return RET_SUCCESS;
     }
     if (permissionBriefDef.isEnable) {
-        return true;
+        result = true;
+        return RET_SUCCESS;
     }
-    return AccessTokenManagerClient::GetInstance().IsSupportPermission(permissionName);
+    return AccessTokenManagerClient::GetInstance().IsSupportedPermission(permissionName, result);
 }
  	 
 

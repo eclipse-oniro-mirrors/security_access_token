@@ -156,7 +156,7 @@ public:
     int32_t ResetDatabaseRecoveryStatus();
     void DumpTokenInfo(const AtmToolsParamInfo& info, std::string& dumpInfo);
     int32_t GetVersion(uint32_t& version);
-    bool IsSupportPermission(const std::string& permissionName);
+    int32_t IsSupportedPermission(const std::string& permissionName, bool& result);
     void OnRemoteDiedHandle();
     void OnAddAccessTokenSa();
     int32_t SetPermDialogCap(const HapBaseInfo& hapBaseInfo, bool enable);
