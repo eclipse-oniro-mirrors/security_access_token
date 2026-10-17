@@ -96,6 +96,7 @@ public:
         OP_CLI_INSTALL_BUNDLE = 67,
         OP_GET_ALL_BUNDLE_INFO = 68,
         OP_DIRECT_CALL = 69,
+        OP_INPUT_RECORDING = 70,
         // 以下声明仅用于文件夹权限的访问记录使用,需要和普通权限做区分
         OP_READ_WRITE_DOWNLOAD_DIRECTORY_MEDIA_READ = 100,
         OP_READ_WRITE_DOWNLOAD_DIRECTORY_MEDIA_WRITE = 101,
