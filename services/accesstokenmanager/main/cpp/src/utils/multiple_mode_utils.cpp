@@ -29,6 +29,11 @@ static constexpr const char *MAIN_MODE_PARAM = "persist.sceneboard.mainmode";
 namespace MultipleModeUtils {
 MultipleMode GetTokenMode(int32_t instIndex)
 {
+    // negative indexes never map to a valid mode: clamp to the main mode so a
+    // bogus instIndex cannot leak the query-only CURRENT_MODE value
+    if (instIndex < 0) {
+        return MultipleMode::DEFAULT_OR_MAIN_MODE;
+    }
     return static_cast<MultipleMode>(instIndex / MAIN_CLONE_INDEX_BASE);
 }
 

@@ -14,6 +14,7 @@
  */
 #ifndef SYSTEM_PARAMETERS_H
 #define SYSTEM_PARAMETERS_H
+#include <cstdint>
 #include <limits>
 #include <string>
 #include <map>
@@ -23,13 +24,19 @@ namespace system {
 bool GetBoolParameter(const std::string& key, bool def);
 void SetBoolParameter(const std::string& key, bool status);
 
+// Int parameter state for tests: returns the stored value when the key was
+// set via SetIntParameter, otherwise falls back to the caller's default.
+int32_t GetStoredIntParameter(const std::string& key, int32_t def);
+void SetIntParameter(const std::string& key, int32_t value);
+void ClearIntParameter(const std::string& key);
+
 template<typename T>
 T GetIntParameter(const std::string& key, T def, T min = std::numeric_limits<T>::min(),
     T max = std::numeric_limits<T>::max())
 {
     (void)min;
     (void)max;
-    return def;
+    return static_cast<T>(GetStoredIntParameter(key, static_cast<int32_t>(def)));
 }
 } // namespace OHOS::system
 } // namespace OHOS

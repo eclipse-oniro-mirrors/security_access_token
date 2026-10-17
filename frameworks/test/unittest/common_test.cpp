@@ -294,6 +294,27 @@ HWTEST_F(CommonTest, DataValidatorTest004, TestSize.Level1)
 }
 
 /*
+ * @tc.name: DataValidatorTest005
+ * @tc.desc: Test IsQueryModeValid
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(CommonTest, DataValidatorTest005, TestSize.Level1)
+{
+    // every defined enum value is a valid query mode
+    EXPECT_TRUE(DataValidator::IsQueryModeValid(MultipleMode::CURRENT_MODE));
+    EXPECT_TRUE(DataValidator::IsQueryModeValid(MultipleMode::DEFAULT_OR_MAIN_MODE));
+    EXPECT_TRUE(DataValidator::IsQueryModeValid(MultipleMode::SUB_MODE));
+    EXPECT_TRUE(DataValidator::IsQueryModeValid(MultipleMode::MAX_MODE));
+    // below CURRENT_MODE is rejected
+    EXPECT_FALSE(DataValidator::IsQueryModeValid(static_cast<MultipleMode>(-2)));
+    EXPECT_FALSE(DataValidator::IsQueryModeValid(static_cast<MultipleMode>(-100)));
+    // above MAX_MODE is rejected
+    EXPECT_FALSE(DataValidator::IsQueryModeValid(static_cast<MultipleMode>(2)));
+    EXPECT_FALSE(DataValidator::IsQueryModeValid(static_cast<MultipleMode>(100)));
+}
+
+/*
  * @tc.name: PermissionValidatorTest001
  * @tc.desc: Test IsPermissionDefValid
  * @tc.type: FUNC

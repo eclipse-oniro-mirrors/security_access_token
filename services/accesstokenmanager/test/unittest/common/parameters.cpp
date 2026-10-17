@@ -38,5 +38,26 @@ void SetBoolParameter(const std::string& key, bool status)
         system::systemParameter[key] = status;
     }
 }
+
+std::map<std::string, int32_t> systemIntParameter;
+
+int32_t GetStoredIntParameter(const std::string& key, int32_t def)
+{
+    auto iter = system::systemIntParameter.find(key);
+    if (iter != system::systemIntParameter.end()) {
+        return iter->second;
+    }
+    return def;
+}
+
+void SetIntParameter(const std::string& key, int32_t value)
+{
+    system::systemIntParameter[key] = value;
+}
+
+void ClearIntParameter(const std::string& key)
+{
+    system::systemIntParameter.erase(key);
+}
 }
 } // namespace OHOS
