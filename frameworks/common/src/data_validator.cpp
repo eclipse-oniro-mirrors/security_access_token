@@ -300,6 +300,13 @@ bool DataValidator::IsSignInfoQueryFlagValid(uint32_t flag)
     return (flag != 0) && ((flag & ~validFlags) == 0);
 }
 
+bool DataValidator::IsQueryModeValid(MultipleMode mode)
+{
+    int32_t value = static_cast<int32_t>(mode);
+    return (value >= static_cast<int32_t>(MultipleMode::CURRENT_MODE)) &&
+        (value <= static_cast<int32_t>(MultipleMode::MAX_MODE));
+}
+
 bool DataValidator::IsListSizeValid(size_t size)
 {
     // param is unsigned

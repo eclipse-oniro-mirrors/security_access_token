@@ -1351,7 +1351,6 @@ HWTEST_F(BootVerifySchedulerTest, HandleHighPrivilegeBundleSpmData001, TestSize.
     scheduler.requestedPermData_[TEST_TOKEN_ID] = {};
     scheduler.isVerifiedMap_[GetBundleModeKey(TEST_BUNDLE_NAME, 0)] = false;
     scheduler.isVerifyingMap_[GetBundleModeKey(TEST_BUNDLE_NAME, 0)] = true;
-    AccessTokenInfoManager::GetInstance().bundleInfoMap_.erase(TEST_BUNDLE_NAME);
 
     scheduler.HandleHighPrivilegeBundleSpmData({});
 
@@ -1373,7 +1372,6 @@ HWTEST_F(BootVerifySchedulerTest, HandleHighPrivilegeBundleSpmData002, TestSize.
     scheduler.bundleInfoMap_[GetBundleModeKey(TEST_BUNDLE_NAME, 0)] = BuildBundleInfo({});
     scheduler.isVerifiedMap_[GetBundleModeKey(TEST_BUNDLE_NAME, 0)] = false;
     scheduler.isVerifyingMap_[GetBundleModeKey(TEST_BUNDLE_NAME, 0)] = true;
-    AccessTokenInfoManager::GetInstance().bundleInfoMap_.erase(TEST_BUNDLE_NAME);
 
     scheduler.HandleHighPrivilegeBundleSpmData({});
 
@@ -1396,7 +1394,6 @@ HWTEST_F(BootVerifySchedulerTest, HandleHighPrivilegeBundleSpmData003, TestSize.
     scheduler.isVerifiedMap_[GetBundleModeKey(TEST_BUNDLE_NAME, 0)] = false;
     scheduler.isVerifyingMap_[GetBundleModeKey(TEST_BUNDLE_NAME, 0)] = true;
     scheduler.bundleSignInfoMap_.erase(GetBundleModeKey(TEST_BUNDLE_NAME, 0));
-    AccessTokenInfoManager::GetInstance().bundleInfoMap_.erase(TEST_BUNDLE_NAME);
 
     VerifiedBundleState state;
     state.bundleName = TEST_BUNDLE_NAME;

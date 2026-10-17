@@ -81,6 +81,9 @@ public:
     int GetInstIndex() const;
     AccessTokenID GetTokenID() const;
     void SetTokenBaseInfo(const HapTokenInfo& baseInfo);
+    // Refresh all info carried by the item: token base info plus the
+    // perm-dialog / migrated / sideload flags.
+    void UpdateHapInfo(const HapTokenInfoItem& item);
     std::string ToString() const;
     bool IsRemote() const;
     void SetRemote(bool isRemote);

@@ -54,6 +54,7 @@ accesstoken_manager_base_config = {
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_change_notifier.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_constraint_check.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_data_brief.cpp",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/src/utils/multiple_mode_utils.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_feature_manager.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/kernel/permission_kernel_utils.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_grant_event.cpp",
@@ -116,6 +117,7 @@ accesstoken_manager_base_config = {
   if (access_token_enable_spm && access_token_manager_hapverify_enable) {
     sources += [
       "${access_token_path}/services/accesstokenmanager/main/cpp/src/install_manager/install_db_repository.cpp",
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/install_manager/bundle_info_manager.cpp",
       "${access_token_path}/services/accesstokenmanager/main/cpp/src/install_manager/install_identity_manager.cpp",
       "${access_token_path}/services/accesstokenmanager/main/cpp/src/install_manager/install_session_manager.cpp",
       "${access_token_path}/services/accesstokenmanager/main/cpp/src/install_manager/install_sysevent_reporter.cpp",
@@ -156,6 +158,7 @@ accesstoken_manager_base_config = {
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/kernel",
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/migration",
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/permission",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/include/utils",
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/proxy",
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/seccomp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/service",

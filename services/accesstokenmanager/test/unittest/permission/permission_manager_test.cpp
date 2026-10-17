@@ -1182,10 +1182,8 @@ HWTEST_F(PermissionManagerTest, UpdateMultiTokenPermissionState002, TestSize.Lev
         undefValues));
 
     AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
-    auto infoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId);
-    ASSERT_NE(nullptr, infoPtr);
     EXPECT_EQ(ERR_TOKENID_NOT_EXIST, PermissionManager::GetInstance().UpdateMultiTokenPermissionState(
-        infoPtr, INVALID_TOKENID, {}, false, 0, false));
+        INVALID_TOKENID, {}, false, 0, false));
 
     EXPECT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId));
 }

@@ -86,6 +86,11 @@ public:
 
     static Security::Verify::VerifyParams MakeVerifyParams(
         const std::string& path, Security::Verify::VerifyType type, int32_t userId);
+    // Fast-verify persisted hap data. Note: paths (and the parallel persistDatas)
+    // are filtered in place - entries whose file no longer exists are erased.
+    static int32_t FastVerify(std::vector<std::string>& paths,
+        std::vector<std::vector<uint8_t>>& persistDatas,
+        std::vector<TrustedBundleInfoInner>& bundleInfos, int32_t userId = 0);
     int32_t CheckMultipleHaps(const std::vector<TrustedBundleInfoInner>& infos) const;
     int32_t BuildHapPolicy(const std::vector<TrustedBundleInfoInner>& infos, HapPolicy& policy,
         BundleParam& param) const;

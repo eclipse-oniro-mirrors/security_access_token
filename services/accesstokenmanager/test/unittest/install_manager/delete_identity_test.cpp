@@ -138,6 +138,27 @@ std::vector<BriefPermData> BuildGrantedBrief(uint16_t permCode)
     return { data };
 }
 
+// Token row with an explicit instIndex, so a bundle's rows can span modes
+// (instIndex < 10000: main mode; >= 10000: sub mode).
+GenericValues BuildModeTokenRow(AccessTokenID tokenId, const std::string& bundleName, int32_t reserved,
+    int32_t instIndex)
+{
+    GenericValues row = BuildTokenRow(tokenId, bundleName, reserved);
+    row.Put(TokenFiledConst::FIELD_INST_INDEX, instIndex);
+    return row;
+}
+
+// The mode condition of the first package-info delete op; -1 when absent.
+int32_t GetPackageCleanMode(const std::vector<DelInfo>& dels)
+{
+    for (const auto& delInfo : dels) {
+        if (delInfo.delType == AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO) {
+            return delInfo.delValue.GetInt(TokenFiledConst::FIELD_MODE);
+        }
+    }
+    return -1; // 0 and 1 are valid modes, -1 marks "no package clean op"
+}
+
 AccessTokenID BuildNonHapTokenId()
 {
     AccessTokenID id = TEST_TOKEN_ID;
@@ -430,6 +451,34 @@ HWTEST_F(DeleteIdentityTest, BuildBundleCleanDbOps004, TestSize.Level0)
 }
 
 /**
+ * @tc.name: BuildBundleCleanDbOps005
+ * @tc.desc: A cross-mode active token does not guard the target mode's package info rows:
+ *           the cleanup runs and is scoped to the target mode.
+ * @tc.type: FUNC
+ */
+HWTEST_F(DeleteIdentityTest, BuildBundleCleanDbOps005, TestSize.Level0)
+{
+    auto info = BuildInfoInner(TEST_TOKEN_ID, TEST_BUNDLE);
+    auto& tokenCache = AccessTokenInfoManager::GetInstance().hapTokenInfoMap_;
+    tokenCache[TEST_TOKEN_ID] = info;
+    AccessTokenIDManager::GetInstance().RegisterTokenId(TEST_TOKEN_ID, TOKEN_HAP);
+    // The other active row belongs to sub mode (instIndex 10000): it must not
+    // guard the main-mode package info rows.
+    SetMockDbFindResult(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, RET_SUCCESS,
+        { BuildModeTokenRow(TEST_OTHER_ID, TEST_BUNDLE, 0, 10000) });
+    DeleteDfxInfo dfx = {};
+
+    EXPECT_EQ(RET_SUCCESS, DeleteBundleManager::GetInstance().DeleteIdentityWithDfx(
+        TEST_TOKEN_ID, TEST_BUNDLE, ReservedType::RESERVED_IDENTITY, dfx));
+
+    // Cross-mode rows do not suppress the cleanup: the main-mode package info
+    // is deleted, scoped to mode 0.
+    EXPECT_EQ(1u, CountDelInfo(GetMockDbState().lastDeleteInfos, AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO));
+    EXPECT_EQ(0, GetPackageCleanMode(GetMockDbState().lastDeleteInfos));
+    EXPECT_EQ(1u, CountDelInfo(GetMockDbState().lastDeleteInfos, AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO));
+}
+
+/**
  * @tc.name: BuildBundleDelDbOps001
  * @tc.desc: Whole-bundle deletion partitions active and reserved tokens and deletes the package info.
  * @tc.type: FUNC
@@ -519,6 +568,34 @@ HWTEST_F(DeleteIdentityTest, DeleteReservedToken003, TestSize.Level0)
         TEST_RESERVED_ID, TEST_BUNDLE, ReservedType::NONE, dfx));
 
     EXPECT_TRUE(AccessTokenIDManager::GetInstance().IsReservedTokenId(TEST_RESERVED_ID));
+}
+
+/**
+ * @tc.name: DeleteReservedToken005
+ * @tc.desc: A complete reserved-token delete honors the clean plan mode-scoped: a
+ *           cross-mode active row neither guards the cleanup nor gets cleaned.
+ * @tc.type: FUNC
+ */
+HWTEST_F(DeleteIdentityTest, DeleteReservedToken005, TestSize.Level0)
+{
+    AccessTokenIDManager::GetInstance().AddReservedTokenId(TEST_RESERVED_ID);
+    // The reserved row is a main-mode trace (instIndex 0); the other active row
+    // belongs to sub mode (instIndex 10000).
+    SetMockDbFindResult(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, RET_SUCCESS,
+        { BuildModeTokenRow(TEST_RESERVED_ID, TEST_BUNDLE, 1, 0),
+          BuildModeTokenRow(TEST_OTHER_ID, TEST_BUNDLE, 0, 10000) });
+    DeleteDfxInfo dfx = {};
+
+    EXPECT_EQ(RET_SUCCESS, DeleteBundleManager::GetInstance().DeleteIdentityWithDfx(
+        TEST_RESERVED_ID, TEST_BUNDLE, ReservedType::NONE, dfx));
+
+    EXPECT_EQ(static_cast<int32_t>(AT_DELETE_RESERVED_TOKEN), dfx.sceneCode);
+    // The clean plan fires: the main-mode package rows go, scoped to mode 0;
+    // the sub-mode rows survive the mode-0 reserved delete.
+    EXPECT_EQ(1u, CountDelInfo(GetMockDbState().lastDeleteInfos, AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO));
+    EXPECT_EQ(0, GetPackageCleanMode(GetMockDbState().lastDeleteInfos));
+    EXPECT_EQ(1u, CountDelInfo(GetMockDbState().lastDeleteInfos, AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO));
+    EXPECT_FALSE(AccessTokenIDManager::GetInstance().IsReservedTokenId(TEST_RESERVED_ID));
 }
 
 /**

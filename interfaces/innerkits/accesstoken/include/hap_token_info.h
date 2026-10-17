@@ -57,6 +57,8 @@ namespace AccessToken {
  * @brief Declares multiple mode type.
  */
 enum class MultipleMode : int32_t {
+    /** Current mode for query only, resolved at runtime; not allowed for install */
+    CURRENT_MODE = -1,
     /** Default mode or main mode */
     DEFAULT_OR_MAIN_MODE = 0,
     /** Non-main mode */
@@ -64,6 +66,7 @@ enum class MultipleMode : int32_t {
     /** Max mode value */
     MAX_MODE = SUB_MODE,
 };
+
 
 /**
  * @brief Declares hap info params class

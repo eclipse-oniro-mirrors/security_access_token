@@ -47,6 +47,9 @@ public:
     // Read the installed bundle module records (path/persistData) of the bundle.
     static int32_t GetInstalledBundleInfo(std::string bundleName, std::vector<std::string>& paths,
         std::vector<std::vector<uint8_t>>& persistDatas);
+    // Strict query: only the rows of the given mode (no fallback).
+    static int32_t GetInstalledBundleInfo(std::string bundleName, MultipleMode mode,
+        std::vector<std::string>& paths, std::vector<std::vector<uint8_t>>& persistDatas);
     // Query hap token records by bundleName and instIndex.
     static int32_t QueryBundleTokenbyIndex(const std::string& bundleName, int32_t instIndex,
         std::vector<GenericValues>& hapTokenResults);

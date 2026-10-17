@@ -77,6 +77,7 @@
 #include "kernel_and_db_transaction.h"
 #include "bundle_infos_rawdata_helper.h"
 #include "check_hap_sign_result_rawdata_helper.h"
+#include "bundle_info_manager.h"
 #include "install_session_manager.h"
 #endif
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
@@ -105,6 +106,7 @@ static const char* ACCESS_TOKEN_SERVICE_INIT_KEY = "accesstoken.permission.init"
 static const char* ACCESS_TOKEN_DB_EMPTY_KEY = "persist.accesstoken.permission.dberror";
 static const char* ACCESS_TOKEN_DB_DIR_PATH = "/data/service/el1/public/access_token/";
 constexpr int32_t ERROR = -1;
+
 const char* GRANT_ABILITY_BUNDLE_NAME = "com.ohos.permissionmanager";
 const char* GRANT_ABILITY_ABILITY_NAME = "com.ohos.permissionmanager.GrantAbility";
 const char* PERMISSION_STATE_SHEET_ABILITY_NAME = "com.ohos.permissionmanager.PermissionStateSheetAbility";
@@ -2016,7 +2018,7 @@ int AccessTokenManagerService::GetHapTokenInfoExtension(AccessTokenID tokenID,
     }
 
 #ifdef SPM_DATA_ENABLE
-    return InstallSessionManager::GetInstance().GetHapAppIdByTokenId(
+    return BundleInfoManager::GetInstance().GetHapAppIdByTokenId(
         hapTokenInfoRes.hapTokenInfoParams.tokenID, appID);
 #else
     return AccessTokenInfoManager::GetInstance().GetHapAppIdByTokenId(
@@ -3371,7 +3373,7 @@ int32_t AccessTokenManagerService::GetCacheSignInfoBySessionId(int32_t sessionId
     return ret;
 }
 
-int32_t AccessTokenManagerService::GetHapSignInfo(const std::string& bundleName, uint32_t flag,
+int32_t AccessTokenManagerService::GetHapSignInfo(const std::string& bundleName, uint32_t flag, int32_t mode,
     BundleInfosRawdata& bundleInfos)
 {
     AccessTokenID tokenID = IPCSkeleton::GetCallingTokenID();
@@ -3379,8 +3381,14 @@ int32_t AccessTokenManagerService::GetHapSignInfo(const std::string& bundleName,
         LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", tokenID);
         return AccessTokenError::ERR_PERMISSION_DENIED;
     }
+    MultipleMode queryMode = static_cast<MultipleMode>(mode);
+    if (!DataValidator::IsQueryModeValid(queryMode)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Query mode is invalid.");
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
     std::vector<TrustedBundleInfo> bundleInfoList;
-    int32_t ret = InstallSessionManager::GetInstance().GetHapSignInfo(bundleName, bundleInfoList, flag);
+    int32_t ret = BundleInfoManager::GetInstance().GetHapSignInfo(
+        bundleName, bundleInfoList, flag, queryMode);
 
     if (!BundleInfosRawdataHelper::WriteToRawData(bundleInfoList, bundleInfos)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "WriteToRawData failed.");

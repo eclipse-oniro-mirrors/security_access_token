@@ -26,6 +26,7 @@
 #include "accesstoken_info_utils.h"
 #include "callback_manager.h"
 #include "hisysevent_adapter.h"
+#include "multiple_mode_utils.h"
 #include "kernel_and_db_transaction.h"
 #include "permission_change_notifier.h"
 #include "permission_data_brief.h"
@@ -107,21 +108,25 @@ void DeleteBundleManager::BuildTokenRemoveDbOps(const std::shared_ptr<HapTokenIn
 }
 
 void DeleteBundleManager::JudgeBundleCleanFromRows(const std::vector<GenericValues>& tokenResults,
-    AccessTokenID targetTokenId, int32_t targetUid, ReservedType delType, BundleCleanPlan& plan)
+    const BundleCleanParam& param, BundleCleanPlan& plan)
 {
     // Spec: the current token's post-transaction state is governed by delType
     // alone; a RESERVED_IDENTITY row stores uid=-1 (bundleId already released
     // at reserve time).
     bool needCleanBundleInfo = true;
-    bool needCleanBundleId = (delType != ReservedType::RESERVED_DATA) && (targetUid != UNAVAILABLE_UID);
+    bool needCleanBundleId =
+        (param.delType != ReservedType::RESERVED_DATA) && (param.uid != UNAVAILABLE_UID);
     int32_t bundleId = UNAVAILABLE_UID;
-    (void)AccessTokenIDManager::GetInstance().ExtractBundleId(targetUid, bundleId);
+    (void)AccessTokenIDManager::GetInstance().ExtractBundleId(param.uid, bundleId);
 
     for (const auto& result : tokenResults) {
-        if (static_cast<AccessTokenID>(result.GetInt(TokenFiledConst::FIELD_TOKEN_ID)) == targetTokenId) {
+        if (static_cast<AccessTokenID>(result.GetInt(TokenFiledConst::FIELD_TOKEN_ID)) == param.tokenId) {
             continue;
         }
-        if (AccessTokenInfoUtils::GetReservedTokenTypeDBValue(result) == ReservedType::NONE) {
+        // Dual-mode: only a same-mode active row guards the package-info rows
+        // of the target mode; bundleId is shared across modes.
+        if ((MultipleModeUtils::GetTokenMode(result.GetInt(TokenFiledConst::FIELD_INST_INDEX)) == param.mode) &&
+            (AccessTokenInfoUtils::GetReservedTokenTypeDBValue(result) == ReservedType::NONE)) {
             needCleanBundleInfo = false;
         }
         if (!needCleanBundleId) {
@@ -138,8 +143,8 @@ void DeleteBundleManager::JudgeBundleCleanFromRows(const std::vector<GenericValu
     plan.cleanBundleId = needCleanBundleId;
 }
 
-int32_t DeleteBundleManager::JudgeBundleClean(AccessTokenID currentTokenId, const std::string& bundleName,
-    int32_t currentUid, ReservedType delType, BundleCleanPlan& plan)
+int32_t DeleteBundleManager::JudgeBundleClean(const BundleCleanParam& param, const std::string& bundleName,
+    BundleCleanPlan& plan)
 {
     GenericValues condition;
     condition.Put(TokenFiledConst::FIELD_BUNDLE_NAME, bundleName);
@@ -149,14 +154,20 @@ int32_t DeleteBundleManager::JudgeBundleClean(AccessTokenID currentTokenId, cons
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to query tokens for bundle %{public}s.", bundleName.c_str());
         return ret;
     }
-    JudgeBundleCleanFromRows(tokenResults, currentTokenId, currentUid, delType, plan);
+    JudgeBundleCleanFromRows(tokenResults, param, plan);
     return RET_SUCCESS;
 }
 
 int32_t DeleteBundleManager::BuildBundleCleanDbOps(const std::shared_ptr<HapTokenInfoInner>& info,
     ReservedType delType, std::vector<DelInfo>& delInfoVec, BundleCleanPlan& plan)
 {
-    int32_t ret = JudgeBundleClean(info->GetTokenID(), info->GetBundleName(), info->GetUid(), delType, plan);
+    BundleCleanParam param = {
+        info->GetTokenID(),
+        info->GetUid(),
+        MultipleModeUtils::GetTokenMode(info->GetInstIndex()),
+        delType,
+    };
+    int32_t ret = JudgeBundleClean(param, info->GetBundleName(), plan);
     if (ret != RET_SUCCESS) {
         return ret;
     }
@@ -165,6 +176,7 @@ int32_t DeleteBundleManager::BuildBundleCleanDbOps(const std::shared_ptr<HapToke
     }
     GenericValues packageCondition;
     packageCondition.Put(TokenFiledConst::FIELD_BUNDLE_NAME, info->GetBundleName());
+    packageCondition.Put(TokenFiledConst::FIELD_MODE, static_cast<int32_t>(param.mode));
     AccessTokenInfoUtils::GenerateDelInfoToVec(
         AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO, packageCondition, delInfoVec);
     return RET_SUCCESS;
@@ -356,7 +368,7 @@ void DeleteBundleManager::PublishActiveTokenDeletion(const std::shared_ptr<HapTo
         // Memory-only bundleId release
         (void)AccessTokenIDManager::GetInstance().RemoveBundleId(info->GetUid());
     }
-    AccessTokenInfoManager::GetInstance().CommitDeleteHapCache(id, info->GetBundleName());
+    AccessTokenInfoManager::GetInstance().CommitDeleteHapCache(id);
     if (delType != ReservedType::NONE) {
         (void)AccessTokenIDManager::GetInstance().ChangeTokenIdStatus(id, TokenIdStatus::RESERVED);
     } else {
@@ -414,7 +426,7 @@ void ReleaseBundleResources(const std::string& bundleName,
 {
     for (const auto& tokenId : allTokens) {
         // Route through the cache commit (active caches no-op for reserved).
-        AccessTokenInfoManager::GetInstance().CommitDeleteHapCache(tokenId, bundleName);
+        AccessTokenInfoManager::GetInstance().CommitDeleteHapCache(tokenId);
         // Force release: the whole bundle is gone, the id leaves whichever
         // set holds it - no active/reserved partition needed here.
         AccessTokenIDManager::GetInstance().ReleaseTokenIdForce(tokenId);
@@ -532,9 +544,9 @@ int32_t DeleteBundleManager::HandleReservedRowNotFound(AccessTokenID tokenID, co
 }
 
 int32_t DeleteBundleManager::PrepareReservedTokenDelete(AccessTokenID tokenID, const std::string& bundleName,
-    DeleteDfxInfo& dfxInfo, int32_t& rowUid, BundleCleanPlan& cleanPlan)
+    DeleteDfxInfo& dfxInfo, BundleCleanParam& cleanParam, BundleCleanPlan& cleanPlan)
 {
-    rowUid = UNAVAILABLE_UID;
+    cleanParam.uid = UNAVAILABLE_UID;
     // One bundle-name query feeds both the row lookup and the clean judgment.
     GenericValues bundleCondition;
     bundleCondition.Put(TokenFiledConst::FIELD_BUNDLE_NAME, bundleName);
@@ -554,20 +566,23 @@ int32_t DeleteBundleManager::PrepareReservedTokenDelete(AccessTokenID tokenID, c
         }
     }
     if (rowIndex == bundleRows.size()) {
+        // Reject on ownership mismatch, proceed idempotently when gone: a
+        // token missing from the db does not join the clean judgment.
         ret = HandleReservedRowNotFound(tokenID, bundleName);
         if (ret != RET_SUCCESS) {
             return ret;
         }
-    }
-    if (rowIndex != bundleRows.size()) {
+    } else {
         const GenericValues& row = bundleRows[rowIndex];
         dfxInfo.userId = row.GetInt(TokenFiledConst::FIELD_USER_ID);
         dfxInfo.instIndex = row.GetInt(TokenFiledConst::FIELD_INST_INDEX);
-        rowUid = row.GetInt(TokenFiledConst::FIELD_UID);
+        // Complete delete (NONE mode).
+        cleanParam.tokenId = tokenID;
+        cleanParam.uid = row.GetInt(TokenFiledConst::FIELD_UID);
+        cleanParam.mode = MultipleModeUtils::GetTokenMode(dfxInfo.instIndex);
+        cleanParam.delType = ReservedType::NONE;
+        JudgeBundleCleanFromRows(bundleRows, cleanParam, cleanPlan);
     }
-
-    // Complete delete (NONE mode); uid=-1 rows are skipped by the judgment.
-    JudgeBundleCleanFromRows(bundleRows, tokenID, rowUid, ReservedType::NONE, cleanPlan);
     return RET_SUCCESS;
 }
 
@@ -577,9 +592,9 @@ int32_t DeleteBundleManager::DeleteReservedToken(AccessTokenID tokenID, const st
     LOGI(ATM_DOMAIN, ATM_TAG, "DeleteReservedToken: tokenID=%{public}u, bundleName=%{public}s.",
         tokenID, bundleName.c_str());
     KernelAndDBWriteTransaction txn;
-    int32_t rowUid = 0;
+    BundleCleanParam cleanParam;
     BundleCleanPlan cleanPlan;
-    int32_t ret = PrepareReservedTokenDelete(tokenID, bundleName, dfxInfo, rowUid, cleanPlan);
+    int32_t ret = PrepareReservedTokenDelete(tokenID, bundleName, dfxInfo, cleanParam, cleanPlan);
     if (ret != RET_SUCCESS) {
         return ret;
     }
@@ -588,8 +603,11 @@ int32_t DeleteBundleManager::DeleteReservedToken(AccessTokenID tokenID, const st
     // token's own stored type: the permission state always goes.
     GenerateHapTokenDelInfoVec(tokenID, bundleName, delInfoVec, true);
     if (cleanPlan.cleanBundleInfo) {
+        // Mode-scoped: the reserved row is the last same-mode trace, so only
+        // the target mode's package info rows go; the other mode survives.
         GenericValues packageCondition;
         packageCondition.Put(TokenFiledConst::FIELD_BUNDLE_NAME, bundleName);
+        packageCondition.Put(TokenFiledConst::FIELD_MODE, static_cast<int32_t>(cleanParam.mode));
         AccessTokenInfoUtils::GenerateDelInfoToVec(
             AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO, packageCondition, delInfoVec);
     }
@@ -600,9 +618,9 @@ int32_t DeleteBundleManager::DeleteReservedToken(AccessTokenID tokenID, const st
         return ret;
     }
     // Route through the cache commit (active caches no-op for reserved).
-    AccessTokenInfoManager::GetInstance().CommitDeleteHapCache(tokenID, bundleName);
+    AccessTokenInfoManager::GetInstance().CommitDeleteHapCache(tokenID);
     if (cleanPlan.cleanBundleId) {
-        (void)AccessTokenIDManager::GetInstance().RemoveBundleId(rowUid);
+        (void)AccessTokenIDManager::GetInstance().RemoveBundleId(cleanParam.uid);
     }
     AccessTokenIDManager::GetInstance().RemoveReservedTokenId(tokenID);
     txn.Commit();

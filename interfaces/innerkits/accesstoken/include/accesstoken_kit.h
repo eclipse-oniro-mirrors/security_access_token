@@ -869,13 +869,24 @@ public:
     static int32_t FinishInstall(int32_t sessionId, bool isPersistent,
         const std::map<std::string, std::string>& modulePathMap);
     /**
-     * @brief Get sign info by bundle name.
+     * @brief Get sign info by bundle name, query current mode by default.
      * @param bundleName bundle name
      * @param flag sign info query flag, see SignInfoQueryFlag in hap_token_info.h
      * @param bundleInfo trusted bundle info list
      * @return error code, see access_token_error.h
      */
     static int32_t GetHapSignInfo(const std::string& bundleName, uint32_t flag,
+        std::vector<TrustedBundleInfo>& bundleInfo);
+    /**
+     * @brief Get sign info by bundle name with explicit query mode.
+     * @param bundleName bundle name
+     * @param flag sign info query flag, see SignInfoQueryFlag in hap_token_info.h
+     * @param mode query mode: CURRENT_MODE resolves current mode at runtime,
+     *             or explicit MultipleMode value, see hap_token_info.h
+     * @param bundleInfo trusted bundle info list
+     * @return error code, see access_token_error.h
+     */
+    static int32_t GetHapSignInfo(const std::string& bundleName, uint32_t flag, MultipleMode mode,
         std::vector<TrustedBundleInfo>& bundleInfo);
     /**
      * @brief Get cache sign info by session id.

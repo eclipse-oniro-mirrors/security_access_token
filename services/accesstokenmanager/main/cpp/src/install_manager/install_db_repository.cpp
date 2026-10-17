@@ -58,6 +58,27 @@ int32_t InstallDbRepository::GetInstalledBundleInfo(std::string bundleName,
     return RET_SUCCESS;
 }
 
+int32_t InstallDbRepository::GetInstalledBundleInfo(std::string bundleName, MultipleMode mode,
+    std::vector<std::string>& paths, std::vector<std::vector<uint8_t>>& persistDatas)
+{
+    GenericValues condition;
+    condition.Put(TokenFiledConst::FIELD_BUNDLE_NAME, bundleName);
+    condition.Put(TokenFiledConst::FIELD_MODE, static_cast<int32_t>(mode));
+    std::vector<GenericValues> hapTokenResults;
+    int32_t ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO, condition, hapTokenResults);
+    if (ret != RET_SUCCESS) {
+        LOGC(ATM_DOMAIN, ATM_TAG, "Db find failed, ret=%{public}d", ret);
+        return ERR_DATABASE_OPERATE_FAILED;
+    }
+
+    for (const auto& tokenValue : hapTokenResults) {
+        paths.emplace_back(tokenValue.GetString(TokenFiledConst::FIELD_PATH));
+        persistDatas.emplace_back(tokenValue.GetBlob(TokenFiledConst::FIELD_PERSIST_DATA));
+    }
+
+    return RET_SUCCESS;
+}
+
 int32_t InstallDbRepository::QueryBundleTokenbyIndex(const std::string& bundleName, int32_t instIndex,
     std::vector<GenericValues>& hapTokenResults)
 {

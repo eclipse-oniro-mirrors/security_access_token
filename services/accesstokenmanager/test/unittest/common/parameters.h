@@ -22,7 +22,16 @@ namespace OHOS {
 namespace system {
 bool GetBoolParameter(const std::string& key, bool def);
 void SetBoolParameter(const std::string& key, bool status);
+
+template<typename T>
+T GetIntParameter(const std::string& key, T def, T min = std::numeric_limits<T>::min(),
+    T max = std::numeric_limits<T>::max())
+{
+    (void)min;
+    (void)max;
+    return def;
 }
+} // namespace OHOS::system
 } // namespace OHOS
 
 #endif // SYSTEM_PARAMETERS_H

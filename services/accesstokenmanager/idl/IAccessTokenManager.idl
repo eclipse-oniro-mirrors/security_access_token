@@ -116,7 +116,7 @@ interface OHOS.Security.AccessToken.IAccessTokenManager{
     [ipccode 87, macrodef SPM_DATA_ENABLE] void DeleteIdentity([in] unsigned int tokenID, [in] String bundleName, [in] ReservedTypeIdl type);
     [ipccode 88, macrodef SPM_DATA_ENABLE] void CheckHapSignInfo([in] BundleHapListIdl list, [in] IRemoteObject cb, [in] unsigned int flag, [out] CheckHapSignResultRawdata checkResult);
     [ipccode 89, macrodef SPM_DATA_ENABLE] void GetCacheSignInfoBySessionId([in] int sessionId, [in] unsigned int flag, [out] BundleInfosRawdata bundleInfos);
-    [ipccode 90, macrodef SPM_DATA_ENABLE] void GetHapSignInfo([in] String bundleName, [in] unsigned int flag, [out] BundleInfosRawdata bundleInfos);
+    [ipccode 90, macrodef SPM_DATA_ENABLE] void GetHapSignInfo([in] String bundleName, [in] unsigned int flag, [in] int mode, [out] BundleInfosRawdata bundleInfos);
 
     [ipccode 101, macrodef SECURITY_COMPONENT_ENHANCE_ENABLE, oneway, customMsgOption flags=MessageOption::TF_IMAGE] void RegisterSecCompEnhance([in] SecCompEnhanceDataParcel enhanceParcel);
     [ipccode 102, macrodef SECURITY_COMPONENT_ENHANCE_ENABLE] void UpdateSecCompEnhance([in] int pid, [in] unsigned int seqNum);
