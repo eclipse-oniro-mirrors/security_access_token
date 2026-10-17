@@ -369,6 +369,37 @@ AccessTokenID RunRepairFlagScenario(const std::string& bundleName, const BundleP
     return AccessTokenIDManager::ParseTokenId(desired.tokenId);
 }
 
+// DLP repair variant: seed the original app with a plain policy at index 0 and
+// KEEP its row — a DLP install derives its permission list from the original's
+// index-0 token (AllocHapPolicy -> InitDlpPermission), so the original must
+// stay. The DLP app itself rides the clone index (AppCloneTest002 convention)
+// and has no row: the repair Prepare runs the desired-id flag adoption path.
+AccessTokenID RunDlpRepairFlagScenario(const std::string& bundleName, const BundlePolicy& dlpPolicy,
+    AccessTokenID desiredId, int32_t desiredUid)
+{
+    BundlePolicy seedPolicy;
+    seedPolicy.dlpType = DLP_COMMON;
+    seedPolicy.isDebugGrant = false;
+    HapBaseInfo baseInfo;
+    baseInfo.userID = TEST_USER_ID;
+    baseInfo.bundleName = bundleName;
+    baseInfo.instIndex = 0;
+    Identity seed = {0, -1};
+    std::string path = "/SYSTEM/system_basic/state:[cam]/acl:[]/Module001/" + bundleName;
+    InstallHap({path}, baseInfo, seedPolicy, seed);
+
+    baseInfo.instIndex = 1;
+    Identity desired = {0, -1};
+    desired.tokenId = desiredId;
+    desired.uid = desiredUid;
+    int32_t sessionId = 0;
+    EXPECT_EQ(ERR_OK, g_installSessionManager->PrepareHapIdentity(
+        sessionId, baseInfo, dlpPolicy, nullptr, desired));
+    std::map<std::string, std::string> emptyPathMap;
+    EXPECT_EQ(ERR_OK, g_installSessionManager->FinishInstall(sessionId, true, emptyPathMap));
+    return AccessTokenIDManager::ParseTokenId(desired.tokenId);
+}
+
 // Install a kernel/package baseline bundle then remove its token row (no
 // sibling uid left), and run a repair Prepare for the desired identity.
 int32_t RepairPrepareOnClearedBundle(const std::string& bundleName, const BundlePolicy& bundlePolicy,
@@ -5305,12 +5336,12 @@ HWTEST_F(InstallSessionManagerMockTest, RepairPrepareTest004, TestSize.Level1)
     EXPECT_EQ(1, TokenIDAttributes::GetTokenIdCloneFlag(fresh));
 
     // dlp repair with a dlp-form desired id: adopted as-is
-    adopted = RunRepairFlagScenario("RepairFlagDlpAdoptBundle", dlpPolicy, 0, dlpFormId, 20054332);
+    adopted = RunDlpRepairFlagScenario("RepairFlagDlpAdoptBundle", dlpPolicy, dlpFormId, 20054332);
     EXPECT_EQ(dlpFormId, adopted);
     EXPECT_EQ(1, TokenIDAttributes::GetTokenIdDlpFlag(adopted));
 
     // dlp repair with a plain-form desired id: rejected, fresh id carries dlpFlag
-    fresh = RunRepairFlagScenario("RepairFlagDlpMismatchBundle", dlpPolicy, 0, plainFormId, 20054333);
+    fresh = RunDlpRepairFlagScenario("RepairFlagDlpMismatchBundle", dlpPolicy, plainFormId, 20054333);
     EXPECT_NE(plainFormId, fresh);
     EXPECT_EQ(1, TokenIDAttributes::GetTokenIdDlpFlag(fresh));
 
