@@ -577,7 +577,7 @@ void AccessTokenMigrationManager::Initialize()
     if (IsMigrationCompleted()) {
         AccessTokenIDManager::GetInstance().SetMigrationDone();
         // todo: install_session_manager SetMigrationDone
-#if defined(IS_SUPPORT_HAP_RUNNING) && defined(IS_SUPPORT_INSTALL_SESSION_MANAGER)
+#if defined(IS_SUPPORT_HAP_RUNNING) && defined(SPM_DATA_ENABLE)
         InstallSessionManager::GetInstance().SetMigrationDone();
 #endif
         LOGI(ATM_DOMAIN, ATM_TAG, "Migration was previously completed, flag set during initialization.");
@@ -781,7 +781,7 @@ int32_t AccessTokenMigrationManager::FinishMigration()
     AccessTokenIDManager::GetInstance().SetMigrationDone();
     // refresh next bundle id after migration, to avoid uid conflict with migrated hap
     (void)AccessTokenIDManager::GetInstance().InitBundleIdConfig();
-#if defined(IS_SUPPORT_HAP_RUNNING) && defined(IS_SUPPORT_INSTALL_SESSION_MANAGER)
+#if defined(IS_SUPPORT_HAP_RUNNING) && defined(SPM_DATA_ENABLE)
     InstallSessionManager::GetInstance().SetMigrationDone();
 #endif
     ReportInvalidUidsIfNeeded();
