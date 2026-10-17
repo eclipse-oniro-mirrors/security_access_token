@@ -298,6 +298,7 @@ export default namespace abilityAccessCtrl {
         offPermissionStateChange(tokenIDList: Array<int>, permissionList: Array<Permissions>,
             callback: Callback<PermissionStateChangeInfo>): void;
         getSelfPermissionStatus(permissionName: Permissions): PermissionStatus;
+        isPermissionSupported(permissionName: Permissions): boolean;
         queryStatusByPermission(permissionList: Array<Permissions>): Promise<Array<PermissionStatusInfo>>;
         queryStatusByTokenID(tokenIDList: Array<int>): Promise<Array<PermissionStatusInfo>>;
         getCliPermissionRequestInfo(agentID: string, cliList: Array<CliInfo>): Promise<PermissionDialogResult>;
@@ -339,6 +340,7 @@ export default namespace abilityAccessCtrl {
             permissionList: Array<Permissions>, callback?: Callback<PermissionStateChangeInfo>): void;
         native requestAppPermOnSettingExecute(tokenID: int): void;
         native getSelfPermissionStatusExecute(permissionName: Permissions): int;
+        native isPermissionSupportedExecute(permissionName: Permissions): boolean;
         native queryStatusByPermissionExecute(permissionList: Array<Permissions>): Array<PermissionStatusInfo>;
         native queryStatusByTokenIDExecute(tokenIDList: Array<int>): Array<PermissionStatusInfo>;
         native getCliPermissionRequestInfoExecute(agentID: string, cliList: Array<CliInfo>): PermissionDialogResult;
@@ -719,6 +721,10 @@ export default namespace abilityAccessCtrl {
         getSelfPermissionStatus(permissionName: Permissions): PermissionStatus {
             let status = this.getSelfPermissionStatusExecute(permissionName);
             return PermissionStatus.fromValue(status);
+        }
+
+        isPermissionSupported(permissionName: Permissions): boolean {
+            return this.isPermissionSupportedExecute(permissionName);
         }
 
         queryStatusByPermission(permissionList: Array<Permissions>): Promise<Array<PermissionStatusInfo>> {

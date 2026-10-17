@@ -166,7 +166,7 @@ public:
         const std::map<std::string, std::string>& modulePathMap) override;
     int32_t GetCacheSignInfoBySessionId(int32_t sessionId, uint32_t flag,
         BundleInfosRawdata& bundleInfos) override;
-    int32_t GetHapSignInfo(const std::string& bundleName, uint32_t flag,
+    int32_t GetHapSignInfo(const std::string& bundleName, uint32_t flag, int32_t mode,
         BundleInfosRawdata& bundleInfos) override;
     int32_t GetCachePolicyBySessionId(int32_t sessionId, const std::string& bundleName,
         BundlePolicyInfoIdl& bundlePolicyInfoIdl) override;

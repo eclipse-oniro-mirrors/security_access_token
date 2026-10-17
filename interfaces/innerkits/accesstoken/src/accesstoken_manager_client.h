@@ -110,7 +110,7 @@ public:
     int32_t GetCacheSignInfoBySessionId(int32_t sessionId, uint32_t flag,
         std::vector<TrustedBundleInfo>& bundleInfo);
     int32_t GetHapSignInfo(const std::string& bundleName, uint32_t flag,
-        std::vector<TrustedBundleInfo>& bundleInfo);
+        MultipleMode mode, std::vector<TrustedBundleInfo>& bundleInfo);
     int32_t GetCachePolicyBySessionId(int32_t sessionId, const std::string& bundleName,
         BundlePolicyInfo& bundlePolicyInfo);
 #endif
@@ -156,7 +156,7 @@ public:
     int32_t ResetDatabaseRecoveryStatus();
     void DumpTokenInfo(const AtmToolsParamInfo& info, std::string& dumpInfo);
     int32_t GetVersion(uint32_t& version);
-    bool IsSupportPermission(const std::string& permissionName);
+    int32_t IsSupportedPermission(const std::string& permissionName, bool& result);
     void OnRemoteDiedHandle();
     void OnAddAccessTokenSa();
     int32_t SetPermDialogCap(const HapBaseInfo& hapBaseInfo, bool enable);

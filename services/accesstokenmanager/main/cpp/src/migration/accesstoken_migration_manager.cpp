@@ -35,6 +35,7 @@
 #if defined(SPM_DATA_ENABLE) && defined(IS_SUPPORT_HAP_RUNNING)
 #include "install_session_manager.h"
 #endif
+#include "multiple_mode_utils.h"
 #include "parameters.h"
 #include "permission_kernel_utils.h"
 #ifdef IS_SUPPORT_HAP_RUNNING
@@ -55,6 +56,11 @@ static constexpr int32_t INVALID_HAP_UID = -1;
 static constexpr size_t MAX_MIGRATED_INFO_SIZE = 50;
 static constexpr int32_t IS_MIGRATED = 1;
 
+static std::string GetPlaceholderModuleName(int32_t index)
+{
+    return "#" + std::to_string(index);
+}
+
 // mode is implicitly encoded in instIndex; returns 0 (main) or 1 (sub).
 static int32_t GetBundleModeFromInstIndex(int32_t instIndex)
 {
@@ -68,17 +74,6 @@ static bool IsModeInstIndexValid(int32_t mode, int32_t instIndex)
     }
     return GetBundleModeFromInstIndex(instIndex) == mode;
 }
-
-static std::string GetPlaceholderModuleName(int32_t index)
-{
-    return "#" + std::to_string(index);
-}
-
-static std::string GetBundleModeKey(const std::string& bundleName, int32_t mode)
-{
-    return bundleName + std::to_string(mode);
-}
-
 int32_t AccessTokenMigrationManager::MarkMigrationCompleted()
 {
     GenericValues delValue;
@@ -220,7 +215,8 @@ int32_t AccessTokenMigrationManager::CheckDuplicateHapBaseInfo(const HapBaseInfo
 int32_t AccessTokenMigrationManager::CheckUidConflict(const MigratedInfoIdl& migratedInfo, int32_t uid,
     std::unordered_set<int32_t>& seenInBundle) const
 {
-    std::string ownerKey = GetBundleModeKey(migratedInfo.bundleName, static_cast<int32_t>(migratedInfo.pathList.mode));
+    std::string ownerKey = MultipleModeUtils::GetBundleModeKey(
+        migratedInfo.bundleName, static_cast<int32_t>(migratedInfo.pathList.mode));
     auto uidOwnerIter = uidOwnerBundles_.find(uid);
     if (uidOwnerIter != uidOwnerBundles_.end()) {
         if (uidOwnerIter->second == ownerKey) {
@@ -249,7 +245,8 @@ int32_t AccessTokenMigrationManager::CheckBundleIdConflict(const MigratedInfoIdl
         return AccessTokenError::ERR_INVALID_UID;
     }
 
-    std::string ownerKey = GetBundleModeKey(migratedInfo.bundleName, static_cast<int32_t>(migratedInfo.pathList.mode));
+    std::string ownerKey = MultipleModeUtils::GetBundleModeKey(
+        migratedInfo.bundleName, static_cast<int32_t>(migratedInfo.pathList.mode));
     auto ownerIter = bundleIdOwnerBundles_.find(bundleId);
     if (ownerIter != bundleIdOwnerBundles_.end() && ownerIter->second != ownerKey) {
         LOGC(ATM_DOMAIN, ATM_TAG, "Migrate installed bundles failed, duplicate bundleId %{public}d across "
@@ -580,7 +577,7 @@ void AccessTokenMigrationManager::Initialize()
     if (IsMigrationCompleted()) {
         AccessTokenIDManager::GetInstance().SetMigrationDone();
         // todo: install_session_manager SetMigrationDone
-#if defined(IS_SUPPORT_HAP_RUNNING) && defined(IS_SUPPORT_INSTALL_SESSION_MANAGER)
+#if defined(IS_SUPPORT_HAP_RUNNING) && defined(SPM_DATA_ENABLE)
         InstallSessionManager::GetInstance().SetMigrationDone();
 #endif
         LOGI(ATM_DOMAIN, ATM_TAG, "Migration was previously completed, flag set during initialization.");
@@ -664,8 +661,9 @@ int32_t AccessTokenMigrationManager::BuildUidBundleCaches()
                 ERR_INVALID_UID);
             continue;
         }
-        int32_t mode = row.GetInt(TokenFiledConst::FIELD_INST_INDEX) / MAIN_CLONE_INDEX_BASE;
-        std::string ownerKey = GetBundleModeKey(bundleName, mode);
+        int32_t mode = static_cast<int32_t>(
+            MultipleModeUtils::GetTokenMode(row.GetInt(TokenFiledConst::FIELD_INST_INDEX)));
+        std::string ownerKey = MultipleModeUtils::GetBundleModeKey(bundleName, mode);
         if (bundleIdOwnerBundles_.count(bundleId) == 0) {
             uidOwnerBundles_[existingUid] = ownerKey;
             bundleIdOwnerBundles_[bundleId] = ownerKey;
@@ -708,7 +706,7 @@ BundleMigrateResultIdl AccessTokenMigrationManager::ProcessBundleMigration(
 
     int32_t singleRet = MigrateSingleBundle(migratedInfo, migrateResult);
     if (singleRet == RET_SUCCESS) {
-        std::string ownerKey = GetBundleModeKey(migratedInfo.bundleName,
+        std::string ownerKey = MultipleModeUtils::GetBundleModeKey(migratedInfo.bundleName,
             static_cast<int32_t>(migratedInfo.pathList.mode));
         for (size_t i = 0; i < migratedInfo.hapBaseInfoList.size(); ++i) {
             const auto& hapBaseInfo = migratedInfo.hapBaseInfoList[i];
@@ -783,7 +781,7 @@ int32_t AccessTokenMigrationManager::FinishMigration()
     AccessTokenIDManager::GetInstance().SetMigrationDone();
     // refresh next bundle id after migration, to avoid uid conflict with migrated hap
     (void)AccessTokenIDManager::GetInstance().InitBundleIdConfig();
-#if defined(IS_SUPPORT_HAP_RUNNING) && defined(IS_SUPPORT_INSTALL_SESSION_MANAGER)
+#if defined(IS_SUPPORT_HAP_RUNNING) && defined(SPM_DATA_ENABLE)
     InstallSessionManager::GetInstance().SetMigrationDone();
 #endif
     ReportInvalidUidsIfNeeded();

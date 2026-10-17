@@ -27,6 +27,7 @@
 #include "delete_bundle_manager.h"
 #include "install_db_repository.h"
 #include "install_identity_manager.h"
+#include "bundle_info_manager.h"
 #include "install_session_manager.h"
 #include "install_session_proxy_death_param.h"
 #include "install_sysevent_reporter.h"
@@ -239,7 +240,7 @@ AccessTokenID InstallBundleSiblingToken(const HapBaseInfo& baseInfo, const Bundl
 // failure handling): cache evicted + id moved to the untrusted set.
 void DemoteTokenToUntrusted(AccessTokenID tokenId, const std::string& bundleName)
 {
-    AccessTokenInfoManager::GetInstance().CommitDeleteHapCache(tokenId, bundleName);
+    AccessTokenInfoManager::GetInstance().CommitDeleteHapCache(tokenId);
     EXPECT_EQ(RET_SUCCESS, AccessTokenIDManager::GetInstance().ChangeTokenIdStatus(
         tokenId, TokenIdStatus::UNTRUSTED));
     EXPECT_EQ(nullptr, AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId));
@@ -3800,7 +3801,8 @@ HWTEST_F(InstallSessionManagerMockTest, GetInfoByBundleNameTest001, TestSize.Lev
     EXPECT_EQ(ERR_OK, g_installSessionManager->FinishInstall(sessionId, true, modulePathMap));
 
     std::vector<TrustedBundleInfo> bundleInfo2;
-    EXPECT_EQ(ERR_OK, g_installSessionManager->GetHapSignInfo("GetInfoByBundleNameTest001", bundleInfo2, QUERY_ALL_SIGN_INFO));
+    EXPECT_EQ(ERR_OK, BundleInfoManager::GetInstance().GetHapSignInfo(
+        "GetInfoByBundleNameTest001", bundleInfo2, QUERY_ALL_SIGN_INFO));
 
     EXPECT_EQ(bundleInfo.size(), hapList.hapPaths.size());
     EXPECT_EQ(bundleInfo.size(), bundleInfo2.size());
@@ -3819,8 +3821,10 @@ HWTEST_F(InstallSessionManagerMockTest, GetInfoByBundleNameTest001, TestSize.Lev
 HWTEST_F(InstallSessionManagerMockTest, GetInfoByBundleNameFailTest001, TestSize.Level0)
 {
     std::vector<TrustedBundleInfo> bundleInfo;
-    EXPECT_NE(ERR_OK, g_installSessionManager->GetHapSignInfo("", bundleInfo, QUERY_ALL_SIGN_INFO));
-    EXPECT_NE(ERR_OK, g_installSessionManager->GetHapSignInfo("GetInfoByBundleNameFailTest001", bundleInfo, QUERY_ALL_SIGN_INFO));
+    EXPECT_NE(ERR_OK, BundleInfoManager::GetInstance().GetHapSignInfo(
+        "", bundleInfo, QUERY_ALL_SIGN_INFO));
+    EXPECT_NE(ERR_OK, BundleInfoManager::GetInstance().GetHapSignInfo(
+        "GetInfoByBundleNameFailTest001", bundleInfo, QUERY_ALL_SIGN_INFO));
     EXPECT_TRUE(bundleInfo.empty());
 
     GenericValues addValue;
@@ -3843,7 +3847,8 @@ HWTEST_F(InstallSessionManagerMockTest, GetInfoByBundleNameFailTest001, TestSize
     EXPECT_EQ(ERR_OK, ret);
 
     std::vector<TrustedBundleInfo> bundleInfo2;
-    EXPECT_NE(ERR_OK, g_installSessionManager->GetHapSignInfo("GetInfoByBundleNameFailTest001", bundleInfo2, QUERY_ALL_SIGN_INFO));
+    EXPECT_NE(ERR_OK, BundleInfoManager::GetInstance().GetHapSignInfo(
+        "GetInfoByBundleNameFailTest001", bundleInfo2, QUERY_ALL_SIGN_INFO));
     EXPECT_TRUE(bundleInfo2.empty());
 
     GenericValues delCondition2;
@@ -5452,7 +5457,7 @@ HWTEST_F(InstallSessionManagerMockTest, UntrustedCollectTest001, TestSize.Level1
     ASSERT_NE(INVALID_TOKENID, tokenId);
 
     // demote: same path as the migration-enforce failure handling
-    AccessTokenInfoManager::GetInstance().CommitDeleteHapCache(tokenId, bundleName);
+    AccessTokenInfoManager::GetInstance().CommitDeleteHapCache(tokenId);
     ASSERT_EQ(RET_SUCCESS, AccessTokenIDManager::GetInstance().ChangeTokenIdStatus(
         tokenId, TokenIdStatus::UNTRUSTED));
 

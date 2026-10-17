@@ -39,6 +39,15 @@ struct BundleCleanPlan final {
     bool cleanBundleId = false;
 };
 
+// Bundle-clean judgment input: the target token's coordinates and deletion
+// mode. uid is -1 when unavailable (a RESERVED_IDENTITY row).
+struct BundleCleanParam final {
+    AccessTokenID tokenId = INVALID_TOKENID;
+    int32_t uid = -1;
+    MultipleMode mode = MultipleMode::DEFAULT_OR_MAIN_MODE;
+    ReservedType delType = ReservedType::NONE;
+};
+
 // DFX-only outputs of DeleteIdentityWithDfx; business logic must not branch
 // on any field. sceneCode defaults to a valid scene for unset paths.
 struct DeleteDfxInfo final {
@@ -68,7 +77,9 @@ public:
     // Whole-bundle deletion (Case 1).
     int32_t DeleteWholeBundle(const std::string& bundleName);
 
-    // Delete a reserved token completely (Case 2.1): db-only transaction.
+    // Delete a reserved token completely (Case 2.1): db-only transaction; the
+    // mode's package-info rows and the bundleId go on the last same-mode
+    // trace.
     int32_t DeleteReservedToken(AccessTokenID tokenID, const std::string& bundleName, DeleteDfxInfo& dfxInfo);
 
 private:
@@ -76,13 +87,15 @@ private:
     static void BuildTokenRemoveDbOps(const std::shared_ptr<HapTokenInfoInner>& info, ReservedType type,
         std::vector<DelInfo>& delInfoVec, std::vector<AddInfo>& addInfoVec);
 
-    // Judge whether the package info row and the bundleId become ownerless.
-    static int32_t JudgeBundleClean(AccessTokenID currentId, const std::string& bundleName,
-        int32_t currentUid, ReservedType delType, BundleCleanPlan& plan);
+    // Judge whether the package info row and the target token's bundleId
+    // become ownerless.
+    static int32_t JudgeBundleClean(const BundleCleanParam& param, const std::string& bundleName,
+        BundleCleanPlan& plan);
 
-    // Pure judgment core over pre-fetched bundle rows.
+    // Judgment core over pre-fetched bundle rows: only a same-mode active row
+    // suppresses the package-info cleanup.
     static void JudgeBundleCleanFromRows(const std::vector<GenericValues>& tokenResults,
-        AccessTokenID currentId, int32_t currentUid, ReservedType delType, BundleCleanPlan& plan);
+        const BundleCleanParam& param, BundleCleanPlan& plan);
 
     // Judge and append the hap_info_table deletion when it holds (Case 2.2).
     static int32_t BuildBundleCleanDbOps(const std::shared_ptr<HapTokenInfoInner>& info, ReservedType delType,
@@ -105,9 +118,11 @@ private:
 
     int32_t DeleteActiveTokenInner(std::shared_ptr<HapTokenInfoInner> info, ReservedType delType);
 
-    // Gather the Case 2.1 pre-commit state under the caller's L0 lock.
+    // Gather the Case 2.1 pre-commit state under the caller's L0 lock: the
+    // judgment input (BundleCleanParam, the common type shared with
+    // JudgeBundleCleanFromRows) and its result.
     int32_t PrepareReservedTokenDelete(AccessTokenID tokenID, const std::string& bundleName,
-        DeleteDfxInfo& dfxInfo, int32_t& rowUid, BundleCleanPlan& cleanPlan);
+        DeleteDfxInfo& dfxInfo, BundleCleanParam& cleanParam, BundleCleanPlan& cleanPlan);
 
     // Row-not-found branch of Case 2.1: mismatch rejects, missing row is idempotent.
     int32_t HandleReservedRowNotFound(AccessTokenID tokenID, const std::string& bundleName);

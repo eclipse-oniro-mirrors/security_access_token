@@ -15,6 +15,7 @@
 
 #include <algorithm>
 
+#include "bundle_info_manager.h"
 #include "install_session_manager.h"
 
 #include "access_token.h"
@@ -66,6 +67,25 @@ constexpr int64_t SESSION_TIMEOUT_MS = 3600000;
 static const uint32_t DEBUG_APP_FLAG = 0x0008;
 constexpr int32_t INVALID_UID = -1;
 constexpr uint32_t ADMIN_CONTROLLED_FLAGS = PERMISSION_FIXED_BY_ADMIN_POLICY | PERMISSION_RESTRICTED_BY_ADMIN;
+
+// Single commit parameter of the hap cache commit: the base info plus the
+// sideload/migrated session bits (uid adopted from the caller input marks the
+// token migrated).
+HapTokenInfoItem BuildHapTokenInfoItem(const HapTokenInfo& info, bool isSideload, bool migrated)
+{
+    HapTokenInfoItem item;
+    item.tokenId = info.tokenID;
+    item.tokenAttr = info.tokenAttr;
+    item.userId = static_cast<uint32_t>(info.userID);
+    item.apiVersion = info.apiVersion;
+    item.instIndex = static_cast<uint32_t>(info.instIndex);
+    item.dlpType = static_cast<HapDlpType>(info.dlpType);
+    item.uid = info.uid;
+    item.bundleName = info.bundleName;
+    item.isSideload = isSideload;
+    item.migrated = migrated;
+    return item;
+}
 
 // Only APP / ATOMIC_SERVICE / APP_SERVICE_FWK bundles may allocate a token id.
 bool IsTokenAllocatableType(int32_t bundleType)
@@ -201,7 +221,7 @@ int32_t InstallSessionManager::MergeBundleInfos(InstallCache& cache, std::vector
     std::vector<std::vector<uint8_t>>& persistDatas)
 {
     std::vector<TrustedBundleInfoInner> bundleInfos;
-    int32_t ret = FastVerify(paths, persistDatas, bundleInfos, cache.list.userId);
+    int32_t ret = HapSignVerifyManager::FastVerify(paths, persistDatas, bundleInfos, cache.list.userId);
     if (ret != RET_SUCCESS) {
         return ret;
     }
@@ -483,20 +503,20 @@ void InstallSessionManager::RefreshCache(const InstallCache& cache, const Finish
 {
     size_t index = 0;
     if (cache.HasNewIdentity()) {
-        HapCommitContext commitContext = { cache.bundleParam.isSideloadApp, cache.uidFromCaller };
+        HapTokenInfoItem hapInfoItem = BuildHapTokenInfoItem(
+            context.hapInfos[index], cache.bundleParam.isSideloadApp, cache.uidFromCaller);
         AccessTokenInfoManager::GetInstance().CommitCreateHapCache(
-            context.hapInfos[index], context.permBriefDataLists[index], context.extendPermLists[index],
-            context.innerInfo, commitContext);
+            hapInfoItem, context.permBriefDataLists[index], context.extendPermLists[index]);
         index++;
     }
 
     for (size_t i = index; i < context.hapInfos.size(); ++i) {
         auto uidIt = cache.uidStateMap.find(context.hapInfos[i].tokenID);
-        HapCommitContext commitContext = { cache.bundleParam.isSideloadApp,
-            uidIt != cache.uidStateMap.end() && uidIt->second.fromCaller };
+        bool uidFromCaller = uidIt != cache.uidStateMap.end() && uidIt->second.fromCaller;
+        HapTokenInfoItem hapInfoItem = BuildHapTokenInfoItem(
+            context.hapInfos[i], cache.bundleParam.isSideloadApp, uidFromCaller);
         AccessTokenInfoManager::GetInstance().CommitUpdateHapCache(
-            context.hapInfos[i], context.permBriefDataLists[i], context.extendPermLists[i],
-            context.innerInfo, commitContext);
+            hapInfoItem, context.permBriefDataLists[i], context.extendPermLists[i]);
     }
     InstallIdentityManager::CommitIdentity(cache, context);
 }
@@ -659,7 +679,7 @@ int32_t InstallSessionManager::FillInstallPolicy(
     }
 
     std::vector<TrustedBundleInfoInner> bundleInfos;
-    ret = FastVerify(hapPaths, persistDatas, bundleInfos);
+    ret = HapSignVerifyManager::FastVerify(hapPaths, persistDatas, bundleInfos);
     if (ret != RET_SUCCESS) {
         LOGE(ATM_DOMAIN, ATM_TAG, "FastVerify failed ret=%{public}d", ret);
         return ret;
@@ -1032,108 +1052,6 @@ int32_t InstallSessionManager::GetCacheSignInfoBySessionId(
         LOGE(ATM_DOMAIN, ATM_TAG, "SessionId %{public}d bundleInfo is empty", sessionId);
         return ERR_PARAM_INVALID;
     }
-    return RET_SUCCESS;
-}
-
-int32_t InstallSessionManager::FastVerify(std::vector<std::string>& paths,
-    std::vector<std::vector<uint8_t>>& persistDatas, std::vector<TrustedBundleInfoInner>& bundleInfos, int32_t userId)
-{
-    for (size_t i = 0; i < paths.size() && i < persistDatas.size(); ++i) {
-        TrustedBundleInfoInner infoInner;
-        infoInner.bootstrapInfo = std::make_shared<Security::Verify::BootstrapInfo>();
-        infoInner.bootstrapInfo->Load(persistDatas[i].data(), persistDatas[i].size());
-        bool isChanged = false;
-        int32_t ret = HapSignVerifyManager::GetInstance().CheckHapsSignInfo(
-            HapSignVerifyManager::MakeVerifyParams(paths[i], Security::Verify::VerifyType::Fast, userId),
-            false, infoInner, isChanged);
-        if (ret != RET_SUCCESS) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "Sign check failed ret=%{public}d, path=%{public}s.", ret, paths[i].c_str());
-            if (ret == ERR_VERIFY_FILE_NOT_EXIST) {
-                LOGE(ATM_DOMAIN, ATM_TAG, "File not exist, continue.");
-                paths.erase(paths.begin() + i);
-                persistDatas.erase(persistDatas.begin() + i);
-                --i;
-                continue;
-            }
-            return ERR_HAP_SIGN_VERIFY_FAILED;
-        }
-        bundleInfos.emplace_back(infoInner);
-    }
-    return RET_SUCCESS;
-}
-
-int32_t InstallSessionManager::GetHapSignInfo(const std::string& bundleName,
-    std::vector<TrustedBundleInfo>& bundleInfo, uint32_t flag)
-{
-    if (bundleName.empty()) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "bundleName is empty");
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-    if (!DataValidator::IsSignInfoQueryFlagValid(flag)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Query flag is invalid.");
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-    std::vector<std::string> hapPaths;
-    std::vector<std::vector<uint8_t>> persistDatas;
-    int32_t ret = InstallDbRepository::GetInstalledBundleInfo(bundleName, hapPaths, persistDatas);
-    if (ret != RET_SUCCESS) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Get installed bundle info failed ret=%{public}d", ret);
-        return ret;
-    }
-    if (hapPaths.empty()) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Bundle %{public}s not exist", bundleName.c_str());
-        return ERR_BUNDLE_NOT_EXIST;
-    }
-
-    std::vector<TrustedBundleInfoInner> bundleInfos;
-    ret = FastVerify(hapPaths, persistDatas, bundleInfos);
-    if (ret != RET_SUCCESS) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "FastVerify failed ret=%{public}d", ret);
-        return ret;
-    }
-    HapSignVerifyManager::GetInstance().ConvertTrustedBundleInfo(bundleInfos, bundleInfo, flag);
-    return RET_SUCCESS;
-}
-
-int32_t InstallSessionManager::GetHapAppIdByTokenId(AccessTokenID tokenID, std::string& appId)
-{
-    std::shared_ptr<HapTokenInfoInner> infoPtr =
-        AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenID);
-    if (infoPtr == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Token %{public}u not found.", tokenID);
-        return AccessTokenError::ERR_TOKENID_NOT_EXIST;
-    }
-    // Reuse the GetHapSignInfo query channel (single Fast-verify entry for
-    // installed bundle sign info) instead of a duplicated verify loop.
-    std::vector<TrustedBundleInfo> bundleInfos;
-    int32_t ret = GetHapSignInfo(infoPtr->GetBundleName(), bundleInfos, QUERY_PROFILE);
-    if (ret == RET_SUCCESS && !bundleInfos.empty() && !bundleInfos.front().profileData.appId.empty()) {
-        appId = bundleInfos.front().profileData.appId;
-        return RET_SUCCESS;
-    }
-    // Old-flow fallback: tokens installed via the legacy path have no
-    // package-info row; read the appId directly from hap_token_info table.
-    LOGI(ATM_DOMAIN, ATM_TAG, "No package-info row for bundle %{public}s, fallback to hap_token_info.",
-        infoPtr->GetBundleName().c_str());
-    GenericValues conditionValue;
-    conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenID));
-    std::vector<GenericValues> hapTokenResults;
-    ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, conditionValue, hapTokenResults);
-    if (ret != RET_SUCCESS) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to find Id(%{public}u) from hap_token_table, err: %{public}d.",
-            tokenID, ret);
-        return ret;
-    }
-    if (hapTokenResults.empty()) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Id(%{public}u) is not in hap_token_table.", tokenID);
-        return AccessTokenError::ERR_TOKENID_NOT_EXIST;
-    }
-    std::string result = hapTokenResults[0].GetString(TokenFiledConst::FIELD_APP_ID);
-    if (!DataValidator::IsAppIDDescValid(result)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "TokenID: 0x%{public}x appID is error.", tokenID);
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-    appId = result;
     return RET_SUCCESS;
 }
 

@@ -546,8 +546,10 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, ResetUidAndMigrateCompleted001, TestSi
     db->executedSqls_.clear();
     db->executeSqlResults_.clear();
     db->executeSqlIndex_ = 0;
-    // PRAGMA table_info rows: [1]=column name. uid present (system_config value/name are core columns, not checked).
+    // First query: bms_migrate_completed value '0' (migration not completed).
+    // Second query: PRAGMA table_info rows: [1]=column name. uid present.
     db->querySqlResults_ = {
+        { {"0"} },
         { {"0", "uid", "INTEGER", "1", "-1", "0"} }
     };
     db->querySqlIndex_ = 0;
@@ -580,8 +582,10 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, ResetUidAndMigrateCompleted002, TestSi
     db->executedSqls_.clear();
     db->executeSqlResults_.clear();
     db->executeSqlIndex_ = 0;
-    // uid absent in hap_token_info -> hap reset skipped.
+    // First query: bms_migrate_completed value '0' (migration not completed).
+    // Second query: uid absent in hap_token_info -> hap reset skipped.
     db->querySqlResults_ = {
+        { {"0"} },
         { {"0", "token_id", "INTEGER", "1", "", "1"} }
     };
     db->querySqlIndex_ = 0;
@@ -602,7 +606,7 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, ResetUidAndMigrateCompleted002, TestSi
 
 /*
  * @tc.name: ResetUidAndMigrateCompleted003
- * @tc.desc: AccessTokenOpenCallback::ResetUidAndMigrateCompleted propagates GetTableColumnList failure.
+ * @tc.desc: AccessTokenOpenCallback::ResetUidAndMigrateCompleted propagates query failure.
  * @tc.type: FUNC
  * @tc.require: TDD
  */
@@ -614,6 +618,32 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, ResetUidAndMigrateCompleted003, TestSi
     db->queryFlag_ = NativeRdb::RdbStore::RdbStoreOperationResult::RESULT_FAIL;
     ASSERT_EQ(ERR_DATABASE_OPERATE_FAILED, callback.ResetUidAndMigrateCompleted(*(db.get())));
     db->queryFlag_ = 0;
+}
+
+/*
+ * @tc.name: ResetUidAndMigrateCompleted004
+ * @tc.desc: AccessTokenOpenCallback::ResetUidAndMigrateCompleted keeps the migrated state when the
+ *           bms_migrate_completed value is greater than 1: no uid reset and no flag reset.
+ * @tc.type: FUNC
+ * @tc.require: TDD
+ */
+HWTEST_F(AccessTokenDatabaseCoverageTest, ResetUidAndMigrateCompleted004, TestSize.Level4)
+{
+    std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance()->GetRdb();
+    AccessTokenOpenCallback callback;
+    db->executedSqls_.clear();
+    db->executeSqlResults_.clear();
+    db->executeSqlIndex_ = 0;
+    // bms_migrate_completed value '2' (greater than 1): migration already completed, cleanup skipped.
+    db->querySqlResults_ = {
+        { {"2"} }
+    };
+    db->querySqlIndex_ = 0;
+    ASSERT_EQ(NativeRdb::E_OK, callback.ResetUidAndMigrateCompleted(*(db.get())));
+    for (const auto& sql : db->executedSqls_) {
+        EXPECT_TRUE(sql.find(TokenFiledConst::FIELD_UID + "=-1") == std::string::npos);
+        EXPECT_TRUE(sql.find("bms_migrate_completed") == std::string::npos);
+    }
 }
 #endif
 

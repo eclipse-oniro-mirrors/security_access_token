@@ -1088,7 +1088,7 @@ int32_t AccessTokenManagerClient::GetCacheSignInfoBySessionId(int32_t sessionId,
 }
 
 int32_t AccessTokenManagerClient::GetHapSignInfo(const std::string& bundleName, uint32_t flag,
-    std::vector<TrustedBundleInfo>& bundleInfo)
+    MultipleMode mode, std::vector<TrustedBundleInfo>& bundleInfo)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
@@ -1097,7 +1097,7 @@ int32_t AccessTokenManagerClient::GetHapSignInfo(const std::string& bundleName, 
     }
 
     BundleInfosRawdata bundleInfosRawdata;
-    int32_t res = proxy->GetHapSignInfo(bundleName, flag, bundleInfosRawdata);
+    int32_t res = proxy->GetHapSignInfo(bundleName, flag, static_cast<int32_t>(mode), bundleInfosRawdata);
     if (res != RET_SUCCESS) {
         res = ConvertResult(res);
         LOGE(ATM_DOMAIN, ATM_TAG, "GetHapSignInfo failed, err=%{public}d.", res);
@@ -1715,22 +1715,21 @@ int32_t AccessTokenManagerClient::GetVersion(uint32_t& version)
     return errCode;
 }
 
-bool AccessTokenManagerClient::IsSupportPermission(const std::string& permissionName)
+int32_t AccessTokenManagerClient::IsSupportedPermission(const std::string& permissionName, bool& result)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
-        return false;
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
 
-    bool isSupported = false;
-    int32_t errCode = proxy->IsSupportPermission(permissionName, isSupported);
+    int32_t errCode = proxy->IsSupportPermission(permissionName, result);
     if (errCode != RET_SUCCESS) {
         errCode = ConvertResult(errCode);
-        LOGE(ATM_DOMAIN, ATM_TAG, "Request fail, result: %{public}d", errCode);
-        return false;
+        LOGE(ATM_DOMAIN, ATM_TAG, "Request fail, errcode: %{public}d", errCode);
+        return errCode;
     }
-    return isSupported;
+    return RET_SUCCESS;
 }
 
 void AccessTokenManagerClient::InitProxy()

@@ -20,6 +20,7 @@
 #include "accesstoken_id_manager.h"
 #include "generic_values.h"
 #include "install_db_repository.h"
+#include "multiple_mode_utils.h"
 #include "token_field_const.h"
 #include "tokenid_attributes.h"
 
@@ -108,7 +109,7 @@ int32_t InstallIdentityManager::CreateTokenIdAndUid(
     InstallCache& cache, const BundlePolicy& bundlePolicy, int32_t bundleRefUid)
 {
     bool isDlpApp = bundlePolicy.dlpType > DLP_COMMON;
-    bool isCloneApp = !isDlpApp && (cache.baseInfo.instIndex > 0);
+    bool isCloneApp = !isDlpApp && (!MultipleModeUtils::IsMainAppIndex(cache.baseInfo.instIndex));
 
     AccessTokenID tokenId = ResolveTokenId(cache, isDlpApp, isCloneApp);
     if (tokenId == 0) {

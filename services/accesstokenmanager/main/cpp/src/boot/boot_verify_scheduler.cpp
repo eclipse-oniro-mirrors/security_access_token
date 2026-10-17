@@ -34,6 +34,7 @@
 #include "hisysevent_adapter.h"
 #if defined(IS_SUPPORT_HAP_RUNNING)
 #include "hap_sign_verify_helper.h"
+#include "multiple_mode_utils.h"
 #include "permission_map.h"
 #include "permission_constraint_check.h"
 #include "permission_manager.h"
@@ -108,11 +109,6 @@ const std::string BMS_DB_DIR_PATH = "/data/service/el1/public/bms/bundle_manager
 const std::string BMS_DB_FILE_NAME = "bmsdb.db";
 const std::string BMS_SLAVE_DB_FILE_NAME = "bmsdb_slave.db";
 #endif
-
-std::string GetBundleModeKey(const std::string& bundleName, int32_t mode)
-{
-    return bundleName + std::to_string(mode);
-}
 
 #ifdef SPM_DATA_ENABLE
 bool IsBmsDbExisted()
@@ -528,8 +524,9 @@ void BootVerifyScheduler::BuildBriefPermDataFromDb(const std::vector<GenericValu
 void BootVerifyScheduler::UpdateBundleVerifyContext(const std::string& bundleName, AccessTokenID tokenId,
     const GenericValues& tokenValue, const std::vector<BriefPermData>& briefPermData)
 {
-    int32_t mode = tokenValue.GetInt(TokenFiledConst::FIELD_INST_INDEX) / MAIN_CLONE_INDEX_BASE;
-    std::string key = GetBundleModeKey(bundleName, mode);
+    int32_t mode = static_cast<int32_t>(
+        MultipleModeUtils::GetTokenMode(tokenValue.GetInt(TokenFiledConst::FIELD_INST_INDEX)));
+    std::string key = MultipleModeUtils::GetBundleModeKey(bundleName, mode);
     auto& bundleInfo = bundleInfoMap_[key];
     if (bundleInfo == nullptr) {
         bundleInfo = std::make_shared<BundleInfoInner>();
@@ -553,8 +550,9 @@ void BootVerifyScheduler::BuildPriorityBundleList()
     }
     for (const auto& item : hapTokenInfoMap_) {
         if (!item.second.bundleName.empty()) {
-            int32_t mode = static_cast<int32_t>(item.second.instIndex) / MAIN_CLONE_INDEX_BASE;
-            bundleKeySet.insert(GetBundleModeKey(item.second.bundleName, mode));
+            int32_t mode = static_cast<int32_t>(
+                MultipleModeUtils::GetTokenMode(static_cast<int32_t>(item.second.instIndex)));
+            bundleKeySet.insert(MultipleModeUtils::GetBundleModeKey(item.second.bundleName, mode));
         }
     }
 
@@ -616,7 +614,7 @@ int32_t BootVerifyScheduler::RefreshBundleSignInfoMap()
         if (mode < 0) {
             mode = 0;
         }
-        std::string key = GetBundleModeKey(bundleName, mode);
+        std::string key = MultipleModeUtils::GetBundleModeKey(bundleName, mode);
         auto& info = bundleSignInfoMap_[key];
         int32_t bundleType = result.GetInt(TokenFiledConst::FIELD_BUNDLE_TYPE);
         if (bundleType != static_cast<int32_t>(AppExecFwk::Spm::BundleType::APP) &&
@@ -647,14 +645,10 @@ void BootVerifyScheduler::CommitBundleCacheLocked(const std::string& key)
     }
 
     std::vector<AccessTokenInfoManager::HapTokenRestoreData> tokenRestoreDataList;
-    std::string bundleName;
     for (const auto tokenId : bundleIter->second->tokenIds) {
         auto hapIter = hapTokenInfoMap_.find(tokenId);
         if (hapIter == hapTokenInfoMap_.end()) {
             continue;
-        }
-        if (bundleName.empty()) {
-            bundleName = hapIter->second.bundleName;
         }
 
         (void)PermissionKernelUtils::AddHapPermToKernel(tokenId, requestedPermData_[tokenId]);
@@ -669,8 +663,7 @@ void BootVerifyScheduler::CommitBundleCacheLocked(const std::string& key)
         tokenRestoreDataList.emplace_back(restoreData);
     }
 
-    AccessTokenInfoManager::GetInstance().RestoreHapCache(
-        bundleName, nullptr, tokenRestoreDataList);
+    AccessTokenInfoManager::GetInstance().RestoreHapCache(tokenRestoreDataList);
 }
 
 bool BootVerifyScheduler::IsAllBundlesVerified() const
@@ -1432,7 +1425,7 @@ int32_t BootVerifyScheduler::PreVerifyBundle(const std::string& bundleName)
     bool found = false;
     int32_t result = RET_SUCCESS;
     for (int32_t mode = 0; mode <= 1; ++mode) {
-        std::string key = GetBundleModeKey(bundleName, mode);
+        std::string key = MultipleModeUtils::GetBundleModeKey(bundleName, mode);
         {
             std::lock_guard<std::mutex> lock(verifyMutex_);
             if (bundleInfoMap_.find(key) == bundleInfoMap_.end()) {
@@ -1459,13 +1452,14 @@ int32_t BootVerifyScheduler::PreVerifyBundle(const std::string& bundleName, int3
         return RET_SUCCESS;
     }
 
-    std::string key = GetBundleModeKey(bundleName, instIndex / MAIN_CLONE_INDEX_BASE);
+    std::string key = MultipleModeUtils::GetBundleModeKey(bundleName,
+        static_cast<int32_t>(MultipleModeUtils::GetTokenMode(instIndex)));
     {
         std::lock_guard<std::mutex> lock(verifyMutex_);
         if (bundleInfoMap_.find(key) == bundleInfoMap_.end()) {
             LOGW(ATM_DOMAIN, ATM_TAG,
                 "Pre verify skipped, bundle not exist, bundleName=%{public}s, mode=%{public}d.",
-                bundleName.c_str(), instIndex / MAIN_CLONE_INDEX_BASE);
+                bundleName.c_str(), static_cast<int32_t>(MultipleModeUtils::GetTokenMode(instIndex)));
             return RET_SUCCESS;
         }
     }
@@ -1493,13 +1487,13 @@ int32_t BootVerifyScheduler::PreVerifyBundle(uint32_t tokenID)
             return RET_SUCCESS;
         }
         bundleName = tokenIter->second.bundleName;
-        mode = static_cast<int32_t>(tokenIter->second.instIndex) / MAIN_CLONE_INDEX_BASE;
+        mode = static_cast<int32_t>(MultipleModeUtils::GetTokenMode(static_cast<int32_t>(tokenIter->second.instIndex)));
     }
     if (bundleName.empty()) {
         LOGW(ATM_DOMAIN, ATM_TAG, "Pre verify skipped, bundle name empty, tokenId=%{public}u.", tokenID);
         return RET_SUCCESS;
     }
-    return PreVerifyBundleInner(GetBundleModeKey(bundleName, mode));
+    return PreVerifyBundleInner(MultipleModeUtils::GetBundleModeKey(bundleName, mode));
 }
 
 int32_t BootVerifyScheduler::PreVerifyBundle(int32_t uid)
@@ -1517,7 +1511,7 @@ int32_t BootVerifyScheduler::PreVerifyBundle(int32_t uid)
                 continue;
             }
             bundleName = entry.second.bundleName;
-            mode = static_cast<int32_t>(entry.second.instIndex) / MAIN_CLONE_INDEX_BASE;
+            mode = static_cast<int32_t>(MultipleModeUtils::GetTokenMode(static_cast<int32_t>(entry.second.instIndex)));
             break;
         }
     }
@@ -1525,7 +1519,7 @@ int32_t BootVerifyScheduler::PreVerifyBundle(int32_t uid)
         LOGW(ATM_DOMAIN, ATM_TAG, "Pre verify skipped, uid not exist, uid=%{public}d.", uid);
         return RET_SUCCESS;
     }
-    return PreVerifyBundleInner(GetBundleModeKey(bundleName, mode));
+    return PreVerifyBundleInner(MultipleModeUtils::GetBundleModeKey(bundleName, mode));
 }
 #endif
 } // namespace AccessToken

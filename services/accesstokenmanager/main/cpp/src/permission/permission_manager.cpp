@@ -396,14 +396,15 @@ int32_t PermissionManager::UpdateTokenPermissionState(const std::shared_ptr<HapT
     return RET_SUCCESS;
 }
 
-int32_t PermissionManager::UpdateMultiTokenPermissionState(const std::shared_ptr<HapTokenInfoInner> &infoPtr,
+int32_t PermissionManager::UpdateMultiTokenPermissionState(
     AccessTokenID tokenID, const std::vector<std::string> &permissionList, bool isGranted, uint32_t flag, bool needKill)
 {
-    HapTokenInfo hapInfo;
-    if (AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenID, hapInfo) != RET_SUCCESS) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get hap token info, tokenId=%{public}u.", tokenID);
+    std::shared_ptr<HapTokenInfoInner> infoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenID);
+    if (infoPtr == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Token %{public}u is not exist.", tokenID);
         return AccessTokenError::ERR_TOKENID_NOT_EXIST;
     }
+    HapTokenInfo hapInfo = infoPtr->GetHapInfoBasic();
     ClearThreadErrorMsg();
 
     int32_t ret = RET_SUCCESS;
@@ -556,7 +557,7 @@ int32_t PermissionManager::UpdateMultiPermissionStatus(
         return ret;
     }
 
-    ret = UpdateMultiTokenPermissionState(infoPtr, tokenID, permissionList, isGranted, flag, needKill);
+    ret = UpdateMultiTokenPermissionState(tokenID, permissionList, isGranted, flag, needKill);
     if (ret != RET_SUCCESS) {
         LOGC(ATM_DOMAIN, ATM_TAG, "Failed to update perms of (%{public}u, %{public}s), ret is %{public}d.",
             tokenID, infoPtr->GetBundleName().c_str(), ret);
@@ -568,7 +569,9 @@ int32_t PermissionManager::UpdateMultiPermissionStatus(
     std::vector<AccessTokenID> tokenIdList;
     AccessTokenInfoManager::GetInstance().GetRelatedSandBoxHapList(tokenID, tokenIdList);
     for (const auto &id : tokenIdList) {
-        (void)UpdateMultiTokenPermissionState(infoPtr, id, permissionList, isGranted, flag, needKill);
+        // each related token updates its own permission state resolved by
+        // its own token id inside the callee
+        (void)UpdateMultiTokenPermissionState(id, permissionList, isGranted, flag, needKill);
     }
 #endif
 

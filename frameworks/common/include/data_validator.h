@@ -19,6 +19,7 @@
 #include <map>
 #include <string>
 #include "access_token.h"
+#include "hap_token_info.h"
 
 namespace OHOS {
 namespace Security {
@@ -71,6 +72,7 @@ public:
     static bool IsAppProvisionTypeValid(const std::string& appProvisionType);
     static bool IsHapListSizeValid(uint32_t size);
     static bool IsSignInfoQueryFlagValid(uint32_t flag);
+    static bool IsQueryModeValid(MultipleMode mode);
     static bool IsListSizeValid(size_t size);
     static bool IsStringListValid(const std::vector<std::string>& valueList);
     static bool IsPermFeatureValid(const std::string& feature);

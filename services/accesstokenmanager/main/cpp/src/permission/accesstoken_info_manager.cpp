@@ -42,6 +42,7 @@
 #endif
 #include "generic_values.h"
 #include "hap_token_info_inner.h"
+#include "multiple_mode_utils.h"
 #include "hisysevent_adapter.h"
 #include "ipc_skeleton.h"
 #include "json_parse_loader.h"
@@ -395,123 +396,61 @@ int32_t AccessTokenInfoManager::QueryStatusByTokenIdFromCache(const std::vector<
 AccessTokenInfoManager::AccessTokenInfoManager()
     : hasInited_(false), maxQueryResultSize_(DEFAULT_MAX_QUERY_RESULT_SIZE) {}
 
-std::shared_ptr<BundleInfoInner> AccessTokenInfoManager::GetBundleInfoInner(const std::string& bundleName)
+// Caller must hold hapTokenInfoLock_ (unique): write one token's live cache
+// entries - token info map, identity-triple index, permission brief data and
+// the userId cache. The item ctor fills the token base info plus the
+// sideload/migrated flags.
+void AccessTokenInfoManager::UpsertHapTokenCacheLocked(const HapTokenInfoItem& hapInfoItem,
+    const std::vector<BriefPermData>& briefPermData,
+    const std::vector<PermissionWithValue>& aclExtendedList)
 {
-    if (bundleName.empty()) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Bundle name is empty.");
-        return nullptr;
-    }
-
-    std::shared_lock<std::shared_mutex> infoGuard(this->hapTokenInfoLock_);
-    auto iter = bundleInfoMap_.find(bundleName);
-    if (iter != bundleInfoMap_.end() && iter->second != nullptr) {
-        return iter->second;
-    }
-    return nullptr;
+    AccessTokenID tokenID = hapInfoItem.tokenId;
+    std::shared_ptr<HapTokenInfoInner> hapInfoInner = std::make_shared<HapTokenInfoInner>(hapInfoItem);
+    hapTokenInfoMap_[tokenID] = hapInfoInner;
+    hapTokenIdMap_[AccessTokenInfoUtils::GetHapUniqueStr(hapInfoInner)] = tokenID;
+    userIdSet_.insert(hapInfoItem.userId);
+    PermissionDataBrief::GetInstance().ReplaceBriefPermDataByTokenId(tokenID, briefPermData, aclExtendedList);
 }
 
-void AccessTokenInfoManager::UpsertBundleInfoInnerCache(
-    const std::string& bundleName, const std::shared_ptr<BundleInfoInner>& bundleInfo)
-{
-    if (bundleName.empty() || bundleInfo == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Bundle info cache upsert input is invalid.");
-        return;
-    }
-
-    std::unique_lock<std::shared_mutex> infoGuard(this->hapTokenInfoLock_);
-    UpsertBundleInfoInnerCacheWithoutLock(bundleName, bundleInfo);
-}
-
-void AccessTokenInfoManager::UpsertBundleInfoInnerCacheWithoutLock(
-    const std::string& bundleName, const std::shared_ptr<BundleInfoInner>& bundleInfo)
-{
-    if (bundleName.empty() || bundleInfo == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Bundle info cache upsert input is invalid.");
-        return;
-    }
-
-    bundleInfoMap_[bundleName] = bundleInfo;
-}
-
-void AccessTokenInfoManager::RestoreHapCache(const std::string& bundleName,
-    const std::shared_ptr<BundleInfoInner>& bundleInfo,
-    const std::vector<HapTokenRestoreData>& tokenRestoreDataList)
+void AccessTokenInfoManager::RestoreHapCache(const std::vector<HapTokenRestoreData>& tokenRestoreDataList)
 {
     std::unique_lock<std::shared_mutex> infoGuard(this->hapTokenInfoLock_);
     for (const auto& tokenRestoreData : tokenRestoreDataList) {
-        AccessTokenID tokenID = tokenRestoreData.hapTokenInfoItem.tokenId;
-        std::shared_ptr<HapTokenInfoInner> hapInfoInner =
-            std::make_shared<HapTokenInfoInner>(tokenRestoreData.hapTokenInfoItem);
-        hapTokenInfoMap_[tokenID] = hapInfoInner;
-        hapTokenIdMap_[AccessTokenInfoUtils::GetHapUniqueStr(hapInfoInner)] = tokenID;
-        PermissionDataBrief::GetInstance().ReplaceBriefPermDataByTokenId(
-            tokenID, tokenRestoreData.requestedPermData, tokenRestoreData.extendedPermList);
-    }
-    if (bundleInfo != nullptr) {
-        UpsertBundleInfoInnerCacheWithoutLock(bundleName, bundleInfo);
+        UpsertHapTokenCacheLocked(tokenRestoreData.hapTokenInfoItem,
+            tokenRestoreData.requestedPermData, tokenRestoreData.extendedPermList);
     }
 }
 
-void AccessTokenInfoManager::CommitCreateHapCache(const HapTokenInfo& hapInfo,
+void AccessTokenInfoManager::CommitCreateHapCache(const HapTokenInfoItem& hapInfoItem,
     const std::vector<BriefPermData>& briefPermData,
-    const std::vector<PermissionWithValue>& aclExtendedList,
-    const std::shared_ptr<BundleInfoInner>& bundleInfo,
-    const HapCommitContext& commitContext)
+    const std::vector<PermissionWithValue>& aclExtendedList)
 {
-    AccessTokenID tokenID = hapInfo.tokenID;
-    std::shared_ptr<HapTokenInfoInner> hapInfoInner =
-        std::make_shared<HapTokenInfoInner>(tokenID, hapInfo, std::vector<PermissionStatus>{});
-    hapInfoInner->SetSideloadApp(commitContext.isSideloadApp);
-    if (commitContext.uidFromCaller) {
-        hapInfoInner->SetMigrated(true);
-    }
     std::unique_lock<std::shared_mutex> infoGuard(this->hapTokenInfoLock_);
-    hapTokenInfoMap_[tokenID] = hapInfoInner;
-    hapTokenIdMap_[AccessTokenInfoUtils::GetHapUniqueStr(hapInfoInner)] = tokenID;
-    PermissionDataBrief::GetInstance().ReplaceBriefPermDataByTokenId(tokenID, briefPermData, aclExtendedList);
-    if (bundleInfo != nullptr) {
-        UpsertBundleInfoInnerCacheWithoutLock(hapInfo.bundleName, bundleInfo);
-    }
+    UpsertHapTokenCacheLocked(hapInfoItem, briefPermData, aclExtendedList);
 }
 
-void AccessTokenInfoManager::CommitUpdateHapCache(const HapTokenInfo& hapInfo,
+void AccessTokenInfoManager::CommitUpdateHapCache(const HapTokenInfoItem& hapInfoItem,
     const std::vector<BriefPermData>& briefPermData,
-    const std::vector<PermissionWithValue>& aclExtendedList,
-    const std::shared_ptr<BundleInfoInner>& bundleInfo,
-    const HapCommitContext& commitContext)
+    const std::vector<PermissionWithValue>& aclExtendedList)
 {
-    AccessTokenID tokenID = hapInfo.tokenID;
+    AccessTokenID tokenID = hapInfoItem.tokenId;
     std::unique_lock<std::shared_mutex> infoGuard(this->hapTokenInfoLock_);
     auto oldHapIter = hapTokenInfoMap_.find(tokenID);
     std::shared_ptr<HapTokenInfoInner> oldHapInfo =
         (oldHapIter == hapTokenInfoMap_.end()) ? nullptr : oldHapIter->second;
     if (oldHapInfo == nullptr) {
         // an inactive token collected by this update session (cache evicted):
-        // rebuild the live cache entry; the token becomes ACTIVE on commit
-        oldHapInfo = std::make_shared<HapTokenInfoInner>(tokenID, hapInfo, std::vector<PermissionStatus>{});
-        hapTokenInfoMap_[tokenID] = oldHapInfo;
-    } else if (!oldHapInfo->IsRemote()) {
-        std::string oldUniqueKey = AccessTokenInfoUtils::GetHapUniqueStr(oldHapInfo);
-        auto iter = hapTokenIdMap_.find(oldUniqueKey);
-        if (iter != hapTokenIdMap_.end() && iter->second == tokenID) {
-            hapTokenIdMap_.erase(iter);
-        }
+        // rebuild the live cache entry; the token becomes ACTIVE on commit.
+        UpsertHapTokenCacheLocked(hapInfoItem, briefPermData, aclExtendedList);
+        return;
     }
-    oldHapInfo->SetTokenBaseInfo(hapInfo);
-    oldHapInfo->SetSideloadApp(commitContext.isSideloadApp);
-    if (commitContext.uidFromCaller) {
-        oldHapInfo->SetMigrated(true);
-    }
-    if (!oldHapInfo->IsRemote()) {
-        hapTokenIdMap_[AccessTokenInfoUtils::GetHapUniqueStr(oldHapInfo)] = tokenID;
-    }
+    // The identity-triple <-> tokenID mapping never changes on update: only
+    // the token info carried by the item and the permission brief are refreshed.
+    oldHapInfo->UpdateHapInfo(hapInfoItem);
     PermissionDataBrief::GetInstance().ReplaceBriefPermDataByTokenId(tokenID, briefPermData, aclExtendedList);
-    if (bundleInfo != nullptr) {
-        UpsertBundleInfoInnerCacheWithoutLock(hapInfo.bundleName, bundleInfo);
-    }
 }
 
-void AccessTokenInfoManager::CommitDeleteHapCache(AccessTokenID tokenID, const std::string& bundleName)
+void AccessTokenInfoManager::CommitDeleteHapCache(AccessTokenID tokenID)
 {
     std::unique_lock<std::shared_mutex> infoGuard(this->hapTokenInfoLock_);
     std::shared_ptr<HapTokenInfoInner> oldHapInfo = nullptr;
@@ -830,38 +769,63 @@ std::shared_ptr<HapTokenInfoInner> AccessTokenInfoManager::GetHapTokenInfoInner(
     return nullptr;
 }
 
+int32_t AccessTokenInfoManager::GetHapAppIdByTokenId(AccessTokenID tokenID, std::string& appId)
+{
+    GenericValues conditionValue;
+    conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenID));
+    std::vector<GenericValues> hapTokenResults;
+    int32_t ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, conditionValue,
+        hapTokenResults);
+    if (ret != RET_SUCCESS) {
+        LOGE(ATM_DOMAIN, ATM_TAG,
+            "Failed to find Id(%{public}u) from hap_token_table, err: %{public}d.", tokenID, ret);
+        return ret;
+    }
+
+    if (hapTokenResults.empty()) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Id(%{public}u) is not in hap_token_table.", tokenID);
+        return AccessTokenError::ERR_TOKENID_NOT_EXIST;
+    }
+    std::string result = hapTokenResults[0].GetString(TokenFiledConst::FIELD_APP_ID);
+    if (!DataValidator::IsAppIDDescValid(result)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "TokenID: 0x%{public}x appID is error.", tokenID);
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    appId = result;
+    return RET_SUCCESS;
+}
+
 int32_t AccessTokenInfoManager::RestoreInstallPolicyFromKernel(
     const std::string& bundleName, const BundlePolicy& bundlePolicy, BundleParam& param, HapPolicy& policy)
 {
     std::shared_ptr<HapTokenInfoInner> baseHapInfo = nullptr;
     AccessTokenID baseTokenId = INVALID_TOKENID;
-    std::vector<AccessTokenID> bundleTokenIds;
+    std::set<int32_t> userIds;
     {
         std::shared_lock<std::shared_mutex> infoGuard(this->hapTokenInfoLock_);
-        for (const auto& item : hapTokenInfoMap_) {
-            const auto& tokenInfoPtr = item.second;
-            if (tokenInfoPtr == nullptr || tokenInfoPtr->IsRemote() ||
-                tokenInfoPtr->GetBundleName() != bundleName) {
-                continue;
-            }
-            bundleTokenIds.emplace_back(item.first);
-            if (tokenInfoPtr->GetInstIndex() == 0 && baseTokenId == INVALID_TOKENID) {
-                baseTokenId = item.first;
-                baseHapInfo = tokenInfoPtr;
-            }
+        userIds = userIdSet_;
+    }
+    // No full token scan: for every known userId probe the same-bundleName
+    // index=0 app by its identity triple and read its kernel data.
+    for (const auto& userId : userIds) {
+        AccessTokenIDEx tokenIdEx = GetHapTokenID(userId, bundleName, 0);
+        AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+        if (tokenId == 0) {
+            continue;
         }
-    }
-    if (bundleTokenIds.empty()) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Bundle info of %{public}s does not exist.", bundleName.c_str());
-        return ERR_BUNDLE_NOT_EXIST;
-    }
-    if (baseTokenId == INVALID_TOKENID) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "TokenId with index = 0 not found.");
-        return ERR_TOKENID_NOT_EXIST;
+        // GetHapTokenID only resolves local triple-index entries, never remote
+        std::shared_ptr<HapTokenInfoInner> tokenInfoPtr = GetHapTokenInfoInner(tokenId);
+        if (tokenInfoPtr == nullptr) {
+            continue;
+        }
+        baseTokenId = tokenId;
+        baseHapInfo = tokenInfoPtr;
+        break;
     }
 
     BundleInfoInner bundleInfo;
-    BuildBundlePermCodeList(bundleTokenIds, bundleInfo);
+    // no use tokenIdList
+    BuildBundlePermCodeList({}, bundleInfo);
 
     BundleNoCachedInfo noCached;
     std::vector<PermissionWithValue> extendedPermList;
@@ -1476,31 +1440,6 @@ AccessTokenIDEx AccessTokenInfoManager::GetHapTokenID(int32_t userID, const std:
     return tokenIdEx;
 }
 
-int32_t AccessTokenInfoManager::GetHapAppIdByTokenId(AccessTokenID tokenID, std::string& appId)
-{
-    GenericValues conditionValue;
-    conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenID));
-    std::vector<GenericValues> hapTokenResults;
-    int32_t ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, conditionValue,
-        hapTokenResults);
-    if (ret != RET_SUCCESS) {
-        LOGE(ATM_DOMAIN, ATM_TAG,
-            "Failed to find Id(%{public}u) from hap_token_table, err: %{public}d.", tokenID, ret);
-        return ret;
-    }
-
-    if (hapTokenResults.empty()) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Id(%{public}u) is not in hap_token_table.", tokenID);
-        return AccessTokenError::ERR_TOKENID_NOT_EXIST;
-    }
-    std::string result = hapTokenResults[0].GetString(TokenFiledConst::FIELD_APP_ID);
-    if (!DataValidator::IsAppIDDescValid(result)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "TokenID: 0x%{public}x appID is error.", tokenID);
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-    appId = result;
-    return RET_SUCCESS;
-}
 
 int32_t AccessTokenInfoManager::GetHapIdentity(const HapBaseInfo& info, Identity& identity)
 {
@@ -2347,9 +2286,11 @@ void AccessTokenInfoManager::GetRelatedSandBoxHapList(AccessTokenID tokenId, std
     int32_t index = infoIter->second->GetInstIndex();
     int32_t dlpType = infoIter->second->GetDlpType();
     // the permissions of a common application whose index is not equal 0 are managed independently.
-    if ((dlpType == DLP_COMMON) && (index != 0)) {
+    // updated permissoin states of dlp application need sync to main app, and vice versa
+    if ((dlpType == DLP_COMMON) && (!MultipleModeUtils::IsMainAppIndex(index))) {
         return;
     }
+    MultipleMode mode = MultipleModeUtils::GetTokenMode(index);
 
     for (auto iter = hapTokenInfoMap_.begin(); iter != hapTokenInfoMap_.end(); ++iter) {
         if (iter->second == nullptr) {
@@ -2357,7 +2298,11 @@ void AccessTokenInfoManager::GetRelatedSandBoxHapList(AccessTokenID tokenId, std
         }
         if ((bundleName == iter->second->GetBundleName()) && (userID == iter->second->GetUserID()) &&
             (tokenId != iter->second->GetTokenID())) {
-            if ((iter->second->GetDlpType() == DLP_COMMON) && (iter->second->GetInstIndex() != 0)) {
+            if ((iter->second->GetDlpType() == DLP_COMMON) &&
+                (!MultipleModeUtils::IsMainAppIndex(iter->second->GetInstIndex()))) {
+                continue;
+            }
+            if (MultipleModeUtils::GetTokenMode(iter->second->GetInstIndex()) != mode) {
                 continue;
             }
             tokenIdList.emplace_back(iter->second->GetTokenID());
