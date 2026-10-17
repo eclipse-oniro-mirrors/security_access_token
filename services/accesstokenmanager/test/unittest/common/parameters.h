@@ -24,11 +24,35 @@ namespace system {
 bool GetBoolParameter(const std::string& key, bool def);
 void SetBoolParameter(const std::string& key, bool status);
 
-// Int parameter state for tests: returns the stored value when the key was
-// set via SetIntParameter, otherwise falls back to the caller's default.
-int32_t GetStoredIntParameter(const std::string& key, int32_t def);
-void SetIntParameter(const std::string& key, int32_t value);
-void ClearIntParameter(const std::string& key);
+// Int parameter state for tests. Header-inline on purpose: every test target
+// that shadows the real "parameters.h" with this mock gets the state without
+// a link-time dependency on parameters.cpp. Returns the stored value when
+// the key was set via SetIntParameter, otherwise falls back to the default.
+inline std::map<std::string, int32_t>& IntParameterState()
+{
+    static std::map<std::string, int32_t> state;
+    return state;
+}
+
+inline int32_t GetStoredIntParameter(const std::string& key, int32_t def)
+{
+    auto& state = IntParameterState();
+    auto iter = state.find(key);
+    if (iter != state.end()) {
+        return iter->second;
+    }
+    return def;
+}
+
+inline void SetIntParameter(const std::string& key, int32_t value)
+{
+    IntParameterState()[key] = value;
+}
+
+inline void ClearIntParameter(const std::string& key)
+{
+    IntParameterState().erase(key);
+}
 
 template<typename T>
 T GetIntParameter(const std::string& key, T def, T min = std::numeric_limits<T>::min(),

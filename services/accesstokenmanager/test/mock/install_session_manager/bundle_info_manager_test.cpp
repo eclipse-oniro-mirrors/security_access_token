@@ -109,7 +109,8 @@ HWTEST_F(BundleInfoManagerTest, GetInfoByBundleNameTest001, TestSize.Level0)
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
     HapVerifyResultInfo resultInfo;
-    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO));
+    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(
+        hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO));
 
     HapInfoCheckResult result;
     EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, result));
