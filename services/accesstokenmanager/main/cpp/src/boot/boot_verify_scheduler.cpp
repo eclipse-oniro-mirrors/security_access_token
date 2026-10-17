@@ -282,15 +282,19 @@ int32_t BootVerifyScheduler::LoadVerifyDataFromDb(std::map<int32_t, TokenIdInfo>
         return ret;
     }
 #if defined(SPM_DATA_ENABLE) && defined(IS_SUPPORT_HAP_RUNNING)
-    if (hapTokenRes.empty() && !IsBmsDbExisted() &&
-        !AccessTokenMigrationManager::GetInstance().IsMigrationCompleted()) {
+    bool migrationCompleted = AccessTokenMigrationManager::GetInstance().IsMigrationCompleted();
+    if (!migrationCompleted && hapTokenRes.empty() && !IsBmsDbExisted()) {
         LOGI(ATM_DOMAIN, ATM_TAG, "Access token database is empty and BMS database does not exist, "
             "mark migration completed.");
         int32_t markRet = AccessTokenMigrationManager::MarkMigrationCompleted();
         if (markRet != RET_SUCCESS) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Mark migration completed failed, ret=%{public}d.", markRet);
+        } else {
+            migrationCompleted = true;
         }
     }
+    migrationCompleted_.store(
+        migrationCompleted ? migrationCompleted : AccessTokenMigrationManager::GetInstance().IsMigrationCompleted());
 #endif
     ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_PERMISSION_STATE, conditionValue, permStateRes);
     if (ret != RET_SUCCESS) {
@@ -545,37 +549,58 @@ void BootVerifyScheduler::UpdateBundleVerifyContext(const std::string& bundleNam
 void BootVerifyScheduler::BuildPriorityBundleList()
 {
     std::set<std::string> bundleKeySet;
+    CollectBundleKeySet(bundleKeySet);
+    for (const auto& key : bundleKeySet) {
+        ClassifyBundle(key);
+    }
+    SortPriorityBundleList();
+}
+
+void BootVerifyScheduler::CollectBundleKeySet(std::set<std::string>& bundleKeySet)
+{
     for (const auto& item : bundleSignInfoMap_) {
         bundleKeySet.insert(item.first);
     }
     for (const auto& item : hapTokenInfoMap_) {
-        if (!item.second.bundleName.empty()) {
-            int32_t mode = static_cast<int32_t>(
-                MultipleModeUtils::GetTokenMode(static_cast<int32_t>(item.second.instIndex)));
-            bundleKeySet.insert(MultipleModeUtils::GetBundleModeKey(item.second.bundleName, mode));
-        }
-    }
-
-    for (const auto& key : bundleKeySet) {
-        if (bundleInfoMap_[key] == nullptr) {
-            bundleInfoMap_[key] = std::make_shared<BundleInfoInner>();
-        }
-        isVerifiedMap_[key] = false;
-        isVerifyingMap_[key] = false;
-
-        auto signInfoIter = bundleSignInfoMap_.find(key);
-        if (signInfoIter == bundleSignInfoMap_.end()) {
-            // only has hap token info, no sign info, treat as high privilege bundle
-            highPrivilegeBundleList_.emplace_back(key);
+        if (item.second.bundleName.empty()) {
             continue;
         }
-        if (signInfoIter->second.isPreInstalled) {
-            highPrivilegeBundleList_.emplace_back(key);
-        } else {
-            normalBundleList_.emplace_back(key);
-        }
+        int32_t mode = static_cast<int32_t>(
+            MultipleModeUtils::GetTokenMode(static_cast<int32_t>(item.second.instIndex)));
+        bundleKeySet.insert(MultipleModeUtils::GetBundleModeKey(item.second.bundleName, mode));
     }
+}
 
+void BootVerifyScheduler::ClassifyBundle(const std::string& key)
+{
+    if (bundleInfoMap_[key] == nullptr) {
+        bundleInfoMap_[key] = std::make_shared<BundleInfoInner>();
+    }
+    isVerifiedMap_[key] = false;
+    isVerifyingMap_[key] = false;
+#if defined(SPM_DATA_ENABLE) && defined(IS_SUPPORT_HAP_RUNNING)
+    if (!migrationCompleted_.load()) {
+        // Migration not completed, verify all bundles with high priority.
+        highPrivilegeBundleList_.emplace_back(key);
+        return;
+    }
+#endif
+
+    auto signInfoIter = bundleSignInfoMap_.find(key);
+    if (signInfoIter == bundleSignInfoMap_.end()) {
+        // only has hap token info, no sign info, treat as high privilege bundle
+        highPrivilegeBundleList_.emplace_back(key);
+        return;
+    }
+    if (signInfoIter->second.isPreInstalled) {
+        highPrivilegeBundleList_.emplace_back(key);
+    } else {
+        normalBundleList_.emplace_back(key);
+    }
+}
+
+void BootVerifyScheduler::SortPriorityBundleList()
+{
     // sort the bundle list by the number of paths in descending order, and then by bundle key in ascending order
     auto bundleComparator = [this](const std::string& left, const std::string& right) {
         size_t leftCount = 0;
@@ -1094,6 +1119,12 @@ void BootVerifyScheduler::HandleHighPrivilegeBundleSpmData(const std::map<std::s
 
 bool BootVerifyScheduler::ShouldSkipVerifyLocked(const std::string& key) const
 {
+#if defined(SPM_DATA_ENABLE) && defined(IS_SUPPORT_HAP_RUNNING)
+    // skip verify only when migration is not completed.
+    if (!migrationCompleted_.load()) {
+        return true;
+    }
+#endif
     auto bundleIter = bundleInfoMap_.find(key);
     if (bundleIter == bundleInfoMap_.end() || bundleIter->second == nullptr || bundleIter->second->tokenIds.empty()) {
         return true;

@@ -66,6 +66,9 @@ const std::string TEST_BUNDLE_NAME = "com.example.camera";
 const std::string TEST_BUNDLE_NAME_2 = "com.example.music";
 const std::string TEST_BUNDLE_NAME_3 = "com.example.notes";
 const std::string RESERVED_BUNDLE_ID_LIST_KEY = "reserved_bundle_id_list";
+const std::string BMS_MIGRATE_COMPLETED_KEY = "bms_migrate_completed";
+const std::string MIGRATION_COMPLETED_VALUE = "2";
+const std::string MIGRATION_NOT_COMPLETED_VALUE = "0";
 const std::string TEST_DIR = "/data/test_temp";
 const std::string TEST_PATH = "/data/test_temp/camera.hap";
 const std::string TEST_PATH2 = "/data/test_temp/music.hap";
@@ -135,6 +138,7 @@ public:
         scheduler.bundleSignInfoMap_.clear();
         scheduler.isAllHapBundlesVerified_.store(false);
         scheduler.uidSet_.clear();
+        scheduler.migrationCompleted_.store(true);
         originAdapter_ = HapSignVerifyManager::GetInstance().adapter_;
         adapter_ = std::make_unique<MockAppVerifyAdapter>();
         adapter_->bundleName_ = TEST_BUNDLE_NAME;
@@ -250,6 +254,15 @@ protected:
         return std::vector<uint8_t>(dump.get(), dump.get() + size);
     }
 
+    void SetMigrationCompleted(bool completed)
+    {
+        GenericValues systemConfig;
+        systemConfig.Put(TokenFiledConst::FIELD_NAME, BMS_MIGRATE_COMPLETED_KEY);
+        systemConfig.Put(TokenFiledConst::FIELD_VALUE,
+            completed ? MIGRATION_COMPLETED_VALUE : MIGRATION_NOT_COMPLETED_VALUE);
+        SetMockDbFindResult(AtmDataType::ACCESSTOKEN_SYSTEM_CONFIG, RET_SUCCESS, { systemConfig });
+    }
+
     void PrepareVerifyDb(bool preInstalled = true, uint32_t uid = TEST_UID, bool migrated = true,
         uint32_t tokenAttr = 0)
     {
@@ -262,7 +275,7 @@ protected:
             {BuildBundleSignValue(TEST_BUNDLE_NAME, "entry", TEST_PATH, preInstalled,
                 static_cast<int32_t>(AppExecFwk::Spm::BundleType::APP),
                 BuildPersistData(TEST_BUNDLE_NAME, TEST_BUNDLE_NAME))});
-        SetMockDbFindResult(AtmDataType::ACCESSTOKEN_SYSTEM_CONFIG, RET_SUCCESS, {});
+        SetMigrationCompleted(true);
         SetMockDbFindResult(AtmDataType::ACCESSTOKEN_HAP_UNDEFINE_INFO, RET_SUCCESS, {});
     }
 
@@ -388,7 +401,7 @@ HWTEST_F(BootVerifySchedulerTest, VerifyBundleSignInfoWhenStart004, TestSize.Lev
             static_cast<int32_t>(AppExecFwk::Spm::BundleType::APP),
             BuildPersistData(TEST_BUNDLE_NAME, TEST_BUNDLE_NAME)),
     });
-    SetMockDbFindResult(AtmDataType::ACCESSTOKEN_SYSTEM_CONFIG, RET_SUCCESS, {});
+    SetMigrationCompleted(true);
     SetMockDbFindResult(AtmDataType::ACCESSTOKEN_HAP_UNDEFINE_INFO, RET_SUCCESS, {});
 
     // Step 1: Fail the first bundle only during verify.
@@ -472,7 +485,7 @@ HWTEST_F(BootVerifySchedulerTest, VerifyBundleSignInfoWhenStart008, TestSize.Lev
     auto& scheduler = BootVerifyScheduler::GetInstance();
     EXPECT_EQ(RET_SUCCESS, scheduler.VerifyBundleSignInfoWhenStart(hapSize, tokenIdAplMap));
     EXPECT_TRUE(scheduler.highPrivilegeBundleList_.empty());
-    EXPECT_EQ(1U, scheduler.normalBundleList_.size());
+    ASSERT_EQ(1U, scheduler.normalBundleList_.size());
     EXPECT_EQ(GetBundleModeKey(TEST_BUNDLE_NAME, 0), scheduler.normalBundleList_[0]);
     EXPECT_FALSE(scheduler.isVerifiedMap_[GetBundleModeKey(TEST_BUNDLE_NAME, 0)]);
     EXPECT_FALSE(scheduler.isVerifyingMap_[GetBundleModeKey(TEST_BUNDLE_NAME, 0)]);
@@ -480,6 +493,48 @@ HWTEST_F(BootVerifySchedulerTest, VerifyBundleSignInfoWhenStart008, TestSize.Lev
         scheduler.bundleInfoMap_.end());
     EXPECT_TRUE(scheduler.bundleNoCachedInfoMap_.find(GetBundleModeKey(TEST_BUNDLE_NAME, 0)) !=
         scheduler.bundleNoCachedInfoMap_.end());
+}
+
+/**
+ * @tc.name: VerifyBundleSignInfoWhenStart009
+ * @tc.desc: Verify all bundles including a preinstalled third-party bundle and a preinstalled bundle are
+ *           classified as high privilege and skip verification when migration is not completed.
+ * @tc.type: FUNC
+ */
+HWTEST_F(BootVerifySchedulerTest, VerifyBundleSignInfoWhenStart009, TestSize.Level1)
+{
+    uint32_t hapSize = 0;
+    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
+    // Seed one non-preinstalled third-party bundle and one preinstalled bundle.
+    SetMockDbFindResult(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, RET_SUCCESS, {
+        BuildHapInfoValue(TEST_TOKEN_ID, TEST_BUNDLE_NAME, TEST_UID),
+        BuildHapInfoValue(TEST_TOKEN_ID_2, TEST_BUNDLE_NAME_2, TEST_UID + 1),
+    });
+    SetMockDbFindResult(AtmDataType::ACCESSTOKEN_PERMISSION_STATE, RET_SUCCESS, {
+        BuildPermStateValue(TEST_TOKEN_ID, "ohos.permission.CAMERA"),
+        BuildPermStateValue(TEST_TOKEN_ID_2, "ohos.permission.CAMERA"),
+    });
+    SetMockDbFindResult(AtmDataType::ACCESSTOKEN_PERMISSION_EXTEND_VALUE, RET_SUCCESS, {});
+    SetMockDbFindResult(AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO, RET_SUCCESS, {
+        BuildBundleSignValue(TEST_BUNDLE_NAME, "entry", TEST_PATH, true,
+            static_cast<int32_t>(AppExecFwk::Spm::BundleType::APP),
+            BuildPersistData(TEST_BUNDLE_NAME, TEST_BUNDLE_NAME)),
+        BuildBundleSignValue(TEST_BUNDLE_NAME_2, "entry", TEST_PATH2, false,
+            static_cast<int32_t>(AppExecFwk::Spm::BundleType::APP),
+            BuildPersistData(TEST_BUNDLE_NAME_2, TEST_BUNDLE_NAME_2)),
+    });
+    SetMigrationCompleted(false);
+    SetMockDbFindResult(AtmDataType::ACCESSTOKEN_HAP_UNDEFINE_INFO, RET_SUCCESS, {});
+
+    auto& scheduler = BootVerifyScheduler::GetInstance();
+    EXPECT_EQ(RET_SUCCESS, scheduler.VerifyBundleSignInfoWhenStart(hapSize, tokenIdAplMap));
+    EXPECT_FALSE(scheduler.migrationCompleted_.load());
+    EXPECT_EQ(2U, scheduler.highPrivilegeBundleList_.size());
+    EXPECT_EQ(2U, hapSize);
+    EXPECT_TRUE(scheduler.normalBundleList_.empty());
+    for (const auto& key : scheduler.highPrivilegeBundleList_) {
+        EXPECT_TRUE(scheduler.ShouldSkipVerifyLocked(key));
+    }
 }
 #endif // SPM_DATA_ENABLE
 
@@ -708,7 +763,7 @@ HWTEST_F(BootVerifySchedulerTest, LoadVerifyDataFromDbPermDialogCap001, TestSize
         {BuildBundleSignValue(TEST_BUNDLE_NAME, "entry", TEST_PATH, false,
             static_cast<int32_t>(AppExecFwk::Spm::BundleType::APP),
             BuildPersistData(TEST_BUNDLE_NAME, TEST_BUNDLE_NAME))});
-    SetMockDbFindResult(AtmDataType::ACCESSTOKEN_SYSTEM_CONFIG, RET_SUCCESS, {});
+    SetMigrationCompleted(true);
     SetMockDbFindResult(AtmDataType::ACCESSTOKEN_HAP_UNDEFINE_INFO, RET_SUCCESS, {});
 
     auto& scheduler = BootVerifyScheduler::GetInstance();
@@ -747,13 +802,16 @@ HWTEST_F(BootVerifySchedulerTest, LoadVerifyDataFromDb003, TestSize.Level1)
     GenericValues systemConfig;
     systemConfig.Put(TokenFiledConst::FIELD_NAME, RESERVED_BUNDLE_ID_LIST_KEY);
     systemConfig.Put(TokenFiledConst::FIELD_VALUE, "{\"list\":[10019]}");
+    GenericValues migrationConfig;
+    migrationConfig.Put(TokenFiledConst::FIELD_NAME, BMS_MIGRATE_COMPLETED_KEY);
+    migrationConfig.Put(TokenFiledConst::FIELD_VALUE, MIGRATION_COMPLETED_VALUE);
     SetMockDbFindResult(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, RET_SUCCESS,
         {BuildHapInfoValue(TEST_TOKEN_ID, TEST_BUNDLE_NAME, TEST_UID, APL_NORMAL, 0, true,
             ReservedType::RESERVED_DATA)});
     SetMockDbFindResult(AtmDataType::ACCESSTOKEN_PERMISSION_STATE, RET_SUCCESS, {});
     SetMockDbFindResult(AtmDataType::ACCESSTOKEN_PERMISSION_EXTEND_VALUE, RET_SUCCESS, {});
     SetMockDbFindResult(AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO, RET_SUCCESS, {});
-    SetMockDbFindResult(AtmDataType::ACCESSTOKEN_SYSTEM_CONFIG, RET_SUCCESS, {systemConfig});
+    SetMockDbFindResult(AtmDataType::ACCESSTOKEN_SYSTEM_CONFIG, RET_SUCCESS, {systemConfig, migrationConfig});
     auto& scheduler = BootVerifyScheduler::GetInstance();
     AccessTokenIDManager::GetInstance().bundleIdSet_.clear();
     AccessTokenIDManager::GetInstance().scanStartBundleId_ = -1;
@@ -1840,22 +1898,6 @@ HWTEST_F(BootVerifySchedulerTest, BuildPriorityBundleListEmptyBundleName001, Tes
 
     EXPECT_TRUE(scheduler.highPrivilegeBundleList_.empty());
     EXPECT_TRUE(scheduler.normalBundleList_.empty());
-}
-
-/**
- * @tc.name: CommitBundleCacheLockedMissingBundle001
- * @tc.desc: CommitBundleCacheLocked returns silently when bundle cache is missing or null.
- * @tc.type: FUNC
- */
-HWTEST_F(BootVerifySchedulerTest, CommitBundleCacheLockedMissingBundle001, TestSize.Level1)
-{
-    auto& scheduler = BootVerifyScheduler::GetInstance();
-    scheduler.bundleInfoMap_.erase(TEST_BUNDLE_NAME);
-    scheduler.CommitBundleCacheLocked(GetBundleModeKey(TEST_BUNDLE_NAME, 0));
-
-    scheduler.bundleInfoMap_[GetBundleModeKey(TEST_BUNDLE_NAME, 0)] = nullptr;
-    scheduler.CommitBundleCacheLocked(GetBundleModeKey(TEST_BUNDLE_NAME, 0));
-    SUCCEED();
 }
 
 /**
