@@ -50,6 +50,7 @@ struct SpmDataTaskItem final {
 namespace KernelDetail {
 void BuildPermissionBitmap(const std::vector<BriefPermData>& permBriefDataList, std::vector<uint32_t>& bitmap,
     bool needGrant = false);
+int32_t ParsePermissionBitmap(const SpmBlob& permsBlob, std::vector<uint16_t>& permCodeList);
 void BuildExtendedPermissionBuffer(const std::vector<PermissionWithValue>& extendedPermList,
     std::vector<uint8_t>& buffer);
 int32_t ParseExtendedPermissionBuffer(const SpmBlob& extendPermBlob, std::vector<PermissionWithValue>& permList);

@@ -26,11 +26,15 @@ ohos_unittest("libinstall_session_manager_mock_test") {
   branch_protector_ret = "pac_ret"
 
   include_dirs = accesstoken_manager_base_config.include_dirs
+  include_dirs += [ "${access_token_path}/services/accesstokenmanager/test/unittest/common" ]
 
   sources = [
+    "bundle_info_manager_test.cpp",
     "delete_identity_mock_test.cpp",
     "hap_sign_verify_manager_mock.cpp",
     "install_session_manager_mock_test.cpp",
+    "${access_token_path}/services/accesstokenmanager/test/unittest/common/parameter.cpp",
+    "${access_token_path}/services/accesstokenmanager/test/unittest/common/parameters.cpp",
   ]
   sources += accesstoken_manager_base_config.sources
   sources -= [

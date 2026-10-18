@@ -117,26 +117,6 @@ uint64_t GetPermissionTimestamp(const GenericValues& stateValue)
     return timestamp <= 0 ? 0 : static_cast<uint64_t>(timestamp);
 }
 
-// Bundle-level expected perm codes, rebuilt as the union of the per-token brief
-// perm data — the same construction the boot verify scheduler uses to feed the
-// bundle info cache (UpdateBundleVerifyContext).
-void BuildBundlePermCodeList(const std::vector<AccessTokenID>& bundleTokenIds, BundleInfoInner& bundleInfo)
-{
-    for (const auto tokenId : bundleTokenIds) {
-        std::vector<BriefPermData> briefPermData;
-        if (PermissionDataBrief::GetInstance().GetBriefPermDataByTokenId(tokenId, briefPermData) != RET_SUCCESS) {
-            LOGW(ATM_DOMAIN, ATM_TAG, "Get brief perm data failed, tokenId=%{public}u.", tokenId);
-            continue;
-        }
-        for (const auto& permData : briefPermData) {
-            if (std::find(bundleInfo.permCodeList.begin(), bundleInfo.permCodeList.end(),
-                permData.permCode) == bundleInfo.permCodeList.end()) {
-                bundleInfo.permCodeList.emplace_back(permData.permCode);
-            }
-        }
-    }
-}
-
 void RollbackRestrictedFlag(AccessTokenID tokenId, uint32_t permCode, bool isRestricted)
 {
     PermissionDataBrief::PermissionStatusChangeType rollbackChangeType =
@@ -823,18 +803,19 @@ int32_t AccessTokenInfoManager::RestoreInstallPolicyFromKernel(
         break;
     }
 
-    BundleInfoInner bundleInfo;
-    // no use tokenIdList
-    BuildBundlePermCodeList({}, bundleInfo);
-
     BundleNoCachedInfo noCached;
     std::vector<PermissionWithValue> extendedPermList;
-    int32_t ret = PermissionKernelUtils::GetBundleInfoFromKernel(baseTokenId, noCached, extendedPermList);
+    std::vector<uint16_t> permCodeList;
+    int32_t ret = PermissionKernelUtils::GetBundleInfoFromKernel(baseTokenId, noCached, extendedPermList,
+        permCodeList);
     if (ret != RET_SUCCESS) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Get kernel bundle info failed, tokenId=%{public}u, ret=%{public}d.",
             baseTokenId, ret);
         return ret;
     }
+    // the kernel bitmap drives the expected perm codes, no cache read here
+    BundleInfoInner bundleInfo;
+    bundleInfo.permCodeList = std::move(permCodeList);
     std::vector<BriefPermData> briefPermDataList;
     bool isFixed = false;
     policy = HapPolicy();

@@ -52,6 +52,32 @@ void BuildPermissionBitmap(const std::vector<BriefPermData>& permBriefDataList, 
     }
 }
 
+int32_t ParsePermissionBitmap(const SpmBlob& permsBlob, std::vector<uint16_t>& permCodeList)
+{
+    permCodeList.clear();
+    if (permsBlob.buf == nullptr || permsBlob.bufSize == 0) {
+        return RET_SUCCESS;
+    }
+    if ((permsBlob.bufSize % sizeof(uint32_t)) != 0) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Perms bitmap size %{public}u is not word aligned.", permsBlob.bufSize);
+        return ERR_PARAM_INVALID;
+    }
+    size_t wordCount = permsBlob.bufSize / sizeof(uint32_t);
+    if (wordCount > MAX_PERMISSION_BITMAP_WORDS) {
+        wordCount = MAX_PERMISSION_BITMAP_WORDS;
+    }
+    const uint32_t* words = reinterpret_cast<const uint32_t*>(permsBlob.buf);
+    for (size_t idx = 0; idx < wordCount; ++idx) {
+        uint32_t word = words[idx];
+        while (word != 0) {
+            uint32_t bitIdx = static_cast<uint32_t>(__builtin_ctz(word));
+            word &= word - 1;
+            permCodeList.emplace_back(static_cast<uint16_t>(idx * UINT32_T_BITS + bitIdx));
+        }
+    }
+    return RET_SUCCESS;
+}
+
 void BuildExtendedPermissionBuffer(const std::vector<PermissionWithValue>& extendedPermList,
     std::vector<uint8_t>& buffer)
 {

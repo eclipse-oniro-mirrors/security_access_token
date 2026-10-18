@@ -83,6 +83,10 @@ bool FillModuelData(const std::string path, TrustedBundleInfoInner& info)
     info.shareFilesRaw = path;
 
     info.bootstrapInfo = std::make_shared<Security::Verify::BootstrapInfo>();
+    // keep the bootstrap sections in sync so flag-filtered conversions have
+    // content for every requested section (mirrors the real verify chain)
+    info.bootstrapInfo->moduleRaw = moduleName;
+    info.bootstrapInfo->shareFilesRaw = path;
     return true;
 }
 
@@ -128,19 +132,26 @@ void HapSignVerifyManager::ConvertTrustedBundleInfo(
     for (const auto& infoInner : bundleInfos) {
         if (infoInner.bootstrapInfo != nullptr) {
             TrustedBundleInfo info;
-            info.profileData.provisionRaw = infoInner.bootstrapInfo->profileJsonRaw;
-            info.profileData.profileBlockLength = infoInner.provisionInfo.profileBlockLength;
-            if (infoInner.provisionInfo.profileBlock != nullptr && infoInner.provisionInfo.profileBlockLength > 0) {
-                info.profileData.profileBlock.assign(infoInner.provisionInfo.profileBlock.get(),
-                    infoInner.provisionInfo.profileBlock.get() + infoInner.provisionInfo.profileBlockLength);
+            // fill only the requested sections, aligned with the real verify chain
+            if ((flag & QUERY_PROFILE) != 0) {
+                info.profileData.provisionRaw = infoInner.bootstrapInfo->profileJsonRaw;
+                info.profileData.profileBlockLength = infoInner.provisionInfo.profileBlockLength;
+                if (infoInner.provisionInfo.profileBlock != nullptr && infoInner.provisionInfo.profileBlockLength > 0) {
+                    info.profileData.profileBlock.assign(infoInner.provisionInfo.profileBlock.get(),
+                        infoInner.provisionInfo.profileBlock.get() + infoInner.provisionInfo.profileBlockLength);
+                }
+                info.profileData.appId = infoInner.provisionInfo.appId;
+                info.profileData.fingerprint = infoInner.provisionInfo.fingerprint;
+                info.profileData.organization = infoInner.provisionInfo.organization;
+                info.profileData.isOpenHarmony = infoInner.provisionInfo.isOpenHarmony;
+                info.profileData.isEnterpriseResigned = infoInner.provisionInfo.isEnterpriseResigned;
             }
-            info.profileData.appId = infoInner.provisionInfo.appId;
-            info.profileData.fingerprint = infoInner.provisionInfo.fingerprint;
-            info.profileData.organization = infoInner.provisionInfo.organization;
-            info.profileData.isOpenHarmony = infoInner.provisionInfo.isOpenHarmony;
-            info.profileData.isEnterpriseResigned = infoInner.provisionInfo.isEnterpriseResigned;
-            info.moduleInfo = infoInner.bootstrapInfo->moduleRaw;
-            info.sharedFiles = infoInner.bootstrapInfo->shareFilesRaw;
+            if ((flag & QUERY_MODULE_INFO) != 0) {
+                info.moduleInfo = infoInner.bootstrapInfo->moduleRaw;
+            }
+            if ((flag & QUERY_SHARED_FILES) != 0) {
+                info.sharedFiles = infoInner.bootstrapInfo->shareFilesRaw;
+            }
             bundleInfo.emplace_back(info);
         }
     }
