@@ -90,10 +90,52 @@ HWTEST_F(GetHapSignInfoTest, GetHapSignInfoTest002, TestSize.Level0)
 {
     MockNativeToken mock("foundation");
 
-    std::string bundleName = "com.ohos.dlpmanager";
+    // Seed the query target through the four-phase install chain with a real
+    // system hap: the install session binds to the bundle carried by the hap
+    // signature and the hap_info_table row is persisted under that name, so
+    // the query must target the signed bundle. Drop any leftover row first
+    // so reruns stay stable.
+    const std::string signedBundle = "com.ohos.bluetooth";
+    AccessTokenKit::DeleteIdentity(0, signedBundle, ReservedType::NONE);
+
+    BundleHapList hapList;
+    hapList.hapPaths.emplace_back("/system/app/Bluetooth/Bluetooth.hap");
+    hapList.isPreInstalled = false;
+    hapList.userId = 100;
+
+    int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetHapSignInfo(bundleName, QUERY_ALL_SIGN_INFO, bundleInfo));
-    EXPECT_FALSE(bundleInfo.empty());
+    HapVerifyResultInfo resultInfo;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::CheckHapSignInfo(hapList, QUERY_ALL_SIGN_INFO,
+        sessionId, bundleInfo, resultInfo));
+
+    HapInfoCheckResult result;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::CheckHapPermissionInfo(sessionId, TYPE_INSTALL, result));
+
+    HapBaseInfo baseInfo;
+    baseInfo.userID = 100;
+    baseInfo.bundleName = "GetHapSignInfoTest002";
+    baseInfo.instIndex = 0;
+
+    BundlePolicy bundlePolicy;
+    bundlePolicy.dlpType = DLP_COMMON;
+    bundlePolicy.isDebugGrant = false;
+
+    Identity identity;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::PrepareHapIdentity(sessionId, baseInfo, bundlePolicy, identity));
+
+    std::map<std::string, std::string> modulePathMap;
+    modulePathMap[hapList.hapPaths[0]] = hapList.hapPaths[0];
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::FinishInstall(sessionId, true, modulePathMap));
+
+    // the sign-info channel returns the persisted modules of the signed bundle
+    std::vector<TrustedBundleInfo> bundleInfo2;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetHapSignInfo(signedBundle, QUERY_ALL_SIGN_INFO, bundleInfo2));
+    EXPECT_FALSE(bundleInfo2.empty());
+
+    // cleanup: the allocated token and the seeded row both live under the
+    // signed bundle's namespace, one bundle-level delete drops them all
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteIdentity(0, signedBundle, ReservedType::NONE));
 }
 
 /**
