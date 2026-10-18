@@ -380,40 +380,6 @@ HWTEST_F(InstallSessionManagerTest, GetCacheSignInfoBySessionIdTest002, TestSize
 }
 
 /**
- * @tc.name: GetHapSignInfoTest001
- * @tc.desc: Test GetHapSignInfo, with invalid param, with not exist bundle.
- * @tc.type: FUNC
- * @tc.require: Issue Number
- */
-HWTEST_F(InstallSessionManagerTest, GetHapSignInfoTest001, TestSize.Level0)
-{
-    MockNativeToken mock("foundation");
-
-    std::string bundleName = "";
-    std::vector<TrustedBundleInfo> bundleInfo;
-    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
-        AccessTokenKit::GetHapSignInfo(bundleName, QUERY_ALL_SIGN_INFO, bundleInfo));
-    bundleName = "GetHapSignInfoTest001";
-    EXPECT_EQ(AccessTokenError::ERR_BUNDLE_NOT_EXIST,
-        AccessTokenKit::GetHapSignInfo(bundleName, QUERY_ALL_SIGN_INFO, bundleInfo));
-}
-/**
- * @tc.name: GetHapSignInfoTest002
- * @tc.desc: Test GetHapSignInfo, with result.
- * @tc.type: FUNC
- * @tc.require: Issue Number
- */
-HWTEST_F(InstallSessionManagerTest, GetHapSignInfoTest002, TestSize.Level0)
-{
-    MockNativeToken mock("foundation");
-
-    std::string bundleName = "com.ohos.dlpmanager";
-    std::vector<TrustedBundleInfo> bundleInfo;
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetHapSignInfo(bundleName, QUERY_ALL_SIGN_INFO, bundleInfo));
-    EXPECT_FALSE(bundleInfo.empty());
-}
-
-/**
  * @tc.name: GetCachePolicyBySessionIdTest001
  * @tc.desc: Test GetCachePolicyBySessionId, with invalid param.
  * @tc.type: FUNC
