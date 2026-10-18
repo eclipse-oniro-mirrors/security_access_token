@@ -98,6 +98,9 @@ private:
     void UpdateBundleVerifyContext(const std::string& bundleName, AccessTokenID tokenId,
         const GenericValues& tokenValue, const std::vector<BriefPermData>& briefPermData);
     void BuildPriorityBundleList();
+    void CollectBundleKeySet(std::set<std::string>& bundleKeySet);
+    void ClassifyBundle(const std::string& key);
+    void SortPriorityBundleList();
     int32_t RefreshBundleSignInfoMap();
     void VerifyNormalBundleListAsync();
     bool IsAllBundlesVerified() const;
@@ -160,6 +163,7 @@ private:
     std::map<std::string, bool> isVerifiedMap_;
     std::map<std::string, bool> isVerifyingMap_;
     std::atomic_bool isAllHapBundlesVerified_ = false;
+    std::atomic_bool migrationCompleted_ = false;
     std::mutex verifyMutex_;
     std::condition_variable verifyCondition_;
     std::set<int32_t> uidSet_;
