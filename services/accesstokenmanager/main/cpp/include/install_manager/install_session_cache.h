@@ -52,6 +52,11 @@ struct InstallCache {
     // Basic info:
     // Input hap list containing hap paths and user ID
     BundleHapList list;
+    // Install mode of this session, the single mode source of the four-stage
+    // flow: set from list.mode at CheckHapSignInfo (already validated to
+    // {0,1}), or derived from baseInfo.instIndex in the repair-only
+    // CreateInstallSession path. Constant for the session lifetime.
+    MultipleMode mode = MultipleMode::DEFAULT_OR_MAIN_MODE;
     // Verified bundle info list; front elements from list signature verification,
     // back elements from database verification in MERGE scenario
     std::vector<TrustedBundleInfoInner> bundleInfos;
@@ -81,12 +86,12 @@ struct InstallCache {
     // Repair mode iff the desired plain 32-bit token id is non-zero
     bool IsRepairMode() const
     {
-        return AccessTokenIDManager::ParseTokenId(repairedIdentity.tokenId) != 0;
+        return AccessTokenIDManager::ExtractTokenIdFromFull(repairedIdentity.tokenId) != 0;
     }
 
     // Install info:
     // Install type: TYPE_INSTALL, TYPE_REPLACE, or TYPE_MERGE
-    InstallTypeEnum type;
+    InstallTypeEnum type = TYPE_INSTALL;
     // Basic hap info for newly allocated tokenID: userID, bundleName, instIndex
     HapBaseInfo baseInfo;
     // Newly allocated tokenID and uid
@@ -103,7 +108,7 @@ struct InstallCache {
     // True means the new identity uid was adopted from the caller's input
     // (PrepareHapIdentity identity.uid param); such tokens are marked migrated
     // to indicate the uid was designated by the caller
-    bool uidFromCaller = false;
+    bool isUidFromCaller = false;
     // Reserved token flag: see ReservedType definition
     ReservedType reserved = ReservedType::NONE;
     // Old token ID for reserved != 0 scenario
@@ -115,7 +120,7 @@ struct InstallCache {
     // Policies of the tokens covered by this session's update plan, keyed by tokenId
     std::unordered_map<AccessTokenID, BundlePolicy> updatedBundlePolicyMap;
     // Resolved uid (and allocation state) per updated tokenId
-    std::unordered_map<AccessTokenID, ResolvedUid> uidStateMap;
+    std::unordered_map<AccessTokenID, ResolvedUid> updatedUidStateMap;
     // 会话级非活跃 token 快照（以 tokenId 为键）：
     // 更新链路经 GetHapTokenInfoForInstall 加载的 UNTRUSTED token DB 快照，
     // 同一会话内复用，避免重复读库。ACTIVE token 走 InfoManager 活跃缓存，
@@ -129,13 +134,29 @@ struct InstallCache {
     bool bundleTokenIdsLoaded = false;
 };
 
+// Final per-hap info of a finish context: the base token info, the bundle-level
+// sideload bit (echoed from cache.bundleParam onto every token), and the sticky
+// state (migrated / perm-dialog-cap) resolved once at FillFinishContext time
+// (session snapshot first, then the InfoManager read-back chain). Both the db
+// write (GenerateHapTokenInfoItem) and the cache refresh (RefreshCache) consume
+// the same values.
+struct InstallHapInfo {
+    HapTokenInfo baseInfo;
+    bool isSideload = false;
+    bool migrated = false;
+    bool permDialogCapState = false;
+};
+
 struct FinishContext {
     BundleNoCachedInfo noCachedInfo;
     std::shared_ptr<BundleInfoInner> innerInfo;
-    std::vector<HapTokenInfo> hapInfos;
+    std::vector<InstallHapInfo> hapInfos;
     std::vector<std::vector<BriefPermData>> permBriefDataLists;
     std::vector<std::vector<PermissionWithValue>> extendPermLists;
     std::vector<std::shared_ptr<std::vector<BriefPermData>>> oldPermList;
+    // Undefined permissions collected during permission initialization,
+    // persisted to ACCESSTOKEN_HAP_UNDEFINE_INFO (same as master).
+    std::vector<GenericValues> undefValues;
 };
 
 } // namespace AccessToken

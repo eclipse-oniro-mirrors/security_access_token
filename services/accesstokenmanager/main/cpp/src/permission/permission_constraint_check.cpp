@@ -123,6 +123,24 @@ bool PermissionConstraintCheck::IsPermAvailableRangeSatisfied(const BundleParam&
     return true;
 }
 
+bool PermissionConstraintCheck::CheckAclAndEdm(const BundleParam& param, const HapPolicy& policy,
+    HapInfoCheckResult& result)
+{
+    for (const auto& status : policy.permStateList) {
+        PermissionBriefDef briefDef;
+        if (!GetPermissionBriefDef(status.permissionName, briefDef) || !briefDef.isEnable) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Get definition of %{public}s failed or permission is undefined.",
+                status.permissionName.c_str());
+            continue;
+        }
+        result.permCheckResult.permissionName = status.permissionName;
+        if (!AclAndEdmCheck(param, briefDef, policy, result)) {
+            return false;
+        }
+    }
+    return true;
+}
+
 bool PermissionConstraintCheck::AclAndEdmCheck(const BundleParam& param, const PermissionBriefDef& briefDef,
     const HapPolicy& policy, HapInfoCheckResult& result)
 {

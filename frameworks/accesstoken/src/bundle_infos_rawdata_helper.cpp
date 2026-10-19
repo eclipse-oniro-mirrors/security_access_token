@@ -52,11 +52,10 @@ bool BundleInfosRawdataHelper::WriteToRawData(const std::vector<TrustedBundleInf
 
     RETURN_IF_FALSE(WriteBundleInfosToParcel(bundleInfos, parcel));
 
-    size_t bufferSize = parcel.GetDataSize();
-    RETURN_IF_FALSE(bufferSize <= MAX_BUNDLE_INFOS_RAW_DATA_SIZE);
+    rawData.size = static_cast<uint32_t>(parcel.GetDataSize());
+    RETURN_IF_FALSE(rawData.size <= MAX_BUNDLE_INFOS_RAW_DATA_SIZE);
 
     void* bufferPtr = reinterpret_cast<void *>(parcel.GetData());
-    rawData.size = static_cast<uint32_t>(bufferSize);
     return rawData.RawDataCpy(bufferPtr) == 0;
 }
 
@@ -83,7 +82,7 @@ bool BundleInfosRawdataHelper::ReadBundleInfosFromParcel(MessageParcel& parcel,
         RETURN_IF_FALSE(parcel.ReadString(info.moduleInfo));
         RETURN_IF_FALSE(parcel.ReadString(info.sharedFiles));
 
-        bundleInfos.push_back(info);
+        bundleInfos.emplace_back(info);
     }
 
     return true;

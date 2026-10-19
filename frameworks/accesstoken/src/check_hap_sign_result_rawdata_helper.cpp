@@ -42,11 +42,10 @@ bool CheckHapSignResultRawdataHelper::WriteToRawData(
     RETURN_IF_FALSE(parcel.WriteUint32(resultInfo.index));
     RETURN_IF_FALSE(parcel.WriteInt32(resultInfo.errorCode));
 
-    size_t bufferSize = parcel.GetDataSize();
-    RETURN_IF_FALSE(bufferSize <= MAX_BUNDLE_INFOS_RAW_DATA_SIZE);
+    rawData.size = static_cast<uint32_t>(parcel.GetDataSize());
+    RETURN_IF_FALSE(rawData.size <= MAX_BUNDLE_INFOS_RAW_DATA_SIZE);
 
     void* bufferPtr = reinterpret_cast<void *>(parcel.GetData());
-    rawData.size = static_cast<uint32_t>(bufferSize);
     return rawData.RawDataCpy(bufferPtr) == 0;
 }
 

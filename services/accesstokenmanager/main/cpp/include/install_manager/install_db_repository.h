@@ -44,9 +44,6 @@ namespace AccessToken {
  */
 class InstallDbRepository final {
 public:
-    // Read the installed bundle module records (path/persistData) of the bundle.
-    static int32_t GetInstalledBundleInfo(std::string bundleName, std::vector<std::string>& paths,
-        std::vector<std::vector<uint8_t>>& persistDatas);
     // Strict query: only the rows of the given mode (no fallback).
     static int32_t GetInstalledBundleInfo(std::string bundleName, MultipleMode mode,
         std::vector<std::string>& paths, std::vector<std::vector<uint8_t>>& persistDatas);
@@ -59,7 +56,7 @@ public:
     static int32_t QueryBundleTokens(const std::string& bundleName, InstallCache& cache,
         std::vector<GenericValues>& hapTokenResults);
     // Read permission states of the token from db and convert to brief permission data.
-    static int32_t FillPermStateFromDb(AccessTokenID tokenId, std::vector<BriefPermData>& oldPermBriefDataList);
+    static int32_t BuildPermStateByTokenId(AccessTokenID tokenId, std::vector<BriefPermData>& oldPermBriefDataList);
     // Remove residual records of the token from hap token related tables.
     static int32_t DeleteFromDbByTokenId(AccessTokenID tokenID);
     // Assemble all db records for the finish context (token, permission and
@@ -68,24 +65,32 @@ public:
     static int32_t BuildDbOpsVec(const InstallCache& cache, const FinishContext& context,
         const std::map<std::string, std::string>& modulePathMap, std::vector<AddInfo>& addInfoVec,
         std::vector<DelInfo>& delInfoVec);
+    static int32_t GetAppIdFromDb(const std::string& bundleName, MultipleMode mode, std::string& appId);
 
 private:
     // Resolve the final on-disk path for every module in cache.bundleInfos:
     // new modules via BMS's modulePathMap, merge-surviving old modules via cache.oldModulePaths.
     static int32_t ResolveModulePaths(const InstallCache& cache,
         const std::map<std::string, std::string>& modulePathMap, std::vector<std::string>& modulePaths);
-    static void GenerateHapTokenInfoItem(const InstallCache& cache, const HapTokenInfo& hapInfo,
+    static void GenerateHapTokenInfoItem(const InstallCache& cache, const InstallHapInfo& installInfo,
         std::vector<GenericValues>& genericValues);
-    static void ConvertBriefPermDataToGenericValues(AccessTokenID tokenId,
+    static int32_t ConvertBriefPermDataToGenericValues(AccessTokenID tokenId,
         const std::vector<BriefPermData>& briefPermDataList, std::vector<GenericValues>& genericValuesList);
+    // Load the token's local-device permission states for timestamp
+    // arbitration; remote-device rows are excluded.
+    static int32_t GetLocalPermStateListFromDb(AccessTokenID tokenId, std::vector<PermissionStatus>& permList);
     static void GeneratePermDefFromHapPolicy(AccessTokenID tokenId, const HapPolicy& hapPolicy,
         const std::string& bundleName, std::vector<GenericValues>& genericValuesList);
     static int32_t ConvertInstallCacheToBundleInfoItems(const InstallCache& cache,
         const std::map<std::string, std::string>& modulePathMap, std::vector<GenericValues>& genericValuesList,
         GenericValues& delCondition);
-    static void GenerateTokenDbOpsVec(const InstallCache& cache, const HapTokenInfo& hapInfo,
-        const std::vector<BriefPermData>& permBriefDataList, std::vector<AddInfo>& addInfoVec,
-        std::vector<DelInfo>& delInfoVec);
+    // Assemble the per-token db op vectors for the finish-context slot
+    // `index`; the caller submits them in one transaction
+    // (KernelAndDBWriteTransaction::CommitDb). Optional tables (extend /
+    // undefine) emit add entries only when they carry data; their del
+    // entries are unconditional (rewrite cleanup of residual rows).
+    static int32_t GenerateTokenDbOpsVec(const InstallCache& cache, const FinishContext& context,
+        size_t index, std::vector<AddInfo>& addInfoVec, std::vector<DelInfo>& delInfoVec);
     static void TranslateGenericValuesToPermState(const std::vector<GenericValues>& permStateResults,
         std::vector<PermissionStatus>& existingPermList);
 };

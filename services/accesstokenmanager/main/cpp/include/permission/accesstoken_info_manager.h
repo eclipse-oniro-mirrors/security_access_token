@@ -94,8 +94,11 @@ public:
     // status-based decisions); unknown -> nullptr (status stays ACTIVE so
     // callers take the not-exist path).
     std::shared_ptr<HapTokenInfoInner> GetHapTokenInfoAndStatus(AccessTokenID id, TokenIdStatus& status);
-    int32_t RestoreInstallPolicyFromKernel(
-        const std::string& bundleName, const BundlePolicy& bundlePolicy, BundleParam& param, HapPolicy& policy);
+    // mode scopes the kernel base-token probe to the mode's main app
+    // (instIndex = mode * MAIN_CLONE_INDEX_BASE); policies of one mode are
+    // never restored from another mode's base token.
+    int32_t RestoreInstallPolicyFromKernel(const std::string& bundleName, MultipleMode mode,
+        const BundlePolicy& bundlePolicy, BundleParam& param, HapPolicy& policy);
     int GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo& infoParcel);
     int GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfoBase& info);
     int AllocAccessTokenIDEx(const HapInfoParams& info, AccessTokenID tokenId, AccessTokenIDEx& tokenIdEx);

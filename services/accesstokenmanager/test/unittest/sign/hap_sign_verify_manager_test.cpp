@@ -773,13 +773,13 @@ HWTEST_F(HapSignVerifyManagerTest, BuildTrustedBundleInfo001, TestSize.Level1)
 }
 
 /**
- * @tc.name: ParseTokenId001
- * @tc.desc: ParseTokenId masks to lower 32 bits of a full token id.
+ * @tc.name: ExtractTokenIdFromFull001
+ * @tc.desc: ExtractTokenIdFromFull masks to lower 32 bits of a full token id.
  * @tc.type: FUNC
  */
-HWTEST_F(HapSignVerifyManagerTest, ParseTokenId001, TestSize.Level1)
+HWTEST_F(HapSignVerifyManagerTest, ExtractTokenIdFromFull001, TestSize.Level1)
 {
-    EXPECT_EQ(0xABCDu, AccessTokenIDManager::ParseTokenId(0x123456780000ABCDull));
+    EXPECT_EQ(0xABCDu, AccessTokenIDManager::ExtractTokenIdFromFull(0x123456780000ABCDull));
 }
 
 /**

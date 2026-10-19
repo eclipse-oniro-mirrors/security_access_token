@@ -1746,13 +1746,10 @@ HWTEST_F(DeleteIdentityMockTest, DeleteIdentityTest021, TestSize.Level0)
     bundlePolicy2.dlpType = DLP_COMMON;
     bundlePolicy2.isDebugGrant = false;
 
-    Identity identity2;
-    CloneApp(path2, baseInfo2, bundlePolicy2, identity2);
-    AccessTokenID tokenId2 = static_cast<AccessTokenID>(identity2.tokenId);
-
-    // Seed the sub-mode sign-info row (install-side mode writing belongs to
-    // P-1/P-3; the row is seeded directly to observe the delete-side
-    // mode-scoped cleanup).
+    // Seed the sub-mode sign-info row BEFORE the sub-mode session: the
+    // auto-session (repair) path loads its installed base per mode (P-3,
+    // BR-3: no cross-mode base) and does not write sign rows itself; the row
+    // stays directly seeded to observe the delete-side mode-scoped cleanup.
     GenericValues mode1Row;
     mode1Row.Put(TokenFiledConst::FIELD_BUNDLE_NAME, "DeleteIdentityTest021");
     mode1Row.Put(TokenFiledConst::FIELD_MODULE_NAME, "Module001");
@@ -1767,6 +1764,10 @@ HWTEST_F(DeleteIdentityMockTest, DeleteIdentityTest021, TestSize.Level0)
     mode1Add.addValues = { mode1Row };
     int32_t ret = AccessTokenDbOperator::DeleteAndInsertValues({}, { mode1Add });
     EXPECT_EQ(ERR_OK, ret);
+
+    Identity identity2;
+    CloneApp(path2, baseInfo2, bundlePolicy2, identity2);
+    AccessTokenID tokenId2 = static_cast<AccessTokenID>(identity2.tokenId);
 
     // Precondition: both mode rows exist
     EXPECT_GT(QueryHapInfoRowsByMode("DeleteIdentityTest021",
@@ -1867,17 +1868,18 @@ HWTEST_F(DeleteIdentityMockTest, HapInfoTableCleanupModeAssociated001, TestSize.
     bundlePolicy2.dlpType = DLP_COMMON;
     bundlePolicy2.isDebugGrant = false;
 
-    Identity identity2;
-    CloneApp(path, baseInfo2, bundlePolicy2, identity2);
-    AccessTokenID tokenId2 = static_cast<AccessTokenID>(identity2.tokenId);
-
-    // Seed the sub-mode sign-info row (install-side mode writing belongs to
-    // P-1/P-3; the row is seeded directly to observe the delete-side
-    // mode-scoped cleanup).
+    // Seed the sub-mode sign-info row BEFORE the sub-mode session: the
+    // auto-session (repair) path loads its installed base per mode (P-3,
+    // BR-3: no cross-mode base) and does not write sign rows itself; the row
+    // stays directly seeded to observe the delete-side mode-scoped cleanup.
     GenericValues mode1Row = BuildHapInfoRow(bundleName, "Module001", path);
     mode1Row.Put(TokenFiledConst::FIELD_MODE, static_cast<int32_t>(MultipleMode::SUB_MODE));
     ASSERT_EQ(ERR_OK, AccessTokenDbOperator::DeleteAndInsertValues(
         {}, { BuildHapInfoAddInfo({ mode1Row }) }));
+
+    Identity identity2;
+    CloneApp(path, baseInfo2, bundlePolicy2, identity2);
+    AccessTokenID tokenId2 = static_cast<AccessTokenID>(identity2.tokenId);
 
     // Precondition: rows of both modes exist
     EXPECT_GT(QueryHapInfoRowsByMode(bundleName, MultipleMode::DEFAULT_OR_MAIN_MODE), static_cast<size_t>(0));
