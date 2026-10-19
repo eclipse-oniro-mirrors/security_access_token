@@ -311,7 +311,8 @@ int32_t StartReplaceSession(const std::string& path, int32_t& sessionId)
         return ret;
     }
     HapInfoCheckResult result;
-    return g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
+    return g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
 }
 
 // Install a token for the given (userId, bundleName, instIndex) via the auto
@@ -741,7 +742,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapTest001, TestSize.Level0)
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_EQ(ERR_OK, ret);
 
     HapBaseInfo baseInfo;
@@ -1073,7 +1075,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapTest009, TestSize.Level0)
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_EQ(ERR_OK, ret);
 
     std::map<std::string, std::string> modulePathMap;
@@ -1112,7 +1115,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapTest010, TestSize.Level0)
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_EQ(ERR_OK, ret);
 
     HapBaseInfo baseInfo;
@@ -1171,7 +1175,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapTest011, TestSize.Level0)
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_EQ(ERR_OK, ret);
 
     std::map<std::string, std::string> modulePathMap;
@@ -1210,7 +1215,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapTest012, TestSize.Level0)
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_EQ(ERR_OK, ret);
 
     std::map<std::string, std::string> modulePathMap;
@@ -1317,7 +1323,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapTest014, TestSize.Level0)
     EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO));
 
     HapInfoCheckResult result;
-    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
+    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
 
     std::map<std::string, std::string> modulePathMap;
     modulePathMap[path2] = path2;
@@ -1379,7 +1386,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapTest015, TestSize.Level0)
     EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO));
 
     HapInfoCheckResult result;
-    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
+    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
 
     std::map<std::string, std::string> modulePathMap;
     modulePathMap[path2] = path2;
@@ -1428,7 +1436,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapTest016, TestSize.Level0)
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_NE(ERR_OK, ret);
     EXPECT_EQ(result.permCheckResult.rule, PermissionRulesEnum::PERMISSION_EDM_RULE);
     EXPECT_EQ(result.permCheckResult.permissionName, "ohos.permission.SET_ENTERPRISE_INFO");
@@ -1566,7 +1575,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapFailedTest003, TestSize.Level0
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, InstallTypeEnum::TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, InstallTypeEnum::TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_NE(ERR_OK, ret);
 }
 
@@ -1606,14 +1616,16 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapFailedTest004, TestSize.Level0
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, InstallTypeEnum::TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, InstallTypeEnum::TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_NE(ERR_OK, ret);
 
     int32_t sceneCode = 0;
     ret = DeleteIdentityCore(tokenId, "InstallHapFailedTest004", ReservedType::NONE, sceneCode);
     EXPECT_EQ(ERR_OK, ret);
 
-    ret = g_installSessionManager->CheckHapPermissionInfo(INVALID_SESSION, InstallTypeEnum::TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        INVALID_SESSION, InstallTypeEnum::TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_NE(ERR_OK, ret);
 }
 
@@ -1639,7 +1651,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapSuccessTest005, TestSize.Level
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, InstallTypeEnum::TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, InstallTypeEnum::TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_EQ(ERR_OK, ret);
 
     sessionId = 0;
@@ -1649,7 +1662,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapSuccessTest005, TestSize.Level
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result2;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, InstallTypeEnum::TYPE_MERGE, MultipleMode::DEFAULT_OR_MAIN_MODE, result2);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, InstallTypeEnum::TYPE_MERGE, MultipleMode::DEFAULT_OR_MAIN_MODE, result2);
     EXPECT_EQ(ERR_OK, ret);
 }
 
@@ -1692,7 +1706,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapFailedTest006, TestSize.Level0
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, InstallTypeEnum::TYPE_MERGE, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, InstallTypeEnum::TYPE_MERGE, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_NE(ERR_OK, ret);
 
     GenericValues delCondition2;
@@ -1743,7 +1758,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapFailedTest007, TestSize.Level0
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, InstallTypeEnum::TYPE_MERGE, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, InstallTypeEnum::TYPE_MERGE, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_NE(ERR_OK, ret);
 
     GenericValues delCondition2;
@@ -1777,7 +1793,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapFailedTest008, TestSize.Level0
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, InstallTypeEnum::TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, InstallTypeEnum::TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_NE(ERR_OK, ret);
     EXPECT_EQ(result.permCheckResult.rule, PermissionRulesEnum::PERMISSION_ACL_RULE);
     EXPECT_EQ(result.permCheckResult.permissionName, "ohos.permission.GET_WIFI_INFO_INTERNAL");
@@ -1832,7 +1849,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapFailedTest010, TestSize.Level0
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_EQ(ERR_OK, ret);
 
     HapBaseInfo baseInfo;
@@ -1877,7 +1895,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapFailedTest014, TestSize.Level0
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_EQ(ERR_OK, ret);
 
     HapBaseInfo baseInfo;
@@ -1916,7 +1935,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapFailedTest015, TestSize.Level0
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_EQ(ERR_OK, ret);
 
     HapBaseInfo baseInfo;
@@ -1979,7 +1999,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapFailedTest017, TestSize.Level0
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_EQ(ERR_OK, ret);
 
     HapBaseInfo baseInfo;
@@ -2036,7 +2057,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapFailedTest018, TestSize.Level0
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_EQ(ERR_OK, ret);
 
     HapBaseInfo baseInfo;
@@ -2094,7 +2116,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapFailedTest019, TestSize.Level0
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_EQ(ERR_OK, ret);
 
     Identity identity2 = {0, -1};
@@ -2128,7 +2151,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapFailedTest020, TestSize.Level0
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_EQ(ERR_OK, ret);
 
     HapBaseInfo baseInfo;
@@ -2167,7 +2191,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapFailedTest021, TestSize.Level0
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_EQ(ERR_OK, ret);
 
     HapBaseInfo baseInfo;
@@ -2222,7 +2247,8 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest001, TestSize.Level0)
     ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO);
     EXPECT_EQ(ERR_OK, ret);
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_EQ(ERR_OK, ret);
 
     AccessTokenIDEx tokenIdEx = {0};
@@ -2282,7 +2308,8 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTokenIdExTest001, TestSize.Leve
         hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO);
     EXPECT_EQ(ERR_OK, ret);
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_EQ(ERR_OK, ret);
 
     // caller passes the stale full token id (attr 0 from the install round)
@@ -2354,7 +2381,8 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTokenIdExTest002, TestSize.Leve
         hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO);
     EXPECT_EQ(ERR_OK, ret);
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_EQ(ERR_OK, ret);
 
     // caller passes the full token id of the install round (attr = SYSTEM_APP_FLAG)
@@ -2426,7 +2454,8 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest002, TestSize.Level0)
         hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO);
     EXPECT_EQ(ERR_OK, ret);
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_EQ(ERR_OK, ret);
 
     bundlePolicy.preAuthorizationInfo.emplace_back(PreAuthorizationInfo{"ohos.permission.CAMERA", true});
@@ -2485,7 +2514,8 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest003, TestSize.Level0)
     ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO);
     EXPECT_EQ(ERR_OK, ret);
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_EQ(ERR_OK, ret);
 
     AccessTokenIDEx tokenIdEx = {0};
@@ -2546,7 +2576,8 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest004, TestSize.Level0)
         hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO);
     EXPECT_EQ(ERR_OK, ret);
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_EQ(ERR_OK, ret);
 
     AccessTokenIDEx tokenIdEx = {0};
@@ -2609,7 +2640,8 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest005, TestSize.Level0)
     ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO);
     EXPECT_EQ(ERR_OK, ret);
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_EQ(ERR_OK, ret);
 
     AccessTokenIDEx tokenIdEx = {0};
@@ -2675,7 +2707,8 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest006, TestSize.Level0)
     ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO);
     EXPECT_EQ(ERR_OK, ret);
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_EQ(ERR_OK, ret);
 
     std::map<std::string, std::string> modulePathMap;
@@ -2727,7 +2760,8 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest007, TestSize.Level0)
     HapVerifyResultInfo resultInfo;
     EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO));
     HapInfoCheckResult result;
-    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_MERGE, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
+    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_MERGE, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
 
     std::map<std::string, std::string> modulePathMap;
     modulePathMap[path3] = path3;
@@ -2789,7 +2823,8 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest008, TestSize.Level0)
         hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO);
     EXPECT_EQ(ERR_OK, ret);
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_EQ(ERR_OK, ret);
 
     AccessTokenIDEx tokenIdEx = {0};
@@ -2848,7 +2883,8 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest009, TestSize.Level0)
         hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO);
     EXPECT_EQ(ERR_OK, ret);
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_EQ(ERR_OK, ret);
 
     int32_t uid = TEST_UID;
@@ -2905,7 +2941,8 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest010, TestSize.Level0)
     EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO));
 
     HapInfoCheckResult result;
-    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
+    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
 
     int32_t uid = TEST_UID;
     AccessTokenIDEx tokenIdEx = {0};
@@ -2957,7 +2994,8 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest011, TestSize.Level0)
     EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO));
 
     HapInfoCheckResult result;
-    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
+    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
 
     int32_t uid = TEST_UID;
     AccessTokenIDEx tokenIdEx = {0};
@@ -3011,7 +3049,8 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest012, TestSize.Level0)
     EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO));
 
     HapInfoCheckResult result;
-    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
+    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
 
     int32_t uid = TEST_INVALID_UID;
     AccessTokenIDEx tokenIdEx = {0};
@@ -3072,7 +3111,8 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest013, TestSize.Level0)
     EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO));
 
     HapInfoCheckResult result;
-    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
+    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
 
     int32_t uid = identity2.uid;
     AccessTokenIDEx tokenIdEx = {0};
@@ -3127,7 +3167,8 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest014, TestSize.Level4)
     EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO));
 
     HapInfoCheckResult result;
-    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
+    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
 
     int32_t uid = TEST_UID2;
     AccessTokenIDEx tokenIdEx = {0};
@@ -3179,7 +3220,8 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapFromCallerMigratedTest001, Test
     EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo,
         QUERY_ALL_SIGN_INFO));
     HapInfoCheckResult result;
-    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
+    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
 
     int32_t uid = TEST_UID2;
     AccessTokenIDEx tokenIdEx = {0};
@@ -3448,7 +3490,8 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapFailedTest001, TestSize.Level0)
         hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO);
     EXPECT_EQ(ERR_OK, ret);
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_EQ(ERR_OK, ret);
 
 
@@ -3511,7 +3554,8 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapFailedTest002, TestSize.Level0)
         hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO);
     EXPECT_EQ(ERR_OK, ret);
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_EQ(ERR_OK, ret);
 
     AccessTokenIDEx tokenIdEx = {0};
@@ -3564,7 +3608,8 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapFailedTest003, TestSize.Level0)
         hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO);
     EXPECT_EQ(ERR_OK, ret);
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_EQ(ERR_OK, ret);
 
     AccessTokenIDEx tokenIdEx = BuildTokenIdEx(static_cast<AccessTokenID>(123456789));
@@ -3612,7 +3657,8 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapFailedTest004, TestSize.Level0)
     ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO);
     EXPECT_EQ(ERR_OK, ret);
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_EQ(ERR_OK, ret);
 
     AccessTokenIDEx tokenIdEx = {0};
@@ -3679,7 +3725,8 @@ HWTEST_F(InstallSessionManagerMockTest, FinishHapTest001, TestSize.Level0)
     EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO));
 
     HapInfoCheckResult result;
-    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
+    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
 
     HapBaseInfo baseInfo;
     baseInfo.userID = 100;
@@ -3728,7 +3775,8 @@ HWTEST_F(InstallSessionManagerMockTest, FinishHapTest002, TestSize.Level0)
     EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO));
 
     HapInfoCheckResult result;
-    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
+    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
 
     std::map<std::string, std::string> modulePathMap;
     modulePathMap[path] = path;
@@ -3762,7 +3810,8 @@ HWTEST_F(InstallSessionManagerMockTest, FinishHapTest004, TestSize.Level0)
     EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO));
 
     HapInfoCheckResult result;
-    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
+    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
 
     std::map<std::string, std::string> modulePathMap;
     modulePathMap[path] = path;
@@ -3798,7 +3847,8 @@ HWTEST_F(InstallSessionManagerMockTest, FinishHapFailedTest001, TestSize.Level0)
     EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO));
 
     HapInfoCheckResult result;
-    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
+    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
 
     std::map<std::string, std::string> modulePathMap;
     modulePathMap[path] = path;
@@ -4048,7 +4098,8 @@ HWTEST_F(InstallSessionManagerMockTest, AppCloneTest005, TestSize.Level0)
     EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO));
 
     HapInfoCheckResult result;
-    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
+    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
 
     baseInfo.userID = TEST_USER_ID;
     baseInfo.instIndex = 1;
@@ -4503,7 +4554,8 @@ HWTEST_F(InstallSessionManagerMockTest, GetInfoByBundleNameTest001, TestSize.Lev
     EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO));
 
     HapInfoCheckResult result;
-    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
+    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
 
     HapBaseInfo baseInfo;
     baseInfo.userID = 100;
@@ -4613,7 +4665,8 @@ HWTEST_F(InstallSessionManagerMockTest, GetCachePolicyBySessionIdTest001, TestSi
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_EQ(ERR_OK, ret);
 
     HapBaseInfo baseInfo;
@@ -4662,7 +4715,8 @@ HWTEST_F(InstallSessionManagerMockTest, GetCachePolicyBySessionIdTest002, TestSi
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_EQ(ERR_OK, ret);
 
     HapBaseInfo baseInfo;
@@ -4805,7 +4859,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallSessionTest001, TestSize.Level1)
 
         HapInfoCheckResultIdl checkResult;
         EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
-            atManagerService_->CheckHapPermissionInfo(1, InstallTypeEnumIdl::TYPE_INSTALL, MultipleModeEnumIdl::DEFAULT_OR_MAIN_MODE, checkResult));
+            atManagerService_->CheckHapPermissionInfo(
+                1, InstallTypeEnumIdl::TYPE_INSTALL, MultipleModeEnumIdl::DEFAULT_OR_MAIN_MODE, checkResult));
 
         HapBaseInfoIdl infoIdl;
         infoIdl.userID = 100;
@@ -4894,7 +4949,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallSessionTest003, TestSize.Level1)
     EXPECT_TRUE(g_installSessionManager->sessionToInstallCache.find(sessionId) !=
         g_installSessionManager->sessionToInstallCache.end());
     HapInfoCheckResult checkResult;
-    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, checkResult));
+    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, checkResult));
 }
 
 /**
@@ -5332,7 +5388,8 @@ HWTEST_F(InstallSessionManagerMockTest, SideloadAppTest004, TestSize.Level0)
     ASSERT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(
         hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO));
     HapInfoCheckResult checkResult;
-    ASSERT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, checkResult));
+    ASSERT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, checkResult));
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx.tokenIDEx = identity.tokenId;
     ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(
@@ -5425,7 +5482,8 @@ HWTEST_F(InstallSessionManagerMockTest, SideloadAppTest003, TestSize.Level0)
     // ACL check should fail (getwifi is system_core, no ACL, no sideload bypass
     // permission in current production definitions)
     HapInfoCheckResult result;
-    int32_t ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
+    int32_t ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_NE(ERR_OK, ret);
     if (ret != ERR_OK) {
         EXPECT_EQ(PermissionRulesEnum::PERMISSION_ACL_RULE, result.permCheckResult.rule);
@@ -5474,7 +5532,8 @@ HWTEST_F(InstallSessionManagerMockTest, SideloadAppTest005, TestSize.Level0)
     ASSERT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(
         hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO));
     HapInfoCheckResult checkResult;
-    ASSERT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, checkResult));
+    ASSERT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, checkResult));
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx.tokenIDEx = identity.tokenId;
     ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(
@@ -5542,7 +5601,8 @@ HWTEST_F(InstallSessionManagerMockTest, SideloadAppTest006, TestSize.Level0)
     ASSERT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(
         hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO));
     HapInfoCheckResult checkResult;
-    ASSERT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, checkResult));
+    ASSERT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, checkResult));
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx.tokenIDEx = identity.tokenId;
     ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(
@@ -5929,7 +5989,8 @@ HWTEST_F(InstallSessionManagerMockTest, DriftedUpdateTest003, TestSize.Level1)
     ASSERT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(
         hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO));
     HapInfoCheckResult result;
-    ASSERT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
+    ASSERT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
 
     // token exists but belongs to another bundle: fatal, must roll the session back
     int32_t uid = -1; // no uid expectation
@@ -6238,7 +6299,8 @@ HWTEST_F(InstallSessionManagerMockTest, UntrustedCollectTest001, TestSize.Level1
     ASSERT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(
         hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO));
     HapInfoCheckResult result;
-    ASSERT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
+    ASSERT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
 
     int32_t uid = -1; // no uid expectation
     AccessTokenIDEx tokenIdEx = {0};
@@ -6549,7 +6611,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallModeTest002, TestSize.Level0)
 
     HapInfoCheckResult result;
     // session mode stays DEFAULT_OR_MAIN_MODE
-    ASSERT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
+    ASSERT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
 
     // prepare with a sub-mode instIndex while the session mode is main (0)
     HapBaseInfo baseInfo;
@@ -7037,7 +7100,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallModeTest013, TestSize.Level0)
     ASSERT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(
         hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO));
     HapInfoCheckResult result;
-    ASSERT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
+    ASSERT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
 
     // mismatched prepare fails and the session is rolled back
     HapBaseInfo badInfo;

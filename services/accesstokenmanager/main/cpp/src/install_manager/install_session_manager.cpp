@@ -272,7 +272,8 @@ int32_t InstallSessionManager::MergeBundleInfos(InstallCache& cache, std::vector
     std::vector<std::vector<uint8_t>>& persistDatas)
 {
     std::vector<TrustedBundleInfoInner> bundleInfos;
-    int32_t ret = HapSignVerifyManager::FastVerify(paths, persistDatas, bundleInfos, cache.list.userIdForEnterpriseSign);
+    int32_t ret = HapSignVerifyManager::FastVerify(paths, persistDatas, bundleInfos,
+        cache.list.userIdForEnterpriseSign);
     if (ret != RET_SUCCESS) {
         return ret;
     }
@@ -702,9 +703,8 @@ int32_t InstallSessionManager::CheckHapPermissionInfo(
         return AccessTokenError::ERR_SESSION_NOT_EXIST;
     }
     // install mode must be within the same mode domain ({0,1}); CURRENT_MODE
-    // is a query-only sentinel
+    // is a query-only sentinel; DataValidator logs the invalid value
     if (!DataValidator::IsInstallModeValid(mode)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Invalid install mode %{public}d.", static_cast<int32_t>(mode));
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     InstallCache& cache = sessionToInstallCache[sessionId];

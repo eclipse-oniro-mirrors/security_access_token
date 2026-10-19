@@ -113,7 +113,8 @@ HWTEST_F(BundleInfoManagerTest, GetInfoByBundleNameTest001, TestSize.Level0)
         hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO));
 
     HapInfoCheckResult result;
-    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
+    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
 
     HapBaseInfo baseInfo;
     baseInfo.userID = 100;
@@ -174,7 +175,8 @@ HWTEST_F(BundleInfoManagerTest, GetInfoByBundleNameTest002, TestSize.Level0)
         hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO));
 
     HapInfoCheckResult result;
-    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
+    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
 
     HapBaseInfo baseInfo;
     baseInfo.userID = 100;
@@ -231,7 +233,8 @@ HWTEST_F(BundleInfoManagerTest, GetInfoByBundleNameTest003, TestSize.Level0)
         hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO));
 
     HapInfoCheckResult result;
-    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
+    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
 
     HapBaseInfo baseInfo;
     baseInfo.userID = 100;
@@ -399,7 +402,8 @@ HWTEST_F(BundleInfoManagerTest, GetHapAppIdByTokenIdTest002, TestSize.Level0)
         hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO));
 
     HapInfoCheckResult result;
-    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
+    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
 
     HapBaseInfo baseInfo;
     baseInfo.userID = 100;
