@@ -38,6 +38,12 @@ public:
     uint32_t size = 0;
     const void* data = nullptr;
 
+    // the destructor frees the owned buffer, so a shallow copy would double
+    // free it; copying is forbidden until a deep copy/move is actually needed
+    RawdataBuffer() = default;
+    RawdataBuffer(const RawdataBuffer&) = delete;
+    RawdataBuffer& operator=(const RawdataBuffer&) = delete;
+
     ~RawdataBuffer()
     {
         if (data != nullptr) {

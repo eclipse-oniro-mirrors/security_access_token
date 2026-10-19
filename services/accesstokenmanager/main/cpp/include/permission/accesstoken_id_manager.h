@@ -59,7 +59,7 @@ public:
     ATokenTypeEnum GetTokenIdType(AccessTokenID id);
     int32_t ChangeTokenIdStatus(AccessTokenID id, TokenIdStatus targetStatus);
     // Parse the plain 32-bit token id out of a full 64-bit token id.
-    static AccessTokenID ParseTokenId(FullTokenID fullTokenId);
+    static AccessTokenID ExtractTokenIdFromFull(FullTokenID fullTokenId);
     // Splice the plain 32-bit token id and the attr bits into a full 64-bit token id.
     static FullTokenID BuildFullTokenId(AccessTokenID tokenId, AccessTokenAttr tokenAttr);
 

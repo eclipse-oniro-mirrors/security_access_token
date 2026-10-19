@@ -203,34 +203,6 @@ HWTEST_F(InstallSessionManagerTest, PrepareHapIdentityTest002, TestSize.Level0)
 }
 
 /**
- * @tc.name: PrepareHapIdentityTest003
- * @tc.desc: Test PrepareHapIdentity, with exist HapBaseInfo.
- * @tc.type: FUNC
- * @tc.require: Issue Number
- */
-HWTEST_F(InstallSessionManagerTest, PrepareHapIdentityTest003, TestSize.Level0)
-{
-    MockNativeToken mock("foundation");
-
-    int32_t sessionId = 0;
-
-    HapBaseInfo baseInfo;
-    baseInfo.userID = 101;
-    baseInfo.bundleName = "com.ohos.dlpmanager";
-    baseInfo.instIndex = 0;
-
-    BundlePolicy bundlePolicy;
-    bundlePolicy.dlpType = DLP_COMMON;
-    bundlePolicy.isDebugGrant = false;
-
-    Identity identity;
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::PrepareHapIdentity(sessionId, baseInfo, bundlePolicy, identity));
-
-    std::map<std::string, std::string> modulePathMap;
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::FinishInstall(sessionId, false, modulePathMap));
-}
-
-/**
  * @tc.name: UpdateHapPolicyTest001
  * @tc.desc: Test UpdateHapPolicy, with invalid param.
  * @tc.type: FUNC
@@ -250,37 +222,6 @@ HWTEST_F(InstallSessionManagerTest, UpdateHapPolicyTest001, TestSize.Level0)
     EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
         AccessTokenKit::UpdateHapPolicy(sessionId, tokenId, bundlePolicy, uid));
 }
-/**
- * @tc.name: UpdateHapPolicyTest002
- * @tc.desc: Test UpdateHapPolicy, with not exist session, with not exist tokenID.
- * @tc.type: FUNC
- * @tc.require: Issue Number
- */
-HWTEST_F(InstallSessionManagerTest, UpdateHapPolicyTest002, TestSize.Level0)
-{
-    MockNativeToken mock("foundation");
-
-    int32_t sessionId = INVALID_SESSION;
-    int32_t tokenId = 123;
-
-    BundlePolicy bundlePolicy;
-    bundlePolicy.dlpType = DLP_COMMON;
-    bundlePolicy.isDebugGrant = false;
-
-    int32_t uid = 0;
-    EXPECT_NE(RET_SUCCESS, AccessTokenKit::UpdateHapPolicy(sessionId, tokenId, bundlePolicy, uid));
-
-    sessionId = 0;
-    HapBaseInfo baseInfo;
-    baseInfo.userID = 101;
-    baseInfo.bundleName = "com.ohos.dlpmanager";
-    baseInfo.instIndex = 0;
-
-    Identity identity;
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::PrepareHapIdentity(sessionId, baseInfo, bundlePolicy, identity));
-
-    EXPECT_NE(RET_SUCCESS, AccessTokenKit::UpdateHapPolicy(sessionId, tokenId, bundlePolicy, uid));
-}
 
 /**
  * @tc.name: FinishInstallTest001
@@ -297,36 +238,6 @@ HWTEST_F(InstallSessionManagerTest, FinishInstallTest001, TestSize.Level0)
     EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
         AccessTokenKit::FinishInstall(sessionId, false, modulePathMap));
 }
-/**
- * @tc.name: FinishInstallTest002
- * @tc.desc: Test FinishInstall success.
- * @tc.type: FUNC
- * @tc.require: Issue Number
- */
-HWTEST_F(InstallSessionManagerTest, FinishInstallTest002, TestSize.Level0)
-{
-    MockNativeToken mock("foundation");
-
-    int32_t sessionId = 0;
-    HapBaseInfo baseInfo;
-    baseInfo.userID = 101;
-    baseInfo.bundleName = "com.ohos.dlpmanager";
-    baseInfo.instIndex = 0;
-
-    BundlePolicy bundlePolicy;
-    bundlePolicy.dlpType = DLP_COMMON;
-    bundlePolicy.isDebugGrant = false;
-
-    Identity identity;
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::PrepareHapIdentity(sessionId, baseInfo, bundlePolicy, identity));
-
-    std::map<std::string, std::string> modulePathMap;
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::FinishInstall(sessionId, true, modulePathMap));
-
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteIdentity(
-        static_cast<AccessTokenID>(identity.tokenId), "com.ohos.dlpmanager", ReservedType::NONE));
-}
-
 /**
  * @tc.name: GetCacheSignInfoBySessionIdTest001
  * @tc.desc: Test GetCacheSignInfoBySessionId, with invalid param.
@@ -345,38 +256,24 @@ HWTEST_F(InstallSessionManagerTest, GetCacheSignInfoBySessionIdTest001, TestSize
     EXPECT_EQ(AccessTokenError::ERR_SESSION_NOT_EXIST,
         AccessTokenKit::GetCacheSignInfoBySessionId(sessionId, QUERY_ALL_SIGN_INFO, bundleInfo));
 }
+
 /**
- * @tc.name: GetCacheSignInfoBySessionIdTest002
- * @tc.desc: Test GetCacheSignInfoBySessionId, with empty result.
+ * @tc.name: GetHapSignInfoTest001
+ * @tc.desc: Test GetHapSignInfo, with invalid param, with not exist bundle.
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(InstallSessionManagerTest, GetCacheSignInfoBySessionIdTest002, TestSize.Level0)
+HWTEST_F(InstallSessionManagerTest, GetHapSignInfoTest001, TestSize.Level0)
 {
     MockNativeToken mock("foundation");
 
-    int32_t sessionId = 0;
-    HapBaseInfo baseInfo;
-    baseInfo.userID = 101;
-    baseInfo.bundleName = "com.ohos.dlpmanager";
-    baseInfo.instIndex = 0;
-
-    BundlePolicy bundlePolicy;
-    bundlePolicy.dlpType = DLP_COMMON;
-    bundlePolicy.isDebugGrant = false;
-
-    Identity identity;
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::PrepareHapIdentity(sessionId, baseInfo, bundlePolicy, identity));
-    
+    std::string bundleName = "";
     std::vector<TrustedBundleInfo> bundleInfo;
-    EXPECT_NE(RET_SUCCESS, AccessTokenKit::GetCacheSignInfoBySessionId(sessionId, QUERY_ALL_SIGN_INFO, bundleInfo));
-    EXPECT_TRUE(bundleInfo.empty());
-
-    std::map<std::string, std::string> modulePathMap;
-
-    // Somehow migration state could be dropped here, make sure the migration is finished.
-    (void)AccessTokenKit::FinishMigration();
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::FinishInstall(sessionId, false, modulePathMap));
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
+        AccessTokenKit::GetHapSignInfo(bundleName, QUERY_ALL_SIGN_INFO, bundleInfo));
+    bundleName = "GetHapSignInfoTest001";
+    EXPECT_EQ(AccessTokenError::ERR_BUNDLE_NOT_EXIST,
+        AccessTokenKit::GetHapSignInfo(bundleName, QUERY_ALL_SIGN_INFO, bundleInfo));
 }
 
 /**

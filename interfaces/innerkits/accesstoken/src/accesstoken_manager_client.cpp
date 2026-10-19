@@ -936,7 +936,7 @@ int32_t AccessTokenManagerClient::CheckHapSignInfo(const BundleHapList& list, ui
     int32_t res = proxy->CheckHapSignInfo(listIdl, anonyStub->AsObject(), flag, resultRawData);
     if (res != RET_SUCCESS) {
         res = ConvertResult(res);
-        LOGE(ATM_DOMAIN, ATM_TAG, "CheckHapSignInfo failed, err=%{public}d.", res);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed, err=%{public}d, flag=%{public}u.", res, flag);
         return res;
     }
 
@@ -964,7 +964,7 @@ int32_t AccessTokenManagerClient::CheckHapPermissionInfo(int32_t sessionId, Inst
     int32_t res = proxy->CheckHapPermissionInfo(sessionId, static_cast<InstallTypeEnumIdl>(type), resultInfoIdl);
     if (res != RET_SUCCESS) {
         res = ConvertResult(res);
-        LOGE(ATM_DOMAIN, ATM_TAG, "CheckHapPermissionInfo failed, err=%{public}d.", res);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed, err=%{public}d.", res);
         return res;
     }
 
@@ -1006,7 +1006,7 @@ int32_t AccessTokenManagerClient::PrepareHapIdentity(int32_t& sessionId, const H
     int32_t res = proxy->PrepareHapIdentity(sessionId, infoIdl, policyIdl, anonyStub->AsObject(), identityIdl);
     if (res != RET_SUCCESS) {
         res = ConvertResult(res);
-        LOGE(ATM_DOMAIN, ATM_TAG, "PrepareHapIdentity failed, err=%{public}d.", res);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed, err=%{public}d.", res);
         return res;
     }
     identity.uid = identityIdl.uid;
@@ -1033,7 +1033,7 @@ int32_t AccessTokenManagerClient::UpdateHapPolicy(
     int32_t res = proxy->UpdateHapPolicy(sessionId, tokenId, policyIdl, uid);
     if (res != RET_SUCCESS) {
         res = ConvertResult(res);
-        LOGE(ATM_DOMAIN, ATM_TAG, "UpdateHapPolicy failed, err=%{public}d.", res);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed, err=%{public}d.", res);
         return res;
     }
 
@@ -1053,7 +1053,7 @@ int32_t AccessTokenManagerClient::FinishInstall(int32_t sessionId, bool isPersis
     int32_t res = proxy->FinishInstall(sessionId, isPersistent, modulePathMap);
     if (res != RET_SUCCESS) {
         res = ConvertResult(res);
-        LOGE(ATM_DOMAIN, ATM_TAG, "FinishInstall failed, err=%{public}d.", res);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed, err=%{public}d.", res);
         return res;
     }
 
@@ -1074,7 +1074,7 @@ int32_t AccessTokenManagerClient::GetCacheSignInfoBySessionId(int32_t sessionId,
     int32_t res = proxy->GetCacheSignInfoBySessionId(sessionId, flag, bundleInfosRawdata);
     if (res != RET_SUCCESS) {
         res = ConvertResult(res);
-        LOGE(ATM_DOMAIN, ATM_TAG, "GetCacheSignInfoBySessionId failed, err=%{public}d.", res);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed, err=%{public}d.", res);
         return res;
     }
     if (!BundleInfosRawdataHelper::ReadFromRawData(bundleInfosRawdata, bundleInfo)) {
@@ -1100,7 +1100,7 @@ int32_t AccessTokenManagerClient::GetHapSignInfo(const std::string& bundleName, 
     int32_t res = proxy->GetHapSignInfo(bundleName, flag, static_cast<int32_t>(mode), bundleInfosRawdata);
     if (res != RET_SUCCESS) {
         res = ConvertResult(res);
-        LOGE(ATM_DOMAIN, ATM_TAG, "GetHapSignInfo failed, err=%{public}d.", res);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed, err=%{public}d.", res);
         return res;
     }
     if (!BundleInfosRawdataHelper::ReadFromRawData(bundleInfosRawdata, bundleInfo)) {
@@ -1126,7 +1126,7 @@ int32_t AccessTokenManagerClient::GetCachePolicyBySessionId(int32_t sessionId, c
     int32_t res = proxy->GetCachePolicyBySessionId(sessionId, bundleName, bundlePolicyInfoIdl);
     if (res != RET_SUCCESS) {
         res = ConvertResult(res);
-        LOGE(ATM_DOMAIN, ATM_TAG, "GetCachePolicyBySessionId failed, err=%{public}d.", res);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed, err=%{public}d.", res);
         return res;
     }
     bundlePolicyInfo.reqPermissions = bundlePolicyInfoIdl.reqPermissions;

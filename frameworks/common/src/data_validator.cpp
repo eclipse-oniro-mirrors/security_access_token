@@ -195,9 +195,13 @@ bool DataValidator::IsTokenIDValid(AccessTokenID id)
 
 bool DataValidator::IsDlpTypeValid(int dlpType)
 {
-    return ((dlpType == DLP_COMMON) || (dlpType == DLP_READ) ||
+    if (!((dlpType == DLP_COMMON) || (dlpType == DLP_READ) ||
         (dlpType == DLP_FULL_CONTROL) || (dlpType == DLP_READ_PERM) ||
-        (dlpType == DLP_FULL_PERM));
+        (dlpType == DLP_FULL_PERM))) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Dlp type is invalid(%{public}d).", dlpType);
+        return false;
+    }
+    return true;
 }
 
 bool DataValidator::IsPermissionUsedFlagValid(uint32_t flag)
@@ -305,6 +309,26 @@ bool DataValidator::IsQueryModeValid(MultipleMode mode)
     int32_t value = static_cast<int32_t>(mode);
     return (value >= static_cast<int32_t>(MultipleMode::CURRENT_MODE)) &&
         (value <= static_cast<int32_t>(MultipleMode::MAX_MODE));
+}
+
+bool DataValidator::IsInstallModeValid(MultipleMode mode)
+{
+    int32_t value = static_cast<int32_t>(mode);
+    if (value < static_cast<int32_t>(MultipleMode::DEFAULT_OR_MAIN_MODE) ||
+        value > static_cast<int32_t>(MultipleMode::MAX_MODE)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Install mode is invalid(%{public}d).", value);
+        return false;
+    }
+    return true;
+}
+
+bool DataValidator::IsInstallTypeValid(int32_t type)
+{
+    if (type < TYPE_INSTALL || type > TYPE_MERGE) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Install type is invalid(%{public}d).", type);
+        return false;
+    }
+    return true;
 }
 
 bool DataValidator::IsListSizeValid(size_t size)

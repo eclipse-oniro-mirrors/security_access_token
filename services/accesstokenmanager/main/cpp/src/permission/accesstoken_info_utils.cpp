@@ -92,7 +92,7 @@ void AccessTokenInfoUtils::BuildHapTokenInfo(const Identity& id, const BundlePar
     uint32_t inputSize = apiStr.length();
 
     info = {};
-    info.tokenID = AccessTokenIDManager::ParseTokenId(id.tokenId);
+    info.tokenID = AccessTokenIDManager::ExtractTokenIdFromFull(id.tokenId);
     info.userID = id.uid / BASE_USER_RANGE;
     info.ver = DEFAULT_TOKEN_VERSION;
     info.tokenAttr = 0;

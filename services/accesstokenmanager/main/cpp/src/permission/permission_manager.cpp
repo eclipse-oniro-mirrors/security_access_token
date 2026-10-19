@@ -25,6 +25,7 @@
 #include "accesstoken_dfx_define.h"
 #include "accesstoken_id_manager.h"
 #include "accesstoken_info_manager.h"
+#include "accesstoken_info_utils.h"
 #include "accesstoken_common_log.h"
 #include "app_manager_access_client.h"
 #include "callback_manager.h"
@@ -1043,11 +1044,13 @@ void PermissionManager::GetMasterAppUndValues(AccessTokenID tokenId, std::vector
     }
 }
 
-bool PermissionManager::InitDlpPermissionList(const HapInfoParams& info,
+bool PermissionManager::InitDlpPermissionList(const HapInfoParams& info, MultipleMode mode,
     std::vector<PermissionStatus>& initializedList, std::vector<GenericValues>& undefValues)
 {
-    // get dlp original app, index is 0
-    AccessTokenIDEx tokenId = AccessTokenInfoManager::GetInstance().GetHapTokenID(info.userID, info.bundleName, 0);
+    // dlp source app: the main app of the dlp hap's mode domain
+    int32_t mainIndex = static_cast<int32_t>(mode) * MAIN_CLONE_INDEX_BASE;
+    AccessTokenIDEx tokenId = AccessTokenInfoManager::GetInstance().GetHapTokenID(
+        info.userID, info.bundleName, mainIndex);
     std::shared_ptr<HapTokenInfoInner> infoPtr =
         AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId.tokenIdExStruct.tokenID);
     if (infoPtr == nullptr) {
@@ -1154,24 +1157,6 @@ bool PermissionManager::InitPermissionList(const BundleParam& param, const HapPo
         initializedList.emplace_back(state);
     }
     LOGI(ATM_DOMAIN, ATM_TAG, "After, request perm list size: %{public}zu.", initializedList.size());
-    return true;
-}
-
-bool PermissionManager::CheckAclAndEdm(const BundleParam& param, const HapPolicy& policy,
-    HapInfoCheckResult& result)
-{
-    for (const auto& status : policy.permStateList) {
-        PermissionBriefDef briefDef;
-        if (!GetPermissionBriefDef(status.permissionName, briefDef) || !briefDef.isEnable) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "Get definition of %{public}s failed or permission is undefined.",
-                status.permissionName.c_str());
-            continue;
-        }
-        result.permCheckResult.permissionName = status.permissionName;
-        if (!PermissionConstraintCheck::AclAndEdmCheck(param, briefDef, policy, result)) {
-            return false;
-        }
-    }
     return true;
 }
 } // namespace AccessToken

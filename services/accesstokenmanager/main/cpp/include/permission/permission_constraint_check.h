@@ -29,6 +29,8 @@ namespace Security {
 namespace AccessToken {
 class PermissionConstraintCheck final {
 public:
+    static bool CheckAclAndEdm(const BundleParam& param, const HapPolicy& policy,
+        HapInfoCheckResult& result);
     static bool AclAndEdmCheck(const BundleParam& param, const PermissionBriefDef& briefDef,
         const HapPolicy& policy, HapInfoCheckResult& result);
     static bool IsSideloadAclExempt(bool isSideloadApp, const PermissionBriefDef& briefDef);

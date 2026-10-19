@@ -419,7 +419,6 @@ void AccessTokenInfoManager::CommitUpdateHapCache(const HapTokenInfoItem& hapInf
     std::shared_ptr<HapTokenInfoInner> oldHapInfo =
         (oldHapIter == hapTokenInfoMap_.end()) ? nullptr : oldHapIter->second;
     if (oldHapInfo == nullptr) {
-        // an inactive token collected by this update session (cache evicted):
         // rebuild the live cache entry; the token becomes ACTIVE on commit.
         UpsertHapTokenCacheLocked(hapInfoItem, briefPermData, aclExtendedList);
         return;
@@ -775,8 +774,8 @@ int32_t AccessTokenInfoManager::GetHapAppIdByTokenId(AccessTokenID tokenID, std:
     return RET_SUCCESS;
 }
 
-int32_t AccessTokenInfoManager::RestoreInstallPolicyFromKernel(
-    const std::string& bundleName, const BundlePolicy& bundlePolicy, BundleParam& param, HapPolicy& policy)
+int32_t AccessTokenInfoManager::RestoreInstallPolicyFromKernel(const std::string& bundleName, MultipleMode mode,
+    const BundlePolicy& bundlePolicy, BundleParam& param, HapPolicy& policy)
 {
     std::shared_ptr<HapTokenInfoInner> baseHapInfo = nullptr;
     AccessTokenID baseTokenId = INVALID_TOKENID;
@@ -786,9 +785,11 @@ int32_t AccessTokenInfoManager::RestoreInstallPolicyFromKernel(
         userIds = userIdSet_;
     }
     // No full token scan: for every known userId probe the same-bundleName
-    // index=0 app by its identity triple and read its kernel data.
+    // same-mode main app (mode's base instIndex) by its identity triple and
+    // read its kernel data.
+    const int32_t baseInstIndex = static_cast<int32_t>(mode) * MAIN_CLONE_INDEX_BASE;
     for (const auto& userId : userIds) {
-        AccessTokenIDEx tokenIdEx = GetHapTokenID(userId, bundleName, 0);
+        AccessTokenIDEx tokenIdEx = GetHapTokenID(userId, bundleName, baseInstIndex);
         AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
         if (tokenId == 0) {
             continue;

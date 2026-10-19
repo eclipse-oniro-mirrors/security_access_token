@@ -45,6 +45,8 @@ BundleInfoManager::~BundleInfoManager() {}
 int32_t BundleInfoManager::GetHapSignInfo(const std::string& bundleName,
     std::vector<TrustedBundleInfo>& bundleInfo, uint32_t flag, MultipleMode mode)
 {
+    // the output always reflects only this call, no matter which path returns
+    bundleInfo.clear();
     if (bundleName.empty()) {
         LOGE(ATM_DOMAIN, ATM_TAG, "bundleName is empty");
         return AccessTokenError::ERR_PARAM_INVALID;

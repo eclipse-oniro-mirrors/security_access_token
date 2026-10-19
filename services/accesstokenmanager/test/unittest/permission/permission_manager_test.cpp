@@ -779,7 +779,8 @@ HWTEST_F(PermissionManagerTest, InitDlpPermissionList001, TestSize.Level0)
     HapInfoParams dlpInfo = masterInfo;
     dlpInfo.dlpType = DLP_FULL_CONTROL;
     std::vector<PermissionStatus> initializedList;
-    EXPECT_TRUE(PermissionManager::GetInstance().InitDlpPermissionList(dlpInfo, initializedList, undefValues));
+    EXPECT_TRUE(PermissionManager::GetInstance().InitDlpPermissionList(dlpInfo,
+        MultipleMode::DEFAULT_OR_MAIN_MODE, initializedList, undefValues));
     EXPECT_TRUE(initializedList.empty());
 
     EXPECT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId));

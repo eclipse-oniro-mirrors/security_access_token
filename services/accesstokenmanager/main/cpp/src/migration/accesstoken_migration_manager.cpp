@@ -61,19 +61,6 @@ static std::string GetPlaceholderModuleName(int32_t index)
     return "#" + std::to_string(index);
 }
 
-// mode is implicitly encoded in instIndex; returns 0 (main) or 1 (sub).
-static int32_t GetBundleModeFromInstIndex(int32_t instIndex)
-{
-    return instIndex / MAIN_CLONE_INDEX_BASE;
-}
-
-static bool IsModeInstIndexValid(int32_t mode, int32_t instIndex)
-{
-    if (instIndex < 0) {
-        return false;
-    }
-    return GetBundleModeFromInstIndex(instIndex) == mode;
-}
 int32_t AccessTokenMigrationManager::MarkMigrationCompleted()
 {
     GenericValues delValue;
@@ -122,7 +109,8 @@ int32_t AccessTokenMigrationManager::ValidateMigratedInfo(const MigratedInfoIdl&
                 "Migrate installed bundles failed, bundleName mismatch in hap base info.");
             return AccessTokenError::ERR_PARAM_INVALID;
         }
-        if (!IsModeInstIndexValid(static_cast<int32_t>(migratedInfo.pathList.mode), hap.instIndex)) {
+        if (!MultipleModeUtils::IsModeInstIndexMatch(
+            static_cast<int32_t>(migratedInfo.pathList.mode), hap.instIndex)) {
             LOGE(ATM_DOMAIN, ATM_TAG,
                 "Migrate installed bundles failed, mode %{public}d with instIndex %{public}d is invalid.",
                 static_cast<int32_t>(migratedInfo.pathList.mode), hap.instIndex);

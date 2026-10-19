@@ -19,9 +19,9 @@
 #include "access_token_error.h"
 #include "accesstoken_common_log.h"
 #include "accesstoken_id_manager.h"
-#include "accesstoken_info_manager.h"
 #include "accesstoken_info_utils.h"
 #include "data_translator.h"
+#include "multiple_mode_utils.h"
 #include "permission_map.h"
 #include "permission_status.h"
 #include "table_item.h"
@@ -32,30 +32,31 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
+// Build the ACL extended permission values and the token-id-stamped undefined
+// permission values for persistence (same tables as master AddHapTokenInfoToDb).
+void BuildPermExtendAndUndefValues(AccessTokenID tokenId,
+    const std::vector<PermissionWithValue>& extendPermList,
+    const std::vector<GenericValues>& undefValues,
+    std::vector<GenericValues>& permExtendValues,
+    std::vector<GenericValues>& undefValuesWithTokenId)
+{
+    for (const auto& extendValue : extendPermList) {
+        GenericValues genericValues;
+        genericValues.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
+        genericValues.Put(TokenFiledConst::FIELD_PERMISSION_NAME, extendValue.permissionName);
+        genericValues.Put(TokenFiledConst::FIELD_VALUE, extendValue.value);
+        permExtendValues.emplace_back(genericValues);
+    }
+    for (const auto& undefValue : undefValues) {
+        GenericValues stamped = undefValue;
+        stamped.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
+        undefValuesWithTokenId.emplace_back(stamped);
+    }
+}
 constexpr int32_t HAP_TOKEN_CURRENT_VERSION = 1;
 constexpr const char* HAP_TOKEN_DEFAULT_DEVICE_ID = "0";
 constexpr const char* PERM_STATE_LOCAL_DEVICE_ID = "PHONE-001";
 constexpr int32_t INVALID_UID = -1;
-}
-
-int32_t InstallDbRepository::GetInstalledBundleInfo(std::string bundleName,
-    std::vector<std::string>& paths, std::vector<std::vector<uint8_t>>& persistDatas)
-{
-    GenericValues condition;
-    condition.Put(TokenFiledConst::FIELD_BUNDLE_NAME, bundleName);
-    std::vector<GenericValues> hapTokenResults;
-    int32_t ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO, condition, hapTokenResults);
-    if (ret != RET_SUCCESS) {
-        LOGC(ATM_DOMAIN, ATM_TAG, "Db find failed, ret=%{public}d", ret);
-        return ERR_DATABASE_OPERATE_FAILED;
-    }
-
-    for (const auto& tokenValue : hapTokenResults) {
-        paths.emplace_back(tokenValue.GetString(TokenFiledConst::FIELD_PATH));
-        persistDatas.emplace_back(tokenValue.GetBlob(TokenFiledConst::FIELD_PERSIST_DATA));
-    }
-
-    return RET_SUCCESS;
 }
 
 int32_t InstallDbRepository::GetInstalledBundleInfo(std::string bundleName, MultipleMode mode,
@@ -104,8 +105,18 @@ int32_t InstallDbRepository::QueryBundleTokens(const std::string& bundleName, In
         return ERR_DATABASE_OPERATE_FAILED;
     }
 
+    // single pass: mode-mismatched rows are dropped from the output; mode-matched
+    // rows stay in hapTokenResults (any status, the reuse path needs reserved
+    // rows); only ACTIVE rows enter the supplement candidate list
+    std::vector<GenericValues> modeMatched;
+    modeMatched.reserve(hapTokenResults.size());
     cache.bundleTokenIdList.clear();
     for (const auto& tokenValue : hapTokenResults) {
+        int32_t instIndex = tokenValue.GetInt(TokenFiledConst::FIELD_INST_INDEX);
+        if (!MultipleModeUtils::IsModeInstIndexMatch(static_cast<int32_t>(cache.mode), instIndex)) {
+            continue;
+        }
+        modeMatched.emplace_back(tokenValue);
         AccessTokenID tokenId = static_cast<AccessTokenID>(tokenValue.GetInt(TokenFiledConst::FIELD_TOKEN_ID));
         TokenIdStatus status;
         if ((AccessTokenIDManager::GetInstance().GetTokenIdStatus(tokenId, status) != RET_SUCCESS) ||
@@ -114,6 +125,7 @@ int32_t InstallDbRepository::QueryBundleTokens(const std::string& bundleName, In
         }
         cache.bundleTokenIdList.emplace_back(tokenId);
     }
+    hapTokenResults = std::move(modeMatched);
     cache.bundleTokenIdsLoaded = true;
     return RET_SUCCESS;
 }
@@ -132,7 +144,7 @@ void InstallDbRepository::TranslateGenericValuesToPermState(
     }
 }
 
-int32_t InstallDbRepository::FillPermStateFromDb(
+int32_t InstallDbRepository::BuildPermStateByTokenId(
     AccessTokenID tokenId, std::vector<BriefPermData>& oldPermBriefDataList)
 {
     GenericValues condition;
@@ -170,72 +182,71 @@ int32_t InstallDbRepository::DeleteFromDbByTokenId(AccessTokenID tokenID)
     return RET_SUCCESS;
 }
 
-void InstallDbRepository::GenerateHapTokenInfoItem(const InstallCache& cache, const HapTokenInfo& hapInfo,
+void InstallDbRepository::GenerateHapTokenInfoItem(const InstallCache& cache, const InstallHapInfo& installInfo,
     std::vector<GenericValues>& genericValues)
 {
+    // the sideload bit and the sticky flags (migrated / perm-dialog-cap) were
+    // resolved once at FillFinishContext; the db write and the cache refresh
+    // share them
     HapTokenInfoItem item;
-    std::shared_ptr<HapTokenInfoInner> infoPtr;
-    // Prefer the session cache: inactive tokens inside the update plan were
-    // already loaded by GetHapTokenInfoForInstall.
-    auto innerIt = cache.untrustedTokenInfoMap.find(hapInfo.tokenID);
-    if (innerIt != cache.untrustedTokenInfoMap.end()) {
-        infoPtr = innerIt->second;
-    } else {
-        // Tokens outside the update plan (e.g. the reused RESERVED_DATA identity):
-        // the two-arg overload returns the live cache object for ACTIVE tokens
-        // and a DB snapshot for inactive ones.
-        TokenIdStatus status = TokenIdStatus::ACTIVE;
-        infoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoAndStatus(hapInfo.tokenID, status);
-    }
-    bool uidFromCaller = false;
-    if (hapInfo.tokenID == AccessTokenIDManager::ParseTokenId(cache.identity.tokenId)) {
-        uidFromCaller = cache.uidFromCaller;
-    } else {
-        auto uidIt = cache.uidStateMap.find(hapInfo.tokenID);
-        uidFromCaller = uidIt != cache.uidStateMap.end() && uidIt->second.fromCaller;
-    }
-    if (infoPtr != nullptr && (hapInfo.tokenID != AccessTokenIDManager::ParseTokenId(cache.identity.tokenId) ||
-        cache.reserved == ReservedType::RESERVED_DATA)) {
-        item.permDialogCapState = infoPtr->IsPermDialogForbidden();
-        // uid designated by the caller (prepare/update input uid adopted) marks the token migrated
-        item.migrated = uidFromCaller || infoPtr->IsMigrated();
-    } else {
-        item.permDialogCapState = false;
-        item.migrated = uidFromCaller;
-    }
-    item.tokenId = hapInfo.tokenID;
-    item.userId = static_cast<uint32_t>(hapInfo.userID);
-    item.bundleName = hapInfo.bundleName;
-    item.instIndex = static_cast<uint32_t>(hapInfo.instIndex);
-    item.dlpType = static_cast<HapDlpType>(hapInfo.dlpType);
-    item.apiVersion = hapInfo.apiVersion;
-    item.uid = hapInfo.uid;
-    item.tokenAttr = static_cast<uint32_t>(hapInfo.tokenAttr);
+    item.migrated = installInfo.migrated;
+    item.permDialogCapState = installInfo.permDialogCapState;
+    item.tokenId = installInfo.baseInfo.tokenID;
+    item.userId = static_cast<uint32_t>(installInfo.baseInfo.userID);
+    item.bundleName = installInfo.baseInfo.bundleName;
+    item.instIndex = static_cast<uint32_t>(installInfo.baseInfo.instIndex);
+    item.dlpType = static_cast<HapDlpType>(installInfo.baseInfo.dlpType);
+    item.apiVersion = installInfo.baseInfo.apiVersion;
+    item.uid = installInfo.baseInfo.uid;
+    item.tokenAttr = static_cast<uint32_t>(installInfo.baseInfo.tokenAttr);
 
     item.appId = cache.bundleParam.appId;
     item.deviceId = HAP_TOKEN_DEFAULT_DEVICE_ID;
     item.apl = cache.policy.apl;
     item.version = HAP_TOKEN_CURRENT_VERSION;
     item.reserved = ReservedType::NONE;
-    item.isSideload = cache.bundleParam.isSideloadApp;
+    item.isSideload = installInfo.isSideload;
 
     item.BuildAddValue(genericValues);
 }
 
-void InstallDbRepository::ConvertBriefPermDataToGenericValues(AccessTokenID tokenId,
-    const std::vector<BriefPermData>& briefPermDataList, std::vector<GenericValues>& genericValuesList)
+int32_t InstallDbRepository::GetLocalPermStateListFromDb(AccessTokenID tokenId,
+    std::vector<PermissionStatus>& permList)
 {
-    std::vector<GenericValues> oldPermStateValues;
     GenericValues condition;
     condition.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
+    std::vector<GenericValues> oldPermStateValues;
     int32_t ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_PERMISSION_STATE,
         condition, oldPermStateValues);
     if (ret != RET_SUCCESS) {
+        // a failed find may leave partial rows; drop them and fail fast so the
+        // caller aborts instead of silently resetting every grant timestamp
+        oldPermStateValues.clear();
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to find old permission states for token %{public}u, ret %{public}d.",
             tokenId, ret);
+        return ret;
     }
+    // local-device rows only: remote-device rows (distributed sync) carry
+    // their own grant timestamps and must not leak into the local row,
+    // same as the master update flow (BuildPermissionStateValues)
+    std::vector<GenericValues> localValues;
+    for (const auto& value : oldPermStateValues) {
+        if (value.GetString(TokenFiledConst::FIELD_DEVICE_ID) == PERM_STATE_LOCAL_DEVICE_ID) {
+            localValues.emplace_back(value);
+        }
+    }
+    TranslateGenericValuesToPermState(localValues, permList);
+    return RET_SUCCESS;
+}
+
+int32_t InstallDbRepository::ConvertBriefPermDataToGenericValues(AccessTokenID tokenId,
+    const std::vector<BriefPermData>& briefPermDataList, std::vector<GenericValues>& genericValuesList)
+{
     std::vector<PermissionStatus> existingPermList;
-    TranslateGenericValuesToPermState(oldPermStateValues, existingPermList);
+    int32_t ret = GetLocalPermStateListFromDb(tokenId, existingPermList);
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
 
     uint64_t currentTimestamp = static_cast<uint64_t>(TimeUtil::GetCurrentTimestamp());
     for (const auto& data : briefPermDataList) {
@@ -253,9 +264,14 @@ void InstallDbRepository::ConvertBriefPermDataToGenericValues(AccessTokenID toke
         genericValues.Put(TokenFiledConst::FIELD_GRANT_STATE, static_cast<int32_t>(data.status));
         genericValues.Put(TokenFiledConst::FIELD_GRANT_FLAG, static_cast<int32_t>(data.flag));
 
+        // timestamp arbitration aligned with the master update flow
+        // (BuildPermissionStateValues): keep the old grant time only when the
+        // local row matches on name + status + flag; any change, including a
+        // flag flip (grant nature change), is a new grant event
         auto iter = std::find_if(existingPermList.begin(), existingPermList.end(),
             [permissionName, data](const PermissionStatus& oldPerm) {
-                return permissionName == oldPerm.permissionName && data.status == oldPerm.grantStatus;
+                return permissionName == oldPerm.permissionName && data.status == oldPerm.grantStatus &&
+                    data.flag == oldPerm.grantFlag;
             });
         if (iter != existingPermList.end()) {
             genericValues.Put(TokenFiledConst::FIELD_TIMESTAMP, static_cast<int64_t>(iter->timestamp));
@@ -265,6 +281,7 @@ void InstallDbRepository::ConvertBriefPermDataToGenericValues(AccessTokenID toke
 
         genericValuesList.emplace_back(genericValues);
     }
+    return RET_SUCCESS;
 }
 
 void InstallDbRepository::GeneratePermDefFromHapPolicy(AccessTokenID tokenId, const HapPolicy& hapPolicy,
@@ -295,9 +312,9 @@ int32_t InstallDbRepository::ResolveModulePaths(const InstallCache& cache,
                 LOGC(ATM_DOMAIN, ATM_TAG, "HAP path not found in map, index=%{public}zu.", i);
                 return AccessTokenError::ERR_PARAM_INVALID;
             }
-            modulePaths.push_back(it->second);
+            modulePaths.emplace_back(it->second);
         } else {
-            modulePaths.push_back(cache.oldModulePaths[i - newCount]);
+            modulePaths.emplace_back(cache.oldModulePaths[i - newCount]);
         }
     }
     return RET_SUCCESS;
@@ -316,6 +333,7 @@ int32_t InstallDbRepository::ConvertInstallCacheToBundleInfoItems(const InstallC
     BundleInfoItems items;
     items.bundleName = cache.bundleInfos[0].GetBundleName();
     items.isPreInstalled = cache.list.isPreInstalled;
+    items.mode = cache.mode;
     for (size_t i = 0; i < cache.bundleInfos.size(); ++i) {
         const auto& bundleInfo = cache.bundleInfos[i];
         ModuleInfoItem moduleItem;
@@ -334,34 +352,61 @@ int32_t InstallDbRepository::ConvertInstallCacheToBundleInfoItems(const InstallC
     }
 
     items.BuildAddValue(genericValuesList);
+    // delete is mode-scoped: a sub-mode reinstall must not remove the main
+    // mode rows of the same bundleName (hap_info_table PK is name+module+mode)
     delCondition.Put(TokenFiledConst::FIELD_BUNDLE_NAME, items.bundleName);
+    delCondition.Put(TokenFiledConst::FIELD_MODE, static_cast<int32_t>(items.mode));
     return RET_SUCCESS;
 }
 
-void InstallDbRepository::GenerateTokenDbOpsVec(const InstallCache& cache, const HapTokenInfo& hapInfo,
-    const std::vector<BriefPermData>& permBriefDataList, std::vector<AddInfo>& addInfoVec,
-    std::vector<DelInfo>& delInfoVec)
+int32_t InstallDbRepository::GenerateTokenDbOpsVec(const InstallCache& cache, const FinishContext& context,
+    size_t index, std::vector<AddInfo>& addInfoVec, std::vector<DelInfo>& delInfoVec)
 {
-    AccessTokenID tokenId = hapInfo.tokenID;
+    const InstallHapInfo& installInfo = context.hapInfos[index];
+    AccessTokenID tokenId = installInfo.baseInfo.tokenID;
     std::vector<GenericValues> hapTokenInfoValues;
-    GenerateHapTokenInfoItem(cache, hapInfo, hapTokenInfoValues);
+    GenerateHapTokenInfoItem(cache, installInfo, hapTokenInfoValues);
     std::vector<GenericValues> permStateValues;
-    ConvertBriefPermDataToGenericValues(tokenId, permBriefDataList, permStateValues);
+    int32_t ret = ConvertBriefPermDataToGenericValues(tokenId, context.permBriefDataLists[index], permStateValues);
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
     std::vector<GenericValues> permDefValues;
-    GeneratePermDefFromHapPolicy(tokenId, cache.policy, hapInfo.bundleName, permDefValues);
+    GeneratePermDefFromHapPolicy(tokenId, cache.policy, installInfo.baseInfo.bundleName, permDefValues);
+
+    std::vector<GenericValues> permExtendValues;
+    std::vector<GenericValues> undefValuesWithTokenId;
+    BuildPermExtendAndUndefValues(tokenId, context.extendPermLists[index], context.undefValues,
+        permExtendValues, undefValuesWithTokenId);
 
     AccessTokenInfoUtils::GenerateAddInfoToVec(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, hapTokenInfoValues, addInfoVec);
     AccessTokenInfoUtils::GenerateAddInfoToVec(AtmDataType::ACCESSTOKEN_PERMISSION_STATE, permStateValues, addInfoVec);
+    // optional tables emit add entries only when they carry data; the del
+    // entries below still guarantee the rewrite cleanup
+    if (!permExtendValues.empty()) {
+        AccessTokenInfoUtils::GenerateAddInfoToVec(AtmDataType::ACCESSTOKEN_PERMISSION_EXTEND_VALUE,
+            permExtendValues, addInfoVec);
+    }
+    if (!undefValuesWithTokenId.empty()) {
+        AccessTokenInfoUtils::GenerateAddInfoToVec(AtmDataType::ACCESSTOKEN_HAP_UNDEFINE_INFO,
+            undefValuesWithTokenId, addInfoVec);
+    }
 
     GenericValues condition;
     condition.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
     AccessTokenInfoUtils::GenerateDelInfoToVec(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, condition, delInfoVec);
     AccessTokenInfoUtils::GenerateDelInfoToVec(AtmDataType::ACCESSTOKEN_PERMISSION_STATE, condition, delInfoVec);
+    AccessTokenInfoUtils::GenerateDelInfoToVec(AtmDataType::ACCESSTOKEN_PERMISSION_EXTEND_VALUE, condition,
+        delInfoVec);
+    AccessTokenInfoUtils::GenerateDelInfoToVec(AtmDataType::ACCESSTOKEN_HAP_UNDEFINE_INFO, condition, delInfoVec);
 
-    if (!permDefValues.empty()) {
+    // PERMISSION_DEF is only persisted for system resources (same as master
+    // AddHapTokenInfoToDb); non-system-resource tokens skip this table.
+    if (AccessTokenInfoUtils::IsSystemResource(installInfo.baseInfo.bundleName) && !permDefValues.empty()) {
         AccessTokenInfoUtils::GenerateAddInfoToVec(AtmDataType::ACCESSTOKEN_PERMISSION_DEF, permDefValues, addInfoVec);
         AccessTokenInfoUtils::GenerateDelInfoToVec(AtmDataType::ACCESSTOKEN_PERMISSION_DEF, condition, delInfoVec);
     }
+    return RET_SUCCESS;
 }
 
 int32_t InstallDbRepository::BuildDbOpsVec(const InstallCache& cache,
@@ -371,9 +416,12 @@ int32_t InstallDbRepository::BuildDbOpsVec(const InstallCache& cache,
     // collect session uids for reserved bundleId cleanup below
     std::vector<int32_t> sessionUids;
     for (size_t i = 0; i < context.hapInfos.size(); ++i) {
-        GenerateTokenDbOpsVec(cache, context.hapInfos[i], context.permBriefDataLists[i], addInfoVec, delInfoVec);
-        if (context.hapInfos[i].uid != INVALID_UID) {
-            sessionUids.push_back(context.hapInfos[i].uid);
+        int32_t ret = GenerateTokenDbOpsVec(cache, context, i, addInfoVec, delInfoVec);
+        if (ret != RET_SUCCESS) {
+            return ret;
+        }
+        if (context.hapInfos[i].baseInfo.uid != INVALID_UID) {
+            sessionUids.emplace_back(context.hapInfos[i].baseInfo.uid);
         }
     }
 
@@ -401,6 +449,33 @@ int32_t InstallDbRepository::BuildDbOpsVec(const InstallCache& cache,
     // Batch call: one lock acquisition, one set copy, one DEL + one ADD pair
     AccessTokenIDManager::GetInstance().GetReservedBundleIdsPersistInfo(sessionUids, delInfoVec, addInfoVec);
     return RET_SUCCESS;
+}
+
+int32_t InstallDbRepository::GetAppIdFromDb(const std::string& bundleName, MultipleMode mode,
+    std::string& appId)
+{
+    GenericValues condition;
+    condition.Put(TokenFiledConst::FIELD_BUNDLE_NAME, bundleName);
+    std::vector<GenericValues> hapTokenResults;
+    int32_t ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, condition, hapTokenResults);
+    if (ret != RET_SUCCESS) {
+        LOGC(ATM_DOMAIN, ATM_TAG, "Query failed, ret: %{public}d", ret);
+        return ERR_DATABASE_OPERATE_FAILED;
+    }
+
+    // mode-scoped: hap_token_info has no mode column (mode is encoded in
+    // instIndex); pick the first row within the session's mode domain
+    for (const auto& tokenValue : hapTokenResults) {
+        int32_t instIndex = tokenValue.GetInt(TokenFiledConst::FIELD_INST_INDEX);
+        if (!MultipleModeUtils::IsModeInstIndexMatch(static_cast<int32_t>(mode), instIndex)) {
+            continue;
+        }
+        appId = tokenValue.GetString(TokenFiledConst::FIELD_APP_ID);
+        return RET_SUCCESS;
+    }
+    LOGE(ATM_DOMAIN, ATM_TAG, "No token of bundle %{public}s in mode %{public}d.",
+        bundleName.c_str(), static_cast<int32_t>(mode));
+    return ERR_PARAM_INVALID;
 }
 
 } // namespace AccessToken
