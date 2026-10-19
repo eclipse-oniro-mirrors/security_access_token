@@ -34,7 +34,7 @@ constexpr const char*  INTEGER_STR = " integer not null,";
 constexpr const char*  TEXT_STR = " text not null,";
 // INTEGER_DEFAULT_ZERO_STR is used by create table, keep column definitions consistent with alter table upgrades.
 constexpr const char*  INTEGER_DEFAULT_ZERO_STR = " integer not null default 0";
-// back up name is xxx_slave fixed, can not be changed
+// replica db lives in DATABASE_REPLICA_PATH dir, file name still follows legacy _slave.db rule
 constexpr const char* DATABASE_NAME_BACK = "access_token_slave.db";
 constexpr int32_t LEGACY_SUBPROFILE_ID = -1;
 constexpr const char* BACKUP_SUFFIX = "_backup";
@@ -507,15 +507,21 @@ int32_t AccessTokenOpenCallback::OnCreate(NativeRdb::RdbStore& rdbStore)
         return res;
     }
 #endif
-    std::string dbBackPath = std::string(DATABASE_PATH) + std::string(DATABASE_NAME_BACK);
+    std::string dbBackPath = std::string(DATABASE_REPLICA_PATH) + std::string(DATABASE_NAME_BACK);
+    std::string restorePath; // empty means restore from the configured replica db
     if (access(dbBackPath.c_str(), NativeRdb::E_OK) != 0) {
-        return 0;
+        // upgrade compatibility: legacy replica db still lives in master dir before replica dir switch
+        dbBackPath = std::string(DATABASE_PATH) + std::string(DATABASE_NAME_BACK);
+        if (access(dbBackPath.c_str(), NativeRdb::E_OK) != 0) {
+            return 0;
+        }
+        restorePath = dbBackPath;
     }
 
     // if OnCreate solution found back up db, restore from backup, may be origin db has lost
     LOGW(ATM_DOMAIN, ATM_TAG, "Detech origin database disappear, restore from backup!");
 
-    res = rdbStore.Restore("");
+    res = rdbStore.Restore(restorePath);
     if (res != NativeRdb::E_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Db restore failed, res is %{public}d.", res);
         ReportSysEventDbException(AccessTokenDbSceneCode::AT_DB_RESTORE_ERROR, res, DATABASE_NAME_BACK);

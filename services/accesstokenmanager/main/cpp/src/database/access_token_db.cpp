@@ -103,6 +103,10 @@ void AccessTokenDb::InitRdb()
     config.SetSecurityLevel(NativeRdb::SecurityLevel::S3);
     config.SetAllowRebuild(true);
     config.SetHaMode(NativeRdb::HAMode::MAIN_REPLICA); // Real-time dual-write backup database
+    // custom replica db directory, empty means legacy rule (master dir + _slave.db suffix)
+    config.SetReplicaPath(DATABASE_REPLICA_PATH);
+    // audit records are dumped to /data/log/hiaudit/rdb by rdb, requires log gid in process cfg
+    config.SetAuditEnabled(true);
     config.SetClearMemorySize(ACCESSTOKEN_CLEAR_MEMORY_SIZE);
     AccessTokenOpenCallback callback;
     int32_t res = NativeRdb::E_OK;

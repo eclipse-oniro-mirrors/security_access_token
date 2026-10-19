@@ -223,6 +223,21 @@ void RdbStoreConfig::SetAllowRebuild(bool allow)
 void RdbStoreConfig::SetHaMode(NativeRdb::HAMode mode)
 {}
 
+void RdbStoreConfig::SetReplicaPath(const std::string& replicaPath)
+{
+    replicaPath_ = replicaPath;
+}
+
+void RdbStoreConfig::SetAuditEnabled(bool isAuditEnabled)
+{
+    isAuditEnabled_ = isAuditEnabled;
+}
+
+std::string RdbStoreConfig::GetReplicaPath() const
+{
+    return replicaPath_;
+}
+
 void RdbStoreConfig::SetClearMemorySize(int32_t size)
 {}
 
