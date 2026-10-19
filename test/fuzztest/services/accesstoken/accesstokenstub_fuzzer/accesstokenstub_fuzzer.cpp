@@ -521,6 +521,26 @@ bool GetNativeTokenInfoStubFuzzTest(FuzzedDataProvider &provider)
     return true;
 }
 
+bool GetHapTokenInfoStubFuzzTest(FuzzedDataProvider &provider)
+{
+    AccessTokenID tokenId = ConsumeTokenId(provider);
+    MessageParcel inData;
+    inData.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
+    if (!inData.WriteUint32(tokenId)) {
+        return false;
+    }
+
+    uint32_t code = static_cast<uint32_t>(
+        IAccessTokenManagerIpcCode::COMMAND_GET_HAP_TOKEN_INFO);
+
+    MessageParcel reply;
+    MessageOption option;
+    MockToken mock({}, false);
+    (void)DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, inData, reply, option);
+
+    return true;
+}
+
 bool GrantPermissionStubFuzzTest(FuzzedDataProvider &provider)
 {
     AccessTokenID tokenId = ConsumeTokenId(provider);
@@ -854,9 +874,9 @@ bool MigrateInstalledBundlesStubFuzzTest(FuzzedDataProvider &provider)
     for (int32_t i = 0; i < listSize; ++i) {
         MigratedInfoIdl info;
         info.bundleName = provider.ConsumeRandomLengthString();
-        info.pathList.userId = provider.ConsumeIntegral<int32_t>();
+        info.pathList.userIdForEnterpriseSign = provider.ConsumeIntegral<int32_t>();
         info.pathList.isPreInstalled = provider.ConsumeBool();
-        info.pathList.mode = static_cast<MultipleModeEnumIdl>(provider.ConsumeIntegralInRange<int32_t>(
+        info.mode = static_cast<MultipleModeEnumIdl>(provider.ConsumeIntegralInRange<int32_t>(
             0, static_cast<int32_t>(MultipleModeEnumIdl::SUB_MODE)));
         int32_t pathCount = provider.ConsumeIntegralInRange<int32_t>(0, MAX_MIGRATED_SUB_LIST_SIZE);
         for (int32_t j = 0; j < pathCount; ++j) {
@@ -941,6 +961,7 @@ void AccessTokenStubFuzzTest(FuzzedDataProvider &provider)
     (void)DeleteRemoteDeviceTokensStubFuzzTest(provider);
     (void)GetDefPermissionStubFuzzTest(provider);
     (void)GetNativeTokenInfoStubFuzzTest(provider);
+    (void)GetHapTokenInfoStubFuzzTest(provider);
     (void)GrantPermissionStubFuzzTest(provider);
     (void)RevokePermissionStubFuzzTest(provider);
 #ifdef SUPPORT_MANAGE_USER_POLICY

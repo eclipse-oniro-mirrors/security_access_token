@@ -1264,16 +1264,17 @@ int32_t AccessTokenKit::CheckHapSignInfo(const BundleHapList& list, uint32_t fla
 #endif
 }
 
-int32_t AccessTokenKit::CheckHapPermissionInfo(int32_t sessionId, InstallTypeEnum type, HapInfoCheckResult& result)
+int32_t AccessTokenKit::CheckHapPermissionInfo(int32_t sessionId, InstallTypeEnum type, MultipleMode mode,
+    HapInfoCheckResult& result)
 {
 #ifdef SPM_DATA_ENABLE
-    LOGI(ATM_DOMAIN, ATM_TAG, "sessionId=%{public}d, type=%{public}d",
-        sessionId, static_cast<int32_t>(type));
+    LOGI(ATM_DOMAIN, ATM_TAG, "sessionId=%{public}d, type=%{public}d, mode=%{public}d",
+        sessionId, static_cast<int32_t>(type), static_cast<int32_t>(mode));
     if (sessionId <= 0) {
         LOGE(ATM_DOMAIN, ATM_TAG, "sessionId is 0.");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
-    return AccessTokenManagerClient::GetInstance().CheckHapPermissionInfo(sessionId, type, result);
+    return AccessTokenManagerClient::GetInstance().CheckHapPermissionInfo(sessionId, type, mode, result);
 #else
     LOGW(ATM_DOMAIN, ATM_TAG, "Not support.");
     return RET_SUCCESS;
@@ -1299,16 +1300,17 @@ int32_t AccessTokenKit::PrepareHapIdentity(int32_t& sessionId, const HapBaseInfo
 #endif
 }
 
-int32_t AccessTokenKit::UpdateHapPolicy(int32_t sessionId, int32_t tokenId, const BundlePolicy& policy, int32_t& uid)
+int32_t AccessTokenKit::UpdateHapPolicy(int32_t sessionId, AccessTokenIDEx& tokenIdEx,
+    const BundlePolicy& policy, int32_t& uid)
 {
 #ifdef SPM_DATA_ENABLE
-    LOGI(ATM_DOMAIN, ATM_TAG, "sessionId=%{public}d, tokenId=%{public}d, uid=%{public}d.",
-        sessionId, tokenId, uid);
+    LOGI(ATM_DOMAIN, ATM_TAG, "sessionId=%{public}d, tokenId=%{public}u, uid=%{public}d.",
+        sessionId, tokenIdEx.tokenIdExStruct.tokenID, uid);
     if (sessionId <= 0) {
         LOGE(ATM_DOMAIN, ATM_TAG, "SessionId is invalid.");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
-    return AccessTokenManagerClient::GetInstance().UpdateHapPolicy(sessionId, tokenId, policy, uid);
+    return AccessTokenManagerClient::GetInstance().UpdateHapPolicy(sessionId, tokenIdEx, policy, uid);
 #else
     LOGW(ATM_DOMAIN, ATM_TAG, "Not support.");
     return RET_SUCCESS;

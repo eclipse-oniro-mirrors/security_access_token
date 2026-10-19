@@ -268,7 +268,7 @@ void BuildMigratedInfo(const HapInfoParams& info, uint64_t tokenIdEx, int32_t ui
     migratedInfo.bundleName = info.bundleName;
     migratedInfo.pathList.hapPaths = { TEST_PATH };
     migratedInfo.pathList.isPreInstalled = false;
-    migratedInfo.pathList.mode = static_cast<MultipleModeEnumIdl>(mode);
+    migratedInfo.mode = static_cast<MultipleModeEnumIdl>(mode);
     HapBaseInfoIdl baseInfo;
     baseInfo.bundleName = info.bundleName;
     baseInfo.userID = info.userID;
@@ -284,7 +284,7 @@ void BuildDualModeMigratedInfo(const HapBaseInfoIdl& baseInfo, MultipleModeEnumI
     migratedInfo.bundleName = baseInfo.bundleName;
     migratedInfo.pathList.hapPaths = { baseInfo.bundleName };
     migratedInfo.pathList.isPreInstalled = false;
-    migratedInfo.pathList.mode = mode;
+    migratedInfo.mode = mode;
     migratedInfo.hapBaseInfoList = { baseInfo };
     migratedInfo.uidList = { uid };
     migratedInfo.reservedTypeList = { ReservedTypeIdl::NONE };
@@ -988,7 +988,7 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, MigrateInstalledBundles_NewToken, T
     migratedInfo.bundleName = info.bundleName;
     migratedInfo.pathList.hapPaths = { info.bundleName };
     migratedInfo.pathList.isPreInstalled = false;
-    migratedInfo.pathList.mode = MultipleModeEnumIdl::DEFAULT_OR_MAIN_MODE;
+    migratedInfo.mode = MultipleModeEnumIdl::DEFAULT_OR_MAIN_MODE;
     migratedInfo.hapBaseInfoList = { baseInfo };
     migratedInfo.uidList = { 20021301 };
     migratedInfo.reservedTypeList = { ReservedTypeIdl::NONE };
@@ -1652,7 +1652,7 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, MigrateInstalledBundles_DuplicateUi
     MigratedInfoIdl migratedInfo;
     migratedInfo.bundleName = info.bundleName;
     migratedInfo.pathList.hapPaths = { info.bundleName };
-    migratedInfo.pathList.mode = MultipleModeEnumIdl::DEFAULT_OR_MAIN_MODE;
+    migratedInfo.mode = MultipleModeEnumIdl::DEFAULT_OR_MAIN_MODE;
     migratedInfo.hapBaseInfoList = { baseInfo, cloneBaseInfo };
     migratedInfo.uidList = { 20021001, 20021001 }; // same UID
     migratedInfo.reservedTypeList = { ReservedTypeIdl::NONE, ReservedTypeIdl::NONE };
@@ -1744,7 +1744,7 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, MigrateInstalledBundles_BundleIdInc
     MigratedInfoIdl migratedInfo;
     migratedInfo.bundleName = info.bundleName;
     migratedInfo.pathList.hapPaths = { info.bundleName };
-    migratedInfo.pathList.mode = MultipleModeEnumIdl::DEFAULT_OR_MAIN_MODE;
+    migratedInfo.mode = MultipleModeEnumIdl::DEFAULT_OR_MAIN_MODE;
     migratedInfo.hapBaseInfoList = { baseInfo0, baseInfo1 };
     migratedInfo.uidList = { 20020123, 20020456 };
     migratedInfo.reservedTypeList = { ReservedTypeIdl::NONE, ReservedTypeIdl::NONE };
@@ -1784,7 +1784,7 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, MigrateInstalledBundles_SecondHapBu
     MigratedInfoIdl migratedInfo;
     migratedInfo.bundleName = info.bundleName;
     migratedInfo.pathList.hapPaths = { info.bundleName };
-    migratedInfo.pathList.mode = MultipleModeEnumIdl::DEFAULT_OR_MAIN_MODE;
+    migratedInfo.mode = MultipleModeEnumIdl::DEFAULT_OR_MAIN_MODE;
     migratedInfo.hapBaseInfoList = { baseInfoOk, baseInfoBad };
     migratedInfo.uidList = { 20021101, 20021102 };
     migratedInfo.reservedTypeList = { ReservedTypeIdl::NONE, ReservedTypeIdl::NONE };

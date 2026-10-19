@@ -101,10 +101,12 @@ public:
     int32_t DeleteIdentity(AccessTokenID tokenID, const std::string& bundleName, ReservedType type);
     int32_t CheckHapSignInfo(const BundleHapList& list, uint32_t flag, int32_t& sessionId,
         std::vector<TrustedBundleInfo>& bundleInfo, HapVerifyResultInfo& resultInfo);
-    int32_t CheckHapPermissionInfo(int32_t sessionId, InstallTypeEnum type, HapInfoCheckResult& result);
+    int32_t CheckHapPermissionInfo(int32_t sessionId, InstallTypeEnum type, MultipleMode mode,
+        HapInfoCheckResult& result);
     int32_t PrepareHapIdentity(int32_t& sessionId, const HapBaseInfo& info,
         const BundlePolicy& policy, Identity& identity);
-    int32_t UpdateHapPolicy(int32_t sessionId, int32_t tokenId, const BundlePolicy& policy, int32_t& uid);
+    int32_t UpdateHapPolicy(int32_t sessionId, AccessTokenIDEx& tokenIdEx,
+        const BundlePolicy& policy, int32_t& uid);
     int32_t FinishInstall(
         int32_t sessionId, bool isPersistent, const std::map<std::string, std::string>& modulePathMap);
     int32_t GetCacheSignInfoBySessionId(int32_t sessionId, uint32_t flag,

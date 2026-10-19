@@ -150,7 +150,7 @@ void DeleteIdentityMockTest::InstallHap(const std::vector<std::string>& hapPaths
     BundleHapList hapList;
     hapList.hapPaths = hapPaths;
     hapList.isPreInstalled = false;
-    hapList.userId = baseInfo.userID;
+    hapList.userIdForEnterpriseSign = baseInfo.userID;
 
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
@@ -160,7 +160,7 @@ void DeleteIdentityMockTest::InstallHap(const std::vector<std::string>& hapPaths
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_EQ(ERR_OK, ret);
 
     ret = g_installSessionManager->PrepareHapIdentity(sessionId, baseInfo, bundlePolicy, nullptr, identity);

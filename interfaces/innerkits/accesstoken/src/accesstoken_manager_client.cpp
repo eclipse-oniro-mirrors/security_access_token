@@ -929,8 +929,7 @@ int32_t AccessTokenManagerClient::CheckHapSignInfo(const BundleHapList& list, ui
     BundleHapListIdl listIdl;
     listIdl.hapPaths = list.hapPaths;
     listIdl.isPreInstalled = list.isPreInstalled;
-    listIdl.userId = list.userId;
-    listIdl.mode = static_cast<MultipleModeEnumIdl>(list.mode);
+    listIdl.userIdForEnterpriseSign = list.userIdForEnterpriseSign;
 
     CheckHapSignResultRawdata resultRawData;
     int32_t res = proxy->CheckHapSignInfo(listIdl, anonyStub->AsObject(), flag, resultRawData);
@@ -952,7 +951,7 @@ int32_t AccessTokenManagerClient::CheckHapSignInfo(const BundleHapList& list, ui
 }
 
 int32_t AccessTokenManagerClient::CheckHapPermissionInfo(int32_t sessionId, InstallTypeEnum type,
-    HapInfoCheckResult& result)
+    MultipleMode mode, HapInfoCheckResult& result)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
@@ -961,7 +960,8 @@ int32_t AccessTokenManagerClient::CheckHapPermissionInfo(int32_t sessionId, Inst
     }
 
     HapInfoCheckResultIdl resultInfoIdl;
-    int32_t res = proxy->CheckHapPermissionInfo(sessionId, static_cast<InstallTypeEnumIdl>(type), resultInfoIdl);
+    int32_t res = proxy->CheckHapPermissionInfo(sessionId, static_cast<InstallTypeEnumIdl>(type),
+        static_cast<MultipleModeEnumIdl>(mode), resultInfoIdl);
     if (res != RET_SUCCESS) {
         res = ConvertResult(res);
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed, err=%{public}d.", res);
@@ -1019,7 +1019,7 @@ int32_t AccessTokenManagerClient::PrepareHapIdentity(int32_t& sessionId, const H
 }
 
 int32_t AccessTokenManagerClient::UpdateHapPolicy(
-    int32_t sessionId, int32_t tokenId, const BundlePolicy& policy, int32_t& uid)
+    int32_t sessionId, AccessTokenIDEx& tokenIdEx, const BundlePolicy& policy, int32_t& uid)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
@@ -1030,14 +1030,17 @@ int32_t AccessTokenManagerClient::UpdateHapPolicy(
     BundlePolicyIdl policyIdl;
     TransferBundlePolicyToIdl(policy, policyIdl);
 
-    int32_t res = proxy->UpdateHapPolicy(sessionId, tokenId, policyIdl, uid);
+    uint64_t tokenIdExVal = tokenIdEx.tokenIDEx;
+    int32_t res = proxy->UpdateHapPolicy(sessionId, tokenIdExVal, policyIdl, uid);
     if (res != RET_SUCCESS) {
         res = ConvertResult(res);
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed, err=%{public}d.", res);
         return res;
     }
+    tokenIdEx.tokenIDEx = tokenIdExVal;
 
-    LOGI(ATM_DOMAIN, ATM_TAG, "Result=%{public}d, uid=%{public}d", res, uid);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result=%{public}d, uid=%{public}d, fullTokenId=%{public}" PRIu64,
+        res, uid, tokenIdEx.tokenIDEx);
     return res;
 }
 
@@ -1198,7 +1201,7 @@ int32_t AccessTokenManagerClient::MigrateInstalledBundles(const std::vector<Migr
         migratedInfoIdl.bundleName = migratedInfo.bundleName;
         migratedInfoIdl.pathList.hapPaths = migratedInfo.pathList.hapPaths;
         migratedInfoIdl.pathList.isPreInstalled = migratedInfo.pathList.isPreInstalled;
-        migratedInfoIdl.pathList.mode = static_cast<MultipleModeEnumIdl>(migratedInfo.pathList.mode);
+        migratedInfoIdl.mode = static_cast<MultipleModeEnumIdl>(migratedInfo.mode);
         for (const auto& hapBaseInfo : migratedInfo.hapBaseInfoList) {
             HapBaseInfoIdl hapBaseInfoIdl;
             hapBaseInfoIdl.userID = hapBaseInfo.userID;

@@ -53,8 +53,8 @@ struct InstallCache {
     // Input hap list containing hap paths and user ID
     BundleHapList list;
     // Install mode of this session, the single mode source of the four-stage
-    // flow: set from list.mode at CheckHapSignInfo (already validated to
-    // {0,1}), or derived from baseInfo.instIndex in the repair-only
+    // flow: set from the CheckHapPermissionInfo mode param (already validated
+    // to {0,1}), or derived from baseInfo.instIndex in the repair-only
     // CreateInstallSession path. Constant for the session lifetime.
     MultipleMode mode = MultipleMode::DEFAULT_OR_MAIN_MODE;
     // Verified bundle info list; front elements from list signature verification,

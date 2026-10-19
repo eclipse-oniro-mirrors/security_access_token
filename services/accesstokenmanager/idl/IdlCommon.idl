@@ -177,13 +177,13 @@ enum MultipleModeEnumIdl {
 struct BundleHapListIdl {
     List<String> hapPaths;
     boolean isPreInstalled;
-    int userId;
-    MultipleModeEnumIdl mode;
+    int userIdForEnterpriseSign;
 };
 
 struct MigratedInfoIdl {
     String bundleName;
     BundleHapListIdl pathList;
+    MultipleModeEnumIdl mode;
     List<HapBaseInfoIdl> hapBaseInfoList;
     List<int> uidList;
     List<ReservedTypeIdl> reservedTypeList;

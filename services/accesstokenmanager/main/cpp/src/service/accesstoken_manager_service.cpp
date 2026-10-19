@@ -3226,8 +3226,7 @@ void TransferBundleHapListFromIdl(const BundleHapListIdl& listIdl, BundleHapList
 {
     list.hapPaths = listIdl.hapPaths;
     list.isPreInstalled = listIdl.isPreInstalled;
-    list.userId = listIdl.userId;
-    list.mode = static_cast<MultipleMode>(listIdl.mode);
+    list.userIdForEnterpriseSign = listIdl.userIdForEnterpriseSign;
 }
 
 void TransferHapBaseInfoFromIdl(const HapBaseInfoIdl& infoIdl, HapBaseInfo& info)
@@ -3272,9 +3271,6 @@ int32_t AccessTokenManagerService::CheckHapSignInfo(const BundleHapListIdl& list
 
     BundleHapList bundleHapList;
     TransferBundleHapListFromIdl(list, bundleHapList);
-    if (!DataValidator::IsInstallModeValid(bundleHapList.mode)) {
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfoList;
     HapVerifyResultInfo resultInfo;
@@ -3289,7 +3285,7 @@ int32_t AccessTokenManagerService::CheckHapSignInfo(const BundleHapListIdl& list
 }
 
 int32_t AccessTokenManagerService::CheckHapPermissionInfo(int32_t sessionId, InstallTypeEnumIdl type,
-    HapInfoCheckResultIdl& resultInfoIdl)
+    MultipleModeEnumIdl mode, HapInfoCheckResultIdl& resultInfoIdl)
 {
     AccessTokenID tokenID = IPCSkeleton::GetCallingTokenID();
     if (!IsPrivilegedCalling() &&
@@ -3304,7 +3300,7 @@ int32_t AccessTokenManagerService::CheckHapPermissionInfo(int32_t sessionId, Ins
 
     HapInfoCheckResult checkResult;
     int32_t ret = InstallSessionManager::GetInstance().CheckHapPermissionInfo(
-        sessionId, static_cast<InstallTypeEnum>(type), checkResult);
+        sessionId, static_cast<InstallTypeEnum>(type), static_cast<MultipleMode>(mode), checkResult);
     resultInfoIdl.realResult = ret;
     if (ret != ERR_OK) {
         resultInfoIdl.permissionName = checkResult.permCheckResult.permissionName;
@@ -3339,7 +3335,7 @@ int32_t AccessTokenManagerService::PrepareHapIdentity(int32_t& sessionId, const 
     return ret;
 }
 
-int32_t AccessTokenManagerService::UpdateHapPolicy(int32_t sessionId, AccessTokenID tokenId,
+int32_t AccessTokenManagerService::UpdateHapPolicy(int32_t sessionId, uint64_t& tokenIdEx,
     const BundlePolicyIdl& policy, int32_t& uid)
 {
     AccessTokenID tokenID = IPCSkeleton::GetCallingTokenID();
@@ -3353,7 +3349,13 @@ int32_t AccessTokenManagerService::UpdateHapPolicy(int32_t sessionId, AccessToke
     }
     BundlePolicy bundlePolicy;
     TransferBundlePolicyFromIdl(policy, bundlePolicy);
-    return InstallSessionManager::GetInstance().UpdateHapPolicy(sessionId, tokenId, bundlePolicy, uid);
+    // inout param: low 32 bits locate the token, high 32 bits (token attr)
+    // are refreshed by the upgrade and echoed back to the caller
+    AccessTokenIDEx idEx;
+    idEx.tokenIDEx = tokenIdEx;
+    int32_t ret = InstallSessionManager::GetInstance().UpdateHapPolicy(sessionId, idEx, bundlePolicy, uid);
+    tokenIdEx = idEx.tokenIDEx;
+    return ret;
 }
 
 int32_t AccessTokenManagerService::FinishInstall(int32_t sessionId, bool isPersistent,
@@ -3439,7 +3441,7 @@ int32_t AccessTokenManagerService::CheckHapSignInfo(const BundleHapListIdl& list
 }
 
 int32_t AccessTokenManagerService::CheckHapPermissionInfo(int32_t sessionId, InstallTypeEnumIdl type,
-    HapInfoCheckResultIdl& resultInfoIdl)
+    MultipleModeEnumIdl mode, HapInfoCheckResultIdl& resultInfoIdl)
 {
     LOGW(ATM_DOMAIN, ATM_TAG, "Not supported on this device.");
     return AccessTokenError::ERR_CAPABILITY_NOT_SUPPORT;
@@ -3452,7 +3454,7 @@ int32_t AccessTokenManagerService::PrepareHapIdentity(int32_t& sessionId, const 
     return AccessTokenError::ERR_CAPABILITY_NOT_SUPPORT;
 }
 
-int32_t AccessTokenManagerService::UpdateHapPolicy(int32_t sessionId, AccessTokenID tokenId,
+int32_t AccessTokenManagerService::UpdateHapPolicy(int32_t sessionId, uint64_t& tokenIdEx,
     const BundlePolicyIdl& policy, int32_t& uid)
 {
     LOGW(ATM_DOMAIN, ATM_TAG, "Not supported on this device.");
