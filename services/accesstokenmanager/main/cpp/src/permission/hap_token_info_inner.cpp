@@ -343,6 +343,23 @@ void HapTokenInfoInner::SetTokenBaseInfo(const HapTokenInfo& baseInfo)
     tokenInfoBasic_ = baseInfo;
 }
 
+void HapTokenInfoInner::UpdateHapInfo(const HapTokenInfoItem& item)
+{
+    std::unique_lock<std::shared_mutex> infoGuard(this->policySetLock_);
+    tokenInfoBasic_.ver = DEFAULT_TOKEN_VERSION;
+    tokenInfoBasic_.tokenID = item.tokenId;
+    tokenInfoBasic_.tokenAttr = item.tokenAttr;
+    tokenInfoBasic_.userID = static_cast<int>(item.userId);
+    tokenInfoBasic_.apiVersion = item.apiVersion;
+    tokenInfoBasic_.instIndex = static_cast<int>(item.instIndex);
+    tokenInfoBasic_.dlpType = item.dlpType;
+    tokenInfoBasic_.uid = item.uid;
+    tokenInfoBasic_.bundleName = item.bundleName;
+    isPermDialogForbidden_ = item.permDialogCapState;
+    isMigrated_ = item.migrated;
+    isSideloadApp_ = item.isSideload;
+}
+
 bool HapTokenInfoInner::IsRemote() const
 {
     std::shared_lock<std::shared_mutex> infoGuard(this->policySetLock_);
@@ -384,6 +401,12 @@ bool HapTokenInfoInner::IsSideloadApp() const
 {
     std::shared_lock<std::shared_mutex> infoGuard(this->policySetLock_);
     return isSideloadApp_;
+}
+
+void HapTokenInfoInner::SetSideloadApp(bool isSideloadApp)
+{
+    std::unique_lock<std::shared_mutex> infoGuard(this->policySetLock_);
+    isSideloadApp_ = isSideloadApp;
 }
 
 int32_t HapTokenInfoInner::GetApiVersion(int32_t apiVersion)
@@ -518,7 +541,7 @@ int32_t HapTokenInfoInner::ResetUserGrantPermissionStatus(void)
 
 #ifdef SUPPORT_SANDBOX_APP
     // update permission status with dlp permission rule.
-    DlpPermissionSetManager::GetInstance().UpdatePermStateWithDlpInfo(tokenInfoBasic_.dlpType, permListOfHap);
+    DlpPermissionSetManager::GetInstance().FilterPermState(tokenInfoBasic_.dlpType, permListOfHap);
     std::vector<PermissionWithValue> extendedPermList;
     PermissionDataBrief::GetInstance().GetExtendedValueList(tokenInfoBasic_.tokenID, extendedPermList);
     std::map<std::string, std::string> aclExtendedMap;

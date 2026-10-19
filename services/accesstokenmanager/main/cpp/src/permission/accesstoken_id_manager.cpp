@@ -43,6 +43,7 @@ constexpr int32_t BUNDLE_ID_MAX = 65535;
 constexpr int32_t UID_TRANSFORM_DIVISOR = 200000;
 const std::string RESERVED_BUNDLE_ID_LIST_KEY = "reserved_bundle_id_list";
 static std::atomic<int32_t> g_bundleIdMin = -1;
+const std::string NEXT_BUNDLE_ID_KEY = "next_bundle_id";
 }
 
 int32_t AccessTokenIDManager::GetBundleIdMin()
@@ -162,6 +163,21 @@ void AccessTokenIDManager::ReleaseTokenIdForce(AccessTokenID id)
     tokenIdSet_.erase(id);
     reservedTokenIdSet_.erase(id);
     untrustedTokenIdSet_.erase(id);
+}
+
+AccessTokenID AccessTokenIDManager::ParseTokenId(FullTokenID fullTokenId)
+{
+    AccessTokenIDEx tokenIdEx;
+    tokenIdEx.tokenIDEx = fullTokenId;
+    return tokenIdEx.tokenIdExStruct.tokenID;
+}
+
+FullTokenID AccessTokenIDManager::BuildFullTokenId(AccessTokenID tokenId, AccessTokenAttr tokenAttr)
+{
+    AccessTokenIDEx tokenIdEx;
+    tokenIdEx.tokenIdExStruct.tokenID = tokenId;
+    tokenIdEx.tokenIdExStruct.tokenAttr = tokenAttr;
+    return tokenIdEx.tokenIDEx;
 }
 
 bool AccessTokenIDManager::IsReservedTokenId(AccessTokenID id)
@@ -295,6 +311,11 @@ bool AccessTokenIDManager::ExtractBundleId(int32_t uid, int32_t& bundleId) const
     }
     bundleId = extracted;
     return true;
+}
+
+int32_t AccessTokenIDManager::ExtractUserId(int32_t uid)
+{
+    return uid / UID_TRANSFORM_DIVISOR;
 }
 
 int32_t AccessTokenIDManager::IsUidReusable(int32_t uid, bool& reusable)
@@ -432,13 +453,15 @@ int32_t AccessTokenIDManager::PersistReservedBundleIdSetLocked(const std::set<in
     GenericValues delValue;
     delValue.Put(TokenFiledConst::FIELD_NAME, RESERVED_BUNDLE_ID_LIST_KEY);
     DelInfo delInfo = { AtmDataType::ACCESSTOKEN_SYSTEM_CONFIG, delValue };
-
-    GenericValues addValue;
-    addValue.Put(TokenFiledConst::FIELD_NAME, RESERVED_BUNDLE_ID_LIST_KEY);
-    addValue.Put(TokenFiledConst::FIELD_VALUE, value);
     AddInfo addInfo;
-    addInfo.addType = AtmDataType::ACCESSTOKEN_SYSTEM_CONFIG;
-    addInfo.addValues.emplace_back(addValue);
+    if (!value.empty()) {
+        GenericValues addValue;
+        addValue.Put(TokenFiledConst::FIELD_NAME, RESERVED_BUNDLE_ID_LIST_KEY);
+        addValue.Put(TokenFiledConst::FIELD_VALUE, value);
+        addInfo.addType = AtmDataType::ACCESSTOKEN_SYSTEM_CONFIG;
+        addInfo.addValues.emplace_back(addValue);
+    }
+
     return AccessTokenDbOperator::DeleteAndInsertValues({ delInfo }, { addInfo });
 }
 
@@ -558,19 +581,95 @@ int32_t AccessTokenIDManager::RemoveReservedBundleId(int32_t uid)
     reservedBundleIdSet_.erase(bundleId);
     return RET_SUCCESS;
 }
-// Memory update (reservedBundleIdSet_ + bundleIdSet_) is deferred to RemoveReservedBundleId.
-// Caller must invoke RemoveReservedBundleId after the DB transaction (DeleteAndInsertValues)
-// succeeds, to maintain the DB -> Cache consistency order and allow rollback on failure.
-int32_t AccessTokenIDManager::GetReservedBundleIdSetPersistInfo(int32_t bundleId,
+
+void AccessTokenIDManager::RemoveBundleIdFromReservedSet(int32_t uid)
+{
+    int32_t bundleId = 0;
+    if (!ExtractBundleId(uid, bundleId)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Invalid uid=%{public}d.", uid);
+        return;
+    }
+    std::unique_lock<std::shared_mutex> lock(bundleIdLock_);
+    reservedBundleIdSet_.erase(bundleId);
+}
+
+int32_t AccessTokenIDManager::RemoveReservedBundleIds(const std::set<int32_t>& bundleIds)
+{
+    std::unique_lock<std::shared_mutex> lock(bundleIdLock_);
+    for (int32_t bundleId : bundleIds) {
+        bundleIdSet_.erase(bundleId);
+        reservedBundleIdSet_.erase(bundleId);
+    }
+    return RET_SUCCESS;
+}
+
+int32_t AccessTokenIDManager::BuildReservedBundleIdsPersistInfo(const std::set<int32_t>& bundleIds,
     std::vector<DelInfo>& delInfoVec, std::vector<AddInfo>& addInfoVec)
 {
     std::unique_lock<std::shared_mutex> lock(bundleIdLock_);
-    if (reservedBundleIdSet_.count(bundleId) == 0) {
+    std::set<int32_t> updatedSet = reservedBundleIdSet_;
+    bool changed = false;
+    for (int32_t bundleId : bundleIds) {
+        if (updatedSet.erase(bundleId) > 0) {
+            changed = true;
+        }
+    }
+    if (!changed) {
+        return RET_SUCCESS;
+    }
+
+    GenericValues delValue;
+    delValue.Put(TokenFiledConst::FIELD_NAME, RESERVED_BUNDLE_ID_LIST_KEY);
+    delInfoVec.emplace_back(DelInfo { AtmDataType::ACCESSTOKEN_SYSTEM_CONFIG, delValue });
+
+    if (updatedSet.empty()) {
+        return RET_SUCCESS;
+    }
+    std::string value;
+    int32_t ret = ReservedBundleIdSetToJson(updatedSet, value);
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
+    GenericValues addValue;
+    addValue.Put(TokenFiledConst::FIELD_NAME, RESERVED_BUNDLE_ID_LIST_KEY);
+    addValue.Put(TokenFiledConst::FIELD_VALUE, value);
+    AddInfo addInfo;
+    addInfo.addType = AtmDataType::ACCESSTOKEN_SYSTEM_CONFIG;
+    addInfo.addValues.emplace_back(addValue);
+    addInfoVec.emplace_back(addInfo);
+    return RET_SUCCESS;
+}
+
+// Memory update (reservedBundleIdSet_ + bundleIdSet_) is deferred to RemoveReservedBundleId.
+// Caller must invoke RemoveReservedBundleId after the DB transaction (DeleteAndInsertValues)
+// succeeds, to maintain the DB -> Cache consistency order and allow rollback on failure.
+int32_t AccessTokenIDManager::GetReservedBundleIdsPersistInfo(const std::vector<int32_t>& uids,
+    std::vector<DelInfo>& delInfoVec, std::vector<AddInfo>& addInfoVec)
+{
+    // Single lock: filter in-reserved bundleIds, copy once, remove all,
+    // generate one DEL + one ADD. The set itself is never modified here —
+    // memory cleanup happens separately in CommitIdentity.
+    std::shared_lock<std::shared_mutex> lock(bundleIdLock_);
+
+    std::set<int32_t> bundleIdsToRemove;
+    for (int32_t uid : uids) {
+        int32_t bundleId = 0;
+        if (!ExtractBundleId(uid, bundleId)) {
+            LOGW(ATM_DOMAIN, ATM_TAG, "Invalid uid=%{public}d, skip.", uid);
+            continue;
+        }
+        if (reservedBundleIdSet_.count(bundleId) > 0) {
+            bundleIdsToRemove.insert(bundleId);
+        }
+    }
+    if (bundleIdsToRemove.empty()) {
         return RET_SUCCESS;
     }
 
     std::set<int32_t> updatedSet = reservedBundleIdSet_;
-    updatedSet.erase(bundleId);
+    for (int32_t bundleId : bundleIdsToRemove) {
+        updatedSet.erase(bundleId);
+    }
 
     GenericValues delValue;
     delValue.Put(TokenFiledConst::FIELD_NAME, RESERVED_BUNDLE_ID_LIST_KEY);
@@ -607,6 +706,12 @@ bool AccessTokenIDManager::IsReservedBundleId(int32_t uid)
     return reservedBundleIdSet_.count(bundleId) > 0;
 }
 
+bool AccessTokenIDManager::IsBundleIdOccupied(int32_t bundleId)
+{
+    std::shared_lock<std::shared_mutex> lock(bundleIdLock_);
+    return bundleIdSet_.count(bundleId) > 0 && reservedBundleIdSet_.count(bundleId) == 0;
+}
+
 void AccessTokenIDManager::SetMigrationDone()
 {
     std::unique_lock<std::shared_mutex> lock(migrationLock_);
@@ -616,7 +721,7 @@ void AccessTokenIDManager::SetMigrationDone()
 
 bool AccessTokenIDManager::IsMigrationDone()
 {
-#ifdef SPM_DATA_ENABLE
+#if defined(SPM_DATA_ENABLE) && defined(IS_SUPPORT_HAP_RUNNING)
     std::shared_lock<std::shared_mutex> lock(migrationLock_);
     if (!migrationDone_) {
         LOGE(ATM_DOMAIN, ATM_TAG, "AllocUid failed, migration not completed.");

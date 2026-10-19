@@ -69,9 +69,17 @@ bool SetPermDialogCapStubFuzzTest(const uint8_t* data, size_t size)
     return true;
 }
 
+static constexpr int32_t SLEEP_TIME = 5;
+
+void BeforeExit()
+{
+    std::this_thread::sleep_for(std::chrono::seconds(SLEEP_TIME));
+}
+
 extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv)
 {
     OHOS::Initialize();
+    (void)atexit(BeforeExit);
     return 0;
 }
 

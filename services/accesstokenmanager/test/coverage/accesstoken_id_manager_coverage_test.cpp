@@ -708,12 +708,12 @@ HWTEST_F(AccessTokenIdManagerCoverageTest, RemoveReservedBundleId003, TestSize.L
 }
 
 /*
- * @tc.name: GetReservedBundleIdSetPersistInfo001
+ * @tc.name: GetReservedBundleIdsPersistInfo001
  * @tc.desc: Construct DB info when reserved set non-empty after removal; memory unchanged
  * @tc.type: FUNC
  * @tc.require: TDD
  */
-HWTEST_F(AccessTokenIdManagerCoverageTest, GetReservedBundleIdSetPersistInfo001, TestSize.Level4)
+HWTEST_F(AccessTokenIdManagerCoverageTest, GetReservedBundleIdsPersistInfo001, TestSize.Level4)
 {
     auto& manager = AccessTokenIDManager::GetInstance();
     // bundleId=10000 in reserved set, 10001 also in reserved (non-empty after removal)
@@ -723,7 +723,7 @@ HWTEST_F(AccessTokenIdManagerCoverageTest, GetReservedBundleIdSetPersistInfo001,
     manager.bundleIdSet_.insert(TEST_BUNDLE_ID_1);
     std::vector<DelInfo> delInfoVec;
     std::vector<AddInfo> addInfoVec;
-    ASSERT_EQ(RET_SUCCESS, manager.GetReservedBundleIdSetPersistInfo(TEST_BUNDLE_ID_BASE, delInfoVec, addInfoVec));
+    ASSERT_EQ(RET_SUCCESS, manager.GetReservedBundleIdsPersistInfo({TEST_BUNDLE_ID_BASE}, delInfoVec, addInfoVec));
     ASSERT_EQ(1U, delInfoVec.size());
     ASSERT_EQ(1U, addInfoVec.size());
     ASSERT_EQ(1U, manager.reservedBundleIdSet_.count(TEST_BUNDLE_ID_BASE));
@@ -731,19 +731,19 @@ HWTEST_F(AccessTokenIdManagerCoverageTest, GetReservedBundleIdSetPersistInfo001,
 }
 
 /*
- * @tc.name: GetReservedBundleIdSetPersistInfo002
+ * @tc.name: GetReservedBundleIdsPersistInfo002
  * @tc.desc: Construct DB info when reserved set becomes empty; addInfoVec empty
  * @tc.type: FUNC
  * @tc.require: TDD
  */
-HWTEST_F(AccessTokenIdManagerCoverageTest, GetReservedBundleIdSetPersistInfo002, TestSize.Level4)
+HWTEST_F(AccessTokenIdManagerCoverageTest, GetReservedBundleIdsPersistInfo002, TestSize.Level4)
 {
     auto& manager = AccessTokenIDManager::GetInstance();
     manager.reservedBundleIdSet_.insert(TEST_BUNDLE_ID_BASE);
     manager.bundleIdSet_.insert(TEST_BUNDLE_ID_BASE);
     std::vector<DelInfo> delInfoVec;
     std::vector<AddInfo> addInfoVec;
-    ASSERT_EQ(RET_SUCCESS, manager.GetReservedBundleIdSetPersistInfo(TEST_BUNDLE_ID_BASE, delInfoVec, addInfoVec));
+    ASSERT_EQ(RET_SUCCESS, manager.GetReservedBundleIdsPersistInfo({TEST_BUNDLE_ID_BASE}, delInfoVec, addInfoVec));
     ASSERT_EQ(1U, delInfoVec.size());
     ASSERT_TRUE(addInfoVec.empty());
     ASSERT_EQ(1U, manager.reservedBundleIdSet_.count(TEST_BUNDLE_ID_BASE));
@@ -751,28 +751,28 @@ HWTEST_F(AccessTokenIdManagerCoverageTest, GetReservedBundleIdSetPersistInfo002,
 }
 
 /*
- * @tc.name: GetReservedBundleIdSetPersistInfo003
+ * @tc.name: GetReservedBundleIdsPersistInfo003
  * @tc.desc: bundleId not in reserved set returns empty vectors
  * @tc.type: FUNC
  * @tc.require: TDD
  */
-HWTEST_F(AccessTokenIdManagerCoverageTest, GetReservedBundleIdSetPersistInfo003, TestSize.Level4)
+HWTEST_F(AccessTokenIdManagerCoverageTest, GetReservedBundleIdsPersistInfo003, TestSize.Level4)
 {
     auto& manager = AccessTokenIDManager::GetInstance();
     std::vector<DelInfo> delInfoVec;
     std::vector<AddInfo> addInfoVec;
-    ASSERT_EQ(RET_SUCCESS, manager.GetReservedBundleIdSetPersistInfo(TEST_BUNDLE_ID_BASE, delInfoVec, addInfoVec));
+    ASSERT_EQ(RET_SUCCESS, manager.GetReservedBundleIdsPersistInfo({TEST_BUNDLE_ID_BASE}, delInfoVec, addInfoVec));
     ASSERT_TRUE(delInfoVec.empty());
     ASSERT_TRUE(addInfoVec.empty());
 }
 
 /*
- * @tc.name: GetReservedBundleIdSetPersistInfo004
- * @tc.desc: Memory unchanged after GetReservedBundleIdSetPersistInfo (rollback safety)
+ * @tc.name: GetReservedBundleIdsPersistInfo004
+ * @tc.desc: Memory unchanged after GetReservedBundleIdsPersistInfo (rollback safety)
  * @tc.type: FUNC
  * @tc.require: TDD
  */
-HWTEST_F(AccessTokenIdManagerCoverageTest, GetReservedBundleIdSetPersistInfo004, TestSize.Level4)
+HWTEST_F(AccessTokenIdManagerCoverageTest, GetReservedBundleIdsPersistInfo004, TestSize.Level4)
 {
     auto& manager = AccessTokenIDManager::GetInstance();
     manager.reservedBundleIdSet_.insert(TEST_BUNDLE_ID_BASE);
@@ -781,18 +781,18 @@ HWTEST_F(AccessTokenIdManagerCoverageTest, GetReservedBundleIdSetPersistInfo004,
     manager.bundleIdSet_.insert(TEST_BUNDLE_ID_1);
     std::vector<DelInfo> delInfoVec;
     std::vector<AddInfo> addInfoVec;
-    (void)manager.GetReservedBundleIdSetPersistInfo(TEST_BUNDLE_ID_BASE, delInfoVec, addInfoVec);
+    (void)manager.GetReservedBundleIdsPersistInfo({TEST_BUNDLE_ID_BASE}, delInfoVec, addInfoVec);
     ASSERT_EQ(2U, manager.reservedBundleIdSet_.size());
     ASSERT_EQ(2U, manager.bundleIdSet_.size());
 }
 
 /*
- * @tc.name: GetReservedBundleIdSetPersistInfo005
+ * @tc.name: GetReservedBundleIdsPersistInfo005
  * @tc.desc: Caller calls RemoveReservedBundleId after DB success to commit memory
  * @tc.type: FUNC
  * @tc.require: TDD
  */
-HWTEST_F(AccessTokenIdManagerCoverageTest, GetReservedBundleIdSetPersistInfo005, TestSize.Level4)
+HWTEST_F(AccessTokenIdManagerCoverageTest, GetReservedBundleIdsPersistInfo005, TestSize.Level4)
 {
     auto& manager = AccessTokenIDManager::GetInstance();
     manager.reservedBundleIdSet_.insert(TEST_BUNDLE_ID_BASE);
@@ -801,7 +801,7 @@ HWTEST_F(AccessTokenIdManagerCoverageTest, GetReservedBundleIdSetPersistInfo005,
     manager.bundleIdSet_.insert(TEST_BUNDLE_ID_1);
     std::vector<DelInfo> delInfoVec;
     std::vector<AddInfo> addInfoVec;
-    ASSERT_EQ(RET_SUCCESS, manager.GetReservedBundleIdSetPersistInfo(TEST_BUNDLE_ID_BASE, delInfoVec, addInfoVec));
+    ASSERT_EQ(RET_SUCCESS, manager.GetReservedBundleIdsPersistInfo({TEST_BUNDLE_ID_BASE}, delInfoVec, addInfoVec));
     // Simulate DB success, then commit memory
     ASSERT_EQ(RET_SUCCESS, manager.RemoveReservedBundleId(TEST_UID_BASE));
     ASSERT_EQ(0U, manager.reservedBundleIdSet_.count(TEST_BUNDLE_ID_BASE));
@@ -810,19 +810,19 @@ HWTEST_F(AccessTokenIdManagerCoverageTest, GetReservedBundleIdSetPersistInfo005,
 }
 
 /*
- * @tc.name: GetReservedBundleIdSetPersistInfo006
+ * @tc.name: GetReservedBundleIdsPersistInfo006
  * @tc.desc: Caller skips RemoveReservedBundleId after DB failure; memory unchanged
  * @tc.type: FUNC
  * @tc.require: TDD
  */
-HWTEST_F(AccessTokenIdManagerCoverageTest, GetReservedBundleIdSetPersistInfo006, TestSize.Level4)
+HWTEST_F(AccessTokenIdManagerCoverageTest, GetReservedBundleIdsPersistInfo006, TestSize.Level4)
 {
     auto& manager = AccessTokenIDManager::GetInstance();
     manager.reservedBundleIdSet_.insert(TEST_BUNDLE_ID_BASE);
     manager.bundleIdSet_.insert(TEST_BUNDLE_ID_BASE);
     std::vector<DelInfo> delInfoVec;
     std::vector<AddInfo> addInfoVec;
-    ASSERT_EQ(RET_SUCCESS, manager.GetReservedBundleIdSetPersistInfo(TEST_BUNDLE_ID_BASE, delInfoVec, addInfoVec));
+    ASSERT_EQ(RET_SUCCESS, manager.GetReservedBundleIdsPersistInfo({TEST_BUNDLE_ID_BASE}, delInfoVec, addInfoVec));
     // Simulate DB failure: do NOT call RemoveReservedBundleId
     ASSERT_EQ(1U, manager.reservedBundleIdSet_.count(TEST_BUNDLE_ID_BASE));
     ASSERT_EQ(1U, manager.bundleIdSet_.count(TEST_BUNDLE_ID_BASE));

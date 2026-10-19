@@ -243,6 +243,54 @@ void PermissionDataBrief::GetPermissionBriefDataList(AccessTokenID tokenID,
     }
 }
 
+bool PermissionDataBrief::BuildPermissionBriefData(
+    const PermissionStatus& permState, BriefPermData& briefPermData)
+{
+    uint32_t code;
+    PermissionBriefDef briefDef;
+    if (GetPermissionBriefDef(permState.permissionName, briefDef, code) && briefDef.isEnable) {
+        briefPermData.status = static_cast<int8_t>(permState.grantStatus);
+        briefPermData.permCode = code;
+        briefPermData.flag = permState.grantFlag;
+        briefPermData.type = 0;
+        if (briefDef.isKernelEffect) {
+            briefPermData.type |= IS_KERNEL_EFFECT;
+        }
+
+        if (briefDef.hasValue) {
+            briefPermData.type |= HAS_VALUE;
+        }
+
+        if (briefPermData.type != 0) {
+            LOGI(ATM_DOMAIN, ATM_TAG, "%{public}s with type %{public}d",
+                permState.permissionName.c_str(), static_cast<int32_t>(briefPermData.type));
+        }
+        return true;
+    }
+
+    return false;
+}
+
+void PermissionDataBrief::BuildPermissionBriefDataList(const std::vector<PermissionStatus>& permStateList,
+    std::vector<BriefPermData>& permBriefDataList)
+{
+    for (const auto& permState : permStateList) {
+        BriefPermData data;
+        if (BuildPermissionBriefData(permState, data)) {
+            permBriefDataList.emplace_back(data);
+        }
+    }
+}
+
+PermissionStatus PermissionDataBrief::BuildPermissionStatusFromBrief(const BriefPermData& briefPermData)
+{
+    PermissionStatus permState;
+    permState.permissionName = TransferOpcodeToPermission(briefPermData.permCode);
+    permState.grantStatus = static_cast<int32_t>(briefPermData.status);
+    permState.grantFlag = briefPermData.flag;
+    return permState;
+}
+
 void PermissionDataBrief::AddBriefPermDataByTokenId(
     AccessTokenID tokenID, const std::vector<BriefPermData>& listInput)
 {

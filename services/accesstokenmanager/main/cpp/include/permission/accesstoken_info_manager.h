@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <atomic>
 #include <map>
+#include <set>
 #include <memory>
 #include <shared_mutex>
 #include <unordered_map>
@@ -32,6 +33,7 @@
 #ifdef TOKEN_SYNC_ENABLE
 #include "device_manager.h"
 #endif
+#include "hap_data_structure.h"
 #include "hap_token_info.h"
 #include "hap_token_info_inner.h"
 #include "native_token_info_base.h"
@@ -44,6 +46,10 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+
+// 前置声明：避免引入完整头文件破坏测试文件的 #define private public 注入模式
+enum class TokenIdStatus : uint32_t;
+
 #ifdef TOKEN_SYNC_ENABLE
 class AccessTokenDmInitCallback final : public DistributedHardware::DmInitCallback {
     void OnRemoteDied() override
@@ -61,7 +67,9 @@ typedef struct {
     bool isSystemApp;
 } TokenIdInfo;
 
+class AccessTokenMigrationManager;
 class AccessTokenInfoManager final {
+    friend class AccessTokenMigrationManager;
 public:
     struct HapTokenRestoreData {
         HapTokenInfoItem hapTokenInfoItem;
@@ -71,8 +79,7 @@ public:
 
     static AccessTokenInfoManager& GetInstance();
     ~AccessTokenInfoManager();
-    void Init(uint32_t& hapSize, uint32_t& nativeSize, uint32_t& pefDefSize, uint32_t& dlpSize,
-        std::map<int32_t, TokenIdInfo>& tokenIdAplMap);
+    void Init(uint32_t& nativeSize, uint32_t& pefDefSize, uint32_t& dlpSize);
     void InitNativeTokenInfos(const std::vector<NativeTokenInfoBase>& tokenInfos);
     void GetTokenIDByUserID(
         int32_t userID, int32_t subProfileId, std::unordered_set<AccessTokenID>& tokenIdList);
@@ -87,15 +94,20 @@ public:
     // status-based decisions); unknown -> nullptr (status stays ACTIVE so
     // callers take the not-exist path).
     std::shared_ptr<HapTokenInfoInner> GetHapTokenInfoAndStatus(AccessTokenID id, TokenIdStatus& status);
+    int32_t RestoreInstallPolicyFromKernel(
+        const std::string& bundleName, const BundlePolicy& bundlePolicy, BundleParam& param, HapPolicy& policy);
     int GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo& infoParcel);
     int GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfoBase& info);
     int AllocAccessTokenIDEx(const HapInfoParams& info, AccessTokenID tokenId, AccessTokenIDEx& tokenIdEx);
     int RemoveHapTokenInfo(AccessTokenID id, bool isTokenReserved = false);
     int RemoveNativeTokenInfo(AccessTokenID id);
-    int32_t GetHapAppIdByTokenId(AccessTokenID tokenID, std::string& appId);
     int CreateHapTokenInfo(const HapInfoParams& info, const HapPolicy& policy, AccessTokenIDEx& tokenIdEx,
         std::vector<GenericValues>& undefValues);
     AccessTokenIDEx GetHapTokenID(int32_t userID, const std::string& bundleName, int32_t instIndex);
+    // Query appId of the token directly from the hap token db table.
+    int32_t GetHapAppIdByTokenId(AccessTokenID tokenID, std::string& appId);
+    int32_t GetHapIdentity(const HapBaseInfo& info, Identity& identity);
+    int32_t GetHapBaseInfoByUid(int32_t uid, HapBaseInfo& info);
     FullTokenID AllocLocalTokenID(const std::string& remoteDeviceID, AccessTokenID remoteTokenID);
     int32_t UpdateHapToken(AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info,
         const std::vector<PermissionStatus>& permStateList, const HapPolicy& hapPolicy,
@@ -135,21 +147,16 @@ public:
     bool UpdateCapStateToDatabase(AccessTokenID tokenID, bool enable);
     int32_t GetKernelPermissions(AccessTokenID tokenId, std::vector<PermissionWithValue>& kernelPermList);
     int32_t GetReqPermissionByName(AccessTokenID tokenId, const std::string& permissionName, std::string& value);
-    std::shared_ptr<BundleInfoInner> GetBundleInfoInner(const std::string& bundleName);
-    void UpsertBundleInfoInnerCache(const std::string& bundleName, const std::shared_ptr<BundleInfoInner>& bundleInfo);
-    void RestoreHapCache(const std::string& bundleName,
-        const std::shared_ptr<BundleInfoInner>& bundleInfo,
-        const std::vector<HapTokenRestoreData>& tokenRestoreDataList);
+    void RestoreHapCache(const std::vector<HapTokenRestoreData>& tokenRestoreDataList);
 
-    void CommitCreateHapCache(const HapTokenInfo& hapInfo,
+    void CommitCreateHapCache(const HapTokenInfoItem& hapInfoItem,
         const std::vector<BriefPermData>& briefPermData,
-        const std::vector<PermissionWithValue>& aclExtendedList,
-        const std::shared_ptr<BundleInfoInner>& bundleInfo);
-    void CommitUpdateHapCache(const HapTokenInfo& hapInfo,
+        const std::vector<PermissionWithValue>& aclExtendedList);
+    void CommitUpdateHapCache(const HapTokenInfoItem& hapInfoItem,
         const std::vector<BriefPermData>& briefPermData,
-        const std::vector<PermissionWithValue>& aclExtendedList,
-        const std::shared_ptr<BundleInfoInner>& bundleInfo);
-    void CommitDeleteHapCache(AccessTokenID tokenID, const std::string& bundleName);
+        const std::vector<PermissionWithValue>& aclExtendedList);
+    void CommitDeleteHapCache(AccessTokenID tokenID);
+    void AddReservedHapInfoFromDbValues(const GenericValues& tokenValue, bool& isReservedToken);
 
     int32_t QueryStatusByPermission(const std::vector<uint32_t>& permCodeList,
         std::vector<PermissionStatusIdl>& permissionInfoList, bool onlyHap);
@@ -228,21 +235,20 @@ private:
         std::vector<UserPolicyRefreshSnapshot>& appliedSnapshots);
     int32_t CheckHapInfoParam(const HapInfoParams& info, const HapPolicy& policy);
     int32_t ResolveQueryTokenID(AccessTokenID tokenID, AccessTokenID& queryTokenID);
-    std::shared_ptr<HapTokenInfoInner> GetHapTokenInfoInnerFromDb(AccessTokenID id);
     // Pure db snapshot: basic row restore only - no permission brief
     // registration, no reserved-id registration, no cache writes.
     std::shared_ptr<HapTokenInfoInner> LoadHapTokenInfoFromDbAndNoCache(AccessTokenID id);
+    std::shared_ptr<HapTokenInfoInner> LoadHapTokenInfoFromDbAndNoCache(
+        int32_t userID, const std::string& bundleName, int32_t instIndex);
     void RemoveReservedHapTokenId(int32_t userID, const std::string& bundleName, int32_t instIndex);
     void AddReservedHapTokenId(int32_t userID, const std::string& bundleName,
         int32_t instIndex, AccessTokenID tokenID);
     AccessTokenID GetReservedHapTokenId(int32_t userID, const std::string& bundleName, int32_t instIndex);
     void UpdateTokenAttr(const UpdateHapInfoParams& info, AccessTokenIDEx& tokenIdEx);
-    void UpsertBundleInfoInnerCacheWithoutLock(const std::string& bundleName,
-        const std::shared_ptr<BundleInfoInner>& bundleInfo);
-    void AddTokenIdToBundleInfoInner(const std::shared_ptr<BundleInfoInner>& bundleInfo, AccessTokenID tokenId);
-    void RemoveTokenIdFromBundleInfoInner(const std::shared_ptr<BundleInfoInner>& bundleInfo, AccessTokenID tokenId);
+    void UpsertHapTokenCacheLocked(const HapTokenInfoItem& hapInfoItem,
+        const std::vector<BriefPermData>& briefPermData,
+        const std::vector<PermissionWithValue>& aclExtendedList);
     void LoadPermissionDefinitionExt(ConfigPolicyLoaderInterface& policy);
-    bool AddReservedHapInfoFromDbValues(const GenericValues& tokenValue);
     bool hasInited_;
 
     std::shared_mutex hapTokenInfoLock_;
@@ -256,7 +262,8 @@ private:
 
     std::map<int, std::shared_ptr<HapTokenInfoInner>> hapTokenInfoMap_;
     std::map<std::string, AccessTokenID> hapTokenIdMap_;
-    std::map<std::string, std::shared_ptr<BundleInfoInner>> bundleInfoMap_;
+    // userIds that may exist on the device
+    std::set<int32_t> userIdSet_;
     std::map<uint32_t, NativeTokenInfoCache> nativeTokenInfoMap_;
     std::shared_ptr<VerifyAccessTokenMonitor> tokenMonitor_;
     std::shared_mutex monitorLock_;

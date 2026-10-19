@@ -16,6 +16,7 @@
 #include "getpermissionstatusdetailsstub_fuzzer.h"
 
 #include <string>
+#include <thread>
 #include <vector>
 
 #include "accesstoken_fuzzdata.h"
@@ -198,9 +199,17 @@ bool GetPermissionStatusDetailsStubFuzzTest(const uint8_t* data, size_t size)
 }
 }
 
+static constexpr int32_t SLEEP_TIME = 5;
+
+void BeforeExit()
+{
+    std::this_thread::sleep_for(std::chrono::seconds(SLEEP_TIME));
+}
+
 extern "C" int LLVMFuzzerInitialize(int* argc, char*** argv)
 {
     OHOS::Initialize();
+    (void)atexit(BeforeExit);
     return 0;
 }
 

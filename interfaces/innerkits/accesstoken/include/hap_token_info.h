@@ -57,6 +57,8 @@ namespace AccessToken {
  * @brief Declares multiple mode type.
  */
 enum class MultipleMode : int32_t {
+    /** Current mode for query only, resolved at runtime; not allowed for install */
+    CURRENT_MODE = -1,
     /** Default mode or main mode */
     DEFAULT_OR_MAIN_MODE = 0,
     /** Non-main mode */
@@ -64,6 +66,7 @@ enum class MultipleMode : int32_t {
     /** Max mode value */
     MAX_MODE = SUB_MODE,
 };
+
 
 /**
  * @brief Declares hap info params class
@@ -293,6 +296,7 @@ public:
     std::vector<PreAuthorizationInfo> preAuthorizationInfo;
     HapPolicyCheckIgnore checkIgnore = HapPolicyCheckIgnore::NONE;
     std::map<std::string, std::string> aclExtendedMap;
+    DlpType dlpType = DlpType::DLP_COMMON;
     bool isDebugGrant = false;
 };
 
@@ -345,7 +349,7 @@ struct BundleHapList final {
     std::vector<std::string> hapPaths;
     bool isPreInstalled = false;
     int32_t userId;
-    int32_t mode = 0;
+    MultipleMode mode = MultipleMode::DEFAULT_OR_MAIN_MODE;
 };
 
 struct MigratedInfo final {

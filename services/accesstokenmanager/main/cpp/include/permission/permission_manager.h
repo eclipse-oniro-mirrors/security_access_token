@@ -104,6 +104,7 @@ public:
     bool InitPermissionList(const BundleParam& param, const HapPolicy& policy,
         std::vector<PermissionStatus>& initializedList, HapInfoCheckResult& result,
         std::vector<GenericValues>& undefValues, bool dataRefresh = false);
+    bool CheckAclAndEdm(const BundleParam& param, const HapPolicy& policy, HapInfoCheckResult& result);
     bool InitDlpPermissionList(const HapInfoParams& initInfo,
         std::vector<PermissionStatus>& initializedList, std::vector<GenericValues>& undefValues);
 
@@ -116,7 +117,7 @@ private:
     int32_t ScopeFilter(const PermStateChangeScope& scopeSrc, PermStateChangeScope& scopeRes);
     int32_t UpdateTokenPermissionState(const std::shared_ptr<HapTokenInfoInner>& infoPtr, AccessTokenID tokenID,
         const std::string& permission, bool isGranted, uint32_t flag, bool needKill);
-    int32_t UpdateMultiTokenPermissionState(const std::shared_ptr<HapTokenInfoInner> &infoPtr, AccessTokenID tokenID,
+    int32_t UpdateMultiTokenPermissionState(AccessTokenID tokenID,
         const std::vector<std::string> &permissionList, bool isGranted, uint32_t flag, bool needKill);
     int32_t UpdateMultiTokenPermissionStateCheck(const std::shared_ptr<HapTokenInfoInner> &infoPtr,
         AccessTokenID tokenID, const std::vector<std::string> &permissionList);

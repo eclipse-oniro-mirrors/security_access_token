@@ -17,6 +17,9 @@
 
 #include <unordered_set>
 
+#include "accesstoken_common_log.h"
+#include "accesstoken_id_manager.h"
+#include "parameter.h"
 #include "permission_constraint_check.h"
 #include "permission_feature_manager.h"
 #include "permission_map.h"
@@ -89,7 +92,7 @@ void AccessTokenInfoUtils::BuildHapTokenInfo(const Identity& id, const BundlePar
     uint32_t inputSize = apiStr.length();
 
     info = {};
-    info.tokenID = static_cast<AccessTokenID>(id.tokenId & 0xffffffff);
+    info.tokenID = AccessTokenIDManager::ParseTokenId(id.tokenId);
     info.userID = id.uid / BASE_USER_RANGE;
     info.ver = DEFAULT_TOKEN_VERSION;
     info.tokenAttr = 0;
@@ -116,7 +119,6 @@ void AccessTokenInfoUtils::BuildBundleFullInfo(const BundleParam& param, const H
         innerInfo = std::make_shared<BundleInfoInner>();
     }
     innerInfo->permCodeList.clear();
-    innerInfo->tokenIds.clear();
     noCached.apl = policy.apl;
     noCached.distributionType = param.distributionType;
     noCached.idType = static_cast<uint32_t>(PermissionConstraintCheck::BuildIdType(param, policy));
@@ -128,7 +130,7 @@ void AccessTokenInfoUtils::BuildBundleFullInfo(const BundleParam& param, const H
             continue;
         }
         PermissionBriefDef briefDef;
-        if (!GetPermissionBriefDef(status.permissionName, briefDef)) {
+        if (!GetPermissionBriefDef(status.permissionName, briefDef) || !briefDef.isEnable) {
             continue;
         }
         if (!PermissionConstraintCheck::IsAclSatisfied(param.isSideloadApp, briefDef, policy)) {
@@ -162,6 +164,41 @@ ReservedType AccessTokenInfoUtils::GetReservedTokenTypeDBValue(const GenericValu
     }
     return ReservedType::NONE;
 #endif
+}
+
+void AccessTokenInfoUtils::AccessTokenServiceAppVerifyParamSet()
+{
+    int32_t res = SetParameter(ACCESS_TOKEN_SERVICE_APP_VERIFY_KEY, "1");
+    if (res != 0) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "SetParameter ACCESS_TOKEN_SERVICE_APP_VERIFY_KEY failed %{public}d.", res);
+    }
+}
+
+bool AccessTokenInfoUtils::IsSystemAppVerified()
+{
+    constexpr int NAME_BUFFER_LEN = 32;
+    char value[NAME_BUFFER_LEN] = {0};
+    int32_t ret = GetParameter(ACCESS_TOKEN_SERVICE_APP_VERIFY_KEY, "", value, NAME_BUFFER_LEN - 1);
+    if (ret < 0) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "GetParameter ACCESS_TOKEN_SERVICE_APP_VERIFY_KEY failed, ret=%{public}d.", ret);
+        return false;
+    }
+    return std::atoi(value) > 0;
+}
+
+bool AccessTokenInfoUtils::IsSystemSpmEnforcing()
+{
+    constexpr int NAME_BUFFER_LEN = 32;
+    static bool isEnforcing = false;
+    char value[NAME_BUFFER_LEN] = {0};
+    int32_t ret = GetParameter(ACCESS_TOKEN_SERVICE_SPM_ENFORCING_KEY, "", value, NAME_BUFFER_LEN - 1);
+    if (ret < 0) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "GetParameter ACCESS_TOKEN_SERVICE_SPM_ENFORCING_KEY failed, ret=%{public}d.",
+            ret);
+        return false;
+    }
+    isEnforcing = std::atoi(value) > 0;
+    return isEnforcing;
 }
 } // namespace AccessToken
 } // namespace Security

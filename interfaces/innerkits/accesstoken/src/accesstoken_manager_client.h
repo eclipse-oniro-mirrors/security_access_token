@@ -19,6 +19,7 @@
 #include <atomic>
 #include <functional>
 #include <map>
+#include <set>
 #include <mutex>
 #include <string>
 #include <unordered_set>
@@ -90,13 +91,33 @@ public:
     AccessTokenIDEx AllocHapToken(const HapInfoParams& info, const HapPolicy& policy);
     int32_t InitHapToken(const HapInfoParams& info, HapPolicy& policy,
         AccessTokenIDEx& fullTokenId, HapInfoCheckResult& result);
+    int32_t MigrateInstalledBundles(const std::vector<MigratedInfo>& migratedInfoList,
+        std::vector<BundleMigrateResult>& results);
+    int32_t FinishMigration();
+    int32_t CheckMigratedUidSet(const std::set<int32_t>& totalUids, std::set<int32_t>& unreceivedUids);
     int DeleteToken(AccessTokenID tokenID, bool isTokenReserved);
     int32_t DeleteToolTokenByPid(int32_t pid);
 #ifdef SPM_DATA_ENABLE
     int32_t DeleteIdentity(AccessTokenID tokenID, const std::string& bundleName, ReservedType type);
+    int32_t CheckHapSignInfo(const BundleHapList& list, uint32_t flag, int32_t& sessionId,
+        std::vector<TrustedBundleInfo>& bundleInfo, HapVerifyResultInfo& resultInfo);
+    int32_t CheckHapPermissionInfo(int32_t sessionId, InstallTypeEnum type, HapInfoCheckResult& result);
+    int32_t PrepareHapIdentity(int32_t& sessionId, const HapBaseInfo& info,
+        const BundlePolicy& policy, Identity& identity);
+    int32_t UpdateHapPolicy(int32_t sessionId, int32_t tokenId, const BundlePolicy& policy, int32_t& uid);
+    int32_t FinishInstall(
+        int32_t sessionId, bool isPersistent, const std::map<std::string, std::string>& modulePathMap);
+    int32_t GetCacheSignInfoBySessionId(int32_t sessionId, uint32_t flag,
+        std::vector<TrustedBundleInfo>& bundleInfo);
+    int32_t GetHapSignInfo(const std::string& bundleName, uint32_t flag,
+        MultipleMode mode, std::vector<TrustedBundleInfo>& bundleInfo);
+    int32_t GetCachePolicyBySessionId(int32_t sessionId, const std::string& bundleName,
+        BundlePolicyInfo& bundlePolicyInfo);
 #endif
     ATokenTypeEnum GetTokenType(AccessTokenID tokenID);
     AccessTokenIDEx GetHapTokenID(int32_t userID, const std::string& bundleName, int32_t instIndex);
+    int32_t GetHapIdentity(const HapBaseInfo& info, Identity& identity);
+    int32_t GetHapBaseInfoByUid(int32_t uid, HapBaseInfo& info);
     FullTokenID AllocLocalTokenID(const std::string& remoteDeviceID, AccessTokenID remoteTokenID);
     int32_t UpdateHapToken(AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info,
         const HapPolicy& policy, HapInfoCheckResult& result);
@@ -135,7 +156,7 @@ public:
     int32_t ResetDatabaseRecoveryStatus();
     void DumpTokenInfo(const AtmToolsParamInfo& info, std::string& dumpInfo);
     int32_t GetVersion(uint32_t& version);
-    bool IsSupportPermission(const std::string& permissionName);
+    int32_t IsSupportedPermission(const std::string& permissionName, bool& result);
     void OnRemoteDiedHandle();
     void OnAddAccessTokenSa();
     int32_t SetPermDialogCap(const HapBaseInfo& hapBaseInfo, bool enable);
@@ -174,6 +195,9 @@ private:
     bool SubscribeSystemAbility(const std::function<void(int32_t, const std::string&)>& callbackFunc);
     void ReregisterPermStateChangeCallback();
     bool GetNativeTokenInfoFromSpm(AccessTokenID tokenID, NativeTokenInfo& nativeTokenInfoRes);
+#ifdef SPM_DATA_ENABLE
+    sptr<ProxyDeathCallBack> GetAnonyStub();
+#endif
 
     DISALLOW_COPY_AND_MOVE(AccessTokenManagerClient);
     std::mutex proxyMutex_;
@@ -193,6 +217,11 @@ private:
     std::shared_ptr<TokenSyncKitInterface> syncCallbackImpl_ = nullptr;
     sptr<TokenSyncCallback> tokenSyncCallback_ = nullptr;
 #endif // TOKEN_SYNC_ENABLE
+
+#ifdef SPM_DATA_ENABLE
+    sptr<ProxyDeathCallBack> anonyStub_ = nullptr;
+    std::mutex stubMutex_;
+#endif
 };
 } // namespace AccessToken
 } // namespace Security

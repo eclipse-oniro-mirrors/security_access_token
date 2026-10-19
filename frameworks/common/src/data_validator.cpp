@@ -17,6 +17,7 @@
 
 #include "access_token.h"
 #include "accesstoken_common_log.h"
+#include "hap_token_info.h"
 #include "permission_used_request.h"
 #include "permission_used_type.h"
 #include "privacy_param.h"
@@ -284,12 +285,49 @@ bool DataValidator::IsHapCaller(AccessTokenID id)
     return true;
 }
 
+bool DataValidator::IsHapListSizeValid(uint32_t size)
+{
+    if (size == 0 || size > MAX_HAP_LIST_SIZE) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Size is invalid(%{public}u).", size);
+        return false;
+    }
+    return true;
+}
+
+bool DataValidator::IsSignInfoQueryFlagValid(uint32_t flag)
+{
+    uint32_t validFlags = QUERY_PROFILE | QUERY_MODULE_INFO | QUERY_SHARED_FILES;
+    return (flag != 0) && ((flag & ~validFlags) == 0);
+}
+
+bool DataValidator::IsQueryModeValid(MultipleMode mode)
+{
+    int32_t value = static_cast<int32_t>(mode);
+    return (value >= static_cast<int32_t>(MultipleMode::CURRENT_MODE)) &&
+        (value <= static_cast<int32_t>(MultipleMode::MAX_MODE));
+}
+
 bool DataValidator::IsListSizeValid(size_t size)
 {
     // param is unsigned
     if (size == 0 || size > MAX_LIST_SIZE) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Size is invalid(%{public}zu).", size);
         return false;
+    }
+    return true;
+}
+
+bool DataValidator::IsStringListValid(const std::vector<std::string>& valueList)
+{
+    if (!IsListSizeValid(valueList.size())) {
+        return false;
+    }
+    for (const auto& value : valueList) {
+        if (value.empty() || value.length() > MAX_LENGTH) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "String list item %{public}s is invalid.",
+                value.substr(0, MAX_LENGTH).c_str());
+            return false;
+        }
     }
     return true;
 }

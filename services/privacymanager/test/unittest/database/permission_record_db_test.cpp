@@ -1075,7 +1075,7 @@ HWTEST_F(PermissionRecordDBTest, OnUpdate007, TestSize.Level0)
 
 /*
  * @tc.name: OnUpdate008
- * @tc.desc: Verify 7->8 migration adds sub_profile_id to permission used record toggle status table.
+ * @tc.desc: Verify 7->8 migration rebuilds toggle status table with sub_profile_id in primary key.
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -1092,13 +1092,29 @@ HWTEST_F(PermissionRecordDBTest, OnUpdate008, TestSize.Level0)
 
     auto stmt = db.Prepare("pragma table_info(permission_used_record_toggle_status_table)");
     bool foundSubProfileId = false;
+    int32_t userIdPkOrder = 0;
+    int32_t subProfileIdPkOrder = 0;
+    int32_t statusPkOrder = 0;
     while (stmt.Step() == Statement::State::ROW) {
-        if (stmt.GetColumnString(1) == PrivacyFiledConst::FIELD_SUB_PROFILE_ID) {
+        const std::string columnName = stmt.GetColumnString(1);
+        if (columnName == PrivacyFiledConst::FIELD_USER_ID) {
+            userIdPkOrder = stmt.GetColumnInt(5);
+        } else if (columnName == PrivacyFiledConst::FIELD_SUB_PROFILE_ID) {
             foundSubProfileId = true;
             EXPECT_EQ("-1", stmt.GetColumnString(4));
+            subProfileIdPkOrder = stmt.GetColumnInt(5);
+        } else if (columnName == PrivacyFiledConst::FIELD_STATUS) {
+            statusPkOrder = stmt.GetColumnInt(5);
         }
     }
     EXPECT_TRUE(foundSubProfileId);
+    EXPECT_EQ(1, userIdPkOrder);
+    EXPECT_EQ(2, subProfileIdPkOrder);
+    EXPECT_EQ(0, statusPkOrder);
+
+    // backup table must be dropped after migration
+    auto backupStmt = db.Prepare("pragma table_info(permission_used_record_toggle_status_table_backup)");
+    EXPECT_NE(Statement::State::ROW, backupStmt.Step());
 }
 
 /*
@@ -1129,6 +1145,140 @@ HWTEST_F(PermissionRecordDBTest, OnUpdate009, TestSize.Level0)
     EXPECT_EQ(USER_ID, results[0].GetInt(PrivacyFiledConst::FIELD_USER_ID));
     EXPECT_EQ(0, results[0].GetInt(PrivacyFiledConst::FIELD_STATUS));
     EXPECT_EQ(-1, results[0].GetInt(PrivacyFiledConst::FIELD_SUB_PROFILE_ID));
+}
+
+/*
+ * @tc.name: OnUpdate010
+ * @tc.desc: Verify 7->8 migration allows toggle records of same user with different sub_profile_id.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordDBTest, OnUpdate010, TestSize.Level0)
+{
+    constexpr int32_t USER_ID = 34;
+    constexpr int32_t SUB_PROFILE_ID = 100;
+    auto& db = PermissionUsedRecordDb::GetInstance();
+    ASSERT_EQ(0, db.ExecuteSql("drop table if exists permission_used_record_toggle_status_table"));
+    ASSERT_EQ(0, db.ExecuteSql("create table permission_used_record_toggle_status_table ("
+        "user_id integer not null,"
+        "status integer not null,"
+        "primary key(user_id))"));
+
+    db.OnUpdate(7);
+
+    GenericValues legacyRecord;
+    legacyRecord.Put(PrivacyFiledConst::FIELD_USER_ID, USER_ID);
+    legacyRecord.Put(PrivacyFiledConst::FIELD_SUB_PROFILE_ID, -1);
+    legacyRecord.Put(PrivacyFiledConst::FIELD_STATUS, 0);
+    GenericValues subProfileRecord;
+    subProfileRecord.Put(PrivacyFiledConst::FIELD_USER_ID, USER_ID);
+    subProfileRecord.Put(PrivacyFiledConst::FIELD_SUB_PROFILE_ID, SUB_PROFILE_ID);
+    subProfileRecord.Put(PrivacyFiledConst::FIELD_STATUS, 1);
+    std::vector<GenericValues> recordValues;
+    recordValues.emplace_back(legacyRecord);
+    recordValues.emplace_back(subProfileRecord);
+    ASSERT_EQ(PermissionUsedRecordDb::ExecuteResult::SUCCESS,
+        db.Add(PermissionUsedRecordDb::PERMISSION_USED_RECORD_TOGGLE_STATUS, recordValues));
+
+    GenericValues conditionValue;
+    conditionValue.Put(PrivacyFiledConst::FIELD_USER_ID, USER_ID);
+    std::vector<GenericValues> results;
+    ASSERT_EQ(PermissionUsedRecordDb::ExecuteResult::SUCCESS,
+        db.Query(PermissionUsedRecordDb::PERMISSION_USED_RECORD_TOGGLE_STATUS, conditionValue, results));
+    ASSERT_EQ(2, static_cast<int32_t>(results.size()));
+}
+
+/*
+ * @tc.name: OnUpdate011
+ * @tc.desc: Verify 7->8 migration returns error when rename step fails and keeps legacy records intact.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordDBTest, OnUpdate011, TestSize.Level0)
+{
+    constexpr int32_t USER_ID = 35;
+    auto& db = PermissionUsedRecordDb::GetInstance();
+    ASSERT_EQ(0, db.ExecuteSql("drop table if exists permission_used_record_toggle_status_table"));
+    ASSERT_EQ(0, db.ExecuteSql("drop table if exists permission_used_record_toggle_status_table_backup"));
+    ASSERT_EQ(0, db.ExecuteSql("create table permission_used_record_toggle_status_table ("
+        "user_id integer not null,"
+        "status integer not null,"
+        "primary key(user_id))"));
+    ASSERT_EQ(0, db.ExecuteSql("insert into permission_used_record_toggle_status_table values(35, 1)"));
+    // leftover backup table makes rename step fail
+    ASSERT_EQ(0, db.ExecuteSql("create table permission_used_record_toggle_status_table_backup (user_id integer)"));
+
+    db.BeginTransaction();
+    ASSERT_EQ(PrivacyError::ERR_DATABASE_OPERATE_FAILED, db.UpdateToggleStatusTablePrimaryKey());
+
+    // legacy table and its record must be kept after rollback
+    auto countStmt = db.Prepare("select count(*) from permission_used_record_toggle_status_table where user_id=" +
+        std::to_string(USER_ID));
+    ASSERT_EQ(Statement::State::ROW, countStmt.Step());
+    EXPECT_EQ(1, countStmt.GetColumnInt(0));
+    EXPECT_EQ(Statement::State::DONE, countStmt.Step());
+
+    // restore environment for following cases
+    ASSERT_EQ(0, db.ExecuteSql("drop table permission_used_record_toggle_status_table_backup"));
+    ASSERT_EQ(0, db.ExecuteSql("drop table permission_used_record_toggle_status_table"));
+    ASSERT_EQ(0, db.CreatePermissionUsedRecordToggleStatusTable());
+}
+
+/*
+ * @tc.name: OnUpdate012
+ * @tc.desc: Verify 7->8 migration returns error when copy step fails and rolls back to legacy schema.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordDBTest, OnUpdate012, TestSize.Level0)
+{
+    auto& db = PermissionUsedRecordDb::GetInstance();
+    ASSERT_EQ(0, db.ExecuteSql("drop table if exists permission_used_record_toggle_status_table"));
+    ASSERT_EQ(0, db.ExecuteSql("drop table if exists permission_used_record_toggle_status_table_backup"));
+    // malformed legacy table without status column makes copy step fail
+    ASSERT_EQ(0, db.ExecuteSql("create table permission_used_record_toggle_status_table ("
+        "user_id integer not null,"
+        "primary key(user_id))"));
+    ASSERT_EQ(0, db.ExecuteSql("insert into permission_used_record_toggle_status_table values(36)"));
+
+    db.BeginTransaction();
+    ASSERT_EQ(PrivacyError::ERR_DATABASE_OPERATE_FAILED, db.UpdateToggleStatusTablePrimaryKey());
+
+    // rollback must restore legacy schema, record and remove backup table
+    auto countStmt = db.Prepare("select count(*) from permission_used_record_toggle_status_table");
+    ASSERT_EQ(Statement::State::ROW, countStmt.Step());
+    EXPECT_EQ(1, countStmt.GetColumnInt(0));
+    EXPECT_EQ(Statement::State::DONE, countStmt.Step());
+    auto infoStmt = db.Prepare("pragma table_info(permission_used_record_toggle_status_table)");
+    int32_t columnCount = 0;
+    while (infoStmt.Step() == Statement::State::ROW) {
+        EXPECT_EQ(PrivacyFiledConst::FIELD_USER_ID, infoStmt.GetColumnString(1));
+        columnCount++;
+    }
+    EXPECT_EQ(1, columnCount);
+    auto backupStmt = db.Prepare("pragma table_info(permission_used_record_toggle_status_table_backup)");
+    EXPECT_NE(Statement::State::ROW, backupStmt.Step());
+
+    // restore environment for following cases
+    ASSERT_EQ(0, db.ExecuteSql("drop table permission_used_record_toggle_status_table"));
+    ASSERT_EQ(0, db.CreatePermissionUsedRecordToggleStatusTable());
+}
+
+/*
+ * @tc.name: OnUpdate013
+ * @tc.desc: Verify 7->8 migration returns error when toggle status table info is not registered.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordDBTest, OnUpdate013, TestSize.Level0)
+{
+    auto& db = PermissionUsedRecordDb::GetInstance();
+    auto& tableMap = db.dataTypeToSqlTable_;
+    auto savedTable = tableMap[PermissionUsedRecordDb::PERMISSION_USED_RECORD_TOGGLE_STATUS];
+    tableMap.erase(PermissionUsedRecordDb::PERMISSION_USED_RECORD_TOGGLE_STATUS);
+    int32_t ret = db.UpdateToggleStatusTablePrimaryKey();
+    tableMap[PermissionUsedRecordDb::PERMISSION_USED_RECORD_TOGGLE_STATUS] = savedTable;
+    EXPECT_EQ(PrivacyError::ERR_DATABASE_OPERATE_FAILED, ret);
 }
 
 /*

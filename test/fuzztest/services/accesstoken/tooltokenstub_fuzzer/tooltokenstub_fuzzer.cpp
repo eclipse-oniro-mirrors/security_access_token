@@ -16,6 +16,7 @@
 #include "tooltokenstub_fuzzer.h"
 
 #include <string>
+#include <thread>
 #include <unistd.h>
 #include <vector>
 
@@ -467,9 +468,17 @@ bool ToolTokenStubFuzzTest(const uint8_t* data, size_t size)
 }
 }
 
+static constexpr int32_t SLEEP_TIME = 5;
+
+void BeforeExit()
+{
+    std::this_thread::sleep_for(std::chrono::seconds(SLEEP_TIME));
+}
+
 extern "C" int LLVMFuzzerInitialize(int* argc, char*** argv)
 {
     OHOS::InitializeToolTokenStubFuzz();
+    (void)atexit(BeforeExit);
     return 0;
 }
 

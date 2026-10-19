@@ -50,6 +50,7 @@ group("fuzztest") {
     "grantpermissionforspecifiedtime_fuzzer:GrantPermissionForSpecifiedTimeFuzzTest",
     "inithaptoken_fuzzer:InitHapTokenFuzzTest",
     "issupportpermission_fuzzer:IsSupportPermissionFuzzTest",
+    "issupportedpermission_fuzzer:IsSupportedPermissionFuzzTest",
     "querystatusbypermission_fuzzer:QueryStatusByPermissionFuzzTest",
     "querystatusbytokenid_fuzzer:QueryStatusByTokenIDFuzzTest",
     "registerpermstatechangecallback_fuzzer:RegisterPermStateChangeCallbackFuzzTest",
@@ -77,9 +78,6 @@ group("fuzztest") {
       "storeseccompenhancekey_fuzzer:StoreSecCompEnhanceKeyFuzzTest",
       "updateseccompenhance_fuzzer:UpdateSecCompEnhanceFuzzTest",
     ]
-  }
-  if (access_token_enable_spm) {
-    deps += [ "deleteidentity_fuzzer:DeleteIdentityFuzzTest" ]
   }
   if (is_standard_system && token_sync_enable) {
     deps += [

@@ -54,6 +54,7 @@ accesstoken_manager_base_config = {
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_change_notifier.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_constraint_check.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_data_brief.cpp",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/src/utils/multiple_mode_utils.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_feature_manager.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/kernel/permission_kernel_utils.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_grant_event.cpp",
@@ -64,6 +65,7 @@ accesstoken_manager_base_config = {
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/user_policy_manager.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/verify_accesstoken_monitor.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/service/accesstoken_manager_service.cpp",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/src/boot/boot_verify_scheduler.cpp",
   ]
 
   # Conditional sources based on feature flags
@@ -92,14 +94,6 @@ accesstoken_manager_base_config = {
     sources += [ "${access_token_path}/services/accesstokenmanager/main/cpp/src/seccomp/sec_comp_enhance_agent.cpp" ]
   }
 
-  if (access_token_enable_spm && access_token_manager_hapverify_enable) {
-    sources += [
-      "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/app_verify_adapter.cpp",
-      "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/hap_sign_verify_helper.cpp",
-      "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/hap_sign_verify_manager.cpp",
-    ]
-  }
-
   if (access_token_enable_spm == true) {
     sources += [
       "${access_token_path}/services/accesstokenmanager/main/cpp/src/kernel/add_spm_data_task.cpp",
@@ -109,6 +103,27 @@ accesstoken_manager_base_config = {
       "${access_token_path}/services/accesstokenmanager/main/cpp/src/kernel/update_spm_data_task.cpp",
       "${access_token_path}/services/accesstokenmanager/main/cpp/src/install_manager/delete_bundle_manager.cpp",
       "${access_token_path}/services/accesstokenmanager/main/cpp/src/transaction/kernel_and_db_transaction.cpp",
+    ]
+  }
+
+  if (access_token_manager_hapverify_enable) {
+    sources += [
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/sign/app_verify_adapter.cpp",
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/sign/hap_sign_verify_helper.cpp",
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/sign/hap_sign_verify_manager.cpp",
+    ]
+  }
+
+  if (access_token_enable_spm && access_token_manager_hapverify_enable) {
+    sources += [
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/install_manager/install_db_repository.cpp",
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/install_manager/bundle_info_manager.cpp",
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/install_manager/install_identity_manager.cpp",
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/install_manager/install_session_manager.cpp",
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/install_manager/install_sysevent_reporter.cpp",
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/proxy/install_session_proxy_death_param.cpp",
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/migration/migration_verify_helper.cpp",
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/migration/accesstoken_migration_manager.cpp",
     ]
   }
 
@@ -129,9 +144,11 @@ accesstoken_manager_base_config = {
     "${access_token_path}/services/common/dfx/include",
     "${access_token_path}/services/common/handler/include",
     "${access_token_path}/services/common/libraryloader/include",
+    "${access_token_path}/services/common/proxy_death/include",
     "${access_token_path}/services/common/random/include",
     "${access_token_path}/services/common/utils/include",
     "${access_token_path}/services/common/background_task_manager/include",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/include/boot",
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/callback",
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/clawtoken",
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/database",
@@ -139,9 +156,13 @@ accesstoken_manager_base_config = {
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/form_manager",
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/install_manager",
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/kernel",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/include/migration",
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/permission",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/include/utils",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/include/proxy",
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/seccomp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/service",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/include/sign",
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/transaction",
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/clawtoken",
   ]
@@ -195,8 +216,9 @@ accesstoken_manager_base_config = {
     external_deps += [ "os_account:os_account_innerkits_lite" ]
   }
 
-  if (access_token_enable_spm && access_token_manager_hapverify_enable) {
+  if (access_token_manager_hapverify_enable) {
     external_deps += [ "bundle_framework:spm_module_parser" ]
+    deps += [ "${access_token_path}/services/common/proxy_death:proxy_death_handler" ]
   }
   # ========== lite_device_enable: Complete Configuration ==========
   # Light device: use dlopen database (smaller footprint)

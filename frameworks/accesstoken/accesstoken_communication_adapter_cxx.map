@@ -14,6 +14,8 @@
 {
   global:
     extern "C++" {
+      OHOS::Security::AccessToken::BundleInfosRawdataHelper*;
+      OHOS::Security::AccessToken::CheckHapSignResultRawdataHelper*;
       OHOS::Security::AccessToken::AtmToolsParamInfoParcel::CheckParam*;
       OHOS::Security::AccessToken::AtmToolsParamInfoParcel::Marshalling*;
       OHOS::Security::AccessToken::AtmToolsParamInfoParcel::Unmarshalling*;
@@ -71,6 +73,12 @@
       "VTT for OHOS::Security::AccessToken::PermissionStatusParcel";
       "vtable for OHOS::Security::AccessToken::SecCompEnhanceDataParcel";
       "VTT for OHOS::Security::AccessToken::SecCompEnhanceDataParcel";
+      "vtable for OHOS::Security::AccessToken::RawdataBuffer";
+      "vtable for OHOS::Security::AccessToken::BundleInfosRawdata";
+      "vtable for OHOS::Security::AccessToken::CheckHapSignResultRawdata";
+      "typeinfo for OHOS::Security::AccessToken::RawdataBuffer";
+      "typeinfo for OHOS::Security::AccessToken::BundleInfosRawdata";
+      "typeinfo for OHOS::Security::AccessToken::CheckHapSignResultRawdata";
     };
   local:
     *;

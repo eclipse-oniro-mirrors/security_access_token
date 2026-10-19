@@ -173,7 +173,7 @@ void ReportSysEventAddHap(int32_t errorCode, const HapDfxInfo& info, bool needRe
  * @param errorCode Operation error code (RET_SUCCESS if success)
  * @param info HAP token DFX information
  */
-void ReportSysEventUpdateHap(int32_t errorCode, const HapDfxInfo& info);
+void ReportSysEventUpdateHap(int32_t errorCode, const HapDfxInfo& info, bool needReportFault = true);
 
 /**
  * @brief Report HAP token deletion event

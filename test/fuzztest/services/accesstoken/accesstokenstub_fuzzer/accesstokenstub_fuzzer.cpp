@@ -18,6 +18,7 @@
 #include <climits>
 #include <fuzzer/FuzzedDataProvider.h>
 #include <string>
+#include <thread>
 #include <unistd.h>
 #include "access_token_db_operator.h"
 #include "accesstoken_callback_stubs.h"
@@ -57,6 +58,10 @@ static const std::string VALID_USER_POLICY_PERMISSION = "ohos.permission.INTERNE
 static constexpr int32_t VALID_USER_POLICY_USER_ID = 0;
 static constexpr int32_t UNDEFINED_INFO_TOKEN_ID = 123; // 123: invalid token id, same as unit test
 static constexpr int32_t ASYNC_DB_WAIT_SECONDS = 2; // 2: seconds to wait for UpdateDatabaseAsync
+#ifdef SPM_DATA_ENABLE
+static constexpr int32_t MAX_MIGRATED_BUNDLE_LIST_SIZE = 5; // 5: max bundle list / uid set size for fuzzing
+static constexpr int32_t MAX_MIGRATED_SUB_LIST_SIZE = 2; // 2: max path/baseInfo/uid/reserved count for fuzzing
+#endif
 static const std::string MISMATCHED_PERM_DEF_VERSION = "fuzz_mismatched_perm_def_version";
 static const std::string UNDEFINED_USER_GRANT_PERM = "ohos.permission.ACTIVITY_MOTION";
 static const std::string UNDEFINED_SYSTEM_GRANT_PERM = "ohos.permission.REFRESH_USER_ACTION";
@@ -460,7 +465,10 @@ bool DeleteRemoteDeviceTokensStubFuzzTest(FuzzedDataProvider &provider)
         uint32_t pefDefSize = 0;
         uint32_t dlpSize = 0;
         std::map<int32_t, TokenIdInfo> tokenIdAplMap;
-        AccessTokenInfoManager::GetInstance().Init(hapSize, nativeSize, pefDefSize, dlpSize, tokenIdAplMap);
+        AccessTokenInfoManager::GetInstance().Init(nativeSize, pefDefSize, dlpSize);
+        (void)BootVerifyScheduler::GetInstance().VerifyBundleSignInfoWhenStart(hapSize, tokenIdAplMap);
+        BootVerifyScheduler::GetInstance().StartVerifyNormalBundleListAsync();
+        sleep(3);
     }
     (void)DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
     (void)SetSelfTokenID(g_hdcdTokenID);
@@ -795,6 +803,131 @@ void AccessTokenServiceInitFuzz(FuzzedDataProvider &provider)
     (void)PermissionDataBrief::GetInstance().DeleteBriefPermDataByTokenId(static_cast<AccessTokenID>(tokenId));
 }
 
+#ifdef SPM_DATA_ENABLE
+bool GetHapIdentityStubFuzzTest(FuzzedDataProvider &provider)
+{
+    HapBaseInfoParcel hapBaseInfoParcel;
+    hapBaseInfoParcel.hapBaseInfo.userID = provider.ConsumeIntegral<int32_t>();
+    hapBaseInfoParcel.hapBaseInfo.bundleName = provider.ConsumeRandomLengthString();
+    hapBaseInfoParcel.hapBaseInfo.instIndex = provider.ConsumeIntegral<int32_t>();
+
+    MessageParcel datas;
+    datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
+    if (!datas.WriteParcelable(&hapBaseInfoParcel)) {
+        return false;
+    }
+
+    uint32_t code = static_cast<uint32_t>(IAccessTokenManagerIpcCode::COMMAND_GET_HAP_IDENTITY);
+    MessageParcel reply;
+    MessageOption option;
+    MockToken mock({}, false);
+    (void)DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
+    return true;
+}
+
+bool GetHapBaseInfoByUidStubFuzzTest(FuzzedDataProvider &provider)
+{
+    int32_t uid = provider.ConsumeIntegral<int32_t>();
+
+    MessageParcel datas;
+    datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
+    if (!datas.WriteInt32(uid)) {
+        return false;
+    }
+
+    uint32_t code = static_cast<uint32_t>(IAccessTokenManagerIpcCode::COMMAND_GET_HAP_BASE_INFO_BY_UID);
+    MessageParcel reply;
+    MessageOption option;
+    MockToken mock({}, false);
+    (void)DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
+    return true;
+}
+
+bool MigrateInstalledBundlesStubFuzzTest(FuzzedDataProvider &provider)
+{
+    int32_t listSize = provider.ConsumeIntegralInRange<int32_t>(0, MAX_MIGRATED_BUNDLE_LIST_SIZE);
+    MessageParcel datas;
+    datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
+    if (!datas.WriteInt32(listSize)) {
+        return false;
+    }
+    for (int32_t i = 0; i < listSize; ++i) {
+        MigratedInfoIdl info;
+        info.bundleName = provider.ConsumeRandomLengthString();
+        info.pathList.userId = provider.ConsumeIntegral<int32_t>();
+        info.pathList.isPreInstalled = provider.ConsumeBool();
+        info.pathList.mode = static_cast<MultipleModeEnumIdl>(provider.ConsumeIntegralInRange<int32_t>(
+            0, static_cast<int32_t>(MultipleModeEnumIdl::SUB_MODE)));
+        int32_t pathCount = provider.ConsumeIntegralInRange<int32_t>(0, MAX_MIGRATED_SUB_LIST_SIZE);
+        for (int32_t j = 0; j < pathCount; ++j) {
+            info.pathList.hapPaths.emplace_back(provider.ConsumeRandomLengthString());
+        }
+        int32_t baseCount = provider.ConsumeIntegralInRange<int32_t>(0, MAX_MIGRATED_SUB_LIST_SIZE);
+        for (int32_t j = 0; j < baseCount; ++j) {
+            HapBaseInfoIdl baseInfo;
+            baseInfo.userID = provider.ConsumeIntegral<int32_t>();
+            baseInfo.bundleName = provider.ConsumeRandomLengthString();
+            baseInfo.instIndex = provider.ConsumeIntegral<int32_t>();
+            info.hapBaseInfoList.emplace_back(baseInfo);
+        }
+        int32_t uidCount = provider.ConsumeIntegralInRange<int32_t>(0, MAX_MIGRATED_SUB_LIST_SIZE);
+        for (int32_t j = 0; j < uidCount; ++j) {
+            info.uidList.emplace_back(provider.ConsumeIntegral<int32_t>());
+        }
+        int32_t reservedCount = provider.ConsumeIntegralInRange<int32_t>(0, MAX_MIGRATED_SUB_LIST_SIZE);
+        for (int32_t j = 0; j < reservedCount; ++j) {
+            info.reservedTypeList.emplace_back(static_cast<ReservedTypeIdl>(
+                provider.ConsumeIntegralInRange<int32_t>(0, static_cast<int32_t>(ReservedTypeIdl::RESERVED_DATA))));
+        }
+        if (MigratedInfoIdlBlockMarshalling(datas, info) != ERR_NONE) {
+            return false;
+        }
+    }
+
+    uint32_t code = static_cast<uint32_t>(IAccessTokenManagerIpcCode::COMMAND_MIGRATE_INSTALLED_BUNDLES);
+    MessageParcel reply;
+    MessageOption option;
+    MockToken mock({ "ohos.permission.MANAGE_HAP_TOKENID" });
+    (void)DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
+    return true;
+}
+
+bool FinishMigrationStubFuzzTest()
+{
+    MessageParcel datas;
+    datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
+
+    uint32_t code = static_cast<uint32_t>(IAccessTokenManagerIpcCode::COMMAND_FINISH_MIGRATION);
+    MessageParcel reply;
+    MessageOption option;
+    MockToken mock({ "ohos.permission.MANAGE_HAP_TOKENID" });
+    (void)DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
+    return true;
+}
+
+bool CheckMigratedUidSetStubFuzzTest(FuzzedDataProvider &provider)
+{
+    int32_t setSize = provider.ConsumeIntegralInRange<int32_t>(0, MAX_MIGRATED_BUNDLE_LIST_SIZE);
+    MessageParcel datas;
+    datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
+    if (!datas.WriteInt32(setSize)) {
+        return false;
+    }
+    for (int32_t i = 0; i < setSize; ++i) {
+        if (!datas.WriteInt32(provider.ConsumeIntegral<int32_t>())) {
+            return false;
+        }
+    }
+
+    uint32_t code = static_cast<uint32_t>(IAccessTokenManagerIpcCode::COMMAND_CHECK_MIGRATED_UID_SET);
+    MessageParcel reply;
+    MessageOption option;
+    MockToken mock({ "ohos.permission.MANAGE_HAP_TOKENID" });
+    (void)DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
+    return true;
+}
+#endif
+
 void AccessTokenStubFuzzTest(FuzzedDataProvider &provider)
 {
     GetVersion();
@@ -814,6 +947,13 @@ void AccessTokenStubFuzzTest(FuzzedDataProvider &provider)
     (void)SetUserPolicyStubFuzzTest(provider);
 #endif
     (void)VerifyAccessTokenStubFuzzTest(provider);
+#ifdef SPM_DATA_ENABLE
+    (void)GetHapIdentityStubFuzzTest(provider);
+    (void)GetHapBaseInfoByUidStubFuzzTest(provider);
+    (void)MigrateInstalledBundlesStubFuzzTest(provider);
+    (void)FinishMigrationStubFuzzTest();
+    (void)CheckMigratedUidSetStubFuzzTest(provider);
+#endif
 }
 
 bool FuzzTest(FuzzedDataProvider &provider)
@@ -834,9 +974,17 @@ void Initialize()
 }
 } // namespace OHOS
 
+static constexpr int32_t SLEEP_TIME = 5;
+
+void BeforeExit()
+{
+    std::this_thread::sleep_for(std::chrono::seconds(SLEEP_TIME));
+}
+
 extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv)
 {
     OHOS::Initialize();
+    (void)atexit(BeforeExit);
     return 0;
 }
 

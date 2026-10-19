@@ -32,6 +32,8 @@
 #include "claw_ticket_manager.h"
 #include "hap_info_parcel.h"
 #include "hap_policy_parcel.h"
+#include "bundle_infos_rawdata.h"
+#include "hap_token_info.h"
 #include "mock_permission.h"
 #include "parameters.h"
 #include "os_account_manager_lite.h"
@@ -4645,6 +4647,36 @@ HWTEST_F(AccessTokenManagerServiceTest, ToggleRequestService002, TestSize.Level0
         "ohos.permission.CAMERA", status, 0, 0));
     EXPECT_EQ(PermissionRequestToggleStatus::OPEN, status);
 }
+
+#ifdef SPM_DATA_ENABLE
+/**
+ * @tc.name: GetHapSignInfoServiceTest001
+ * @tc.desc: Test GetHapSignInfo service entry mode validation and pass-through.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, GetHapSignInfoServiceTest001, TestSize.Level0)
+{
+    BundleInfosRawdata bundleInfos;
+    std::string bundleName = "GetHapSignInfoServiceTest001";
+    // mode below CURRENT_MODE is rejected at the service layer
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
+        atManagerService_->GetHapSignInfo(bundleName, QUERY_PROFILE, -2, bundleInfos));
+    // mode above MAX_MODE is rejected at the service layer
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
+        atManagerService_->GetHapSignInfo(bundleName, QUERY_PROFILE, 2, bundleInfos));
+    // a valid mode passes service validation; the empty bundle name is then
+    // rejected by the bundle info manager
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
+        atManagerService_->GetHapSignInfo("", QUERY_PROFILE,
+            static_cast<int32_t>(MultipleMode::CURRENT_MODE), bundleInfos));
+    // valid explicit main mode with a bundle that has no package-info rows
+    EXPECT_EQ(AccessTokenError::ERR_BUNDLE_NOT_EXIST,
+        atManagerService_->GetHapSignInfo(bundleName, QUERY_PROFILE,
+            static_cast<int32_t>(MultipleMode::DEFAULT_OR_MAIN_MODE), bundleInfos));
+}
+#endif // SPM_DATA_ENABLE
+
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

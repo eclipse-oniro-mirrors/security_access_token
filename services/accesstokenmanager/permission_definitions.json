@@ -4427,6 +4427,17 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.INPUT_RECORDING",
+            "grantMode": "manual_settings",
+            "availableLevel": "system_basic",
+            "availableType": "NORMAL",
+            "since": "26.2.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1"]
+        },
+        {
             "name": "ohos.permission.LAUNCH_SPAMSHIELD_PAGE",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
@@ -10352,6 +10363,17 @@
             "deviceTypes": ["general"]
         },
         {
+            "name": "ohos.permission.CONNECT_AGENT_FROM_BACKGROUND",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.2.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1", "car", "phone", "tablet", "tv", "wearable"]
+        },
+        {
             "name": "ohos.permission.REVOKE_FILE_ACCESS_PERSIST",
             "grantMode": "system_grant",
             "availableLevel": "system_core",
@@ -12088,6 +12110,17 @@
             "deviceTypes": ["2in1"]
         },
         {
+            "name": "ohos.permission.kernel.ACCESS_DISK_USERDATA",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "MDM",
+            "since": "26.2.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1"]
+        },
+        {
             "name": "ohos.permission.vehicle.FACTORYRESET_WRITE_CONFIG",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
@@ -12694,6 +12727,17 @@
             "deviceTypes": ["phone"]
         },
         {
+            "name": "ohos.permission.AUDIO_USER_MICROPHONE_INDICATOR",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "availableType": "SYSTEM",
+            "since": "26.2.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1", "car", "phone", "tablet", "tv", "wearable"]
+        },
+        {
             "name": "ohos.permission.vehicle.LOGIN_TSP",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
@@ -12788,7 +12832,7 @@
             "availableType": "NORMAL",
             "since": "26.2.0",
             "deprecated": "",
-            "provisionEnable": true,
+            "provisionEnable": false,
             "distributedSceneEnable": false,
             "deviceTypes": ["2in1"]
         }

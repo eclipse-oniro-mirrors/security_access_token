@@ -25,6 +25,7 @@
 
 #include "accesstoken_info_manager.h"
 #include "access_token_manager_stub.h"
+#include "boot_verify_scheduler.h"
 #ifdef EVENTHANDLER_ENABLE
 #include "access_event_handler.h"
 #endif
@@ -92,6 +93,12 @@ public:
     int DeleteToken(AccessTokenID tokenID, bool isTokenReserved) override;
 #ifdef SPM_DATA_ENABLE
     int32_t DeleteIdentity(AccessTokenID tokenID, const std::string& bundleName, ReservedTypeIdl type) override;
+    int32_t GetHapIdentity(const HapBaseInfoParcel& hapBaseInfoParcel, IdentityIdl& identityIdl) override;
+    int32_t GetHapBaseInfoByUid(int32_t uid, HapBaseInfoParcel& hapBaseInfoParcel) override;
+    int32_t MigrateInstalledBundles(const std::vector<MigratedInfoIdl>& migratedInfoList,
+        std::vector<BundleMigrateResultIdl>& results) override;
+    int32_t FinishMigration() override;
+    int32_t CheckMigratedUidSet(const std::set<int32_t>& totalUids, std::set<int32_t>& unreceivedUids) override;
 #endif
     int GetTokenType(AccessTokenID tokenID);
     int GetTokenType(AccessTokenID tokenID, int32_t& tokenType) override;
@@ -146,6 +153,24 @@ public:
     int32_t DeleteToolTokenByPid(int32_t pid) override;
     int32_t GetHostTokenId(AccessTokenID toolTokenId, AccessTokenID& hostTokenId) override;
     int32_t ResetDatabaseRecoveryStatus() override;
+#ifdef SPM_DATA_ENABLE
+    int32_t CheckHapSignInfo(const BundleHapListIdl& list, const sptr<IRemoteObject>& cb, uint32_t flag,
+        CheckHapSignResultRawdata& result) override;
+    int32_t CheckHapPermissionInfo(int32_t sessionId, InstallTypeEnumIdl type,
+        HapInfoCheckResultIdl& resultInfoIdl) override;
+    int32_t PrepareHapIdentity(int32_t& sessionId, const HapBaseInfoIdl& info, const BundlePolicyIdl& policy,
+        const sptr<IRemoteObject>& cb, IdentityIdl& identity) override;
+    int32_t UpdateHapPolicy(
+        int32_t sessionId, AccessTokenID tokenId, const BundlePolicyIdl& policy, int32_t& uid) override;
+    int32_t FinishInstall(int32_t sessionId, bool isPersistent,
+        const std::map<std::string, std::string>& modulePathMap) override;
+    int32_t GetCacheSignInfoBySessionId(int32_t sessionId, uint32_t flag,
+        BundleInfosRawdata& bundleInfos) override;
+    int32_t GetHapSignInfo(const std::string& bundleName, uint32_t flag, int32_t mode,
+        BundleInfosRawdata& bundleInfos) override;
+    int32_t GetCachePolicyBySessionId(int32_t sessionId, const std::string& bundleName,
+        BundlePolicyInfoIdl& bundlePolicyInfoIdl) override;
+#endif
     int SetPermDialogCap(const HapBaseInfoParcel& hapBaseInfoParcel, bool enable) override;
     int32_t GetPermissionManagerInfo(PermissionGrantInfoParcel& infoParcel) override;
 #ifdef SUPPORT_MANAGE_USER_POLICY
@@ -185,11 +210,16 @@ private:
     void AccessTokenServiceParamSet() const;
     bool IsLocationPermSpecialHandle(std::string permissionName, int32_t apiVersion);
     int VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName);
+    int32_t CheckHapManagerPermission();
     PermissionOper GetPermissionsState(AccessTokenID tokenID, std::vector<PermissionListStateParcel>& reqPermList);
     void ReportAddHap(AccessTokenIDEx fullTokenId, const HapInfoParams& hapInfo,
         const HapPolicy& policy, int64_t beginTime, int32_t errorCode);
     void ReportUpdateHap(AccessTokenIDEx fullTokenId, const HapTokenInfo& info,
         const HapPolicy& policy, int64_t beginTime, int32_t errorCode);
+    int32_t PreVerifyHapTokenIfNeeded(AccessTokenID tokenID);
+    int32_t PreVerifyHapTokenByUidIfNeeded(int32_t uid);
+    int32_t PreVerifyBundleIfNeeded(const std::string& bundleName);
+    int32_t PreVerifyBundleIfNeeded(const std::string& bundleName, int32_t instIndex);
     int32_t PreCheckPermissionStatusDetails(
         AccessTokenID tokenID, const std::vector<std::string>& permissionList);
     bool IsPermissionValid(bool isSideloadApp, int32_t hapApl, const PermissionBriefDef& data,

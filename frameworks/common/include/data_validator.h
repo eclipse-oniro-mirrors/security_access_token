@@ -19,6 +19,7 @@
 #include <map>
 #include <string>
 #include "access_token.h"
+#include "hap_token_info.h"
 
 namespace OHOS {
 namespace Security {
@@ -69,7 +70,11 @@ public:
     static bool IsAclExtendedMapSizeValid(const std::map<std::string, std::string>& aclExtendedMap);
     static bool IsAclExtendedMapContentValid(const std::string& permissionName, const std::string& value);
     static bool IsAppProvisionTypeValid(const std::string& appProvisionType);
+    static bool IsHapListSizeValid(uint32_t size);
+    static bool IsSignInfoQueryFlagValid(uint32_t flag);
+    static bool IsQueryModeValid(MultipleMode mode);
     static bool IsListSizeValid(size_t size);
+    static bool IsStringListValid(const std::vector<std::string>& valueList);
     static bool IsPermFeatureValid(const std::string& feature);
 
 private:
@@ -81,6 +86,7 @@ private:
     const static int32_t MAX_VALUE_LENGTH = 1024;
     const static int32_t MAX_LIST_SIZE = 1024;
     const static int32_t MAX_FEATURE_SIZE = 64;
+    const static int32_t MAX_HAP_LIST_SIZE = 128;
 };
 } // namespace AccessToken
 } // namespace Security

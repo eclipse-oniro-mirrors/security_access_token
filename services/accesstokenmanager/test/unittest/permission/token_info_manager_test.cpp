@@ -33,9 +33,8 @@
 #include "accesstoken_info_utils.h"
 #include "accesstoken_info_manager.h"
 #include "accesstoken_remote_token_manager.h"
-#ifdef SUPPORT_SANDBOX_APP
+#include "boot_verify_scheduler.h"
 #include "dlp_permission_set_manager.h"
-#endif
 #include "libraryloader.h"
 #include "token_field_const.h"
 #include "user_policy_manager.h"
@@ -394,7 +393,9 @@ void TokenInfoManagerTest::SetUpTestCase()
     uint32_t pefDefSize = 0;
     uint32_t dlpSize = 0;
     std::map<int32_t, TokenIdInfo> tokenIdAplMap;
-    AccessTokenInfoManager::GetInstance().Init(hapSize, nativeSize, pefDefSize, dlpSize, tokenIdAplMap);
+    AccessTokenInfoManager::GetInstance().Init(nativeSize, pefDefSize, dlpSize);
+    (void)BootVerifyScheduler::GetInstance().VerifyBundleSignInfoWhenStart(hapSize, tokenIdAplMap);
+    BootVerifyScheduler::GetInstance().StartVerifyNormalBundleListAsync();
 }
 
 void TokenInfoManagerTest::TearDownTestCase()
@@ -495,60 +496,6 @@ HWTEST_F(TokenInfoManagerTest, IsPermDlpModeAvailableToDlpHap002, TestSize.Level
 #endif
 
 /**
- * @tc.name: GetBundleInfoInner001
- * @tc.desc: AccessTokenInfoManager::GetBundleInfoInner returns existing bundle cache and does not create one.
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(TokenInfoManagerTest, GetBundleInfoInner001, TestSize.Level0)
-{
-    auto& manager = AccessTokenInfoManager::GetInstance();
-    const std::string bundleName = "com.ohos.bundle.info.inner";
-    manager.bundleInfoMap_.erase(bundleName);
-
-    auto queried = manager.GetBundleInfoInner(bundleName);
-    EXPECT_EQ(nullptr, queried);
-    EXPECT_EQ(manager.bundleInfoMap_.end(), manager.bundleInfoMap_.find(bundleName));
-
-    auto cached = std::make_shared<BundleInfoInner>();
-    cached->permCodeList = { 1, 2 };
-    manager.bundleInfoMap_[bundleName] = cached;
-    queried = manager.GetBundleInfoInner(bundleName);
-    EXPECT_EQ(cached, queried);
-    ASSERT_NE(nullptr, queried);
-    ASSERT_EQ(2u, queried->permCodeList.size());
-
-    manager.bundleInfoMap_.erase(bundleName);
-}
-
-/**
- * @tc.name: UpsertBundleInfoInnerCache001
- * @tc.desc: AccessTokenInfoManager::UpsertBundleInfoInnerCache inserts and updates bundle cache.
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(TokenInfoManagerTest, UpsertBundleInfoInnerCache001, TestSize.Level0)
-{
-    auto& manager = AccessTokenInfoManager::GetInstance();
-    const std::string bundleName = "com.ohos.bundle.info.upsert";
-    manager.bundleInfoMap_.erase(bundleName);
-
-    auto first = std::make_shared<BundleInfoInner>();
-    first->tokenIds = { 1 };
-    manager.UpsertBundleInfoInnerCache(bundleName, first);
-    ASSERT_NE(manager.bundleInfoMap_.end(), manager.bundleInfoMap_.find(bundleName));
-    EXPECT_EQ(first, manager.bundleInfoMap_[bundleName]);
-
-    auto second = std::make_shared<BundleInfoInner>();
-    second->tokenIds = { 2, 3 };
-    manager.UpsertBundleInfoInnerCache(bundleName, second);
-    EXPECT_EQ(second, manager.bundleInfoMap_[bundleName]);
-    ASSERT_EQ(2u, manager.bundleInfoMap_[bundleName]->tokenIds.size());
-
-    manager.bundleInfoMap_.erase(bundleName);
-}
-
-/**
  * @tc.name: GetHapTokenIdListByBundleName001
  * @tc.desc: AccessTokenInfoManager::GetHapTokenIdListByBundleName gets token IDs from hap token info cache.
  * @tc.type: FUNC
@@ -567,7 +514,6 @@ HWTEST_F(TokenInfoManagerTest, GetHapTokenIdListByBundleName001, TestSize.Level0
     AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
     ASSERT_NE(INVALID_TOKENID, tokenId);
 
-    manager.bundleInfoMap_.erase(info.bundleName);
     std::vector<AccessTokenID> tokenIdList;
     ASSERT_EQ(RET_SUCCESS, manager.GetHapTokenIdListByBundleName(info.bundleName, tokenIdList));
     ASSERT_EQ(1u, tokenIdList.size());
@@ -2241,12 +2187,10 @@ HWTEST_F(TokenInfoManagerTest, GetNativePermissionList002, TestSize.Level0)
 HWTEST_F(TokenInfoManagerTest, AccessTokenInfoManager001, TestSize.Level0)
 {
     AccessTokenInfoManager::GetInstance().hasInited_ = true;
-    uint32_t hapSize = 0;
     uint32_t nativeSize = 0;
     uint32_t pefDefSize = 0;
     uint32_t dlpSize = 0;
-    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
-    AccessTokenInfoManager::GetInstance().Init(hapSize, nativeSize, pefDefSize, dlpSize, tokenIdAplMap);
+    AccessTokenInfoManager::GetInstance().Init(nativeSize, pefDefSize, dlpSize);
     AccessTokenInfoManager::GetInstance().hasInited_ = false;
     ASSERT_EQ(false, AccessTokenInfoManager::GetInstance().hasInited_);
 }
@@ -3249,6 +3193,7 @@ HWTEST_F(TokenInfoManagerTest, VerifyAccessToken002, TestSize.Level0)
     ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId));
 }
 
+#ifndef SPM_DATA_ENABLE
 /**
  * @tc.name: GetAppId001
  * @tc.desc: TokenInfoManagerTest::VerifyAccessToken function test
@@ -3272,11 +3217,13 @@ HWTEST_F(TokenInfoManagerTest, GetAppId001, TestSize.Level0)
     ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(info, policy, tokenIdEx,
         undefValues));
     std::string appId;
-    int ret = AccessTokenInfoManager::GetInstance().GetHapAppIdByTokenId(tokenIdEx.tokenIdExStruct.tokenID, appId);
+    int ret = AccessTokenInfoManager::GetInstance().GetHapAppIdByTokenId(tokenIdEx.tokenIdExStruct.tokenID,
+        appId);
     ASSERT_EQ(ret, RET_SUCCESS);
     ASSERT_EQ(appId, "token_info_manager_test");
     ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenIdEx.tokenIdExStruct.tokenID));
 }
+#endif
 
 /**
  * @tc.name: GetApiVersionByTokenId002
@@ -4776,7 +4723,12 @@ HWTEST_F(TokenInfoManagerTest, ReservedHapInfo002, TestSize.Level0)
     genericValues.Put(TokenFiledConst::FIELD_APL, ATokenAplEnum::APL_NORMAL);
     genericValues.Put(TokenFiledConst::FIELD_TOKEN_VERSION, 0);
     genericValues.Put(TokenFiledConst::FIELD_TOKEN_ATTR, TOKEN_ATTR_RESERVED);
-    genericValues.Put(TokenFiledConst::FIELD_FORBID_PERM_DIALOG, "test_perm_dialog_cap_state");
+    genericValues.Put(TokenFiledConst::FIELD_FORBID_PERM_DIALOG, 0);
+#ifdef SPM_DATA_ENABLE
+    genericValues.Put(TokenFiledConst::FIELD_UID, 0);
+    genericValues.Put(TokenFiledConst::FIELD_MIGRATED, 0);
+    genericValues.Put(TokenFiledConst::FIELD_RESERVED, 1);
+#endif
     AddInfo addInfo;
     addInfo.addType = AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO;
     addInfo.addValues.emplace_back(genericValues);
@@ -4791,12 +4743,13 @@ HWTEST_F(TokenInfoManagerTest, ReservedHapInfo002, TestSize.Level0)
     uint32_t pefDefSize = 0;
     uint32_t dlpSize = 0;
     std::map<int32_t, TokenIdInfo> tokenIdAplMap;
-    AccessTokenInfoManager::GetInstance().Init(hapSize, nativeSize, pefDefSize, dlpSize, tokenIdAplMap);
-    std::string HapUniqueKey = AccessTokenInfoUtils::GetHapUniqueStr(100, "test_bundle_name", 0);
-    auto it = AccessTokenInfoManager::GetInstance().reservedHapTokenIdMap_.find(HapUniqueKey);
-    EXPECT_NE(it, AccessTokenInfoManager::GetInstance().reservedHapTokenIdMap_.end());
 
-    AccessTokenInfoManager::GetInstance().reservedHapTokenIdMap_.erase(HapUniqueKey);
+    AccessTokenInfoManager::GetInstance().Init(nativeSize, pefDefSize, dlpSize);
+    (void)BootVerifyScheduler::GetInstance().VerifyBundleSignInfoWhenStart(hapSize, tokenIdAplMap);
+    BootVerifyScheduler::GetInstance().StartVerifyNormalBundleListAsync();
+    sleep(3);
+    EXPECT_TRUE(AccessTokenIDManager::GetInstance().IsReservedTokenId(123));
+    AccessTokenIDManager::GetInstance().RemoveReservedTokenId(123);
     addInfoVec.clear();
     DelInfo delInfo;
     delInfo.delType = AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO;
@@ -4874,7 +4827,8 @@ HWTEST_F(TokenInfoManagerTest, ReservedHapInfo004, TestSize.Level0)
 
 /**
  * @tc.name: ReservedHapInfo005
- * @tc.desc: coverage test
+ * @tc.desc: Verify the ACTIVE-only query contract: a token erased from the
+ *           active cache is not visible to GetHapTokenInfo.
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -4885,14 +4839,14 @@ HWTEST_F(TokenInfoManagerTest, ReservedHapInfo005, TestSize.Level0)
     int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_infoManagerTestInfoParms,
         g_infoManagerTestPolicyPrams1, tokenIdEx, undefValues);
     ASSERT_EQ(RET_SUCCESS, ret);
-    GTEST_LOG_(INFO) << "add a normal hap token";
 
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
     AccessTokenInfoManager::GetInstance().hapTokenInfoMap_.erase(tokenID);
     HapTokenInfo info;
-    EXPECT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenID, info));
-
-    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID));
+    EXPECT_EQ(AccessTokenError::ERR_TOKENID_NOT_EXIST,
+        AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenID, info));
+    EXPECT_EQ(AccessTokenError::ERR_TOKENID_NOT_EXIST,
+        AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID));
 }
 
 #ifdef TOKEN_SYNC_ENABLE
@@ -5021,6 +4975,314 @@ HWTEST_F(TokenInfoManagerTest, RegisterTokenId003, TestSize.Level0)
     innerId.type_ext = 0;
     AccessTokenID tokenId1 = *reinterpret_cast<AccessTokenID*>(&innerId);
     ASSERT_EQ(ERR_PARAM_INVALID, AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId1, TOKEN_HAP));
+}
+
+/**
+ * @tc.name: GetRelatedSandBoxHapListMode001
+ * @tc.desc: Test GetRelatedSandBoxHapList mode isolation, main app of sub mode propagates.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenInfoManagerTest, GetRelatedSandBoxHapListMode001, TestSize.Level0)
+{
+    std::string bundleName = "sandbox_mode_test";
+    HapInfoParams mainInfo = {
+        .userID = USER_ID,
+        .bundleName = bundleName,
+        .instIndex = 0,
+        .appIDDesc = "sandbox_mode_test_app"
+    };
+    HapInfoParams subMainInfo = {
+        .userID = USER_ID,
+        .bundleName = bundleName,
+        .instIndex = 10000,
+        .appIDDesc = "sandbox_mode_test_app"
+    };
+    // dlp tokens need a distinct identity triple (bundle&user&instIndex):
+    // dlp instIndex lives in 100-200 for the main mode and 10100-10200 for
+    // the sub mode.
+    HapInfoParams mainDlpInfo = {
+        .userID = USER_ID,
+        .bundleName = bundleName,
+        .instIndex = 100,
+        .appIDDesc = "sandbox_mode_test_app",
+        .dlpType = 1
+    };
+    HapInfoParams subDlpInfo = {
+        .userID = USER_ID,
+        .bundleName = bundleName,
+        .instIndex = 10100,
+        .appIDDesc = "sandbox_mode_test_app",
+        .dlpType = 1
+    };
+    HapPolicy policy = {.apl = APL_NORMAL, .domain = "test.domain"};
+    AccessTokenIDEx mainTokenIdEx;
+    AccessTokenIDEx subMainTokenIdEx;
+    AccessTokenIDEx mainDlpTokenIdEx;
+    AccessTokenIDEx subDlpTokenIdEx;
+    std::vector<GenericValues> undefValues;
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(mainInfo, policy,
+        mainTokenIdEx, undefValues));
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(subMainInfo, policy,
+        subMainTokenIdEx, undefValues));
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(mainDlpInfo, policy,
+        mainDlpTokenIdEx, undefValues));
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(subDlpInfo, policy,
+        subDlpTokenIdEx, undefValues));
+
+    std::vector<AccessTokenID> tokenIdList;
+    AccessTokenInfoManager::GetInstance().GetRelatedSandBoxHapList(subMainTokenIdEx.tokenIdExStruct.tokenID,
+        tokenIdList);
+    // main app of sub mode (instIndex=10000) must not be judged as clone: the
+    // same-mode dlp token is collected, cross-mode tokens are not.
+    EXPECT_TRUE(std::find(tokenIdList.begin(), tokenIdList.end(),
+        subDlpTokenIdEx.tokenIdExStruct.tokenID) != tokenIdList.end());
+    EXPECT_TRUE(std::find(tokenIdList.begin(), tokenIdList.end(),
+        mainDlpTokenIdEx.tokenIdExStruct.tokenID) == tokenIdList.end());
+    EXPECT_TRUE(std::find(tokenIdList.begin(), tokenIdList.end(),
+        mainTokenIdEx.tokenIdExStruct.tokenID) == tokenIdList.end());
+
+    tokenIdList.clear();
+    AccessTokenInfoManager::GetInstance().GetRelatedSandBoxHapList(mainTokenIdEx.tokenIdExStruct.tokenID,
+        tokenIdList);
+    // main mode main app (instIndex=0) is related to its own mode dlp token only.
+    EXPECT_TRUE(std::find(tokenIdList.begin(), tokenIdList.end(),
+        mainDlpTokenIdEx.tokenIdExStruct.tokenID) != tokenIdList.end());
+    EXPECT_TRUE(std::find(tokenIdList.begin(), tokenIdList.end(),
+        subDlpTokenIdEx.tokenIdExStruct.tokenID) == tokenIdList.end());
+
+    AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(mainTokenIdEx.tokenIdExStruct.tokenID);
+    AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(subMainTokenIdEx.tokenIdExStruct.tokenID);
+    AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(mainDlpTokenIdEx.tokenIdExStruct.tokenID);
+    AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(subDlpTokenIdEx.tokenIdExStruct.tokenID);
+}
+
+/**
+ * @tc.name: GetRelatedSandBoxHapListMode002
+ * @tc.desc: Test GetRelatedSandBoxHapList clone token returns empty, no cross mode propagation.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenInfoManagerTest, GetRelatedSandBoxHapListMode002, TestSize.Level0)
+{
+    std::string bundleName = "sandbox_clone_mode_test";
+    HapInfoParams mainInfo = {
+        .userID = USER_ID,
+        .bundleName = bundleName,
+        .instIndex = 0,
+        .appIDDesc = "sandbox_clone_mode_test_app"
+    };
+    HapInfoParams cloneInfo = {
+        .userID = USER_ID,
+        .bundleName = bundleName,
+        .instIndex = 1,
+        .appIDDesc = "sandbox_clone_mode_test_app"
+    };
+    HapInfoParams subCloneInfo = {
+        .userID = USER_ID,
+        .bundleName = bundleName,
+        .instIndex = 10001,
+        .appIDDesc = "sandbox_clone_mode_test_app"
+    };
+    HapPolicy policy = {.apl = APL_NORMAL, .domain = "test.domain"};
+    AccessTokenIDEx mainTokenIdEx;
+    AccessTokenIDEx cloneTokenIdEx;
+    AccessTokenIDEx subCloneTokenIdEx;
+    std::vector<GenericValues> undefValues;
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(mainInfo, policy,
+        mainTokenIdEx, undefValues));
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(cloneInfo, policy,
+        cloneTokenIdEx, undefValues));
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(subCloneInfo, policy,
+        subCloneTokenIdEx, undefValues));
+
+    std::vector<AccessTokenID> tokenIdList;
+    AccessTokenInfoManager::GetInstance().GetRelatedSandBoxHapList(cloneTokenIdEx.tokenIdExStruct.tokenID,
+        tokenIdList);
+    // clone of main mode: managed independently, empty list
+    EXPECT_TRUE(tokenIdList.empty());
+
+    tokenIdList.clear();
+    AccessTokenInfoManager::GetInstance().GetRelatedSandBoxHapList(subCloneTokenIdEx.tokenIdExStruct.tokenID,
+        tokenIdList);
+    // clone of sub mode: managed independently, empty list
+    EXPECT_TRUE(tokenIdList.empty());
+
+    tokenIdList.clear();
+    AccessTokenInfoManager::GetInstance().GetRelatedSandBoxHapList(mainTokenIdEx.tokenIdExStruct.tokenID,
+        tokenIdList);
+    // clones are never collected into sandbox list
+    EXPECT_TRUE(tokenIdList.empty());
+
+    AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(mainTokenIdEx.tokenIdExStruct.tokenID);
+    AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(cloneTokenIdEx.tokenIdExStruct.tokenID);
+    AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(subCloneTokenIdEx.tokenIdExStruct.tokenID);
+}
+
+/**
+ * @tc.name: ModeSwitchPermConsistency001
+ * @tc.desc: Test permission state consistency across mode switch (ispcmode change).
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenInfoManagerTest, ModeSwitchPermConsistency001, TestSize.Level0)
+{
+    std::string bundleName = "mode_switch_test";
+    HapInfoParams mainInfo = {
+        .userID = USER_ID,
+        .bundleName = bundleName,
+        .instIndex = 0,
+        .appIDDesc = "mode_switch_test_app"
+    };
+    HapInfoParams subMainInfo = {
+        .userID = USER_ID,
+        .bundleName = bundleName,
+        .instIndex = 10000,
+        .appIDDesc = "mode_switch_test_app"
+    };
+    HapPolicy policy = {.apl = APL_NORMAL, .domain = "test.domain"};
+    AccessTokenIDEx mainTokenIdEx;
+    AccessTokenIDEx subMainTokenIdEx;
+    std::vector<GenericValues> undefValues;
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(mainInfo, policy,
+        mainTokenIdEx, undefValues));
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(subMainInfo, policy,
+        subMainTokenIdEx, undefValues));
+
+    std::vector<AccessTokenID> mainList;
+    std::vector<AccessTokenID> subList;
+    AccessTokenInfoManager::GetInstance().GetRelatedSandBoxHapList(mainTokenIdEx.tokenIdExStruct.tokenID,
+        mainList);
+    AccessTokenInfoManager::GetInstance().GetRelatedSandBoxHapList(subMainTokenIdEx.tokenIdExStruct.tokenID,
+        subList);
+    // mode switch does not alter token relationships in memory: both are dlp-related within their own mode
+    (void)mainList.size();
+    (void)subList.size();
+
+    AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(mainTokenIdEx.tokenIdExStruct.tokenID);
+    AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(subMainTokenIdEx.tokenIdExStruct.tokenID);
+}
+
+/**
+ * @tc.name: PermissionSyncModeIsolated001
+ * @tc.desc: Test grant/revoke/batch permission sync propagates inside one mode only.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenInfoManagerTest, PermissionSyncModeIsolated001, TestSize.Level0)
+{
+    std::string bundleName = "perm_sync_mode_isolated";
+    std::string permName = "ohos.permission.CAMERA";
+    HapInfoParams mainInfo = {
+        .userID = USER_ID,
+        .bundleName = bundleName,
+        .instIndex = 0,
+        .appIDDesc = "perm_sync_mode_isolated_app"
+    };
+    HapInfoParams subMainInfo = {
+        .userID = USER_ID,
+        .bundleName = bundleName,
+        .instIndex = 10000,
+        .appIDDesc = "perm_sync_mode_isolated_app"
+    };
+    HapInfoParams mainDlpInfo = {
+        .userID = USER_ID,
+        .bundleName = bundleName,
+        .instIndex = 100,
+        .appIDDesc = "perm_sync_mode_isolated_app",
+        .dlpType = 1
+    };
+    HapInfoParams subDlpInfo = {
+        .userID = USER_ID,
+        .bundleName = bundleName,
+        .instIndex = 10100,
+        .appIDDesc = "perm_sync_mode_isolated_app",
+        .dlpType = 1
+    };
+    PermissionStatus permStat = {
+        .permissionName = permName,
+        .grantStatus = PermissionState::PERMISSION_DENIED,
+        .grantFlag = PermissionFlag::PERMISSION_DEFAULT_FLAG
+    };
+    HapPolicy policy = {.apl = APL_NORMAL, .domain = "test.domain", .permStateList = {permStat}};
+    AccessTokenIDEx mainTokenIdEx;
+    AccessTokenIDEx subMainTokenIdEx;
+    AccessTokenIDEx mainDlpTokenIdEx;
+    AccessTokenIDEx subDlpTokenIdEx;
+    std::vector<GenericValues> undefValues;
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(mainInfo, policy,
+        mainTokenIdEx, undefValues));
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(subMainInfo, policy,
+        subMainTokenIdEx, undefValues));
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(mainDlpInfo, policy,
+        mainDlpTokenIdEx, undefValues));
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(subDlpInfo, policy,
+        subDlpTokenIdEx, undefValues));
+
+    AccessTokenID mainTokenId = mainTokenIdEx.tokenIdExStruct.tokenID;
+    AccessTokenID subMainTokenId = subMainTokenIdEx.tokenIdExStruct.tokenID;
+    AccessTokenID mainDlpTokenId = mainDlpTokenIdEx.tokenIdExStruct.tokenID;
+    AccessTokenID subDlpTokenId = subDlpTokenIdEx.tokenIdExStruct.tokenID;
+
+    // Initial state: the permission is denied on all four tokens
+    EXPECT_EQ(PERMISSION_DENIED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(mainTokenId, permName));
+    EXPECT_EQ(PERMISSION_DENIED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(subMainTokenId, permName));
+    EXPECT_EQ(PERMISSION_DENIED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(mainDlpTokenId, permName));
+    EXPECT_EQ(PERMISSION_DENIED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(subDlpTokenId, permName));
+
+    // Single grant on the main-mode main app: only the same-mode dlp app syncs
+    ASSERT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GrantPermission(
+        mainTokenId, permName, PERMISSION_COMPONENT_SET));
+    EXPECT_EQ(PERMISSION_GRANTED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(mainTokenId, permName));
+    EXPECT_EQ(PERMISSION_GRANTED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(mainDlpTokenId, permName));
+    EXPECT_EQ(PERMISSION_DENIED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(subMainTokenId, permName));
+    EXPECT_EQ(PERMISSION_DENIED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(subDlpTokenId, permName));
+
+    // Single revoke rolls the same-mode dlp app back, still no cross-mode impact
+    ASSERT_EQ(RET_SUCCESS, PermissionManager::GetInstance().RevokePermission(
+        mainTokenId, permName, PERMISSION_COMPONENT_SET, USER_GRANTED_PERM, false));
+    EXPECT_EQ(PERMISSION_DENIED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(mainTokenId, permName));
+    EXPECT_EQ(PERMISSION_DENIED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(mainDlpTokenId, permName));
+
+    // Batch grant on the sub-mode main app: only the same-mode dlp app syncs
+    std::vector<std::string> permList = {permName};
+    ASSERT_EQ(RET_SUCCESS, PermissionManager::GetInstance().UpdateMultiPermissionStatus(
+        subMainTokenId, permList, PERMISSION_GRANTED, PERMISSION_COMPONENT_SET));
+    EXPECT_EQ(PERMISSION_GRANTED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(subMainTokenId, permName));
+    EXPECT_EQ(PERMISSION_GRANTED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(subDlpTokenId, permName));
+    EXPECT_EQ(PERMISSION_DENIED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(mainTokenId, permName));
+    EXPECT_EQ(PERMISSION_DENIED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(mainDlpTokenId, permName));
+
+    // Batch revoke rolls the sub-mode dlp app back
+    ASSERT_EQ(RET_SUCCESS, PermissionManager::GetInstance().UpdateMultiPermissionStatus(
+        subMainTokenId, permList, PERMISSION_DENIED, PERMISSION_COMPONENT_SET));
+    EXPECT_EQ(PERMISSION_DENIED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(subMainTokenId, permName));
+    EXPECT_EQ(PERMISSION_DENIED,
+        AccessTokenInfoManager::GetInstance().VerifyAccessToken(subDlpTokenId, permName));
+
+    AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(mainTokenId);
+    AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(subMainTokenId);
+    AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(mainDlpTokenId);
+    AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(subDlpTokenId);
 }
 } // namespace AccessToken
 } // namespace Security

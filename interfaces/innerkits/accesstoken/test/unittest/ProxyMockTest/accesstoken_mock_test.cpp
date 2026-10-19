@@ -16,6 +16,7 @@
 #include "accesstoken_mock_test.h"
 #include <cerrno>
 #include <cstring>
+#include <set>
 #include <thread>
 #include "access_token_error.h"
 #include "access_token_manager_proxy.h"
@@ -148,6 +149,50 @@ sptr<NativeTokenInfoRemoteObject> InstallNativeTokenInfoRemoteObject()
 {
     AccessTokenManagerClient::GetInstance().ReleaseProxy();
     sptr<NativeTokenInfoRemoteObject> remote = new (std::nothrow) NativeTokenInfoRemoteObject();
+    if (remote == nullptr) {
+        return nullptr;
+    }
+    sptr<AccessTokenManagerProxy> proxy = new (std::nothrow) AccessTokenManagerProxy(remote);
+    if (proxy == nullptr) {
+        return nullptr;
+    }
+    AccessTokenManagerClient::GetInstance().proxy_ = proxy;
+    return remote;
+}
+
+class IsSupportPermissionRemoteObject final : public IPCObjectStub {
+public:
+    IsSupportPermissionRemoteObject() : IPCObjectStub(u"IsSupportPermissionRemoteObject") {}
+
+    int OnRemoteRequest(uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option) override
+    {
+        (void)option;
+        (void)data.ReadInterfaceToken();
+        if (code != static_cast<uint32_t>(IAccessTokenManagerIpcCode::COMMAND_IS_SUPPORT_PERMISSION)) {
+            return ERR_INVALID_DATA;
+        }
+        (void)data.ReadString16();
+        if (!reply.WriteInt32(errCode_)) {
+            return ERR_INVALID_DATA;
+        }
+        if (errCode_ == RET_SUCCESS) {
+            if (!reply.WriteInt32(isSupported_ ? 1 : 0)) {
+                return ERR_INVALID_DATA;
+            }
+        }
+        ++callCount_;
+        return ERR_NONE;
+    }
+
+    int32_t errCode_ = RET_SUCCESS;
+    bool isSupported_ = true;
+    uint32_t callCount_ = 0;
+};
+
+sptr<IsSupportPermissionRemoteObject> InstallIsSupportPermissionRemoteObject()
+{
+    AccessTokenManagerClient::GetInstance().ReleaseProxy();
+    sptr<IsSupportPermissionRemoteObject> remote = new (std::nothrow) IsSupportPermissionRemoteObject();
     if (remote == nullptr) {
         return nullptr;
     }
@@ -608,6 +653,74 @@ public:
     sptr<IRemoteObject> systemAbility_ = nullptr;
     sptr<ISystemAbilityStatusChange> listener_ = nullptr;
 };
+
+#ifdef SPM_DATA_ENABLE
+class GetHapIdentityRemoteObject final : public IPCObjectStub {
+public:
+    GetHapIdentityRemoteObject() : IPCObjectStub(u"GetHapIdentityRemoteObject") {}
+
+    int OnRemoteRequest(uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option) override
+    {
+        (void)option;
+        (void)data.ReadInterfaceToken();
+        if (code == static_cast<uint32_t>(IAccessTokenManagerIpcCode::COMMAND_GET_HAP_IDENTITY)) {
+            (void)data.ReadParcelable<HapBaseInfoParcel>();
+            (void)reply.WriteInt32(result_);
+            if (result_ == RET_SUCCESS) {
+                IdentityIdl identityIdl;
+                identityIdl.uid = uid_;
+                identityIdl.tokenId = tokenId_;
+                if (IdentityIdlBlockMarshalling(reply, identityIdl) != ERR_NONE) {
+                    return ERR_INVALID_DATA;
+                }
+            }
+            ++identityCallCount_;
+            return ERR_NONE;
+        }
+        if (code == static_cast<uint32_t>(IAccessTokenManagerIpcCode::COMMAND_GET_HAP_BASE_INFO_BY_UID)) {
+            (void)data.ReadInt32();
+            (void)reply.WriteInt32(result_);
+            if (result_ == RET_SUCCESS) {
+                HapBaseInfoParcel parcel;
+                parcel.hapBaseInfo.userID = userID_;
+                parcel.hapBaseInfo.bundleName = bundleName_;
+                parcel.hapBaseInfo.instIndex = instIndex_;
+                if (!reply.WriteParcelable(&parcel)) {
+                    return ERR_INVALID_DATA;
+                }
+            }
+            ++baseInfoCallCount_;
+            return ERR_NONE;
+        }
+        (void)reply.WriteInt32(ERR_INVALID_DATA);
+        return ERR_NONE;
+    }
+
+    int32_t result_ = RET_SUCCESS;
+    int32_t uid_ = 10001;
+    uint64_t tokenId_ = 0x12345678;
+    int32_t userID_ = 100;
+    std::string bundleName_ = "com.example.mock";
+    int32_t instIndex_ = 0;
+    uint32_t identityCallCount_ = 0;
+    uint32_t baseInfoCallCount_ = 0;
+};
+
+sptr<GetHapIdentityRemoteObject> InstallGetHapIdentityRemoteObject()
+{
+    AccessTokenManagerClient::GetInstance().ReleaseProxy();
+    sptr<GetHapIdentityRemoteObject> remote = new (std::nothrow) GetHapIdentityRemoteObject();
+    if (remote == nullptr) {
+        return nullptr;
+    }
+    sptr<AccessTokenManagerProxy> proxy = new (std::nothrow) AccessTokenManagerProxy(remote);
+    if (proxy == nullptr) {
+        return nullptr;
+    }
+    AccessTokenManagerClient::GetInstance().proxy_ = proxy;
+    return remote;
+}
+#endif
 }
 void AccessTokenMockTest::SetUpTestCase()
 {
@@ -761,6 +874,95 @@ HWTEST_F(AccessTokenMockTest, TransferPermissionToOpcode001, TestSize.Level4)
     EXPECT_FALSE(AccessTokenKit::IsSupportPermission(permissionName));
     EXPECT_FALSE(AccessTokenKit::TransferPermissionToOpcode(permissionName, opCode));
     EXPECT_TRUE(SetPermissionBriefEnabled(permissionName, true));
+}
+
+/**
+ * @tc.name: IsSupportedPermissionClient001
+ * @tc.desc: IsSupportedPermission returns ERR_SERVICE_ABNORMAL when proxy is null
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, IsSupportedPermissionClient001, TestSize.Level4)
+{
+    auto& client = AccessTokenManagerClient::GetInstance();
+    client.ReleaseProxy();
+    client.proxy_ = nullptr;
+
+    bool result = true;
+    int32_t ret = client.IsSupportedPermission("ohos.permission.CAMERA", result);
+    EXPECT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, ret);
+}
+
+/**
+ * @tc.name: IsSupportedPermissionClient002
+ * @tc.desc: IsSupportedPermission returns RET_SUCCESS with result=true when IPC succeeds and permission is supported
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, IsSupportedPermissionClient002, TestSize.Level4)
+{
+    auto remote = InstallIsSupportPermissionRemoteObject();
+    ASSERT_NE(nullptr, remote);
+
+    remote->errCode_ = RET_SUCCESS;
+    remote->isSupported_ = true;
+
+    bool result = false;
+    int32_t ret = AccessTokenManagerClient::GetInstance().IsSupportedPermission(
+        "ohos.permission.CAMERA", result);
+    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_TRUE(result);
+    EXPECT_EQ(1U, remote->callCount_);
+
+    AccessTokenManagerClient::GetInstance().ReleaseProxy();
+}
+
+/**
+ * @tc.name: IsSupportedPermissionClient003
+ * @tc.desc: IsSupportedPermission returns RET_SUCCESS with result=false
+ *     when IPC succeeds and permission is not supported
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, IsSupportedPermissionClient003, TestSize.Level4)
+{
+    auto remote = InstallIsSupportPermissionRemoteObject();
+    ASSERT_NE(nullptr, remote);
+
+    remote->errCode_ = RET_SUCCESS;
+    remote->isSupported_ = false;
+
+    bool result = true;
+    int32_t ret = AccessTokenManagerClient::GetInstance().IsSupportedPermission(
+        "ohos.permission.INVALID", result);
+    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_FALSE(result);
+    EXPECT_EQ(1U, remote->callCount_);
+
+    AccessTokenManagerClient::GetInstance().ReleaseProxy();
+}
+
+/**
+ * @tc.name: IsSupportedPermissionClient004
+ * @tc.desc: IsSupportedPermission returns error code when IPC returns error
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, IsSupportedPermissionClient004, TestSize.Level4)
+{
+    auto remote = InstallIsSupportPermissionRemoteObject();
+    ASSERT_NE(nullptr, remote);
+
+    remote->errCode_ = AccessTokenError::ERR_PERMISSION_NOT_EXIST;
+
+    bool result = true;
+    int32_t ret = AccessTokenManagerClient::GetInstance().IsSupportedPermission(
+        "ohos.permission.CAMERA", result);
+    EXPECT_NE(RET_SUCCESS, ret);
+    EXPECT_TRUE(result);
+    EXPECT_EQ(1U, remote->callCount_);
+
+    AccessTokenManagerClient::GetInstance().ReleaseProxy();
 }
 
 /**
@@ -2435,6 +2637,152 @@ HWTEST_F(AccessTokenMockTest, ReregisterPermStateChangeCallback005, TestSize.Lev
     EXPECT_EQ(2U, client.callbackMap_.size());
 }
 
+#ifdef SPM_DATA_ENABLE
+/**
+ * @tc.name: MigrateInstalledBundlesSizeExceed001
+ * @tc.desc: MigrateInstalledBundles returns ERR_PARAM_INVALID when migratedInfoList size exceeds limit.
+ * @tc.type: FUNC
+ */
+HWTEST_F(AccessTokenMockTest, MigrateInstalledBundlesSizeExceed001, TestSize.Level4)
+{
+    std::vector<MigratedInfo> migratedInfoList(51);
+    std::vector<BundleMigrateResult> results;
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID,
+        AccessTokenKit::MigrateInstalledBundles(migratedInfoList, results));
+    ASSERT_TRUE(results.empty());
+}
+
+/**
+ * @tc.name: MigrateInstalledBundlesProxyNull001
+ * @tc.desc: MigrateInstalledBundles returns service abnormal when proxy is null.
+ * @tc.type: FUNC
+ */
+HWTEST_F(AccessTokenMockTest, MigrateInstalledBundlesProxyNull001, TestSize.Level4)
+{
+    MigratedInfo migratedInfo;
+    migratedInfo.bundleName = "com.example.test";
+    std::vector<MigratedInfo> migratedInfoList = { migratedInfo };
+    std::vector<BundleMigrateResult> results;
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL,
+        AccessTokenKit::MigrateInstalledBundles(migratedInfoList, results));
+}
+
+/**
+ * @tc.name: FinishMigrationProxyNull001
+ * @tc.desc: FinishMigration returns service abnormal when proxy is null.
+ * @tc.type: FUNC
+ */
+HWTEST_F(AccessTokenMockTest, FinishMigrationProxyNull001, TestSize.Level4)
+{
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::FinishMigration());
+}
+
+/**
+ * @tc.name: CheckMigratedUidSetProxyNull001
+ * @tc.desc: CheckMigratedUidSet returns service abnormal when proxy is null.
+ * @tc.type: FUNC
+ */
+HWTEST_F(AccessTokenMockTest, CheckMigratedUidSetProxyNull001, TestSize.Level4)
+{
+    std::set<int32_t> totalUids = { 123 };
+    std::set<int32_t> unreceivedUids;
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL,
+        AccessTokenKit::CheckMigratedUidSet(totalUids, unreceivedUids));
+}
+
+/**
+ * @tc.name: GetHapIdentityInvalidParam001
+ * @tc.desc: GetHapIdentity returns ERR_PARAM_INVALID when userId or bundleName is invalid.
+ * @tc.type: FUNC
+ */
+HWTEST_F(AccessTokenMockTest, GetHapIdentityInvalidParam001, TestSize.Level4)
+{
+    Identity identity;
+    HapBaseInfo info;
+    info.userID = -1;
+    info.bundleName = "com.example.test";
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, AccessTokenKit::GetHapIdentity(info, identity));
+
+    info.userID = 0;
+    info.bundleName = "";
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, AccessTokenKit::GetHapIdentity(info, identity));
+}
+
+/**
+ * @tc.name: GetHapIdentityProxyNull001
+ * @tc.desc: GetHapIdentity returns service abnormal when proxy is null.
+ * @tc.type: FUNC
+ */
+HWTEST_F(AccessTokenMockTest, GetHapIdentityProxyNull001, TestSize.Level4)
+{
+    HapBaseInfo info;
+    info.userID = 0;
+    info.bundleName = "com.example.test";
+    info.instIndex = 0;
+    Identity identity;
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::GetHapIdentity(info, identity));
+}
+
+/**
+ * @tc.name: GetHapIdentitySuccess001
+ * @tc.desc: GetHapIdentity returns identity when the IPC service succeeds.
+ * @tc.type: FUNC
+ */
+HWTEST_F(AccessTokenMockTest, GetHapIdentitySuccess001, TestSize.Level4)
+{
+    auto remote = InstallGetHapIdentityRemoteObject();
+    ASSERT_NE(nullptr, remote);
+    HapBaseInfo info;
+    info.userID = 0;
+    info.bundleName = "com.example.test";
+    info.instIndex = 0;
+    Identity identity;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetHapIdentity(info, identity));
+    EXPECT_EQ(remote->uid_, identity.uid);
+    EXPECT_EQ(remote->tokenId_, identity.tokenId);
+    EXPECT_EQ(1U, remote->identityCallCount_);
+}
+
+/**
+ * @tc.name: GetHapBaseInfoByUidInvalidUid001
+ * @tc.desc: GetHapBaseInfoByUid returns ERR_PARAM_INVALID when uid is not positive.
+ * @tc.type: FUNC
+ */
+HWTEST_F(AccessTokenMockTest, GetHapBaseInfoByUidInvalidUid001, TestSize.Level4)
+{
+    HapBaseInfo info;
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, AccessTokenKit::GetHapBaseInfoByUid(0, info));
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, AccessTokenKit::GetHapBaseInfoByUid(-1, info));
+}
+
+/**
+ * @tc.name: GetHapBaseInfoByUidProxyNull001
+ * @tc.desc: GetHapBaseInfoByUid returns service abnormal when proxy is null.
+ * @tc.type: FUNC
+ */
+HWTEST_F(AccessTokenMockTest, GetHapBaseInfoByUidProxyNull001, TestSize.Level4)
+{
+    HapBaseInfo info;
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::GetHapBaseInfoByUid(123, info));
+}
+
+/**
+ * @tc.name: GetHapBaseInfoByUidSuccess001
+ * @tc.desc: GetHapBaseInfoByUid returns hap base info when the IPC service succeeds.
+ * @tc.type: FUNC
+ */
+HWTEST_F(AccessTokenMockTest, GetHapBaseInfoByUidSuccess001, TestSize.Level4)
+{
+    auto remote = InstallGetHapIdentityRemoteObject();
+    ASSERT_NE(nullptr, remote);
+    HapBaseInfo info;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetHapBaseInfoByUid(123, info));
+    EXPECT_EQ(remote->userID_, info.userID);
+    EXPECT_EQ(remote->bundleName_, info.bundleName);
+    EXPECT_EQ(remote->instIndex_, info.instIndex);
+    EXPECT_EQ(1U, remote->baseInfoCallCount_);
+}
+#endif
 }  // namespace AccessToken
 }  // namespace Security
 }

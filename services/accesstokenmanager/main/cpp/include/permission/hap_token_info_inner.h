@@ -81,6 +81,9 @@ public:
     int GetInstIndex() const;
     AccessTokenID GetTokenID() const;
     void SetTokenBaseInfo(const HapTokenInfo& baseInfo);
+    // Refresh all info carried by the item: token base info plus the
+    // perm-dialog / migrated / sideload flags.
+    void UpdateHapInfo(const HapTokenInfoItem& item);
     std::string ToString() const;
     bool IsRemote() const;
     void SetRemote(bool isRemote);
@@ -89,6 +92,7 @@ public:
     bool IsMigrated() const;
     void SetMigrated(bool isMigrated);
     bool IsSideloadApp() const;
+    void SetSideloadApp(bool isSideloadApp);
 
     int32_t UpdatePermissionStatus(
         const std::string& permissionName, bool isGranted, uint32_t flag, bool& statusChanged);
@@ -104,11 +108,11 @@ public:
     static void GetGrantedPermList(AccessTokenID tokenID, std::vector<std::string>& permissionList);
     static void ClearAllSecCompGrantedPerm();
     static bool IsPermissionGrantedWithSecComp(AccessTokenID tokenID, const std::string& permissionName);
+    static int32_t GetApiVersion(int32_t apiVersion);
 
     uint64_t permUpdateTimestamp_;
 
 private:
-    int32_t GetApiVersion(int32_t apiVersion);
     void StoreHapBasicInfo(std::vector<GenericValues>& valueList) const;
     void TranslationIntoGenericValues(GenericValues& outGenericValues) const;
     int RestoreHapTokenBasicInfo(const GenericValues& inGenericValues);

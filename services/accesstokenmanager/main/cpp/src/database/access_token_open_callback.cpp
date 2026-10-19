@@ -15,6 +15,7 @@
 
 #include "access_token_open_callback.h"
 
+#include <cstdlib>
 #include <functional>
 
 #include "access_token_error.h"
@@ -725,6 +726,31 @@ static int32_t IsColumnExist(NativeRdb::RdbStore& rdbStore, AtmDataType type,
     return NativeRdb::E_OK;
 }
 
+#ifdef SPM_DATA_ENABLE
+static int32_t IsMigrationAlreadyCompleted(NativeRdb::RdbStore& rdbStore, bool& completed)
+{
+    completed = false;
+    std::string systemConfigTableName;
+    AccessTokenDbUtil::GetTableNameByType(AtmDataType::ACCESSTOKEN_SYSTEM_CONFIG, systemConfigTableName);
+    std::string querySql = "select " + TokenFiledConst::FIELD_VALUE + " from " + systemConfigTableName +
+        " where " + TokenFiledConst::FIELD_NAME + "='" + BMS_MIGRATE_COMPLETED + "'";
+    auto resultSet = rdbStore.QuerySql(querySql);
+    if (resultSet == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to query %{public}s from %{public}s.",
+            BMS_MIGRATE_COMPLETED, systemConfigTableName.c_str());
+        return ERR_DATABASE_OPERATE_FAILED;
+    }
+    while (resultSet->GoToNextRow() == NativeRdb::E_OK) {
+        std::string valueStr;
+        resultSet->GetString(0, valueStr);
+        if (std::atoi(valueStr.c_str()) > 1) {
+            completed = true;
+        }
+    }
+    return NativeRdb::E_OK;
+}
+#endif
+
 int32_t AccessTokenOpenCallback::AddUidMigratedReservedColumns(NativeRdb::RdbStore& rdbStore)
 {
     std::string tableName;
@@ -996,10 +1022,23 @@ int32_t AccessTokenOpenCallback::UpgradeFromVersion12(NativeRdb::RdbStore& rdbSt
 
 int32_t AccessTokenOpenCallback::ResetUidAndMigrateCompleted(NativeRdb::RdbStore& rdbStore)
 {
+    // If BMS migration is already completed (config value greater than 1), keep
+    // the migrated state: neither the hap uid nor the completion flag is reset,
+    // otherwise the uid would stay invalid because BMS does not migrate again.
+    bool migrationCompleted = false;
+    int32_t res = IsMigrationAlreadyCompleted(rdbStore, migrationCompleted);
+    if (res != NativeRdb::E_OK) {
+        return res;
+    }
+    if (migrationCompleted) {
+        LOGI(ATM_DOMAIN, ATM_TAG, "Migration already completed, skip uid and flag reset.");
+        return NativeRdb::E_OK;
+    }
+
     const int32_t hapInvalidUid = -1;
     bool uidExist = false;
     std::string hapTokenInfoTableName;
-    int32_t res = IsColumnExist(rdbStore, AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, TokenFiledConst::FIELD_UID,
+    res = IsColumnExist(rdbStore, AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, TokenFiledConst::FIELD_UID,
         uidExist, hapTokenInfoTableName);
     if (res != NativeRdb::E_OK) {
         return res;

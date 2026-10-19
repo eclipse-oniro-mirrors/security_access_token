@@ -55,9 +55,11 @@ ohos_unittest("libaccesstoken_sdk_test") {
     "HapTokenTest/alloc_hap_token_test.cpp",
     "HapTokenTest/app_installation_optimized_test.cpp",
     "HapTokenTest/delete_token_test.cpp",
+    "HapTokenTest/get_hap_sign_info_test.cpp",
     "HapTokenTest/get_hap_token_test.cpp",
     "HapTokenTest/get_token_type_test.cpp",
     "HapTokenTest/init_hap_token_test.cpp",
+    "HapTokenTest/install_session_manager_test.cpp",
     "HapTokenTest/update_hap_token_test.cpp",
     "PermDenyTest/accesstoken_deny_test.cpp",
     "PermisionDialogTest/accesstoken_location_request_test.cpp",
@@ -104,6 +106,7 @@ ohos_unittest("libaccesstoken_sdk_test") {
     "${access_token_path}/interfaces/innerkits/nativetoken:libnativetoken_shared",
     "${access_token_path}/interfaces/innerkits/token_setproc:libpermsetproc_shared",
     "${access_token_path}/interfaces/innerkits/token_setproc:libtokensetproc_shared",
+    "${access_token_path}/services/common/proxy_death:proxy_death_stub",
   ]
 
   external_deps = [
@@ -216,6 +219,7 @@ ohos_unittest("accesstoken_mock_test") {
     "${access_token_path}/interfaces/innerkits/nativetoken/include",
     "${access_token_path}/interfaces/innerkits/token_setproc/include",
     "${access_token_path}/interfaces/innerkits/proxy_death/include",
+    "${access_token_path}/services/common/proxy_death/include",
     "${access_token_innerkit_path}/include",
     "${access_token_innerkit_path}/src",
   ]
@@ -250,6 +254,7 @@ ohos_unittest("accesstoken_mock_test") {
     "${access_token_path}/interfaces/innerkits/token_setproc:libpermsetproc_shared",
     "${access_token_path}/interfaces/innerkits/token_setproc:libtoken_setproc",
     "${access_token_path}/services/accesstokenmanager/idl:access_token_manager_proxy",
+    "${access_token_path}/services/common/proxy_death:proxy_death_stub",
   ]
 
   external_deps = [

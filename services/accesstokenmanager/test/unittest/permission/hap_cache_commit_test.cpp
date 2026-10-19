@@ -4,7 +4,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -29,23 +29,21 @@ namespace Security {
 namespace AccessToken {
 namespace {
 constexpr AccessTokenID TEST_TOKEN_ID = 0x20260428;
-constexpr AccessTokenID TEST_TOKEN_ID_2 = 0x20260429;
+constexpr AccessTokenID TEST_TOKEN_ID_2 =  0x20260429;
 constexpr int32_t TEST_USER_ID = 100;
 constexpr int32_t TEST_INST_INDEX = 0;
 
-HapTokenInfo BuildTestHapInfo(AccessTokenID tokenId, const std::string& bundleName, int32_t apiVersion)
+HapTokenInfoItem BuildTestHapInfoItem(AccessTokenID tokenId, const std::string& bundleName, int32_t apiVersion)
 {
-    HapTokenInfo info = {};
-    info.ver = 1;
-    info.userID = TEST_USER_ID;
-    info.bundleName = bundleName;
-    info.apiVersion = apiVersion;
-    info.instIndex = TEST_INST_INDEX;
-    info.dlpType = DLP_COMMON;
-    info.tokenID = tokenId;
-    info.tokenAttr = 0;
-    info.uid = 20100000; //20100000: test uid
-    return info;
+    HapTokenInfoItem item;
+    item.tokenId = tokenId;
+    item.userId = static_cast<uint32_t>(TEST_USER_ID);
+    item.bundleName = bundleName;
+    item.apiVersion = apiVersion;
+    item.instIndex = static_cast<uint32_t>(TEST_INST_INDEX);
+    item.dlpType = DLP_COMMON;
+    item.uid = 20100000; //20100000: test uid
+    return item;
 }
 
 std::vector<BriefPermData> BuildBriefData(uint16_t permCode, int8_t status, uint32_t flag)
@@ -98,9 +96,6 @@ public:
         manager.hapTokenIdMap_.erase("com.example.cache.updated&100&1");
         manager.hapTokenIdMap_.erase("com.example.cache.multi&100&0");
         manager.hapTokenIdMap_.erase("com.example.cache.multi&100&1");
-        manager.bundleInfoMap_.erase("com.example.cache");
-        manager.bundleInfoMap_.erase("com.example.cache.updated");
-        manager.bundleInfoMap_.erase("com.example.cache.multi");
         (void)PermissionDataBrief::GetInstance().DeleteBriefPermDataByTokenId(TEST_TOKEN_ID);
         (void)PermissionDataBrief::GetInstance().DeleteBriefPermDataByTokenId(TEST_TOKEN_ID_2);
     }
@@ -108,32 +103,32 @@ public:
 
 /**
  * @tc.name: CommitCreateHapCache001
- * @tc.desc: Verify create cache writes hap, bundle and brief caches.
+ * @tc.desc: Verify create cache writes hap and brief caches.
  * @tc.type: FUNC
  */
 HWTEST_F(HapCacheCommitTest, CommitCreateHapCache001, TestSize.Level0)
 {
     auto& manager = AccessTokenInfoManager::GetInstance();
-    auto hapInfo = BuildTestHapInfo(TEST_TOKEN_ID, "com.example.cache", 12);
-    auto bundleInfo = std::make_shared<BundleInfoInner>();
-    bundleInfo->tokenIds = { TEST_TOKEN_ID };
-    bundleInfo->permCodeList = { 1 };
+    auto hapInfoItem = BuildTestHapInfoItem(TEST_TOKEN_ID, "com.example.cache", 12);
+    hapInfoItem.isSideload = true;
+    hapInfoItem.migrated = true;
     auto briefData = BuildBriefData(1, PERMISSION_GRANTED, PERMISSION_SYSTEM_FIXED);
 
-    manager.CommitCreateHapCache(hapInfo, briefData, {}, bundleInfo);
+    manager.CommitCreateHapCache(hapInfoItem, briefData, {});
 
     ASSERT_NE(manager.hapTokenInfoMap_.find(TEST_TOKEN_ID), manager.hapTokenInfoMap_.end());
     ASSERT_NE(nullptr, manager.hapTokenInfoMap_[TEST_TOKEN_ID]);
     HapTokenInfo cachedInfo = manager.hapTokenInfoMap_[TEST_TOKEN_ID]->GetHapInfoBasic();
-    EXPECT_EQ(hapInfo.tokenID, cachedInfo.tokenID);
-    EXPECT_EQ(hapInfo.bundleName, cachedInfo.bundleName);
-    EXPECT_EQ(hapInfo.apiVersion, cachedInfo.apiVersion);
+    EXPECT_EQ(hapInfoItem.tokenId, cachedInfo.tokenID);
+    EXPECT_EQ(hapInfoItem.bundleName, cachedInfo.bundleName);
+    EXPECT_EQ(hapInfoItem.apiVersion, cachedInfo.apiVersion);
+    // sideload/migrated ride on the item (uidFromCaller corresponds to migrated)
+    EXPECT_TRUE(manager.hapTokenInfoMap_[TEST_TOKEN_ID]->IsSideloadApp());
+    EXPECT_TRUE(manager.hapTokenInfoMap_[TEST_TOKEN_ID]->IsMigrated());
     ASSERT_NE(manager.hapTokenIdMap_.find("com.example.cache&100&0"), manager.hapTokenIdMap_.end());
     EXPECT_EQ(TEST_TOKEN_ID, manager.hapTokenIdMap_["com.example.cache&100&0"]);
-    ASSERT_NE(manager.bundleInfoMap_.find("com.example.cache"), manager.bundleInfoMap_.end());
-    EXPECT_EQ(bundleInfo, manager.bundleInfoMap_["com.example.cache"]);
-    ASSERT_EQ(1u, manager.bundleInfoMap_["com.example.cache"]->tokenIds.size());
-    EXPECT_EQ(TEST_TOKEN_ID, manager.bundleInfoMap_["com.example.cache"]->tokenIds[0]);
+    // the userId cache is populated on create
+    EXPECT_EQ(1u, manager.userIdSet_.count(TEST_USER_ID));
 
     std::vector<BriefPermData> queriedData;
     ASSERT_EQ(RET_SUCCESS, PermissionDataBrief::GetInstance().GetBriefPermDataByTokenId(TEST_TOKEN_ID, queriedData));
@@ -149,32 +144,25 @@ HWTEST_F(HapCacheCommitTest, CommitCreateHapCache001, TestSize.Level0)
 HWTEST_F(HapCacheCommitTest, CommitUpdateHapCache001, TestSize.Level0)
 {
     auto& manager = AccessTokenInfoManager::GetInstance();
-    auto hapInfo = BuildTestHapInfo(TEST_TOKEN_ID, "com.example.cache", 12);
-    auto bundleInfo = std::make_shared<BundleInfoInner>();
-    bundleInfo->tokenIds = { TEST_TOKEN_ID };
-    bundleInfo->permCodeList = { 1 };
-    manager.CommitCreateHapCache(hapInfo, BuildBriefData(1, PERMISSION_GRANTED, 0), {}, bundleInfo);
+    auto hapInfoItem = BuildTestHapInfoItem(TEST_TOKEN_ID, "com.example.cache", 12);
+    manager.CommitCreateHapCache(hapInfoItem, BuildBriefData(1, PERMISSION_GRANTED, 0), {});
 
     auto oldPtr = manager.hapTokenInfoMap_[TEST_TOKEN_ID];
-    HapTokenInfo updatedInfo = hapInfo;
+    HapTokenInfoItem updatedInfo = hapInfoItem;
     updatedInfo.apiVersion = 15;
     updatedInfo.tokenAttr = 0x8;
-    auto updatedBundleInfo = std::make_shared<BundleInfoInner>();
-    updatedBundleInfo->tokenIds = { TEST_TOKEN_ID };
-    updatedBundleInfo->permCodeList = { 2 };
 
     manager.CommitUpdateHapCache(updatedInfo,
-        BuildBriefData(2, PERMISSION_DENIED, PERMISSION_DEFAULT_FLAG), {}, updatedBundleInfo);
+        BuildBriefData(2, PERMISSION_DENIED, PERMISSION_DEFAULT_FLAG), {});
 
     ASSERT_NE(manager.hapTokenInfoMap_.find(TEST_TOKEN_ID), manager.hapTokenInfoMap_.end());
     EXPECT_EQ(oldPtr, manager.hapTokenInfoMap_[TEST_TOKEN_ID]);
     HapTokenInfo cachedInfo = manager.hapTokenInfoMap_[TEST_TOKEN_ID]->GetHapInfoBasic();
     EXPECT_EQ(15, cachedInfo.apiVersion);
     EXPECT_EQ(static_cast<uint32_t>(0x8), cachedInfo.tokenAttr);
-    ASSERT_NE(manager.bundleInfoMap_.find("com.example.cache"), manager.bundleInfoMap_.end());
-    EXPECT_EQ(updatedBundleInfo, manager.bundleInfoMap_["com.example.cache"]);
-    ASSERT_EQ(1u, manager.bundleInfoMap_["com.example.cache"]->tokenIds.size());
-    EXPECT_EQ(TEST_TOKEN_ID, manager.bundleInfoMap_["com.example.cache"]->tokenIds[0]);
+    // the identity-triple <-> tokenID mapping is untouched by the update
+    ASSERT_NE(manager.hapTokenIdMap_.find("com.example.cache&100&0"), manager.hapTokenIdMap_.end());
+    EXPECT_EQ(TEST_TOKEN_ID, manager.hapTokenIdMap_["com.example.cache&100&0"]);
 
     std::vector<BriefPermData> queriedData;
     ASSERT_EQ(RET_SUCCESS, PermissionDataBrief::GetInstance().GetBriefPermDataByTokenId(TEST_TOKEN_ID, queriedData));
@@ -184,215 +172,59 @@ HWTEST_F(HapCacheCommitTest, CommitUpdateHapCache001, TestSize.Level0)
 
 /**
  * @tc.name: CommitDeleteHapCache001
- * @tc.desc: Verify delete cache removes hap, bundle and brief caches.
+ * @tc.desc: Verify delete cache removes hap and brief caches.
  * @tc.type: FUNC
  */
 HWTEST_F(HapCacheCommitTest, CommitDeleteHapCache001, TestSize.Level0)
 {
     auto& manager = AccessTokenInfoManager::GetInstance();
-    auto hapInfo = BuildTestHapInfo(TEST_TOKEN_ID, "com.example.cache", 12);
-    auto bundleInfo = std::make_shared<BundleInfoInner>();
-    bundleInfo->tokenIds = { TEST_TOKEN_ID };
-    bundleInfo->permCodeList = { 1 };
-    manager.CommitCreateHapCache(hapInfo, BuildBriefData(1, PERMISSION_GRANTED, 0), {}, bundleInfo);
+    auto hapInfoItem = BuildTestHapInfoItem(TEST_TOKEN_ID, "com.example.cache", 12);
+    manager.CommitCreateHapCache(hapInfoItem, BuildBriefData(1, PERMISSION_GRANTED, 0), {});
 
-    manager.CommitDeleteHapCache(TEST_TOKEN_ID, "com.example.cache");
+    manager.CommitDeleteHapCache(TEST_TOKEN_ID);
 
     EXPECT_EQ(manager.hapTokenInfoMap_.end(), manager.hapTokenInfoMap_.find(TEST_TOKEN_ID));
     EXPECT_EQ(manager.hapTokenIdMap_.end(), manager.hapTokenIdMap_.find("com.example.cache&100&0"));
-    EXPECT_EQ(manager.bundleInfoMap_.end(), manager.bundleInfoMap_.find("com.example.cache"));
 
     std::vector<BriefPermData> queriedData;
     EXPECT_NE(RET_SUCCESS, PermissionDataBrief::GetInstance().GetBriefPermDataByTokenId(TEST_TOKEN_ID, queriedData));
 }
 
 /**
- * @tc.name: CommitUpdateHapCache002
- * @tc.desc: Verify update cache inherits original tokenIds when bundle info pointer changes.
- * @tc.type: FUNC
- */
-HWTEST_F(HapCacheCommitTest, CommitUpdateHapCache002, TestSize.Level0)
-{
-    auto& manager = AccessTokenInfoManager::GetInstance();
-    auto hapInfo = BuildTestHapInfo(TEST_TOKEN_ID, "com.example.cache", 12);
-    auto bundleInfo = std::make_shared<BundleInfoInner>();
-    bundleInfo->tokenIds = { TEST_TOKEN_ID };
-    bundleInfo->permCodeList = { 1 };
-    manager.CommitCreateHapCache(hapInfo, BuildBriefData(1, PERMISSION_GRANTED, 0), {}, bundleInfo);
-
-    auto updatedBundleInfo = std::make_shared<BundleInfoInner>();
-    updatedBundleInfo->tokenIds = { TEST_TOKEN_ID_2 };
-    updatedBundleInfo->permCodeList = { 2 };
-
-    manager.CommitUpdateHapCache(hapInfo,
-        BuildBriefData(2, PERMISSION_DENIED, PERMISSION_DEFAULT_FLAG), {}, updatedBundleInfo);
-
-    ASSERT_NE(manager.bundleInfoMap_.end(), manager.bundleInfoMap_.find("com.example.cache"));
-    EXPECT_EQ(updatedBundleInfo, manager.bundleInfoMap_["com.example.cache"]);
-    ASSERT_EQ(1u, manager.bundleInfoMap_["com.example.cache"]->tokenIds.size());
-    EXPECT_EQ(TEST_TOKEN_ID, manager.bundleInfoMap_["com.example.cache"]->tokenIds[0]);
-}
-
-/**
- * @tc.name: CommitCreateHapCache002
- * @tc.desc: Verify create cache keeps existing tokenIds in the passed bundle info and appends current tokenId.
- * @tc.type: FUNC
- */
-HWTEST_F(HapCacheCommitTest, CommitCreateHapCache002, TestSize.Level0)
-{
-    auto& manager = AccessTokenInfoManager::GetInstance();
-    auto hapInfo = BuildTestHapInfo(TEST_TOKEN_ID, "com.example.cache", 12);
-    auto bundleInfo = std::make_shared<BundleInfoInner>();
-    bundleInfo->tokenIds = { TEST_TOKEN_ID_2 };
-    bundleInfo->permCodeList = { 1 };
-
-    manager.CommitCreateHapCache(hapInfo, BuildBriefData(1, PERMISSION_GRANTED, 0), {}, bundleInfo);
-
-    ASSERT_NE(manager.bundleInfoMap_.end(), manager.bundleInfoMap_.find("com.example.cache"));
-    ASSERT_EQ(2u, manager.bundleInfoMap_["com.example.cache"]->tokenIds.size());
-    EXPECT_NE(std::find(manager.bundleInfoMap_["com.example.cache"]->tokenIds.begin(),
-        manager.bundleInfoMap_["com.example.cache"]->tokenIds.end(), TEST_TOKEN_ID),
-        manager.bundleInfoMap_["com.example.cache"]->tokenIds.end());
-    EXPECT_NE(std::find(manager.bundleInfoMap_["com.example.cache"]->tokenIds.begin(),
-        manager.bundleInfoMap_["com.example.cache"]->tokenIds.end(), TEST_TOKEN_ID_2),
-        manager.bundleInfoMap_["com.example.cache"]->tokenIds.end());
-}
-
-/**
- * @tc.name: CommitCreateHapCache003
- * @tc.desc: Verify create cache replaces different bundle info pointer and preserves old tokenIds.
- * @tc.type: FUNC
- */
-HWTEST_F(HapCacheCommitTest, CommitCreateHapCache003, TestSize.Level0)
-{
-    auto& manager = AccessTokenInfoManager::GetInstance();
-    auto oldBundleInfo = std::make_shared<BundleInfoInner>();
-    oldBundleInfo->tokenIds = { TEST_TOKEN_ID_2 };
-    oldBundleInfo->permCodeList = { 9 };
-    manager.bundleInfoMap_["com.example.cache"] = oldBundleInfo;
-
-    auto newBundleInfo = std::make_shared<BundleInfoInner>();
-    newBundleInfo->tokenIds = {};
-    newBundleInfo->permCodeList = { 1 };
-
-    manager.CommitCreateHapCache(BuildTestHapInfo(TEST_TOKEN_ID, "com.example.cache", 12),
-        BuildBriefData(1, PERMISSION_GRANTED, 0), {}, newBundleInfo);
-
-    ASSERT_NE(manager.bundleInfoMap_.end(), manager.bundleInfoMap_.find("com.example.cache"));
-    EXPECT_EQ(newBundleInfo, manager.bundleInfoMap_["com.example.cache"]);
-    ASSERT_EQ(2u, manager.bundleInfoMap_["com.example.cache"]->tokenIds.size());
-    EXPECT_NE(std::find(manager.bundleInfoMap_["com.example.cache"]->tokenIds.begin(),
-        manager.bundleInfoMap_["com.example.cache"]->tokenIds.end(), TEST_TOKEN_ID),
-        manager.bundleInfoMap_["com.example.cache"]->tokenIds.end());
-    EXPECT_NE(std::find(manager.bundleInfoMap_["com.example.cache"]->tokenIds.begin(),
-        manager.bundleInfoMap_["com.example.cache"]->tokenIds.end(), TEST_TOKEN_ID_2),
-        manager.bundleInfoMap_["com.example.cache"]->tokenIds.end());
-}
-
-/**
- * @tc.name: CommitCreateHapCache004
- * @tc.desc: Verify create cache does not append duplicate tokenIds into bundle info.
- * @tc.type: FUNC
- */
-HWTEST_F(HapCacheCommitTest, CommitCreateHapCache004, TestSize.Level0)
-{
-    auto& manager = AccessTokenInfoManager::GetInstance();
-    auto oldBundleInfo = std::make_shared<BundleInfoInner>();
-    oldBundleInfo->tokenIds = { TEST_TOKEN_ID };
-    oldBundleInfo->permCodeList = { 9 };
-    manager.bundleInfoMap_["com.example.cache"] = oldBundleInfo;
-
-    auto newBundleInfo = std::make_shared<BundleInfoInner>();
-    newBundleInfo->tokenIds = { TEST_TOKEN_ID };
-    newBundleInfo->permCodeList = { 1 };
-
-    manager.CommitCreateHapCache(BuildTestHapInfo(TEST_TOKEN_ID, "com.example.cache", 12),
-        BuildBriefData(1, PERMISSION_GRANTED, 0), {}, newBundleInfo);
-
-    ASSERT_NE(manager.bundleInfoMap_.end(), manager.bundleInfoMap_.find("com.example.cache"));
-    EXPECT_EQ(newBundleInfo, manager.bundleInfoMap_["com.example.cache"]);
-    ASSERT_EQ(1u, manager.bundleInfoMap_["com.example.cache"]->tokenIds.size());
-    EXPECT_EQ(TEST_TOKEN_ID, manager.bundleInfoMap_["com.example.cache"]->tokenIds[0]);
-}
-
-/**
- * @tc.name: CommitUpdateHapCache004
- * @tc.desc: Verify update cache preserves original tokenIds when replacing bundle info content.
- * @tc.type: FUNC
- */
-HWTEST_F(HapCacheCommitTest, CommitUpdateHapCache004, TestSize.Level0)
-{
-    auto& manager = AccessTokenInfoManager::GetInstance();
-    auto hapInfo = BuildTestHapInfo(TEST_TOKEN_ID, "com.example.cache", 12);
-    auto bundleInfo = std::make_shared<BundleInfoInner>();
-    bundleInfo->tokenIds = { TEST_TOKEN_ID };
-    bundleInfo->permCodeList = { 1 };
-    manager.CommitCreateHapCache(hapInfo, BuildBriefData(1, PERMISSION_GRANTED, 0), {}, bundleInfo);
-
-    manager.bundleInfoMap_["com.example.cache"]->tokenIds = { TEST_TOKEN_ID, TEST_TOKEN_ID_2 };
-    auto updatedBundleInfo = std::make_shared<BundleInfoInner>();
-    updatedBundleInfo->tokenIds = {};
-    updatedBundleInfo->permCodeList = { 2 };
-
-    manager.CommitUpdateHapCache(hapInfo,
-        BuildBriefData(2, PERMISSION_DENIED, PERMISSION_DEFAULT_FLAG), {}, updatedBundleInfo);
-
-    ASSERT_NE(manager.bundleInfoMap_.end(), manager.bundleInfoMap_.find("com.example.cache"));
-    EXPECT_EQ(updatedBundleInfo, manager.bundleInfoMap_["com.example.cache"]);
-    ASSERT_EQ(2u, manager.bundleInfoMap_["com.example.cache"]->tokenIds.size());
-    EXPECT_NE(std::find(manager.bundleInfoMap_["com.example.cache"]->tokenIds.begin(),
-        manager.bundleInfoMap_["com.example.cache"]->tokenIds.end(), TEST_TOKEN_ID),
-        manager.bundleInfoMap_["com.example.cache"]->tokenIds.end());
-    EXPECT_NE(std::find(manager.bundleInfoMap_["com.example.cache"]->tokenIds.begin(),
-        manager.bundleInfoMap_["com.example.cache"]->tokenIds.end(), TEST_TOKEN_ID_2),
-        manager.bundleInfoMap_["com.example.cache"]->tokenIds.end());
-}
-
-/**
  * @tc.name: CommitUpdateHapCache003
- * @tc.desc: Verify update cache is a no-op when token does not exist in cache.
+ * @tc.desc: Verify update cache rebuilds the live cache entry for a token collected by the update session.
  * @tc.type: FUNC
  */
 HWTEST_F(HapCacheCommitTest, CommitUpdateHapCache003, TestSize.Level0)
 {
     auto& manager = AccessTokenInfoManager::GetInstance();
-    HapTokenInfo updatedInfo = BuildTestHapInfo(TEST_TOKEN_ID, "com.example.cache.updated", 15);
-    auto updatedBundleInfo = std::make_shared<BundleInfoInner>();
-    updatedBundleInfo->tokenIds = { TEST_TOKEN_ID };
-    updatedBundleInfo->permCodeList = { 2 };
+    HapTokenInfoItem updatedInfo = BuildTestHapInfoItem(TEST_TOKEN_ID, "com.example.cache.updated", 15);
 
     manager.CommitUpdateHapCache(updatedInfo,
-        BuildBriefData(2, PERMISSION_DENIED, PERMISSION_DEFAULT_FLAG), {}, updatedBundleInfo);
+        BuildBriefData(2, PERMISSION_DENIED, PERMISSION_DEFAULT_FLAG), {});
 
-    EXPECT_EQ(manager.hapTokenInfoMap_.end(), manager.hapTokenInfoMap_.find(TEST_TOKEN_ID));
-    EXPECT_EQ(manager.hapTokenIdMap_.end(), manager.hapTokenIdMap_.find("com.example.cache.updated&100&0"));
-    EXPECT_EQ(manager.bundleInfoMap_.end(), manager.bundleInfoMap_.find("com.example.cache.updated"));
+    ASSERT_NE(manager.hapTokenInfoMap_.end(), manager.hapTokenInfoMap_.find(TEST_TOKEN_ID));
+    HapTokenInfo cachedInfo = manager.hapTokenInfoMap_[TEST_TOKEN_ID]->GetHapInfoBasic();
+    EXPECT_EQ(15, cachedInfo.apiVersion);
 }
 
 /**
  * @tc.name: CommitDeleteHapCache002
- * @tc.desc: Verify delete cache keeps bundle cache when other tokenIds still belong to the same bundle.
+ * @tc.desc: Verify delete cache of one token keeps the other tokens.
  * @tc.type: FUNC
  */
 HWTEST_F(HapCacheCommitTest, CommitDeleteHapCache002, TestSize.Level0)
 {
     auto& manager = AccessTokenInfoManager::GetInstance();
-    auto bundleInfo = std::make_shared<BundleInfoInner>();
-    bundleInfo->tokenIds = { TEST_TOKEN_ID, TEST_TOKEN_ID_2 };
-    bundleInfo->permCodeList = { 1, 2 };
-    manager.CommitCreateHapCache(BuildTestHapInfo(TEST_TOKEN_ID, "com.example.cache.multi", 12),
-        BuildBriefData(1, PERMISSION_GRANTED, 0), {}, bundleInfo);
-    manager.CommitCreateHapCache(BuildTestHapInfo(TEST_TOKEN_ID_2, "com.example.cache.multi", 12),
-        BuildBriefData(2, PERMISSION_GRANTED, 0), {}, bundleInfo);
+    manager.CommitCreateHapCache(BuildTestHapInfoItem(TEST_TOKEN_ID, "com.example.cache.multi", 12),
+        BuildBriefData(1, PERMISSION_GRANTED, 0), {});
+    manager.CommitCreateHapCache(BuildTestHapInfoItem(TEST_TOKEN_ID_2, "com.example.cache.multi", 12),
+        BuildBriefData(2, PERMISSION_GRANTED, 0), {});
 
-    manager.CommitDeleteHapCache(TEST_TOKEN_ID, "com.example.cache.multi");
+    manager.CommitDeleteHapCache(TEST_TOKEN_ID);
 
     EXPECT_EQ(manager.hapTokenInfoMap_.end(), manager.hapTokenInfoMap_.find(TEST_TOKEN_ID));
     ASSERT_NE(manager.hapTokenInfoMap_.end(), manager.hapTokenInfoMap_.find(TEST_TOKEN_ID_2));
-    ASSERT_NE(manager.bundleInfoMap_.end(), manager.bundleInfoMap_.find("com.example.cache.multi"));
-    ASSERT_NE(nullptr, manager.bundleInfoMap_["com.example.cache.multi"]);
-    ASSERT_EQ(1u, manager.bundleInfoMap_["com.example.cache.multi"]->tokenIds.size());
-    EXPECT_EQ(TEST_TOKEN_ID_2, manager.bundleInfoMap_["com.example.cache.multi"]->tokenIds[0]);
 }
 
 /**
@@ -403,10 +235,7 @@ HWTEST_F(HapCacheCommitTest, CommitDeleteHapCache002, TestSize.Level0)
 HWTEST_F(HapCacheCommitTest, CommitCreateHapCacheWithExtendedPerm001, TestSize.Level0)
 {
     auto& manager = AccessTokenInfoManager::GetInstance();
-    auto hapInfo = BuildTestHapInfo(TEST_TOKEN_ID, "com.example.cache", 12);
-    auto bundleInfo = std::make_shared<BundleInfoInner>();
-    bundleInfo->tokenIds = { TEST_TOKEN_ID };
-    bundleInfo->permCodeList = { 1, 2 };
+    auto hapInfoItem = BuildTestHapInfoItem(TEST_TOKEN_ID, "com.example.cache", 12);
     auto briefData = BuildBriefData(1, PERMISSION_GRANTED, PERMISSION_SYSTEM_FIXED);
 
     // Build extended permission list
@@ -421,7 +250,7 @@ HWTEST_F(HapCacheCommitTest, CommitCreateHapCacheWithExtendedPerm001, TestSize.L
     perm2.value = "denied";
     extendedPermList.push_back(perm2);
 
-    manager.CommitCreateHapCache(hapInfo, briefData, extendedPermList, bundleInfo);
+    manager.CommitCreateHapCache(hapInfoItem, briefData, extendedPermList);
 
     ASSERT_NE(manager.hapTokenInfoMap_.find(TEST_TOKEN_ID), manager.hapTokenInfoMap_.end());
     std::vector<BriefPermData> queriedData;
@@ -456,10 +285,7 @@ HWTEST_F(HapCacheCommitTest, CommitCreateHapCacheWithExtendedPerm001, TestSize.L
 HWTEST_F(HapCacheCommitTest, CommitCreateHapCacheWithExtendedPerm002, TestSize.Level0)
 {
     auto& manager = AccessTokenInfoManager::GetInstance();
-    auto hapInfo = BuildTestHapInfo(TEST_TOKEN_ID, "com.example.cache", 12);
-    auto bundleInfo = std::make_shared<BundleInfoInner>();
-    bundleInfo->tokenIds = { TEST_TOKEN_ID };
-    bundleInfo->permCodeList = { 1 };
+    auto hapInfoItem = BuildTestHapInfoItem(TEST_TOKEN_ID, "com.example.cache", 12);
     auto briefData = BuildBriefData(1, PERMISSION_GRANTED, PERMISSION_SYSTEM_FIXED);
 
     // First create with extended permissions
@@ -468,7 +294,7 @@ HWTEST_F(HapCacheCommitTest, CommitCreateHapCacheWithExtendedPerm002, TestSize.L
     perm1.permissionName = "ohos.permission.ACCESS_DDK_DRIVERS";
     perm1.value = "allowed";
     extendedPermList.push_back(perm1);
-    manager.CommitCreateHapCache(hapInfo, briefData, extendedPermList, bundleInfo);
+    manager.CommitCreateHapCache(hapInfoItem, briefData, extendedPermList);
 
     // Verify extended permissions are set
     std::vector<PermissionWithValue> queriedExtendedPerms;
@@ -476,7 +302,7 @@ HWTEST_F(HapCacheCommitTest, CommitCreateHapCacheWithExtendedPerm002, TestSize.L
     ASSERT_EQ(1u, queriedExtendedPerms.size());
 
     // Update with empty extended permission list
-    manager.CommitCreateHapCache(hapInfo, briefData, {}, bundleInfo);
+    manager.CommitCreateHapCache(hapInfoItem, briefData, {});
 
     // Verify extended permissions are cleared
     queriedExtendedPerms.clear();
@@ -492,11 +318,8 @@ HWTEST_F(HapCacheCommitTest, CommitCreateHapCacheWithExtendedPerm002, TestSize.L
 HWTEST_F(HapCacheCommitTest, CommitUpdateHapCacheWithExtendedPerm001, TestSize.Level0)
 {
     auto& manager = AccessTokenInfoManager::GetInstance();
-    auto hapInfo = BuildTestHapInfo(TEST_TOKEN_ID, "com.example.cache", 12);
-    auto bundleInfo = std::make_shared<BundleInfoInner>();
-    bundleInfo->tokenIds = { TEST_TOKEN_ID };
-    bundleInfo->permCodeList = { 1 };
-    manager.CommitCreateHapCache(hapInfo, BuildBriefData(1, PERMISSION_GRANTED, 0), {}, bundleInfo);
+    auto hapInfoItem = BuildTestHapInfoItem(TEST_TOKEN_ID, "com.example.cache", 12);
+    manager.CommitCreateHapCache(hapInfoItem, BuildBriefData(1, PERMISSION_GRANTED, 0), {});
 
     // Build updated extended permission list
     std::vector<PermissionWithValue> extendedPermList;
@@ -505,14 +328,11 @@ HWTEST_F(HapCacheCommitTest, CommitUpdateHapCacheWithExtendedPerm001, TestSize.L
     perm1.value = "in_use";
     extendedPermList.push_back(perm1);
 
-    HapTokenInfo updatedInfo = hapInfo;
+    HapTokenInfoItem updatedInfo = hapInfoItem;
     updatedInfo.apiVersion = 15;
-    auto updatedBundleInfo = std::make_shared<BundleInfoInner>();
-    updatedBundleInfo->tokenIds = { TEST_TOKEN_ID };
-    updatedBundleInfo->permCodeList = { 1 };
 
     manager.CommitUpdateHapCache(updatedInfo,
-        BuildBriefData(1, PERMISSION_GRANTED, PERMISSION_DEFAULT_FLAG), extendedPermList, updatedBundleInfo);
+        BuildBriefData(1, PERMISSION_GRANTED, PERMISSION_DEFAULT_FLAG), extendedPermList);
 
     // Verify extended permissions are updated
     std::vector<PermissionWithValue> queriedExtendedPerms;
@@ -530,10 +350,7 @@ HWTEST_F(HapCacheCommitTest, CommitUpdateHapCacheWithExtendedPerm001, TestSize.L
 HWTEST_F(HapCacheCommitTest, CommitUpdateHapCacheWithExtendedPerm002, TestSize.Level0)
 {
     auto& manager = AccessTokenInfoManager::GetInstance();
-    auto hapInfo = BuildTestHapInfo(TEST_TOKEN_ID, "com.example.cache", 12);
-    auto bundleInfo = std::make_shared<BundleInfoInner>();
-    bundleInfo->tokenIds = { TEST_TOKEN_ID };
-    bundleInfo->permCodeList = { 1 };
+    auto hapInfoItem = BuildTestHapInfoItem(TEST_TOKEN_ID, "com.example.cache", 12);
 
     // Create with initial extended permissions
     std::vector<PermissionWithValue> initialExtendedList;
@@ -541,7 +358,7 @@ HWTEST_F(HapCacheCommitTest, CommitUpdateHapCacheWithExtendedPerm002, TestSize.L
     perm1.permissionName = "ohos.permission.ACCESS_DDK_DRIVERS";
     perm1.value = "allowed";
     initialExtendedList.push_back(perm1);
-    manager.CommitCreateHapCache(hapInfo, BuildBriefData(1, PERMISSION_GRANTED, 0), initialExtendedList, bundleInfo);
+    manager.CommitCreateHapCache(hapInfoItem, BuildBriefData(1, PERMISSION_GRANTED, 0), initialExtendedList);
 
     // Verify initial extended permissions
     std::vector<PermissionWithValue> queriedExtendedPerms;
@@ -555,12 +372,8 @@ HWTEST_F(HapCacheCommitTest, CommitUpdateHapCacheWithExtendedPerm002, TestSize.L
     perm2.value = "denied";
     updatedExtendedList.push_back(perm2);
 
-    auto updatedBundleInfo = std::make_shared<BundleInfoInner>();
-    updatedBundleInfo->tokenIds = { TEST_TOKEN_ID };
-    updatedBundleInfo->permCodeList = { 1 };
-
-    manager.CommitUpdateHapCache(hapInfo,
-        BuildBriefData(1, PERMISSION_GRANTED, PERMISSION_DEFAULT_FLAG), updatedExtendedList, updatedBundleInfo);
+    manager.CommitUpdateHapCache(hapInfoItem,
+        BuildBriefData(1, PERMISSION_GRANTED, PERMISSION_DEFAULT_FLAG), updatedExtendedList);
 
     // Verify extended permissions are replaced
     queriedExtendedPerms.clear();
@@ -578,14 +391,11 @@ HWTEST_F(HapCacheCommitTest, CommitUpdateHapCacheWithExtendedPerm002, TestSize.L
 HWTEST_F(HapCacheCommitTest, RestoreHapCache001, TestSize.Level0)
 {
     auto& manager = AccessTokenInfoManager::GetInstance();
-    auto bundleInfo = std::make_shared<BundleInfoInner>();
-    bundleInfo->tokenIds = { TEST_TOKEN_ID };
-    bundleInfo->permCodeList = { 1, 2 };
     std::vector<AccessTokenInfoManager::HapTokenRestoreData> tokenRestoreDataList = {
         BuildRestoreData(TEST_TOKEN_ID, "com.example.cache")
     };
 
-    manager.RestoreHapCache("com.example.cache", bundleInfo, tokenRestoreDataList);
+    manager.RestoreHapCache(tokenRestoreDataList);
 
     // Verify HAP token info is restored
     ASSERT_NE(manager.hapTokenInfoMap_.find(TEST_TOKEN_ID), manager.hapTokenInfoMap_.end());
@@ -608,12 +418,6 @@ HWTEST_F(HapCacheCommitTest, RestoreHapCache001, TestSize.Level0)
     ASSERT_EQ(1u, queriedExtendedPerms.size());
     EXPECT_EQ("ohos.permission.kernel.SUPPORT_PLUGIN", queriedExtendedPerms[0].permissionName);
     EXPECT_EQ("allowed", queriedExtendedPerms[0].value);
-
-    // Verify bundle info is updated
-    ASSERT_NE(manager.bundleInfoMap_.end(), manager.bundleInfoMap_.find("com.example.cache"));
-    EXPECT_EQ(bundleInfo, manager.bundleInfoMap_["com.example.cache"]);
-    ASSERT_EQ(1u, manager.bundleInfoMap_["com.example.cache"]->tokenIds.size());
-    EXPECT_EQ(TEST_TOKEN_ID, manager.bundleInfoMap_["com.example.cache"]->tokenIds[0]);
 }
 
 /**
@@ -624,9 +428,6 @@ HWTEST_F(HapCacheCommitTest, RestoreHapCache001, TestSize.Level0)
 HWTEST_F(HapCacheCommitTest, RestoreHapCache002, TestSize.Level0)
 {
     auto& manager = AccessTokenInfoManager::GetInstance();
-    auto bundleInfo = std::make_shared<BundleInfoInner>();
-    bundleInfo->tokenIds = {TEST_TOKEN_ID, TEST_TOKEN_ID_2};
-    bundleInfo->permCodeList = {1, 2};
 
     // Build restore data for first token
     AccessTokenInfoManager::HapTokenRestoreData restoreData1;
@@ -658,26 +459,16 @@ HWTEST_F(HapCacheCommitTest, RestoreHapCache002, TestSize.Level0)
     tokenRestoreDataList.push_back(restoreData1);
     tokenRestoreDataList.push_back(restoreData2);
 
-    manager.RestoreHapCache("com.example.cache.multi", bundleInfo, tokenRestoreDataList);
+    manager.RestoreHapCache(tokenRestoreDataList);
 
     // Verify both tokens are restored
     ASSERT_NE(manager.hapTokenInfoMap_.find(TEST_TOKEN_ID), manager.hapTokenInfoMap_.end());
     ASSERT_NE(manager.hapTokenInfoMap_.find(TEST_TOKEN_ID_2), manager.hapTokenInfoMap_.end());
-
-    // Verify bundle info contains both tokenIds
-    ASSERT_NE(manager.bundleInfoMap_.end(), manager.bundleInfoMap_.find("com.example.cache.multi"));
-    ASSERT_EQ(2u, manager.bundleInfoMap_["com.example.cache.multi"]->tokenIds.size());
-    EXPECT_NE(std::find(manager.bundleInfoMap_["com.example.cache.multi"]->tokenIds.begin(),
-        manager.bundleInfoMap_["com.example.cache.multi"]->tokenIds.end(), TEST_TOKEN_ID),
-        manager.bundleInfoMap_["com.example.cache.multi"]->tokenIds.end());
-    EXPECT_NE(std::find(manager.bundleInfoMap_["com.example.cache.multi"]->tokenIds.begin(),
-        manager.bundleInfoMap_["com.example.cache.multi"]->tokenIds.end(), TEST_TOKEN_ID_2),
-        manager.bundleInfoMap_["com.example.cache.multi"]->tokenIds.end());
 }
 
 /**
  * @tc.name: RestoreHapCache003
- * @tc.desc: Verify RestoreHapCache restores hap cache even when bundleInfo is nullptr.
+ * @tc.desc: Verify RestoreHapCache restores hap cache from the restore data list only.
  * @tc.type: FUNC
  */
 HWTEST_F(HapCacheCommitTest, RestoreHapCache003, TestSize.Level0)
@@ -686,14 +477,19 @@ HWTEST_F(HapCacheCommitTest, RestoreHapCache003, TestSize.Level0)
     std::vector<AccessTokenInfoManager::HapTokenRestoreData> tokenRestoreDataList = {
         BuildRestoreData(TEST_TOKEN_ID, "com.example.cache")
     };
+    // a userId no other case touches: proves the restore path feeds the cache
+    constexpr int32_t restoreTestUserId = 101; // 101: restore-only test user
+    tokenRestoreDataList[0].hapTokenInfoItem.userId = restoreTestUserId;
 
-    manager.RestoreHapCache("com.example.cache", nullptr, tokenRestoreDataList);
+    manager.RestoreHapCache(tokenRestoreDataList);
 
     ASSERT_NE(manager.hapTokenInfoMap_.find(TEST_TOKEN_ID), manager.hapTokenInfoMap_.end());
     ASSERT_NE(nullptr, manager.hapTokenInfoMap_[TEST_TOKEN_ID]);
     HapTokenInfo cachedInfo = manager.hapTokenInfoMap_[TEST_TOKEN_ID]->GetHapInfoBasic();
     EXPECT_EQ(TEST_TOKEN_ID, cachedInfo.tokenID);
     EXPECT_EQ("com.example.cache", cachedInfo.bundleName);
+    // the restore path also populates the userId cache
+    EXPECT_EQ(1u, manager.userIdSet_.count(restoreTestUserId));
 
     std::vector<BriefPermData> queriedData;
     ASSERT_EQ(RET_SUCCESS, PermissionDataBrief::GetInstance().GetBriefPermDataByTokenId(TEST_TOKEN_ID, queriedData));
@@ -703,7 +499,6 @@ HWTEST_F(HapCacheCommitTest, RestoreHapCache003, TestSize.Level0)
     PermissionDataBrief::GetInstance().GetExtendedValueList(TEST_TOKEN_ID, queriedExtendedPerms);
     ASSERT_EQ(1u, queriedExtendedPerms.size());
     EXPECT_EQ("allowed", queriedExtendedPerms[0].value);
-    EXPECT_EQ(manager.bundleInfoMap_.end(), manager.bundleInfoMap_.find("com.example.cache"));
 }
 } // namespace AccessToken
 } // namespace Security

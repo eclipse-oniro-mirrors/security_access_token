@@ -34,7 +34,8 @@
 - **UID 唯一性**：不同应用不能共享 UID，每个 UID 映射到一个 bundleId
 - **数据一致性顺序**：Kernel → Database → Cache，失败时需回滚
 - **缓存生命周期**：活跃应用常驻内存，非活跃应用按需加载/释放
-- **InfoManager 与 IDManager 缓存联动**：修改 `AccessTokenInfoManager` 中缓存（`hapTokenInfoMap_`/`hapTokenIdMap_`/`bundleInfoMap_`/reserved 索引）时，必须同步关联更新 `AccessTokenIDManager` 中 tokenId（`tokenIdSet_`/`reservedTokenIdSet_`/`untrustedTokenIdSet_`）与 bundleId（`bundleIdSet_`）的状态，反之亦然——两侧状态必须在同一变更点保持一致，禁止只改一侧
+- **InfoManager 与 IDManager 缓存联动**：修改 `AccessTokenInfoManager` 中缓存（`hapTokenInfoMap_`/`hapTokenIdMap_`/reserved 索引）时，必须同步关联更新 `AccessTokenIDManager` 中 tokenId（`tokenIdSet_`/`reservedTokenIdSet_`/`untrustedTokenIdSet_`）与 bundleId（`bundleIdSet_`）的状态，反之亦然——两侧状态必须在同一变更点保持一致，禁止只改一侧。注意：reserved 与 untrusted 的 tokenId **不在** `hapTokenInfoMap_` 和 `hapTokenIdMap_` 中（这两张表仅承载 ACTIVE token；reserved/untrusted 状态的 token 信息仅存于 DB，查询走 DB 快照路径，不做缓存写入）
+- **hapTokenInfoMap_ 与 hapTokenIdMap_ 内容必须一致（仅 local token）**：对 local token，两张表是双向索引（tokenId ↔ 三元组 bundleName&userId&instIndex）——`hapTokenInfoMap_` 中每个 local token 必须在 `hapTokenIdMap_` 有对应的三元组条目，反之亦然；任何一侧的增删必须在同一变更点同步另一侧，禁止出现单侧悬空条目。**该约束对 remote token 不成立**：remote token 仅存在于 `hapTokenInfoMap_`（`IsRemote() == true`），不进入 `hapTokenIdMap_`——若把 remote tokenid 记录进 `hapTokenIdMap_`，同三元组的 local token 索引条目会被覆盖
 
 ### 禁止改动（需显式审查）
 - 不改变四阶段安装流程的原子性或回滚规则

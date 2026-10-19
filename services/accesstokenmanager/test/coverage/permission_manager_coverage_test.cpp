@@ -85,7 +85,9 @@ void PermissionManagerCoverageTest::SetUpTestCase()
     uint32_t pefDefSize = 0;
     uint32_t dlpSize = 0;
     std::map<int32_t, TokenIdInfo> tokenIdAplMap;
-    AccessTokenInfoManager::GetInstance().Init(hapSize, nativeSize, pefDefSize, dlpSize, tokenIdAplMap);
+    AccessTokenInfoManager::GetInstance().Init(nativeSize, pefDefSize, dlpSize);
+    (void)BootVerifyScheduler::GetInstance().VerifyBundleSignInfoWhenStart(hapSize, tokenIdAplMap);
+    BootVerifyScheduler::GetInstance().StartVerifyNormalBundleListAsync();
 }
 
 void PermissionManagerCoverageTest::TearDownTestCase() {}

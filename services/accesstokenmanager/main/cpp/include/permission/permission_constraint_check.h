@@ -36,6 +36,8 @@ public:
     static bool IsPermAvailableRangeSatisfied(const BundleParam& param, const PermissionBriefDef& briefDef,
         PermissionRulesEnum& rule);
     static int BuildIdType(const BundleParam& param, const HapPolicy& policy);
+    static void FixPersistentHapInfo(
+        const BundleParam& param, const HapPolicy& policy, HapTokenInfoItem& hapTokenInfoItem, bool& isFixed);
     static void FixBriefPermData(
         const BundleInfoInner& infoInner, int32_t dlpType, std::vector<BriefPermData>& data, bool& isFixed);
 

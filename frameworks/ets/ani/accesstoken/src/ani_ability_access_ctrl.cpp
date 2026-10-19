@@ -983,6 +983,37 @@ static ani_int GetSelfPermissionStatusExecute([[maybe_unused]] ani_env* env, [[m
     return static_cast<ani_int>(syncContext->permissionsStatus);
 }
 
+static ani_boolean IsPermissionSupportedExecute([[maybe_unused]] ani_env* env, [[maybe_unused]] ani_object object,
+    ani_string aniPermissionName)
+{
+    if (env == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Env is null.");
+        return static_cast<ani_boolean>(false);
+    }
+
+    std::string permissionName;
+    if (!ParseAniString(env, aniPermissionName, permissionName)) {
+        std::string errMsg = GetParamErrorMsg("permissionName", "Permissions");
+        BusinessErrorAni::ThrowError(env, STS_ERROR_PARAM_ILLEGAL, errMsg);
+        return static_cast<ani_boolean>(false);
+    }
+    if (!BusinessErrorAni::ValidatePermissionWithThrowError(env, permissionName)) {
+        return static_cast<ani_boolean>(false);
+    }
+
+    bool result = false;
+    int32_t errCode = AccessTokenKit::IsSupportedPermission(permissionName, result);
+    if (errCode != RET_SUCCESS) {
+        int32_t stsCode = BusinessErrorAni::GetStsErrorCode(errCode);
+        BusinessErrorAni::ThrowError(env, stsCode, GetErrorMessage(stsCode));
+        return static_cast<ani_boolean>(false);
+    }
+
+    LOGD(ATM_DOMAIN, ATM_TAG, "PermissionName %{public}s is supported: %{public}d.", permissionName.c_str(),
+        static_cast<int32_t>(result));
+    return static_cast<ani_boolean>(result);
+}
+
 static ani_ref CreatePermissionStatusInfoArray(ani_env* env,
     const std::vector<PermissionStatus>& permissionInfoList)
 {
@@ -1544,6 +1575,8 @@ static void AppendQueryNativeFunctions(std::vector<ani_native_function>& methods
             reinterpret_cast<void*>(UnregisterPermStateChangeCallback) },
         ani_native_function { "getSelfPermissionStatusExecute",
             nullptr, reinterpret_cast<void*>(GetSelfPermissionStatusExecute) },
+        ani_native_function { "isPermissionSupportedExecute",
+            nullptr, reinterpret_cast<void*>(IsPermissionSupportedExecute) },
         ani_native_function { "queryStatusByPermissionExecute",
             nullptr, reinterpret_cast<void*>(QueryStatusByPermissionExecute) },
         ani_native_function { "queryStatusByTokenIDExecute",

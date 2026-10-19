@@ -709,6 +709,17 @@ public:
  	 */
     static bool IsSupportPermission(const std::string& permissionName);
  	 
+    /**
+ 	 * @brief Query whether permission is supported.
+ 	 * @note When the local permission definition is enabled, this returns success with result=true directly
+ 	 *       without IPC. Only when local isEnable is false will it query service side.
+ 	 *       Besides, this returns an error code to distinguish failure from "not supported".
+ 	 * @param permissionName permissionName
+ 	 * @param result output: true if the permission is supported, false otherwise
+ 	 * @return Returns RET_SUCCESS(0) on success, returns corresponding error code on failure
+ 	 */
+    static int32_t IsSupportedPermission(const std::string& permissionName, bool& result);
+ 	 
  	/**
  	 * @brief Transfer permission to permCode.
      * @param permissionName permissionName
@@ -858,13 +869,24 @@ public:
     static int32_t FinishInstall(int32_t sessionId, bool isPersistent,
         const std::map<std::string, std::string>& modulePathMap);
     /**
-     * @brief Get sign info by bundle name.
+     * @brief Get sign info by bundle name, query current mode by default.
      * @param bundleName bundle name
      * @param flag sign info query flag, see SignInfoQueryFlag in hap_token_info.h
      * @param bundleInfo trusted bundle info list
      * @return error code, see access_token_error.h
      */
     static int32_t GetHapSignInfo(const std::string& bundleName, uint32_t flag,
+        std::vector<TrustedBundleInfo>& bundleInfo);
+    /**
+     * @brief Get sign info by bundle name with explicit query mode.
+     * @param bundleName bundle name
+     * @param flag sign info query flag, see SignInfoQueryFlag in hap_token_info.h
+     * @param mode query mode: CURRENT_MODE resolves current mode at runtime,
+     *             or explicit MultipleMode value, see hap_token_info.h
+     * @param bundleInfo trusted bundle info list
+     * @return error code, see access_token_error.h
+     */
+    static int32_t GetHapSignInfo(const std::string& bundleName, uint32_t flag, MultipleMode mode,
         std::vector<TrustedBundleInfo>& bundleInfo);
     /**
      * @brief Get cache sign info by session id.

@@ -81,7 +81,7 @@ int32_t PermissionKernelUtils::AddHapPermToKernel(AccessTokenID tokenID,
 }
 
 int32_t PermissionKernelUtils::GetBundleInfoFromKernel(AccessTokenID tokenId, BundleNoCachedInfo& noCachedInfo,
-    std::vector<PermissionWithValue>& permList)
+    std::vector<PermissionWithValue>& permList, std::vector<uint16_t>& permCodeList)
 {
 #ifdef SPM_DATA_ENABLE
     SpmDataPtr spmData = nullptr;
@@ -94,6 +94,11 @@ int32_t PermissionKernelUtils::GetBundleInfoFromKernel(AccessTokenID tokenId, Bu
     noCachedInfo.distributionType = spmData->distributionType;
     noCachedInfo.idType = spmData->idType;
     noCachedInfo.ownerid = spmData->ownerid;
+    // the kernel bitmap is the authoritative perm code set of the token
+    ret = KernelDetail::ParsePermissionBitmap(spmData->perms, permCodeList);
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
     return KernelDetail::ParseExtendedPermissionBuffer(spmData->extendPerms, permList);
 #else
     return AccessTokenError::ERR_IOCTL_UNSUPPORT;

@@ -29,6 +29,12 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+static const char* ACCESS_TOKEN_SERVICE_APP_VERIFY_KEY = "accesstoken.permission.appverified";
+static const char* ACCESS_TOKEN_SERVICE_SPM_ENFORCING_KEY = "accesstoken.permission.spm.enforcing";
+// instIndex base for the sub mode (dual mode / same bundleName different package).
+// [0, MAIN_CLONE_INDEX_BASE) is main mode, [MAIN_CLONE_INDEX_BASE, 2 * MAIN_CLONE_INDEX_BASE) is sub mode.
+constexpr int32_t MAIN_CLONE_INDEX_BASE = 10000;
+
 class AccessTokenInfoUtils final {
 public:
     static bool IsSystemResource(const std::string& bundleName);
@@ -42,6 +48,9 @@ public:
     static void BuildHapTokenInfo(const Identity& id, const BundleParam& param, HapTokenInfo& info);
     static void BuildBundleFullInfo(const BundleParam& param, const HapPolicy& policy,
         std::shared_ptr<BundleInfoInner>& innerInfo, BundleNoCachedInfo& noCached);
+    static void AccessTokenServiceAppVerifyParamSet();
+    static bool IsSystemAppVerified();
+    static bool IsSystemSpmEnforcing();
     static ReservedType GetReservedTokenTypeDBValue(const GenericValues& values);
 
 private:

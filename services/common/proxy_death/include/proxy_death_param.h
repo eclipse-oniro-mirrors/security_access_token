@@ -26,6 +26,9 @@ public:
     virtual ~ProxyDeathParam() = default;
     virtual void ProcessParam() = 0;
     virtual bool IsEqual(ProxyDeathParam* param) = 0;
+    // Type tag for safe downcast in IsEqual (RTTI is disabled in this build).
+    // Subclasses should override with a unique non-zero value.
+    virtual uint32_t GetParamType() const { return 0; }
 };
 }  // namespace AccessToken
 } // namespace Security
