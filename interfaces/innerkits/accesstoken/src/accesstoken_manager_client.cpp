@@ -1040,7 +1040,7 @@ int32_t AccessTokenManagerClient::UpdateHapPolicy(
     tokenIdEx.tokenIDEx = tokenIdExVal;
 
     LOGI(ATM_DOMAIN, ATM_TAG, "Result=%{public}d, uid=%{public}d, fullTokenId=%{public}" PRIu64,
-        res, uid, tokenIdEx.tokenIDEx);
+        res, uid, static_cast<uint64_t>(tokenIdEx.tokenIDEx));
     return res;
 }
 
