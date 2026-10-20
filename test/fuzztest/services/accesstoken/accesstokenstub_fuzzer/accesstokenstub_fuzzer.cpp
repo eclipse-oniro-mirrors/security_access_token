@@ -975,9 +975,7 @@ bool CheckHapSignInfoStubFuzzTest(FuzzedDataProvider &provider)
         list.hapPaths.emplace_back(provider.ConsumeRandomLengthString());
     }
     list.isPreInstalled = provider.ConsumeBool();
-    list.userId = provider.ConsumeIntegral<int32_t>();
-    list.mode = static_cast<MultipleModeEnumIdl>(provider.ConsumeIntegralInRange<int32_t>(-1,
-        static_cast<int32_t>(MultipleModeEnumIdl::SUB_MODE) + 1)); // -1: query sentinel, +1: invalid mode
+    list.userIdForEnterpriseSign = provider.ConsumeIntegral<int32_t>();
     uint32_t flag = provider.ConsumeIntegral<uint32_t>();
 
     sptr<IRemoteObject> cb = new (std::nothrow) TokenSyncCallbackImpl();

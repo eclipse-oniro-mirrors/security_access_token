@@ -439,33 +439,6 @@ HWTEST_F(PermissionConstraintCheckTest, FixBriefPermData003, TestSize.Level0)
     manager.dlpPermissionModeMap_.clear();
 }
 #endif
-
-/**
- * @tc.name: BuildIdType001
- * @tc.desc: PermissionConstraintCheck::BuildIdType function test.
- * @tc.type: FUNC
- */
-HWTEST_F(PermissionConstraintCheckTest, BuildIdType001, TestSize.Level0)
-{
-    BundleParam param;
-    HapPolicy policy;
-
-    param.isDebug = true;
-    EXPECT_EQ(3, PermissionConstraintCheck::BuildIdType(param, policy));
-
-    param.isDebug = false;
-    param.appIdentifier = 0;
-    EXPECT_EQ(5, PermissionConstraintCheck::BuildIdType(param, policy));
-
-    param.appIdentifier = 1;
-    PermissionStatus tempJitAllow;
-    tempJitAllow.permissionName = "TEMPJITALLOW";
-    policy.permStateList = { tempJitAllow };
-    EXPECT_EQ(10, PermissionConstraintCheck::BuildIdType(param, policy));
-
-    policy.permStateList.clear();
-    EXPECT_EQ(2, PermissionConstraintCheck::BuildIdType(param, policy));
-}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

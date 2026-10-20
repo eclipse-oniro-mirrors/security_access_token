@@ -3487,15 +3487,18 @@ HWTEST_F(InstallSessionManagerMockTest, CheckTypeRetryTest001, TestSize.Level0)
         hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO));
     HapInfoCheckResult result;
     EXPECT_EQ(AccessTokenError::ERR_BUNDLE_ALREADY_EXIST,
-        g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, result));
+        g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE,
+            result));
     EXPECT_EQ(1, static_cast<int>(g_installSessionManager->sessionToInstallCache.count(sessionId)));
 
     // same session retried with TYPE_REPLACE passes the type check
-    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, result));
+    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE,
+        MultipleMode::DEFAULT_OR_MAIN_MODE, result));
 
     // the update flow continues on the same session
     int32_t uid = -1; // no uid expectation
-    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenId, bundlePolicy, uid));
+    AccessTokenIDEx tokenIdEx = BuildTokenIdEx(tokenId);
+    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid));
     std::map<std::string, std::string> modulePathMap;
     modulePathMap[path] = path;
     ASSERT_EQ(ERR_OK, g_installSessionManager->FinishInstall(sessionId, true, modulePathMap));
@@ -3542,7 +3545,8 @@ HWTEST_F(InstallSessionManagerMockTest, CheckTypeLeftoverFinishTest001, TestSize
         hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO));
     HapInfoCheckResult result;
     EXPECT_EQ(AccessTokenError::ERR_BUNDLE_ALREADY_EXIST,
-        g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, result));
+        g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE,
+            result));
     EXPECT_EQ(1, static_cast<int>(g_installSessionManager->sessionToInstallCache.count(sessionId)));
 
     // misuse guard: finishing the half-checked session fails and erases it
