@@ -30,6 +30,7 @@
 #include "iaccess_token_manager.h"
 #include "mock_permission.h"
 #include "permission_data_brief.h"
+#include "string_ex.h"
 #include "token_field_const.h"
 #include "token_setproc.h"
 #include "token_sync_kit_interface.h"
@@ -928,6 +929,225 @@ bool CheckMigratedUidSetStubFuzzTest(FuzzedDataProvider &provider)
 }
 #endif
 
+// Fuzz the install-session IPC entries (four-phase install/update + session queries, except GetHapSignInfo).
+#ifdef SPM_DATA_ENABLE
+static constexpr int32_t MAX_INSTALL_FUZZ_LIST_SIZE = 2; // 2: max path / pre-auth / module-path count for fuzzing
+
+static void InitBundlePolicyIdl(FuzzedDataProvider &provider, BundlePolicyIdl& policy)
+{
+    int32_t preAuthCount = provider.ConsumeIntegralInRange<int32_t>(0, MAX_INSTALL_FUZZ_LIST_SIZE);
+    for (int32_t i = 0; i < preAuthCount; ++i) {
+        PreAuthorizationInfoIdl preAuth;
+        preAuth.permissionName = provider.ConsumeRandomLengthString();
+        preAuth.userCancelable = provider.ConsumeBool();
+        policy.preAuthorizationInfo.emplace_back(preAuth);
+    }
+    policy.dlpType = static_cast<DlpTypeIdl>(provider.ConsumeIntegralInRange<int32_t>(
+        0, static_cast<int32_t>(DlpTypeIdl::DLP_FULL_CONTROL) + 1)); // +1: cover the invalid dlp type
+    policy.isDebugGrant = provider.ConsumeBool();
+}
+
+bool CheckHapSignInfoStubFuzzTest(FuzzedDataProvider &provider)
+{
+    BundleHapListIdl list;
+    int32_t pathCount = provider.ConsumeIntegralInRange<int32_t>(0, MAX_INSTALL_FUZZ_LIST_SIZE);
+    for (int32_t i = 0; i < pathCount; ++i) {
+        list.hapPaths.emplace_back(provider.ConsumeRandomLengthString());
+    }
+    list.isPreInstalled = provider.ConsumeBool();
+    list.userId = provider.ConsumeIntegral<int32_t>();
+    list.mode = static_cast<MultipleModeEnumIdl>(provider.ConsumeIntegralInRange<int32_t>(-1,
+        static_cast<int32_t>(MultipleModeEnumIdl::SUB_MODE) + 1)); // -1: query sentinel, +1: invalid mode
+    uint32_t flag = provider.ConsumeIntegral<uint32_t>();
+
+    sptr<IRemoteObject> cb = new (std::nothrow) TokenSyncCallbackImpl();
+    MessageParcel datas;
+    datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
+    if (BundleHapListIdlBlockMarshalling(datas, list) != ERR_NONE) {
+        return false;
+    }
+    if (!datas.WriteRemoteObject(cb)) {
+        return false;
+    }
+    if (!datas.WriteUint32(flag)) {
+        return false;
+    }
+    uint32_t code = static_cast<uint32_t>(IAccessTokenManagerIpcCode::COMMAND_CHECK_HAP_SIGN_INFO);
+    MessageParcel reply;
+    MessageOption option;
+    MockToken mock({ "ohos.permission.MANAGE_HAP_TOKENID" });
+    (void)DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
+    return true;
+}
+
+bool CheckHapPermissionInfoStubFuzzTest(FuzzedDataProvider &provider)
+{
+    int32_t sessionId = provider.ConsumeIntegral<int32_t>();
+    InstallTypeEnumIdl type = static_cast<InstallTypeEnumIdl>(provider.ConsumeIntegralInRange<int32_t>(
+        0, static_cast<int32_t>(InstallTypeEnumIdl::TYPE_MERGE) + 1)); // +1: cover the invalid install type
+
+    MessageParcel datas;
+    datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
+    if (!datas.WriteInt32(sessionId)) {
+        return false;
+    }
+    if (!datas.WriteInt32(static_cast<int32_t>(type))) {
+        return false;
+    }
+    uint32_t code = static_cast<uint32_t>(IAccessTokenManagerIpcCode::COMMAND_CHECK_HAP_PERMISSION_INFO);
+    MessageParcel reply;
+    MessageOption option;
+    MockToken mock({ "ohos.permission.MANAGE_HAP_TOKENID" });
+    (void)DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
+    return true;
+}
+
+bool PrepareHapIdentityStubFuzzTest(FuzzedDataProvider &provider)
+{
+    int32_t sessionId = provider.ConsumeIntegral<int32_t>();
+    HapBaseInfoIdl info;
+    info.userID = provider.ConsumeIntegral<int32_t>();
+    info.bundleName = provider.ConsumeRandomLengthString();
+    info.instIndex = provider.ConsumeIntegral<int32_t>();
+    BundlePolicyIdl policy;
+    InitBundlePolicyIdl(provider, policy);
+    IdentityIdl identity;
+    identity.uid = provider.ConsumeIntegral<int32_t>();
+    identity.tokenId = provider.ConsumeIntegral<uint64_t>();
+
+    sptr<IRemoteObject> cb = new (std::nothrow) TokenSyncCallbackImpl();
+    MessageParcel datas;
+    datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
+    if (!datas.WriteInt32(sessionId)) {
+        return false;
+    }
+    if (HapBaseInfoIdlBlockMarshalling(datas, info) != ERR_NONE) {
+        return false;
+    }
+    if (BundlePolicyIdlBlockMarshalling(datas, policy) != ERR_NONE) {
+        return false;
+    }
+    if (!datas.WriteRemoteObject(cb)) {
+        return false;
+    }
+    if (IdentityIdlBlockMarshalling(datas, identity) != ERR_NONE) {
+        return false;
+    }
+    uint32_t code = static_cast<uint32_t>(IAccessTokenManagerIpcCode::COMMAND_PREPARE_HAP_IDENTITY);
+    MessageParcel reply;
+    MessageOption option;
+    MockToken mock({ "ohos.permission.MANAGE_HAP_TOKENID" });
+    (void)DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
+    return true;
+}
+
+bool UpdateHapPolicyStubFuzzTest(FuzzedDataProvider &provider)
+{
+    int32_t sessionId = provider.ConsumeIntegral<int32_t>();
+    uint32_t tokenId = provider.ConsumeIntegral<uint32_t>();
+    BundlePolicyIdl policy;
+    InitBundlePolicyIdl(provider, policy);
+    int32_t uid = provider.ConsumeIntegral<int32_t>();
+
+    MessageParcel datas;
+    datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
+    if (!datas.WriteInt32(sessionId)) {
+        return false;
+    }
+    if (!datas.WriteUint32(tokenId)) {
+        return false;
+    }
+    if (BundlePolicyIdlBlockMarshalling(datas, policy) != ERR_NONE) {
+        return false;
+    }
+    if (!datas.WriteInt32(uid)) {
+        return false;
+    }
+    uint32_t code = static_cast<uint32_t>(IAccessTokenManagerIpcCode::COMMAND_UPDATE_HAP_POLICY);
+    MessageParcel reply;
+    MessageOption option;
+    MockToken mock({ "ohos.permission.MANAGE_HAP_TOKENID" });
+    (void)DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
+    return true;
+}
+
+bool FinishInstallStubFuzzTest(FuzzedDataProvider &provider)
+{
+    int32_t sessionId = provider.ConsumeIntegral<int32_t>();
+    bool isPersistent = provider.ConsumeBool();
+    std::map<std::string, std::string> modulePathMap;
+    int32_t mapSize = provider.ConsumeIntegralInRange<int32_t>(0, MAX_INSTALL_FUZZ_LIST_SIZE);
+    for (int32_t i = 0; i < mapSize; ++i) {
+        modulePathMap.emplace(provider.ConsumeRandomLengthString(), provider.ConsumeRandomLengthString());
+    }
+
+    MessageParcel datas;
+    datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
+    if (!datas.WriteInt32(sessionId)) {
+        return false;
+    }
+    if (!datas.WriteInt32(isPersistent ? 1 : 0)) {
+        return false;
+    }
+    if (!datas.WriteInt32(static_cast<int32_t>(modulePathMap.size()))) {
+        return false;
+    }
+    for (const auto& item : modulePathMap) {
+        if (!datas.WriteString16(Str8ToStr16(item.first)) || !datas.WriteString16(Str8ToStr16(item.second))) {
+            return false;
+        }
+    }
+    uint32_t code = static_cast<uint32_t>(IAccessTokenManagerIpcCode::COMMAND_FINISH_INSTALL);
+    MessageParcel reply;
+    MessageOption option;
+    MockToken mock({ "ohos.permission.MANAGE_HAP_TOKENID" });
+    (void)DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
+    return true;
+}
+
+bool GetCachePolicyBySessionIdStubFuzzTest(FuzzedDataProvider &provider)
+{
+    int32_t sessionId = provider.ConsumeIntegral<int32_t>();
+    std::string bundleName = provider.ConsumeRandomLengthString();
+
+    MessageParcel datas;
+    datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
+    if (!datas.WriteInt32(sessionId)) {
+        return false;
+    }
+    if (!datas.WriteString16(Str8ToStr16(bundleName))) {
+        return false;
+    }
+    uint32_t code = static_cast<uint32_t>(IAccessTokenManagerIpcCode::COMMAND_GET_CACHE_POLICY_BY_SESSION_ID);
+    MessageParcel reply;
+    MessageOption option;
+    MockToken mock({ "ohos.permission.MANAGE_HAP_TOKENID" });
+    (void)DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
+    return true;
+}
+
+bool GetCacheSignInfoBySessionIdStubFuzzTest(FuzzedDataProvider &provider)
+{
+    int32_t sessionId = provider.ConsumeIntegral<int32_t>();
+    uint32_t flag = provider.ConsumeIntegral<uint32_t>();
+
+    MessageParcel datas;
+    datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
+    if (!datas.WriteInt32(sessionId)) {
+        return false;
+    }
+    if (!datas.WriteUint32(flag)) {
+        return false;
+    }
+    uint32_t code = static_cast<uint32_t>(IAccessTokenManagerIpcCode::COMMAND_GET_CACHE_SIGN_INFO_BY_SESSION_ID);
+    MessageParcel reply;
+    MessageOption option;
+    MockToken mock({ "ohos.permission.MANAGE_HAP_TOKENID" });
+    (void)DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
+    return true;
+}
+#endif
+
 void AccessTokenStubFuzzTest(FuzzedDataProvider &provider)
 {
     GetVersion();
@@ -953,6 +1173,13 @@ void AccessTokenStubFuzzTest(FuzzedDataProvider &provider)
     (void)MigrateInstalledBundlesStubFuzzTest(provider);
     (void)FinishMigrationStubFuzzTest();
     (void)CheckMigratedUidSetStubFuzzTest(provider);
+    (void)CheckHapSignInfoStubFuzzTest(provider);
+    (void)CheckHapPermissionInfoStubFuzzTest(provider);
+    (void)PrepareHapIdentityStubFuzzTest(provider);
+    (void)UpdateHapPolicyStubFuzzTest(provider);
+    (void)FinishInstallStubFuzzTest(provider);
+    (void)GetCachePolicyBySessionIdStubFuzzTest(provider);
+    (void)GetCacheSignInfoBySessionIdStubFuzzTest(provider);
 #endif
 }
 

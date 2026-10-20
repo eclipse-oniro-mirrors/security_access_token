@@ -660,7 +660,7 @@ int32_t InstallSessionManager::CheckHapSignInfo(const BundleHapList& list, const
 int32_t InstallSessionManager::CheckInstallType(std::vector<std::string>& installedPaths, InstallTypeEnum type)
 {
     if (!installedPaths.empty() && type == InstallTypeEnum::TYPE_INSTALL) {
-        LOGC(ATM_DOMAIN, ATM_TAG, "Already has data, type:0");
+        LOGW(ATM_DOMAIN, ATM_TAG, "Already has data, type:0");
         return ERR_BUNDLE_ALREADY_EXIST;
     }
 
@@ -686,7 +686,9 @@ int32_t InstallSessionManager::PrepareInstalledBundleInfo(int32_t sessionId, Ins
 
     ret = CheckInstallType(installedPaths, type);
     if (ret != RET_SUCCESS) {
-        RollbackAll(sessionId, InstallHapSceneCode::CHECK_TYPE, ret, 0);
+        // keep the session alive for a same-session retry with a corrected type;
+        // nothing is allocated at this stage so the identity rollback is a no-op
+        RollbackAll(sessionId, InstallHapSceneCode::CHECK_TYPE, ret, 0, false);
         return ret;
     }
 
@@ -958,6 +960,9 @@ int32_t InstallSessionManager::UpdateHapPolicy(
         // caller re-create the missing token via a repair PrepareHapIdentity session
         LOGW(ATM_DOMAIN, ATM_TAG, "Token %{public}u not exist in ATM, skip update, sessionId=%{public}d, "
             "bundle=%{public}s.", tokenId, sessionId, it->second.bundleParam.bundleName.c_str());
+        // report-only, no RollbackAll: the session keeps.
+        InstallSysEventReporter::ReportSessionError(it->second, InstallHapSceneCode::UPDATE_HAP_POLICY,
+            AccessTokenError::ERR_TOKENID_NOT_EXIST, tokenId);
         return AccessTokenError::ERR_TOKENID_NOT_EXIST;
     }
     int32_t ret = CheckUpdateTargetMatch(it->second, tokenId, infoPtr, uid);
