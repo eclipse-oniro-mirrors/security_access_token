@@ -68,8 +68,7 @@ static BundleHapList BuildBundleHapList()
     BundleHapList list;
     list.hapPaths = {TEST_HAP_PATH};
     list.isPreInstalled = false;
-    list.userId = TEST_USER_ID;
-    list.mode = MultipleMode::DEFAULT_OR_MAIN_MODE;
+    list.userIdForEnterpriseSign = TEST_USER_ID;
     return list;
 }
 
@@ -176,7 +175,8 @@ HWTEST_F(SpmKitTest, CheckHapSignInfo001, TestSize.Level1)
 HWTEST_F(SpmKitTest, CheckHapPermissionInfo001, TestSize.Level1)
 {
     HapInfoCheckResult result;
-    EXPECT_EQ(0, AccessTokenKit::CheckHapPermissionInfo(TEST_SESSION_ID, InstallTypeEnum::TYPE_INSTALL, result));
+    EXPECT_EQ(0, AccessTokenKit::CheckHapPermissionInfo(TEST_SESSION_ID, InstallTypeEnum::TYPE_INSTALL,
+        MultipleMode::DEFAULT_OR_MAIN_MODE, result));
 }
 
 /**
@@ -201,7 +201,9 @@ HWTEST_F(SpmKitTest, PrepareHapIdentity001, TestSize.Level1)
 HWTEST_F(SpmKitTest, UpdateHapPolicy001, TestSize.Level1)
 {
     int32_t uid = TEST_UID;
-    EXPECT_EQ(0, AccessTokenKit::UpdateHapPolicy(TEST_SESSION_ID, TEST_TOKEN_ID, BuildBundlePolicy(), uid));
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx.tokenIdExStruct.tokenID = TEST_TOKEN_ID;
+    EXPECT_EQ(0, AccessTokenKit::UpdateHapPolicy(TEST_SESSION_ID, tokenIdEx, BuildBundlePolicy(), uid));
 }
 
 /**

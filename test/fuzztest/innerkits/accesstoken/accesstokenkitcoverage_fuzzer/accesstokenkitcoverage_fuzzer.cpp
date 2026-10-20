@@ -75,9 +75,7 @@ static BundleHapList ConsumeBundleHapList(FuzzedDataProvider& provider)
         list.hapPaths.push_back(provider.ConsumeRandomLengthString());
     }
     list.isPreInstalled = provider.ConsumeBool();
-    list.userId = provider.ConsumeIntegral<int32_t>();
-    list.mode = static_cast<MultipleMode>(
-        provider.ConsumeIntegralInRange<int32_t>(MODE_FUZZ_MIN, MODE_FUZZ_MAX));
+    list.userIdForEnterpriseSign = provider.ConsumeIntegral<int32_t>();
     return list;
 }
 
@@ -92,6 +90,7 @@ enum SpmApiSelector {
     SPM_API_UPDATE_HAP_POLICY,
     SPM_API_FINISH_INSTALL,
     SPM_API_GET_HAP_SIGN_INFO,
+    SPM_API_GET_HAP_SIGN_INFO_BY_MODE,
     SPM_API_GET_CACHE_SIGN_INFO_BY_SESSION_ID,
     SPM_API_GET_CACHE_POLICY_BY_SESSION_ID,
     SPM_API_GET_HAP_IDENTITY,
@@ -116,6 +115,8 @@ static void DispatchSpmInterface(FuzzedDataProvider& provider, uint32_t spmSelec
                 MigratedInfo migratedInfo;
                 migratedInfo.bundleName = provider.ConsumeRandomLengthString();
                 migratedInfo.pathList = ConsumeBundleHapList(provider);
+                migratedInfo.mode = static_cast<MultipleMode>(
+                    provider.ConsumeIntegralInRange<int32_t>(MODE_FUZZ_MIN, MODE_FUZZ_MAX));
                 migratedInfo.hapBaseInfoList.push_back(ConsumeHapBaseInfo(provider));
                 migratedInfo.uidList.push_back(provider.ConsumeIntegral<int32_t>());
                 migratedInfo.reservedTypeList.push_back(
@@ -154,6 +155,8 @@ static void DispatchSpmInterface(FuzzedDataProvider& provider, uint32_t spmSelec
             AccessTokenKit::CheckHapPermissionInfo(provider.ConsumeIntegral<int32_t>(),
                 static_cast<InstallTypeEnum>(
                     provider.ConsumeIntegralInRange<int32_t>(INSTALL_TYPE_MIN, INSTALL_TYPE_MAX)),
+                static_cast<MultipleMode>(
+                    provider.ConsumeIntegralInRange<int32_t>(MODE_FUZZ_MIN, MODE_FUZZ_MAX)),
                 result);
             break;
         }
@@ -166,8 +169,10 @@ static void DispatchSpmInterface(FuzzedDataProvider& provider, uint32_t spmSelec
         }
         case SPM_API_UPDATE_HAP_POLICY: {
             int32_t uid = provider.ConsumeIntegral<int32_t>();
+            AccessTokenIDEx tokenIdEx = {0};
+            tokenIdEx.tokenIDEx = provider.ConsumeIntegral<uint64_t>();
             AccessTokenKit::UpdateHapPolicy(provider.ConsumeIntegral<int32_t>(),
-                provider.ConsumeIntegral<int32_t>(), ConsumeBundlePolicy(provider), uid);
+                tokenIdEx, ConsumeBundlePolicy(provider), uid);
             break;
         }
         case SPM_API_FINISH_INSTALL: {
@@ -184,6 +189,15 @@ static void DispatchSpmInterface(FuzzedDataProvider& provider, uint32_t spmSelec
             std::vector<TrustedBundleInfo> bundleInfo;
             AccessTokenKit::GetHapSignInfo(provider.ConsumeRandomLengthString(),
                 provider.ConsumeIntegral<uint32_t>(), bundleInfo);
+            break;
+        }
+        case SPM_API_GET_HAP_SIGN_INFO_BY_MODE: {
+            std::vector<TrustedBundleInfo> bundleInfo;
+            AccessTokenKit::GetHapSignInfo(provider.ConsumeRandomLengthString(),
+                provider.ConsumeIntegral<uint32_t>(),
+                static_cast<MultipleMode>(
+                    provider.ConsumeIntegralInRange<int32_t>(MODE_FUZZ_MIN, MODE_FUZZ_MAX)),
+                bundleInfo);
             break;
         }
         case SPM_API_GET_CACHE_SIGN_INFO_BY_SESSION_ID: {

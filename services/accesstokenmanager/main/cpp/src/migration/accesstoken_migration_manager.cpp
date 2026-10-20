@@ -110,10 +110,10 @@ int32_t AccessTokenMigrationManager::ValidateMigratedInfo(const MigratedInfoIdl&
             return AccessTokenError::ERR_PARAM_INVALID;
         }
         if (!MultipleModeUtils::IsModeInstIndexMatch(
-            static_cast<int32_t>(migratedInfo.pathList.mode), hap.instIndex)) {
+            static_cast<int32_t>(migratedInfo.mode), hap.instIndex)) {
             LOGE(ATM_DOMAIN, ATM_TAG,
                 "Migrate installed bundles failed, mode %{public}d with instIndex %{public}d is invalid.",
-                static_cast<int32_t>(migratedInfo.pathList.mode), hap.instIndex);
+                static_cast<int32_t>(migratedInfo.mode), hap.instIndex);
             return AccessTokenError::ERR_PARAM_INVALID;
         }
     }
@@ -204,7 +204,7 @@ int32_t AccessTokenMigrationManager::CheckUidConflict(const MigratedInfoIdl& mig
     std::unordered_set<int32_t>& seenInBundle) const
 {
     std::string ownerKey = MultipleModeUtils::GetBundleModeKey(
-        migratedInfo.bundleName, static_cast<int32_t>(migratedInfo.pathList.mode));
+        migratedInfo.bundleName, static_cast<int32_t>(migratedInfo.mode));
     auto uidOwnerIter = uidOwnerBundles_.find(uid);
     if (uidOwnerIter != uidOwnerBundles_.end()) {
         if (uidOwnerIter->second == ownerKey) {
@@ -234,7 +234,7 @@ int32_t AccessTokenMigrationManager::CheckBundleIdConflict(const MigratedInfoIdl
     }
 
     std::string ownerKey = MultipleModeUtils::GetBundleModeKey(
-        migratedInfo.bundleName, static_cast<int32_t>(migratedInfo.pathList.mode));
+        migratedInfo.bundleName, static_cast<int32_t>(migratedInfo.mode));
     auto ownerIter = bundleIdOwnerBundles_.find(bundleId);
     if (ownerIter != bundleIdOwnerBundles_.end() && ownerIter->second != ownerKey) {
         LOGC(ATM_DOMAIN, ATM_TAG, "Migrate installed bundles failed, duplicate bundleId %{public}d across "
@@ -383,7 +383,7 @@ void AccessTokenMigrationManager::BuildPlaceholderSignInfo(const PreparedMigrati
     if (!preparedBundle.migratedInfo.pathList.hapPaths.empty() && preparedBundle.needVerification) {
         BundleSignInfo placeholderSign;
         placeholderSign.bundleName = preparedBundle.migratedInfo.bundleName;
-        placeholderSign.mode = static_cast<MultipleMode>(preparedBundle.migratedInfo.pathList.mode);
+        placeholderSign.mode = static_cast<MultipleMode>(preparedBundle.migratedInfo.mode);
         placeholderSign.isPreInstalled = preparedBundle.migratedInfo.pathList.isPreInstalled;
         Security::Verify::BootstrapInfo sentinelBootstrap = {};
         sentinelBootstrap.version = -1;
@@ -405,7 +405,7 @@ void AccessTokenMigrationManager::BuildPlaceholderSignInfo(const PreparedMigrati
         if (placeholderSign.ToGenericValues(signValues) == RET_SUCCESS) {
             GenericValues delValues;
             delValues.Put(TokenFiledConst::FIELD_BUNDLE_NAME, preparedBundle.migratedInfo.bundleName);
-            delValues.Put(TokenFiledConst::FIELD_MODE, static_cast<int32_t>(preparedBundle.migratedInfo.pathList.mode));
+            delValues.Put(TokenFiledConst::FIELD_MODE, static_cast<int32_t>(preparedBundle.migratedInfo.mode));
             delInfoVec.emplace_back(DelInfo {AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO, delValues});
             addInfoVec.emplace_back(AddInfo {AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO, signValues});
         }
@@ -695,7 +695,7 @@ BundleMigrateResultIdl AccessTokenMigrationManager::ProcessBundleMigration(
     int32_t singleRet = MigrateSingleBundle(migratedInfo, migrateResult);
     if (singleRet == RET_SUCCESS) {
         std::string ownerKey = MultipleModeUtils::GetBundleModeKey(migratedInfo.bundleName,
-            static_cast<int32_t>(migratedInfo.pathList.mode));
+            static_cast<int32_t>(migratedInfo.mode));
         for (size_t i = 0; i < migratedInfo.hapBaseInfoList.size(); ++i) {
             const auto& hapBaseInfo = migratedInfo.hapBaseInfoList[i];
             std::string key = AccessTokenInfoUtils::GetHapUniqueStr(

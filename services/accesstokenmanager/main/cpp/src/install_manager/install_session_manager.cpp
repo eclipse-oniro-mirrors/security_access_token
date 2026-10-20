@@ -175,7 +175,7 @@ int32_t VerifyHapList(const BundleHapList& list, std::vector<TrustedBundleInfoIn
         bool isChanged = false;
         int32_t ret = HapSignVerifyManager::GetInstance().CheckHapsSignInfo(
             HapSignVerifyManager::MakeVerifyParams(list.hapPaths[i], Security::Verify::VerifyType::All,
-                list.userId),
+                list.userIdForEnterpriseSign),
             false, infoInner, isChanged);
         if (ret != RET_SUCCESS) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Sign check ret=%{public}d, path=%{public}s",
@@ -272,7 +272,8 @@ int32_t InstallSessionManager::MergeBundleInfos(InstallCache& cache, std::vector
     std::vector<std::vector<uint8_t>>& persistDatas)
 {
     std::vector<TrustedBundleInfoInner> bundleInfos;
-    int32_t ret = HapSignVerifyManager::FastVerify(paths, persistDatas, bundleInfos, cache.list.userId);
+    int32_t ret = HapSignVerifyManager::FastVerify(paths, persistDatas, bundleInfos,
+        cache.list.userIdForEnterpriseSign);
     if (ret != RET_SUCCESS) {
         return ret;
     }
@@ -635,13 +636,6 @@ int32_t InstallSessionManager::CheckHapSignInfo(const BundleHapList& list, const
         return AccessTokenError::ERR_PARAM_INVALID;
     }
 
-    // install mode must be within the same mode domain ({0,1}); CURRENT_MODE
-    // is a query-only sentinel
-    if (!DataValidator::IsInstallModeValid(list.mode)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Invalid install mode %{public}d.", static_cast<int32_t>(list.mode));
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-
     InstallCache cache;
 
     int32_t ret = VerifyHapList(list, cache.bundleInfos, resultInfo);
@@ -652,7 +646,6 @@ int32_t InstallSessionManager::CheckHapSignInfo(const BundleHapList& list, const
     HapSignVerifyManager::GetInstance().ConvertTrustedBundleInfo(cache.bundleInfos, bundleInfo, flag);
 
     cache.list = list;
-    cache.mode = list.mode;
     CreateSessionEntry(cache, cb, cache.bundleInfos.front().GetBundleName(), sessionId);
     return RET_SUCCESS;
 }
@@ -704,15 +697,21 @@ int32_t InstallSessionManager::PrepareInstalledBundleInfo(int32_t sessionId, Ins
 }
 
 int32_t InstallSessionManager::CheckHapPermissionInfo(
-    int32_t sessionId, InstallTypeEnum type, HapInfoCheckResult& result)
+    int32_t sessionId, InstallTypeEnum type, MultipleMode mode, HapInfoCheckResult& result)
 {
     std::lock_guard<std::mutex> lock(cacheMutex_);
     if (sessionToInstallCache.find(sessionId) == sessionToInstallCache.end()) {
         LOGE(ATM_DOMAIN, ATM_TAG, "sessionId %{public}d not exist", sessionId);
         return AccessTokenError::ERR_SESSION_NOT_EXIST;
     }
+    // install mode must be within the same mode domain ({0,1}); CURRENT_MODE
+    // is a query-only sentinel; DataValidator logs the invalid value
+    if (!DataValidator::IsInstallModeValid(mode)) {
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
     InstallCache& cache = sessionToInstallCache[sessionId];
     cache.type = type;
+    cache.mode = mode;
     cache.ipcCode = IPC_CHECK_HAP_PERMISSION_INFO;
 
     if (cache.bundleInfos.empty()) {
@@ -929,9 +928,11 @@ int32_t CheckUpdateTargetMatch(const InstallCache& cache, AccessTokenID tokenId,
 }
 
 int32_t InstallSessionManager::UpdateHapPolicy(
-    int32_t sessionId, AccessTokenID tokenId, const BundlePolicy& policy, int32_t& uid)
+    int32_t sessionId, AccessTokenIDEx& tokenIdEx, const BundlePolicy& policy, int32_t& uid)
 {
     std::lock_guard<std::mutex> lock(cacheMutex_);
+    // low 32 bits carry the plain token id: the update target (unchanged logic)
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
     if (!migrationDone_.load()) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Migration not completed");
         RollbackAll(sessionId,
@@ -982,6 +983,9 @@ int32_t InstallSessionManager::UpdateHapPolicy(
 
     it->second.updatedBundlePolicyMap[tokenId] = policy;
     it->second.updatedUidStateMap[tokenId] = {uid, isNewBundleId, fromCaller};
+    // refresh the high 32 bits (token attr) with the value this upgrade applies
+    // at FinishInstall; the plain token id itself never changes in the update flow
+    tokenIdEx.tokenIdExStruct.tokenAttr = InstallIdentityManager::BuildTokenAttr(it->second.bundleParam);
     return RET_SUCCESS;
 }
 

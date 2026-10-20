@@ -81,7 +81,7 @@ HWTEST_F(InstallSessionManagerTest, CheckHapSignInfoTest001, TestSize.Level0)
 
     BundleHapList hapList;
     hapList.isPreInstalled = false;
-    hapList.userId = 100;
+    hapList.userIdForEnterpriseSign = 100;
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
     HapVerifyResultInfo resultInfo;
@@ -107,7 +107,7 @@ HWTEST_F(InstallSessionManagerTest, CheckHapSignInfoTest002, TestSize.Level0)
     BundleHapList hapList;
     hapList.hapPaths.emplace_back(path);
     hapList.isPreInstalled = false;
-    hapList.userId = 100;
+    hapList.userIdForEnterpriseSign = 100;
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
     HapVerifyResultInfo resultInfo;
@@ -127,7 +127,8 @@ HWTEST_F(InstallSessionManagerTest, CheckHapPermissionInfoTest001, TestSize.Leve
     int32_t sessionId = 0;
     InstallTypeEnum type = TYPE_INSTALL;
     HapInfoCheckResult result;
-    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, AccessTokenKit::CheckHapPermissionInfo(sessionId, type, result));
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, AccessTokenKit::CheckHapPermissionInfo(sessionId, type,
+        MultipleMode::DEFAULT_OR_MAIN_MODE, result));
 }
 /**
  * @tc.name: CheckHapPermissionInfoTest002
@@ -143,7 +144,7 @@ HWTEST_F(InstallSessionManagerTest, CheckHapPermissionInfoTest002, TestSize.Leve
     InstallTypeEnum type = TYPE_INSTALL;
     HapInfoCheckResult result;
     EXPECT_EQ(AccessTokenError::ERR_SESSION_NOT_EXIST,
-        AccessTokenKit::CheckHapPermissionInfo(sessionId, type, result));
+        AccessTokenKit::CheckHapPermissionInfo(sessionId, type, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
 }
 /**
  * @tc.name: PrepareHapIdentityTest001
@@ -213,14 +214,15 @@ HWTEST_F(InstallSessionManagerTest, UpdateHapPolicyTest001, TestSize.Level0)
     MockNativeToken mock("foundation");
 
     int32_t sessionId = -1;
-    int32_t tokenId = 123;
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx.tokenIdExStruct.tokenID = 123;
 
     BundlePolicy bundlePolicy;
     bundlePolicy.dlpType = DLP_COMMON;
     bundlePolicy.isDebugGrant = false;
     int32_t uid = 0;
     EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
-        AccessTokenKit::UpdateHapPolicy(sessionId, tokenId, bundlePolicy, uid));
+        AccessTokenKit::UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid));
 }
 
 /**
@@ -317,7 +319,7 @@ HWTEST_F(InstallSessionManagerTest, CheckHapSignInfoTest101, TestSize.Level0)
     BundleHapList hapList;
     hapList.hapPaths.emplace_back(path);
     hapList.isPreInstalled = false;
-    hapList.userId = 100;
+    hapList.userIdForEnterpriseSign = 100;
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
     HapVerifyResultInfo resultInfo;
@@ -339,7 +341,8 @@ HWTEST_F(InstallSessionManagerTest, CheckHapPermissionInfoTest101, TestSize.Leve
     int32_t sessionId = INVALID_SESSION;
     InstallTypeEnum type = TYPE_INSTALL;
     HapInfoCheckResult result;
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::CheckHapPermissionInfo(sessionId, type, result));
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::CheckHapPermissionInfo(sessionId, type,
+        MultipleMode::DEFAULT_OR_MAIN_MODE, result));
 }
 
 /**
@@ -379,14 +382,15 @@ HWTEST_F(InstallSessionManagerTest, UpdateHapPolicyTest101, TestSize.Level0)
     MockNativeToken mock("foundation");
 
     int32_t sessionId = INVALID_SESSION;
-    int32_t tokenId = 123;
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx.tokenIdExStruct.tokenID = 123;
 
     BundlePolicy bundlePolicy;
     bundlePolicy.dlpType = DLP_COMMON;
     bundlePolicy.isDebugGrant = false;
 
     int32_t uid = 0;
-    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::UpdateHapPolicy(sessionId, tokenId, bundlePolicy, uid));
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid));
 }
 
 /**

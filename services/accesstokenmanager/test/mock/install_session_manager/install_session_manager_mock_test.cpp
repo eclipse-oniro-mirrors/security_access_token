@@ -80,6 +80,8 @@ static constexpr int32_t ILLEGAL_SIBLING_UID = 20054322; // 100 * UID_MASK + 543
 static constexpr int32_t CLONE_TOKEN_COUNT = 3;
 static constexpr int32_t INDEX_CLONE_B = 1;
 static constexpr int32_t INDEX_CLONE_C = 2;
+// aligned with the SYSTEM_APP_FLAG bit of InstallIdentityManager::BuildTokenAttr
+static constexpr uint32_t SYSTEM_APP_FLAG = 0x0001;
 static std::map<std::string, std::string> g_modulePathMap;
 
 // This branch folds the DeleteIdentity chain into DeleteBundleManager, so the
@@ -109,6 +111,16 @@ struct TestUidGuard {
     TestUidGuard(const TestUidGuard&) = delete;
     TestUidGuard& operator=(const TestUidGuard&) = delete;
 };
+
+// Wrap a plain 32-bit token id into the in-out AccessTokenIDEx param of
+// UpdateHapPolicy: low 32 bits carry the token id, high 32 bits the token
+// attr refreshed by the upgrade.
+AccessTokenIDEx BuildTokenIdEx(AccessTokenID tokenId)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx.tokenIdExStruct.tokenID = tokenId;
+    return tokenIdEx;
+}
 }
 
 void InstallSessionManagerMockTest::SetUpTestCase()
@@ -151,7 +163,7 @@ void InstallHap(const std::vector<std::string>& hapPaths, const HapBaseInfo& bas
     BundleHapList hapList;
     hapList.hapPaths = hapPaths;
     hapList.isPreInstalled = false;
-    hapList.userId = baseInfo.userID;
+    hapList.userIdForEnterpriseSign = baseInfo.userID;
     // no desired uid: must be INVALID_UID so PrepareHapIdentity skips the uid-user check
     identity.uid = -1;
 
@@ -163,7 +175,8 @@ void InstallHap(const std::vector<std::string>& hapPaths, const HapBaseInfo& bas
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_EQ(ERR_OK, ret);
 
     ret = g_installSessionManager->PrepareHapIdentity(sessionId, baseInfo, bundlePolicy, nullptr, identity);
@@ -187,8 +200,7 @@ void InstallHapWithMode(const std::vector<std::string>& hapPaths, const HapBaseI
     BundleHapList hapList;
     hapList.hapPaths = hapPaths;
     hapList.isPreInstalled = false;
-    hapList.userId = baseInfo.userID;
-    hapList.mode = mode;
+    hapList.userIdForEnterpriseSign = baseInfo.userID;
     identity.uid = -1;
 
     int32_t sessionId = 0;
@@ -199,7 +211,7 @@ void InstallHapWithMode(const std::vector<std::string>& hapPaths, const HapBaseI
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, mode, result);
     EXPECT_EQ(ERR_OK, ret);
 
     ret = g_installSessionManager->PrepareHapIdentity(sessionId, baseInfo, bundlePolicy, nullptr, identity);
@@ -219,7 +231,7 @@ void InstallHapWithMode(const std::vector<std::string>& hapPaths, const HapBaseI
 // id is ready for PrepareHapIdentity / FinishInstall when RET_SUCCESS returns.
 int32_t StartMergeSessionMode(const std::string& path, MultipleMode mode, int32_t& sessionId)
 {
-    BundleHapList hapList{std::vector<std::string>{path}, false, 100, mode};
+    BundleHapList hapList{std::vector<std::string>{path}, false, 100};
     std::vector<TrustedBundleInfo> bundleInfo;
     HapVerifyResultInfo resultInfo;
     int32_t ret = g_installSessionManager->CheckHapSignInfo(
@@ -228,7 +240,7 @@ int32_t StartMergeSessionMode(const std::string& path, MultipleMode mode, int32_
         return ret;
     }
     HapInfoCheckResult result;
-    return g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_MERGE, result);
+    return g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_MERGE, mode, result);
 }
 
 // Make the token's uid invalid (-1) in both db and memory and drop its kernel
@@ -299,7 +311,8 @@ int32_t StartReplaceSession(const std::string& path, int32_t& sessionId)
         return ret;
     }
     HapInfoCheckResult result;
-    return g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, result);
+    return g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
 }
 
 // Install a token for the given (userId, bundleName, instIndex) via the auto
@@ -511,7 +524,7 @@ AccessTokenID InstallAppWithMode(const std::string& path, const std::string& bun
 // StartReplaceSession which always runs in main mode.
 int32_t StartReplaceSessionMode(const std::string& path, MultipleMode mode, int32_t& sessionId)
 {
-    BundleHapList hapList{std::vector<std::string>{path}, false, 100, mode};
+    BundleHapList hapList{std::vector<std::string>{path}, false, 100};
     std::vector<TrustedBundleInfo> bundleInfo;
     HapVerifyResultInfo resultInfo;
     int32_t ret = g_installSessionManager->CheckHapSignInfo(
@@ -520,7 +533,7 @@ int32_t StartReplaceSessionMode(const std::string& path, MultipleMode mode, int3
         return ret;
     }
     HapInfoCheckResult result;
-    return g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, result);
+    return g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, mode, result);
 }
 
 // Sibling/clone base info for the auto-session install path.
@@ -719,7 +732,7 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapTest001, TestSize.Level0)
     BundleHapList hapList;
     hapList.hapPaths.emplace_back(path);
     hapList.isPreInstalled = false;
-    hapList.userId = 100;
+    hapList.userIdForEnterpriseSign = 100;
     
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
@@ -729,7 +742,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapTest001, TestSize.Level0)
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_EQ(ERR_OK, ret);
 
     HapBaseInfo baseInfo;
@@ -1051,7 +1065,7 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapTest009, TestSize.Level0)
     BundleHapList hapList;
     hapList.hapPaths.emplace_back(path);
     hapList.isPreInstalled = false;
-    hapList.userId = 100;
+    hapList.userIdForEnterpriseSign = 100;
     
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
@@ -1061,7 +1075,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapTest009, TestSize.Level0)
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_EQ(ERR_OK, ret);
 
     std::map<std::string, std::string> modulePathMap;
@@ -1090,7 +1105,7 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapTest010, TestSize.Level0)
     BundleHapList hapList;
     hapList.hapPaths.emplace_back(path);
     hapList.isPreInstalled = false;
-    hapList.userId = 100;
+    hapList.userIdForEnterpriseSign = 100;
     
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
@@ -1100,7 +1115,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapTest010, TestSize.Level0)
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_EQ(ERR_OK, ret);
 
     HapBaseInfo baseInfo;
@@ -1149,7 +1165,7 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapTest011, TestSize.Level0)
     BundleHapList hapList;
     hapList.hapPaths.emplace_back(path);
     hapList.isPreInstalled = false;
-    hapList.userId = 100;
+    hapList.userIdForEnterpriseSign = 100;
     
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
@@ -1159,7 +1175,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapTest011, TestSize.Level0)
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_EQ(ERR_OK, ret);
 
     std::map<std::string, std::string> modulePathMap;
@@ -1188,7 +1205,7 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapTest012, TestSize.Level0)
     BundleHapList hapList;
     hapList.hapPaths.emplace_back(path);
     hapList.isPreInstalled = false;
-    hapList.userId = 100;
+    hapList.userIdForEnterpriseSign = 100;
     
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
@@ -1198,7 +1215,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapTest012, TestSize.Level0)
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_EQ(ERR_OK, ret);
 
     std::map<std::string, std::string> modulePathMap;
@@ -1297,7 +1315,7 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapTest014, TestSize.Level0)
     BundleHapList hapList;
     hapList.hapPaths.emplace_back(path2);
     hapList.isPreInstalled = false;
-    hapList.userId = 100;
+    hapList.userIdForEnterpriseSign = 100;
     
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
@@ -1305,7 +1323,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapTest014, TestSize.Level0)
     EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO));
 
     HapInfoCheckResult result;
-    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, result));
+    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
 
     std::map<std::string, std::string> modulePathMap;
     modulePathMap[path2] = path2;
@@ -1359,7 +1378,7 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapTest015, TestSize.Level0)
     BundleHapList hapList;
     hapList.hapPaths.emplace_back(path2);
     hapList.isPreInstalled = false;
-    hapList.userId = 100;
+    hapList.userIdForEnterpriseSign = 100;
     
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
@@ -1367,7 +1386,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapTest015, TestSize.Level0)
     EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO));
 
     HapInfoCheckResult result;
-    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, result));
+    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
 
     std::map<std::string, std::string> modulePathMap;
     modulePathMap[path2] = path2;
@@ -1406,7 +1426,7 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapTest016, TestSize.Level0)
     BundleHapList hapList;
     hapList.hapPaths.emplace_back(path);
     hapList.isPreInstalled = false;
-    hapList.userId = 100;
+    hapList.userIdForEnterpriseSign = 100;
     
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
@@ -1416,7 +1436,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapTest016, TestSize.Level0)
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_NE(ERR_OK, ret);
     EXPECT_EQ(result.permCheckResult.rule, PermissionRulesEnum::PERMISSION_EDM_RULE);
     EXPECT_EQ(result.permCheckResult.permissionName, "ohos.permission.SET_ENTERPRISE_INFO");
@@ -1492,7 +1513,7 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapFailedTest001, TestSize.Level0
     hapList.hapPaths.emplace_back(
         "/SYSTEM/CheckFailed/system_basic/state:[cam,mic]/acl:[getwifi]/Module001/InstallHapFailedTest001");
     hapList.isPreInstalled = false;
-    hapList.userId = 100;
+    hapList.userIdForEnterpriseSign = 100;
     
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
@@ -1522,7 +1543,7 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapFailedTest002, TestSize.Level0
     hapList.hapPaths.emplace_back(
         "/SYSTEM/system_basic/state:[cam,mic]/acl:[getwifi]/Module002/InstallHapFailedTest002-2");
     hapList.isPreInstalled = false;
-    hapList.userId = 100;
+    hapList.userIdForEnterpriseSign = 100;
     
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
@@ -1544,7 +1565,7 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapFailedTest003, TestSize.Level0
     hapList.hapPaths.emplace_back(
         "/SYSTEM/BuildFailed/system_basic/state:[cam,mic]/acl:[getwifi]/Module001/InstallHapFailedTest003");
     hapList.isPreInstalled = false;
-    hapList.userId = 100;
+    hapList.userIdForEnterpriseSign = 100;
     
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
@@ -1554,7 +1575,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapFailedTest003, TestSize.Level0
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, InstallTypeEnum::TYPE_INSTALL, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, InstallTypeEnum::TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_NE(ERR_OK, ret);
 }
 
@@ -1584,7 +1606,7 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapFailedTest004, TestSize.Level0
     BundleHapList hapList;
     hapList.hapPaths.emplace_back(path);
     hapList.isPreInstalled = false;
-    hapList.userId = 100;
+    hapList.userIdForEnterpriseSign = 100;
     
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
@@ -1594,14 +1616,16 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapFailedTest004, TestSize.Level0
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, InstallTypeEnum::TYPE_INSTALL, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, InstallTypeEnum::TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_NE(ERR_OK, ret);
 
     int32_t sceneCode = 0;
     ret = DeleteIdentityCore(tokenId, "InstallHapFailedTest004", ReservedType::NONE, sceneCode);
     EXPECT_EQ(ERR_OK, ret);
 
-    ret = g_installSessionManager->CheckHapPermissionInfo(INVALID_SESSION, InstallTypeEnum::TYPE_INSTALL, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        INVALID_SESSION, InstallTypeEnum::TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_NE(ERR_OK, ret);
 }
 
@@ -1617,7 +1641,7 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapSuccessTest005, TestSize.Level
     hapList.hapPaths.emplace_back(
         "/SYSTEM/system_basic/state:[cam,mic]/acl:[getwifi]/Module001/InstallHapFailedTest005");
     hapList.isPreInstalled = false;
-    hapList.userId = 100;
+    hapList.userIdForEnterpriseSign = 100;
     
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
@@ -1627,7 +1651,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapSuccessTest005, TestSize.Level
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, InstallTypeEnum::TYPE_REPLACE, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, InstallTypeEnum::TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_EQ(ERR_OK, ret);
 
     sessionId = 0;
@@ -1637,7 +1662,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapSuccessTest005, TestSize.Level
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result2;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, InstallTypeEnum::TYPE_MERGE, result2);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, InstallTypeEnum::TYPE_MERGE, MultipleMode::DEFAULT_OR_MAIN_MODE, result2);
     EXPECT_EQ(ERR_OK, ret);
 }
 
@@ -1671,7 +1697,7 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapFailedTest006, TestSize.Level0
     hapList.hapPaths.emplace_back(
         "/SYSTEM/system_basic/state:[cam,mic,syswin,getwifi]/acl:[getwifi]/Module001/InstallHapFailedTest006");
     hapList.isPreInstalled = false;
-    hapList.userId = 100;
+    hapList.userIdForEnterpriseSign = 100;
     
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
@@ -1680,7 +1706,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapFailedTest006, TestSize.Level0
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, InstallTypeEnum::TYPE_MERGE, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, InstallTypeEnum::TYPE_MERGE, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_NE(ERR_OK, ret);
 
     GenericValues delCondition2;
@@ -1722,7 +1749,7 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapFailedTest007, TestSize.Level0
     hapList.hapPaths.emplace_back(
         "/SYSTEM/system_basic/state:[cam,mic,syswin,getwifi]/acl:[getwifi]/Module001/InstallHapFailedTest007");
     hapList.isPreInstalled = false;
-    hapList.userId = 100;
+    hapList.userIdForEnterpriseSign = 100;
     
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
@@ -1731,7 +1758,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapFailedTest007, TestSize.Level0
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, InstallTypeEnum::TYPE_MERGE, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, InstallTypeEnum::TYPE_MERGE, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_NE(ERR_OK, ret);
 
     GenericValues delCondition2;
@@ -1755,7 +1783,7 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapFailedTest008, TestSize.Level0
     hapList.hapPaths.emplace_back(
         "/SYSTEM/system_basic/state:[cam,mic,syswin,getwifi]/Module001/InstallHapFailedTest008");
     hapList.isPreInstalled = false;
-    hapList.userId = 100;
+    hapList.userIdForEnterpriseSign = 100;
     
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
@@ -1765,7 +1793,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapFailedTest008, TestSize.Level0
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, InstallTypeEnum::TYPE_INSTALL, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, InstallTypeEnum::TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_NE(ERR_OK, ret);
     EXPECT_EQ(result.permCheckResult.rule, PermissionRulesEnum::PERMISSION_ACL_RULE);
     EXPECT_EQ(result.permCheckResult.permissionName, "ohos.permission.GET_WIFI_INFO_INTERNAL");
@@ -1810,7 +1839,7 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapFailedTest010, TestSize.Level0
     hapList.hapPaths.emplace_back(
         "/SYSTEM/system_basic/state:[cam,mic,syswin,getwifi]/acl:[getwifi]/Module001/InstallHapFailedTest010");
     hapList.isPreInstalled = false;
-    hapList.userId = 100;
+    hapList.userIdForEnterpriseSign = 100;
     
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
@@ -1820,7 +1849,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapFailedTest010, TestSize.Level0
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_EQ(ERR_OK, ret);
 
     HapBaseInfo baseInfo;
@@ -1855,7 +1885,7 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapFailedTest014, TestSize.Level0
     hapList.hapPaths.emplace_back(
         "/SYSTEM/system_basic/state:[cam,mic,syswin]/SKILL/Module001/InstallHapFailedTest014");
     hapList.isPreInstalled = false;
-    hapList.userId = 100;
+    hapList.userIdForEnterpriseSign = 100;
     
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
@@ -1865,7 +1895,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapFailedTest014, TestSize.Level0
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_EQ(ERR_OK, ret);
 
     HapBaseInfo baseInfo;
@@ -1894,7 +1925,7 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapFailedTest015, TestSize.Level0
     hapList.hapPaths.emplace_back(
         "/SYSTEM/system_basic/state:[cam,mic,syswin]/Module001/InstallHapFailedTest015");
     hapList.isPreInstalled = false;
-    hapList.userId = 100;
+    hapList.userIdForEnterpriseSign = 100;
     
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
@@ -1904,7 +1935,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapFailedTest015, TestSize.Level0
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_EQ(ERR_OK, ret);
 
     HapBaseInfo baseInfo;
@@ -1957,7 +1989,7 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapFailedTest017, TestSize.Level0
     BundleHapList hapList;
     hapList.hapPaths.emplace_back(path);
     hapList.isPreInstalled = false;
-    hapList.userId = 100;
+    hapList.userIdForEnterpriseSign = 100;
     
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
@@ -1967,7 +1999,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapFailedTest017, TestSize.Level0
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_EQ(ERR_OK, ret);
 
     HapBaseInfo baseInfo;
@@ -2014,7 +2047,7 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapFailedTest018, TestSize.Level0
     BundleHapList hapList;
     hapList.hapPaths.emplace_back(path);
     hapList.isPreInstalled = false;
-    hapList.userId = 100;
+    hapList.userIdForEnterpriseSign = 100;
     
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
@@ -2024,7 +2057,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapFailedTest018, TestSize.Level0
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_EQ(ERR_OK, ret);
 
     HapBaseInfo baseInfo;
@@ -2072,7 +2106,7 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapFailedTest019, TestSize.Level0
     BundleHapList hapList;
     hapList.hapPaths.emplace_back(path);
     hapList.isPreInstalled = false;
-    hapList.userId = 100;
+    hapList.userIdForEnterpriseSign = 100;
     
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
@@ -2082,7 +2116,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapFailedTest019, TestSize.Level0
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_EQ(ERR_OK, ret);
 
     Identity identity2 = {0, -1};
@@ -2106,7 +2141,7 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapFailedTest020, TestSize.Level0
     hapList.hapPaths.emplace_back(
         "/SYSTEM/system_basic/state:[cam,mic,syswin]/APP_PLUGIN/Module001/InstallHapFailedTest020");
     hapList.isPreInstalled = false;
-    hapList.userId = 100;
+    hapList.userIdForEnterpriseSign = 100;
     
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
@@ -2116,7 +2151,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapFailedTest020, TestSize.Level0
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_EQ(ERR_OK, ret);
 
     HapBaseInfo baseInfo;
@@ -2145,7 +2181,7 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapFailedTest021, TestSize.Level0
     hapList.hapPaths.emplace_back(
         "/SYSTEM/system_basic/state:[cam,mic,syswin]/SHARED/Module001/InstallHapFailedTest021");
     hapList.isPreInstalled = false;
-    hapList.userId = 100;
+    hapList.userIdForEnterpriseSign = 100;
     
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
@@ -2155,7 +2191,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallHapFailedTest021, TestSize.Level0
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_EQ(ERR_OK, ret);
 
     HapBaseInfo baseInfo;
@@ -2202,7 +2239,7 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest001, TestSize.Level0)
     BundleHapList hapList;
     hapList.hapPaths.emplace_back(path);
     hapList.isPreInstalled = false;
-    hapList.userId = 100;
+    hapList.userIdForEnterpriseSign = 100;
 
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
@@ -2210,10 +2247,13 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest001, TestSize.Level0)
     ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO);
     EXPECT_EQ(ERR_OK, ret);
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_EQ(ERR_OK, ret);
 
-    ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenId, bundlePolicy, identity.uid);
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx.tokenIDEx = identity.tokenId;
+    ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, identity.uid);
     EXPECT_EQ(ERR_OK, ret);
 
     std::map<std::string, std::string> modulePathMap;
@@ -2225,6 +2265,156 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest001, TestSize.Level0)
 
     int32_t sceneCode = 0;
     ret = DeleteIdentityCore(tokenId, "UpdateHapTest001", ReservedType::NONE, sceneCode);
+    EXPECT_EQ(ERR_OK, ret);
+}
+
+/**
+ * @tc.name: UpdateHapTokenIdExTest001
+ * @tc.desc: Test the in-out AccessTokenIDEx of UpdateHapPolicy, with NORMAL change
+ *           to SYSTEM: the low 32 bits locate the token and stay unchanged, the
+ *           high 32 bits (token attr) are refreshed with the attr this upgrade
+ *           applies and echoed back to the caller.
+ * @tc.type: FUNC
+ * @tc.require: Issue
+ */
+HWTEST_F(InstallSessionManagerMockTest, UpdateHapTokenIdExTest001, TestSize.Level0)
+{
+    // install in NORMAL mode: the token attr is 0
+    std::string path = "/state:[cam,mic]/Module001/UpdateHapTokenIdExTest001";
+    std::vector<std::string> hapPaths = {path};
+    HapBaseInfo baseInfo;
+    baseInfo.userID = 100;
+    baseInfo.bundleName = "UpdateHapTokenIdExTest001";
+    baseInfo.instIndex = 0;
+    BundlePolicy bundlePolicy;
+    bundlePolicy.dlpType = DLP_COMMON;
+    bundlePolicy.isDebugGrant = false;
+    Identity identity = {0, -1};
+    InstallHap(hapPaths, baseInfo, bundlePolicy, identity);
+    AccessTokenID tokenId = static_cast<AccessTokenID>(identity.tokenId);
+
+    // update with a SYSTEM package: the applied attr becomes SYSTEM_APP_FLAG
+    std::string path2 =
+        "/SYSTEM/system_basic/state:[cam,mic,syswin,getwifi]/acl:[getwifi]/Module001/UpdateHapTokenIdExTest001";
+    BundleHapList hapList;
+    hapList.hapPaths.emplace_back(path2);
+    hapList.isPreInstalled = false;
+    hapList.userIdForEnterpriseSign = 100;
+
+    int32_t sessionId = 0;
+    std::vector<TrustedBundleInfo> bundleInfo;
+    HapVerifyResultInfo resultInfo;
+    int32_t ret = g_installSessionManager->CheckHapSignInfo(
+        hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO);
+    EXPECT_EQ(ERR_OK, ret);
+    HapInfoCheckResult result;
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
+    EXPECT_EQ(ERR_OK, ret);
+
+    // caller passes the stale full token id (attr 0 from the install round)
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx.tokenIDEx = identity.tokenId;
+    int32_t uid = -1; // no uid expectation
+    ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid);
+    EXPECT_EQ(ERR_OK, ret);
+    // low 32 bits: the token id stays unchanged
+    EXPECT_EQ(tokenId, tokenIdEx.tokenIdExStruct.tokenID);
+    // high 32 bits: refreshed with the attr this upgrade applies
+    EXPECT_EQ(SYSTEM_APP_FLAG, tokenIdEx.tokenIdExStruct.tokenAttr);
+
+    std::map<std::string, std::string> modulePathMap;
+    modulePathMap[path2] = path2;
+    ret = g_installSessionManager->FinishInstall(sessionId, true, modulePathMap);
+    EXPECT_EQ(ERR_OK, ret);
+
+    // the committed attr equals the refreshed high bits
+    std::shared_ptr<HapTokenInfoInner> infoPtr =
+        AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId);
+    EXPECT_NE(infoPtr, nullptr);
+    if (infoPtr != nullptr) {
+        EXPECT_EQ(SYSTEM_APP_FLAG, infoPtr->GetAttr());
+    }
+
+    int32_t sceneCode = 0;
+    ret = DeleteIdentityCore(tokenId, "UpdateHapTokenIdExTest001", ReservedType::NONE, sceneCode);
+    EXPECT_EQ(ERR_OK, ret);
+}
+
+/**
+ * @tc.name: UpdateHapTokenIdExTest002
+ * @tc.desc: Test the in-out AccessTokenIDEx of UpdateHapPolicy, with SYSTEM change
+ *           to NORMAL and an error path: on success the high 32 bits are cleared
+ *           to the new attr; on failure (session not exist) the caller's input
+ *           is left untouched.
+ * @tc.type: FUNC
+ * @tc.require: Issue
+ */
+HWTEST_F(InstallSessionManagerMockTest, UpdateHapTokenIdExTest002, TestSize.Level0)
+{
+    // install in SYSTEM mode: the token attr is SYSTEM_APP_FLAG
+    std::string path =
+        "/SYSTEM/system_basic/state:[cam,mic,syswin,getwifi]/acl:[getwifi]/Module001/UpdateHapTokenIdExTest002";
+    std::vector<std::string> hapPaths = {path};
+    HapBaseInfo baseInfo;
+    baseInfo.userID = 100;
+    baseInfo.bundleName = "UpdateHapTokenIdExTest002";
+    baseInfo.instIndex = 0;
+    BundlePolicy bundlePolicy;
+    bundlePolicy.dlpType = DLP_COMMON;
+    bundlePolicy.isDebugGrant = false;
+    Identity identity = {0, -1};
+    InstallHap(hapPaths, baseInfo, bundlePolicy, identity);
+    AccessTokenID tokenId = static_cast<AccessTokenID>(identity.tokenId);
+
+    // update with a NORMAL package: the applied attr becomes 0
+    std::string path2 = "/state:[cam,mic]/Module001/UpdateHapTokenIdExTest002";
+    BundleHapList hapList;
+    hapList.hapPaths.emplace_back(path2);
+    hapList.isPreInstalled = false;
+    hapList.userIdForEnterpriseSign = 100;
+
+    int32_t sessionId = 0;
+    std::vector<TrustedBundleInfo> bundleInfo;
+    HapVerifyResultInfo resultInfo;
+    int32_t ret = g_installSessionManager->CheckHapSignInfo(
+        hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO);
+    EXPECT_EQ(ERR_OK, ret);
+    HapInfoCheckResult result;
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
+    EXPECT_EQ(ERR_OK, ret);
+
+    // caller passes the full token id of the install round (attr = SYSTEM_APP_FLAG)
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx.tokenIDEx = identity.tokenId;
+    // error path first: invalid session leaves the in-out param untouched
+    int32_t uid = -1; // no uid expectation
+    ret = g_installSessionManager->UpdateHapPolicy(INVALID_SESSION, tokenIdEx, bundlePolicy, uid);
+    EXPECT_EQ(AccessTokenError::ERR_SESSION_NOT_EXIST, ret);
+    EXPECT_EQ(tokenId, tokenIdEx.tokenIdExStruct.tokenID);
+    EXPECT_EQ(SYSTEM_APP_FLAG, tokenIdEx.tokenIdExStruct.tokenAttr);
+
+    ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid);
+    EXPECT_EQ(ERR_OK, ret);
+    // low 32 bits unchanged, high 32 bits cleared to the new attr
+    EXPECT_EQ(tokenId, tokenIdEx.tokenIdExStruct.tokenID);
+    EXPECT_EQ(0U, tokenIdEx.tokenIdExStruct.tokenAttr);
+
+    std::map<std::string, std::string> modulePathMap;
+    modulePathMap[path2] = path2;
+    ret = g_installSessionManager->FinishInstall(sessionId, true, modulePathMap);
+    EXPECT_EQ(ERR_OK, ret);
+
+    std::shared_ptr<HapTokenInfoInner> infoPtr =
+        AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId);
+    EXPECT_NE(infoPtr, nullptr);
+    if (infoPtr != nullptr) {
+        EXPECT_EQ(0U, infoPtr->GetAttr());
+    }
+
+    int32_t sceneCode = 0;
+    ret = DeleteIdentityCore(tokenId, "UpdateHapTokenIdExTest002", ReservedType::NONE, sceneCode);
     EXPECT_EQ(ERR_OK, ret);
 }
 
@@ -2255,7 +2445,7 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest002, TestSize.Level0)
     BundleHapList hapList;
     hapList.hapPaths.emplace_back(path);
     hapList.isPreInstalled = false;
-    hapList.userId = 100;
+    hapList.userIdForEnterpriseSign = 100;
 
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
@@ -2264,11 +2454,14 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest002, TestSize.Level0)
         hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO);
     EXPECT_EQ(ERR_OK, ret);
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_EQ(ERR_OK, ret);
 
     bundlePolicy.preAuthorizationInfo.emplace_back(PreAuthorizationInfo{"ohos.permission.CAMERA", true});
-    ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenId, bundlePolicy, identity.uid);
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx.tokenIDEx = identity.tokenId;
+    ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, identity.uid);
     EXPECT_EQ(ERR_OK, ret);
 
     std::map<std::string, std::string> modulePathMap;
@@ -2313,7 +2506,7 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest003, TestSize.Level0)
     hapList.hapPaths.emplace_back(path);
     hapList.hapPaths.emplace_back(path2);
     hapList.isPreInstalled = false;
-    hapList.userId = 100;
+    hapList.userIdForEnterpriseSign = 100;
 
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
@@ -2321,10 +2514,13 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest003, TestSize.Level0)
     ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO);
     EXPECT_EQ(ERR_OK, ret);
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_EQ(ERR_OK, ret);
 
-    ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenId, bundlePolicy, identity.uid);
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx.tokenIDEx = identity.tokenId;
+    ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, identity.uid);
     EXPECT_EQ(ERR_OK, ret);
 
     std::map<std::string, std::string> modulePathMap;
@@ -2371,7 +2567,7 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest004, TestSize.Level0)
     hapList.hapPaths.emplace_back(path);
     hapList.hapPaths.emplace_back(path2);
     hapList.isPreInstalled = false;
-    hapList.userId = 100;
+    hapList.userIdForEnterpriseSign = 100;
 
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
@@ -2380,10 +2576,13 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest004, TestSize.Level0)
         hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO);
     EXPECT_EQ(ERR_OK, ret);
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_EQ(ERR_OK, ret);
 
-    ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenId, bundlePolicy, identity.uid);
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx.tokenIDEx = identity.tokenId;
+    ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, identity.uid);
     EXPECT_EQ(ERR_OK, ret);
 
     std::map<std::string, std::string> modulePathMap;
@@ -2433,7 +2632,7 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest005, TestSize.Level0)
     BundleHapList hapList;
     hapList.hapPaths.emplace_back(path);
     hapList.isPreInstalled = false;
-    hapList.userId = 100;
+    hapList.userIdForEnterpriseSign = 100;
 
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
@@ -2441,10 +2640,13 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest005, TestSize.Level0)
     ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO);
     EXPECT_EQ(ERR_OK, ret);
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_EQ(ERR_OK, ret);
 
-    ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenId, bundlePolicy, identity.uid);
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx.tokenIDEx = identity.tokenId;
+    ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, identity.uid);
     EXPECT_EQ(ERR_OK, ret);
 
     std::map<std::string, std::string> modulePathMap;
@@ -2497,7 +2699,7 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest006, TestSize.Level0)
     BundleHapList hapList;
     hapList.hapPaths.emplace_back(path);
     hapList.isPreInstalled = false;
-    hapList.userId = 100;
+    hapList.userIdForEnterpriseSign = 100;
 
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
@@ -2505,7 +2707,8 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest006, TestSize.Level0)
     ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO);
     EXPECT_EQ(ERR_OK, ret);
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_EQ(ERR_OK, ret);
 
     std::map<std::string, std::string> modulePathMap;
@@ -2557,7 +2760,8 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest007, TestSize.Level0)
     HapVerifyResultInfo resultInfo;
     EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO));
     HapInfoCheckResult result;
-    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_MERGE, result));
+    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_MERGE, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
 
     std::map<std::string, std::string> modulePathMap;
     modulePathMap[path3] = path3;
@@ -2610,7 +2814,7 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest008, TestSize.Level0)
     BundleHapList hapList;
     hapList.hapPaths.emplace_back(path);
     hapList.isPreInstalled = false;
-    hapList.userId = 100;
+    hapList.userIdForEnterpriseSign = 100;
 
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
@@ -2619,10 +2823,13 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest008, TestSize.Level0)
         hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO);
     EXPECT_EQ(ERR_OK, ret);
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_EQ(ERR_OK, ret);
 
-    ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenId, bundlePolicy, identity.uid);
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx.tokenIDEx = identity.tokenId;
+    ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, identity.uid);
     EXPECT_EQ(ERR_OK, ret);
 
     std::map<std::string, std::string> modulePathMap;
@@ -2667,7 +2874,7 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest009, TestSize.Level0)
     BundleHapList hapList;
     hapList.hapPaths.emplace_back(path);
     hapList.isPreInstalled = false;
-    hapList.userId = 100;
+    hapList.userIdForEnterpriseSign = 100;
 
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
@@ -2676,11 +2883,14 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest009, TestSize.Level0)
         hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO);
     EXPECT_EQ(ERR_OK, ret);
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_EQ(ERR_OK, ret);
 
     int32_t uid = TEST_UID;
-    ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenId, bundlePolicy, uid);
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx.tokenIDEx = identity.tokenId;
+    ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid);
     EXPECT_EQ(ERR_OK, ret);
     EXPECT_EQ(uid, identity.uid);
 
@@ -2731,10 +2941,13 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest010, TestSize.Level0)
     EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO));
 
     HapInfoCheckResult result;
-    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, result));
+    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
 
     int32_t uid = TEST_UID;
-    EXPECT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenId, bundlePolicy, uid));
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx.tokenIDEx = identity.tokenId;
+    EXPECT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid));
     EXPECT_EQ(uid, identity.uid);
 
     EXPECT_EQ(ERR_OK, g_installSessionManager->FinishInstall(sessionId, true, modulePathMap));
@@ -2781,10 +2994,13 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest011, TestSize.Level0)
     EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO));
 
     HapInfoCheckResult result;
-    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, result));
+    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
 
     int32_t uid = TEST_UID;
-    EXPECT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenId, bundlePolicy, uid));
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx.tokenIDEx = identity.tokenId;
+    EXPECT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid));
     EXPECT_EQ(uid, TEST_UID);
 
     std::map<std::string, std::string> modulePathMap;
@@ -2833,10 +3049,13 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest012, TestSize.Level0)
     EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO));
 
     HapInfoCheckResult result;
-    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, result));
+    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
 
     int32_t uid = TEST_INVALID_UID;
-    EXPECT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenId, bundlePolicy, uid));
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx.tokenIDEx = identity.tokenId;
+    EXPECT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid));
     EXPECT_NE(uid, TEST_INVALID_UID);
 
     std::map<std::string, std::string> modulePathMap;
@@ -2892,10 +3111,13 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest013, TestSize.Level0)
     EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO));
 
     HapInfoCheckResult result;
-    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, result));
+    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
 
     int32_t uid = identity2.uid;
-    EXPECT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenId, bundlePolicy, uid));
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx.tokenIDEx = identity.tokenId;
+    EXPECT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid));
     EXPECT_NE(uid, identity2.uid);
 
     std::map<std::string, std::string> modulePathMap;
@@ -2945,10 +3167,13 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest014, TestSize.Level4)
     EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO));
 
     HapInfoCheckResult result;
-    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, result));
+    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
 
     int32_t uid = TEST_UID2;
-    EXPECT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenId, bundlePolicy, uid));
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx.tokenIDEx = identity.tokenId;
+    EXPECT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid));
     EXPECT_EQ(uid, TEST_UID2);
 
     std::map<std::string, std::string> modulePathMap;
@@ -2995,10 +3220,13 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapFromCallerMigratedTest001, Test
     EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo,
         QUERY_ALL_SIGN_INFO));
     HapInfoCheckResult result;
-    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, result));
+    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
 
     int32_t uid = TEST_UID2;
-    EXPECT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenId, bundlePolicy, uid));
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx.tokenIDEx = identity.tokenId;
+    EXPECT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid));
     EXPECT_EQ(uid, TEST_UID2);
 
     std::map<std::string, std::string> modulePathMap;
@@ -3050,7 +3278,9 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapKeepMigratedTest001, TestSize.L
     int32_t sessionId = 0;
     ASSERT_EQ(ERR_OK, StartReplaceSession(path, sessionId));
     int32_t uid = -1; // no uid expectation
-    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenId, bundlePolicy, uid));
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx.tokenIDEx = identity.tokenId;
+    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid));
     std::map<std::string, std::string> modulePathMap;
     modulePathMap[path] = path;
     ASSERT_EQ(ERR_OK, g_installSessionManager->FinishInstall(sessionId, true, modulePathMap));
@@ -3100,7 +3330,9 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapKeepPermDialogCapTest001, TestS
     int32_t sessionId = 0;
     ASSERT_EQ(ERR_OK, StartReplaceSession(path, sessionId));
     int32_t uid = -1; // no uid expectation
-    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenId, bundlePolicy, uid));
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx.tokenIDEx = identity.tokenId;
+    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid));
     std::map<std::string, std::string> modulePathMap;
     modulePathMap[path] = path;
     ASSERT_EQ(ERR_OK, g_installSessionManager->FinishInstall(sessionId, true, modulePathMap));
@@ -3149,7 +3381,9 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateUntrustedKeepStickyFlagsTest001, T
     int32_t sessionId = 0;
     ASSERT_EQ(ERR_OK, StartReplaceSession(path, sessionId));
     int32_t uid = -1; // no uid expectation
-    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenId, bundlePolicy, uid));
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx.tokenIDEx = identity.tokenId;
+    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid));
     std::map<std::string, std::string> modulePathMap;
     modulePathMap[path] = path;
     ASSERT_EQ(ERR_OK, g_installSessionManager->FinishInstall(sessionId, true, modulePathMap));
@@ -3353,7 +3587,7 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapFailedTest001, TestSize.Level0)
     BundleHapList hapList;
     hapList.hapPaths.emplace_back(path);
     hapList.isPreInstalled = false;
-    hapList.userId = 100;
+    hapList.userIdForEnterpriseSign = 100;
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
     HapVerifyResultInfo resultInfo;
@@ -3361,12 +3595,15 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapFailedTest001, TestSize.Level0)
         hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO);
     EXPECT_EQ(ERR_OK, ret);
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_EQ(ERR_OK, ret);
 
 
     g_installSessionManager->migrationDone_ = false;
-    ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenId, bundlePolicy, identity.uid);
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx.tokenIDEx = identity.tokenId;
+    ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, identity.uid);
     EXPECT_NE(ERR_OK, ret);
     g_installSessionManager->migrationDone_ = true;
 
@@ -3414,7 +3651,7 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapFailedTest002, TestSize.Level0)
     BundleHapList hapList;
     hapList.hapPaths.emplace_back(path);
     hapList.isPreInstalled = false;
-    hapList.userId = 100;
+    hapList.userIdForEnterpriseSign = 100;
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
     HapVerifyResultInfo resultInfo;
@@ -3422,13 +3659,18 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapFailedTest002, TestSize.Level0)
         hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO);
     EXPECT_EQ(ERR_OK, ret);
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_EQ(ERR_OK, ret);
 
-    ret = g_installSessionManager->UpdateHapPolicy(INVALID_SESSION, tokenId, bundlePolicy, identity.uid);
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx.tokenIDEx = identity.tokenId;
+    ret = g_installSessionManager->UpdateHapPolicy(INVALID_SESSION, tokenIdEx, bundlePolicy, identity.uid);
     EXPECT_NE(ERR_OK, ret);
 
-    ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenId2, bundlePolicy, identity2.uid);
+    tokenIdEx = {0};
+    tokenIdEx.tokenIDEx = identity2.tokenId;
+    ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, identity2.uid);
     EXPECT_NE(ERR_OK, ret);
 
     int32_t sceneCode = 0;
@@ -3463,7 +3705,7 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapFailedTest003, TestSize.Level0)
     BundleHapList hapList;
     hapList.hapPaths.emplace_back(path);
     hapList.isPreInstalled = false;
-    hapList.userId = 100;
+    hapList.userIdForEnterpriseSign = 100;
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
     HapVerifyResultInfo resultInfo;
@@ -3471,10 +3713,12 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapFailedTest003, TestSize.Level0)
         hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO);
     EXPECT_EQ(ERR_OK, ret);
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_EQ(ERR_OK, ret);
 
-    ret = g_installSessionManager->UpdateHapPolicy(sessionId, 123456789, bundlePolicy, identity.uid);
+    AccessTokenIDEx tokenIdEx = BuildTokenIdEx(static_cast<AccessTokenID>(123456789));
+    ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, identity.uid);
     EXPECT_NE(ERR_OK, ret);
 
     int32_t sceneCode = 0;
@@ -3511,17 +3755,20 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapFailedTest004, TestSize.Level0)
     BundleHapList hapList;
     hapList.hapPaths.emplace_back(path);
     hapList.isPreInstalled = false;
-    hapList.userId = 100;
+    hapList.userIdForEnterpriseSign = 100;
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
     HapVerifyResultInfo resultInfo;
     ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO);
     EXPECT_EQ(ERR_OK, ret);
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_EQ(ERR_OK, ret);
 
-    ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenId, bundlePolicy, identity.uid);
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx.tokenIDEx = identity.tokenId;
+    ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, identity.uid);
     EXPECT_NE(ERR_OK, ret);
 
     ret = DeleteIdentityCore(0, "UpdateHapFailedTest004", ReservedType::NONE, sceneCode);
@@ -3549,8 +3796,10 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapFailedTest005, TestSize.Level1)
     int32_t sessionId = 0;
     ASSERT_EQ(ERR_OK, StartReplaceSession(path, sessionId));
     int32_t uid = 0;
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx.tokenIDEx = identity.tokenId;
     EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
-        g_installSessionManager->UpdateHapPolicy(sessionId, tokenId, bundlePolicy, uid));
+        g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid));
     // fatal rejection rolls the session back
     std::map<std::string, std::string> emptyPathMap;
     EXPECT_EQ(AccessTokenError::ERR_SESSION_NOT_EXIST,
@@ -3573,7 +3822,7 @@ HWTEST_F(InstallSessionManagerMockTest, FinishHapTest001, TestSize.Level0)
     BundleHapList hapList;
     hapList.hapPaths.emplace_back(path);
     hapList.isPreInstalled = false;
-    hapList.userId = 100;
+    hapList.userIdForEnterpriseSign = 100;
     
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
@@ -3581,7 +3830,8 @@ HWTEST_F(InstallSessionManagerMockTest, FinishHapTest001, TestSize.Level0)
     EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO));
 
     HapInfoCheckResult result;
-    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, result));
+    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
 
     HapBaseInfo baseInfo;
     baseInfo.userID = 100;
@@ -3622,7 +3872,7 @@ HWTEST_F(InstallSessionManagerMockTest, FinishHapTest002, TestSize.Level0)
     BundleHapList hapList;
     hapList.hapPaths.emplace_back(path);
     hapList.isPreInstalled = false;
-    hapList.userId = 100;
+    hapList.userIdForEnterpriseSign = 100;
     
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
@@ -3630,7 +3880,8 @@ HWTEST_F(InstallSessionManagerMockTest, FinishHapTest002, TestSize.Level0)
     EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO));
 
     HapInfoCheckResult result;
-    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, result));
+    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
 
     std::map<std::string, std::string> modulePathMap;
     modulePathMap[path] = path;
@@ -3656,7 +3907,7 @@ HWTEST_F(InstallSessionManagerMockTest, FinishHapTest004, TestSize.Level0)
     BundleHapList hapList;
     hapList.hapPaths.emplace_back(path);
     hapList.isPreInstalled = false;
-    hapList.userId = 100;
+    hapList.userIdForEnterpriseSign = 100;
     
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
@@ -3664,7 +3915,8 @@ HWTEST_F(InstallSessionManagerMockTest, FinishHapTest004, TestSize.Level0)
     EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO));
 
     HapInfoCheckResult result;
-    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, result));
+    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
 
     std::map<std::string, std::string> modulePathMap;
     modulePathMap[path] = path;
@@ -3692,7 +3944,7 @@ HWTEST_F(InstallSessionManagerMockTest, FinishHapFailedTest001, TestSize.Level0)
     BundleHapList hapList;
     hapList.hapPaths.emplace_back(path);
     hapList.isPreInstalled = false;
-    hapList.userId = 100;
+    hapList.userIdForEnterpriseSign = 100;
     
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
@@ -3700,7 +3952,8 @@ HWTEST_F(InstallSessionManagerMockTest, FinishHapFailedTest001, TestSize.Level0)
     EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO));
 
     HapInfoCheckResult result;
-    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, result));
+    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
 
     std::map<std::string, std::string> modulePathMap;
     modulePathMap[path] = path;
@@ -3950,7 +4203,8 @@ HWTEST_F(InstallSessionManagerMockTest, AppCloneTest005, TestSize.Level0)
     EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO));
 
     HapInfoCheckResult result;
-    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, result));
+    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
 
     baseInfo.userID = TEST_USER_ID;
     baseInfo.instIndex = 1;
@@ -4263,7 +4517,7 @@ HWTEST_F(InstallSessionManagerMockTest, IsCheckPermTest001, TestSize.Level0)
     BundleHapList hapList;
     hapList.hapPaths.emplace_back(path);
     hapList.isPreInstalled = false;
-    hapList.userId = 100;
+    hapList.userIdForEnterpriseSign = 100;
 
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
@@ -4288,7 +4542,8 @@ HWTEST_F(InstallSessionManagerMockTest, IsCheckPermTest001, TestSize.Level0)
     HapVerifyResultInfo resultInfo2;
     ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo2, QUERY_ALL_SIGN_INFO);
     EXPECT_EQ(ERR_OK, ret);
-    ret = g_installSessionManager->UpdateHapPolicy(sessionId, INVALID_SESSION, bundlePolicy, identity.uid);
+    AccessTokenIDEx tokenIdEx = BuildTokenIdEx(static_cast<AccessTokenID>(INVALID_SESSION));
+    ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, identity.uid);
     EXPECT_NE(ERR_OK, ret);
 
     HapVerifyResultInfo resultInfo3;
@@ -4315,7 +4570,7 @@ HWTEST_F(InstallSessionManagerMockTest, GetInfoBySessionTest001, TestSize.Level0
     hapList.hapPaths.emplace_back(path);
     hapList.hapPaths.emplace_back(path2);
     hapList.isPreInstalled = false;
-    hapList.userId = 100;
+    hapList.userIdForEnterpriseSign = 100;
     
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
@@ -4396,7 +4651,7 @@ HWTEST_F(InstallSessionManagerMockTest, GetInfoByBundleNameTest001, TestSize.Lev
     hapList.hapPaths.emplace_back(path);
     hapList.hapPaths.emplace_back(path2);
     hapList.isPreInstalled = false;
-    hapList.userId = 100;
+    hapList.userIdForEnterpriseSign = 100;
     
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
@@ -4404,7 +4659,8 @@ HWTEST_F(InstallSessionManagerMockTest, GetInfoByBundleNameTest001, TestSize.Lev
     EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO));
 
     HapInfoCheckResult result;
-    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, result));
+    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
 
     HapBaseInfo baseInfo;
     baseInfo.userID = 100;
@@ -4504,7 +4760,7 @@ HWTEST_F(InstallSessionManagerMockTest, GetCachePolicyBySessionIdTest001, TestSi
     BundleHapList hapList;
     hapList.hapPaths.emplace_back(path);
     hapList.isPreInstalled = false;
-    hapList.userId = 100;
+    hapList.userIdForEnterpriseSign = 100;
     
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
@@ -4514,7 +4770,8 @@ HWTEST_F(InstallSessionManagerMockTest, GetCachePolicyBySessionIdTest001, TestSi
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_EQ(ERR_OK, ret);
 
     HapBaseInfo baseInfo;
@@ -4553,7 +4810,7 @@ HWTEST_F(InstallSessionManagerMockTest, GetCachePolicyBySessionIdTest002, TestSi
     BundleHapList hapList;
     hapList.hapPaths.emplace_back(path);
     hapList.isPreInstalled = false;
-    hapList.userId = 100;
+    hapList.userIdForEnterpriseSign = 100;
     
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
@@ -4563,7 +4820,8 @@ HWTEST_F(InstallSessionManagerMockTest, GetCachePolicyBySessionIdTest002, TestSi
     EXPECT_EQ(ERR_OK, ret);
 
     HapInfoCheckResult result;
-    ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, result);
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_EQ(ERR_OK, ret);
 
     HapBaseInfo baseInfo;
@@ -4699,14 +4957,15 @@ HWTEST_F(InstallSessionManagerMockTest, InstallSessionTest001, TestSize.Level1)
         BundleHapListIdl listIdl;
         listIdl.hapPaths.emplace_back(path);
         listIdl.isPreInstalled = false;
-        listIdl.userId = 100;
+        listIdl.userIdForEnterpriseSign = 100;
         CheckHapSignResultRawdata rawData;
         EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
             atManagerService_->CheckHapSignInfo(listIdl, cb, QUERY_ALL_SIGN_INFO, rawData));
 
         HapInfoCheckResultIdl checkResult;
         EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
-            atManagerService_->CheckHapPermissionInfo(1, InstallTypeEnumIdl::TYPE_INSTALL, checkResult));
+            atManagerService_->CheckHapPermissionInfo(
+                1, InstallTypeEnumIdl::TYPE_INSTALL, MultipleModeEnumIdl::DEFAULT_OR_MAIN_MODE, checkResult));
 
         HapBaseInfoIdl infoIdl;
         infoIdl.userID = 100;
@@ -4740,7 +4999,7 @@ HWTEST_F(InstallSessionManagerMockTest, InstallSessionTest002, TestSize.Level1)
     BundleHapList hapList;
     hapList.hapPaths.emplace_back(path);
     hapList.isPreInstalled = false;
-    hapList.userId = 100;
+    hapList.userIdForEnterpriseSign = 100;
 
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
@@ -4780,7 +5039,7 @@ HWTEST_F(InstallSessionManagerMockTest, InstallSessionTest003, TestSize.Level1)
     BundleHapList hapList;
     hapList.hapPaths.emplace_back(path);
     hapList.isPreInstalled = false;
-    hapList.userId = 100;
+    hapList.userIdForEnterpriseSign = 100;
 
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
@@ -4795,7 +5054,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallSessionTest003, TestSize.Level1)
     EXPECT_TRUE(g_installSessionManager->sessionToInstallCache.find(sessionId) !=
         g_installSessionManager->sessionToInstallCache.end());
     HapInfoCheckResult checkResult;
-    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, checkResult));
+    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, checkResult));
 }
 
 /**
@@ -4994,7 +5254,8 @@ HWTEST_F(InstallSessionManagerMockTest, FinishHapTest008, TestSize.Level1)
     int32_t sessionId = 0;
     ASSERT_EQ(ERR_OK, StartReplaceSession(newPath, sessionId));
     int32_t uid = -1; // no uid expectation
-    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenA, bundlePolicy, uid));
+    AccessTokenIDEx tokenIdEx = BuildTokenIdEx(tokenA);
+    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid));
     std::map<std::string, std::string> modulePathMap;
     modulePathMap[newPath] = newPath;
     ASSERT_EQ(ERR_OK, g_installSessionManager->FinishInstall(sessionId, true, modulePathMap));
@@ -5064,7 +5325,9 @@ HWTEST_F(InstallSessionManagerMockTest, FinishHapTest009, TestSize.Level1)
     int32_t sessionId = 0;
     ASSERT_EQ(ERR_OK, StartReplaceSession(newPath, sessionId));
     int32_t uid = -1; // no uid expectation
-    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenA, bundlePolicy, uid));
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx.tokenIDEx = identityA.tokenId;
+    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid));
     std::map<std::string, std::string> modulePathMap;
     modulePathMap[newPath] = newPath;
     ASSERT_EQ(ERR_OK, g_installSessionManager->FinishInstall(sessionId, true, modulePathMap));
@@ -5223,16 +5486,19 @@ HWTEST_F(InstallSessionManagerMockTest, SideloadAppTest004, TestSize.Level0)
     BundleHapList hapList;
     hapList.hapPaths.emplace_back(updatePath);
     hapList.isPreInstalled = false;
-    hapList.userId = 100;
+    hapList.userIdForEnterpriseSign = 100;
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
     HapVerifyResultInfo resultInfo;
     ASSERT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(
         hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO));
     HapInfoCheckResult checkResult;
-    ASSERT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, checkResult));
+    ASSERT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, checkResult));
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx.tokenIDEx = identity.tokenId;
     ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(
-        sessionId, tokenId, bundlePolicy, identity.uid));
+        sessionId, tokenIdEx, bundlePolicy, identity.uid));
     std::map<std::string, std::string> modulePathMap;
     modulePathMap[updatePath] = updatePath;
     ASSERT_EQ(ERR_OK, g_installSessionManager->FinishInstall(sessionId, true, modulePathMap));
@@ -5310,7 +5576,7 @@ HWTEST_F(InstallSessionManagerMockTest, SideloadAppTest003, TestSize.Level0)
     BundleHapList hapList;
     hapList.hapPaths.emplace_back(path);
     hapList.isPreInstalled = false;
-    hapList.userId = 100;
+    hapList.userIdForEnterpriseSign = 100;
 
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
@@ -5321,7 +5587,8 @@ HWTEST_F(InstallSessionManagerMockTest, SideloadAppTest003, TestSize.Level0)
     // ACL check should fail (getwifi is system_core, no ACL, no sideload bypass
     // permission in current production definitions)
     HapInfoCheckResult result;
-    int32_t ret = g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, result);
+    int32_t ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
     EXPECT_NE(ERR_OK, ret);
     if (ret != ERR_OK) {
         EXPECT_EQ(PermissionRulesEnum::PERMISSION_ACL_RULE, result.permCheckResult.rule);
@@ -5363,16 +5630,19 @@ HWTEST_F(InstallSessionManagerMockTest, SideloadAppTest005, TestSize.Level0)
     BundleHapList hapList;
     hapList.hapPaths.emplace_back(normalPath);
     hapList.isPreInstalled = false;
-    hapList.userId = 100;
+    hapList.userIdForEnterpriseSign = 100;
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
     HapVerifyResultInfo resultInfo;
     ASSERT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(
         hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO));
     HapInfoCheckResult checkResult;
-    ASSERT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, checkResult));
+    ASSERT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, checkResult));
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx.tokenIDEx = identity.tokenId;
     ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(
-        sessionId, tokenId, bundlePolicy, identity.uid));
+        sessionId, tokenIdEx, bundlePolicy, identity.uid));
     std::map<std::string, std::string> modulePathMap;
     modulePathMap[normalPath] = normalPath;
     ASSERT_EQ(ERR_OK, g_installSessionManager->FinishInstall(sessionId, true, modulePathMap));
@@ -5429,16 +5699,19 @@ HWTEST_F(InstallSessionManagerMockTest, SideloadAppTest006, TestSize.Level0)
     BundleHapList hapList;
     hapList.hapPaths.emplace_back(sideloadPath);
     hapList.isPreInstalled = false;
-    hapList.userId = 100;
+    hapList.userIdForEnterpriseSign = 100;
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
     HapVerifyResultInfo resultInfo;
     ASSERT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(
         hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO));
     HapInfoCheckResult checkResult;
-    ASSERT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, checkResult));
+    ASSERT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, checkResult));
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx.tokenIDEx = identity.tokenId;
     ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(
-        sessionId, tokenId, bundlePolicy, identity.uid));
+        sessionId, tokenIdEx, bundlePolicy, identity.uid));
     std::map<std::string, std::string> modulePathMap;
     modulePathMap[sideloadPath] = sideloadPath;
     ASSERT_EQ(ERR_OK, g_installSessionManager->FinishInstall(sessionId, true, modulePathMap));
@@ -5675,22 +5948,27 @@ HWTEST_F(InstallSessionManagerMockTest, DriftedUpdateTest001, TestSize.Level1)
     ASSERT_NE(INVALID_TOKENID, static_cast<AccessTokenID>(newIdentity.tokenId));
 
     int32_t uid = -1; // no uid expectation
-    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIds[0], bundlePolicy, uid));
+    AccessTokenIDEx tokenIdEx = BuildTokenIdEx(tokenIds[0]);
+    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid));
     // reset: the out param was overwritten with token[0]'s resolved uid; the next
     // token belongs to another user, pass no-expectation (-1) again
     uid = -1;
-    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIds[1], bundlePolicy, uid));
+    tokenIdEx = BuildTokenIdEx(tokenIds[1]);
+    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid));
 
     // drifted tokenid: never registered in ATM
     constexpr AccessTokenID driftedTokenId = 0x2a580123;
+    tokenIdEx = BuildTokenIdEx(driftedTokenId);
     EXPECT_EQ(AccessTokenError::ERR_TOKENID_NOT_EXIST,
-        g_installSessionManager->UpdateHapPolicy(sessionId, driftedTokenId, bundlePolicy, uid));
+        g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid));
 
     // session is still alive: remaining updates succeed
     uid = -1;
-    EXPECT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIds[2], bundlePolicy, uid));
+    tokenIdEx = BuildTokenIdEx(tokenIds[2]);
+    EXPECT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid));
     uid = -1;
-    EXPECT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIds[3], bundlePolicy, uid));
+    tokenIdEx = BuildTokenIdEx(tokenIds[3]);
+    EXPECT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid));
     // the in-session allocation is not rolled back
     TokenIdStatus status;
     EXPECT_EQ(RET_SUCCESS, AccessTokenIDManager::GetInstance().GetTokenIdStatus(
@@ -5739,10 +6017,12 @@ HWTEST_F(InstallSessionManagerMockTest, DriftedUpdateTest002, TestSize.Level1)
         // reset per token: the out param carries the previous token's resolved
         // uid, and each token belongs to a different user (no expectation)
         uid = -1;
-        ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenId, bundlePolicy, uid));
+        AccessTokenIDEx tokenIdEx = BuildTokenIdEx(tokenId);
+        ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid));
     }
+    AccessTokenIDEx tokenIdEx = BuildTokenIdEx(driftedTokenId);
     EXPECT_EQ(AccessTokenError::ERR_TOKENID_NOT_EXIST,
-        g_installSessionManager->UpdateHapPolicy(sessionId, driftedTokenId, bundlePolicy, uid));
+        g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid));
 
     std::map<std::string, std::string> modulePathMap;
     modulePathMap[path] = path;
@@ -5807,23 +6087,28 @@ HWTEST_F(InstallSessionManagerMockTest, DriftedUpdateTest003, TestSize.Level1)
     BundleHapList hapList;
     hapList.hapPaths.emplace_back(path);
     hapList.isPreInstalled = false;
-    hapList.userId = 100;
+    hapList.userIdForEnterpriseSign = 100;
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
     HapVerifyResultInfo resultInfo;
     ASSERT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(
         hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO));
     HapInfoCheckResult result;
-    ASSERT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, result));
+    ASSERT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
 
     // token exists but belongs to another bundle: fatal, must roll the session back
     int32_t uid = -1; // no uid expectation
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx.tokenIDEx = otherIdentity.tokenId;
     EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
-        g_installSessionManager->UpdateHapPolicy(sessionId, otherTokenId, bundlePolicy, uid));
+        g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid));
 
     // session was erased by RollbackAll
+    tokenIdEx = {0};
+    tokenIdEx.tokenIDEx = identity.tokenId;
     EXPECT_EQ(AccessTokenError::ERR_SESSION_NOT_EXIST,
-        g_installSessionManager->UpdateHapPolicy(sessionId, tokenId, bundlePolicy, uid));
+        g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid));
     // the other bundle's token is not touched by the rollback
     EXPECT_NE(nullptr, AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(otherTokenId));
 
@@ -6112,17 +6397,20 @@ HWTEST_F(InstallSessionManagerMockTest, UntrustedCollectTest001, TestSize.Level1
     BundleHapList hapList;
     hapList.hapPaths.emplace_back(path);
     hapList.isPreInstalled = false;
-    hapList.userId = 100;
+    hapList.userIdForEnterpriseSign = 100;
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
     HapVerifyResultInfo resultInfo;
     ASSERT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(
         hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO));
     HapInfoCheckResult result;
-    ASSERT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, result));
+    ASSERT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
 
     int32_t uid = -1; // no uid expectation
-    EXPECT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenId, bundlePolicy, uid));
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx.tokenIDEx = identity.tokenId;
+    EXPECT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid));
 
     std::map<std::string, std::string> modulePathMap;
     modulePathMap[path] = path;
@@ -6349,7 +6637,9 @@ HWTEST_F(InstallSessionManagerMockTest, UntrustedUpdatePermInheritTest001, TestS
     ASSERT_EQ(ERR_OK, StartReplaceSession(path, sessionId));
     BundlePolicy updatePolicy; // plain policy: no preAuthorizationInfo
     int32_t uid = -1; // no uid expectation
-    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenId, updatePolicy, uid));
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx.tokenIDEx = identity.tokenId;
+    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, updatePolicy, uid));
     std::map<std::string, std::string> modulePathMap;
     modulePathMap[path] = path;
     ASSERT_EQ(ERR_OK, g_installSessionManager->FinishInstall(sessionId, true, modulePathMap));
@@ -6366,9 +6656,9 @@ HWTEST_F(InstallSessionManagerMockTest, UntrustedUpdatePermInheritTest001, TestS
 
 /**
  * @tc.name: InstallModeTest001
- * @tc.desc: EX-2/AC-09E: CheckHapSignInfo rejects mode outside {0,1}
+ * @tc.desc: EX-2/AC-09E: CheckHapPermissionInfo rejects mode outside {0,1}
  *           (including the query-only CURRENT_MODE sentinel) with 12100001
- *           and creates no session.
+ *           and leaves the session not permission-checked.
  * @tc.type: FUNC
  */
 HWTEST_F(InstallSessionManagerMockTest, InstallModeTest001, TestSize.Level0)
@@ -6377,25 +6667,29 @@ HWTEST_F(InstallSessionManagerMockTest, InstallModeTest001, TestSize.Level0)
     BundleHapList hapList;
     hapList.hapPaths.emplace_back(path);
     hapList.isPreInstalled = false;
-    hapList.userId = 100;
-    hapList.mode = static_cast<MultipleMode>(2); // out of the install domain
+    hapList.userIdForEnterpriseSign = 100;
 
-    size_t sessionCountBefore = g_installSessionManager->sessionToInstallCache.size();
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
     HapVerifyResultInfo resultInfo;
     int32_t ret = g_installSessionManager->CheckHapSignInfo(
         hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO);
-    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
-    EXPECT_EQ(sessionCountBefore, g_installSessionManager->sessionToInstallCache.size());
-    EXPECT_TRUE(QuerySignInfoRows("ModeInvalidRejected001", -1).empty());
+    ASSERT_EQ(ERR_OK, ret);
 
-    // CURRENT_MODE is a query-only sentinel and must never enter the install chain
-    hapList.mode = MultipleMode::CURRENT_MODE;
-    ret = g_installSessionManager->CheckHapSignInfo(
-        hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO);
+    HapInfoCheckResult result;
+    // out of the install domain
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_INSTALL, static_cast<MultipleMode>(2), result);
     EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
-    EXPECT_EQ(sessionCountBefore, g_installSessionManager->sessionToInstallCache.size());
+    // CURRENT_MODE is a query-only sentinel and must never enter the install chain
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_INSTALL, MultipleMode::CURRENT_MODE, result);
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
+
+    // the session stays not permission-checked: no half state leaks to the next phase
+    auto cacheIt = g_installSessionManager->sessionToInstallCache.find(sessionId);
+    ASSERT_TRUE(cacheIt != g_installSessionManager->sessionToInstallCache.end());
+    EXPECT_FALSE(cacheIt->second.hasPermChecked);
 }
 
 /**
@@ -6412,7 +6706,7 @@ HWTEST_F(InstallSessionManagerMockTest, InstallModeTest002, TestSize.Level0)
     BundleHapList hapList;
     hapList.hapPaths.emplace_back(path);
     hapList.isPreInstalled = false;
-    hapList.userId = 100; // session mode stays DEFAULT_OR_MAIN_MODE
+    hapList.userIdForEnterpriseSign = 100;
 
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
@@ -6421,7 +6715,9 @@ HWTEST_F(InstallSessionManagerMockTest, InstallModeTest002, TestSize.Level0)
         hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO));
 
     HapInfoCheckResult result;
-    ASSERT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, result));
+    // session mode stays DEFAULT_OR_MAIN_MODE
+    ASSERT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
 
     // prepare with a sub-mode instIndex while the session mode is main (0)
     HapBaseInfo baseInfo;
@@ -6439,12 +6735,12 @@ HWTEST_F(InstallSessionManagerMockTest, InstallModeTest002, TestSize.Level0)
     EXPECT_TRUE(QuerySignInfoRows(bundleName, -1).empty());
 
     // reverse direction: sub-mode session with a main-mode instIndex is rejected too
-    hapList.mode = MultipleMode::SUB_MODE;
     int32_t subSessionId = 0;
     ASSERT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(
         hapList, nullptr, subSessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO));
     HapInfoCheckResult subResult;
-    ASSERT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(subSessionId, TYPE_INSTALL, subResult));
+    ASSERT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(
+        subSessionId, TYPE_INSTALL, MultipleMode::SUB_MODE, subResult));
     HapBaseInfo subBaseInfo;
     subBaseInfo.userID = 100;
     subBaseInfo.bundleName = bundleName;
@@ -6594,8 +6890,7 @@ HWTEST_F(InstallSessionManagerMockTest, InstallModeTest007, TestSize.Level0)
     BundleHapList hapList;
     hapList.hapPaths.emplace_back(path);
     hapList.isPreInstalled = false;
-    hapList.userId = 100;
-    hapList.mode = MultipleMode::SUB_MODE;
+    hapList.userIdForEnterpriseSign = 100;
 
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
@@ -6603,7 +6898,8 @@ HWTEST_F(InstallSessionManagerMockTest, InstallModeTest007, TestSize.Level0)
     ASSERT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(
         hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO));
     HapInfoCheckResult result;
-    ASSERT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, result));
+    ASSERT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_INSTALL, MultipleMode::SUB_MODE, result));
 
     HapBaseInfo baseInfo;
     baseInfo.userID = 100;
@@ -6902,14 +7198,15 @@ HWTEST_F(InstallSessionManagerMockTest, InstallModeTest013, TestSize.Level0)
 {
     std::string bundleName = "ModeMismatchRecycle001";
     std::string path = "/SYSTEM/system_basic/state:[cam]/acl:[]/Module001/" + bundleName;
-    BundleHapList hapList{std::vector<std::string>{path}, false, 100, MultipleMode::DEFAULT_OR_MAIN_MODE};
+    BundleHapList hapList{std::vector<std::string>{path}, false, 100};
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
     HapVerifyResultInfo resultInfo;
     ASSERT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(
         hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO));
     HapInfoCheckResult result;
-    ASSERT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, result));
+    ASSERT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
 
     // mismatched prepare fails and the session is rolled back
     HapBaseInfo badInfo;
@@ -6954,12 +7251,15 @@ HWTEST_F(InstallSessionManagerMockTest, InstallModeTest014, TestSize.Level0)
 {
     std::string bundleName = "ModeWriteSetCheck001";
     std::string path = "/SYSTEM/system_basic/state:[cam]/acl:[]/Module001/" + bundleName;
-    BundleHapList hapList{std::vector<std::string>{path}, false, 100, MultipleMode::SUB_MODE};
+    BundleHapList hapList{std::vector<std::string>{path}, false, 100};
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
     HapVerifyResultInfo resultInfo;
     ASSERT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(
         hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO));
+    HapInfoCheckResult checkResult;
+    ASSERT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_INSTALL, MultipleMode::SUB_MODE, checkResult));
     auto cacheIt = g_installSessionManager->sessionToInstallCache.find(sessionId);
     ASSERT_TRUE(cacheIt != g_installSessionManager->sessionToInstallCache.end());
     ASSERT_FALSE(cacheIt->second.bundleInfos.empty());
@@ -7013,7 +7313,8 @@ HWTEST_F(InstallSessionManagerMockTest, ModeIsolationTest001, TestSize.Level1)
     ASSERT_EQ(ERR_OK, StartReplaceSession(newPath, sessionId));
     BundlePolicy bundlePolicy = CommonBundlePolicy();
     int32_t uid = -1; // no uid expectation
-    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenMain, bundlePolicy, uid));
+    AccessTokenIDEx tokenIdEx = BuildTokenIdEx(tokenMain);
+    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid));
     std::map<std::string, std::string> modulePathMap;
     modulePathMap[newPath] = newPath;
     ASSERT_EQ(ERR_OK, g_installSessionManager->FinishInstall(sessionId, true, modulePathMap));
@@ -7060,7 +7361,8 @@ HWTEST_F(InstallSessionManagerMockTest, ModeIsolationTest002, TestSize.Level1)
     ASSERT_EQ(ERR_OK, StartReplaceSessionMode(newSubPath, MultipleMode::SUB_MODE, sessionId));
     BundlePolicy bundlePolicy = CommonBundlePolicy();
     int32_t uid = -1; // no uid expectation
-    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenSub, bundlePolicy, uid));
+    AccessTokenIDEx tokenIdEx = BuildTokenIdEx(tokenSub);
+    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid));
     std::map<std::string, std::string> modulePathMap;
     modulePathMap[newSubPath] = newSubPath;
     ASSERT_EQ(ERR_OK, g_installSessionManager->FinishInstall(sessionId, true, modulePathMap));
@@ -7181,7 +7483,8 @@ HWTEST_F(InstallSessionManagerMockTest, ModeSupplementTest001, TestSize.Level1)
     int32_t sessionId = 0;
     ASSERT_EQ(ERR_OK, StartReplaceSession(newPath, sessionId));
     int32_t uid = -1; // no uid expectation
-    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenA, bundlePolicy, uid));
+    AccessTokenIDEx tokenIdEx = BuildTokenIdEx(tokenA);
+    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid));
     std::map<std::string, std::string> modulePathMap;
     modulePathMap[newPath] = newPath;
     ASSERT_EQ(ERR_OK, g_installSessionManager->FinishInstall(sessionId, true, modulePathMap));
@@ -7228,7 +7531,8 @@ HWTEST_F(InstallSessionManagerMockTest, ModeSupplementTest002, TestSize.Level1)
     int32_t sessionId = 0;
     ASSERT_EQ(ERR_OK, StartReplaceSession(newPath, sessionId));
     int32_t uid = -1; // no uid expectation
-    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenA, bundlePolicy, uid));
+    AccessTokenIDEx tokenIdEx = BuildTokenIdEx(tokenA);
+    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid));
     std::map<std::string, std::string> modulePathMap;
     modulePathMap[newPath] = newPath;
     ASSERT_EQ(ERR_OK, g_installSessionManager->FinishInstall(sessionId, true, modulePathMap));
@@ -7242,7 +7546,8 @@ HWTEST_F(InstallSessionManagerMockTest, ModeSupplementTest002, TestSize.Level1)
     std::string newSubPath = "/SYSTEM/system_basic/state:[cam,manwifi]/acl:[manwifi]/Module001/" + bundleName;
     int32_t subSessionId = 0;
     ASSERT_EQ(ERR_OK, StartReplaceSessionMode(newSubPath, MultipleMode::SUB_MODE, subSessionId));
-    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(subSessionId, tokenC, bundlePolicy, uid));
+    tokenIdEx = BuildTokenIdEx(tokenC);
+    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(subSessionId, tokenIdEx, bundlePolicy, uid));
     std::map<std::string, std::string> subPathMap;
     subPathMap[newSubPath] = newSubPath;
     ASSERT_EQ(ERR_OK, g_installSessionManager->FinishInstall(subSessionId, true, subPathMap));

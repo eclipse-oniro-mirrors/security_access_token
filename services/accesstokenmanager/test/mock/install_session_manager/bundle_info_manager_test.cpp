@@ -104,7 +104,7 @@ HWTEST_F(BundleInfoManagerTest, GetInfoByBundleNameTest001, TestSize.Level0)
     hapList.hapPaths.emplace_back(path);
     hapList.hapPaths.emplace_back(path2);
     hapList.isPreInstalled = false;
-    hapList.userId = 100;
+    hapList.userIdForEnterpriseSign = 100;
 
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
@@ -113,7 +113,8 @@ HWTEST_F(BundleInfoManagerTest, GetInfoByBundleNameTest001, TestSize.Level0)
         hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO));
 
     HapInfoCheckResult result;
-    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, result));
+    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
 
     HapBaseInfo baseInfo;
     baseInfo.userID = 100;
@@ -165,7 +166,7 @@ HWTEST_F(BundleInfoManagerTest, GetInfoByBundleNameTest002, TestSize.Level0)
     hapList.hapPaths.emplace_back(path);
     hapList.hapPaths.emplace_back(path2);
     hapList.isPreInstalled = false;
-    hapList.userId = 100;
+    hapList.userIdForEnterpriseSign = 100;
 
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
@@ -174,7 +175,8 @@ HWTEST_F(BundleInfoManagerTest, GetInfoByBundleNameTest002, TestSize.Level0)
         hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO));
 
     HapInfoCheckResult result;
-    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, result));
+    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
 
     HapBaseInfo baseInfo;
     baseInfo.userID = 100;
@@ -222,7 +224,7 @@ HWTEST_F(BundleInfoManagerTest, GetInfoByBundleNameTest003, TestSize.Level0)
     BundleHapList hapList;
     hapList.hapPaths.emplace_back(path);
     hapList.isPreInstalled = false;
-    hapList.userId = 100;
+    hapList.userIdForEnterpriseSign = 100;
 
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
@@ -231,7 +233,8 @@ HWTEST_F(BundleInfoManagerTest, GetInfoByBundleNameTest003, TestSize.Level0)
         hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO));
 
     HapInfoCheckResult result;
-    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, result));
+    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
 
     HapBaseInfo baseInfo;
     baseInfo.userID = 100;
@@ -390,7 +393,7 @@ HWTEST_F(BundleInfoManagerTest, GetHapAppIdByTokenIdTest002, TestSize.Level0)
     BundleHapList hapList;
     hapList.hapPaths.emplace_back(path);
     hapList.isPreInstalled = false;
-    hapList.userId = 100;
+    hapList.userIdForEnterpriseSign = 100;
 
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
@@ -399,7 +402,8 @@ HWTEST_F(BundleInfoManagerTest, GetHapAppIdByTokenIdTest002, TestSize.Level0)
         hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO));
 
     HapInfoCheckResult result;
-    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, result));
+    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
 
     HapBaseInfo baseInfo;
     baseInfo.userID = 100;

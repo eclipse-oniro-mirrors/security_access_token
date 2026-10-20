@@ -109,9 +109,9 @@ interface OHOS.Security.AccessToken.IAccessTokenManager{
     [ipccode 80] void VerifyAccessToken([in] unsigned int tokenID, [in] List<String> permissionList, [out] List<int> permStateList);  
     [ipccode 81] void GetSelfPermissionStatus([in] String permissionName, [out] int status);
     [ipccode 82, macrodef SPM_DATA_ENABLE] void PrepareHapIdentity([inout] int sessionId, [in] HapBaseInfoIdl info, [in] BundlePolicyIdl policy, [in] IRemoteObject cb, [inout] IdentityIdl identity);
-    [ipccode 83, macrodef SPM_DATA_ENABLE] void UpdateHapPolicy([in] int sessionId, [in] unsigned int tokenId, [in] BundlePolicyIdl policy, [inout] int uid);
+    [ipccode 83, macrodef SPM_DATA_ENABLE] void UpdateHapPolicy([in] int sessionId, [inout] unsigned long tokenIdEx, [in] BundlePolicyIdl policy, [inout] int uid);
     [ipccode 84, macrodef SPM_DATA_ENABLE] void FinishInstall([in] int sessionId, [in] boolean isPersistent, [in] OrderedMap<String, String> modulePathMap);
-    [ipccode 85, macrodef SPM_DATA_ENABLE] void CheckHapPermissionInfo([in] int sessionId, [in] InstallTypeEnumIdl type, [out] HapInfoCheckResultIdl resultInfoIdl);
+    [ipccode 85, macrodef SPM_DATA_ENABLE] void CheckHapPermissionInfo([in] int sessionId, [in] InstallTypeEnumIdl type, [in] MultipleModeEnumIdl mode, [out] HapInfoCheckResultIdl resultInfoIdl);
     [ipccode 86, macrodef SPM_DATA_ENABLE] void GetCachePolicyBySessionId([in] int sessionId, [in] String bundleName, [out] BundlePolicyInfoIdl bundlePolicyInfoIdl);
     [ipccode 87, macrodef SPM_DATA_ENABLE] void DeleteIdentity([in] unsigned int tokenID, [in] String bundleName, [in] ReservedTypeIdl type);
     [ipccode 88, macrodef SPM_DATA_ENABLE] void CheckHapSignInfo([in] BundleHapListIdl list, [in] IRemoteObject cb, [in] unsigned int flag, [out] CheckHapSignResultRawdata checkResult);

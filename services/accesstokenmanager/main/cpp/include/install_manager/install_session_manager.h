@@ -59,10 +59,12 @@ public:
 
     int32_t CheckHapSignInfo(const BundleHapList& list, const sptr<IRemoteObject>& cb, int32_t& sessionId,
         std::vector<TrustedBundleInfo>& bundleInfo, HapVerifyResultInfo& resultInfo, uint32_t flag);
-    int32_t CheckHapPermissionInfo(int32_t sessionId, InstallTypeEnum type, HapInfoCheckResult& result);
+    int32_t CheckHapPermissionInfo(int32_t sessionId, InstallTypeEnum type, MultipleMode mode,
+        HapInfoCheckResult& result);
     int32_t PrepareHapIdentity(int32_t& sessionId, const HapBaseInfo& info, const BundlePolicy& policy,
         const sptr<IRemoteObject>& cb, Identity& identity);
-    int32_t UpdateHapPolicy(int32_t sessionId, AccessTokenID tokenId, const BundlePolicy& policy, int32_t& uid);
+    int32_t UpdateHapPolicy(int32_t sessionId, AccessTokenIDEx& tokenIdEx,
+        const BundlePolicy& policy, int32_t& uid);
     int32_t FinishInstall(
         int32_t sessionId, bool isPersistent, const std::map<std::string, std::string>& modulePathMap);
     int32_t GetCacheSignInfoBySessionId(int32_t sessionId, std::vector<TrustedBundleInfo>& bundleInfo,
