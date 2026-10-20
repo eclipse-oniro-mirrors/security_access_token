@@ -35,6 +35,8 @@ constexpr const char* NATIVE_CFG_DIR_PATH = "/data/service/el0/access_token";
 constexpr const char* NATIVE_CFG_FILE_NAME = "nativetoken.json";
 constexpr const char* NATIVE_CFG_FILE_PATH = "/data/service/el0/access_token/nativetoken.json";
 constexpr const char* DATABASE_DIR_PATH = "/data/service/el1/public/access_token/";
+// keep in sync with DATABASE_REPLICA_PATH in access_token_open_callback.h
+constexpr const char* BACKUP_DATABASE_DIR_PATH = "/data/service/el1/public/database/access_token/backup/";
 constexpr const char* DATA_FOLDER = "/data";
 constexpr const char* CURRENT_FOLDER = ".";
 constexpr const char* PARENT_FOLDER = "..";
@@ -190,8 +192,12 @@ void ReportAccessTokenRdbFileInfo()
     GetDirFileSize(DATABASE_DIR_PATH, filePaths, fileSizes, INITIAL_DEPTH);
     std::vector<std::string> fileNames = { CURRENT_FOLDER };
     GetCurrentDirFileNames(DATABASE_DIR_PATH, fileNames);
+    GetDirFileSize(BACKUP_DATABASE_DIR_PATH, filePaths, fileSizes, INITIAL_DEPTH);
+    std::vector<std::string> backupFileNames;
+    GetCurrentDirFileNames(BACKUP_DATABASE_DIR_PATH, backupFileNames);
     ReportDataUsageFileInfo(NATIVE_CFG_DIR_PATH, { CURRENT_FOLDER, NATIVE_CFG_FILE_NAME });
     ReportDataUsageFileInfo(DATABASE_DIR_PATH, fileNames);
+    ReportDataUsageFileInfo(BACKUP_DATABASE_DIR_PATH, backupFileNames);
     (void)HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::FILEMANAGEMENT, "USER_DATA_SIZE",
         HiviewDFX::HiSysEvent::EventType::STATISTIC,
         "COMPONENT_NAME", ACCESSTOKEN_NAME,

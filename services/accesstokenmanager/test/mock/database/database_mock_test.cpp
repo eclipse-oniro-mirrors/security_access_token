@@ -19,6 +19,7 @@
 #include "access_token_db.h"
 #undef private
 #include "access_token_error.h"
+#include "access_token_open_callback.h"
 #include "token_field_const.h"
 
 using namespace testing::ext;
@@ -258,6 +259,21 @@ HWTEST_F(AccessTokenDatabaseMockTest, RestoreDatabaseTest001, TestSize.Level4)
     rdb->restoreFlag_ = NativeRdb::RdbStore::RdbStoreOperationResult::RESULT_FAIL;
     // restore return err
     accessTokenDb.RestoreDatabase(NativeRdb::E_SQLITE_CORRUPT);
+}
+
+/*
+ * @tc.name: RdbStoreConfigReplicaAndAudit001
+ * @tc.desc: test InitRdb sets custom replica path and enables rdb audit
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenDatabaseMockTest, RdbStoreConfigReplicaAndAudit001, TestSize.Level4)
+{
+    AccessTokenDb accessTokenDb;
+    auto rdb = accessTokenDb.GetRdb();
+    ASSERT_NE(nullptr, rdb);
+    EXPECT_EQ(DATABASE_REPLICA_PATH, rdb->config_.replicaPath_);
+    EXPECT_TRUE(rdb->config_.isAuditEnabled_);
 }
 } // namespace AccessToken
 } // namespace Security
