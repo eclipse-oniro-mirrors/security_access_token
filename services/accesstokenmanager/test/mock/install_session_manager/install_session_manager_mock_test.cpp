@@ -3224,6 +3224,111 @@ HWTEST_F(InstallSessionManagerMockTest, ReservedDataReinstallKeepMigratedTest001
 }
 
 /**
+ * @tc.name: CheckTypeRetryTest001
+ * @tc.desc: CheckHapPermissionInfo(TYPE_INSTALL) on an installed bundle returns
+ *           ERR_BUNDLE_ALREADY_EXIST but keeps the session alive; re-entering the
+ *           same session with TYPE_REPLACE passes and the finish lands normally.
+ * @tc.type: FUNC
+ * @tc.require: Issue
+ */
+HWTEST_F(InstallSessionManagerMockTest, CheckTypeRetryTest001, TestSize.Level0)
+{
+    std::string bundleName = "CheckTypeRetry001";
+    std::string path = "/SYSTEM/system_basic/state:[cam,mic,syswin,getwifi]/acl:[getwifi]/Module001/" + bundleName;
+    HapBaseInfo baseInfo{100, bundleName, 0};
+    BundlePolicy bundlePolicy{std::vector<PreAuthorizationInfo>(), DLP_COMMON, false};
+
+    // install once: the bundle has package records in db
+    Identity identity = {0, -1};
+    InstallHap({path}, baseInfo, bundlePolicy, identity);
+    AccessTokenID tokenId = static_cast<AccessTokenID>(identity.tokenId);
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+
+    // new session; TYPE_INSTALL is rejected (records exist) but the session survives
+    BundleHapList hapList{std::vector<std::string>{path}, false, 100};
+    int32_t sessionId = 0;
+    std::vector<TrustedBundleInfo> bundleInfo;
+    HapVerifyResultInfo resultInfo;
+    ASSERT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(
+        hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO));
+    HapInfoCheckResult result;
+    EXPECT_EQ(AccessTokenError::ERR_BUNDLE_ALREADY_EXIST,
+        g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, result));
+    EXPECT_EQ(1, static_cast<int>(g_installSessionManager->sessionToInstallCache.count(sessionId)));
+
+    // same session retried with TYPE_REPLACE passes the type check
+    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_REPLACE, result));
+
+    // the update flow continues on the same session
+    int32_t uid = -1; // no uid expectation
+    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenId, bundlePolicy, uid));
+    std::map<std::string, std::string> modulePathMap;
+    modulePathMap[path] = path;
+    ASSERT_EQ(ERR_OK, g_installSessionManager->FinishInstall(sessionId, true, modulePathMap));
+
+    // token reused, session consumed
+    EXPECT_EQ(0, static_cast<int>(g_installSessionManager->sessionToInstallCache.count(sessionId)));
+    {
+        auto innerAfter = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId);
+        ASSERT_NE(nullptr, innerAfter);
+        EXPECT_EQ(bundleName, innerAfter->GetBundleName());
+    }
+
+    int32_t sceneCode = 0;
+    EXPECT_EQ(ERR_OK, DeleteIdentityCore(INVALID_TOKENID, bundleName, ReservedType::NONE, sceneCode));
+}
+
+/**
+ * @tc.name: CheckTypeLeftoverFinishTest001
+ * @tc.desc: A session left alive by the CheckInstallType rejection is guarded:
+ *           FinishInstall on it returns ERR_NOT_CHECK_PERMISSION and erases it,
+ *           leaving the installed token unaffected.
+ * @tc.type: FUNC
+ * @tc.require: Issue
+ */
+HWTEST_F(InstallSessionManagerMockTest, CheckTypeLeftoverFinishTest001, TestSize.Level0)
+{
+    std::string bundleName = "CheckTypeLeftover001";
+    std::string path = "/SYSTEM/system_basic/state:[cam,mic,syswin,getwifi]/acl:[getwifi]/Module001/" + bundleName;
+    HapBaseInfo baseInfo{100, bundleName, 0};
+    BundlePolicy bundlePolicy{std::vector<PreAuthorizationInfo>(), DLP_COMMON, false};
+
+    // install once: the bundle has package records in db
+    Identity identity = {0, -1};
+    InstallHap({path}, baseInfo, bundlePolicy, identity);
+    AccessTokenID tokenId = static_cast<AccessTokenID>(identity.tokenId);
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+
+    // new session rejected by the type check, session stays alive
+    BundleHapList hapList{std::vector<std::string>{path}, false, 100};
+    int32_t sessionId = 0;
+    std::vector<TrustedBundleInfo> bundleInfo;
+    HapVerifyResultInfo resultInfo;
+    ASSERT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(
+        hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO));
+    HapInfoCheckResult result;
+    EXPECT_EQ(AccessTokenError::ERR_BUNDLE_ALREADY_EXIST,
+        g_installSessionManager->CheckHapPermissionInfo(sessionId, TYPE_INSTALL, result));
+    EXPECT_EQ(1, static_cast<int>(g_installSessionManager->sessionToInstallCache.count(sessionId)));
+
+    // misuse guard: finishing the half-checked session fails and erases it
+    std::map<std::string, std::string> modulePathMap;
+    EXPECT_EQ(AccessTokenError::ERR_NOT_CHECK_PERMISSION,
+        g_installSessionManager->FinishInstall(sessionId, true, modulePathMap));
+    EXPECT_EQ(0, static_cast<int>(g_installSessionManager->sessionToInstallCache.count(sessionId)));
+
+    // the installed token is unaffected
+    {
+        auto innerAfter = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId);
+        ASSERT_NE(nullptr, innerAfter);
+        EXPECT_EQ(bundleName, innerAfter->GetBundleName());
+    }
+
+    int32_t sceneCode = 0;
+    EXPECT_EQ(ERR_OK, DeleteIdentityCore(INVALID_TOKENID, bundleName, ReservedType::NONE, sceneCode));
+}
+
+/**
  * @tc.name: UpdateHapFailedTest001
  * @tc.desc: Test update a new hap, without migrationDone.
  * @tc.type: FUNC
