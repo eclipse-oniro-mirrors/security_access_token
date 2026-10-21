@@ -166,6 +166,7 @@ const std::map<std::string, int32_t> Constant::PERMISSION_OPCODE_MAP = {
     std::map<std::string, int32_t>::value_type("ohos.permission.DVRCAMERA", Constant::OP_DVRCAMERA),
     std::map<std::string, int32_t>::value_type("ohos.permission.DIRECT_CALL", Constant::OP_DIRECT_CALL),
     std::map<std::string, int32_t>::value_type("ohos.permission.INPUT_RECORDING", Constant::OP_INPUT_RECORDING),
+    std::map<std::string, int32_t>::value_type("ohos.permission.HOOK_INPUT_EVENT", Constant::OP_HOOK_INPUT_EVENT),
     std::map<std::string, int32_t>::value_type("ohos.permission.READ_WRITE_IMAGES_DIRECTORY_MEDIA_READ",
         Constant::OP_READ_WRITE_IMAGES_DIRECTORY_MEDIA_READ),
     std::map<std::string, int32_t>::value_type("ohos.permission.READ_WRITE_IMAGES_DIRECTORY_MEDIA_WRITE",
