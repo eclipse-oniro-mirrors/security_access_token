@@ -2871,11 +2871,9 @@ bool AccessTokenManagerService::Initialize()
     std::map<int32_t, TokenIdInfo> tokenIdAplMap;
     AccessTokenInfoManager::GetInstance().Init(nativeSize, pefDefSize, dlpSize);
     int32_t ret = BootVerifyScheduler::GetInstance().VerifyBundleSignInfoWhenStart(hapSize, tokenIdAplMap);
-    if (ret != RET_SUCCESS) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Verify bundle sign info when start failed, ret=%{public}d.", ret);
-        return false;
+    if (ret == RET_SUCCESS) {
+        BootVerifyScheduler::GetInstance().StartVerifyNormalBundleListAsync();
     }
-    BootVerifyScheduler::GetInstance().StartVerifyNormalBundleListAsync();
     std::vector<DelInfo> delInfoVec;
     std::vector<AddInfo> addInfoVec;
     bool needUpdateDb = false;

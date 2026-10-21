@@ -1005,10 +1005,7 @@ int32_t BootVerifyScheduler::VerifyBundleSignInfoWhenStart(
         return ret;
     }
 
-    ret = AccessTokenIDManager::GetInstance().InitBundleIdConfig();
-    if (ret != RET_SUCCESS) {
-        return ret;
-    }
+    (void)AccessTokenIDManager::GetInstance().InitBundleIdConfig();
 
     BuildPriorityBundleList();
     hapSize = static_cast<uint32_t>(highPrivilegeBundleList_.size());
