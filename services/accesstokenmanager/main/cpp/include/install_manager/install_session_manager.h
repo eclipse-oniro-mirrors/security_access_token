@@ -59,10 +59,12 @@ public:
 
     int32_t CheckHapSignInfo(const BundleHapList& list, const sptr<IRemoteObject>& cb, int32_t& sessionId,
         std::vector<TrustedBundleInfo>& bundleInfo, HapVerifyResultInfo& resultInfo, uint32_t flag);
-    int32_t CheckHapPermissionInfo(int32_t sessionId, InstallTypeEnum type, HapInfoCheckResult& result);
+    int32_t CheckHapPermissionInfo(int32_t sessionId, InstallTypeEnum type, MultipleMode mode,
+        HapInfoCheckResult& result);
     int32_t PrepareHapIdentity(int32_t& sessionId, const HapBaseInfo& info, const BundlePolicy& policy,
         const sptr<IRemoteObject>& cb, Identity& identity);
-    int32_t UpdateHapPolicy(int32_t sessionId, AccessTokenID tokenId, const BundlePolicy& policy, int32_t& uid);
+    int32_t UpdateHapPolicy(int32_t sessionId, AccessTokenIDEx& tokenIdEx,
+        const BundlePolicy& policy, int32_t& uid);
     int32_t FinishInstall(
         int32_t sessionId, bool isPersistent, const std::map<std::string, std::string>& modulePathMap);
     int32_t GetCacheSignInfoBySessionId(int32_t sessionId, std::vector<TrustedBundleInfo>& bundleInfo,
@@ -82,13 +84,25 @@ private:
     void CreateSessionEntry(InstallCache& cache, const sptr<IRemoteObject>& cb,
         const std::string& bundleName, int32_t& sessionId);
     int32_t PrepareSessionIdentity(int32_t sessionId, const HapBaseInfo& info,
-        const BundlePolicy& policy, Identity& identity);
+        const BundlePolicy& policy, Identity& identity, bool sessionCreatedInPrepare);
+    // Validations that only apply to pre-existing sessions (created by
+    // CheckHapSignInfo): not prepared yet, permission-check stage passed, and
+    // the prepare target consistent with the sign-verified bundle. Sessions
+    // created in this prepare call skip them (guaranteed by construction).
+    int32_t ValidatePreExistingSession(const InstallCache& cache, const HapBaseInfo& info);
     int32_t CheckInstallType(std::vector<std::string>& installedPaths, InstallTypeEnum type);
+    // Load the same-mode installed sign rows as the install-type decision
+    // base (BR-3: hap_info_table rows are per-mode, no cross-mode base) and
+    // merge them into the session for TYPE_MERGE. On failure the session is
+    // rolled back with the matching scene code and the error is returned.
+    int32_t PrepareInstalledBundleInfo(int32_t sessionId, InstallCache& cache, InstallTypeEnum type);
 
-    void InitPermissionList(const BundleParam& bundleParam, HapPolicy& policy);
+    void InitPermissionList(const BundleParam& bundleParam, HapPolicy& policy,
+        std::vector<GenericValues>* undefValues = nullptr);
     std::vector<BriefPermData> BuildUpdatedPermList(const BundleParam& bundleParam,
         const BundlePolicy& bundlePolicy, AccessTokenAttr oldAttr, HapPolicy& newPolicy,
-        const std::vector<BriefPermData>& oldPermList);
+        const std::vector<BriefPermData>& oldPermList,
+        std::vector<GenericValues>* undefValues = nullptr);
     bool ShouldSkipPermInheritance(const BundleParam& bundleParam, const HapPolicy& policy, AccessTokenAttr oldAttr);
     void MergePermission(std::vector<BriefPermData>& newPerms,
         const std::vector<BriefPermData>& oldPerms, bool skipPermInheritance);
@@ -99,8 +113,8 @@ private:
     std::shared_ptr<HapTokenInfoInner> GetHapTokenInfoForInstall(InstallCache& cache, AccessTokenID tokenId);
     int32_t MergeReservedPermState(const InstallCache& cache, const HapPolicy& policy,
         std::vector<BriefPermData>& newPerms);
-    void CreateUpdateHapInfo(InstallCache& cache, FinishContext& context);
-    int32_t InitDlpPermission(const HapBaseInfo& baseInfo, HapPolicy& policy);
+    int32_t CreateUpdateHapInfo(InstallCache& cache, FinishContext& context);
+    int32_t InitDlpPermission(const HapBaseInfo& baseInfo, MultipleMode mode, HapPolicy& policy);
     void RefreshCache(const InstallCache& cache, const FinishContext& context);
     void RollbackAll(int32_t sessionId, int32_t sceneCode, int32_t errorCode, AccessTokenID tokenId,
         bool eraseCache = true);

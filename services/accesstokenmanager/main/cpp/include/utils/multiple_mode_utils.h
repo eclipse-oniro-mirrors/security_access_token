@@ -26,6 +26,7 @@ namespace AccessToken {
 namespace MultipleModeUtils {
 MultipleMode GetTokenMode(int32_t instIndex);
 bool IsMainAppIndex(int32_t instIndex);
+bool IsModeInstIndexMatch(int32_t mode, int32_t instIndex);
 MultipleMode GetCurrentMode();
 std::string GetBundleModeKey(const std::string& bundleName, int32_t mode);
 } // namespace MultipleModeUtils

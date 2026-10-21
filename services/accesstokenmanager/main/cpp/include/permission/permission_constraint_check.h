@@ -29,13 +29,14 @@ namespace Security {
 namespace AccessToken {
 class PermissionConstraintCheck final {
 public:
+    static bool CheckAclAndEdm(const BundleParam& param, const HapPolicy& policy,
+        HapInfoCheckResult& result);
     static bool AclAndEdmCheck(const BundleParam& param, const PermissionBriefDef& briefDef,
         const HapPolicy& policy, HapInfoCheckResult& result);
     static bool IsSideloadAclExempt(bool isSideloadApp, const PermissionBriefDef& briefDef);
     static bool IsAclSatisfied(bool isSideloadApp, const PermissionBriefDef& briefDef, const HapPolicy& policy);
     static bool IsPermAvailableRangeSatisfied(const BundleParam& param, const PermissionBriefDef& briefDef,
         PermissionRulesEnum& rule);
-    static int BuildIdType(const BundleParam& param, const HapPolicy& policy);
     static void FixPersistentHapInfo(
         const BundleParam& param, const HapPolicy& policy, HapTokenInfoItem& hapTokenInfoItem, bool& isFixed);
     static void FixBriefPermData(

@@ -25,6 +25,7 @@ namespace Security {
 namespace AccessToken {
 
 static constexpr const char* DATABASE_PATH = "/data/service/el1/public/access_token/";
+static constexpr const char* DATABASE_REPLICA_PATH = "/data/service/el1/public/database/access_token/backup/";
 
 static constexpr const int32_t DATABASE_VERSION_1 = 1;
 static constexpr const int32_t DATABASE_VERSION_2 = 2;

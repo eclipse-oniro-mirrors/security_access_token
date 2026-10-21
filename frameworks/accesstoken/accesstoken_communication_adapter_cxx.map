@@ -14,11 +14,11 @@
 {
   global:
     extern "C++" {
-      OHOS::Security::AccessToken::BundleInfosRawdataHelper*;
-      OHOS::Security::AccessToken::CheckHapSignResultRawdataHelper*;
       OHOS::Security::AccessToken::AtmToolsParamInfoParcel::CheckParam*;
       OHOS::Security::AccessToken::AtmToolsParamInfoParcel::Marshalling*;
       OHOS::Security::AccessToken::AtmToolsParamInfoParcel::Unmarshalling*;
+      OHOS::Security::AccessToken::BundleInfosRawdataHelper*;
+      OHOS::Security::AccessToken::CheckHapSignResultRawdataHelper*;
       OHOS::Security::AccessToken::HapBaseInfoParcel::Marshalling*;
       OHOS::Security::AccessToken::HapBaseInfoParcel::Unmarshalling*;
       OHOS::Security::AccessToken::HapInfoParcel::Marshalling*;
@@ -47,6 +47,9 @@
       OHOS::Security::AccessToken::SecCompEnhanceDataParcel::Unmarshalling*;
       "vtable for OHOS::Security::AccessToken::AtmToolsParamInfoParcel";
       "VTT for OHOS::Security::AccessToken::AtmToolsParamInfoParcel";
+      "vtable for OHOS::Security::AccessToken::BundleInfosRawdata";
+      "vtable for OHOS::Security::AccessToken::CheckHapSignResultRawdata";
+      "vtable for OHOS::Security::AccessToken::RawdataBuffer";
       "vtable for OHOS::Security::AccessToken::HapBaseInfoParcel";
       "VTT for OHOS::Security::AccessToken::HapBaseInfoParcel";
       "vtable for OHOS::Security::AccessToken::HapInfoParcel";
@@ -73,12 +76,9 @@
       "VTT for OHOS::Security::AccessToken::PermissionStatusParcel";
       "vtable for OHOS::Security::AccessToken::SecCompEnhanceDataParcel";
       "VTT for OHOS::Security::AccessToken::SecCompEnhanceDataParcel";
-      "vtable for OHOS::Security::AccessToken::RawdataBuffer";
-      "vtable for OHOS::Security::AccessToken::BundleInfosRawdata";
-      "vtable for OHOS::Security::AccessToken::CheckHapSignResultRawdata";
-      "typeinfo for OHOS::Security::AccessToken::RawdataBuffer";
       "typeinfo for OHOS::Security::AccessToken::BundleInfosRawdata";
       "typeinfo for OHOS::Security::AccessToken::CheckHapSignResultRawdata";
+      "typeinfo for OHOS::Security::AccessToken::RawdataBuffer";
     };
   local:
     *;

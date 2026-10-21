@@ -836,10 +836,12 @@ public:
      * @brief Check hap sign info.
      * @param sessionId session id
      * @param type install type
+     * @param mode install mode, must be DEFAULT_OR_MAIN_MODE or SUB_MODE
      * @param result hap info check result
      * @return error code, see access_token_error.h
      */
-    static int32_t CheckHapPermissionInfo(int32_t sessionId, InstallTypeEnum type, HapInfoCheckResult& result);
+    static int32_t CheckHapPermissionInfo(int32_t sessionId, InstallTypeEnum type, MultipleMode mode,
+        HapInfoCheckResult& result);
     /**
      * @brief Prepare hap identity.
      * @param sessionId session id
@@ -853,12 +855,16 @@ public:
     /**
      * @brief Update hap policy.
      * @param sessionId session id
-     * @param tokenId token id
+     * @param tokenIdEx in-out full token id, see AccessTokenIDEx in access_token.h:
+     *        the low 32 bits (tokenID) locate the token to update; on success the
+     *        high 32 bits (tokenAttr) are refreshed with the token attributes
+     *        applied by this upgrade and echoed back to the caller
      * @param policy bundle policy
-     * @param uid uid
+     * @param uid in-out uid, the resolved effective uid returns to the caller
      * @return error code, see access_token_error.h
      */
-    static int32_t UpdateHapPolicy(int32_t sessionId, int32_t tokenId, const BundlePolicy& policy, int32_t& uid);
+    static int32_t UpdateHapPolicy(int32_t sessionId, AccessTokenIDEx& tokenIdEx,
+        const BundlePolicy& policy, int32_t& uid);
     /**
      * @brief Finish install.
      * @param sessionId session id

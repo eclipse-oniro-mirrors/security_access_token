@@ -773,13 +773,13 @@ HWTEST_F(HapSignVerifyManagerTest, BuildTrustedBundleInfo001, TestSize.Level1)
 }
 
 /**
- * @tc.name: ParseTokenId001
- * @tc.desc: ParseTokenId masks to lower 32 bits of a full token id.
+ * @tc.name: ExtractTokenIdFromFull001
+ * @tc.desc: ExtractTokenIdFromFull masks to lower 32 bits of a full token id.
  * @tc.type: FUNC
  */
-HWTEST_F(HapSignVerifyManagerTest, ParseTokenId001, TestSize.Level1)
+HWTEST_F(HapSignVerifyManagerTest, ExtractTokenIdFromFull001, TestSize.Level1)
 {
-    EXPECT_EQ(0xABCDu, AccessTokenIDManager::ParseTokenId(0x123456780000ABCDull));
+    EXPECT_EQ(0xABCDu, AccessTokenIDManager::ExtractTokenIdFromFull(0x123456780000ABCDull));
 }
 
 /**
@@ -1261,7 +1261,7 @@ HWTEST_F(HapSignVerifyManagerTest, CheckHapsSignInfo007, TestSize.Level1)
 /**
  * @tc.name: CheckHapsSignInfo008
  * @tc.desc: isChanged=false and booting=false takes the ParseProvision path,
- *           and a parse failure returns ERR_HAP_PROVISION_INVALID.
+ *           and a parse failure returns the specific error code.
  * @tc.type: FUNC
  */
 HWTEST_F(HapSignVerifyManagerTest, CheckHapsSignInfo008, TestSize.Level1)
@@ -1284,7 +1284,7 @@ HWTEST_F(HapSignVerifyManagerTest, CheckHapsSignInfo008, TestSize.Level1)
     HapSignVerifyManager failManager(failAdapter);
     TrustedBundleInfoInner failInfo;
     bool failChanged = true;
-    EXPECT_EQ(ERR_HAP_PROVISION_INVALID, failManager.CheckHapsSignInfo(
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, failManager.CheckHapsSignInfo(
         HapSignVerifyManager::MakeVerifyParams(TEST_PATH, Security::Verify::VerifyType::Fast, -1),
         false, failInfo, failChanged));
 }

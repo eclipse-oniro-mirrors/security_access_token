@@ -42,6 +42,14 @@ bool IsMainAppIndex(int32_t instIndex)
     return (instIndex % MAIN_CLONE_INDEX_BASE) == 0;
 }
 
+bool IsModeInstIndexMatch(int32_t mode, int32_t instIndex)
+{
+    if (instIndex < 0) {
+        return false;
+    }
+    return static_cast<int32_t>(GetTokenMode(instIndex)) == mode;
+}
+
 MultipleMode GetCurrentMode()
 {
     int32_t isPcMode = OHOS::system::GetIntParameter(IS_PC_MODE_PARAM,

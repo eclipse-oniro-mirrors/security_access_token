@@ -191,7 +191,13 @@ public:
     void SetSecurityLevel(NativeRdb::SecurityLevel level);
     void SetAllowRebuild(bool allow);
     void SetHaMode(NativeRdb::HAMode mode);
+    void SetReplicaPath(const std::string& replicaPath);
+    void SetAuditEnabled(bool isAuditEnabled);
+    std::string GetReplicaPath() const;
     void SetClearMemorySize(int32_t size);
+
+    std::string replicaPath_;
+    bool isAuditEnabled_ = false;
 };
 
 class RdbStore {

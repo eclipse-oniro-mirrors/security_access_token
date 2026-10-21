@@ -165,7 +165,7 @@ void AccessTokenIDManager::ReleaseTokenIdForce(AccessTokenID id)
     untrustedTokenIdSet_.erase(id);
 }
 
-AccessTokenID AccessTokenIDManager::ParseTokenId(FullTokenID fullTokenId)
+AccessTokenID AccessTokenIDManager::ExtractTokenIdFromFull(FullTokenID fullTokenId)
 {
     AccessTokenIDEx tokenIdEx;
     tokenIdEx.tokenIDEx = fullTokenId;

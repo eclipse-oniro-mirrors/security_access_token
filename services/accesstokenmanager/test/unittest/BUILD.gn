@@ -355,7 +355,10 @@ if (access_token_enable_spm) {
     sources += account_mock_sources
 
     if (access_token_enable_spm && access_token_manager_hapverify_enable) {
-      sources += [ "install_manager/install_session_spm_task_test.cpp" ]
+      sources += [
+        "install_manager/install_session_spm_task_test.cpp",
+        "install_manager/rawdata_helper_test.cpp",
+      ]
     }
 
     sources += accesstoken_manager_base_config.sources

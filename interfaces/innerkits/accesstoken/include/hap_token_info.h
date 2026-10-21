@@ -348,13 +348,14 @@ enum InstallTypeEnum {
 struct BundleHapList final {
     std::vector<std::string> hapPaths;
     bool isPreInstalled = false;
-    int32_t userId;
-    MultipleMode mode = MultipleMode::DEFAULT_OR_MAIN_MODE;
+    /** user id used by enterprise sign verification */
+    int32_t userIdForEnterpriseSign;
 };
 
 struct MigratedInfo final {
     std::string bundleName;
     BundleHapList pathList;
+    MultipleMode mode = MultipleMode::DEFAULT_OR_MAIN_MODE;
     std::vector<HapBaseInfo> hapBaseInfoList;
     std::vector<int32_t> uidList;
     std::vector<ReservedType> reservedTypeList;
