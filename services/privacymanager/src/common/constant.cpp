@@ -236,7 +236,7 @@ bool Constant::IsPrivacyPermission(const std::string& permissionName)
     return PERMISSION_OPCODE_MAP.count(permissionName) != 0;
 }
 
-bool Constant::IsCameraPermission(const std::string& permissionName)
+bool Constant::IsCameraPermissionGroup(const std::string& permissionName)
 {
     return permissionName == "ohos.permission.CAMERA" || permissionName == "ohos.permission.DVRCAMERA";
 }

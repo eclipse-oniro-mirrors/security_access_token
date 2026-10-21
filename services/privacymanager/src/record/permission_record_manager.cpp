@@ -2028,7 +2028,7 @@ void PermissionRecordManager::ExecuteAndUpdateRecord(uint32_t tokenId, int32_t p
             }
 
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
-            if (Constant::IsCameraPermission(perm) && (status == PERM_ACTIVE_IN_BACKGROUND) &&
+            if (Constant::IsCameraPermissionGroup(perm) && (status == PERM_ACTIVE_IN_BACKGROUND) &&
                 !hasCameraBackground) {
                 LOGI(PRI_DOMAIN, PRI_TAG, "Camera float window is close!");
                 camPermList.emplace_back(perm);
@@ -2532,7 +2532,7 @@ int32_t PermissionRecordManager::StartUsingPermission(const PermissionUsedTypeIn
             permissionName, tokenId) ? Constant::SUCCESS : PrivacyError::ERR_PARAM_INVALID;
     }
 
-    if ((!Constant::IsCameraPermission(permissionName)) ||
+    if ((!Constant::IsCameraPermissionGroup(permissionName)) ||
         (AccessTokenKit::GetTokenTypeFlag(tokenId) != TOKEN_HAP)) {
         LOGD(PRI_DOMAIN, PRI_TAG, "Token(%{public}u), perm(%{public}s).", tokenId, permissionName.c_str());
         return PrivacyError::ERR_PARAM_INVALID;
@@ -2820,7 +2820,7 @@ bool PermissionRecordManager::IsAllowedUsingPermission(AccessTokenID tokenId, co
         return false;
     }
 
-    if (Constant::IsCameraPermission(permissionName)) {
+    if (Constant::IsCameraPermissionGroup(permissionName)) {
         return IsAllowedUsingCamera(normalizedTokenId, normalizedPid);
     } else if (permissionName == MICROPHONE_PERMISSION_NAME) {
         return IsAllowedUsingMicrophone(normalizedTokenId, normalizedPid);
