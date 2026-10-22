@@ -493,6 +493,32 @@ HWTEST_F(TokenInfoManagerTest, IsPermDlpModeAvailableToDlpHap002, TestSize.Level
         EXPECT_EQ(item.none, manager.IsPermDlpModeAvailableToDlpHap(item.type, DLP_PERM_NONE));
     }
 }
+
+/**
+ * @tc.name: IsPermDlpModeAvailableToDlpHap003
+ * @tc.desc: Verify the permission matrices of DLP_READ_PERM_SANDBOX and DLP_FULL_PERM_SANDBOX type.
+ * @tc.type: FUNC
+ */
+HWTEST_F(TokenInfoManagerTest, IsPermDlpModeAvailableToDlpHap003, TestSize.Level0)
+{
+    auto& manager = DlpPermissionSetManager::GetInstance();
+    struct Case {
+        HapDlpType type;
+        bool all;
+        bool fullControl;
+        bool none;
+    };
+    const std::vector<Case> cases = {
+        {DLP_READ_PERM_SANDBOX, true, false, true},
+        {DLP_FULL_PERM_SANDBOX, true, true, true},
+    };
+    for (const auto& item : cases) {
+        EXPECT_EQ(item.all, manager.IsPermDlpModeAvailableToDlpHap(item.type, DLP_PERM_ALL));
+        EXPECT_EQ(item.fullControl,
+            manager.IsPermDlpModeAvailableToDlpHap(item.type, DLP_PERM_FULL_CONTROL));
+        EXPECT_EQ(item.none, manager.IsPermDlpModeAvailableToDlpHap(item.type, DLP_PERM_NONE));
+    }
+}
 #endif
 
 /**

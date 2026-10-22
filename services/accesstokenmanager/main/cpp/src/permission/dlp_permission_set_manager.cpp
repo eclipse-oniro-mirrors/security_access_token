@@ -118,12 +118,12 @@ bool DlpPermissionSetManager::IsPermDlpModeAvailableToDlpHap(int32_t hapDlpType,
     }
 
     /* DLP_READ_PERM is unavailable only in full-control permission mode. */
-    if (hapDlpType == DLP_READ_PERM) {
+    if ((hapDlpType == DLP_READ_PERM) || (hapDlpType == DLP_READ_PERM_SANDBOX)) {
         return permDlpMode != DLP_PERM_FULL_CONTROL;
     }
 
     /* DLP_FULL_PERM is available in all permission modes. */
-    if (hapDlpType == DLP_FULL_PERM) {
+    if ((hapDlpType == DLP_FULL_PERM) || (hapDlpType == DLP_FULL_PERM_SANDBOX)) {
         return true;
     }
 
