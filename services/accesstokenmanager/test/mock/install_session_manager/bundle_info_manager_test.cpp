@@ -16,6 +16,7 @@
 #include "bundle_info_manager_test.h"
 
 #include <map>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -33,6 +34,8 @@
 #include "access_token_error.h"
 #include "generic_values.h"
 #include "hap_token_info.h"
+#include "multiple_mode_utils.h"
+#include "parameters.h"
 #include "token_field_const.h"
 
 #ifdef SPM_DATA_ENABLE
@@ -58,6 +61,57 @@ int32_t DeleteIdentityCore(AccessTokenID tokenID, const std::string& bundleName,
         tokenID, bundleName, reservedType, deleteDfx);
     sceneCode = deleteDfx.sceneCode;
     return ret;
+}
+
+// Four-stage install of one single-module bundle in the given mode; the
+// module segment of the path doubles as the module identity of the sign rows.
+AccessTokenID InstallSignInfoModule(const std::string& path, const std::string& bundleName,
+    int32_t instIndex, MultipleMode mode)
+{
+    BundleHapList hapList;
+    hapList.hapPaths.emplace_back(path);
+    hapList.isPreInstalled = false;
+    hapList.userIdForEnterpriseSign = USER_ID;
+
+    int32_t sessionId = 0;
+    std::vector<TrustedBundleInfo> bundleInfo;
+    HapVerifyResultInfo resultInfo;
+    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(
+        hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO));
+
+    HapInfoCheckResult result;
+    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_INSTALL, mode, result));
+
+    HapBaseInfo baseInfo;
+    baseInfo.userID = USER_ID;
+    baseInfo.bundleName = bundleName;
+    baseInfo.instIndex = instIndex;
+
+    BundlePolicy bundlePolicy;
+    bundlePolicy.dlpType = DLP_COMMON;
+    bundlePolicy.isDebugGrant = false;
+
+    Identity identity = {0, -1};
+    EXPECT_EQ(ERR_OK, g_installSessionManager->PrepareHapIdentity(
+        sessionId, baseInfo, bundlePolicy, nullptr, identity));
+    AccessTokenID tokenId = static_cast<AccessTokenID>(identity.tokenId);
+
+    std::map<std::string, std::string> modulePathMap;
+    modulePathMap[path] = path;
+    EXPECT_EQ(ERR_OK, g_installSessionManager->FinishInstall(sessionId, true, modulePathMap));
+    return tokenId;
+}
+
+// Module names of one sign-info query result, collected so mode-isolation
+// assertions stay order-insensitive.
+std::set<std::string> ModuleNamesOf(const std::vector<TrustedBundleInfo>& infos)
+{
+    std::set<std::string> names;
+    for (const auto& info : infos) {
+        names.insert(info.moduleInfo);
+    }
+    return names;
 }
 }
 
@@ -207,6 +261,146 @@ HWTEST_F(BundleInfoManagerTest, GetInfoByBundleNameTest002, TestSize.Level0)
     int32_t sceneCode = 0;
     EXPECT_EQ(ERR_OK,
         DeleteIdentityCore(tokenId, "GetInfoByBundleNameTest002", ReservedType::NONE, sceneCode));
+}
+
+/**
+ * @tc.name: GetInfoByBundleNameModeTest001
+ * @tc.desc: Test GetHapSignInfo with explicit modes on a dual-mode bundle:
+ *           the main-mode query returns only the main-mode modules and the
+ *           sub-mode query returns only the sub-mode module - module names
+ *           and paths never cross modes (content-level isolation).
+ * @tc.type: FUNC
+ * @tc.require: Issue
+ */
+HWTEST_F(BundleInfoManagerTest, GetInfoByBundleNameModeTest001, TestSize.Level0)
+{
+    std::string bundleName = "GetInfoByBundleNameMode001";
+    std::string mainPath1 =
+        "/SYSTEM/system_basic/state:[mic,syswin,getwifi]/acl:[getwifi]/Module001/" + bundleName;
+    std::string mainPath2 =
+        "/SYSTEM/system_basic/state:[cam,syswin]/Module002/" + bundleName;
+    std::string subPath =
+        "/SYSTEM/system_basic/state:[mic]/Module003/" + bundleName;
+
+    // main-mode install: two modules in one session
+    BundleHapList mainList;
+    mainList.hapPaths.emplace_back(mainPath1);
+    mainList.hapPaths.emplace_back(mainPath2);
+    mainList.isPreInstalled = false;
+    mainList.userIdForEnterpriseSign = USER_ID;
+
+    int32_t sessionId = 0;
+    std::vector<TrustedBundleInfo> bundleInfo;
+    HapVerifyResultInfo resultInfo;
+    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(
+        mainList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO));
+
+    HapInfoCheckResult result;
+    EXPECT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
+
+    HapBaseInfo baseInfo;
+    baseInfo.userID = USER_ID;
+    baseInfo.bundleName = bundleName;
+    baseInfo.instIndex = 0;
+
+    BundlePolicy bundlePolicy;
+    bundlePolicy.dlpType = DLP_COMMON;
+    bundlePolicy.isDebugGrant = false;
+
+    Identity identity = {0, -1};
+    EXPECT_EQ(ERR_OK, g_installSessionManager->PrepareHapIdentity(
+        sessionId, baseInfo, bundlePolicy, nullptr, identity));
+
+    std::map<std::string, std::string> modulePathMap;
+    modulePathMap[mainPath1] = mainPath1;
+    modulePathMap[mainPath2] = mainPath2;
+    EXPECT_EQ(ERR_OK, g_installSessionManager->FinishInstall(sessionId, true, modulePathMap));
+
+    // sub-mode install of the same bundle: one different module
+    // ([MAIN_CLONE_INDEX_BASE, 2 * MAIN_CLONE_INDEX_BASE) is sub mode)
+    InstallSignInfoModule(subPath, bundleName, 10000, MultipleMode::SUB_MODE);
+
+    // explicit main-mode query: both main modules, never the sub module
+    std::vector<TrustedBundleInfo> mainQuery;
+    EXPECT_EQ(ERR_OK, BundleInfoManager::GetInstance().GetHapSignInfo(
+        bundleName, mainQuery, QUERY_ALL_SIGN_INFO, MultipleMode::DEFAULT_OR_MAIN_MODE));
+    EXPECT_EQ((std::set<std::string> {"Module001", "Module002"}), ModuleNamesOf(mainQuery));
+
+    // explicit sub-mode query: the sub module only, with its own path
+    std::vector<TrustedBundleInfo> subQuery;
+    EXPECT_EQ(ERR_OK, BundleInfoManager::GetInstance().GetHapSignInfo(
+        bundleName, subQuery, QUERY_ALL_SIGN_INFO, MultipleMode::SUB_MODE));
+    ASSERT_EQ(1u, subQuery.size());
+    EXPECT_EQ("Module003", subQuery[0].moduleInfo);
+    EXPECT_EQ(subPath, subQuery[0].sharedFiles);
+
+    int32_t sceneCode = 0;
+    EXPECT_EQ(ERR_OK, DeleteIdentityCore(INVALID_TOKENID, bundleName, ReservedType::NONE, sceneCode));
+}
+
+/**
+ * @tc.name: GetInfoByBundleNameModeTest002
+ * @tc.desc: Test GetHapSignInfo with CURRENT_MODE: in main-mode device state
+ *           CURRENT_MODE returns the dual bundle's main module; in sub-mode
+ *           device state it returns the dual bundle's sub module (no
+ *           fallback) and falls back to the main module of a main-only
+ *           bundle, while an explicit SUB_MODE query on the main-only bundle
+ *           stays strict (ERR_BUNDLE_NOT_EXIST). Content assertions tell the
+ *           resolved mode apart beyond row counts.
+ * @tc.type: FUNC
+ * @tc.require: Issue
+ */
+HWTEST_F(BundleInfoManagerTest, GetInfoByBundleNameModeTest002, TestSize.Level0)
+{
+    std::string mainOnlyBundle = "GetInfoByBundleNameMode002Main";
+    std::string mainOnlyPath =
+        "/SYSTEM/system_basic/state:[cam]/acl:[]/Module004/" + mainOnlyBundle;
+    std::string dualBundle = "GetInfoByBundleNameMode002Dual";
+    std::string dualMainPath =
+        "/SYSTEM/system_basic/state:[cam]/acl:[]/Module005/" + dualBundle;
+    std::string dualSubPath =
+        "/SYSTEM/system_basic/state:[mic]/acl:[]/Module006/" + dualBundle;
+
+    InstallSignInfoModule(mainOnlyPath, mainOnlyBundle, 0, MultipleMode::DEFAULT_OR_MAIN_MODE);
+    InstallSignInfoModule(dualMainPath, dualBundle, 0, MultipleMode::DEFAULT_OR_MAIN_MODE);
+    InstallSignInfoModule(dualSubPath, dualBundle, 10000, MultipleMode::SUB_MODE);
+
+    // device in main mode (default): CURRENT_MODE returns the dual bundle's main module
+    EXPECT_EQ(MultipleMode::DEFAULT_OR_MAIN_MODE, MultipleModeUtils::GetCurrentMode());
+    std::vector<TrustedBundleInfo> infos;
+    EXPECT_EQ(ERR_OK, BundleInfoManager::GetInstance().GetHapSignInfo(
+        dualBundle, infos, QUERY_ALL_SIGN_INFO, MultipleMode::CURRENT_MODE));
+    ASSERT_EQ(1u, infos.size());
+    EXPECT_EQ("Module005", infos[0].moduleInfo);
+
+    // switch the device to sub mode (canary: the parameter shim must bite)
+    system::SetIntParameter("persist.sceneboard.ispcmode", 1);
+    EXPECT_EQ(MultipleMode::SUB_MODE, MultipleModeUtils::GetCurrentMode());
+
+    // dual bundle: CURRENT_MODE resolves sub and returns the sub module, no fallback
+    EXPECT_EQ(ERR_OK, BundleInfoManager::GetInstance().GetHapSignInfo(
+        dualBundle, infos, QUERY_ALL_SIGN_INFO, MultipleMode::CURRENT_MODE));
+    ASSERT_EQ(1u, infos.size());
+    EXPECT_EQ("Module006", infos[0].moduleInfo);
+
+    // main-only bundle: sub rows empty, CURRENT_MODE falls back to the main module
+    EXPECT_EQ(ERR_OK, BundleInfoManager::GetInstance().GetHapSignInfo(
+        mainOnlyBundle, infos, QUERY_ALL_SIGN_INFO, MultipleMode::CURRENT_MODE));
+    ASSERT_EQ(1u, infos.size());
+    EXPECT_EQ("Module004", infos[0].moduleInfo);
+
+    // explicit SUB_MODE on the main-only bundle stays strict: no fallback
+    EXPECT_EQ(AccessTokenError::ERR_BUNDLE_NOT_EXIST, BundleInfoManager::GetInstance().GetHapSignInfo(
+        mainOnlyBundle, infos, QUERY_ALL_SIGN_INFO, MultipleMode::SUB_MODE));
+
+    // restore the device mode
+    system::ClearIntParameter("persist.sceneboard.ispcmode");
+    EXPECT_EQ(MultipleMode::DEFAULT_OR_MAIN_MODE, MultipleModeUtils::GetCurrentMode());
+
+    int32_t sceneCode = 0;
+    EXPECT_EQ(ERR_OK, DeleteIdentityCore(INVALID_TOKENID, mainOnlyBundle, ReservedType::NONE, sceneCode));
+    EXPECT_EQ(ERR_OK, DeleteIdentityCore(INVALID_TOKENID, dualBundle, ReservedType::NONE, sceneCode));
 }
 
 /**
