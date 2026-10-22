@@ -47,6 +47,7 @@
 
 #include "access_token.h"
 #include "atm_tools_param_info.h"
+#include "automation_control_types.h"
 #include "claw_permission_info.h"
 #include "hap_token_info.h"
 #include "native_token_info.h"
@@ -764,6 +765,47 @@ public:
      */
     static int32_t QueryStatusByTokenID(const std::vector<AccessTokenID>& tokenIDList,
         std::vector<PermissionStatus>& permissionInfoList, bool needTimestamp = true);
+
+    /**
+     * @brief Set automation control status for controller->target pairs.
+     * @param controllerTokenId Controller app token ID.
+     * @param targetList List of target apps and their automation control status.
+     * @param results Output parameter, returns the result for each target app.
+     * @return Returns RET_SUCCESS(0) on success, returns corresponding error code on failure.
+     */
+    static int32_t SetAutomationControlStatus(
+        AccessTokenID controllerTokenId,
+        const std::vector<AutomationControlTargetParam>& targetList,
+        std::vector<AutomationControlSetResult>& results);
+    /**
+     * @brief Get all target apps that the controller is allowed to control.
+     * @param controllerTokenId Controller app token ID.
+     * @param results Output parameter, returns the target apps and their status.
+     * @return Returns RET_SUCCESS(0) on success, returns corresponding error code on failure.
+     */
+    static int32_t GetAutomationControlTargets(
+        AccessTokenID controllerTokenId,
+        std::vector<AutomationControlTargetResult>& results);
+    /**
+     * @brief Get all controller apps that have automation control over a target app.
+     * @param targetTokenId Target app token ID.
+     * @param results Output parameter, returns the controller apps info.
+     * @return Returns RET_SUCCESS(0) on success, returns corresponding error code on failure.
+     */
+    static int32_t GetAutomationControlControllers(
+        AccessTokenID targetTokenId,
+        std::vector<AutomationControlControllerInfo>& results);
+    /**
+     * @brief Check automation control access for controller->target pairs.
+     * @param controllerTokenId Controller app token ID.
+     * @param targetList List of target app token IDs to check.
+     * @param decisionResults Output parameter, returns the access decision for each target.
+     * @return Returns RET_SUCCESS(0) on success, returns corresponding error code on failure.
+     */
+    static int32_t CheckAutomationControlAccess(
+        AccessTokenID controllerTokenId,
+        const std::vector<AccessTokenID>& targetList,
+        std::vector<AutomationControlAccessDecision>& decisionResults);
 
     /**
      * @brief Query whether the current caller needs a permission dialog for CLI commands.

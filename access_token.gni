@@ -34,6 +34,7 @@ declare_args() {
   access_token_support_subprofile = false
   access_token_privacy_bundle_start_stop_enable = false
   access_token_enable_spm = true
+  access_token_automation_control_enable = false
 }
 
 # External dependencies for each feature flag
@@ -253,6 +254,10 @@ if ("${target_platform}" == "pc" || "${target_platform}" == "tablet" ||
 
 if (access_token_privacy_bundle_start_stop_enable) {
   access_token_cflags_cc += [ "-DPRIVACY_BUNDLE_START_STOP_ENABLE" ]
+}
+
+if (access_token_automation_control_enable) {
+  access_token_cflags_cc += [ "-DENABLE_AUTOMATION_CONTROL" ]
 }
 
 if (is_emulator) {

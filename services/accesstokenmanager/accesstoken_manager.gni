@@ -148,6 +148,7 @@ accesstoken_manager_base_config = {
     "${access_token_path}/services/common/random/include",
     "${access_token_path}/services/common/utils/include",
     "${access_token_path}/services/common/background_task_manager/include",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/include/automation_control_manager",
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/boot",
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/callback",
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/clawtoken",
@@ -233,6 +234,12 @@ accesstoken_manager_base_config = {
       "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/access_token_db.cpp",
       "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/access_token_db_util.cpp",
       "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/access_token_open_callback.cpp",
+    ]
+  }
+
+  if (access_token_automation_control_enable) {
+    sources += [
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/automation_control_manager/automation_control_switch_manager.cpp",
     ]
   }
 

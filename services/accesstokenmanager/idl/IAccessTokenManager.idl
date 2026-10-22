@@ -125,6 +125,25 @@ interface OHOS.Security.AccessToken.IAccessTokenManager{
     [ipccode 105] void SetPermissionStatusWithPolicy([in] unsigned int tokenID, [in] List<String> permissionList, [in] int status, [in] unsigned int flag);
     [ipccode 107, macrodef SECURITY_COMPONENT_ENHANCE_ENABLE] void GetSecCompEnhanceKey([out] SecCompEnhanceKeyIdl enhanceKey);
 
+    [macrodef ENABLE_AUTOMATION_CONTROL, ipccode 190] void SetAutomationControlStatus(
+        [in] unsigned int controllerTokenId,
+        [in] List<unsigned int> targetTokenIds,
+        [in] List<int> statusList,
+        [out] List<int> results);
+    [macrodef ENABLE_AUTOMATION_CONTROL, ipccode 191] void GetAutomationControlTargets(
+        [in] unsigned int controllerTokenId,
+        [out] List<unsigned int> targetTokenIds,
+        [out] List<int> statusList,
+        [out] List<String> bundleNames);
+    [macrodef ENABLE_AUTOMATION_CONTROL, ipccode 192] void GetAutomationControlControllers(
+        [in] unsigned int targetTokenId,
+        [out] List<unsigned int> controllerTokenIds,
+        [out] List<String> bundleNames);
+    [macrodef ENABLE_AUTOMATION_CONTROL, ipccode 193] void CheckAutomationControlAccess(
+        [in] unsigned int controllerTokenId,
+        [in] List<unsigned int> targetList,
+        [out] List<int> decisionResults);
+
     [ipccode 200] void GetHapTokenInfo([in] unsigned int tokenID, [out] HapTokenInfoCompatIdl hapTokenInfoIdl);
     [ipccode 201] void GetPermissionCode([in] String permission, [out] unsigned int permCode);
     [ipccode 202, ipcoutcapacity 122880] void QueryStatusByPermission([in] List<unsigned int> permCodeList, [out] List<PermissionStatusIdl> permissionInfoList, [in] boolean onlyHap);

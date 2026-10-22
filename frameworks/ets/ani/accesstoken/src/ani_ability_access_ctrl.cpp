@@ -1596,6 +1596,162 @@ static void AppendClawNativeFunctions(std::vector<ani_native_function>& methods)
     });
 }
 
+static bool ParseAutomationControlTargetParam(ani_env* env, ani_object object,
+    AutomationControlTargetParam& param)
+{
+    int32_t tokenId = 0;
+    int32_t status = 0;
+    if (!GetIntField(env, object, "targetTokenID", tokenId) ||
+        !GetEnumProperty(env, object, "status", status, !OPTIONAL_PROPERTY)) {
+        return false;
+    }
+    param.targetTokenID = static_cast<AccessTokenID>(tokenId);
+    param.status = status;
+    return true;
+}
+
+static ani_ref SetAutomationControlStatusExecute([[maybe_unused]] ani_env* env,
+    [[maybe_unused]] ani_object object, ani_int aniControllerTokenId, ani_array aniTargetList)
+{
+    if ((env == nullptr) || (aniTargetList == nullptr)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Env or targetList is null.");
+        return nullptr;
+    }
+    AccessTokenID controllerTokenId = static_cast<AccessTokenID>(aniControllerTokenId);
+    std::vector<AutomationControlTargetParam> targetList;
+    if (!ParseObjectArray(env, aniTargetList, targetList, ParseAutomationControlTargetParam)) {
+        BusinessErrorAni::ThrowError(env, STS_ERROR_PARAM_ILLEGAL,
+            GetParamErrorMsg("targetList", "Array<AutomationControlTargetParam>"));
+        return nullptr;
+    }
+    std::vector<AutomationControlSetResult> results;
+    int32_t result = AccessTokenKit::SetAutomationControlStatus(controllerTokenId, targetList, results);
+    if (result != RET_SUCCESS) {
+        int32_t stsCode = BusinessErrorAni::GetStsErrorCode(result);
+        BusinessErrorAni::ThrowError(env, stsCode, GetErrorMessage(stsCode));
+        return nullptr;
+    }
+    ani_ref resultArray = CreateArrayObject(env, static_cast<uint32_t>(results.size()));
+    if (resultArray == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to create result array.");
+        return nullptr;
+    }
+    for (size_t i = 0; i < results.size(); i++) {
+        ani_object intObj = CreateIntObject(env, static_cast<int32_t>(results[i]));
+        if (env->Array_Set(reinterpret_cast<ani_array>(resultArray),
+            static_cast<ani_size>(i), intObj) != ANI_OK) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to set array element at index %{public}zu.", i);
+            return nullptr;
+        }
+    }
+    return resultArray;
+}
+
+static ani_ref GetAutomationControlTargetsExecute([[maybe_unused]] ani_env* env,
+    [[maybe_unused]] ani_object object, ani_int aniControllerTokenId)
+{
+    if (env == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Env is null.");
+        return nullptr;
+    }
+    AccessTokenID controllerTokenId = static_cast<AccessTokenID>(aniControllerTokenId);
+    std::vector<AutomationControlTargetResult> results;
+    int32_t result = AccessTokenKit::GetAutomationControlTargets(controllerTokenId, results);
+    if (result != RET_SUCCESS) {
+        int32_t stsCode = BusinessErrorAni::GetStsErrorCode(result);
+        BusinessErrorAni::ThrowError(env, stsCode, GetErrorMessage(stsCode));
+        return nullptr;
+    }
+    std::vector<ani_object> objects;
+    for (const auto& r : results) {
+        ani_object aniObject = CreateClassObject(env,
+            "@ohos.abilityAccessCtrl.abilityAccessCtrl.AutomationControlTargetResultInner");
+        if (aniObject == nullptr) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to create AutomationControlTargetResult object.");
+            continue;
+        }
+        if (!SetIntProperty(env, aniObject, "targetTokenID", static_cast<int32_t>(r.targetTokenID)) ||
+            !SetEnumProperty(env, aniObject,
+                "@ohos.abilityAccessCtrl.abilityAccessCtrl.AutomationControlStatus",
+                "status", static_cast<uint32_t>(r.status)) ||
+            !SetStringProperty(env, aniObject, "bundleName", r.bundleName)) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to set AutomationControlTargetResult properties.");
+            continue;
+        }
+        objects.emplace_back(aniObject);
+    }
+    ani_ref resultArray = CreateArrayObject(env, static_cast<uint32_t>(objects.size()));
+    if (resultArray == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to create result array.");
+        return nullptr;
+    }
+    for (size_t i = 0; i < objects.size(); i++) {
+        if (env->Array_Set(reinterpret_cast<ani_array>(resultArray),
+            static_cast<ani_size>(i), objects[i]) != ANI_OK) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to set array element at index %{public}zu.", i);
+            return nullptr;
+        }
+    }
+    return resultArray;
+}
+
+static ani_ref GetAutomationControlControllersExecute([[maybe_unused]] ani_env* env,
+    [[maybe_unused]] ani_object object, ani_int aniTargetTokenId)
+{
+    if (env == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Env is null.");
+        return nullptr;
+    }
+    AccessTokenID targetTokenId = static_cast<AccessTokenID>(aniTargetTokenId);
+    std::vector<AutomationControlControllerInfo> results;
+    int32_t result = AccessTokenKit::GetAutomationControlControllers(targetTokenId, results);
+    if (result != RET_SUCCESS) {
+        int32_t stsCode = BusinessErrorAni::GetStsErrorCode(result);
+        BusinessErrorAni::ThrowError(env, stsCode, GetErrorMessage(stsCode));
+        return nullptr;
+    }
+    std::vector<ani_object> objects;
+    for (const auto& r : results) {
+        ani_object aniObject = CreateClassObject(env,
+            "@ohos.abilityAccessCtrl.abilityAccessCtrl.AutomationControlControllerInfoInner");
+        if (aniObject == nullptr) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to create AutomationControlControllerInfo object.");
+            continue;
+        }
+        if (!SetIntProperty(env, aniObject, "controllerTokenID", static_cast<int32_t>(r.controllerTokenID)) ||
+            !SetStringProperty(env, aniObject, "bundleName", r.bundleName)) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to set AutomationControlControllerInfo properties.");
+            continue;
+        }
+        objects.emplace_back(aniObject);
+    }
+    ani_ref resultArray = CreateArrayObject(env, static_cast<uint32_t>(objects.size()));
+    if (resultArray == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to create result array.");
+        return nullptr;
+    }
+    for (size_t i = 0; i < objects.size(); i++) {
+        if (env->Array_Set(reinterpret_cast<ani_array>(resultArray),
+            static_cast<ani_size>(i), objects[i]) != ANI_OK) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Failed to set array element at index %{public}zu.", i);
+            return nullptr;
+        }
+    }
+    return resultArray;
+}
+
+static void AppendAutomationControlNativeFunctions(std::vector<ani_native_function>& methods)
+{
+    methods.insert(methods.end(), {
+        ani_native_function { "setAutomationControlStatusExecute",
+            nullptr, reinterpret_cast<void*>(SetAutomationControlStatusExecute) },
+        ani_native_function { "getAutomationControlTargetsExecute",
+            nullptr, reinterpret_cast<void*>(GetAutomationControlTargetsExecute) },
+        ani_native_function { "getAutomationControlControllersExecute",
+            nullptr, reinterpret_cast<void*>(GetAutomationControlControllersExecute) },
+    });
+}
+
 static ani_status AtManagerBindNativeFunction(ani_env* env, ani_class& cls)
 {
     std::vector<ani_native_function> clsMethods;
@@ -1603,6 +1759,7 @@ static ani_status AtManagerBindNativeFunction(ani_env* env, ani_class& cls)
     AppendRequestNativeFunctions(clsMethods);
     AppendQueryNativeFunctions(clsMethods);
     AppendClawNativeFunctions(clsMethods);
+    AppendAutomationControlNativeFunctions(clsMethods);
     return env->Class_BindNativeMethods(cls, clsMethods.data(), clsMethods.size());
 }
 

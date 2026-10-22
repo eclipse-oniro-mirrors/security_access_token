@@ -25,7 +25,8 @@
       "access_token_with_distributed_capability",
       "access_token_enhance_capability",
       "access_token_support_subprofile",
-      "access_token_privacy_bundle_start_stop_enable"
+      "access_token_privacy_bundle_start_stop_enable",
+      "access_token_automation_control_enable"
     ],
     "adapted_system_type": [ "standard" ],
     "rom": "10000KB",

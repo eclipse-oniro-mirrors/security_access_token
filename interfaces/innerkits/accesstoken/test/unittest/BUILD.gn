@@ -132,6 +132,11 @@ ohos_unittest("libaccesstoken_sdk_test") {
   if (access_token_enable_manual_test == true) {
     sources += [ "ToolTokenTest/tool_token_test.cpp" ]
   }
+
+  sources += [
+    "AutomationControlTest/automation_control_test.cpp",
+    "AutomationControlTest/automation_control_access_check_test.cpp",
+  ]
 }
 
 if (!use_clang_coverage && relational_store_enable) {

@@ -73,6 +73,10 @@ public:
     const static std::string FIELD_RESTRICTED_USER;
     const static std::string FIELD_WHITELIST;
     const static std::string FIELD_MODE;
+    const static std::string FIELD_AUTOMATION_SOURCE_TOKEN_ID;
+    const static std::string FIELD_AUTOMATION_TARGET_TOKEN_ID;
+    const static std::string FIELD_AUTOMATION_STATUS;
+    const static std::string FIELD_AUTOMATION_TIMESTAMP;
 };
 } // namespace AccessToken
 } // namespace Security

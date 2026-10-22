@@ -19,6 +19,7 @@
 
 #include "accesstoken_kit.h"
 #include "access_token_error.h"
+#include "automation_control_types.h"
 #include "claw_permission_info.h"
 #include "mock_permission.h"
 #include "test_common.h"
@@ -837,6 +838,158 @@ HWTEST_F(AccessTokenDenyTest, GenerateCliAuthResult001, TestSize.Level1)
     EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
         AccessTokenKit::GenerateCliAuthResult(host.GetTokenId(), DEFAULT_AGENT_ID, { BuildCliAuthInfo() }, result));
 }
+
+#ifdef ENABLE_AUTOMATION_CONTROL
+/**
+ * @tc.name: SetAutomationControlStatusDeny001
+ * @tc.desc: SetAutomationControlStatus without GRANT_SENSITIVE_PERMISSIONS.
+ */
+HWTEST_F(AccessTokenDenyTest, SetAutomationControlStatusDeny001, TestSize.Level1)
+{
+    RestoreSelfCaller();
+    std::vector<std::string> reqPerm;
+    MockHapToken mock("SetAutomationControlStatusDeny001", reqPerm, true);
+    EXPECT_EQ(0, setuid(INVALID_UID));
+
+    std::vector<AutomationControlTargetParam> targetList;
+    AutomationControlTargetParam param;
+    param.targetTokenID = RANDOM_TOKENID;
+    param.status = AUTOMATION_CONTROL_ENABLED;
+    targetList.emplace_back(param);
+    std::vector<AutomationControlSetResult> results;
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
+        AccessTokenKit::SetAutomationControlStatus(mock.GetTokenID(), targetList, results));
+    RestoreSelfCaller();
+}
+
+/**
+ * @tc.name: SetAutomationControlStatusDeny002
+ * @tc.desc: SetAutomationControlStatus with non-system app.
+ */
+HWTEST_F(AccessTokenDenyTest, SetAutomationControlStatusDeny002, TestSize.Level1)
+{
+    RestoreSelfCaller();
+    std::vector<std::string> reqPerm;
+    MockHapToken mock("SetAutomationControlStatusDeny002", reqPerm, false);
+    EXPECT_EQ(0, setuid(INVALID_UID));
+
+    std::vector<AutomationControlTargetParam> targetList;
+    AutomationControlTargetParam param;
+    param.targetTokenID = RANDOM_TOKENID;
+    param.status = AUTOMATION_CONTROL_ENABLED;
+    targetList.emplace_back(param);
+    std::vector<AutomationControlSetResult> results;
+    EXPECT_EQ(AccessTokenError::ERR_NOT_SYSTEM_APP,
+        AccessTokenKit::SetAutomationControlStatus(mock.GetTokenID(), targetList, results));
+    RestoreSelfCaller();
+}
+
+/**
+ * @tc.name: GetAutomationControlTargetsDeny001
+ * @tc.desc: GetAutomationControlTargets without GET_SENSITIVE_PERMISSIONS.
+ */
+HWTEST_F(AccessTokenDenyTest, GetAutomationControlTargetsDeny001, TestSize.Level1)
+{
+    RestoreSelfCaller();
+    std::vector<std::string> reqPerm;
+    MockHapToken mock("GetAutomationControlTargetsDeny001", reqPerm, true);
+    EXPECT_EQ(0, setuid(INVALID_UID));
+
+    std::vector<AutomationControlTargetResult> results;
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
+        AccessTokenKit::GetAutomationControlTargets(mock.GetTokenID(), results));
+    RestoreSelfCaller();
+}
+
+/**
+ * @tc.name: GetAutomationControlTargetsDeny002
+ * @tc.desc: GetAutomationControlTargets with non-system app.
+ */
+HWTEST_F(AccessTokenDenyTest, GetAutomationControlTargetsDeny002, TestSize.Level1)
+{
+    RestoreSelfCaller();
+    std::vector<std::string> reqPerm;
+    MockHapToken mock("GetAutomationControlTargetsDeny002", reqPerm, false);
+    EXPECT_EQ(0, setuid(INVALID_UID));
+
+    std::vector<AutomationControlTargetResult> results;
+    EXPECT_EQ(AccessTokenError::ERR_NOT_SYSTEM_APP,
+        AccessTokenKit::GetAutomationControlTargets(mock.GetTokenID(), results));
+    RestoreSelfCaller();
+}
+
+/**
+ * @tc.name: GetAutomationControlControllersDeny001
+ * @tc.desc: GetAutomationControlControllers without GET_SENSITIVE_PERMISSIONS.
+ */
+HWTEST_F(AccessTokenDenyTest, GetAutomationControlControllersDeny001, TestSize.Level1)
+{
+    RestoreSelfCaller();
+    std::vector<std::string> reqPerm;
+    MockHapToken mock("GetAutomationControlControllersDeny001", reqPerm, true);
+    EXPECT_EQ(0, setuid(INVALID_UID));
+
+    std::vector<AutomationControlControllerInfo> results;
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
+        AccessTokenKit::GetAutomationControlControllers(RANDOM_TOKENID, results));
+    RestoreSelfCaller();
+}
+
+/**
+ * @tc.name: GetAutomationControlControllersDeny002
+ * @tc.desc: GetAutomationControlControllers with non-system app.
+ */
+HWTEST_F(AccessTokenDenyTest, GetAutomationControlControllersDeny002, TestSize.Level1)
+{
+    RestoreSelfCaller();
+    std::vector<std::string> reqPerm;
+    MockHapToken mock("GetAutomationControlControllersDeny002", reqPerm, false);
+    EXPECT_EQ(0, setuid(INVALID_UID));
+
+    std::vector<AutomationControlControllerInfo> results;
+    EXPECT_EQ(AccessTokenError::ERR_NOT_SYSTEM_APP,
+        AccessTokenKit::GetAutomationControlControllers(mock.GetTokenID(), results));
+    RestoreSelfCaller();
+}
+
+/**
+ * @tc.name: CheckAutomationControlAccessDeny001
+ * @tc.desc: CheckAutomationControlAccess without GET_SENSITIVE_PERMISSIONS.
+ */
+HWTEST_F(AccessTokenDenyTest, CheckAutomationControlAccessDeny001, TestSize.Level1)
+{
+    RestoreSelfCaller();
+    std::vector<std::string> reqPerm;
+    MockHapToken mock("CheckAutomationControlAccessDeny001", reqPerm, true);
+    EXPECT_EQ(0, setuid(INVALID_UID));
+
+    std::vector<AccessTokenID> targetList;
+    targetList.emplace_back(RANDOM_TOKENID);
+    std::vector<AutomationControlAccessDecision> decisions;
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
+        AccessTokenKit::CheckAutomationControlAccess(mock.GetTokenID(), targetList, decisions));
+    RestoreSelfCaller();
+}
+
+/**
+ * @tc.name: CheckAutomationControlAccessDeny002
+ * @tc.desc: CheckAutomationControlAccess with non-system app.
+ */
+HWTEST_F(AccessTokenDenyTest, CheckAutomationControlAccessDeny002, TestSize.Level1)
+{
+    RestoreSelfCaller();
+    std::vector<std::string> reqPerm;
+    MockHapToken mock("CheckAutomationControlAccessDeny002", reqPerm, false);
+    EXPECT_EQ(0, setuid(INVALID_UID));
+
+    std::vector<AccessTokenID> targetList;
+    targetList.emplace_back(RANDOM_TOKENID);
+    std::vector<AutomationControlAccessDecision> decisions;
+    EXPECT_EQ(AccessTokenError::ERR_NOT_SYSTEM_APP,
+        AccessTokenKit::CheckAutomationControlAccess(mock.GetTokenID(), targetList, decisions));
+    RestoreSelfCaller();
+}
+#endif
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

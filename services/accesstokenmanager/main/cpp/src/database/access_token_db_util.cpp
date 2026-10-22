@@ -40,6 +40,7 @@ static const std::map<AtmDataType, std::string> g_DateTypeToTableName = {
     {AtmDataType::ACCESSTOKEN_SYSTEM_CONFIG, "system_config_table"},
     {AtmDataType::ACCESSTOKEN_USER_POLICY, "user_policy_table"},
     {AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO, "hap_info_table"},
+    {AtmDataType::ACCESSTOKEN_CONTROL_SWITCH, "control_switch_table"},
 };
 
 void PutIntColumn(const std::string& columnName, const NativeRdb::ValueObject& object, GenericValues& value)

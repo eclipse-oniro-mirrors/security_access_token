@@ -67,6 +67,9 @@
 #include "token_field_const.h"
 #include "token_setproc.h"
 #include "user_policy_manager.h"
+#ifdef ENABLE_AUTOMATION_CONTROL
+#include "automation_control_switch_manager.h"
+#endif
 #ifdef TOKEN_SYNC_ENABLE
 #include "token_modify_notifier.h"
 #endif
@@ -1129,6 +1132,11 @@ int AccessTokenInfoManager::RemoveHapTokenInfo(AccessTokenID id, bool isTokenRes
     if (ret != RET_SUCCESS) {
         LOGC(ATM_DOMAIN, ATM_TAG, "Remove info from db failed, ret is %{public}d", ret);
     }
+#ifdef ENABLE_AUTOMATION_CONTROL
+    if (ret == RET_SUCCESS) {
+        AutomationControlSwitchManager::GetInstance().ClearByTokenId(id);
+    }
+#endif
 
     LOGI(ATM_DOMAIN, ATM_TAG, "Remove hap token %{public}u ok!", id);
     std::vector<std::string> permissionList;
@@ -2000,6 +2008,19 @@ int AccessTokenInfoManager::RemoveHapTokenInfoFromDb(
     if (AccessTokenInfoUtils::IsSystemResource(info->GetBundleName())) {
         AccessTokenInfoUtils::GenerateDelInfoToVec(AtmDataType::ACCESSTOKEN_PERMISSION_DEF, condition, delInfoVec);
     }
+
+#ifdef ENABLE_AUTOMATION_CONTROL
+    GenericValues ctrlCond;
+    ctrlCond.Put(TokenFiledConst::FIELD_AUTOMATION_SOURCE_TOKEN_ID,
+        static_cast<int32_t>(tokenID));
+    AccessTokenInfoUtils::GenerateDelInfoToVec(
+        AtmDataType::ACCESSTOKEN_CONTROL_SWITCH, ctrlCond, delInfoVec);
+    GenericValues tgtCond;
+    tgtCond.Put(TokenFiledConst::FIELD_AUTOMATION_TARGET_TOKEN_ID,
+        static_cast<int32_t>(tokenID));
+    AccessTokenInfoUtils::GenerateDelInfoToVec(
+        AtmDataType::ACCESSTOKEN_CONTROL_SWITCH, tgtCond, delInfoVec);
+#endif
 
     std::vector<AddInfo> addInfoVec;
     if (isTokenReserved) {

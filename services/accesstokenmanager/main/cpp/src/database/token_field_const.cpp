@@ -67,6 +67,10 @@ const std::string TokenFiledConst::FIELD_CONTROLLER_TOKENID = "controller_tokeni
 const std::string TokenFiledConst::FIELD_RESTRICTED_USER = "restricted_user";
 const std::string TokenFiledConst::FIELD_WHITELIST = "whitelist";
 const std::string TokenFiledConst::FIELD_MODE = "mode";
+const std::string TokenFiledConst::FIELD_AUTOMATION_SOURCE_TOKEN_ID = "source_token_id";
+const std::string TokenFiledConst::FIELD_AUTOMATION_TARGET_TOKEN_ID = "target_token_id";
+const std::string TokenFiledConst::FIELD_AUTOMATION_STATUS = "status";
+const std::string TokenFiledConst::FIELD_AUTOMATION_TIMESTAMP = "timestamp";
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

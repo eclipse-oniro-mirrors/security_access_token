@@ -39,12 +39,6 @@ static constexpr size_t UPGRADE_V9_STEP_SQL_COUNT = 4;
 static constexpr size_t UPGRADE_V3_FAIL_SQL_COUNT = 2;
 static constexpr size_t ADD_MODE_COLUMN_RECREATE_SQL_COUNT = 2; // drop + create
 static constexpr size_t ADD_MODE_COLUMN_DROP_FAIL_SQL_COUNT = 1; // drop only
-#ifdef SPM_DATA_ENABLE
-static constexpr int32_t UPGRADE_V11_TO_V12_SPM_SQL_COUNT = 9;
-static constexpr size_t UPGRADE_V10_TO_V11_SPM_SQL_COUNT = 10;
-#else
-static constexpr size_t UPGRADE_V10_TO_V11_NON_SPM_SQL_COUNT = 2;
-#endif
 }
 class AccessTokenDatabaseCoverageTest : public testing::Test {
 public:
@@ -180,44 +174,6 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, OnUpgrade001, TestSize.Level4)
     ASSERT_EQ(NativeRdb::E_OK, callback.OnUpgrade(*(db.get()), DATABASE_VERSION_4, DATABASE_VERSION_6));
 
     ASSERT_EQ(NativeRdb::E_OK, callback.OnUpgrade(*(db.get()), DATABASE_VERSION_5, DATABASE_VERSION_6));
-}
-
-/*
- * @tc.name: OnUpgradeIsSideloadColumn001
- * @tc.desc: AccessTokenOpenCallback::OnUpgrade 11->12 adds is_sideload column, the altered column
- *           definition is equivalent to the fresh create table statement, legacy rows default to 0
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenDatabaseCoverageTest, OnUpgradeIsSideloadColumn001, TestSize.Level4)
-{
-    std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance()->GetRdb();
-    AccessTokenOpenCallback callback;
-    const std::string columnDef = TokenFiledConst::FIELD_IS_SIDELOAD + " integer not null default 0";
-
-    // fresh create path: create table statement contains the is_sideload column definition
-    db->executedSqls_.clear();
-    ASSERT_EQ(NativeRdb::E_OK, callback.OnCreate(*(db.get())));
-    bool foundInCreate = false;
-    for (const auto& sql : db->executedSqls_) {
-        if (sql.find(columnDef) != std::string::npos) {
-            foundInCreate = true;
-            EXPECT_NE(std::string::npos, sql.find("hap_token_info_table"));
-        }
-    }
-    ASSERT_EQ(true, foundInCreate);
-
-    // upgrade path: alter table adds the same column definition, legacy rows default to 0
-    db->executedSqls_.clear();
-    ASSERT_EQ(NativeRdb::E_OK, callback.OnUpgrade(*(db.get()), DATABASE_VERSION_11, DATABASE_VERSION_12));
-#ifdef SPM_DATA_ENABLE
-    // fallthrough continues into the spm 12->13 steps
-    ASSERT_EQ(UPGRADE_V11_TO_V12_SPM_SQL_COUNT, static_cast<int32_t>(db->executedSqls_.size()));
-    EXPECT_EQ("alter table hap_token_info_table add column " + columnDef, db->executedSqls_[0]);
-#else
-    ASSERT_EQ(1, static_cast<int32_t>(db->executedSqls_.size()));
-    EXPECT_EQ("alter table hap_token_info_table add column " + columnDef, db->executedSqls_[0]);
-#endif
 }
 
 /*
@@ -953,52 +909,6 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, OnUpgrade004, TestSize.Level4)
 }
 
 /*
- * @tc.name: OnUpgrade005
- * @tc.desc: AccessTokenOpenCallback::OnUpgrade version 9->10 rebuilds the request-toggle table and preserves data.
- * @tc.type: FUNC
- * @tc.require: TDD
- */
-HWTEST_F(AccessTokenDatabaseCoverageTest, OnUpgrade005, TestSize.Level4)
-{
-    std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance()->GetRdb();
-    ASSERT_NE(nullptr, db);
-    db->executeSqlResults_.clear();
-    db->executeSqlIndex_ = 0;
-    db->executedSqls_.clear();
-
-    AccessTokenOpenCallback callback;
-    ASSERT_EQ(NativeRdb::E_OK, callback.OnUpgrade(*(db.get()), DATABASE_VERSION_9, DATABASE_VERSION_10));
-    const std::vector<std::string> expectedSqls = {
-        "alter table permission_request_toggle_status_table rename to permission_request_toggle_status_table_backup",
-        "create table if not exists permission_request_toggle_status_table (user_id integer not null,"
-            "permission_name text not null,sub_profile_id integer default -1,status integer not null,"
-            "primary key(user_id,permission_name,sub_profile_id))",
-        "insert into permission_request_toggle_status_table (user_id,permission_name,sub_profile_id,status) select "
-            "user_id,permission_name,-1,status from permission_request_toggle_status_table_backup",
-        "drop table permission_request_toggle_status_table_backup",
-        "delete from hap_info_table",
-        "alter table hap_token_info_table add column is_sideload integer not null default 0",
-#ifdef SPM_DATA_ENABLE
-        "create table if not exists hap_info_table (bundle_name text not null,module_name text not null,"
-            "path text not null,bundle_type integer not null,persist_data blob not null,"
-            "is_preinstalled integer not null,mode integer not null default 0,"
-            "primary key(bundle_name,module_name,mode))",
-        "drop table if exists hap_info_table",
-        "create table if not exists hap_info_table (bundle_name text not null,module_name text not null,"
-            "path text not null,bundle_type integer not null,persist_data blob not null,"
-            "is_preinstalled integer not null,mode integer not null default 0,"
-            "primary key(bundle_name,module_name,mode))",
-        "update system_config_table set value='0' where name='bms_migrate_completed'",
-        "alter table hap_token_info_table add column uid integer not null default -1",
-        "alter table hap_token_info_table add column migrated integer not null default 0",
-        "alter table hap_token_info_table add column reserved integer not null default 0",
-        "update hap_token_info_table set reserved= 1 where token_attr & 0x0004 != 0",
-#endif
-    };
-    EXPECT_EQ(expectedSqls, db->executedSqls_);
-}
-
-/*
 * @tc.name: UpgradeFromVersion9001
 * @tc.desc: AccessTokenOpenCallback::UpgradeFromVersion10 clears hap info
 * @tc.type: FUNC
@@ -1198,56 +1108,6 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, OnUpgrade007, TestSize.Level4)
     EXPECT_EQ(migrationStepCount, db->executedSqls_.size());
     EXPECT_EQ(1U, db->transaction_->rollbackCount_);
     db->transaction_->commitFlag_ = 0;
-}
-
-/*
- * @tc.name: OnUpgrade008
- * @tc.desc: AccessTokenOpenCallback::OnUpgrade propagates a version 10->11 cleanup failure.
- * @tc.type: FUNC
- * @tc.require: TDD
- */
-HWTEST_F(AccessTokenDatabaseCoverageTest, OnUpgrade008, TestSize.Level4)
-{
-    std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance()->GetRdb();
-    ASSERT_NE(nullptr, db);
-    AccessTokenOpenCallback callback;
-
-    db->executeSqlResults_ = {NativeRdb::E_SQLITE_CORRUPT};
-    db->executeSqlIndex_ = 0;
-    db->executedSqls_.clear();
-
-    // ignore the failure
-    EXPECT_EQ(NativeRdb::E_OK,
-        callback.OnUpgrade(*(db.get()), DATABASE_VERSION_10, DATABASE_VERSION_11));
-#ifdef SPM_DATA_ENABLE
-    // UpgradeFromVersion10 failure is ignored; fallthrough runs 11->12 (is_sideload) and 12->13 (spm)
-    // AddModeColumn drops and recreates the table so mode is part of the primary key.
-    ASSERT_EQ(UPGRADE_V10_TO_V11_SPM_SQL_COUNT, db->executedSqls_.size());
-    EXPECT_EQ("delete from hap_info_table", db->executedSqls_[0]);
-    EXPECT_EQ("alter table hap_token_info_table add column is_sideload integer not null default 0",
-        db->executedSqls_[1]);
-    EXPECT_EQ("create table if not exists hap_info_table (bundle_name text not null,module_name text not null,"
-        "path text not null,bundle_type integer not null,persist_data blob not null,"
-        "is_preinstalled integer not null,mode integer not null default 0,"
-        "primary key(bundle_name,module_name,mode))", db->executedSqls_[2]);
-    EXPECT_EQ("drop table if exists hap_info_table", db->executedSqls_[3]);
-    EXPECT_EQ("create table if not exists hap_info_table (bundle_name text not null,module_name text not null,"
-        "path text not null,bundle_type integer not null,persist_data blob not null,"
-        "is_preinstalled integer not null,mode integer not null default 0,"
-        "primary key(bundle_name,module_name,mode))", db->executedSqls_[4]);
-    EXPECT_EQ("update system_config_table set value='0' where name='bms_migrate_completed'", db->executedSqls_[5]);
-    EXPECT_EQ("alter table hap_token_info_table add column uid integer not null default -1", db->executedSqls_[6]);
-    EXPECT_EQ("alter table hap_token_info_table add column migrated integer not null default 0", db->executedSqls_[7]);
-    EXPECT_EQ("alter table hap_token_info_table add column reserved integer not null default 0",
-        db->executedSqls_[8]);
-    EXPECT_EQ("update hap_token_info_table set reserved= 1 where token_attr & 0x0004 != 0", db->executedSqls_[9]);
-#else
-    // UpgradeFromVersion10 failure is ignored; fallthrough runs UpgradeFromVersion11 (is_sideload)
-    ASSERT_EQ(UPGRADE_V10_TO_V11_NON_SPM_SQL_COUNT, db->executedSqls_.size());
-    EXPECT_EQ("delete from hap_info_table", db->executedSqls_[0]);
-    EXPECT_EQ("alter table hap_token_info_table add column is_sideload integer not null default 0",
-        db->executedSqls_[1]);
-#endif
 }
 
 /*

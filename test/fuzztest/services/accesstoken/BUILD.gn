@@ -68,6 +68,15 @@ group("fuzztest") {
     "verifyaccesstokenwithliststub_fuzzer:VerifyAccessTokenWithListStubFuzzTest",
   ]
 
+  if (access_token_automation_control_enable) {
+    deps += [
+      "setautomationcontrolstatusstub_fuzzer:SetAutomationControlStatusStubFuzzTest",
+      "getautomationcontroltargetsstub_fuzzer:GetAutomationControlTargetsStubFuzzTest",
+      "getautomationcontrolcontrollersstub_fuzzer:GetAutomationControlControllersStubFuzzTest",
+      "checkautomationcontrolaccessstub_fuzzer:CheckAutomationControlAccessStubFuzzTest",
+    ]
+  }
+
   if (access_token_manage_user_policy_enable) {
     deps += [ "setuserpolicystub_fuzzer:SetUserPolicyStubFuzzTest" ]
   }

@@ -17,6 +17,7 @@
 #include "access_token.h"
 #include "data_validator.h"
 #include "hisysevent.h"
+#include "napi_automation_control.h"
 #include "napi_claw_permission.h"
 #include "napi_hisysevent_adapter.h"
 #include "napi_open_permission_on_setting.h"
@@ -282,6 +283,10 @@ napi_value NapiAtManager::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("getCliPermissionRequestInfo", NapiClawPermission::GetCliPermissionRequestInfo),
         DECLARE_NAPI_FUNCTION("getCliPermissions", NapiClawPermission::GetCliPermissions),
         DECLARE_NAPI_FUNCTION("generateCliAuthResult", NapiClawPermission::GenerateCliAuthResult),
+        DECLARE_NAPI_FUNCTION("setAutomationControlStatus", NapiAutomationControl::SetAutomationControlStatus),
+        DECLARE_NAPI_FUNCTION("getAutomationControlTargets", NapiAutomationControl::GetAutomationControlTargets),
+        DECLARE_NAPI_FUNCTION("getAutomationControlControllers",
+            NapiAutomationControl::GetAutomationControlControllers),
     };
 
     napi_value cons = nullptr;
@@ -294,6 +299,18 @@ napi_value NapiAtManager::Init(napi_env env, napi_value exports)
     CreateObjects(env, exports);
 
     return exports;
+}
+
+void NapiAtManager::CreateAutomationControlEnums(napi_env env,
+    napi_value& status, napi_value& setResult)
+{
+    napi_create_object(env, &status);
+    SetNamedProperty(env, status, AUTOMATION_CONTROL_DISABLED, "DISABLED");
+    SetNamedProperty(env, status, AUTOMATION_CONTROL_ENABLED, "ENABLED");
+
+    napi_create_object(env, &setResult);
+    SetNamedProperty(env, setResult, AUTOMATION_CONTROL_SET_SUCCESS, "SUCCESS");
+    SetNamedProperty(env, setResult, AUTOMATION_CONTROL_SET_TOKEN_ID_NOT_EXIST, "TOKEN_ID_NOT_EXIST");
 }
 
 void NapiAtManager::CreateObjects(napi_env env, napi_value exports)
@@ -333,6 +350,10 @@ void NapiAtManager::CreateObjects(napi_env env, napi_value exports)
     SetNamedProperty(env, selectedResult, SELECTED_OPENED, "OPENED");
     SetNamedProperty(env, selectedResult, SELECTED_GRANTED, "GRANTED");
 
+    napi_value automationControlStatus = nullptr;
+    napi_value automationControlSetResult = nullptr;
+    CreateAutomationControlEnums(env, automationControlStatus, automationControlSetResult);
+
     napi_property_descriptor exportFuncs[] = {
         DECLARE_NAPI_PROPERTY("GrantStatus", grantStatus),
         DECLARE_NAPI_PROPERTY("PermissionStateChangeType", permStateChangeType),
@@ -341,6 +362,8 @@ void NapiAtManager::CreateObjects(napi_env env, napi_value exports)
         DECLARE_NAPI_PROPERTY("SwitchType", globalSwitchType),
         DECLARE_NAPI_PROPERTY("SelectedResult", selectedResult),
         DECLARE_NAPI_PROPERTY("PermissionDecisionStatus", CreatePermissionDecisionStatus(env)),
+        DECLARE_NAPI_PROPERTY("AutomationControlStatus", automationControlStatus),
+        DECLARE_NAPI_PROPERTY("AutomationControlSetResult", automationControlSetResult),
     };
     napi_define_properties(env, exports, sizeof(exportFuncs) / sizeof(*exportFuncs), exportFuncs);
 }

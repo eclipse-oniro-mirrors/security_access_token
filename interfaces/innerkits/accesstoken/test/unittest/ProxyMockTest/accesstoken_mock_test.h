@@ -20,6 +20,7 @@
 
 #include "access_token.h"
 #include "accesstoken_kit.h"
+#include "automation_control_types.h"
 #include "iservice_registry.h"
 
 namespace OHOS {

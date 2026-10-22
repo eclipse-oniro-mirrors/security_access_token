@@ -2637,6 +2637,63 @@ HWTEST_F(AccessTokenMockTest, ReregisterPermStateChangeCallback005, TestSize.Lev
     EXPECT_EQ(2U, client.callbackMap_.size());
 }
 
+#ifdef ENABLE_AUTOMATION_CONTROL
+/**
+ * @tc.name: SetAutomationControlStatusProxyNull001
+ * @tc.desc: SetAutomationControlStatus returns ERR_SERVICE_ABNORMAL when proxy is null.
+ */
+HWTEST_F(AccessTokenMockTest, SetAutomationControlStatusProxyNull001, TestSize.Level4)
+{
+    AccessTokenManagerClient::GetInstance().ReleaseProxy();
+    std::vector<AutomationControlTargetParam> targetList;
+    AutomationControlTargetParam param;
+    param.targetTokenID = g_testTokenId;
+    param.status = AUTOMATION_CONTROL_ENABLED;
+    targetList.emplace_back(param);
+    std::vector<AutomationControlSetResult> results;
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL,
+        AccessTokenKit::SetAutomationControlStatus(g_testTokenId, targetList, results));
+}
+
+/**
+ * @tc.name: GetAutomationControlTargetsProxyNull001
+ * @tc.desc: GetAutomationControlTargets returns ERR_SERVICE_ABNORMAL when proxy is null.
+ */
+HWTEST_F(AccessTokenMockTest, GetAutomationControlTargetsProxyNull001, TestSize.Level4)
+{
+    AccessTokenManagerClient::GetInstance().ReleaseProxy();
+    std::vector<AutomationControlTargetResult> results;
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL,
+        AccessTokenKit::GetAutomationControlTargets(g_testTokenId, results));
+}
+
+/**
+ * @tc.name: GetAutomationControlControllersProxyNull001
+ * @tc.desc: GetAutomationControlControllers returns ERR_SERVICE_ABNORMAL when proxy is null.
+ */
+HWTEST_F(AccessTokenMockTest, GetAutomationControlControllersProxyNull001, TestSize.Level4)
+{
+    AccessTokenManagerClient::GetInstance().ReleaseProxy();
+    std::vector<AutomationControlControllerInfo> results;
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL,
+        AccessTokenKit::GetAutomationControlControllers(g_testTokenId, results));
+}
+
+/**
+ * @tc.name: CheckAutomationControlAccessProxyNull001
+ * @tc.desc: CheckAutomationControlAccess returns ERR_SERVICE_ABNORMAL when proxy is null.
+ */
+HWTEST_F(AccessTokenMockTest, CheckAutomationControlAccessProxyNull001, TestSize.Level4)
+{
+    AccessTokenManagerClient::GetInstance().ReleaseProxy();
+    std::vector<AccessTokenID> targetList;
+    targetList.emplace_back(g_testTokenId);
+    std::vector<AutomationControlAccessDecision> decisions;
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL,
+        AccessTokenKit::CheckAutomationControlAccess(g_testTokenId, targetList, decisions));
+}
+#endif
+
 #ifdef SPM_DATA_ENABLE
 /**
  * @tc.name: MigrateInstalledBundlesSizeExceed001

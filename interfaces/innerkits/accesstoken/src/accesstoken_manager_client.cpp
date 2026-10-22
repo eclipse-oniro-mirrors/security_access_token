@@ -2278,6 +2278,112 @@ int32_t AccessTokenManagerClient::QueryStatusByTokenID(const std::vector<AccessT
     return RET_SUCCESS;
 }
 
+#ifdef ENABLE_AUTOMATION_CONTROL
+int32_t AccessTokenManagerClient::SetAutomationControlStatus(AccessTokenID controllerTokenId,
+    const std::vector<AutomationControlTargetParam>& targetList,
+    std::vector<AutomationControlSetResult>& results)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+    std::vector<uint32_t> targetTokenIds;
+    std::vector<int32_t> statusList;
+    targetTokenIds.reserve(targetList.size());
+    statusList.reserve(targetList.size());
+    for (const auto& item : targetList) {
+        targetTokenIds.emplace_back(item.targetTokenID);
+        statusList.emplace_back(item.status);
+    }
+    std::vector<int32_t> resultInts;
+    int32_t result = proxy->SetAutomationControlStatus(
+        controllerTokenId, targetTokenIds, statusList, resultInts);
+    if (result != RET_SUCCESS) {
+        return ConvertResult(result);
+    }
+    results.reserve(resultInts.size());
+    for (int32_t val : resultInts) {
+        results.emplace_back(static_cast<AutomationControlSetResult>(val));
+    }
+    return RET_SUCCESS;
+}
+
+int32_t AccessTokenManagerClient::GetAutomationControlTargets(AccessTokenID controllerTokenId,
+    std::vector<AutomationControlTargetResult>& results)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+    std::vector<uint32_t> targetTokenIds;
+    std::vector<int32_t> statusList;
+    std::vector<std::string> bundleNames;
+    int32_t result = proxy->GetAutomationControlTargets(
+        controllerTokenId, targetTokenIds, statusList, bundleNames);
+    if (result != RET_SUCCESS) {
+        return ConvertResult(result);
+    }
+    results.clear();
+    for (size_t i = 0; i < targetTokenIds.size(); i++) {
+        AutomationControlTargetResult item;
+        item.targetTokenID = targetTokenIds[i];
+        item.status = (i < statusList.size()) ? statusList[i] : 0;
+        item.bundleName = (i < bundleNames.size()) ? bundleNames[i] : "";
+        results.emplace_back(item);
+    }
+    return RET_SUCCESS;
+}
+
+int32_t AccessTokenManagerClient::GetAutomationControlControllers(AccessTokenID targetTokenId,
+    std::vector<AutomationControlControllerInfo>& results)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+    std::vector<uint32_t> controllerTokenIds;
+    std::vector<std::string> bundleNames;
+    int32_t result = proxy->GetAutomationControlControllers(
+        targetTokenId, controllerTokenIds, bundleNames);
+    if (result != RET_SUCCESS) {
+        return ConvertResult(result);
+    }
+    results.clear();
+    for (size_t i = 0; i < controllerTokenIds.size(); i++) {
+        AutomationControlControllerInfo item;
+        item.controllerTokenID = controllerTokenIds[i];
+        item.bundleName = (i < bundleNames.size()) ? bundleNames[i] : "";
+        results.emplace_back(item);
+    }
+    return RET_SUCCESS;
+}
+
+int32_t AccessTokenManagerClient::CheckAutomationControlAccess(AccessTokenID controllerTokenId,
+    const std::vector<AccessTokenID>& targetList,
+    std::vector<AutomationControlAccessDecision>& decisionResults)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+    std::vector<int32_t> resultInts;
+    int32_t result = proxy->CheckAutomationControlAccess(
+        controllerTokenId, targetList, resultInts);
+    if (result != RET_SUCCESS) {
+        return ConvertResult(result);
+    }
+    decisionResults.clear();
+    for (int32_t val : resultInts) {
+        decisionResults.emplace_back(static_cast<AutomationControlAccessDecision>(val));
+    }
+    return RET_SUCCESS;
+}
+#endif
+
 int32_t AccessTokenManagerClient::GetCliPermissionRequestInfo(
     const std::string& agentID, const std::vector<CliInfo>& cliInfoList, PermissionDialogResult& result)
 {

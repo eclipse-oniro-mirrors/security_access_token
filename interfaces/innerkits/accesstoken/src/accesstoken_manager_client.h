@@ -28,6 +28,9 @@
 #include "access_token.h"
 #include "atm_tools_param_info.h"
 #include "accesstoken_death_recipient.h"
+#ifdef ENABLE_AUTOMATION_CONTROL
+#include "automation_control_types.h"
+#endif
 #include "claw_permission_info.h"
 #include "hap_token_info.h"
 #include "iaccess_token_manager.h"
@@ -181,6 +184,19 @@ public:
         std::vector<PermissionStatus>& permissionInfoList, bool onlyHap);
     int32_t QueryStatusByTokenID(const std::vector<AccessTokenID>& tokenIDList,
         std::vector<PermissionStatus>& permissionInfoList, bool needTimestamp);
+#ifdef ENABLE_AUTOMATION_CONTROL
+    int32_t SetAutomationControlStatus(AccessTokenID controllerTokenId,
+        const std::vector<AutomationControlTargetParam>& targetList,
+        std::vector<AutomationControlSetResult>& results);
+    int32_t GetAutomationControlTargets(AccessTokenID controllerTokenId,
+        std::vector<AutomationControlTargetResult>& results);
+    int32_t GetAutomationControlControllers(AccessTokenID targetTokenId,
+        std::vector<AutomationControlControllerInfo>& results);
+    int32_t CheckAutomationControlAccess(AccessTokenID controllerTokenId,
+        const std::vector<AccessTokenID>& targetList,
+        std::vector<AutomationControlAccessDecision>& decisionResults);
+#endif
+
     int32_t GetCliPermissionRequestInfo(
         const std::string& agentID, const std::vector<CliInfo>& cliInfoList, PermissionDialogResult& result);
     int32_t GetCliPermissions(AccessTokenID hostTokenID, const std::string& agentID,
