@@ -251,6 +251,10 @@ if ("${target_platform}" == "pc" || "${target_platform}" == "tablet" ||
   access_token_manage_user_policy_enable = false
 }
 
+if ("${target_platform}" == "pc") {
+  access_token_cflags_cc += [ "-DSUPPORT_PC_PRODUCT" ]
+}
+
 if (access_token_privacy_bundle_start_stop_enable) {
   access_token_cflags_cc += [ "-DPRIVACY_BUNDLE_START_STOP_ENABLE" ]
 }

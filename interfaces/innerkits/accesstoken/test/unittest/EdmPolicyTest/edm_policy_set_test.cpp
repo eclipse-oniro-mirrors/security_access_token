@@ -45,6 +45,9 @@ static const std::string CAMERA = "ohos.permission.CAMERA"; // user_grant
 static const std::string CUSTOM_SCREEN_CAPTURE = "ohos.permission.CUSTOM_SCREEN_CAPTURE"; // user_grant
 static const std::string READ_HEALTH_DATA = "ohos.permission.READ_HEALTH_DATA";
 static const std::string MANAGE_EDM_POLICY = "ohos.permission.MANAGE_EDM_POLICY"; // system_grant
+#ifdef SUPPORT_PC_PRODUCT
+static const std::string HOOK_KEY_EVENT = "ohos.permission.HOOK_KEY_EVENT"; // manual_settings
+#endif
 PermissionStateFull g_infoManagerInternetState = {
     .permissionName = INTERNET,
     .isGeneral = true,
@@ -93,6 +96,16 @@ PermissionStateFull g_infoManagerCustomScreenCaptureState = {
     .grantFlags = {0}
 };
 
+#ifdef SUPPORT_PC_PRODUCT
+PermissionStateFull g_infoManagerHookKeyEventState = {
+    .permissionName = HOOK_KEY_EVENT,
+    .isGeneral = true,
+    .resDeviceID = {"local2"},
+    .grantStatus = {PermissionState::PERMISSION_DENIED},
+    .grantFlags = {0}
+};
+#endif
+
 // Permission set
 HapInfoParams g_testHapInfoParams = {
     .userID = 0,
@@ -114,6 +127,16 @@ HapPolicyParams g_testPolicyParams = {
         g_infoManagerCustomScreenCaptureState,
     }
 };
+
+#ifdef SUPPORT_PC_PRODUCT
+HapPolicyParams g_testPolicyParamsWithManualSetting = {
+    .apl = APL_SYSTEM_CORE,
+    .domain = "test.domain2",
+    .permStateList = {
+        g_infoManagerHookKeyEventState,
+    }
+};
+#endif
 
 PermissionStateFull g_infoManagerCustomScreenCaptureState02 = {
     .permissionName = CUSTOM_SCREEN_CAPTURE,
@@ -1211,6 +1234,39 @@ HWTEST_F(EdmPolicySetTest, EdmTestUpdateHapToken003, TestSize.Level0)
 
     EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
+
+/**
+ * @tc.name: SetPermissionStatusWithPolicy013
+ * @tc.desc: Force grant manual_settings permission by admin policy, verify granted status and flag.
+ * @tc.type: FUNC
+ * @tc.require:Issue Number
+ */
+#ifdef SUPPORT_PC_PRODUCT
+HWTEST_F(EdmPolicySetTest, SetPermissionStatusWithPolicy013, TestSize.Level0)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "SetPermissionStatusWithPolicy013");
+
+    g_testHapInfoParams.userID = MOCK_USER_ID_10001;
+    AccessTokenIDEx tokenIdEx = TestCommon::AllocAndGrantHapTokenByTest(g_testHapInfoParams,
+        g_testPolicyParamsWithManualSetting);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+    MockNativeToken mock("edm");
+
+    uint32_t flag = 0;
+    std::vector<std::string> permList = {HOOK_KEY_EVENT};
+
+    int32_t ret = AccessTokenKit::SetPermissionStatusWithPolicy(
+        tokenID, permList, PERMISSION_GRANTED, PERMISSION_FIXED_BY_ADMIN_POLICY);
+    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetPermissionFlag(tokenID, HOOK_KEY_EVENT, flag));
+    EXPECT_EQ(PERMISSION_FIXED_BY_ADMIN_POLICY, flag);
+    EXPECT_EQ(PERMISSION_GRANTED,
+        AccessTokenKit::VerifyAccessToken(tokenID, HOOK_KEY_EVENT, false));
+
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
+}
+#endif
 }
 }
 }
