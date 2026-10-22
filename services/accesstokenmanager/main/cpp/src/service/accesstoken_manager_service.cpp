@@ -69,6 +69,10 @@
 #include "permission_kernel_utils.h"
 #include "permission_map.h"
 #include "permission_request_toggle_manager.h"
+#ifdef ENABLE_AUTOMATION_CONTROL
+#include "automation_control_switch_manager.h"
+#include "automation_control_types.h"
+#endif
 #include "permission_status_parcel.h"
 #include "permission_validator.h"
 #include "random.h"
@@ -2983,6 +2987,78 @@ bool AccessTokenManagerService::IsSystemAppCalling() const
     uint64_t fullTokenId = IPCSkeleton::GetCallingFullTokenID();
     return TokenIDAttributes::IsSystemApp(fullTokenId);
 }
+
+#ifdef ENABLE_AUTOMATION_CONTROL
+int32_t AccessTokenManagerService::SetAutomationControlStatus(uint32_t controllerTokenId,
+    const std::vector<uint32_t>& targetTokenIds, const std::vector<int32_t>& statusList,
+    std::vector<int32_t>& results)
+{
+    AccessTokenID callingTokenID = IPCSkeleton::GetCallingTokenID();
+    if ((GetTokenType(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "not system app, callingTokenID=%{public}d.", callingTokenID);
+        return AccessTokenError::ERR_NOT_SYSTEM_APP;
+    }
+    if (VerifyAccessToken(callingTokenID, GRANT_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {
+        ReportPermissionVerifyEvent(callingTokenID, GRANT_SENSITIVE_PERMISSIONS, "SetAutomationControlStatus");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", callingTokenID);
+        return AccessTokenError::ERR_PERMISSION_DENIED;
+    }
+    return AutomationControlSwitchManager::GetInstance().SetAutomationControlStatus(
+        controllerTokenId, targetTokenIds, statusList, results);
+}
+
+int32_t AccessTokenManagerService::GetAutomationControlTargets(uint32_t controllerTokenId,
+    std::vector<uint32_t>& targetTokenIds, std::vector<int32_t>& statusList,
+    std::vector<std::string>& bundleNames)
+{
+    AccessTokenID callingTokenID = IPCSkeleton::GetCallingTokenID();
+    if ((GetTokenType(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "not system app, callingTokenID=%{public}d.", callingTokenID);
+        return AccessTokenError::ERR_NOT_SYSTEM_APP;
+    }
+    if (VerifyAccessToken(callingTokenID, GET_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {
+        ReportPermissionVerifyEvent(callingTokenID, GET_SENSITIVE_PERMISSIONS, "GetAutomationControlTargets");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", callingTokenID);
+        return AccessTokenError::ERR_PERMISSION_DENIED;
+    }
+    return AutomationControlSwitchManager::GetInstance().GetAutomationControlTargets(
+        controllerTokenId, targetTokenIds, statusList, bundleNames);
+}
+
+int32_t AccessTokenManagerService::GetAutomationControlControllers(uint32_t targetTokenId,
+    std::vector<uint32_t>& controllerTokenIds, std::vector<std::string>& bundleNames)
+{
+    AccessTokenID callingTokenID = IPCSkeleton::GetCallingTokenID();
+    if ((GetTokenType(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "not system app, callingTokenID=%{public}d.", callingTokenID);
+        return AccessTokenError::ERR_NOT_SYSTEM_APP;
+    }
+    if (VerifyAccessToken(callingTokenID, GET_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {
+        ReportPermissionVerifyEvent(callingTokenID, GET_SENSITIVE_PERMISSIONS, "GetAutomationControlControllers");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", callingTokenID);
+        return AccessTokenError::ERR_PERMISSION_DENIED;
+    }
+    return AutomationControlSwitchManager::GetInstance().GetAutomationControlControllers(
+        targetTokenId, controllerTokenIds, bundleNames);
+}
+
+int32_t AccessTokenManagerService::CheckAutomationControlAccess(uint32_t controllerTokenId,
+    const std::vector<uint32_t>& targetList, std::vector<int32_t>& decisionResults)
+{
+    AccessTokenID callingTokenID = IPCSkeleton::GetCallingTokenID();
+    if ((GetTokenType(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "not system app, callingTokenID=%{public}d.", callingTokenID);
+        return AccessTokenError::ERR_NOT_SYSTEM_APP;
+    }
+    if (VerifyAccessToken(callingTokenID, GET_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {
+        ReportPermissionVerifyEvent(callingTokenID, GET_SENSITIVE_PERMISSIONS, "CheckAutomationControlAccess");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", callingTokenID);
+        return AccessTokenError::ERR_PERMISSION_DENIED;
+    }
+    return AutomationControlSwitchManager::GetInstance().CheckAccess(
+        controllerTokenId, targetList, decisionResults);
+}
+#endif
 
 int32_t AccessTokenManagerService::ValidateGetCliPermissionRequestInfoCaller(
     AccessTokenID callingTokenId, const std::string& agentID, const std::vector<CliInfoIdl>& cliInfoList)

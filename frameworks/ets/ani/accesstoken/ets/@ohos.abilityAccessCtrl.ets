@@ -126,6 +126,20 @@ export default namespace abilityAccessCtrl {
         authResults: Array<string>;
     }
 
+    export interface AutomationControlTargetParam {
+        targetTokenID: int;
+        status: AutomationControlStatus;
+    }
+    export interface AutomationControlTargetResult {
+        targetTokenID: int;
+        status: AutomationControlStatus;
+        bundleName: string;
+    }
+    export interface AutomationControlControllerInfo {
+        controllerTokenID: int;
+        bundleName: string;
+    }
+
     export enum PermissionStateChangeType {
         PERMISSION_REVOKED_OPER = 0,
         PERMISSION_GRANTED_OPER = 1
@@ -135,6 +149,16 @@ export default namespace abilityAccessCtrl {
         CAMERA = 0,
         MICROPHONE = 1,
         LOCATION = 2,
+    }
+
+    export enum AutomationControlStatus {
+        DISABLED = 0,
+        ENABLED = 1
+    }
+
+    export enum AutomationControlSetResult {
+        SUCCESS = 0,
+        TOKEN_ID_NOT_EXIST = 1
     }
 
     enum STSErrorCode {
@@ -179,6 +203,15 @@ export default namespace abilityAccessCtrl {
     }
     class ToolAuthResultInner implements ToolAuthResult {
         authResults: Array<string>;
+    }
+    class AutomationControlTargetResultInner implements AutomationControlTargetResult {
+        targetTokenID: int;
+        status: AutomationControlStatus;
+        bundleName: string;
+    }
+    class AutomationControlControllerInfoInner implements AutomationControlControllerInfo {
+        controllerTokenID: int;
+        bundleName: string;
     }
     function validateRequestParams(context: Context, permissionList: Array<Permissions>): void {
         if ((typeof context === "undefined") || (context == null)) {
@@ -306,6 +339,11 @@ export default namespace abilityAccessCtrl {
             Promise<CliPermissionsResult>;
         generateCliAuthResult(hostTokenID: int, agentID: string, authInfoList: Array<CliAuthInfo>):
             Promise<ToolAuthResult>;
+
+        setAutomationControlStatus(controllerTokenID: int,
+            targetList: Array<AutomationControlTargetParam>): Promise<Array<AutomationControlSetResult>>;
+        getAutomationControlTargets(controllerTokenID: int): Promise<Array<AutomationControlTargetResult>>;
+        getAutomationControlControllers(targetTokenID: int): Promise<Array<AutomationControlControllerInfo>>;
     }
 
     class AtManagerInner implements AtManager {
@@ -348,6 +386,10 @@ export default namespace abilityAccessCtrl {
             CliPermissionsResult;
         native generateCliAuthResultExecute(hostTokenID: int, agentID: string, authInfoList: Array<CliAuthInfo>):
             ToolAuthResult;
+        native setAutomationControlStatusExecute(controllerTokenID: int,
+            targetList: Array<AutomationControlTargetParam>): Array<AutomationControlSetResult>;
+        native getAutomationControlTargetsExecute(controllerTokenID: int): Array<AutomationControlTargetResult>;
+        native getAutomationControlControllersExecute(targetTokenID: int): Array<AutomationControlControllerInfo>;
 
         verifyAccessTokenSync(tokenID: int, permissionName: Permissions): GrantStatus {
             let result = this.checkAccessTokenExecute(tokenID, permissionName);
@@ -804,6 +846,56 @@ export default namespace abilityAccessCtrl {
                     });
                     p1.then((e: Any): void => {
                         resolve(e as ToolAuthResult);
+                    }).catch((err: Error): void => {
+                        reject(err as BusinessError);
+                    });
+                });
+            return p;
+        }
+
+        setAutomationControlStatus(controllerTokenID: int,
+            targetList: Array<AutomationControlTargetParam>): Promise<Array<AutomationControlSetResult>> {
+            let p = new Promise<Array<AutomationControlSetResult>>(
+                (resolve: (v: Array<AutomationControlSetResult>) => void,
+                    reject: (err: Error) => void): void => {
+                    let p1 = taskpool.execute((): Array<AutomationControlSetResult> => {
+                        return new AtManagerInner().setAutomationControlStatusExecute(
+                            controllerTokenID, targetList);
+                    });
+                    p1.then((e: Any): void => {
+                        resolve(e as Array<AutomationControlSetResult>);
+                    }).catch((err: Error): void => {
+                        reject(err as BusinessError);
+                    });
+                });
+            return p;
+        }
+
+        getAutomationControlTargets(controllerTokenID: int): Promise<Array<AutomationControlTargetResult>> {
+            let p = new Promise<Array<AutomationControlTargetResult>>(
+                (resolve: (v: Array<AutomationControlTargetResult>) => void,
+                    reject: (err: Error) => void): void => {
+                    let p1 = taskpool.execute((): Array<AutomationControlTargetResult> => {
+                        return new AtManagerInner().getAutomationControlTargetsExecute(controllerTokenID);
+                    });
+                    p1.then((e: Any): void => {
+                        resolve(e as Array<AutomationControlTargetResult>);
+                    }).catch((err: Error): void => {
+                        reject(err as BusinessError);
+                    });
+                });
+            return p;
+        }
+
+        getAutomationControlControllers(targetTokenID: int): Promise<Array<AutomationControlControllerInfo>> {
+            let p = new Promise<Array<AutomationControlControllerInfo>>(
+                (resolve: (v: Array<AutomationControlControllerInfo>) => void,
+                    reject: (err: Error) => void): void => {
+                    let p1 = taskpool.execute((): Array<AutomationControlControllerInfo> => {
+                        return new AtManagerInner().getAutomationControlControllersExecute(targetTokenID);
+                    });
+                    p1.then((e: Any): void => {
+                        resolve(e as Array<AutomationControlControllerInfo>);
                     }).catch((err: Error): void => {
                         reject(err as BusinessError);
                     });

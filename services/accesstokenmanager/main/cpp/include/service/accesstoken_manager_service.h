@@ -185,6 +185,19 @@ public:
         std::vector<PermissionStatusIdl>& permissionInfoList, bool onlyHap) override;
     ErrCode QueryStatusByTokenID(const std::vector<uint32_t>& tokenIDList,
         std::vector<PermissionStatusIdl>& permissionInfoList, bool needTimestamp) override;
+#ifdef ENABLE_AUTOMATION_CONTROL
+    int32_t SetAutomationControlStatus(uint32_t controllerTokenId,
+        const std::vector<uint32_t>& targetTokenIds, const std::vector<int32_t>& statusList,
+        std::vector<int32_t>& results) override;
+    int32_t GetAutomationControlTargets(uint32_t controllerTokenId,
+        std::vector<uint32_t>& targetTokenIds, std::vector<int32_t>& statusList,
+        std::vector<std::string>& bundleNames) override;
+    int32_t GetAutomationControlControllers(uint32_t targetTokenId,
+        std::vector<uint32_t>& controllerTokenIds, std::vector<std::string>& bundleNames) override;
+    int32_t CheckAutomationControlAccess(uint32_t controllerTokenId,
+        const std::vector<uint32_t>& targetList, std::vector<int32_t>& decisionResults) override;
+#endif
+
     int32_t GetCliPermissionRequestInfo(
         const std::string& agentID, const std::vector<CliInfoIdl>& cliInfoList,
         PermissionDialogResultIdl& resultIdl) override;

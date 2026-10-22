@@ -500,6 +500,7 @@ int32_t AccessTokenOpenCallback::OnCreate(NativeRdb::RdbStore& rdbStore)
         ReportSysEventDbException(AccessTokenDbSceneCode::AT_DB_CREATE_ERROR, res, "version 8 tables");
         return res;
     }
+
 #ifdef SPM_DATA_ENABLE
     res = CreateVersionTwelveTable(rdbStore);
     if (res != NativeRdb::E_OK) {
@@ -507,6 +508,13 @@ int32_t AccessTokenOpenCallback::OnCreate(NativeRdb::RdbStore& rdbStore)
         return res;
     }
 #endif
+
+    res = CreateVersionFourteenTable(rdbStore);
+    if (res != NativeRdb::E_OK) {
+        ReportSysEventDbException(AccessTokenDbSceneCode::AT_DB_CREATE_ERROR, res, "version 14 tables");
+        return res;
+    }
+
     std::string dbBackPath = std::string(DATABASE_REPLICA_PATH) + std::string(DATABASE_NAME_BACK);
     std::string restorePath; // empty means restore from the configured replica db
     if (access(dbBackPath.c_str(), NativeRdb::E_OK) != 0) {
@@ -1074,6 +1082,52 @@ int32_t AccessTokenOpenCallback::ResetUidAndMigrateCompleted(NativeRdb::RdbStore
 }
 #endif
 
+int32_t AccessTokenOpenCallback::CreateAutomationControlSwitchTable(NativeRdb::RdbStore& rdbStore)
+{
+    std::string tableName;
+    AccessTokenDbUtil::GetTableNameByType(AtmDataType::ACCESSTOKEN_CONTROL_SWITCH, tableName);
+
+    std::string sql = "create table if not exists " + tableName;
+    sql.append(" (")
+        .append(TokenFiledConst::FIELD_AUTOMATION_SOURCE_TOKEN_ID)
+        .append(INTEGER_STR)
+        .append(TokenFiledConst::FIELD_AUTOMATION_TARGET_TOKEN_ID)
+        .append(INTEGER_STR)
+        .append(TokenFiledConst::FIELD_AUTOMATION_STATUS)
+        .append(INTEGER_STR)
+        .append(TokenFiledConst::FIELD_AUTOMATION_TIMESTAMP)
+        .append(INTEGER_STR)
+        .append("primary key(")
+        .append(TokenFiledConst::FIELD_AUTOMATION_SOURCE_TOKEN_ID)
+        .append(",")
+        .append(TokenFiledConst::FIELD_AUTOMATION_TARGET_TOKEN_ID)
+        .append("))");
+
+    return rdbStore.ExecuteSql(sql);
+}
+
+int32_t AccessTokenOpenCallback::CreateVersionFourteenTable(NativeRdb::RdbStore& rdbStore)
+{
+    int32_t res = CreateAutomationControlSwitchTable(rdbStore);
+    if (res != NativeRdb::E_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to create control_switch_table.");
+        return res;
+    }
+    return NativeRdb::E_OK;
+}
+
+int32_t AccessTokenOpenCallback::UpgradeFromVersion13(NativeRdb::RdbStore& rdbStore)
+{
+    int32_t res = CreateAutomationControlSwitchTable(rdbStore);
+    if (res != NativeRdb::E_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to create control_switch_table during upgrade from version 13.");
+        ReportUpgradeError(res, DATABASE_VERSION_13, "CreateAutomationControlSwitchTable");
+        return res;
+    }
+    LOGI(ATM_DOMAIN, ATM_TAG, "Success to upgrade from version 13 to version 14.");
+    return NativeRdb::E_OK;
+}
+
 int32_t AccessTokenOpenCallback::OnUpgrade(NativeRdb::RdbStore& rdbStore, int32_t currentVersion, int32_t targetVersion)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "DB OnUpgrade from Ver %{public}d to Ver %{public}d.", currentVersion, targetVersion);
@@ -1150,6 +1204,12 @@ int32_t AccessTokenOpenCallback::OnUpgrade(NativeRdb::RdbStore& rdbStore, int32_
             }
             [[fallthrough]];
 #endif
+        case DATABASE_VERSION_13: // 13->14
+            res = UpgradeFromVersion13(rdbStore);
+            if (res != NativeRdb::E_OK) {
+                return res;
+            }
+            [[fallthrough]];
         default:
             return NativeRdb::E_OK;
     }

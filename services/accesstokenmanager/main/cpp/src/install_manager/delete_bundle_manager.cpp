@@ -34,6 +34,9 @@
 #include "tokenid_attributes.h"
 #include "token_modify_notifier.h"
 #include "user_policy_manager.h"
+#ifdef ENABLE_AUTOMATION_CONTROL
+#include "automation_control_switch_manager.h"
+#endif
 
 namespace OHOS {
 namespace Security {
@@ -74,6 +77,19 @@ void DeleteBundleManager::GenerateHapTokenDelInfoVec(AccessTokenID tokenID,
     if (AccessTokenInfoUtils::IsSystemResource(bundleName)) {
         AccessTokenInfoUtils::GenerateDelInfoToVec(AtmDataType::ACCESSTOKEN_PERMISSION_DEF, condition, delInfoVec);
     }
+
+#ifdef ENABLE_AUTOMATION_CONTROL
+    if (includePermissionState) {
+        GenericValues ctrlCond;
+        ctrlCond.Put(TokenFiledConst::FIELD_AUTOMATION_SOURCE_TOKEN_ID, static_cast<int32_t>(tokenID));
+        AccessTokenInfoUtils::GenerateDelInfoToVec(
+            AtmDataType::ACCESSTOKEN_CONTROL_SWITCH, ctrlCond, delInfoVec);
+        GenericValues tgtCond;
+        tgtCond.Put(TokenFiledConst::FIELD_AUTOMATION_TARGET_TOKEN_ID, static_cast<int32_t>(tokenID));
+        AccessTokenInfoUtils::GenerateDelInfoToVec(
+            AtmDataType::ACCESSTOKEN_CONTROL_SWITCH, tgtCond, delInfoVec);
+    }
+#endif
 }
 
 void DeleteBundleManager::BuildTokenRemoveDbOps(const std::shared_ptr<HapTokenInfoInner>& info, ReservedType type,
@@ -335,6 +351,9 @@ int32_t DeleteBundleManager::DeleteActiveTokenInner(std::shared_ptr<HapTokenInfo
             return ret;
         }
         PublishActiveTokenDeletion(info, delType, cleanPlan);
+#ifdef ENABLE_AUTOMATION_CONTROL
+        AutomationControlSwitchManager::GetInstance().ClearByTokenId(id);
+#endif
         txn.Commit();
     } // L0 lock released; the notification tail below runs lock-free.
     LOGI(ATM_DOMAIN, ATM_TAG, "Remove hap token %{public}u ok!", id);
@@ -450,6 +469,7 @@ int32_t DeleteBundleManager::DeleteWholeBundle(const std::string& bundleName)
     std::vector<int32_t> uids;
     std::vector<DelInfo> delInfoVec;
     std::vector<AddInfo> addInfoVec;
+    std::vector<AccessTokenID> allBundleTokens;
     {
         KernelAndDBWriteTransaction txn;
         int32_t ret = BuildBundleDelDbOps(bundleName, activeTokens, reservedTokens, uids, delInfoVec);
@@ -468,14 +488,13 @@ int32_t DeleteBundleManager::DeleteWholeBundle(const std::string& bundleName)
         // entry inside the same transaction: freed ids must not leak policy
         // privileges to their next owner. The combined list also feeds the
         // set-agnostic release below.
-        std::vector<AccessTokenID> allBundleTokens = activeTokens;
+        allBundleTokens = activeTokens;
         allBundleTokens.insert(allBundleTokens.end(), reservedTokens.begin(), reservedTokens.end());
         (void)UserPolicyManager::GetInstance().BuildRemoveTokensFromPolicyWhiteListOps(
             allBundleTokens, delInfoVec, addInfoVec);
         ret = txn.CommitDb(delInfoVec, addInfoVec);
         if (ret != RET_SUCCESS) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "CommitDb failed for bundle %{public}s, ret %{public}d.",
-                bundleName.c_str(), ret);
+            LOGE(ATM_DOMAIN, ATM_TAG, "CommitDb failed for bundle %{public}s, ret %{public}d", bundleName.c_str(), ret);
             return ret;
         }
         // Capture the granted lists while the briefs are still alive.
@@ -484,6 +503,11 @@ int32_t DeleteBundleManager::DeleteWholeBundle(const std::string& bundleName)
             (void)HapTokenInfoInner::GetGrantedPermList(activeTokens[i], grantedPermLists[i]);
         }
         ReleaseBundleResources(bundleName, allBundleTokens, uids);
+#ifdef ENABLE_AUTOMATION_CONTROL
+        for (AccessTokenID tid : allBundleTokens) {
+            AutomationControlSwitchManager::GetInstance().ClearByTokenId(tid);
+        }
+#endif
         txn.Commit();
     } // L0 lock released; cross-module notifications run lock-free below.
     NotifyBundleTokensDeleted(activeTokens, grantedPermLists);
@@ -623,6 +647,9 @@ int32_t DeleteBundleManager::DeleteReservedToken(AccessTokenID tokenID, const st
         (void)AccessTokenIDManager::GetInstance().RemoveBundleId(cleanParam.uid);
     }
     AccessTokenIDManager::GetInstance().RemoveReservedTokenId(tokenID);
+#ifdef ENABLE_AUTOMATION_CONTROL
+    AutomationControlSwitchManager::GetInstance().ClearByTokenId(tokenID);
+#endif
     txn.Commit();
     return RET_SUCCESS;
 }

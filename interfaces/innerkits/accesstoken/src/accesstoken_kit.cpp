@@ -1215,6 +1215,82 @@ int32_t AccessTokenKit::QueryStatusByTokenID(const std::vector<AccessTokenID>& t
         tokenIDList, permissionInfoList, needTimestamp);
 }
 
+int32_t AccessTokenKit::SetAutomationControlStatus(
+    AccessTokenID controllerTokenId,
+    const std::vector<AutomationControlTargetParam>& targetList,
+    std::vector<AutomationControlSetResult>& results)
+{
+#ifdef ENABLE_AUTOMATION_CONTROL
+    if (controllerTokenId == INVALID_TOKENID || !DataValidator::IsListSizeValid(targetList.size())) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Invalid param: controller=%{public}u, listSize=%{public}zu.",
+            controllerTokenId, targetList.size());
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    if (GetTokenTypeFlag(controllerTokenId) != TOKEN_HAP) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Controller tokenId %{public}u is not HAP.", controllerTokenId);
+        return AccessTokenError::ERR_TOKENID_NOT_EXIST;
+    }
+    return AccessTokenManagerClient::GetInstance().SetAutomationControlStatus(
+        controllerTokenId, targetList, results);
+#else
+    return AccessTokenError::ERR_CAPABILITY_NOT_SUPPORT;
+#endif
+}
+
+int32_t AccessTokenKit::GetAutomationControlTargets(
+    AccessTokenID controllerTokenId,
+    std::vector<AutomationControlTargetResult>& results)
+{
+#ifdef ENABLE_AUTOMATION_CONTROL
+    if (GetTokenTypeFlag(controllerTokenId) != TOKEN_HAP) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Controller tokenId %{public}u is not HAP.", controllerTokenId);
+        return AccessTokenError::ERR_TOKENID_NOT_EXIST;
+    }
+    return AccessTokenManagerClient::GetInstance().GetAutomationControlTargets(
+        controllerTokenId, results);
+#else
+    return AccessTokenError::ERR_CAPABILITY_NOT_SUPPORT;
+#endif
+}
+
+int32_t AccessTokenKit::GetAutomationControlControllers(
+    AccessTokenID targetTokenId,
+    std::vector<AutomationControlControllerInfo>& results)
+{
+#ifdef ENABLE_AUTOMATION_CONTROL
+    if (GetTokenTypeFlag(targetTokenId) != TOKEN_HAP) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Target tokenId %{public}u is not HAP.", targetTokenId);
+        return AccessTokenError::ERR_TOKENID_NOT_EXIST;
+    }
+    return AccessTokenManagerClient::GetInstance().GetAutomationControlControllers(
+        targetTokenId, results);
+#else
+    return AccessTokenError::ERR_CAPABILITY_NOT_SUPPORT;
+#endif
+}
+
+int32_t AccessTokenKit::CheckAutomationControlAccess(
+    AccessTokenID controllerTokenId,
+    const std::vector<AccessTokenID>& targetList,
+    std::vector<AutomationControlAccessDecision>& decisionResults)
+{
+#ifdef ENABLE_AUTOMATION_CONTROL
+    if (controllerTokenId == INVALID_TOKENID || !DataValidator::IsListSizeValid(targetList.size())) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Invalid param: controller=%{public}u, listSize=%{public}zu.",
+            controllerTokenId, targetList.size());
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    if (GetTokenTypeFlag(controllerTokenId) != TOKEN_HAP) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Controller tokenId %{public}u is not HAP.", controllerTokenId);
+        return AccessTokenError::ERR_TOKENID_NOT_EXIST;
+    }
+    return AccessTokenManagerClient::GetInstance().CheckAutomationControlAccess(
+        controllerTokenId, targetList, decisionResults);
+#else
+    return AccessTokenError::ERR_CAPABILITY_NOT_SUPPORT;
+#endif
+}
+
 int32_t AccessTokenKit::GetCliPermissionRequestInfo(
     const std::string& agentID, const std::vector<CliInfo>& cliInfoList, PermissionDialogResult& result)
 {

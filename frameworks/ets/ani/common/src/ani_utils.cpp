@@ -629,6 +629,23 @@ bool GetIntProperty(ani_env* env, const ani_object& object, const std::string& p
     return true;
 }
 
+bool GetIntField(ani_env* env, const ani_object& object, const std::string& property, int32_t& value)
+{
+    if (env == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Env is null.");
+        return false;
+    }
+    ani_int intValue;
+    ani_status status = env->Object_GetPropertyByName_Int(object, property.c_str(), &intValue);
+    if (status != ANI_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get int field(%{public}s), status: %{public}u.",
+            property.c_str(), status);
+        return false;
+    }
+    value = static_cast<int32_t>(intValue);
+    return true;
+}
+
 bool GetLongProperty(ani_env* env, const ani_object& object, const std::string& property, int64_t& value,
     bool isPropertyOptional)
 {

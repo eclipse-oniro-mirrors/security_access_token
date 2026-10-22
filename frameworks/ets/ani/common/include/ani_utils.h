@@ -43,6 +43,7 @@ bool GetBoolProperty(ani_env* env, const ani_object& object, const std::string& 
     bool isPropertyOptional);
 bool GetIntProperty(ani_env* env, const ani_object& object, const std::string& property, int32_t& value,
     bool isPropertyOptional);
+bool GetIntField(ani_env* env, const ani_object& object, const std::string& property, int32_t& value);
 bool GetLongProperty(ani_env* env, const ani_object& object, const std::string& property, int64_t& value,
     bool isPropertyOptional);
 bool GetStringProperty(ani_env* env, const ani_object& object, const std::string& property, std::string& value,
