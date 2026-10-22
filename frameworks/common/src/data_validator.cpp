@@ -197,7 +197,8 @@ bool DataValidator::IsDlpTypeValid(int dlpType)
 {
     if (!((dlpType == DLP_COMMON) || (dlpType == DLP_READ) ||
         (dlpType == DLP_FULL_CONTROL) || (dlpType == DLP_READ_PERM) ||
-        (dlpType == DLP_FULL_PERM))) {
+        (dlpType == DLP_FULL_PERM) || (dlpType == DLP_READ_PERM_SANDBOX) ||
+        (dlpType == DLP_FULL_PERM_SANDBOX))) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Dlp type is invalid(%{public}d).", dlpType);
         return false;
     }

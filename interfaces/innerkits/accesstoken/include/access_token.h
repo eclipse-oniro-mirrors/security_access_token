@@ -255,6 +255,8 @@ typedef enum DlpType {
     DLP_FULL_CONTROL = 2,
     DLP_READ_PERM = 3,
     DLP_FULL_PERM = 4,
+    DLP_READ_PERM_SANDBOX = 5,
+    DLP_FULL_PERM_SANDBOX = 6,
     BUTT_DLP_TYPE,
 } HapDlpType;
 
