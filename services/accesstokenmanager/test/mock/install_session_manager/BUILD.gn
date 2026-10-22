@@ -36,6 +36,10 @@ ohos_unittest("libinstall_session_manager_mock_test") {
     "${access_token_path}/services/accesstokenmanager/test/unittest/common/parameter.cpp",
     "${access_token_path}/services/accesstokenmanager/test/unittest/common/parameters.cpp",
   ]
+  # dlp_dual_mode_permission_test injects a restrictive dlpMode into the
+  # process-wide DlpPermissionSetManager singleton; keep it last in link
+  # order so its suite runs after every other suite in this binary.
+  sources += [ "dlp_dual_mode_permission_test.cpp" ]
   sources += accesstoken_manager_base_config.sources
   sources -= [
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/sign/hap_sign_verify_manager.cpp",
