@@ -3082,36 +3082,43 @@ int32_t PermissionRecordManager::InsertOrUpdateDisablePolicy(int32_t opCode, boo
     conditionValue.Put(PrivacyFiledConst::FIELD_PERMISSION_CODE, opCode);
     conditionValue.Put(PrivacyFiledConst::FIELD_USER_ID, userId);
 
-    std::vector<GenericValues> results;
-    int32_t res = PermissionUsedRecordDb::GetInstance().Query(
-        PermissionUsedRecordDb::DataType::PERMISSION_DISABLE_POLICY, conditionValue, results);
-    if (res != PermissionUsedRecordDb::SUCCESS) {
-        return PrivacyError::ERR_DATABASE_OPERATE_FAILED;
-    }
-
-    if (results.empty()) {
+    if (isDisable) {
         GenericValues value;
         value.Put(PrivacyFiledConst::FIELD_PERMISSION_CODE, opCode);
         value.Put(PrivacyFiledConst::FIELD_USER_ID, userId);
-        value.Put(PrivacyFiledConst::FIELD_DISABLE_POLICY, isDisable ? 1 : 0);
+        value.Put(PrivacyFiledConst::FIELD_DISABLE_POLICY, 1);
 
         std::vector<GenericValues> values;
         values.emplace_back(value);
-        res = PermissionUsedRecordDb::GetInstance().Add(
+        int32_t res = PermissionUsedRecordDb::GetInstance().AddOrReplace(
             PermissionUsedRecordDb::DataType::PERMISSION_DISABLE_POLICY, values);
         if (res != PermissionUsedRecordDb::ExecuteResult::SUCCESS) {
+            LOGE(PRI_DOMAIN, PRI_TAG, "AddOrReplace disable policy failed, opCode: %{public}d, userId: %{public}d",
+                opCode, userId);
             return PrivacyError::ERR_DATABASE_OPERATE_FAILED;
         }
     } else {
-        GenericValues modifyValue;
-        modifyValue.Put(PrivacyFiledConst::FIELD_PERMISSION_CODE, opCode);
-        modifyValue.Put(PrivacyFiledConst::FIELD_USER_ID, userId);
-        modifyValue.Put(PrivacyFiledConst::FIELD_DISABLE_POLICY, isDisable ? 1 : 0);
+        if (userId == -1) {
+            GenericValues modifyValue;
+            modifyValue.Put(PrivacyFiledConst::FIELD_PERMISSION_CODE, opCode);
+            modifyValue.Put(PrivacyFiledConst::FIELD_USER_ID, userId);
+            modifyValue.Put(PrivacyFiledConst::FIELD_DISABLE_POLICY, 0);
 
-        res = PermissionUsedRecordDb::GetInstance().Update(PermissionUsedRecordDb::DataType::PERMISSION_DISABLE_POLICY,
-            modifyValue, conditionValue);
-        if (res != PermissionUsedRecordDb::ExecuteResult::SUCCESS) {
-            return PrivacyError::ERR_DATABASE_OPERATE_FAILED;
+            int32_t res = PermissionUsedRecordDb::GetInstance().Update(
+                PermissionUsedRecordDb::DataType::PERMISSION_DISABLE_POLICY, modifyValue, conditionValue);
+            if (res != PermissionUsedRecordDb::ExecuteResult::SUCCESS) {
+                LOGE(PRI_DOMAIN, PRI_TAG, "Update disable policy failed, opCode: %{public}d, userId: %{public}d",
+                    opCode, userId);
+                return PrivacyError::ERR_DATABASE_OPERATE_FAILED;
+            }
+        } else {
+            int32_t res = PermissionUsedRecordDb::GetInstance().Remove(
+                PermissionUsedRecordDb::DataType::PERMISSION_DISABLE_POLICY, conditionValue);
+            if (res != PermissionUsedRecordDb::ExecuteResult::SUCCESS) {
+                LOGE(PRI_DOMAIN, PRI_TAG, "Remove disable policy failed, opCode: %{public}d, userId: %{public}d",
+                    opCode, userId);
+                return PrivacyError::ERR_DATABASE_OPERATE_FAILED;
+            }
         }
     }
 

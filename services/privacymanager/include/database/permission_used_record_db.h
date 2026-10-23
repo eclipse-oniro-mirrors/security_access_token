@@ -49,6 +49,7 @@ public:
     ~PermissionUsedRecordDb() override;
 
     int32_t Add(DataType type, const std::vector<GenericValues>& values);
+    int32_t AddOrReplace(DataType type, const std::vector<GenericValues>& values);
     int32_t Remove(DataType type, const GenericValues& conditions);
     int32_t FindByConditions(DataType type, const std::set<int32_t>& opCodeList, const GenericValues& andConditions,
         std::vector<GenericValues>& results, int32_t databaseQueryCount);
@@ -76,6 +77,7 @@ private:
     std::shared_mutex rwLock_;
 
     int32_t AddLocked(DataType type, const std::vector<GenericValues>& values);
+    int32_t AddOrReplaceLocked(DataType type, const std::vector<GenericValues>& values);
     int32_t RemoveLocked(DataType type, const GenericValues& conditions);
     int32_t UpdateLocked(DataType type, const GenericValues& modifyValue, const GenericValues& conditionValue);
     int32_t DeleteExpireRecordsLocked(DataType type, const GenericValues& andConditions);
@@ -99,6 +101,7 @@ private:
     std::string CreateDeleteHistoryRecordsPrepareSqlCmd(DataType type,
         const std::unordered_set<AccessTokenID>& tokenIDList) const;
     std::string CreateInsertPrepareSqlCmd(DataType type) const;
+    std::string CreateInsertOrReplacePrepareSqlCmd(DataType type) const;
     std::string CreateDeletePrepareSqlCmd(
         DataType type, const std::vector<std::string>& columnNames = std::vector<std::string>()) const;
     std::string CreateSelectByConditionPrepareSqlCmd(const int32_t tokenId, DataType type,

@@ -237,6 +237,11 @@ int32_t PermissionUsedRecordDb::Add(DataType type, const std::vector<GenericValu
     return RetryOnCorrupt([this, &values, &type] { return AddLocked(type, values); });
 }
 
+int32_t PermissionUsedRecordDb::AddOrReplace(DataType type, const std::vector<GenericValues>& values)
+{
+    return RetryOnCorrupt([this, &values, &type] { return AddOrReplaceLocked(type, values); });
+}
+
 int32_t PermissionUsedRecordDb::AddLocked(DataType type, const std::vector<GenericValues>& values)
 {
     int64_t beginTime = TimeUtil::GetCurrentTimestamp();
@@ -268,6 +273,41 @@ int32_t PermissionUsedRecordDb::AddLocked(DataType type, const std::vector<Gener
 
     int64_t endTime = TimeUtil::GetCurrentTimestamp();
     LogCost("Add", endTime - beginTime);
+
+    return SUCCESS;
+}
+
+int32_t PermissionUsedRecordDb::AddOrReplaceLocked(DataType type, const std::vector<GenericValues>& values)
+{
+    int64_t beginTime = TimeUtil::GetCurrentTimestamp();
+
+    std::string prepareSql = CreateInsertOrReplacePrepareSqlCmd(type);
+    if (prepareSql.empty()) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Type %{public}u invalid", type);
+        return PrivacyError::ERR_DATABASE_OPERATE_FAILED;
+    }
+    LOGD(PRI_DOMAIN, PRI_TAG, "AddOrReplace sql is %{public}s.", prepareSql.c_str());
+
+    auto statement = Prepare(prepareSql);
+    bool isSuccess = true;
+    for (const auto& value : values) {
+        std::vector<std::string> columnNames = value.GetAllKeys();
+        for (const auto& name : columnNames) {
+            statement.Bind(name, value.Get(name));
+        }
+        int32_t ret = statement.Step();
+        if (ret != Statement::State::DONE) {
+            LOGE(PRI_DOMAIN, PRI_TAG, "Failed, errorMsg: %{public}s", SpitError().c_str());
+            isSuccess = false;
+        }
+        statement.Reset();
+    }
+    if (!isSuccess) {
+        return PrivacyError::ERR_DATABASE_OPERATE_FAILED;
+    }
+
+    int64_t endTime = TimeUtil::GetCurrentTimestamp();
+    LogCost("AddOrReplace", endTime - beginTime);
 
     return SUCCESS;
 }
@@ -545,6 +585,25 @@ std::string PermissionUsedRecordDb::CreateInsertPrepareSqlCmd(DataType type) con
         return std::string();
     }
     std::string sql = "insert into " + it->second.tableName_ + " values(";
+    int32_t i = 1;
+    for (const auto& name : it->second.tableColumnNames_) {
+        sql.append(":" + name);
+        if (i < static_cast<int32_t>(it->second.tableColumnNames_.size())) {
+            sql.append(",");
+        }
+        i += 1;
+    }
+    sql.append(")");
+    return sql;
+}
+
+std::string PermissionUsedRecordDb::CreateInsertOrReplacePrepareSqlCmd(DataType type) const
+{
+    auto it = dataTypeToSqlTable_.find(type);
+    if (it == dataTypeToSqlTable_.end()) {
+        return std::string();
+    }
+    std::string sql = "insert or replace into " + it->second.tableName_ + " values(";
     int32_t i = 1;
     for (const auto& name : it->second.tableColumnNames_) {
         sql.append(":" + name);
