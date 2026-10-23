@@ -3176,6 +3176,11 @@ int32_t PermissionRecordManager::SetDisablePolicy(const std::string& permissionN
         return PrivacyError::ERR_PARAM_INVALID;
     }
 
+    if (userId != -1 && permissionName != CAMERA_PERMISSION_NAME) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "User level only support camera, perm: %{public}s", permissionName.c_str());
+        return PrivacyError::ERR_PERMISSION_NOT_SUPPORT;
+    }
+
     bool oldEffective = GetCacheDisablePolicy(opCode, userId);
     res = InsertOrUpdateDisablePolicy(opCode, isDisable, userId);
     if (res != Constant::SUCCESS) {
@@ -3208,6 +3213,11 @@ int32_t PermissionRecordManager::GetDisablePolicy(const std::string& permissionN
     if (userId != -1 && !IsUserIdValid(userId)) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Invalid userId: %{public}d", userId);
         return PrivacyError::ERR_PARAM_INVALID;
+    }
+
+    if (userId != -1 && permissionName != CAMERA_PERMISSION_NAME) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "User level only support camera, perm: %{public}s", permissionName.c_str());
+        return PrivacyError::ERR_PERMISSION_NOT_SUPPORT;
     }
 
     isDisable = GetCacheDisablePolicy(opCode, userId);
