@@ -78,6 +78,7 @@ void PermissionUsedRecordDb::OnCreate()
     CreatePermissionUsedTypeTable();
     CreatePermissionUsedRecordToggleStatusTable();
     CreatePermissionDisablePolicyTable();
+    CreateUserLevelCameraDisablePolicyTable();
 }
 
 void PermissionUsedRecordDb::OnUpdate(int32_t version)
@@ -106,6 +107,9 @@ void PermissionUsedRecordDb::OnUpdate(int32_t version)
             [[fallthrough]];
         case 7: // 7->8
             UpdateToggleStatusTablePrimaryKey();
+            [[fallthrough]];
+        case 8: // 8->9
+            CreateUserLevelCameraDisablePolicyTable();
             [[fallthrough]];
         default:
             return;
@@ -168,6 +172,15 @@ void PermissionUsedRecordDb::InitPermDisablePolicyTableInfo(SqliteTable& permiss
     };
 }
 
+void PermissionUsedRecordDb::InitUserLevelCameraDisableTableInfo(SqliteTable& userCameraMutePolicyTable)
+{
+    userCameraMutePolicyTable.tableName_ = USER_LEVEL_CAMERA_DISABLE_POLICY_TABLE;
+    userCameraMutePolicyTable.tableColumnNames_ = {
+        PrivacyFiledConst::FIELD_USER_ID,
+        PrivacyFiledConst::FIELD_DISABLE_POLICY
+    };
+}
+
 PermissionUsedRecordDb::PermissionUsedRecordDb() : SqliteHelper(DATABASE_NAME, DATABASE_PATH, DATABASE_VERSION)
 {
     SqliteTable permissionRecordTable;
@@ -182,11 +195,15 @@ PermissionUsedRecordDb::PermissionUsedRecordDb() : SqliteHelper(DATABASE_NAME, D
     SqliteTable permissionDisablePolicyTable;
     InitPermDisablePolicyTableInfo(permissionDisablePolicyTable);
 
+    SqliteTable userCameraMutePolicyTable;
+    InitUserLevelCameraDisableTableInfo(userCameraMutePolicyTable);
+
     dataTypeToSqlTable_ = {
         {PERMISSION_RECORD, permissionRecordTable},
         {PERMISSION_USED_TYPE, permissionUsedTypeTable},
         {PERMISSION_USED_RECORD_TOGGLE_STATUS, permissionUsedRecordToggleStatusTable},
         {PERMISSION_DISABLE_POLICY, permissionDisablePolicyTable},
+        {USER_LEVEL_CAMERA_DISABLE_POLICY, userCameraMutePolicyTable},
     };
     Open();
 }
@@ -900,6 +917,25 @@ int32_t PermissionUsedRecordDb::CreatePermissionDisablePolicyTable() const
         .append(INTEGER_STR)
         .append("primary key(")
         .append(PrivacyFiledConst::FIELD_PERMISSION_CODE)
+        .append("))");
+    return ExecuteSql(sql);
+}
+
+int32_t PermissionUsedRecordDb::CreateUserLevelCameraDisablePolicyTable() const
+{
+    auto it = dataTypeToSqlTable_.find(DataType::USER_LEVEL_CAMERA_DISABLE_POLICY);
+    if (it == dataTypeToSqlTable_.end()) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Table type not found.");
+        return PrivacyError::ERR_DATABASE_OPERATE_FAILED;
+    }
+    std::string sql = CREATE_TABLE_STR;
+    sql.append(it->second.tableName_ + " (")
+        .append(PrivacyFiledConst::FIELD_USER_ID)
+        .append(INTEGER_STR)
+        .append(PrivacyFiledConst::FIELD_DISABLE_POLICY)
+        .append(" integer not null default 0,")
+        .append("primary key(")
+        .append(PrivacyFiledConst::FIELD_USER_ID)
         .append("))");
     return ExecuteSql(sql);
 }

@@ -121,8 +121,8 @@ public:
     int32_t SetPrivacyMutePolicy(const std::string permissionName, bool isMute);
     int32_t SetTempMutePolicy(const std::string permissionName, bool isMute);
     int32_t SetHapWithFGReminder(uint32_t tokenId, bool isAllowed);
-    int32_t SetDisablePolicy(const std::string& permissionName, bool isDisable);
-    int32_t GetDisablePolicy(const std::string& permissionName, bool& isDisable);
+    int32_t SetDisablePolicy(const std::string& permissionName, bool isDisable, int32_t userId = -1);
+    int32_t GetDisablePolicy(const std::string& permissionName, bool& isDisable, int32_t userId = -1);
     void GetCurrUsingPermInfo(std::vector<CurrUsingPermInfo>& infoList);
     int32_t CheckPermissionInUse(const std::string& permissionName, bool& isUsing);
     int32_t RegisterPermDisablePolicyCallback(AccessTokenID regiterTokenId, const std::vector<std::string>& permList,
@@ -134,6 +134,7 @@ public:
     void SetScreenOn(bool isScreenOn);
     bool IsScreenOn(bool isIpc = false);
     bool IsCameraPrivacyControlEnhanceEnabled() const;
+    void RemoveUserLevelCameraDisablePolicy(int32_t userId);
 
     void OnAppMgrRemoteDiedHandle();
     void OnAudioMgrRemoteDiedHandle();
@@ -242,6 +243,10 @@ private:
     bool GetCacheDisablePolicy(const std::string& permissionName);
     bool IsEdmMuteOrDisable(const std::string& permissionName);
     void UpdateDisablePolicyCache(int32_t opCode, bool isDisable);
+    int32_t InsertOrUpdateUserLevelCameraDisablePolicy(int32_t userId, bool isMute);
+    bool GetCacheUserLevelCameraDisablePolicy(int32_t userId);
+    void UpdateUserLevelCameraDisableCache(int32_t userId, bool isMute);
+    void InitUserLevelCameraDisableFromDb();
     int32_t PermListFilter(const std::vector<std::string>& listSrc, std::vector<std::string>& listRes);
 
 #ifdef REMOTE_PRIVACY_ENABLE
@@ -323,6 +328,8 @@ private:
 
     std::shared_mutex diablePolicyMutex_;
     std::unordered_map<int32_t, bool> disablePolicyMap_;
+    std::mutex userLevelCamDisableMutex_;
+    std::unordered_map<int32_t, bool> userLevelCameraDisableMap_;
 #ifdef REMOTE_PRIVACY_ENABLE
     // remote start list
     std::mutex startRemoteRecordListMutex_;

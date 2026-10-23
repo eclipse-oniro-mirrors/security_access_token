@@ -41,6 +41,7 @@
 #include "parameter.h"
 #include "perm_active_status_change_callback_stub.h"
 #include "perm_disable_policy_change_callback.h"
+#include "perm_disable_policy_parcel.h"
 #include "privacy_error.h"
 #include "privacy_field_const.h"
 #include "privacy_kit.h"
@@ -95,6 +96,7 @@ static constexpr int32_t SUBPROFILE_TEST_ID = 10;
 static constexpr int32_t SUBPROFILE_TEST_ID_2 = 11;
 #endif
 static const int32_t VALUE_MAX_LEN = 32;
+static constexpr int32_t INVALID_RECEIVED_USER_ID = -999;
 const static uint32_t TEST_MAX_PERMISSION_USED_TYPE_SIZE = 20;
 static const char* EDM_MIC_MUTE_KEY = "persist.edm.mic_disable";
 static const char* EDM_CAMERA_MUTE_KEY = "persist.edm.camera_disable";
@@ -3286,6 +3288,298 @@ HWTEST_F(PermissionRecordManagerTest, CheckPermissionInUse010, TestSize.Level1)
     EXPECT_FALSE(isUsing);
 }
 #endif
+
+class UserCameraMuteCallbackTest : public DisablePolicyChangeCallback {
+public:
+    explicit UserCameraMuteCallbackTest(const std::vector<std::string>& permList)
+        : DisablePolicyChangeCallback(permList) {}
+    ~UserCameraMuteCallbackTest() {}
+
+    void PermDisablePolicyCallback(const PermDisablePolicyInfo& info) override
+    {
+        receivedPermissionName = info.permissionName;
+        receivedIsDisable = info.isDisable;
+        receivedUserId = info.userId;
+        callbackCount++;
+    }
+
+    std::string receivedPermissionName;
+    bool receivedIsDisable = false;
+    int32_t receivedUserId = INVALID_RECEIVED_USER_ID;
+    int32_t callbackCount = 0;
+
+    void Reset()
+    {
+        receivedPermissionName.clear();
+        receivedIsDisable = false;
+        receivedUserId = INVALID_RECEIVED_USER_ID;
+        callbackCount = 0;
+    }
+};
+
+/*
+ * @tc.name: SetDisablePolicy_UserLevel_Success
+ * @tc.desc: Set user-level camera disable policy with valid userId
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, SetDisablePolicy_UserLevel_Success, TestSize.Level1)
+{
+    int32_t userId = 100;
+    EXPECT_EQ(Constant::SUCCESS,
+        PermissionRecordManager::GetInstance().SetDisablePolicy("ohos.permission.CAMERA", true, userId));
+    EXPECT_TRUE(PermissionRecordManager::GetInstance().GetCacheUserLevelCameraDisablePolicy(userId));
+    PermissionRecordManager::GetInstance().SetDisablePolicy("ohos.permission.CAMERA", false, userId);
+}
+
+/*
+ * @tc.name: GetDisablePolicy_UserLevel_Success
+ * @tc.desc: Get user-level camera disable policy after set
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, GetDisablePolicy_UserLevel_Success, TestSize.Level1)
+{
+    int32_t userId = 101;
+    PermissionRecordManager::GetInstance().SetDisablePolicy("ohos.permission.CAMERA", true, userId);
+    bool isDisable = false;
+    EXPECT_EQ(Constant::SUCCESS,
+        PermissionRecordManager::GetInstance().GetDisablePolicy("ohos.permission.CAMERA", isDisable, userId));
+    EXPECT_TRUE(isDisable);
+    PermissionRecordManager::GetInstance().SetDisablePolicy("ohos.permission.CAMERA", false, userId);
+}
+
+/*
+ * @tc.name: SetDisablePolicy_InvalidUserId
+ * @tc.desc: Set with invalid userId (< -1)
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, SetDisablePolicy_InvalidUserId, TestSize.Level1)
+{
+    EXPECT_EQ(PrivacyError::ERR_PARAM_INVALID,
+        PermissionRecordManager::GetInstance().SetDisablePolicy("ohos.permission.CAMERA", true, -2));
+}
+
+/*
+ * @tc.name: SetDisablePolicy_UserLevel_MicNotSupport
+ * @tc.desc: User level only supports camera, not microphone
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, SetDisablePolicy_UserLevel_MicNotSupport, TestSize.Level1)
+{
+    EXPECT_EQ(PrivacyError::ERR_PERMISSION_NOT_SUPPORT,
+        PermissionRecordManager::GetInstance().SetDisablePolicy("ohos.permission.MICROPHONE", true, 100));
+}
+
+/*
+ * @tc.name: SetDisablePolicy_DeviceLevel_BackwardCompat
+ * @tc.desc: userId=-1 (default) behaves identically to existing device-level path
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, SetDisablePolicy_DeviceLevel_BackwardCompat, TestSize.Level1)
+{
+    EXPECT_EQ(Constant::SUCCESS,
+        PermissionRecordManager::GetInstance().SetDisablePolicy("ohos.permission.CAMERA", true));
+    EXPECT_EQ(Constant::SUCCESS,
+        PermissionRecordManager::GetInstance().SetDisablePolicy("ohos.permission.CAMERA", false));
+}
+
+/*
+ * @tc.name: SetDisablePolicy_DeviceLevelDisabled_UserLevelSetSuccess
+ * @tc.desc: Setting user-level policy (both mute and unmute) succeeds regardless of device-level state (AC-3.3)
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, SetDisablePolicy_DeviceLevelDisabled_UserLevelSetSuccess, TestSize.Level1)
+{
+    int32_t userId = 105;
+    PermissionRecordManager::GetInstance().SetDisablePolicy("ohos.permission.CAMERA", true);
+    // Device level disabled, user level set disable should succeed
+    EXPECT_EQ(Constant::SUCCESS,
+        PermissionRecordManager::GetInstance().SetDisablePolicy("ohos.permission.CAMERA", true, userId));
+    EXPECT_TRUE(PermissionRecordManager::GetInstance().GetCacheUserLevelCameraDisablePolicy(userId));
+    // Device level disabled, user level set enable should also succeed (no device level check)
+    EXPECT_EQ(Constant::SUCCESS,
+        PermissionRecordManager::GetInstance().SetDisablePolicy("ohos.permission.CAMERA", false, userId));
+    EXPECT_FALSE(PermissionRecordManager::GetInstance().GetCacheUserLevelCameraDisablePolicy(userId));
+    // Cleanup
+    PermissionRecordManager::GetInstance().SetDisablePolicy("ohos.permission.CAMERA", false);
+}
+
+/*
+ * @tc.name: GetDisablePolicy_DeviceLevelOverrides
+ * @tc.desc: Device-level disabled overrides user-level query result
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, GetDisablePolicy_DeviceLevelOverrides, TestSize.Level1)
+{
+    PermissionRecordManager::GetInstance().SetDisablePolicy("ohos.permission.CAMERA", true);
+    bool isDisable = false;
+    EXPECT_EQ(Constant::SUCCESS,
+        PermissionRecordManager::GetInstance().GetDisablePolicy("ohos.permission.CAMERA", isDisable, 100));
+    EXPECT_TRUE(isDisable);
+    PermissionRecordManager::GetInstance().SetDisablePolicy("ohos.permission.CAMERA", false);
+}
+
+/*
+ * @tc.name: GetDisablePolicy_NeverSet_DefaultFalse
+ * @tc.desc: User never set policy returns default false
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, GetDisablePolicy_NeverSet_DefaultFalse, TestSize.Level1)
+{
+    bool isDisable = true;
+    EXPECT_EQ(Constant::SUCCESS,
+        PermissionRecordManager::GetInstance().GetDisablePolicy("ohos.permission.CAMERA", isDisable, 999));
+    EXPECT_FALSE(isDisable);
+}
+
+/*
+ * @tc.name: SetDisablePolicy_DbFail_CacheNotCorrupted
+ * @tc.desc: DB failure does not corrupt in-memory cache
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, SetDisablePolicy_DbFail_CacheNotCorrupted, TestSize.Level2)
+{
+    int32_t userId = 102;
+    PermissionRecordManager::GetInstance().SetDisablePolicy("ohos.permission.CAMERA", true, userId);
+    auto backup = PermissionUsedRecordDb::GetInstance().dataTypeToSqlTable_;
+    PermissionUsedRecordDb::GetInstance().dataTypeToSqlTable_.clear();
+    EXPECT_EQ(PrivacyError::ERR_DATABASE_OPERATE_FAILED,
+        PermissionRecordManager::GetInstance().SetDisablePolicy("ohos.permission.CAMERA", false, userId));
+    EXPECT_TRUE(PermissionRecordManager::GetInstance().GetCacheUserLevelCameraDisablePolicy(userId));
+    PermissionUsedRecordDb::GetInstance().dataTypeToSqlTable_ = backup;
+    PermissionRecordManager::GetInstance().SetDisablePolicy("ohos.permission.CAMERA", false, userId);
+}
+
+/*
+ * @tc.name: Callback_UserLevel_WithUserId
+ * @tc.desc: Callback receives PermDisablePolicyInfo with userId
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, Callback_UserLevel_WithUserId, TestSize.Level1)
+{
+    int32_t userId = 103;
+    std::vector<std::string> permList = {"ohos.permission.CAMERA"};
+    auto callback = std::make_shared<UserCameraMuteCallbackTest>(permList);
+    sptr<PermDisablePolicyChangeCallback> callbackWrap =
+        new (std::nothrow) PermDisablePolicyChangeCallback(callback);
+    ASSERT_NE(nullptr, callbackWrap);
+    EXPECT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().RegisterPermDisablePolicyCallback(
+        GetSelfTokenID(), permList, callbackWrap->AsObject()));
+
+    PermissionRecordManager::GetInstance().SetDisablePolicy("ohos.permission.CAMERA", true, userId);
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    EXPECT_EQ(1, callback->callbackCount);
+    EXPECT_EQ(userId, callback->receivedUserId);
+    EXPECT_TRUE(callback->receivedIsDisable);
+
+    PermissionRecordManager::GetInstance().SetDisablePolicy("ohos.permission.CAMERA", false, userId);
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    PermissionRecordManager::GetInstance().UnRegisterPermDisablePolicyCallback(callbackWrap->AsObject());
+}
+
+/*
+ * @tc.name: Callback_NoChange_NoCallback
+ * @tc.desc: Repeated set same value does not trigger callback
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, Callback_NoChange_NoCallback, TestSize.Level2)
+{
+    int32_t userId = 104;
+    std::vector<std::string> permList = {"ohos.permission.CAMERA"};
+    auto callback = std::make_shared<UserCameraMuteCallbackTest>(permList);
+    sptr<PermDisablePolicyChangeCallback> callbackWrap =
+        new (std::nothrow) PermDisablePolicyChangeCallback(callback);
+    ASSERT_NE(nullptr, callbackWrap);
+    EXPECT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().RegisterPermDisablePolicyCallback(
+        GetSelfTokenID(), permList, callbackWrap->AsObject()));
+
+    PermissionRecordManager::GetInstance().SetDisablePolicy("ohos.permission.CAMERA", true, userId);
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    int32_t countAfterFirst = callback->callbackCount;
+
+    PermissionRecordManager::GetInstance().SetDisablePolicy("ohos.permission.CAMERA", true, userId);
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    EXPECT_EQ(countAfterFirst, callback->callbackCount);
+
+    PermissionRecordManager::GetInstance().SetDisablePolicy("ohos.permission.CAMERA", false, userId);
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    PermissionRecordManager::GetInstance().UnRegisterPermDisablePolicyCallback(callbackWrap->AsObject());
+}
+
+/*
+ * @tc.name: Callback_DeviceLevel_UserIdMinus1
+ * @tc.desc: Device-level change callback has userId=-1
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, Callback_DeviceLevel_UserIdMinus1, TestSize.Level2)
+{
+    std::vector<std::string> permList = {"ohos.permission.CAMERA"};
+    auto callback = std::make_shared<UserCameraMuteCallbackTest>(permList);
+    sptr<PermDisablePolicyChangeCallback> callbackWrap =
+        new (std::nothrow) PermDisablePolicyChangeCallback(callback);
+    ASSERT_NE(nullptr, callbackWrap);
+    EXPECT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().RegisterPermDisablePolicyCallback(
+        GetSelfTokenID(), permList, callbackWrap->AsObject()));
+
+    PermissionRecordManager::GetInstance().SetDisablePolicy("ohos.permission.CAMERA", true);
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    EXPECT_EQ(-1, callback->receivedUserId);
+
+    PermissionRecordManager::GetInstance().SetDisablePolicy("ohos.permission.CAMERA", false);
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    PermissionRecordManager::GetInstance().UnRegisterPermDisablePolicyCallback(callbackWrap->AsObject());
+}
+
+/*
+ * @tc.name: Callback_Parcel_UserId001
+ * @tc.desc: PermDisablePolicyParcel marshalling includes userId field
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, Callback_Parcel_UserId001, TestSize.Level1)
+{
+    PermDisablePolicyInfo info("ohos.permission.CAMERA", true, 105);
+    EXPECT_EQ(105, info.userId);
+
+    Parcel parcelOut;
+    PermDisablePolicyParcel srcParcel;
+    srcParcel.info = info;
+    EXPECT_TRUE(srcParcel.Marshalling(parcelOut));
+
+    parcelOut.RewindRead(0);
+    PermDisablePolicyParcel* dstParcel = PermDisablePolicyParcel::Unmarshalling(parcelOut);
+    ASSERT_NE(nullptr, dstParcel);
+    EXPECT_EQ(105, dstParcel->info.userId);
+    EXPECT_EQ("ohos.permission.CAMERA", dstParcel->info.permissionName);
+    EXPECT_TRUE(dstParcel->info.isDisable);
+    delete dstParcel;
+}
+
+/*
+ * @tc.name: RemoveUserLevelCameraDisablePolicy_OnUserRemoved
+ * @tc.desc: User removal clears policy from DB and cache (AC-4.3)
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, RemoveUserLevelCameraDisablePolicy_OnUserRemoved, TestSize.Level1)
+{
+    int32_t userId = 106;
+    PermissionRecordManager::GetInstance().SetDisablePolicy("ohos.permission.CAMERA", true, userId);
+    EXPECT_TRUE(PermissionRecordManager::GetInstance().GetCacheUserLevelCameraDisablePolicy(userId));
+    PermissionRecordManager::GetInstance().RemoveUserLevelCameraDisablePolicy(userId);
+    EXPECT_FALSE(PermissionRecordManager::GetInstance().GetCacheUserLevelCameraDisablePolicy(userId));
+}
 
 #ifdef MAX_COUNT_TEST
 class DisablePolicyChangeCallbackTest : public DisablePolicyChangeCallback {

@@ -42,6 +42,7 @@ public:
         PERMISSION_USED_TYPE,
         PERMISSION_USED_RECORD_TOGGLE_STATUS,
         PERMISSION_DISABLE_POLICY,
+        USER_LEVEL_CAMERA_DISABLE_POLICY,
     };
     enum ExecuteResult { FAILURE = -1, SUCCESS };
     static PermissionUsedRecordDb& GetInstance();
@@ -68,6 +69,7 @@ private:
     void InitPermUsedTypeTableInfo(SqliteTable& permissionRecordTable);
     void InitPermUsedRecordToggleStatusTableInfo(SqliteTable& permissionRecordTable);
     void InitPermDisablePolicyTableInfo(SqliteTable& permissionRecordTable);
+    void InitUserLevelCameraDisableTableInfo(SqliteTable& table);
 
     PermissionUsedRecordDb();
     DISALLOW_COPY_AND_MOVE(PermissionUsedRecordDb);
@@ -92,6 +94,7 @@ private:
     int32_t InsertPermissionUsedTypeColumn() const;
     int32_t UpdatePermissionRecordTablePrimaryKey(bool withEnhancedIdentity) const;
     int32_t CreatePermissionDisablePolicyTable() const;
+    int32_t CreateUserLevelCameraDisablePolicyTable() const;
     int32_t InsertEnhancedIdentityColumn() const;
 
     std::string CreateDeleteHistoryRecordsPrepareSqlCmd(DataType type,
@@ -116,9 +119,11 @@ private:
     inline static constexpr const char* PERMISSION_USED_RECORD_TOGGLE_STATUS_TABLE =
         "permission_used_record_toggle_status_table";
     inline static constexpr const char* PERMISSION_DISABLE_POLICY_TABLE = "permission_disable_policy_table";
+    inline static constexpr const char* USER_LEVEL_CAMERA_DISABLE_POLICY_TABLE =
+        "user_level_camera_disable_policy_table";
     inline static constexpr const char* DATABASE_NAME = "permission_used_record.db";
     inline static constexpr const char* DATABASE_PATH = "/data/service/el1/public/access_token/";
-    static const int32_t DATABASE_VERSION = 8;
+    static const int32_t DATABASE_VERSION = 9;
 };
 } // namespace AccessToken
 } // namespace Security
