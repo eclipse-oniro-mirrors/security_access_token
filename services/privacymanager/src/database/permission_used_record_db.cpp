@@ -78,7 +78,6 @@ void PermissionUsedRecordDb::OnCreate()
     CreatePermissionUsedTypeTable();
     CreatePermissionUsedRecordToggleStatusTable();
     CreatePermissionDisablePolicyTable();
-    CreateUserLevelCameraDisablePolicyTable();
 }
 
 void PermissionUsedRecordDb::OnUpdate(int32_t version)
@@ -109,7 +108,8 @@ void PermissionUsedRecordDb::OnUpdate(int32_t version)
             UpdateToggleStatusTablePrimaryKey();
             [[fallthrough]];
         case 8: // 8->9
-            CreateUserLevelCameraDisablePolicyTable();
+            InsertUserIdColumnToDisablePolicyTable();
+            UpdateDisablePolicyTablePrimaryKey();
             [[fallthrough]];
         default:
             return;
@@ -168,14 +168,6 @@ void PermissionUsedRecordDb::InitPermDisablePolicyTableInfo(SqliteTable& permiss
     permissionDisablePolicyTable.tableName_ = PERMISSION_DISABLE_POLICY_TABLE;
     permissionDisablePolicyTable.tableColumnNames_ = {
         PrivacyFiledConst::FIELD_PERMISSION_CODE,
-        PrivacyFiledConst::FIELD_DISABLE_POLICY
-    };
-}
-
-void PermissionUsedRecordDb::InitUserLevelCameraDisableTableInfo(SqliteTable& userCameraMutePolicyTable)
-{
-    userCameraMutePolicyTable.tableName_ = USER_LEVEL_CAMERA_DISABLE_POLICY_TABLE;
-    userCameraMutePolicyTable.tableColumnNames_ = {
         PrivacyFiledConst::FIELD_USER_ID,
         PrivacyFiledConst::FIELD_DISABLE_POLICY
     };
@@ -195,15 +187,11 @@ PermissionUsedRecordDb::PermissionUsedRecordDb() : SqliteHelper(DATABASE_NAME, D
     SqliteTable permissionDisablePolicyTable;
     InitPermDisablePolicyTableInfo(permissionDisablePolicyTable);
 
-    SqliteTable userCameraMutePolicyTable;
-    InitUserLevelCameraDisableTableInfo(userCameraMutePolicyTable);
-
     dataTypeToSqlTable_ = {
         {PERMISSION_RECORD, permissionRecordTable},
         {PERMISSION_USED_TYPE, permissionUsedTypeTable},
         {PERMISSION_USED_RECORD_TOGGLE_STATUS, permissionUsedRecordToggleStatusTable},
         {PERMISSION_DISABLE_POLICY, permissionDisablePolicyTable},
-        {USER_LEVEL_CAMERA_DISABLE_POLICY, userCameraMutePolicyTable},
     };
     Open();
 }
@@ -915,29 +903,53 @@ int32_t PermissionUsedRecordDb::CreatePermissionDisablePolicyTable() const
         .append(INTEGER_STR)
         .append(PrivacyFiledConst::FIELD_DISABLE_POLICY)
         .append(INTEGER_STR)
+        .append(PrivacyFiledConst::FIELD_USER_ID)
+        .append(" integer not null default -1,")
         .append("primary key(")
         .append(PrivacyFiledConst::FIELD_PERMISSION_CODE)
+        .append(",")
+        .append(PrivacyFiledConst::FIELD_USER_ID)
         .append("))");
     return ExecuteSql(sql);
 }
 
-int32_t PermissionUsedRecordDb::CreateUserLevelCameraDisablePolicyTable() const
+int32_t PermissionUsedRecordDb::InsertUserIdColumnToDisablePolicyTable() const
 {
-    auto it = dataTypeToSqlTable_.find(DataType::USER_LEVEL_CAMERA_DISABLE_POLICY);
-    if (it == dataTypeToSqlTable_.end()) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Table type not found.");
-        return PrivacyError::ERR_DATABASE_OPERATE_FAILED;
-    }
-    std::string sql = CREATE_TABLE_STR;
-    sql.append(it->second.tableName_ + " (")
-        .append(PrivacyFiledConst::FIELD_USER_ID)
-        .append(INTEGER_STR)
-        .append(PrivacyFiledConst::FIELD_DISABLE_POLICY)
-        .append(" integer not null default 0,")
-        .append("primary key(")
-        .append(PrivacyFiledConst::FIELD_USER_ID)
-        .append("))");
+    std::string sql = "alter table " + std::string(PERMISSION_DISABLE_POLICY_TABLE) + " add column " +
+        PrivacyFiledConst::FIELD_USER_ID + " integer not null default -1";
     return ExecuteSql(sql);
+}
+
+int32_t PermissionUsedRecordDb::UpdateDisablePolicyTablePrimaryKey() const
+{
+    std::string tableName = PERMISSION_DISABLE_POLICY_TABLE;
+    std::string backupTableName = tableName + BACKUP_TABLE_SUFFIX;
+
+    int32_t res = ExecuteSql("alter table " + tableName + " rename to " + backupTableName);
+    if (res != SUCCESS) {
+        return res;
+    }
+
+    res = CreatePermissionDisablePolicyTable();
+    if (res != SUCCESS) {
+        return res;
+    }
+
+    std::string copyDataSql = "insert into " + tableName + " (" +
+        PrivacyFiledConst::FIELD_PERMISSION_CODE + "," +
+        PrivacyFiledConst::FIELD_USER_ID + "," +
+        PrivacyFiledConst::FIELD_DISABLE_POLICY + ") select " +
+        PrivacyFiledConst::FIELD_PERMISSION_CODE + "," +
+        std::to_string(LEGACY_SUBPROFILE_ID) + "," +
+        PrivacyFiledConst::FIELD_DISABLE_POLICY + " from " + backupTableName;
+
+    res = ExecuteSql(copyDataSql);
+    if (res != SUCCESS) {
+        return res;
+    }
+
+    res = ExecuteSql("drop table " + backupTableName);
+    return res;
 }
 
 int32_t PermissionUsedRecordDb::InsertLockScreenStatusColumn() const

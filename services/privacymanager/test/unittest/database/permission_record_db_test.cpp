@@ -1925,35 +1925,40 @@ HWTEST_F(PermissionRecordDBTest, Remote_DeleteExcessiveRecords_CorruptDb, TestSi
 #endif
 
 /*
- * @tc.name: CreateUserLevelCameraDisablePolicyTable001
- * @tc.desc: Verify user_level_camera_mute_policy_table is created and CRUD works
+ * @tc.name: CreatePermissionDisablePolicyTable001
+ * @tc.desc: Verify permission_disable_policy_table supports user_id composite PK and CRUD works
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordDBTest, CreateUserLevelCameraDisablePolicyTable001, TestSize.Level1)
+HWTEST_F(PermissionRecordDBTest, CreatePermissionDisablePolicyTable001, TestSize.Level1)
 {
-    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().CreateUserLevelCameraDisablePolicyTable());
+    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().CreatePermissionDisablePolicyTable());
 
+    // Insert user-level disable entry
     GenericValues value;
+    value.Put(PrivacyFiledConst::FIELD_PERMISSION_CODE, 18); // OP_CAMERA
     value.Put(PrivacyFiledConst::FIELD_USER_ID, 100);
     value.Put(PrivacyFiledConst::FIELD_DISABLE_POLICY, 1);
     std::vector<GenericValues> values;
     values.emplace_back(value);
     EXPECT_EQ(PermissionUsedRecordDb::ExecuteResult::SUCCESS,
         PermissionUsedRecordDb::GetInstance().Add(
-            PermissionUsedRecordDb::DataType::USER_LEVEL_CAMERA_DISABLE_POLICY, values));
+            PermissionUsedRecordDb::DataType::PERMISSION_DISABLE_POLICY, values));
 
+    // Query by user_id condition
     GenericValues condition;
+    condition.Put(PrivacyFiledConst::FIELD_USER_ID, 100);
     std::vector<GenericValues> results;
     EXPECT_EQ(PermissionUsedRecordDb::ExecuteResult::SUCCESS,
         PermissionUsedRecordDb::GetInstance().Query(
-            PermissionUsedRecordDb::DataType::USER_LEVEL_CAMERA_DISABLE_POLICY, condition, results));
+            PermissionUsedRecordDb::DataType::PERMISSION_DISABLE_POLICY, condition, results));
     ASSERT_EQ(1, static_cast<int32_t>(results.size()));
     EXPECT_EQ(100, results[0].GetInt(PrivacyFiledConst::FIELD_USER_ID));
     EXPECT_EQ(1, results[0].GetInt(PrivacyFiledConst::FIELD_DISABLE_POLICY));
 
+    // Remove by user_id
     PermissionUsedRecordDb::GetInstance().Remove(
-        PermissionUsedRecordDb::DataType::USER_LEVEL_CAMERA_DISABLE_POLICY, condition);
+        PermissionUsedRecordDb::DataType::PERMISSION_DISABLE_POLICY, condition);
 }
 
 } // namespace AccessToken

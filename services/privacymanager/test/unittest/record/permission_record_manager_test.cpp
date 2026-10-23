@@ -3328,7 +3328,7 @@ HWTEST_F(PermissionRecordManagerTest, SetDisablePolicy_UserLevel_Success, TestSi
     int32_t userId = 100;
     EXPECT_EQ(Constant::SUCCESS,
         PermissionRecordManager::GetInstance().SetDisablePolicy("ohos.permission.CAMERA", true, userId));
-    EXPECT_TRUE(PermissionRecordManager::GetInstance().GetCacheUserLevelCameraDisablePolicy(userId));
+    EXPECT_TRUE(PermissionRecordManager::GetInstance().GetCacheDisablePolicy("ohos.permission.CAMERA", userId));
     PermissionRecordManager::GetInstance().SetDisablePolicy("ohos.permission.CAMERA", false, userId);
 }
 
@@ -3400,11 +3400,11 @@ HWTEST_F(PermissionRecordManagerTest, SetDisablePolicy_DeviceLevelDisabled_UserL
     // Device level disabled, user level set disable should succeed
     EXPECT_EQ(Constant::SUCCESS,
         PermissionRecordManager::GetInstance().SetDisablePolicy("ohos.permission.CAMERA", true, userId));
-    EXPECT_TRUE(PermissionRecordManager::GetInstance().GetCacheUserLevelCameraDisablePolicy(userId));
+    EXPECT_TRUE(PermissionRecordManager::GetInstance().GetCacheDisablePolicy("ohos.permission.CAMERA", userId));
     // Device level disabled, user level set enable should also succeed (no device level check)
     EXPECT_EQ(Constant::SUCCESS,
         PermissionRecordManager::GetInstance().SetDisablePolicy("ohos.permission.CAMERA", false, userId));
-    EXPECT_FALSE(PermissionRecordManager::GetInstance().GetCacheUserLevelCameraDisablePolicy(userId));
+    EXPECT_FALSE(PermissionRecordManager::GetInstance().GetCacheDisablePolicy("ohos.permission.CAMERA", userId));
     // Cleanup
     PermissionRecordManager::GetInstance().SetDisablePolicy("ohos.permission.CAMERA", false);
 }
@@ -3453,7 +3453,7 @@ HWTEST_F(PermissionRecordManagerTest, SetDisablePolicy_DbFail_CacheNotCorrupted,
     PermissionUsedRecordDb::GetInstance().dataTypeToSqlTable_.clear();
     EXPECT_EQ(PrivacyError::ERR_DATABASE_OPERATE_FAILED,
         PermissionRecordManager::GetInstance().SetDisablePolicy("ohos.permission.CAMERA", false, userId));
-    EXPECT_TRUE(PermissionRecordManager::GetInstance().GetCacheUserLevelCameraDisablePolicy(userId));
+    EXPECT_TRUE(PermissionRecordManager::GetInstance().GetCacheDisablePolicy("ohos.permission.CAMERA", userId));
     PermissionUsedRecordDb::GetInstance().dataTypeToSqlTable_ = backup;
     PermissionRecordManager::GetInstance().SetDisablePolicy("ohos.permission.CAMERA", false, userId);
 }
@@ -3567,18 +3567,18 @@ HWTEST_F(PermissionRecordManagerTest, Callback_Parcel_UserId001, TestSize.Level1
 }
 
 /*
- * @tc.name: RemoveUserLevelCameraDisablePolicy_OnUserRemoved
+ * @tc.name: RemoveUserLevelDisablePolicy_OnUserRemoved
  * @tc.desc: User removal clears policy from DB and cache (AC-4.3)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, RemoveUserLevelCameraDisablePolicy_OnUserRemoved, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, RemoveUserLevelDisablePolicy_OnUserRemoved, TestSize.Level1)
 {
     int32_t userId = 106;
     PermissionRecordManager::GetInstance().SetDisablePolicy("ohos.permission.CAMERA", true, userId);
-    EXPECT_TRUE(PermissionRecordManager::GetInstance().GetCacheUserLevelCameraDisablePolicy(userId));
-    PermissionRecordManager::GetInstance().RemoveUserLevelCameraDisablePolicy(userId);
-    EXPECT_FALSE(PermissionRecordManager::GetInstance().GetCacheUserLevelCameraDisablePolicy(userId));
+    EXPECT_TRUE(PermissionRecordManager::GetInstance().GetCacheDisablePolicy("ohos.permission.CAMERA", userId));
+    PermissionRecordManager::GetInstance().RemoveUserLevelDisablePolicy(userId);
+    EXPECT_FALSE(PermissionRecordManager::GetInstance().GetCacheDisablePolicy("ohos.permission.CAMERA", userId));
 }
 
 #ifdef MAX_COUNT_TEST

@@ -101,7 +101,7 @@ void PrivacyCommonEventSubscriber::OnReceiveEvent(const EventFwk::CommonEventDat
     } else if (action == EventFwk::CommonEventSupport::COMMON_EVENT_USER_REMOVED) {
         int32_t removedUserId = event.GetCode();
         LOGI(PRI_DOMAIN, PRI_TAG, "Receive user removed: removedUserId=%{public}d", removedUserId);
-        PermissionRecordManager::GetInstance().RemoveUserLevelCameraDisablePolicy(removedUserId);
+        PermissionRecordManager::GetInstance().RemoveUserLevelDisablePolicy(removedUserId);
     } else {
         LOGE(PRI_DOMAIN, PRI_TAG, "Action is invalid.");
     }

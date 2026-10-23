@@ -457,7 +457,7 @@ void PermissionRecordManager::UpdatePermRecImmediately()
 
 bool PermissionRecordManager::IsEdmMuteOrDisable(const std::string& permissionName)
 {
-    return (GetMuteStatus(permissionName, EDM) || (GetCacheDisablePolicy(permissionName)));
+    return (GetMuteStatus(permissionName, EDM) || (GetCacheDisablePolicy(permissionName, -1)));
 }
 
 int32_t PermissionRecordManager::GetPermissionRecord(const AddPermParamInfo& info, PermissionRecord& record)
@@ -2961,10 +2961,11 @@ bool PermissionRecordManager::GetMuteStatus(const std::string& permissionName, i
     bool isMute = false;
     if (permissionName == MICROPHONE_PERMISSION_NAME) {
         std::lock_guard<std::mutex> lock(micMuteMutex_);
-        isMute = (index == EDM) ? (isMicEdmMute_ || (GetCacheDisablePolicy(Constant::OP_MICROPHONE))) : isMicMixMute_;
+        isMute = (index == EDM) ?
+            (isMicEdmMute_ || (GetCacheDisablePolicy(Constant::OP_MICROPHONE, -1))) : isMicMixMute_;
     } else if (permissionName == CAMERA_PERMISSION_NAME) {
         std::lock_guard<std::mutex> lock(camMuteMutex_);
-        isMute = (index == EDM) ? (isCamEdmMute_ || (GetCacheDisablePolicy(Constant::OP_CAMERA))) : isCamMixMute_;
+        isMute = (index == EDM) ? (isCamEdmMute_ || (GetCacheDisablePolicy(Constant::OP_CAMERA, -1))) : isCamMixMute_;
     } else {
         return false;
     }
@@ -3075,10 +3076,11 @@ int32_t PermissionRecordManager::IsPermValidForDisablePolicy(const std::string& 
     return Constant::SUCCESS;
 }
 
-int32_t PermissionRecordManager::InsertOrUpdateDisablePolicy(int32_t opCode, bool isDisable)
+int32_t PermissionRecordManager::InsertOrUpdateDisablePolicy(int32_t opCode, bool isDisable, int32_t userId)
 {
     GenericValues conditionValue;
     conditionValue.Put(PrivacyFiledConst::FIELD_PERMISSION_CODE, opCode);
+    conditionValue.Put(PrivacyFiledConst::FIELD_USER_ID, userId);
 
     std::vector<GenericValues> results;
     int32_t res = PermissionUsedRecordDb::GetInstance().Query(
@@ -3090,6 +3092,7 @@ int32_t PermissionRecordManager::InsertOrUpdateDisablePolicy(int32_t opCode, boo
     if (results.empty()) {
         GenericValues value;
         value.Put(PrivacyFiledConst::FIELD_PERMISSION_CODE, opCode);
+        value.Put(PrivacyFiledConst::FIELD_USER_ID, userId);
         value.Put(PrivacyFiledConst::FIELD_DISABLE_POLICY, isDisable ? 1 : 0);
 
         std::vector<GenericValues> values;
@@ -3102,6 +3105,7 @@ int32_t PermissionRecordManager::InsertOrUpdateDisablePolicy(int32_t opCode, boo
     } else {
         GenericValues modifyValue;
         modifyValue.Put(PrivacyFiledConst::FIELD_PERMISSION_CODE, opCode);
+        modifyValue.Put(PrivacyFiledConst::FIELD_USER_ID, userId);
         modifyValue.Put(PrivacyFiledConst::FIELD_DISABLE_POLICY, isDisable ? 1 : 0);
 
         res = PermissionUsedRecordDb::GetInstance().Update(PermissionUsedRecordDb::DataType::PERMISSION_DISABLE_POLICY,
@@ -3114,17 +3118,24 @@ int32_t PermissionRecordManager::InsertOrUpdateDisablePolicy(int32_t opCode, boo
     return Constant::SUCCESS;
 }
 
-bool PermissionRecordManager::GetCacheDisablePolicy(int32_t opCode)
+bool PermissionRecordManager::GetCacheDisablePolicy(int32_t opCode, int32_t userId)
 {
-    std::shared_lock<std::shared_mutex> lock(diablePolicyMutex_);
-    auto it = disablePolicyMap_.find(opCode);
+    std::shared_lock<std::shared_mutex> lock(disablePolicyMutex_);
+    auto deviceIt = disablePolicyMap_.find({opCode, -1});
+    if (deviceIt != disablePolicyMap_.end() && deviceIt->second) {
+        return true;
+    }
+    if (userId == -1) {
+        return false;
+    }
+    auto it = disablePolicyMap_.find({opCode, userId});
     if (it != disablePolicyMap_.end()) {
         return it->second;
     }
-    return false; // default false
+    return false;
 }
 
-bool PermissionRecordManager::GetCacheDisablePolicy(const std::string& permissionName)
+bool PermissionRecordManager::GetCacheDisablePolicy(const std::string& permissionName, int32_t userId)
 {
     int32_t opCode = -1;
     if (!Constant::TransferPermissionToOpcode(permissionName, opCode)) {
@@ -3132,64 +3143,46 @@ bool PermissionRecordManager::GetCacheDisablePolicy(const std::string& permissio
         return false;
     }
 
-    return GetCacheDisablePolicy(opCode);
+    return GetCacheDisablePolicy(opCode, userId);
 }
 
-void PermissionRecordManager::UpdateDisablePolicyCache(int32_t opCode, bool isDisable)
+void PermissionRecordManager::UpdateDisablePolicyCache(int32_t opCode, bool isDisable, int32_t userId)
 {
-    std::unique_lock<std::shared_mutex> lock(diablePolicyMutex_);
-    auto it = disablePolicyMap_.find(opCode);
-    if (it != disablePolicyMap_.end()) {
-        it->second = isDisable;
-        return;
+    std::unique_lock<std::shared_mutex> lock(disablePolicyMutex_);
+    if (isDisable) {
+        disablePolicyMap_[{opCode, userId}] = true;
+    } else {
+        disablePolicyMap_.erase({opCode, userId});
     }
-
-    disablePolicyMap_.insert(std::pair<int32_t, bool>(opCode, isDisable));
 }
 
 int32_t PermissionRecordManager::SetDisablePolicy(const std::string& permissionName, bool isDisable, int32_t userId)
 {
-    if (userId == -1) {
-        int32_t opCode = -1;
-        int32_t res = IsPermValidForDisablePolicy(permissionName, opCode);
-        if (res != Constant::SUCCESS) {
-            return res;
-        }
-        res = InsertOrUpdateDisablePolicy(opCode, isDisable);
-        if (res != Constant::SUCCESS) {
-            return res;
-        }
-        bool needCallback = (isDisable != GetCacheDisablePolicy(opCode));
-        UpdateDisablePolicyCache(opCode, isDisable);
-        if (!needCallback) {
-            LOGI(PRI_DOMAIN, PRI_TAG, "No need to send callback!");
-            return Constant::SUCCESS;
-        }
-        LOGI(PRI_DOMAIN, PRI_TAG, "Need to send callback!");
-        PermDisablePolicyInfo info(permissionName, isDisable);
-        DisablePolicyCbkManager::GetInstance()->ExecuteCallbackAsync(info);
-        return Constant::SUCCESS;
-    }
-
-    if (!IsUserIdValid(userId)) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Invalid userId: %{public}d", userId);
-        return PrivacyError::ERR_PARAM_INVALID;
-    }
-    if (permissionName != CAMERA_PERMISSION_NAME) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "User level only support camera, perm: %{public}s", permissionName.c_str());
-        return PrivacyError::ERR_PERMISSION_NOT_SUPPORT;
-    }
-
-    bool needCallback = (isDisable != GetCacheUserLevelCameraDisablePolicy(userId));
-    int32_t res = InsertOrUpdateUserLevelCameraDisablePolicy(userId, isDisable);
+    int32_t opCode = -1;
+    int32_t res = IsPermValidForDisablePolicy(permissionName, opCode);
     if (res != Constant::SUCCESS) {
         return res;
     }
-    UpdateUserLevelCameraDisableCache(userId, isDisable);
-    if (!needCallback) {
-        LOGI(PRI_DOMAIN, PRI_TAG, "No need to send callback for userId: %{public}d", userId);
+
+    if (userId != -1 && !IsUserIdValid(userId)) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Invalid userId: %{public}d", userId);
+        return PrivacyError::ERR_PARAM_INVALID;
+    }
+
+    bool oldEffective = GetCacheDisablePolicy(opCode, userId);
+    res = InsertOrUpdateDisablePolicy(opCode, isDisable, userId);
+    if (res != Constant::SUCCESS) {
+        return res;
+    }
+
+    UpdateDisablePolicyCache(opCode, isDisable, userId);
+    bool newEffective = GetCacheDisablePolicy(opCode, userId);
+    if (oldEffective == newEffective) {
+        LOGI(PRI_DOMAIN, PRI_TAG, "No need to send callback for userId: %{public}d, effective unchanged",
+            userId);
         return Constant::SUCCESS;
     }
+
     LOGI(PRI_DOMAIN, PRI_TAG, "Need to send callback for userId: %{public}d", userId);
     PermDisablePolicyInfo info(permissionName, isDisable, userId);
     DisablePolicyCbkManager::GetInstance()->ExecuteCallbackAsync(info);
@@ -3199,25 +3192,18 @@ int32_t PermissionRecordManager::SetDisablePolicy(const std::string& permissionN
 int32_t PermissionRecordManager::GetDisablePolicy(const std::string& permissionName, bool& isDisable,
     int32_t userId)
 {
-    if (userId == -1) {
-        int32_t opCode = -1;
-        int32_t res = IsPermValidForDisablePolicy(permissionName, opCode);
-        if (res != Constant::SUCCESS) {
-            return res;
-        }
-        isDisable = GetCacheDisablePolicy(opCode);
-        return Constant::SUCCESS;
+    int32_t opCode = -1;
+    int32_t res = IsPermValidForDisablePolicy(permissionName, opCode);
+    if (res != Constant::SUCCESS) {
+        return res;
     }
 
-    if (!IsUserIdValid(userId)) {
+    if (userId != -1 && !IsUserIdValid(userId)) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Invalid userId: %{public}d", userId);
         return PrivacyError::ERR_PARAM_INVALID;
     }
-    if (GetMuteStatus(CAMERA_PERMISSION_NAME, EDM)) {
-        isDisable = true;
-        return Constant::SUCCESS;
-    }
-    isDisable = GetCacheUserLevelCameraDisablePolicy(userId);
+
+    isDisable = GetCacheDisablePolicy(opCode, userId);
     return Constant::SUCCESS;
 }
 
@@ -3402,113 +3388,40 @@ void PermissionRecordManager::InitDisablePolicyFromDb()
         return;
     }
 
-    int32_t opCode = -1;
-    bool isDisable = false;
-
-    std::unique_lock<std::shared_mutex> lock(diablePolicyMutex_);
+    std::unique_lock<std::shared_mutex> lock(disablePolicyMutex_);
     for (const auto& result : results) {
-        opCode = result.GetInt(PrivacyFiledConst::FIELD_PERMISSION_CODE);
-        isDisable = result.GetInt(PrivacyFiledConst::FIELD_DISABLE_POLICY) == 1;
-        disablePolicyMap_.insert(std::pair<int32_t, bool>(opCode, isDisable));
+        int32_t opCode = result.GetInt(PrivacyFiledConst::FIELD_PERMISSION_CODE);
+        bool isDisable = result.GetInt(PrivacyFiledConst::FIELD_DISABLE_POLICY) == 1;
+        int32_t userId = result.GetInt(PrivacyFiledConst::FIELD_USER_ID);
+        disablePolicyMap_[{opCode, userId}] = isDisable;
     }
 }
 
-void PermissionRecordManager::InitUserLevelCameraDisableFromDb()
+void PermissionRecordManager::RemoveUserLevelDisablePolicyFromCache(int32_t userId)
 {
-    GenericValues conditionValue;
-    std::vector<GenericValues> results;
-    int32_t res = PermissionUsedRecordDb::GetInstance().Query(
-        PermissionUsedRecordDb::DataType::USER_LEVEL_CAMERA_DISABLE_POLICY, conditionValue, results);
-    if (res != PermissionUsedRecordDb::SUCCESS) {
-        return;
-    }
-
-    if (results.empty()) {
-        return;
-    }
-
-    int32_t userId = -1;
-    bool isMute = false;
-
-    std::lock_guard<std::mutex> lock(userLevelCamDisableMutex_);
-    for (const auto& result : results) {
-        userId = result.GetInt(PrivacyFiledConst::FIELD_USER_ID);
-        isMute = result.GetInt(PrivacyFiledConst::FIELD_DISABLE_POLICY) == 1;
-        userLevelCameraDisableMap_[userId] = isMute;
-    }
-}
-
-int32_t PermissionRecordManager::InsertOrUpdateUserLevelCameraDisablePolicy(int32_t userId, bool isMute)
-{
-    GenericValues conditionValue;
-    conditionValue.Put(PrivacyFiledConst::FIELD_USER_ID, userId);
-
-    std::vector<GenericValues> results;
-    int32_t res = PermissionUsedRecordDb::GetInstance().Query(
-        PermissionUsedRecordDb::DataType::USER_LEVEL_CAMERA_DISABLE_POLICY, conditionValue, results);
-    if (res != PermissionUsedRecordDb::SUCCESS) {
-        return PrivacyError::ERR_DATABASE_OPERATE_FAILED;
-    }
-
-    if (isMute) {
-        if (results.empty()) {
-            GenericValues value;
-            value.Put(PrivacyFiledConst::FIELD_USER_ID, userId);
-            value.Put(PrivacyFiledConst::FIELD_DISABLE_POLICY, 1);
-
-            std::vector<GenericValues> values;
-            values.emplace_back(value);
-            res = PermissionUsedRecordDb::GetInstance().Add(
-                PermissionUsedRecordDb::DataType::USER_LEVEL_CAMERA_DISABLE_POLICY, values);
-            if (res != PermissionUsedRecordDb::ExecuteResult::SUCCESS) {
-                return PrivacyError::ERR_DATABASE_OPERATE_FAILED;
-            }
-        }
-    } else {
-        res = PermissionUsedRecordDb::GetInstance().Remove(
-            PermissionUsedRecordDb::DataType::USER_LEVEL_CAMERA_DISABLE_POLICY, conditionValue);
-        if (res != PermissionUsedRecordDb::ExecuteResult::SUCCESS) {
-            return PrivacyError::ERR_DATABASE_OPERATE_FAILED;
+    std::unique_lock<std::shared_mutex> lock(disablePolicyMutex_);
+    for (auto it = disablePolicyMap_.begin(); it != disablePolicyMap_.end();) {
+        if (it->first.second == userId) {
+            it = disablePolicyMap_.erase(it);
+        } else {
+            ++it;
         }
     }
-
-    return Constant::SUCCESS;
 }
 
-bool PermissionRecordManager::GetCacheUserLevelCameraDisablePolicy(int32_t userId)
-{
-    std::lock_guard<std::mutex> lock(userLevelCamDisableMutex_);
-    auto it = userLevelCameraDisableMap_.find(userId);
-    if (it != userLevelCameraDisableMap_.end()) {
-        return it->second;
-    }
-    return false;
-}
-
-void PermissionRecordManager::UpdateUserLevelCameraDisableCache(int32_t userId, bool isMute)
-{
-    std::lock_guard<std::mutex> lock(userLevelCamDisableMutex_);
-    if (isMute) {
-        userLevelCameraDisableMap_[userId] = true;
-    } else {
-        userLevelCameraDisableMap_.erase(userId);
-    }
-}
-
-void PermissionRecordManager::RemoveUserLevelCameraDisablePolicy(int32_t userId)
+void PermissionRecordManager::RemoveUserLevelDisablePolicy(int32_t userId)
 {
     GenericValues condition;
     condition.Put(PrivacyFiledConst::FIELD_USER_ID, userId);
     int32_t res = PermissionUsedRecordDb::GetInstance().Remove(
-        PermissionUsedRecordDb::DataType::USER_LEVEL_CAMERA_DISABLE_POLICY, condition);
+        PermissionUsedRecordDb::DataType::PERMISSION_DISABLE_POLICY, condition);
     if (res != PermissionUsedRecordDb::ExecuteResult::SUCCESS) {
         LOGE(PRI_DOMAIN, PRI_TAG, "DB remove failed for userId: %{public}d, res: %{public}d", userId, res);
         return;
     }
 
-    std::lock_guard<std::mutex> lock(userLevelCamDisableMutex_);
-    userLevelCameraDisableMap_.erase(userId);
-    LOGI(PRI_DOMAIN, PRI_TAG, "RemoveUserLevelCameraDisablePolicy for userId: %{public}d", userId);
+    RemoveUserLevelDisablePolicyFromCache(userId);
+    LOGI(PRI_DOMAIN, PRI_TAG, "RemoveUserLevelDisablePolicy for userId: %{public}d", userId);
 }
 
 void PermissionRecordManager::SetDefaultConfigValue()
@@ -3578,7 +3491,6 @@ void PermissionRecordManager::Init()
 
     UpdatePermUsedRecToggleStatusMapFromDb();
     InitDisablePolicyFromDb();
-    InitUserLevelCameraDisableFromDb();
 
     GetConfigValue();
 }
