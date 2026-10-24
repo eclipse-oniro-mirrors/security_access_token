@@ -393,12 +393,35 @@ ani_int CheckContextExecute([[maybe_unused]] ani_env* env, [[maybe_unused]] ani_
         return STS_ERROR_PARAM_ILLEGAL;
     }
     auto abilityContext = AbilityRuntime::Context::ConvertTo<AbilityRuntime::AbilityContext>(context);
-    auto uiExtensionContext = AbilityRuntime::Context::ConvertTo<AbilityRuntime::UIExtensionContext>(context);
-    if (abilityContext == nullptr && uiExtensionContext == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to convert to ability context or ui extension context.");
-        return STS_ERROR_PARAM_ILLEGAL;
+    if (abilityContext != nullptr) {
+        return STS_OK;
     }
-    return STS_OK;
+    auto uiExtensionContext = AbilityRuntime::Context::ConvertTo<AbilityRuntime::UIExtensionContext>(context);
+    if (uiExtensionContext != nullptr) {
+        return STS_OK;
+    }
+#ifdef SUPPORT_IME_EXTENSION_CONTEXT
+    auto imeContext = AbilityRuntime::Context::ConvertTo<AbilityRuntime::InputMethodExtensionContext>(context);
+    if (imeContext != nullptr) {
+        return STS_OK;
+    }
+#endif
+    LOGE(ATM_DOMAIN, ATM_TAG,
+        "Failed to convert to ability context, ui extension context, or input method extension context.");
+    return STS_ERROR_PARAM_ILLEGAL;
+}
+
+void InjectIMEContextType(const std::shared_ptr<RequestAsyncContextBase>& asyncContext, OHOS::AAFwk::Want& want)
+{
+#ifdef SUPPORT_IME_EXTENSION_CONTEXT
+    static const std::string CONTEXT_TYPE_KEY = "ohos.ability.params.contextType";
+    static const std::string INPUT_METHOD_CONTEXT_TYPE = "inputMethod";
+    auto imeContext = OHOS::AbilityRuntime::Context::ConvertTo<
+        OHOS::AbilityRuntime::InputMethodExtensionContext>(asyncContext->stageContext_);
+    if (imeContext != nullptr) {
+        want.SetParam(CONTEXT_TYPE_KEY, INPUT_METHOD_CONTEXT_TYPE);
+    }
+#endif
 }
 }  // namespace AccessToken
 }  // namespace Security

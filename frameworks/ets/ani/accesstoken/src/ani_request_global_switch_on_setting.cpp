@@ -101,6 +101,7 @@ void RequestGlobalSwitchAsyncContext::StartExtensionAbility(std::shared_ptr<Requ
     want.SetElementName(this->info.grantBundleName, this->info.globalSwitchAbilityName);
     want.SetParam(GLOBAL_SWITCH_KEY, this->switchType);
     want.SetParam(EXTENSION_TYPE_KEY, UI_EXTENSION_TYPE);
+    InjectIMEContextType(asyncContext, want);
     CreateUIExtension(want, asyncContext, GetRequestInstanceControl());
 }
 

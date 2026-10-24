@@ -78,6 +78,10 @@ ohos_shared_library("accesstoken_ani") {
     external_deps += [ "eventhandler:libeventhandler" ]
   }
 
+  if (access_token_support_ime_extension) {
+    external_deps += [ "imf:inputmethod_extension" ]
+  }
+
   part_name = "access_token"
   subsystem_name = "security"
 }

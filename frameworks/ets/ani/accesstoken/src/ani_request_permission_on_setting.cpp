@@ -174,6 +174,7 @@ void RequestPermOnSettingAsyncContext::StartExtensionAbility(std::shared_ptr<Req
     want.SetElementName(this->info.grantBundleName, this->info.permStateAbilityName);
     want.SetParam(PERMISSION_SETTING_KEY, this->permissionList);
     want.SetParam(EXTENSION_TYPE_KEY, UI_EXTENSION_TYPE);
+    InjectIMEContextType(asyncContext, want);
     CreateUIExtension(want, asyncContext, GetRequestInstanceControl());
 }
 

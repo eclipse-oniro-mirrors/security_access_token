@@ -127,7 +127,7 @@ static void CreateServiceExtensionWithWindowId(std::shared_ptr<RequestAsyncConte
         return;
     }
     want.SetParam(TOKEN_KEY, window->GetContext()->GetToken());
-    
+
     Rosen::Rect windowRect = window->GetRect();
     int32_t left = windowRect.posX_;
     int32_t top = windowRect.posY_;
@@ -148,6 +148,55 @@ static void CreateServiceExtensionWithWindowId(std::shared_ptr<RequestAsyncConte
         ret, asyncContext->tokenId, asyncContext->permissionList.size());
 }
 
+static void CreateServiceExtensionForIME(std::shared_ptr<RequestAsyncContext> asyncContext)
+{
+#ifdef SUPPORT_IME_EXTENSION_CONTEXT
+    auto imeContext = OHOS::AbilityRuntime::Context::ConvertTo<
+        OHOS::AbilityRuntime::InputMethodExtensionContext>(asyncContext->stageContext_);
+    if (imeContext == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Convert to AbilityContext and InputMethodExtensionContext failed.");
+        asyncContext->needDynamicRequest_ = false;
+        asyncContext->result_.errorCode = RET_FAILED;
+        ReportHisysEventError(*asyncContext, ABILITY_FLAG_ERROR, asyncContext->tokenId);
+        return;
+    }
+    OHOS::sptr<IRemoteObject> remoteObject = new (std::nothrow) AuthorizationResult(asyncContext);
+    if (remoteObject == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "New AuthorizationResult failed!");
+        asyncContext->needDynamicRequest_ = false;
+        asyncContext->result_.errorCode = RET_FAILED;
+        return;
+    }
+    Want want;
+    want.SetElementName(asyncContext->info.grantBundleName, asyncContext->info.grantServiceAbilityName);
+    want.SetParam(PERMISSION_KEY, asyncContext->permissionList);
+    want.SetParam(STATE_KEY, asyncContext->permissionsState);
+    want.SetParam(TOKEN_KEY, imeContext->GetToken());
+    want.SetParam(CALLBACK_KEY, remoteObject);
+    InjectIMEContextType(asyncContext, want);
+    want.SetParam(WINDOW_RECTANGLE_LEFT_KEY, 0);
+    want.SetParam(WINDOW_RECTANGLE_TOP_KEY, 0);
+    want.SetParam(WINDOW_RECTANGLE_WIDTH_KEY, 0);
+    want.SetParam(WINDOW_RECTANGLE_HEIGHT_KEY, 0);
+    want.SetParam(REQUEST_TOKEN_KEY, imeContext->GetToken());
+    int32_t ret = AbilityManagerClient::GetInstance()->RequestDialogService(want, imeContext->GetToken());
+    if (ret != ERR_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "RequestDialogService error!");
+        asyncContext->needDynamicRequest_ = false;
+        asyncContext->result_.errorCode = RET_FAILED;
+        asyncContext->result_.errorMsg = "Failed to pop up permission dialog.";
+    }
+    LOGI(ATM_DOMAIN, ATM_TAG, "Request end, ret: %{public}d, id: %{public}d, permNum: %{public}zu", ret,
+        asyncContext->tokenId, asyncContext->permissionList.size());
+#else
+    LOGE(ATM_DOMAIN, ATM_TAG, "Convert to AbilityContext failed. "
+        "UIExtension ability can not pop service ablility window!");
+    asyncContext->needDynamicRequest_ = false;
+    asyncContext->result_.errorCode = RET_FAILED;
+    ReportHisysEventError(*asyncContext, ABILITY_FLAG_ERROR, asyncContext->tokenId);
+#endif
+}
+
 static void CreateServiceExtension(std::shared_ptr<RequestAsyncContext> asyncContext)
 {
     if (asyncContext->isWithWindowId) {
@@ -157,11 +206,7 @@ static void CreateServiceExtension(std::shared_ptr<RequestAsyncContext> asyncCon
     auto abilityContext = OHOS::AbilityRuntime::Context::ConvertTo<OHOS::AbilityRuntime::AbilityContext>(
         asyncContext->stageContext_);
     if (abilityContext == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Convert to AbilityContext failed. " \
-            "UIExtension ability can not pop service ablility window!");
-        asyncContext->needDynamicRequest_ = false;
-        asyncContext->result_.errorCode = RET_FAILED;
-        ReportHisysEventError(*asyncContext, ABILITY_FLAG_ERROR, asyncContext->tokenId);
+        CreateServiceExtensionForIME(asyncContext);
         return;
     }
     OHOS::sptr<IRemoteObject> remoteObject = new (std::nothrow) AuthorizationResult(asyncContext);
@@ -230,6 +275,7 @@ void RequestAsyncContext::StartExtensionAbility(std::shared_ptr<RequestAsyncCont
         want.SetParam(PERMISSION_KEY, this->permissionList);
         want.SetParam(STATE_KEY, this->permissionsState);
         want.SetParam(EXTENSION_TYPE_KEY, UI_EXTENSION_TYPE);
+        InjectIMEContextType(asyncContext, want);
         CreateUIExtension(want,
             std::static_pointer_cast<RequestAsyncContext>(asyncContext),
             GetRequestInstanceControl());

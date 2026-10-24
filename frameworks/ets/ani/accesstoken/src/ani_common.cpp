@@ -76,6 +76,14 @@ OHOS::Ace::UIContent* GetUIContent(
             OHOS::AbilityRuntime::Context::ConvertTo<OHOS::AbilityRuntime::UIExtensionContext>(stageContext);
         if (uiExtensionContext == nullptr) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Failed to ConvertTo UIExtensionContext.");
+#ifdef SUPPORT_IME_EXTENSION_CONTEXT
+            auto imeContext = OHOS::AbilityRuntime::Context::ConvertTo<
+                OHOS::AbilityRuntime::InputMethodExtensionContext>(stageContext);
+            if (imeContext != nullptr) {
+                LOGI(ATM_DOMAIN, ATM_TAG, "Get UIContent from InputMethodExtensionContext");
+                return imeContext->GetUIContent();
+            }
+#endif
             return nullptr;
         }
         uiContent = uiExtensionContext->GetUIContent();

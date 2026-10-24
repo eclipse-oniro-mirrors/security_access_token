@@ -77,6 +77,10 @@ ohos_shared_library("libabilityaccessctrl") {
     external_deps += [ "eventhandler:libeventhandler" ]
   }
 
+  if (access_token_support_ime_extension) {
+    external_deps += [ "imf:inputmethod_extension" ]
+  }
+
   configs = [
     "${access_token_path}/config:access_token_compile_flags",
     "${access_token_path}/config:coverage_flags",
