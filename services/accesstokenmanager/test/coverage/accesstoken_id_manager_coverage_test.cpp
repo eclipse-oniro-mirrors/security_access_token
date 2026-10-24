@@ -1378,6 +1378,107 @@ HWTEST_F(AccessTokenIdManagerCoverageTest, RefreshReservedBundleIdSet004, TestSi
     delInfo.delType = AtmDataType::ACCESSTOKEN_SYSTEM_CONFIG;
     ASSERT_EQ(RET_SUCCESS, AccessTokenDbOperator::DeleteAndInsertValues({ delInfo }, {}));
 }
+
+/*
+ * @tc.name: RemoveReservedBundleIds001
+ * @tc.desc: RemoveReservedBundleIds erases present bundleIds from both bundleIdSet_ and reservedBundleIdSet_.
+ * @tc.type: FUNC
+ * @tc.require: TDD
+ */
+HWTEST_F(AccessTokenIdManagerCoverageTest, RemoveReservedBundleIds001, TestSize.Level4)
+{
+    auto& manager = AccessTokenIDManager::GetInstance();
+    manager.bundleIdSet_.insert(TEST_BUNDLE_ID_1);
+    manager.reservedBundleIdSet_.insert(TEST_BUNDLE_ID_1);
+    manager.bundleIdSet_.insert(TEST_BUNDLE_ID_2);
+    manager.reservedBundleIdSet_.insert(TEST_BUNDLE_ID_2);
+
+    std::set<int32_t> bundleIds = { TEST_BUNDLE_ID_1, TEST_BUNDLE_ID_3 };
+    ASSERT_EQ(RET_SUCCESS, manager.RemoveReservedBundleIds(bundleIds));
+    ASSERT_EQ(0U, manager.bundleIdSet_.count(TEST_BUNDLE_ID_1));
+    ASSERT_EQ(0U, manager.reservedBundleIdSet_.count(TEST_BUNDLE_ID_1));
+    ASSERT_EQ(1U, manager.bundleIdSet_.count(TEST_BUNDLE_ID_2));
+    ASSERT_EQ(1U, manager.reservedBundleIdSet_.count(TEST_BUNDLE_ID_2));
+}
+
+/*
+ * @tc.name: RemoveReservedBundleIds002
+ * @tc.desc: RemoveReservedBundleIds with empty input is a no-op returning RET_SUCCESS.
+ * @tc.type: FUNC
+ * @tc.require: TDD
+ */
+HWTEST_F(AccessTokenIdManagerCoverageTest, RemoveReservedBundleIds002, TestSize.Level4)
+{
+    auto& manager = AccessTokenIDManager::GetInstance();
+    std::set<int32_t> emptySet;
+    ASSERT_EQ(RET_SUCCESS, manager.RemoveReservedBundleIds(emptySet));
+    ASSERT_TRUE(manager.bundleIdSet_.empty());
+    ASSERT_TRUE(manager.reservedBundleIdSet_.empty());
+}
+
+/*
+ * @tc.name: BuildReservedBundleIdsPersistInfo001
+ * @tc.desc: BuildReservedBundleIdsPersistInfo returns without persist info when no bundleId is reserved.
+ * @tc.type: FUNC
+ * @tc.require: TDD
+ */
+HWTEST_F(AccessTokenIdManagerCoverageTest, BuildReservedBundleIdsPersistInfo001, TestSize.Level4)
+{
+    auto& manager = AccessTokenIDManager::GetInstance();
+    manager.reservedBundleIdSet_.insert(TEST_BUNDLE_ID_1);
+    std::vector<DelInfo> delInfoVec;
+    std::vector<AddInfo> addInfoVec;
+    std::set<int32_t> bundleIds = { TEST_BUNDLE_ID_2 };
+    ASSERT_EQ(RET_SUCCESS, manager.BuildReservedBundleIdsPersistInfo(bundleIds, delInfoVec, addInfoVec));
+    ASSERT_TRUE(delInfoVec.empty());
+    ASSERT_TRUE(addInfoVec.empty());
+    ASSERT_EQ(1U, manager.reservedBundleIdSet_.count(TEST_BUNDLE_ID_1));
+}
+
+/*
+ * @tc.name: BuildReservedBundleIdsPersistInfo002
+ * @tc.desc: BuildReservedBundleIdsPersistInfo with all reserved ids removed emits only a delete info.
+ * @tc.type: FUNC
+ * @tc.require: TDD
+ */
+HWTEST_F(AccessTokenIdManagerCoverageTest, BuildReservedBundleIdsPersistInfo002, TestSize.Level4)
+{
+    auto& manager = AccessTokenIDManager::GetInstance();
+    manager.reservedBundleIdSet_.insert(TEST_BUNDLE_ID_1);
+    std::vector<DelInfo> delInfoVec;
+    std::vector<AddInfo> addInfoVec;
+    std::set<int32_t> bundleIds = { TEST_BUNDLE_ID_1 };
+    ASSERT_EQ(RET_SUCCESS, manager.BuildReservedBundleIdsPersistInfo(bundleIds, delInfoVec, addInfoVec));
+    ASSERT_EQ(1U, delInfoVec.size());
+    EXPECT_EQ(AtmDataType::ACCESSTOKEN_SYSTEM_CONFIG, delInfoVec[0].delType);
+    ASSERT_TRUE(addInfoVec.empty());
+}
+
+/*
+ * @tc.name: BuildReservedBundleIdsPersistInfo003
+ * @tc.desc: BuildReservedBundleIdsPersistInfo emits delete and add info with the remaining reserved ids.
+ * @tc.type: FUNC
+ * @tc.require: TDD
+ */
+HWTEST_F(AccessTokenIdManagerCoverageTest, BuildReservedBundleIdsPersistInfo003, TestSize.Level4)
+{
+    auto& manager = AccessTokenIDManager::GetInstance();
+    manager.reservedBundleIdSet_.insert(TEST_BUNDLE_ID_1);
+    manager.reservedBundleIdSet_.insert(TEST_BUNDLE_ID_2);
+    std::vector<DelInfo> delInfoVec;
+    std::vector<AddInfo> addInfoVec;
+    std::set<int32_t> bundleIds = { TEST_BUNDLE_ID_1 };
+    ASSERT_EQ(RET_SUCCESS, manager.BuildReservedBundleIdsPersistInfo(bundleIds, delInfoVec, addInfoVec));
+    ASSERT_EQ(1U, delInfoVec.size());
+    EXPECT_EQ(AtmDataType::ACCESSTOKEN_SYSTEM_CONFIG, delInfoVec[0].delType);
+    ASSERT_EQ(1U, addInfoVec.size());
+    EXPECT_EQ(AtmDataType::ACCESSTOKEN_SYSTEM_CONFIG, addInfoVec[0].addType);
+    ASSERT_EQ(1U, addInfoVec[0].addValues.size());
+    std::string value = addInfoVec[0].addValues[0].GetString(TokenFiledConst::FIELD_VALUE);
+    ASSERT_FALSE(value.empty());
+    EXPECT_NE(std::string::npos, value.find(std::to_string(TEST_BUNDLE_ID_2)));
+    EXPECT_EQ(std::string::npos, value.find(std::to_string(TEST_BUNDLE_ID_1)));
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

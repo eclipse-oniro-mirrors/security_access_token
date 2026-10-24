@@ -28,8 +28,10 @@
 #include "access_token_error.h"
 #include "accesstoken_id_manager.h"
 #include "accesstoken_info_utils.h"
+#include "accesstoken_migration_manager.h"
 #include "atm_tools_param_info_parcel.h"
 #include "claw_ticket_manager.h"
+#include "hap_base_info_parcel.h"
 #include "hap_info_parcel.h"
 #include "hap_policy_parcel.h"
 #include "bundle_infos_rawdata.h"
@@ -46,6 +48,7 @@
 #include "sec_comp_enhance_agent.h"
 #endif
 #include "securec.h"
+#include "system_ability_definition.h"
 #include "test_common.h"
 #include "token_field_const.h"
 #include "tokenid_attributes.h"
@@ -4675,7 +4678,146 @@ HWTEST_F(AccessTokenManagerServiceTest, GetHapSignInfoServiceTest001, TestSize.L
         atManagerService_->GetHapSignInfo(bundleName, QUERY_PROFILE,
             static_cast<int32_t>(MultipleMode::DEFAULT_OR_MAIN_MODE), bundleInfos));
 }
+
+/**
+ * @tc.name: GetHapIdentityServiceTest001
+ * @tc.desc: GetHapIdentity returns ERR_PERMISSION_DENIED for a non-native, non-privileged caller.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, GetHapIdentityServiceTest001, TestSize.Level1)
+{
+    MockHapToken mock("com.ohos.gethapidentity.noperm", {}, false);
+    UidGuard guard(NON_ROOT_UID);
+    HapBaseInfoParcel infoParcel;
+    infoParcel.hapBaseInfo.bundleName = "com.ohos.gethapidentity";
+    infoParcel.hapBaseInfo.userID = USER_ID;
+    infoParcel.hapBaseInfo.instIndex = INST_INDEX;
+    IdentityIdl identity;
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, atManagerService_->GetHapIdentity(infoParcel, identity));
+}
+
+/**
+ * @tc.name: GetHapIdentityServiceTest002
+ * @tc.desc: GetHapIdentity returns ERR_TOKENID_NOT_EXIST for a hap not present in the cache.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, GetHapIdentityServiceTest002, TestSize.Level1)
+{
+    MockNativeToken mock("foundation");
+    HapBaseInfoParcel infoParcel;
+    infoParcel.hapBaseInfo.bundleName = "com.ohos.gethapidentity.notexist";
+    infoParcel.hapBaseInfo.userID = USER_ID;
+    infoParcel.hapBaseInfo.instIndex = INST_INDEX;
+    IdentityIdl identity;
+    EXPECT_EQ(AccessTokenError::ERR_TOKENID_NOT_EXIST, atManagerService_->GetHapIdentity(infoParcel, identity));
+}
+
+/**
+ * @tc.name: GetHapIdentityServiceTest003
+ * @tc.desc: GetHapIdentity returns the token id and uid for an existing hap.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, GetHapIdentityServiceTest003, TestSize.Level1)
+{
+    MockNativeToken mock("foundation");
+    AccessTokenID tokenId = INVALID_TOKENID;
+    uint64_t fullTokenId = CreateServiceTestHapToken("com.ohos.gethapidentity.ok", false, {}, tokenId);
+    ASSERT_NE(0U, fullTokenId);
+
+    HapBaseInfoParcel infoParcel;
+    infoParcel.hapBaseInfo.bundleName = "com.ohos.gethapidentity.ok";
+    infoParcel.hapBaseInfo.userID = USER_ID;
+    infoParcel.hapBaseInfo.instIndex = INST_INDEX;
+    IdentityIdl identity;
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->GetHapIdentity(infoParcel, identity));
+    EXPECT_EQ(fullTokenId, static_cast<uint64_t>(identity.tokenId));
+    EXPECT_NE(0, identity.uid);
+
+    ASSERT_EQ(RET_SUCCESS, atManagerService_->DeleteToken(tokenId, false));
+}
+
+/**
+ * @tc.name: GetHapBaseInfoByUidServiceTest001
+ * @tc.desc: GetHapBaseInfoByUid returns ERR_PERMISSION_DENIED for a non-native, non-privileged caller.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, GetHapBaseInfoByUidServiceTest001, TestSize.Level1)
+{
+    MockHapToken mock("com.ohos.gethapbaseinfo.noperm", {}, false);
+    UidGuard guard(NON_ROOT_UID);
+    HapBaseInfoParcel infoParcel;
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
+        atManagerService_->GetHapBaseInfoByUid(20010001, infoParcel));
+}
+
+/**
+ * @tc.name: GetHapBaseInfoByUidServiceTest002
+ * @tc.desc: GetHapBaseInfoByUid returns the hap base info for an existing uid.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, GetHapBaseInfoByUidServiceTest002, TestSize.Level1)
+{
+    MockNativeToken mock("foundation");
+    AccessTokenID tokenId = INVALID_TOKENID;
+    ASSERT_NE(0U, CreateServiceTestHapToken("com.ohos.gethapbaseinfo.ok", false, {}, tokenId));
+
+    const int32_t testUid = 20010002;
+    std::shared_ptr<HapTokenInfoInner> infoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId);
+    ASSERT_NE(nullptr, infoPtr);
+    infoPtr->SetUid(testUid);
+
+    HapBaseInfoParcel infoParcel;
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->GetHapBaseInfoByUid(testUid, infoParcel));
+    EXPECT_EQ("com.ohos.gethapbaseinfo.ok", infoParcel.hapBaseInfo.bundleName);
+    EXPECT_EQ(USER_ID, infoParcel.hapBaseInfo.userID);
+    EXPECT_EQ(INST_INDEX, infoParcel.hapBaseInfo.instIndex);
+
+    ASSERT_EQ(RET_SUCCESS, atManagerService_->DeleteToken(tokenId, false));
+}
 #endif // SPM_DATA_ENABLE
+
+#if defined(SPM_DATA_ENABLE) && defined(IS_SUPPORT_HAP_RUNNING)
+/**
+ * @tc.name: CheckMigratedUidSetServiceTest001
+ * @tc.desc: CheckMigratedUidSet returns ERR_PERMISSION_DENIED without permission and succeeds for privileged caller.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, CheckMigratedUidSetServiceTest001, TestSize.Level1)
+{
+    std::set<int32_t> unreceivedUids;
+    {
+        MockHapToken mock("com.ohos.checkmigrated.noperm", {}, false);
+        UidGuard guard(NON_ROOT_UID);
+        EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
+            atManagerService_->CheckMigratedUidSet({}, unreceivedUids));
+    }
+    {
+        std::set<int32_t> localUnreceivedUids;
+        EXPECT_EQ(RET_SUCCESS, atManagerService_->CheckMigratedUidSet({}, localUnreceivedUids));
+        EXPECT_TRUE(localUnreceivedUids.empty());
+    }
+}
+
+/**
+ * @tc.name: OnAddSystemAbilityPostVerify001
+ * @tc.desc: OnAddSystemAbility triggers post verify when BMS SA arrives and post verify is needed.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, OnAddSystemAbilityPostVerify001, TestSize.Level1)
+{
+    AccessTokenMigrationManager::GetInstance().SetNeedPostVerify(true);
+    atManagerService_->OnAddSystemAbility(BUNDLE_MGR_SERVICE_SYS_ABILITY_ID, "");
+    EXPECT_FALSE(AccessTokenMigrationManager::GetInstance().IsNeedPostVerify());
+    AccessTokenMigrationManager::GetInstance().SetNeedPostVerify(false);
+}
+#endif // SPM_DATA_ENABLE && IS_SUPPORT_HAP_RUNNING
 
 } // namespace AccessToken
 } // namespace Security

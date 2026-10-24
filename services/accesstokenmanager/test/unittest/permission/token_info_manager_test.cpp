@@ -1228,6 +1228,126 @@ HWTEST_F(TokenInfoManagerTest, GetHapTokenID001, TestSize.Level0)
     GTEST_LOG_(INFO) << "remove the token info";
 }
 
+/**
+ * @tc.name: LoadHapTokenInfoFromDbAndNoCache001
+ * @tc.desc: Verify LoadHapTokenInfoFromDbAndNoCache returns null for unknown hap and loads an existing row.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenInfoManagerTest, LoadHapTokenInfoFromDbAndNoCache001, TestSize.Level0)
+{
+    auto& manager = AccessTokenInfoManager::GetInstance();
+
+    // Unknown hap (empty DB result) -> nullptr
+    ASSERT_EQ(nullptr, manager.LoadHapTokenInfoFromDbAndNoCache(
+        USER_ID, "com.ohos.notexist.load", INST_INDEX));
+
+    HapInfoParams info = g_infoManagerTestInfoParms;
+    info.bundleName = "com.ohos.loadhapnocache";
+    info.appIDDesc = info.bundleName;
+    AccessTokenIDEx tokenIdEx = {0};
+    std::vector<GenericValues> undefValues;
+    ASSERT_EQ(RET_SUCCESS, manager.CreateHapTokenInfo(info, g_infoManagerTestPolicyPrams1, tokenIdEx, undefValues));
+
+    std::shared_ptr<HapTokenInfoInner> loaded = manager.LoadHapTokenInfoFromDbAndNoCache(
+        info.userID, info.bundleName, info.instIndex);
+    ASSERT_NE(nullptr, loaded);
+    EXPECT_EQ(tokenIdEx.tokenIdExStruct.tokenID, loaded->GetTokenID());
+    EXPECT_EQ(info.bundleName, loaded->GetBundleName());
+
+    ASSERT_EQ(RET_SUCCESS, manager.RemoveHapTokenInfo(tokenIdEx.tokenIdExStruct.tokenID));
+}
+
+/**
+ * @tc.name: GetHapIdentity001
+ * @tc.desc: Verify GetHapIdentity returns ERR_TOKENID_NOT_EXIST for a hap not present in cache.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenInfoManagerTest, GetHapIdentity001, TestSize.Level0)
+{
+    auto& manager = AccessTokenInfoManager::GetInstance();
+    HapBaseInfo info;
+    info.userID = USER_ID;
+    info.bundleName = "com.ohos.notexist.identity";
+    info.instIndex = INST_INDEX;
+    Identity identity;
+    ASSERT_EQ(AccessTokenError::ERR_TOKENID_NOT_EXIST, manager.GetHapIdentity(info, identity));
+}
+
+/**
+ * @tc.name: GetHapIdentity002
+ * @tc.desc: Verify GetHapIdentity returns the token id and uid for an existing hap.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenInfoManagerTest, GetHapIdentity002, TestSize.Level0)
+{
+    auto& manager = AccessTokenInfoManager::GetInstance();
+    HapInfoParams info = g_infoManagerTestInfoParms;
+    info.bundleName = "com.ohos.gethapidentity";
+    info.appIDDesc = info.bundleName;
+    AccessTokenIDEx tokenIdEx = {0};
+    std::vector<GenericValues> undefValues;
+    ASSERT_EQ(RET_SUCCESS, manager.CreateHapTokenInfo(info, g_infoManagerTestPolicyPrams1, tokenIdEx, undefValues));
+
+    HapBaseInfo baseInfo;
+    baseInfo.userID = info.userID;
+    baseInfo.bundleName = info.bundleName;
+    baseInfo.instIndex = info.instIndex;
+    Identity identity;
+    ASSERT_EQ(RET_SUCCESS, manager.GetHapIdentity(baseInfo, identity));
+    EXPECT_EQ(tokenIdEx.tokenIDEx, identity.tokenId);
+    EXPECT_NE(0, identity.uid);
+
+    ASSERT_EQ(RET_SUCCESS, manager.RemoveHapTokenInfo(tokenIdEx.tokenIdExStruct.tokenID));
+}
+
+/**
+ * @tc.name: GetHapBaseInfoByUid001
+ * @tc.desc: Verify GetHapBaseInfoByUid handles invalid uid and non-existent uid.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenInfoManagerTest, GetHapBaseInfoByUid001, TestSize.Level0)
+{
+    auto& manager = AccessTokenInfoManager::GetInstance();
+    HapBaseInfo info;
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, manager.GetHapBaseInfoByUid(0, info));
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, manager.GetHapBaseInfoByUid(-1, info));
+    ASSERT_EQ(AccessTokenError::ERR_UID_NOT_EXIST, manager.GetHapBaseInfoByUid(999999999, info));
+}
+
+/**
+ * @tc.name: GetHapBaseInfoByUid002
+ * @tc.desc: Verify GetHapBaseInfoByUid returns the base info for an existing uid.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenInfoManagerTest, GetHapBaseInfoByUid002, TestSize.Level0)
+{
+    auto& manager = AccessTokenInfoManager::GetInstance();
+    HapInfoParams info = g_infoManagerTestInfoParms;
+    info.bundleName = "com.ohos.gethapbaseinfobyuid";
+    info.appIDDesc = info.bundleName;
+    AccessTokenIDEx tokenIdEx = {0};
+    std::vector<GenericValues> undefValues;
+    ASSERT_EQ(RET_SUCCESS, manager.CreateHapTokenInfo(info, g_infoManagerTestPolicyPrams1, tokenIdEx, undefValues));
+
+    const int32_t testUid = 20010001;
+    std::shared_ptr<HapTokenInfoInner> infoPtr = manager.GetHapTokenInfoInner(tokenIdEx.tokenIdExStruct.tokenID);
+    ASSERT_NE(nullptr, infoPtr);
+    infoPtr->SetUid(testUid);
+
+    HapBaseInfo baseInfo;
+    ASSERT_EQ(RET_SUCCESS, manager.GetHapBaseInfoByUid(testUid, baseInfo));
+    EXPECT_EQ(info.userID, baseInfo.userID);
+    EXPECT_EQ(info.bundleName, baseInfo.bundleName);
+    EXPECT_EQ(info.instIndex, baseInfo.instIndex);
+
+    ASSERT_EQ(RET_SUCCESS, manager.RemoveHapTokenInfo(tokenIdEx.tokenIdExStruct.tokenID));
+}
+
 #ifdef ACCESS_TOKEN_SUPPORT_SUBPROFILE
 /**
  * @tc.name: GetTokenIDByUserIDWithSubProfile001
