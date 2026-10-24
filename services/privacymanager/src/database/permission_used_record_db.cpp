@@ -983,17 +983,6 @@ int32_t PermissionUsedRecordDb::UpdateDisablePolicyTablePrimaryKey() const
 {
     std::string tableName = PERMISSION_DISABLE_POLICY_TABLE;
     std::string backupTableName = tableName + BACKUP_TABLE_SUFFIX;
-
-    int32_t res = ExecuteSql("alter table " + tableName + " rename to " + backupTableName);
-    if (res != SUCCESS) {
-        return res;
-    }
-
-    res = CreatePermissionDisablePolicyTable();
-    if (res != SUCCESS) {
-        return res;
-    }
-
     std::string copyDataSql = "insert into " + tableName + " (" +
         PrivacyFiledConst::FIELD_PERMISSION_CODE + "," +
         PrivacyFiledConst::FIELD_USER_ID + "," +
@@ -1002,13 +991,27 @@ int32_t PermissionUsedRecordDb::UpdateDisablePolicyTablePrimaryKey() const
         std::to_string(LEGACY_SUBPROFILE_ID) + "," +
         PrivacyFiledConst::FIELD_DISABLE_POLICY + " from " + backupTableName;
 
-    res = ExecuteSql(copyDataSql);
-    if (res != SUCCESS) {
-        return res;
+    int32_t res = SUCCESS;
+    const std::vector<std::function<int32_t()>> migrationSteps = {
+        [&]() { return ExecuteSql("alter table " + tableName + " rename to " + backupTableName); },
+        [&]() { return CreatePermissionDisablePolicyTable(); },
+        [&]() { return ExecuteSql(copyDataSql); },
+        [&]() { return ExecuteSql("drop table " + backupTableName); },
+    };
+    for (const auto& step : migrationSteps) {
+        res = step();
+        if (res != SUCCESS) {
+            LOGE(PRI_DOMAIN, PRI_TAG,
+                "Migrate disable policy table failed, errCode is %{public}d, errMsg is %{public}s.",
+                res, SpitError().c_str());
+            break;
+        }
     }
-
-    res = ExecuteSql("drop table " + backupTableName);
-    return res;
+    if (res != SUCCESS) {
+        RollbackTransaction();
+        return PrivacyError::ERR_DATABASE_OPERATE_FAILED;
+    }
+    return SUCCESS;
 }
 
 int32_t PermissionUsedRecordDb::InsertLockScreenStatusColumn() const
