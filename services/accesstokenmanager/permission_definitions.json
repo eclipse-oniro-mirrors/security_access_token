@@ -12879,6 +12879,17 @@
             "provisionEnable": true,
             "distributedSceneEnable": false,
             "deviceTypes": ["2in1"]
+        },
+        {
+            "name": "ohos.permission.WINDOW_CAPTURE",
+            "grantMode": "user_grant",
+            "availableLevel": "normal",
+            "availableType": "NORMAL",
+            "since": "26.1.0",
+            "deprecated": "",
+            "provisionEnable": false,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1"]
         }
     ]
 }
