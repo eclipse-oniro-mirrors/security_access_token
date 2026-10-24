@@ -727,7 +727,7 @@ int32_t PermissionManager::CheckMultiPermissionStatus(
         if (!IsDefinedPermissionInner(permissionName)) {
             return AccessTokenError::ERR_PERMISSION_NOT_EXIST;
         }
-        if (!IsUserGrantPermission(permissionName)) {
+        if (!IsOperablePermission(permissionName)) {
             return AccessTokenError::ERR_PARAM_INVALID;
         }
     }
