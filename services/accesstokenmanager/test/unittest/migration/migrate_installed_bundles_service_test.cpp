@@ -1947,6 +1947,201 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, LoadDbCacheIfNeeded_InvalidAndDupli
         EXPECT_EQ("com.example.loadcache.dup0", manager.bundleIdOwnerBundles_[23124]);
     }
 }
+
+/**
+ * @tc.name: ResolveIdentityInfo_IterBranchInfoPtrNull
+ * @tc.desc: ResolveIdentityInfo enters the identity-map branch and returns ERR_TOKENID_NOT_EXIST
+ *           when the DB row cannot be loaded (infoPtr == nullptr).
+ * @tc.type: FUNC
+ */
+HWTEST_F(MigrateInstalledBundlesServiceTest, ResolveIdentityInfo_IterBranchInfoPtrNull, TestSize.Level1)
+{
+    MockNativeToken mock("foundation");
+    auto& manager = AccessTokenMigrationManager::GetInstance();
+
+    const std::string bundleName = "com.example.iter.null";
+    const std::string key = AccessTokenInfoUtils::GetHapUniqueStr(1, bundleName, 0);
+    Identity identity;
+    identity.tokenId = 0x200000ff;
+    identity.uid = 20023301;
+    manager.hapIdentityMap_[key] = identity;
+
+    PreparedMigrationBundle bundle;
+    HapBaseInfoIdl baseInfo;
+    baseInfo.bundleName = bundleName;
+    baseInfo.userID = 1;
+    baseInfo.instIndex = 0;
+    bundle.migratedInfo.bundleName = bundleName;
+    bundle.migratedInfo.pathList.hapPaths = { bundleName };
+    bundle.migratedInfo.mode = MultipleModeEnumIdl::DEFAULT_OR_MAIN_MODE;
+    bundle.migratedInfo.hapBaseInfoList = { baseInfo };
+    bundle.migratedInfo.uidList = { 20023301 };
+    bundle.migratedInfo.reservedTypeList = { ReservedTypeIdl::NONE };
+
+    AccessTokenID tokenId = 0;
+    std::shared_ptr<HapTokenInfoInner> infoPtr;
+    bool isNewToken = false;
+    EXPECT_EQ(AccessTokenError::ERR_TOKENID_NOT_EXIST,
+        manager.ResolveIdentityInfo(bundle, 0, tokenId, infoPtr, isNewToken));
+
+    manager.hapIdentityMap_.clear();
+}
+
+/**
+ * @tc.name: ResolveIdentityInfo_IterBranchSuccess
+ * @tc.desc: ResolveIdentityInfo loads a cached identity from DB when the token is absent from the
+ *           active cache and returns RET_SUCCESS with a non-null infoPtr.
+ * @tc.type: FUNC
+ */
+HWTEST_F(MigrateInstalledBundlesServiceTest, ResolveIdentityInfo_IterBranchSuccess, TestSize.Level1)
+{
+    MockNativeToken mock("foundation");
+
+    const std::string bundleName = "com.example.iter.success";
+    const int32_t userID = TestCommon::GetInfoManagerTestSystemInfoParms().userID;
+    const int32_t uid = 20023302;
+
+    // Create a full token in DB + active cache, then drop it from the active cache so that
+    // GetHapTokenID returns INVALID and ResolveIdentityInfo falls into the identity-map branch.
+    HapInfoParams info = TestCommon::GetInfoManagerTestSystemInfoParms();
+    info.bundleName = bundleName;
+    info.appIDDesc = bundleName;
+    HapPolicyParams policy = TestCommon::GetTestPolicyParams();
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS, AllocHapTokenLocally(info, policy, tokenIdEx));
+    AccessTokenID allocatedTokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(0U, allocatedTokenId);
+
+    AccessTokenInfoManager::GetInstance().hapTokenInfoMap_.erase(allocatedTokenId);
+    AccessTokenInfoManager::GetInstance().hapTokenIdMap_.erase(
+        AccessTokenInfoUtils::GetHapUniqueStr(userID, bundleName, 0));
+
+    auto& manager = AccessTokenMigrationManager::GetInstance();
+    manager.hapIdentityMap_.clear();
+    ASSERT_EQ(RET_SUCCESS, manager.LoadDbCacheIfNeeded());
+
+    PreparedMigrationBundle bundle;
+    HapBaseInfoIdl baseInfo;
+    baseInfo.bundleName = bundleName;
+    baseInfo.userID = userID;
+    baseInfo.instIndex = 0;
+    bundle.migratedInfo.bundleName = bundleName;
+    bundle.migratedInfo.pathList.hapPaths = { bundleName };
+    bundle.migratedInfo.mode = MultipleModeEnumIdl::DEFAULT_OR_MAIN_MODE;
+    bundle.migratedInfo.hapBaseInfoList = { baseInfo };
+    bundle.migratedInfo.uidList = { uid };
+    bundle.migratedInfo.reservedTypeList = { ReservedTypeIdl::NONE };
+
+    AccessTokenID tokenId = 0;
+    std::shared_ptr<HapTokenInfoInner> infoPtr;
+    bool isNewToken = false;
+    EXPECT_EQ(RET_SUCCESS, manager.ResolveIdentityInfo(bundle, 0, tokenId, infoPtr, isNewToken));
+    EXPECT_EQ(allocatedTokenId, tokenId);
+    ASSERT_NE(nullptr, infoPtr);
+    EXPECT_EQ(bundleName, infoPtr->GetBundleName());
+
+    manager.hapIdentityMap_.clear();
+    manager.SetNeedPostVerify(false);
+
+    CleanupMigratedToken(allocatedTokenId);
+    AccessTokenIDManager::GetInstance().ReleaseTokenId(allocatedTokenId);
+}
+
+/**
+ * @tc.name: CheckMigratedUidSet_EmptyAndInvalidUid
+ * @tc.desc: CheckMigratedUidSet covers the empty-reserved and invalid-uid branches.
+ * @tc.type: FUNC
+ */
+HWTEST_F(MigrateInstalledBundlesServiceTest, CheckMigratedUidSet_EmptyAndInvalidUid, TestSize.Level1)
+{
+    MockNativeToken mock("foundation");
+    auto& manager = AccessTokenMigrationManager::GetInstance();
+
+    // All uids already present in the identity map -> reserved bundle ids empty.
+    manager.hapIdentityMap_.clear();
+    std::string key = AccessTokenInfoUtils::GetHapUniqueStr(1, "com.example.empty", 0);
+    Identity identity;
+    identity.tokenId = 0x20000100;
+    identity.uid = 20023303;
+    manager.hapIdentityMap_[key] = identity;
+
+    std::set<int32_t> unreceivedUids;
+    EXPECT_EQ(RET_SUCCESS, manager.CheckMigratedUidSet({ 20023303 }, unreceivedUids));
+    EXPECT_TRUE(unreceivedUids.empty());
+
+    // Invalid uid (< 0) skips reservation, leaving reserved set empty.
+    std::set<int32_t> unreceivedInvalid;
+    EXPECT_EQ(RET_SUCCESS, manager.CheckMigratedUidSet({ -1 }, unreceivedInvalid));
+    EXPECT_EQ(std::set<int32_t>({ -1 }), unreceivedInvalid);
+
+    manager.hapIdentityMap_.clear();
+}
+
+/**
+ * @tc.name: CheckMigratedUidSet_OccupiedBundleId
+ * @tc.desc: CheckMigratedUidSet skips reservation when the extracted bundleId is already occupied.
+ * @tc.type: FUNC
+ */
+HWTEST_F(MigrateInstalledBundlesServiceTest, CheckMigratedUidSet_OccupiedBundleId, TestSize.Level1)
+{
+    MockNativeToken mock("foundation");
+    auto& manager = AccessTokenMigrationManager::GetInstance();
+    manager.hapIdentityMap_.clear();
+
+    // uid -> bundleId 21301, inserted into bundleIdSet_ only => occupied.
+    int32_t occupiedUid = UID_TRANSFORM_DIVISOR * 100 + 21301;
+    AccessTokenIDManager::GetInstance().bundleIdSet_.insert(21301);
+
+    std::set<int32_t> unreceivedUids;
+    EXPECT_EQ(RET_SUCCESS, manager.CheckMigratedUidSet({ occupiedUid }, unreceivedUids));
+    EXPECT_EQ(std::set<int32_t>({ occupiedUid }), unreceivedUids);
+
+    AccessTokenIDManager::GetInstance().bundleIdSet_.erase(21301);
+}
+
+/**
+ * @tc.name: PersistMigratedBundles_ReservedBundleIdRemoved
+ * @tc.desc: PersistMigratedBundles removes a reserved bundle id when the migrated uid is reserved.
+ * @tc.type: FUNC
+ */
+HWTEST_F(MigrateInstalledBundlesServiceTest, PersistMigratedBundles_ReservedBundleIdRemoved, TestSize.Level1)
+{
+    MockNativeToken mock("foundation");
+
+    const int32_t reservedBundleId = 21302;
+    AccessTokenIDManager::GetInstance().reservedBundleIdSet_.insert(reservedBundleId);
+    AccessTokenIDManager::GetInstance().bundleIdSet_.insert(reservedBundleId);
+
+    HapInfoParams info = TestCommon::GetInfoManagerTestSystemInfoParms();
+    info.bundleName = "com.example.reserved.rm";
+    info.appIDDesc = info.bundleName;
+    info.userID = 100;
+
+    HapBaseInfoIdl baseInfo;
+    baseInfo.bundleName = info.bundleName;
+    baseInfo.userID = info.userID;
+    baseInfo.instIndex = 0;
+
+    MigratedInfoIdl migratedInfo;
+    migratedInfo.bundleName = info.bundleName;
+    migratedInfo.pathList.hapPaths = { info.bundleName };
+    migratedInfo.pathList.isPreInstalled = false;
+    migratedInfo.mode = MultipleModeEnumIdl::DEFAULT_OR_MAIN_MODE;
+    migratedInfo.hapBaseInfoList = { baseInfo };
+    migratedInfo.uidList = { UID_TRANSFORM_DIVISOR * 100 + reservedBundleId };
+    migratedInfo.reservedTypeList = { ReservedTypeIdl::NONE };
+
+    auto service = DelayedSingleton<AccessTokenManagerService>::GetInstance();
+    ASSERT_NE(nullptr, service);
+    std::vector<BundleMigrateResultIdl> results;
+    EXPECT_EQ(RET_SUCCESS, service->MigrateInstalledBundles({ migratedInfo }, results));
+    ASSERT_EQ(1u, results.size());
+    EXPECT_EQ(RET_SUCCESS, results[0].errcode);
+
+    EXPECT_EQ(0U, AccessTokenIDManager::GetInstance().reservedBundleIdSet_.count(reservedBundleId));
+    AccessTokenIDManager::GetInstance().reservedBundleIdSet_.erase(reservedBundleId);
+    AccessTokenIDManager::GetInstance().bundleIdSet_.erase(reservedBundleId);
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

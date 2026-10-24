@@ -131,6 +131,11 @@ int32_t AllocHapTokenLocally(const HapInfoParams& info, HapPolicyParams& policyP
 
 class MigrationVerifyHelperTest : public testing::Test {
 public:
+    void SetUp() override
+    {
+        SetUpVerifyEnvironment();
+    }
+
     static void SetUpTestCase()
     {
         std::filesystem::create_directory(TEST_DIR);
@@ -566,7 +571,6 @@ HWTEST_F(MigrationVerifyHelperTest, PostVerifyMigratedBundlesTask002, TestSize.L
 HWTEST_F(MigrationVerifyHelperTest, HandleMigratedBundleTask001, TestSize.Level1)
 {
     MockNativeToken mock("foundation");
-    SetUpVerifyEnvironment();
 
     HapInfoParams info = TestCommon::GetInfoManagerTestSystemInfoParms();
     info.bundleName = "com.example.handle.success";
@@ -604,7 +608,6 @@ HWTEST_F(MigrationVerifyHelperTest, HandleMigratedBundleTask001, TestSize.Level1
 
     (void)SpmRemoveEntry(tokenId);
     EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenId));
-    TearDownVerifyEnvironment();
 }
 
 /**
@@ -615,7 +618,6 @@ HWTEST_F(MigrationVerifyHelperTest, HandleMigratedBundleTask001, TestSize.Level1
 HWTEST_F(MigrationVerifyHelperTest, HandleMigratedBundleTask002, TestSize.Level1)
 {
     MockNativeToken mock("foundation");
-    SetUpVerifyEnvironment();
 
     HapInfoParams info = TestCommon::GetInfoManagerTestSystemInfoParms();
     info.bundleName = "com.example.handle.noenforce";
@@ -650,7 +652,6 @@ HWTEST_F(MigrationVerifyHelperTest, HandleMigratedBundleTask002, TestSize.Level1
 
     (void)SpmRemoveEntry(tokenId);
     EXPECT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId));
-    TearDownVerifyEnvironment();
 }
 
 /**
@@ -661,7 +662,6 @@ HWTEST_F(MigrationVerifyHelperTest, HandleMigratedBundleTask002, TestSize.Level1
 HWTEST_F(MigrationVerifyHelperTest, HandleMigratedBundleTask003, TestSize.Level1)
 {
     MockNativeToken mock("foundation");
-    SetUpVerifyEnvironment();
 
     HapInfoParams info = TestCommon::GetInfoManagerTestSystemInfoParms();
     info.bundleName = "com.example.handle.enforce";
@@ -695,7 +695,6 @@ HWTEST_F(MigrationVerifyHelperTest, HandleMigratedBundleTask003, TestSize.Level1
     SetParameter(ACCESS_TOKEN_SERVICE_SPM_ENFORCING_KEY, "0");
     (void)SpmRemoveEntry(tokenId);
     (void)AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId);
-    TearDownVerifyEnvironment();
 }
 
 /**
@@ -736,6 +735,170 @@ HWTEST_F(MigrationVerifyHelperTest, NeedPostVerify002, TestSize.Level1)
     bundleInfo.moduleInfoItems = { moduleInfo0, moduleInfo1 };
 
     EXPECT_FALSE(MigrationVerifyHelper::GetInstance().NeedPostVerify(bundleInfo));
+}
+
+/**
+ * @tc.name: DoVerifyMigratedBundleCheckMultipleHapsFail001
+ * @tc.desc: DoVerifyMigratedBundle returns ERR_PARAM_INVALID when CheckMultipleHaps fails
+ *           because multiple haps have different bundle names.
+ * @tc.type: FUNC
+ */
+HWTEST_F(MigrationVerifyHelperTest, DoVerifyMigratedBundleCheckMultipleHapsFail001, TestSize.Level1)
+{
+    MockNativeToken mock("foundation");
+    std::string savedBundleName = mockAdapter_.bundleName_;
+    mockAdapter_.verifyRet_ = RET_SUCCESS;
+    // Empty bundleName makes each hap path derive its own bundleName, so the two haps differ.
+    mockAdapter_.bundleName_ = "";
+
+    MigratedInfoIdl migratedInfo;
+    migratedInfo.bundleName = "com.example.multiple";
+    migratedInfo.pathList.hapPaths = { TEST_PATH, TEST_PATH2 };
+    migratedInfo.pathList.isPreInstalled = false;
+    BundleInfoItems bundleInfo = BuildBundleInfo(migratedInfo);
+    VerifiedMigrationBundle verifiedBundle;
+
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
+        MigrationVerifyHelper::GetInstance().DoVerifyMigratedBundle(bundleInfo, verifiedBundle));
+
+    mockAdapter_.bundleName_ = savedBundleName;
+}
+
+/**
+ * @tc.name: BuildCachedInfosModeMismatch001
+ * @tc.desc: BuildCachedInfos returns false when the token mode does not match the bundle mode.
+ * @tc.type: FUNC
+ */
+HWTEST_F(MigrationVerifyHelperTest, BuildCachedInfosModeMismatch001, TestSize.Level1)
+{
+    MockNativeToken mock("foundation");
+    HapInfoParams info = TestCommon::GetInfoManagerTestSystemInfoParms();
+    info.bundleName = "com.example.cache.mode";
+    info.appIDDesc = info.bundleName;
+    HapPolicyParams policy = TestCommon::GetTestPolicyParams();
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS, TestCommon::AllocTestHapToken(info, policy, tokenIdEx));
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+
+    BundleInfoItems bundleInfo;
+    bundleInfo.bundleName = info.bundleName;
+    bundleInfo.mode = MultipleMode::SUB_MODE; // token instIndex=0 -> main mode, mismatch
+
+    std::vector<std::shared_ptr<HapTokenInfoInner>> cachedInfos;
+    EXPECT_FALSE(MigrationVerifyHelper::GetInstance().BuildCachedInfos(bundleInfo, cachedInfos));
+    EXPECT_TRUE(cachedInfos.empty());
+
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenId));
+}
+
+/**
+ * @tc.name: PrepareHapInfoOperationsSideloadMismatch001
+ * @tc.desc: PrepareHapInfoOperations sets sideload flag when it differs from param,
+ *           and skips tokens that are not found in DB.
+ * @tc.type: FUNC
+ */
+HWTEST_F(MigrationVerifyHelperTest, PrepareHapInfoOperationsSideloadMismatch001, TestSize.Level1)
+{
+    MockNativeToken mock("foundation");
+    auto cachedInfo = BuildCachedInfo(0x200000fe, 100, "com.example.prepare", 0);
+    std::vector<std::shared_ptr<HapTokenInfoInner>> cachedInfos = { cachedInfo };
+
+    BundleParam param;
+    param.isSideloadApp = true;
+    HapPolicy policy;
+
+    MigrationVerifyHelper::GetInstance().PrepareHapInfoOperations(param, policy, cachedInfos);
+
+    // IsSideloadApp mismatch branch: cache sideload flag updated to match param.
+    EXPECT_TRUE(cachedInfo->IsSideloadApp());
+}
+
+/**
+ * @tc.name: FixBriefPermDataPerTokenNotFixed001
+ * @tc.desc: FixBriefPermDataPerToken leaves tokenFixed false when no permission data needs fixing.
+ * @tc.type: FUNC
+ */
+HWTEST_F(MigrationVerifyHelperTest, FixBriefPermDataPerTokenNotFixed001, TestSize.Level1)
+{
+    MockNativeToken mock("foundation");
+    VerifiedMigrationBundle verifiedBundle;
+    verifiedBundle.policy = HapPolicy();
+    verifiedBundle.installParam.bundleName = "com.example.fixbrief";
+
+    auto cachedInfo = BuildCachedInfo(0x200000fd, 100, verifiedBundle.installParam.bundleName, 0);
+    std::vector<std::shared_ptr<HapTokenInfoInner>> cachedInfos = { cachedInfo };
+
+    MigrationVerifyHelper::GetInstance().delInfoVec_.clear();
+    MigrationVerifyHelper::GetInstance().addInfoVec_.clear();
+
+    BundleNoCachedInfo noCached;
+    std::vector<std::vector<BriefPermData>> fixedPermBriefPerToken;
+    MigrationVerifyHelper::GetInstance().FixBriefPermDataPerToken(
+        verifiedBundle, cachedInfos, noCached, fixedPermBriefPerToken);
+
+    EXPECT_EQ(1u, fixedPermBriefPerToken.size());
+    EXPECT_TRUE(MigrationVerifyHelper::GetInstance().delInfoVec_.empty());
+    EXPECT_TRUE(MigrationVerifyHelper::GetInstance().addInfoVec_.empty());
+}
+
+/**
+ * @tc.name: VerifyMigratedBundlePersistDbFail001
+ * @tc.desc: VerifyMigratedBundle returns error when PersistDbInfo fails due to
+ *           module count mismatch (one module has an empty path).
+ * @tc.type: FUNC
+ */
+HWTEST_F(MigrationVerifyHelperTest, VerifyMigratedBundlePersistDbFail001, TestSize.Level1)
+{
+    MockNativeToken mock("foundation");
+    HapInfoParams info = TestCommon::GetInfoManagerTestSystemInfoParms();
+    info.bundleName = "com.example.persist.fail";
+    info.appIDDesc = info.bundleName;
+    HapPolicyParams policy = TestCommon::GetTestPolicyParams();
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS, TestCommon::AllocTestHapToken(info, policy, tokenIdEx));
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+
+    auto cachedInfo = BuildCachedInfo(tokenId, info.userID, info.bundleName, 0);
+    std::vector<std::shared_ptr<HapTokenInfoInner>> cachedInfos = { cachedInfo };
+
+    mockAdapter_.bundleName_ = info.bundleName;
+    mockAdapter_.verifyRet_ = RET_SUCCESS;
+    MigratedInfoIdl migratedInfo = BuildBasicMigratedInfo(info.bundleName, TEST_PATH);
+    migratedInfo.pathList.hapPaths = { TEST_PATH, "" }; // second path empty -> skipped in verify
+    BundleInfoItems bundleInfo = BuildBundleInfo(migratedInfo);
+
+    int32_t ret = MigrationVerifyHelper::GetInstance().VerifyMigratedBundle(bundleInfo, cachedInfos);
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
+
+    (void)SpmRemoveEntry(tokenId);
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenId));
+}
+
+/**
+ * @tc.name: PersistDbInfoBuildBundleSignInfoFail001
+ * @tc.desc: PersistDbInfo returns error when BuildBundleSignInfo fails due to
+ *           module count mismatch between bundleInfo and verifiedBundle.
+ * @tc.type: FUNC
+ */
+HWTEST_F(MigrationVerifyHelperTest, PersistDbInfoBuildBundleSignInfoFail001, TestSize.Level1)
+{
+    MockNativeToken mock("foundation");
+
+    BundleInfoItems bundleInfo;
+    bundleInfo.bundleName = "com.example.persist.buildsign";
+    ModuleInfoItem moduleInfo;
+    moduleInfo.moduleName = "#0";
+    moduleInfo.path = TEST_PATH;
+    bundleInfo.moduleInfoItems = { moduleInfo };
+
+    VerifiedMigrationBundle verifiedBundle;
+    auto info1 = std::make_shared<TrustedBundleInfoInner>();
+    auto info2 = std::make_shared<TrustedBundleInfoInner>();
+    verifiedBundle.verifiedInfos = { *info1, *info2 }; // 2 != 1 -> BuildBundleSignInfo fails
+
+    std::vector<std::shared_ptr<HapTokenInfoInner>> cachedInfos;
+    int32_t ret = MigrationVerifyHelper::GetInstance().PersistDbInfo(bundleInfo, verifiedBundle, cachedInfos);
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
 }
 } // namespace AccessToken
 } // namespace Security
