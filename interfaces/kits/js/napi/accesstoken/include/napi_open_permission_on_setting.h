@@ -24,6 +24,9 @@
 #include "permission_grant_info.h"
 #include "ui_content.h"
 #include "ui_extension_context.h"
+#ifdef SUPPORT_IME_EXTENSION_CONTEXT
+#include "inputmethod_extension_context.h"
+#endif
 
 namespace OHOS {
 namespace Security {
@@ -47,6 +50,9 @@ struct OpenPermOnSettingAsyncContext : public AtManagerAsyncWorkData {
 
     std::shared_ptr<AbilityRuntime::AbilityContext> abilityContext;
     std::shared_ptr<AbilityRuntime::UIExtensionContext> uiExtensionContext;
+#ifdef SUPPORT_IME_EXTENSION_CONTEXT
+    std::shared_ptr<AbilityRuntime::InputMethodExtensionContext> inputMethodExtensionContext;
+#endif
     bool uiAbilityFlag = false;
     bool releaseFlag = false;
 #ifdef EVENTHANDLER_ENABLE
