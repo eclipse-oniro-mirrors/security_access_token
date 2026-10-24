@@ -847,27 +847,28 @@ int32_t PrivacyManagerClient::SetHapWithFGReminder(uint32_t tokenId, bool isAllo
     return ret;
 }
 
-int32_t PrivacyManagerClient::SetDisablePolicy(const std::string& permissionName, bool isDisable)
+int32_t PrivacyManagerClient::SetDisablePolicy(const std::string& permissionName, bool isDisable, int32_t userId)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Proxy is null.");
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
-    int32_t ret = proxy->SetDisablePolicy(permissionName, isDisable);
+    int32_t ret = proxy->SetDisablePolicy(permissionName, isDisable, userId);
     ret = ConvertResult(ret);
     LOGI(PRI_DOMAIN, PRI_TAG, "Ret is %{public}d.", ret);
     return ret;
 }
 
-int32_t PrivacyManagerClient::GetDisablePolicy(const std::string& permissionName, bool& isDisable)
+int32_t PrivacyManagerClient::GetDisablePolicy(const std::string& permissionName, bool& isDisable,
+    int32_t userId)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Proxy is null.");
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
-    int32_t ret = proxy->GetDisablePolicy(permissionName, isDisable);
+    int32_t ret = proxy->GetDisablePolicy(permissionName, isDisable, userId);
     ret = ConvertResult(ret);
     if (ret == RET_SUCCESS) {
         LOGI(PRI_DOMAIN, PRI_TAG,

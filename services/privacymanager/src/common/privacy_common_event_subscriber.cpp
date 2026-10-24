@@ -49,6 +49,7 @@ void PrivacyCommonEventSubscriber::RegisterEvent()
     skill->AddEvent(EventFwk::CommonEventSupport::COMMON_EVENT_PACKAGE_REMOVED);
     skill->AddEvent(EventFwk::CommonEventSupport::COMMON_EVENT_PACKAGE_FULLY_REMOVED);
     skill->AddEvent(EventFwk::CommonEventSupport::COMMON_EVENT_SHUTDOWN);
+    skill->AddEvent(EventFwk::CommonEventSupport::COMMON_EVENT_USER_REMOVED);
     auto info = std::make_shared<EventFwk::CommonEventSubscribeInfo>(*skill);
     g_subscriber = std::make_shared<PrivacyCommonEventSubscriber>(*info);
     const auto result = EventFwk::CommonEventManager::SubscribeCommonEvent(g_subscriber);
@@ -97,6 +98,10 @@ void PrivacyCommonEventSubscriber::OnReceiveEvent(const EventFwk::CommonEventDat
     } else if (action == EventFwk::CommonEventSupport::COMMON_EVENT_SHUTDOWN) {
         // when receive shut down power event, store the cache data to database immediately
         PermissionRecordManager::GetInstance().UpdatePermRecImmediately();
+    } else if (action == EventFwk::CommonEventSupport::COMMON_EVENT_USER_REMOVED) {
+        int32_t removedUserId = event.GetCode();
+        LOGI(PRI_DOMAIN, PRI_TAG, "Receive user removed: removedUserId=%{public}d", removedUserId);
+        PermissionRecordManager::GetInstance().RemoveUserLevelDisablePolicy(removedUserId);
     } else {
         LOGE(PRI_DOMAIN, PRI_TAG, "Action is invalid.");
     }

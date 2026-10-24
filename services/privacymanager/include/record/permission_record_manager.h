@@ -16,11 +16,13 @@
 #ifndef PERMISSION_RECORD_MANAGER_H
 #define PERMISSION_RECORD_MANAGER_H
 
+#include <map>
 #include <set>
 #include <shared_mutex>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
 #ifdef EVENTHANDLER_ENABLE
@@ -121,8 +123,8 @@ public:
     int32_t SetPrivacyMutePolicy(const std::string permissionName, bool isMute);
     int32_t SetTempMutePolicy(const std::string permissionName, bool isMute);
     int32_t SetHapWithFGReminder(uint32_t tokenId, bool isAllowed);
-    int32_t SetDisablePolicy(const std::string& permissionName, bool isDisable);
-    int32_t GetDisablePolicy(const std::string& permissionName, bool& isDisable);
+    int32_t SetDisablePolicy(const std::string& permissionName, bool isDisable, int32_t userId = -1);
+    int32_t GetDisablePolicy(const std::string& permissionName, bool& isDisable, int32_t userId = -1);
     void GetCurrUsingPermInfo(std::vector<CurrUsingPermInfo>& infoList);
     int32_t CheckPermissionInUse(const std::string& permissionName, bool& isUsing);
     int32_t RegisterPermDisablePolicyCallback(AccessTokenID regiterTokenId, const std::vector<std::string>& permList,
@@ -134,6 +136,7 @@ public:
     void SetScreenOn(bool isScreenOn);
     bool IsScreenOn(bool isIpc = false);
     bool IsCameraPrivacyControlEnhanceEnabled() const;
+    void RemoveUserLevelDisablePolicy(int32_t userId);
 
     void OnAppMgrRemoteDiedHandle();
     void OnAudioMgrRemoteDiedHandle();
@@ -237,11 +240,12 @@ private:
 
     void InitDisablePolicyFromDb();
     int32_t IsPermValidForDisablePolicy(const std::string& permissionName, int32_t& opCode);
-    int32_t InsertOrUpdateDisablePolicy(int32_t opCode, bool isDisable);
-    bool GetCacheDisablePolicy(int32_t opCode);
-    bool GetCacheDisablePolicy(const std::string& permissionName);
+    int32_t InsertOrUpdateDisablePolicy(int32_t opCode, bool isDisable, int32_t userId);
+    bool GetCacheDisablePolicy(int32_t opCode, int32_t userId);
+    bool GetCacheDisablePolicy(const std::string& permissionName, int32_t userId);
     bool IsEdmMuteOrDisable(const std::string& permissionName);
-    void UpdateDisablePolicyCache(int32_t opCode, bool isDisable);
+    void UpdateDisablePolicyCache(int32_t opCode, bool isDisable, int32_t userId);
+    void RemoveUserLevelDisablePolicyFromCache(int32_t userId);
     int32_t PermListFilter(const std::vector<std::string>& listSrc, std::vector<std::string>& listRes);
 
 #ifdef REMOTE_PRIVACY_ENABLE
@@ -321,8 +325,9 @@ private:
     mutable std::mutex permUsedRecToggleStatusMutex_;
     std::map<std::string, bool> permUsedRecToggleStatusMap_;
 
-    std::shared_mutex diablePolicyMutex_;
-    std::unordered_map<int32_t, bool> disablePolicyMap_;
+    mutable std::shared_mutex disablePolicyMutex_;
+    std::map<std::pair<int32_t, int32_t>, bool> disablePolicyMap_;
+    // key = (opCode, userId), userId=-1 is device level, userId>=0 is user level
 #ifdef REMOTE_PRIVACY_ENABLE
     // remote start list
     std::mutex startRemoteRecordListMutex_;
