@@ -51,7 +51,8 @@ bool IsGrantedWithoutDialog(const PermissionStatus& status)
 int32_t BuildPermissionStatusMap(AccessTokenID tokenId, PermissionStatusMap& permissionStatusMap)
 {
     std::vector<PermissionStatus> userGrantPermissions;
-    int32_t ret = PermissionManager::GetInstance().GetReqPermissions(tokenId, userGrantPermissions, false);
+    int32_t ret = PermissionManager::GetInstance().GetReqPermissions(
+        tokenId, userGrantPermissions, PermissionGrantType::NON_SYSTEM_GRANT);
     if (ret != RET_SUCCESS) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Get user grant permissions failed, tokenId=%{public}u, ret=%{public}d.",
             tokenId, ret);
@@ -59,7 +60,8 @@ int32_t BuildPermissionStatusMap(AccessTokenID tokenId, PermissionStatusMap& per
     }
 
     std::vector<PermissionStatus> systemGrantPermissions;
-    ret = PermissionManager::GetInstance().GetReqPermissions(tokenId, systemGrantPermissions, true);
+    ret = PermissionManager::GetInstance().GetReqPermissions(
+        tokenId, systemGrantPermissions, PermissionGrantType::SYSTEM_GRANT);
     if (ret != RET_SUCCESS) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Get system grant permissions failed, tokenId=%{public}u, ret=%{public}d.",
             tokenId, ret);
