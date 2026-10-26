@@ -2640,8 +2640,10 @@ HWTEST_F(AccessTokenManagerServiceTest, FilterPermFeatureTest006, TestSize.Level
     ASSERT_EQ(RET_SUCCESS, ret);
 
     std::vector<PermissionStatusParcel> reqPermList;
-    EXPECT_EQ(RET_SUCCESS, atManagerService_->GetReqPermissions(tokenIdEx.tokenIdExStruct.tokenID, reqPermList, true));
-    EXPECT_EQ(RET_SUCCESS, atManagerService_->GetReqPermissions(tokenIdEx.tokenIdExStruct.tokenID, reqPermList, false));
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->GetReqPermissions(
+        tokenIdEx.tokenIdExStruct.tokenID, reqPermList, PermissionGrantTypeIdl::SYSTEM_GRANT));
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->GetReqPermissions(
+        tokenIdEx.tokenIdExStruct.tokenID, reqPermList, PermissionGrantTypeIdl::NON_SYSTEM_GRANT));
 
     EXPECT_EQ(INDEX_TWO, reqPermList.size());
 
@@ -2688,8 +2690,10 @@ HWTEST_F(AccessTokenManagerServiceTest, FilterPermFeatureTest007, TestSize.Level
     ASSERT_NE(0, tokenIdEx.tokenIDEx);
 
     std::vector<PermissionStatusParcel> reqPermList;
-    EXPECT_EQ(RET_SUCCESS, atManagerService_->GetReqPermissions(tokenIdEx.tokenIdExStruct.tokenID, reqPermList, true));
-    EXPECT_EQ(RET_SUCCESS, atManagerService_->GetReqPermissions(tokenIdEx.tokenIdExStruct.tokenID, reqPermList, false));
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->GetReqPermissions(
+        tokenIdEx.tokenIdExStruct.tokenID, reqPermList, PermissionGrantTypeIdl::SYSTEM_GRANT));
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->GetReqPermissions(
+        tokenIdEx.tokenIdExStruct.tokenID, reqPermList, PermissionGrantTypeIdl::NON_SYSTEM_GRANT));
 
     EXPECT_EQ(INDEX_ONE, reqPermList.size());
 
@@ -2749,8 +2753,10 @@ HWTEST_F(AccessTokenManagerServiceTest, FilterPermFeatureTest008, TestSize.Level
     tokenIdEx.tokenIDEx = fullTokenId2;
 
     std::vector<PermissionStatusParcel> reqPermList;
-    EXPECT_EQ(RET_SUCCESS, atManagerService_->GetReqPermissions(tokenIdEx.tokenIdExStruct.tokenID, reqPermList, true));
-    EXPECT_EQ(RET_SUCCESS, atManagerService_->GetReqPermissions(tokenIdEx.tokenIdExStruct.tokenID, reqPermList, false));
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->GetReqPermissions(
+        tokenIdEx.tokenIdExStruct.tokenID, reqPermList, PermissionGrantTypeIdl::SYSTEM_GRANT));
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->GetReqPermissions(
+        tokenIdEx.tokenIdExStruct.tokenID, reqPermList, PermissionGrantTypeIdl::NON_SYSTEM_GRANT));
 
     EXPECT_EQ(INDEX_THREE, reqPermList.size());
 
@@ -2810,8 +2816,10 @@ HWTEST_F(AccessTokenManagerServiceTest, FilterPermFeatureTest009, TestSize.Level
     tokenIdEx.tokenIDEx = fullTokenId2;
 
     std::vector<PermissionStatusParcel> reqPermList;
-    EXPECT_EQ(RET_SUCCESS, atManagerService_->GetReqPermissions(tokenIdEx.tokenIdExStruct.tokenID, reqPermList, true));
-    EXPECT_EQ(RET_SUCCESS, atManagerService_->GetReqPermissions(tokenIdEx.tokenIdExStruct.tokenID, reqPermList, false));
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->GetReqPermissions(
+        tokenIdEx.tokenIdExStruct.tokenID, reqPermList, PermissionGrantTypeIdl::SYSTEM_GRANT));
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->GetReqPermissions(
+        tokenIdEx.tokenIdExStruct.tokenID, reqPermList, PermissionGrantTypeIdl::NON_SYSTEM_GRANT));
 
     EXPECT_EQ(INDEX_TWO, reqPermList.size());
 
@@ -4646,6 +4654,90 @@ HWTEST_F(AccessTokenManagerServiceTest, ToggleRequestService002, TestSize.Level0
     ASSERT_EQ(RET_SUCCESS, atManagerService_->GetPermissionRequestToggleStatus(
         "ohos.permission.CAMERA", status, 0, 0));
     EXPECT_EQ(PermissionRequestToggleStatus::OPEN, status);
+}
+
+#ifdef SPM_DATA_ENABLE
+/**
+ * @tc.name: IsMigrationDoneServiceTest001
+ * @tc.desc: Test IsMigrationDone service entry passes through migration state.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, IsMigrationDoneServiceTest001, TestSize.Level1)
+{
+    bool isDone = false;
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->IsMigrationDone(isDone));
+    EXPECT_EQ(AccessTokenIDManager::GetInstance().IsMigrationDone(), isDone);
+}
+
+/**
+ * @tc.name: IsMigrationDoneServiceTest002
+ * @tc.desc: Test IsMigrationDone returns permission denied for caller without MANAGE_HAP_TOKENID.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, IsMigrationDoneServiceTest002, TestSize.Level1)
+{
+    MockToken mock(g_selfShellTokenId, "accesstoken_service", false);
+    UidGuard uidGuard(NON_ROOT_UID);
+
+    bool isDone = false;
+    EXPECT_EQ(ERR_PERMISSION_DENIED, atManagerService_->IsMigrationDone(isDone));
+}
+#endif // SPM_DATA_ENABLE
+
+/**
+ * @tc.name: GetReqPermissionsFilterServiceTest001
+ * @tc.desc: Test GetReqPermissions returns all requested permissions without grant mode filter.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, GetReqPermissionsFilterServiceTest001, TestSize.Level1)
+{
+    atManagerService_->Initialize();
+    HapInfoParams info = {
+        .userID = USER_ID,
+        .bundleName = "GetReqPermissionsFilterServiceTest001",
+        .instIndex = INST_INDEX,
+        .dlpType = static_cast<int>(HapDlpType::DLP_COMMON),
+        .apiVersion = API_VERSION_9,
+        .isSystemApp = true,
+        .appIDDesc = "GetReqPermissionsFilterServiceTest001"
+    };
+    HapPolicy policy = {
+        .apl = APL_SYSTEM_CORE,
+        .domain = "domain",
+        .permStateList = {g_state7, g_state9}
+    };
+    PermissionFeatureManager::GetInstance().SetFeatures({"service_test_feature2"});
+
+    HapInfoParcel infoParcel;
+    infoParcel.hapInfoParameter = info;
+    HapPolicyParcel policyParcel;
+    policyParcel.hapPolicy = policy;
+
+    AccessTokenIDEx tokenIdEx;
+    uint64_t fullTokenId;
+    ASSERT_EQ(RET_SUCCESS, atManagerService_->AllocHapToken(infoParcel, policyParcel, fullTokenId));
+    tokenIdEx.tokenIDEx = fullTokenId;
+    ASSERT_NE(0, tokenIdEx.tokenIDEx);
+
+    std::vector<PermissionStatusParcel> allList;
+    std::vector<PermissionStatusParcel> userList;
+    std::vector<PermissionStatusParcel> systemList;
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->GetReqPermissions(
+        tokenIdEx.tokenIdExStruct.tokenID, allList, PermissionGrantTypeIdl::ALL));
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->GetReqPermissions(
+        tokenIdEx.tokenIdExStruct.tokenID, userList, PermissionGrantTypeIdl::NON_SYSTEM_GRANT));
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->GetReqPermissions(
+        tokenIdEx.tokenIdExStruct.tokenID, systemList, PermissionGrantTypeIdl::SYSTEM_GRANT));
+    EXPECT_EQ(INDEX_TWO, allList.size());
+    EXPECT_EQ(INDEX_ONE, userList.size());
+    EXPECT_EQ(INDEX_ONE, systemList.size());
+    EXPECT_EQ(userList.size() + systemList.size(), allList.size());
+
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->DeleteToken(tokenIdEx.tokenIdExStruct.tokenID, false));
+    PermissionFeatureManager::GetInstance().SetFeatures({});
 }
 
 #ifdef SPM_DATA_ENABLE

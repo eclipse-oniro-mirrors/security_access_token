@@ -720,6 +720,46 @@ sptr<GetHapIdentityRemoteObject> InstallGetHapIdentityRemoteObject()
     AccessTokenManagerClient::GetInstance().proxy_ = proxy;
     return remote;
 }
+
+class IsMigrationDoneRemoteObject final : public IPCObjectStub {
+public:
+    IsMigrationDoneRemoteObject() : IPCObjectStub(u"IsMigrationDoneRemoteObject") {}
+
+    int OnRemoteRequest(uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option) override
+    {
+        (void)option;
+        (void)data.ReadInterfaceToken();
+        if (code == static_cast<uint32_t>(IAccessTokenManagerIpcCode::COMMAND_IS_MIGRATION_DONE)) {
+            (void)reply.WriteInt32(result_);
+            if (result_ == RET_SUCCESS) {
+                (void)reply.WriteInt32(isDone_ ? 1 : 0);
+            }
+            ++migrationDoneCallCount_;
+            return ERR_NONE;
+        }
+        (void)reply.WriteInt32(ERR_INVALID_DATA);
+        return ERR_NONE;
+    }
+
+    int32_t result_ = RET_SUCCESS;
+    bool isDone_ = false;
+    uint32_t migrationDoneCallCount_ = 0;
+};
+
+sptr<IsMigrationDoneRemoteObject> InstallIsMigrationDoneRemoteObject()
+{
+    AccessTokenManagerClient::GetInstance().ReleaseProxy();
+    sptr<IsMigrationDoneRemoteObject> remote = new (std::nothrow) IsMigrationDoneRemoteObject();
+    if (remote == nullptr) {
+        return nullptr;
+    }
+    sptr<AccessTokenManagerProxy> proxy = new (std::nothrow) AccessTokenManagerProxy(remote);
+    if (proxy == nullptr) {
+        return nullptr;
+    }
+    AccessTokenManagerClient::GetInstance().proxy_ = proxy;
+    return remote;
+}
 #endif
 }
 void AccessTokenMockTest::SetUpTestCase()
@@ -1251,6 +1291,33 @@ HWTEST_F(AccessTokenMockTest, GetReqPermissions001, TestSize.Level4)
     AccessTokenID tokenId = 123;
     std::vector<PermissionStateFull> permList;
     ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::GetReqPermissions(tokenId, permList, false));
+}
+
+/**
+ * @tc.name: GetReqPermissionsFilterProxyNull001
+ * @tc.desc: GetReqPermissions overload with proxy is null.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, GetReqPermissionsFilterProxyNull001, TestSize.Level4)
+{
+    AccessTokenID tokenId = 123;
+    std::vector<PermissionStateFull> permList;
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL,
+        AccessTokenKit::GetReqPermissions(tokenId, permList, PermissionGrantType::ALL));
+}
+
+/**
+ * @tc.name: GetReqPermissionsFilterInvalidToken001
+ * @tc.desc: GetReqPermissions overload with invalid token.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, GetReqPermissionsFilterInvalidToken001, TestSize.Level4)
+{
+    std::vector<PermissionStateFull> permList;
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID,
+        AccessTokenKit::GetReqPermissions(INVALID_TOKENID, permList, PermissionGrantType::ALL));
 }
 
 /**
@@ -2745,6 +2812,51 @@ HWTEST_F(AccessTokenMockTest, CheckMigratedUidSetProxyNull001, TestSize.Level4)
     std::set<int32_t> unreceivedUids;
     ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL,
         AccessTokenKit::CheckMigratedUidSet(totalUids, unreceivedUids));
+}
+
+/**
+ * @tc.name: IsMigrationDoneProxyNull001
+ * @tc.desc: IsMigrationDone returns service abnormal when proxy is null.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, IsMigrationDoneProxyNull001, TestSize.Level4)
+{
+    bool isDone = false;
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::IsMigrationDone(isDone));
+}
+
+/**
+ * @tc.name: IsMigrationDoneSuccess001
+ * @tc.desc: IsMigrationDone returns success and sets isDone when the IPC service succeeds.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, IsMigrationDoneSuccess001, TestSize.Level4)
+{
+    auto remote = InstallIsMigrationDoneRemoteObject();
+    ASSERT_NE(nullptr, remote);
+    remote->isDone_ = true;
+    bool isDone = false;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::IsMigrationDone(isDone));
+    EXPECT_TRUE(isDone);
+    EXPECT_EQ(1U, remote->migrationDoneCallCount_);
+}
+
+/**
+ * @tc.name: IsMigrationDoneResultFail001
+ * @tc.desc: IsMigrationDone returns the converted result when the IPC service returns a non-success code.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, IsMigrationDoneResultFail001, TestSize.Level4)
+{
+    auto remote = InstallIsMigrationDoneRemoteObject();
+    ASSERT_NE(nullptr, remote);
+    remote->result_ = AccessTokenError::ERR_PARAM_INVALID;
+    bool isDone = false;
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, AccessTokenKit::IsMigrationDone(isDone));
+    EXPECT_EQ(1U, remote->migrationDoneCallCount_);
 }
 
 /**

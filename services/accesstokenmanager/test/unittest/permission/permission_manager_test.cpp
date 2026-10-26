@@ -510,7 +510,8 @@ HWTEST_F(PermissionManagerTest, GetReqPermissions001, TestSize.Level0)
     std::vector<PermissionStatus> result;
 
     // permissionName is empty
-    ASSERT_EQ(ERR_TOKENID_NOT_EXIST, PermissionManager::GetInstance().GetReqPermissions(0, result, true));
+    ASSERT_EQ(ERR_TOKENID_NOT_EXIST,
+        PermissionManager::GetInstance().GetReqPermissions(0, result, PermissionGrantType::SYSTEM_GRANT));
     ASSERT_TRUE(result.empty());
 }
 
@@ -531,7 +532,38 @@ HWTEST_F(PermissionManagerTest, GetReqPermissions002, TestSize.Level0)
     std::vector<PermissionStatus> result;
     AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
     // permissionName is empty
-    ASSERT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GetReqPermissions(tokenId, result, true));
+    ASSERT_EQ(RET_SUCCESS,
+        PermissionManager::GetInstance().GetReqPermissions(tokenId, result, PermissionGrantType::SYSTEM_GRANT));
+
+    ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenIdEx.tokenIdExStruct.tokenID);
+    ASSERT_EQ(RET_SUCCESS, ret);
+}
+
+/**
+ * @tc.name: GetReqPermissions003
+ * @tc.desc: GetReqPermissions with PermissionGrantType::ALL returns all permissions without distinguishing grant mode.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionManagerTest, GetReqPermissions003, TestSize.Level0)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+    std::vector<GenericValues> undefValues;
+    int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_infoManagerTestInfoParms,
+        g_infoManagerTestPolicyPrams1, tokenIdEx, undefValues);
+    ASSERT_EQ(RET_SUCCESS, ret);
+
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    std::vector<PermissionStatus> allResult;
+    std::vector<PermissionStatus> userResult;
+    std::vector<PermissionStatus> systemResult;
+    ASSERT_EQ(RET_SUCCESS,
+        PermissionManager::GetInstance().GetReqPermissions(tokenId, allResult, PermissionGrantType::ALL));
+    ASSERT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GetReqPermissions(
+        tokenId, userResult, PermissionGrantType::NON_SYSTEM_GRANT));
+    ASSERT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GetReqPermissions(
+        tokenId, systemResult, PermissionGrantType::SYSTEM_GRANT));
+    ASSERT_EQ(userResult.size() + systemResult.size(), allResult.size());
 
     ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenIdEx.tokenIdExStruct.tokenID);
     ASSERT_EQ(RET_SUCCESS, ret);

@@ -39,7 +39,7 @@ option_stub_hooks on;
 interface OHOS.Security.AccessToken.IAccessTokenManager{
     [ipccode 1] void VerifyAccessToken([in] unsigned int tokenID, [in] String permissionName, [out] int state);
     [ipccode 2] void GetDefPermission([in] String permissionName, [out] PermissionDefParcel permissionDefResult);
-    [ipccode 3] void GetReqPermissions([in] unsigned int tokenID, [out] List<PermissionStatusParcel> reqPermList, [in] boolean isSystemGrant);
+    [ipccode 3] void GetReqPermissions([in] unsigned int tokenID, [out] List<PermissionStatusParcel> reqPermList, [in] PermissionGrantTypeIdl filterIdl);
     [ipccode 4] void GetPermissionFlag([in] unsigned int tokenID, [in] String permissionName, [out] unsigned int flag);
     [ipccode 5] void GrantPermission([in] unsigned int tokenID, [in] String permissionName, [in] unsigned int flag, [in] int updateFlag);
     [ipccode 6] void RevokePermission([in] unsigned int tokenID, [in] String permissionName,
@@ -117,6 +117,7 @@ interface OHOS.Security.AccessToken.IAccessTokenManager{
     [ipccode 88, macrodef SPM_DATA_ENABLE] void CheckHapSignInfo([in] BundleHapListIdl list, [in] IRemoteObject cb, [in] unsigned int flag, [out] CheckHapSignResultRawdata checkResult);
     [ipccode 89, macrodef SPM_DATA_ENABLE] void GetCacheSignInfoBySessionId([in] int sessionId, [in] unsigned int flag, [out] BundleInfosRawdata bundleInfos);
     [ipccode 90, macrodef SPM_DATA_ENABLE] void GetHapSignInfo([in] String bundleName, [in] unsigned int flag, [in] int mode, [out] BundleInfosRawdata bundleInfos);
+    [ipccode 91, macrodef SPM_DATA_ENABLE] void IsMigrationDone([out] boolean isDone);
 
     [ipccode 101, macrodef SECURITY_COMPONENT_ENHANCE_ENABLE, oneway, customMsgOption flags=MessageOption::TF_IMAGE] void RegisterSecCompEnhance([in] SecCompEnhanceDataParcel enhanceParcel);
     [ipccode 102, macrodef SECURITY_COMPONENT_ENHANCE_ENABLE] void UpdateSecCompEnhance([in] int pid, [in] unsigned int seqNum);

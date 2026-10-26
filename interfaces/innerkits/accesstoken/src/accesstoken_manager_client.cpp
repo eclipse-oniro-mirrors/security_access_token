@@ -358,7 +358,7 @@ int AccessTokenManagerClient::GetDefPermission(
 }
 
 int AccessTokenManagerClient::GetReqPermissions(
-    AccessTokenID tokenID, std::vector<PermissionStateFull>& reqPermList, bool isSystemGrant)
+    AccessTokenID tokenID, std::vector<PermissionStateFull>& reqPermList, PermissionGrantType filter)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
@@ -366,7 +366,7 @@ int AccessTokenManagerClient::GetReqPermissions(
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
     std::vector<PermissionStatusParcel> parcelList;
-    int result = proxy->GetReqPermissions(tokenID, parcelList, isSystemGrant);
+    int result = proxy->GetReqPermissions(tokenID, parcelList, static_cast<PermissionGrantTypeIdl>(filter));
     if (result != RET_SUCCESS) {
         result = ConvertResult(result);
         LOGE(ATM_DOMAIN, ATM_TAG, "Request fail, result: %{public}d", result);
@@ -1267,6 +1267,21 @@ int32_t AccessTokenManagerClient::CheckMigratedUidSet(
     }
 
     int32_t result = proxy->CheckMigratedUidSet(totalUids, unreceivedUids);
+    if (result != RET_SUCCESS) {
+        return ConvertResult(result);
+    }
+    return RET_SUCCESS;
+}
+
+int32_t AccessTokenManagerClient::IsMigrationDone(bool& isDone)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+
+    int32_t result = proxy->IsMigrationDone(isDone);
     if (result != RET_SUCCESS) {
         return ConvertResult(result);
     }
