@@ -256,6 +256,7 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
+            "provisionBypassForSideload": true,
             "deviceTypes": ["2in1"]
         },
         {
@@ -4424,7 +4425,8 @@
             "since": 11,
             "deprecated": "",
             "provisionEnable": true,
-            "distributedSceneEnable": false
+            "distributedSceneEnable": false,
+            "provisionBypassForSideload": true
         },
         {
             "name": "ohos.permission.INPUT_RECORDING",
@@ -4736,7 +4738,8 @@
             "since": 11,
             "deprecated": "",
             "provisionEnable": true,
-            "distributedSceneEnable": false
+            "distributedSceneEnable": false,
+            "provisionBypassForSideload": true
         },
         {
             "name": "ohos.permission.SET_SANDBOX_POLICY",
@@ -5524,7 +5527,8 @@
             "since": 16,
             "deprecated": "",
             "provisionEnable": true,
-            "distributedSceneEnable": false
+            "distributedSceneEnable": false,
+            "provisionBypassForSideload": true
         },
         {
             "name": "ohos.permission.WRITE_GTOKEN_POLICY",
@@ -6396,7 +6400,8 @@
             "since": 18,
             "deprecated": "",
             "provisionEnable": true,
-            "distributedSceneEnable": false
+            "distributedSceneEnable": false,
+            "provisionBypassForSideload": true
         },
         {
             "name": "ohos.permission.READ_SOUND_RECORD_IN_FILE_MANAGER",
@@ -6878,6 +6883,7 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
+            "provisionBypassForSideload": true,
             "label": "$string:ohos_lab_write_imagevideo",
             "description": "$string:ohos_desc_write_imagevideo"
         },
@@ -6925,6 +6931,7 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
+            "provisionBypassForSideload": true,
             "deviceTypes": ["phone", "tv", "wearable", "2in1", "tablet", "car"],
             "label": "$string:ohos_lab_read_whole_calendar",
             "description": "$string:ohos_desc_read_whole_calendar"
@@ -6938,6 +6945,7 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
+            "provisionBypassForSideload": true,
             "deviceTypes": ["phone", "tv", "wearable", "2in1", "tablet", "car"],
             "label": "$string:ohos_lab_write_whole_calendar",
             "description": "$string:ohos_desc_write_whole_calendar"
@@ -7013,6 +7021,7 @@
             "distributedSceneEnable": false,
             "label": "$string:ohos_lab_read_pasteboard",
             "description": "$string:ohos_desc_read_pasteboard",
+            "provisionBypassForSideload": true,
             "deviceTypes": ["phone", "wearable", "tv", "2in1", "tablet", "car"]
         },
         {
@@ -7049,6 +7058,7 @@
             "provisionEnable": true,
             "distributedSceneEnable": false,
             "label": "$string:ohos_lab_read_write_desktop_directory",
+            "provisionBypassForSideload": true,
             "description": "$string:ohos_desc_read_write_desktop_directory"
         },
         {
@@ -7781,6 +7791,7 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
+            "provisionBypassForSideload": true,
             "label": "$string:ohos_lab_short_term_write_imagevideo",
             "description": "$string:ohos_desc_short_term_write_imagevideo"
         },
@@ -8029,6 +8040,7 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
+            "provisionBypassForSideload": true,
             "deviceTypes": ["phone", "tablet", "2in1"]
         },
         {
@@ -8052,6 +8064,7 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
+            "provisionBypassForSideload": true,
             "isKernelEffect": true,
             "hasValue": false
         },
@@ -8114,6 +8127,7 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
+            "provisionBypassForSideload": true,
             "isKernelEffect": true,
             "hasValue": false
         },
@@ -8147,6 +8161,7 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
+            "provisionBypassForSideload": true,
             "isKernelEffect": true
         },
         {
@@ -8611,6 +8626,7 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
+            "provisionBypassForSideload": true,
             "deviceTypes": ["general"]
         },
         {
@@ -8730,6 +8746,7 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
+            "provisionBypassForSideload": true,
             "deviceTypes": ["2in1"]
         },
         {
@@ -8964,6 +8981,7 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
+            "provisionBypassForSideload": true,
             "deviceTypes": ["phone", "tablet", "2in1"]
         },
         {
@@ -8986,6 +9004,7 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
+            "provisionBypassForSideload": true,
             "deviceTypes": ["phone", "tablet", "2in1"]
         },
         {
@@ -9189,6 +9208,7 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
+            "provisionBypassForSideload": true,
             "deviceTypes": ["phone", "2in1", "tablet"]
         },
         {
@@ -9223,6 +9243,7 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
+            "provisionBypassForSideload": true,
             "isKernelEffect": true,
             "deviceTypes": ["2in1"]
         },
@@ -9578,6 +9599,7 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
+            "provisionBypassForSideload": true,
             "deviceTypes": ["tablet", "2in1"]
         },
         {
@@ -9644,6 +9666,7 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
+            "provisionBypassForSideload": true,
             "deviceTypes": ["2in1", "tv"]
         },
         {
@@ -9655,6 +9678,7 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
+            "provisionBypassForSideload": true,
             "deviceTypes": ["2in1"]
         },
         {
@@ -9765,6 +9789,7 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
+            "provisionBypassForSideload": true,
             "deviceTypes": ["2in1"]
         },
         {
@@ -10514,6 +10539,7 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
+            "provisionBypassForSideload": true,
             "deviceTypes": ["2in1"]
         },
         {
@@ -10944,6 +10970,7 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
+            "provisionBypassForSideload": true,
             "deviceTypes": ["2in1"]
         },
         {
@@ -11540,6 +11567,7 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
+            "provisionBypassForSideload": true,
             "deviceTypes": ["2in1"],
             "isKernelEffect": true,
             "hasValue": false
