@@ -34,6 +34,10 @@ const std::string GLOBAL_SWITCH_RESULT_KEY = "ohos.user.setting.global_switch.re
 const std::string RESULT_ERROR_KEY = "ohos.user.setting.error_code";
 const std::string EXTENSION_TYPE_KEY = "ability.want.params.uiExtensionType";
 const std::string UI_EXTENSION_TYPE = "sys/commonUI";
+#ifdef SUPPORT_IME_EXTENSION_CONTEXT
+const std::string CONTEXT_TYPE_KEY = "ohos.ability.params.contextType";
+const std::string INPUT_METHOD_CONTEXT_TYPE = "inputMethod";
+#endif
 
 // error code from dialog
 const int32_t REQUEST_ALREADY_EXIST = 1;
@@ -117,6 +121,11 @@ static Ace::UIContent* GetUIContent(std::shared_ptr<RequestGlobalSwitchAsyncCont
     Ace::UIContent* uiContent = nullptr;
     if (asyncContext->uiAbilityFlag) {
         uiContent = asyncContext->abilityContext->GetUIContent();
+#ifdef SUPPORT_IME_EXTENSION_CONTEXT
+    } else if (asyncContext->inputMethodExtensionContext != nullptr) {
+        LOGI(ATM_DOMAIN, ATM_TAG, "InputMethodExtensionContext GetUIContent");
+        uiContent = asyncContext->inputMethodExtensionContext->GetUIContent();
+#endif
     } else {
         uiContent = asyncContext->uiExtensionContext->GetUIContent();
     }
@@ -145,10 +154,22 @@ static napi_value GetContext(
             LOGW(ATM_DOMAIN, ATM_TAG, "Failed to convert to ability context.");
             asyncContext->uiExtensionContext =
                 AbilityRuntime::Context::ConvertTo<AbilityRuntime::UIExtensionContext>(context);
-            if (asyncContext->uiExtensionContext == nullptr) {
+            if (asyncContext->uiExtensionContext != nullptr) {
+                return WrapVoidToJS(env);
+            } else {
                 LOGE(ATM_DOMAIN, ATM_TAG, "Failed to convert to ui extension context.");
+            }
+#ifdef SUPPORT_IME_EXTENSION_CONTEXT
+            asyncContext->inputMethodExtensionContext =
+                AbilityRuntime::Context::ConvertTo<AbilityRuntime::InputMethodExtensionContext>(context);
+            if (asyncContext->inputMethodExtensionContext == nullptr) {
+                LOGE(ATM_DOMAIN, ATM_TAG, "Failed to convert to inputmethod extension context.");
                 return nullptr;
             }
+            LOGI(ATM_DOMAIN, ATM_TAG, "Get InputMethodExtensionContext success");
+#else
+            return nullptr;
+#endif
         }
         return WrapVoidToJS(env);
     }
@@ -412,6 +433,11 @@ static int32_t StartUIExtension(std::shared_ptr<RequestGlobalSwitchAsyncContext>
     want.SetElementName(asyncContext->info.grantBundleName, asyncContext->info.globalSwitchAbilityName);
     want.SetParam(GLOBAL_SWITCH_KEY, asyncContext->switchType);
     want.SetParam(EXTENSION_TYPE_KEY, UI_EXTENSION_TYPE);
+#ifdef SUPPORT_IME_EXTENSION_CONTEXT
+    if (asyncContext->inputMethodExtensionContext != nullptr) {
+        want.SetParam(CONTEXT_TYPE_KEY, INPUT_METHOD_CONTEXT_TYPE);
+    }
+#endif
 
     return CreateUIExtension(want, asyncContext);
 }
@@ -627,6 +653,35 @@ static bool ValidateSwitchType(std::shared_ptr<RequestGlobalSwitchAsyncContext>&
     return true;
 }
 
+static bool FillTokenIdAndBundleName(std::shared_ptr<RequestGlobalSwitchAsyncContext>& asyncContext)
+{
+    if (asyncContext->uiAbilityFlag) {
+        if ((asyncContext->abilityContext == nullptr) ||
+            (asyncContext->abilityContext->GetApplicationInfo() == nullptr)) {
+            return false;
+        }
+        asyncContext->tokenId = asyncContext->abilityContext->GetApplicationInfo()->accessTokenId;
+        asyncContext->bundleName = asyncContext->abilityContext->GetApplicationInfo()->bundleName;
+    } else if ((asyncContext->uiExtensionContext != nullptr) &&
+        (asyncContext->uiExtensionContext->GetApplicationInfo() != nullptr)) {
+        asyncContext->tokenId = asyncContext->uiExtensionContext->GetApplicationInfo()->accessTokenId;
+        asyncContext->bundleName = asyncContext->uiExtensionContext->GetApplicationInfo()->bundleName;
+#ifdef SUPPORT_IME_EXTENSION_CONTEXT
+    } else if (asyncContext->inputMethodExtensionContext != nullptr) {
+        if (asyncContext->inputMethodExtensionContext->GetApplicationInfo() == nullptr) {
+            return false;
+        }
+        asyncContext->tokenId =
+            asyncContext->inputMethodExtensionContext->GetApplicationInfo()->accessTokenId;
+        asyncContext->bundleName =
+            asyncContext->inputMethodExtensionContext->GetApplicationInfo()->bundleName;
+#endif
+    } else {
+        return false;
+    }
+    return true;
+}
+
 void NapiRequestGlobalSwitch::RequestGlobalSwitchExecute(napi_env env, void* data)
 {
     // asyncContext release in complete
@@ -638,24 +693,8 @@ void NapiRequestGlobalSwitch::RequestGlobalSwitchExecute(napi_env env, void* dat
     if (!ValidateSwitchType(asyncContextHandle->asyncContextPtr)) {
         return;
     }
-    if (asyncContextHandle->asyncContextPtr->uiAbilityFlag) {
-        if ((asyncContextHandle->asyncContextPtr->abilityContext == nullptr) ||
-            (asyncContextHandle->asyncContextPtr->abilityContext->GetApplicationInfo() == nullptr)) {
-            return;
-        }
-        asyncContextHandle->asyncContextPtr->tokenId =
-            asyncContextHandle->asyncContextPtr->abilityContext->GetApplicationInfo()->accessTokenId;
-        asyncContextHandle->asyncContextPtr->bundleName =
-            asyncContextHandle->asyncContextPtr->abilityContext->GetApplicationInfo()->bundleName;
-    } else {
-        if ((asyncContextHandle->asyncContextPtr->uiExtensionContext == nullptr) ||
-            (asyncContextHandle->asyncContextPtr->uiExtensionContext->GetApplicationInfo() == nullptr)) {
-            return;
-        }
-        asyncContextHandle->asyncContextPtr->tokenId =
-            asyncContextHandle->asyncContextPtr->uiExtensionContext->GetApplicationInfo()->accessTokenId;
-        asyncContextHandle->asyncContextPtr->bundleName =
-            asyncContextHandle->asyncContextPtr->uiExtensionContext->GetApplicationInfo()->bundleName;
+    if (!FillTokenIdAndBundleName(asyncContextHandle->asyncContextPtr)) {
+        return;
     }
     static AccessTokenID currToken = static_cast<AccessTokenID>(GetSelfTokenID());
     if (asyncContextHandle->asyncContextPtr->tokenId != currToken) {

@@ -24,6 +24,9 @@
 #include "event_handler.h"
 #include "event_queue.h"
 #endif
+#ifdef SUPPORT_IME_EXTENSION_CONTEXT
+#include "inputmethod_extension_context.h"
+#endif
 #include "permission_grant_info.h"
 #include "ui_content.h"
 #include "ui_extension_context.h"
@@ -119,6 +122,7 @@ private:
 };
 
 ani_int CheckContextExecute([[maybe_unused]] ani_env* env, [[maybe_unused]] ani_object object, ani_object aniContext);
+void InjectIMEContextType(const std::shared_ptr<RequestAsyncContextBase>& asyncContext, OHOS::AAFwk::Want& want);
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

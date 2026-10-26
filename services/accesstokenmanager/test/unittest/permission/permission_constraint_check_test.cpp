@@ -439,6 +439,123 @@ HWTEST_F(PermissionConstraintCheckTest, FixBriefPermData003, TestSize.Level0)
     manager.dlpPermissionModeMap_.clear();
 }
 #endif
+
+/**
+ * @tc.name: FixPersistentHapInfo001
+ * @tc.desc: Verify FixPersistentHapInfo repairs bundleName, apiVersion, apl, sideload and sets
+ *           system/atomic/debug token attribute flags when they mismatch the source params.
+ * @tc.type: FUNC
+ */
+HWTEST_F(PermissionConstraintCheckTest, FixPersistentHapInfo001, TestSize.Level0)
+{
+    constexpr uint32_t SYSTEM_APP_FLAG = 0x0001;
+    constexpr uint32_t ATOMIC_SERVICE_FLAG = 0x0002;
+    constexpr uint32_t DEBUG_APP_FLAG = 0x0008;
+
+    BundleParam param;
+    param.bundleName = "com.ohos.helper.fix";
+    param.apiVersion = 1205;
+    param.isSystem = true;
+    param.isAtomicService = true;
+    param.isDebug = true;
+    param.isSideloadApp = true;
+
+    HapPolicy policy;
+    policy.apl = APL_SYSTEM_CORE;
+
+    HapTokenInfoItem item;
+    item.bundleName = "com.ohos.helper.old";
+    item.apiVersion = 1;
+    item.apl = APL_NORMAL;
+    item.tokenAttr = 0;
+    item.isSideload = false;
+
+    bool isFixed = false;
+    PermissionConstraintCheck::FixPersistentHapInfo(param, policy, item, isFixed);
+
+    EXPECT_TRUE(isFixed);
+    EXPECT_EQ(param.bundleName, item.bundleName);
+    EXPECT_EQ(param.apiVersion, item.apiVersion);
+    EXPECT_EQ(policy.apl, item.apl);
+    EXPECT_TRUE(item.isSideload);
+    EXPECT_NE(0u, item.tokenAttr & SYSTEM_APP_FLAG);
+    EXPECT_NE(0u, item.tokenAttr & ATOMIC_SERVICE_FLAG);
+    EXPECT_NE(0u, item.tokenAttr & DEBUG_APP_FLAG);
+}
+
+/**
+ * @tc.name: FixPersistentHapInfo002
+ * @tc.desc: Verify FixPersistentHapInfo leaves isFixed false when persistent info already matches params.
+ * @tc.type: FUNC
+ */
+HWTEST_F(PermissionConstraintCheckTest, FixPersistentHapInfo002, TestSize.Level0)
+{
+    BundleParam param;
+    param.bundleName = "com.ohos.helper.same";
+    param.apiVersion = 12;
+    param.isSystem = false;
+    param.isAtomicService = false;
+    param.isDebug = false;
+    param.isSideloadApp = false;
+
+    HapPolicy policy;
+    policy.apl = APL_NORMAL;
+
+    HapTokenInfoItem item;
+    item.bundleName = param.bundleName;
+    item.apiVersion = param.apiVersion;
+    item.apl = policy.apl;
+    item.tokenAttr = 0;
+    item.isSideload = false;
+
+    bool isFixed = false;
+    PermissionConstraintCheck::FixPersistentHapInfo(param, policy, item, isFixed);
+
+    EXPECT_FALSE(isFixed);
+    EXPECT_EQ(param.bundleName, item.bundleName);
+    EXPECT_EQ(param.apiVersion, item.apiVersion);
+    EXPECT_EQ(policy.apl, item.apl);
+    EXPECT_EQ(0u, item.tokenAttr);
+}
+
+/**
+ * @tc.name: FixPersistentHapInfo003
+ * @tc.desc: Verify FixPersistentHapInfo clears system/atomic/debug attribute flags when params turn them off.
+ * @tc.type: FUNC
+ */
+HWTEST_F(PermissionConstraintCheckTest, FixPersistentHapInfo003, TestSize.Level0)
+{
+    constexpr uint32_t SYSTEM_APP_FLAG = 0x0001;
+    constexpr uint32_t ATOMIC_SERVICE_FLAG = 0x0002;
+    constexpr uint32_t DEBUG_APP_FLAG = 0x0008;
+
+    BundleParam param;
+    param.bundleName = "com.ohos.helper.clear";
+    param.apiVersion = 12;
+    param.isSystem = false;
+    param.isAtomicService = false;
+    param.isDebug = false;
+    param.isSideloadApp = true;
+
+    HapPolicy policy;
+    policy.apl = APL_SYSTEM_BASIC;
+
+    HapTokenInfoItem item;
+    item.bundleName = param.bundleName;
+    item.apiVersion = param.apiVersion;
+    item.apl = policy.apl;
+    item.tokenAttr = SYSTEM_APP_FLAG | ATOMIC_SERVICE_FLAG | DEBUG_APP_FLAG;
+    item.isSideload = false;
+
+    bool isFixed = false;
+    PermissionConstraintCheck::FixPersistentHapInfo(param, policy, item, isFixed);
+
+    EXPECT_TRUE(isFixed);
+    EXPECT_EQ(0u, item.tokenAttr & SYSTEM_APP_FLAG);
+    EXPECT_EQ(0u, item.tokenAttr & ATOMIC_SERVICE_FLAG);
+    EXPECT_EQ(0u, item.tokenAttr & DEBUG_APP_FLAG);
+    EXPECT_TRUE(item.isSideload);
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

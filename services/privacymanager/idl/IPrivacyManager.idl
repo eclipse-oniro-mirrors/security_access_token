@@ -47,8 +47,8 @@ interface OHOS.Security.AccessToken.IPrivacyManager {
         [in] int userID, [in] boolean status, [in] int subProfileId);
     [ipccode 16] void GetPermissionUsedRecordToggleStatus(
         [in] int userID, [out] boolean status, [in] int subProfileId);
-    [ipccode 17] void SetDisablePolicy([in] String permissionName, [in] boolean isDisable);
-    [ipccode 18] void GetDisablePolicy([in] String permissionName, [out] boolean isDisable);
+    [ipccode 17] void SetDisablePolicy([in] String permissionName, [in] boolean isDisable, [in] int userId);
+    [ipccode 18] void GetDisablePolicy([in] String permissionName, [out] boolean isDisable, [in] int userId);
     [ipccode 19] void RegisterPermDisablePolicyCallback([in] List<String> permList, [in] IRemoteObject cb);
     [ipccode 20] void UnRegisterPermDisablePolicyCallback([in] IRemoteObject cb);
     [ipccode 21] void GetCurrUsingPermInfo([out] List<ActiveChangeResponseParcel> resultsParcel);

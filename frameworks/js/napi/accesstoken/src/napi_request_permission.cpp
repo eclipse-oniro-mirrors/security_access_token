@@ -49,6 +49,10 @@ const std::string WINDOW_RECTANGLE_TOP_KEY = "ohos.ability.params.request.top";
 const std::string WINDOW_RECTANGLE_HEIGHT_KEY = "ohos.ability.params.request.height";
 const std::string WINDOW_RECTANGLE_WIDTH_KEY = "ohos.ability.params.request.width";
 const std::string REQUEST_TOKEN_KEY = "ohos.ability.params.request.token";
+#ifdef SUPPORT_IME_EXTENSION_CONTEXT
+const std::string CONTEXT_TYPE_KEY = "ohos.ability.params.contextType";
+const std::string INPUT_METHOD_CONTEXT_TYPE = "inputMethod";
+#endif
 
 static inline void ReportHisysEventReqPermsFromUserBehavior(bool uiExtensionFlag, const RequestAsyncContext& context)
 {
@@ -134,6 +138,11 @@ static Ace::UIContent* GetUIContent(std::shared_ptr<RequestAsyncContext> asyncCo
         uiContent = window->GetUIContent();
     } else if (asyncContext->uiAbilityFlag) {
         uiContent = asyncContext->abilityContext->GetUIContent();
+#ifdef SUPPORT_IME_EXTENSION_CONTEXT
+    } else if (asyncContext->inputMethodExtensionContext != nullptr) {
+        LOGI(ATM_DOMAIN, ATM_TAG, "InputMethodExtensionContext GetUIContent");
+        uiContent = asyncContext->inputMethodExtensionContext->GetUIContent();
+#endif
     } else {
         uiContent = asyncContext->uiExtensionContext->GetUIContent();
     }
@@ -248,6 +257,26 @@ static void CloseModalUIExtensionMainThread(std::shared_ptr<RequestAsyncContext>
     LOGI(ATM_DOMAIN, ATM_TAG, "Instance id: %{public}d", asyncContext->instanceId);
 }
 
+#ifdef SUPPORT_IME_EXTENSION_CONTEXT
+static bool FillIMEContext(const std::shared_ptr<AbilityRuntime::Context>& context,
+    std::shared_ptr<RequestAsyncContext>& asyncContext)
+{
+    asyncContext->inputMethodExtensionContext =
+        AbilityRuntime::Context::ConvertTo<AbilityRuntime::InputMethodExtensionContext>(context);
+    if ((asyncContext->inputMethodExtensionContext == nullptr) ||
+        (asyncContext->inputMethodExtensionContext->GetApplicationInfo() == nullptr)) {
+        return false;
+    }
+    asyncContext->tokenId =
+        asyncContext->inputMethodExtensionContext->GetApplicationInfo()->accessTokenId;
+    asyncContext->bundleName =
+        asyncContext->inputMethodExtensionContext->GetApplicationInfo()->bundleName;
+    LOGI(ATM_DOMAIN, ATM_TAG, "Get InputMethodExtensionContext success, tokenId: %{public}d",
+        asyncContext->tokenId);
+    return true;
+}
+#endif
+
 static napi_value GetContext(
     const napi_env &env, const napi_value &value, std::shared_ptr<RequestAsyncContext>& asyncContext)
 {
@@ -256,42 +285,46 @@ static napi_value GetContext(
     if (status != napi_ok || !stageMode) {
         LOGE(ATM_DOMAIN, ATM_TAG, "It is not a stage mode");
         return nullptr;
-    } else {
-        auto context = AbilityRuntime::GetStageModeContext(env, value);
-        if (context == nullptr) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "Get context failed");
+    }
+    auto context = AbilityRuntime::GetStageModeContext(env, value);
+    if (context == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Get context failed");
+        return nullptr;
+    }
+    asyncContext->abilityContext = AbilityRuntime::Context::ConvertTo<AbilityRuntime::AbilityContext>(context);
+    if (asyncContext->isWithWindowId) {
+        auto appInfo = context->GetApplicationInfo();
+        if (appInfo == nullptr) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "GetApplicationInfo failed");
             return nullptr;
         }
-        asyncContext->abilityContext = AbilityRuntime::Context::ConvertTo<AbilityRuntime::AbilityContext>(context);
-        if (asyncContext->isWithWindowId) {
-            auto appInfo = context->GetApplicationInfo();
-            if (appInfo == nullptr) {
-                LOGE(ATM_DOMAIN, ATM_TAG, "GetApplicationInfo failed");
-                return nullptr;
+        asyncContext->tokenId = appInfo->accessTokenId;
+        asyncContext->bundleName = appInfo->bundleName;
+    } else if ((asyncContext->abilityContext != nullptr) &&
+        (asyncContext->abilityContext->GetApplicationInfo() != nullptr)) {
+        asyncContext->uiAbilityFlag = true;
+        asyncContext->tokenId = asyncContext->abilityContext->GetApplicationInfo()->accessTokenId;
+        asyncContext->bundleName = asyncContext->abilityContext->GetApplicationInfo()->bundleName;
+    } else {
+        LOGW(ATM_DOMAIN, ATM_TAG, "Convert to ability context failed");
+        asyncContext->uiExtensionContext =
+            AbilityRuntime::Context::ConvertTo<AbilityRuntime::UIExtensionContext>(context);
+        if ((asyncContext->uiExtensionContext == nullptr) ||
+            (asyncContext->uiExtensionContext->GetApplicationInfo() == nullptr)) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Convert to ui extension context failed");
+#ifdef SUPPORT_IME_EXTENSION_CONTEXT
+            if (FillIMEContext(context, asyncContext)) {
+                return WrapVoidToJS(env);
             }
-            asyncContext->tokenId = appInfo->accessTokenId;
-            asyncContext->bundleName = appInfo->bundleName;
-        } else if ((asyncContext->abilityContext != nullptr) &&
-            (asyncContext->abilityContext->GetApplicationInfo() != nullptr)) {
-            asyncContext->uiAbilityFlag = true;
-            asyncContext->tokenId = asyncContext->abilityContext->GetApplicationInfo()->accessTokenId;
-            asyncContext->bundleName = asyncContext->abilityContext->GetApplicationInfo()->bundleName;
-        } else {
-            LOGW(ATM_DOMAIN, ATM_TAG, "Convert to ability context failed");
-            asyncContext->uiExtensionContext =
-                AbilityRuntime::Context::ConvertTo<AbilityRuntime::UIExtensionContext>(context);
-            if ((asyncContext->uiExtensionContext == nullptr) ||
-                (asyncContext->uiExtensionContext->GetApplicationInfo() == nullptr)) {
-                LOGE(ATM_DOMAIN, ATM_TAG, "Convert to ui extension context failed");
-                return nullptr;
-            }
-            asyncContext->tokenId = asyncContext->uiExtensionContext->GetApplicationInfo()->accessTokenId;
-            asyncContext->bundleName = asyncContext->uiExtensionContext->GetApplicationInfo()->bundleName;
+#endif
+            return nullptr;
         }
-        LOGI(ATM_DOMAIN, ATM_TAG, "Get context success, tokenId: %{public}d, bundleName: %{public}s",
-            asyncContext->tokenId, asyncContext->bundleName.c_str());
-        return WrapVoidToJS(env);
+        asyncContext->tokenId = asyncContext->uiExtensionContext->GetApplicationInfo()->accessTokenId;
+        asyncContext->bundleName = asyncContext->uiExtensionContext->GetApplicationInfo()->bundleName;
     }
+    LOGI(ATM_DOMAIN, ATM_TAG, "Get context success, tokenId: %{public}d, bundleName: %{public}s",
+        asyncContext->tokenId, asyncContext->bundleName.c_str());
+    return WrapVoidToJS(env);
 }
 
 static napi_value WrapRequestResult(const napi_env& env, const std::vector<std::string>& permissions,
@@ -439,6 +472,15 @@ void AuthorizationResult::WindowShownCallback()
     LOGD(ATM_DOMAIN, ATM_TAG, "OnRequestPermissionsFromUser async callback is called end");
 }
 
+static void InjectIMEContextType(std::shared_ptr<RequestAsyncContext> asyncContext, AAFwk::Want& want)
+{
+#ifdef SUPPORT_IME_EXTENSION_CONTEXT
+    if (asyncContext->inputMethodExtensionContext != nullptr) {
+        want.SetParam(CONTEXT_TYPE_KEY, INPUT_METHOD_CONTEXT_TYPE);
+    }
+#endif
+}
+
 static void CreateServiceExtensionWithWindowId(std::shared_ptr<RequestAsyncContext>& asyncContext)
 {
     sptr<Rosen::Window> window = OHOS::Rosen::Window::GetWindowWithId(asyncContext->windowId);
@@ -471,7 +513,8 @@ static void CreateServiceExtensionWithWindowId(std::shared_ptr<RequestAsyncConte
         return;
     }
     want.SetParam(TOKEN_KEY, window->GetContext()->GetToken());
-    
+    InjectIMEContextType(asyncContext, want);
+
     Rosen::Rect windowRect = window->GetRect();
 
     int32_t left = windowRect.posX_;
@@ -490,6 +533,46 @@ static void CreateServiceExtensionWithWindowId(std::shared_ptr<RequestAsyncConte
         ret, asyncContext->tokenId, asyncContext->permissionList.size());
 }
 
+static bool CreateServiceExtensionForIME(std::shared_ptr<RequestAsyncContext> asyncContext)
+{
+#ifdef SUPPORT_IME_EXTENSION_CONTEXT
+    if (asyncContext->inputMethodExtensionContext == nullptr) {
+        return false;
+    }
+    sptr<IRemoteObject> remoteObject = new (std::nothrow) AccessToken::AuthorizationResult(asyncContext);
+    if (remoteObject == nullptr) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Create window failed!");
+        asyncContext->needDynamicRequest = false;
+        asyncContext->result.errorCode = RET_FAILED;
+        return true;
+    }
+    AAFwk::Want want;
+    want.SetElementName(asyncContext->info.grantBundleName, asyncContext->info.grantServiceAbilityName);
+    want.SetParam(PERMISSION_KEY, asyncContext->permissionList);
+    want.SetParam(STATE_KEY, asyncContext->permissionsState);
+    want.SetParam(TOKEN_KEY, asyncContext->inputMethodExtensionContext->GetToken());
+    want.SetParam(CALLBACK_KEY, remoteObject);
+    want.SetParam(CONTEXT_TYPE_KEY, INPUT_METHOD_CONTEXT_TYPE);
+    want.SetParam(WINDOW_RECTANGLE_LEFT_KEY, 0);
+    want.SetParam(WINDOW_RECTANGLE_TOP_KEY, 0);
+    want.SetParam(WINDOW_RECTANGLE_WIDTH_KEY, 0);
+    want.SetParam(WINDOW_RECTANGLE_HEIGHT_KEY, 0);
+    want.SetParam(REQUEST_TOKEN_KEY, asyncContext->inputMethodExtensionContext->GetToken());
+    int32_t ret = AAFwk::AbilityManagerClient::GetInstance()->RequestDialogService(
+        want, asyncContext->inputMethodExtensionContext->GetToken());
+    LOGI(ATM_DOMAIN, ATM_TAG, "Request end, ret: %{public}d, tokenId: %{public}d, permNum: %{public}zu",
+        ret, asyncContext->tokenId, asyncContext->permissionList.size());
+    if (ret != ERR_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "RequestDialogService failed!");
+        asyncContext->needDynamicRequest = false;
+        asyncContext->result.errorCode = RET_FAILED;
+    }
+    return true;
+#else
+    return false;
+#endif
+}
+
 static void CreateServiceExtension(std::shared_ptr<RequestAsyncContext> asyncContext)
 {
     if (asyncContext == nullptr) {
@@ -497,6 +580,10 @@ static void CreateServiceExtension(std::shared_ptr<RequestAsyncContext> asyncCon
     }
     if (asyncContext->isWithWindowId) {
         CreateServiceExtensionWithWindowId(asyncContext);
+        return;
+    }
+
+    if (CreateServiceExtensionForIME(asyncContext)) {
         return;
     }
 
@@ -702,6 +789,7 @@ static void CreateUIExtension(std::shared_ptr<RequestAsyncContext> asyncContext)
     want.SetParam(PERMISSION_KEY, asyncContext->permissionList);
     want.SetParam(STATE_KEY, asyncContext->permissionsState);
     want.SetParam(EXTENSION_TYPE_KEY, UI_EXTENSION_TYPE);
+    InjectIMEContextType(asyncContext, want);
 
     auto uiExtCallback = std::make_shared<UIExtensionCallback>(asyncContext);
     Ace::ModalUIExtensionCallbacks uiExtensionCallbacks = {

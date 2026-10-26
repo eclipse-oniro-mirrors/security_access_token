@@ -79,8 +79,8 @@ public:
     int32_t Dump(int32_t fd, const std::vector<std::u16string>& args) override;
     int32_t SetMutePolicy(uint32_t policyType, uint32_t callerType, bool isMute, AccessTokenID tokenID) override;
     int32_t SetHapWithFGReminder(uint32_t tokenId, bool isAllowed) override;
-    int32_t SetDisablePolicy(const std::string& permissionName, bool isDisable) override;
-    int32_t GetDisablePolicy(const std::string& permissionName, bool& isDisable) override;
+    int32_t SetDisablePolicy(const std::string& permissionName, bool isDisable, int32_t userId) override;
+    int32_t GetDisablePolicy(const std::string& permissionName, bool& isDisable, int32_t userId) override;
     int32_t GetCurrUsingPermInfo(std::vector<ActiveChangeResponseParcel>& resultParcelList) override;
     int32_t CheckPermissionInUse(const std::string& permissionName, bool& isUsing) override;
     int32_t RegisterPermDisablePolicyCallback(const std::vector<std::string>& permList,

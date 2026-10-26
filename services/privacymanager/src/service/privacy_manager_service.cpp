@@ -690,26 +690,28 @@ int32_t PrivacyManagerService::GetPermissionUsedTypeInfos(const AccessTokenID to
     return RET_SUCCESS;
 }
 
-int32_t PrivacyManagerService::SetDisablePolicy(const std::string& permissionName, bool isDisable)
+int32_t PrivacyManagerService::SetDisablePolicy(const std::string& permissionName, bool isDisable, int32_t userId)
 {
-    LOGI(PRI_DOMAIN, PRI_TAG, "Perm %{public}s, isDisable %{public}d.", permissionName.c_str(), isDisable);
+    LOGI(PRI_DOMAIN, PRI_TAG, "Perm %{public}s, isDisable %{public}d, userId %{public}d.",
+        permissionName.c_str(), isDisable, userId);
 
     if (!VerifyPermission(MANAGE_EDM_POLICY)) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Caller without permission ohos.permission.MANAGE_EDM_POLICY!");
         return PrivacyError::ERR_PERMISSION_DENIED;
     }
 
-    return PermissionRecordManager::GetInstance().SetDisablePolicy(permissionName, isDisable);
+    return PermissionRecordManager::GetInstance().SetDisablePolicy(permissionName, isDisable, userId);
 }
 
-int32_t PrivacyManagerService::GetDisablePolicy(const std::string& permissionName, bool& isDisable)
+int32_t PrivacyManagerService::GetDisablePolicy(const std::string& permissionName, bool& isDisable,
+    int32_t userId)
 {
     if (!VerifyPermission(GET_PERMISSION_POLICY)) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Caller without permission ohos.permission.GET_PERMISSION_POLICY!");
         return PrivacyError::ERR_PERMISSION_DENIED;
     }
 
-    return PermissionRecordManager::GetInstance().GetDisablePolicy(permissionName, isDisable);
+    return PermissionRecordManager::GetInstance().GetDisablePolicy(permissionName, isDisable, userId);
 }
 
 int32_t PrivacyManagerService::GetCurrUsingPermInfo(std::vector<ActiveChangeResponseParcel>& resultParcelList)

@@ -246,17 +246,19 @@ public:
      * @brief Set permission disable policy.
      * @param permission permission name
      * @param isDisable true means set permission disable
+     * @param userId user id, -1 means device level, >= 0 means user level
      * @return error code, see privacy_error.h
      */
-    static int32_t SetDisablePolicy(const std::string& permissionName, bool isDisable);
+    static int32_t SetDisablePolicy(const std::string& permissionName, bool isDisable, int32_t userId = -1);
 
     /**
      * @brief Get permission disable policy.
      * @param permission permission name
      * @param isDisable permission disable policy
+     * @param userId user id, -1 means device level, >= 0 means user level
      * @return error code, see privacy_error.h
      */
-    static int32_t GetDisablePolicy(const std::string& permissionName, bool& isDisable);
+    static int32_t GetDisablePolicy(const std::string& permissionName, bool& isDisable, int32_t userId = -1);
 
     /**
      * @brief Register permission disable policy change callback.

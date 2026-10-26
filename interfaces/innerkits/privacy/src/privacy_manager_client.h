@@ -103,8 +103,8 @@ public:
         std::vector<PermissionUsedTypeInfo>& results);
     int32_t SetMutePolicy(uint32_t policyType, uint32_t callerType, bool isMute, AccessTokenID tokenID);
     int32_t SetHapWithFGReminder(uint32_t tokenId, bool isAllowed);
-    int32_t SetDisablePolicy(const std::string& permissionName, bool isDisable);
-    int32_t GetDisablePolicy(const std::string& permissionName, bool& isDisable);
+    int32_t SetDisablePolicy(const std::string& permissionName, bool isDisable, int32_t userId = -1);
+    int32_t GetDisablePolicy(const std::string& permissionName, bool& isDisable, int32_t userId = -1);
     int32_t GetCurrUsingPermInfo(std::vector<CurrUsingPermInfo> &infoList);
     int32_t CheckPermissionInUse(const std::string& permissionName, bool& isUsing);
     int32_t RegisterPermDisablePolicyCallback(const std::shared_ptr<DisablePolicyChangeCallback>& callback);

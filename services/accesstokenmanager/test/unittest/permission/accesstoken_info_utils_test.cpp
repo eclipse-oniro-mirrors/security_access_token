@@ -18,6 +18,7 @@
 
 #include "access_token.h"
 #include "accesstoken_info_utils.h"
+#include "parameter.h"
 #include "permission_feature_manager.h"
 #include "permission_map.h"
 #include "provision/provision_info.h"
@@ -307,6 +308,82 @@ HWTEST_F(AccessTokenInfoUtilsTest, GetReservedTokenTypeDBValue002, TestSize.Leve
     values.Put(TokenFiledConst::FIELD_TOKEN_ATTR, 0);
 #endif
     EXPECT_EQ(ReservedType::NONE, AccessTokenInfoUtils::GetReservedTokenTypeDBValue(values));
+}
+
+/**
+ * @tc.name: BuildBundleFullInfoDisabledPerm001
+ * @tc.desc: Verify BuildBundleFullInfo skips permissions whose briefDef.isEnable is false.
+ * @tc.type: FUNC
+ */
+HWTEST_F(AccessTokenInfoUtilsTest, BuildBundleFullInfoDisabledPerm001, TestSize.Level0)
+{
+    ASSERT_TRUE(SetPermissionBriefEnabled("ohos.permission.CAMERA", false));
+
+    BundleParam param;
+    param.bundleName = "com.ohos.helper.disabled";
+
+    HapPolicy policy;
+    policy.apl = APL_NORMAL;
+    policy.permStateList = {BuildStatus("ohos.permission.CAMERA")};
+
+    std::shared_ptr<BundleInfoInner> innerInfo;
+    BundleNoCachedInfo noCached;
+    AccessTokenInfoUtils::BuildBundleFullInfo(param, policy, innerInfo, noCached);
+
+    ASSERT_NE(nullptr, innerInfo);
+    EXPECT_TRUE(innerInfo->permCodeList.empty());
+
+    SetPermissionBriefEnabled("ohos.permission.CAMERA", true);
+}
+
+/**
+ * @tc.name: AccessTokenServiceAppVerifyParamSet001
+ * @tc.desc: Verify AccessTokenServiceAppVerifyParamSet stores the app verify parameter.
+ * @tc.type: FUNC
+ */
+HWTEST_F(AccessTokenInfoUtilsTest, AccessTokenServiceAppVerifyParamSet001, TestSize.Level0)
+{
+    AccessTokenInfoUtils::AccessTokenServiceAppVerifyParamSet();
+
+    char value[32] = {0};
+    EXPECT_GE(GetParameter(ACCESS_TOKEN_SERVICE_APP_VERIFY_KEY, "", value, sizeof(value) - 1), 0);
+    EXPECT_EQ(std::string("1"), std::string(value));
+
+    SetParameter(ACCESS_TOKEN_SERVICE_APP_VERIFY_KEY, "0");
+}
+
+/**
+ * @tc.name: IsSystemAppVerified001
+ * @tc.desc: Verify IsSystemAppVerified reflects the app verify parameter value.
+ * @tc.type: FUNC
+ */
+HWTEST_F(AccessTokenInfoUtilsTest, IsSystemAppVerified001, TestSize.Level0)
+{
+    SetParameter(ACCESS_TOKEN_SERVICE_APP_VERIFY_KEY, "0");
+    EXPECT_FALSE(AccessTokenInfoUtils::IsSystemAppVerified());
+
+    SetParameter(ACCESS_TOKEN_SERVICE_APP_VERIFY_KEY, "1");
+    EXPECT_TRUE(AccessTokenInfoUtils::IsSystemAppVerified());
+
+    SetParameter(ACCESS_TOKEN_SERVICE_APP_VERIFY_KEY, "0");
+    EXPECT_FALSE(AccessTokenInfoUtils::IsSystemAppVerified());
+}
+
+/**
+ * @tc.name: IsSystemSpmEnforcing001
+ * @tc.desc: Verify IsSystemSpmEnforcing reflects the spm enforcing parameter value.
+ * @tc.type: FUNC
+ */
+HWTEST_F(AccessTokenInfoUtilsTest, IsSystemSpmEnforcing001, TestSize.Level0)
+{
+    SetParameter(ACCESS_TOKEN_SERVICE_SPM_ENFORCING_KEY, "0");
+    EXPECT_FALSE(AccessTokenInfoUtils::IsSystemSpmEnforcing());
+
+    SetParameter(ACCESS_TOKEN_SERVICE_SPM_ENFORCING_KEY, "1");
+    EXPECT_TRUE(AccessTokenInfoUtils::IsSystemSpmEnforcing());
+
+    SetParameter(ACCESS_TOKEN_SERVICE_SPM_ENFORCING_KEY, "0");
+    EXPECT_FALSE(AccessTokenInfoUtils::IsSystemSpmEnforcing());
 }
 } // namespace AccessToken
 } // namespace Security

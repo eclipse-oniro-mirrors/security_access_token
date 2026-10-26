@@ -184,7 +184,8 @@ void DisablePolicyCbkManager::ExecuteCallbackAsync(const PermDisablePolicyInfo& 
     }
 
     AccessTokenID callerTokenID = IPCSkeleton::GetCallingTokenID();
-    std::string taskName = std::to_string(callerTokenID) + info.permissionName + (info.isDisable ? "true" : "false");
+    std::string taskName = std::to_string(callerTokenID) + info.permissionName +
+        (info.isDisable ? "true" : "false") + std::to_string(info.userId);
     LOGI(PRI_DOMAIN, PRI_TAG, "Add permission task name %{public}s", taskName.c_str());
     std::function<void()> task = ([info]() {
         DisablePolicyCbkManager::GetInstance()->PermDisablePolicyCallback(info);

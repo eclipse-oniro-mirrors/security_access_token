@@ -1955,6 +1955,231 @@ HWTEST_F(BootVerifySchedulerTest, PreVerifyBundleByInstIndexSkip001, TestSize.Le
     EXPECT_EQ(RET_SUCCESS, scheduler.PreVerifyBundle(TEST_BUNDLE_NAME, 10000));
 }
 
+/**
+ * @tc.name: PreVerifyBundleByUid001
+ * @tc.desc: PreVerifyBundle(uid) covers invalid uid, all-verified, empty map, and uid-not-found branches.
+ * @tc.type: FUNC
+ */
+HWTEST_F(BootVerifySchedulerTest, PreVerifyBundleByUid001, TestSize.Level1)
+{
+    auto& scheduler = BootVerifyScheduler::GetInstance();
+
+    EXPECT_EQ(RET_SUCCESS, scheduler.PreVerifyBundle(0));
+    EXPECT_EQ(RET_SUCCESS, scheduler.PreVerifyBundle(-1));
+
+    scheduler.isAllHapBundlesVerified_.store(true);
+    EXPECT_EQ(RET_SUCCESS, scheduler.PreVerifyBundle(static_cast<int32_t>(TEST_UID)));
+    scheduler.isAllHapBundlesVerified_.store(false);
+
+    EXPECT_EQ(RET_SUCCESS, scheduler.PreVerifyBundle(static_cast<int32_t>(TEST_UID)));
+
+    scheduler.hapTokenInfoMap_[TEST_TOKEN_ID] = BuildHapTokenInfoItem(TEST_TOKEN_ID, TEST_BUNDLE_NAME, TEST_UID + 1);
+    EXPECT_EQ(RET_SUCCESS, scheduler.PreVerifyBundle(static_cast<int32_t>(TEST_UID)));
+}
+
+/**
+ * @tc.name: BuildSpmParamsTokenMiss001
+ * @tc.desc: BuildSpmParams returns ERR_TOKENID_NOT_EXIST when a bundle tokenId is absent from cache.
+ * @tc.type: FUNC
+ */
+HWTEST_F(BootVerifySchedulerTest, BuildSpmParamsTokenMiss001, TestSize.Level1)
+{
+    auto& scheduler = BootVerifyScheduler::GetInstance();
+    scheduler.bundleInfoMap_[GetBundleModeKey(TEST_BUNDLE_NAME, 0)] = BuildBundleInfo({ TEST_TOKEN_ID });
+    scheduler.bundleNoCachedInfoMap_[GetBundleModeKey(TEST_BUNDLE_NAME, 0)] = BundleNoCachedInfo {};
+
+    BundleNoCachedInfo noCachedInfo;
+    std::vector<HapTokenInfo> hapInfoCache;
+    std::vector<std::vector<BriefPermData>> permBriefDataListCache;
+    std::vector<std::vector<PermissionWithValue>> extendPermListCache;
+    std::vector<SpmDataParam> params;
+    EXPECT_EQ(ERR_TOKENID_NOT_EXIST,
+        scheduler.BuildSpmParams(GetBundleModeKey(TEST_BUNDLE_NAME, 0), noCachedInfo, hapInfoCache,
+        permBriefDataListCache, extendPermListCache, params));
+}
+
+/**
+ * @tc.name: ShouldSkipVerifyLockedHapMiss001
+ * @tc.desc: ShouldSkipVerifyLocked returns true when a bundle token is absent from hapTokenInfoMap_.
+ * @tc.type: FUNC
+ */
+HWTEST_F(BootVerifySchedulerTest, ShouldSkipVerifyLockedHapMiss001, TestSize.Level1)
+{
+    auto& scheduler = BootVerifyScheduler::GetInstance();
+    scheduler.bundleInfoMap_[GetBundleModeKey(TEST_BUNDLE_NAME, 0)] = BuildBundleInfo({ TEST_TOKEN_ID });
+    scheduler.bundleSignInfoMap_[GetBundleModeKey(TEST_BUNDLE_NAME, 0)] = BuildSignInfo();
+
+    EXPECT_TRUE(scheduler.ShouldSkipVerifyLocked(GetBundleModeKey(TEST_BUNDLE_NAME, 0)));
+}
+
+/**
+ * @tc.name: PrepareBundleForBatchVerifyLocked001
+ * @tc.desc: PrepareBundleForBatchVerifyLocked returns false when already verifying or verified and true otherwise.
+ * @tc.type: FUNC
+ */
+HWTEST_F(BootVerifySchedulerTest, PrepareBundleForBatchVerifyLocked001, TestSize.Level1)
+{
+    auto& scheduler = BootVerifyScheduler::GetInstance();
+    std::string key = GetBundleModeKey(TEST_BUNDLE_NAME, 0);
+    scheduler.bundleInfoMap_[key] = BuildBundleInfo({ TEST_TOKEN_ID });
+    scheduler.hapTokenInfoMap_[TEST_TOKEN_ID] = BuildHapTokenInfoItem(TEST_TOKEN_ID);
+    scheduler.bundleSignInfoMap_[key] = BuildSignInfo();
+
+    BundleSignInfo updatedInfo;
+
+    scheduler.isVerifyingMap_[key] = true;
+    scheduler.isVerifiedMap_[key] = false;
+    EXPECT_FALSE(scheduler.PrepareBundleForBatchVerifyLocked(key, updatedInfo));
+
+    scheduler.isVerifyingMap_[key] = false;
+    scheduler.isVerifiedMap_[key] = true;
+    EXPECT_FALSE(scheduler.PrepareBundleForBatchVerifyLocked(key, updatedInfo));
+
+    scheduler.isVerifyingMap_[key] = false;
+    scheduler.isVerifiedMap_[key] = false;
+    EXPECT_TRUE(scheduler.PrepareBundleForBatchVerifyLocked(key, updatedInfo));
+    EXPECT_TRUE(scheduler.isVerifyingMap_[key]);
+}
+
+#ifdef SPM_DATA_ENABLE
+/**
+ * @tc.name: RefreshBundleSignInfoMapNegativeMode001
+ * @tc.desc: RefreshBundleSignInfoMap resets a negative mode to zero when loading package info.
+ * @tc.type: FUNC
+ */
+HWTEST_F(BootVerifySchedulerTest, RefreshBundleSignInfoMapNegativeMode001, TestSize.Level1)
+{
+    GenericValues signValue = BuildBundleSignValue(TEST_BUNDLE_NAME, "entry", TEST_PATH, true,
+        static_cast<int32_t>(AppExecFwk::Spm::BundleType::APP),
+        BuildPersistData(TEST_BUNDLE_NAME, TEST_BUNDLE_NAME));
+    signValue.Put(TokenFiledConst::FIELD_MODE, -1);
+    SetMockDbFindResult(AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO, RET_SUCCESS, { signValue });
+
+    auto& scheduler = BootVerifyScheduler::GetInstance();
+    EXPECT_EQ(RET_SUCCESS, scheduler.RefreshBundleSignInfoMap());
+    EXPECT_TRUE(scheduler.bundleSignInfoMap_.find(GetBundleModeKey(TEST_BUNDLE_NAME, 0)) !=
+        scheduler.bundleSignInfoMap_.end());
+}
+#endif
+
+/**
+ * @tc.name: InitExtendedPermContextTranslationFail001
+ * @tc.desc: InitExtendedPermContext skips extended permissions that fail translation (empty permission name).
+ * @tc.type: FUNC
+ */
+HWTEST_F(BootVerifySchedulerTest, InitExtendedPermContextTranslationFail001, TestSize.Level1)
+{
+    auto& scheduler = BootVerifyScheduler::GetInstance();
+    std::map<AccessTokenID, std::vector<GenericValues>> extendedPermMap;
+    std::vector<GenericValues> extendedPermRes = {
+        BuildExtendedValue(TEST_TOKEN_ID, "", "empty-name")
+    };
+
+    scheduler.InitExtendedPermContext(extendedPermRes, extendedPermMap);
+
+    EXPECT_TRUE(scheduler.extendedPermMap_.empty());
+}
+
+/**
+ * @tc.name: ReconcileVerifiedBundleCacheExtendedPermCompare001
+ * @tc.desc: ReconcileVerifiedBundleCache skips invalid and disabled extended perms and updates the cached
+ *           extended perm value when it differs from the policy.
+ * @tc.type: FUNC
+ */
+HWTEST_F(BootVerifySchedulerTest, ReconcileVerifiedBundleCacheExtendedPermCompare001, TestSize.Level1)
+{
+    ASSERT_TRUE(SetPermissionBriefEnabled("ohos.permission.MICROPHONE", false));
+
+    auto& scheduler = BootVerifyScheduler::GetInstance();
+    scheduler.bundleInfoMap_[GetBundleModeKey(TEST_BUNDLE_NAME, 0)] = BuildBundleInfo({ TEST_TOKEN_ID });
+    scheduler.hapTokenInfoMap_[TEST_TOKEN_ID] = BuildHapTokenInfoItem(TEST_TOKEN_ID);
+    scheduler.requestedPermData_[TEST_TOKEN_ID] = {};
+    PermissionWithValue oldValue;
+    oldValue.permissionName = "ohos.permission.kernel.SUPPORT_PLUGIN";
+    oldValue.value = "old";
+    scheduler.extendedPermMap_[TEST_TOKEN_ID] = { oldValue };
+
+    HapPolicy policy;
+    policy.apl = APL_NORMAL;
+    policy.aclExtendedMap = {
+        { "ohos.permission.kernel.SUPPORT_PLUGIN", "new" },
+        { "ohos.permission.MICROPHONE", "ignored" },
+        { "ohos.permission.INVALID_BOOT_VERIFY", "ignored" }
+    };
+    BundleParam param;
+    param.bundleName = TEST_BUNDLE_NAME;
+    VerifiedBundleState state;
+
+    EXPECT_EQ(RET_SUCCESS,
+        scheduler.ReconcileVerifiedBundleCache(GetBundleModeKey(TEST_BUNDLE_NAME, 0), policy, param, state));
+    EXPECT_TRUE(state.needUpdateExtendPerm);
+    ASSERT_EQ(1U, scheduler.extendedPermMap_[TEST_TOKEN_ID].size());
+    EXPECT_EQ("ohos.permission.kernel.SUPPORT_PLUGIN", scheduler.extendedPermMap_[TEST_TOKEN_ID][0].permissionName);
+    EXPECT_EQ("new", scheduler.extendedPermMap_[TEST_TOKEN_ID][0].value);
+
+    SetPermissionBriefEnabled("ohos.permission.MICROPHONE", true);
+}
+
+/**
+ * @tc.name: PersistVerifiedBundleStateNeedUpdateExtendPerm001
+ * @tc.desc: PersistVerifiedBundleState persists extended permission values when needUpdateExtendPerm is set.
+ * @tc.type: FUNC
+ */
+HWTEST_F(BootVerifySchedulerTest, PersistVerifiedBundleStateNeedUpdateExtendPerm001, TestSize.Level1)
+{
+    auto& scheduler = BootVerifyScheduler::GetInstance();
+    scheduler.bundleInfoMap_[GetBundleModeKey(TEST_BUNDLE_NAME, 0)] = BuildBundleInfo({ TEST_TOKEN_ID });
+    scheduler.hapTokenInfoMap_[TEST_TOKEN_ID] = BuildHapTokenInfoItem(TEST_TOKEN_ID);
+    scheduler.requestedPermData_[TEST_TOKEN_ID] = {};
+    PermissionWithValue extValue;
+    extValue.permissionName = "ohos.permission.kernel.SUPPORT_PLUGIN";
+    extValue.value = "enabled";
+    scheduler.extendedPermMap_[TEST_TOKEN_ID] = { extValue };
+
+    VerifiedBundleState state;
+    state.bundleName = TEST_BUNDLE_NAME;
+    state.needUpdateExtendPerm = true;
+
+    EXPECT_EQ(RET_SUCCESS,
+        scheduler.PersistVerifiedBundleState(GetBundleModeKey(TEST_BUNDLE_NAME, 0), state));
+
+    bool foundExtendPerm = false;
+    for (const auto& addInfo : GetMockDbState().lastAddInfos) {
+        if (addInfo.addType == AtmDataType::ACCESSTOKEN_PERMISSION_EXTEND_VALUE) {
+            foundExtendPerm = true;
+        }
+    }
+    EXPECT_TRUE(foundExtendPerm);
+}
+
+/**
+ * @tc.name: HandleHighPrivilegeBundleSpmDataPersistFail001
+ * @tc.desc: HandleHighPrivilegeBundleSpmData still commits cache when PersistVerifiedBundleStates fails.
+ * @tc.type: FUNC
+ */
+HWTEST_F(BootVerifySchedulerTest, HandleHighPrivilegeBundleSpmDataPersistFail001, TestSize.Level1)
+{
+    auto& scheduler = BootVerifyScheduler::GetInstance();
+    std::string key = GetBundleModeKey(TEST_BUNDLE_NAME, 0);
+    scheduler.highPrivilegeBundleList_ = { key };
+    scheduler.bundleInfoMap_[key] = BuildBundleInfo({ TEST_TOKEN_ID });
+    scheduler.hapTokenInfoMap_[TEST_TOKEN_ID] = BuildHapTokenInfoItem(TEST_TOKEN_ID);
+    scheduler.requestedPermData_[TEST_TOKEN_ID] = {};
+    scheduler.extendedPermMap_[TEST_TOKEN_ID] = {};
+    scheduler.isVerifiedMap_[key] = false;
+    scheduler.isVerifyingMap_[key] = true;
+
+    VerifiedBundleState state;
+    state.bundleName = TEST_BUNDLE_NAME;
+    state.needPersistPermState = true;
+
+    GetMockDbState().deleteAndInsertRet = ERR_DATABASE_OPERATE_FAILED;
+    scheduler.HandleHighPrivilegeBundleSpmData({ { key, state } });
+
+    EXPECT_TRUE(scheduler.isVerifiedMap_[key]);
+    EXPECT_FALSE(scheduler.isVerifyingMap_[key]);
+}
+
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

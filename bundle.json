@@ -20,6 +20,7 @@
       "//base/security/access_token/hisysevent.yaml"
     ],
     "features": [
+      "access_token_support_ime_extension",
       "access_token_feature_coverage",
       "access_token_camera_float_window_enable",
       "access_token_with_distributed_capability",
@@ -54,6 +55,7 @@
         "hitrace",
         "hilog",
         "init",
+        "imf",
         "ipc",
         "json",
         "memmgr",

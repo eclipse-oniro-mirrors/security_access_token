@@ -23,6 +23,7 @@ bool PermDisablePolicyParcel::Marshalling(Parcel& out) const
 {
     RETURN_IF_FALSE(out.WriteString(this->info.permissionName));
     RETURN_IF_FALSE(out.WriteBool(this->info.isDisable));
+    RETURN_IF_FALSE(out.WriteInt32(this->info.userId));
     return true;
 }
 
@@ -35,6 +36,7 @@ PermDisablePolicyParcel* PermDisablePolicyParcel::Unmarshalling(Parcel& in)
 
     RELEASE_IF_FALSE(in.ReadString(permDisablePolicyParcel->info.permissionName), permDisablePolicyParcel);
     RELEASE_IF_FALSE(in.ReadBool(permDisablePolicyParcel->info.isDisable), permDisablePolicyParcel);
+    RELEASE_IF_FALSE(in.ReadInt32(permDisablePolicyParcel->info.userId), permDisablePolicyParcel);
     
     return permDisablePolicyParcel;
 }

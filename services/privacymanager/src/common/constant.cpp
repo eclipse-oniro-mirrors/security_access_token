@@ -207,6 +207,7 @@ const std::map<std::string, int32_t> Constant::PERMISSION_OPCODE_MAP = {
         Constant::OP_READ_WRITE_EXTERNAL_DIRECTORY_OTHER_READ),
     std::map<std::string, int32_t>::value_type("ohos.permission.READ_WRITE_EXTERNAL_DIRECTORY_OTHER_WRITE",
         Constant::OP_READ_WRITE_EXTERNAL_DIRECTORY_OTHER_WRITE),
+    std::map<std::string, int32_t>::value_type("ohos.permission.WINDOW_CAPTURE", Constant::OP_WINDOW_CAPTURE),
 };
 
 bool Constant::TransferPermissionToOpcode(const std::string& permissionName, int32_t& opCode)

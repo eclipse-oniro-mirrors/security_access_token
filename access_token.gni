@@ -27,6 +27,7 @@ module_output_path_unittest_privacy = "access_token/privacy"
 module_output_path_unittest_atm_tools = "access_token/tools"
 
 declare_args() {
+  access_token_support_ime_extension = false
   access_token_camera_float_window_enable = true
   access_token_with_distributed_capability = true
   access_token_enhance_capability = true
@@ -252,12 +253,20 @@ if ("${target_platform}" == "pc" || "${target_platform}" == "tablet" ||
   access_token_manage_user_policy_enable = false
 }
 
+if ("${target_platform}" == "pc") {
+  access_token_cflags_cc += [ "-DSUPPORT_PC_PRODUCT" ]
+}
+
 if (access_token_privacy_bundle_start_stop_enable) {
   access_token_cflags_cc += [ "-DPRIVACY_BUNDLE_START_STOP_ENABLE" ]
 }
 
 if (access_token_automation_control_enable) {
   access_token_cflags_cc += [ "-DENABLE_AUTOMATION_CONTROL" ]
+}
+
+if (access_token_support_ime_extension) {
+  access_token_cflags_cc += [ "-DSUPPORT_IME_EXTENSION_CONTEXT" ]
 }
 
 if (is_emulator) {

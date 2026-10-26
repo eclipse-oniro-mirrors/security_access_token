@@ -25,6 +25,9 @@
 #include "token_callback_stub.h"
 #include "ui_content.h"
 #include "ui_extension_context.h"
+#ifdef SUPPORT_IME_EXTENSION_CONTEXT
+#include "inputmethod_extension_context.h"
+#endif
 
 namespace OHOS {
 namespace Security {
@@ -51,6 +54,9 @@ struct RequestAsyncContext : public AtManagerAsyncWorkData {
     PermissionGrantInfo info;
     std::shared_ptr<AbilityRuntime::AbilityContext> abilityContext;
     std::shared_ptr<AbilityRuntime::UIExtensionContext> uiExtensionContext;
+#ifdef SUPPORT_IME_EXTENSION_CONTEXT
+    std::shared_ptr<AbilityRuntime::InputMethodExtensionContext> inputMethodExtensionContext;
+#endif
     bool uiAbilityFlag = false;
     bool isWithWindowId = false;
     bool uiExtensionFlag = false;
