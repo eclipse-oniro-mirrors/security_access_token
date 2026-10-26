@@ -3146,7 +3146,7 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
-            "deviceTypes": ["phone", "tv", "wearable", "2in1", "tablet", "car"]
+            "deviceTypes": ["phone", "tv", "wearable", "2in1", "tablet", "car", "smarthomehost"]
         },
         {
             "name": "ohos.permission.WRITE_HIVIEW_SYSTEM",
@@ -3157,7 +3157,7 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
-            "deviceTypes": ["phone", "tv", "wearable", "2in1", "tablet", "car"]
+            "deviceTypes": ["phone", "tv", "wearable", "2in1", "tablet", "car", "smarthomehost"]
         },
         {
             "name": "ohos.permission.ENTERPRISE_GET_DEVICE_INFO",
