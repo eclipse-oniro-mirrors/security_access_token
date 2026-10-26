@@ -263,8 +263,13 @@ private:
         int32_t userId, std::vector<RemotePermissionRecord>& mergedRecords,
         std::map<std::string, BundleUsedRecord>& deviceIdToBundleMap, PermissionUsedResult& result,
         const PermissionUsageFlag& flag);
+    void CollectMergedRemoteRecordsFromCache(
+        int32_t userId, int32_t subProfileId, std::vector<RemotePermissionRecord>& mergedRecords);
+    void AppendRemoteBundleRecords(std::map<std::string, BundleUsedRecord>& deviceIdToBundleMap,
+        PermissionUsedResult& result, const PermissionUsageFlag& flag);
     int32_t UpdateRemotePermissionUsedRecordToDb(const RemotePermissionRecord& record);
     int32_t DeleteRemotePermissionRecord(int32_t days);
+    void RemoveRemotePermissionRecordsOnToggle(int32_t userID, int32_t subProfileId);
 #endif
 
 private:
