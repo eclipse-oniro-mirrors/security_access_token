@@ -4738,8 +4738,7 @@
             "since": 11,
             "deprecated": "",
             "provisionEnable": true,
-            "distributedSceneEnable": false,
-            "provisionBypassForSideload": true
+            "distributedSceneEnable": false
         },
         {
             "name": "ohos.permission.SET_SANDBOX_POLICY",
