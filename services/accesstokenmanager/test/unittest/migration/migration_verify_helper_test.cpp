@@ -758,7 +758,7 @@ HWTEST_F(MigrationVerifyHelperTest, DoVerifyMigratedBundleCheckMultipleHapsFail0
     BundleInfoItems bundleInfo = BuildBundleInfo(migratedInfo);
     VerifiedMigrationBundle verifiedBundle;
 
-    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
+    EXPECT_EQ(AccessTokenError::ERR_CHECK_MULTIPLE_HAP_BUNDLE_NAME_MISMATCH,
         MigrationVerifyHelper::GetInstance().DoVerifyMigratedBundle(bundleInfo, verifiedBundle));
 
     mockAdapter_.bundleName_ = savedBundleName;

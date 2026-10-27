@@ -189,8 +189,8 @@ int32_t VerifyHapList(const BundleHapList& list, std::vector<TrustedBundleInfoIn
 
     int32_t ret = HapSignVerifyManager::GetInstance().CheckMultipleHaps(bundleInfos);
     if (ret != RET_SUCCESS) {
-        // failure details are logged inside CheckMultipleHaps
-        return ERR_CHECK_MULTIPLE_HAP_FAILED;
+        // the specific mismatch code is logged inside CheckMultipleHaps and returned as-is
+        return ret;
     }
     return RET_SUCCESS;
 }
@@ -291,7 +291,7 @@ int32_t InstallSessionManager::MergeBundleInfos(InstallCache& cache, std::vector
     ret = HapSignVerifyManager::GetInstance().CheckMultipleHaps(cache.bundleInfos);
     if (ret != RET_SUCCESS) {
         LOGE(ATM_DOMAIN, ATM_TAG, "CheckMultipleHaps failed ret=%{public}d", ret);
-        return ERR_CHECK_MULTIPLE_HAP_FAILED;
+        return ret;
     }
     return RET_SUCCESS;
 }

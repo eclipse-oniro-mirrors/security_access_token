@@ -472,31 +472,28 @@ int32_t HapSignVerifyManager::CheckMultipleHaps(const std::vector<TrustedBundleI
 #endif
 
     const TrustedBundleInfoInner& baseline = infos.front();
-    bool isInvalid = std::any_of(infos.begin(), infos.end(), [&baseline](const auto& info) {
+    for (const auto& info : infos) {
         if (baseline.GetBundleName() != info.GetBundleName()) {
             LOGC(ATM_DOMAIN, ATM_TAG, "Check multiple haps failed, hap files have different bundleName.");
-            return true;
+            return AccessTokenError::ERR_CHECK_MULTIPLE_HAP_BUNDLE_NAME_MISMATCH;
         }
         if (baseline.GetAppFeature() != info.GetAppFeature()) {
             LOGC(ATM_DOMAIN, ATM_TAG, "Check multiple haps failed, hap files have different appFeature.");
-            return true;
+            return AccessTokenError::ERR_CHECK_MULTIPLE_HAP_APP_FEATURE_MISMATCH;
         }
         if (IsAppGalleryOrOsIntegrationType(baseline.provisionInfo.distributionType) !=
             IsAppGalleryOrOsIntegrationType(info.provisionInfo.distributionType)) {
             LOGC(ATM_DOMAIN, ATM_TAG,
                 "Check multiple haps failed, hap files have different appDistributionType class.");
-            return true;
+            return AccessTokenError::ERR_CHECK_MULTIPLE_HAP_DISTRIBUTION_TYPE_MISMATCH;
         }
         if (baseline.GetAppProvisionType() != info.GetAppProvisionType()) {
             LOGC(ATM_DOMAIN, ATM_TAG, "Check multiple haps failed, hap files have different appProvisionType.");
-            return true;
+            return AccessTokenError::ERR_CHECK_MULTIPLE_HAP_PROVISION_TYPE_MISMATCH;
         }
-        return false;
-    });
-    if (!isInvalid) {
-        LOGD(ATM_DOMAIN, ATM_TAG, "Check multiple trusted haps successfully.");
     }
-    return isInvalid ? AccessTokenError::ERR_PARAM_INVALID : RET_SUCCESS;
+    LOGD(ATM_DOMAIN, ATM_TAG, "Check multiple trusted haps successfully.");
+    return RET_SUCCESS;
 }
 
 int32_t HapSignVerifyManager::BuildHapPolicy(
