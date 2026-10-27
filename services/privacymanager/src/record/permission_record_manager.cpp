@@ -1009,6 +1009,35 @@ static void AddRemoteDebugLog(const std::string& deviceId, const BundleUsedRecor
     totalFailCount += deviceTotalFailCount;
 }
 
+void PermissionRecordManager::CollectMergedRemoteRecordsFromCache(
+    int32_t userId, int32_t subProfileId, std::vector<RemotePermissionRecord>& mergedRecords)
+{
+    const std::string targetToggleKey = BuildToggleStatusKey(userId, subProfileId);
+    std::lock_guard<std::mutex> lock(remotePermUsedRecMutex_);
+    for (const auto& cache : remotePermUsedRecList_) {
+        if (cache.needUpdateToDb &&
+            (BuildToggleStatusKey(cache.record.userId, cache.record.subProfileId) == targetToggleKey)) {
+            mergedRecords.emplace_back(cache.record);
+        }
+    }
+}
+
+void PermissionRecordManager::AppendRemoteBundleRecords(
+    std::map<std::string, BundleUsedRecord>& deviceIdToBundleMap, PermissionUsedResult& result,
+    const PermissionUsageFlag& flag)
+{
+    int32_t totalSuccCount = 0;
+    int32_t totalFailCount = 0;
+    for (auto iter = deviceIdToBundleMap.begin(); iter != deviceIdToBundleMap.end(); ++iter) {
+        result.bundleRecords.emplace_back(iter->second);
+        AddRemoteDebugLog(iter->second.deviceId, iter->second, totalSuccCount, totalFailCount);
+    }
+    if (flag == FLAG_PERMISSION_USAGE_SUMMARY) {
+        LOGI(PRI_DOMAIN, PRI_TAG, "Total success count is %{public}d, total failure count is %{public}d",
+            totalSuccCount, totalFailCount);
+    }
+}
+
 int32_t PermissionRecordManager::GetRemotePermissionUsedRecords(
     const PermissionUsedRequest& request, int32_t userId, PermissionUsedResult& result)
 {
@@ -1051,32 +1080,13 @@ int32_t PermissionRecordManager::GetRemotePermissionUsedRecords(
     }
 
     std::vector<RemotePermissionRecord> mergedRecords;
-    const std::string targetToggleKey = BuildToggleStatusKey(userId, subProfileId);
-    {
-        std::lock_guard<std::mutex> lock(remotePermUsedRecMutex_);
-        for (const auto& cache : remotePermUsedRecList_) {
-            if (cache.needUpdateToDb &&
-                (BuildToggleStatusKey(cache.record.userId, cache.record.subProfileId) == targetToggleKey)) {
-                mergedRecords.emplace_back(cache.record);
-            }
-        }
-    }
+    CollectMergedRemoteRecordsFromCache(userId, subProfileId, mergedRecords);
 
     std::map<std::string, BundleUsedRecord> deviceIdToBundleMap;
     BuildBundleUsedRecordsFromRemoteResults(
         findRecordsValues, userId, mergedRecords, deviceIdToBundleMap, result, request.flag);
 
-    int32_t totalSuccCount = 0;
-    int32_t totalFailCount = 0;
-    for (auto iter = deviceIdToBundleMap.begin(); iter != deviceIdToBundleMap.end(); ++iter) {
-        result.bundleRecords.emplace_back(iter->second);
-        AddRemoteDebugLog(iter->second.deviceId, iter->second, totalSuccCount, totalFailCount);
-    }
-
-    if (request.flag == FLAG_PERMISSION_USAGE_SUMMARY) {
-        LOGI(PRI_DOMAIN, PRI_TAG, "Total success count is %{public}d, total failure count is %{public}d",
-            totalSuccCount, totalFailCount);
-    }
+    AppendRemoteBundleRecords(deviceIdToBundleMap, result, request.flag);
 
     return Constant::SUCCESS;
 }
@@ -1317,6 +1327,28 @@ bool PermissionRecordManager::ToRemoveRemoteRecord(
 }
 #endif
 
+#ifdef REMOTE_PRIVACY_ENABLE
+void PermissionRecordManager::RemoveRemotePermissionRecordsOnToggle(int32_t userID, int32_t subProfileId)
+{
+    const std::string toggleKey = BuildToggleStatusKey(userID, subProfileId);
+    {
+        std::lock_guard<std::mutex> lock(remotePermUsedRecMutex_);
+        for (auto it = remotePermUsedRecList_.begin(); it != remotePermUsedRecList_.end();) {
+            if (BuildToggleStatusKey(it->record.userId, it->record.subProfileId) == toggleKey) {
+                it = remotePermUsedRecList_.erase(it);
+            } else {
+                ++it;
+            }
+        }
+    }
+    GenericValues conditions;
+    conditions.Put(PrivacyFiledConst::FIELD_SUB_PROFILE_ID, subProfileId);
+    std::unique_lock<std::shared_mutex> lk(this->rwLock_);
+    RemotePermUsedRecordDbManager::GetInstance().Remove(userID, conditions);
+    LOGI(PRI_DOMAIN, PRI_TAG, "Remove remote permission records when toggle status is false.");
+}
+#endif
+
 int32_t PermissionRecordManager::SetPermissionUsedRecordToggleStatus(int32_t userID, bool status, int32_t subProfileId)
 {
     if (!PermissionRecordManager::IsUserIdValid(userID)) {
@@ -1351,24 +1383,7 @@ int32_t PermissionRecordManager::SetPermissionUsedRecordToggleStatus(int32_t use
         RemoveHistoryPermissionUsedRecords(tokenIDList);
     }
 #ifdef REMOTE_PRIVACY_ENABLE
-    // Remove remote permission records
-    const std::string toggleKey = BuildToggleStatusKey(userID, subProfileId);
-    {
-        std::lock_guard<std::mutex> lock(remotePermUsedRecMutex_);
-        for (auto it = remotePermUsedRecList_.begin(); it != remotePermUsedRecList_.end();) {
-            if (BuildToggleStatusKey(it->record.userId, it->record.subProfileId) == toggleKey) {
-                it = remotePermUsedRecList_.erase(it);
-            } else {
-                ++it;
-            }
-        }
-    }
-
-    GenericValues conditions;
-    conditions.Put(PrivacyFiledConst::FIELD_SUB_PROFILE_ID, subProfileId);
-    std::unique_lock<std::shared_mutex> lk(this->rwLock_);
-    RemotePermUsedRecordDbManager::GetInstance().Remove(userID, conditions);
-    LOGI(PRI_DOMAIN, PRI_TAG, "Remove remote permission records when toggle status is false.");
+    RemoveRemotePermissionRecordsOnToggle(userID, subProfileId);
 #endif
 
     if (!UpdatePermUsedRecToggleStatusMap(userID, subProfileId, status)) {
