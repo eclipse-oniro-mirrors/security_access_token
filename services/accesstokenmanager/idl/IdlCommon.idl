@@ -174,6 +174,12 @@ enum MultipleModeEnumIdl {
     SUB_MODE = 1,
 };
 
+enum PermissionGrantTypeIdl {
+    SYSTEM_GRANT = 0,
+    NON_SYSTEM_GRANT = 1,
+    ALL = 2,
+};
+
 struct BundleHapListIdl {
     List<String> hapPaths;
     boolean isPreInstalled;

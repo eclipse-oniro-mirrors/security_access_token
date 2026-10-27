@@ -69,7 +69,7 @@ public:
         const std::vector<std::string>& permissionList, std::vector<int32_t>& permStateList);
     int GetDefPermission(const std::string& permissionName, PermissionDef& permissionDefResult);
     int GetReqPermissions(
-        AccessTokenID tokenID, std::vector<PermissionStateFull>& reqPermList, bool isSystemGrant);
+        AccessTokenID tokenID, std::vector<PermissionStateFull>& reqPermList, PermissionGrantType filter);
     int GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName, uint32_t& flag);
     int32_t SetPermissionRequestToggleStatus(const std::string& permissionName, uint32_t status, int32_t userID,
         int32_t subProfileId);
@@ -98,6 +98,7 @@ public:
         std::vector<BundleMigrateResult>& results);
     int32_t FinishMigration();
     int32_t CheckMigratedUidSet(const std::set<int32_t>& totalUids, std::set<int32_t>& unreceivedUids);
+    int32_t IsMigrationDone(bool& isDone);
     int DeleteToken(AccessTokenID tokenID, bool isTokenReserved);
     int32_t DeleteToolTokenByPid(int32_t pid);
 #ifdef SPM_DATA_ENABLE

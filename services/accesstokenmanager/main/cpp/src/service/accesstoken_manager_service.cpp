@@ -948,7 +948,7 @@ int AccessTokenManagerService::GetDefPermission(
 }
 
 int AccessTokenManagerService::GetReqPermissions(
-    AccessTokenID tokenID, std::vector<PermissionStatusParcel>& reqPermList, bool isSystemGrant)
+    AccessTokenID tokenID, std::vector<PermissionStatusParcel>& reqPermList, PermissionGrantTypeIdl filterIdl)
 {
     AccessTokenID callingTokenID = IPCSkeleton::GetCallingTokenID();
     if ((this->GetTokenType(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
@@ -961,8 +961,24 @@ int AccessTokenManagerService::GetReqPermissions(
     }
     (void)PreVerifyHapTokenIfNeeded(tokenID);
 
+    PermissionGrantType filter;
+    switch (filterIdl) {
+        case PermissionGrantTypeIdl::SYSTEM_GRANT:
+            filter = PermissionGrantType::SYSTEM_GRANT;
+            break;
+        case PermissionGrantTypeIdl::NON_SYSTEM_GRANT:
+            filter = PermissionGrantType::NON_SYSTEM_GRANT;
+            break;
+        case PermissionGrantTypeIdl::ALL:
+            filter = PermissionGrantType::ALL;
+            break;
+        default:
+            LOGE(ATM_DOMAIN, ATM_TAG, "Invalid filter.");
+            return AccessTokenError::ERR_PARAM_INVALID;
+    }
+
     std::vector<PermissionStatus> permList;
-    int result = PermissionManager::GetInstance().GetReqPermissions(tokenID, permList, isSystemGrant);
+    int result = PermissionManager::GetInstance().GetReqPermissions(tokenID, permList, filter);
 
     for (const auto& perm : permList) {
         PermissionStatusParcel permParcel;
@@ -1047,12 +1063,10 @@ int32_t AccessTokenManagerService::GetPermissionsStatus(AccessTokenID tokenID,
 
 static bool GetAppReqPermissions(AccessTokenID tokenID, std::vector<PermissionStatus>& permsList)
 {
-    int retUserGrant = PermissionManager::GetInstance().GetReqPermissions(tokenID, permsList, false);
-    int retSysGrant = PermissionManager::GetInstance().GetReqPermissions(tokenID, permsList, true);
-    if ((retSysGrant != RET_SUCCESS) || (retUserGrant != RET_SUCCESS)) {
-        LOGE(ATM_DOMAIN, ATM_TAG,
-            "GetReqPermissions failed, retUserGrant %{public}d, retSysGrant %{public}d.",
-            retUserGrant, retSysGrant);
+    int32_t ret = PermissionManager::GetInstance().GetReqPermissions(
+        tokenID, permsList, PermissionGrantType::ALL);
+    if (ret != RET_SUCCESS) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "GetReqPermissions failed, ret %{public}d.", ret);
         permsList.clear();
         return false;
     }
@@ -3745,6 +3759,21 @@ int32_t AccessTokenManagerService::CheckMigratedUidSet(
 #else
     LOGE(ATM_DOMAIN, ATM_TAG, "CheckMigratedUidSet is not supported in this build.");
     return AccessTokenError::ERR_CAPABILITY_NOT_SUPPORT;
+#endif
+}
+
+int32_t AccessTokenManagerService::IsMigrationDone(bool& isDone)
+{
+#ifdef IS_SUPPORT_HAP_RUNNING
+    int32_t ret = CheckHapManagerPermission();
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
+    isDone = AccessTokenIDManager::GetInstance().IsMigrationDone();
+    return RET_SUCCESS;
+#else
+    isDone = true;
+    return RET_SUCCESS;
 #endif
 }
 #endif

@@ -118,9 +118,9 @@ PermUsedTypeEnum PermissionManager::GetPermissionUsedType(
 }
 
 int PermissionManager::GetReqPermissions(
-    AccessTokenID tokenID, std::vector<PermissionStatus>& reqPermList, bool isSystemGrant)
+    AccessTokenID tokenID, std::vector<PermissionStatus>& reqPermList, PermissionGrantType filter)
 {
-    LOGD(ATM_DOMAIN, ATM_TAG, "TokenID: %{public}u, isSystemGrant: %{public}d", tokenID, isSystemGrant);
+    LOGD(ATM_DOMAIN, ATM_TAG, "TokenID: %{public}u, filter: %{public}d", tokenID, static_cast<int32_t>(filter));
     std::shared_ptr<HapTokenInfoInner> infoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenID);
     if (infoPtr == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Token %{public}u is invalid.", tokenID);
@@ -137,9 +137,9 @@ int PermissionManager::GetReqPermissions(
         if (!GetPermissionBriefDef(perm.permissionName, briefDef)) {
             continue;
         }
-
-        if ((isSystemGrant && briefDef.grantMode == SYSTEM_GRANT) ||
-            (!isSystemGrant && briefDef.grantMode != SYSTEM_GRANT)) {
+        if ((filter == PermissionGrantType::ALL) ||
+            ((filter == PermissionGrantType::SYSTEM_GRANT && briefDef.grantMode == SYSTEM_GRANT) ||
+             (filter == PermissionGrantType::NON_SYSTEM_GRANT && briefDef.grantMode != SYSTEM_GRANT))) {
             reqPermList.emplace_back(perm);
         }
     }

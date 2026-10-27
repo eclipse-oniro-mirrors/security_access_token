@@ -3146,7 +3146,7 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
-            "deviceTypes": ["phone", "tv", "wearable", "2in1", "tablet", "car"]
+            "deviceTypes": ["phone", "tv", "wearable", "2in1", "tablet", "car", "smarthomehost"]
         },
         {
             "name": "ohos.permission.WRITE_HIVIEW_SYSTEM",
@@ -3157,7 +3157,7 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
-            "deviceTypes": ["phone", "tv", "wearable", "2in1", "tablet", "car"]
+            "deviceTypes": ["phone", "tv", "wearable", "2in1", "tablet", "car", "smarthomehost"]
         },
         {
             "name": "ohos.permission.ENTERPRISE_GET_DEVICE_INFO",
@@ -12901,6 +12901,17 @@
             "provisionEnable": true,
             "distributedSceneEnable": false,
             "deviceTypes": ["phone", "tv", "2in1", "tablet"]
+        },
+        {
+            "name": "ohos.permission.USE_ULTRA_FAST_AUDIO_STREAM",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "NORMAL",
+            "since": "26.1.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1", "phone", "tablet"]
         },
         {
             "name": "ohos.permission.DLP_ACTIVE_SECURITY",
