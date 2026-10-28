@@ -1113,7 +1113,7 @@ HWTEST_F(BootVerifySchedulerTest, VerifySingleBundle002, TestSize.Level1)
     updatedInfo.persistDataList.emplace_back(BuildPersistData(TEST_BUNDLE_NAME, TEST_BUNDLE_NAME));
 
     VerifiedBundleState state;
-    EXPECT_EQ(ERR_PARAM_INVALID,
+    EXPECT_EQ(ERR_CHECK_MULTIPLE_HAP_BUNDLE_NAME_MISMATCH,
         scheduler.VerifySingleBundle(GetBundleModeKey(TEST_BUNDLE_NAME, 0), updatedInfo, state));
 }
 
