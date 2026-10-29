@@ -3822,18 +3822,18 @@ HWTEST_F(PermissionRecordManagerTest, DvrOpcodeRegistered001, TestSize.Level0)
 }
 
 /**
- * @tc.name: IsCameraPermission001
+ * @tc.name: IsCameraPermissionGroup001
  * @tc.desc: only CAMERA and DVRCAMERA belong to camera type permission.
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, IsCameraPermission001, TestSize.Level0)
+HWTEST_F(PermissionRecordManagerTest, IsCameraPermissionGroup001, TestSize.Level0)
 {
-    EXPECT_TRUE(Constant::IsCameraPermission(CAMERA_PERMISSION_NAME));
-    EXPECT_TRUE(Constant::IsCameraPermission(DVR_CAMERA_PERMISSION_NAME));
-    EXPECT_FALSE(Constant::IsCameraPermission("ohos.permission.MICROPHONE"));
-    EXPECT_FALSE(Constant::IsCameraPermission("ohos.permission.READ_CALENDAR"));
-    EXPECT_FALSE(Constant::IsCameraPermission(""));
+    EXPECT_TRUE(Constant::IsCameraPermissionGroup(CAMERA_PERMISSION_NAME));
+    EXPECT_TRUE(Constant::IsCameraPermissionGroup(DVR_CAMERA_PERMISSION_NAME));
+    EXPECT_FALSE(Constant::IsCameraPermissionGroup("ohos.permission.MICROPHONE"));
+    EXPECT_FALSE(Constant::IsCameraPermissionGroup("ohos.permission.READ_CALENDAR"));
+    EXPECT_FALSE(Constant::IsCameraPermissionGroup(""));
 }
 
 /**

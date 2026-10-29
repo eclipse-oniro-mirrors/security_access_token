@@ -5187,6 +5187,41 @@ HWTEST_F(PrivacyKitTest, StartUsingPermission021, TestSize.Level0)
 }
 
 /**
+ * @tc.name: StartUsingPermission022
+ * @tc.desc: StartUsingPermission with dvr camera permission and callback.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, StartUsingPermission022, TestSize.Level0)
+{
+    std::string permissionName = "ohos.permission.DVRCAMERA";
+    auto callbackPtr = std::make_shared<CbCustomizeTest4>();
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::StartUsingPermission(g_tokenIdE, permissionName, callbackPtr));
+    EXPECT_EQ(PrivacyError::ERR_CALLBACK_ALREADY_EXIST,
+        PrivacyKit::StartUsingPermission(g_tokenIdE, permissionName, callbackPtr));
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::StopUsingPermission(g_tokenIdE, permissionName));
+    EXPECT_EQ(PrivacyError::ERR_PERMISSION_NOT_START_USING,
+        PrivacyKit::StopUsingPermission(g_tokenIdE, permissionName));
+}
+
+/**
+ * @tc.name: StartUsingPermission023
+ * @tc.desc: StartUsingPermission registers camera and dvr camera callbacks independently.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, StartUsingPermission023, TestSize.Level0)
+{
+    std::string cameraName = "ohos.permission.CAMERA";
+    std::string dvrCameraName = "ohos.permission.DVRCAMERA";
+    auto callbackPtr = std::make_shared<CbCustomizeTest4>();
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::StartUsingPermission(g_tokenIdE, cameraName, callbackPtr));
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::StartUsingPermission(g_tokenIdF, dvrCameraName, callbackPtr));
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::StopUsingPermission(g_tokenIdE, cameraName));
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::StopUsingPermission(g_tokenIdF, dvrCameraName));
+}
+
+/**
  * @tc.name: CheckPermissionInUse001
  * @tc.desc: Test CheckPermissionInUse with permission being used.
  * @tc.type: FUNC
