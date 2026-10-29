@@ -235,12 +235,21 @@ HWTEST_F(GetPermissionTest, GetDefPermissionFuncTest001, TestSize.Level0)
     // get user grant permission define
     ASSERT_EQ(0, AccessTokenKit::GetDefPermission("ohos.permission.CAMERA", permDef));
     ASSERT_EQ("ohos.permission.CAMERA", permDef.permissionName);
-    ASSERT_FALSE(permDef.binIndependentUsable);
 
-    // get system grant permission define
+    // GetDefPermission must propagate provisionBypassForSideload exactly as declared in
+    // the permission definition (the brief map), so the assertions stay correct even if
+    // the permission is marked later; one unmarked and one marked permission suffice
+    PermissionBriefDef unmarkedBrief;
+    ASSERT_TRUE(GetPermissionBriefDef("ohos.permission.PERMISSION_USED_STATS", unmarkedBrief));
     ASSERT_EQ(0, AccessTokenKit::GetDefPermission("ohos.permission.PERMISSION_USED_STATS", permDef));
     ASSERT_EQ("ohos.permission.PERMISSION_USED_STATS", permDef.permissionName);
-    ASSERT_FALSE(permDef.binIndependentUsable);
+    ASSERT_EQ(unmarkedBrief.provisionBypassForSideload, permDef.provisionBypassForSideload);
+
+    PermissionBriefDef markedBrief;
+    ASSERT_TRUE(GetPermissionBriefDef("ohos.permission.KERNEL_ATM_SELF_USE", markedBrief));
+    ASSERT_EQ(0, AccessTokenKit::GetDefPermission("ohos.permission.KERNEL_ATM_SELF_USE", permDef));
+    ASSERT_EQ("ohos.permission.KERNEL_ATM_SELF_USE", permDef.permissionName);
+    ASSERT_EQ(markedBrief.provisionBypassForSideload, permDef.provisionBypassForSideload);
 }
 
 /**

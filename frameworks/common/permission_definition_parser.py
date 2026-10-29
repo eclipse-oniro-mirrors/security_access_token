@@ -78,8 +78,7 @@ PERMISSION_BRIEF_DEFINE_PATTERN = '''
     .isKernelEffect = %s,
     .hasValue = %s,
     .isEnable = %s,
-    .provisionBypassForSideload = %s,
-    .binIndependentUsable = %s
+    .provisionBypassForSideload = %s
 },'''
 
 JSON_VALUE_CONVERT_TO_CPP_DICT = {
@@ -133,7 +132,6 @@ class PermissionDef(object):
         self.provision_enable = convert_bool_flag(permission_def_dict, "provisionEnable")
         self.distributed_scene_enable = convert_bool_flag(permission_def_dict, "distributedSceneEnable")
         self.is_kernel_effect = convert_bool_flag(permission_def_dict, "isKernelEffect")
-        self.bin_independent_usable = convert_bool_flag(permission_def_dict, "binIndependentUsable")
         self.has_value = convert_bool_flag(permission_def_dict, "hasValue")
         self.provision_bypass_for_sideload = convert_bool_flag(permission_def_dict, "provisionBypassForSideload")
 
@@ -174,7 +172,7 @@ class PermissionDef(object):
             self.code, self.grant_mode, self.available_level,
             self.available_type, self.provision_enable, self.distributed_scene_enable,
             self.is_kernel_effect, self.has_value, self.is_enable,
-            self.provision_bypass_for_sideload, self.bin_independent_usable
+            self.provision_bypass_for_sideload
         )
         return entry
 
