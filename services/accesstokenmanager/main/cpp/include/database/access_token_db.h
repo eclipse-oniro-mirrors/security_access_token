@@ -42,6 +42,7 @@ public:
         std::vector<GenericValues>& results);
     std::shared_ptr<NativeRdb::RdbStore> GetRdb();
     int32_t DeleteAndInsertValues(const std::vector<DelInfo>& delInfoVec, const std::vector<AddInfo>& addInfoVec);
+    void ClearCache();
 
 private:
     DISALLOW_COPY_AND_MOVE(AccessTokenDb);

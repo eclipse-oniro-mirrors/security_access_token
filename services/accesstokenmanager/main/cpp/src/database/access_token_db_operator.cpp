@@ -62,6 +62,15 @@ int32_t AccessTokenDbOperator::DeleteAndInsertValues(const std::vector<DelInfo>&
     return AccessTokenDb::GetInstance()->DeleteAndInsertValues(delInfoVec, addInfoVec);
 #endif
 }
+
+void AccessTokenDbOperator::ClearCache()
+{
+#ifdef DYNAMIC_CLOSE_LIBS
+    RdbDlopenManager::GetInstance()->ClearCache();
+#else
+    AccessTokenDb::GetInstance()->ClearCache();
+#endif
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
