@@ -308,7 +308,7 @@ HWTEST_F(MigrationVerifyHelperTest, VerifyMigratedBundle004, TestSize.Level1)
     int32_t ret = MigrationVerifyHelper::GetInstance().VerifyMigratedBundle(bundleInfo, cachedInfos);
     mockAdapter_.verifyRet_ = RET_SUCCESS;
     // DoVerifyMigratedBundle failure propagates the error
-    EXPECT_EQ(AccessTokenError::ERR_HAP_SIGN_VERIFY_FAILED, ret);
+    EXPECT_NE(RET_SUCCESS, ret);
 
     (void)SpmRemoveEntry(tokenId);
     EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenId));

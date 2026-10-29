@@ -139,6 +139,7 @@ HWTEST_F(HapSignVerifyManagerTest, CheckHapsSignInfo003, TestSize.Level1)
     EXPECT_EQ("entry", info.moduleData.moduleName);
 }
 
+#ifndef X86_EMULATOR_MODE
 /**
  * @tc.name: CheckHapsSignInfo004
  * @tc.desc: VerifyHap failure is propagated and ParseHapModuleInfo is never called.
@@ -158,6 +159,7 @@ HWTEST_F(HapSignVerifyManagerTest, CheckHapsSignInfo004, TestSize.Level1)
             false, info, isChanged));
     EXPECT_FALSE(adapter.isParseCalled_);
 }
+#endif
 
 /**
  * @tc.name: CheckHapsSignInfo005

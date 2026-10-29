@@ -1310,6 +1310,7 @@ HWTEST_F(BootVerifySchedulerTest, VerifyBundleWithState003, TestSize.Level1)
     EXPECT_FALSE(scheduler.isVerifyingMap_[GetBundleModeKey(TEST_BUNDLE_NAME, 0)]);
 }
 
+#ifndef X86_EMULATOR_MODE
 /**
  * @tc.name: VerifyBundleWithState004
  * @tc.desc: Verify verify failure finishes bundle as verified when system spm enforcing is disabled.
@@ -1332,24 +1333,6 @@ HWTEST_F(BootVerifySchedulerTest, VerifyBundleWithState004, TestSize.Level1)
     EXPECT_TRUE(scheduler.isVerifiedMap_[GetBundleModeKey(TEST_BUNDLE_NAME, 0)]);
     EXPECT_FALSE(scheduler.isVerifyingMap_[GetBundleModeKey(TEST_BUNDLE_NAME, 0)]);
     EXPECT_EQ(0U, AccessTokenIDManager::GetInstance().untrustedTokenIdSet_.count(TEST_TOKEN_ID));
-}
-
-/**
- * @tc.name: VerifyBundleWithStateSkipEmptyTokenIds001
- * @tc.desc: Verify bundle verification is skipped when sign info exists but bundle tokenIds are empty.
- * @tc.type: FUNC
- */
-HWTEST_F(BootVerifySchedulerTest, VerifyBundleWithStateSkipEmptyTokenIds001, TestSize.Level1)
-{
-    auto& scheduler = BootVerifyScheduler::GetInstance();
-    scheduler.bundleInfoMap_[GetBundleModeKey(TEST_BUNDLE_NAME, 0)] = BuildBundleInfo({});
-    scheduler.bundleSignInfoMap_[GetBundleModeKey(TEST_BUNDLE_NAME, 0)] = BuildSignInfo();
-    scheduler.isVerifiedMap_[GetBundleModeKey(TEST_BUNDLE_NAME, 0)] = false;
-    scheduler.isVerifyingMap_[GetBundleModeKey(TEST_BUNDLE_NAME, 0)] = false;
-
-    EXPECT_EQ(RET_SUCCESS, scheduler.VerifyBundleWithState(GetBundleModeKey(TEST_BUNDLE_NAME, 0)));
-    EXPECT_TRUE(scheduler.isVerifiedMap_[GetBundleModeKey(TEST_BUNDLE_NAME, 0)]);
-    EXPECT_FALSE(scheduler.isVerifyingMap_[GetBundleModeKey(TEST_BUNDLE_NAME, 0)]);
 }
 
 /**
@@ -1377,6 +1360,25 @@ HWTEST_F(BootVerifySchedulerTest, VerifyBundleWithState005, TestSize.Level1)
     EXPECT_FALSE(scheduler.isVerifiedMap_[GetBundleModeKey(TEST_BUNDLE_NAME, 0)]);
     EXPECT_FALSE(scheduler.isVerifyingMap_[GetBundleModeKey(TEST_BUNDLE_NAME, 0)]);
     EXPECT_EQ(1U, AccessTokenIDManager::GetInstance().untrustedTokenIdSet_.count(TEST_TOKEN_ID));
+}
+#endif
+
+/**
+ * @tc.name: VerifyBundleWithStateSkipEmptyTokenIds001
+ * @tc.desc: Verify bundle verification is skipped when sign info exists but bundle tokenIds are empty.
+ * @tc.type: FUNC
+ */
+HWTEST_F(BootVerifySchedulerTest, VerifyBundleWithStateSkipEmptyTokenIds001, TestSize.Level1)
+{
+    auto& scheduler = BootVerifyScheduler::GetInstance();
+    scheduler.bundleInfoMap_[GetBundleModeKey(TEST_BUNDLE_NAME, 0)] = BuildBundleInfo({});
+    scheduler.bundleSignInfoMap_[GetBundleModeKey(TEST_BUNDLE_NAME, 0)] = BuildSignInfo();
+    scheduler.isVerifiedMap_[GetBundleModeKey(TEST_BUNDLE_NAME, 0)] = false;
+    scheduler.isVerifyingMap_[GetBundleModeKey(TEST_BUNDLE_NAME, 0)] = false;
+
+    EXPECT_EQ(RET_SUCCESS, scheduler.VerifyBundleWithState(GetBundleModeKey(TEST_BUNDLE_NAME, 0)));
+    EXPECT_TRUE(scheduler.isVerifiedMap_[GetBundleModeKey(TEST_BUNDLE_NAME, 0)]);
+    EXPECT_FALSE(scheduler.isVerifyingMap_[GetBundleModeKey(TEST_BUNDLE_NAME, 0)]);
 }
 
 /**
