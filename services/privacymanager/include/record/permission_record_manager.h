@@ -45,6 +45,7 @@
 #include "privacy_param.h"
 #ifdef REMOTE_PRIVACY_ENABLE
 #include "remote_add_perm_param_info.h"
+#include "remote_caller_info.h"
 #include "remote_permission_used_info.h"
 #endif
 #include "safe_map.h"
@@ -252,6 +253,7 @@ private:
     int32_t AddRecordToStartRemoteList(const RemotePermissionUsedInfo &info, ActiveChangeType type, int32_t callerPid);
     bool ToRemoveRemoteRecord(const RemoteContinuousPermissionRecord& targetRecord,
         const IsRemoteEqualFunc& isEqualFunc, bool removeAll = false);
+    void CleanRemoteUsingDeviceMap(int32_t opCode);
     int32_t GetRemotePermissionRecord(const RemoteAddPermParamInfo& info, RemotePermissionRecord& record,
         const int32_t userId, int32_t subProfileId);
     int32_t AddRemoteRecord(const RemotePermissionRecord& record);
@@ -336,8 +338,7 @@ private:
 #ifdef REMOTE_PRIVACY_ENABLE
     // remote start list
     std::mutex startRemoteRecordListMutex_;
-    std::string uniqueDeviceId_;
-    std::string uniqueDeviceName_;
+    std::map<int32_t, RemoteCallerInfo> remoteUsingDeviceMap_;
     std::multiset<RemoteContinuousPermissionRecord> startRemoteRecordList_;
 
     std::mutex remotePermUsedRecMutex_;
