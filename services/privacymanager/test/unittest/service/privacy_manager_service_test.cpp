@@ -1785,9 +1785,9 @@ HWTEST_F(PrivacyManagerServiceTest, VerifyPermission001, TestSize.Level0)
     {
         MockNativeToken mock("edm");
 
-        ASSERT_EQ(0, privacyManagerService_->SetDisablePolicy("ohos.permission.CAMERA", false));
+        ASSERT_EQ(0, privacyManagerService_->SetDisablePolicy("ohos.permission.CAMERA", false, -1));
         ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED,
-            privacyManagerService_->GetDisablePolicy("ohos.permission.CAMERA", isDisable));
+            privacyManagerService_->GetDisablePolicy("ohos.permission.CAMERA", isDisable, -1));
         ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED,
             privacyManagerService_->RegisterPermDisablePolicyCallback(permList, callback));
         ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED,
@@ -1797,8 +1797,8 @@ HWTEST_F(PrivacyManagerServiceTest, VerifyPermission001, TestSize.Level0)
     MockNativeToken mock("accesstoken_service");
 
     ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED,
-        privacyManagerService_->SetDisablePolicy("ohos.permission.CAMERA", false));
-    ASSERT_EQ(0, privacyManagerService_->GetDisablePolicy("ohos.permission.CAMERA", isDisable));
+        privacyManagerService_->SetDisablePolicy("ohos.permission.CAMERA", false, -1));
+    ASSERT_EQ(0, privacyManagerService_->GetDisablePolicy("ohos.permission.CAMERA", isDisable, -1));
     ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID,
         privacyManagerService_->RegisterPermDisablePolicyCallback(permList, callback)); // callback is nullptr
     ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID,
@@ -2016,6 +2016,43 @@ HWTEST_F(PrivacyManagerServiceTest, ToggleStatusService002, TestSize.Level0)
     ASSERT_EQ(RET_SUCCESS,
         privacyManagerService_->GetPermissionUsedRecordToggleStatus(0, status, LEGACY_SUBPROFILE_ID));
     EXPECT_TRUE(status);
+}
+
+/*
+ * @tc.name: SetDisablePolicy_UserIdPassed001
+ * @tc.desc: Service layer passes userId to PermissionRecordManager
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyManagerServiceTest, SetDisablePolicy_UserIdPassed001, TestSize.Level1)
+{
+    {
+        MockNativeToken mock("edm");
+        EXPECT_EQ(0, privacyManagerService_->SetDisablePolicy("ohos.permission.CAMERA", true, 100));
+    }
+    {
+        MockNativeToken mockGet("accesstoken_service");
+        bool isDisable = false;
+        EXPECT_EQ(0, privacyManagerService_->GetDisablePolicy("ohos.permission.CAMERA", isDisable, 100));
+        EXPECT_TRUE(isDisable);
+    }
+    {
+        MockNativeToken mock("edm");
+        privacyManagerService_->SetDisablePolicy("ohos.permission.CAMERA", false, 100);
+    }
+}
+
+/*
+ * @tc.name: SetDisablePolicy_PermissionDenied001
+ * @tc.desc: Caller without MANAGE_EDM_POLICY gets ERR_PERMISSION_DENIED
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyManagerServiceTest, SetDisablePolicy_PermissionDenied001, TestSize.Level1)
+{
+    MockNativeToken mock("accesstoken_service");
+    EXPECT_EQ(PrivacyError::ERR_PERMISSION_DENIED,
+        privacyManagerService_->SetDisablePolicy("ohos.permission.CAMERA", true, 100));
 }
 
 } // namespace AccessToken

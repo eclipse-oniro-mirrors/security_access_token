@@ -47,11 +47,12 @@ namespace AccessToken {
  */
 struct PermDisablePolicyInfo {
     PermDisablePolicyInfo() = default;
-    PermDisablePolicyInfo(const std::string& permissionName, bool isDisable)
-        : permissionName(permissionName), isDisable(isDisable) {}
+    PermDisablePolicyInfo(const std::string& permissionName, bool isDisable, int32_t userId = -1)
+        : permissionName(permissionName), isDisable(isDisable), userId(userId) {}
 
     std::string permissionName;
     bool isDisable;
+    int32_t userId = -1;
 };
 } // namespace AccessToken
 } // namespace Security

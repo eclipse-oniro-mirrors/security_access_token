@@ -415,20 +415,20 @@ int32_t PrivacyKit::SetHapWithFGReminder(uint32_t tokenId, bool isAllowed)
     return PrivacyManagerClient::GetInstance().SetHapWithFGReminder(tokenId, isAllowed);
 }
 
-int32_t PrivacyKit::SetDisablePolicy(const std::string& permissionName, bool isDisable)
+int32_t PrivacyKit::SetDisablePolicy(const std::string& permissionName, bool isDisable, int32_t userId)
 {
     if (!DataValidator::IsPermissionNameValid(permissionName)) {
         return PrivacyError::ERR_PARAM_INVALID;
     }
-    return PrivacyManagerClient::GetInstance().SetDisablePolicy(permissionName, isDisable);
+    return PrivacyManagerClient::GetInstance().SetDisablePolicy(permissionName, isDisable, userId);
 }
 
-int32_t PrivacyKit::GetDisablePolicy(const std::string& permissionName, bool& isDisable)
+int32_t PrivacyKit::GetDisablePolicy(const std::string& permissionName, bool& isDisable, int32_t userId)
 {
     if (!DataValidator::IsPermissionNameValid(permissionName)) {
         return PrivacyError::ERR_PARAM_INVALID;
     }
-    return PrivacyManagerClient::GetInstance().GetDisablePolicy(permissionName, isDisable);
+    return PrivacyManagerClient::GetInstance().GetDisablePolicy(permissionName, isDisable, userId);
 }
 
 int32_t PrivacyKit::GetCurrUsingPermInfo(std::vector<CurrUsingPermInfo>& infoList)

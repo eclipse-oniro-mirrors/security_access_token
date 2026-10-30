@@ -31,8 +31,14 @@ const static int32_t MAX_CALLBACK_SIZE = 200;
 const static int32_t MAX_DISABLE_CALLBACK_SIZE = 20;
 const static int32_t MAX_PERM_LIST_SIZE = 1024;
 constexpr const char* CAMERA_PERMISSION_NAME = "ohos.permission.CAMERA";
+constexpr const char* DVR_CAMERA_PERMISSION_NAME = "ohos.permission.DVRCAMERA";
 static const int32_t SA_ID_PRIVACY_MANAGER_SERVICE = 3505;
 std::recursive_mutex g_instanceMutex;
+
+static bool IsCameraPermissionGroup(const std::string& permissionName)
+{
+    return (permissionName == CAMERA_PERMISSION_NAME) || (permissionName == DVR_CAMERA_PERMISSION_NAME);
+}
 } // namespace
 
 PrivacyManagerClient& PrivacyManagerClient::GetInstance()
@@ -337,7 +343,7 @@ int32_t PrivacyManagerClient::StartUsingPermission(AccessTokenID tokenId, int32_
         LOGE(PRI_DOMAIN, PRI_TAG, "Callback is nullptr.");
         return PrivacyError::ERR_PARAM_INVALID;
     }
-    if (permissionName != CAMERA_PERMISSION_NAME) {
+    if (!IsCameraPermissionGroup(permissionName)) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Permission %{public}s is not supported.", permissionName.c_str());
         return PrivacyError::ERR_PARAM_INVALID;
     }
@@ -389,7 +395,7 @@ int32_t PrivacyManagerClient::StopUsingPermission(
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
 
-    if (permissionName == CAMERA_PERMISSION_NAME) {
+    if (IsCameraPermissionGroup(permissionName)) {
         uint64_t id = GetUniqueId(tokenID, pid);
         std::lock_guard<std::mutex> lock(stateCbkMutex_);
         auto iter = stateChangeCallbackMap_.find(id);
@@ -847,27 +853,28 @@ int32_t PrivacyManagerClient::SetHapWithFGReminder(uint32_t tokenId, bool isAllo
     return ret;
 }
 
-int32_t PrivacyManagerClient::SetDisablePolicy(const std::string& permissionName, bool isDisable)
+int32_t PrivacyManagerClient::SetDisablePolicy(const std::string& permissionName, bool isDisable, int32_t userId)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Proxy is null.");
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
-    int32_t ret = proxy->SetDisablePolicy(permissionName, isDisable);
+    int32_t ret = proxy->SetDisablePolicy(permissionName, isDisable, userId);
     ret = ConvertResult(ret);
     LOGI(PRI_DOMAIN, PRI_TAG, "Ret is %{public}d.", ret);
     return ret;
 }
 
-int32_t PrivacyManagerClient::GetDisablePolicy(const std::string& permissionName, bool& isDisable)
+int32_t PrivacyManagerClient::GetDisablePolicy(const std::string& permissionName, bool& isDisable,
+    int32_t userId)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Proxy is null.");
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
-    int32_t ret = proxy->GetDisablePolicy(permissionName, isDisable);
+    int32_t ret = proxy->GetDisablePolicy(permissionName, isDisable, userId);
     ret = ConvertResult(ret);
     if (ret == RET_SUCCESS) {
         LOGI(PRI_DOMAIN, PRI_TAG,

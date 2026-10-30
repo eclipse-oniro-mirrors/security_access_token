@@ -947,6 +947,19 @@ bool CheckMigratedUidSetStubFuzzTest(FuzzedDataProvider &provider)
     (void)DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
     return true;
 }
+
+bool IsMigrationDoneStubFuzzTest()
+{
+    MessageParcel datas;
+    datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
+
+    uint32_t code = static_cast<uint32_t>(IAccessTokenManagerIpcCode::COMMAND_IS_MIGRATION_DONE);
+    MessageParcel reply;
+    MessageOption option;
+    MockToken mock({ "ohos.permission.MANAGE_HAP_TOKENID" });
+    (void)DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
+    return true;
+}
 #endif
 
 // Fuzz the install-session IPC entries (four-phase install/update + session queries, except GetHapSignInfo).
@@ -1192,6 +1205,7 @@ void AccessTokenStubFuzzTest(FuzzedDataProvider &provider)
     (void)MigrateInstalledBundlesStubFuzzTest(provider);
     (void)FinishMigrationStubFuzzTest();
     (void)CheckMigratedUidSetStubFuzzTest(provider);
+    (void)IsMigrationDoneStubFuzzTest();
     (void)CheckHapSignInfoStubFuzzTest(provider);
     (void)CheckHapPermissionInfoStubFuzzTest(provider);
     (void)PrepareHapIdentityStubFuzzTest(provider);

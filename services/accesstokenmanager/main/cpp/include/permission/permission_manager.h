@@ -63,7 +63,7 @@ public:
     int VerifyHapAccessToken(AccessTokenID tokenID, const std::string& permissionName);
     PermUsedTypeEnum GetPermissionUsedType(AccessTokenID tokenID, const std::string& permissionName);
     int GetReqPermissions(
-        AccessTokenID tokenID, std::vector<PermissionStatus>& reqPermList, bool isSystemGrant);
+        AccessTokenID tokenID, std::vector<PermissionStatus>& reqPermList, PermissionGrantType filter);
     int GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName, uint32_t& flag);
     int32_t RequestAppPermOnSetting(const HapTokenInfo& hapInfo,
         const std::string& bundleName, const std::string& abilityName);

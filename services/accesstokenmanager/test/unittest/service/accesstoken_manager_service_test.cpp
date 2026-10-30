@@ -28,8 +28,10 @@
 #include "access_token_error.h"
 #include "accesstoken_id_manager.h"
 #include "accesstoken_info_utils.h"
+#include "accesstoken_migration_manager.h"
 #include "atm_tools_param_info_parcel.h"
 #include "claw_ticket_manager.h"
+#include "hap_base_info_parcel.h"
 #include "hap_info_parcel.h"
 #include "hap_policy_parcel.h"
 #include "bundle_infos_rawdata.h"
@@ -46,6 +48,7 @@
 #include "sec_comp_enhance_agent.h"
 #endif
 #include "securec.h"
+#include "system_ability_definition.h"
 #include "test_common.h"
 #include "token_field_const.h"
 #include "tokenid_attributes.h"
@@ -2640,8 +2643,10 @@ HWTEST_F(AccessTokenManagerServiceTest, FilterPermFeatureTest006, TestSize.Level
     ASSERT_EQ(RET_SUCCESS, ret);
 
     std::vector<PermissionStatusParcel> reqPermList;
-    EXPECT_EQ(RET_SUCCESS, atManagerService_->GetReqPermissions(tokenIdEx.tokenIdExStruct.tokenID, reqPermList, true));
-    EXPECT_EQ(RET_SUCCESS, atManagerService_->GetReqPermissions(tokenIdEx.tokenIdExStruct.tokenID, reqPermList, false));
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->GetReqPermissions(
+        tokenIdEx.tokenIdExStruct.tokenID, reqPermList, PermissionGrantTypeIdl::SYSTEM_GRANT));
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->GetReqPermissions(
+        tokenIdEx.tokenIdExStruct.tokenID, reqPermList, PermissionGrantTypeIdl::NON_SYSTEM_GRANT));
 
     EXPECT_EQ(INDEX_TWO, reqPermList.size());
 
@@ -2688,8 +2693,10 @@ HWTEST_F(AccessTokenManagerServiceTest, FilterPermFeatureTest007, TestSize.Level
     ASSERT_NE(0, tokenIdEx.tokenIDEx);
 
     std::vector<PermissionStatusParcel> reqPermList;
-    EXPECT_EQ(RET_SUCCESS, atManagerService_->GetReqPermissions(tokenIdEx.tokenIdExStruct.tokenID, reqPermList, true));
-    EXPECT_EQ(RET_SUCCESS, atManagerService_->GetReqPermissions(tokenIdEx.tokenIdExStruct.tokenID, reqPermList, false));
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->GetReqPermissions(
+        tokenIdEx.tokenIdExStruct.tokenID, reqPermList, PermissionGrantTypeIdl::SYSTEM_GRANT));
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->GetReqPermissions(
+        tokenIdEx.tokenIdExStruct.tokenID, reqPermList, PermissionGrantTypeIdl::NON_SYSTEM_GRANT));
 
     EXPECT_EQ(INDEX_ONE, reqPermList.size());
 
@@ -2749,8 +2756,10 @@ HWTEST_F(AccessTokenManagerServiceTest, FilterPermFeatureTest008, TestSize.Level
     tokenIdEx.tokenIDEx = fullTokenId2;
 
     std::vector<PermissionStatusParcel> reqPermList;
-    EXPECT_EQ(RET_SUCCESS, atManagerService_->GetReqPermissions(tokenIdEx.tokenIdExStruct.tokenID, reqPermList, true));
-    EXPECT_EQ(RET_SUCCESS, atManagerService_->GetReqPermissions(tokenIdEx.tokenIdExStruct.tokenID, reqPermList, false));
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->GetReqPermissions(
+        tokenIdEx.tokenIdExStruct.tokenID, reqPermList, PermissionGrantTypeIdl::SYSTEM_GRANT));
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->GetReqPermissions(
+        tokenIdEx.tokenIdExStruct.tokenID, reqPermList, PermissionGrantTypeIdl::NON_SYSTEM_GRANT));
 
     EXPECT_EQ(INDEX_THREE, reqPermList.size());
 
@@ -2810,8 +2819,10 @@ HWTEST_F(AccessTokenManagerServiceTest, FilterPermFeatureTest009, TestSize.Level
     tokenIdEx.tokenIDEx = fullTokenId2;
 
     std::vector<PermissionStatusParcel> reqPermList;
-    EXPECT_EQ(RET_SUCCESS, atManagerService_->GetReqPermissions(tokenIdEx.tokenIdExStruct.tokenID, reqPermList, true));
-    EXPECT_EQ(RET_SUCCESS, atManagerService_->GetReqPermissions(tokenIdEx.tokenIdExStruct.tokenID, reqPermList, false));
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->GetReqPermissions(
+        tokenIdEx.tokenIdExStruct.tokenID, reqPermList, PermissionGrantTypeIdl::SYSTEM_GRANT));
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->GetReqPermissions(
+        tokenIdEx.tokenIdExStruct.tokenID, reqPermList, PermissionGrantTypeIdl::NON_SYSTEM_GRANT));
 
     EXPECT_EQ(INDEX_TWO, reqPermList.size());
 
@@ -4650,6 +4661,90 @@ HWTEST_F(AccessTokenManagerServiceTest, ToggleRequestService002, TestSize.Level0
 
 #ifdef SPM_DATA_ENABLE
 /**
+ * @tc.name: IsMigrationDoneServiceTest001
+ * @tc.desc: Test IsMigrationDone service entry passes through migration state.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, IsMigrationDoneServiceTest001, TestSize.Level1)
+{
+    bool isDone = false;
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->IsMigrationDone(isDone));
+    EXPECT_EQ(AccessTokenIDManager::GetInstance().IsMigrationDone(), isDone);
+}
+
+/**
+ * @tc.name: IsMigrationDoneServiceTest002
+ * @tc.desc: Test IsMigrationDone returns permission denied for caller without MANAGE_HAP_TOKENID.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, IsMigrationDoneServiceTest002, TestSize.Level1)
+{
+    MockToken mock(g_selfShellTokenId, "accesstoken_service", false);
+    UidGuard uidGuard(NON_ROOT_UID);
+
+    bool isDone = false;
+    EXPECT_EQ(ERR_PERMISSION_DENIED, atManagerService_->IsMigrationDone(isDone));
+}
+#endif // SPM_DATA_ENABLE
+
+/**
+ * @tc.name: GetReqPermissionsFilterServiceTest001
+ * @tc.desc: Test GetReqPermissions returns all requested permissions without grant mode filter.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, GetReqPermissionsFilterServiceTest001, TestSize.Level1)
+{
+    atManagerService_->Initialize();
+    HapInfoParams info = {
+        .userID = USER_ID,
+        .bundleName = "GetReqPermissionsFilterServiceTest001",
+        .instIndex = INST_INDEX,
+        .dlpType = static_cast<int>(HapDlpType::DLP_COMMON),
+        .apiVersion = API_VERSION_9,
+        .isSystemApp = true,
+        .appIDDesc = "GetReqPermissionsFilterServiceTest001"
+    };
+    HapPolicy policy = {
+        .apl = APL_SYSTEM_CORE,
+        .domain = "domain",
+        .permStateList = {g_state7, g_state9}
+    };
+    PermissionFeatureManager::GetInstance().SetFeatures({"service_test_feature2"});
+
+    HapInfoParcel infoParcel;
+    infoParcel.hapInfoParameter = info;
+    HapPolicyParcel policyParcel;
+    policyParcel.hapPolicy = policy;
+
+    AccessTokenIDEx tokenIdEx;
+    uint64_t fullTokenId;
+    ASSERT_EQ(RET_SUCCESS, atManagerService_->AllocHapToken(infoParcel, policyParcel, fullTokenId));
+    tokenIdEx.tokenIDEx = fullTokenId;
+    ASSERT_NE(0, tokenIdEx.tokenIDEx);
+
+    std::vector<PermissionStatusParcel> allList;
+    std::vector<PermissionStatusParcel> userList;
+    std::vector<PermissionStatusParcel> systemList;
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->GetReqPermissions(
+        tokenIdEx.tokenIdExStruct.tokenID, allList, PermissionGrantTypeIdl::ALL));
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->GetReqPermissions(
+        tokenIdEx.tokenIdExStruct.tokenID, userList, PermissionGrantTypeIdl::NON_SYSTEM_GRANT));
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->GetReqPermissions(
+        tokenIdEx.tokenIdExStruct.tokenID, systemList, PermissionGrantTypeIdl::SYSTEM_GRANT));
+    EXPECT_EQ(INDEX_TWO, allList.size());
+    EXPECT_EQ(INDEX_ONE, userList.size());
+    EXPECT_EQ(INDEX_ONE, systemList.size());
+    EXPECT_EQ(userList.size() + systemList.size(), allList.size());
+
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->DeleteToken(tokenIdEx.tokenIdExStruct.tokenID, false));
+    PermissionFeatureManager::GetInstance().SetFeatures({});
+}
+
+#ifdef SPM_DATA_ENABLE
+/**
  * @tc.name: GetHapSignInfoServiceTest001
  * @tc.desc: Test GetHapSignInfo service entry mode validation and pass-through.
  * @tc.type: FUNC
@@ -4675,7 +4770,146 @@ HWTEST_F(AccessTokenManagerServiceTest, GetHapSignInfoServiceTest001, TestSize.L
         atManagerService_->GetHapSignInfo(bundleName, QUERY_PROFILE,
             static_cast<int32_t>(MultipleMode::DEFAULT_OR_MAIN_MODE), bundleInfos));
 }
+
+/**
+ * @tc.name: GetHapIdentityServiceTest001
+ * @tc.desc: GetHapIdentity returns ERR_PERMISSION_DENIED for a non-native, non-privileged caller.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, GetHapIdentityServiceTest001, TestSize.Level1)
+{
+    MockHapToken mock("com.ohos.gethapidentity.noperm", {}, false);
+    UidGuard guard(NON_ROOT_UID);
+    HapBaseInfoParcel infoParcel;
+    infoParcel.hapBaseInfo.bundleName = "com.ohos.gethapidentity";
+    infoParcel.hapBaseInfo.userID = USER_ID;
+    infoParcel.hapBaseInfo.instIndex = INST_INDEX;
+    IdentityIdl identity;
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, atManagerService_->GetHapIdentity(infoParcel, identity));
+}
+
+/**
+ * @tc.name: GetHapIdentityServiceTest002
+ * @tc.desc: GetHapIdentity returns ERR_TOKENID_NOT_EXIST for a hap not present in the cache.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, GetHapIdentityServiceTest002, TestSize.Level1)
+{
+    MockNativeToken mock("foundation");
+    HapBaseInfoParcel infoParcel;
+    infoParcel.hapBaseInfo.bundleName = "com.ohos.gethapidentity.notexist";
+    infoParcel.hapBaseInfo.userID = USER_ID;
+    infoParcel.hapBaseInfo.instIndex = INST_INDEX;
+    IdentityIdl identity;
+    EXPECT_EQ(AccessTokenError::ERR_TOKENID_NOT_EXIST, atManagerService_->GetHapIdentity(infoParcel, identity));
+}
+
+/**
+ * @tc.name: GetHapIdentityServiceTest003
+ * @tc.desc: GetHapIdentity returns the token id and uid for an existing hap.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, GetHapIdentityServiceTest003, TestSize.Level1)
+{
+    MockNativeToken mock("foundation");
+    AccessTokenID tokenId = INVALID_TOKENID;
+    uint64_t fullTokenId = CreateServiceTestHapToken("com.ohos.gethapidentity.ok", false, {}, tokenId);
+    ASSERT_NE(0U, fullTokenId);
+
+    HapBaseInfoParcel infoParcel;
+    infoParcel.hapBaseInfo.bundleName = "com.ohos.gethapidentity.ok";
+    infoParcel.hapBaseInfo.userID = USER_ID;
+    infoParcel.hapBaseInfo.instIndex = INST_INDEX;
+    IdentityIdl identity;
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->GetHapIdentity(infoParcel, identity));
+    EXPECT_EQ(fullTokenId, static_cast<uint64_t>(identity.tokenId));
+    EXPECT_NE(0, identity.uid);
+
+    ASSERT_EQ(RET_SUCCESS, atManagerService_->DeleteToken(tokenId, false));
+}
+
+/**
+ * @tc.name: GetHapBaseInfoByUidServiceTest001
+ * @tc.desc: GetHapBaseInfoByUid returns ERR_PERMISSION_DENIED for a non-native, non-privileged caller.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, GetHapBaseInfoByUidServiceTest001, TestSize.Level1)
+{
+    MockHapToken mock("com.ohos.gethapbaseinfo.noperm", {}, false);
+    UidGuard guard(NON_ROOT_UID);
+    HapBaseInfoParcel infoParcel;
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
+        atManagerService_->GetHapBaseInfoByUid(20010001, infoParcel));
+}
+
+/**
+ * @tc.name: GetHapBaseInfoByUidServiceTest002
+ * @tc.desc: GetHapBaseInfoByUid returns the hap base info for an existing uid.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, GetHapBaseInfoByUidServiceTest002, TestSize.Level1)
+{
+    MockNativeToken mock("foundation");
+    AccessTokenID tokenId = INVALID_TOKENID;
+    ASSERT_NE(0U, CreateServiceTestHapToken("com.ohos.gethapbaseinfo.ok", false, {}, tokenId));
+
+    const int32_t testUid = 20010002;
+    std::shared_ptr<HapTokenInfoInner> infoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId);
+    ASSERT_NE(nullptr, infoPtr);
+    infoPtr->SetUid(testUid);
+
+    HapBaseInfoParcel infoParcel;
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->GetHapBaseInfoByUid(testUid, infoParcel));
+    EXPECT_EQ("com.ohos.gethapbaseinfo.ok", infoParcel.hapBaseInfo.bundleName);
+    EXPECT_EQ(USER_ID, infoParcel.hapBaseInfo.userID);
+    EXPECT_EQ(INST_INDEX, infoParcel.hapBaseInfo.instIndex);
+
+    ASSERT_EQ(RET_SUCCESS, atManagerService_->DeleteToken(tokenId, false));
+}
 #endif // SPM_DATA_ENABLE
+
+#if defined(SPM_DATA_ENABLE) && defined(IS_SUPPORT_HAP_RUNNING)
+/**
+ * @tc.name: CheckMigratedUidSetServiceTest001
+ * @tc.desc: CheckMigratedUidSet returns ERR_PERMISSION_DENIED without permission and succeeds for privileged caller.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, CheckMigratedUidSetServiceTest001, TestSize.Level1)
+{
+    std::set<int32_t> unreceivedUids;
+    {
+        MockHapToken mock("com.ohos.checkmigrated.noperm", {}, false);
+        UidGuard guard(NON_ROOT_UID);
+        EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
+            atManagerService_->CheckMigratedUidSet({}, unreceivedUids));
+    }
+    {
+        std::set<int32_t> localUnreceivedUids;
+        EXPECT_EQ(RET_SUCCESS, atManagerService_->CheckMigratedUidSet({}, localUnreceivedUids));
+        EXPECT_TRUE(localUnreceivedUids.empty());
+    }
+}
+
+/**
+ * @tc.name: OnAddSystemAbilityPostVerify001
+ * @tc.desc: OnAddSystemAbility triggers post verify when BMS SA arrives and post verify is needed.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, OnAddSystemAbilityPostVerify001, TestSize.Level1)
+{
+    AccessTokenMigrationManager::GetInstance().SetNeedPostVerify(true);
+    atManagerService_->OnAddSystemAbility(BUNDLE_MGR_SERVICE_SYS_ABILITY_ID, "");
+    EXPECT_FALSE(AccessTokenMigrationManager::GetInstance().IsNeedPostVerify());
+    AccessTokenMigrationManager::GetInstance().SetNeedPostVerify(false);
+}
+#endif // SPM_DATA_ENABLE && IS_SUPPORT_HAP_RUNNING
 
 } // namespace AccessToken
 } // namespace Security

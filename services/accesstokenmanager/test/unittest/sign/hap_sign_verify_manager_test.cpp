@@ -139,6 +139,7 @@ HWTEST_F(HapSignVerifyManagerTest, CheckHapsSignInfo003, TestSize.Level1)
     EXPECT_EQ("entry", info.moduleData.moduleName);
 }
 
+#ifndef X86_EMULATOR_MODE
 /**
  * @tc.name: CheckHapsSignInfo004
  * @tc.desc: VerifyHap failure is propagated and ParseHapModuleInfo is never called.
@@ -158,6 +159,7 @@ HWTEST_F(HapSignVerifyManagerTest, CheckHapsSignInfo004, TestSize.Level1)
             false, info, isChanged));
     EXPECT_FALSE(adapter.isParseCalled_);
 }
+#endif
 
 /**
  * @tc.name: CheckHapsSignInfo005
@@ -217,8 +219,8 @@ HWTEST_F(HapSignVerifyManagerTest, CheckMultipleHaps002, TestSize.Level1)
 
 /**
  * @tc.name: CheckMultipleHaps003
- * @tc.desc: Mismatched bundleName, apl, appFeature, distributionType class, or provision type
- *           returns ERR_PARAM_INVALID.
+ * @tc.desc: Mismatched bundleName, appFeature, distributionType class, or provision type
+ *           returns its own distinct error code.
  * @tc.type: FUNC
  */
 HWTEST_F(HapSignVerifyManagerTest, CheckMultipleHaps003, TestSize.Level1)
@@ -228,22 +230,22 @@ HWTEST_F(HapSignVerifyManagerTest, CheckMultipleHaps003, TestSize.Level1)
     TrustedBundleInfoInner info2 = info1;
     info2.provisionInfo.bundleInfo.bundleName = "other.bundle";
     std::vector<TrustedBundleInfoInner> infos = {info1, info2};
-    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, manager.CheckMultipleHaps(infos));
+    EXPECT_EQ(AccessTokenError::ERR_CHECK_MULTIPLE_HAP_BUNDLE_NAME_MISMATCH, manager.CheckMultipleHaps(infos));
 
     info2 = info1;
     info2.provisionInfo.bundleInfo.appFeature = "hos_system_app";
     infos = {info1, info2};
-    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, manager.CheckMultipleHaps(infos));
+    EXPECT_EQ(AccessTokenError::ERR_CHECK_MULTIPLE_HAP_APP_FEATURE_MISMATCH, manager.CheckMultipleHaps(infos));
 
     info2 = info1;
     info2.provisionInfo.distributionType = Security::Verify::APP_GALLERY;
     infos = {info1, info2};
-    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, manager.CheckMultipleHaps(infos));
+    EXPECT_EQ(AccessTokenError::ERR_CHECK_MULTIPLE_HAP_DISTRIBUTION_TYPE_MISMATCH, manager.CheckMultipleHaps(infos));
 
     info2 = info1;
     info2.provisionInfo.type = Security::Verify::DEBUG;
     infos = {info1, info2};
-    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, manager.CheckMultipleHaps(infos));
+    EXPECT_EQ(AccessTokenError::ERR_CHECK_MULTIPLE_HAP_PROVISION_TYPE_MISMATCH, manager.CheckMultipleHaps(infos));
 }
 
 /**

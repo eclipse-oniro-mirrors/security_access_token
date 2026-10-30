@@ -232,6 +232,17 @@ int32_t AccessTokenKit::CheckMigratedUidSet(
 #endif
 }
 
+int32_t AccessTokenKit::IsMigrationDone(bool& isDone)
+{
+#ifdef SPM_DATA_ENABLE
+    LOGI(ATM_DOMAIN, ATM_TAG, "IsMigrationDone.");
+    return AccessTokenManagerClient::GetInstance().IsMigrationDone(isDone);
+#else
+    isDone = true;
+    return ERR_OK;
+#endif
+}
+
 int AccessTokenKit::DeleteToken(AccessTokenID tokenID)
 {
     return DeleteToken(tokenID, false);
@@ -600,13 +611,20 @@ int AccessTokenKit::GetDefPermission(const std::string& permissionName, Permissi
 int AccessTokenKit::GetReqPermissions(
     AccessTokenID tokenID, std::vector<PermissionStateFull>& reqPermList, bool isSystemGrant)
 {
-    LOGD(ATM_DOMAIN, ATM_TAG, "TokenID=%{public}d, isSystemGrant=%{public}d.", tokenID, isSystemGrant);
+    return GetReqPermissions(tokenID, reqPermList,
+        isSystemGrant ? PermissionGrantType::SYSTEM_GRANT : PermissionGrantType::NON_SYSTEM_GRANT);
+}
+
+int AccessTokenKit::GetReqPermissions(
+    AccessTokenID tokenID, std::vector<PermissionStateFull>& reqPermList, PermissionGrantType filter)
+{
+    LOGD(ATM_DOMAIN, ATM_TAG, "TokenID=%{public}d, filter=%{public}d.", tokenID, static_cast<int32_t>(filter));
     if (tokenID == INVALID_TOKENID) {
         LOGE(ATM_DOMAIN, ATM_TAG, "TokenID is invalid");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
 
-    return AccessTokenManagerClient::GetInstance().GetReqPermissions(tokenID, reqPermList, isSystemGrant);
+    return AccessTokenManagerClient::GetInstance().GetReqPermissions(tokenID, reqPermList, filter);
 }
 
 int AccessTokenKit::GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName, uint32_t& flag)

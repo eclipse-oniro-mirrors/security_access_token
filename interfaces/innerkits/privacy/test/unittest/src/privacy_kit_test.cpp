@@ -5187,6 +5187,41 @@ HWTEST_F(PrivacyKitTest, StartUsingPermission021, TestSize.Level0)
 }
 
 /**
+ * @tc.name: StartUsingPermission022
+ * @tc.desc: StartUsingPermission with dvr camera permission and callback.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, StartUsingPermission022, TestSize.Level0)
+{
+    std::string permissionName = "ohos.permission.DVRCAMERA";
+    auto callbackPtr = std::make_shared<CbCustomizeTest4>();
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::StartUsingPermission(g_tokenIdE, permissionName, callbackPtr));
+    EXPECT_EQ(PrivacyError::ERR_CALLBACK_ALREADY_EXIST,
+        PrivacyKit::StartUsingPermission(g_tokenIdE, permissionName, callbackPtr));
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::StopUsingPermission(g_tokenIdE, permissionName));
+    EXPECT_EQ(PrivacyError::ERR_PERMISSION_NOT_START_USING,
+        PrivacyKit::StopUsingPermission(g_tokenIdE, permissionName));
+}
+
+/**
+ * @tc.name: StartUsingPermission023
+ * @tc.desc: StartUsingPermission registers camera and dvr camera callbacks independently.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, StartUsingPermission023, TestSize.Level0)
+{
+    std::string cameraName = "ohos.permission.CAMERA";
+    std::string dvrCameraName = "ohos.permission.DVRCAMERA";
+    auto callbackPtr = std::make_shared<CbCustomizeTest4>();
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::StartUsingPermission(g_tokenIdE, cameraName, callbackPtr));
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::StartUsingPermission(g_tokenIdF, dvrCameraName, callbackPtr));
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::StopUsingPermission(g_tokenIdE, cameraName));
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::StopUsingPermission(g_tokenIdF, dvrCameraName));
+}
+
+/**
  * @tc.name: CheckPermissionInUse001
  * @tc.desc: Test CheckPermissionInUse with permission being used.
  * @tc.type: FUNC
@@ -5305,3 +5340,66 @@ HWTEST_F(PrivacyKitTest, CheckPermissionInUse007, TestSize.Level0)
     bool isUsing = false;
     EXPECT_EQ(PrivacyError::ERR_PERMISSION_DENIED, PrivacyKit::CheckPermissionInUse("ohos.permission.CAMERA", isUsing));
 }
+
+/**
+ * @tc.name: AddPermissionUsedRecordManualSetting001
+ * @tc.desc: AddPermissionUsedRecord should not record manual_settings permission fixed by admin policy.
+ * @tc.type: FUNC
+ * @tc.require:Issue Number
+ */
+#ifdef SUPPORT_PC_PRODUCT
+HWTEST_F(PrivacyKitTest, AddPermissionUsedRecordManualSetting001, TestSize.Level0)
+{
+    ASSERT_EQ(RET_SUCCESS, EnablePermissionUsedRecordToggleStatus());
+
+    PermissionStateFull hookKeyState = {
+        .permissionName = "ohos.permission.HOOK_KEY_EVENT",
+        .isGeneral = true,
+        .resDeviceID = {"local"},
+        .grantStatus = {PermissionState::PERMISSION_DENIED},
+        .grantFlags = {PermissionFlag::PERMISSION_DEFAULT_FLAG}
+    };
+    HapPolicyParams manualPolicy = {
+        .apl = APL_SYSTEM_BASIC,
+        .domain = "test.domain.manual",
+        .permStateList = {hookKeyState}
+    };
+    HapInfoParams manualInfo = {
+        .userID = TEST_USER_ID,
+        .bundleName = "ohos.privacy_test.manual_setting",
+        .instIndex = 0,
+        .appIDDesc = "manual_setting_test"
+    };
+    AccessTokenIDEx tokenIdEx = PrivacyTestCommon::AllocTestHapToken(manualInfo, manualPolicy);
+    AccessTokenID targetToken = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, targetToken);
+
+    {
+        MockNativeToken mock("edm");
+        std::vector<std::string> permList = {"ohos.permission.HOOK_KEY_EVENT"};
+        EXPECT_EQ(RET_SUCCESS, AccessTokenKit::SetPermissionStatusWithPolicy(
+            targetToken, permList, PERMISSION_GRANTED, PERMISSION_FIXED_BY_ADMIN_POLICY));
+    uint32_t flag = 0;
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetPermissionFlag(targetToken, "ohos.permission.HOOK_KEY_EVENT", flag));
+    EXPECT_EQ(PERMISSION_FIXED_BY_ADMIN_POLICY, flag);
+    EXPECT_EQ(PERMISSION_GRANTED,
+        AccessTokenKit::VerifyAccessToken(targetToken, "ohos.permission.HOOK_KEY_EVENT"));
+    }
+    
+    AddPermParamInfo addInfo;
+    addInfo.tokenId = targetToken;
+    addInfo.permissionName = "ohos.permission.HOOK_KEY_EVENT";
+    addInfo.successCount = 1;
+    addInfo.failCount = 0;
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(addInfo));
+
+    PermissionUsedRequest request;
+    PermissionUsedResult result;
+    std::vector<std::string> queryList = {"ohos.permission.HOOK_KEY_EVENT"};
+    BuildQueryRequest(targetToken, "ohos.privacy_test.manual_setting", queryList, request);
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
+    ASSERT_EQ(static_cast<uint32_t>(0), result.bundleRecords.size());
+
+    AccessTokenKit::DeleteToken(targetToken);
+}
+#endif

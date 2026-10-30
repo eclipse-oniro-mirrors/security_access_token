@@ -1923,6 +1923,44 @@ HWTEST_F(PermissionRecordDBTest, Remote_DeleteExcessiveRecords_CorruptDb, TestSi
     db->Rebuild();
 }
 #endif
+
+/*
+ * @tc.name: CreatePermissionDisablePolicyTable001
+ * @tc.desc: Verify permission_disable_policy_table supports user_id composite PK and CRUD works
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordDBTest, CreatePermissionDisablePolicyTable001, TestSize.Level1)
+{
+    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().CreatePermissionDisablePolicyTable());
+
+    // Insert user-level disable entry
+    GenericValues value;
+    value.Put(PrivacyFiledConst::FIELD_PERMISSION_CODE, 18); // OP_CAMERA
+    value.Put(PrivacyFiledConst::FIELD_USER_ID, 100);
+    value.Put(PrivacyFiledConst::FIELD_DISABLE_POLICY, 1);
+    std::vector<GenericValues> values;
+    values.emplace_back(value);
+    EXPECT_EQ(PermissionUsedRecordDb::ExecuteResult::SUCCESS,
+        PermissionUsedRecordDb::GetInstance().Add(
+            PermissionUsedRecordDb::DataType::PERMISSION_DISABLE_POLICY, values));
+
+    // Query by user_id condition
+    GenericValues condition;
+    condition.Put(PrivacyFiledConst::FIELD_USER_ID, 100);
+    std::vector<GenericValues> results;
+    EXPECT_EQ(PermissionUsedRecordDb::ExecuteResult::SUCCESS,
+        PermissionUsedRecordDb::GetInstance().Query(
+            PermissionUsedRecordDb::DataType::PERMISSION_DISABLE_POLICY, condition, results));
+    ASSERT_EQ(1, static_cast<int32_t>(results.size()));
+    EXPECT_EQ(100, results[0].GetInt(PrivacyFiledConst::FIELD_USER_ID));
+    EXPECT_EQ(1, results[0].GetInt(PrivacyFiledConst::FIELD_DISABLE_POLICY));
+
+    // Remove by user_id
+    PermissionUsedRecordDb::GetInstance().Remove(
+        PermissionUsedRecordDb::DataType::PERMISSION_DISABLE_POLICY, condition);
+}
+
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

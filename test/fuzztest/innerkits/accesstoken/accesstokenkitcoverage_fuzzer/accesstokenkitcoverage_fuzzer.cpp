@@ -46,6 +46,8 @@ const int32_t USER_ID_MAX = 100;
 const int32_t ENTRY_COUNT_MIN = 0;
 const int32_t ENTRY_COUNT_MAX = 3;
 const int32_t MIGRATE_INFO_COUNT_MAX = 2;
+const int32_t PERM_TYPE_FILTER_MIN = -1;
+const int32_t PERM_TYPE_FILTER_MAX = static_cast<int32_t>(PermissionGrantType::ALL) + 1;
 }
 
 namespace OHOS {
@@ -95,6 +97,7 @@ enum SpmApiSelector {
     SPM_API_GET_CACHE_POLICY_BY_SESSION_ID,
     SPM_API_GET_HAP_IDENTITY,
     SPM_API_GET_HAP_BASE_INFO_BY_UID,
+    SPM_API_IS_MIGRATION_DONE,
     SPM_API_BUTT,
 };
 
@@ -222,6 +225,11 @@ static void DispatchSpmInterface(FuzzedDataProvider& provider, uint32_t spmSelec
             AccessTokenKit::GetHapBaseInfoByUid(provider.ConsumeIntegral<int32_t>(), info);
             break;
         }
+        case SPM_API_IS_MIGRATION_DONE: {
+            bool isDone = false;
+            AccessTokenKit::IsMigrationDone(isDone);
+            break;
+        }
         default:
             break;
     }
@@ -243,6 +251,10 @@ bool AccessTokenKitCoverageFuzzTest(const uint8_t* data, size_t size)
     AccessTokenKit::GetHapTokenInfoExtension(tokenID, info);
     std::vector<PermissionWithValue> kernelPermList;
     AccessTokenKit::GetKernelPermissions(tokenID, kernelPermList);
+    std::vector<PermissionStateFull> permList;
+    AccessTokenKit::GetReqPermissions(tokenID, permList,
+        static_cast<PermissionGrantType>(
+            provider.ConsumeIntegralInRange<int32_t>(PERM_TYPE_FILTER_MIN, PERM_TYPE_FILTER_MAX)));
     std::string value;
     AccessTokenKit::GetReqPermissionByName(tokenID, permissionName, value);
     uint32_t version;

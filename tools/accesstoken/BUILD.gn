@@ -15,6 +15,7 @@ import("//base/security/access_token/access_token.gni")
 import("//build/ohos.gni")
 
 ohos_executable("atm") {
+  branch_protector_ret = "pac_ret"
   install_enable = true
   subsystem_name = "security"
   part_name = "access_token"

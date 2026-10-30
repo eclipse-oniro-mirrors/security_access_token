@@ -303,6 +303,15 @@ public:
     static int GetReqPermissions(
         AccessTokenID tokenID, std::vector<PermissionStateFull>& reqPermList, bool isSystemGrant);
     /**
+     * @brief Get requested permission full state by token id and grant filter.
+     * @param tokenID token id
+     * @param reqPermList PermissionStateFull list quote, as query result
+     * @param filter grant filter, see PermissionGrantType
+     * @return error code, see access_token_error.h
+     */
+    static int GetReqPermissions(
+        AccessTokenID tokenID, std::vector<PermissionStateFull>& reqPermList, PermissionGrantType filter);
+    /**
      * @brief Get permission grant flag
      * @param tokenID token id
      * @param permissionName permission name quote
@@ -855,6 +864,12 @@ public:
      * @return error code, see access_token_error.h
      */
     static int32_t FinishMigration();
+    /**
+     * @brief Check whether installed-bundle migration has completed.
+     * @param isDone output parameter, true if migration is completed, false otherwise.
+     * @return error code, see access_token_error.h
+     */
+    static int32_t IsMigrationDone(bool& isDone);
     /**
      * @brief Check migrated uid set and reserve missing bundle ids.
      * @param totalUids total migrated uid set from caller.

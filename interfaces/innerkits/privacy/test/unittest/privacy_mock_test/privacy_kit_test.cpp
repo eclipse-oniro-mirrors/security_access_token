@@ -188,6 +188,22 @@ HWTEST_F(PrivacyKitTest, StartUsingPermission002, TestSize.Level0)
         PrivacyKit::StartUsingPermission(g_TokenId_A, permissionName, callbackPtr));
 }
 
+/**
+ * @tc.name: StartUsingPermission003
+ * @tc.desc: StartUsingPermission with dvr camera callback passes client check, non-camera is rejected.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, StartUsingPermission003, TestSize.Level0)
+{
+    auto callbackPtr = std::make_shared<CbCustomizeForMockTest>();
+    AccessTokenID tokenId = 0xff;
+    ASSERT_EQ(PrivacyError::ERR_SERVICE_ABNORMAL,
+        PrivacyKit::StartUsingPermission(tokenId, "ohos.permission.DVRCAMERA", callbackPtr));
+    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID,
+        PrivacyKit::StartUsingPermission(tokenId, "ohos.permission.MICROPHONE", callbackPtr));
+}
+
 #ifdef PRIVACY_BUNDLE_START_STOP_ENABLE
 /**
  * @tc.name: BundleUsingProxyTest001

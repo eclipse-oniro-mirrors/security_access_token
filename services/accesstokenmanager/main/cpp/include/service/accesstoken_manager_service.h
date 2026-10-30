@@ -69,7 +69,8 @@ public:
         const std::vector<std::string>& permissionList, std::vector<int32_t>& permStateList) override;
     int GetDefPermission(const std::string& permissionName, PermissionDefParcel& permissionDefResult) override;
     int GetReqPermissions(
-        AccessTokenID tokenID, std::vector<PermissionStatusParcel>& reqPermList, bool isSystemGrant) override;
+        AccessTokenID tokenID, std::vector<PermissionStatusParcel>& reqPermList,
+        PermissionGrantTypeIdl filterIdl) override;
     int32_t GetSelfPermissionStatus(const std::string& permissionName, int32_t& status) override;
     int32_t GetSelfPermissionsState(std::vector<PermissionListStateParcel>& reqPermList,
         PermissionGrantInfoParcel& infoParcel, int32_t& permOper) override;
@@ -99,6 +100,7 @@ public:
         std::vector<BundleMigrateResultIdl>& results) override;
     int32_t FinishMigration() override;
     int32_t CheckMigratedUidSet(const std::set<int32_t>& totalUids, std::set<int32_t>& unreceivedUids) override;
+    int32_t IsMigrationDone(bool& isDone) override;
 #endif
     int GetTokenType(AccessTokenID tokenID);
     int GetTokenType(AccessTokenID tokenID, int32_t& tokenType) override;

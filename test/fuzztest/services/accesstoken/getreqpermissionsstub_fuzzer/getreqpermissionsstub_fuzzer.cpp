@@ -96,13 +96,15 @@ AccessTokenID EnsureValidTokenId()
             return false;
         }
         AccessTokenID tokenId = provider.ConsumeBool() ? validTokenId : ConsumeTokenId(provider);
-        
+        int32_t filterIdl = provider.ConsumeIntegralInRange<int32_t>(
+            -1, static_cast<int32_t>(PermissionGrantTypeIdl::ALL) + 1);
+
         MessageParcel datas;
         datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
         if (!datas.WriteUint32(tokenId)) {
             return false;
         }
-        if (!datas.WriteInt32(true)) {
+        if (!datas.WriteInt32(filterIdl)) {
             return false;
         }
 

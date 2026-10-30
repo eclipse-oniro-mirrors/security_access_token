@@ -24,6 +24,7 @@
         "OHOS::Security::AccessToken::AccessTokenKit::MigrateInstalledBundles(std::__h::vector<OHOS::Security::AccessToken::MigratedInfo, std::__h::allocator<OHOS::Security::AccessToken::MigratedInfo>> const&, std::__h::vector<OHOS::Security::AccessToken::BundleMigrateResult, std::__h::allocator<OHOS::Security::AccessToken::BundleMigrateResult>>&)";
         "OHOS::Security::AccessToken::AccessTokenKit::FinishMigration()";
         "OHOS::Security::AccessToken::AccessTokenKit::CheckMigratedUidSet(std::__h::set<int, std::__h::less<int>, std::__h::allocator<int>> const&, std::__h::set<int, std::__h::less<int>, std::__h::allocator<int>>&)";
+        "OHOS::Security::AccessToken::AccessTokenKit::IsMigrationDone(bool&)";
         "OHOS::Security::AccessToken::AccessTokenKit::DeleteToken(unsigned int)";
         "OHOS::Security::AccessToken::AccessTokenKit::DeleteToken(unsigned int, bool)";
         "OHOS::Security::AccessToken::AccessTokenKit::DeleteIdentity(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, OHOS::Security::AccessToken::ReservedType)";
@@ -66,6 +67,7 @@
         "OHOS::Security::AccessToken::PermStateChangeCallbackCustomize::~PermStateChangeCallbackCustomize()";
         "OHOS::Security::AccessToken::AccessTokenKit::GetDefPermission(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, OHOS::Security::AccessToken::PermissionDef&)";
         "OHOS::Security::AccessToken::AccessTokenKit::GetReqPermissions(unsigned int, std::__h::vector<OHOS::Security::AccessToken::PermissionStateFull, std::__h::allocator<OHOS::Security::AccessToken::PermissionStateFull>>&, bool)";
+        "OHOS::Security::AccessToken::AccessTokenKit::GetReqPermissions(unsigned int, std::__h::vector<OHOS::Security::AccessToken::PermissionStateFull, std::__h::allocator<OHOS::Security::AccessToken::PermissionStateFull>>&, OHOS::Security::AccessToken::PermissionGrantType)";
         "OHOS::Security::AccessToken::AccessTokenKit::VerifyAccessToken(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&)";
         "OHOS::Security::AccessToken::AccessTokenKit::VerifyAccessToken(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, bool)";
         "OHOS::Security::AccessToken::AccessTokenKit::SetPermissionRequestToggleStatus(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, unsigned int, int, int)";

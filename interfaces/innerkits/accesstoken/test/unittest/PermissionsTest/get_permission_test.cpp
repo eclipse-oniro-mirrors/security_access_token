@@ -296,6 +296,32 @@ HWTEST_F(GetPermissionTest, GetReqPermissionsFuncTest002, TestSize.Level0)
 }
 
 /**
+ * @tc.name: GetReqPermissionsFuncTest005
+ * @tc.desc: Get all requested permission state info without distinguishing grant mode.
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(GetPermissionTest, GetReqPermissionsFuncTest005, TestSize.Level0)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "GetReqPermissionsFuncTest005");
+    std::vector<std::string> reqPerm;
+    reqPerm.emplace_back("ohos.permission.GET_SENSITIVE_PERMISSIONS");
+    MockHapToken mockHap("GetReqPermissionsFuncTest005", reqPerm, true);
+
+    AccessTokenIDEx tokenIdEx = TestCommon::GetHapTokenIdFromBundle(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+
+    std::vector<PermissionStateFull> permStatListAll;
+    std::vector<PermissionStateFull> permStatUserList;
+    std::vector<PermissionStateFull> permStatSystemList;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetReqPermissions(tokenID, permStatListAll, PermissionGrantType::ALL));
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetReqPermissions(tokenID, permStatUserList, false));
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetReqPermissions(tokenID, permStatSystemList, true));
+    ASSERT_EQ(permStatUserList.size() + permStatSystemList.size(), permStatListAll.size());
+}
+
+/**
  * @tc.name: GetReqPermissionsFuncTest003
  * @tc.desc: Get user granted permission state info after clear request permission list.
  * @tc.type: FUNC
@@ -363,6 +389,34 @@ HWTEST_F(GetPermissionTest, GetReqPermissionsFuncTest004, TestSize.Level0)
         reqPerm.emplace_back("ohos.permission.GET_SENSITIVE_PERMISSIONS");
         MockHapToken mock("GetReqPermissionsFuncTest004", reqPerm, false);
         ASSERT_EQ(ERR_NOT_SYSTEM_APP, AccessTokenKit::GetReqPermissions(GetSelfTokenID(), permStatList, false));
+    }
+}
+
+/**
+ * @tc.name: GetReqPermissionsFuncTest006
+ * @tc.desc: GetReqPermissions overload call failure with no permission.
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(GetPermissionTest, GetReqPermissionsFuncTest006, TestSize.Level0)
+{
+    int32_t selfUid = getuid();
+    std::vector<PermissionStateFull> permStatList;
+    {
+        // mock native token with no permission
+        MockNativeToken mock("accesstoken_service");
+        setuid(1);
+        ASSERT_EQ(ERR_PERMISSION_DENIED,
+            AccessTokenKit::GetReqPermissions(GetSelfTokenID(), permStatList, PermissionGrantType::ALL));
+    }
+    setuid(selfUid);
+    {
+        // mock hap token with non system app
+        std::vector<std::string> reqPerm;
+        reqPerm.emplace_back("ohos.permission.GET_SENSITIVE_PERMISSIONS");
+        MockHapToken mock("GetReqPermissionsFuncTest006", reqPerm, false);
+        ASSERT_EQ(ERR_NOT_SYSTEM_APP,
+            AccessTokenKit::GetReqPermissions(GetSelfTokenID(), permStatList, PermissionGrantType::ALL));
     }
 }
 
