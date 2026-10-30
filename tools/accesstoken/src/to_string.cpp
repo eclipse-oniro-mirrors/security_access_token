@@ -157,7 +157,6 @@ static void PermDefToJson(const PermissionBriefDef& briefDef, CJsonUnique& permD
     (void)AddBoolToJson(permDefJson, "distributedSceneEnable", briefDef.distributedSceneEnable);
     (void)AddBoolToJson(permDefJson, "isKernelEffect", briefDef.isKernelEffect);
     (void)AddBoolToJson(permDefJson, "hasValue", briefDef.hasValue);
-    (void)AddBoolToJson(permDefJson, "binIndependentUsable", briefDef.binIndependentUsable);
 }
 
 static bool IsPermDefinitionPrintable(const PermissionBriefDef& briefDef)
