@@ -1850,6 +1850,49 @@ HWTEST_F(PrivacyKitTest, StartRemoteUsingPermission004, TestSize.Level1)
 
     EXPECT_EQ(RET_NO_ERROR, PrivacyKit::UnRegisterPermActiveStatusCallback(callbackPtr));
 }
+
+/**
+ * @tc.name: StartRemoteUsingPermission005
+ * @tc.desc: Test different permissions used by different devices simultaneously
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, StartRemoteUsingPermission005, TestSize.Level1)
+{
+    MockNativeToken mock("camera_service");
+    EXPECT_EQ(RET_NO_ERROR, SetDisablePolicy("ohos.permission.MICROPHONE", false));
+    EXPECT_EQ(RET_NO_ERROR, SetDisablePolicy("ohos.permission.CAMERA", false));
+
+    std::vector<std::string> permList;
+    auto callbackPtr = std::make_shared<CbCustomizeTest6>(permList);
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::RegisterPermActiveStatusCallback(callbackPtr));
+
+    RemoteCallerInfo infoA = {"deviceA", "nameA"};
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::StartRemoteUsingPermission(infoA, "ohos.permission.CAMERA"));
+    usleep(1000000); // 1000000us = 1s
+    EXPECT_EQ(callbackPtr->callTimes, 1);
+    EXPECT_EQ(callbackPtr->deviceId_, "deviceA");
+
+    RemoteCallerInfo infoB = {"deviceB", "nameB"};
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::StartRemoteUsingPermission(infoB, "ohos.permission.MICROPHONE"));
+    usleep(1000000); // 1000000us = 1s
+    EXPECT_EQ(callbackPtr->callTimes, 2);
+    EXPECT_EQ(callbackPtr->deviceId_, "deviceB");
+
+    EXPECT_EQ(ERR_REMOTE_USING_CONFLICT,
+        PrivacyKit::StartRemoteUsingPermission(infoB, "ohos.permission.CAMERA"));
+    usleep(1000000); // 1000000us = 1s
+    EXPECT_EQ(callbackPtr->callTimes, 2);
+
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::StopRemoteUsingPermission(infoA, "ohos.permission.CAMERA"));
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::StopRemoteUsingPermission(infoB, "ohos.permission.MICROPHONE"));
+
+    RemoteCallerInfo infoC = {"deviceC", "nameC"};
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::StartRemoteUsingPermission(infoC, "ohos.permission.CAMERA"));
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::StopRemoteUsingPermission(infoC, "ohos.permission.CAMERA"));
+
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::UnRegisterPermActiveStatusCallback(callbackPtr));
+}
 #else
 /**
  * @tc.name: RemotePrivacyLiteTest001
