@@ -166,7 +166,7 @@ void ConvertPermissionBriefToDef(const PermissionBriefDef& briefDef, PermissionD
     def.availableType = briefDef.availableType;
     def.isKernelEffect = briefDef.isKernelEffect;
     def.hasValue = briefDef.hasValue;
-    def.binIndependentUsable = briefDef.binIndependentUsable;
+    def.provisionBypassForSideload = briefDef.provisionBypassForSideload;
 }
 
 bool IsPermissionValidForHap(const std::string& permissionName)

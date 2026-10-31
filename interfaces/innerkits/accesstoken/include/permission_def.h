@@ -77,10 +77,11 @@ public:
     bool isKernelEffect = false;
     bool hasValue = false;
     /**
-     * indicates whether BIN can obtain this permission independently,
-     * without the parent HAP declaring it
+     * indicates whether sideload apps can bypass the provision (ACL) check
+     * for this permission; also indicates whether BIN can obtain this
+     * permission independently, without the parent HAP declaring it
      */
-    bool binIndependentUsable = false;
+    bool provisionBypassForSideload = false;
 };
 
 /**

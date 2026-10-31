@@ -1201,15 +1201,16 @@ int32_t PermissionRecordManager::AddRecordToStartRemoteList(
     }
 
     std::lock_guard<std::mutex> lock(startRemoteRecordListMutex_);
-    if (uniqueDeviceId_.empty()) {
-        uniqueDeviceId_ = info.remoteDeviceId;
-    } else if (uniqueDeviceId_ != info.remoteDeviceId) {
+    auto mapIt = remoteUsingDeviceMap_.find(opCode);
+    if (mapIt == remoteUsingDeviceMap_.end()) {
+        remoteUsingDeviceMap_[opCode] = RemoteCallerInfo{info.remoteDeviceId, info.remoteDeviceName};
+    } else if (mapIt->second.remoteDeviceId != info.remoteDeviceId) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Remote already using, id:%{public}s",
-            ConstantCommon::EncryptDevId(uniqueDeviceId_).c_str());
+            ConstantCommon::EncryptDevId(mapIt->second.remoteDeviceId).c_str());
         return PrivacyError::ERR_REMOTE_USING_CONFLICT;
+    } else {
+        mapIt->second.remoteDeviceName = info.remoteDeviceName;
     }
-    // update to newest deviceName
-    uniqueDeviceName_ = info.remoteDeviceName;
 
     RemoteContinuousPermissionRecord newRecord = {
         .opCode = opCode,
@@ -1217,7 +1218,7 @@ int32_t PermissionRecordManager::AddRecordToStartRemoteList(
     };
 
     startRemoteRecordList_.emplace(newRecord);
-    CallbackRemoteExecute(newRecord, uniqueDeviceId_, info.remoteDeviceName, permissionName, type);
+    CallbackRemoteExecute(newRecord, info.remoteDeviceId, info.remoteDeviceName, permissionName, type);
 
     return Constant::SUCCESS;
 }
@@ -1269,7 +1270,8 @@ int32_t PermissionRecordManager::StopRemoteUsingPermission(const std::string& re
 
     {
         std::lock_guard<std::mutex> lock(startRemoteRecordListMutex_);
-        if (uniqueDeviceId_.empty() || uniqueDeviceId_ != remoteDeviceId) {
+        auto mapIt = remoteUsingDeviceMap_.find(opCode);
+        if (mapIt == remoteUsingDeviceMap_.end() || mapIt->second.remoteDeviceId != remoteDeviceId) {
             LOGE(PRI_DOMAIN, PRI_TAG, "Remote not match, id:%{public}s",
                 ConstantCommon::EncryptDevId(remoteDeviceId).c_str());
             return PrivacyError::ERR_PERMISSION_NOT_START_USING;
@@ -1296,6 +1298,7 @@ bool PermissionRecordManager::ToRemoveRemoteRecord(
     bool res = false;
     {
         std::lock_guard<std::mutex> lock(startRemoteRecordListMutex_);
+        std::set<int32_t> removedOpCodes;
         for (auto it = startRemoteRecordList_.begin(); it != startRemoteRecordList_.end();) {
             if (((*it).*isEqualFunc)(targetRecord)) {
                 std::string perm;
@@ -1304,26 +1307,36 @@ bool PermissionRecordManager::ToRemoveRemoteRecord(
                     .opCode = it->opCode,
                     .callerPid = it->callerPid,
                 };
-                // deviceName is latest when inactive
+                auto mapIt = remoteUsingDeviceMap_.find(it->opCode);
+                std::string cbDeviceId = (mapIt != remoteUsingDeviceMap_.end()) ? mapIt->second.remoteDeviceId : "";
+                std::string cbDeviceName = (mapIt != remoteUsingDeviceMap_.end()) ? mapIt->second.remoteDeviceName : "";
                 CallbackRemoteExecute(
-                    newRecord, uniqueDeviceId_, uniqueDeviceName_, perm, ActiveChangeType::PERM_INACTIVE);
-                // remove record success
+                    newRecord, cbDeviceId, cbDeviceName, perm, ActiveChangeType::PERM_INACTIVE);
                 res = true;
+                removedOpCodes.insert(it->opCode);
                 it = startRemoteRecordList_.erase(it);
-                
+
                 if (!removeAll) {
-                    // only remove one record
                     break;
                 }
             } else {
                 ++it;
             }
         }
-        if (startRemoteRecordList_.empty()) {
-            uniqueDeviceId_ = "";
+        for (int32_t op : removedOpCodes) {
+            CleanRemoteUsingDeviceMap(op);
         }
     }
     return res;
+}
+
+void PermissionRecordManager::CleanRemoteUsingDeviceMap(int32_t opCode)
+{
+    if (std::any_of(startRemoteRecordList_.begin(), startRemoteRecordList_.end(),
+        [opCode](const RemoteContinuousPermissionRecord& record) { return record.opCode == opCode; })) {
+        return;
+    }
+    remoteUsingDeviceMap_.erase(opCode);
 }
 #endif
 
@@ -1958,10 +1971,13 @@ void PermissionRecordManager::GetCurrUsingPermInfo(std::vector<CurrUsingPermInfo
         for (const auto& record : startRemoteRecordList_) {
             std::string perm;
             (void)Constant::TransferOpcodeToPermission(record.opCode, perm);
-            infoList.emplace_back(perm, uniqueDeviceId_, uniqueDeviceName_);
+            auto mapIt = remoteUsingDeviceMap_.find(record.opCode);
+            std::string devId = (mapIt != remoteUsingDeviceMap_.end()) ? mapIt->second.remoteDeviceId : "";
+            std::string devName = (mapIt != remoteUsingDeviceMap_.end()) ? mapIt->second.remoteDeviceName : "";
+            infoList.emplace_back(perm, devId, devName);
             LOGI(PRI_DOMAIN, PRI_TAG, "deviceId: %{public}s, "
             "using permission %{public}s, type %{public}d, callerPid %{public}d.",
-                ConstantCommon::EncryptDevId(uniqueDeviceId_).c_str(), perm.c_str(),
+                ConstantCommon::EncryptDevId(devId).c_str(), perm.c_str(),
                 ActiveChangeType::PERM_REMOTE_USING, record.callerPid);
         }
     }
@@ -2354,6 +2370,12 @@ void PermissionRecordManager::UpdateStartRemoteUsingRecord(const std::string& pe
     int32_t opCode = 0;
     Constant::TransferPermissionToOpcode(permissionName, opCode);
     std::lock_guard<std::mutex> lock(startRemoteRecordListMutex_);
+    auto mapIt = remoteUsingDeviceMap_.find(opCode);
+    if (mapIt == remoteUsingDeviceMap_.end()) {
+        return;
+    }
+    std::string devId = mapIt->second.remoteDeviceId;
+    std::string devName = mapIt->second.remoteDeviceName;
     std::multiset<RemoteContinuousPermissionRecord> updatedRecordList;
     for (auto it = startRemoteRecordList_.begin(); it != startRemoteRecordList_.end();) {
         RemoteContinuousPermissionRecord record = *it;
@@ -2366,13 +2388,13 @@ void PermissionRecordManager::UpdateStartRemoteUsingRecord(const std::string& pe
         it = startRemoteRecordList_.erase(it);
     }
     for (const auto& record : updatedRecordList) {
-        // deviceName is latest when inactive
         CallbackRemoteExecute(
-            record, uniqueDeviceId_, uniqueDeviceName_, permissionName, ActiveChangeType::PERM_INACTIVE);
+            record, devId, devName, permissionName, ActiveChangeType::PERM_INACTIVE);
     }
-    if (startRemoteRecordList_.empty()) {
-        uniqueDeviceId_ = "";
-    }
+    // Safe to erase unconditionally: the early return above guarantees the opCode
+    // exists in the map, and the lock prevents concurrent removal, so at least one
+    // matching record was collected and removed from startRemoteRecordList_.
+    remoteUsingDeviceMap_.erase(opCode);
 }
 #endif
 

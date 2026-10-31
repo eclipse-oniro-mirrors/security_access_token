@@ -36,7 +36,7 @@ bool PermissionDefParcel::Marshalling(Parcel& out) const
     RETURN_IF_FALSE(out.WriteInt32(this->permissionDef.availableType));
     RETURN_IF_FALSE(out.WriteBool(this->permissionDef.isKernelEffect));
     RETURN_IF_FALSE(out.WriteBool(this->permissionDef.hasValue));
-    RETURN_IF_FALSE(out.WriteBool(this->permissionDef.binIndependentUsable));
+    RETURN_IF_FALSE(out.WriteBool(this->permissionDef.provisionBypassForSideload));
     return true;
 }
 
@@ -66,7 +66,8 @@ PermissionDefParcel* PermissionDefParcel::Unmarshalling(Parcel& in)
     permissionDefParcel->permissionDef.availableType = ATokenAvailableTypeEnum(availableType);
     RELEASE_IF_FALSE(in.ReadBool(permissionDefParcel->permissionDef.isKernelEffect), permissionDefParcel);
     RELEASE_IF_FALSE(in.ReadBool(permissionDefParcel->permissionDef.hasValue), permissionDefParcel);
-    RELEASE_IF_FALSE(in.ReadBool(permissionDefParcel->permissionDef.binIndependentUsable), permissionDefParcel);
+    RELEASE_IF_FALSE(in.ReadBool(permissionDefParcel->permissionDef.provisionBypassForSideload),
+        permissionDefParcel);
     return permissionDefParcel;
 }
 } // namespace AccessToken
