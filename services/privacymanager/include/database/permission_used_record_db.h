@@ -61,8 +61,8 @@ public:
     int32_t Update(DataType type, const GenericValues& modifyValue, const GenericValues& conditionValue);
     int32_t Query(DataType type, const GenericValues& conditionValue, std::vector<GenericValues>& results);
 
-    void OnCreate() override;
-    void OnUpdate(int32_t version) override;
+    int32_t OnCreate() override;
+    int32_t OnUpdate(int32_t version) override;
 
 private:
     void InitPermRecordTableInfo(SqliteTable& permissionRecordTable);
@@ -97,6 +97,7 @@ private:
     int32_t UpdateDisablePolicyTablePrimaryKey() const;
     int32_t InsertUserIdColumnToDisablePolicyTable() const;
     int32_t InsertEnhancedIdentityColumn() const;
+    bool IsColumnExists(const std::string& tableName, const std::string& columnName) const;
 
     std::string CreateDeleteHistoryRecordsPrepareSqlCmd(DataType type,
         const std::unordered_set<AccessTokenID>& tokenIDList) const;

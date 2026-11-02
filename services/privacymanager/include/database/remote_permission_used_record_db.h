@@ -46,8 +46,8 @@ public:
     int32_t DeleteExcessiveRecords(uint32_t excessiveSize);
     int32_t Update(const GenericValues& modifyValue, const GenericValues& conditionValue);
 
-    void OnCreate() override;
-    void OnUpdate(int32_t version) override;
+    int32_t OnCreate() override;
+    int32_t OnUpdate(int32_t version) override;
 
 private:
     std::shared_mutex rwLock_;
