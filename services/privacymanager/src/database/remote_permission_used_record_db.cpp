@@ -227,21 +227,20 @@ RemotePermissionUsedRecordDb::~RemotePermissionUsedRecordDb()
     Close();
 }
 
-void RemotePermissionUsedRecordDb::OnCreate()
+int32_t RemotePermissionUsedRecordDb::OnCreate()
 {
     LOGI(PRI_DOMAIN, PRI_TAG, "Entry");
-    CreateRemotePermissionRecordTable();
+    return CreateRemotePermissionRecordTable();
 }
 
-void RemotePermissionUsedRecordDb::OnUpdate(int32_t version)
+int32_t RemotePermissionUsedRecordDb::OnUpdate(int32_t version)
 {
     LOGI(PRI_DOMAIN, PRI_TAG, "Entry");
     switch (version) {
         case 1: // 1->2
-            (void)AddSubProfileIdColumn();
-            [[fallthrough]];
+            return AddSubProfileIdColumn();
         default:
-            return;
+            return SUCCESS;
     }
 }
 
@@ -309,6 +308,7 @@ int32_t RemotePermissionUsedRecordDb::AddLocked(const std::vector<GenericValues>
         int32_t ret = statement.Step();
         if (ret != Statement::State::DONE) {
             LOGE(PRI_DOMAIN, PRI_TAG, "Failed, errorMsg: %{public}s", SpitError().c_str());
+            ReportDbException(DB_REMOTE_RECORD_ADD_FAILED, GetDbErrCode(), std::string(DATABASE_NAME));
             isAddSuccessfully = false;
         }
         statement.Reset();
@@ -358,7 +358,10 @@ int32_t RemotePermissionUsedRecordDb::RemoveLocked(const GenericValues& conditio
         statement.Bind(columnName, conditions.Get(columnName));
     }
     int32_t ret = statement.Step();
-    
+    if (ret != Statement::State::DONE) {
+        ReportDbException(DB_REMOTE_RECORD_REMOVE_FAILED, GetDbErrCode(), std::string(DATABASE_NAME));
+    }
+
     int64_t endTime = TimeUtil::GetCurrentTimestamp();
     LOGI(PRI_DOMAIN, PRI_TAG, "Remove cost %{public}" PRId64 ".", endTime - beginTime);
 
@@ -382,7 +385,8 @@ int32_t RemotePermissionUsedRecordDb::FindByConditions(const std::set<int32_t>& 
         statement.Bind(columnName, andConditions.Get(columnName));
     }
 
-    while (statement.Step() == Statement::State::ROW) {
+    int32_t findStepRet = statement.Step();
+    while (findStepRet == Statement::State::ROW) {
         int32_t columnCount = statement.GetColumnCount();
         GenericValues value;
         for (int32_t i = 0; i < columnCount; i++) {
@@ -394,6 +398,10 @@ int32_t RemotePermissionUsedRecordDb::FindByConditions(const std::set<int32_t>& 
             }
         }
         results.emplace_back(value);
+        findStepRet = statement.Step();
+    }
+    if (findStepRet != Statement::State::DONE) {
+        ReportDbException(DB_REMOTE_RECORD_FIND_FAILED, GetDbErrCode(), std::string(DATABASE_NAME));
     }
     
     int64_t endTime = TimeUtil::GetCurrentTimestamp();
@@ -411,9 +419,12 @@ int32_t RemotePermissionUsedRecordDb::Count()
     std::string countSql = CreateCountPrepareSqlCmd();
     LOGD(PRI_DOMAIN, PRI_TAG, "Count sql is %{public}s.", countSql.c_str());
     auto countStatement = Prepare(countSql);
-    if (countStatement.Step() == Statement::State::ROW) {
+    int32_t countStepRet = countStatement.Step();
+    if (countStepRet == Statement::State::ROW) {
         int32_t column = 0;
         countValue.Put(FIELD_COUNT_NUMBER, countStatement.GetValue(column, false));
+    } else if (countStepRet != Statement::State::DONE) {
+        ReportDbException(DB_REMOTE_RECORD_COUNT_FAILED, GetDbErrCode(), std::string(DATABASE_NAME));
     }
     
     int64_t endTime = TimeUtil::GetCurrentTimestamp();
@@ -441,6 +452,7 @@ int32_t RemotePermissionUsedRecordDb::DeleteExpireRecordsLocked(const GenericVal
         }
         if (deleteExpireStatement.Step() != Statement::State::DONE) {
             LOGE(PRI_DOMAIN, PRI_TAG, "Step failed, errMsg is %{public}s.", SpitError().c_str());
+            ReportDbException(DB_REMOTE_RECORD_DELETE_EXPIRE_FAILED, GetDbErrCode(), std::string(DATABASE_NAME));
             return PrivacyError::ERR_DATABASE_OPERATE_FAILED;
         }
     }
@@ -465,6 +477,7 @@ int32_t RemotePermissionUsedRecordDb::DeleteExcessiveRecordsLocked(uint32_t exce
     auto deleteExcessiveStatement = Prepare(deleteExcessiveSql);
     if (deleteExcessiveStatement.Step() != Statement::State::DONE) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Step failed, errMsg is %{public}s.", SpitError().c_str());
+        ReportDbException(DB_REMOTE_RECORD_DELETE_EXCESSIVE_FAILED, GetDbErrCode(), std::string(DATABASE_NAME));
         return PrivacyError::ERR_DATABASE_OPERATE_FAILED;
     }
 
@@ -507,6 +520,7 @@ int32_t RemotePermissionUsedRecordDb::UpdateLocked(const GenericValues& modifyVa
     if (ret != Statement::State::DONE) {
         LOGE(PRI_DOMAIN, PRI_TAG,
             "Update table failed, errCode is %{public}d, errMsg is %{public}s.", ret, SpitError().c_str());
+        ReportDbException(DB_REMOTE_RECORD_UPDATE_OP_FAILED, GetDbErrCode(), std::string(DATABASE_NAME));
         return PrivacyError::ERR_DATABASE_OPERATE_FAILED;
     }
 

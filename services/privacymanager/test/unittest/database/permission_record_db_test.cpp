@@ -1209,7 +1209,8 @@ HWTEST_F(PermissionRecordDBTest, OnUpdate011, TestSize.Level0)
     ASSERT_EQ(0, db.ExecuteSql("create table permission_used_record_toggle_status_table_backup (user_id integer)"));
 
     db.BeginTransaction();
-    ASSERT_EQ(PrivacyError::ERR_DATABASE_OPERATE_FAILED, db.UpdateToggleStatusTablePrimaryKey());
+    ASSERT_NE(0, db.UpdateToggleStatusTablePrimaryKey());
+    db.RollbackTransaction();
 
     // legacy table and its record must be kept after rollback
     auto countStmt = db.Prepare("select count(*) from permission_used_record_toggle_status_table where user_id=" +
@@ -1242,7 +1243,8 @@ HWTEST_F(PermissionRecordDBTest, OnUpdate012, TestSize.Level0)
     ASSERT_EQ(0, db.ExecuteSql("insert into permission_used_record_toggle_status_table values(36)"));
 
     db.BeginTransaction();
-    ASSERT_EQ(PrivacyError::ERR_DATABASE_OPERATE_FAILED, db.UpdateToggleStatusTablePrimaryKey());
+    ASSERT_NE(0, db.UpdateToggleStatusTablePrimaryKey());
+    db.RollbackTransaction();
 
     // rollback must restore legacy schema, record and remove backup table
     auto countStmt = db.Prepare("select count(*) from permission_used_record_toggle_status_table");

@@ -16,6 +16,7 @@
 #ifndef SQLITE_HELPER_H
 #define SQLITE_HELPER_H
 
+#include <functional>
 #include <string>
 
 #include "statement.h"
@@ -53,8 +54,11 @@ public:
     bool NeedRebuild(bool fullCheck = false) const;
     int32_t Rebuild();
 
-    virtual void OnCreate() = 0;
-    virtual void OnUpdate(int32_t version) = 0;
+    virtual int32_t OnCreate() = 0;
+    virtual int32_t OnUpdate(int32_t version) = 0;
+
+protected:
+    int32_t GetDbErrCode() const { return sqlite3_errcode(db_); }
 
 private:
     inline static const std::string PRAGMA_VERSION_COMMAND = "PRAGMA user_version";
@@ -67,9 +71,14 @@ private:
     sqlite3* db_;
 
     bool IsCorruptCode(int32_t code) const;
+    bool IsRetryableError(int32_t code) const;
+    int32_t ExecuteWithRetry(int32_t sceneCode, const std::function<int32_t()>& action,
+        int32_t targetVersion);
+    void TryOnCreate();
+    void TryOnUpdate(int32_t version);
     void SetWal() const;
     int32_t GetVersion() const;
-    void SetVersion() const;
+    int32_t SetVersion(int32_t version) const;
 };
 } // namespace AccessToken
 } // namespace Security

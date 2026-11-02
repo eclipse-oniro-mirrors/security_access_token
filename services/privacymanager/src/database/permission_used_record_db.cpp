@@ -23,6 +23,7 @@
 #include "accesstoken_common_log.h"
 #include "active_change_response_info.h"
 #include "constant.h"
+#include "data_usage_dfx.h"
 #include "permission_used_type.h"
 #include "privacy_error.h"
 #include "privacy_field_const.h"
@@ -71,48 +72,62 @@ PermissionUsedRecordDb::~PermissionUsedRecordDb()
     Close();
 }
 
-void PermissionUsedRecordDb::OnCreate()
+int32_t PermissionUsedRecordDb::OnCreate()
 {
     LOGI(PRI_DOMAIN, PRI_TAG, "Entry");
-    CreatePermissionRecordTable();
-    CreatePermissionUsedTypeTable();
-    CreatePermissionUsedRecordToggleStatusTable();
-    CreatePermissionDisablePolicyTable();
+    int32_t ret = CreatePermissionRecordTable();
+    if (ret == SUCCESS) {
+        ret = CreatePermissionUsedTypeTable();
+    }
+    if (ret == SUCCESS) {
+        ret = CreatePermissionUsedRecordToggleStatusTable();
+    }
+    if (ret == SUCCESS) {
+        ret = CreatePermissionDisablePolicyTable();
+    }
+    return ret;
 }
 
-void PermissionUsedRecordDb::OnUpdate(int32_t version)
+int32_t PermissionUsedRecordDb::OnUpdate(int32_t version)
 {
     LOGI(PRI_DOMAIN, PRI_TAG, "Entry");
     switch (version) {
         case DataBaseVersion::VERISION_1: // 1->2
-            InsertLockScreenStatusColumn();
-            [[fallthrough]];
-        case DataBaseVersion::VERISION_2: // 2->3
-            InsertPermissionUsedTypeColumn();
-            CreatePermissionUsedTypeTable();
-            [[fallthrough]];
+            return InsertLockScreenStatusColumn();
+        case DataBaseVersion::VERISION_2: { // 2->3
+            int32_t ret = InsertPermissionUsedTypeColumn();
+            if (ret == SUCCESS) {
+                ret = CreatePermissionUsedTypeTable();
+            }
+            return ret;
+        }
         case DataBaseVersion::VERISION_3: // 3->4
-            UpdatePermissionRecordTablePrimaryKey(false);
-            [[fallthrough]];
+            return UpdatePermissionRecordTablePrimaryKey(false);
         case DataBaseVersion::VERISION_4: // 4->5
-            CreatePermissionUsedRecordToggleStatusTable();
-            [[fallthrough]];
+            return CreatePermissionUsedRecordToggleStatusTable();
         case DataBaseVersion::VERISION_5: // 5->6
-            CreatePermissionDisablePolicyTable();
-            [[fallthrough]];
-        case DataBaseVersion::VERISION_6: // 6->7
-            InsertEnhancedIdentityColumn();
-            UpdatePermissionRecordTablePrimaryKey(true);
-            [[fallthrough]];
+            return CreatePermissionDisablePolicyTable();
+        case DataBaseVersion::VERISION_6: { // 6->7
+            int32_t ret = InsertEnhancedIdentityColumn();
+            if (ret == SUCCESS) {
+                ret = UpdatePermissionRecordTablePrimaryKey(true);
+            }
+            return ret;
+        }
         case 7: // 7->8
-            UpdateToggleStatusTablePrimaryKey();
-            [[fallthrough]];
-        case 8: // 8->9
-            InsertUserIdColumnToDisablePolicyTable();
-            UpdateDisablePolicyTablePrimaryKey();
-            [[fallthrough]];
+            return UpdateToggleStatusTablePrimaryKey();
+        case 8: { // 8->9
+            if (IsColumnExists(std::string(PERMISSION_DISABLE_POLICY_TABLE), PrivacyFiledConst::FIELD_USER_ID)) {
+                return SUCCESS;
+            }
+            int32_t ret = InsertUserIdColumnToDisablePolicyTable();
+            if (ret == SUCCESS) {
+                ret = UpdateDisablePolicyTablePrimaryKey();
+            }
+            return ret;
+        }
         default:
-            return;
+            return SUCCESS;
     }
 }
 
@@ -263,6 +278,7 @@ int32_t PermissionUsedRecordDb::AddLocked(DataType type, const std::vector<Gener
         int32_t ret = statement.Step();
         if (ret != Statement::State::DONE) {
             LOGE(PRI_DOMAIN, PRI_TAG, "Failed, errorMsg: %{public}s", SpitError().c_str());
+            ReportDbException(DB_RECORD_ADD_FAILED, GetDbErrCode(), std::string(DATABASE_PATH) + DATABASE_NAME);
             isAddSuccessfully = false;
         }
         statement.Reset();
@@ -334,7 +350,10 @@ int32_t PermissionUsedRecordDb::RemoveLocked(DataType type, const GenericValues&
         statement.Bind(columnName, conditions.Get(columnName));
     }
     int32_t ret = statement.Step();
-    
+    if (ret != Statement::State::DONE) {
+        ReportDbException(DB_RECORD_REMOVE_FAILED, GetDbErrCode(), std::string(DATABASE_PATH) + DATABASE_NAME);
+    }
+
     int64_t endTime = TimeUtil::GetCurrentTimestamp();
     LogCost("Remove", endTime - beginTime);
 
@@ -367,7 +386,8 @@ int32_t PermissionUsedRecordDb::FindByConditions(DataType type, const std::set<i
         statement.Bind(columnName, andConditions.Get(columnName));
     }
 
-    while (statement.Step() == Statement::State::ROW) {
+    int32_t stepRet = statement.Step();
+    while (stepRet == Statement::State::ROW) {
         int32_t columnCount = statement.GetColumnCount();
         GenericValues value;
         for (int32_t i = 0; i < columnCount; i++) {
@@ -379,6 +399,10 @@ int32_t PermissionUsedRecordDb::FindByConditions(DataType type, const std::set<i
             }
         }
         results.emplace_back(value);
+        stepRet = statement.Step();
+    }
+    if (stepRet != Statement::State::DONE) {
+        ReportDbException(DB_RECORD_FIND_FAILED, GetDbErrCode(), std::string(DATABASE_PATH) + DATABASE_NAME);
     }
     
     int64_t endTime = TimeUtil::GetCurrentTimestamp();
@@ -396,9 +420,12 @@ int32_t PermissionUsedRecordDb::Count(DataType type)
     std::string countSql = CreateCountPrepareSqlCmd(type);
     LOGD(PRI_DOMAIN, PRI_TAG, "Count sql is %{public}s.", countSql.c_str());
     auto countStatement = Prepare(countSql);
-    if (countStatement.Step() == Statement::State::ROW) {
+    int32_t countStepRet = countStatement.Step();
+    if (countStepRet == Statement::State::ROW) {
         int32_t column = 0;
         countValue.Put(FIELD_COUNT_NUMBER, countStatement.GetValue(column, false));
+    } else if (countStepRet != Statement::State::DONE) {
+        ReportDbException(DB_RECORD_COUNT_FAILED, GetDbErrCode(), std::string(DATABASE_PATH) + DATABASE_NAME);
     }
     
     int64_t endTime = TimeUtil::GetCurrentTimestamp();
@@ -430,6 +457,8 @@ int32_t PermissionUsedRecordDb::DeleteExpireRecordsLocked(DataType type,
         }
         if (deleteExpireStatement.Step() != Statement::State::DONE) {
             LOGE(PRI_DOMAIN, PRI_TAG, "Step failed, errMsg is %{public}s.", SpitError().c_str());
+            ReportDbException(DB_RECORD_DELETE_EXPIRE_FAILED, GetDbErrCode(),
+                std::string(DATABASE_PATH) + DATABASE_NAME);
             return PrivacyError::ERR_DATABASE_OPERATE_FAILED;
         }
     }
@@ -459,6 +488,8 @@ int32_t PermissionUsedRecordDb::DeleteHistoryRecordsInTablesLocked(std::vector<D
         auto deleteHistoryStatement = Prepare(deleteHistorySql);
         if (deleteHistoryStatement.Step() != Statement::State::DONE) {
             LOGE(PRI_DOMAIN, PRI_TAG, "Step failed, errMsg is %{public}s.", SpitError().c_str());
+            ReportDbException(DB_RECORD_DELETE_HISTORY_FAILED, GetDbErrCode(),
+                std::string(DATABASE_PATH) + DATABASE_NAME);
             return PrivacyError::ERR_DATABASE_OPERATE_FAILED;
         }
     }
@@ -485,6 +516,8 @@ int32_t PermissionUsedRecordDb::DeleteExcessiveRecordsLocked(DataType type, uint
     auto deleteExcessiveStatement = Prepare(deleteExcessiveSql);
     if (deleteExcessiveStatement.Step() != Statement::State::DONE) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Step failed, errMsg is %{public}s.", SpitError().c_str());
+        ReportDbException(DB_RECORD_DELETE_EXCESSIVE_FAILED, GetDbErrCode(),
+            std::string(DATABASE_PATH) + DATABASE_NAME);
         return PrivacyError::ERR_DATABASE_OPERATE_FAILED;
     }
 
@@ -532,6 +565,8 @@ int32_t PermissionUsedRecordDb::UpdateLocked(DataType type, const GenericValues&
         LOGE(PRI_DOMAIN, PRI_TAG,
             "Update table Type %{public}u failed, errCode is %{public}d, errMsg is %{public}s.", type, ret,
             SpitError().c_str());
+        ReportDbException(DB_RECORD_UPDATE_OP_FAILED, GetDbErrCode(),
+            std::string(DATABASE_PATH) + DATABASE_NAME);
         return PrivacyError::ERR_DATABASE_OPERATE_FAILED;
     }
 
@@ -561,7 +596,8 @@ int32_t PermissionUsedRecordDb::Query(DataType type, const GenericValues& condit
         statement.Bind(conditionColumn, conditionValue.Get(conditionColumn));
     }
 
-    while (statement.Step() == Statement::State::ROW) {
+    int32_t queryStepRet = statement.Step();
+    while (queryStepRet == Statement::State::ROW) {
         int32_t columnCount = statement.GetColumnCount();
         GenericValues value;
 
@@ -570,6 +606,10 @@ int32_t PermissionUsedRecordDb::Query(DataType type, const GenericValues& condit
         }
 
         results.emplace_back(value);
+        queryStepRet = statement.Step();
+    }
+    if (queryStepRet != Statement::State::DONE) {
+        ReportDbException(DB_RECORD_QUERY_FAILED, GetDbErrCode(), std::string(DATABASE_PATH) + DATABASE_NAME);
     }
 
     int64_t endTime = TimeUtil::GetCurrentTimestamp();
@@ -942,11 +982,7 @@ int32_t PermissionUsedRecordDb::UpdateToggleStatusTablePrimaryKey() const
             break;
         }
     }
-    if (res != SUCCESS) {
-        RollbackTransaction();
-        return PrivacyError::ERR_DATABASE_OPERATE_FAILED;
-    }
-    return SUCCESS;
+    return res;
 }
 
 int32_t PermissionUsedRecordDb::CreatePermissionDisablePolicyTable() const
@@ -979,6 +1015,17 @@ int32_t PermissionUsedRecordDb::InsertUserIdColumnToDisablePolicyTable() const
     return ExecuteSql(sql);
 }
 
+bool PermissionUsedRecordDb::IsColumnExists(const std::string& tableName, const std::string& columnName) const
+{
+    auto stmt = Prepare("pragma table_info(" + tableName + ")");
+    while (stmt.Step() == Statement::State::ROW) {
+        if (stmt.GetColumnString(1) == columnName) {
+            return true;
+        }
+    }
+    return false;
+}
+
 int32_t PermissionUsedRecordDb::UpdateDisablePolicyTablePrimaryKey() const
 {
     std::string tableName = PERMISSION_DISABLE_POLICY_TABLE;
@@ -1007,11 +1054,7 @@ int32_t PermissionUsedRecordDb::UpdateDisablePolicyTablePrimaryKey() const
             break;
         }
     }
-    if (res != SUCCESS) {
-        RollbackTransaction();
-        return PrivacyError::ERR_DATABASE_OPERATE_FAILED;
-    }
-    return SUCCESS;
+    return res;
 }
 
 int32_t PermissionUsedRecordDb::InsertLockScreenStatusColumn() const
@@ -1151,7 +1194,6 @@ int32_t PermissionUsedRecordDb::UpdatePermissionRecordTablePrimaryKey(bool withE
     if (createNewRes != 0) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Create new table failed, errCode is %{public}d, errMsg is %{public}s.",
             createNewRes, SpitError().c_str());
-        RollbackTransaction();
         return PrivacyError::ERR_DATABASE_OPERATE_FAILED;
     }
 
@@ -1160,7 +1202,6 @@ int32_t PermissionUsedRecordDb::UpdatePermissionRecordTablePrimaryKey(bool withE
     if (copyDataRes != 0) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Copy data from old table failed, errCode is %{public}d, errMsg is %{public}s.",
             copyDataRes, SpitError().c_str());
-        RollbackTransaction();
         return PrivacyError::ERR_DATABASE_OPERATE_FAILED;
     }
 
@@ -1169,7 +1210,6 @@ int32_t PermissionUsedRecordDb::UpdatePermissionRecordTablePrimaryKey(bool withE
     if (dropOldRes != 0) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Drop old table failed, errCode is %{public}d, errMsg is %{public}s.",
             dropOldRes, SpitError().c_str());
-        RollbackTransaction();
         return PrivacyError::ERR_DATABASE_OPERATE_FAILED;
     }
 
@@ -1178,7 +1218,6 @@ int32_t PermissionUsedRecordDb::UpdatePermissionRecordTablePrimaryKey(bool withE
     if (renameRes != 0) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Rename table failed, errCode is %{public}d, errMsg is %{public}s.",
             renameRes, SpitError().c_str());
-        RollbackTransaction();
         return PrivacyError::ERR_DATABASE_OPERATE_FAILED;
     }
 

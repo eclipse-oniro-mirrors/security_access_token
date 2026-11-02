@@ -15,15 +15,23 @@
 
 #include "sqlite_helper.h"
 
-#include "accesstoken_common_log.h"
-#include "data_usage_dfx.h"
-#include "sqlite3ext.h"
+#include <chrono>
 #include <cstdio>
 #include <sys/types.h>
+#include <thread>
+
+#include "accesstoken_common_log.h"
+#include "access_token.h"
+#include "data_usage_dfx.h"
+#include "sqlite3ext.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+namespace {
+constexpr int32_t SLEEP_RETRY_MS = 300;
+constexpr int32_t MAX_RETRY_COUNT = 1;
+}
 
 SqliteHelper::SqliteHelper(const std::string& dbName, const std::string& dbPath, int32_t version)
     : dbName_(dbName), dbPath_(dbPath), currentVersion_(version), db_(nullptr)
@@ -31,6 +39,51 @@ SqliteHelper::SqliteHelper(const std::string& dbName, const std::string& dbPath,
 
 SqliteHelper::~SqliteHelper()
 {}
+
+int32_t SqliteHelper::ExecuteWithRetry(int32_t sceneCode, const std::function<int32_t()>& action,
+    int32_t targetVersion)
+{
+    for (int32_t attempt = 0; attempt <= MAX_RETRY_COUNT; ++attempt) {
+        int32_t ret = BeginTransaction();
+        if (ret == RET_SUCCESS) {
+            ret = action();
+        }
+        if (ret == RET_SUCCESS) {
+            ret = SetVersion(targetVersion);
+        }
+        if (ret == RET_SUCCESS) {
+            ret = CommitTransaction();
+        }
+        if (ret == RET_SUCCESS) {
+            return RET_SUCCESS;
+        }
+        int32_t errCode = sqlite3_errcode(db_);
+        LOGE(ATM_DOMAIN, ATM_TAG, "Sql execute failed, errCode=%{public}d, errMsg: %{public}s", errCode,
+            sqlite3_errmsg(db_));
+        ReportDbException(sceneCode, errCode, dbPath_ + dbName_);
+        (void)RollbackTransaction();
+        if (!IsRetryableError(errCode) || attempt == MAX_RETRY_COUNT) {
+            return GENERAL_ERROR;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(SLEEP_RETRY_MS));
+    }
+    return GENERAL_ERROR;
+}
+
+void SqliteHelper::TryOnCreate()
+{
+    ExecuteWithRetry(DB_CREATE_FAILED, [this]() { return OnCreate(); }, currentVersion_);
+}
+
+void SqliteHelper::TryOnUpdate(int32_t version)
+{
+    for (int32_t v = version; v < currentVersion_; ++v) {
+        if (ExecuteWithRetry(DB_UPDATE_FAILED, [this, v]() { return OnUpdate(v); }, v + 1)
+            != RET_SUCCESS) {
+            break;
+        }
+    }
+}
 
 void SqliteHelper::Open(bool skipCheck) __attribute__((no_sanitize("cfi")))
 {
@@ -51,13 +104,19 @@ void SqliteHelper::Open(bool skipCheck) __attribute__((no_sanitize("cfi")))
     const uint32_t flags = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX;
     int32_t res = sqlite3_open_v2(fileName.c_str(), &db_, flags, NULL);
     if (res != SQLITE_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to open db res=%{public}d, msg: %{public}s", res, sqlite3_errmsg(db_));
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to open db res=%{public}d, msg: %{public}s", res,
+            db_ != nullptr ? sqlite3_errmsg(db_) : "null");
+        if (db_ != nullptr) {
+            sqlite3_close_v2(db_);
+            db_ = nullptr;
+        }
         if (!skipCheck && IsCorruptCode(res)) {
             LOGW(ATM_DOMAIN, ATM_TAG, "Open failed with corrupt code=%{public}d, rebuild", res);
             (void)Rebuild();
         }
         return;
     }
+    sqlite3_busy_timeout(db_, SLEEP_RETRY_MS);
     SetWal();
 
     if (!skipCheck && NeedRebuild(true)) {
@@ -71,16 +130,11 @@ void SqliteHelper::Open(bool skipCheck) __attribute__((no_sanitize("cfi")))
         return;
     }
 
-    BeginTransaction();
     if (version == DataBaseVersion::VERISION_0) {
-        OnCreate();
-    } else {
-        if (version < currentVersion_) {
-            OnUpdate(version);
-        }
+        TryOnCreate();
+    } else if (version < currentVersion_) {
+        TryOnUpdate(version);
     }
-    SetVersion();
-    CommitTransaction();
     if (!skipCheck && NeedRebuild(true)) {
         LOGW(ATM_DOMAIN, ATM_TAG, "integrity_check failed after open, rebuild!");
         (void)Rebuild();
@@ -129,7 +183,8 @@ int32_t SqliteHelper::CommitTransaction() const
     int32_t ret = sqlite3_exec(db_, "COMMIT;", nullptr, nullptr, &errorMessage);
     if (ret != SQLITE_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed, ret=%{public}d errorMsg: %{public}s", ret, errorMessage);
-        result = GENERAL_ERROR;
+        sqlite3_free(errorMessage);
+        return GENERAL_ERROR;
     }
     sqlite3_free(errorMessage);
     sqlite3_db_cacheflush(db_);
@@ -204,14 +259,19 @@ int32_t SqliteHelper::GetVersion() const __attribute__((no_sanitize("cfi")))
     return version;
 }
 
-void SqliteHelper::SetVersion() const
+int32_t SqliteHelper::SetVersion(int32_t version) const
 {
     if (db_ == nullptr) {
         LOGW(ATM_DOMAIN, ATM_TAG, "Do open data base first!");
-        return;
+        return GENERAL_ERROR;
     }
-    auto statement = Prepare(PRAGMA_VERSION_COMMAND + " = " + std::to_string(currentVersion_));
-    statement.Step();
+    auto statement = Prepare(PRAGMA_VERSION_COMMAND + " = " + std::to_string(version));
+    auto stepRet = statement.Step();
+    if (stepRet != Statement::State::DONE) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "SetVersion step failed, ret=%{public}d", static_cast<int32_t>(stepRet));
+        return GENERAL_ERROR;
+    }
+    return RET_SUCCESS;
 }
 
 std::string SqliteHelper::SpitError() const
@@ -226,6 +286,11 @@ std::string SqliteHelper::SpitError() const
 bool SqliteHelper::IsCorruptCode(int32_t code) const
 {
     return code == SQLITE_CORRUPT || code == SQLITE_NOTADB;
+}
+
+bool SqliteHelper::IsRetryableError(int32_t code) const
+{
+    return code == SQLITE_BUSY || code == SQLITE_LOCKED;
 }
 
 bool SqliteHelper::NeedRebuild(bool fullCheck) const
