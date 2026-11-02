@@ -41,6 +41,7 @@ constexpr int32_t SLEEP_RETRY_MS = 300;
 constexpr const size_t TOKEN_ID_LENGTH = 11;
 constexpr int64_t COST_TIME_LOG_THRESHOLD = 5;
 constexpr int32_t LEGACY_SUBPROFILE_ID = -1;
+constexpr int32_t DEFAULT_USER_ID_FOR_DEVICE_POLICY = -1;
 constexpr const char* BACKUP_TABLE_SUFFIX = "_backup";
 
 static void LogCost(const char* func, int64_t cost)
@@ -961,7 +962,7 @@ int32_t PermissionUsedRecordDb::CreatePermissionDisablePolicyTable() const
         .append(PrivacyFiledConst::FIELD_PERMISSION_CODE)
         .append(INTEGER_STR)
         .append(PrivacyFiledConst::FIELD_USER_ID)
-        .append(" integer not null default -1,")
+        .append(" integer not null default " + std::to_string(DEFAULT_USER_ID_FOR_DEVICE_POLICY) + ",")
         .append(PrivacyFiledConst::FIELD_DISABLE_POLICY)
         .append(INTEGER_STR)
         .append("primary key(")
@@ -975,7 +976,8 @@ int32_t PermissionUsedRecordDb::CreatePermissionDisablePolicyTable() const
 int32_t PermissionUsedRecordDb::InsertUserIdColumnToDisablePolicyTable() const
 {
     std::string sql = "alter table " + std::string(PERMISSION_DISABLE_POLICY_TABLE) + " add column " +
-        PrivacyFiledConst::FIELD_USER_ID + " integer not null default -1";
+        PrivacyFiledConst::FIELD_USER_ID + " integer not null default " +
+        std::to_string(DEFAULT_USER_ID_FOR_DEVICE_POLICY);
     return ExecuteSql(sql);
 }
 
@@ -988,7 +990,7 @@ int32_t PermissionUsedRecordDb::UpdateDisablePolicyTablePrimaryKey() const
         PrivacyFiledConst::FIELD_USER_ID + "," +
         PrivacyFiledConst::FIELD_DISABLE_POLICY + ") select " +
         PrivacyFiledConst::FIELD_PERMISSION_CODE + "," +
-        std::to_string(LEGACY_SUBPROFILE_ID) + "," +
+        std::to_string(DEFAULT_USER_ID_FOR_DEVICE_POLICY) + "," +
         PrivacyFiledConst::FIELD_DISABLE_POLICY + " from " + backupTableName;
 
     int32_t res = SUCCESS;

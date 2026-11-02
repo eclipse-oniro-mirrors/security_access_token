@@ -37,8 +37,9 @@ namespace OHOS {
         FuzzedDataProvider provider(data, size);
         std::string permissionName = ConsumePermissionName(provider);
         bool isDisable = provider.ConsumeBool();
+        int32_t userId = provider.ConsumeIntegralInRange<int32_t>(-1, 200);
 
-        int32_t ret = PrivacyKit::SetDisablePolicy(permissionName, isDisable);
+        int32_t ret = PrivacyKit::SetDisablePolicy(permissionName, isDisable, userId);
         (void)ret;
         return true;
     }

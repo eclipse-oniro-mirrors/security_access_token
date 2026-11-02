@@ -1266,6 +1266,73 @@ HWTEST_F(EdmPolicySetTest, SetPermissionStatusWithPolicy013, TestSize.Level0)
 
     EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
 }
+
+/**
+ * @tc.name: SetPermissionStatusWithPolicy014
+ * @tc.desc: Cancel manual_settings permission by admin policy, verify cancel flag.
+ * @tc.type: FUNC
+ * @tc.require:Issue Number
+ */
+HWTEST_F(EdmPolicySetTest, SetPermissionStatusWithPolicy014, TestSize.Level0)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "SetPermissionStatusWithPolicy014");
+
+    g_testHapInfoParams.userID = MOCK_USER_ID_10001;
+    AccessTokenIDEx tokenIdEx = TestCommon::AllocAndGrantHapTokenByTest(g_testHapInfoParams,
+        g_testPolicyParamsWithManualSetting);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+    MockNativeToken mock("edm");
+
+    uint32_t flag = 0;
+    std::vector<std::string> permList = {HOOK_KEY_EVENT};
+
+    // First grant with FIXED_BY_ADMIN_POLICY
+    int32_t ret = AccessTokenKit::SetPermissionStatusWithPolicy(
+        tokenID, permList, PERMISSION_GRANTED, PERMISSION_FIXED_BY_ADMIN_POLICY);
+    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_EQ(PERMISSION_GRANTED,
+        AccessTokenKit::VerifyAccessToken(tokenID, HOOK_KEY_EVENT, false));
+
+    // Then cancel with ADMIN_POLICIES_CANCEL
+    ret = AccessTokenKit::SetPermissionStatusWithPolicy(
+        tokenID, permList, PERMISSION_DENIED, PERMISSION_ADMIN_POLICIES_CANCEL);
+    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetPermissionFlag(tokenID, HOOK_KEY_EVENT, flag));
+    EXPECT_EQ(PERMISSION_ADMIN_POLICIES_CANCEL, flag);
+    EXPECT_EQ(PERMISSION_GRANTED,
+        AccessTokenKit::VerifyAccessToken(tokenID, HOOK_KEY_EVENT, false));
+
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
+}
+
+/**
+ * @tc.name: SetPermissionStatusWithPolicy015
+ * @tc.desc: CheckMultiPermissionStatus accepts manual_settings permission after IsOperablePermission change.
+ *           Non-existent permission is rejected with ERR_PERMISSION_NOT_EXIST.
+ * @tc.type: FUNC
+ * @tc.require:Issue Number
+ */
+HWTEST_F(EdmPolicySetTest, SetPermissionStatusWithPolicy015, TestSize.Level0)
+{
+    LOGI(ATM_DOMAIN, ATM_TAG, "SetPermissionStatusWithPolicy015");
+
+    g_testHapInfoParams.userID = MOCK_USER_ID_10001;
+    AccessTokenIDEx tokenIdEx = TestCommon::AllocAndGrantHapTokenByTest(g_testHapInfoParams,
+        g_testPolicyParamsWithManualSetting);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+    MockNativeToken mock("edm");
+
+    std::vector<std::string> permList = {"ohos.permission.NON_EXISTENT_PERM"};
+
+    // Non-existent permission should be rejected
+    int32_t ret = AccessTokenKit::SetPermissionStatusWithPolicy(
+        tokenID, permList, PERMISSION_GRANTED, PERMISSION_FIXED_BY_ADMIN_POLICY);
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_NOT_EXIST, ret);
+
+    EXPECT_EQ(RET_SUCCESS, TestCommon::DeleteTestHapToken(tokenID));
+}
 #endif
 }
 }

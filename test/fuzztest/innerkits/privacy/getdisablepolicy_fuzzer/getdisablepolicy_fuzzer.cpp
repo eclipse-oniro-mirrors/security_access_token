@@ -36,9 +36,10 @@ namespace OHOS {
         MockToken mock({ "ohos.permission.GET_PERMISSION_POLICY" });
         FuzzedDataProvider provider(data, size);
         std::string permissionName = ConsumePermissionName(provider);
+        int32_t userId = provider.ConsumeIntegralInRange<int32_t>(-1, 200);
 
         bool isDisable = false;
-        int32_t ret = PrivacyKit::GetDisablePolicy(permissionName, isDisable);
+        int32_t ret = PrivacyKit::GetDisablePolicy(permissionName, isDisable, userId);
         (void)ret;
         (void)isDisable;
         return true;

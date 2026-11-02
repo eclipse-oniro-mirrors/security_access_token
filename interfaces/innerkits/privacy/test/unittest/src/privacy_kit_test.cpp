@@ -5402,4 +5402,118 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecordManualSetting001, TestSize.Level
 
     AccessTokenKit::DeleteToken(targetToken);
 }
+
+/**
+ * @tc.name: AddPermissionUsedRecordAdminPolicyCompare001
+ * @tc.desc: After admin-policy cancel (ADMIN_POLICIES_CANCEL), usage IS recorded, because only
+ *           FIXED_BY_ADMIN_POLICY suppresses recording. Requires FIXED_BY_ADMIN_POLICY as prerequisite.
+ * @tc.type: FUNC
+ * @tc.require:Issue Number
+ */
+HWTEST_F(PrivacyKitTest, AddPermissionUsedRecordAdminPolicyCompare001, TestSize.Level0)
+{
+    ASSERT_EQ(RET_SUCCESS, EnablePermissionUsedRecordToggleStatus());
+
+    PermissionStateFull cameraState = {
+        .permissionName = "ohos.permission.CAMERA",
+        .isGeneral = true,
+        .resDeviceID = {"local"},
+        .grantStatus = {PermissionState::PERMISSION_GRANTED},
+        .grantFlags = {PermissionFlag::PERMISSION_DEFAULT_FLAG}
+    };
+    HapPolicyParams cameraPolicy = {
+        .apl = APL_SYSTEM_BASIC,
+        .domain = "test.domain.admin.compare",
+        .permStateList = {cameraState}
+    };
+    HapInfoParams cameraInfo = {
+        .userID = TEST_USER_ID,
+        .bundleName = "ohos.privacy_test.admin_compare",
+        .instIndex = 0,
+        .appIDDesc = "admin_compare_test"
+    };
+    AccessTokenIDEx tokenIdEx = PrivacyTestCommon::AllocTestHapToken(cameraInfo, cameraPolicy);
+    AccessTokenID targetToken = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, targetToken);
+    std::vector<std::string> permList = {"ohos.permission.CAMERA"};
+    {
+        MockNativeToken mock("edm");
+        // Prerequisite: FIXED_BY_ADMIN_POLICY must precede ADMIN_POLICIES_CANCEL.
+        EXPECT_EQ(RET_SUCCESS, AccessTokenKit::SetPermissionStatusWithPolicy(
+            targetToken, permList, PERMISSION_GRANTED, PERMISSION_FIXED_BY_ADMIN_POLICY));
+        EXPECT_EQ(RET_SUCCESS, AccessTokenKit::SetPermissionStatusWithPolicy(
+            targetToken, permList, PERMISSION_GRANTED, PERMISSION_ADMIN_POLICIES_CANCEL));
+        uint32_t flag = 0;
+        EXPECT_EQ(RET_SUCCESS, AccessTokenKit::GetPermissionFlag(targetToken, "ohos.permission.CAMERA", flag));
+        EXPECT_EQ(PERMISSION_ADMIN_POLICIES_CANCEL, flag);
+    }
+    AddPermParamInfo addInfo = {
+        .tokenId = targetToken, .permissionName = "ohos.permission.CAMERA",
+        .successCount = 1, .failCount = 0
+    };
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(addInfo));
+
+    PermissionUsedRequest request;
+    PermissionUsedResult result;
+    BuildQueryRequest(targetToken, "ohos.privacy_test.admin_compare", permList, request);
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
+    ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords.size());
+    AccessTokenKit::DeleteToken(targetToken);
+}
+
+/**
+ * @tc.name: AddPermissionUsedRecordAdminPolicyCompare002
+ * @tc.desc: user_grant CAMERA with FIXED_BY_ADMIN_POLICY suppresses recording (flag-based, not perm-type).
+ *           Proves the suppression is caused by the flag, not by manual_settings grant mode.
+ * @tc.type: FUNC
+ * @tc.require:Issue Number
+ */
+HWTEST_F(PrivacyKitTest, AddPermissionUsedRecordAdminPolicyCompare002, TestSize.Level0)
+{
+    ASSERT_EQ(RET_SUCCESS, EnablePermissionUsedRecordToggleStatus());
+
+    PermissionStateFull cameraState = {
+        .permissionName = "ohos.permission.CAMERA",
+        .isGeneral = true,
+        .resDeviceID = {"local"},
+        .grantStatus = {PermissionState::PERMISSION_GRANTED},
+        .grantFlags = {PermissionFlag::PERMISSION_DEFAULT_FLAG}
+    };
+    HapPolicyParams cameraPolicy = {
+        .apl = APL_SYSTEM_BASIC,
+        .domain = "test.domain.flag.compare",
+        .permStateList = {cameraState}
+    };
+    HapInfoParams cameraInfo = {
+        .userID = TEST_USER_ID,
+        .bundleName = "ohos.privacy_test.flag_compare",
+        .instIndex = 0,
+        .appIDDesc = "flag_compare_test"
+    };
+    AccessTokenIDEx tokenIdEx = PrivacyTestCommon::AllocTestHapToken(cameraInfo, cameraPolicy);
+    AccessTokenID targetToken = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, targetToken);
+
+    std::vector<std::string> permList = {"ohos.permission.CAMERA"};
+    {
+        MockNativeToken mock("edm");
+        EXPECT_EQ(RET_SUCCESS, AccessTokenKit::SetPermissionStatusWithPolicy(
+            targetToken, permList, PERMISSION_GRANTED, PERMISSION_FIXED_BY_ADMIN_POLICY));
+    }
+
+    AddPermParamInfo addInfo;
+    addInfo.tokenId = targetToken;
+    addInfo.permissionName = "ohos.permission.CAMERA";
+    addInfo.successCount = 1;
+    addInfo.failCount = 0;
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(addInfo));
+
+    PermissionUsedRequest request;
+    PermissionUsedResult result;
+    BuildQueryRequest(targetToken, "ohos.privacy_test.flag_compare", permList, request);
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
+    ASSERT_EQ(static_cast<uint32_t>(0), result.bundleRecords.size());
+
+    AccessTokenKit::DeleteToken(targetToken);
+}
 #endif
