@@ -12973,6 +12973,28 @@
             "distributedSceneEnable": false,
             "deviceTypes": ["2in1"],
             "hasValue": true
+        },
+        {
+            "name": "ohos.permission.vehicle.AALE_LIGHTRES_SERVICE",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.1",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["car"]
+        },
+        {
+            "name": "ohos.permission.vehicle.AALE_AMBIENT_SERVICE",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.0.1",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["car"]
         }
     ]
 }
