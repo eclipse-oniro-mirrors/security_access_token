@@ -4932,6 +4932,17 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.REPORT_QOS",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SERVICE",
+            "since": "26.0.1",
+            "deprecated": "",
+            "provisionEnable": false,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "tv", "2in1", "tablet", "car", "wearable"]
+        },
+        {
             "name": "ohos.permission.SEND_TASK_COMPLETE_EVENT",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
