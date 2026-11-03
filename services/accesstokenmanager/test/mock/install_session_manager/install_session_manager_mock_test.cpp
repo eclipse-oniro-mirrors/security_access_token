@@ -4892,6 +4892,71 @@ HWTEST_F(InstallSessionManagerMockTest, GetCachePolicyBySessionIdTest003, TestSi
 }
 
 /**
+ * @tc.name: GetCachePolicyBySessionIdTest004
+ * @tc.desc: Test GetCachePolicyBySessionId filters undefined and disabled permissions.
+ * @tc.type: FUNC
+ * @tc.require: Issue
+ */
+HWTEST_F(InstallSessionManagerMockTest, GetCachePolicyBySessionIdTest004, TestSize.Level0)
+{
+    std::string path =
+        "/SYSTEM/system_basic/state:[cam,mic,syswin,getwifi]/acl:[getwifi]/Module001/GetCachePolicyBySessionIdTest004";
+    BundleHapList hapList;
+    hapList.hapPaths.emplace_back(path);
+    hapList.isPreInstalled = false;
+    hapList.userIdForEnterpriseSign = 100;
+
+    int32_t sessionId = 0;
+    std::vector<TrustedBundleInfo> bundleInfo;
+    HapVerifyResultInfo resultInfo;
+    int32_t ret = g_installSessionManager->CheckHapSignInfo(
+        hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO);
+    EXPECT_EQ(ERR_OK, ret);
+
+    HapInfoCheckResult result;
+    ret = g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result);
+    EXPECT_EQ(ERR_OK, ret);
+
+    HapBaseInfo baseInfo;
+    baseInfo.userID = 100;
+    baseInfo.bundleName = "GetCachePolicyBySessionIdTest004";
+    baseInfo.instIndex = 0;
+
+    BundlePolicy bundlePolicy;
+    bundlePolicy.dlpType = DLP_COMMON;
+    bundlePolicy.isDebugGrant = false;
+
+    Identity identity = {0, -1};
+    ret = g_installSessionManager->PrepareHapIdentity(sessionId, baseInfo, bundlePolicy, nullptr, identity);
+    EXPECT_EQ(ERR_OK, ret);
+
+    // Inject an undefined permission and a disabled permission into the session policy.
+    auto& cache = g_installSessionManager->sessionToInstallCache[sessionId];
+    PermissionStatus undefinedPerm;
+    undefinedPerm.permissionName = "ohos.permission.not_exist";
+    undefinedPerm.grantStatus = PERMISSION_DENIED;
+    cache.policy.permStateList.emplace_back(undefinedPerm);
+
+    PermissionStatus disabledPerm;
+    disabledPerm.permissionName = "ohos.permission.vehicle.HVAC_INFO"; // car-only, disabled by default
+    disabledPerm.grantStatus = PERMISSION_DENIED;
+    cache.policy.permStateList.emplace_back(disabledPerm);
+
+    BundlePolicyInfo bundlePolicyInfo;
+    EXPECT_EQ(ERR_OK, g_installSessionManager->GetCachePolicyBySessionId(
+        sessionId, "GetCachePolicyBySessionIdTest004", bundlePolicyInfo));
+
+    const std::vector<std::string>& reqPerms = bundlePolicyInfo.reqPermissions;
+    EXPECT_NE(reqPerms.end(), std::find(reqPerms.begin(), reqPerms.end(), "ohos.permission.CAMERA"));
+    EXPECT_EQ(reqPerms.end(), std::find(reqPerms.begin(), reqPerms.end(), "ohos.permission.not_exist"));
+    EXPECT_EQ(reqPerms.end(), std::find(reqPerms.begin(), reqPerms.end(), "ohos.permission.vehicle.HVAC_INFO"));
+
+    std::map<std::string, std::string> modulePathMap;
+    EXPECT_EQ(ERR_OK, g_installSessionManager->FinishInstall(sessionId, false, modulePathMap));
+}
+
+/**
  * @tc.name: SessionMgrCoverageTest001
  * @tc.desc: coverage test.
  * @tc.type: FUNC

@@ -1217,6 +1217,10 @@ int32_t InstallSessionManager::GetCachePolicyBySessionId(int32_t sessionId, cons
     }
 
     for (auto permState : it->second.policy.permStateList) {
+        PermissionBriefDef briefDef;
+        if (!GetPermissionBriefDef(permState.permissionName, briefDef) || !briefDef.isEnable) {
+            continue;
+        }
         bundlePolicyInfo.reqPermissions.emplace_back(permState.permissionName);
     }
     return RET_SUCCESS;
