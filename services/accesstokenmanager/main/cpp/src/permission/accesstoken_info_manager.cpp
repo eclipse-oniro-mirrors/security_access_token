@@ -1524,7 +1524,6 @@ void AccessTokenInfoManager::InitNativeTokenInfos(const std::vector<NativeTokenI
         }
 
         nativeTokenInfoMap_[tokenId] = cache;
-        PermissionKernelUtils::AddNativePermToKernel(tokenId, opCodeList, statusList);
         LOGI(ATM_DOMAIN, ATM_TAG,
             "Init native token %{public}u process name %{public}s, permSize %{public}zu ok!",
             tokenId, process.c_str(), info.permStateList.size());

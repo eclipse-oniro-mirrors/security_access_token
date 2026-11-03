@@ -2562,3 +2562,93 @@ HWTEST_F(TokenLibKitTest, FixPerm_EmptyFileMismatch, TestSize.Level1)
     EXPECT_EQ(fileStat.st_mode & 0777, FIX_PERM_EXPECT_MODE);
     unlink(FIX_PERM_FILE);
 }
+
+static void WritePermissionDefinitionExtFile(const char *content)
+{
+    const char *extFilePath = "/system/etc/access_token/accesstoken_permission_definition_ext.txt";
+    int32_t fd = open(extFilePath, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP);
+    if (fd < 0) {
+        return;
+    }
+    (void)write(fd, content, strlen(content));
+    close(fd);
+}
+
+static void RemovePermissionDefinitionExtFile()
+{
+    (void)unlink("/system/etc/access_token/accesstoken_permission_definition_ext.txt");
+}
+
+static bool KernelPermGranted(uint32_t tokenId, uint32_t opCode)
+{
+    bool isGranted = false;
+    (void)OHOS::Security::AccessToken::GetPermissionFromKernel(tokenId, static_cast<int32_t>(opCode), isGranted);
+    return isGranted;
+}
+
+static uint32_t GetTokenIdWithPerms(const char *processName, const char *aplStr,
+    const char **perms, int32_t permsNum, const char **acls, int32_t aclsNum)
+{
+    const char *dcapList[] = { "AT_CAP" };
+    NativeTokenInfoParams info = {
+        .dcapsNum = 1,
+        .permsNum = permsNum,
+        .aclsNum = aclsNum,
+        .dcaps = dcapList,
+        .perms = perms,
+        .acls = acls,
+        .processName = processName,
+        .aplStr = aplStr,
+    };
+    return static_cast<uint32_t>(GetAccessTokenId(&info));
+}
+
+/**
+ * @tc.name: GetAccessTokenIdPermissionFilter001
+ * @tc.desc: GetAccessTokenId with apl=system_basic filters disabled car-only and system_core permissions;
+ *           enabling via permission definition ext file and adding ACL makes all three pass.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenLibKitTest, GetAccessTokenIdPermissionFilter001, TestSize.Level0)
+{
+    const char *permList[] = {
+        "ohos.permission.CAMERA",
+        "ohos.permission.vehicle.HVAC_INFO",
+        "ohos.permission.INSTALL_BUNDLE",
+    };
+    uint32_t cameraCode = 0;
+    uint32_t hvacCode = 0;
+    uint32_t installCode = 0;
+    ASSERT_TRUE(::TransferPermissionToOpcode("ohos.permission.CAMERA", &cameraCode));
+    ASSERT_TRUE(::TransferPermissionToOpcode("ohos.permission.vehicle.HVAC_INFO", &hvacCode));
+    ASSERT_TRUE(::TransferPermissionToOpcode("ohos.permission.INSTALL_BUNDLE", &installCode));
+
+    uid_t originalUid = getuid();
+    setuid(ACCESSTOKEN_UID);
+    uint32_t rawTokenId = GetTokenIdWithPerms(
+        "GetAccessTokenIdPermissionFilter001", "system_basic", permList, 3, nullptr, 0);
+    ASSERT_NE(0U, rawTokenId);
+
+    EXPECT_TRUE(KernelPermGranted(rawTokenId, cameraCode));
+    EXPECT_FALSE(KernelPermGranted(rawTokenId, hvacCode));
+    EXPECT_FALSE(KernelPermGranted(rawTokenId, installCode));
+
+    setuid(originalUid);
+    WritePermissionDefinitionExtFile("ohos.permission.vehicle.HVAC_INFO\n");
+    ASSERT_EQ(AtlibInit(), ATRET_SUCCESS);
+
+    setuid(ACCESSTOKEN_UID);
+    const char *aclList[] = { "ohos.permission.INSTALL_BUNDLE" };
+    rawTokenId = GetTokenIdWithPerms("GetAccessTokenIdPermissionFilter001", "system_basic", permList, 3, aclList, 1);
+    ASSERT_NE(0U, rawTokenId);
+
+    EXPECT_TRUE(KernelPermGranted(rawTokenId, cameraCode));
+    EXPECT_TRUE(KernelPermGranted(rawTokenId, hvacCode));
+    EXPECT_TRUE(KernelPermGranted(rawTokenId, installCode));
+
+    (void)DeleteAccessTokenId("GetAccessTokenIdPermissionFilter001");
+    setuid(originalUid);
+    RemovePermissionDefinitionExtFile();
+    (void)::SetPermissionEnabled("ohos.permission.vehicle.HVAC_INFO", false);
+}

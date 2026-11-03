@@ -15,6 +15,7 @@
 
 #include "perm_setproc_c.h"
 
+#include <cstring>
 #include <string>
 
 #include "permission_map.h"
@@ -50,6 +51,43 @@ extern "C" bool TransferOpCodeToPermission(uint32_t opCode, char *permissionName
     if (strcpy_s(permissionName, nameSize, permissionNameStr.c_str()) != EOK) {
         return false;
     }
+    return true;
+}
+
+extern "C" bool SetPermissionEnabled(const char *permissionName, bool isEnable)
+{
+    if (permissionName == nullptr) {
+        return false;
+    }
+    return OHOS::Security::AccessToken::SetPermissionBriefEnabled(std::string(permissionName), isEnable);
+}
+
+extern "C" bool IsNativePermissionAvailable(const char *permissionName, int32_t apl,
+    const char *const *acls, int32_t aclsNum, uint32_t *opCode)
+{
+    if ((permissionName == nullptr) || (opCode == nullptr)) {
+        return false;
+    }
+
+    uint32_t code = 0;
+    OHOS::Security::AccessToken::PermissionBriefDef briefDef;
+    if (!OHOS::Security::AccessToken::GetPermissionBriefDef(std::string(permissionName), briefDef, code) ||
+        !briefDef.isEnable) {
+        return false;
+    }
+    if (apl < static_cast<int32_t>(briefDef.availableLevel)) {
+        bool isInAcls = false;
+        for (int32_t i = 0; i < aclsNum; ++i) {
+            if ((acls != nullptr) && (acls[i] != nullptr) && (strcmp(acls[i], permissionName) == 0)) {
+                isInAcls = true;
+                break;
+            }
+        }
+        if (!isInAcls) {
+            return false;
+        }
+    }
+    *opCode = code;
     return true;
 }
 
