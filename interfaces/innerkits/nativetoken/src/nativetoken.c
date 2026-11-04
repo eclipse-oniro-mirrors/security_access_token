@@ -18,6 +18,7 @@
 #include <policycoreutils.h>
 #endif // WITH_SELINUX
 
+#include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -33,6 +34,9 @@
 #include "securec.h"
 #include "spm_setproc.h"
 #include "accesstoken_file_util.h"
+#ifdef CUSTOMIZATION_CONFIG_POLICY_ENABLE
+#include "config_policy_utils.h"
+#endif
 
 NativeTokenList *g_tokenListHead;
 int32_t g_isNativeTokenInited = 0;
@@ -41,6 +45,8 @@ static const uint32_t SPM_PERM_ARRAY_SIZE = 64;
 static const uint32_t UINT32_BITS_NUM = 32;
 static const int32_t MAX_KERNEL_OPERATE_TRY_TIMES = 2;
 static const mode_t FILE_DAC_MASK = 0777;
+
+#define PERMISSION_DEFINITION_EXT_FILE "/etc/access_token/accesstoken_permission_definition_ext.txt"
 
 #define BREAK_IF_TRUE(cond) \
     if (cond) { \
@@ -439,6 +445,51 @@ static uint32_t ClearOrCreateCfgFile(void)
     return ATRET_SUCCESS;
 }
 
+static void EnablePermissionDefinitionExt(void)
+{
+#ifdef CUSTOMIZATION_CONFIG_POLICY_ENABLE
+    CfgDir *dirs = GetCfgDirList();
+    if (dirs == NULL) {
+        LOGE("Failed to get config dir list.");
+        return;
+    }
+    char filePath[PATH_MAX_LEN + 1] = {0};
+    char line[MAX_PERM_LEN + 1] = {0};
+    for (uint32_t i = 0; i < MAX_CFG_POLICY_DIRS_CNT; ++i) {
+        if (dirs->paths[i] == NULL) {
+            continue;
+        }
+        int32_t len = snprintf_s(filePath, sizeof(filePath), sizeof(filePath) - 1, "%s%s",
+            dirs->paths[i], PERMISSION_DEFINITION_EXT_FILE);
+        if (len < 0) {
+            continue;
+        }
+        FILE *file = fopen(filePath, "r");
+        if (file == NULL) {
+            continue;
+        }
+        while (fgets(line, sizeof(line), file) != NULL) {
+            size_t lineLen = strlen(line);
+            while ((lineLen > 0) && isspace((unsigned char)line[lineLen - 1])) {
+                line[--lineLen] = '\0';
+            }
+            char *permName = line;
+            while (isspace((unsigned char)*permName)) {
+                ++permName;
+            }
+            lineLen = strlen(permName);
+            if ((lineLen > 0) && !SetPermissionEnabled(permName, true)) {
+                LOGW("Permission in ext file is invalid %s.", permName);
+            }
+        }
+        (void)fclose(file);
+    }
+    FreeCfgDirList(dirs);
+#else
+    return;
+#endif
+}
+
 uint32_t AtlibInit(void)
 {
     g_tokenListHead = (NativeTokenList *)malloc(sizeof(NativeTokenList));
@@ -477,6 +528,7 @@ uint32_t AtlibInit(void)
             }
         }
     }
+    EnablePermissionDefinitionExt();
     g_isNativeTokenInited = 1;
 
     return ATRET_SUCCESS;
@@ -1002,18 +1054,18 @@ static bool IsKernelSupportSpm()
     return isSupportSpm;
 }
 
-static void BuildSpmPerms(const NativeTokenInfoParams *tokenInfo, uint32_t perms[SPM_PERM_ARRAY_SIZE])
+static void BuildSpmPerms(const NativeTokenInfoParams *tokenInfo, int32_t apl, uint32_t perms[SPM_PERM_ARRAY_SIZE])
 {
     for (int32_t i = 0; i < tokenInfo->permsNum; ++i) {
         uint32_t opCode = 0;
-        if (!TransferPermissionToOpcode(tokenInfo->perms[i], &opCode)) {
-            LOGE("Failed to transfer permission to opcode, permission=%{public}s.", tokenInfo->perms[i]);
+        if (!IsNativePermissionAvailable(tokenInfo->perms[i], apl, tokenInfo->acls, tokenInfo->aclsNum, &opCode)) {
+            LOGW("Permission %s is not available for native token, skip.", tokenInfo->perms[i]);
             continue;
         }
 
         uint32_t index = opCode / UINT32_BITS_NUM;
         if (index >= SPM_PERM_ARRAY_SIZE) {
-            LOGE("Opcode out of range, opcode=%{public}u.", opCode);
+            LOGE("Opcode out of range, opcode=%u.", opCode);
             continue;
         }
         perms[index] |= ((uint32_t)1 << (opCode % UINT32_BITS_NUM));
@@ -1029,7 +1081,7 @@ static void BuildSpmData(const NativeTokenInfoParams *tokenInfo, uint32_t tokenI
 
     (void)memset_s(spmData, sizeof(SpmData), 0, sizeof(SpmData));
     (void)memset_s(perms, sizeof(uint32_t) * SPM_PERM_ARRAY_SIZE, 0, sizeof(uint32_t) * SPM_PERM_ARRAY_SIZE);
-    BuildSpmPerms(tokenInfo, perms);
+    BuildSpmPerms(tokenInfo, apl, perms);
 
     spmData->uid = (uint32_t)tokenInfo->uid;
     spmData->tokenid = tokenId;
@@ -1101,7 +1153,7 @@ static int32_t TrySpmAddEntries(SpmData *spmData)
 
     for (int32_t i = 0; i < MAX_KERNEL_OPERATE_TRY_TIMES; ++i) {
         ret = SpmAddEntries(entries, 1, &idxErr);
-        if (ret == ATRET_SUCCESS || ret == ENOTSUP) {
+        if (ret == ATRET_SUCCESS || ret == ENOTSUP || ret == EEXIST) {
             return ATRET_SUCCESS;
         }
     }

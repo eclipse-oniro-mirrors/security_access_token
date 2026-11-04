@@ -1607,3 +1607,76 @@ HWTEST_F(TokensetprocKitTest, AddPermissionToKernelUpdate001, TestSize.Level0)
     ASSERT_EQ(ACCESS_TOKEN_OK, OHOS::Security::AccessToken::RemovePermissionFromKernel(g_tokeId));
     setuid(g_selfUid);
 }
+
+HWTEST_F(TokensetprocKitTest, SetPermissionEnabled001, TestSize.Level0)
+{
+    // null permission name
+    EXPECT_FALSE(::SetPermissionEnabled(nullptr, true));
+    EXPECT_FALSE(::SetPermissionEnabled(nullptr, false));
+    // undefined permission
+    EXPECT_FALSE(::SetPermissionEnabled("ohos.permission.not_exist", true));
+    // valid permission
+    ASSERT_TRUE(::SetPermissionEnabled("ohos.permission.CAMERA", true));
+    // restore enable state
+    ASSERT_TRUE(::SetPermissionEnabled("ohos.permission.CAMERA", true));
+}
+
+HWTEST_F(TokensetprocKitTest, IsNativePermissionAvailable001, TestSize.Level0)
+{
+    uint32_t opCode = 0;
+    // null permission name
+    EXPECT_FALSE(::IsNativePermissionAvailable(nullptr, 1, nullptr, 0, &opCode));
+    // null opCode
+    EXPECT_FALSE(::IsNativePermissionAvailable("ohos.permission.CAMERA", 1, nullptr, 0, nullptr));
+    // undefined permission
+    EXPECT_FALSE(::IsNativePermissionAvailable("ohos.permission.not_exist", 1, nullptr, 0, &opCode));
+}
+
+HWTEST_F(TokensetprocKitTest, IsNativePermissionAvailable002, TestSize.Level0)
+{
+    // disabled permission should be filtered out
+    ASSERT_TRUE(::SetPermissionEnabled("ohos.permission.CAMERA", false));
+    uint32_t opCode = 0;
+    EXPECT_FALSE(::IsNativePermissionAvailable("ohos.permission.CAMERA", 1, nullptr, 0, &opCode));
+    // restore enable state
+    ASSERT_TRUE(::SetPermissionEnabled("ohos.permission.CAMERA", true));
+}
+
+HWTEST_F(TokensetprocKitTest, IsNativePermissionAvailable003, TestSize.Level0)
+{
+    // APL is not lower than availableLevel -> available
+    uint32_t cameraCode = 0;
+    ASSERT_TRUE(::IsNativePermissionAvailable("ohos.permission.CAMERA", 1, nullptr, 0, &cameraCode));
+    uint32_t expectCode = 0;
+    ASSERT_TRUE(::TransferPermissionToOpcode("ohos.permission.CAMERA", &expectCode));
+    EXPECT_EQ(expectCode, cameraCode);
+
+    // MANAGE_SECURE_SETTINGS availableLevel is SYSTEM_BASIC, apl equals availableLevel -> available
+    uint32_t secureSettingsCode = 0;
+    ASSERT_TRUE(::IsNativePermissionAvailable("ohos.permission.MANAGE_SECURE_SETTINGS", 2, nullptr, 0,
+        &secureSettingsCode));
+    uint32_t expectSecureCode = 0;
+    ASSERT_TRUE(::TransferPermissionToOpcode("ohos.permission.MANAGE_SECURE_SETTINGS", &expectSecureCode));
+    EXPECT_EQ(expectSecureCode, secureSettingsCode);
+}
+
+HWTEST_F(TokensetprocKitTest, IsNativePermissionAvailable004, TestSize.Level0)
+{
+    uint32_t opCode = 0;
+    // APL lower than availableLevel and permission not in ACL -> filtered out
+    EXPECT_FALSE(::IsNativePermissionAvailable("ohos.permission.MANAGE_SECURE_SETTINGS", 1, nullptr, 0, &opCode));
+
+    // APL lower than availableLevel but permission in ACL -> available
+    const char *acls[] = { "ohos.permission.MANAGE_SECURE_SETTINGS" };
+    ASSERT_TRUE(::IsNativePermissionAvailable("ohos.permission.MANAGE_SECURE_SETTINGS", 1, acls, 1, &opCode));
+    uint32_t expectCode = 0;
+    ASSERT_TRUE(::TransferPermissionToOpcode("ohos.permission.MANAGE_SECURE_SETTINGS", &expectCode));
+    EXPECT_EQ(expectCode, opCode);
+
+    // ACL does not contain the target permission -> filtered out
+    const char *otherAcls[] = { "ohos.permission.CAMERA" };
+    EXPECT_FALSE(::IsNativePermissionAvailable("ohos.permission.MANAGE_SECURE_SETTINGS", 1, otherAcls, 1, &opCode));
+
+    // acls is null while aclsNum > 0 -> filtered out
+    EXPECT_FALSE(::IsNativePermissionAvailable("ohos.permission.MANAGE_SECURE_SETTINGS", 1, nullptr, 1, &opCode));
+}

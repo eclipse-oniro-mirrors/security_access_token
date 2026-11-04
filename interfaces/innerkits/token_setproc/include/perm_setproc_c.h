@@ -32,6 +32,9 @@ int32_t GetPermissionsFromKernel(uint32_t tokenId, uint32_t perms[MAX_PERM_BIT_M
 int32_t FilterKernelPermissions(uint32_t perms[MAX_PERM_BIT_MAP_SIZE], uint16_t *kernelPerms, uint32_t* permSize);
 bool TransferPermissionToOpcode(const char *permissionName, uint32_t *opCode);
 bool TransferOpCodeToPermission(uint32_t opCode, char *permissionName, uint32_t nameSize);
+bool SetPermissionEnabled(const char *permissionName, bool isEnable);
+bool IsNativePermissionAvailable(const char *permissionName, int32_t apl,
+    const char *const *acls, int32_t aclsNum, uint32_t *opCode);
 #ifdef __cplusplus
 }
 #endif

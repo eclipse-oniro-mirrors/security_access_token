@@ -67,6 +67,11 @@ if (is_standard_system) {
       external_deps += [ "selinux_adapter:librestorecon" ]
       cflags += [ "-DWITH_SELINUX" ]
     }
+
+    if (customization_config_policy_enable) {
+      cflags += [ "-DCUSTOMIZATION_CONFIG_POLICY_ENABLE" ]
+      external_deps += [ "config_policy:configpolicy_util" ]
+    }
   }
 
   ohos_shared_library("libnativetoken_shared") {
@@ -108,6 +113,11 @@ if (is_standard_system) {
       "hilog:libhilog",
       "hisysevent:libhisysevent",
     ]
+
+    if (customization_config_policy_enable) {
+      cflags += [ "-DCUSTOMIZATION_CONFIG_POLICY_ENABLE" ]
+      external_deps += [ "config_policy:configpolicy_util" ]
+    }
 
     if (build_selinux) {
       external_deps += [ "selinux_adapter:librestorecon" ]
