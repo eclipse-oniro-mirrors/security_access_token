@@ -37,10 +37,14 @@ namespace OHOS {
 
         FuzzedDataProvider provider(data, size);
         std::string permissionName = ConsumePermissionName(provider);
+        int32_t userId = provider.ConsumeIntegralInRange<int32_t>(-1, 200);
 
         MessageParcel datas;
         datas.WriteInterfaceToken(IPrivacyManager::GetDescriptor());
         if (!datas.WriteString(permissionName)) {
+            return false;
+        }
+        if (!datas.WriteInt32(userId)) {
             return false;
         }
 
