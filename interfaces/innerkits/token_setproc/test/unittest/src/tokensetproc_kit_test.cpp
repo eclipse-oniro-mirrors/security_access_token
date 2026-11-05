@@ -1680,3 +1680,13 @@ HWTEST_F(TokensetprocKitTest, IsNativePermissionAvailable004, TestSize.Level0)
     // acls is null while aclsNum > 0 -> filtered out
     EXPECT_FALSE(::IsNativePermissionAvailable("ohos.permission.MANAGE_SECURE_SETTINGS", 1, nullptr, 1, &opCode));
 }
+
+/**
+ * @tc.name: IsPermissionKernelEffect001
+ * @tc.desc: permissionName is nullptr, return false
+ * @tc.type: FUNC
+ */
+HWTEST_F(TokensetprocKitTest, IsPermissionKernelEffect001, TestSize.Level0)
+{
+    EXPECT_FALSE(IsPermissionKernelEffect(nullptr));
+}

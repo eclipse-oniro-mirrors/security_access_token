@@ -24,6 +24,7 @@
       SetPermissionToKernel;
       TransferOpCodeToPermission;
       TransferPermissionToOpcode;
+      IsPermissionKernelEffect;
     };
     extern "C++" {
       OHOS::Security::AccessToken::AddPermissionToKernel*;

@@ -561,7 +561,7 @@ HWTEST_F(TokenOperTest, GetInfoArrFromJson001, TestSize.Level0)
     SetTimes();
     CopyNativeTokenJson(TOKEN_ID_CFG_FILE_PATH, TOKEN_ID_CFG_FILE_COPY_PATH);
 
-    NativeTokenInfoParams tokenInfo;
+    NativeTokenInfoParams tokenInfo = {};
     g_parse = DEFAULT_TIME;
     EXPECT_EQ(GetAccessTokenId(&tokenInfo), 0);
     CopyNativeTokenJson(TOKEN_ID_CFG_FILE_COPY_PATH, TOKEN_ID_CFG_FILE_PATH);

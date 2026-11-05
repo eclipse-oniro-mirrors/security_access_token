@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -34,6 +34,11 @@
 #include "spm_setproc.h"
 #include "accesstoken_file_util.h"
 
+#define KERN_PERM_TYPE_BOOL 1
+#define KERN_PERM_TYPE_INT  2
+#define KERN_PERM_DENIED    0
+#define KERN_PERM_GRANTED   1
+
 using namespace testing::ext;
 using namespace OHOS::Security;
 
@@ -46,6 +51,11 @@ static constexpr uint32_t ACCESSTOKEN_UID = 3020;
 static const char* TOKEN_ID_CFG_FILE_BACKUP_PATH = "/data/service/el0/access_token/nativetoken.json.test_backup";
 static const char* TOKEN_ID_CFG_FILE_LINK_PATH = "/data/service/el0/access_token/nativetoken.json.test_link";
 static const char* TOKEN_ID_CFG_FILE_LINK_TARGET_PATH = "/data/service/el0/access_token/nativetoken.json.test_target";
+
+#define KERN_PERM_TYPE_BOOL 1
+#define KERN_PERM_TYPE_INT  2
+#define KERN_PERM_DENIED    0
+#define KERN_PERM_GRANTED   1
 
 class NativeTokenConfigFileGuard {
 public:
@@ -2651,4 +2661,639 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenIdPermissionFilter001, TestSize.Level0)
     setuid(originalUid);
     RemovePermissionDefinitionExtFile();
     (void)::SetPermissionEnabled("ohos.permission.vehicle.HVAC_INFO", false);
+}
+
+static constexpr const char *KERN_PERM_VALID = "ohos.permission.kernel.SUPPORT_PLUGIN";
+static constexpr const char *KERN_PERM_NOT_KERNEL = "ohos.permission.vehicle.SMARTKEY_INFO";
+
+static PermNameWithValue *CreateKernPermEntry(const char *name, int type, int valueNum)
+{
+    PermNameWithValue *entry = new PermNameWithValue;
+    entry->type = type;
+    entry->valueNum = valueNum;
+    entry->permissionName = strdup(name);
+    return entry;
+}
+
+static void FreeKernPermEntry(PermNameWithValue *entry)
+{
+    if (entry != nullptr) {
+        free(entry->permissionName);
+        delete entry;
+    }
+}
+
+/**
+ * @tc.name: GetAccessTokenIdKernPerm001
+ * @tc.desc: AC-1 bool ValueNum=GRANTED, bitmap bit=1
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenLibKitTest, GetAccessTokenIdKernPerm001, TestSize.Level0)
+{
+    const char *processName = "KernPerm001";
+    PermNameWithValue *kernEntry = CreateKernPermEntry(KERN_PERM_VALID, KERN_PERM_TYPE_BOOL, KERN_PERM_GRANTED);
+    NativeTokenInfoParams infoInstance = {
+        .permsNum = 0, .aclsNum = 0, .dcaps = nullptr, .perms = nullptr, .acls = nullptr,
+        .aplStr = "system_core", .processName = processName,
+        .kernPerms = { .permsNum = 1, .perms = kernEntry },
+    };
+    uint64_t tokenId = GetAccessTokenId(&infoInstance);
+    ASSERT_NE(tokenId, 0);
+    if (IsKernelSupportSpm()) {
+        uint32_t perms[MAX_PERM_BIT_MAP_SIZE] = {0};
+        uint32_t permsSize = MAX_PERM_BIT_MAP_SIZE;
+        ASSERT_EQ(GetPermissionsFromKernel((uint32_t)tokenId, perms, permsSize), 0);
+        uint32_t opCode = 0;
+        ASSERT_TRUE(TransferPermissionToOpcode(KERN_PERM_VALID, &opCode));
+        uint32_t index = opCode / KERNEL_PERM_BIT_NUM;
+        EXPECT_TRUE((perms[index] & (1U << (opCode % KERNEL_PERM_BIT_NUM))) != 0);
+    }
+    FreeKernPermEntry(kernEntry);
+    DeleteAccessTokenId(processName);
+}
+
+/**
+ * @tc.name: GetAccessTokenIdKernPerm002
+ * @tc.desc: AC-2 bool ValueNum=DENIED, bitmap bit=0
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenLibKitTest, GetAccessTokenIdKernPerm002, TestSize.Level1)
+{
+    const char *processName = "KernPerm002";
+    PermNameWithValue *kernEntry = CreateKernPermEntry(KERN_PERM_VALID, KERN_PERM_TYPE_BOOL, KERN_PERM_DENIED);
+    NativeTokenInfoParams infoInstance = {
+        .permsNum = 0, .aclsNum = 0, .dcaps = nullptr, .perms = nullptr, .acls = nullptr,
+        .aplStr = "system_core", .processName = processName,
+        .kernPerms = { .permsNum = 1, .perms = kernEntry },
+    };
+    uint64_t tokenId = GetAccessTokenId(&infoInstance);
+    ASSERT_NE(tokenId, 0);
+    if (IsKernelSupportSpm()) {
+        uint32_t perms[MAX_PERM_BIT_MAP_SIZE] = {0};
+        uint32_t permsSize = MAX_PERM_BIT_MAP_SIZE;
+        ASSERT_EQ(GetPermissionsFromKernel((uint32_t)tokenId, perms, permsSize), 0);
+        uint32_t opCode = 0;
+        ASSERT_TRUE(TransferPermissionToOpcode(KERN_PERM_VALID, &opCode));
+        uint32_t index = opCode / KERNEL_PERM_BIT_NUM;
+        EXPECT_TRUE((perms[index] & (1U << (opCode % KERNEL_PERM_BIT_NUM))) == 0);
+    }
+    FreeKernPermEntry(kernEntry);
+    DeleteAccessTokenId(processName);
+}
+
+/**
+ * @tc.name: GetAccessTokenIdKernPerm003
+ * @tc.desc: AC-3 first call, kernPerms authorized name in JSON permissions
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenLibKitTest, GetAccessTokenIdKernPerm003, TestSize.Level0)
+{
+    const char *processName = "KernPerm003";
+    PermNameWithValue *kernEntry = CreateKernPermEntry(KERN_PERM_VALID, KERN_PERM_TYPE_BOOL, KERN_PERM_GRANTED);
+    NativeTokenInfoParams infoInstance = {
+        .permsNum = 0, .aclsNum = 0, .dcaps = nullptr, .perms = nullptr, .acls = nullptr,
+        .aplStr = "system_core", .processName = processName,
+        .kernPerms = { .permsNum = 1, .perms = kernEntry },
+    };
+    uint64_t tokenId = GetAccessTokenId(&infoInstance);
+    ASSERT_NE(tokenId, 0);
+    char *fileBuff = nullptr;
+    ASSERT_EQ(GetFileBuff(TOKEN_ID_CFG_FILE_PATH, &fileBuff), ATRET_SUCCESS);
+    ASSERT_NE(fileBuff, nullptr);
+    std::string content(fileBuff);
+    free(fileBuff);
+    EXPECT_TRUE(content.find(KERN_PERM_VALID) != std::string::npos);
+    FreeKernPermEntry(kernEntry);
+    DeleteAccessTokenId(processName);
+}
+
+/**
+ * @tc.name: GetAccessTokenIdKernPerm004
+ * @tc.desc: AC-4 repeat call with changed kernPerms, tokenId unchanged
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenLibKitTest, GetAccessTokenIdKernPerm004, TestSize.Level0)
+{
+    const char *processName = "KernPerm004";
+    PermNameWithValue *kernEntry1 = CreateKernPermEntry(KERN_PERM_VALID, KERN_PERM_TYPE_BOOL, KERN_PERM_GRANTED);
+    NativeTokenInfoParams info1 = {
+        .permsNum = 0, .aclsNum = 0, .dcaps = nullptr, .perms = nullptr, .acls = nullptr,
+        .aplStr = "system_core", .processName = processName,
+        .kernPerms = { .permsNum = 1, .perms = kernEntry1 },
+    };
+    uint64_t tokenId1 = GetAccessTokenId(&info1);
+    ASSERT_NE(tokenId1, 0);
+    FreeKernPermEntry(kernEntry1);
+
+    PermNameWithValue *kernEntry2 = CreateKernPermEntry(KERN_PERM_NOT_KERNEL, KERN_PERM_TYPE_BOOL, KERN_PERM_GRANTED);
+    NativeTokenInfoParams info2 = {
+        .permsNum = 0, .aclsNum = 0, .dcaps = nullptr, .perms = nullptr, .acls = nullptr,
+        .aplStr = "system_core", .processName = processName,
+        .kernPerms = { .permsNum = 1, .perms = kernEntry2 },
+    };
+    uint64_t tokenId2 = GetAccessTokenId(&info2);
+    EXPECT_EQ(tokenId2, tokenId1);
+    FreeKernPermEntry(kernEntry2);
+    DeleteAccessTokenId(processName);
+}
+
+/**
+ * @tc.name: GetAccessTokenIdKernPerm005
+ * @tc.desc: AC-5 int type, bitmap bit=1
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenLibKitTest, GetAccessTokenIdKernPerm005, TestSize.Level0)
+{
+    const char *processName = "KernPerm005";
+    PermNameWithValue *kernEntry = CreateKernPermEntry(KERN_PERM_VALID, KERN_PERM_TYPE_INT, 0);
+    NativeTokenInfoParams infoInstance = {
+        .permsNum = 0, .aclsNum = 0, .dcaps = nullptr, .perms = nullptr, .acls = nullptr,
+        .aplStr = "system_core", .processName = processName,
+        .kernPerms = { .permsNum = 1, .perms = kernEntry },
+    };
+    uint64_t tokenId = GetAccessTokenId(&infoInstance);
+    ASSERT_NE(tokenId, 0);
+    if (IsKernelSupportSpm()) {
+        uint32_t perms[MAX_PERM_BIT_MAP_SIZE] = {0};
+        uint32_t permsSize = MAX_PERM_BIT_MAP_SIZE;
+        ASSERT_EQ(GetPermissionsFromKernel((uint32_t)tokenId, perms, permsSize), 0);
+        uint32_t opCode = 0;
+        ASSERT_TRUE(TransferPermissionToOpcode(KERN_PERM_VALID, &opCode));
+        uint32_t index = opCode / KERNEL_PERM_BIT_NUM;
+        EXPECT_TRUE((perms[index] & (1U << (opCode % KERNEL_PERM_BIT_NUM))) != 0);
+    }
+    FreeKernPermEntry(kernEntry);
+    DeleteAccessTokenId(processName);
+}
+
+/**
+ * @tc.name: GetAccessTokenIdKernPerm006
+ * @tc.desc: AC-6 kernPerms empty, behavior same as no kernPerms
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenLibKitTest, GetAccessTokenIdKernPerm006, TestSize.Level1)
+{
+    const char *processName = "KernPerm006";
+    NativeTokenInfoParams infoEmpty = {
+        .permsNum = 0, .aclsNum = 0, .dcaps = nullptr, .perms = nullptr, .acls = nullptr,
+        .aplStr = "system_core", .processName = processName,
+        .kernPerms = { .permsNum = 0, .perms = nullptr },
+    };
+    uint64_t tokenIdEmpty = GetAccessTokenId(&infoEmpty);
+    ASSERT_NE(tokenIdEmpty, 0);
+    DeleteAccessTokenId(processName);
+}
+
+/**
+ * @tc.name: GetAccessTokenIdKernPerm007
+ * @tc.desc: AC-7 old code reads merged permissions, no crash
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenLibKitTest, GetAccessTokenIdKernPerm007, TestSize.Level1)
+{
+    const char *processName = "KernPerm007";
+    PermNameWithValue *kernEntry = CreateKernPermEntry(KERN_PERM_VALID, KERN_PERM_TYPE_BOOL, KERN_PERM_GRANTED);
+    NativeTokenInfoParams infoInstance = {
+        .permsNum = 0, .aclsNum = 0, .dcaps = nullptr, .perms = nullptr, .acls = nullptr,
+        .aplStr = "system_core", .processName = processName,
+        .kernPerms = { .permsNum = 1, .perms = kernEntry },
+    };
+    uint64_t tokenId = GetAccessTokenId(&infoInstance);
+    ASSERT_NE(tokenId, 0);
+    NativeTokenInfoParams infoRead = {
+        .permsNum = 0, .aclsNum = 0, .dcaps = nullptr, .perms = nullptr, .acls = nullptr,
+        .aplStr = "system_core", .processName = processName,
+    };
+    uint64_t tokenId2 = GetAccessTokenId(&infoRead);
+    EXPECT_EQ(tokenId2, tokenId);
+    FreeKernPermEntry(kernEntry);
+    DeleteAccessTokenId(processName);
+}
+
+/**
+ * @tc.name: GetAccessTokenIdKernPerm008
+ * @tc.desc: AC-8 combined count exceeds MAX_PERM_NUM, return INVALID_TOKEN_ID
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenLibKitTest, GetAccessTokenIdKernPerm008, TestSize.Level1)
+{
+    const char *processName = "KernPerm008";
+    int32_t cnt = MAX_PERM_NUM + 1;
+    PermNameWithValue *kernArr = new PermNameWithValue[cnt];
+    for (int32_t i = 0; i < cnt; i++) {
+        kernArr[i].type = KERN_PERM_TYPE_BOOL;
+        kernArr[i].valueNum = KERN_PERM_GRANTED;
+        kernArr[i].permissionName = strdup(KERN_PERM_VALID);
+    }
+    NativeTokenInfoParams infoInstance = {
+        .permsNum = 0, .aclsNum = 0, .dcaps = nullptr, .perms = nullptr, .acls = nullptr,
+        .aplStr = "system_core", .processName = processName,
+        .kernPerms = { .permsNum = cnt, .perms = kernArr },
+    };
+    uint64_t tokenId = GetAccessTokenId(&infoInstance);
+    EXPECT_EQ(tokenId, INVALID_TOKEN_ID);
+    for (int32_t i = 0; i < cnt; i++) {
+        free(kernArr[i].permissionName);
+    }
+    delete[] kernArr;
+}
+
+/**
+ * @tc.name: GetAccessTokenIdKernPerm009
+ * @tc.desc: AC-9 permission not in map, skip and others normal
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenLibKitTest, GetAccessTokenIdKernPerm009, TestSize.Level1)
+{
+    const char *processName = "KernPerm009";
+    PermNameWithValue *kernArr = new PermNameWithValue[2];
+    kernArr[0].type = KERN_PERM_TYPE_BOOL;
+    kernArr[0].valueNum = KERN_PERM_GRANTED;
+    kernArr[0].permissionName = strdup("ohos.permission.not.exist");
+    kernArr[1].type = KERN_PERM_TYPE_BOOL;
+    kernArr[1].valueNum = KERN_PERM_GRANTED;
+    kernArr[1].permissionName = strdup(KERN_PERM_VALID);
+    NativeTokenInfoParams infoInstance = {
+        .permsNum = 0, .aclsNum = 0, .dcaps = nullptr, .perms = nullptr, .acls = nullptr,
+        .aplStr = "system_core", .processName = processName,
+        .kernPerms = { .permsNum = 2, .perms = kernArr },
+    };
+    uint64_t tokenId = GetAccessTokenId(&infoInstance);
+    ASSERT_NE(tokenId, 0);
+    if (IsKernelSupportSpm()) {
+        uint32_t perms[MAX_PERM_BIT_MAP_SIZE] = {0};
+        uint32_t permsSize = MAX_PERM_BIT_MAP_SIZE;
+        ASSERT_EQ(GetPermissionsFromKernel((uint32_t)tokenId, perms, permsSize), 0);
+        uint32_t opCode = 0;
+        ASSERT_TRUE(TransferPermissionToOpcode(KERN_PERM_VALID, &opCode));
+        uint32_t index = opCode / KERNEL_PERM_BIT_NUM;
+        EXPECT_TRUE((perms[index] & (1U << (opCode % KERNEL_PERM_BIT_NUM))) != 0);
+    }
+    for (int32_t i = 0; i < 2; i++) {
+        free(kernArr[i].permissionName);
+    }
+    delete[] kernArr;
+    DeleteAccessTokenId(processName);
+}
+
+/**
+ * @tc.name: GetAccessTokenIdKernPerm010
+ * @tc.desc: AC-10 duplicate permissionName, last wins (DENIED overrides GRANTED)
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenLibKitTest, GetAccessTokenIdKernPerm010, TestSize.Level1)
+{
+    const char *processName = "KernPerm010";
+    PermNameWithValue *kernArr = new PermNameWithValue[2];
+    kernArr[0].type = KERN_PERM_TYPE_BOOL;
+    kernArr[0].valueNum = KERN_PERM_GRANTED;
+    kernArr[0].permissionName = strdup(KERN_PERM_VALID);
+    kernArr[1].type = KERN_PERM_TYPE_BOOL;
+    kernArr[1].valueNum = KERN_PERM_DENIED;
+    kernArr[1].permissionName = strdup(KERN_PERM_VALID);
+    NativeTokenInfoParams infoInstance = {
+        .permsNum = 0, .aclsNum = 0, .dcaps = nullptr, .perms = nullptr, .acls = nullptr,
+        .aplStr = "system_core", .processName = processName,
+        .kernPerms = { .permsNum = 2, .perms = kernArr },
+    };
+    uint64_t tokenId = GetAccessTokenId(&infoInstance);
+    ASSERT_NE(tokenId, 0);
+    if (IsKernelSupportSpm()) {
+        uint32_t perms[MAX_PERM_BIT_MAP_SIZE] = {0};
+        uint32_t permsSize = MAX_PERM_BIT_MAP_SIZE;
+        ASSERT_EQ(GetPermissionsFromKernel((uint32_t)tokenId, perms, permsSize), 0);
+        uint32_t opCode = 0;
+        ASSERT_TRUE(TransferPermissionToOpcode(KERN_PERM_VALID, &opCode));
+        uint32_t index = opCode / KERNEL_PERM_BIT_NUM;
+        EXPECT_TRUE((perms[index] & (1U << (opCode % KERNEL_PERM_BIT_NUM))) == 0);
+    }
+    for (int32_t i = 0; i < 2; i++) {
+        free(kernArr[i].permissionName);
+    }
+    delete[] kernArr;
+    DeleteAccessTokenId(processName);
+}
+
+/**
+ * @tc.name: GetAccessTokenIdKernPerm011
+ * @tc.desc: AC-11 isKernelEffect=false, skip and not in bitmap
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenLibKitTest, GetAccessTokenIdKernPerm011, TestSize.Level1)
+{
+    const char *processName = "KernPerm011";
+    PermNameWithValue *kernEntry = CreateKernPermEntry(KERN_PERM_NOT_KERNEL, KERN_PERM_TYPE_BOOL, KERN_PERM_GRANTED);
+    NativeTokenInfoParams infoInstance = {
+        .permsNum = 0, .aclsNum = 0, .dcaps = nullptr, .perms = nullptr, .acls = nullptr,
+        .aplStr = "system_core", .processName = processName,
+        .kernPerms = { .permsNum = 1, .perms = kernEntry },
+    };
+    uint64_t tokenId = GetAccessTokenId(&infoInstance);
+    ASSERT_NE(tokenId, 0);
+    if (IsKernelSupportSpm()) {
+        uint32_t perms[MAX_PERM_BIT_MAP_SIZE] = {0};
+        uint32_t permsSize = MAX_PERM_BIT_MAP_SIZE;
+        ASSERT_EQ(GetPermissionsFromKernel((uint32_t)tokenId, perms, permsSize), 0);
+        uint32_t opCode = 0;
+        if (TransferPermissionToOpcode(KERN_PERM_NOT_KERNEL, &opCode)) {
+            uint32_t index = opCode / KERNEL_PERM_BIT_NUM;
+            EXPECT_TRUE((perms[index] & (1U << (opCode % KERNEL_PERM_BIT_NUM))) == 0);
+        }
+    }
+    FreeKernPermEntry(kernEntry);
+    DeleteAccessTokenId(processName);
+}
+
+/**
+ * @tc.name: GetAccessTokenIdKernPerm012
+ * @tc.desc: types not 1 or 2, skip entry
+ * @tc.type: FUNC
+ */
+HWTEST_F(TokenLibKitTest, GetAccessTokenIdKernPerm012, TestSize.Level1)
+{
+    const char *processName = "KernPerm012";
+    PermNameWithValue kernArr[2];
+    kernArr[0].type = 3;
+    kernArr[0].valueNum = KERN_PERM_GRANTED;
+    kernArr[0].permissionName = strdup(KERN_PERM_VALID);
+    kernArr[1].type = KERN_PERM_TYPE_BOOL;
+    kernArr[1].valueNum = KERN_PERM_GRANTED;
+    kernArr[1].permissionName = strdup(KERN_PERM_VALID);
+    NativeTokenInfoParams infoInstance = {
+        .permsNum = 0, .aclsNum = 0, .dcaps = nullptr, .perms = nullptr, .acls = nullptr,
+        .aplStr = "system_core", .processName = processName,
+        .kernPerms = { .permsNum = 2, .perms = kernArr },
+    };
+    uint64_t tokenId = GetAccessTokenId(&infoInstance);
+    ASSERT_NE(tokenId, 0);
+    if (IsKernelSupportSpm()) {
+        uint32_t perms[MAX_PERM_BIT_MAP_SIZE] = {0};
+        uint32_t permsSize = MAX_PERM_BIT_MAP_SIZE;
+        ASSERT_EQ(GetPermissionsFromKernel((uint32_t)tokenId, perms, permsSize), 0);
+        uint32_t opCode = 0;
+        ASSERT_TRUE(TransferPermissionToOpcode(KERN_PERM_VALID, &opCode));
+        uint32_t index = opCode / KERNEL_PERM_BIT_NUM;
+        EXPECT_TRUE((perms[index] & (1U << (opCode % KERNEL_PERM_BIT_NUM))) != 0);
+    }
+    free(kernArr[0].permissionName);
+    free(kernArr[1].permissionName);
+    DeleteAccessTokenId(processName);
+}
+
+/**
+ * @tc.name: GetAccessTokenIdKernPerm015
+ * @tc.desc: bool valueNum=2 (invalid), return INVALID_TOKEN_ID
+ * @tc.type: FUNC
+ */
+HWTEST_F(TokenLibKitTest, GetAccessTokenIdKernPerm015, TestSize.Level1)
+{
+    const char *processName = "KernPerm015";
+    PermNameWithValue kernEntry;
+    kernEntry.type = KERN_PERM_TYPE_BOOL;
+    kernEntry.valueNum = 2;
+    kernEntry.permissionName = strdup(KERN_PERM_VALID);
+    NativeTokenInfoParams infoInstance = {
+        .permsNum = 0, .aclsNum = 0, .dcaps = nullptr, .perms = nullptr, .acls = nullptr,
+        .aplStr = "system_core", .processName = processName,
+        .kernPerms = { .permsNum = 1, .perms = &kernEntry },
+    };
+    uint64_t tokenId = GetAccessTokenId(&infoInstance);
+    EXPECT_EQ(tokenId, INVALID_TOKEN_ID);
+    free(kernEntry.permissionName);
+}
+
+/**
+ * @tc.name: GetAccessTokenIdKernPerm016
+ * @tc.desc: kernPerms permsNum>0 but perms=NULL, return INVALID_TOKEN_ID
+ * @tc.type: FUNC
+ */
+HWTEST_F(TokenLibKitTest, GetAccessTokenIdKernPerm016, TestSize.Level1)
+{
+    const char *processName = "KernPerm016";
+    NativeTokenInfoParams infoInstance = {
+        .permsNum = 0, .aclsNum = 0, .dcaps = nullptr, .perms = nullptr, .acls = nullptr,
+        .aplStr = "system_core", .processName = processName,
+        .kernPerms = { .permsNum = 3, .perms = nullptr },
+    };
+    uint64_t tokenId = GetAccessTokenId(&infoInstance);
+    EXPECT_EQ(tokenId, INVALID_TOKEN_ID);
+}
+
+/**
+ * @tc.name: GetAccessTokenIdKernPerm020
+ * @tc.desc: CheckKernPerms combined count (permsNum + kernPerms.permsNum) exceeds MAX_PERM_NUM
+ * @tc.type: FUNC
+ */
+HWTEST_F(TokenLibKitTest, GetAccessTokenIdKernPerm020, TestSize.Level1)
+{
+    const char *processName = "KernPerm020";
+    const char **perms = new const char *[MAX_PERM_NUM];
+    for (int32_t i = 0; i < MAX_PERM_NUM; i++) {
+        perms[i] = "ohos.permission.test1";
+    }
+    PermNameWithValue kernEntry;
+    kernEntry.type = KERN_PERM_TYPE_BOOL;
+    kernEntry.valueNum = KERN_PERM_GRANTED;
+    kernEntry.permissionName = strdup(KERN_PERM_VALID);
+    NativeTokenInfoParams infoInstance = {
+        .permsNum = MAX_PERM_NUM, .aclsNum = 0, .dcaps = nullptr, .perms = perms, .acls = nullptr,
+        .aplStr = "system_core", .processName = processName,
+        .kernPerms = { .permsNum = 1, .perms = &kernEntry },
+    };
+    uint64_t tokenId = GetAccessTokenId(&infoInstance);
+    EXPECT_EQ(tokenId, INVALID_TOKEN_ID);
+    free(kernEntry.permissionName);
+    delete[] perms;
+}
+
+/**
+ * @tc.name: GetAccessTokenIdKernPerm021
+ * @tc.desc: types=3 entry filtered by ShouldSkipKernPerm, not in bitmap or JSON
+ * @tc.type: FUNC
+ */
+HWTEST_F(TokenLibKitTest, GetAccessTokenIdKernPerm021, TestSize.Level1)
+{
+    const char *processName = "KernPerm021";
+    PermNameWithValue kernEntry;
+    kernEntry.type = 3;
+    kernEntry.valueNum = KERN_PERM_GRANTED;
+    kernEntry.permissionName = strdup(KERN_PERM_VALID);
+    NativeTokenInfoParams infoInstance = {
+        .permsNum = 0, .aclsNum = 0, .dcaps = nullptr, .perms = nullptr, .acls = nullptr,
+        .aplStr = "system_core", .processName = processName,
+        .kernPerms = { .permsNum = 1, .perms = &kernEntry },
+    };
+    uint64_t tokenId = GetAccessTokenId(&infoInstance);
+    ASSERT_NE(tokenId, 0);
+    if (IsKernelSupportSpm()) {
+        uint32_t perms[MAX_PERM_BIT_MAP_SIZE] = {0};
+        uint32_t permsSize = MAX_PERM_BIT_MAP_SIZE;
+        ASSERT_EQ(GetPermissionsFromKernel((uint32_t)tokenId, perms, permsSize), 0);
+        uint32_t opCode = 0;
+        ASSERT_TRUE(TransferPermissionToOpcode(KERN_PERM_VALID, &opCode));
+        uint32_t index = opCode / KERNEL_PERM_BIT_NUM;
+        EXPECT_TRUE((perms[index] & (1U << (opCode % KERNEL_PERM_BIT_NUM))) == 0);
+    }
+    free(kernEntry.permissionName);
+    DeleteAccessTokenId(processName);
+}
+
+/**
+ * @tc.name: GetAccessTokenIdKernPerm022
+ * @tc.desc: perms with content + kernPerms appended, CreatePermsWithKernPerms copies existing perms
+ * @tc.type: FUNC
+ */
+HWTEST_F(TokenLibKitTest, GetAccessTokenIdKernPerm022, TestSize.Level0)
+{
+    const char *processName = "KernPerm022";
+    const char *permsArr[] = {"ohos.permission.test1", "ohos.permission.test2"};
+    PermNameWithValue kernEntry;
+    kernEntry.type = KERN_PERM_TYPE_BOOL;
+    kernEntry.valueNum = KERN_PERM_GRANTED;
+    kernEntry.permissionName = strdup(KERN_PERM_VALID);
+    NativeTokenInfoParams infoInstance = {
+        .dcapsNum = 0, .permsNum = 2, .aclsNum = 0,
+        .dcaps = nullptr, .perms = permsArr, .acls = nullptr,
+        .aplStr = "system_core", .processName = processName,
+        .kernPerms = { .permsNum = 1, .perms = &kernEntry },
+    };
+    uint64_t tokenId = GetAccessTokenId(&infoInstance);
+    ASSERT_NE(tokenId, 0);
+    char *fileBuff = nullptr;
+    ASSERT_EQ(GetFileBuff(TOKEN_ID_CFG_FILE_PATH, &fileBuff), ATRET_SUCCESS);
+    ASSERT_NE(fileBuff, nullptr);
+    std::string content(fileBuff);
+    free(fileBuff);
+    EXPECT_TRUE(content.find("ohos.permission.test1") != std::string::npos);
+    EXPECT_TRUE(content.find(KERN_PERM_VALID) != std::string::npos);
+    free(kernEntry.permissionName);
+    DeleteAccessTokenId(processName);
+}
+
+/**
+ * @tc.name: GetAccessTokenIdKernPerm023
+ * @tc.desc: First call without kernPerms, second call with kernPerms, update triggered
+ * @tc.type: FUNC
+ */
+HWTEST_F(TokenLibKitTest, GetAccessTokenIdKernPerm023, TestSize.Level1)
+{
+    const char *processName = "KernPerm023";
+    NativeTokenInfoParams infoEmpty = {
+        .permsNum = 0, .aclsNum = 0, .dcaps = nullptr, .perms = nullptr, .acls = nullptr,
+        .aplStr = "system_core", .processName = processName,
+        .kernPerms = { .permsNum = 0, .perms = nullptr },
+    };
+    uint64_t tokenId1 = GetAccessTokenId(&infoEmpty);
+    ASSERT_NE(tokenId1, 0);
+
+    PermNameWithValue kernEntry;
+    kernEntry.type = KERN_PERM_TYPE_BOOL;
+    kernEntry.valueNum = KERN_PERM_GRANTED;
+    kernEntry.permissionName = strdup(KERN_PERM_VALID);
+    NativeTokenInfoParams infoWithKern = {
+        .permsNum = 0, .aclsNum = 0, .dcaps = nullptr, .perms = nullptr, .acls = nullptr,
+        .aplStr = "system_core", .processName = processName,
+        .kernPerms = { .permsNum = 1, .perms = &kernEntry },
+    };
+    uint64_t tokenId2 = GetAccessTokenId(&infoWithKern);
+    EXPECT_EQ(tokenId2, tokenId1);
+
+    if (IsKernelSupportSpm()) {
+        uint32_t perms[MAX_PERM_BIT_MAP_SIZE] = {0};
+        uint32_t permsSize = MAX_PERM_BIT_MAP_SIZE;
+        ASSERT_EQ(GetPermissionsFromKernel((uint32_t)tokenId2, perms, permsSize), 0);
+        uint32_t opCode = 0;
+        ASSERT_TRUE(TransferPermissionToOpcode(KERN_PERM_VALID, &opCode));
+        uint32_t index = opCode / KERNEL_PERM_BIT_NUM;
+        EXPECT_TRUE((perms[index] & (1U << (opCode % KERNEL_PERM_BIT_NUM))) != 0);
+    }
+    free(kernEntry.permissionName);
+    DeleteAccessTokenId(processName);
+}
+
+/**
+ * @tc.name: GetAccessTokenIdKernPerm024
+ * @tc.desc: kernPerms permsNum>0 but perms pointer is NULL, return INVALID_TOKEN_ID
+ * @tc.type: FUNC
+ */
+HWTEST_F(TokenLibKitTest, GetAccessTokenIdKernPerm024, TestSize.Level1)
+{
+    const char *processName = "KernPerm024";
+    NativeTokenInfoParams infoInstance = {
+        .permsNum = 0, .aclsNum = 0, .dcaps = nullptr, .perms = nullptr, .acls = nullptr,
+        .aplStr = "system_core", .processName = processName,
+        .kernPerms = { .permsNum = 1, .perms = nullptr },
+    };
+    uint64_t tokenId = GetAccessTokenId(&infoInstance);
+    EXPECT_EQ(tokenId, INVALID_TOKEN_ID);
+}
+
+/**
+ * @tc.name: GetAccessTokenIdKernPerm025
+ * @tc.desc: entry with NULL permissionName, CheckKernPerms hard fail
+ * @tc.type: FUNC
+ */
+HWTEST_F(TokenLibKitTest, GetAccessTokenIdKernPerm025, TestSize.Level1)
+{
+    const char *processName = "KernPerm025";
+    PermNameWithValue kernArr[2];
+    kernArr[0].type = KERN_PERM_TYPE_BOOL;
+    kernArr[0].valueNum = KERN_PERM_GRANTED;
+    kernArr[0].permissionName = strdup(KERN_PERM_VALID);
+    kernArr[1].type = KERN_PERM_TYPE_BOOL;
+    kernArr[1].valueNum = KERN_PERM_GRANTED;
+    kernArr[1].permissionName = nullptr;
+    NativeTokenInfoParams infoInstance = {
+        .permsNum = 0, .aclsNum = 0, .dcaps = nullptr, .perms = nullptr, .acls = nullptr,
+        .aplStr = "system_core", .processName = processName,
+        .kernPerms = { .permsNum = 2, .perms = kernArr },
+    };
+    uint64_t tokenId = GetAccessTokenId(&infoInstance);
+    EXPECT_EQ(tokenId, INVALID_TOKEN_ID);
+    free(kernArr[0].permissionName);
+}
+
+/**
+ * @tc.name: GetAccessTokenIdKernPerm026
+ * @tc.desc: kernPerms permsNum negative, return INVALID_TOKEN_ID
+ * @tc.type: FUNC
+ */
+HWTEST_F(TokenLibKitTest, GetAccessTokenIdKernPerm026, TestSize.Level1)
+{
+    const char *processName = "KernPerm026";
+    NativeTokenInfoParams infoInstance = {
+        .permsNum = 0, .aclsNum = 0, .dcaps = nullptr, .perms = nullptr, .acls = nullptr,
+        .aplStr = "system_core", .processName = processName,
+        .kernPerms = { .permsNum = -1, .perms = nullptr },
+    };
+    uint64_t tokenId = GetAccessTokenId(&infoInstance);
+    EXPECT_EQ(tokenId, INVALID_TOKEN_ID);
+}
+
+/**
+ * @tc.name: GetAccessTokenIdKernPerm027
+ * @tc.desc: kernPerms permsNum exceeds MAX_PERM_NUM, return INVALID_TOKEN_ID
+ * @tc.type: FUNC
+ */
+HWTEST_F(TokenLibKitTest, GetAccessTokenIdKernPerm027, TestSize.Level1)
+{
+    const char *processName = "KernPerm027";
+    NativeTokenInfoParams infoInstance = {
+        .permsNum = 0, .aclsNum = 0, .dcaps = nullptr, .perms = nullptr, .acls = nullptr,
+        .aplStr = "system_core", .processName = processName,
+        .kernPerms = { .permsNum = MAX_PERM_NUM + 1, .perms = nullptr },
+    };
+    uint64_t tokenId = GetAccessTokenId(&infoInstance);
+    EXPECT_EQ(tokenId, INVALID_TOKEN_ID);
 }

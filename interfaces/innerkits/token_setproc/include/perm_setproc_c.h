@@ -35,6 +35,7 @@ bool TransferOpCodeToPermission(uint32_t opCode, char *permissionName, uint32_t 
 bool SetPermissionEnabled(const char *permissionName, bool isEnable);
 bool IsNativePermissionAvailable(const char *permissionName, int32_t apl,
     const char *const *acls, int32_t aclsNum, uint32_t *opCode);
+bool IsPermissionKernelEffect(const char *permissionName);
 #ifdef __cplusplus
 }
 #endif

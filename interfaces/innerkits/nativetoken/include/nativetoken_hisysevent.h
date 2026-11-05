@@ -53,6 +53,7 @@ typedef enum AccessTokenExceptionErrorCode {
     STRCPY_FAILED,
     CREATE_ARRAY_FAILED,
     SAVE_CONTENT_TO_CFG_FAILED,
+    KERNPERMS_INVALID,
 } AccessTokenExceptionErrorCode;
 
 void ReportNativeTokenExceptionEvent(int32_t sceneCode, int32_t errorCode, const char* errorMsg);
