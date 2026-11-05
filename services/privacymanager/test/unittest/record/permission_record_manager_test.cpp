@@ -3984,8 +3984,8 @@ HWTEST_F(PermissionRecordManagerTest, DvrBackgroundWithPermAllowed001, TestSize.
 
 /**
  * @tc.name: CameraPrivacyControlEnhance001
- * @tc.desc: camera usage is denied when lock/off-screen privacy control is enabled
- *           and screen is locked or off, allowed when switch off or screen unlocked/on.
+ * @tc.desc: camera usage is denied when off-screen privacy control is enabled and screen
+ *           is off, allowed when switch off or screen on. Lock status does not affect it.
  * @tc.type: FUNC
  * @tc.require: TDD coverage
  */
@@ -4007,8 +4007,13 @@ HWTEST_F(PermissionRecordManagerTest, CameraPrivacyControlEnhance001, TestSize.L
     recordManager.SetScreenOn(false);
     EXPECT_TRUE(recordManager.IsAllowedUsingPermission(tokenId, CAMERA_PERMISSION_NAME, TEST_PID_1));
 
-    // switch on, screen locked: denied
+    // switch on, screen locked but on: camera allowed, lock status alone does not deny
     recordManager.cameraPrivacyControlEnhanceEnable_ = true;
+    recordManager.SetScreenOn(true);
+    EXPECT_TRUE(recordManager.IsAllowedUsingPermission(tokenId, CAMERA_PERMISSION_NAME, TEST_PID_1));
+
+    // switch on, screen locked and off: denied
+    recordManager.SetScreenOn(false);
     EXPECT_FALSE(recordManager.IsAllowedUsingPermission(tokenId, CAMERA_PERMISSION_NAME, TEST_PID_1));
 
     // switch on, screen off but unlocked: denied
