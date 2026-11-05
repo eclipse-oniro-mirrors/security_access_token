@@ -53,6 +53,8 @@ private:
         std::vector<GenericValues>& results);
     int32_t FindByStep(const NativeRdb::RdbPredicates& predicates, const std::vector<std::string>& columns,
         std::vector<GenericValues>& results, const std::shared_ptr<NativeRdb::RdbStore>& db);
+    int32_t RestoreAndRequery(const std::string& tableName, const NativeRdb::RdbPredicates& predicates,
+        const std::vector<std::string>& columns, std::vector<GenericValues>& results);
 
     int32_t DeleteAndInsertValuesInner(const std::vector<DelInfo>& delInfoVec, const std::vector<AddInfo>& addInfoVec);
     void RestoreDatabase(int32_t errCode);
