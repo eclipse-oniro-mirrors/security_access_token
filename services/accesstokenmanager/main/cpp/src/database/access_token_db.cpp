@@ -247,6 +247,9 @@ int32_t AccessTokenDb::QueryByPredicates(const std::string& tableName, const Nat
 
         res = FindByStep(predicates, columns, results, db);
     }
+    if (res == NativeRdb::E_SQLITE_CORRUPT) {
+        res = RestoreAndRequery(tableName, predicates, columns, results);
+    }
     if (res != NativeRdb::E_OK) {
         return res;
     }
@@ -272,20 +275,29 @@ int32_t AccessTokenDb::FindByStep(const NativeRdb::RdbPredicates& predicates,
             return NativeRdb::E_OK;
         }
         if (errCode == NativeRdb::E_SQLITE_CORRUPT) {
-            break;
+            return NativeRdb::E_SQLITE_CORRUPT;
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(QUERY_RETRY_SLEEP_TIME_MS));
         continue;
     }
 
-    if (errCode != NativeRdb::E_SQLITE_CORRUPT) {
-        LOGC(ATM_DOMAIN, ATM_TAG, "Failed to find records from table %{public}s after retry.", tableName.c_str());
+    LOGC(ATM_DOMAIN, ATM_TAG, "Failed to find records from table %{public}s after retry.", tableName.c_str());
+    return AccessTokenError::ERR_DATABASE_OPERATE_FAILED;
+}
+
+int32_t AccessTokenDb::RestoreAndRequery(const std::string& tableName, const NativeRdb::RdbPredicates& predicates,
+    const std::vector<std::string>& columns, std::vector<GenericValues>& results)
+{
+    std::unique_lock<std::shared_mutex> lock(this->rwLock_);
+    auto db = GetRdb();
+    if (db == nullptr) {
+        LOGC(ATM_DOMAIN, ATM_TAG, "Db is nullptr.");
         return AccessTokenError::ERR_DATABASE_OPERATE_FAILED;
     }
 
     results.clear();
     LOGW(ATM_DOMAIN, ATM_TAG, "Detech database corrupt, restore from backup!");
-    ReportSysEventDbException(AccessTokenDbSceneCode::AT_DB_QUERY_RESTORE, errCode, tableName);
+    ReportSysEventDbException(AccessTokenDbSceneCode::AT_DB_QUERY_RESTORE, NativeRdb::E_SQLITE_CORRUPT, tableName);
     int32_t res = db->Restore("");
     if (res != NativeRdb::E_OK) {
         LOGC(ATM_DOMAIN, ATM_TAG, "Db restore failed, res is %{public}d.", res);
@@ -293,10 +305,10 @@ int32_t AccessTokenDb::FindByStep(const NativeRdb::RdbPredicates& predicates,
     }
     LOGI(ATM_DOMAIN, ATM_TAG, "Database restore success, try query again!");
 
-    errCode = QueryByStepAndRead(db, predicates, columns, results);
-    if (errCode != NativeRdb::E_OK) {
+    res = QueryByStepAndRead(db, predicates, columns, results);
+    if (res != NativeRdb::E_OK) {
         LOGC(ATM_DOMAIN, ATM_TAG, "Failed to find records from table %{public}s after restore, res is %{public}d.",
-            tableName.c_str(), errCode);
+            tableName.c_str(), res);
         return AccessTokenError::ERR_DATABASE_OPERATE_FAILED;
     }
     return NativeRdb::E_OK;
