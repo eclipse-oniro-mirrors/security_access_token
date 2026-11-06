@@ -48,6 +48,7 @@ std::string g_remoteDeviceId;
 std::string g_remoteNetworkId;
 AccessTokenID g_tokenSyncTokenId = INVALID_TOKENID;
 AccessTokenID g_hdcdTokenId = INVALID_TOKENID;
+AccessTokenID g_validRemoteTokenId = INVALID_TOKENID;
 std::shared_ptr<TestDmInitCallback> g_dmInitCallback = std::make_shared<TestDmInitCallback>();
 
 bool SetTokenSyncToken()
@@ -151,7 +152,7 @@ bool GetHapTokenInfoFromRemoteStubFuzzTest(const uint8_t* data, size_t size)
     }
 
     FuzzedDataProvider provider(data, size);
-    AccessTokenID validTokenId = EnsureRemoteMapTokenId();
+    AccessTokenID validTokenId = g_validRemoteTokenId;
     if (validTokenId == INVALID_TOKENID) {
         return false;
     }
@@ -182,6 +183,9 @@ bool GetHapTokenInfoFromRemoteStubFuzzTest(const uint8_t* data, size_t size)
 void Initialize()
 {
     DelayedSingleton<AccessTokenManagerService>::GetInstance()->Initialize();
+#ifdef TOKEN_SYNC_ENABLE
+    g_validRemoteTokenId = EnsureRemoteMapTokenId();
+#endif
 }
 } // namespace OHOS
 
