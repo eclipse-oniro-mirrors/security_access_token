@@ -47,7 +47,6 @@ constexpr AccessTokenID TEST_REMOTE_TOKEN_ID = 0x20100000;
 std::string g_remoteDeviceId;
 std::string g_remoteNetworkId;
 AccessTokenID g_tokenSyncTokenId = INVALID_TOKENID;
-AccessTokenID g_hdcdTokenId = INVALID_TOKENID;
 AccessTokenID g_validRemoteTokenId = INVALID_TOKENID;
 std::shared_ptr<TestDmInitCallback> g_dmInitCallback = std::make_shared<TestDmInitCallback>();
 
@@ -56,7 +55,6 @@ bool SetTokenSyncToken()
     if (g_tokenSyncTokenId == INVALID_TOKENID) {
         MockToken mock({}, false);
         g_tokenSyncTokenId = AccessTokenKit::GetNativeTokenId("token_sync_service");
-        g_hdcdTokenId = AccessTokenKit::GetNativeTokenId("hdcd");
     }
     if (g_tokenSyncTokenId == INVALID_TOKENID) {
         return false;
@@ -147,7 +145,7 @@ bool GetHapTokenInfoFromRemoteStubFuzzTest(const uint8_t* data, size_t size)
     if ((data == nullptr) || (size == 0)) {
         return false;
     }
-    if (!SetTokenSyncToken()) {
+    if (g_tokenSyncTokenId == INVALID_TOKENID) {
         return false;
     }
 
@@ -170,9 +168,6 @@ bool GetHapTokenInfoFromRemoteStubFuzzTest(const uint8_t* data, size_t size)
     MessageParcel reply;
     MessageOption option;
     DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
-    if (g_hdcdTokenId != INVALID_TOKENID) {
-        (void)SetSelfTokenID(g_hdcdTokenId);
-    }
 
     return true;
 #else
@@ -184,6 +179,7 @@ void Initialize()
 {
     DelayedSingleton<AccessTokenManagerService>::GetInstance()->Initialize();
 #ifdef TOKEN_SYNC_ENABLE
+    SetTokenSyncToken();
     g_validRemoteTokenId = EnsureRemoteMapTokenId();
 #endif
 }
