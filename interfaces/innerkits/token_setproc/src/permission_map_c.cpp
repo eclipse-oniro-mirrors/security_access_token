@@ -133,3 +133,15 @@ extern "C" int32_t FilterKernelPermissions(
     *permSize = outputSize;
     return ACCESS_TOKEN_OK;
 }
+
+extern "C" bool IsPermissionKernelEffect(const char *permissionName)
+{
+    if (permissionName == nullptr) {
+        return false;
+    }
+    OHOS::Security::AccessToken::PermissionBriefDef briefDef;
+    if (!OHOS::Security::AccessToken::GetPermissionBriefDef(std::string(permissionName), briefDef)) {
+        return false;
+    }
+    return briefDef.isKernelEffect;
+}
