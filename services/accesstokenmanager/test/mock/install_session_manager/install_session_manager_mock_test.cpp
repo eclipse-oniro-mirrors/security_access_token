@@ -123,6 +123,62 @@ AccessTokenIDEx BuildTokenIdEx(AccessTokenID tokenId)
 }
 }
 
+// Snapshot of tokens that existed before any test ran. Every test's TearDown
+// and the final TearDownTestCase only delete tokens NOT in this set, so
+// system tokens (apps installed outside this test process) are never touched.
+static std::set<AccessTokenID> preExistingTokenIds;
+
+// Per-test snapshot: tokens that existed before THIS test ran. TearDown
+// deletes only the difference (tokens this test created).
+static std::set<AccessTokenID> tokensBeforeThisTest;
+
+// Union of every hap token id known to the id manager.
+static std::set<AccessTokenID> CollectAllTokenIds()
+{
+    auto& idMgr = AccessTokenIDManager::GetInstance();
+    std::set<AccessTokenID> ids(idMgr.tokenIdSet_);
+    ids.insert(idMgr.reservedTokenIdSet_.begin(), idMgr.reservedTokenIdSet_.end());
+    ids.insert(idMgr.untrustedTokenIdSet_.begin(), idMgr.untrustedTokenIdSet_.end());
+    return ids;
+}
+
+// Resolve the bundle name of one token: live cache first, db row fallback.
+static std::string ResolveBundleName(AccessTokenID tokenId)
+{
+    auto inner = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId);
+    if (inner != nullptr) {
+        return inner->GetBundleName();
+    }
+    GenericValues cond;
+    cond.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
+    std::vector<GenericValues> rows;
+    if (AccessTokenDbOperator::Find(
+        AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, cond, rows) == ERR_OK && !rows.empty()) {
+        return rows[0].GetString(TokenFiledConst::FIELD_BUNDLE_NAME);
+    }
+    return "";
+}
+
+// Delete the given tokens through the standard DeleteIdentityCore path
+// (db rows + InfoManager cache + kernel entries in one call), then sweep
+// any remaining package rows for those bundles.
+static void DeleteTokens(const std::set<AccessTokenID>& tokenIds)
+{
+    std::set<std::string> bundleNames;
+    for (AccessTokenID tokenId : tokenIds) {
+        std::string bundleName = ResolveBundleName(tokenId);
+        if (!bundleName.empty()) {
+            bundleNames.insert(bundleName);
+            int32_t sceneCode = 0;
+            DeleteIdentityCore(tokenId, bundleName, ReservedType::NONE, sceneCode);
+        }
+    }
+    for (const auto& bundleName : bundleNames) {
+        int32_t sceneCode = 0;
+        DeleteIdentityCore(INVALID_TOKENID, bundleName, ReservedType::NONE, sceneCode);
+    }
+}
+
 void InstallSessionManagerMockTest::SetUpTestCase()
 {
     atManagerService_ = DelayedSingleton<AccessTokenManagerService>::GetInstance();
@@ -134,26 +190,61 @@ void InstallSessionManagerMockTest::SetUpTestCase()
     AccessTokenInfoManager::GetInstance().Init(nativeSize, pefDefSize, dlpSize);
     g_installSessionManager->SetMigrationDone();
     AccessTokenIDManager::GetInstance().SetMigrationDone();
+
+    // snapshot: every token that exists right now (system tokens installed
+    // outside this test process). No cleanup happens here — we never touch
+    // anything we didn't create.
+    preExistingTokenIds = CollectAllTokenIds();
 }
 
 void InstallSessionManagerMockTest::TearDownTestCase()
 {
+    // safety net: delete any token this test run created that individual
+    // test TearDowns may have missed (e.g. a test crashed mid-assert).
+    // Only tokens NOT in the pre-existing snapshot are deleted.
+    std::set<AccessTokenID> leftover;
+    for (AccessTokenID tokenId : CollectAllTokenIds()) {
+        if (preExistingTokenIds.count(tokenId) == 0) {
+            leftover.insert(tokenId);
+        }
+    }
+    if (!leftover.empty()) {
+        DeleteTokens(leftover);
+    }
+
     g_installSessionManager = nullptr;
     DelayedSingleton<AccessTokenManagerService>::DestroyInstance();
     atManagerService_ = nullptr;
 }
 
 void InstallSessionManagerMockTest::SetUp()
-{}
+{
+    // per-test snapshot: whatever exists before this test starts
+    tokensBeforeThisTest = CollectAllTokenIds();
+}
 
 void InstallSessionManagerMockTest::TearDown()
 {
+    // release any sessions this test left open
     std::vector<int32_t> sessionList;
     for (auto it : g_installSessionManager->sessionToInstallCache) {
         sessionList.emplace_back(it.first);
     }
     for (auto session : sessionList) {
         g_installSessionManager->FinishInstall(session, false, g_modulePathMap);
+    }
+
+    // delete tokens this test created: any token that exists now but was
+    // not in the per-test SetUp snapshot. System tokens (in the snapshot)
+    // are never touched.
+    std::set<AccessTokenID> created;
+    for (AccessTokenID tokenId : CollectAllTokenIds()) {
+        if (tokensBeforeThisTest.count(tokenId) == 0) {
+            created.insert(tokenId);
+        }
+    }
+    if (!created.empty()) {
+        DeleteTokens(created);
     }
 }
 
@@ -555,6 +646,21 @@ size_t CountGrantedBriefs(const std::vector<BriefPermData>& briefs)
         }
     }
     return granted;
+}
+
+// Find the FIELD_TIMESTAMP of one permission row for a token in the db.
+bool FindPermTimestamp(AccessTokenID tokenId, const std::string& permName, int64_t& ts)
+{
+    GenericValues cond;
+    cond.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
+    cond.Put(TokenFiledConst::FIELD_PERMISSION_NAME, permName);
+    std::vector<GenericValues> rows;
+    if (AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_PERMISSION_STATE, cond, rows) != ERR_OK ||
+        rows.size() != 1) {
+        return false;
+    }
+    ts = rows[0].GetInt64(TokenFiledConst::FIELD_TIMESTAMP);
+    return true;
 }
 
 // Install one token per user for the same bundle: the first user goes through
@@ -7909,6 +8015,820 @@ HWTEST_F(InstallSessionManagerMockTest, GetAppIdFromDbModeScopedTest001, TestSiz
     ASSERT_EQ(ERR_OK, DeleteIdentityCore(tokenMain, bundleName, ReservedType::NONE, sceneCode));
     EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, InstallDbRepository::GetAppIdFromDb(
         bundleName, MultipleMode::DEFAULT_OR_MAIN_MODE, appId));
+}
+
+/**
+ * @tc.name: RepairPrepareNoBaseTest001
+ * @tc.desc: Coverage: the FillInstallPolicy failure branch of the repair
+ *           session creation - a PrepareHapIdentity(sessionId=0) for a bundle
+ *           without any installed package base returns ERR_BUNDLE_NOT_EXIST
+ *           and creates no session (GetInfoBySessionTest002 seeds a base
+ *           first, so this branch had zero coverage).
+ * @tc.type: FUNC
+ */
+HWTEST_F(InstallSessionManagerMockTest, RepairPrepareNoBaseTest001, TestSize.Level1)
+{
+    HapBaseInfo baseInfo;
+    baseInfo.userID = 100;
+    baseInfo.bundleName = "RepairNoBase001";
+    baseInfo.instIndex = 0;
+    BundlePolicy bundlePolicy;
+    bundlePolicy.dlpType = DLP_COMMON;
+    bundlePolicy.isDebugGrant = false;
+
+    size_t sessionCountBefore = g_installSessionManager->sessionToInstallCache.size();
+    Identity identity = {0, -1};
+    int32_t sessionId = 0;
+    int32_t ret = g_installSessionManager->PrepareHapIdentity(
+        sessionId, baseInfo, bundlePolicy, nullptr, identity);
+    EXPECT_EQ(ERR_BUNDLE_NOT_EXIST, ret);
+    EXPECT_EQ(0, identity.tokenId);
+    EXPECT_EQ(sessionCountBefore, g_installSessionManager->sessionToInstallCache.size());
+}
+
+/**
+ * @tc.name: PrepareBundleMismatchTest001
+ * @tc.desc: Coverage: the bundleName-mismatch branch of the pre-existing
+ *           session validation - a PrepareHapIdentity whose bundleName differs
+ *           from the sign-verified one is rejected with ERR_PARAM_INVALID and
+ *           the session is rolled back (no half identity).
+ * @tc.type: FUNC
+ */
+HWTEST_F(InstallSessionManagerMockTest, PrepareBundleMismatchTest001, TestSize.Level1)
+{
+    std::string path = "/SYSTEM/system_basic/state:[cam]/acl:[]/Module001/PrepareMismatchBundleA";
+    BundleHapList hapList;
+    hapList.hapPaths.emplace_back(path);
+    hapList.isPreInstalled = false;
+    hapList.userIdForEnterpriseSign = 100;
+
+    int32_t sessionId = 0;
+    std::vector<TrustedBundleInfo> bundleInfo;
+    HapVerifyResultInfo resultInfo;
+    ASSERT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(
+        hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO));
+    HapInfoCheckResult result;
+    ASSERT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
+
+    // the prepare target names a bundle other than the sign-verified one
+    HapBaseInfo badInfo;
+    badInfo.userID = 100;
+    badInfo.bundleName = "PrepareMismatchBundleB";
+    badInfo.instIndex = 0;
+    BundlePolicy bundlePolicy;
+    bundlePolicy.dlpType = DLP_COMMON;
+    bundlePolicy.isDebugGrant = false;
+    Identity identity = {0, -1};
+    int32_t ret = g_installSessionManager->PrepareHapIdentity(sessionId, badInfo, bundlePolicy, nullptr, identity);
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
+    EXPECT_EQ(0, identity.tokenId);
+    EXPECT_EQ(0, static_cast<int>(g_installSessionManager->sessionToInstallCache.count(sessionId)));
+}
+
+/**
+ * @tc.name: GetSignInfoFlagInvalidTest001
+ * @tc.desc: Coverage: the invalid-flag branches of both sign-info query
+ *           entries - an all-zero query flag is rejected by
+ *           GetCacheSignInfoBySessionId and by the bundle-name query.
+ * @tc.type: FUNC
+ */
+HWTEST_F(InstallSessionManagerMockTest, GetSignInfoFlagInvalidTest001, TestSize.Level1)
+{
+    std::string bundleName = "SignFlagInvalid001";
+    std::string path = "/SYSTEM/system_basic/state:[cam]/acl:[]/Module001/" + bundleName;
+    BundleHapList hapList;
+    hapList.hapPaths.emplace_back(path);
+    hapList.isPreInstalled = false;
+    hapList.userIdForEnterpriseSign = 100;
+    int32_t sessionId = 0;
+    std::vector<TrustedBundleInfo> bundleInfo;
+    HapVerifyResultInfo resultInfo;
+    ASSERT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(
+        hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO));
+
+    std::vector<TrustedBundleInfo> infos;
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
+        g_installSessionManager->GetCacheSignInfoBySessionId(sessionId, infos, 0));
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
+        BundleInfoManager::GetInstance().GetHapSignInfo(bundleName, infos, 0));
+
+    std::map<std::string, std::string> modulePathMap;
+    EXPECT_EQ(ERR_OK, g_installSessionManager->FinishInstall(sessionId, false, modulePathMap));
+}
+
+/**
+ * @tc.name: ClearSessionByPidTest001
+ * @tc.desc: Coverage: the proxy-death session recycle itself (ProxyDeathParamTest001
+ *           only covers the param type check) - ClearSessionByPid erases every
+ *           session of the dead caller and releases the acquired token id and
+ *           bundle id back to the id manager sets.
+ * @tc.type: FUNC
+ */
+HWTEST_F(InstallSessionManagerMockTest, ClearSessionByPidTest001, TestSize.Level1)
+{
+    std::string bundleName = "DeathRecycleBundle";
+    std::string path = "/SYSTEM/system_basic/state:[cam]/acl:[]/Module001/" + bundleName;
+    BundlePolicy bundlePolicy;
+    bundlePolicy.dlpType = DLP_COMMON;
+    bundlePolicy.isDebugGrant = false;
+
+    // session A: full prepare, identity acquired
+    BundleHapList hapList;
+    hapList.hapPaths.emplace_back(path);
+    hapList.isPreInstalled = false;
+    hapList.userIdForEnterpriseSign = 100;
+    int32_t sessionIdA = 0;
+    std::vector<TrustedBundleInfo> bundleInfo;
+    HapVerifyResultInfo resultInfo;
+    ASSERT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(
+        hapList, nullptr, sessionIdA, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO));
+    HapInfoCheckResult result;
+    ASSERT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(
+        sessionIdA, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
+    HapBaseInfo baseInfo;
+    baseInfo.userID = 100;
+    baseInfo.bundleName = bundleName;
+    baseInfo.instIndex = 0;
+    Identity identity = {0, -1};
+    ASSERT_EQ(ERR_OK, g_installSessionManager->PrepareHapIdentity(
+        sessionIdA, baseInfo, bundlePolicy, nullptr, identity));
+    AccessTokenID tokenId = static_cast<AccessTokenID>(identity.tokenId);
+    int32_t bundleId = identity.uid % UID_MASK;
+
+    // session B: sign-checked only, same caller pid
+    int32_t sessionIdB = 0;
+    ASSERT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(
+        hapList, nullptr, sessionIdB, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO));
+    ASSERT_EQ(2U, g_installSessionManager->sessionToInstallCache.size());
+
+    int32_t callerPid = g_installSessionManager->sessionToInstallCache[sessionIdA].callerPid;
+    g_installSessionManager->ClearSessionByPid(callerPid);
+
+    // both sessions of the dead caller are cleared and the acquired ids are released
+    EXPECT_TRUE(g_installSessionManager->sessionToInstallCache.empty());
+    EXPECT_EQ(0U, AccessTokenIDManager::GetInstance().tokenIdSet_.count(tokenId));
+    EXPECT_EQ(0U, AccessTokenIDManager::GetInstance().bundleIdSet_.count(bundleId));
+}
+
+/**
+ * @tc.name: GetHapAppIdFallbackTest001
+ * @tc.desc: Coverage: the unknown-token and the legacy-fallback branches of
+ *           GetHapAppIdByTokenId - an unknown token id is rejected up front;
+ *           when the sign channel has no package rows for the bundle the
+ *           legacy db read of the token row still resolves the appId.
+ * @tc.type: FUNC
+ */
+HWTEST_F(InstallSessionManagerMockTest, GetHapAppIdFallbackTest001, TestSize.Level1)
+{
+    std::string bundleName = "AppIdFallbackBundle";
+    std::string path = "/SYSTEM/system_basic/state:[cam]/acl:[]/Module001/" + bundleName;
+    HapBaseInfo baseInfo;
+    baseInfo.userID = 100;
+    baseInfo.bundleName = bundleName;
+    baseInfo.instIndex = 0;
+    BundlePolicy bundlePolicy;
+    bundlePolicy.dlpType = DLP_COMMON;
+    bundlePolicy.isDebugGrant = false;
+    Identity identity = {0, -1};
+    InstallHap({path}, baseInfo, bundlePolicy, identity);
+    AccessTokenID tokenId = static_cast<AccessTokenID>(identity.tokenId);
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+
+    // unknown token id: rejected before any channel is tried
+    std::string appId;
+    EXPECT_EQ(AccessTokenError::ERR_TOKENID_NOT_EXIST,
+        BundleInfoManager::GetInstance().GetHapAppIdByTokenId(0x28888888, appId));
+
+    // drop the package rows: the sign channel finds nothing and the legacy db
+    // read of the token row resolves the appId (mock FillBundleParam value)
+    GenericValues delCondition;
+    delCondition.Put(TokenFiledConst::FIELD_BUNDLE_NAME, bundleName);
+    std::vector<DelInfo> delInfoVec;
+    AccessTokenInfoUtils::GenerateDelInfoToVec(AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO, delCondition, delInfoVec);
+    std::vector<AddInfo> addInfoVec;
+    ASSERT_EQ(ERR_OK, AccessTokenDbOperator::DeleteAndInsertValues(delInfoVec, addInfoVec));
+
+    EXPECT_EQ(ERR_OK, BundleInfoManager::GetInstance().GetHapAppIdByTokenId(tokenId, appId));
+    EXPECT_EQ(bundleName + "aaaaa", appId);
+
+    int32_t sceneCode = 0;
+    EXPECT_EQ(ERR_OK, DeleteIdentityCore(tokenId, bundleName, ReservedType::NONE, sceneCode));
+}
+
+/**
+ * @tc.name: UpdateDebugSkipInheritTest001
+ * @tc.desc: Coverage: both skip branches of ShouldSkipPermInheritance on the
+ *           update path - a double-side debug update resets a user-set grant
+ *           (no inheritance), and a plain update on a debug-flagged token
+ *           resets it too (attr-based skip).
+ * @tc.type: FUNC
+ */
+HWTEST_F(InstallSessionManagerMockTest, UpdateDebugSkipInheritTest001, TestSize.Level1)
+{
+    std::string bundleName = "DebugSkipInheritBundle";
+    std::string debugPath = "/SYSTEM/DEBUG/system_basic/state:[cam,mic]/acl:[]/Module001/" + bundleName;
+    std::string plainPath = "/SYSTEM/system_basic/state:[cam,mic]/acl:[]/Module001/" + bundleName;
+
+    // first install with both debug sides: cam auto-granted, mic user-granted
+    HapBaseInfo baseInfo;
+    baseInfo.userID = 100;
+    baseInfo.bundleName = bundleName;
+    baseInfo.instIndex = 0;
+    BundlePolicy debugPolicy;
+    debugPolicy.dlpType = DLP_COMMON;
+    debugPolicy.isDebugGrant = true;
+    Identity identity = {0, -1};
+    InstallHap({debugPath}, baseInfo, debugPolicy, identity);
+    AccessTokenID tokenId = static_cast<AccessTokenID>(identity.tokenId);
+    ASSERT_EQ(PERMISSION_GRANTED, atManagerService_->VerifyAccessToken(tokenId, "ohos.permission.CAMERA"));
+    ASSERT_EQ(ERR_OK, atManagerService_->GrantPermission(
+        tokenId, "ohos.permission.MICROPHONE", 2, USER_GRANTED_PERM));
+    ASSERT_EQ(PERMISSION_GRANTED, atManagerService_->VerifyAccessToken(tokenId, "ohos.permission.MICROPHONE"));
+
+    // round 1: still double-side debug -> inheritance skipped but debug
+    // auto-grant re-initializes mic as GRANTED (skip ≠ deny; it means "new
+    // initial state", which for debug is GRANTED)
+    int32_t sessionId = 0;
+    ASSERT_EQ(ERR_OK, StartReplaceSession(debugPath, sessionId));
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx.tokenIDEx = tokenId;
+    int32_t uid = -1; // no uid expectation
+    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, debugPolicy, uid));
+    std::map<std::string, std::string> modulePathMap;
+    modulePathMap[debugPath] = debugPath;
+    ASSERT_EQ(ERR_OK, g_installSessionManager->FinishInstall(sessionId, true, modulePathMap));
+    EXPECT_EQ(PERMISSION_GRANTED, atManagerService_->VerifyAccessToken(tokenId, "ohos.permission.MICROPHONE"));
+    EXPECT_EQ(PERMISSION_GRANTED, atManagerService_->VerifyAccessToken(tokenId, "ohos.permission.CAMERA"));
+
+    // round 2: plain update on the still debug-flagged token -> attr-based skip
+    ASSERT_EQ(ERR_OK, atManagerService_->GrantPermission(
+        tokenId, "ohos.permission.MICROPHONE", 2, USER_GRANTED_PERM));
+    int32_t plainSessionId = 0;
+    ASSERT_EQ(ERR_OK, StartReplaceSession(plainPath, plainSessionId));
+    BundlePolicy plainPolicy;
+    plainPolicy.dlpType = DLP_COMMON;
+    plainPolicy.isDebugGrant = false;
+    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(plainSessionId, tokenIdEx, plainPolicy, uid));
+    std::map<std::string, std::string> plainPathMap;
+    plainPathMap[plainPath] = plainPath;
+    ASSERT_EQ(ERR_OK, g_installSessionManager->FinishInstall(plainSessionId, true, plainPathMap));
+    EXPECT_EQ(PERMISSION_DENIED, atManagerService_->VerifyAccessToken(tokenId, "ohos.permission.MICROPHONE"));
+    EXPECT_EQ(PERMISSION_DENIED, atManagerService_->VerifyAccessToken(tokenId, "ohos.permission.CAMERA"));
+
+    int32_t sceneCode = 0;
+    EXPECT_EQ(ERR_OK, DeleteIdentityCore(INVALID_TOKENID, bundleName, ReservedType::NONE, sceneCode));
+}
+
+/**
+ * @tc.name: UpdateTimestampPreservationTest001
+ * @tc.desc: Coverage: the timestamp arbitration in
+ *           ConvertBriefPermDataToGenericValues - after a REPLACE update, a
+ *           permission whose name+status+flag are unchanged keeps its original
+ *           DB timestamp; a newly added permission gets a fresh timestamp.
+ * @tc.type: FUNC
+ */
+HWTEST_F(InstallSessionManagerMockTest, UpdateTimestampPreservationTest001, TestSize.Level1)
+{
+    std::string bundleName = "TimestampKeepBundle";
+    std::string path = "/SYSTEM/system_basic/state:[cam,mic]/acl:[]/Module001/" + bundleName;
+    HapBaseInfo baseInfo;
+    baseInfo.userID = 100;
+    baseInfo.bundleName = bundleName;
+    baseInfo.instIndex = 0;
+    BundlePolicy bundlePolicy;
+    bundlePolicy.dlpType = DLP_COMMON;
+    bundlePolicy.isDebugGrant = false;
+    Identity identity = {0, -1};
+    InstallHap({path}, baseInfo, bundlePolicy, identity);
+    AccessTokenID tokenId = static_cast<AccessTokenID>(identity.tokenId);
+    ASSERT_EQ(ERR_OK, atManagerService_->GrantPermission(
+        tokenId, "ohos.permission.CAMERA", 2, USER_GRANTED_PERM));
+
+    int64_t camTsBefore = 0;
+    ASSERT_TRUE(FindPermTimestamp(tokenId, "ohos.permission.CAMERA", camTsBefore));
+
+    sleep(2); // guarantee the wall clock advances past camTsBefore
+
+    // REPLACE update: same cam+mic plus a new syswin
+    std::string newPath = "/SYSTEM/system_basic/state:[cam,mic,syswin]/acl:[]/Module001/" + bundleName;
+    int32_t sessionId = 0;
+    ASSERT_EQ(ERR_OK, StartReplaceSession(newPath, sessionId));
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx.tokenIDEx = tokenId;
+    int32_t uid = -1; // no uid expectation
+    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid));
+    std::map<std::string, std::string> modulePathMap;
+    modulePathMap[newPath] = newPath;
+    ASSERT_EQ(ERR_OK, g_installSessionManager->FinishInstall(sessionId, true, modulePathMap));
+
+    // unchanged permission (same name+status+flag): timestamp preserved
+    int64_t camTsAfter = 0;
+    ASSERT_TRUE(FindPermTimestamp(tokenId, "ohos.permission.CAMERA", camTsAfter));
+    EXPECT_EQ(camTsBefore, camTsAfter);
+    // newly added permission: fresh timestamp, strictly greater
+    int64_t syswinTs = 0;
+    ASSERT_TRUE(FindPermTimestamp(tokenId, "ohos.permission.SYSTEM_FLOAT_WINDOW", syswinTs));
+    EXPECT_GT(syswinTs, camTsBefore);
+
+    int32_t sceneCode = 0;
+    EXPECT_EQ(ERR_OK, DeleteIdentityCore(INVALID_TOKENID, bundleName, ReservedType::NONE, sceneCode));
+}
+
+/**
+ * @tc.name: UpdatePermRowContentAfterRemovalTest001
+ * @tc.desc: Coverage: L3-db content assertion after module removal - when a
+ *           REPLACE update drops a module, the remaining permission rows carry
+ *           the correct grant state and flag (not just the right row count).
+ * @tc.type: FUNC
+ */
+HWTEST_F(InstallSessionManagerMockTest, UpdatePermRowContentAfterRemovalTest001, TestSize.Level1)
+{
+    std::string bundleName = "RowContentRemovalBundle";
+    std::string path1 = "/SYSTEM/system_basic/state:[cam,syswin]/acl:[]/Module001/" + bundleName;
+    std::string path2 = "/SYSTEM/system_basic/state:[mic]/acl:[]/Module002/" + bundleName;
+    HapBaseInfo baseInfo;
+    baseInfo.userID = 100;
+    baseInfo.bundleName = bundleName;
+    baseInfo.instIndex = 0;
+    BundlePolicy bundlePolicy;
+    bundlePolicy.dlpType = DLP_COMMON;
+    bundlePolicy.isDebugGrant = false;
+    Identity identity = {0, -1};
+    InstallHap({path1, path2}, baseInfo, bundlePolicy, identity);
+    AccessTokenID tokenId = static_cast<AccessTokenID>(identity.tokenId);
+    ASSERT_EQ(ERR_OK, atManagerService_->GrantPermission(
+        tokenId, "ohos.permission.CAMERA", 2, USER_GRANTED_PERM));
+
+    // REPLACE update keeping only Module001 (cam+syswin): mic module removed
+    int32_t sessionId = 0;
+    ASSERT_EQ(ERR_OK, StartReplaceSession(path1, sessionId));
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx.tokenIDEx = tokenId;
+    int32_t uid = -1; // no uid expectation
+    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid));
+    std::map<std::string, std::string> modulePathMap;
+    modulePathMap[path1] = path1;
+    ASSERT_EQ(ERR_OK, g_installSessionManager->FinishInstall(sessionId, true, modulePathMap));
+
+    GenericValues condition;
+    condition.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
+    std::vector<GenericValues> permRows;
+    ASSERT_EQ(ERR_OK, AccessTokenDbOperator::Find(
+        AtmDataType::ACCESSTOKEN_PERMISSION_STATE, condition, permRows));
+    ASSERT_EQ(2U, permRows.size()); // mic gone, cam+syswin remain
+
+    for (const auto& row : permRows) {
+        std::string permName = row.GetString(TokenFiledConst::FIELD_PERMISSION_NAME);
+        int32_t grantState = row.GetInt(TokenFiledConst::FIELD_GRANT_STATE);
+        if (permName == "ohos.permission.CAMERA") {
+            EXPECT_EQ(PERMISSION_GRANTED, grantState);
+        } else if (permName == "ohos.permission.SYSTEM_FLOAT_WINDOW") {
+            EXPECT_EQ(PERMISSION_GRANTED, grantState);
+        } else {
+            FAIL() << "unexpected permission row: " << permName;
+        }
+    }
+    AssertPermRowAbsent(tokenId, "ohos.permission.MICROPHONE");
+    int32_t sceneCode = 0;
+    EXPECT_EQ(ERR_OK, DeleteIdentityCore(INVALID_TOKENID, bundleName, ReservedType::NONE, sceneCode));
+}
+
+/**
+ * @tc.name: PermStateRemoteDeviceFilterTest001
+ * @tc.desc: Coverage: the local-device filter in GetLocalPermStateListFromDb -
+ *           a perm-state row written with a remote device id does not leak
+ *           into the local perm list used for the update's timestamp
+ *           arbitration and status resolution.
+ * @tc.type: FUNC
+ */
+HWTEST_F(InstallSessionManagerMockTest, PermStateRemoteDeviceFilterTest001, TestSize.Level1)
+{
+    std::string bundleName = "RemoteFilterBundle";
+    std::string path = "/SYSTEM/system_basic/state:[cam]/acl:[]/Module001/" + bundleName;
+    HapBaseInfo baseInfo;
+    baseInfo.userID = 100;
+    baseInfo.bundleName = bundleName;
+    baseInfo.instIndex = 0;
+    BundlePolicy bundlePolicy;
+    bundlePolicy.dlpType = DLP_COMMON;
+    bundlePolicy.isDebugGrant = false;
+    Identity identity = {0, -1};
+    InstallHap({path}, baseInfo, bundlePolicy, identity);
+    AccessTokenID tokenId = static_cast<AccessTokenID>(identity.tokenId);
+
+    // insert a remote-device row with a very old timestamp for the same perm
+    GenericValues remoteRow;
+    remoteRow.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
+    remoteRow.Put(TokenFiledConst::FIELD_PERMISSION_NAME, "ohos.permission.CAMERA");
+    remoteRow.Put(TokenFiledConst::FIELD_DEVICE_ID, "REMOTE-DEVICE-XYZ");
+    remoteRow.Put(TokenFiledConst::FIELD_GRANT_IS_GENERAL, 1);
+    remoteRow.Put(TokenFiledConst::FIELD_GRANT_STATE, PERMISSION_DENIED);
+    remoteRow.Put(TokenFiledConst::FIELD_GRANT_FLAG, 0);
+    remoteRow.Put(TokenFiledConst::FIELD_TIMESTAMP, static_cast<int64_t>(1)); // distinguishable
+    std::vector<GenericValues> remoteRows = {remoteRow};
+    std::vector<AddInfo> addInfoVec;
+    AccessTokenInfoUtils::GenerateAddInfoToVec(
+        AtmDataType::ACCESSTOKEN_PERMISSION_STATE, remoteRows, addInfoVec);
+    std::vector<DelInfo> delInfoVec;
+    ASSERT_EQ(ERR_OK, AccessTokenDbOperator::DeleteAndInsertValues(delInfoVec, addInfoVec));
+
+    // the local list must contain exactly one entry (the local cam row);
+    // a leaked remote row would make the count 2
+    std::vector<PermissionStatus> localPermList;
+    ASSERT_EQ(ERR_OK, InstallDbRepository::GetLocalPermStateListFromDb(tokenId, localPermList));
+    EXPECT_EQ(1U, localPermList.size());
+
+    int32_t sceneCode = 0;
+    EXPECT_EQ(ERR_OK, DeleteIdentityCore(INVALID_TOKENID, bundleName, ReservedType::NONE, sceneCode));
+}
+
+/**
+ * @tc.name: DlpInstallNoSourceTest001
+ * @tc.desc: Coverage: the InitDlpPermission failure branch in AllocHapInfo -
+ *           a four-stage install with DLP type for a bundle that has no
+ *           existing main app fails at FinishInstall with
+ *           ERR_PERM_REQUEST_CFG_FAILED (the DLP source at instIndex=0
+ *           cannot be resolved).
+ * @tc.type: FUNC
+ */
+HWTEST_F(InstallSessionManagerMockTest, DlpInstallNoSourceTest001, TestSize.Level1)
+{
+    std::string bundleName = "DlpNoSourceBundle";
+    std::string path = "/SYSTEM/system_basic/state:[cam]/acl:[]/Module001/" + bundleName;
+
+    // phase 1 + 2: no existing data, TYPE_INSTALL passes
+    BundleHapList hapList;
+    hapList.hapPaths.emplace_back(path);
+    hapList.isPreInstalled = false;
+    hapList.userIdForEnterpriseSign = 100;
+    int32_t sessionId = 0;
+    std::vector<TrustedBundleInfo> bundleInfo;
+    HapVerifyResultInfo resultInfo;
+    ASSERT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(
+        hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO));
+    HapInfoCheckResult result;
+    ASSERT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
+
+    // phase 3: clone position (instIndex=1), DLP type - prepare succeeds
+    HapBaseInfo baseInfo;
+    baseInfo.userID = 100;
+    baseInfo.bundleName = bundleName;
+    baseInfo.instIndex = 1;
+    BundlePolicy dlpPolicy;
+    dlpPolicy.dlpType = DLP_READ;
+    dlpPolicy.isDebugGrant = false;
+    Identity identity = {0, -1};
+    ASSERT_EQ(ERR_OK, g_installSessionManager->PrepareHapIdentity(
+        sessionId, baseInfo, dlpPolicy, nullptr, identity));
+    ASSERT_NE(0, identity.tokenId);
+
+    // phase 4: AllocHapInfo → InitDlpPermission fails: source at
+    // (100, bundleName, 0) does not exist
+    std::map<std::string, std::string> modulePathMap;
+    modulePathMap[path] = path;
+    int32_t ret = g_installSessionManager->FinishInstall(sessionId, true, modulePathMap);
+    EXPECT_EQ(ERR_PERM_REQUEST_CFG_FAILED, ret);
+    // the rollback released the acquired identity
+    EXPECT_EQ(0, static_cast<int>(g_installSessionManager->sessionToInstallCache.count(sessionId)));
+}
+
+/**
+ * @tc.name: GetCachePolicyEmptyPermTest001
+ * @tc.desc: Coverage: the empty-permission session path of
+ *           GetCachePolicyBySessionId - a session installed with state:[]
+ *           yields an empty reqPermissions list (not an error).
+ * @tc.type: FUNC
+ */
+HWTEST_F(InstallSessionManagerMockTest, GetCachePolicyEmptyPermTest001, TestSize.Level1)
+{
+    std::string bundleName = "EmptyPermPolicyBundle";
+    std::string path = "/SYSTEM/system_basic/state:[]/acl:[]/Module001/" + bundleName;
+
+    BundleHapList hapList;
+    hapList.hapPaths.emplace_back(path);
+    hapList.isPreInstalled = false;
+    hapList.userIdForEnterpriseSign = 100;
+    int32_t sessionId = 0;
+    std::vector<TrustedBundleInfo> bundleInfo;
+    HapVerifyResultInfo resultInfo;
+    ASSERT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(
+        hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO));
+    HapInfoCheckResult result;
+    ASSERT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_INSTALL, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
+
+    // the policy has no permission states: reqPermissions is empty, not an error
+    BundlePolicyInfo policyInfo;
+    int32_t ret = g_installSessionManager->GetCachePolicyBySessionId(sessionId, bundleName, policyInfo);
+    EXPECT_EQ(ERR_OK, ret);
+    EXPECT_TRUE(policyInfo.reqPermissions.empty());
+
+    std::map<std::string, std::string> modulePathMap;
+    EXPECT_EQ(ERR_OK, g_installSessionManager->FinishInstall(sessionId, false, modulePathMap));
+}
+
+/**
+ * @tc.name: UpdateUidRollbackBundleIdReleaseTest001
+ * @tc.desc: Coverage: the updatedUidStateMap iteration with isNewBundleId in
+ *           RollbackIdentity - after a level 3 uid adoption and a non-persistent
+ *           finish rollback, the newly acquired bundleId is released from the
+ *           id manager set (the precise assertion that UpdateHapTest014's
+ *           original nullptr-guard check could not make).
+ * @tc.type: FUNC
+ */
+HWTEST_F(InstallSessionManagerMockTest, UpdateUidRollbackBundleIdReleaseTest001, TestSize.Level1)
+{
+    std::string bundleName = "UidLeakStrongBundle";
+    std::string path = "/SYSTEM/system_basic/state:[cam]/acl:[]/Module001/" + bundleName;
+    HapBaseInfo baseInfo;
+    baseInfo.userID = 100;
+    baseInfo.bundleName = bundleName;
+    baseInfo.instIndex = 0;
+    BundlePolicy bundlePolicy;
+    bundlePolicy.dlpType = DLP_COMMON;
+    bundlePolicy.isDebugGrant = false;
+    Identity identity = {0, -1};
+    InstallHap({path}, baseInfo, bundlePolicy, identity);
+    AccessTokenID tokenId = static_cast<AccessTokenID>(identity.tokenId);
+
+    // simulate a migration-abnormal uid=-1 state
+    ASSERT_TRUE(SetUidInvalidInDbAndCache(tokenId));
+
+    // level 3 adoption: UpdateHapPolicy with a reusable uid acquires a new bundleId
+    int32_t sessionId = 0;
+    ASSERT_EQ(ERR_OK, StartReplaceSession(path, sessionId));
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx.tokenIDEx = tokenId;
+    BundlePolicy updatePolicy;
+    updatePolicy.dlpType = DLP_COMMON;
+    updatePolicy.isDebugGrant = false;
+    int32_t uid = TEST_UID2;
+    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, updatePolicy, uid));
+    ASSERT_EQ(TEST_UID2, uid);
+    // the new bundleId is registered by the adoption
+    int32_t adoptedBundleId = TEST_UID2 % UID_MASK;
+    EXPECT_EQ(1U, AccessTokenIDManager::GetInstance().bundleIdSet_.count(adoptedBundleId));
+
+    // non-persistent finish rolls the session back
+    std::map<std::string, std::string> modulePathMap;
+    modulePathMap[path] = path;
+    ASSERT_EQ(ERR_OK, g_installSessionManager->FinishInstall(sessionId, false, modulePathMap));
+
+    // RollbackIdentity releases the adopted bundleId (isNewBundleId=true path)
+    EXPECT_EQ(0U, AccessTokenIDManager::GetInstance().bundleIdSet_.count(adoptedBundleId));
+
+    int32_t sceneCode = 0;
+    EXPECT_EQ(ERR_OK, DeleteIdentityCore(INVALID_TOKENID, bundleName, ReservedType::NONE, sceneCode));
+}
+
+/**
+ * @tc.name: DlpSupplementUpdateTest001
+ * @tc.desc: Coverage: the DLP filter path in BuildUpdatedPermList when a DLP
+ *           clone is supplemented during a REPLACE update - the per-token
+ *           dlpType from SupplementUpdateInfo (infoPtr->GetDlpType()) drives
+ *           FilterPermState in the update chain (previously only exercised
+ *           at install time by AppCloneTest002, never at update time).
+ * @tc.type: FUNC
+ */
+HWTEST_F(InstallSessionManagerMockTest, DlpSupplementUpdateTest001, TestSize.Level1)
+{
+    std::string bundleName = "DlpSupplementBundle";
+    std::string path = "/SYSTEM/system_basic/state:[cam,mic]/acl:[]/Module001/" + bundleName;
+    BundlePolicy bundlePolicy = CommonBundlePolicy();
+
+    // main app install
+    HapBaseInfo baseInfo;
+    baseInfo.userID = 100;
+    baseInfo.bundleName = bundleName;
+    baseInfo.instIndex = 0;
+    Identity identity = {0, -1};
+    InstallHap({path}, baseInfo, bundlePolicy, identity);
+    AccessTokenID mainTokenId = static_cast<AccessTokenID>(identity.tokenId);
+
+    // DLP clone (instIndex=1, DLP_FULL_CONTROL): created beside the main app
+    BundlePolicy dlpPolicy;
+    dlpPolicy.dlpType = DLP_FULL_CONTROL;
+    dlpPolicy.isDebugGrant = false;
+    AccessTokenID dlpTokenId = InstallBundleSiblingToken(
+        MakeSiblingInfo(bundleName, 100, 1), dlpPolicy);
+    ASSERT_NE(INVALID_TOKENID, dlpTokenId);
+    ASSERT_EQ(1, TokenIDAttributes::GetTokenIdDlpFlag(dlpTokenId));
+
+    // REPLACE update: new version adds syswin, explicitly names main app only
+    std::string newPath = "/SYSTEM/system_basic/state:[cam,mic,syswin]/acl:[]/Module001/" + bundleName;
+    int32_t sessionId = 0;
+    ASSERT_EQ(ERR_OK, StartReplaceSession(newPath, sessionId));
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx.tokenIDEx = mainTokenId;
+    int32_t uid = -1; // no uid expectation
+    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid));
+    std::map<std::string, std::string> modulePathMap;
+    modulePathMap[newPath] = newPath;
+    ASSERT_EQ(ERR_OK, g_installSessionManager->FinishInstall(sessionId, true, modulePathMap));
+
+    // the supplemented DLP clone gets the new policy; user_grant permissions
+    // reset to the new initial state (DENIED) because the update path uses
+    // InitPermissionList + FilterPermState (not the install-time
+    // InitDlpPermission which grants all for FULL_CONTROL); system_grant
+    // permissions (syswin) are GRANTED
+    EXPECT_EQ(PERMISSION_GRANTED,
+        atManagerService_->VerifyAccessToken(dlpTokenId, "ohos.permission.SYSTEM_FLOAT_WINDOW"));
+    // control: the main app itself is also updated
+    EXPECT_EQ(PERMISSION_GRANTED,
+        atManagerService_->VerifyAccessToken(mainTokenId, "ohos.permission.SYSTEM_FLOAT_WINDOW"));
+
+    int32_t sceneCode = 0;
+    EXPECT_EQ(ERR_OK, DeleteIdentityCore(INVALID_TOKENID, bundleName, ReservedType::NONE, sceneCode));
+}
+
+/**
+ * @tc.name: MergeSignInfoTruncateTest001
+ * @tc.desc: Coverage: the signCount truncation in GetCacheSignInfoBySessionId
+ *           after a MERGE session - the query returns only the originally
+ *           verified modules (first hapPaths.size() entries), not the
+ *           merge-appended old modules from the db.
+ * @tc.type: FUNC
+ */
+HWTEST_F(InstallSessionManagerMockTest, MergeSignInfoTruncateTest001, TestSize.Level1)
+{
+    std::string bundleName = "MergeTruncateBundle";
+    std::string path1 = "/SYSTEM/system_basic/state:[cam]/acl:[]/Module001/" + bundleName;
+    std::string path2 = "/SYSTEM/system_basic/state:[mic]/acl:[]/Module002/" + bundleName;
+    std::string path3 = "/SYSTEM/system_basic/state:[syswin]/acl:[]/Module003/" + bundleName;
+
+    // first install: Module001 + Module002
+    HapBaseInfo baseInfo;
+    baseInfo.userID = 100;
+    baseInfo.bundleName = bundleName;
+    baseInfo.instIndex = 0;
+    BundlePolicy bundlePolicy = CommonBundlePolicy();
+    Identity identity = {0, -1};
+    InstallHap({path1, path2}, baseInfo, bundlePolicy, identity);
+
+    // MERGE session: Module002 (new version) + Module003 (new module)
+    BundleHapList hapList;
+    hapList.hapPaths.emplace_back(path2);
+    hapList.hapPaths.emplace_back(path3);
+    hapList.isPreInstalled = false;
+    hapList.userIdForEnterpriseSign = 100;
+    int32_t sessionId = 0;
+    std::vector<TrustedBundleInfo> bundleInfo;
+    HapVerifyResultInfo resultInfo;
+    ASSERT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(
+        hapList, nullptr, sessionId, bundleInfo, resultInfo, QUERY_ALL_SIGN_INFO));
+    HapInfoCheckResult result;
+    ASSERT_EQ(ERR_OK, g_installSessionManager->CheckHapPermissionInfo(
+        sessionId, TYPE_MERGE, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
+
+    // after merge: bundleInfos has 3 entries (Module002_new, Module003, Module001_old)
+    // but the sign info query truncates to the session's 2 verified modules
+    std::vector<TrustedBundleInfo> signInfo;
+    ASSERT_EQ(ERR_OK, g_installSessionManager->GetCacheSignInfoBySessionId(
+        sessionId, signInfo, QUERY_ALL_SIGN_INFO));
+    EXPECT_EQ(2U, signInfo.size()); // not 3: Module001_old is excluded by truncation
+
+    std::map<std::string, std::string> modulePathMap;
+    modulePathMap[path2] = path2;
+    modulePathMap[path3] = path3;
+    EXPECT_EQ(ERR_OK, g_installSessionManager->FinishInstall(sessionId, true, modulePathMap));
+
+    int32_t sceneCode = 0;
+    EXPECT_EQ(ERR_OK, DeleteIdentityCore(INVALID_TOKENID, bundleName, ReservedType::NONE, sceneCode));
+}
+
+/**
+ * @tc.name: SignInfoQueryFlagSelectTest001
+ * @tc.desc: Coverage: the flag-based field selection in
+ *           ConvertTrustedBundleInfo - QUERY_PROFILE returns profileData
+ *           only (moduleInfo empty); QUERY_MODULE_INFO returns moduleInfo
+ *           only (profileData.appId empty); the unselected fields stay
+ *           default-constructed.
+ * @tc.type: FUNC
+ */
+HWTEST_F(InstallSessionManagerMockTest, SignInfoQueryFlagSelectTest001, TestSize.Level0)
+{
+    std::string bundleName = "FlagSelectBundle";
+    std::string path = "/SYSTEM/system_basic/state:[cam]/acl:[]/Module001/" + bundleName;
+
+    // QUERY_PROFILE: only profileData populated
+    BundleHapList hapList;
+    hapList.hapPaths.emplace_back(path);
+    hapList.isPreInstalled = false;
+    hapList.userIdForEnterpriseSign = 100;
+    int32_t sessionId = 0;
+    std::vector<TrustedBundleInfo> profileOnly;
+    HapVerifyResultInfo resultInfo;
+    ASSERT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(
+        hapList, nullptr, sessionId, profileOnly, resultInfo, QUERY_PROFILE));
+    ASSERT_EQ(1U, profileOnly.size());
+    EXPECT_FALSE(profileOnly[0].profileData.appId.empty()); // profile is populated
+    EXPECT_TRUE(profileOnly[0].moduleInfo.empty()); // module info NOT requested
+    EXPECT_TRUE(profileOnly[0].sharedFiles.empty()); // shared files NOT requested
+
+    // QUERY_MODULE_INFO: only moduleInfo populated
+    int32_t sessionId2 = 0;
+    std::vector<TrustedBundleInfo> moduleOnly;
+    ASSERT_EQ(ERR_OK, g_installSessionManager->CheckHapSignInfo(
+        hapList, nullptr, sessionId2, moduleOnly, resultInfo, QUERY_MODULE_INFO));
+    ASSERT_EQ(1U, moduleOnly.size());
+    EXPECT_FALSE(moduleOnly[0].moduleInfo.empty()); // module info is populated
+    EXPECT_TRUE(moduleOnly[0].profileData.appId.empty()); // profile NOT requested
+    EXPECT_TRUE(moduleOnly[0].sharedFiles.empty()); // shared files NOT requested
+
+    // cleanup both sessions
+    std::map<std::string, std::string> modulePathMap;
+    EXPECT_EQ(ERR_OK, g_installSessionManager->FinishInstall(sessionId, false, modulePathMap));
+    EXPECT_EQ(ERR_OK, g_installSessionManager->FinishInstall(sessionId2, false, modulePathMap));
+}
+
+/**
+ * @tc.name: UpdateUidAllSiblingsInvalidTest001
+ * @tc.desc: Coverage: the level-2 fallthrough branch in ResolveUpdateUid -
+ *           QueryBundleTokenbyIndex returns rows but every uid is -1
+ *           (migration-abnormal siblings), so bundleRefUid stays INVALID_UID
+ *           and the resolution falls to level 3 (adopt or fresh allocation).
+ *           UpdateHapTest010 covers level-2 success (sibling has valid uid);
+ *           this test covers the "rows found but all invalid" path.
+ * @tc.type: FUNC
+ */
+HWTEST_F(InstallSessionManagerMockTest, UpdateUidAllSiblingsInvalidTest001, TestSize.Level1)
+{
+    std::string bundleName = "AllSiblingsInvalidBundle";
+    std::string path = "/SYSTEM/system_basic/state:[cam]/acl:[]/Module001/" + bundleName;
+    BundlePolicy bundlePolicy = CommonBundlePolicy();
+
+    // main app (user100) + cross-user sibling (user101), both at instIndex=0
+    AccessTokenID mainTokenId = InstallAppWithMode(path, bundleName, 100, 0,
+        MultipleMode::DEFAULT_OR_MAIN_MODE);
+    AccessTokenID siblingTokenId = InstallBundleSiblingToken(MakeSiblingInfo(bundleName, 101, 0),
+        bundlePolicy);
+    ASSERT_NE(INVALID_TOKENID, mainTokenId);
+    ASSERT_NE(INVALID_TOKENID, siblingTokenId);
+
+    // migration-abnormal: both tokens have uid=-1 in db and cache
+    ASSERT_TRUE(SetUidInvalidInDbAndCache(mainTokenId));
+    ASSERT_TRUE(SetUidInvalidInDbAndCache(siblingTokenId));
+
+    // REPLACE update with a reusable uid: level 1 fails (uid==-1), level 2
+    // finds rows but all uid==-1 (fallthrough), level 3 adopts TEST_UID2
+    int32_t sessionId = 0;
+    ASSERT_EQ(ERR_OK, StartReplaceSession(path, sessionId));
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx.tokenIDEx = mainTokenId;
+    int32_t uid = TEST_UID2;
+    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid));
+    EXPECT_EQ(TEST_UID2, uid); // level 3 adoption, not a TranslateUid result
+
+    std::map<std::string, std::string> modulePathMap;
+    modulePathMap[path] = path;
+    ASSERT_EQ(ERR_OK, g_installSessionManager->FinishInstall(sessionId, true, modulePathMap));
+
+    int32_t sceneCode = 0;
+    EXPECT_EQ(ERR_OK, DeleteIdentityCore(INVALID_TOKENID, bundleName, ReservedType::NONE, sceneCode));
+}
+
+/**
+ * @tc.name: CloneNoValidSiblingUidTest001
+ * @tc.desc: Coverage: the uid==INVALID_UID sub-branch in GetTokenIdAndUid's
+ *           cross-user path - a cross-user sibling at the same instIndex has
+ *           uid=-1 (migration abnormal), so bundleRefUid stays INVALID_UID
+ *           and the new clone gets a fresh uid allocation instead of a
+ *           TranslateUid from the sibling (AppCloneTest004's valid-uid path).
+ * @tc.type: FUNC
+ */
+HWTEST_F(InstallSessionManagerMockTest, CloneNoValidSiblingUidTest001, TestSize.Level1)
+{
+    std::string bundleName = "CloneNoValidSiblingBundle";
+    std::string path = "/SYSTEM/system_basic/state:[cam]/acl:[]/Module001/" + bundleName;
+    BundlePolicy bundlePolicy = CommonBundlePolicy();
+
+    // main app at (100, bundle, 0)
+    AccessTokenID mainTokenId = InstallAppWithMode(path, bundleName, 100, 0,
+        MultipleMode::DEFAULT_OR_MAIN_MODE);
+    ASSERT_NE(INVALID_TOKENID, mainTokenId);
+
+    // migration-abnormal: main app's uid becomes -1 in db and cache
+    ASSERT_TRUE(SetUidInvalidInDbAndCache(mainTokenId));
+
+    // clone at (101, bundle, 0): the cross-user sibling (main app) has uid=-1
+    // → no bundleRefUid → fresh uid allocation (not TranslateUid)
+    AccessTokenID cloneTokenId = InstallBundleSiblingToken(MakeSiblingInfo(bundleName, 101, 0),
+        bundlePolicy);
+    ASSERT_NE(INVALID_TOKENID, cloneTokenId);
+
+    // the clone got a valid fresh uid (not -1, not a translation of the
+    // sibling's invalid uid): the install itself succeeding proves the
+    // uid==-1 sub-branch was taken without hitting TranslateUid(-1)
+    auto cloneInfo = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(cloneTokenId);
+    ASSERT_NE(nullptr, cloneInfo);
+    EXPECT_NE(-1, cloneInfo->GetUid()); // fresh allocation, not inherited -1
+    int32_t cloneBundleId = 0;
+    EXPECT_TRUE(AccessTokenIDManager::GetInstance().ExtractBundleId(cloneInfo->GetUid(), cloneBundleId));
+
+    int32_t sceneCode = 0;
+    EXPECT_EQ(ERR_OK, DeleteIdentityCore(INVALID_TOKENID, bundleName, ReservedType::NONE, sceneCode));
 }
 } // namespace AccessToken
 } // namespace Security
