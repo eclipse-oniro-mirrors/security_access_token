@@ -56,7 +56,6 @@ ohos_unittest("libaccesstoken_framework_test") {
     "c_utils:utils",
     "hilog:libhilog",
     "ipc:ipc_single",
-    "openssl:libcrypto_shared",
   ]
 }
 

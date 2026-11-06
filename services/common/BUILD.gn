@@ -57,7 +57,6 @@ ohos_static_library("accesstoken_service_common") {
     "dfx/src/data_usage_dfx.cpp",
     "libraryloader/src/libraryloader.cpp",
     "random/src/random_dev_urandom.cpp",
-    "random/src/random_openssl.cpp",
   ]
 
   cflags_cc = access_token_cflags_cc
@@ -72,7 +71,6 @@ ohos_static_library("accesstoken_service_common") {
     "hilog:libhilog",
     "hisysevent:libhisysevent",
     "ipc:ipc_single",
-    "openssl:libcrypto_shared",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
     "sqlite:sqlite",
