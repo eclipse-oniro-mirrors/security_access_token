@@ -216,6 +216,7 @@ public:
     std::pair<int32_t, std::shared_ptr<OHOS::NativeRdb::Transaction>> CreateTransaction(
         OHOS::NativeRdb::Transaction::TransactionType type);
     int32_t ExecuteSql(const std::string& a);
+    std::pair<int32_t, ValueObject> Execute(const std::string& a);
     std::shared_ptr<ResultSet> QuerySql(const std::string& sql, const std::vector<std::string>& args = {});
 
     RdbStoreConfig config_;
@@ -248,6 +249,7 @@ class RdbHelper {
 public:
     static std::shared_ptr<NativeRdb::RdbStore> GetRdbStore(
         NativeRdb::RdbStoreConfig& config, int32_t a, RdbOpenCallback callback, int32_t& res);
+    static void ClearCache();
 };
 } // namespace NativeRdb
 } // namespace OHOS

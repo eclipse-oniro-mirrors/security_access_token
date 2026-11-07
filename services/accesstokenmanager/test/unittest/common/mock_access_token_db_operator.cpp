@@ -116,6 +116,9 @@ int32_t AccessTokenDbOperator::DeleteAndInsertValues(const std::vector<DelInfo>&
     return g_mockDbState.deleteAndInsertRet;
 }
 
+void AccessTokenDbOperator::ClearCache()
+{}
+
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

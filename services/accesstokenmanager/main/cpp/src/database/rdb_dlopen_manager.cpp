@@ -243,6 +243,16 @@ int32_t RdbDlopenManager::DeleteAndInsertValues(const std::vector<DelInfo>& delI
     TaskNumGuard taskNumGuard(taskNum_);
     return instance->DeleteAndInsertValues(delInfoVec, addInfoVec);
 }
+
+void RdbDlopenManager::ClearCache()
+{
+    // only clear cache while the loader is already open; a closed loader has released all rdb resources
+    std::lock_guard<std::mutex> lock(handleMutex_);
+    if (instance_ == nullptr) {
+        return;
+    }
+    instance_->ClearCache();
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

@@ -37,6 +37,7 @@ public:
         std::vector<GenericValues>& results);
     static int32_t DeleteAndInsertValues(const std::vector<DelInfo>& delInfoVec,
         const std::vector<AddInfo>& addInfoVec);
+    static void ClearCache();
 };
 } // namespace AccessToken
 } // namespace Security

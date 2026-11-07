@@ -317,6 +317,15 @@ int32_t RdbStore::ExecuteSql(const std::string& a)
     return NativeRdb::E_OK;
 }
 
+std::pair<int32_t, ValueObject> RdbStore::Execute(const std::string& a)
+{
+    executedSqls_.emplace_back(a);
+    if (executeSqlIndex_ < executeSqlResults_.size()) {
+        return std::make_pair(executeSqlResults_[executeSqlIndex_++], ValueObject());
+    }
+    return std::make_pair(NativeRdb::E_OK, ValueObject());
+}
+
 std::shared_ptr<ResultSet> RdbStore::QuerySql(const std::string& sql, const std::vector<std::string>& args)
 {
     if (queryFlag_ == RdbStore::RdbStoreOperationResult::RESULT_FAIL) {
@@ -352,5 +361,8 @@ std::shared_ptr<NativeRdb::RdbStore> RdbHelper::GetRdbStore(
     return std::make_shared<NativeRdb::RdbStore>(config);
 #endif
 }
+
+void RdbHelper::ClearCache()
+{}
 } // namespace NativeRdb
 } // namespace OHOS
