@@ -35,6 +35,7 @@ static const std::vector<uint32_t> g_opCodeList = {0, 1, 2, 3, 4, 5, 63, 128};
 static uint32_t g_selfUid;
 static const int32_t CYCLE_TIMES = 1000;
 static const int32_t TEST_UID = 1000;
+static const uint32_t SPM_VERSION_APPUID = 2; // kernel SPM v2 parses the appUid field
 
 static bool IsKernelSupportSpm()
 {
@@ -978,6 +979,114 @@ HWTEST_F(TokensetprocKitTest, SpmGetEntry005, TestSize.Level0)
 }
 
 /**
+ * @tc.name: SpmAppUidRoundTrip001
+ * @tc.desc: Test appUid write/read symmetry: appUid set in SpmData is passed to kernel by
+ *           SpmAddEntries and copied back by SpmGetEntry (SpmCopyGetResult). Requires kernel
+ *           SPM version >= 2, which parses the appUid field (former reserved[0] slot).
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokensetprocKitTest, SpmAppUidRoundTrip001, TestSize.Level0)
+{
+    uint32_t version = 0;
+    int ret = SpmGetVersion(&version);
+    if (ret != 0 || version < SPM_VERSION_APPUID) {
+        GTEST_LOG_(INFO) << "Kernel SPM unsupported or version < 2, appUid not parsed, skip test";
+        return;
+    }
+
+    const uint32_t testAppUid = 2001000; // random appUid for test, no need to be real
+    SpmData *entry = SpmDataNew(1, 1, 64);
+    ASSERT_NE(entry, nullptr);
+    EXPECT_EQ(entry->appUid, 0u); // SpmDataNew zero-initializes appUid
+    InitSpmEntry(entry, 9003, "test_appuid");
+    entry->appUid = testAppUid;
+
+    uint8_t idx_err = 0;
+    SpmData *arr[] = {entry};
+    ret = SpmAddEntries(arr, 1, &idx_err);
+    if (ret != 0) {
+        SpmDataFree(entry);
+        GTEST_LOG_(INFO) << "SpmAddEntries failed with " << ret << ", skip test";
+        return;
+    }
+
+    SpmData *queryEntry = SpmDataNew(1, 1, 64);
+    ASSERT_NE(queryEntry, nullptr);
+    ret = SpmGetEntry(9003, queryEntry);
+    EXPECT_EQ(ret, 0);
+    if (ret == 0) {
+        // uid and appUid must round-trip independently: appUid occupies the former reserved[0]
+        // slot in the kernel ABI and must not clobber uid.
+        EXPECT_EQ(queryEntry->uid, static_cast<uint32_t>(CYCLE_TIMES));
+        EXPECT_EQ(queryEntry->appUid, testAppUid);
+    }
+    SpmDataFree(entry);
+    SpmDataFree(queryEntry);
+    SpmRemoveEntry(9003);
+}
+
+/**
+ * @tc.name: SpmAddEntriesAppUidConflict001
+ * @tc.desc: Test kernel conflict rejection for appUid-carrying (version >= 2) entries: re-adding the
+ *           same tokenid returns EEXIST with idx_err 0. A second tokenid sharing the same appUid is
+ *           observational only, because kernel-side appUid uniqueness is not documented in this repo.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokensetprocKitTest, SpmAddEntriesAppUidConflict001, TestSize.Level0)
+{
+    uint32_t version = 0;
+    int ret = SpmGetVersion(&version);
+    if (ret != 0 || version < SPM_VERSION_APPUID) {
+        GTEST_LOG_(INFO) << "Kernel SPM unsupported or version < 2, appUid not parsed, skip test";
+        return;
+    }
+
+    const uint32_t testAppUid = 2002000; // distinct from SpmAppUidRoundTrip001's 2001000
+    const uint32_t tokenidA = 9004;
+    const uint32_t tokenidB = 9005;
+    SpmData *entryA = SpmDataNew(1, 1, 64);
+    ASSERT_NE(entryA, nullptr);
+    SpmData *entryB = SpmDataNew(1, 1, 64);
+    ASSERT_NE(entryB, nullptr);
+    InitSpmEntry(entryA, tokenidA, "test_appuid_conflict_a");
+    entryA->appUid = testAppUid;
+    InitSpmEntry(entryB, tokenidB, "test_appuid_conflict_b");
+    entryB->appUid = testAppUid;
+
+    uint8_t idx_err = 0;
+    SpmData *arrA[] = {entryA};
+    ret = SpmAddEntries(arrA, 1, &idx_err);
+    EXPECT_EQ(ret, 0);
+
+    // re-delivering the same tokenid must be rejected deterministically (spm_setproc.h contract)
+    idx_err = 0;
+    ret = SpmAddEntries(arrA, 1, &idx_err);
+    EXPECT_EQ(ret, EEXIST);
+    EXPECT_EQ(idx_err, 0);
+
+    // observational: do NOT hard-assert, kernel-side appUid uniqueness is not documented
+    idx_err = 0;
+    SpmData *arrB[] = {entryB};
+    ret = SpmAddEntries(arrB, 1, &idx_err);
+    if (ret == EEXIST) {
+        GTEST_LOG_(INFO) << "kernel enforces appUid uniqueness";
+    } else if (ret == 0) {
+        GTEST_LOG_(INFO) << "kernel admits shared appUid across tokenids; userspace "
+                         << "(CheckUidConflict/IsAppUidReusable/boot dedup) is the enforcement layer";
+    } else {
+        GTEST_LOG_(INFO) << "add entry B with shared appUid returned " << ret;
+    }
+
+    // unconditional cleanup: ignore results, entries may or may not exist
+    SpmDataFree(entryA);
+    SpmDataFree(entryB);
+    SpmRemoveEntry(tokenidA);
+    SpmRemoveEntry(tokenidB);
+}
+
+/**
  * @tc.name: SpmRemoveEntry001
  * @tc.desc: Test removing an existing SPM entry from kernel.
  * @tc.type: FUNC
@@ -1199,15 +1308,21 @@ HWTEST_F(TokensetprocKitTest, TransferSpmExternPerms003, TestSize.Level0)
     EXPECT_EQ(ACCESS_TOKEN_PARAM_INVALID, TransferSpmExternPerms(&data, nullptr, &listSize));
 }
 
+/**
+ * @tc.name: SpmIncUidRefCnt001
+ * @tc.desc: Test incrementing UID reference count.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
 HWTEST_F(TokensetprocKitTest, SpmIncUidRefCnt001, TestSize.Level0)
 {
-    int ret = SpmIncUidRefCnt(1000, 1);
+    int ret = SpmIncUidRefCnt(20010011, 1); // appUid-form key (userId 100, bundleId 100xx)
     if (ret == ENOTSUP) {
         GTEST_LOG_(INFO) << "Kernel doesn't support SPM CMD, skip test";
         return;
     }
     EXPECT_EQ(ret, 0);
-    SpmDecUidRefCnt(1000, 1);
+    SpmDecUidRefCnt(20010011, 1);
 }
 
 /**
@@ -1218,12 +1333,12 @@ HWTEST_F(TokensetprocKitTest, SpmIncUidRefCnt001, TestSize.Level0)
  */
 HWTEST_F(TokensetprocKitTest, SpmDecUidRefCnt001, TestSize.Level0)
 {
-    int ret = SpmIncUidRefCnt(1001, 1);
+    int ret = SpmIncUidRefCnt(20010012, 1);
     if (ret == ENOTSUP) {
         GTEST_LOG_(INFO) << "Kernel doesn't support SPM CMD, skip test";
         return;
     }
-    ret = SpmDecUidRefCnt(1001, 1);
+    ret = SpmDecUidRefCnt(20010012, 1);
     EXPECT_EQ(ret, 0);
 }
 
@@ -1237,7 +1352,7 @@ HWTEST_F(TokensetprocKitTest, SpmGetUidRefCnt001, TestSize.Level0)
 {
     setuid(ACCESS_TOKEN_UID);
     uint64_t refcnt = 0;
-    int ret = SpmGetUidRefCnt(1002, &refcnt);
+    int ret = SpmGetUidRefCnt(20010013, &refcnt);
     if (ret == ENOTSUP) {
         GTEST_LOG_(INFO) << "Kernel doesn't support SPM CMD, skip test";
         return;
@@ -1334,6 +1449,66 @@ HWTEST_F(TokensetprocKitTest, SpmGetUidRefCntWithRetry004, TestSize.Level0)
     EXPECT_EQ(ACCESS_TOKEN_OK, ret);
     EXPECT_EQ(0u, refcnt);
     setuid(g_selfUid);
+}
+
+/**
+ * @tc.name: SpmUidRefCntIncDecRoundTrip001
+ * @tc.desc: Test appUid refcount value-level round trip: inc raises the refcount to 1 and dec
+ *           drops it back to 0, verified via SpmGetUidRefCnt after each step.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokensetprocKitTest, SpmUidRefCntIncDecRoundTrip001, TestSize.Level0)
+{
+    const uint32_t testAppUid = 20010001; // userId 100, bundleId 10001
+    const uint32_t testSpawnid = 4242; // fixed spawnid, unused elsewhere in this file
+    int ret = SpmIncUidRefCnt(testAppUid, testSpawnid);
+    if (ret == ENOTSUP) {
+        GTEST_LOG_(INFO) << "Kernel doesn't support SPM CMD, skip test";
+        return;
+    }
+    EXPECT_EQ(ret, 0);
+
+    uint64_t refcnt = 0;
+    ret = SpmGetUidRefCnt(testAppUid, &refcnt);
+    EXPECT_EQ(ret, 0);
+    EXPECT_EQ(1u, refcnt);
+
+    ret = SpmDecUidRefCnt(testAppUid, testSpawnid);
+    EXPECT_EQ(ret, 0);
+
+    ret = SpmGetUidRefCnt(testAppUid, &refcnt);
+    EXPECT_EQ(ret, 0);
+    EXPECT_EQ(0u, refcnt);
+
+    // unconditional cleanup: avoid leaking refcnt to sibling tests if a mid-test step failed
+    (void)SpmDecUidRefCnt(testAppUid, testSpawnid);
+}
+
+/**
+ * @tc.name: SpmUidRefCntNonSpmKernel001
+ * @tc.desc: Test non-SPM kernel contract: direct appUid refcount APIs propagate the raw ioctl
+ *           errno ENOTSUP, while SpmGetUidRefCntWithRetry degrades to ACCESS_TOKEN_OK with
+ *           refcnt zeroed.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokensetprocKitTest, SpmUidRefCntNonSpmKernel001, TestSize.Level0)
+{
+    if (IsKernelSupportSpm()) {
+        GTEST_LOG_(INFO) << "SPM-capable kernel, skip non-SPM contract test";
+        return;
+    }
+    const uint32_t testAppUid = 20010002; // userId 100, bundleId 10002
+    const uint32_t testSpawnid = 4242; // fixed spawnid, unused elsewhere in this file
+    // spm_setproc.c propagates the raw ioctl errno on non-SPM kernels (ENOTSUP == EOPNOTSUPP == 95)
+    EXPECT_EQ(ENOTSUP, SpmIncUidRefCnt(testAppUid, testSpawnid));
+    EXPECT_EQ(ENOTSUP, SpmDecUidRefCnt(testAppUid, testSpawnid));
+    uint64_t refcnt = 99;
+    EXPECT_EQ(ENOTSUP, SpmGetUidRefCnt(testAppUid, &refcnt));
+    // degrade contract (spm_setproc.h): WithRetry succeeds with refcnt=0 when kernel lacks SPM
+    EXPECT_EQ(ACCESS_TOKEN_OK, SpmGetUidRefCntWithRetry(testAppUid, &refcnt));
+    EXPECT_EQ(0u, refcnt);
 }
 
 /**

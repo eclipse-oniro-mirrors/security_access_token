@@ -78,7 +78,6 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
     blocklist = "${access_token_path}/cfi_blocklist.txt"
   }
   branch_protector_ret = "pac_ret"
-
   include_dirs = account_mock_include_dirs
   include_dirs += accesstoken_manager_base_config.include_dirs
   include_dirs += [
@@ -237,6 +236,15 @@ if (access_token_manager_hapverify_enable) {
 
     cflags_cc = accesstoken_manager_base_config.cflags_cc
     cflags_cc += [ "-DATM_TEST_ENABLE" ]
+
+    # Wiring-expecting uid decision test (BuildHapPolicyIsSharedUid001): compile this target
+    # (test code AND the directly compiled production sources) with both sharedUid features ON.
+    # The OFF path is locked by libaccesstoken_manager_service_standard_test via
+    # accesstoken_info_utils_test.cpp, which intentionally does NOT carry these defines.
+    cflags_cc += [
+      "-DACCESS_TOKEN_SUPPORT_SHAREDUID",
+      "-DACCESS_TOKEN_ENABLE_SHAREDUID",
+    ]
 
     configs = accesstoken_manager_base_config.configs
 

@@ -128,7 +128,8 @@ void HapTokenInfoItem::BuildAddValue(std::vector<GenericValues>& addValues) cons
     addValue.Put(TokenFiledConst::FIELD_API_VERSION, apiVersion);
     addValue.Put(TokenFiledConst::FIELD_FORBID_PERM_DIALOG, static_cast<int32_t>(permDialogCapState));
 #ifdef SPM_DATA_ENABLE
-    addValue.Put(TokenFiledConst::FIELD_UID, uid);
+    // The uid column persists the app-level identity, never the runtime uid.
+    addValue.Put(TokenFiledConst::FIELD_UID, appUid);
     addValue.Put(TokenFiledConst::FIELD_MIGRATED, static_cast<int32_t>(migrated));
     addValue.Put(TokenFiledConst::FIELD_RESERVED, static_cast<int32_t>(reserved));
 #endif
@@ -170,7 +171,9 @@ void HapTokenInfoItem::LoadFromDB(const std::vector<GenericValues>& values, std:
         item.apiVersion = value.GetInt(TokenFiledConst::FIELD_API_VERSION);
         item.permDialogCapState = value.GetInt(TokenFiledConst::FIELD_FORBID_PERM_DIALOG) != 0;
 #ifdef SPM_DATA_ENABLE
-        item.uid = value.GetInt(TokenFiledConst::FIELD_UID);
+        // The uid column persists the app-level identity: appUid loads it, while the
+        // runtime uid stays INVALID until a resolution flow derives it.
+        item.appUid = value.GetInt(TokenFiledConst::FIELD_UID);
         item.migrated = value.GetInt(TokenFiledConst::FIELD_MIGRATED) != 0;
         item.reserved = static_cast<ReservedType>(value.GetInt(TokenFiledConst::FIELD_RESERVED));
 #endif

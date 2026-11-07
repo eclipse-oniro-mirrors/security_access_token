@@ -127,8 +127,8 @@ void InstallSysEventReporter::ReportAddHap(const InstallCache& cache, int32_t sc
     dfxInfo.tokenId = idEx.tokenIdExStruct.tokenID;
     dfxInfo.tokenIdEx = idEx;
 
-    // replace userID with uid
-    dfxInfo.userID = cache.identity.uid;
+    // replace userID with appUid (app-level identity, keeps historical event semantics)
+    dfxInfo.userID = cache.identity.appUid;
     dfxInfo.bundleName = cache.baseInfo.bundleName;
     dfxInfo.instIndex = cache.baseInfo.instIndex;
 
@@ -161,8 +161,8 @@ void InstallSysEventReporter::ReportUpdateHap(AccessTokenID tokenID, const Bundl
     dfxInfo.tokenId = tokenID;
     dfxInfo.tokenIdEx = idEx;
 
-    // replace userID with uid
-    dfxInfo.userID = infoPtr->GetUid();
+    // replace userID with appUid (app-level identity, keeps historical event semantics)
+    dfxInfo.userID = infoPtr->GetAppUid();
     dfxInfo.bundleName = tokenInfo.bundleName;
     dfxInfo.instIndex = tokenInfo.instIndex;
 

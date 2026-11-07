@@ -79,6 +79,8 @@ public:
         moduleInfo.moduleName = moduleName_;
         moduleInfo.apiTargetVersion = apiTargetVersion_;
         moduleInfo.bundleType = bundleType_;
+        moduleInfo.sharedUID = sharedUID_;
+        moduleInfo.deviceTypes = deviceTypes_;
         moduleInfo.requestPermission = requestPermissions_;
         moduleInfo.definePermission = definePermissions_;
         ++parseCallCount_;
@@ -148,6 +150,8 @@ public:
     Security::Verify::AppDistType distributionType_ = Security::Verify::NONE_TYPE;
     Security::Verify::ProvisionType provisionType_ = Security::Verify::RELEASE;
     AppExecFwk::Spm::BundleType bundleType_ = AppExecFwk::Spm::BundleType::APP;
+    bool sharedUID_ = false;
+    std::vector<std::string> deviceTypes_;
     std::vector<AppExecFwk::Spm::RequestPermission> requestPermissions_ = BuildDefaultMockRequestPermissions();
     std::vector<AppExecFwk::Spm::DefinePermission> definePermissions_;
     mutable bool isParseCalled_ = false;

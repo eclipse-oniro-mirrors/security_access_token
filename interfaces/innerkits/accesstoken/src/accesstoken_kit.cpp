@@ -222,11 +222,11 @@ int32_t AccessTokenKit::FinishMigration()
 }
 
 int32_t AccessTokenKit::CheckMigratedUidSet(
-    const std::set<int32_t>& totalUids, std::set<int32_t>& unreceivedUids)
+    const std::set<int32_t>& totalAppUids, std::set<int32_t>& unreceivedAppUids)
 {
 #ifdef SPM_DATA_ENABLE
-    LOGI(ATM_DOMAIN, ATM_TAG, "CheckMigratedUidSet size=%{public}zu.", totalUids.size());
-    return AccessTokenManagerClient::GetInstance().CheckMigratedUidSet(totalUids, unreceivedUids);
+    LOGI(ATM_DOMAIN, ATM_TAG, "CheckMigratedUidSet size=%{public}zu.", totalAppUids.size());
+    return AccessTokenManagerClient::GetInstance().CheckMigratedUidSet(totalAppUids, unreceivedAppUids);
 #else
     return ERR_OK;
 #endif
@@ -378,14 +378,14 @@ int32_t AccessTokenKit::GetHapIdentity(const HapBaseInfo& info, Identity& identi
 #endif
 }
 
-int32_t AccessTokenKit::GetHapBaseInfoByUid(int32_t uid, HapBaseInfo& info)
+int32_t AccessTokenKit::GetHapBaseInfoByUid(int32_t appUid, HapBaseInfo& info)
 {
 #ifdef SPM_DATA_ENABLE
-    if (uid <= 0) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Uid=%{public}d is invalid.", uid);
+    if (appUid <= 0) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "AppUid=%{public}d is invalid.", appUid);
         return AccessTokenError::ERR_PARAM_INVALID;
     }
-    return AccessTokenManagerClient::GetInstance().GetHapBaseInfoByUid(uid, info);
+    return AccessTokenManagerClient::GetInstance().GetHapBaseInfoByUid(appUid, info);
 #else
     return ERR_OK;
 #endif
@@ -1414,6 +1414,24 @@ int32_t AccessTokenKit::UpdateHapPolicy(int32_t sessionId, AccessTokenIDEx& toke
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     return AccessTokenManagerClient::GetInstance().UpdateHapPolicy(sessionId, tokenIdEx, policy, uid);
+#else
+    LOGW(ATM_DOMAIN, ATM_TAG, "Not support.");
+    return RET_SUCCESS;
+#endif
+}
+
+int32_t AccessTokenKit::UpdateHapPolicy(int32_t sessionId, AccessTokenIDEx& tokenIdEx,
+    const BundlePolicy& policy, int32_t& appUid, int32_t& uid)
+{
+#ifdef SPM_DATA_ENABLE
+    LOGI(ATM_DOMAIN, ATM_TAG, "SessionId=%{public}d, tokenId=%{public}u, appUid=%{public}d.",
+        sessionId, tokenIdEx.tokenIdExStruct.tokenID, appUid);
+    if (sessionId <= 0) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "SessionId is invalid.");
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    return AccessTokenManagerClient::GetInstance().UpdateHapPolicy(
+        sessionId, tokenIdEx, policy, appUid, uid);
 #else
     LOGW(ATM_DOMAIN, ATM_TAG, "Not support.");
     return RET_SUCCESS;

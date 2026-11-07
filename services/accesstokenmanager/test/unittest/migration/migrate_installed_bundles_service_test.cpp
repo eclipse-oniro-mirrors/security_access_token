@@ -96,7 +96,7 @@ void ResetMigrationRuntimeState()
     // Reset lazy caches so each test starts fresh
     auto& manager = AccessTokenMigrationManager::GetInstance();
     manager.dbRowCache_.clear();
-    manager.uidOwnerBundles_.clear();
+    manager.appUidOwnerBundles_.clear();
     manager.bundleIdOwnerBundles_.clear();
     manager.cacheLoaded_ = false;
 }
@@ -903,7 +903,7 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, MigrateInstalledBundles_CachedUidDi
 
     auto infoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenIdEx.tokenIdExStruct.tokenID);
     ASSERT_NE(nullptr, infoPtr);
-    infoPtr->SetUid(221001); // set a valid UID different from migration UID
+    infoPtr->SetAppUid(221001); // set a valid appUid different from migration appUid
 
     MigratedInfoIdl migratedInfo;
     BuildMigratedInfo(info, tokenIdEx.tokenIDEx, 221002, migratedInfo);
@@ -914,8 +914,8 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, MigrateInstalledBundles_CachedUidDi
     EXPECT_EQ(RET_SUCCESS, service->MigrateInstalledBundles({ migratedInfo }, results));
     ASSERT_EQ(1u, results.size());
     EXPECT_EQ(AccessTokenError::ERR_MIGRATION_UID_EXISTED, results[0].errcode);
-    // Original UID must be preserved on failure
-    EXPECT_EQ(221001u, infoPtr->GetUid());
+    // Original appUid must be preserved on failure
+    EXPECT_EQ(221001, infoPtr->GetAppUid());
 
     EXPECT_EQ(RET_SUCCESS,
         AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenIdEx.tokenIdExStruct.tokenID));
@@ -959,7 +959,7 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, MigrateInstalledBundles_BasicSucces
     // Verify cache reflects migrated UID
     auto infoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenIdEx.tokenIdExStruct.tokenID);
     ASSERT_NE(nullptr, infoPtr);
-    EXPECT_EQ(static_cast<uint32_t>(migratedInfo.uidList[0]), infoPtr->GetUid());
+    EXPECT_EQ(static_cast<uint32_t>(migratedInfo.uidList[0]), infoPtr->GetAppUid());
     // Verify DB state
     ExpectMigratedDbState(tokenIdEx.tokenIdExStruct.tokenID, info.bundleName, migratedInfo.uidList[0]);
 
@@ -1288,7 +1288,7 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, MigrateInstalledBundles_BatchMixedV
     // Valid bundle should have its UID and DB updated
     auto infoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenIdEx.tokenIdExStruct.tokenID);
     ASSERT_NE(nullptr, infoPtr);
-    EXPECT_EQ(static_cast<uint32_t>(validInfo.uidList[0]), infoPtr->GetUid());
+    EXPECT_EQ(static_cast<uint32_t>(validInfo.uidList[0]), infoPtr->GetAppUid());
     ExpectMigratedDbState(tokenIdEx.tokenIdExStruct.tokenID, info.bundleName, validInfo.uidList[0]);
 
     (void)SpmRemoveEntry(tokenIdEx.tokenIdExStruct.tokenID);
@@ -1414,10 +1414,10 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, MigrateInstalledBundles_RetryAfterF
     AccessTokenIDEx tokenIdEx = {0};
     ASSERT_EQ(RET_SUCCESS, AllocHapTokenLocally(info, policy, tokenIdEx));
 
-    // Set a conflicting cached UID so the first migration fails
+    // Set a conflicting cached appUid so the first migration fails
     auto infoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenIdEx.tokenIdExStruct.tokenID);
     ASSERT_NE(nullptr, infoPtr);
-    infoPtr->SetUid(203201);
+    infoPtr->SetAppUid(203201);
 
     MigratedInfoIdl migratedInfo;
     BuildMigratedInfo(info, tokenIdEx.tokenIDEx, 223202, migratedInfo);
@@ -1431,8 +1431,8 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, MigrateInstalledBundles_RetryAfterF
     ASSERT_EQ(1u, results.size());
     EXPECT_EQ(AccessTokenError::ERR_MIGRATION_UID_EXISTED, results[0].errcode);
 
-    // UID is not in cache — retry should succeed after fixing the conflict
-    infoPtr->SetUid(static_cast<uint32_t>(-1)); // INVALID_HAP_UID
+    // appUid is not in cache - retry should succeed after fixing the conflict
+    infoPtr->SetAppUid(-1); // INVALID_HAP_UID
     std::vector<BundleMigrateResultIdl> results2;
     EXPECT_EQ(RET_SUCCESS, service->MigrateInstalledBundles({ migratedInfo }, results2));
     ASSERT_EQ(1u, results2.size());
@@ -2106,20 +2106,32 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, LoadDbCacheIfNeeded_InvalidAndDupli
     auto& manager = AccessTokenMigrationManager::GetInstance();
     manager.cacheLoaded_ = false;
     manager.dbRowCache_.clear();
-    manager.uidOwnerBundles_.clear();
+    manager.appUidOwnerBundles_.clear();
     manager.bundleIdOwnerBundles_.clear();
     EXPECT_EQ(RET_SUCCESS, manager.LoadDbCacheIfNeeded());
-    EXPECT_EQ("", manager.uidOwnerBundles_[1]);
-    if (manager.uidOwnerBundles_.find(20023124) != manager.uidOwnerBundles_.end()) {
-        EXPECT_EQ("com.example.loadcache.owner0", manager.uidOwnerBundles_[20023124]);
-        EXPECT_NE("com.example.loadcache.dup0", manager.uidOwnerBundles_[20223124]);
-        EXPECT_NE("com.example.loadcache.dup0", manager.bundleIdOwnerBundles_[23124]);
+    // appUid 1 fails ExtractBundleId, so it must be absent from the owner cache.
+    // Use count() instead of operator[] to avoid inserting a default entry into the map under test.
+    EXPECT_EQ(0U, manager.appUidOwnerBundles_.count(1));
+    auto ownerIt = manager.appUidOwnerBundles_.find(20023124);
+    if (ownerIt != manager.appUidOwnerBundles_.end()) {
+        EXPECT_EQ("com.example.loadcache.owner0", ownerIt->second);
+        // dup lost the shared bundleId: its appUid/bundleId are absent or owned by another bundle
+        auto dupAppUidIt = manager.appUidOwnerBundles_.find(20223124);
+        EXPECT_TRUE(dupAppUidIt == manager.appUidOwnerBundles_.end() ||
+            dupAppUidIt->second != "com.example.loadcache.dup0");
+        auto dupBundleIt = manager.bundleIdOwnerBundles_.find(23124);
+        EXPECT_TRUE(dupBundleIt == manager.bundleIdOwnerBundles_.end() ||
+            dupBundleIt->second != "com.example.loadcache.dup0");
     } else {
         // maybe com.example.loadcache.owner and com.example.loadcache.dup have same bundleId,
         // so only one of them will be preserved
-        EXPECT_NE("com.example.loadcache.owner0", manager.uidOwnerBundles_[20023124]);
-        EXPECT_EQ("com.example.loadcache.dup0", manager.uidOwnerBundles_[20223124]);
-        EXPECT_EQ("com.example.loadcache.dup0", manager.bundleIdOwnerBundles_[23124]);
+        EXPECT_EQ(0U, manager.appUidOwnerBundles_.count(20023124));
+        auto dupAppUidIt = manager.appUidOwnerBundles_.find(20223124);
+        ASSERT_TRUE(dupAppUidIt != manager.appUidOwnerBundles_.end());
+        EXPECT_EQ("com.example.loadcache.dup0", dupAppUidIt->second);
+        auto dupBundleIt = manager.bundleIdOwnerBundles_.find(23124);
+        ASSERT_TRUE(dupBundleIt != manager.bundleIdOwnerBundles_.end());
+        EXPECT_EQ("com.example.loadcache.dup0", dupBundleIt->second);
     }
 }
 
@@ -2238,6 +2250,7 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, CheckMigratedUidSet_EmptyAndInvalid
     Identity identity;
     identity.tokenId = 0x20000100;
     identity.uid = 20023303;
+    identity.appUid = 20023303;
     manager.hapIdentityMap_[key] = identity;
 
     std::set<int32_t> unreceivedUids;

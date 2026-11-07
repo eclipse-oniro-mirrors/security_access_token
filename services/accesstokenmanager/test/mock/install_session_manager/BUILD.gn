@@ -24,6 +24,8 @@ ohos_unittest("libinstall_session_manager_mock_test") {
     blocklist = "${access_token_path}/cfi_blocklist.txt"
   }
   branch_protector_ret = "pac_ret"
+  # Run the DB-appUid face with the shareduid db feature enabled.
+  defines = [ "ACCESS_TOKEN_ENABLE_SHAREDUID" ]
 
   include_dirs = accesstoken_manager_base_config.include_dirs
   include_dirs += [ "${access_token_path}/services/accesstokenmanager/test/unittest/common" ]

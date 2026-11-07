@@ -44,9 +44,11 @@ int32_t AccessTokenDbOperator::Modify(const AtmDataType type, const GenericValue
     const GenericValues& conditionValue)
 {
     (void)type;
-    (void)modifyValue;
-    (void)conditionValue;
     ++g_mockDbState.modifyCallCount;
+    g_mockDbState.lastModifyValues = modifyValue;
+    g_mockDbState.lastModifyCondition = conditionValue;
+    g_mockDbState.modifyValuesList.push_back(modifyValue);
+    g_mockDbState.modifyConditionList.push_back(conditionValue);
     return g_mockDbState.modifyRet;
 }
 

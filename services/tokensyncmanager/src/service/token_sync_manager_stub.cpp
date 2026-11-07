@@ -70,7 +70,7 @@ bool TokenSyncManagerStub::IsNativeProcessCalling() const
 bool TokenSyncManagerStub::IsRootCalling() const
 {
 #ifndef ATM_BUILD_VARIANT_USER_ENABLE
-    int callingUid = IPCSkeleton::GetCallingUid();
+    int callingUid = IPCSkeleton::GetCallingAppUid();
     LOGD(ATM_DOMAIN, ATM_TAG, "Calling uid: %{public}d", callingUid);
     return callingUid == ROOT_UID;
 #else

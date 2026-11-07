@@ -1081,6 +1081,136 @@ HWTEST_F(HapSignVerifyManagerTest, AppVerifyAdapter001, TestSize.Level1)
 }
 
 /**
+ * @tc.name: ParseHapModuleInfoSharedUidDeviceTypes001
+ * @tc.desc: AppVerifyAdapter::ParseHapModuleInfo drives the real SpmModuleParser and extracts the
+ *           sharedUID flag from the app section plus the deviceTypes string array from the module
+ *           section, preserving the array order; absent keys default to false and an empty array.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HapSignVerifyManagerTest, ParseHapModuleInfoSharedUidDeviceTypes001, TestSize.Level1)
+{
+    AppVerifyAdapter adapter;
+    AppExecFwk::Spm::InnerModuleInfoForSpm moduleInfo;
+    const std::string sharedUidModuleJson =
+        "{\"app\":{\"bundleName\":\"com.example.test\",\"bundleType\":\"app\",\"sharedUID\":true,"
+        "\"targetAPIVersion\":12},"
+        "\"module\":{\"name\":\"entry\","
+        "\"deviceTypes\":[\"2in1\",\"phone\"],\"definePermissions\":[],\"requestPermissions\":[]}}";
+    EXPECT_EQ(RET_SUCCESS, adapter.ParseHapModuleInfo(sharedUidModuleJson, moduleInfo));
+    EXPECT_EQ("com.example.test", moduleInfo.bundleName);
+    EXPECT_EQ("entry", moduleInfo.moduleName);
+    EXPECT_TRUE(moduleInfo.sharedUID);
+    EXPECT_EQ(std::vector<std::string>({"2in1", "phone"}), moduleInfo.deviceTypes);
+
+    AppExecFwk::Spm::InnerModuleInfoForSpm plainInfo;
+    const std::string plainModuleJson =
+        "{\"app\":{\"bundleName\":\"com.example.test\",\"bundleType\":\"app\",\"targetAPIVersion\":12},"
+        "\"module\":{\"name\":\"entry\",\"definePermissions\":[],\"requestPermissions\":[]}}";
+    EXPECT_EQ(RET_SUCCESS, adapter.ParseHapModuleInfo(plainModuleJson, plainInfo));
+    EXPECT_FALSE(plainInfo.sharedUID);
+    EXPECT_TRUE(plainInfo.deviceTypes.empty());
+}
+
+/**
+ * @tc.name: BuildHapPolicyIsSharedUid001
+ * @tc.desc: The real parser feeds sharedUID and deviceTypes into the real BuildHapPolicy, where
+ *           the uid-switch decision is centralized into param.isSharedUid. This target is
+ *           compiled with the sharedUid feature ON: two device types keep the decision false,
+ *           and exactly one 2in1 type flips it to true when no CUSTOM_SANDBOX is requested.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HapSignVerifyManagerTest, BuildHapPolicyIsSharedUid001, TestSize.Level1)
+{
+    AppVerifyAdapter adapter;
+    HapSignVerifyManager& manager = HapSignVerifyManager::GetInstance();
+
+    // Case 1: sharedUID with two device types and an empty request permission list keeps
+    // isSharedUid false, because the array-length criterion demands exactly one 2in1 entry.
+    AppExecFwk::Spm::InnerModuleInfoForSpm twoTypeModule;
+    const std::string twoTypeJson =
+        "{\"app\":{\"bundleName\":\"com.example.test\",\"bundleType\":\"app\",\"sharedUID\":true,"
+        "\"targetAPIVersion\":12},"
+        "\"module\":{\"name\":\"entry\","
+        "\"deviceTypes\":[\"2in1\",\"phone\"],\"definePermissions\":[],\"requestPermissions\":[]}}";
+    ASSERT_EQ(RET_SUCCESS, adapter.ParseHapModuleInfo(twoTypeJson, twoTypeModule));
+    ASSERT_TRUE(twoTypeModule.sharedUID);
+    ASSERT_EQ(std::vector<std::string>({"2in1", "phone"}), twoTypeModule.deviceTypes);
+    TrustedBundleInfoInner twoTypeInfo = BuildTrustedBundleInfo("com.example.test");
+    twoTypeInfo.moduleData = twoTypeModule;
+    HapPolicy twoTypePolicy;
+    BundleParam twoTypeParam;
+    ASSERT_EQ(RET_SUCCESS, manager.BuildHapPolicy({twoTypeInfo}, twoTypePolicy, twoTypeParam));
+    EXPECT_TRUE(twoTypePolicy.permStateList.empty());
+    EXPECT_FALSE(twoTypeParam.isSharedUid);
+
+    // Case 2: sharedUID with exactly one 2in1 device type and no CUSTOM_SANDBOX in the policy
+    // flips isSharedUid to true at the BundleParam construction point.
+    AppExecFwk::Spm::InnerModuleInfoForSpm singleTypeModule;
+    const std::string singleTypeJson =
+        "{\"app\":{\"bundleName\":\"com.example.test\",\"bundleType\":\"app\",\"sharedUID\":true,"
+        "\"targetAPIVersion\":12},"
+        "\"module\":{\"name\":\"entry\","
+        "\"deviceTypes\":[\"2in1\"],\"definePermissions\":[],\"requestPermissions\":[]}}";
+    ASSERT_EQ(RET_SUCCESS, adapter.ParseHapModuleInfo(singleTypeJson, singleTypeModule));
+    ASSERT_TRUE(singleTypeModule.sharedUID);
+    ASSERT_EQ(std::vector<std::string>({"2in1"}), singleTypeModule.deviceTypes);
+    TrustedBundleInfoInner singleTypeInfo = BuildTrustedBundleInfo("com.example.test");
+    singleTypeInfo.moduleData = singleTypeModule;
+    HapPolicy singleTypePolicy;
+    BundleParam singleTypeParam;
+    ASSERT_EQ(RET_SUCCESS, manager.BuildHapPolicy({singleTypeInfo}, singleTypePolicy, singleTypeParam));
+    EXPECT_TRUE(singleTypePolicy.permStateList.empty());
+    EXPECT_TRUE(singleTypeParam.isSharedUid);
+}
+
+/**
+ * @tc.name: BuildHapPolicyIsSharedUidAnyModule001
+ * @tc.desc: The uid-switch decision merges across modules: a feature module declaring
+ *           sharedUID with 2in1-only device types flips isSharedUid even when the
+ *           entry (baseline) module alone would keep it false.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HapSignVerifyManagerTest, BuildHapPolicyIsSharedUidAnyModule001, TestSize.Level1)
+{
+    AppVerifyAdapter adapter;
+    HapSignVerifyManager& manager = HapSignVerifyManager::GetInstance();
+
+    AppExecFwk::Spm::InnerModuleInfoForSpm entryModule;
+    const std::string entryJson =
+        "{\"app\":{\"bundleName\":\"com.example.test\",\"bundleType\":\"app\",\"sharedUID\":true,"
+        "\"targetAPIVersion\":12},"
+        "\"module\":{\"name\":\"entry\","
+        "\"deviceTypes\":[\"2in1\",\"phone\"],\"definePermissions\":[],\"requestPermissions\":[]}}";
+    ASSERT_EQ(RET_SUCCESS, adapter.ParseHapModuleInfo(entryJson, entryModule));
+    AppExecFwk::Spm::InnerModuleInfoForSpm featureModule;
+    const std::string featureJson =
+        "{\"app\":{\"bundleName\":\"com.example.test\",\"bundleType\":\"app\",\"sharedUID\":true,"
+        "\"targetAPIVersion\":12},"
+        "\"module\":{\"name\":\"feature\","
+        "\"deviceTypes\":[\"2in1\"],\"definePermissions\":[],\"requestPermissions\":[]}}";
+    ASSERT_EQ(RET_SUCCESS, adapter.ParseHapModuleInfo(featureJson, featureModule));
+
+    TrustedBundleInfoInner entryInfo = BuildTrustedBundleInfo("com.example.test");
+    entryInfo.moduleData = entryModule;
+    TrustedBundleInfoInner featureInfo = BuildTrustedBundleInfo("com.example.test");
+    featureInfo.moduleData = featureModule;
+
+    HapPolicy policy;
+    BundleParam param;
+    ASSERT_EQ(RET_SUCCESS, manager.BuildHapPolicy({entryInfo, featureInfo}, policy, param));
+    EXPECT_TRUE(policy.permStateList.empty());
+    EXPECT_TRUE(param.isSharedUid);
+
+    TrustedBundleInfoInner secondTwoTypeInfo = BuildTrustedBundleInfo("com.example.test");
+    secondTwoTypeInfo.moduleData = entryModule;
+    HapPolicy twoTypePolicy;
+    BundleParam twoTypeParam;
+    ASSERT_EQ(RET_SUCCESS, manager.BuildHapPolicy({entryInfo, secondTwoTypeInfo}, twoTypePolicy, twoTypeParam));
+    EXPECT_TRUE(twoTypePolicy.permStateList.empty());
+    EXPECT_FALSE(twoTypeParam.isSharedUid);
+}
+
+/**
  * @tc.name: AppVerifyAdapter002
  * @tc.desc: AppVerifyAdapter::ParseProvision and ParseProfile exercise both result branches.
  * @tc.type: FUNC

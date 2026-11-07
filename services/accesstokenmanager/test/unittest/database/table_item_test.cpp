@@ -54,7 +54,7 @@ HWTEST_F(TableItemTest, HapTokenInfoItemBuildAddValue001, TestSize.Level0)
     item.apiVersion = 12;
     item.permDialogCapState = true;
 #ifdef SPM_DATA_ENABLE
-    item.uid = 20100000;
+    item.appUid = 20100000;
     item.migrated = true;
     item.reserved = ReservedType::NONE;
 #endif
@@ -78,6 +78,8 @@ HWTEST_F(TableItemTest, HapTokenInfoItemBuildAddValue001, TestSize.Level0)
     EXPECT_EQ(12, value.GetInt(TokenFiledConst::FIELD_API_VERSION));
     EXPECT_NE(0, value.GetInt(TokenFiledConst::FIELD_FORBID_PERM_DIALOG));
 #ifdef SPM_DATA_ENABLE
+    // The uid column persists the app-level identity; the runtime uid (100) is
+    // derived in memory and never stored.
     EXPECT_EQ(20100000, value.GetInt(TokenFiledConst::FIELD_UID));
     EXPECT_NE(0, value.GetInt(TokenFiledConst::FIELD_MIGRATED));
     EXPECT_EQ(static_cast<int32_t>(ReservedType::NONE), value.GetInt(TokenFiledConst::FIELD_RESERVED));
@@ -181,7 +183,9 @@ HWTEST_F(TableItemTest, HapTokenInfoItemLoadFromDB001, TestSize.Level0)
     EXPECT_EQ(11, items[0].apiVersion);
     EXPECT_FALSE(items[0].permDialogCapState);
 #ifdef SPM_DATA_ENABLE
-    EXPECT_EQ(20100100u, items[0].uid);
+    // The uid column carries the app-level identity: appUid loads it; the runtime uid
+    // stays INVALID until a resolution flow derives it.
+    EXPECT_EQ(20100100, items[0].appUid);
     EXPECT_TRUE(items[0].migrated);
     EXPECT_EQ(ReservedType::NONE, items[0].reserved);
 #endif
@@ -247,7 +251,7 @@ HWTEST_F(TableItemTest, HapTokenInfoItemLoadFromDB002, TestSize.Level0)
     EXPECT_EQ(APL_NORMAL, items[0].apl);
     EXPECT_EQ(0, items[0].tokenAttr);
 #ifdef SPM_DATA_ENABLE
-    EXPECT_EQ(20100100u, items[0].uid);
+    EXPECT_EQ(20100100, items[0].appUid);
     EXPECT_FALSE(items[0].migrated);
     EXPECT_EQ(ReservedType::NONE, items[0].reserved);
 #endif
@@ -258,7 +262,7 @@ HWTEST_F(TableItemTest, HapTokenInfoItemLoadFromDB002, TestSize.Level0)
     EXPECT_EQ(APL_SYSTEM_CORE, items[1].apl);
     EXPECT_EQ(DEBUG_APP_FLAG, items[1].tokenAttr);
 #ifdef SPM_DATA_ENABLE
-    EXPECT_EQ(20100200u, items[1].uid);
+    EXPECT_EQ(20100200, items[1].appUid);
     EXPECT_TRUE(items[1].migrated);
     EXPECT_EQ(ReservedType::RESERVED_DATA, items[1].reserved);
 #endif

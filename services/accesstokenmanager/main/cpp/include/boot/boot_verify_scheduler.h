@@ -72,7 +72,8 @@ public:
     int32_t PreVerifyBundle(const std::string& bundleName);
     int32_t PreVerifyBundle(const std::string& bundleName, int32_t instIndex);
     int32_t PreVerifyBundle(uint32_t tokenID);
-    int32_t PreVerifyBundle(int32_t uid);
+    // Overload by appUid: triggers pre-verification for the bundle whose cached token matches the given appUid.
+    int32_t PreVerifyBundle(int32_t appUid);
 
 #ifdef IS_SUPPORT_HAP_RUNNING
 private:
@@ -162,7 +163,7 @@ private:
     void VerifyHighPrivilegeBundleList(std::map<std::string, VerifiedBundleState>& stateMap);
     void RunHighPrivilegeBundleVerifyTasks(std::vector<std::map<std::string, VerifiedBundleState>>& stateGroups);
     void HandleHighPrivilegeBundleSpmData(const std::map<std::string, VerifiedBundleState>& stateMap);
-    bool InitHapInfoUid(const std::string& bundleName, AccessTokenID tokenId, int32_t uid);
+    bool InitHapInfoAppUid(const std::string& bundleName, AccessTokenID tokenId, int32_t appUid);
     int32_t PreVerifyBundleInner(const std::string& key);
     BootVerifyScheduler() = default;
     ~BootVerifyScheduler() = default;
@@ -183,7 +184,7 @@ private:
     std::atomic_bool migrationCompleted_ = false;
     std::mutex verifyMutex_;
     std::condition_variable verifyCondition_;
-    std::set<int32_t> uidSet_;
+    std::set<int32_t> appUidSet_;
 #endif
 };
 } // namespace AccessToken

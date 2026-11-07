@@ -37,14 +37,14 @@ public:
     // Session failure path: release every id acquired by this session (allocated
     // token, new bundle ids, inactive cache entries). Mirror of CommitIdentity.
     static void RollbackIdentity(const InstallCache& cache);
-    static int32_t ResolveUpdateUid(int32_t& uid, const std::shared_ptr<HapTokenInfoInner>& infoPtr,
+    static int32_t ResolveUpdateAppUid(int32_t& appUid, const std::shared_ptr<HapTokenInfoInner>& infoPtr,
         bool& isNewBundleId, bool& fromCaller);
     static AccessTokenAttr BuildTokenAttr(const BundleParam& param);
 
 private:
-    static int32_t CreateTokenIdAndUid(InstallCache& cache, const BundlePolicy& bundlePolicy, int32_t bundleRefUid);
+    static int32_t CreateTokenIdAndUid(InstallCache& cache, const BundlePolicy& bundlePolicy, int32_t bundleRefAppUid);
     static void RestoreIdentityFromReservedData(
-        InstallCache& cache, AccessTokenID tokenId, int32_t uid, int32_t oldAttr);
+        InstallCache& cache, AccessTokenID tokenId, int32_t appUid, int32_t oldAttr);
     static int32_t ResolveExistingTokenReuse(InstallCache& cache,
         const GenericValues& tokenValue);
 };

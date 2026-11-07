@@ -180,7 +180,7 @@ HWTEST_F(PermissionRequestToggleManagerTest, SetPermissionRequestToggleStatus002
  */
 HWTEST_F(PermissionRequestToggleManagerTest, SetPermissionRequestToggleStatus003, TestSize.Level0)
 {
-    const int32_t resolvedUser = IPCSkeleton::GetCallingUid() / BASE_USER_RANGE;
+    const int32_t resolvedUser = IPCSkeleton::GetCallingAppUid() / BASE_USER_RANGE;
     uint32_t status = PermissionRequestToggleStatus::CLOSED;
     std::string permissionName = "ohos.permission.CAMERA";
     uint32_t getStatus = PermissionRequestToggleStatus::OPEN;

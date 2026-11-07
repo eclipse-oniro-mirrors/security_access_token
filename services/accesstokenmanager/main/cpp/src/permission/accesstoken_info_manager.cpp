@@ -293,7 +293,7 @@ int32_t AccessTokenInfoManager::FindPermissionByNameFromDb(const std::vector<uin
     std::unordered_map<std::string, uint32_t>& permissionNameToCodeMap, std::vector<GenericValues>& permStateResults)
 {
     std::unordered_set<AccessTokenID> hapTokenIdSet;
-    int32_t userId = IPCSkeleton::GetCallingUid() / BASE_USER_RANGE;
+    int32_t userId = IPCSkeleton::GetCallingAppUid() / BASE_USER_RANGE;
     if (userId == 0) {
         GetAllHapTokenId(hapTokenIdSet);
     } else {
@@ -1438,15 +1438,25 @@ int32_t AccessTokenInfoManager::GetHapIdentity(const HapBaseInfo& info, Identity
     if (ret != RET_SUCCESS) {
         return ret;
     }
-    identity.uid = hapInfo.uid;
+    // The runtime uid is derived: the app-level identity from the token record plus
+    // the sharedUid decision recovered from the kernel entry (the existing kernel
+    // bundle-info reader). Kernel miss or unsupported keeps the conservative
+    // (uid == appUid) form.
+    BundleNoCachedInfo noCached;
+    std::vector<PermissionWithValue> kernelPermList;
+    std::vector<uint16_t> kernelPermCodes;
+    (void)PermissionKernelUtils::GetBundleInfoFromKernel(tokenIdEx.tokenIdExStruct.tokenID, noCached,
+        kernelPermList, kernelPermCodes);
+    identity.uid = AccessTokenInfoUtils::ResolveHapUid(hapInfo.uid, noCached.isSharedUid);
+    identity.appUid = hapInfo.uid;
     identity.tokenId = tokenIdEx.tokenIDEx;
     return RET_SUCCESS;
 }
 
-int32_t AccessTokenInfoManager::GetHapBaseInfoByUid(int32_t uid, HapBaseInfo& info)
+int32_t AccessTokenInfoManager::GetHapBaseInfoByUid(int32_t appUid, HapBaseInfo& info)
 {
-    if (uid <= 0) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Uid %{public}d is invalid.", uid);
+    if (appUid <= 0) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "AppUid %{public}d is invalid.", appUid);
         return AccessTokenError::ERR_PARAM_INVALID;
     }
 
@@ -1456,7 +1466,7 @@ int32_t AccessTokenInfoManager::GetHapBaseInfoByUid(int32_t uid, HapBaseInfo& in
             continue;
         }
         HapTokenInfo hapInfo = hapInfoPtr->GetHapInfoBasic();
-        if (hapInfo.uid != uid) {
+        if (hapInfo.uid != appUid) {
             continue;
         }
         info.userID = hapInfo.userID;
@@ -1464,7 +1474,7 @@ int32_t AccessTokenInfoManager::GetHapBaseInfoByUid(int32_t uid, HapBaseInfo& in
         info.instIndex = hapInfo.instIndex;
         return RET_SUCCESS;
     }
-    LOGE(ATM_DOMAIN, ATM_TAG, "Uid %{public}d is not exist.", uid);
+    LOGE(ATM_DOMAIN, ATM_TAG, "AppUid %{public}d does not exist.", appUid);
     return AccessTokenError::ERR_UID_NOT_EXIST;
 }
 

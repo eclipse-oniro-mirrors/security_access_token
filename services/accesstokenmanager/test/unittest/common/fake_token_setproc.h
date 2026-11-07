@@ -29,6 +29,7 @@ struct FakeSpmKernelState final {
     int32_t addRet = 0;
     int32_t setRet = 0;
     int32_t getVersionRet = 0;
+    uint32_t versionValue = 1;
     int32_t getRetOnCall0 = 0;
     int32_t getRetOnCall1 = 0;
     int32_t removeRet = 0;

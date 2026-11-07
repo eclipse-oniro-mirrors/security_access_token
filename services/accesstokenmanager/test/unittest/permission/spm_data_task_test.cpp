@@ -1698,6 +1698,56 @@ HWTEST_F(SpmDataTaskTest, RemoveSpmEntryFromKernelWrapper001, TestSize.Level0)
     EXPECT_EQ(RET_SUCCESS, PermissionKernelUtils::RemoveSpmEntryFromKernel(tokenId));
     EXPECT_EQ(2, GetFakeSpmKernelState().removeCallCount);
 }
+
+/**
+ * @tc.name: BuildSpmData_AppUidMapped_001
+ * @tc.desc: Verify BuildSpmData maps appUid from HapTokenInfo to SpmData and, with the
+ *           bundle-level isSharedUid decision off, derives the runtime uid in the
+ *           conservative (uid == appUid) form.
+ * @tc.type: FUNC
+ */
+HWTEST_F(SpmDataTaskTest, BuildSpmData_AppUidMapped_001, TestSize.Level0)
+{
+    HapTokenInfo hapInfo = BuildHapInfo(0x201, "bundle.appUid");
+    hapInfo.uid = 20200042;
+    BundleNoCachedInfo noCached = BuildNoCached();
+    std::vector<BriefPermData> briefList = BuildBriefList(1);
+    std::vector<PermissionWithValue> extendPerms;
+
+    SpmDataPtr spmData;
+    ASSERT_EQ(RET_SUCCESS, KernelDetail::BuildSpmData(hapInfo, noCached, briefList, extendPerms, spmData));
+    ASSERT_NE(nullptr, spmData);
+    EXPECT_EQ(20200042u, spmData->appUid);
+    EXPECT_EQ(hapInfo.uid, static_cast<int32_t>(spmData->uid));
+}
+
+/**
+ * @tc.name: BuildSpmData_UidDerivedSharedUid001
+ * @tc.desc: With the bundle-level isSharedUid decision on, BuildSpmData derives the
+ *           runtime uid in the userId form from the app-level identity; the appUid field
+ *           keeps the original app-level identity. This is the core derivation invariant
+ *           of the uid model: the runtime uid exists only on the kernel entry.
+ * @tc.type: FUNC
+ */
+HWTEST_F(SpmDataTaskTest, BuildSpmData_UidDerivedSharedUid001, TestSize.Level0)
+{
+    HapTokenInfo hapInfo = BuildHapInfo(0x202, "bundle.shareduid");
+    hapInfo.uid = 20100042; // userId 100 segment, bundleId 42
+    // v2 kernel: only at/above the switch version does ResolveHapUid derive the uid form.
+    GetFakeSpmKernelState().versionValue = 2;
+    BundleNoCachedInfo noCached = BuildNoCached();
+    noCached.isSharedUid = true;
+    std::vector<BriefPermData> briefList = BuildBriefList(1);
+    std::vector<PermissionWithValue> extendPerms;
+
+    SpmDataPtr spmData;
+    ASSERT_EQ(RET_SUCCESS, KernelDetail::BuildSpmData(hapInfo, noCached, briefList, extendPerms, spmData));
+    ASSERT_NE(nullptr, spmData);
+    EXPECT_EQ(20100042u, spmData->appUid);
+    // userId form: the appUid user segment becomes the runtime uid
+    EXPECT_EQ(100, static_cast<int32_t>(spmData->uid));
+    EXPECT_NE(static_cast<int32_t>(spmData->appUid), static_cast<int32_t>(spmData->uid));
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

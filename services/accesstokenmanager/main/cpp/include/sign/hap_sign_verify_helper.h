@@ -113,6 +113,15 @@ public:
         std::vector<PermissionStatus>& permStateList);
 
     /**
+     * @brief Capture the bundle-level uid-switch decision into param.isSharedUid.
+     * @param sortedInfos Sorted trusted bundle info list.
+     * @param policy Hap policy carrying the merged requested permission list.
+     * @param param Output bundle param; only isSharedUid is written.
+     */
+    static void ResolveSharedUidFlag(const std::vector<TrustedBundleInfoInner>& sortedInfos,
+        const HapPolicy& policy, BundleParam& param);
+
+    /**
      * @brief Build the brief permission data list from the hap policy.
      * @param policy Hap policy.
      * @param permBriefDataList Output brief permission data list.

@@ -66,19 +66,19 @@ public:
     // Identity bundleId management
     // Note: Callers are responsible for determining whether to add or remove bundleId based on their own logic.
     // This class only provides the underlying management capabilities.
-    int32_t InitSingleBundleIdCache(int32_t uid);
-    int32_t ImportInitialUids(const std::vector<int32_t>& uids);
-    int32_t AllocUid(int32_t localId, int32_t& outUid);
-    int32_t RemoveBundleId(int32_t uid, bool rollbackScanStart = false);
-    int32_t TranslateUid(int32_t srcUid, int32_t dstLocalId, int32_t& outUid);
-    int32_t GetReservedBundleIdsPersistInfo(const std::vector<int32_t>& uids,
+    int32_t InitSingleBundleIdCache(int32_t appUid);
+    int32_t ImportInitialAppUids(const std::vector<int32_t>& appUids);
+    int32_t AllocAppUid(int32_t localId, int32_t& outAppUid);
+    int32_t RemoveBundleId(int32_t appUid, bool rollbackScanStart = false);
+    int32_t TranslateAppUid(int32_t srcAppUid, int32_t dstLocalId, int32_t& outAppUid);
+    int32_t GetReservedBundleIdsPersistInfo(const std::vector<int32_t>& appUids,
         std::vector<DelInfo>& delInfoVec, std::vector<AddInfo>& addInfoVec);
     int32_t GetReservedBundleIdSetPersistInfo(int32_t bundleId, std::vector<DelInfo>& delInfoVec,
         std::vector<AddInfo>& addInfoVec);
     int32_t BuildReservedBundleIdsPersistInfo(const std::set<int32_t>& bundleIds,
         std::vector<DelInfo>& delInfoVec, std::vector<AddInfo>& addInfoVec);
     int32_t GetBundleIdMin();
-    int32_t IsUidReusable(int32_t uid, bool& reusable);
+    int32_t IsAppUidReusable(int32_t appUid, bool& reusable);
 
     // Migration control
     int32_t InitBundleIdConfig();
@@ -86,20 +86,18 @@ public:
     int32_t RefreshReservedBundleIdSet(const std::set<int32_t>& bundleList);
 
     // Reserved uid management
-    int32_t RemoveReservedBundleId(int32_t uid);
-    // Remove the bundleId carried by this uid from reservedBundleIdSet_ only
-    // (keep bundleIdSet_ intact); install-chain API for adopted reserved uids
-    void RemoveBundleIdFromReservedSet(int32_t uid);
+    int32_t RemoveReservedBundleId(int32_t appUid);
+    void RemoveBundleIdFromReservedSet(int32_t appUid);
     int32_t RemoveReservedBundleIds(const std::set<int32_t>& bundleIds);
-    bool IsReservedBundleId(int32_t uid);
+    bool IsReservedBundleId(int32_t appUid);
     bool IsBundleIdOccupied(int32_t bundleId);
 
-    // Migration control
     void SetMigrationDone();
     bool IsMigrationDone();
-    bool ExtractBundleId(int32_t uid, int32_t &bundleId) const;
-    static int32_t ExtractUserId(int32_t uid);
+    bool ExtractBundleId(int32_t appUid, int32_t& bundleId) const;
+    static int32_t ExtractUserId(int32_t appUid);
     int32_t GetTokenIdStatus(AccessTokenID id, TokenIdStatus& status);
+
 private:
     AccessTokenIDManager() = default;
     DISALLOW_COPY_AND_MOVE(AccessTokenIDManager);
@@ -119,7 +117,7 @@ private:
     std::shared_mutex bundleIdLock_;
     std::set<int32_t> bundleIdSet_;
     std::set<int32_t> reservedBundleIdSet_;
-    // Scan start hint for AllocUid, persisted best-effort. Allocation correctness
+    // Scan start hint for AllocAppUid, persisted best-effort. Allocation correctness
     // relies on bundleIdSet_ and SpmGetUidRefCnt, not on this value.
     int32_t scanStartBundleId_ = -1;
     std::shared_mutex migrationLock_;

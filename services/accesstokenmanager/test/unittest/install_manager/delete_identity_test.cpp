@@ -96,7 +96,8 @@ GenericValues BuildTokenRow(AccessTokenID tokenId, const std::string& bundleName
     row.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
     row.Put(TokenFiledConst::FIELD_BUNDLE_NAME, bundleName);
     // 20020000: user base, 45536: bundleId range
-    row.Put(TokenFiledConst::FIELD_UID, static_cast<int32_t>(20020000 + (tokenId % 45536)));
+    int32_t rowUid = static_cast<int32_t>(20020000 + (tokenId % 45536));
+    row.Put(TokenFiledConst::FIELD_UID, rowUid);
     row.Put(TokenFiledConst::FIELD_RESERVED, reserved);
     return row;
 }
@@ -875,7 +876,7 @@ HWTEST_F(DeleteIdentityTest, DeleteIdentityWithDfx004, TestSize.Level0)
 HWTEST_F(DeleteIdentityTest, DeleteIdentityWithDfx005, TestSize.Level0)
 {
     // RESERVED_IDENTITY-stored rows keep uid=-1: the re-insert writes the
-    // unavailable uid and the bundleId went back to the pool at reserve time.
+    // unavailable value and the bundleId went back to the pool at reserve time.
     GenericValues row = BuildTokenRow(TEST_RESERVED_ID, TEST_BUNDLE, 1);
     row.Remove(TokenFiledConst::FIELD_UID);
     row.Put(TokenFiledConst::FIELD_UID, -1);

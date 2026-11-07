@@ -96,7 +96,7 @@ bool IsCliTokenSelfRecordCalling(AccessTokenID callingTokenID, AccessTokenID inf
 
 int32_t ResolveToggleUserId(int32_t userID)
 {
-    int32_t callingUid = IPCSkeleton::GetCallingUid();
+    int32_t callingUid = IPCSkeleton::GetCallingAppUid();
     int32_t callingUserId = callingUid / BASE_USER_RANGE;
     return (callingUserId == 0) ? userID : callingUserId;
 }
@@ -392,7 +392,7 @@ int32_t PrivacyManagerService::GetRemotePermissionUsedRecords(
         std::to_string(request.request.beginTimeMillis).c_str(), std::to_string(request.request.endTimeMillis).c_str(),
         request.request.flag, permissionList.c_str());
 
-    int32_t callingUid = IPCSkeleton::GetCallingUid();
+    int32_t callingUid = IPCSkeleton::GetCallingAppUid();
     int32_t callingUserId = callingUid / BASE_USER_RANGE;
     PermissionUsedResult permissionRecord;
     int32_t ret = PermissionRecordManager::GetInstance().GetRemotePermissionUsedRecords(
@@ -863,7 +863,7 @@ bool PrivacyManagerService::IsPrivilegedCalling() const
 {
     // shell process is root in debug mode.
 #ifndef ATM_BUILD_VARIANT_USER_ENABLE
-    int32_t callingUid = IPCSkeleton::GetCallingUid();
+    int32_t callingUid = IPCSkeleton::GetCallingAppUid();
     return callingUid == ROOT_UID;
 #else
     return false;
@@ -872,7 +872,7 @@ bool PrivacyManagerService::IsPrivilegedCalling() const
 
 bool PrivacyManagerService::IsAccessTokenCalling() const
 {
-    int32_t callingUid = IPCSkeleton::GetCallingUid();
+    int32_t callingUid = IPCSkeleton::GetCallingAppUid();
     return callingUid == ACCESSTOKEN_UID;
 }
 

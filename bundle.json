@@ -28,7 +28,8 @@
       "access_token_support_subprofile",
       "access_token_privacy_bundle_start_stop_enable",
       "access_token_automation_control_enable",
-      "access_token_bin_permission_dialog_enable"
+      "access_token_bin_permission_dialog_enable",
+      "access_token_support_shareduid"
     ],
     "adapted_system_type": [ "standard" ],
     "rom": "10000KB",

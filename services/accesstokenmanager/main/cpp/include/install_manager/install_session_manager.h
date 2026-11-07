@@ -64,7 +64,7 @@ public:
     int32_t PrepareHapIdentity(int32_t& sessionId, const HapBaseInfo& info, const BundlePolicy& policy,
         const sptr<IRemoteObject>& cb, Identity& identity);
     int32_t UpdateHapPolicy(int32_t sessionId, AccessTokenIDEx& tokenIdEx,
-        const BundlePolicy& policy, int32_t& uid);
+        const BundlePolicy& policy, int32_t& appUid, int32_t& uid);
     int32_t FinishInstall(
         int32_t sessionId, bool isPersistent, const std::map<std::string, std::string>& modulePathMap);
     int32_t GetCacheSignInfoBySessionId(int32_t sessionId, std::vector<TrustedBundleInfo>& bundleInfo,

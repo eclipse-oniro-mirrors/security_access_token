@@ -38,6 +38,7 @@ typedef struct {
  */
 typedef struct {
     uint32_t uid;
+    uint32_t appUid; /**< Application-level uid; parsed by kernel when SPM data version >= 2. */
     uint32_t tokenid;
     uint32_t tokenidAttr;
     uint32_t index;
@@ -104,37 +105,37 @@ int SpmRemoveEntry(uint32_t tokenid);
 
 /**
  * @brief Increment uid active process refcount.
- * @param uid Target uid.
+ * @param appUid Target appUid.
  * @param spawnid Spawn ID of the process being tracked.
  * @return 0 on success; ENOTSUP if kernel doesn't support this CMD (caller should handle).
  */
-int SpmIncUidRefCnt(uint32_t uid, uint32_t spawnid);
+int SpmIncUidRefCnt(uint32_t appUid, uint32_t spawnid);
 
 /**
  * @brief Decrement uid active process refcount.
- * @param uid Target uid.
+ * @param appUid Target appUid.
  * @param spawnid Spawn ID of the process being tracked.
  * @return 0 on success; ENOTSUP if kernel doesn't support this CMD (caller should handle).
  */
-int SpmDecUidRefCnt(uint32_t uid, uint32_t spawnid);
+int SpmDecUidRefCnt(uint32_t appUid, uint32_t spawnid);
 
 /**
  * @brief Get uid active process refcount.
- * @param uid Target uid.
+ * @param appUid Target appUid.
  * @param refcnt Output: refcount value.
  * @return 0 on success; ENOTSUP if kernel doesn't support this CMD (caller should handle).
  */
-int SpmGetUidRefCnt(uint32_t uid, uint64_t *refcnt);
+int SpmGetUidRefCnt(uint32_t appUid, uint64_t *refcnt);
 
 /**
  * @brief Get uid active process refcount with kernel SPM check and retry.
  *        If kernel doesn't support SPM, returns success with refcnt=0.
  *        If SpmGetUidRefCnt fails, retries up to 3 times.
- * @param uid Target uid.
+ * @param appUid Target appUid.
  * @param refcnt Output: refcount value.
  * @return 0 on success; errno on failure after retries.
  */
-int SpmGetUidRefCntWithRetry(uint32_t uid, uint64_t *refcnt);
+int SpmGetUidRefCntWithRetry(uint32_t appUid, uint64_t *refcnt);
 
 /**
  * @brief Increment tokenid active process refcount.
@@ -168,8 +169,11 @@ int SpmGetTokenidRefCnt(uint32_t tokenid, uint64_t *refcnt);
 int SpmClearSpawnidRefCnt(uint32_t spawnid);
 
 /**
- * @brief Get SPM kernel feature version. Initial version is 1.
- * @param version Output: version number.
+ * @brief Get SPM kernel feature version. Initial version is 1; version 2 parses the appUid field.
+ *        This function is a thin syscall wrapper without internal caching. Callers that invoke it
+ *        repeatedly should cache the result at their own layer, since the kernel SPM version never
+ *        changes at runtime.
+ * @param version Output: version number (set to 0 on failure).
  * @return 0 on success; ENOTSUP if kernel doesn't support this CMD (caller should handle).
  */
 int SpmGetVersion(uint32_t *version);

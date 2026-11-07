@@ -72,7 +72,7 @@ constexpr uint32_t ADMIN_CONTROLLED_FLAGS = PERMISSION_FIXED_BY_ADMIN_POLICY | P
 
 // Resolve the sticky state (migrated + permDialogCapState) of one token:
 // session snapshot first, InfoManager chain as fallback. The caller-designated
-// uid marks the token migrated on top of any prior state.
+// appUid marks the token migrated on top of any prior state.
 static void ResolveMigratedAndDialogCapState(const InstallCache& cache, AccessTokenID tokenId,
     InstallHapInfo& installInfo)
 {
@@ -86,22 +86,22 @@ static void ResolveMigratedAndDialogCapState(const InstallCache& cache, AccessTo
     }
     // plain 32-bit id of the session's new identity (0 for pure update sessions)
     AccessTokenID installedToken = AccessTokenIDManager::ExtractTokenIdFromFull(cache.identity.tokenId);
-    // this-session caller-designated uid: the installed identity takes the
+    // this-session caller-designated appUid: the installed identity takes the
     // session flag, each updated token takes its own resolution flag
-    bool isUidFromCaller = false;
+    bool isAppUidFromCaller = false;
     if (tokenId == installedToken) {
-        isUidFromCaller = cache.isUidFromCaller;
+        isAppUidFromCaller = cache.isAppUidFromCaller;
     } else {
         auto uidIt = cache.updatedUidStateMap.find(tokenId);
-        isUidFromCaller = uidIt != cache.updatedUidStateMap.end() && uidIt->second.fromCaller;
+        isAppUidFromCaller = uidIt != cache.updatedUidStateMap.end() && uidIt->second.fromCaller;
     }
 
     if (infoPtr != nullptr && (tokenId != installedToken || cache.reserved == ReservedType::RESERVED_DATA)) {
         installInfo.permDialogCapState = infoPtr->IsPermDialogForbidden();
-        installInfo.migrated = isUidFromCaller || infoPtr->IsMigrated();
+        installInfo.migrated = isAppUidFromCaller || infoPtr->IsMigrated();
     } else {
         installInfo.permDialogCapState = false;
-        installInfo.migrated = isUidFromCaller;
+        installInfo.migrated = isAppUidFromCaller;
     }
 }
 
@@ -125,7 +125,7 @@ HapTokenInfoItem BuildHapTokenInfoItem(const InstallHapInfo& installInfo)
     item.apiVersion = installInfo.baseInfo.apiVersion;
     item.instIndex = static_cast<uint32_t>(installInfo.baseInfo.instIndex);
     item.dlpType = static_cast<HapDlpType>(installInfo.baseInfo.dlpType);
-    item.uid = installInfo.baseInfo.uid;
+    item.appUid = installInfo.baseInfo.uid;
     item.bundleName = installInfo.baseInfo.bundleName;
     item.isSideload = installInfo.isSideload;
     item.migrated = installInfo.migrated;
@@ -363,7 +363,7 @@ void InstallSessionManager::SupplementUpdateInfo(InstallCache& cache)
             // for DLP permission handling in CreateUpdateHapInfo
             bundlePolicy.dlpType = static_cast<DlpType>(infoPtr->GetDlpType());
             cache.updatedBundlePolicyMap[tokenId] = bundlePolicy;
-            cache.updatedUidStateMap[tokenId] = {infoPtr->GetUid(), false};
+            cache.updatedUidStateMap[tokenId] = {infoPtr->GetAppUid(), false};
         }
     }
 }
@@ -552,7 +552,9 @@ int32_t InstallSessionManager::CreateUpdateHapInfo(InstallCache& cache, FinishCo
         tokenInfo.apiVersion = HapTokenInfoInner::GetApiVersion(cache.bundleParam.apiVersion);
         auto it = cache.updatedUidStateMap.find(tokenId);
         if (it != cache.updatedUidStateMap.end()) {
-            tokenInfo.uid = it->second.uid;
+            tokenInfo.uid = it->second.appUid;
+            LOGI(ATM_DOMAIN, ATM_TAG, "Update round appUid refresh, tokenId=%{public}u, appUid=%{public}d.",
+                tokenId, tokenInfo.uid);
         }
         
         std::vector<PermissionWithValue> extPerms;
@@ -810,11 +812,16 @@ int32_t InstallSessionManager::CreateInstallSession(const HapBaseInfo& info, con
     cache.baseInfo = info;
     cache.mode = MultipleModeUtils::GetTokenMode(info.instIndex);
 
-    // Adopt the caller's repair expectation as-is; the uid user-segment rule
-    // lives in AdoptReusableUid, which rejects a mismatched desired uid and
-    // falls back to the standard resolution chain (sibling > fresh).
-    if (desired.tokenId != 0 && desired.uid != INVALID_UID) {
+    // The client folds legacy uid-only expectations onto appUid; adopt the caller's
+    // repair expectation as-is. The appUid user-segment rule lives in
+    // AdoptReusableAppUid, which rejects a mismatched desired appUid and falls back
+    // to the standard resolution chain (sibling > fresh).
+    if (desired.tokenId != 0 && desired.appUid != INVALID_UID) {
         cache.repairedIdentity = desired;
+    } else if (desired.tokenId != 0) {
+        LOGW(ATM_DOMAIN, ATM_TAG, "Incomplete repair expectation, tokenId=%{public}u, appUid=%{public}d, "
+            "uid=%{public}d, fallback to fresh allocation.",
+            static_cast<AccessTokenID>(desired.tokenId), desired.appUid, desired.uid);
     }
     int32_t ret = FillInstallPolicy(info.bundleName, policy, cache);
     if (ret != RET_SUCCESS) {
@@ -890,6 +897,7 @@ int32_t InstallSessionManager::PrepareSessionIdentity(int32_t sessionId, const H
     }
     identity.tokenId = cache.identity.tokenId;
     identity.uid = cache.identity.uid;
+    identity.appUid = cache.identity.appUid;
     cache.bundlePolicy = policy;
 
     return RET_SUCCESS;
@@ -911,8 +919,8 @@ int32_t InstallSessionManager::PrepareHapIdentity(
     return PrepareSessionIdentity(sessionId, info, policy, identity, false);
 }
 
-int32_t InstallSessionManager::UpdateHapPolicy(
-    int32_t sessionId, AccessTokenIDEx& tokenIdEx, const BundlePolicy& policy, int32_t& uid)
+int32_t InstallSessionManager::UpdateHapPolicy(int32_t sessionId,
+    AccessTokenIDEx& tokenIdEx, const BundlePolicy& policy, int32_t& appUid, int32_t& uid)
 {
     std::lock_guard<std::mutex> lock(cacheMutex_);
     // low 32 bits carry the plain token id: the update target (unchanged logic)
@@ -959,15 +967,17 @@ int32_t InstallSessionManager::UpdateHapPolicy(
 
     bool isNewBundleId = false;
     bool fromCaller = false;
-    int32_t ret = InstallIdentityManager::ResolveUpdateUid(uid, infoPtr, isNewBundleId, fromCaller);
+    int32_t ret = InstallIdentityManager::ResolveUpdateAppUid(appUid, infoPtr, isNewBundleId, fromCaller);
     if (ret != RET_SUCCESS) {
-        LOGC(ATM_DOMAIN, ATM_TAG, "Check uid failed, ret=%{public}d", ret);
+        LOGC(ATM_DOMAIN, ATM_TAG, "Check appUid failed, ret=%{public}d", ret);
         RollbackAll(sessionId, InstallHapSceneCode::UPDATE_HAP_POLICY, AccessTokenError::ERR_INVALID_UID, tokenId);
         return ret;
     }
 
     it->second.updatedBundlePolicyMap[tokenId] = policy;
-    it->second.updatedUidStateMap[tokenId] = {uid, isNewBundleId, fromCaller};
+    uid = AccessTokenInfoUtils::ResolveHapUid(appUid, it->second.bundleParam.isSharedUid);
+    it->second.updatedUidStateMap[tokenId] = {.appUid = appUid,
+        .isNewBundleId = isNewBundleId, .fromCaller = fromCaller};
     // refresh the high 32 bits (token attr) with the value this upgrade applies
     // at FinishInstall; the plain token id itself never changes in the update flow
     tokenIdEx.tokenIdExStruct.tokenAttr = InstallIdentityManager::BuildTokenAttr(it->second.bundleParam);
@@ -1008,7 +1018,7 @@ void InstallSessionManager::BuildSpmKernelParams(const InstallCache& cache, cons
                 ctx.oldPermList[i].get() : nullptr;
             updateParams.emplace_back(SpmDataParam{ctx.hapInfos[i].baseInfo, ctx.noCachedInfo,
                 ctx.permBriefDataLists[i], ctx.extendPermLists[i], oldPermPtr, true});
-        } else if (ctx.hapInfos[i].baseInfo.uid != INVALID_UID) { // uid -1 don't add
+        } else if (ctx.hapInfos[i].baseInfo.uid != INVALID_UID) { // appUid -1 don't add
             addParams.emplace_back(SpmDataParam{ctx.hapInfos[i].baseInfo, ctx.noCachedInfo,
                 ctx.permBriefDataLists[i], ctx.extendPermLists[i], nullptr, true});
         }
@@ -1283,8 +1293,8 @@ void InstallSessionManager::ClearSessionByPid(int32_t pid)
     for (auto it = sessionToInstallCache.begin(); it != sessionToInstallCache.end();) {
         if (it->second.callerPid == pid) {
             LOGI(ATM_DOMAIN, ATM_TAG, "Clear sessionId=%{public}d for pid=%{public}d, "
-                "tokenId=%{public}u, uid=%{public}d", it->first, pid,
-                static_cast<AccessTokenID>(it->second.identity.tokenId), it->second.identity.uid);
+                "tokenId=%{public}u, appUid=%{public}d", it->first, pid,
+                static_cast<AccessTokenID>(it->second.identity.tokenId), it->second.identity.appUid);
             RollbackAll(it->first, InstallHapSceneCode::PROXY_DEATH, RET_FAILED, 0, false);
             // death handler will release proxy
             it = sessionToInstallCache.erase(it);

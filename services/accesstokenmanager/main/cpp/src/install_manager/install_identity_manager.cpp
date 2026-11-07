@@ -18,6 +18,7 @@
 #include "access_token_error.h"
 #include "accesstoken_common_log.h"
 #include "accesstoken_id_manager.h"
+#include "accesstoken_info_utils.h"
 #include "generic_values.h"
 #include "install_db_repository.h"
 #include "multiple_mode_utils.h"
@@ -60,45 +61,45 @@ AccessTokenID ResolveTokenId(const InstallCache& cache, bool isDlpApp, bool isCl
     return AccessTokenIDManager::GetInstance().CreateAndRegisterTokenId(TOKEN_HAP, isDlpApp, isCloneApp, 0);
 }
 
-// Adopt the BMS-desired uid only when it belongs to the target user and is
+// Adopt the BMS-desired appUid only when it belongs to the target user and is
 // reusable: bring its bundleId into the cache and mark the identity as
 // caller-provided. Any failure falls back to the caller's fresh allocation.
-bool AdoptReusableUid(int32_t desiredUid, int32_t targetUserId, int32_t& uid, bool& fromCaller)
+bool AdoptReusableAppUid(int32_t desiredAppUid, int32_t targetUserId, int32_t& appUid, bool& fromCaller)
 {
-    if (AccessTokenIDManager::ExtractUserId(desiredUid) != targetUserId) {
-        LOGW(ATM_DOMAIN, ATM_TAG, "Desired uid %{public}d doesn't belong to user %{public}d, skip adoption.",
-            desiredUid, targetUserId);
+    if (AccessTokenIDManager::ExtractUserId(desiredAppUid) != targetUserId) {
+        LOGW(ATM_DOMAIN, ATM_TAG, "Desired appUid %{public}d doesn't belong to user %{public}d, skip adoption.",
+            desiredAppUid, targetUserId);
         return false;
     }
     bool reusable = false;
-    if (AccessTokenIDManager::GetInstance().IsUidReusable(desiredUid, reusable) != RET_SUCCESS ||
+    if (AccessTokenIDManager::GetInstance().IsAppUidReusable(desiredAppUid, reusable) != RET_SUCCESS ||
         !reusable) {
         return false;
     }
-    AccessTokenIDManager::GetInstance().InitSingleBundleIdCache(desiredUid);
-    uid = desiredUid;
+    AccessTokenIDManager::GetInstance().InitSingleBundleIdCache(desiredAppUid);
+    appUid = desiredAppUid;
     fromCaller = true;
     return true;
 }
 
-// Resolve the uid: a same-bundle sibling uid first, then the desired uid from
-// the BMS input if it is reusable (INVALID_UID means no expectation),
+// Resolve the appUid: a same-bundle sibling appUid first, then the desired appUid
+// from the BMS input if it is reusable (INVALID_UID means no expectation),
 // otherwise a fresh allocation.
-int32_t ResolveUid(InstallCache& cache, int32_t bundleRefUid, int32_t& uid)
+int32_t ResolveAppUid(InstallCache& cache, int32_t bundleRefAppUid, int32_t& appUid)
 {
-    if (bundleRefUid != INVALID_UID) {
-        return AccessTokenIDManager::GetInstance().TranslateUid(bundleRefUid, cache.baseInfo.userID, uid);
+    if (bundleRefAppUid != INVALID_UID) {
+        return AccessTokenIDManager::GetInstance().TranslateAppUid(bundleRefAppUid, cache.baseInfo.userID, appUid);
     }
 
-    int32_t desiredUid = cache.repairedIdentity.uid;
-    if (desiredUid == INVALID_UID) {
-        return AccessTokenIDManager::GetInstance().AllocUid(cache.baseInfo.userID, uid);
+    int32_t desiredAppUid = cache.repairedIdentity.appUid;
+    if (desiredAppUid == INVALID_UID) {
+        return AccessTokenIDManager::GetInstance().AllocAppUid(cache.baseInfo.userID, appUid);
     }
-    if (AdoptReusableUid(desiredUid, cache.baseInfo.userID, uid, cache.isUidFromCaller)) {
+    if (AdoptReusableAppUid(desiredAppUid, cache.baseInfo.userID, appUid, cache.isAppUidFromCaller)) {
         return RET_SUCCESS;
     }
-    LOGW(ATM_DOMAIN, ATM_TAG, "Adopt uid %{public}d failed, allocate new one.", desiredUid);
-    return AccessTokenIDManager::GetInstance().AllocUid(cache.baseInfo.userID, uid);
+    LOGW(ATM_DOMAIN, ATM_TAG, "Adopt appUid %{public}d failed, allocate new one.", desiredAppUid);
+    return AccessTokenIDManager::GetInstance().AllocAppUid(cache.baseInfo.userID, appUid);
 }
 }
 
@@ -118,7 +119,7 @@ AccessTokenAttr InstallIdentityManager::BuildTokenAttr(const BundleParam& param)
 }
 
 int32_t InstallIdentityManager::CreateTokenIdAndUid(
-    InstallCache& cache, const BundlePolicy& bundlePolicy, int32_t bundleRefUid)
+    InstallCache& cache, const BundlePolicy& bundlePolicy, int32_t bundleRefAppUid)
 {
     bool isDlpApp = bundlePolicy.dlpType > DLP_COMMON;
     bool isCloneApp = !isDlpApp && (!MultipleModeUtils::IsMainAppIndex(cache.baseInfo.instIndex));
@@ -130,24 +131,29 @@ int32_t InstallIdentityManager::CreateTokenIdAndUid(
     }
     cache.identity.tokenId = AccessTokenIDManager::BuildFullTokenId(tokenId, BuildTokenAttr(cache.bundleParam));
 
-    int32_t ret = ResolveUid(cache, bundleRefUid, cache.identity.uid);
+    int32_t ret = ResolveAppUid(cache, bundleRefAppUid, cache.identity.appUid);
     if (ret != RET_SUCCESS) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Uid create failed, ret=%{public}d", ret);
+        LOGE(ATM_DOMAIN, ATM_TAG, "AppUid create failed, ret=%{public}d", ret);
         AccessTokenIDManager::GetInstance().ReleaseTokenId(tokenId);
         if (ret == AccessTokenError::ERR_PARAM_INVALID) {
             return ret;
         }
         return ERR_UID_CREATE_FAILED;
     }
+    cache.identity.uid = AccessTokenInfoUtils::ResolveHapUid(
+        cache.identity.appUid, cache.bundleParam.isSharedUid);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Install identity resolved, tokenId=%{public}llu, appUid=%{public}d, uid=%{public}d.",
+        static_cast<unsigned long long>(cache.identity.tokenId), cache.identity.appUid, cache.identity.uid);
     return RET_SUCCESS;
 }
 
 void InstallIdentityManager::RestoreIdentityFromReservedData(
-    InstallCache& cache, AccessTokenID tokenId, int32_t uid, int32_t oldAttr)
+    InstallCache& cache, AccessTokenID tokenId, int32_t appUid, int32_t oldAttr)
 {
-    LOGI(ATM_DOMAIN, ATM_TAG, "Reserved data token, tokenId=%{public}u, uid=%{public}d", tokenId, uid);
+    LOGI(ATM_DOMAIN, ATM_TAG, "Reserved data token, tokenId=%{public}u, appUid=%{public}d", tokenId, appUid);
     cache.identity.tokenId = AccessTokenIDManager::BuildFullTokenId(tokenId, BuildTokenAttr(cache.bundleParam));
-    cache.identity.uid = uid;
+    cache.identity.appUid = appUid;
+    cache.identity.uid = AccessTokenInfoUtils::ResolveHapUid(appUid, cache.bundleParam.isSharedUid);
     cache.isNewBundleId = false;
     cache.reserved = ReservedType::RESERVED_DATA;
     cache.oldTokenId = tokenId;
@@ -158,11 +164,11 @@ int32_t InstallIdentityManager::ResolveExistingTokenReuse(InstallCache& cache, c
 {
     AccessTokenID tokenId = static_cast<AccessTokenID>(tokenValue.GetInt(TokenFiledConst::FIELD_TOKEN_ID));
     ReservedType reserved = static_cast<ReservedType>(tokenValue.GetInt(TokenFiledConst::FIELD_RESERVED));
-    int32_t uid = tokenValue.GetInt(TokenFiledConst::FIELD_UID);
+    int32_t appUid = tokenValue.GetInt(TokenFiledConst::FIELD_UID);
     int32_t oldAttr = tokenValue.GetInt(TokenFiledConst::FIELD_TOKEN_ATTR);
 
     if (reserved == ReservedType::RESERVED_DATA) {
-        RestoreIdentityFromReservedData(cache, tokenId, uid, oldAttr);
+        RestoreIdentityFromReservedData(cache, tokenId, appUid, oldAttr);
         return RET_SUCCESS;
     }
     if (reserved == ReservedType::RESERVED_IDENTITY) {
@@ -191,7 +197,7 @@ int32_t InstallIdentityManager::GetTokenIdAndUid(InstallCache& cache, const Bund
         return ret;
     }
 
-    int32_t bundleRefUid = INVALID_UID;
+    int32_t bundleRefAppUid = INVALID_UID;
     for (const auto& tokenValue : hapTokenResults) {
         if (tokenValue.GetInt(TokenFiledConst::FIELD_INST_INDEX) != cache.baseInfo.instIndex) {
             continue;
@@ -208,19 +214,19 @@ int32_t InstallIdentityManager::GetTokenIdAndUid(InstallCache& cache, const Bund
                 return RET_SUCCESS;
             }
         } else {
-            int32_t uid = tokenValue.GetInt(TokenFiledConst::FIELD_UID);
-            if (uid != INVALID_UID) {
-                bundleRefUid = uid;
+            int32_t appUid = tokenValue.GetInt(TokenFiledConst::FIELD_UID);
+            if (appUid != INVALID_UID) {
+                bundleRefAppUid = appUid;
                 cache.isNewBundleId = false;
             }
         }
     }
 
-    return CreateTokenIdAndUid(cache, bundlePolicy, bundleRefUid);
+    return CreateTokenIdAndUid(cache, bundlePolicy, bundleRefAppUid);
 }
 
-int32_t InstallIdentityManager::ResolveUpdateUid(
-    int32_t& uid, const std::shared_ptr<HapTokenInfoInner>& infoPtr, bool& isNewBundleId, bool& fromCaller)
+int32_t InstallIdentityManager::ResolveUpdateAppUid(
+    int32_t& appUid, const std::shared_ptr<HapTokenInfoInner>& infoPtr, bool& isNewBundleId, bool& fromCaller)
 {
     // public static entry: direct callers (tests, future code) may pass nullptr
     if (infoPtr == nullptr) {
@@ -228,10 +234,10 @@ int32_t InstallIdentityManager::ResolveUpdateUid(
         return ERR_PARAM_INVALID;
     }
 
-    // level 1: AT memory uid
-    int32_t rawUid = infoPtr->GetUid();
-    if (rawUid != INVALID_UID) {
-        uid = rawUid;
+    // level 1: AT memory appUid
+    int32_t rawAppUid = infoPtr->GetAppUid();
+    if (rawAppUid != INVALID_UID) {
+        appUid = rawAppUid;
         return RET_SUCCESS;
     }
 
@@ -242,25 +248,25 @@ int32_t InstallIdentityManager::ResolveUpdateUid(
     if (ret != RET_SUCCESS) {
         return ret;
     }
-    int32_t bundleRefUid = INVALID_UID;
+    int32_t bundleRefAppUid = INVALID_UID;
     for (const auto& tokenValue : hapTokenResults) {
-        int32_t queryUid = tokenValue.GetInt(TokenFiledConst::FIELD_UID);
-        if (queryUid != INVALID_UID) {
-            bundleRefUid = queryUid;
+        int32_t queryAppUid = tokenValue.GetInt(TokenFiledConst::FIELD_UID);
+        if (queryAppUid != INVALID_UID) {
+            bundleRefAppUid = queryAppUid;
             break;
         }
     }
-    if (bundleRefUid != INVALID_UID) {
-        return AccessTokenIDManager::GetInstance().TranslateUid(bundleRefUid, infoPtr->GetUserID(), uid);
+    if (bundleRefAppUid != INVALID_UID) {
+        return AccessTokenIDManager::GetInstance().TranslateAppUid(bundleRefAppUid, infoPtr->GetUserID(), appUid);
     }
 
-    // level 3: BMS desired uid if reusable, otherwise fresh allocation
-    if (uid != INVALID_UID && AdoptReusableUid(uid, infoPtr->GetUserID(), uid, fromCaller)) {
+    // level 3: BMS desired appUid if reusable, otherwise fresh allocation
+    if (appUid != INVALID_UID && AdoptReusableAppUid(appUid, infoPtr->GetUserID(), appUid, fromCaller)) {
         isNewBundleId = true;
     } else {
-        int32_t ret = AccessTokenIDManager::GetInstance().AllocUid(infoPtr->GetUserID(), uid);
+        int32_t ret = AccessTokenIDManager::GetInstance().AllocAppUid(infoPtr->GetUserID(), appUid);
         if (ret != RET_SUCCESS) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "Uid create failed, ret=%{public}d", ret);
+            LOGE(ATM_DOMAIN, ATM_TAG, "AppUid create failed, ret=%{public}d", ret);
             return ERR_UID_CREATE_FAILED;
         }
         isNewBundleId = true;
@@ -273,7 +279,7 @@ int32_t InstallIdentityManager::ResolveUpdateUid(
 void InstallIdentityManager::CommitIdentity(const InstallCache& cache, const FinishContext& context)
 {
     if (cache.HasNewIdentity()) {
-        AccessTokenIDManager::GetInstance().RemoveBundleIdFromReservedSet(cache.identity.uid);
+        AccessTokenIDManager::GetInstance().RemoveBundleIdFromReservedSet(cache.identity.appUid);
     }
 
     size_t index = cache.HasNewIdentity() ? 1 : 0; // the new token is registered ACTIVE on allocation
@@ -307,12 +313,12 @@ void InstallIdentityManager::RollbackIdentity(const InstallCache& cache)
                 static_cast<AccessTokenID>(cache.identity.tokenId));
         }
         if (cache.isNewBundleId) {
-            AccessTokenIDManager::GetInstance().RemoveBundleId(cache.identity.uid);
+            AccessTokenIDManager::GetInstance().RemoveBundleId(cache.identity.appUid);
         }
     }
     for (const auto& iter : cache.updatedUidStateMap) {
         if (iter.second.isNewBundleId) {
-            AccessTokenIDManager::GetInstance().RemoveBundleId(iter.second.uid);
+            AccessTokenIDManager::GetInstance().RemoveBundleId(iter.second.appUid);
         }
     }
 }

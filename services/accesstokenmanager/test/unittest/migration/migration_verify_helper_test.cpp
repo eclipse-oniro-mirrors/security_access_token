@@ -53,6 +53,8 @@ AppVerifyAdapter resetAdapter_;
 const std::string TEST_DIR = "/data/test_temp";
 const std::string TEST_PATH = "/data/test_temp/camera.hap";
 const std::string TEST_PATH2 = "/data/test_temp/camera2.hap";
+// Realistic app-level uid used to drive the uid refresh loop in VerifyMigratedBundle.
+constexpr int32_t TEST_APP_UID = 20010001;
 
 void SetUpVerifyEnvironment()
 {
@@ -106,6 +108,22 @@ std::shared_ptr<HapTokenInfoInner> BuildCachedInfo(AccessTokenID tokenId, int32_
     hapTokenInfo.instIndex = instIndex;
     infoPtr->SetTokenBaseInfo(hapTokenInfo);
     return infoPtr;
+}
+
+int32_t InsertPlaceholderSignInfo(const MigratedInfoIdl& migratedInfo)
+{
+    GenericValues placeholder;
+    placeholder.Put(TokenFiledConst::FIELD_BUNDLE_NAME, migratedInfo.bundleName);
+    placeholder.Put(TokenFiledConst::FIELD_MODULE_NAME, "#0");
+    placeholder.Put(TokenFiledConst::FIELD_PATH, migratedInfo.pathList.hapPaths[0]);
+    placeholder.Put(TokenFiledConst::FIELD_IS_PREINSTALLED, false);
+    placeholder.Put(TokenFiledConst::FIELD_BUNDLE_TYPE, 0);
+    std::vector<uint8_t> emptyBlob {1};
+    placeholder.PutBlob(TokenFiledConst::FIELD_PERSIST_DATA, emptyBlob);
+    AddInfo addInfo;
+    addInfo.addType = AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO;
+    addInfo.addValues = { placeholder };
+    return AccessTokenDbOperator::DeleteAndInsertValues({}, { addInfo });
 }
 
 int32_t AllocHapTokenLocally(const HapInfoParams& info, HapPolicyParams& policyParams, AccessTokenIDEx& tokenIdEx)
@@ -814,6 +832,72 @@ HWTEST_F(MigrationVerifyHelperTest, PrepareHapInfoOperationsSideloadMismatch001,
 }
 
 /**
+ * @tc.name: PrepareHapInfoOperationsUidSync001
+ * @tc.desc: PrepareHapInfoOperations syncs the app-level identity from cache into the
+ *           persisted row: the uid column carries the cache's appUid, while the runtime
+ *           uid stays in memory and is never persisted.
+ * @tc.type: FUNC
+ */
+HWTEST_F(MigrationVerifyHelperTest, PrepareHapInfoOperationsUidSync001, TestSize.Level1)
+{
+    MockNativeToken mock("foundation");
+    constexpr AccessTokenID syncTokenId = 0x200000fc;
+    constexpr int32_t dbUid = 20010001;
+    constexpr int32_t adoptedAppUid = 20010002;
+    const std::string syncBundleName = "com.example.prepare.uidsync";
+
+    HapTokenInfoItem dbItem;
+    dbItem.tokenId = syncTokenId;
+    dbItem.userId = 100;
+    dbItem.bundleName = syncBundleName;
+    dbItem.instIndex = 0;
+    dbItem.dlpType = DLP_COMMON;
+    dbItem.appId = syncBundleName + "_appid";
+    dbItem.apl = APL_NORMAL;
+    dbItem.version = 1;
+    dbItem.apiVersion = 12;
+    dbItem.appUid = dbUid;
+    dbItem.migrated = true;
+    std::vector<GenericValues> rowValues;
+    dbItem.BuildAddValue(rowValues);
+    AddInfo rowInfo;
+    rowInfo.addType = AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO;
+    rowInfo.addValues = rowValues;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenDbOperator::DeleteAndInsertValues({}, { rowInfo }));
+
+    auto cachedInfo = BuildCachedInfo(syncTokenId, 100, syncBundleName, 0);
+    // The verify flow re-resolved the app-level identity (adoption/translate) while
+    // the runtime uid also moved; only the appUid is persisted.
+    cachedInfo->SetAppUid(adoptedAppUid);
+    std::vector<std::shared_ptr<HapTokenInfoInner>> cachedInfos = { cachedInfo };
+
+    auto& helper = MigrationVerifyHelper::GetInstance();
+    helper.delInfoVec_.clear();
+    helper.addInfoVec_.clear();
+
+    BundleParam param;
+    HapPolicy hapPolicy;
+    helper.PrepareHapInfoOperations(param, hapPolicy, cachedInfos);
+
+    bool foundHapInfoRow = false;
+    for (const auto& addInfo : helper.addInfoVec_) {
+        if (addInfo.addType != AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO || addInfo.addValues.empty()) {
+            continue;
+        }
+        foundHapInfoRow = true;
+        // Only the app-level identity is persisted: the uid column carries the cache's
+        // re-resolved appUid; the runtime uid (100) is derived and never stored.
+        EXPECT_EQ(adoptedAppUid, addInfo.addValues[0].GetInt(TokenFiledConst::FIELD_UID));
+    }
+    EXPECT_TRUE(foundHapInfoRow);
+
+    GenericValues delCondition;
+    delCondition.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(syncTokenId));
+    DelInfo delInfo { AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, delCondition };
+    (void)AccessTokenDbOperator::DeleteAndInsertValues({ delInfo }, {});
+}
+
+/**
  * @tc.name: FixBriefPermDataPerTokenNotFixed001
  * @tc.desc: FixBriefPermDataPerToken leaves tokenFixed false when no permission data needs fixing.
  * @tc.type: FUNC
@@ -899,6 +983,90 @@ HWTEST_F(MigrationVerifyHelperTest, PersistDbInfoBuildBundleSignInfoFail001, Tes
     std::vector<std::shared_ptr<HapTokenInfoInner>> cachedInfos;
     int32_t ret = MigrationVerifyHelper::GetInstance().PersistDbInfo(bundleInfo, verifiedBundle, cachedInfos);
     EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
+}
+
+/**
+ * @tc.name: VerifyMigratedBundleUidRollbackKernelConflict001
+ * @tc.desc: When the kernel add hits ERR_DATA_CONFLICT_WITH_KERNEL (the first verification
+ *           committed the SPM entry, so the second add of the same tokenId gets EEXIST),
+ *           VerifyMigratedBundle returns RET_SUCCESS: the conflict is an idempotent
+ *           re-verification, kernel data stays consistent and the cached app-level
+ *           identity is untouched.
+ * @tc.type: FUNC
+ */
+HWTEST_F(MigrationVerifyHelperTest, VerifyMigratedBundleUidRollbackKernelConflict001, TestSize.Level1)
+{
+    MockNativeToken mock("foundation");
+
+    HapInfoParams info = TestCommon::GetInfoManagerTestSystemInfoParms();
+    info.bundleName = "com.example.verify.uidrollback.kernel";
+    info.appIDDesc = info.bundleName;
+    HapPolicyParams policy = TestCommon::GetTestPolicyParams();
+
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS, TestCommon::AllocTestHapToken(info, policy, tokenIdEx));
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+
+    auto cachedInfo = BuildCachedInfo(tokenId, info.userID, info.bundleName, 0);
+    cachedInfo->SetAppUid(TEST_APP_UID);
+    std::vector<std::shared_ptr<HapTokenInfoInner>> cachedInfos = { cachedInfo };
+
+    mockAdapter_.bundleName_ = info.bundleName;
+    MigratedInfoIdl migratedInfo = BuildBasicMigratedInfo(info.bundleName, TEST_PATH);
+    BundleInfoItems bundleInfo = BuildBundleInfo(migratedInfo);
+    ASSERT_EQ(RET_SUCCESS, InsertPlaceholderSignInfo(migratedInfo));
+
+    int32_t ret = MigrationVerifyHelper::GetInstance().VerifyMigratedBundle(bundleInfo, cachedInfos);
+    ASSERT_EQ(RET_SUCCESS, ret);
+
+    // Re-verify: the kernel conflict path returns success and keeps the cached identity.
+    ret = MigrationVerifyHelper::GetInstance().VerifyMigratedBundle(bundleInfo, cachedInfos);
+    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_EQ(TEST_APP_UID, cachedInfo->GetAppUid());
+
+    (void)SpmRemoveEntry(tokenId);
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenId));
+}
+
+/**
+ * @tc.name: VerifyMigratedBundleUidRollbackPersistFail001
+ * @tc.desc: When PersistDbInfo fails (module count mismatch) after a successful kernel add,
+ *           VerifyMigratedBundle returns the DB error code, the staged kernel add is
+ *           compensated by the RAII transaction destructor, and the cached app-level
+ *           identity is untouched.
+ * @tc.type: FUNC
+ */
+HWTEST_F(MigrationVerifyHelperTest, VerifyMigratedBundleUidRollbackPersistFail001, TestSize.Level1)
+{
+    MockNativeToken mock("foundation");
+
+    HapInfoParams info = TestCommon::GetInfoManagerTestSystemInfoParms();
+    info.bundleName = "com.example.verify.uidrollback.persist";
+    info.appIDDesc = info.bundleName;
+    HapPolicyParams policy = TestCommon::GetTestPolicyParams();
+
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS, TestCommon::AllocTestHapToken(info, policy, tokenIdEx));
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+
+    auto cachedInfo = BuildCachedInfo(tokenId, info.userID, info.bundleName, 0);
+    cachedInfo->SetAppUid(TEST_APP_UID);
+    std::vector<std::shared_ptr<HapTokenInfoInner>> cachedInfos = { cachedInfo };
+
+    mockAdapter_.bundleName_ = info.bundleName;
+    MigratedInfoIdl migratedInfo = BuildBasicMigratedInfo(info.bundleName, TEST_PATH);
+    // Second empty path is skipped by DoVerifyMigratedBundle, so BuildBundleSignInfo sees
+    // 2 moduleInfoItems vs 1 verifiedInfo and PersistDbInfo fails with ERR_PARAM_INVALID.
+    migratedInfo.pathList.hapPaths = { TEST_PATH, "" };
+    BundleInfoItems bundleInfo = BuildBundleInfo(migratedInfo);
+
+    int32_t ret = MigrationVerifyHelper::GetInstance().VerifyMigratedBundle(bundleInfo, cachedInfos);
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
+    // No cache corruption on the DB failure; the RAII transaction compensates the kernel add.
+    EXPECT_EQ(TEST_APP_UID, cachedInfo->GetAppUid());
+
+    (void)SpmRemoveEntry(tokenId);
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenId));
 }
 } // namespace AccessToken
 } // namespace Security

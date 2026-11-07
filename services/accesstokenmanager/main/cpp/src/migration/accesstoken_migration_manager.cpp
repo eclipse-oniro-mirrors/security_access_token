@@ -138,14 +138,15 @@ int32_t AccessTokenMigrationManager::GetCachedTokenInfo(AccessTokenID tokenId, c
 }
 
 int32_t AccessTokenMigrationManager::CheckCachedUid(const std::shared_ptr<HapTokenInfoInner>& infoPtr,
-    int32_t uid)
+    int32_t appUid)
 {
-    int32_t cachedUid = infoPtr->GetUid();
-    if ((cachedUid == INVALID_HAP_UID) || (cachedUid == uid)) {
+    int32_t cachedAppUid = infoPtr->GetAppUid();
+    if ((cachedAppUid == INVALID_HAP_UID) || (cachedAppUid == appUid)) {
         return RET_SUCCESS;
     }
-    LOGC(ATM_DOMAIN, ATM_TAG, "Migrate installed bundles failed, cached uid %{public}d differs from migration uid "
-        "%{public}d while migrating tokenId %{public}u.", cachedUid, uid, infoPtr->GetTokenID());
+    LOGC(ATM_DOMAIN, ATM_TAG,
+        "Migrate failed, cached appUid %{public}d differs from migration appUid "
+        "%{public}d, tokenId %{public}u.", cachedAppUid, appUid, infoPtr->GetTokenID());
     return AccessTokenError::ERR_MIGRATION_UID_EXISTED;
 }
 
@@ -156,7 +157,7 @@ int32_t AccessTokenMigrationManager::CreateNewTokenInfoForHap(
     LOGC(ATM_DOMAIN, ATM_TAG, "Creating new token for hap %{public}s, index=%{public}zu.",
         preparedBundle.migratedInfo.hapBaseInfoList[index].bundleName.c_str(), index);
     const auto& hapBaseInfo = preparedBundle.migratedInfo.hapBaseInfoList[index];
-    int32_t uid = preparedBundle.migratedInfo.uidList[index];
+    int32_t appUid = preparedBundle.migratedInfo.uidList[index];
     int32_t dlpFlag = 0;
     int32_t cloneFlag = ((dlpFlag == 0) && (hapBaseInfo.instIndex % MAIN_CLONE_INDEX_BASE != 0)) ? 1 : 0;
     AccessTokenID newTokenId = AccessTokenIDManager::GetInstance().CreateAndRegisterTokenId(
@@ -171,7 +172,7 @@ int32_t AccessTokenMigrationManager::CreateNewTokenInfoForHap(
     hapTokenInfo.userID = hapBaseInfo.userID;
     hapTokenInfo.bundleName = hapBaseInfo.bundleName;
     hapTokenInfo.instIndex = hapBaseInfo.instIndex;
-    hapTokenInfo.uid = uid;
+    hapTokenInfo.uid = appUid;
     infoPtr->SetTokenBaseInfo(hapTokenInfo);
     infoPtr->SetMigrated(true);
     return RET_SUCCESS;
@@ -201,36 +202,36 @@ int32_t AccessTokenMigrationManager::CheckDuplicateHapBaseInfo(const HapBaseInfo
     return AccessTokenError::ERR_MIGRATION_UID_DUPLICATED;
 }
 
-int32_t AccessTokenMigrationManager::CheckUidConflict(const MigratedInfoIdl& migratedInfo, int32_t uid,
+int32_t AccessTokenMigrationManager::CheckUidConflict(const MigratedInfoIdl& migratedInfo, int32_t appUid,
     std::unordered_set<int32_t>& seenInBundle) const
 {
     std::string ownerKey = MultipleModeUtils::GetBundleModeKey(
         migratedInfo.bundleName, static_cast<int32_t>(migratedInfo.mode));
-    auto uidOwnerIter = uidOwnerBundles_.find(uid);
-    if (uidOwnerIter != uidOwnerBundles_.end()) {
-        if (uidOwnerIter->second == ownerKey) {
+    auto appUidOwnerIter = appUidOwnerBundles_.find(appUid);
+    if (appUidOwnerIter != appUidOwnerBundles_.end()) {
+        if (appUidOwnerIter->second == ownerKey) {
             return RET_SUCCESS;
         }
-        LOGC(ATM_DOMAIN, ATM_TAG, "Migrate installed bundles failed, uid %{public}d already belongs to bundle "
-            "%{public}s, current bundle=%{public}s.", uid, uidOwnerIter->second.c_str(),
+        LOGC(ATM_DOMAIN, ATM_TAG, "Migrate installed bundles failed, appUid %{public}d already belongs to bundle "
+            "%{public}s, current bundle=%{public}s.", appUid, appUidOwnerIter->second.c_str(),
             ownerKey.c_str());
         return AccessTokenError::ERR_MIGRATION_UID_DUPLICATED;
     }
-    if (seenInBundle.insert(uid).second) {
+    if (seenInBundle.insert(appUid).second) {
         return RET_SUCCESS;
     }
-    LOGC(ATM_DOMAIN, ATM_TAG, "Migrate installed bundles failed, duplicate uid %{public}d within bundle "
-        "%{public}s.", uid, ownerKey.c_str());
+    LOGC(ATM_DOMAIN, ATM_TAG, "Migrate installed bundles failed, duplicate appUid %{public}d within bundle "
+        "%{public}s.", appUid, ownerKey.c_str());
     return AccessTokenError::ERR_MIGRATION_UID_DUPLICATED;
 }
 
 int32_t AccessTokenMigrationManager::CheckBundleIdConflict(const MigratedInfoIdl& migratedInfo,
-    const HapBaseInfoIdl& hapBaseInfo, int32_t uid, std::unordered_map<int32_t, int32_t>& bundleIdByInstIndex) const
+    const HapBaseInfoIdl& hapBaseInfo, int32_t appUid, std::unordered_map<int32_t, int32_t>& bundleIdByInstIndex) const
 {
     int32_t bundleId = 0;
-    if (!AccessTokenIDManager::GetInstance().ExtractBundleId(uid, bundleId)) {
-        LOGC(ATM_DOMAIN, ATM_TAG, "Migrate installed bundles failed, invalid uid %{public}d in bundle "
-            "%{public}s.", uid, migratedInfo.bundleName.c_str());
+    if (!AccessTokenIDManager::GetInstance().ExtractBundleId(appUid, bundleId)) {
+        LOGC(ATM_DOMAIN, ATM_TAG, "Migrate installed bundles failed, invalid appUid %{public}d in bundle "
+            "%{public}s.", appUid, migratedInfo.bundleName.c_str());
         return AccessTokenError::ERR_INVALID_UID;
     }
 
@@ -266,17 +267,17 @@ int32_t AccessTokenMigrationManager::CheckMigrationConflicts(const MigratedInfoI
     std::unordered_map<int32_t, int32_t> bundleIdByInstIndex;
 
     for (size_t i = 0; i < migratedInfo.uidList.size(); ++i) {
-        int32_t uid = migratedInfo.uidList[i];
+        int32_t appUid = migratedInfo.uidList[i];
         const auto& hapBaseInfo = migratedInfo.hapBaseInfoList[i];
         int32_t ret = CheckDuplicateHapBaseInfo(hapBaseInfo, seenHapBaseInfos);
         if (ret != RET_SUCCESS) {
             return ret;
         }
-        ret = CheckUidConflict(migratedInfo, uid, seenInBundle);
+        ret = CheckUidConflict(migratedInfo, appUid, seenInBundle);
         if (ret != RET_SUCCESS) {
             return ret;
         }
-        ret = CheckBundleIdConflict(migratedInfo, hapBaseInfo, uid, bundleIdByInstIndex);
+        ret = CheckBundleIdConflict(migratedInfo, hapBaseInfo, appUid, bundleIdByInstIndex);
         if (ret != RET_SUCCESS) {
             return ret;
         }
@@ -301,16 +302,16 @@ int32_t AccessTokenMigrationManager::PrepareIdentityInfos(PreparedMigrationBundl
         if (ret != RET_SUCCESS) {
             return ret;
         }
-        int32_t uid = migratedInfo.uidList[i];
-        ret = CheckCachedUid(infoPtr, uid);
+        int32_t appUid = migratedInfo.uidList[i];
+        ret = CheckCachedUid(infoPtr, appUid);
         if (ret != RET_SUCCESS) {
             return ret;
         }
 
         LOGI(ATM_DOMAIN, ATM_TAG, "Prepare bundle %{public}s userId=%{public}d, instIndex=%{public}d, "
-            "uid=%{public}d, tokenId=%{public}u, isNew=%{public}d.",
+            "appUid=%{public}d, tokenId=%{public}u, isNew=%{public}d.",
             migratedInfo.bundleName.c_str(), infoPtr->GetUserID(), infoPtr->GetInstIndex(),
-            uid, tokenId, static_cast<int>(isNewToken));
+            appUid, tokenId, static_cast<int>(isNewToken));
         cachedInfos.emplace_back(infoPtr);
         newTokenFlags.emplace_back(isNewToken);
     }
@@ -361,7 +362,7 @@ int32_t AccessTokenMigrationManager::ResolveIdentityInfo(PreparedMigrationBundle
     preparedBundle.migratedInfo.reservedTypeList[index] = ReservedTypeIdl::RESERVED_DATA;
     Identity identity;
     identity.tokenId = static_cast<uint64_t>(tokenId);
-    identity.uid = migratedInfo.uidList[index];
+    identity.appUid = migratedInfo.uidList[index];
     hapIdentityMap_[key] = identity;
     return RET_SUCCESS;
 }
@@ -435,10 +436,10 @@ int32_t AccessTokenMigrationManager::PersistMigratedBundles(const PreparedMigrat
     BuildPlaceholderSignInfo(preparedBundle, delInfoVec, addInfoVec);
 
     std::set<int32_t> reservedBundleIdsToRemove;
-    for (int32_t uid : preparedBundle.migratedInfo.uidList) {
+    for (int32_t appUid : preparedBundle.migratedInfo.uidList) {
         int32_t bundleId = 0;
-        if (AccessTokenIDManager::GetInstance().ExtractBundleId(uid, bundleId) &&
-            AccessTokenIDManager::GetInstance().IsReservedBundleId(uid)) {
+        if (AccessTokenIDManager::GetInstance().ExtractBundleId(appUid, bundleId) &&
+            AccessTokenIDManager::GetInstance().IsReservedBundleId(appUid)) {
             reservedBundleIdsToRemove.insert(bundleId);
         }
     }
@@ -463,7 +464,7 @@ int32_t AccessTokenMigrationManager::ExecutePreparedMigration(PreparedMigrationB
     }
     
     for (size_t i = 0; i < preparedBundle.cachedInfos.size(); ++i) {
-        preparedBundle.cachedInfos[i]->SetUid(static_cast<uint32_t>(preparedBundle.migratedInfo.uidList[i]));
+        preparedBundle.cachedInfos[i]->SetAppUid(preparedBundle.migratedInfo.uidList[i]);
         preparedBundle.cachedInfos[i]->SetMigrated(true);
         if (preparedBundle.migratedInfo.reservedTypeList[i] == ReservedTypeIdl::RESERVED_DATA) {
             AccessTokenID tokenId = preparedBundle.cachedInfos[i]->GetTokenID();
@@ -603,7 +604,7 @@ int32_t AccessTokenMigrationManager::LoadDbCacheIfNeeded()
         return ret;
     }
     dbRowCache_ = BuildDbRowCache(dbResults);
-    uidOwnerBundles_.clear();
+    appUidOwnerBundles_.clear();
     bundleIdOwnerBundles_.clear();
     ret = BuildUidBundleCaches();
     if (ret != RET_SUCCESS) {
@@ -641,15 +642,15 @@ std::unordered_map<int32_t, GenericValues> AccessTokenMigrationManager::BuildDbR
 int32_t AccessTokenMigrationManager::BuildUidBundleCaches()
 {
     for (const auto& [tokenid, row] : dbRowCache_) {
-        int32_t existingUid = row.GetInt(TokenFiledConst::FIELD_UID);
+        int32_t existingAppUid = row.GetInt(TokenFiledConst::FIELD_UID);
         std::string bundleName = row.GetString(TokenFiledConst::FIELD_BUNDLE_NAME);
-        if (existingUid < 0) {
+        if (existingAppUid < 0) {
             continue;
         }
         int32_t bundleId = 0;
-        if (!AccessTokenIDManager::GetInstance().ExtractBundleId(existingUid, bundleId)) {
-            LOGC(ATM_DOMAIN, ATM_TAG, "Failed to extract bundleId from uid %{public}d "
-                "for bundle %{public}s.", existingUid, bundleName.c_str());
+        if (!AccessTokenIDManager::GetInstance().ExtractBundleId(existingAppUid, bundleId)) {
+            LOGC(ATM_DOMAIN, ATM_TAG, "Failed to extract bundleId from appUid %{public}d "
+                "for bundle %{public}s.", existingAppUid, bundleName.c_str());
             ReportSysCommonEventError(
                 static_cast<int32_t>(IAccessTokenManagerIpcCode::COMMAND_MIGRATE_INSTALLED_BUNDLES),
                 ERR_INVALID_UID);
@@ -659,13 +660,13 @@ int32_t AccessTokenMigrationManager::BuildUidBundleCaches()
             MultipleModeUtils::GetTokenMode(row.GetInt(TokenFiledConst::FIELD_INST_INDEX)));
         std::string ownerKey = MultipleModeUtils::GetBundleModeKey(bundleName, mode);
         if (bundleIdOwnerBundles_.count(bundleId) == 0) {
-            uidOwnerBundles_[existingUid] = ownerKey;
+            appUidOwnerBundles_[existingAppUid] = ownerKey;
             bundleIdOwnerBundles_[bundleId] = ownerKey;
             continue;
         }
-        LOGC(ATM_DOMAIN, ATM_TAG, "Found same bundleId bundle %{public}s and %{public}s for uid %{public}d.",
+        LOGC(ATM_DOMAIN, ATM_TAG, "Found same bundleId bundle %{public}s and %{public}s for appUid %{public}d.",
             bundleIdOwnerBundles_[bundleId].c_str(),
-            ownerKey.c_str(), existingUid);
+            ownerKey.c_str(), existingAppUid);
         ReportSysCommonEventError(
             static_cast<int32_t>(IAccessTokenManagerIpcCode::COMMAND_MIGRATE_INSTALLED_BUNDLES),
             ERR_INVALID_UID);
@@ -682,7 +683,7 @@ void AccessTokenMigrationManager::BuildHapIdentityMap()
         int32_t instIndex = row.GetInt(TokenFiledConst::FIELD_INST_INDEX);
         Identity identity;
         identity.tokenId = static_cast<uint64_t>(tokenId);
-        identity.uid = row.GetInt(TokenFiledConst::FIELD_UID);
+        identity.appUid = row.GetInt(TokenFiledConst::FIELD_UID);
         hapIdentityMap_[AccessTokenInfoUtils::GetHapUniqueStr(userID, bundleName, instIndex)] = identity;
     }
 }
@@ -708,14 +709,14 @@ BundleMigrateResultIdl AccessTokenMigrationManager::ProcessBundleMigration(
                 hapBaseInfo.userID, hapBaseInfo.bundleName, hapBaseInfo.instIndex);
             auto iter = hapIdentityMap_.find(key);
             if (iter != hapIdentityMap_.end()) {
-                iter->second.uid = migratedInfo.uidList[i];
+                iter->second.appUid = migratedInfo.uidList[i];
             }
         }
-        for (int32_t uid : migratedInfo.uidList) {
-            AccessTokenIDManager::GetInstance().InitSingleBundleIdCache(uid);
-            uidOwnerBundles_[uid] = ownerKey;
+        for (int32_t appUid : migratedInfo.uidList) {
+            AccessTokenIDManager::GetInstance().InitSingleBundleIdCache(appUid);
+            appUidOwnerBundles_[appUid] = ownerKey;
             int32_t bundleId = 0;
-            if (AccessTokenIDManager::GetInstance().ExtractBundleId(uid, bundleId)) {
+            if (AccessTokenIDManager::GetInstance().ExtractBundleId(appUid, bundleId)) {
                 bundleIdOwnerBundles_[bundleId] = ownerKey;
             }
         }
@@ -785,26 +786,26 @@ int32_t AccessTokenMigrationManager::FinishMigration()
 }
 
 int32_t AccessTokenMigrationManager::CheckMigratedUidSet(
-    const std::set<int32_t>& totalUids, std::set<int32_t>& unreceivedUids)
+    const std::set<int32_t>& totalAppUids, std::set<int32_t>& unreceivedAppUids)
 {
     std::lock_guard<std::mutex> lock(migrationMutex_);
-    unreceivedUids.clear();
+    unreceivedAppUids.clear();
 
-    std::set<int32_t> serviceUids;
+    std::set<int32_t> serviceAppUids;
     for (const auto& entry : hapIdentityMap_) {
-        serviceUids.insert(entry.second.uid);
+        serviceAppUids.insert(entry.second.appUid);
     }
-    for (int32_t uid : totalUids) {
-        if (serviceUids.count(uid) == 0) {
-            unreceivedUids.insert(uid);
+    for (int32_t appUid : totalAppUids) {
+        if (serviceAppUids.count(appUid) == 0) {
+            unreceivedAppUids.insert(appUid);
         }
     }
 
     std::set<int32_t> reservedBundleIds;
-    for (int32_t uid : unreceivedUids) {
+    for (int32_t appUid : unreceivedAppUids) {
         int32_t bundleId = 0;
-        if (!AccessTokenIDManager::GetInstance().ExtractBundleId(uid, bundleId)) {
-            LOGW(ATM_DOMAIN, ATM_TAG, "Invalid uid=%{public}d in CheckMigratedUidSet.", uid);
+        if (!AccessTokenIDManager::GetInstance().ExtractBundleId(appUid, bundleId)) {
+            LOGW(ATM_DOMAIN, ATM_TAG, "Invalid appUid=%{public}d in CheckMigratedUidSet.", appUid);
             continue;
         }
         if (AccessTokenIDManager::GetInstance().IsBundleIdOccupied(bundleId)) {
@@ -822,11 +823,11 @@ int32_t AccessTokenMigrationManager::CheckMigratedUidSet(
 
 void AccessTokenMigrationManager::ReportInvalidUidsIfNeeded()
 {
-    GenericValues uidCondition;
-    uidCondition.Put(TokenFiledConst::FIELD_UID, INVALID_HAP_UID);
+    GenericValues invalidUidCondition;
+    invalidUidCondition.Put(TokenFiledConst::FIELD_UID, INVALID_HAP_UID);
     std::vector<GenericValues> invalidUidResults;
     int32_t ret = AccessTokenDbOperator::Find(
-        AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, uidCondition, invalidUidResults);
+        AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, invalidUidCondition, invalidUidResults);
     if (ret != RET_SUCCESS) {
         LOGW(ATM_DOMAIN, ATM_TAG, "Query invalid uid hap info failed, ret=%{public}d.", ret);
         return;
@@ -847,7 +848,7 @@ void AccessTokenMigrationManager::ReportInvalidUidsIfNeeded()
 void AccessTokenMigrationManager::ResetMigrationCache()
 {
     dbRowCache_.clear();
-    uidOwnerBundles_.clear();
+    appUidOwnerBundles_.clear();
     bundleIdOwnerBundles_.clear();
     hapIdentityMap_.clear();
     cacheLoaded_ = false;

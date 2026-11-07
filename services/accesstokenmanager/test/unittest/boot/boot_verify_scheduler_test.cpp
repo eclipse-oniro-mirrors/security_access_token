@@ -17,6 +17,7 @@
 #include <gtest/hwext/gtest-tag.h>
 
 #include <algorithm>
+#include <cerrno>
 #include <fstream>
 #include <filesystem>
 #include <memory>
@@ -138,7 +139,7 @@ public:
         scheduler.ClearBundleVerifyContext();
         scheduler.bundleSignInfoMap_.clear();
         scheduler.isAllHapBundlesVerified_.store(false);
-        scheduler.uidSet_.clear();
+        scheduler.appUidSet_.clear();
         scheduler.migrationCompleted_.store(true);
         originAdapter_ = HapSignVerifyManager::GetInstance().adapter_;
         adapter_ = std::make_unique<MockAppVerifyAdapter>();
@@ -169,7 +170,7 @@ public:
         auto& scheduler = BootVerifyScheduler::GetInstance();
         scheduler.ClearBundleVerifyContext();
         scheduler.bundleSignInfoMap_.clear();
-        scheduler.uidSet_.clear();
+        scheduler.appUidSet_.clear();
         PermissionDataBrief::GetInstance().DeleteBriefPermDataByTokenId(TEST_TOKEN_ID);
         PermissionDataBrief::GetInstance().DeleteBriefPermDataByTokenId(TEST_TOKEN_ID_2);
         PermissionDataBrief::GetInstance().DeleteBriefPermDataByTokenId(TEST_TOKEN_ID_3);
@@ -311,7 +312,7 @@ protected:
         item.version = DEFAULT_TOKEN_VERSION_VALUE;
         item.apiVersion = 12;
         item.tokenAttr = 0;
-        item.uid = uid;
+        item.appUid = uid;
         item.migrated = migrated;
         item.apl = APL_NORMAL;
         item.appId = bundleName + "_mock.appid";
@@ -777,8 +778,8 @@ HWTEST_F(BootVerifySchedulerTest, LoadVerifyDataFromDb002, TestSize.Level1)
     auto& scheduler = BootVerifyScheduler::GetInstance();
 
     EXPECT_EQ(RET_SUCCESS, scheduler.LoadVerifyDataFromDb());
-    EXPECT_TRUE(scheduler.uidSet_.count(static_cast<int32_t>(TEST_UID)) > 0);
-    EXPECT_TRUE(scheduler.uidSet_.count(INVALID_UID) == 0);
+    EXPECT_TRUE(scheduler.appUidSet_.count(static_cast<int32_t>(TEST_UID)) > 0);
+    EXPECT_TRUE(scheduler.appUidSet_.count(INVALID_UID) == 0);
     EXPECT_TRUE(AccessTokenIDManager::GetInstance().IsReservedTokenId(TEST_TOKEN_ID));
     EXPECT_TRUE(AccessTokenIDManager::GetInstance().IsReservedTokenId(TEST_TOKEN_ID_2));
 }
@@ -827,7 +828,7 @@ HWTEST_F(BootVerifySchedulerTest, BuildSpmParams001, TestSize.Level1)
     item.version = DEFAULT_TOKEN_VERSION_VALUE;
     item.apiVersion = 12;
     item.tokenAttr = 0;
-    item.uid = TEST_UID;
+    item.appUid = TEST_UID;
     item.migrated = true;
     scheduler.hapTokenInfoMap_[TEST_TOKEN_ID] = item;
     scheduler.requestedPermData_[TEST_TOKEN_ID] = {};
@@ -857,6 +858,36 @@ HWTEST_F(BootVerifySchedulerTest, BuildSpmParams002, TestSize.Level1)
     EXPECT_EQ(ERR_BUNDLE_NOT_EXIST,
         BootVerifyScheduler::GetInstance().BuildSpmParams(GetBundleModeKey(TEST_BUNDLE_NAME, 0),
         noCachedInfo, hapInfoCache, permBriefDataListCache, extendPermListCache, params));
+}
+
+/**
+ * @tc.name: BuildSpmParamsHalfInvalidAppUid001
+ * @tc.desc: A half-invalid token (valid uid but appUid -1) is kept out of the kernel params
+ *           through the UID_INVALID path while the build itself still succeeds.
+ * @tc.type: FUNC
+ */
+HWTEST_F(BootVerifySchedulerTest, BuildSpmParamsHalfInvalidAppUid001, TestSize.Level1)
+{
+    auto& scheduler = BootVerifyScheduler::GetInstance();
+    std::string key = GetBundleModeKey(TEST_BUNDLE_NAME, 0);
+    scheduler.bundleInfoMap_[key] = BuildBundleInfo({ TEST_TOKEN_ID });
+    scheduler.bundleNoCachedInfoMap_[key] = BundleNoCachedInfo {};
+    HapTokenInfoItem item = BuildHapTokenInfoItem(TEST_TOKEN_ID);
+    item.appUid = INVALID_UID;
+    scheduler.hapTokenInfoMap_[TEST_TOKEN_ID] = item;
+    scheduler.requestedPermData_[TEST_TOKEN_ID] = {};
+    scheduler.extendedPermMap_[TEST_TOKEN_ID] = {};
+
+    BundleNoCachedInfo noCachedInfo;
+    std::vector<HapTokenInfo> hapInfoCache;
+    std::vector<std::vector<BriefPermData>> permBriefDataListCache;
+    std::vector<std::vector<PermissionWithValue>> extendPermListCache;
+    std::vector<SpmDataParam> params;
+    EXPECT_EQ(RET_SUCCESS, scheduler.BuildSpmParams(key, noCachedInfo, hapInfoCache,
+        permBriefDataListCache, extendPermListCache, params));
+    EXPECT_TRUE(params.empty());
+    EXPECT_TRUE(hapInfoCache.empty());
+    EXPECT_TRUE(permBriefDataListCache.empty());
 }
 
 /**
@@ -957,6 +988,34 @@ HWTEST_F(BootVerifySchedulerTest, AddSpmDataForBundle002, TestSize.Level1)
 }
 
 #ifdef SPM_DATA_ENABLE
+/**
+ * @tc.name: AddSpmDataForBundleKernelConflict001
+ * @tc.desc: Verify AddSpmDataForBundle tolerates a kernel add conflict (EEXIST mapped to
+ *           ERR_DATA_CONFLICT_WITH_KERNEL, idempotent boot: the entry is already loaded in the
+ *           kernel) and commits without running the verify-failure handling.
+ * @tc.type: FUNC
+ */
+HWTEST_F(BootVerifySchedulerTest, AddSpmDataForBundleKernelConflict001, TestSize.Level1)
+{
+    auto& scheduler = BootVerifyScheduler::GetInstance();
+    // Step 1: Prepare the minimal cached bundle/token context required by BuildSpmParams.
+    scheduler.bundleInfoMap_[GetBundleModeKey(TEST_BUNDLE_NAME, 0)] = std::make_shared<BundleInfoInner>();
+    scheduler.bundleInfoMap_[GetBundleModeKey(TEST_BUNDLE_NAME, 0)]->tokenIds = { TEST_TOKEN_ID };
+    scheduler.bundleNoCachedInfoMap_[GetBundleModeKey(TEST_BUNDLE_NAME, 0)] = BundleNoCachedInfo {};
+    scheduler.hapTokenInfoMap_[TEST_TOKEN_ID] = BuildHapTokenInfoItem(TEST_TOKEN_ID);
+    scheduler.requestedPermData_[TEST_TOKEN_ID] = {};
+    scheduler.extendedPermMap_[TEST_TOKEN_ID] = {};
+    scheduler.isVerifyingMap_[GetBundleModeKey(TEST_BUNDLE_NAME, 0)] = true;
+    // Step 2: Inject the kernel add conflict (fake kernel returns EEXIST on the staged add).
+    GetFakeSpmKernelState().addRet = EEXIST;
+    GetFakeSpmKernelState().addIdxErr = 0;
+    // Step 3: The conflict is tolerated: the call succeeds and no failure handling runs
+    //         (isVerifyingMap_ stays true, unlike the hard-failure case in AddSpmDataForBundle001).
+    EXPECT_EQ(RET_SUCCESS, scheduler.AddSpmDataForBundle(GetBundleModeKey(TEST_BUNDLE_NAME, 0)));
+    EXPECT_TRUE(scheduler.isVerifyingMap_[GetBundleModeKey(TEST_BUNDLE_NAME, 0)]);
+    EXPECT_EQ(1, GetFakeSpmKernelState().addCallCount);
+}
+
 /**
  * @tc.name: AddSpmDataAndCommitCache003
  * @tc.desc: Verify AddSpmDataAndCommitCache returns AddSpmDataForBundle failure and persist failure.
@@ -1479,6 +1538,27 @@ HWTEST_F(BootVerifySchedulerTest, ShouldSkipVerifyLocked002, TestSize.Level1)
 }
 
 /**
+ * @tc.name: ShouldSkipVerifyLockedHalfInvalidUid001
+ * @tc.desc: A half-invalid token (uid -1 but valid appUid) must not skip verification, while
+ *           a fully unassigned token (both -1) still skips.
+ * @tc.type: FUNC
+ */
+HWTEST_F(BootVerifySchedulerTest, ShouldSkipVerifyLockedHalfInvalidUid001, TestSize.Level1)
+{
+    auto& scheduler = BootVerifyScheduler::GetInstance();
+    std::string key = GetBundleModeKey(TEST_BUNDLE_NAME, 0);
+    scheduler.bundleInfoMap_[key] = BuildBundleInfo({ TEST_TOKEN_ID });
+    scheduler.bundleSignInfoMap_[key] = BuildSignInfo();
+    HapTokenInfoItem item = BuildHapTokenInfoItem(TEST_TOKEN_ID);
+    scheduler.hapTokenInfoMap_[TEST_TOKEN_ID] = item;
+    EXPECT_FALSE(scheduler.ShouldSkipVerifyLocked(key));
+
+    item.appUid = INVALID_UID;
+    scheduler.hapTokenInfoMap_[TEST_TOKEN_ID] = item;
+    EXPECT_TRUE(scheduler.ShouldSkipVerifyLocked(key));
+}
+
+/**
  * @tc.name: BuildBriefPermDataFromDb001
  * @tc.desc: Verify BuildBriefPermDataFromDb skips invalid and disabled permissions,
  *           merges duplicated permission codes, and marks has-value permissions.
@@ -1548,15 +1628,17 @@ HWTEST_F(BootVerifySchedulerTest, InitExtendedPermContext001, TestSize.Level1)
 
 /**
  * @tc.name: HandleHapInfoUid001
- * @tc.desc: Verify HandleHapInfoUid returns false on duplicate positive uid and ignores non-positive uid.
+ * @tc.desc: Verify InitHapInfoAppUid returns false on duplicate positive appUid (the duplicate path also
+ *           reports the REGISTER_UID UID_CONFLICT event, which has no UT capture hook) and ignores
+ *           non-positive appUid.
  * @tc.type: FUNC
  */
 HWTEST_F(BootVerifySchedulerTest, HandleHapInfoUid001, TestSize.Level1)
 {
     auto& scheduler = BootVerifyScheduler::GetInstance();
-    EXPECT_TRUE(scheduler.InitHapInfoUid(TEST_BUNDLE_NAME, TEST_TOKEN_ID, 0));
-    EXPECT_TRUE(scheduler.InitHapInfoUid(TEST_BUNDLE_NAME, TEST_TOKEN_ID, TEST_UID));
-    EXPECT_FALSE(scheduler.InitHapInfoUid(TEST_BUNDLE_NAME_2, TEST_TOKEN_ID_2, TEST_UID));
+    EXPECT_TRUE(scheduler.InitHapInfoAppUid(TEST_BUNDLE_NAME, TEST_TOKEN_ID, 0));
+    EXPECT_TRUE(scheduler.InitHapInfoAppUid(TEST_BUNDLE_NAME, TEST_TOKEN_ID, TEST_UID));
+    EXPECT_FALSE(scheduler.InitHapInfoAppUid(TEST_BUNDLE_NAME_2, TEST_TOKEN_ID_2, TEST_UID));
 }
 
 /**
@@ -1603,7 +1685,7 @@ HWTEST_F(BootVerifySchedulerTest, InitSingleHapTokenContext002, TestSize.Level1)
 HWTEST_F(BootVerifySchedulerTest, InitSingleHapTokenContext003, TestSize.Level1)
 {
     auto& scheduler = BootVerifyScheduler::GetInstance();
-    scheduler.uidSet_.insert(TEST_UID);
+    scheduler.appUidSet_.insert(TEST_UID);
     std::map<AccessTokenID, std::vector<GenericValues>> permStateMap;
     permStateMap[TEST_TOKEN_ID] = { BuildPermStateValue(TEST_TOKEN_ID, "ohos.permission.CAMERA") };
     std::map<AccessTokenID, std::vector<GenericValues>> extendedPermMap;
@@ -1738,11 +1820,30 @@ HWTEST_F(BootVerifySchedulerTest, UpdateBundleSignInfoByTrustedInfos001, TestSiz
 HWTEST_F(BootVerifySchedulerTest, PreVerifyBundleByToken001, TestSize.Level1)
 {
     auto& scheduler = BootVerifyScheduler::GetInstance();
-    scheduler.hapTokenInfoMap_[TEST_TOKEN_ID_2] = BuildHapTokenInfoItem(TEST_TOKEN_ID_2, TEST_BUNDLE_NAME_2);
+    scheduler.hapTokenInfoMap_[TEST_TOKEN_ID_2] = BuildHapTokenInfoItem(TEST_TOKEN_ID_2);
     EXPECT_EQ(RET_SUCCESS, scheduler.PreVerifyBundle(TEST_TOKEN_ID));
 
     scheduler.hapTokenInfoMap_[TEST_TOKEN_ID] = BuildHapTokenInfoItem(TEST_TOKEN_ID, "");
     EXPECT_EQ(RET_SUCCESS, scheduler.PreVerifyBundle(TEST_TOKEN_ID));
+}
+
+/**
+ * @tc.name: PreVerifyBundleByAppUid001
+ * @tc.desc: Verify PreVerifyBundle(appUid) rejects non-positive appUid, skips unknown appUid and
+ *           dispatches the matched bundle key to the inner pre-verify path.
+ * @tc.type: FUNC
+ */
+HWTEST_F(BootVerifySchedulerTest, PreVerifyBundleByAppUid001, TestSize.Level1)
+{
+    auto& scheduler = BootVerifyScheduler::GetInstance();
+    scheduler.hapTokenInfoMap_.clear();
+    scheduler.isVerifiedMap_.clear();
+    scheduler.hapTokenInfoMap_[TEST_TOKEN_ID_2] = BuildHapTokenInfoItem(TEST_TOKEN_ID_2);
+    const int32_t appUid = static_cast<int32_t>(TEST_UID);
+    EXPECT_EQ(RET_SUCCESS, scheduler.PreVerifyBundle(0));
+    EXPECT_EQ(RET_SUCCESS, scheduler.PreVerifyBundle(-1));
+    EXPECT_EQ(RET_SUCCESS, scheduler.PreVerifyBundle(appUid + 1));
+    EXPECT_EQ(ERR_BUNDLE_NOT_EXIST, scheduler.PreVerifyBundle(appUid));
 }
 
 /**
@@ -2265,6 +2366,30 @@ HWTEST_F(BootVerifySchedulerTest, ReconcileVerifiedBundleCacheUndefPermWithExten
     EXPECT_EQ("extend_value",
         scheduler.undefinedPermMap_[TEST_TOKEN_ID][0].GetString(TokenFiledConst::FIELD_VALUE));
 }
+
+#ifdef IS_SUPPORT_HAP_RUNNING
+namespace {
+constexpr int32_t TEST_USER_ID = 100;
+}
+
+/**
+ * @tc.name: ResolveHapUidSwitchDecision001
+ * @tc.desc: The two-param ResolveHapUid honors the seeded switch decision at the switch version:
+ *           isSharedUid true maps appUid to userId form, false keeps appUid, and an invalid
+ *           appUid short-circuits to INVALID_UID regardless of the decision.
+ * @tc.type: FUNC
+ */
+HWTEST_F(BootVerifySchedulerTest, ResolveHapUidSwitchDecision001, TestSize.Level1)
+{
+    GetFakeSpmKernelState().versionValue = SPM_MIN_VERSION_SUPPORT_APPUID;
+    int32_t appUid = static_cast<int32_t>(TEST_UID);
+    EXPECT_EQ(TEST_USER_ID, AccessTokenInfoUtils::ResolveHapUid(appUid, true));
+    EXPECT_EQ(appUid, AccessTokenInfoUtils::ResolveHapUid(appUid, false));
+    EXPECT_EQ(INVALID_UID, AccessTokenInfoUtils::ResolveHapUid(INVALID_UID, true));
+    EXPECT_EQ(INVALID_UID, AccessTokenInfoUtils::ResolveHapUid(INVALID_UID, false));
+}
+
+#endif // IS_SUPPORT_HAP_RUNNING
 
 } // namespace AccessToken
 } // namespace Security

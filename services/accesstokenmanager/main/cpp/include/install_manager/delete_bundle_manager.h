@@ -40,10 +40,10 @@ struct BundleCleanPlan final {
 };
 
 // Bundle-clean judgment input: the target token's coordinates and deletion
-// mode. uid is -1 when unavailable (a RESERVED_IDENTITY row).
+// mode. appUid is -1 when unavailable (a RESERVED_IDENTITY row).
 struct BundleCleanParam final {
     AccessTokenID tokenId = INVALID_TOKENID;
-    int32_t uid = -1;
+    int32_t appUid = -1;
     MultipleMode mode = MultipleMode::DEFAULT_OR_MAIN_MODE;
     ReservedType delType = ReservedType::NONE;
 };
@@ -101,10 +101,10 @@ private:
     static int32_t BuildBundleCleanDbOps(const std::shared_ptr<HapTokenInfoInner>& info, ReservedType delType,
         std::vector<DelInfo>& delInfoVec, BundleCleanPlan& plan);
 
-    // Whole-bundle builder (Case 1): partition active/reserved tokens, collect uids.
+    // Whole-bundle builder (Case 1): partition active/reserved tokens, collect appUids.
     static int32_t BuildBundleDelDbOps(const std::string& bundleName,
         std::vector<AccessTokenID>& activeTokens, std::vector<AccessTokenID>& reservedTokens,
-        std::vector<int32_t>& uids, std::vector<DelInfo>& delInfoVec);
+        std::vector<int32_t>& appUids, std::vector<DelInfo>& delInfoVec);
 
     // includePermissionState follows the deletion mode only, never the stored type.
     static void GenerateHapTokenDelInfoVec(AccessTokenID tokenID, const std::string& bundleName,

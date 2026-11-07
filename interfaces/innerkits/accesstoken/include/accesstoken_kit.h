@@ -877,12 +877,12 @@ public:
     static int32_t IsMigrationDone(bool& isDone);
     /**
      * @brief Check migrated uid set and reserve missing bundle ids.
-     * @param totalUids total migrated uid set from caller.
-     * @param unreceivedUids uid set that does not exist on service side.
+     * @param totalAppUids total migrated uid set from caller.
+     * @param unreceivedAppUids uid set that does not exist on service side.
      * @return error code, see access_token_error.h
      */
     static int32_t CheckMigratedUidSet(
-        const std::set<int32_t>& totalUids, std::set<int32_t>& unreceivedUids);
+        const std::set<int32_t>& totalAppUids, std::set<int32_t>& unreceivedAppUids);
     /**
      * @brief Check hap sign info.
      * @param list hap list to be checked
@@ -927,6 +927,21 @@ public:
      */
     static int32_t UpdateHapPolicy(int32_t sessionId, AccessTokenIDEx& tokenIdEx,
         const BundlePolicy& policy, int32_t& uid);
+    /**
+     * @brief Update hap policy with the appUid identity.
+     * @param sessionId session id
+     * @param tokenIdEx in-out full token id, see AccessTokenIDEx in access_token.h:
+     *        the low 32 bits (tokenID) locate the token to update; on success the
+     *        high 32 bits (tokenAttr) are refreshed with the token attributes
+     *        applied by this upgrade and echoed back to the caller
+     * @param policy bundle policy
+     * @param appUid in-out app-level identity uid, used for conflict checking and returned to caller
+     * @param uid in-out runtime effective uid, validated against the token identity and
+     *        re-resolved from appUid by the service
+     * @return error code, see access_token_error.h
+     */
+    static int32_t UpdateHapPolicy(int32_t sessionId, AccessTokenIDEx& tokenIdEx,
+        const BundlePolicy& policy, int32_t& appUid, int32_t& uid);
     /**
      * @brief Finish install.
      * @param sessionId session id
@@ -982,12 +997,12 @@ public:
      */
     static int32_t GetHapIdentity(const HapBaseInfo& info, Identity& identity);
     /**
-     * @brief Get hap base info by uid.
-     * @param uid hap uid
+     * @brief Get hap base info by appUid (app-level identity).
+     * @param appUid hap appUid
      * @param info hap base info
      * @return error code, see access_token_error.h
      */
-    static int32_t GetHapBaseInfoByUid(int32_t uid, HapBaseInfo& info);
+    static int32_t GetHapBaseInfoByUid(int32_t appUid, HapBaseInfo& info);
 };
 } // namespace AccessToken
 } // namespace Security

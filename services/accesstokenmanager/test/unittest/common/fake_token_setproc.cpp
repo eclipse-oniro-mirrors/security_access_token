@@ -16,6 +16,7 @@
 #include "fake_token_setproc.h"
 
 #include <algorithm>
+#include <cerrno>
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
@@ -245,6 +246,25 @@ int SpmGetUidRefCnt(uint32_t uid, uint64_t *refcnt)
     return 0;
 }
 
+// Without this fake the symbol binds to the real libtokensetproc and identity
+// adoption/allocation hits the real kernel (device-dependent, fails with errno
+// 95 on kernels without SPM support). Mirrors the retry wrapper in
+// spm_setproc.c: delegate to SpmGetUidRefCnt, retry up to 3 times.
+int SpmGetUidRefCntWithRetry(uint32_t uid, uint64_t *refcnt)
+{
+    if (refcnt == nullptr) {
+        return EINVAL;
+    }
+    constexpr int32_t spmRefcntMaxRetry = 3;
+    for (int32_t i = 0; i < spmRefcntMaxRetry; i++) {
+        int ret = SpmGetUidRefCnt(uid, refcnt);
+        if (ret == 0) {
+            return 0;
+        }
+    }
+    return RET_FAILED;
+}
+
 int SpmIncTokenidRefCnt(uint32_t tokenid, uint32_t spawnid)
 {
     (void)tokenid;
@@ -275,7 +295,7 @@ int SpmGetVersion(uint32_t *version)
         return state.getVersionRet;
     }
     if (version != nullptr) {
-        *version = 1;
+        *version = state.versionValue;
     }
     return 0;
 }

@@ -255,8 +255,9 @@ void InstallHap(const std::vector<std::string>& hapPaths, const HapBaseInfo& bas
     hapList.hapPaths = hapPaths;
     hapList.isPreInstalled = false;
     hapList.userIdForEnterpriseSign = baseInfo.userID;
-    // no desired uid: must be INVALID_UID so PrepareHapIdentity skips the uid-user check
+    // no desired identity: must be INVALID_UID so PrepareHapIdentity skips the uid-user check
     identity.uid = -1;
+    identity.appUid = -1;
 
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
@@ -293,6 +294,7 @@ void InstallHapWithMode(const std::vector<std::string>& hapPaths, const HapBaseI
     hapList.isPreInstalled = false;
     hapList.userIdForEnterpriseSign = baseInfo.userID;
     identity.uid = -1;
+    identity.appUid = -1;
 
     int32_t sessionId = 0;
     std::vector<TrustedBundleInfo> bundleInfo;
@@ -461,6 +463,21 @@ size_t CountPackageRows(const std::string& bundleName)
     return rows.size();
 }
 
+// The hap_token_info row of tokenId must carry the session-resolved app-level
+// identity: FIELD_UID == expectedAppUid. The runtime uid is derived in memory
+// and never persisted, so expectedUid is not stored.
+void ExpectHapTokenDbIdentity(AccessTokenID tokenId, int32_t expectedAppUid, int32_t expectedUid)
+{
+    GenericValues condition;
+    condition.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
+    std::vector<GenericValues> rows;
+    ASSERT_EQ(ERR_OK, AccessTokenDbOperator::Find(
+        AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, condition, rows));
+    ASSERT_EQ(1u, rows.size());
+    EXPECT_EQ(expectedAppUid, rows[0].GetInt(TokenFiledConst::FIELD_UID));
+    (void)expectedUid;
+}
+
 // hap_info_table rows of one bundleName; mode >= 0 narrows the query to that
 // mode, mode < 0 returns the rows of all modes.
 std::vector<GenericValues> QuerySignInfoRows(const std::string& bundleName, int32_t mode)
@@ -565,7 +582,7 @@ ModeTokenSnapshot TakeModeTokenSnapshot(AccessTokenID tokenId)
     ModeTokenSnapshot snapshot;
     auto infoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId);
     if (infoPtr != nullptr) {
-        snapshot.uid = infoPtr->GetUid();
+        snapshot.uid = infoPtr->GetAppUid();
         snapshot.instIndex = infoPtr->GetInstIndex();
     }
     GenericValues condition;
@@ -741,8 +758,9 @@ AccessTokenID RunRepairFlagScenario(const std::string& bundleName, const BundleP
     baseInfo.userID = TEST_USER_ID;
     baseInfo.bundleName = bundleName;
     baseInfo.instIndex = instIndex;
-    Identity desired = {0, -1};
+    Identity desired = {0, -1, -1};
     desired.tokenId = desiredId;
+    desired.appUid = desiredUid;
     desired.uid = desiredUid;
     int32_t sessionId = 0;
     EXPECT_EQ(ERR_OK, g_installSessionManager->PrepareHapIdentity(
@@ -797,8 +815,9 @@ void RepairPrepareSiblingUidWins(const std::string& path, const BundlePolicy& bu
     baseInfo.userID = TEST_USER_ID_SIBLING;
     baseInfo.bundleName = "RepairUidBundle";
     baseInfo.instIndex = 0;
-    Identity desired = {0, -1};
+    Identity desired = {0, -1, -1};
     desired.tokenId = 0x2003D4E9;
+    desired.appUid = DESIRED_SIBLING_UID;
     desired.uid = DESIRED_SIBLING_UID;
     int32_t sessionId = 0;
     ASSERT_EQ(ERR_OK, g_installSessionManager->PrepareHapIdentity(
@@ -819,9 +838,10 @@ void RepairPrepareMismatchedDesiredDowngraded(const std::string& path, const Bun
     baseInfo.userID = TEST_USER_ID_SIBLING;
     baseInfo.bundleName = "RepairUidBundle";
     baseInfo.instIndex = 0;
-    Identity desired = {0, -1};
+    Identity desired = {0, -1, -1};
     desired.tokenId = 0x2003D4EA;
-    desired.uid = ILLEGAL_SIBLING_UID; // user segment 100, mismatches the installing user 101
+    desired.appUid = ILLEGAL_SIBLING_UID; // user segment 100, mismatches the installing user 101
+    desired.uid = ILLEGAL_SIBLING_UID;
     int32_t sessionId = 0;
     ASSERT_EQ(ERR_OK, g_installSessionManager->PrepareHapIdentity(
         sessionId, baseInfo, bundlePolicy, nullptr, desired));
@@ -2368,7 +2388,7 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest001, TestSize.Level0)
 
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx.tokenIDEx = identity.tokenId;
-    ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, identity.uid);
+    ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, identity.appUid, identity.uid);
     EXPECT_EQ(ERR_OK, ret);
 
     std::map<std::string, std::string> modulePathMap;
@@ -2377,6 +2397,14 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest001, TestSize.Level0)
     EXPECT_EQ(ERR_OK, ret);
 
     EXPECT_TRUE(atManagerService_->VerifyAccessToken(tokenId, "ohos.permission.CAMERA") == PERMISSION_GRANTED);
+
+    // the session-resolved identity must land in the hap_token_info row: level1
+    // keeps the installed appUid and uid re-derives to the same value (no switch:
+    // the policy carries no sharedUID with deviceTypes exactly ["2in1"] and no
+    // CUSTOM_SANDBOX), so both columns equal identity.appUid
+    EXPECT_EQ(TEST_USER_ID, identity.appUid / UID_MASK);
+    EXPECT_EQ(identity.appUid, identity.uid);
+    ExpectHapTokenDbIdentity(tokenId, identity.appUid, identity.uid);
 
     int32_t sceneCode = 0;
     ret = DeleteIdentityCore(tokenId, "UpdateHapTest001", ReservedType::NONE, sceneCode);
@@ -2431,7 +2459,7 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTokenIdExTest001, TestSize.Leve
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx.tokenIDEx = identity.tokenId;
     int32_t uid = -1; // no uid expectation
-    ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid);
+    ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid, uid);
     EXPECT_EQ(ERR_OK, ret);
     // low 32 bits: the token id stays unchanged
     EXPECT_EQ(tokenId, tokenIdEx.tokenIdExStruct.tokenID);
@@ -2458,12 +2486,11 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTokenIdExTest001, TestSize.Leve
 
 /**
  * @tc.name: UpdateUidMismatchDowngradeTest001
- * @tc.desc: Coverage: the uid user-segment downgrade of the update path - a
- *           caller uid whose user segment doesn't match the token's user is
- *           downgraded to INVALID_UID (logged, not fatal) and ResolveUpdateUid
- *           resolves the final uid (level 1: the token's own uid), echoed back
- *           through the inout param; previously this returned ERR_PARAM_INVALID
- *           and rolled the session back.
+  * @tc.desc: Coverage: the user-segment downgrade of the update path - a caller
+  *           appUid whose user segment doesn't match the token's user is
+  *           superseded by the level 1 resolution (the token's own appUid) and
+  *           the final uid is echoed back through the inout param; previously
+  *           this returned ERR_PARAM_INVALID and rolled the session back.
  * @tc.type: FUNC
  */
 HWTEST_F(InstallSessionManagerMockTest, UpdateUidMismatchDowngradeTest001, TestSize.Level1)
@@ -2485,10 +2512,12 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateUidMismatchDowngradeTest001, TestS
     ASSERT_EQ(ERR_OK, StartReplaceSession(path, sessionId));
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx.tokenIDEx = tokenId;
-    // a uid of another user (user segment 101 vs the token's user 100) is
-    // downgraded; the token's own uid wins the resolution and is echoed back
-    int32_t uid = TEST_USER_ID_SIBLING * UID_MASK + 54322;
-    int32_t ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid);
+    // an appUid of another user (user segment 101 vs the token's user 100) is
+    // superseded by the level 1 resolution; the token's own identity wins and
+    // the resolved uid is echoed back
+    int32_t appUid = TEST_USER_ID_SIBLING * UID_MASK + 54322;
+    int32_t uid = 0;
+    int32_t ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, appUid, uid);
     EXPECT_EQ(ERR_OK, ret);
     EXPECT_EQ(identity.uid, uid);
 
@@ -2549,12 +2578,12 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTokenIdExTest002, TestSize.Leve
     tokenIdEx.tokenIDEx = identity.tokenId;
     // error path first: invalid session leaves the in-out param untouched
     int32_t uid = -1; // no uid expectation
-    ret = g_installSessionManager->UpdateHapPolicy(INVALID_SESSION, tokenIdEx, bundlePolicy, uid);
+    ret = g_installSessionManager->UpdateHapPolicy(INVALID_SESSION, tokenIdEx, bundlePolicy, uid, uid);
     EXPECT_EQ(AccessTokenError::ERR_SESSION_NOT_EXIST, ret);
     EXPECT_EQ(tokenId, tokenIdEx.tokenIdExStruct.tokenID);
     EXPECT_EQ(SYSTEM_APP_FLAG, tokenIdEx.tokenIdExStruct.tokenAttr);
 
-    ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid);
+    ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid, uid);
     EXPECT_EQ(ERR_OK, ret);
     // low 32 bits unchanged, high 32 bits cleared to the new attr
     EXPECT_EQ(tokenId, tokenIdEx.tokenIdExStruct.tokenID);
@@ -2620,7 +2649,7 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest002, TestSize.Level0)
     bundlePolicy.preAuthorizationInfo.emplace_back(PreAuthorizationInfo{"ohos.permission.CAMERA", true});
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx.tokenIDEx = identity.tokenId;
-    ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, identity.uid);
+    ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, identity.appUid, identity.uid);
     EXPECT_EQ(ERR_OK, ret);
 
     std::map<std::string, std::string> modulePathMap;
@@ -2679,7 +2708,7 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest003, TestSize.Level0)
 
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx.tokenIDEx = identity.tokenId;
-    ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, identity.uid);
+    ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, identity.appUid, identity.uid);
     EXPECT_EQ(ERR_OK, ret);
 
     std::map<std::string, std::string> modulePathMap;
@@ -2741,7 +2770,7 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest004, TestSize.Level0)
 
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx.tokenIDEx = identity.tokenId;
-    ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, identity.uid);
+    ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, identity.appUid, identity.uid);
     EXPECT_EQ(ERR_OK, ret);
 
     std::map<std::string, std::string> modulePathMap;
@@ -2805,7 +2834,7 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest005, TestSize.Level0)
 
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx.tokenIDEx = identity.tokenId;
-    ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, identity.uid);
+    ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, identity.appUid, identity.uid);
     EXPECT_EQ(ERR_OK, ret);
 
     std::map<std::string, std::string> modulePathMap;
@@ -2988,7 +3017,7 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest008, TestSize.Level0)
 
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx.tokenIDEx = identity.tokenId;
-    ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, identity.uid);
+    ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, identity.appUid, identity.uid);
     EXPECT_EQ(ERR_OK, ret);
 
     std::map<std::string, std::string> modulePathMap;
@@ -3049,7 +3078,7 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest009, TestSize.Level0)
     int32_t uid = TEST_UID;
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx.tokenIDEx = identity.tokenId;
-    ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid);
+    ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid, uid);
     EXPECT_EQ(ERR_OK, ret);
     EXPECT_EQ(uid, identity.uid);
 
@@ -3106,7 +3135,7 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest010, TestSize.Level0)
     int32_t uid = TEST_UID;
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx.tokenIDEx = identity.tokenId;
-    EXPECT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid));
+    EXPECT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid, uid));
     EXPECT_EQ(uid, identity.uid);
 
     EXPECT_EQ(ERR_OK, g_installSessionManager->FinishInstall(sessionId, true, modulePathMap));
@@ -3119,7 +3148,7 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest010, TestSize.Level0)
             DeleteIdentityCore(0, "UpdateHapTest010", ReservedType::NONE, sCode);
             return;
         }
-        EXPECT_EQ(identity.uid, infoPtr->GetUid());
+        EXPECT_EQ(identity.uid, infoPtr->GetAppUid());
     }
 
     EXPECT_EQ(ERR_OK, DeleteIdentityCore(0, "UpdateHapTest010", ReservedType::NONE, sCode));
@@ -3157,10 +3186,12 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest011, TestSize.Level0)
         sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
 
     int32_t uid = TEST_UID;
+    int32_t appUid = TEST_UID;
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx.tokenIDEx = identity.tokenId;
-    EXPECT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid));
+    EXPECT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, appUid, uid));
     EXPECT_EQ(uid, TEST_UID);
+    EXPECT_EQ(appUid, TEST_UID);
 
     std::map<std::string, std::string> modulePathMap;
     modulePathMap[path] = path;
@@ -3174,7 +3205,7 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest011, TestSize.Level0)
             DeleteIdentityCore(0, "UpdateHapTest011", ReservedType::NONE, sCode);
             return;
         }
-        EXPECT_EQ(uid, infoPtr->GetUid());
+        EXPECT_EQ(uid, infoPtr->GetAppUid());
     }
 
     EXPECT_EQ(ERR_OK, DeleteIdentityCore(0, "UpdateHapTest011", ReservedType::NONE, sCode));
@@ -3214,7 +3245,7 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest012, TestSize.Level0)
     int32_t uid = TEST_INVALID_UID;
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx.tokenIDEx = identity.tokenId;
-    EXPECT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid));
+    EXPECT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid, uid));
     EXPECT_NE(uid, TEST_INVALID_UID);
 
     std::map<std::string, std::string> modulePathMap;
@@ -3229,7 +3260,7 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest012, TestSize.Level0)
             DeleteIdentityCore(0, "UpdateHapTest012", ReservedType::NONE, sCode);
             return;
         }
-        EXPECT_EQ(uid, infoPtr->GetUid());
+        EXPECT_EQ(uid, infoPtr->GetAppUid());
     }
 
     EXPECT_EQ(ERR_OK, DeleteIdentityCore(0, "UpdateHapTest012", ReservedType::NONE, sCode));
@@ -3276,7 +3307,7 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest013, TestSize.Level0)
     int32_t uid = identity2.uid;
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx.tokenIDEx = identity.tokenId;
-    EXPECT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid));
+    EXPECT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid, uid));
     EXPECT_NE(uid, identity2.uid);
 
     std::map<std::string, std::string> modulePathMap;
@@ -3291,7 +3322,7 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest013, TestSize.Level0)
             DeleteIdentityCore(0, "UpdateHapTest013", ReservedType::NONE, sCode);
             return;
         }
-        EXPECT_EQ(uid, infoPtr->GetUid());
+        EXPECT_EQ(uid, infoPtr->GetAppUid());
     }
 
     EXPECT_EQ(ERR_OK, DeleteIdentityCore(0, "UpdateHapTest013", ReservedType::NONE, sCode));
@@ -3311,7 +3342,7 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest014, TestSize.Level4)
     HapBaseInfo baseInfo{100, "UpdateHapTest014", 0};
     BundlePolicy bundlePolicy{std::vector<PreAuthorizationInfo>(), DLP_COMMON, false};
 
-    Identity identity = {0, -1};
+    Identity identity = {0, -1, -1};
     InstallHap(hapPaths, baseInfo, bundlePolicy, identity);
     AccessTokenID tokenId = static_cast<AccessTokenID>(identity.tokenId);
 
@@ -3330,10 +3361,18 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest014, TestSize.Level4)
         sessionId, TYPE_REPLACE, MultipleMode::DEFAULT_OR_MAIN_MODE, result));
 
     int32_t uid = TEST_UID2;
+    int32_t appUid = TEST_UID2;
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx.tokenIDEx = identity.tokenId;
-    EXPECT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid));
-    EXPECT_EQ(uid, TEST_UID2);
+    EXPECT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, appUid, uid));
+    // SetUidInvalidInDbAndCache invalidated level1 (memory) and level2 (db sibling),
+    // so level3 adopts the caller appUid: bundleId 33333 is free in this process and
+    // the kernel refcnt is 0 (real query on SPM kernels, degraded to 0 without SPM
+    // support). uid is re-derived from the adopted appUid and equals it (no switch:
+    // the policy carries no sharedUID with deviceTypes exactly ["2in1"] and no
+    // CUSTOM_SANDBOX), so both out params echo TEST_UID2 on any kernel.
+    EXPECT_EQ(TEST_UID2, appUid);
+    EXPECT_EQ(TEST_UID2, uid);
 
     std::map<std::string, std::string> modulePathMap;
     modulePathMap[path] = path;
@@ -3342,7 +3381,7 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTest014, TestSize.Level4)
     std::shared_ptr<HapTokenInfoInner> infoPtr = nullptr;
     bool isNewBundleId = false;
     bool fromCaller = false;
-    EXPECT_NE(ERR_OK, InstallIdentityManager::ResolveUpdateUid(uid, infoPtr, isNewBundleId, fromCaller));
+    EXPECT_NE(ERR_OK, InstallIdentityManager::ResolveUpdateAppUid(appUid, infoPtr, isNewBundleId, fromCaller));
 
     EXPECT_EQ(ERR_OK, DeleteIdentityCore(0, "UpdateHapTest014", ReservedType::NONE, sCode));
 }
@@ -3365,7 +3404,7 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapFromCallerMigratedTest001, Test
     InstallHap(hapPaths, baseInfo, bundlePolicy, identity);
     AccessTokenID tokenId = static_cast<AccessTokenID>(identity.tokenId);
 
-    // simulate a migration-failed token: uid invalid both in db and memory
+    // simulate a migration-failed token: uid and appUid invalid both in db and memory
     GenericValues conditionValue;
     conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
     ASSERT_TRUE(SetUidInvalidInDbAndCache(tokenId));
@@ -3385,7 +3424,7 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapFromCallerMigratedTest001, Test
     int32_t uid = TEST_UID2;
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx.tokenIDEx = identity.tokenId;
-    EXPECT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid));
+    EXPECT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid, uid));
     EXPECT_EQ(uid, TEST_UID2);
 
     std::map<std::string, std::string> modulePathMap;
@@ -3439,7 +3478,7 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapKeepMigratedTest001, TestSize.L
     int32_t uid = -1; // no uid expectation
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx.tokenIDEx = identity.tokenId;
-    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid));
+    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid, uid));
     std::map<std::string, std::string> modulePathMap;
     modulePathMap[path] = path;
     ASSERT_EQ(ERR_OK, g_installSessionManager->FinishInstall(sessionId, true, modulePathMap));
@@ -3491,7 +3530,7 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapKeepPermDialogCapTest001, TestS
     int32_t uid = -1; // no uid expectation
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx.tokenIDEx = identity.tokenId;
-    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid));
+    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid, uid));
     std::map<std::string, std::string> modulePathMap;
     modulePathMap[path] = path;
     ASSERT_EQ(ERR_OK, g_installSessionManager->FinishInstall(sessionId, true, modulePathMap));
@@ -3542,7 +3581,7 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateUntrustedKeepStickyFlagsTest001, T
     int32_t uid = -1; // no uid expectation
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx.tokenIDEx = identity.tokenId;
-    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid));
+    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid, uid));
     std::map<std::string, std::string> modulePathMap;
     modulePathMap[path] = path;
     ASSERT_EQ(ERR_OK, g_installSessionManager->FinishInstall(sessionId, true, modulePathMap));
@@ -3657,7 +3696,7 @@ HWTEST_F(InstallSessionManagerMockTest, CheckTypeRetryTest001, TestSize.Level0)
     // the update flow continues on the same session
     int32_t uid = -1; // no uid expectation
     AccessTokenIDEx tokenIdEx = BuildTokenIdEx(tokenId);
-    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid));
+    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid, uid));
     std::map<std::string, std::string> modulePathMap;
     modulePathMap[path] = path;
     ASSERT_EQ(ERR_OK, g_installSessionManager->FinishInstall(sessionId, true, modulePathMap));
@@ -3766,7 +3805,7 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapFailedTest001, TestSize.Level0)
     g_installSessionManager->migrationDone_ = false;
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx.tokenIDEx = identity.tokenId;
-    ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, identity.uid);
+    ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, identity.appUid, identity.uid);
     EXPECT_NE(ERR_OK, ret);
     g_installSessionManager->migrationDone_ = true;
 
@@ -3828,12 +3867,13 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapFailedTest002, TestSize.Level0)
 
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx.tokenIDEx = identity.tokenId;
-    ret = g_installSessionManager->UpdateHapPolicy(INVALID_SESSION, tokenIdEx, bundlePolicy, identity.uid);
+    ret = g_installSessionManager->UpdateHapPolicy(INVALID_SESSION,
+        tokenIdEx, bundlePolicy, identity.appUid, identity.uid);
     EXPECT_NE(ERR_OK, ret);
 
     tokenIdEx = {0};
     tokenIdEx.tokenIDEx = identity2.tokenId;
-    ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, identity2.uid);
+    ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, identity2.appUid, identity2.uid);
     EXPECT_NE(ERR_OK, ret);
 
     int32_t sceneCode = 0;
@@ -3881,7 +3921,7 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapFailedTest003, TestSize.Level0)
     EXPECT_EQ(ERR_OK, ret);
 
     AccessTokenIDEx tokenIdEx = BuildTokenIdEx(static_cast<AccessTokenID>(123456789));
-    ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, identity.uid);
+    ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, identity.appUid, identity.uid);
     EXPECT_NE(ERR_OK, ret);
 
     int32_t sceneCode = 0;
@@ -3931,7 +3971,7 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapFailedTest004, TestSize.Level0)
 
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx.tokenIDEx = identity.tokenId;
-    ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, identity.uid);
+    ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, identity.appUid, identity.uid);
     EXPECT_NE(ERR_OK, ret);
 
     ret = DeleteIdentityCore(0, "UpdateHapFailedTest004", ReservedType::NONE, sceneCode);
@@ -3962,8 +4002,9 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapFailedTest005, TestSize.Level1)
     int32_t uid = 0;
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx.tokenIDEx = identity.tokenId;
-    EXPECT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid));
-    // the downgraded uid resolves to the token's own uid (level 1) and is echoed back
+    int32_t appUid = 0;
+    EXPECT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, appUid, uid));
+    // the downgraded appUid resolves to the token's own identity (level 1) and uid is echoed back
     EXPECT_EQ(identity.uid, uid);
     // the session survives: the replace finish applies normally
     std::map<std::string, std::string> modulePathMap;
@@ -4708,7 +4749,7 @@ HWTEST_F(InstallSessionManagerMockTest, IsCheckPermTest001, TestSize.Level0)
     ret = g_installSessionManager->CheckHapSignInfo(hapList, nullptr, sessionId, bundleInfo, resultInfo2, QUERY_ALL_SIGN_INFO);
     EXPECT_EQ(ERR_OK, ret);
     AccessTokenIDEx tokenIdEx = BuildTokenIdEx(static_cast<AccessTokenID>(INVALID_SESSION));
-    ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, identity.uid);
+    ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, identity.appUid, identity.uid);
     EXPECT_NE(ERR_OK, ret);
 
     HapVerifyResultInfo resultInfo3;
@@ -5340,9 +5381,11 @@ HWTEST_F(InstallSessionManagerMockTest, FinishHapTest005, TestSize.Level1)
         cache.updatedBundlePolicyMap.end());
     EXPECT_TRUE(cache.updatedBundlePolicyMap.find(static_cast<int32_t>(tokenIdB)) !=
         cache.updatedBundlePolicyMap.end());
-    // the supplemented entry reuses this round's pre-auth and keeps the token's own uid
+    // the supplemented entry reuses this round's pre-auth and records the token's own appUid
     EXPECT_EQ(1U, cache.updatedBundlePolicyMap[tokenIdB].preAuthorizationInfo.size());
-    EXPECT_EQ(identity2.uid, cache.updatedUidStateMap[tokenIdB].uid);
+    EXPECT_EQ(identity2.appUid, cache.updatedUidStateMap[tokenIdB].appUid);
+    EXPECT_FALSE(cache.updatedUidStateMap[tokenIdB].isNewBundleId);
+    EXPECT_FALSE(cache.updatedUidStateMap[tokenIdB].fromCaller);
 
     int32_t sceneCode = 0;
     EXPECT_EQ(ERR_OK, DeleteIdentityCore(INVALID_TOKENID, bundleName, ReservedType::NONE, sceneCode));
@@ -5478,14 +5521,14 @@ HWTEST_F(InstallSessionManagerMockTest, FinishHapTest008, TestSize.Level1)
     // D's uid before update: supplement must keep the token's own uid
     auto infoD = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenD);
     ASSERT_NE(nullptr, infoD);
-    int32_t uidDBefore = infoD->GetUid();
+    int32_t uidDBefore = infoD->GetAppUid();
 
     // update A: the new version adds system_grant SYSTEM_FLOAT_WINDOW
     int32_t sessionId = 0;
     ASSERT_EQ(ERR_OK, StartReplaceSession(newPath, sessionId));
     int32_t uid = -1; // no uid expectation
     AccessTokenIDEx tokenIdEx = BuildTokenIdEx(tokenA);
-    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid));
+    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid, uid));
     std::map<std::string, std::string> modulePathMap;
     modulePathMap[newPath] = newPath;
     ASSERT_EQ(ERR_OK, g_installSessionManager->FinishInstall(sessionId, true, modulePathMap));
@@ -5498,7 +5541,7 @@ HWTEST_F(InstallSessionManagerMockTest, FinishHapTest008, TestSize.Level1)
     // supplement keeps the token's own uid
     infoD = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenD);
     ASSERT_NE(nullptr, infoD);
-    EXPECT_EQ(uidDBefore, infoD->GetUid());
+    EXPECT_EQ(uidDBefore, infoD->GetAppUid());
 
     // reserved B/C stay invisible and untouched: no new permission row in db
     AssertTokenInvisible(tokenB);
@@ -5557,7 +5600,7 @@ HWTEST_F(InstallSessionManagerMockTest, FinishHapTest009, TestSize.Level1)
     int32_t uid = -1; // no uid expectation
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx.tokenIDEx = identityA.tokenId;
-    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid));
+    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid, uid));
     std::map<std::string, std::string> modulePathMap;
     modulePathMap[newPath] = newPath;
     ASSERT_EQ(ERR_OK, g_installSessionManager->FinishInstall(sessionId, true, modulePathMap));
@@ -5728,7 +5771,7 @@ HWTEST_F(InstallSessionManagerMockTest, SideloadAppTest004, TestSize.Level0)
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx.tokenIDEx = identity.tokenId;
     ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(
-        sessionId, tokenIdEx, bundlePolicy, identity.uid));
+        sessionId, tokenIdEx, bundlePolicy, identity.appUid, identity.uid));
     std::map<std::string, std::string> modulePathMap;
     modulePathMap[updatePath] = updatePath;
     ASSERT_EQ(ERR_OK, g_installSessionManager->FinishInstall(sessionId, true, modulePathMap));
@@ -5872,7 +5915,7 @@ HWTEST_F(InstallSessionManagerMockTest, SideloadAppTest005, TestSize.Level0)
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx.tokenIDEx = identity.tokenId;
     ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(
-        sessionId, tokenIdEx, bundlePolicy, identity.uid));
+        sessionId, tokenIdEx, bundlePolicy, identity.appUid, identity.uid));
     std::map<std::string, std::string> modulePathMap;
     modulePathMap[normalPath] = normalPath;
     ASSERT_EQ(ERR_OK, g_installSessionManager->FinishInstall(sessionId, true, modulePathMap));
@@ -5941,7 +5984,7 @@ HWTEST_F(InstallSessionManagerMockTest, SideloadAppTest006, TestSize.Level0)
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx.tokenIDEx = identity.tokenId;
     ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(
-        sessionId, tokenIdEx, bundlePolicy, identity.uid));
+        sessionId, tokenIdEx, bundlePolicy, identity.appUid, identity.uid));
     std::map<std::string, std::string> modulePathMap;
     modulePathMap[sideloadPath] = sideloadPath;
     ASSERT_EQ(ERR_OK, g_installSessionManager->FinishInstall(sessionId, true, modulePathMap));
@@ -6179,26 +6222,26 @@ HWTEST_F(InstallSessionManagerMockTest, DriftedUpdateTest001, TestSize.Level1)
 
     int32_t uid = -1; // no uid expectation
     AccessTokenIDEx tokenIdEx = BuildTokenIdEx(tokenIds[0]);
-    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid));
+    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid, uid));
     // reset: the out param was overwritten with token[0]'s resolved uid; the next
     // token belongs to another user, pass no-expectation (-1) again
     uid = -1;
     tokenIdEx = BuildTokenIdEx(tokenIds[1]);
-    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid));
+    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid, uid));
 
     // drifted tokenid: never registered in ATM
     constexpr AccessTokenID driftedTokenId = 0x2a580123;
     tokenIdEx = BuildTokenIdEx(driftedTokenId);
     EXPECT_EQ(AccessTokenError::ERR_TOKENID_NOT_EXIST,
-        g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid));
+        g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid, uid));
 
     // session is still alive: remaining updates succeed
     uid = -1;
     tokenIdEx = BuildTokenIdEx(tokenIds[2]);
-    EXPECT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid));
+    EXPECT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid, uid));
     uid = -1;
     tokenIdEx = BuildTokenIdEx(tokenIds[3]);
-    EXPECT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid));
+    EXPECT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid, uid));
     // the in-session allocation is not rolled back
     TokenIdStatus status;
     EXPECT_EQ(RET_SUCCESS, AccessTokenIDManager::GetInstance().GetTokenIdStatus(
@@ -6248,11 +6291,11 @@ HWTEST_F(InstallSessionManagerMockTest, DriftedUpdateTest002, TestSize.Level1)
         // uid, and each token belongs to a different user (no expectation)
         uid = -1;
         AccessTokenIDEx tokenIdEx = BuildTokenIdEx(tokenId);
-        ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid));
+        ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid, uid));
     }
     AccessTokenIDEx tokenIdEx = BuildTokenIdEx(driftedTokenId);
     EXPECT_EQ(AccessTokenError::ERR_TOKENID_NOT_EXIST,
-        g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid));
+        g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid, uid));
 
     std::map<std::string, std::string> modulePathMap;
     modulePathMap[path] = path;
@@ -6332,13 +6375,13 @@ HWTEST_F(InstallSessionManagerMockTest, DriftedUpdateTest003, TestSize.Level1)
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx.tokenIDEx = otherIdentity.tokenId;
     EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
-        g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid));
+        g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid, uid));
 
     // session was erased by RollbackAll
     tokenIdEx = {0};
     tokenIdEx.tokenIDEx = identity.tokenId;
     EXPECT_EQ(AccessTokenError::ERR_SESSION_NOT_EXIST,
-        g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid));
+        g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid, uid));
     // the other bundle's token is not touched by the rollback
     EXPECT_NE(nullptr, AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(otherTokenId));
 
@@ -6380,8 +6423,9 @@ HWTEST_F(InstallSessionManagerMockTest, RepairPrepareTest001, TestSize.Level1)
     // repair for user 105: the seed's cache entry (user 100) does not occupy this slot
     HapBaseInfo repairInfo = baseInfo;
     repairInfo.userID = TEST_USER_ID_REPAIR;
-    Identity desired = {0, -1};
+    Identity desired = {0, -1, -1};
     desired.tokenId = desiredTokenId;
+    desired.appUid = desiredUid;
     desired.uid = desiredUid;
     int32_t sessionId = 0;
     ASSERT_EQ(ERR_OK, g_installSessionManager->PrepareHapIdentity(
@@ -6427,9 +6471,10 @@ HWTEST_F(InstallSessionManagerMockTest, RepairPrepareTest002, TestSize.Level1)
 
     // case 1: desired tokenid already registered -> fresh allocation
     baseInfo.userID = 101;
-    Identity desired = {0, -1};
+    Identity desired = {0, -1, -1};
     desired.tokenId = occupiedId;
     desired.uid = 20254399; // user 101: complete repair expectation matching case 1's repair user
+    desired.appUid = 20254399;
     int32_t sessionId = 0;
     ASSERT_EQ(ERR_OK, g_installSessionManager->PrepareHapIdentity(
         sessionId, baseInfo, bundlePolicy, nullptr, desired));
@@ -6440,9 +6485,10 @@ HWTEST_F(InstallSessionManagerMockTest, RepairPrepareTest002, TestSize.Level1)
 
     // case 2: desired tokenid with invalid version/type bits -> fresh allocation
     baseInfo.userID = 102;
-    Identity malformed = {0, -1};
+    Identity malformed = {0, -1, -1};
     malformed.tokenId = 0x00000001; // version bits 0, not a valid HAP token id
     malformed.uid = 20454399; // user 102: complete repair expectation
+    malformed.appUid = 20454399;
     sessionId = 0;
     ASSERT_EQ(ERR_OK, g_installSessionManager->PrepareHapIdentity(
         sessionId, baseInfo, bundlePolicy, nullptr, malformed));
@@ -6492,6 +6538,7 @@ HWTEST_F(InstallSessionManagerMockTest, RepairPrepareTest003, TestSize.Level1)
     Identity adopt;
     adopt.tokenId = 0x2003D5FA;
     adopt.uid = 21054323;
+    adopt.appUid = 21054323;
     sessionId = RepairPrepareOnClearedBundle("RepairUidAdoptBundle", bundlePolicy, adopt);
     ASSERT_NE(0, sessionId);
     EXPECT_EQ(21054323, adopt.uid);
@@ -6642,7 +6689,7 @@ HWTEST_F(InstallSessionManagerMockTest, UntrustedCollectTest001, TestSize.Level1
     int32_t uid = -1; // no uid expectation
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx.tokenIDEx = identity.tokenId;
-    EXPECT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid));
+    EXPECT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid, uid));
 
     std::map<std::string, std::string> modulePathMap;
     modulePathMap[path] = path;
@@ -6871,7 +6918,7 @@ HWTEST_F(InstallSessionManagerMockTest, UntrustedUpdatePermInheritTest001, TestS
     int32_t uid = -1; // no uid expectation
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx.tokenIDEx = identity.tokenId;
-    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, updatePolicy, uid));
+    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, updatePolicy, uid, uid));
     std::map<std::string, std::string> modulePathMap;
     modulePathMap[path] = path;
     ASSERT_EQ(ERR_OK, g_installSessionManager->FinishInstall(sessionId, true, modulePathMap));
@@ -7411,7 +7458,6 @@ HWTEST_F(InstallSessionManagerMockTest, InstallModeTest012, TestSize.Level0)
     // the existing mode=0 token keeps its uid after the sub-mode install
     auto infoPtr0 = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId0);
     ASSERT_NE(nullptr, infoPtr0);
-    EXPECT_EQ(uid0, infoPtr0->tokenInfoBasic_.uid);
 
     int32_t sceneCode = 0;
     EXPECT_EQ(ERR_OK, DeleteIdentityCore(tokenId0, bundleName, ReservedType::NONE, sceneCode));
@@ -7546,7 +7592,7 @@ HWTEST_F(InstallSessionManagerMockTest, ModeIsolationTest001, TestSize.Level1)
     BundlePolicy bundlePolicy = CommonBundlePolicy();
     int32_t uid = -1; // no uid expectation
     AccessTokenIDEx tokenIdEx = BuildTokenIdEx(tokenMain);
-    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid));
+    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid, uid));
     std::map<std::string, std::string> modulePathMap;
     modulePathMap[newPath] = newPath;
     ASSERT_EQ(ERR_OK, g_installSessionManager->FinishInstall(sessionId, true, modulePathMap));
@@ -7594,7 +7640,7 @@ HWTEST_F(InstallSessionManagerMockTest, ModeIsolationTest002, TestSize.Level1)
     BundlePolicy bundlePolicy = CommonBundlePolicy();
     int32_t uid = -1; // no uid expectation
     AccessTokenIDEx tokenIdEx = BuildTokenIdEx(tokenSub);
-    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid));
+    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid, uid));
     std::map<std::string, std::string> modulePathMap;
     modulePathMap[newSubPath] = newSubPath;
     ASSERT_EQ(ERR_OK, g_installSessionManager->FinishInstall(sessionId, true, modulePathMap));
@@ -7635,7 +7681,7 @@ HWTEST_F(InstallSessionManagerMockTest, ModeIsolationTest003, TestSize.Level1)
     auto mainSignBefore = RowsToCanonical(QuerySignInfoRows(bundleName, 0));
     auto mainInfo = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenMain);
     ASSERT_NE(nullptr, mainInfo);
-    int32_t mainBundleId = mainInfo->GetUid() % UID_MASK;
+    int32_t mainBundleId = mainInfo->GetAppUid() % UID_MASK;
 
     int32_t sceneCode = 0;
     ASSERT_EQ(ERR_OK, DeleteIdentityCore(tokenSub, bundleName, ReservedType::NONE, sceneCode));
@@ -7716,7 +7762,7 @@ HWTEST_F(InstallSessionManagerMockTest, ModeSupplementTest001, TestSize.Level1)
     ASSERT_EQ(ERR_OK, StartReplaceSession(newPath, sessionId));
     int32_t uid = -1; // no uid expectation
     AccessTokenIDEx tokenIdEx = BuildTokenIdEx(tokenA);
-    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid));
+    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid, uid));
     std::map<std::string, std::string> modulePathMap;
     modulePathMap[newPath] = newPath;
     ASSERT_EQ(ERR_OK, g_installSessionManager->FinishInstall(sessionId, true, modulePathMap));
@@ -7764,7 +7810,7 @@ HWTEST_F(InstallSessionManagerMockTest, ModeSupplementTest002, TestSize.Level1)
     ASSERT_EQ(ERR_OK, StartReplaceSession(newPath, sessionId));
     int32_t uid = -1; // no uid expectation
     AccessTokenIDEx tokenIdEx = BuildTokenIdEx(tokenA);
-    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid));
+    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid, uid));
     std::map<std::string, std::string> modulePathMap;
     modulePathMap[newPath] = newPath;
     ASSERT_EQ(ERR_OK, g_installSessionManager->FinishInstall(sessionId, true, modulePathMap));
@@ -7779,7 +7825,7 @@ HWTEST_F(InstallSessionManagerMockTest, ModeSupplementTest002, TestSize.Level1)
     int32_t subSessionId = 0;
     ASSERT_EQ(ERR_OK, StartReplaceSessionMode(newSubPath, MultipleMode::SUB_MODE, subSessionId));
     tokenIdEx = BuildTokenIdEx(tokenC);
-    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(subSessionId, tokenIdEx, bundlePolicy, uid));
+    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(subSessionId, tokenIdEx, bundlePolicy, uid, uid));
     std::map<std::string, std::string> subPathMap;
     subPathMap[newSubPath] = newSubPath;
     ASSERT_EQ(ERR_OK, g_installSessionManager->FinishInstall(subSessionId, true, subPathMap));
@@ -7861,9 +7907,9 @@ HWTEST_F(InstallSessionManagerMockTest, ModeUidLifecycleTest001, TestSize.Level1
     auto subInfo = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenSub);
     ASSERT_NE(nullptr, mainInfo);
     ASSERT_NE(nullptr, subInfo);
-    int32_t mainUid = mainInfo->GetUid();
+    int32_t mainUid = mainInfo->GetAppUid();
     int32_t mainBundleId = mainUid % UID_MASK;
-    int32_t subBundleId = subInfo->GetUid() % UID_MASK;
+    int32_t subBundleId = subInfo->GetAppUid() % UID_MASK;
     ASSERT_NE(mainBundleId, subBundleId);
     ModeTokenSnapshot mainBefore = TakeModeTokenSnapshot(tokenMain);
 
@@ -7879,7 +7925,7 @@ HWTEST_F(InstallSessionManagerMockTest, ModeUidLifecycleTest001, TestSize.Level1
     AssertModeTokenSnapshotUnchanged(mainBefore, tokenMain);
     auto mainInfoAgain = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenMain);
     ASSERT_NE(nullptr, mainInfoAgain);
-    EXPECT_EQ(mainUid, mainInfoAgain->GetUid());
+    EXPECT_EQ(mainUid, mainInfoAgain->GetAppUid());
     EXPECT_EQ(1U, AccessTokenIDManager::GetInstance().bundleIdSet_.count(mainBundleId));
 
     EXPECT_EQ(ERR_OK, DeleteIdentityCore(INVALID_TOKENID, bundleName, ReservedType::NONE, sceneCode));
@@ -8002,8 +8048,8 @@ HWTEST_F(InstallSessionManagerMockTest, ModeRestoreTest001, TestSize.Level1)
     auto subInfo = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenSub);
     ASSERT_NE(nullptr, mainInfo);
     ASSERT_NE(nullptr, subInfo);
-    int32_t mainUid = mainInfo->GetUid();
-    int32_t subUid = subInfo->GetUid();
+    int32_t mainUid = mainInfo->GetAppUid();
+    int32_t subUid = subInfo->GetAppUid();
     ASSERT_EQ(ERR_OK, atManagerService_->GrantPermission(
         tokenMain, "ohos.permission.MICROPHONE", 2, USER_GRANTED_PERM));
     ASSERT_EQ(ERR_OK, atManagerService_->GrantPermission(
@@ -8018,11 +8064,11 @@ HWTEST_F(InstallSessionManagerMockTest, ModeRestoreTest001, TestSize.Level1)
     // the pure db snapshot restores the identity including the mode dimension
     auto mainInner = AccessTokenInfoManager::GetInstance().LoadHapTokenInfoFromDbAndNoCache(tokenMain);
     ASSERT_NE(nullptr, mainInner);
-    EXPECT_EQ(mainUid, mainInner->GetUid());
+    EXPECT_EQ(mainUid, mainInner->GetAppUid());
     EXPECT_EQ(0, mainInner->GetInstIndex());
     auto subInner = AccessTokenInfoManager::GetInstance().LoadHapTokenInfoFromDbAndNoCache(tokenSub);
     ASSERT_NE(nullptr, subInner);
-    EXPECT_EQ(subUid, subInner->GetUid());
+    EXPECT_EQ(subUid, subInner->GetAppUid());
     EXPECT_EQ(10000, subInner->GetInstIndex());
 
     // the perm brief rebuilt from the db keeps each mode's own user grant
@@ -8311,7 +8357,7 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateDebugSkipInheritTest001, TestSize.
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx.tokenIDEx = tokenId;
     int32_t uid = -1; // no uid expectation
-    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, debugPolicy, uid));
+    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, debugPolicy, uid, uid));
     std::map<std::string, std::string> modulePathMap;
     modulePathMap[debugPath] = debugPath;
     ASSERT_EQ(ERR_OK, g_installSessionManager->FinishInstall(sessionId, true, modulePathMap));
@@ -8326,7 +8372,7 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateDebugSkipInheritTest001, TestSize.
     BundlePolicy plainPolicy;
     plainPolicy.dlpType = DLP_COMMON;
     plainPolicy.isDebugGrant = false;
-    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(plainSessionId, tokenIdEx, plainPolicy, uid));
+    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(plainSessionId, tokenIdEx, plainPolicy, uid, uid));
     std::map<std::string, std::string> plainPathMap;
     plainPathMap[plainPath] = plainPath;
     ASSERT_EQ(ERR_OK, g_installSessionManager->FinishInstall(plainSessionId, true, plainPathMap));
@@ -8374,7 +8420,7 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateTimestampPreservationTest001, Test
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx.tokenIDEx = tokenId;
     int32_t uid = -1; // no uid expectation
-    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid));
+    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid, uid));
     std::map<std::string, std::string> modulePathMap;
     modulePathMap[newPath] = newPath;
     ASSERT_EQ(ERR_OK, g_installSessionManager->FinishInstall(sessionId, true, modulePathMap));
@@ -8423,7 +8469,7 @@ HWTEST_F(InstallSessionManagerMockTest, UpdatePermRowContentAfterRemovalTest001,
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx.tokenIDEx = tokenId;
     int32_t uid = -1; // no uid expectation
-    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid));
+    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid, uid));
     std::map<std::string, std::string> modulePathMap;
     modulePathMap[path1] = path1;
     ASSERT_EQ(ERR_OK, g_installSessionManager->FinishInstall(sessionId, true, modulePathMap));
@@ -8589,7 +8635,7 @@ HWTEST_F(InstallSessionManagerMockTest, GetCachePolicyEmptyPermTest001, TestSize
 /**
  * @tc.name: UpdateUidRollbackBundleIdReleaseTest001
  * @tc.desc: Coverage: the updatedUidStateMap iteration with isNewBundleId in
- *           RollbackIdentity - after a level 3 uid adoption and a non-persistent
+ *           RollbackIdentity - after a level 3 appUid adoption and a non-persistent
  *           finish rollback, the newly acquired bundleId is released from the
  *           id manager set (the precise assertion that UpdateHapTest014's
  *           original nullptr-guard check could not make).
@@ -8610,10 +8656,10 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateUidRollbackBundleIdReleaseTest001,
     InstallHap({path}, baseInfo, bundlePolicy, identity);
     AccessTokenID tokenId = static_cast<AccessTokenID>(identity.tokenId);
 
-    // simulate a migration-abnormal uid=-1 state
+    // simulate a migration-abnormal uid/appUid=-1 state
     ASSERT_TRUE(SetUidInvalidInDbAndCache(tokenId));
 
-    // level 3 adoption: UpdateHapPolicy with a reusable uid acquires a new bundleId
+    // level 3 adoption: UpdateHapPolicy with a reusable appUid acquires a new bundleId
     int32_t sessionId = 0;
     ASSERT_EQ(ERR_OK, StartReplaceSession(path, sessionId));
     AccessTokenIDEx tokenIdEx = {0};
@@ -8621,9 +8667,11 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateUidRollbackBundleIdReleaseTest001,
     BundlePolicy updatePolicy;
     updatePolicy.dlpType = DLP_COMMON;
     updatePolicy.isDebugGrant = false;
+    int32_t appUid = TEST_UID2;
     int32_t uid = TEST_UID2;
-    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, updatePolicy, uid));
-    ASSERT_EQ(TEST_UID2, uid);
+    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, updatePolicy, appUid, uid));
+    ASSERT_EQ(TEST_UID2, appUid);
+    ASSERT_EQ(TEST_UID2, uid); // uid re-derives from the adopted appUid (no switch)
     // the new bundleId is registered by the adoption
     int32_t adoptedBundleId = TEST_UID2 % UID_MASK;
     EXPECT_EQ(1U, AccessTokenIDManager::GetInstance().bundleIdSet_.count(adoptedBundleId));
@@ -8680,7 +8728,7 @@ HWTEST_F(InstallSessionManagerMockTest, DlpSupplementUpdateTest001, TestSize.Lev
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx.tokenIDEx = mainTokenId;
     int32_t uid = -1; // no uid expectation
-    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid));
+    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid, uid));
     std::map<std::string, std::string> modulePathMap;
     modulePathMap[newPath] = newPath;
     ASSERT_EQ(ERR_OK, g_installSessionManager->FinishInstall(sessionId, true, modulePathMap));
@@ -8802,11 +8850,11 @@ HWTEST_F(InstallSessionManagerMockTest, SignInfoQueryFlagSelectTest001, TestSize
 
 /**
  * @tc.name: UpdateUidAllSiblingsInvalidTest001
- * @tc.desc: Coverage: the level-2 fallthrough branch in ResolveUpdateUid -
- *           QueryBundleTokenbyIndex returns rows but every uid is -1
- *           (migration-abnormal siblings), so bundleRefUid stays INVALID_UID
+ * @tc.desc: Coverage: the level-2 fallthrough branch in ResolveUpdateAppUid -
+ *           QueryBundleTokenbyIndex returns rows but every appUid is -1
+ *           (migration-abnormal siblings), so bundleRefAppUid stays INVALID_UID
  *           and the resolution falls to level 3 (adopt or fresh allocation).
- *           UpdateHapTest010 covers level-2 success (sibling has valid uid);
+ *           UpdateHapTest010 covers level-2 success (sibling has valid appUid);
  *           this test covers the "rows found but all invalid" path.
  * @tc.type: FUNC
  */
@@ -8824,19 +8872,21 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateUidAllSiblingsInvalidTest001, Test
     ASSERT_NE(INVALID_TOKENID, mainTokenId);
     ASSERT_NE(INVALID_TOKENID, siblingTokenId);
 
-    // migration-abnormal: both tokens have uid=-1 in db and cache
+    // migration-abnormal: both tokens have uid/appUid=-1 in db and cache
     ASSERT_TRUE(SetUidInvalidInDbAndCache(mainTokenId));
     ASSERT_TRUE(SetUidInvalidInDbAndCache(siblingTokenId));
 
-    // REPLACE update with a reusable uid: level 1 fails (uid==-1), level 2
-    // finds rows but all uid==-1 (fallthrough), level 3 adopts TEST_UID2
+    // REPLACE update with a reusable appUid: level 1 fails (appUid==-1), level 2
+    // finds rows but all appUid==-1 (fallthrough), level 3 adopts TEST_UID2
     int32_t sessionId = 0;
     ASSERT_EQ(ERR_OK, StartReplaceSession(path, sessionId));
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx.tokenIDEx = mainTokenId;
+    int32_t appUid = TEST_UID2;
     int32_t uid = TEST_UID2;
-    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid));
-    EXPECT_EQ(TEST_UID2, uid); // level 3 adoption, not a TranslateUid result
+    ASSERT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, appUid, uid));
+    EXPECT_EQ(TEST_UID2, appUid); // level 3 adoption, not a TranslateAppUid result
+    EXPECT_EQ(TEST_UID2, uid); // uid re-derives from the adopted appUid (no switch)
 
     std::map<std::string, std::string> modulePathMap;
     modulePathMap[path] = path;
@@ -8848,11 +8898,11 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateUidAllSiblingsInvalidTest001, Test
 
 /**
  * @tc.name: CloneNoValidSiblingUidTest001
- * @tc.desc: Coverage: the uid==INVALID_UID sub-branch in GetTokenIdAndUid's
+ * @tc.desc: Coverage: the appUid==INVALID_UID sub-branch in GetTokenIdAndUid's
  *           cross-user path - a cross-user sibling at the same instIndex has
- *           uid=-1 (migration abnormal), so bundleRefUid stays INVALID_UID
- *           and the new clone gets a fresh uid allocation instead of a
- *           TranslateUid from the sibling (AppCloneTest004's valid-uid path).
+ *           appUid=-1 (migration abnormal), so bundleRefAppUid stays INVALID_UID
+ *           and the new clone gets a fresh appUid allocation instead of a
+ *           TranslateAppUid from the sibling (AppCloneTest004's valid-uid path).
  * @tc.type: FUNC
  */
 HWTEST_F(InstallSessionManagerMockTest, CloneNoValidSiblingUidTest001, TestSize.Level1)
@@ -8866,23 +8916,23 @@ HWTEST_F(InstallSessionManagerMockTest, CloneNoValidSiblingUidTest001, TestSize.
         MultipleMode::DEFAULT_OR_MAIN_MODE);
     ASSERT_NE(INVALID_TOKENID, mainTokenId);
 
-    // migration-abnormal: main app's uid becomes -1 in db and cache
+    // migration-abnormal: main app's uid/appUid becomes -1 in db and cache
     ASSERT_TRUE(SetUidInvalidInDbAndCache(mainTokenId));
 
-    // clone at (101, bundle, 0): the cross-user sibling (main app) has uid=-1
-    // → no bundleRefUid → fresh uid allocation (not TranslateUid)
+    // clone at (101, bundle, 0): the cross-user sibling (main app) has appUid=-1
+    // → no bundleRefAppUid → fresh appUid allocation (not TranslateAppUid)
     AccessTokenID cloneTokenId = InstallBundleSiblingToken(MakeSiblingInfo(bundleName, 101, 0),
         bundlePolicy);
     ASSERT_NE(INVALID_TOKENID, cloneTokenId);
 
     // the clone got a valid fresh uid (not -1, not a translation of the
-    // sibling's invalid uid): the install itself succeeding proves the
-    // uid==-1 sub-branch was taken without hitting TranslateUid(-1)
+    // sibling's invalid appUid): the install itself succeeding proves the
+    // appUid==-1 sub-branch was taken without hitting TranslateAppUid(-1)
     auto cloneInfo = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(cloneTokenId);
     ASSERT_NE(nullptr, cloneInfo);
-    EXPECT_NE(-1, cloneInfo->GetUid()); // fresh allocation, not inherited -1
+    EXPECT_NE(-1, cloneInfo->GetAppUid()); // fresh allocation, not inherited -1
     int32_t cloneBundleId = 0;
-    EXPECT_TRUE(AccessTokenIDManager::GetInstance().ExtractBundleId(cloneInfo->GetUid(), cloneBundleId));
+    EXPECT_TRUE(AccessTokenIDManager::GetInstance().ExtractBundleId(cloneInfo->GetAppUid(), cloneBundleId));
 
     int32_t sceneCode = 0;
     EXPECT_EQ(ERR_OK, DeleteIdentityCore(INVALID_TOKENID, bundleName, ReservedType::NONE, sceneCode));

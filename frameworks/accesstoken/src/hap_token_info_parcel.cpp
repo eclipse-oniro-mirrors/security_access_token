@@ -29,6 +29,9 @@ bool HapTokenInfoParcel::Marshalling(Parcel& out) const
     RETURN_IF_FALSE(out.WriteInt32(this->hapTokenInfoParams.dlpType));
     RETURN_IF_FALSE(out.WriteUint32(this->hapTokenInfoParams.tokenID));
     RETURN_IF_FALSE(out.WriteUint32(this->hapTokenInfoParams.tokenAttr));
+    // uid/appUid are device-local identities and are intentionally NOT serialized:
+    // the wire format must stay compatible with released GetHapTokenInfo consumers
+    // and cross-device sync peers. SPM flows carry appUid via dedicated IDL interfaces.
     return true;
 }
 
@@ -49,6 +52,7 @@ HapTokenInfoParcel* HapTokenInfoParcel::Unmarshalling(Parcel& in)
     RELEASE_IF_FALSE(in.ReadInt32(hapTokenInfoParcel->hapTokenInfoParams.dlpType), hapTokenInfoParcel);
     RELEASE_IF_FALSE(in.ReadUint32(hapTokenInfoParcel->hapTokenInfoParams.tokenID), hapTokenInfoParcel);
     RELEASE_IF_FALSE(in.ReadUint32(hapTokenInfoParcel->hapTokenInfoParams.tokenAttr), hapTokenInfoParcel);
+    // uid/appUid are not carried on the wire; they keep their default INVALID_UID values.
     return hapTokenInfoParcel;
 }
 } // namespace AccessToken

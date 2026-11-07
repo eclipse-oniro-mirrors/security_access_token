@@ -222,7 +222,7 @@ HWTEST_F(InstallSessionManagerTest, UpdateHapPolicyTest001, TestSize.Level0)
     bundlePolicy.isDebugGrant = false;
     int32_t uid = 0;
     EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
-        AccessTokenKit::UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid));
+        AccessTokenKit::UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid, uid));
 }
 
 /**
@@ -390,6 +390,30 @@ HWTEST_F(InstallSessionManagerTest, UpdateHapPolicyTest101, TestSize.Level0)
     bundlePolicy.isDebugGrant = false;
 
     int32_t uid = 0;
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid, uid));
+}
+
+/**
+ * @tc.name: UpdateHapPolicyLegacyUidFold001
+ * @tc.desc: The legacy 4-param UpdateHapPolicy stays functional after the uid-fold compat:
+ *           a legacy-form uid expectation (nonzero uid, appUid unset) succeeds the same
+ *           way, and the service entry does not corrupt the inout uid exchange.
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(InstallSessionManagerTest, UpdateHapPolicyLegacyUidFold001, TestSize.Level0)
+{
+    MockNativeToken mock("foundation");
+
+    int32_t sessionId = INVALID_SESSION;
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx.tokenIdExStruct.tokenID = 123;
+
+    BundlePolicy bundlePolicy;
+    bundlePolicy.dlpType = DLP_COMMON;
+    bundlePolicy.isDebugGrant = false;
+
+    int32_t uid = 20010001; // userId 100, bundleId 10001: a legacy-form expectation
     EXPECT_EQ(RET_SUCCESS, AccessTokenKit::UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid));
 }
 
