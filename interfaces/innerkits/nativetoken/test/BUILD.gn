@@ -44,7 +44,7 @@ ohos_unittest("libnativetoken_test") {
     "${access_token_path}/interfaces/innerkits/accesstoken_file_util:accesstoken_file_util",
     "${access_token_path}/interfaces/innerkits/token_setproc:libpermsetproc_shared",
     "${access_token_path}/interfaces/innerkits/token_setproc:libtokensetproc_shared",
-    "../:libnativetoken",
+    "../:libnativetoken_static",
   ]
   external_deps = [
     "bounds_checking_function:libsec_shared",
