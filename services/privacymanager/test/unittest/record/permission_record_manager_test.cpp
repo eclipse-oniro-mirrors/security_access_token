@@ -3686,6 +3686,113 @@ HWTEST_F(PermissionRecordManagerTest, GetDisablePolicy_GlobalUnset_DoesNotCascad
     PermissionRecordManager::GetInstance().SetDisablePolicy("ohos.permission.CAMERA", false, userId);
 }
 
+/*
+ * @tc.name: SetDisablePolicy_UnsupportedPermission
+ * @tc.desc: SetDisablePolicy with a valid but unsupported permission (LOCATION) returns ERR_PERMISSION_NOT_SUPPORT
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, SetDisablePolicy_UnsupportedPermission, TestSize.Level1)
+{
+    EXPECT_EQ(PrivacyError::ERR_PERMISSION_NOT_SUPPORT,
+        PermissionRecordManager::GetInstance().SetDisablePolicy("ohos.permission.LOCATION", true, 100));
+    EXPECT_EQ(PrivacyError::ERR_PERMISSION_NOT_SUPPORT,
+        PermissionRecordManager::GetInstance().SetDisablePolicy("ohos.permission.LOCATION", true, -1));
+}
+
+/*
+ * @tc.name: SetDisablePolicy_InvalidPermissionName
+ * @tc.desc: SetDisablePolicy with a non-existent permission name returns ERR_PERMISSION_NOT_EXIST
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, SetDisablePolicy_InvalidPermissionName, TestSize.Level1)
+{
+    EXPECT_EQ(PrivacyError::ERR_PERMISSION_NOT_EXIST,
+        PermissionRecordManager::GetInstance().SetDisablePolicy("ohos.permission.NON_EXISTENT", true, 100));
+    EXPECT_EQ(PrivacyError::ERR_PERMISSION_NOT_EXIST,
+        PermissionRecordManager::GetInstance().SetDisablePolicy("", true, -1));
+}
+
+/*
+ * @tc.name: GetDisablePolicy_UnsupportedPermission
+ * @tc.desc: GetDisablePolicy with a valid but unsupported permission returns ERR_PERMISSION_NOT_SUPPORT
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, GetDisablePolicy_UnsupportedPermission, TestSize.Level1)
+{
+    bool isDisable = false;
+    EXPECT_EQ(PrivacyError::ERR_PERMISSION_NOT_SUPPORT,
+        PermissionRecordManager::GetInstance().GetDisablePolicy("ohos.permission.LOCATION", isDisable, 100));
+}
+
+/*
+ * @tc.name: GetDisablePolicy_InvalidUserId
+ * @tc.desc: GetDisablePolicy with invalid userId (< -1) returns ERR_PARAM_INVALID
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, GetDisablePolicy_InvalidUserId, TestSize.Level1)
+{
+    bool isDisable = false;
+    EXPECT_EQ(PrivacyError::ERR_PARAM_INVALID,
+        PermissionRecordManager::GetInstance().GetDisablePolicy("ohos.permission.CAMERA", isDisable, -2));
+}
+
+/*
+ * @tc.name: GetCacheDisablePolicy_InvalidPermissionName
+ * @tc.desc: GetCacheDisablePolicy(string) with invalid permission name returns false
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, GetCacheDisablePolicy_InvalidPermissionName, TestSize.Level1)
+{
+    EXPECT_FALSE(PermissionRecordManager::GetInstance().GetCacheDisablePolicy("ohos.permission.NON_EXISTENT", 100));
+    EXPECT_FALSE(PermissionRecordManager::GetInstance().GetCacheDisablePolicy("", -1));
+}
+
+/*
+ * @tc.name: SetDisablePolicy_AddOrReplaceDbFail
+ * @tc.desc: DB AddOrReplace failure (isDisable=true) returns ERR_DATABASE_OPERATE_FAILED and cache not updated
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, SetDisablePolicy_AddOrReplaceDbFail, TestSize.Level2)
+{
+    int32_t userId = 200;
+    PermissionRecordManager::GetInstance().SetDisablePolicy("ohos.permission.CAMERA", false, userId);
+    EXPECT_FALSE(PermissionRecordManager::GetInstance().GetCacheDisablePolicy("ohos.permission.CAMERA", userId));
+
+    auto backup = PermissionUsedRecordDb::GetInstance().dataTypeToSqlTable_;
+    PermissionUsedRecordDb::GetInstance().dataTypeToSqlTable_.clear();
+    EXPECT_EQ(PrivacyError::ERR_DATABASE_OPERATE_FAILED,
+        PermissionRecordManager::GetInstance().SetDisablePolicy("ohos.permission.CAMERA", true, userId));
+    EXPECT_FALSE(PermissionRecordManager::GetInstance().GetCacheDisablePolicy("ohos.permission.CAMERA", userId));
+    PermissionUsedRecordDb::GetInstance().dataTypeToSqlTable_ = backup;
+    PermissionRecordManager::GetInstance().SetDisablePolicy("ohos.permission.CAMERA", false, userId);
+}
+
+/*
+ * @tc.name: RemoveUserLevelDisablePolicy_DbFail
+ * @tc.desc: DB Remove failure in RemoveUserLevelDisablePolicy does not clear cache
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, RemoveUserLevelDisablePolicy_DbFail, TestSize.Level2)
+{
+    int32_t userId = 201;
+    PermissionRecordManager::GetInstance().SetDisablePolicy("ohos.permission.CAMERA", true, userId);
+    EXPECT_TRUE(PermissionRecordManager::GetInstance().GetCacheDisablePolicy("ohos.permission.CAMERA", userId));
+
+    auto backup = PermissionUsedRecordDb::GetInstance().dataTypeToSqlTable_;
+    PermissionUsedRecordDb::GetInstance().dataTypeToSqlTable_.clear();
+    PermissionRecordManager::GetInstance().RemoveUserLevelDisablePolicy(userId);
+    EXPECT_TRUE(PermissionRecordManager::GetInstance().GetCacheDisablePolicy("ohos.permission.CAMERA", userId));
+    PermissionUsedRecordDb::GetInstance().dataTypeToSqlTable_ = backup;
+    PermissionRecordManager::GetInstance().SetDisablePolicy("ohos.permission.CAMERA", false, userId);
+}
+
 #ifdef MAX_COUNT_TEST
 class DisablePolicyChangeCallbackTest : public DisablePolicyChangeCallback {
 public:
@@ -3877,8 +3984,8 @@ HWTEST_F(PermissionRecordManagerTest, DvrBackgroundWithPermAllowed001, TestSize.
 
 /**
  * @tc.name: CameraPrivacyControlEnhance001
- * @tc.desc: camera usage is denied when lock/off-screen privacy control is enabled
- *           and screen is locked or off, allowed when switch off or screen unlocked/on.
+ * @tc.desc: camera usage is denied when off-screen privacy control is enabled and screen
+ *           is off, allowed when switch off or screen on. Lock status does not affect it.
  * @tc.type: FUNC
  * @tc.require: TDD coverage
  */
@@ -3900,8 +4007,13 @@ HWTEST_F(PermissionRecordManagerTest, CameraPrivacyControlEnhance001, TestSize.L
     recordManager.SetScreenOn(false);
     EXPECT_TRUE(recordManager.IsAllowedUsingPermission(tokenId, CAMERA_PERMISSION_NAME, TEST_PID_1));
 
-    // switch on, screen locked: denied
+    // switch on, screen locked but on: camera allowed, lock status alone does not deny
     recordManager.cameraPrivacyControlEnhanceEnable_ = true;
+    recordManager.SetScreenOn(true);
+    EXPECT_TRUE(recordManager.IsAllowedUsingPermission(tokenId, CAMERA_PERMISSION_NAME, TEST_PID_1));
+
+    // switch on, screen locked and off: denied
+    recordManager.SetScreenOn(false);
     EXPECT_FALSE(recordManager.IsAllowedUsingPermission(tokenId, CAMERA_PERMISSION_NAME, TEST_PID_1));
 
     // switch on, screen off but unlocked: denied

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -25,6 +25,17 @@
 extern "C" {
 #endif
 
+typedef struct {
+    int32_t type;
+    char *permissionName;
+    int32_t valueNum;
+} PermNameWithValue;
+
+typedef struct {
+    int32_t permsNum;
+    PermNameWithValue *perms;
+} KernelPermissionList;
+
 typedef struct TokenInfoParams {
     int32_t dcapsNum;
     int32_t permsNum;
@@ -35,6 +46,7 @@ typedef struct TokenInfoParams {
     const char *processName;
     const char *aplStr;
     int32_t uid;
+    KernelPermissionList kernPerms;
 } NativeTokenInfoParams;
 
 extern uint64_t GetAccessTokenId(NativeTokenInfoParams *tokenInfo);

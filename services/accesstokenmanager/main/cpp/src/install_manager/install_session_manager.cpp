@@ -810,12 +810,10 @@ int32_t InstallSessionManager::CreateInstallSession(const HapBaseInfo& info, con
     cache.baseInfo = info;
     cache.mode = MultipleModeUtils::GetTokenMode(info.instIndex);
 
+    // Adopt the caller's repair expectation as-is; the uid user-segment rule
+    // lives in AdoptReusableUid, which rejects a mismatched desired uid and
+    // falls back to the standard resolution chain (sibling > fresh).
     if (desired.tokenId != 0 && desired.uid != INVALID_UID) {
-        if (AccessTokenIDManager::ExtractUserId(desired.uid) != info.userID) {
-            LOGE(ATM_DOMAIN, ATM_TAG, "Desired uid %{public}d user segment mismatch with user %{public}d.",
-                desired.uid, info.userID);
-            return AccessTokenError::ERR_PARAM_INVALID;
-        }
         cache.repairedIdentity = desired;
     }
     int32_t ret = FillInstallPolicy(info.bundleName, policy, cache);
@@ -913,20 +911,6 @@ int32_t InstallSessionManager::PrepareHapIdentity(
     return PrepareSessionIdentity(sessionId, info, policy, identity, false);
 }
 
-int32_t CheckUpdateTargetMatch(const InstallCache& cache, AccessTokenID tokenId,
-    const std::shared_ptr<HapTokenInfoInner>& infoPtr, int32_t uid)
-{
-    if (infoPtr->GetBundleName() != cache.bundleParam.bundleName) {
-        LOGC(ATM_DOMAIN, ATM_TAG, "Token %{public}u is not match bundleName.", tokenId);
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-    if (uid != INVALID_UID && AccessTokenIDManager::ExtractUserId(uid) != infoPtr->GetUserID()) {
-        LOGC(ATM_DOMAIN, ATM_TAG, "Uid %{public}d doesn't match token user %{public}d.", uid, infoPtr->GetUserID());
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-    return RET_SUCCESS;
-}
-
 int32_t InstallSessionManager::UpdateHapPolicy(
     int32_t sessionId, AccessTokenIDEx& tokenIdEx, const BundlePolicy& policy, int32_t& uid)
 {
@@ -935,8 +919,8 @@ int32_t InstallSessionManager::UpdateHapPolicy(
     AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
     if (!migrationDone_.load()) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Migration not completed");
-        RollbackAll(sessionId,
-            InstallHapSceneCode::UPDATE_HAP_POLICY, AccessTokenError::ERR_MIGRATION_COMPLETED, tokenId);
+        RollbackAll(sessionId, InstallHapSceneCode::UPDATE_HAP_POLICY,
+            AccessTokenError::ERR_MIGRATION_COMPLETED, tokenId);
         return AccessTokenError::ERR_MIGRATION_COMPLETED;
     }
     auto it = sessionToInstallCache.find(sessionId);
@@ -966,15 +950,16 @@ int32_t InstallSessionManager::UpdateHapPolicy(
             AccessTokenError::ERR_TOKENID_NOT_EXIST, tokenId);
         return AccessTokenError::ERR_TOKENID_NOT_EXIST;
     }
-    int32_t ret = CheckUpdateTargetMatch(it->second, tokenId, infoPtr, uid);
-    if (ret != RET_SUCCESS) {
-        RollbackAll(sessionId, InstallHapSceneCode::UPDATE_HAP_POLICY, ret, tokenId);
-        return ret;
+    // the update target must belong to the session bundle (session hijacking)
+    if (infoPtr->GetBundleName() != it->second.bundleParam.bundleName) {
+        LOGC(ATM_DOMAIN, ATM_TAG, "Token %{public}u is not match bundleName.", tokenId);
+        RollbackAll(sessionId, InstallHapSceneCode::UPDATE_HAP_POLICY, AccessTokenError::ERR_PARAM_INVALID, tokenId);
+        return AccessTokenError::ERR_PARAM_INVALID;
     }
 
     bool isNewBundleId = false;
     bool fromCaller = false;
-    ret = InstallIdentityManager::ResolveUpdateUid(uid, infoPtr, isNewBundleId, fromCaller);
+    int32_t ret = InstallIdentityManager::ResolveUpdateUid(uid, infoPtr, isNewBundleId, fromCaller);
     if (ret != RET_SUCCESS) {
         LOGC(ATM_DOMAIN, ATM_TAG, "Check uid failed, ret=%{public}d", ret);
         RollbackAll(sessionId, InstallHapSceneCode::UPDATE_HAP_POLICY, AccessTokenError::ERR_INVALID_UID, tokenId);
@@ -1217,6 +1202,10 @@ int32_t InstallSessionManager::GetCachePolicyBySessionId(int32_t sessionId, cons
     }
 
     for (auto permState : it->second.policy.permStateList) {
+        PermissionBriefDef briefDef;
+        if (!GetPermissionBriefDef(permState.permissionName, briefDef) || !briefDef.isEnable) {
+            continue;
+        }
         bundlePolicyInfo.reqPermissions.emplace_back(permState.permissionName);
     }
     return RET_SUCCESS;

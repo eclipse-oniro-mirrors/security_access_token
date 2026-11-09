@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,19 +13,21 @@
  * limitations under the License.
  */
 
-#ifndef ACCESS_TOKEN_RANDOM_OPENSSL
-#define ACCESS_TOKEN_RANDOM_OPENSSL
+#ifndef STRCPY_WRAPPER_H
+#define STRCPY_WRAPPER_H
 
-#include <openssl/rand.h>
+#include <stddef.h>
 
-namespace OHOS {
-namespace Security {
-namespace AccessToken {
-class RandomOpenSSL {
-public:
-    static unsigned int GetRandomUint32();
-};
-} // namespace AccessToken
-} // namespace Security
-} // namespace OHOS
-#endif // ACCESS_TOKEN_RANDOM_OPENSSL
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void SetStrcpyFailCount(int count);
+void ResetStrcpyMock(void);
+int GetStrcpyCount(void);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

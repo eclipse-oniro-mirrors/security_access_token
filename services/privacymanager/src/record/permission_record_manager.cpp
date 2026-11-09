@@ -2795,11 +2795,6 @@ bool PermissionRecordManager::IsAllowedUsingCamera(AccessTokenID tokenId, int32_
 {
     // camera privacy control enhancement: deny camera usage while the screen is locked or off
     if (IsCameraPrivacyControlEnhanceEnabled()) {
-        if (GetLockScreenStatus() == LockScreenStatusChangeType::PERM_ACTIVE_IN_LOCKED) {
-            LOGI(PRI_DOMAIN, PRI_TAG, "Id %{public}d, pid %{public}d denied by screen lock control.",
-                tokenId, pid);
-            return false;
-        }
         if (!IsScreenOn()) {
             LOGI(PRI_DOMAIN, PRI_TAG, "Id %{public}d, pid %{public}d denied by screen off control.",
                 tokenId, pid);

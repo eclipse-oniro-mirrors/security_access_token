@@ -38,6 +38,7 @@ namespace OHOS {
         FuzzedDataProvider provider(data, size);
         std::string permissionName = ConsumePermissionName(provider);
         bool isDisable = provider.ConsumeBool();
+        int32_t userId = provider.ConsumeIntegralInRange<int32_t>(-1, 200);
 
         MessageParcel datas;
         datas.WriteInterfaceToken(IPrivacyManager::GetDescriptor());
@@ -45,6 +46,9 @@ namespace OHOS {
             return false;
         }
         if (!datas.WriteInt32(isDisable ? 1 : 0)) {
+            return false;
+        }
+        if (!datas.WriteInt32(userId)) {
             return false;
         }
 

@@ -68,6 +68,11 @@ int32_t AccessTokenDbLoader::DeleteAndInsertValues(const std::vector<DelInfo>& d
     return AccessTokenDb::GetInstance()->DeleteAndInsertValues(delInfoVec, addInfoVec);
 }
 
+void AccessTokenDbLoader::ClearCache()
+{
+    AccessTokenDb::GetInstance()->ClearCache();
+}
+
 bool AccessTokenDbLoader::DestroyRdbHelper()
 {
     AccessTokenDb::DestroyInstance();

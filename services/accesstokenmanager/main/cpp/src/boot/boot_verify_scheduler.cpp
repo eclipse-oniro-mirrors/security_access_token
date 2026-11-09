@@ -965,6 +965,7 @@ void BootVerifyScheduler::StartVerifyNormalBundleListAsync()
     std::thread([this, hapSize]() {
         VerifyNormalBundleListAsync();
         ReportNormalBundleVerifyFinish(hapSize);
+        AccessTokenDbOperator::ClearCache();
     }).detach();
 }
 

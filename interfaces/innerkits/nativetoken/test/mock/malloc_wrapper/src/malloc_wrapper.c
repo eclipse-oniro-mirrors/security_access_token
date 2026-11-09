@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,17 +13,35 @@
  * limitations under the License.
  */
 
-#include "random_openssl.h"
+#include "malloc_wrapper.h"
 
-namespace OHOS {
-namespace Security {
-namespace AccessToken {
-extern "C" unsigned int GetRandomUint32()
+static int g_mallocCount = 0;
+static int g_failCount = -1;
+
+void SetMallocFailCount(int count)
 {
-    unsigned int rand;
-    RAND_bytes(reinterpret_cast<unsigned char *>(&rand), sizeof(rand));
-    return rand;
+    g_mallocCount = 0;
+    g_failCount = count;
 }
-} // namespace AccessToken
-} // namespace Security
-} // namespace OHOS
+
+void ResetMallocMock(void)
+{
+    g_mallocCount = 0;
+    g_failCount = -1;
+}
+
+int GetMallocCount(void)
+{
+    return g_mallocCount;
+}
+
+void* __real_malloc(size_t size);
+
+void* __wrap_malloc(size_t size)
+{
+    g_mallocCount++;
+    if (g_failCount > 0 && g_mallocCount >= g_failCount) {
+        return NULL;
+    }
+    return __real_malloc(size);
+}

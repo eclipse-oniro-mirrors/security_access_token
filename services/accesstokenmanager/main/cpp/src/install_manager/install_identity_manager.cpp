@@ -60,11 +60,16 @@ AccessTokenID ResolveTokenId(const InstallCache& cache, bool isDlpApp, bool isCl
     return AccessTokenIDManager::GetInstance().CreateAndRegisterTokenId(TOKEN_HAP, isDlpApp, isCloneApp, 0);
 }
 
-// Adopt the BMS-desired uid when it is reusable: bring its bundleId into the
-// cache and mark the identity as caller-provided. Shared by the create and
-// update flows.
-bool AdoptReusableUid(int32_t desiredUid, int32_t& uid, bool& fromCaller)
+// Adopt the BMS-desired uid only when it belongs to the target user and is
+// reusable: bring its bundleId into the cache and mark the identity as
+// caller-provided. Any failure falls back to the caller's fresh allocation.
+bool AdoptReusableUid(int32_t desiredUid, int32_t targetUserId, int32_t& uid, bool& fromCaller)
 {
+    if (AccessTokenIDManager::ExtractUserId(desiredUid) != targetUserId) {
+        LOGW(ATM_DOMAIN, ATM_TAG, "Desired uid %{public}d doesn't belong to user %{public}d, skip adoption.",
+            desiredUid, targetUserId);
+        return false;
+    }
     bool reusable = false;
     if (AccessTokenIDManager::GetInstance().IsUidReusable(desiredUid, reusable) != RET_SUCCESS ||
         !reusable) {
@@ -89,13 +94,7 @@ int32_t ResolveUid(InstallCache& cache, int32_t bundleRefUid, int32_t& uid)
     if (desiredUid == INVALID_UID) {
         return AccessTokenIDManager::GetInstance().AllocUid(cache.baseInfo.userID, uid);
     }
-    // The desired uid must belong to the target user
-    if (AccessTokenIDManager::ExtractUserId(desiredUid) != cache.baseInfo.userID) {
-        LOGC(ATM_DOMAIN, ATM_TAG,
-            "Uid %{public}d doesn't belong to user %{public}d.", desiredUid, cache.baseInfo.userID);
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-    if (AdoptReusableUid(desiredUid, uid, cache.isUidFromCaller)) {
+    if (AdoptReusableUid(desiredUid, cache.baseInfo.userID, uid, cache.isUidFromCaller)) {
         return RET_SUCCESS;
     }
     LOGW(ATM_DOMAIN, ATM_TAG, "Adopt uid %{public}d failed, allocate new one.", desiredUid);
@@ -256,7 +255,7 @@ int32_t InstallIdentityManager::ResolveUpdateUid(
     }
 
     // level 3: BMS desired uid if reusable, otherwise fresh allocation
-    if (uid != INVALID_UID && AdoptReusableUid(uid, uid, fromCaller)) {
+    if (uid != INVALID_UID && AdoptReusableUid(uid, infoPtr->GetUserID(), uid, fromCaller)) {
         isNewBundleId = true;
     } else {
         int32_t ret = AccessTokenIDManager::GetInstance().AllocUid(infoPtr->GetUserID(), uid);

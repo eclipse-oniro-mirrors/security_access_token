@@ -24,7 +24,6 @@ extern "C" {
 #endif
 #endif
 
-unsigned int GetRandomUint32(void);
 uint32_t GetRandomUint32FromUrandom(void);
 
 #ifdef __cplusplus

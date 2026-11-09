@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023 Huawei Device Co., Ltd.
+# Copyright (c) 2021-2026 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -44,7 +44,7 @@ ohos_unittest("libnativetoken_test") {
     "${access_token_path}/interfaces/innerkits/accesstoken_file_util:accesstoken_file_util",
     "${access_token_path}/interfaces/innerkits/token_setproc:libpermsetproc_shared",
     "${access_token_path}/interfaces/innerkits/token_setproc:libtokensetproc_shared",
-    "../:libnativetoken",
+    "../:libnativetoken_static",
   ]
   external_deps = [
     "bounds_checking_function:libsec_shared",
@@ -85,11 +85,73 @@ ohos_unittest("libnativetoken_mock_test") {
     "../src/nativetoken_hisysevent.c",
     "../src/nativetoken_json_oper.c",
     "mock/src/cJSON.c",
+    "mock/src/config_policy_mock.c",
     "mock/src/secure_function.c",
     "unittest/mock/nativetoken_oper_test.cpp",
   ]
 
   configs = [ "${access_token_path}/config:coverage_flags" ]
+
+  deps = [
+    "${access_token_path}/interfaces/innerkits/accesstoken_file_util:accesstoken_file_util",
+    "${access_token_path}/frameworks/common:accesstoken_permission_map_static",
+    "${access_token_path}/frameworks/common:accesstoken_static_log_for_nativetoken",
+    "${access_token_path}/interfaces/innerkits/token_setproc:libpermsetproc_shared",
+    "${access_token_path}/interfaces/innerkits/token_setproc:libtokensetproc_shared",
+  ]
+
+  external_deps = [
+    "bounds_checking_function:libsec_shared",
+    "googletest:gmock",
+    "googletest:gtest",
+    "hilog:libhilog",
+    "hisysevent:libhisysevent",
+  ]
+  cflags = [ "-DCUSTOMIZATION_CONFIG_POLICY_ENABLE" ]
+  if (build_selinux) {
+    external_deps += [ "selinux_adapter:librestorecon" ]
+    cflags += [ "-DWITH_SELINUX" ]
+  }
+}
+
+ohos_unittest("libnativetoken_malloc_test") {
+  subsystem_name = "accesscontrol"
+  module_out_path = module_output_path_unittest_accesstoken
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+  branch_protector_ret = "pac_ret"
+
+  include_dirs = [
+    "../include",
+    "unittest/include",
+    "mock/malloc_wrapper/include",
+    "mock/strcpy_wrapper/include",
+    "${access_token_path}/interfaces/innerkits/accesstoken/include",
+    "${access_token_path}/frameworks/accesstoken/include",
+    "${access_token_path}/frameworks/common/include",
+    "mock/include/",
+    "${access_token_path}/interfaces/innerkits/token_setproc/include",
+  ]
+
+  sources = [
+    "../src/nativetoken.c",
+    "../src/nativetoken_hisysevent.c",
+    "../src/nativetoken_json_oper.c",
+    "mock/src/cJSON.c",
+    "mock/malloc_wrapper/src/malloc_wrapper.c",
+    "mock/strcpy_wrapper/src/strcpy_wrapper.c",
+    "unittest/src/nativetoken_malloc_test.cpp",
+  ]
+
+  configs = [ "${access_token_path}/config:coverage_flags" ]
+
+  ldflags = [
+    "-Wl,--wrap=malloc",
+    "-Wl,--wrap=strcpy_s",
+  ]
 
   deps = [
     "${access_token_path}/interfaces/innerkits/accesstoken_file_util:accesstoken_file_util",
@@ -118,5 +180,6 @@ group("unittest") {
   deps = [
     ":libnativetoken_mock_test",
     ":libnativetoken_test",
+    ":libnativetoken_malloc_test",
   ]
 }

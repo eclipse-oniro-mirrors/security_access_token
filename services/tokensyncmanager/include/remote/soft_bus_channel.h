@@ -256,7 +256,7 @@ private:
         int n;
 
         for (n = 0; n < uuidlen; ++n) {
-            int b = static_cast<int32_t>(GetRandomUint32() % bbase);
+            int b = static_cast<int32_t>(GetRandomUint32FromUrandom() % bbase);
             switch (n) {
                 case index6:
                     if (sprintf_s(p, bufSize, "4%x", b % xbase) < 0) {
@@ -264,7 +264,7 @@ private:
                     }
                     break;
                 case index8:
-                    if (sprintf_s(p, bufSize, "%c%x", c[GetRandomUint32() % strlen(c)], b % xbase) < 0) {
+                    if (sprintf_s(p, bufSize, "%c%x", c[GetRandomUint32FromUrandom() % strlen(c)], b % xbase) < 0) {
                         return;
                     }
                     break;

@@ -69,10 +69,6 @@ constexpr const char* CAMERA_PERMISSION_NAME = "ohos.permission.CAMERA";
 constexpr const char* MICROPHONE_PERMISSION_NAME = "ohos.permission.MICROPHONE";
 constexpr const char* LOCATION_PERMISSION_NAME = "ohos.permission.LOCATION";
 static const uint32_t PERM_LIST_SIZE_MAX = 1024;
-static constexpr int32_t COMMON_EVENT_SERVICE_ID = 3299;
-static constexpr int32_t SCREENLOCK_SERVICE_ID = 3704;
-static constexpr int32_t POWER_MANAGER_SERVICE_ID = 3010;
-static constexpr int32_t INVALID_CODE = 999;
 static PermissionStateFull g_testState = {
     .permissionName = "ohos.permission.CAMERA",
     .isGeneral = true,
@@ -1749,25 +1745,6 @@ HWTEST_F(PrivacyManagerServiceTest, SetHapWithFGReminderInner001, TestSize.Level
     // systemapp with need permission
     int32_t ret = privacyManagerService_->SetHapWithFGReminder(tokenID, isAllowed);
     EXPECT_EQ(PrivacyError::ERR_PERMISSION_DENIED, ret);
-}
-
-/**
- * @tc.name: GetProxyDeathHandle001
- * @tc.desc: GetProxyDeathHandle test.
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(PrivacyManagerServiceTest, GetProxyDeathHandle001, TestSize.Level0)
-{
-    auto handler1 = privacyManagerService_->GetProxyDeathHandler();
-    ASSERT_NE(nullptr, handler1);
-    auto handler2 = privacyManagerService_->GetProxyDeathHandler();
-    ASSERT_NE(nullptr, handler2);
-
-    privacyManagerService_->OnAddSystemAbility(COMMON_EVENT_SERVICE_ID, "123");
-    privacyManagerService_->OnAddSystemAbility(SCREENLOCK_SERVICE_ID, "123");
-    privacyManagerService_->OnAddSystemAbility(POWER_MANAGER_SERVICE_ID, "123");
-    privacyManagerService_->OnAddSystemAbility(INVALID_CODE, "123");
 }
 
 /**

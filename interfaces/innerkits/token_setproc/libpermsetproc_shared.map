@@ -18,10 +18,13 @@
       FilterKernelPermissions;
       GetPermissionFromKernel;
       GetPermissionsFromKernel;
+      IsNativePermissionAvailable;
       RemovePermissionFromKernel;
+      SetPermissionEnabled;
       SetPermissionToKernel;
       TransferOpCodeToPermission;
       TransferPermissionToOpcode;
+      IsPermissionKernelEffect;
     };
     extern "C++" {
       OHOS::Security::AccessToken::AddPermissionToKernel*;

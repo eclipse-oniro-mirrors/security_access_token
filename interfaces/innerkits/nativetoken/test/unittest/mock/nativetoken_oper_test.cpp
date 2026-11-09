@@ -14,11 +14,13 @@
  */
 
 #include "nativetoken_oper_test.h"
+#include <filesystem>
 #include <fstream>
 #include <fcntl.h>
 #include <poll.h>
 #include <pthread.h>
 #include "cJSON.h"
+#include "config_policy_utils.h"
 #include "securec.h"
 #include "nativetoken.h"
 #include "nativetoken_json_oper.h"
@@ -26,6 +28,7 @@
 #include "accesstoken_file_util.h"
 #include "nativetoken_test_common.h"
 #include "perm_setproc.h"
+#include "perm_setproc_c.h"
 #include "token_setproc.h"
 
 using namespace testing::ext;
@@ -61,6 +64,31 @@ extern int g_getArrayItemTime;
 extern int g_getObjectItem;
 extern int g_strcpyTime;
 extern NativeTokenList *g_tokenListHead;
+
+static const char *TEST_EXT_CFG_DIR = "/data/nativetoken_ext_cfg";
+static const char *EXT_FILE_REL_PATH = "/etc/access_token/accesstoken_permission_definition_ext.txt";
+
+static void RemoveTestExtCfgDir()
+{
+    std::error_code ec;
+    std::filesystem::remove_all(TEST_EXT_CFG_DIR, ec);
+}
+
+static bool CreateExtFile(const std::string &content)
+{
+    std::error_code ec;
+    std::filesystem::create_directories(std::string(TEST_EXT_CFG_DIR) + "/etc/access_token", ec);
+    if (ec) {
+        return false;
+    }
+    std::ofstream file(std::string(TEST_EXT_CFG_DIR) + EXT_FILE_REL_PATH, std::ios::trunc);
+    if (!file.is_open()) {
+        return false;
+    }
+    file << content;
+    file.close();
+    return true;
+}
 
 static void SetTimes(void)
 {
@@ -533,7 +561,7 @@ HWTEST_F(TokenOperTest, GetInfoArrFromJson001, TestSize.Level0)
     SetTimes();
     CopyNativeTokenJson(TOKEN_ID_CFG_FILE_PATH, TOKEN_ID_CFG_FILE_COPY_PATH);
 
-    NativeTokenInfoParams tokenInfo;
+    NativeTokenInfoParams tokenInfo = {};
     g_parse = DEFAULT_TIME;
     EXPECT_EQ(GetAccessTokenId(&tokenInfo), 0);
     CopyNativeTokenJson(TOKEN_ID_CFG_FILE_COPY_PATH, TOKEN_ID_CFG_FILE_PATH);
@@ -623,4 +651,93 @@ HWTEST_F(TokenOperTest, RemoveNodeFromList002, TestSize.Level0)
 
     CopyNativeTokenJson(TOKEN_ID_CFG_FILE_COPY_PATH, TOKEN_ID_CFG_FILE_PATH);
     std::remove(TOKEN_ID_CFG_FILE_COPY_PATH);
+}
+
+/**
+ * @tc.name: EnablePermissionDefinitionExt001
+ * @tc.desc: GetCfgDirList returns null, AtlibInit still succeeds.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenOperTest, EnablePermissionDefinitionExt001, TestSize.Level0)
+{
+    SetTimes();
+    MockConfigPolicySetReturnNull(1);
+    EXPECT_EQ(ATRET_SUCCESS, AtlibInit());
+    MockConfigPolicySetReturnNull(0);
+}
+
+/**
+ * @tc.name: EnablePermissionDefinitionExt002
+ * @tc.desc: All cfg dir paths are null, AtlibInit still succeeds.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenOperTest, EnablePermissionDefinitionExt002, TestSize.Level0)
+{
+    SetTimes();
+    MockConfigPolicySetCfgDir("");
+    EXPECT_EQ(ATRET_SUCCESS, AtlibInit());
+    MockConfigPolicySetCfgDir("");
+}
+
+/**
+ * @tc.name: EnablePermissionDefinitionExt003
+ * @tc.desc: Cfg dir is set but the ext file does not exist, AtlibInit still succeeds.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenOperTest, EnablePermissionDefinitionExt003, TestSize.Level0)
+{
+    SetTimes();
+    MockConfigPolicySetCfgDir("/data/non_exist_cfg_dir");
+    EXPECT_EQ(ATRET_SUCCESS, AtlibInit());
+    MockConfigPolicySetCfgDir("");
+}
+
+/**
+ * @tc.name: EnablePermissionDefinitionExt004
+ * @tc.desc: Valid ext file enables a previously disabled permission via AtlibInit.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenOperTest, EnablePermissionDefinitionExt004, TestSize.Level0)
+{
+    SetTimes();
+    ASSERT_TRUE(CreateExtFile("ohos.permission.MICROPHONE\n"));
+    ASSERT_TRUE(::SetPermissionEnabled("ohos.permission.MICROPHONE", false));
+
+    uint32_t opCode = 0;
+    EXPECT_FALSE(::IsNativePermissionAvailable("ohos.permission.MICROPHONE", 1, nullptr, 0, &opCode));
+
+    MockConfigPolicySetCfgDir(TEST_EXT_CFG_DIR);
+    EXPECT_EQ(ATRET_SUCCESS, AtlibInit());
+    MockConfigPolicySetCfgDir("");
+
+    EXPECT_TRUE(::IsNativePermissionAvailable("ohos.permission.MICROPHONE", 1, nullptr, 0, &opCode));
+    ASSERT_TRUE(::SetPermissionEnabled("ohos.permission.MICROPHONE", true));
+    RemoveTestExtCfgDir();
+}
+
+/**
+ * @tc.name: EnablePermissionDefinitionExt005
+ * @tc.desc: Ext file with invalid and blank lines, invalid permission is skipped, valid permission enabled.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenOperTest, EnablePermissionDefinitionExt005, TestSize.Level0)
+{
+    SetTimes();
+    ASSERT_TRUE(CreateExtFile("ohos.permission.not_exist\n\n   \nohos.permission.MICROPHONE\n"));
+    ASSERT_TRUE(::SetPermissionEnabled("ohos.permission.MICROPHONE", false));
+
+    MockConfigPolicySetCfgDir(TEST_EXT_CFG_DIR);
+    EXPECT_EQ(ATRET_SUCCESS, AtlibInit());
+    MockConfigPolicySetCfgDir("");
+
+    uint32_t opCode = 0;
+    EXPECT_FALSE(::IsNativePermissionAvailable("ohos.permission.not_exist", 1, nullptr, 0, &opCode));
+    EXPECT_TRUE(::IsNativePermissionAvailable("ohos.permission.MICROPHONE", 1, nullptr, 0, &opCode));
+    ASSERT_TRUE(::SetPermissionEnabled("ohos.permission.MICROPHONE", true));
+    RemoveTestExtCfgDir();
 }

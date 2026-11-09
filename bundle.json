@@ -62,7 +62,6 @@
         "libuv",
         "napi",
         "node",
-        "openssl",
         "os_account",
         "power_manager",
         "relational_store",
@@ -153,6 +152,16 @@
               "tokenid_kit.h"
             ],
             "header_base": "//base/security/access_token/interfaces/innerkits/accesstoken/include"
+          }
+        },
+        {
+          "name": "//base/security/access_token/interfaces/innerkits/nativetoken:libnativetoken_static",
+          "visibility": [ "init"],
+          "header": {
+            "header_files": [
+              "nativetoken_kit.h"
+            ],
+            "header_base": "//base/security/access_token/interfaces/innerkits/nativetoken/include"
           }
         },
         {

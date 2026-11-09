@@ -41,6 +41,8 @@ static constexpr int32_t BATCH_QUERY_SIZE = 512;
 static constexpr int32_t INIT_POS = -1;
 static constexpr int32_t QUERY_MAX_RETRY_TIMES = 2;
 static constexpr int32_t QUERY_RETRY_SLEEP_TIME_MS = 300;
+// limit the sqlite page cache of the main and replica databases to 100 pages
+constexpr const char* PRAGMA_CACHE_SIZE_COMMAND = "PRAGMA cache_size = 100";
 
 int32_t ReadResultSetByStep(const std::shared_ptr<NativeRdb::ResultSet>& resultSet,
     const std::vector<std::string>& columnNames, std::vector<GenericValues>& results)
@@ -114,7 +116,18 @@ void AccessTokenDb::InitRdb()
     db_ = NativeRdb::RdbHelper::GetRdbStore(config, DATABASE_VERSION_14, callback, res);
     if ((res != NativeRdb::E_OK) || (db_ == nullptr)) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to init rdb, res is %{public}d.", res);
+        return;
     }
+    // MAIN_REPLICA dual-write applies the pragma to both main and replica databases
+    int32_t errCode = db_->Execute(PRAGMA_CACHE_SIZE_COMMAND).first;
+    if (errCode != NativeRdb::E_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to limit page cache size, res is %{public}d.", errCode);
+    }
+}
+
+void AccessTokenDb::ClearCache()
+{
+    NativeRdb::RdbHelper::ClearCache();
 }
 
 std::shared_ptr<NativeRdb::RdbStore> AccessTokenDb::GetRdb()
@@ -247,6 +260,9 @@ int32_t AccessTokenDb::QueryByPredicates(const std::string& tableName, const Nat
 
         res = FindByStep(predicates, columns, results, db);
     }
+    if (res == NativeRdb::E_SQLITE_CORRUPT) {
+        res = RestoreAndRequery(tableName, predicates, columns, results);
+    }
     if (res != NativeRdb::E_OK) {
         return res;
     }
@@ -272,20 +288,29 @@ int32_t AccessTokenDb::FindByStep(const NativeRdb::RdbPredicates& predicates,
             return NativeRdb::E_OK;
         }
         if (errCode == NativeRdb::E_SQLITE_CORRUPT) {
-            break;
+            return NativeRdb::E_SQLITE_CORRUPT;
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(QUERY_RETRY_SLEEP_TIME_MS));
         continue;
     }
 
-    if (errCode != NativeRdb::E_SQLITE_CORRUPT) {
-        LOGC(ATM_DOMAIN, ATM_TAG, "Failed to find records from table %{public}s after retry.", tableName.c_str());
+    LOGC(ATM_DOMAIN, ATM_TAG, "Failed to find records from table %{public}s after retry.", tableName.c_str());
+    return AccessTokenError::ERR_DATABASE_OPERATE_FAILED;
+}
+
+int32_t AccessTokenDb::RestoreAndRequery(const std::string& tableName, const NativeRdb::RdbPredicates& predicates,
+    const std::vector<std::string>& columns, std::vector<GenericValues>& results)
+{
+    std::unique_lock<std::shared_mutex> lock(this->rwLock_);
+    auto db = GetRdb();
+    if (db == nullptr) {
+        LOGC(ATM_DOMAIN, ATM_TAG, "Db is nullptr.");
         return AccessTokenError::ERR_DATABASE_OPERATE_FAILED;
     }
 
     results.clear();
     LOGW(ATM_DOMAIN, ATM_TAG, "Detech database corrupt, restore from backup!");
-    ReportSysEventDbException(AccessTokenDbSceneCode::AT_DB_QUERY_RESTORE, errCode, tableName);
+    ReportSysEventDbException(AccessTokenDbSceneCode::AT_DB_QUERY_RESTORE, NativeRdb::E_SQLITE_CORRUPT, tableName);
     int32_t res = db->Restore("");
     if (res != NativeRdb::E_OK) {
         LOGC(ATM_DOMAIN, ATM_TAG, "Db restore failed, res is %{public}d.", res);
@@ -293,10 +318,10 @@ int32_t AccessTokenDb::FindByStep(const NativeRdb::RdbPredicates& predicates,
     }
     LOGI(ATM_DOMAIN, ATM_TAG, "Database restore success, try query again!");
 
-    errCode = QueryByStepAndRead(db, predicates, columns, results);
-    if (errCode != NativeRdb::E_OK) {
+    res = QueryByStepAndRead(db, predicates, columns, results);
+    if (res != NativeRdb::E_OK) {
         LOGC(ATM_DOMAIN, ATM_TAG, "Failed to find records from table %{public}s after restore, res is %{public}d.",
-            tableName.c_str(), errCode);
+            tableName.c_str(), res);
         return AccessTokenError::ERR_DATABASE_OPERATE_FAILED;
     }
     return NativeRdb::E_OK;

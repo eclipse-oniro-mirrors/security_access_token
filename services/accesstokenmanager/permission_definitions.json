@@ -8327,6 +8327,17 @@
             "deviceTypes": ["2in1"]
         },
         {
+            "name": "ohos.permission.ENTERPRISE_MANAGE_DISK",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "ENTERPRISE_NORMAL",
+            "since": "26.1.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1"]
+        },
+        {
             "name": "ohos.permission.MANAGE_EDM_POLICY",
             "grantMode": "system_grant",
             "availableLevel": "system_core",
@@ -12989,7 +13000,7 @@
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "NORMAL",
-            "since": "26.1.0",
+            "since": "26.0.1",
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
@@ -13037,6 +13048,50 @@
             "since": "26.1.0",
             "deprecated": "",
             "provisionEnable": false,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1", "tablet"]
+        },
+        {
+            "name": "ohos.permission.MANAGE_DAEMON_SERVICE",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.1.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1", "tablet"]
+        },
+        {
+            "name": "ohos.permission.REGISTER_DAEMON_SERVICE",
+            "grantMode": "system_grant",
+            "availableLevel": "normal",
+            "availableType": "NORMAL",
+            "since": "26.1.0",
+            "deprecated": "",
+            "provisionEnable": false,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1", "tablet"]
+        },
+        {
+            "name": "ohos.permission.USE_DAEMON_SERVICE",
+            "grantMode": "system_grant",
+            "availableLevel": "normal",
+            "availableType": "NORMAL",
+            "since": "26.1.0",
+            "deprecated": "",
+            "provisionEnable": false,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1", "tablet"]
+        },
+        {
+            "name": "ohos.permission.ENTERPRISE_REGISTER_DAEMON_SERVICE",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "MDM",
+            "since": "26.1.0",
+            "deprecated": "",
+            "provisionEnable": true,
             "distributedSceneEnable": false,
             "deviceTypes": ["2in1", "tablet"]
         }

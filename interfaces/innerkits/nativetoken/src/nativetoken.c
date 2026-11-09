@@ -18,6 +18,7 @@
 #include <policycoreutils.h>
 #endif // WITH_SELINUX
 
+#include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -33,6 +34,9 @@
 #include "securec.h"
 #include "spm_setproc.h"
 #include "accesstoken_file_util.h"
+#ifdef CUSTOMIZATION_CONFIG_POLICY_ENABLE
+#include "config_policy_utils.h"
+#endif
 
 NativeTokenList *g_tokenListHead;
 int32_t g_isNativeTokenInited = 0;
@@ -41,6 +45,13 @@ static const uint32_t SPM_PERM_ARRAY_SIZE = 64;
 static const uint32_t UINT32_BITS_NUM = 32;
 static const int32_t MAX_KERNEL_OPERATE_TRY_TIMES = 2;
 static const mode_t FILE_DAC_MASK = 0777;
+
+#define PERMISSION_DEFINITION_EXT_FILE "/etc/access_token/accesstoken_permission_definition_ext.txt"
+
+#define KERN_PERM_TYPE_BOOL 1
+#define KERN_PERM_TYPE_INT  2
+#define KERN_PERM_DENIED    0
+#define KERN_PERM_GRANTED   1
 
 #define BREAK_IF_TRUE(cond) \
     if (cond) { \
@@ -439,6 +450,51 @@ static uint32_t ClearOrCreateCfgFile(void)
     return ATRET_SUCCESS;
 }
 
+static void EnablePermissionDefinitionExt(void)
+{
+#ifdef CUSTOMIZATION_CONFIG_POLICY_ENABLE
+    CfgDir *dirs = GetCfgDirList();
+    if (dirs == NULL) {
+        LOGE("Failed to get config dir list.");
+        return;
+    }
+    char filePath[PATH_MAX_LEN + 1] = {0};
+    char line[MAX_PERM_LEN + 1] = {0};
+    for (uint32_t i = 0; i < MAX_CFG_POLICY_DIRS_CNT; ++i) {
+        if (dirs->paths[i] == NULL) {
+            continue;
+        }
+        int32_t len = snprintf_s(filePath, sizeof(filePath), sizeof(filePath) - 1, "%s%s",
+            dirs->paths[i], PERMISSION_DEFINITION_EXT_FILE);
+        if (len < 0) {
+            continue;
+        }
+        FILE *file = fopen(filePath, "r");
+        if (file == NULL) {
+            continue;
+        }
+        while (fgets(line, sizeof(line), file) != NULL) {
+            size_t lineLen = strlen(line);
+            while ((lineLen > 0) && isspace((unsigned char)line[lineLen - 1])) {
+                line[--lineLen] = '\0';
+            }
+            char *permName = line;
+            while (isspace((unsigned char)*permName)) {
+                ++permName;
+            }
+            lineLen = strlen(permName);
+            if ((lineLen > 0) && !SetPermissionEnabled(permName, true)) {
+                LOGW("Permission in ext file is invalid %s.", permName);
+            }
+        }
+        (void)fclose(file);
+    }
+    FreeCfgDirList(dirs);
+#else
+    return;
+#endif
+}
+
 uint32_t AtlibInit(void)
 {
     g_tokenListHead = (NativeTokenList *)malloc(sizeof(NativeTokenList));
@@ -477,6 +533,7 @@ uint32_t AtlibInit(void)
             }
         }
     }
+    EnablePermissionDefinitionExt();
     g_isNativeTokenInited = 1;
 
     return ATRET_SUCCESS;
@@ -649,6 +706,41 @@ static uint32_t CheckStrArray(const char **strArray, int32_t strNum, int32_t max
     return ATRET_SUCCESS;
 }
 
+static uint32_t CheckKernPerms(int32_t permsNum, const KernelPermissionList *kernPerms)
+{
+    if (kernPerms->permsNum < 0 || kernPerms->permsNum > MAX_PERM_NUM) {
+        LOGC("Invalid kernPerms permsNum(%d).", kernPerms->permsNum);
+        return KERNPERMS_INVALID;
+    }
+    if (kernPerms->perms == NULL && kernPerms->permsNum > 0) {
+        LOGC("kernPerms perms is null but permsNum(%d) != 0.", kernPerms->permsNum);
+        return KERNPERMS_INVALID;
+    }
+    if (permsNum > MAX_PERM_NUM - kernPerms->permsNum) {
+        LOGC("Combined count(%d + %d) exceeds MAX_PERM_NUM(%d).",
+            permsNum, kernPerms->permsNum, MAX_PERM_NUM);
+        return KERNPERMS_INVALID;
+    }
+    for (int32_t i = 0; i < kernPerms->permsNum; ++i) {
+        if (kernPerms->perms[i].permissionName == NULL) {
+            LOGC("Invalid kernPerms[%d] permissionName is null.", i);
+            return KERNPERMS_INVALID;
+        }
+        size_t permLen = strlen(kernPerms->perms[i].permissionName);
+        if (permLen == 0 || permLen > MAX_PERM_LEN) {
+            LOGC("Invalid kernPerms[%d] permissionName length(%zu).", i, permLen);
+            return KERNPERMS_INVALID;
+        }
+        if (kernPerms->perms[i].type == KERN_PERM_TYPE_BOOL &&
+            kernPerms->perms[i].valueNum != KERN_PERM_DENIED &&
+            kernPerms->perms[i].valueNum != KERN_PERM_GRANTED) {
+            LOGC("Invalid kernPerms[%d] valueNum(%d) for bool type.", i, kernPerms->perms[i].valueNum);
+            return KERNPERMS_INVALID;
+        }
+    }
+    return ATRET_SUCCESS;
+}
+
 static uint32_t CheckProcessName(const char *processName)
 {
     if (processName == NULL) {
@@ -688,10 +780,17 @@ static uint32_t CheckProcessInfo(NativeTokenInfoParams *tokenInfo, int32_t *aplR
         return ACLS_INVALID;
     }
 
-    if (tokenInfo->aclsNum > tokenInfo->permsNum) {
-        LOGC("Invalid aclsNum(%d) or permsNum(%d).", tokenInfo->aclsNum, tokenInfo->permsNum);
+    uint32_t retKernPerm = CheckKernPerms(tokenInfo->permsNum, &(tokenInfo->kernPerms));
+    if (retKernPerm != ATRET_SUCCESS) {
+        return KERNPERMS_INVALID;
+    }
+
+    if (tokenInfo->aclsNum > tokenInfo->permsNum + tokenInfo->kernPerms.permsNum) {
+        LOGC("Invalid aclsNum(%d) or permsNum(%d) + kernPermsNum(%d).",
+            tokenInfo->aclsNum, tokenInfo->permsNum, tokenInfo->kernPerms.permsNum);
         return ACL_GREATER_THAN_PERMS;
     }
+
     int32_t apl = GetAplLevel(tokenInfo->aplStr);
     if (apl == 0) {
         LOGC("Invalid aplStr(%s).", tokenInfo->aplStr);
@@ -730,42 +829,145 @@ static uint32_t CreateStrArray(int32_t num, const char **strArr, char ***strArrR
     return ATRET_SUCCESS;
 }
 
-static uint32_t AddNewTokenToListAndFile(const NativeTokenInfoParams *tokenInfo,
-    int32_t aplIn, NativeAtId *tokenId)
+static void FreeKernPermArray(PermNameWithValue *perms)
 {
-    NativeTokenList *tokenNode;
-    NativeAtId id;
+    if (perms != NULL) {
+        free(perms);
+    }
+}
 
-    id = CreateNativeTokenId(tokenInfo->processName);
+static bool ShouldSkipKernPerm(const PermNameWithValue *entry, const PermNameWithValue *perms,
+    int32_t cnt, int32_t index)
+{
+    if (entry->type != KERN_PERM_TYPE_BOOL && entry->type != KERN_PERM_TYPE_INT) {
+        LOGE("Invalid kernPerms type(%d), skip.", entry->type);
+        return true;
+    }
+    for (int32_t j = index + 1; j < cnt; j++) {
+        if (strcmp(entry->permissionName, perms[j].permissionName) == 0) {
+            return true;
+        }
+    }
+    if (entry->type == KERN_PERM_TYPE_BOOL && entry->valueNum == KERN_PERM_DENIED) {
+        return true;
+    }
+    if (!IsPermissionKernelEffect(entry->permissionName)) {
+        LOGE("kernPerm not found or not kernel effect, permission=%{public}s, skip.", entry->permissionName);
+        return true;
+    }
+    return false;
+}
+
+static uint32_t DedupFilterKernPerms(const KernelPermissionList *src,
+    PermNameWithValue **dst, int32_t *dstNum)
+{
+    *dst = NULL;
+    *dstNum = 0;
+    if (src->permsNum <= 0) {
+        return ATRET_SUCCESS;
+    }
+    *dst = (PermNameWithValue *)malloc(src->permsNum * sizeof(PermNameWithValue));
+    if (*dst == NULL) {
+        LOGE("Failed to alloc memory for kernPerms filter.");
+        return MALLOC_FAILED;
+    }
+    for (int32_t i = 0; i < src->permsNum; ++i) {
+        if (ShouldSkipKernPerm(&src->perms[i], src->perms, src->permsNum, i)) {
+            continue;
+        }
+        (*dst)[*dstNum] = src->perms[i];
+        (*dstNum)++;
+    }
+    return ATRET_SUCCESS;
+}
+
+static uint32_t CreatePermsWithKernPerms(const NativeTokenInfoParams *tokenInfo, NativeTokenList *tokenNode,
+    NativeTokenInfoParams *filteredInfo)
+{
+    uint32_t ret = DedupFilterKernPerms(&tokenInfo->kernPerms,
+        &filteredInfo->kernPerms.perms, &filteredInfo->kernPerms.permsNum);
+    if (ret != ATRET_SUCCESS) {
+        return ret;
+    }
+    int32_t totalNum = tokenInfo->permsNum + filteredInfo->kernPerms.permsNum;
+    tokenNode->perms = (char **)malloc(totalNum * sizeof(char *));
+    if (tokenNode->perms == NULL) {
+        LOGE("Failed to alloc memory for perms array.");
+        return MALLOC_FAILED;
+    }
+    int32_t idx = 0;
+    for (int32_t i = 0; i < tokenInfo->permsNum; ++i) {
+        size_t len = strlen(tokenInfo->perms[i]);
+        char *name = (char *)malloc(len + 1);
+        if (name == NULL || strcpy_s(name, len + 1, tokenInfo->perms[i]) != EOK) {
+            LOGE("Failed to copy perms[%d].", i);
+            free(name);
+            FreeStrArray(&tokenNode->perms, idx - 1);
+            return CREATE_ARRAY_FAILED;
+        }
+        tokenNode->perms[idx++] = name;
+    }
+    for (int32_t i = 0; i < filteredInfo->kernPerms.permsNum; ++i) {
+        size_t len = strlen(filteredInfo->kernPerms.perms[i].permissionName);
+        char *name = (char *)malloc(len + 1);
+        if (name == NULL || strcpy_s(name, len + 1, filteredInfo->kernPerms.perms[i].permissionName) != EOK) {
+            LOGE("Failed to copy kernPerm[%d].", i);
+            free(name);
+            FreeStrArray(&tokenNode->perms, idx - 1);
+            return CREATE_ARRAY_FAILED;
+        }
+        tokenNode->perms[idx++] = name;
+    }
+    tokenNode->permsNum = totalNum;
+    return ATRET_SUCCESS;
+}
+
+static uint32_t CreateTokenNode(const NativeTokenInfoParams *tokenInfo,
+    int32_t aplIn, NativeTokenList **tokenNode)
+{
+    NativeAtId id = CreateNativeTokenId(tokenInfo->processName);
     if (id == INVALID_TOKEN_ID) {
         LOGC("Failed to get new native tokenId.");
         return CREATE_NATIVETOKEN_ID_FAILED;
     }
 
-    tokenNode = (NativeTokenList *)malloc(sizeof(NativeTokenList));
-    if (tokenNode == NULL) {
+    *tokenNode = (NativeTokenList *)malloc(sizeof(NativeTokenList));
+    if (*tokenNode == NULL) {
         LOGC("Failed to alloc memory for tokenNode.");
         return MALLOC_FAILED;
     }
-    tokenNode->tokenId = id;
-    tokenNode->apl = aplIn;
-    tokenNode->uid = tokenInfo->uid;
-    if (strcpy_s(tokenNode->processName, MAX_PROCESS_NAME_LEN + 1, tokenInfo->processName) != EOK) {
+    (*tokenNode)->tokenId = id;
+    (*tokenNode)->apl = aplIn;
+    (*tokenNode)->uid = tokenInfo->uid;
+    (*tokenNode)->dcapsNum = tokenInfo->dcapsNum;
+    (*tokenNode)->permsNum = tokenInfo->permsNum + tokenInfo->kernPerms.permsNum;
+    (*tokenNode)->aclsNum = tokenInfo->aclsNum;
+    if (strcpy_s((*tokenNode)->processName, MAX_PROCESS_NAME_LEN + 1,
+        tokenInfo->processName) != EOK) {
         LOGC("Failed to copy process name.");
-        free(tokenNode);
+        free(*tokenNode);
+        *tokenNode = NULL;
         return STRCPY_FAILED;
     }
-    tokenNode->dcapsNum = tokenInfo->dcapsNum;
-    tokenNode->permsNum = tokenInfo->permsNum;
-    tokenNode->aclsNum = tokenInfo->aclsNum;
+    return ATRET_SUCCESS;
+}
+
+static uint32_t AddNewTokenToListAndFile(const NativeTokenInfoParams *tokenInfo,
+    int32_t aplIn, NativeAtId *tokenId, NativeTokenInfoParams *filteredInfo)
+{
+    NativeTokenList *tokenNode = NULL;
+    uint32_t ret = CreateTokenNode(tokenInfo, aplIn, &tokenNode);
+    if (ret != ATRET_SUCCESS) {
+        return ret;
+    }
 
     if (CreateStrArray(tokenInfo->dcapsNum, tokenInfo->dcaps, &tokenNode->dcaps) != ATRET_SUCCESS) {
         LOGC("Failed to CreateStrArray for dcaps.");
         free(tokenNode);
         return CREATE_ARRAY_FAILED;
     }
-    if (CreateStrArray(tokenInfo->permsNum, tokenInfo->perms, &tokenNode->perms) != ATRET_SUCCESS) {
-        LOGC("Failed to CreateStrArray for perms.");
+    if (CreatePermsWithKernPerms(tokenInfo, tokenNode, filteredInfo) != ATRET_SUCCESS) {
+        LOGC("Failed to CreatePermsWithKernPerms.");
         FreeStrArray(&tokenNode->dcaps, tokenInfo->dcapsNum - 1);
         free(tokenNode);
         return CREATE_ARRAY_FAILED;
@@ -773,16 +975,14 @@ static uint32_t AddNewTokenToListAndFile(const NativeTokenInfoParams *tokenInfo,
     if (CreateStrArray(tokenInfo->aclsNum, tokenInfo->acls, &tokenNode->acls) != ATRET_SUCCESS) {
         LOGC("Failed to CreateStrArray for acls.");
         FreeStrArray(&tokenNode->dcaps, tokenInfo->dcapsNum - 1);
-        FreeStrArray(&tokenNode->perms, tokenInfo->permsNum - 1);
+        FreeStrArray(&tokenNode->perms, tokenNode->permsNum - 1);
         free(tokenNode);
         return CREATE_ARRAY_FAILED;
     }
 
     tokenNode->next = g_tokenListHead->next;
     g_tokenListHead->next = tokenNode;
-
-    *tokenId = id;
-
+    *tokenId = tokenNode->tokenId;
     return SaveTokenIdToCfg(tokenNode);
 }
 
@@ -804,13 +1004,20 @@ static bool IsTokenInfoSame(const NativeTokenList *tokenNode,
 }
 
 static bool IsPermsInfoSame(const NativeTokenList *tokenNode,
-                            const char **permsIn, int32_t permsNumIn)
+                            const char **permsIn, int32_t permsNumIn,
+                            const KernelPermissionList *kernPerms)
 {
-    if (tokenNode->permsNum != permsNumIn) {
+    int32_t totalNum = permsNumIn + kernPerms->permsNum;
+    if (tokenNode->permsNum != totalNum) {
         return false;
     }
-    for (int32_t i = 0; i < permsNumIn; i++) {
+    for (int32_t i = 0; i < permsNumIn; ++i) {
         if (strcmp(tokenNode->perms[i], permsIn[i]) != 0) {
+            return false;
+        }
+    }
+    for (int32_t i = 0; i < kernPerms->permsNum; ++i) {
+        if (strcmp(tokenNode->perms[permsNumIn + i], kernPerms->perms[i].permissionName) != 0) {
             return false;
         }
     }
@@ -853,7 +1060,7 @@ static uint32_t UpdateStrArrayInList(char **strArr[], int32_t *strNum,
 }
 
 static uint32_t UpdateTokenInfoInList(NativeTokenList *tokenNode,
-                                      const NativeTokenInfoParams *tokenInfo)
+    const NativeTokenInfoParams *tokenInfo, NativeTokenInfoParams *filteredInfo)
 {
     tokenNode->apl = GetAplLevel(tokenInfo->aplStr);
     tokenNode->uid = tokenInfo->uid;
@@ -864,22 +1071,21 @@ static uint32_t UpdateTokenInfoInList(NativeTokenList *tokenNode,
         LOGC("Failed to updateStrArray for dcaps.");
         return CREATE_ARRAY_FAILED;
     }
-    ret = UpdateStrArrayInList(&tokenNode->perms, &(tokenNode->permsNum),
-        tokenInfo->perms, tokenInfo->permsNum);
-    if (ret != ATRET_SUCCESS) {
-        LOGC("Failed to updateStrArray for perms.");
-        FreeStrArray(&tokenNode->dcaps, tokenNode->dcapsNum - 1);
+    FreeStrArray(&tokenNode->perms, tokenNode->permsNum - 1);
+    tokenNode->permsNum = 0;
+    if (CreatePermsWithKernPerms(tokenInfo, tokenNode, filteredInfo) != ATRET_SUCCESS) {
+        LOGC("Failed to CreatePermsWithKernPerms.");
         return CREATE_ARRAY_FAILED;
     }
     ret = UpdateStrArrayInList(&tokenNode->acls, &(tokenNode->aclsNum),
         tokenInfo->acls, tokenInfo->aclsNum);
     if (ret != ATRET_SUCCESS) {
         LOGC("Failed to updateStrArray for acls.");
-        FreeStrArray(&tokenNode->dcaps, tokenNode->dcapsNum - 1);
         FreeStrArray(&tokenNode->perms, tokenNode->permsNum - 1);
         return CREATE_ARRAY_FAILED;
     }
-    return ret;
+
+    return ATRET_SUCCESS;
 }
 
 static uint32_t UpdateInfoInCfgFile(const NativeTokenList *tokenNode)
@@ -966,14 +1172,15 @@ static void UnlockNativeTokenFile(int32_t lockFileFd)
     (void)fdsan_close_with_tag(lockFileFd, g_nativeFdTag);
 }
 
-static uint32_t UpdateNewTokenToListAndFile(NativeTokenInfoParams *tokenInfo, NativeTokenList *tokenNode, int32_t apl)
+static uint32_t UpdateNewTokenToListAndFile(NativeTokenInfoParams *tokenInfo, NativeTokenList *tokenNode,
+    int32_t apl, NativeTokenInfoParams *filteredInfo)
 {
     uint32_t ret = ATRET_SUCCESS;
     if (!IsTokenInfoSame(tokenNode, tokenInfo->dcaps, tokenInfo->dcapsNum, apl) ||
-        !IsPermsInfoSame(tokenNode, tokenInfo->perms, tokenInfo->permsNum) ||
+        !IsPermsInfoSame(tokenNode, tokenInfo->perms, tokenInfo->permsNum, &tokenInfo->kernPerms) ||
         !IsAclsInfoSame(tokenNode, tokenInfo->acls, tokenInfo->aclsNum) ||
         (tokenNode->uid != tokenInfo->uid)) {
-        ret = UpdateTokenInfoInList(tokenNode, tokenInfo);
+        ret = UpdateTokenInfoInList(tokenNode, tokenInfo, filteredInfo);
         if (ret != ATRET_SUCCESS) {
             LOGC("Failed to UpdateTokenInfoInList, ret=%u.", ret);
             RemoveNodeFromList(&tokenNode);
@@ -1002,15 +1209,31 @@ static bool IsKernelSupportSpm()
     return isSupportSpm;
 }
 
-static void BuildSpmPerms(const NativeTokenInfoParams *tokenInfo, uint32_t perms[SPM_PERM_ARRAY_SIZE])
+static void BuildSpmPerms(const NativeTokenInfoParams *tokenInfo, int32_t apl, uint32_t perms[SPM_PERM_ARRAY_SIZE])
 {
     for (int32_t i = 0; i < tokenInfo->permsNum; ++i) {
         uint32_t opCode = 0;
-        if (!TransferPermissionToOpcode(tokenInfo->perms[i], &opCode)) {
-            LOGE("Failed to transfer permission to opcode, permission=%{public}s.", tokenInfo->perms[i]);
+        if (!IsNativePermissionAvailable(tokenInfo->perms[i], apl, tokenInfo->acls, tokenInfo->aclsNum, &opCode)) {
+            LOGW("Permission %s is not available for native token, skip.", tokenInfo->perms[i]);
             continue;
         }
 
+        uint32_t index = opCode / UINT32_BITS_NUM;
+        if (index >= SPM_PERM_ARRAY_SIZE) {
+            LOGE("Opcode out of range, opcode=%{public}u.", opCode);
+            continue;
+        }
+        perms[index] |= ((uint32_t)1 << (opCode % UINT32_BITS_NUM));
+    }
+
+    for (int32_t i = 0; i < tokenInfo->kernPerms.permsNum; ++i) {
+        uint32_t opCode = 0;
+        if (!IsNativePermissionAvailable(tokenInfo->kernPerms.perms[i].permissionName, apl, tokenInfo->acls,
+            tokenInfo->aclsNum, &opCode)) {
+            LOGE("kernPerm is not available, permission=%{public}s.",
+                tokenInfo->kernPerms.perms[i].permissionName);
+            continue;
+        }
         uint32_t index = opCode / UINT32_BITS_NUM;
         if (index >= SPM_PERM_ARRAY_SIZE) {
             LOGE("Opcode out of range, opcode=%{public}u.", opCode);
@@ -1029,7 +1252,7 @@ static void BuildSpmData(const NativeTokenInfoParams *tokenInfo, uint32_t tokenI
 
     (void)memset_s(spmData, sizeof(SpmData), 0, sizeof(SpmData));
     (void)memset_s(perms, sizeof(uint32_t) * SPM_PERM_ARRAY_SIZE, 0, sizeof(uint32_t) * SPM_PERM_ARRAY_SIZE);
-    BuildSpmPerms(tokenInfo, perms);
+    BuildSpmPerms(tokenInfo, apl, perms);
 
     spmData->uid = (uint32_t)tokenInfo->uid;
     spmData->tokenid = tokenId;
@@ -1048,7 +1271,7 @@ static void BuildSpmData(const NativeTokenInfoParams *tokenInfo, uint32_t tokenI
 }
 
 static uint32_t PrepareAccessTokenId(NativeTokenInfoParams *tokenInfo, NativeAtId *tokenId, int32_t *apl,
-    int32_t *sceneCode)
+    int32_t *sceneCode, NativeTokenInfoParams *filteredInfo)
 {
     int32_t fd = -1;
     uint32_t ret = ATRET_SUCCESS;
@@ -1077,11 +1300,11 @@ static uint32_t PrepareAccessTokenId(NativeTokenInfoParams *tokenInfo, NativeAtI
         }
 
         if (tokenNode == NULL) {
-            ret = AddNewTokenToListAndFile(tokenInfo, *apl, tokenId);
+            ret = AddNewTokenToListAndFile(tokenInfo, *apl, tokenId, filteredInfo);
             *sceneCode = ADD_NODE;
             BREAK_IF_TRUE(ret != ATRET_SUCCESS);
         } else {
-            ret = UpdateNewTokenToListAndFile(tokenInfo, tokenNode, *apl);
+            ret = UpdateNewTokenToListAndFile(tokenInfo, tokenNode, *apl, filteredInfo);
             *sceneCode = UPDATE_NODE;
             BREAK_IF_TRUE(ret != ATRET_SUCCESS);
         }
@@ -1101,7 +1324,7 @@ static int32_t TrySpmAddEntries(SpmData *spmData)
 
     for (int32_t i = 0; i < MAX_KERNEL_OPERATE_TRY_TIMES; ++i) {
         ret = SpmAddEntries(entries, 1, &idxErr);
-        if (ret == ATRET_SUCCESS || ret == ENOTSUP) {
+        if (ret == ATRET_SUCCESS || ret == ENOTSUP || ret == EEXIST) {
             return ATRET_SUCCESS;
         }
     }
@@ -1151,13 +1374,19 @@ uint64_t GetAccessTokenId(NativeTokenInfoParams *tokenInfo)
     NativeAtIdEx *atPoint = (NativeAtIdEx *)(&result);
 
     ClearThreadErrorMsg();
-    uint32_t ret = PrepareAccessTokenId(tokenInfo, &tokenId, &apl, &sceneCode);
+    NativeTokenInfoParams filteredInfo = *tokenInfo;
+    filteredInfo.kernPerms.perms = NULL;
+    filteredInfo.kernPerms.permsNum = 0;
+    uint32_t ret = PrepareAccessTokenId(tokenInfo, &tokenId, &apl, &sceneCode, &filteredInfo);
     if (ret != ATRET_SUCCESS) {
         ReportNativeTokenExceptionEvent(sceneCode, (int32_t)ret, GetThreadErrorMsg());
-        return INVALID_TOKEN_ID;
+        result = INVALID_TOKEN_ID;
+    } else {
+        atPoint->tokenId = tokenId;
+        atPoint->tokenAttr = 0;
+        SyncNativeTokenToKernel(&filteredInfo, tokenId, apl);
     }
-    atPoint->tokenId = tokenId;
-    atPoint->tokenAttr = 0;
-    SyncNativeTokenToKernel(tokenInfo, tokenId, apl);
+
+    FreeKernPermArray(filteredInfo.kernPerms.perms);
     return result;
 }
