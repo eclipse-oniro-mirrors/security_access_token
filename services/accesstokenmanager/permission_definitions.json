@@ -8327,6 +8327,17 @@
             "deviceTypes": ["2in1"]
         },
         {
+            "name": "ohos.permission.ENTERPRISE_MANAGE_DISK",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "ENTERPRISE_NORMAL",
+            "since": "26.1.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1"]
+        },
+        {
             "name": "ohos.permission.MANAGE_EDM_POLICY",
             "grantMode": "system_grant",
             "availableLevel": "system_core",
