@@ -809,21 +809,30 @@ void RepairPrepareSiblingUidWins(const std::string& path, const BundlePolicy& bu
     ASSERT_EQ(ERR_OK, g_installSessionManager->FinishInstall(sessionId, true, modulePathMap));
 }
 
-// An illegal desired uid (user segment mismatch) is rejected up front at the
-// session creation even when a same-bundle sibling exists.
-void RepairPrepareIllegalDesiredRejected(const std::string& bundleName, const BundlePolicy& bundlePolicy)
+// A desired uid whose user segment mismatches the installing user is downgraded
+// to INVALID_UID at the session creation: the session is created and the uid
+// falls back to the standard chain (a same-bundle sibling uid wins here).
+void RepairPrepareMismatchedDesiredDowngraded(const std::string& path, const BundlePolicy& bundlePolicy,
+    int32_t seedBundleId)
 {
     HapBaseInfo baseInfo;
     baseInfo.userID = TEST_USER_ID_SIBLING;
-    baseInfo.bundleName = bundleName;
+    baseInfo.bundleName = "RepairUidBundle";
     baseInfo.instIndex = 0;
     Identity desired = {0, -1};
     desired.tokenId = 0x2003D4EA;
     desired.uid = ILLEGAL_SIBLING_UID; // user segment 100, mismatches the installing user 101
     int32_t sessionId = 0;
-    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, g_installSessionManager->PrepareHapIdentity(
+    ASSERT_EQ(ERR_OK, g_installSessionManager->PrepareHapIdentity(
         sessionId, baseInfo, bundlePolicy, nullptr, desired));
-    EXPECT_EQ(0, sessionId);
+    ASSERT_NE(0, sessionId);
+    // the mismatched desired uid is dropped; the sibling uid wins the fallback
+    EXPECT_EQ(TEST_USER_ID_SIBLING * UID_MASK + seedBundleId, desired.uid);
+    std::map<std::string, std::string> modulePathMap;
+    modulePathMap[path] = path;
+    // close without persisting so the (101, bundle, 0) slot stays free for the
+    // sibling-wins step that follows
+    ASSERT_EQ(ERR_OK, g_installSessionManager->FinishInstall(sessionId, false, modulePathMap));
 }
 
 /**
@@ -2448,6 +2457,50 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapTokenIdExTest001, TestSize.Leve
 }
 
 /**
+ * @tc.name: UpdateUidMismatchDowngradeTest001
+ * @tc.desc: Coverage: the uid user-segment downgrade of the update path - a
+ *           caller uid whose user segment doesn't match the token's user is
+ *           downgraded to INVALID_UID (logged, not fatal) and ResolveUpdateUid
+ *           resolves the final uid (level 1: the token's own uid), echoed back
+ *           through the inout param; previously this returned ERR_PARAM_INVALID
+ *           and rolled the session back.
+ * @tc.type: FUNC
+ */
+HWTEST_F(InstallSessionManagerMockTest, UpdateUidMismatchDowngradeTest001, TestSize.Level1)
+{
+    std::string bundleName = "UpdateUidMismatchBundle";
+    std::string path = "/SYSTEM/system_basic/state:[cam]/acl:[]/Module001/" + bundleName;
+    HapBaseInfo baseInfo;
+    baseInfo.userID = 100;
+    baseInfo.bundleName = bundleName;
+    baseInfo.instIndex = 0;
+    BundlePolicy bundlePolicy;
+    bundlePolicy.dlpType = DLP_COMMON;
+    bundlePolicy.isDebugGrant = false;
+    Identity identity = {0, -1};
+    InstallHap({path}, baseInfo, bundlePolicy, identity);
+    AccessTokenID tokenId = static_cast<AccessTokenID>(identity.tokenId);
+
+    int32_t sessionId = 0;
+    ASSERT_EQ(ERR_OK, StartReplaceSession(path, sessionId));
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx.tokenIDEx = tokenId;
+    // a uid of another user (user segment 101 vs the token's user 100) is
+    // downgraded; the token's own uid wins the resolution and is echoed back
+    int32_t uid = TEST_USER_ID_SIBLING * UID_MASK + 54322;
+    int32_t ret = g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid);
+    EXPECT_EQ(ERR_OK, ret);
+    EXPECT_EQ(identity.uid, uid);
+
+    std::map<std::string, std::string> modulePathMap;
+    modulePathMap[path] = path;
+    ASSERT_EQ(ERR_OK, g_installSessionManager->FinishInstall(sessionId, true, modulePathMap));
+
+    int32_t sceneCode = 0;
+    EXPECT_EQ(ERR_OK, DeleteIdentityCore(INVALID_TOKENID, bundleName, ReservedType::NONE, sceneCode));
+}
+
+/**
  * @tc.name: UpdateHapTokenIdExTest002
  * @tc.desc: Test the in-out AccessTokenIDEx of UpdateHapPolicy, with SYSTEM change
  *           to NORMAL and an error path: on success the high 32 bits are cleared
@@ -3887,9 +3940,10 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapFailedTest004, TestSize.Level0)
 
 /**
  * @tc.name: UpdateHapFailedTest005
- * @tc.desc: UpdateHapPolicy with uid 0 (struct default) is a caller bug, not a
- *           no-expectation marker: the user-segment ownership check rejects it
- *           with ERR_PARAM_INVALID and rolls the session back.
+ * @tc.desc: UpdateHapPolicy with uid 0 (struct default) used to be a fatal
+ *           caller bug; since the downgrade change it is resolved like a
+ *           no-expectation marker: the uid falls back to the token's own uid
+ *           (level 1) and is echoed back, the session stays alive.
  * @tc.type: FUNC
  * @tc.require: Issue
  */
@@ -3908,12 +3962,13 @@ HWTEST_F(InstallSessionManagerMockTest, UpdateHapFailedTest005, TestSize.Level1)
     int32_t uid = 0;
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx.tokenIDEx = identity.tokenId;
-    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
-        g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid));
-    // fatal rejection rolls the session back
-    std::map<std::string, std::string> emptyPathMap;
-    EXPECT_EQ(AccessTokenError::ERR_SESSION_NOT_EXIST,
-        g_installSessionManager->FinishInstall(sessionId, true, emptyPathMap));
+    EXPECT_EQ(ERR_OK, g_installSessionManager->UpdateHapPolicy(sessionId, tokenIdEx, bundlePolicy, uid));
+    // the downgraded uid resolves to the token's own uid (level 1) and is echoed back
+    EXPECT_EQ(identity.uid, uid);
+    // the session survives: the replace finish applies normally
+    std::map<std::string, std::string> modulePathMap;
+    modulePathMap[path] = path;
+    EXPECT_EQ(ERR_OK, g_installSessionManager->FinishInstall(sessionId, true, modulePathMap));
 
     int32_t sceneCode = 0;
     EXPECT_EQ(ERR_OK, DeleteIdentityCore(tokenId, bundleName, ReservedType::NONE, sceneCode));
@@ -6403,8 +6458,8 @@ HWTEST_F(InstallSessionManagerMockTest, RepairPrepareTest002, TestSize.Level1)
  * @tc.desc: AC-8.9/BR-22 (I8): uid priority is same-bundle srcUid > desired uid > fresh
  *           allocation; uid=-1 expresses no expectation; a desired uid whose user
  *           segment mismatches the installing user (including uid=0 with a non-zero
- *           tokenId) is illegal input rejected up front at the session creation
- *           (ERR_PARAM_INVALID propagates to the caller, no session is created).
+ *           tokenId) is downgraded to uid=-1 at the session creation and resolved
+ *           by the fallback chain instead of being rejected.
  * @tc.type: FUNC
  */
 HWTEST_F(InstallSessionManagerMockTest, RepairPrepareTest003, TestSize.Level1)
@@ -6424,10 +6479,10 @@ HWTEST_F(InstallSessionManagerMockTest, RepairPrepareTest003, TestSize.Level1)
     int32_t seedBundleId = 0;
     ASSERT_TRUE(AccessTokenIDManager::GetInstance().ExtractBundleId(seed.uid, seedBundleId));
 
-    // priority 1: same-bundle sibling uid wins; an illegal desired uid is
-    // rejected up front even when a sibling exists
+    // priority 1: a same-bundle sibling uid wins; a mismatched desired uid is
+    // downgraded (uid=-1) and also loses to the sibling
+    RepairPrepareMismatchedDesiredDowngraded(path, bundlePolicy, seedBundleId);
     RepairPrepareSiblingUidWins(path, bundlePolicy, seedBundleId);
-    RepairPrepareIllegalDesiredRejected(bundleName, bundlePolicy);
 
     // no-sibling scenarios share the session id and the (unused) path map
     int32_t sessionId = 0;
@@ -6453,9 +6508,9 @@ HWTEST_F(InstallSessionManagerMockTest, RepairPrepareTest003, TestSize.Level1)
     EXPECT_TRUE(AccessTokenIDManager::GetInstance().ExtractBundleId(noExpectation.uid, freshBundleId));
     ASSERT_EQ(ERR_OK, g_installSessionManager->FinishInstall(sessionId, true, modulePathMap));
 
-    // uid=0 with a non-zero tokenId is illegal input: its user segment (0)
-    // mismatches the installing user, rejected up front at the session
-    // creation (ERR_PARAM_INVALID propagates, no session is created)
+    // uid=0 (the struct default) with a non-zero tokenId: its user segment (0)
+    // mismatches the installing user, so the uid is downgraded to no
+    // expectation and a fresh uid is allocated for the target user
     Identity zeroExpectation;
     zeroExpectation.tokenId = 0x2003D71C;
     zeroExpectation.uid = 0;
@@ -6467,8 +6522,10 @@ HWTEST_F(InstallSessionManagerMockTest, RepairPrepareTest003, TestSize.Level1)
     int32_t zeroSessionId = 0;
     int32_t zeroRet = g_installSessionManager->PrepareHapIdentity(
         zeroSessionId, zeroInfo, bundlePolicy, nullptr, zeroExpectation);
-    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, zeroRet);
-    EXPECT_EQ(0, zeroSessionId);
+    EXPECT_EQ(ERR_OK, zeroRet);
+    ASSERT_NE(0, zeroSessionId);
+    EXPECT_EQ(TEST_USER_ID_REPAIR, AccessTokenIDManager::ExtractUserId(zeroExpectation.uid));
+    ASSERT_EQ(ERR_OK, g_installSessionManager->FinishInstall(zeroSessionId, true, modulePathMap));
 
     int32_t sceneCode = 0;
     EXPECT_EQ(ERR_OK, DeleteIdentityCore(INVALID_TOKENID, bundleName, ReservedType::NONE, sceneCode));
