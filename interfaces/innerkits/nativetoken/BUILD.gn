@@ -26,6 +26,56 @@ if (is_standard_system) {
     "src/nativetoken_json_oper.c",
     "${access_token_path}/interfaces/innerkits/accesstoken_file_util/src/accesstoken_file_util.cpp",
   ]
+
+  ohos_static_library("libnativetoken_static") {
+    subsystem_name = "security"
+    part_name = "access_token"
+    output_name = "libnativetoken_static"
+    sanitize = {
+      cfi = true
+      cfi_cross_dso = true
+      debug = false
+    }
+    branch_protector_ret = "pac_ret"
+
+    public_configs = [ ":accesstokenlib" ]
+
+    cflags = [ "-Wall" ]
+
+    include_dirs = [
+      "${access_token_path}/frameworks/common/include",
+      "${access_token_path}/interfaces/innerkits/accesstoken_file_util/include",
+      "${access_token_path}/interfaces/innerkits/token_setproc/include",
+    ]
+
+    sources = nativetoken_soruces
+
+    deps = [
+      "${access_token_path}/frameworks/common:accesstoken_permission_map_static",
+      "${access_token_path}/frameworks/common:accesstoken_static_log_for_nativetoken",
+      "${access_token_path}/interfaces/innerkits/token_setproc:libperm_setproc",
+    ]
+
+    external_deps = [
+      "bounds_checking_function:libsec_shared",
+      "cJSON:cjson_static",
+      "hilog:libhilog",
+      "hisysevent:libhisysevent"
+    ]
+
+    cflags += [ "-DHISYSEVENT_ENABLE" ]
+
+    if (build_selinux) {
+      external_deps += [ "selinux_adapter:librestorecon" ]
+      cflags += [ "-DWITH_SELINUX" ]
+    }
+
+    if (customization_config_policy_enable) {
+      cflags += [ "-DCUSTOMIZATION_CONFIG_POLICY_ENABLE" ]
+      external_deps += [ "config_policy:configpolicy_util" ]
+    }
+  }
+
   ohos_static_library("libnativetoken") {
     subsystem_name = "security"
     part_name = "access_token"
@@ -61,16 +111,9 @@ if (is_standard_system) {
       "hilog:libhilog",
     ]
 
-    public_external_deps = [ "hisysevent:libhisysevent" ]
-
     if (build_selinux) {
       external_deps += [ "selinux_adapter:librestorecon" ]
       cflags += [ "-DWITH_SELINUX" ]
-    }
-
-    if (customization_config_policy_enable) {
-      cflags += [ "-DCUSTOMIZATION_CONFIG_POLICY_ENABLE" ]
-      external_deps += [ "config_policy:configpolicy_util" ]
     }
   }
 
@@ -113,6 +156,8 @@ if (is_standard_system) {
       "hilog:libhilog",
       "hisysevent:libhisysevent",
     ]
+
+    cflags += [ "-DHISYSEVENT_ENABLE" ]
 
     if (customization_config_policy_enable) {
       cflags += [ "-DCUSTOMIZATION_CONFIG_POLICY_ENABLE" ]

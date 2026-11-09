@@ -16,13 +16,16 @@
 #include "nativetoken_hisysevent.h"
 
 #include "accesstoken_klog.h"
+#ifdef HISYSEVENT_ENABLE
 #include "hisysevent_c.h"
+#endif
 #include "securec.h"
 
 #define MSG_MAX_LEN 4096
 
 void ReportNativeTokenExceptionEvent(int32_t sceneCode, int32_t errorCode, const char* errorMsg)
 {
+#ifdef HISYSEVENT_ENABLE
     if (errorMsg == NULL || strlen(errorMsg) == 0) {
         LOGC("Null or empty errorMsg.");
         return;
@@ -54,4 +57,9 @@ void ReportNativeTokenExceptionEvent(int32_t sceneCode, int32_t errorCode, const
     };
     OH_HiSysEvent_Write(ACCESS_TOKEND_DOMAIN, EVENT_NATIVE_TOKEN_EXCEPTION,
         HISYSEVENT_FAULT, params, sizeof(params) / sizeof(params[0]));
+#else
+    (void)sceneCode;
+    (void)errorCode;
+    (void)errorMsg;
+#endif
 }
