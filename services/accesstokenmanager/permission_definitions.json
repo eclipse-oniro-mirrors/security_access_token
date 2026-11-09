@@ -13030,6 +13030,28 @@
             "deviceTypes": ["car"]
         },
         {
+            "name": "ohos.permission.START_HISHELL_TERMINAL",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "NORMAL",
+            "since": "26.1.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1", "tablet"]
+        },
+        {
+            "name": "ohos.permission.EXECUTE_HISHELL_COMMAND",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": "26.1.0",
+            "deprecated": "",
+            "provisionEnable": false,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1", "tablet"]
+        },
+        {
             "name": "ohos.permission.MANAGE_DAEMON_SERVICE",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
