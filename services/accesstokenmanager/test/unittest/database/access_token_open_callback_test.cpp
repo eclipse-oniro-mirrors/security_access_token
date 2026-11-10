@@ -213,6 +213,59 @@ HWTEST_F(AccessTokenOpenCallbackTest, UpgradeFromVersion11SafeOnUpgradedDb001, T
     EXPECT_EQ(std::to_string(static_cast<int32_t>(MultipleMode::DEFAULT_OR_MAIN_MODE)), dflt);
 #endif
 }
+
+/**
+ * @tc.name: DbUserVersion001
+ * @tc.desc: Verify the opened database user_version equals the build target version:
+ *           DATABASE_VERSION_15 when SPM_DATA_ENABLE is defined, DATABASE_VERSION_14 otherwise.
+ * @tc.type: FUNC
+ * @tc.require: TDD
+ */
+HWTEST_F(AccessTokenOpenCallbackTest, DbUserVersion001, TestSize.Level0)
+{
+    auto rdbStore = AccessTokenDb::GetInstance()->GetRdb();
+    ASSERT_NE(nullptr, rdbStore);
+    auto resultSet = rdbStore->QuerySql("PRAGMA user_version");
+    ASSERT_NE(nullptr, resultSet);
+    ASSERT_EQ(NativeRdb::E_OK, resultSet->GoToNextRow());
+    int32_t version = 0;
+    EXPECT_EQ(NativeRdb::E_OK, resultSet->GetInt(0, version));
+#ifdef SPM_DATA_ENABLE
+    EXPECT_EQ(DATABASE_VERSION_15, version);
+#else
+    EXPECT_EQ(DATABASE_VERSION_14, version);
+#endif
+}
+
+#ifdef SPM_DATA_ENABLE
+/**
+ * @tc.name: UpgradeFromVersion14Idempotent001
+ * @tc.desc: Verify UpgradeFromVersion14 (14->15 SPM step) is safe to replay on an
+ *           already-upgraded database (the OTA scenario where an old SPM device already ran
+ *           these operations under the legacy 12->13 numbering).
+ * @tc.type: FUNC
+ * @tc.require: TDD
+ */
+HWTEST_F(AccessTokenOpenCallbackTest, UpgradeFromVersion14Idempotent001, TestSize.Level0)
+{
+    auto rdbStore = AccessTokenDb::GetInstance()->GetRdb();
+    ASSERT_NE(nullptr, rdbStore);
+    AccessTokenOpenCallback callback;
+    int32_t res = callback.UpgradeFromVersion14(*rdbStore);
+    EXPECT_EQ(NativeRdb::E_OK, res);
+
+    std::string tableName;
+    AccessTokenDbUtil::GetTableNameByType(AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO, tableName);
+    auto columns = GetTableColumnNames(*rdbStore, tableName);
+    EXPECT_TRUE(columns.find(TokenFiledConst::FIELD_MODE) != columns.end());
+
+    AccessTokenDbUtil::GetTableNameByType(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, tableName);
+    columns = GetTableColumnNames(*rdbStore, tableName);
+    EXPECT_TRUE(columns.find(TokenFiledConst::FIELD_UID) != columns.end());
+    EXPECT_TRUE(columns.find(TokenFiledConst::FIELD_MIGRATED) != columns.end());
+    EXPECT_TRUE(columns.find(TokenFiledConst::FIELD_RESERVED) != columns.end());
+}
+#endif // SPM_DATA_ENABLE
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

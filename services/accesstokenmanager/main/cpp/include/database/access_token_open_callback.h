@@ -39,10 +39,11 @@ static constexpr const int32_t DATABASE_VERSION_9 = 9;
 static constexpr const int32_t DATABASE_VERSION_10 = 10;
 static constexpr const int32_t DATABASE_VERSION_11 = 11;
 static constexpr const int32_t DATABASE_VERSION_12 = 12;
-#ifdef SPM_DATA_ENABLE
 static constexpr const int32_t DATABASE_VERSION_13 = 13;
-#endif
 static constexpr const int32_t DATABASE_VERSION_14 = 14;
+#ifdef SPM_DATA_ENABLE
+static constexpr const int32_t DATABASE_VERSION_15 = 15;
+#endif
 
 class AccessTokenOpenCallback : public NativeRdb::RdbOpenCallback {
 public:
@@ -104,7 +105,7 @@ private:
     int32_t UpgradeFromVersion10(NativeRdb::RdbStore& rdbStore);
     int32_t UpgradeFromVersion11(NativeRdb::RdbStore& rdbStore);
 #ifdef SPM_DATA_ENABLE
-    int32_t UpgradeFromVersion12(NativeRdb::RdbStore& rdbStore);
+    int32_t UpgradeFromVersion14(NativeRdb::RdbStore& rdbStore);
     int32_t ResetUidAndMigrateCompleted(NativeRdb::RdbStore& rdbStore);
 #endif
     int32_t UpgradeFromVersion13(NativeRdb::RdbStore& rdbStore);
