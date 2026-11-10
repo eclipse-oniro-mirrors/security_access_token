@@ -1025,6 +1025,107 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, MigrateInstalledBundles_NewToken, T
     delInfo.delValue = delValue;
     (void)AccessTokenDbOperator::DeleteAndInsertValues({delInfo}, {});
     (void)AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(results[0].tokenIdList[0]);
+    AccessTokenIDManager::GetInstance().RemoveReservedTokenId(
+        static_cast<AccessTokenID>(results[0].tokenIdList[0]));
+}
+
+/**
+ * @tc.name: MigrateInstalledBundles_ReservedDataExistingToken
+ * @tc.desc: An existing active token migrated with RESERVED_DATA leaves the hap token cache and
+ *           enters the reserved id set, with the db row persisted as RESERVED_DATA.
+ * @tc.type: FUNC
+ */
+HWTEST_F(MigrateInstalledBundlesServiceTest, MigrateInstalledBundles_ReservedDataExistingToken,
+    TestSize.Level1)
+{
+    MockNativeToken mock("foundation");
+
+    HapInfoParams info = TestCommon::GetInfoManagerTestSystemInfoParms();
+    info.bundleName = "com.example.reserveddata.existing";
+    info.appIDDesc = info.bundleName;
+    HapPolicyParams policy = TestCommon::GetTestPolicyParams();
+
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS, AllocHapTokenLocally(info, policy, tokenIdEx));
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(nullptr, AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId));
+
+    MigratedInfoIdl migratedInfo;
+    BuildMigratedInfo(info, tokenIdEx.tokenIDEx, 20021310, migratedInfo);
+    migratedInfo.reservedTypeList = { ReservedTypeIdl::RESERVED_DATA };
+
+    auto service = DelayedSingleton<AccessTokenManagerService>::GetInstance();
+    ASSERT_NE(nullptr, service);
+    std::vector<BundleMigrateResultIdl> results;
+    EXPECT_EQ(RET_SUCCESS, service->MigrateInstalledBundles({ migratedInfo }, results));
+    ASSERT_EQ(1u, results.size());
+    EXPECT_EQ(RET_SUCCESS, results[0].errcode);
+    ASSERT_EQ(1u, results[0].reservedTypeList.size());
+    EXPECT_EQ(ReservedTypeIdl::RESERVED_DATA, results[0].reservedTypeList[0]);
+
+    // The reserved-data token is dropped from the active cache and reserved in the id manager.
+    EXPECT_EQ(nullptr, AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId));
+    EXPECT_TRUE(AccessTokenIDManager::GetInstance().IsReservedTokenId(tokenId));
+
+    // The db row persists the migrated uid and reserved type.
+    GenericValues hapCondition;
+    hapCondition.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
+    std::vector<GenericValues> hapResults;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenDbOperator::Find(
+        AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, hapCondition, hapResults));
+    ASSERT_EQ(1u, hapResults.size());
+    EXPECT_EQ(migratedInfo.uidList[0], hapResults[0].GetInt(TokenFiledConst::FIELD_UID));
+    EXPECT_EQ(static_cast<int32_t>(ReservedType::RESERVED_DATA),
+        hapResults[0].GetInt(TokenFiledConst::FIELD_RESERVED));
+
+    CleanupMigratedToken(tokenId);
+    AccessTokenIDManager::GetInstance().RemoveReservedTokenId(tokenId);
+}
+
+/**
+ * @tc.name: MigrateInstalledBundles_NewTokenReservedStatus
+ * @tc.desc: A freshly created migrated token (RESERVED_DATA) is registered as reserved rather than
+ *           active and keeps no hap token cache entry.
+ * @tc.type: FUNC
+ */
+HWTEST_F(MigrateInstalledBundlesServiceTest, MigrateInstalledBundles_NewTokenReservedStatus,
+    TestSize.Level1)
+{
+    MockNativeToken mock("foundation");
+
+    HapInfoParams info = TestCommon::GetInfoManagerTestSystemInfoParms();
+    info.bundleName = "com.example.reserveddata.newtoken";
+    info.appIDDesc = info.bundleName;
+
+    HapBaseInfoIdl baseInfo;
+    baseInfo.bundleName = info.bundleName;
+    baseInfo.userID = info.userID;
+    baseInfo.instIndex = 0;
+
+    MigratedInfoIdl migratedInfo;
+    migratedInfo.bundleName = info.bundleName;
+    migratedInfo.pathList.hapPaths = { info.bundleName };
+    migratedInfo.pathList.isPreInstalled = false;
+    migratedInfo.mode = MultipleModeEnumIdl::DEFAULT_OR_MAIN_MODE;
+    migratedInfo.hapBaseInfoList = { baseInfo };
+    migratedInfo.uidList = { 20021311 };
+    migratedInfo.reservedTypeList = { ReservedTypeIdl::NONE };
+
+    auto service = DelayedSingleton<AccessTokenManagerService>::GetInstance();
+    ASSERT_NE(nullptr, service);
+    std::vector<BundleMigrateResultIdl> results;
+    EXPECT_EQ(RET_SUCCESS, service->MigrateInstalledBundles({ migratedInfo }, results));
+    ASSERT_EQ(1u, results.size());
+    EXPECT_EQ(RET_SUCCESS, results[0].errcode);
+    ASSERT_EQ(1u, results[0].reservedTypeList.size());
+    EXPECT_EQ(ReservedTypeIdl::RESERVED_DATA, results[0].reservedTypeList[0]);
+
+    AccessTokenID tokenId = static_cast<AccessTokenID>(results[0].tokenIdList[0]);
+    EXPECT_EQ(nullptr, AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId));
+    EXPECT_TRUE(AccessTokenIDManager::GetInstance().IsReservedTokenId(tokenId));
+
+    CleanupMigratedToken(tokenId);
+    AccessTokenIDManager::GetInstance().RemoveReservedTokenId(tokenId);
 }
 
 /**
@@ -1075,6 +1176,7 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, MigrateInstalledBundles_DualMode, T
 
     for (AccessTokenID tokenId : { mainTokenId, subTokenId }) {
         CleanupMigratedToken(tokenId);
+        AccessTokenIDManager::GetInstance().RemoveReservedTokenId(tokenId);
     }
 }
 
@@ -1559,6 +1661,8 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, MigrateInstalledBundles_KitHapBaseI
 
     (void)SpmRemoveEntry(results[0].tokenIdList[0].tokenIDEx);
     (void)AccessTokenKit::DeleteToken(results[0].tokenIdList[0].tokenIdExStruct.tokenID);
+    AccessTokenIDManager::GetInstance().RemoveReservedTokenId(
+        results[0].tokenIdList[0].tokenIdExStruct.tokenID);
     (void)AccessTokenKit::FinishMigration();
 }
 
