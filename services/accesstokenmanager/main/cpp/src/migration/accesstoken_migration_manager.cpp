@@ -464,6 +464,12 @@ int32_t AccessTokenMigrationManager::ExecutePreparedMigration(PreparedMigrationB
     for (size_t i = 0; i < preparedBundle.cachedInfos.size(); ++i) {
         preparedBundle.cachedInfos[i]->SetUid(static_cast<uint32_t>(preparedBundle.migratedInfo.uidList[i]));
         preparedBundle.cachedInfos[i]->SetMigrated(true);
+        if (preparedBundle.migratedInfo.reservedTypeList[i] == ReservedTypeIdl::RESERVED_DATA) {
+            AccessTokenID tokenId = preparedBundle.cachedInfos[i]->GetTokenID();
+            AccessTokenInfoManager::GetInstance().CommitDeleteHapCache(tokenId);
+            PermissionKernelUtils::RemovePermFromKernel(tokenId);
+            (void)AccessTokenIDManager::GetInstance().ChangeTokenIdStatus(tokenId, TokenIdStatus::RESERVED);
+        }
     }
     return RET_SUCCESS;
 }
