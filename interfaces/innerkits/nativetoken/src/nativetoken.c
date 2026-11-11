@@ -890,6 +890,11 @@ static uint32_t CreatePermsWithKernPerms(const NativeTokenInfoParams *tokenInfo,
         return ret;
     }
     int32_t totalNum = tokenInfo->permsNum + filteredInfo->kernPerms.permsNum;
+    if (totalNum == 0) {
+        tokenNode->perms = NULL;
+        tokenNode->permsNum = 0;
+        return ATRET_SUCCESS;
+    }
     tokenNode->perms = (char **)malloc(totalNum * sizeof(char *));
     if (tokenNode->perms == NULL) {
         LOGE("Failed to alloc memory for perms array.");

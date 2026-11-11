@@ -3297,3 +3297,42 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenIdKernPerm027, TestSize.Level1)
     uint64_t tokenId = GetAccessTokenId(&infoInstance);
     EXPECT_EQ(tokenId, INVALID_TOKEN_ID);
 }
+
+/**
+ * @tc.name: GetAccessTokenIdKernPerm028
+ * @tc.desc: Update from non-zero perms to totalNum==0; old perms freed, JSON cleared
+ * @tc.type: FUNC
+ */
+HWTEST_F(TokenLibKitTest, GetAccessTokenIdKernPerm028, TestSize.Level1)
+{
+    const char *processName = "KernPerm028";
+    PermNameWithValue kernEntry1;
+    kernEntry1.type = KERN_PERM_TYPE_BOOL;
+    kernEntry1.valueNum = KERN_PERM_GRANTED;
+    kernEntry1.permissionName = strdup(KERN_PERM_VALID);
+    NativeTokenInfoParams infoWithKern = {
+        .permsNum = 0, .aclsNum = 0, .dcaps = nullptr, .perms = nullptr, .acls = nullptr,
+        .aplStr = "system_core", .processName = processName,
+        .kernPerms = { .permsNum = 1, .perms = &kernEntry1 },
+    };
+    uint64_t tokenId1 = GetAccessTokenId(&infoWithKern);
+    ASSERT_NE(tokenId1, 0);
+    free(kernEntry1.permissionName);
+
+    NativeTokenInfoParams infoEmpty = {
+        .permsNum = 0, .aclsNum = 0, .dcaps = nullptr, .perms = nullptr, .acls = nullptr,
+        .aplStr = "system_core", .processName = processName,
+        .kernPerms = { .permsNum = 0, .perms = nullptr },
+    };
+    uint64_t tokenId2 = GetAccessTokenId(&infoEmpty);
+    EXPECT_EQ(tokenId2, tokenId1);
+
+    char *fileBuff2 = nullptr;
+    ASSERT_EQ(GetFileBuff(TOKEN_ID_CFG_FILE_PATH, &fileBuff2), ATRET_SUCCESS);
+    ASSERT_NE(fileBuff2, nullptr);
+    std::string content2(fileBuff2);
+    free(fileBuff2);
+    EXPECT_TRUE(content2.find(KERN_PERM_VALID) == std::string::npos);
+
+    DeleteAccessTokenId(processName);
+}
