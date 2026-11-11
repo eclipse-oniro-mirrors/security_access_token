@@ -33,8 +33,7 @@ int32_t FilterKernelPermissions(uint32_t perms[MAX_PERM_BIT_MAP_SIZE], uint16_t 
 bool TransferPermissionToOpcode(const char *permissionName, uint32_t *opCode);
 bool TransferOpCodeToPermission(uint32_t opCode, char *permissionName, uint32_t nameSize);
 bool SetPermissionEnabled(const char *permissionName, bool isEnable);
-bool IsNativePermissionAvailable(const char *permissionName, int32_t apl,
-    const char *const *acls, int32_t aclsNum, uint32_t *opCode);
+bool IsPermissionEnabled(const char *permissionName, int32_t *availableLevel, uint32_t *opCode);
 bool IsPermissionKernelEffect(const char *permissionName);
 #ifdef __cplusplus
 }

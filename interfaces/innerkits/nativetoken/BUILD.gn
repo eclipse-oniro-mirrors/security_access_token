@@ -63,7 +63,10 @@ if (is_standard_system) {
       "hisysevent:libhisysevent"
     ]
 
-    cflags += [ "-DHISYSEVENT_ENABLE" ]
+    cflags += [
+      "-DHISYSEVENT_ENABLE",
+      "-DNATIVE_TOKEN_ACL_CHECK_ENABLE"
+    ]
 
     if (build_selinux) {
       external_deps += [ "selinux_adapter:librestorecon" ]

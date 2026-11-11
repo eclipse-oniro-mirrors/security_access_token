@@ -1209,6 +1209,33 @@ static bool IsKernelSupportSpm()
     return isSupportSpm;
 }
 
+static bool IsNativePermissionAvailable(const char *permissionName, int32_t apl,
+    const char *const *acls, int32_t aclsNum, uint32_t *opCode)
+{
+    if ((permissionName == NULL) || (opCode == NULL)) {
+        return false;
+    }
+    int32_t availableLevel = 0;
+    if (!IsPermissionEnabled(permissionName, &availableLevel, opCode)) {
+        return false;
+    }
+#ifdef NATIVE_TOKEN_ACL_CHECK_ENABLE
+    if (apl < availableLevel) {
+        bool isInAcls = false;
+        for (int32_t i = 0; i < aclsNum; ++i) {
+            if ((acls != NULL) && (acls[i] != NULL) && (strcmp(acls[i], permissionName) == 0)) {
+                isInAcls = true;
+                break;
+            }
+        }
+        if (!isInAcls) {
+            return false;
+        }
+    }
+#endif
+    return true;
+}
+
 static void BuildSpmPerms(const NativeTokenInfoParams *tokenInfo, int32_t apl, uint32_t perms[SPM_PERM_ARRAY_SIZE])
 {
     for (int32_t i = 0; i < tokenInfo->permsNum; ++i) {

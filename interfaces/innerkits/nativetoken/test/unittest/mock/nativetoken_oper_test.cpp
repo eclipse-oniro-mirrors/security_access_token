@@ -59,6 +59,7 @@ void TokenOperTest::TearDown()
 }
 static const int32_t VALID_TIME = 100;
 static const int32_t DEFAULT_TIME = -1;
+static constexpr uint32_t ACCESSTOKEN_UID = 3020;
 static const char *TOKEN_ID_CFG_FILE_COPY_PATH = "/data/service/el0/access_token/nativetoken_copy.json";
 extern int g_getArrayItemTime;
 extern int g_getObjectItem;
@@ -707,14 +708,15 @@ HWTEST_F(TokenOperTest, EnablePermissionDefinitionExt004, TestSize.Level0)
     ASSERT_TRUE(CreateExtFile("ohos.permission.MICROPHONE\n"));
     ASSERT_TRUE(::SetPermissionEnabled("ohos.permission.MICROPHONE", false));
 
+    int32_t availableLevel = 0;
     uint32_t opCode = 0;
-    EXPECT_FALSE(::IsNativePermissionAvailable("ohos.permission.MICROPHONE", 1, nullptr, 0, &opCode));
+    EXPECT_FALSE(::IsPermissionEnabled("ohos.permission.MICROPHONE", &availableLevel, &opCode));
 
     MockConfigPolicySetCfgDir(TEST_EXT_CFG_DIR);
     EXPECT_EQ(ATRET_SUCCESS, AtlibInit());
     MockConfigPolicySetCfgDir("");
 
-    EXPECT_TRUE(::IsNativePermissionAvailable("ohos.permission.MICROPHONE", 1, nullptr, 0, &opCode));
+    EXPECT_TRUE(::IsPermissionEnabled("ohos.permission.MICROPHONE", &availableLevel, &opCode));
     ASSERT_TRUE(::SetPermissionEnabled("ohos.permission.MICROPHONE", true));
     RemoveTestExtCfgDir();
 }
@@ -735,9 +737,62 @@ HWTEST_F(TokenOperTest, EnablePermissionDefinitionExt005, TestSize.Level0)
     EXPECT_EQ(ATRET_SUCCESS, AtlibInit());
     MockConfigPolicySetCfgDir("");
 
+    int32_t availableLevel = 0;
     uint32_t opCode = 0;
-    EXPECT_FALSE(::IsNativePermissionAvailable("ohos.permission.not_exist", 1, nullptr, 0, &opCode));
-    EXPECT_TRUE(::IsNativePermissionAvailable("ohos.permission.MICROPHONE", 1, nullptr, 0, &opCode));
+    EXPECT_FALSE(::IsPermissionEnabled("ohos.permission.not_exist", &availableLevel, &opCode));
+    EXPECT_TRUE(::IsPermissionEnabled("ohos.permission.MICROPHONE", &availableLevel, &opCode));
     ASSERT_TRUE(::SetPermissionEnabled("ohos.permission.MICROPHONE", true));
     RemoveTestExtCfgDir();
+}
+
+/**
+ * @tc.name: GetPermissionFromKernelWithoutAclCheck001
+ * @tc.desc: Without ACL check, a permission whose available level is higher than the token APL is
+ *           still granted in the kernel even when it is not declared in the ACL list.
+ * @tc.type: FUNC
+ * @tc.require:
+ * @note   This case relies on libnativetoken_mock_test being built WITHOUT NATIVE_TOKEN_ACL_CHECK_ENABLE.
+ *         It verifies that, with the ACL check compiled out, a permission whose available level exceeds the
+ *         token APL and is not declared in the nativeAcls list is still granted in the kernel.
+ *         This behavior is coupled to the test-case compatibility, so modify with caution.
+ */
+HWTEST_F(TokenOperTest, GetPermissionFromKernelWithoutAclCheck001, TestSize.Level0)
+{
+    SetTimes();
+    const char *perms[] = {
+        "ohos.permission.PLACE_CALL",
+    };
+    NativeTokenInfoParams infoInstance = {
+        .dcapsNum = 0,
+        .permsNum = 1,
+        .aclsNum = 0,
+        .dcaps = nullptr,
+        .perms = perms,
+        .acls = nullptr,
+        .processName = "GetPermissionFromKernelWithoutAclCheck001",
+        .aplStr = "normal",
+    };
+
+    uid_t originalUid = getuid();
+    if (IsKernelSupportSpm()) {
+        setuid(0);
+    } else {
+        setuid(ACCESSTOKEN_UID);
+    }
+    uint64_t tokenId = GetAccessTokenId(&infoInstance);
+    ASSERT_NE(tokenId, 0U);
+
+    uint32_t opcode = 0;
+    ASSERT_TRUE(::TransferPermissionToOpcode("ohos.permission.PLACE_CALL", &opcode));
+
+    bool isGranted = false;
+    ASSERT_EQ(0, OHOS::Security::AccessToken::GetPermissionFromKernel(
+        static_cast<uint32_t>(tokenId), static_cast<int32_t>(opcode), isGranted));
+    EXPECT_TRUE(isGranted);
+
+    if (IsKernelSupportSpm()) {
+        (void)SpmRemoveEntry(static_cast<uint32_t>(tokenId));
+    }
+    (void)OHOS::Security::AccessToken::RemovePermissionFromKernel(static_cast<uint32_t>(tokenId));
+    setuid(originalUid);
 }
