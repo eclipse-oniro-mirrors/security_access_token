@@ -1111,6 +1111,39 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, OnUpgrade007, TestSize.Level4)
 }
 
 /*
+ * @tc.name: OnUpgrade008
+ * @tc.desc: AccessTokenOpenCallback::OnUpgrade chain entries across the renumbered versions:
+ *           11->12, 12->13, 13->14 and the SPM-only 14->15 step all succeed on an upgraded db.
+ * @tc.type: FUNC
+ * @tc.require: TDD
+ */
+HWTEST_F(AccessTokenDatabaseCoverageTest, OnUpgrade008, TestSize.Level4)
+{
+    std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance()->GetRdb();
+    ASSERT_NE(nullptr, db);
+    AccessTokenOpenCallback callback;
+
+    db->executedSqls_.clear();
+    db->executeSqlResults_.clear();
+    db->executeSqlIndex_ = 0;
+    db->querySqlResults_.clear();
+    db->querySqlIndex_ = 0;
+    if (db->transaction_ != nullptr) {
+        db->transaction_->rollbackCount_ = 0;
+        db->transaction_->commitFlag_ = 0;
+    }
+
+    ASSERT_EQ(NativeRdb::E_OK, callback.OnUpgrade(*(db.get()), DATABASE_VERSION_11, DATABASE_VERSION_12));
+    ASSERT_EQ(NativeRdb::E_OK, callback.OnUpgrade(*(db.get()), DATABASE_VERSION_12, DATABASE_VERSION_13));
+    ASSERT_EQ(NativeRdb::E_OK, callback.OnUpgrade(*(db.get()), DATABASE_VERSION_13, DATABASE_VERSION_14));
+#ifdef SPM_DATA_ENABLE
+    ASSERT_EQ(NativeRdb::E_OK, callback.OnUpgrade(*(db.get()), DATABASE_VERSION_11, DATABASE_VERSION_15));
+    ASSERT_EQ(NativeRdb::E_OK, callback.OnUpgrade(*(db.get()), DATABASE_VERSION_12, DATABASE_VERSION_15));
+    ASSERT_EQ(NativeRdb::E_OK, callback.OnUpgrade(*(db.get()), DATABASE_VERSION_14, DATABASE_VERSION_15));
+#endif
+}
+
+/*
  * @tc.name: UpgradeFromVersionErrorBranches001
  * @tc.desc: AccessTokenOpenCallback upgrade steps return database errors.
  * @tc.type: FUNC

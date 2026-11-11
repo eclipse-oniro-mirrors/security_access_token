@@ -991,13 +991,13 @@ int32_t AccessTokenOpenCallback::UpgradeFromVersion11(NativeRdb::RdbStore& rdbSt
     if (res != NativeRdb::E_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get column list for table %{public}s, errCode is %{public}d.",
             tableName.c_str(), res);
-        ReportUpgradeError(res, DATABASE_VERSION_12, "GetTableColumnList");
+        ReportUpgradeError(res, DATABASE_VERSION_11, "GetTableColumnList");
         return res;
     }
     res = AddColumn(columnList, rdbStore, tableName, TokenFiledConst::FIELD_IS_SIDELOAD,
         "integer not null default " + std::to_string(0));
     if (res != NativeRdb::E_OK) {
-        ReportUpgradeError(res, DATABASE_VERSION_12, "AddIsSideloadColumn");
+        ReportUpgradeError(res, DATABASE_VERSION_11, "AddIsSideloadColumn");
         return res;
     }
     LOGI(ATM_DOMAIN, ATM_TAG, "Success to upgrade from version 11 to version 12.");
@@ -1005,32 +1005,32 @@ int32_t AccessTokenOpenCallback::UpgradeFromVersion11(NativeRdb::RdbStore& rdbSt
 }
 
 #ifdef SPM_DATA_ENABLE
-int32_t AccessTokenOpenCallback::UpgradeFromVersion12(NativeRdb::RdbStore& rdbStore)
+int32_t AccessTokenOpenCallback::UpgradeFromVersion14(NativeRdb::RdbStore& rdbStore)
 {
     int32_t res = CreateHapInfoTable(rdbStore);
     if (res != NativeRdb::E_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to create hap_info_table during upgrade from version 12.");
-        ReportUpgradeError(res, DATABASE_VERSION_13, "CreateHapInfoTable");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to create hap_info_table during upgrade from version 14.");
+        ReportUpgradeError(res, DATABASE_VERSION_14, "CreateHapInfoTable");
         return res;
     }
 
     res = AddModeColumn(rdbStore, AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO);
     if (res != NativeRdb::E_OK) {
-        ReportUpgradeError(res, DATABASE_VERSION_13, "AddModeColumn");
+        ReportUpgradeError(res, DATABASE_VERSION_14, "AddModeColumn");
         return res;
     }
     res = ResetUidAndMigrateCompleted(rdbStore);
     if (res != NativeRdb::E_OK) {
-        ReportUpgradeError(res, DATABASE_VERSION_13, "ResetUidAndMigrateCompleted");
+        ReportUpgradeError(res, DATABASE_VERSION_14, "ResetUidAndMigrateCompleted");
         return res;
     }
     res = AddUidMigratedReservedColumns(rdbStore);
     if (res != NativeRdb::E_OK) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to add uid/migrated/reserved columns during upgrade from version 12.");
-        ReportUpgradeError(res, DATABASE_VERSION_13, "AddUidMigratedReservedColumns");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to add uid/migrated/reserved columns during upgrade from version 14.");
+        ReportUpgradeError(res, DATABASE_VERSION_14, "AddUidMigratedReservedColumns");
         return res;
     }
-    LOGI(ATM_DOMAIN, ATM_TAG, "Success to upgrade from version 12 to version 13.");
+    LOGI(ATM_DOMAIN, ATM_TAG, "Success to upgrade from version 14 to version 15.");
     return NativeRdb::E_OK;
 }
 
@@ -1196,20 +1196,21 @@ int32_t AccessTokenOpenCallback::OnUpgrade(NativeRdb::RdbStore& rdbStore, int32_
                 return res;
             }
             [[fallthrough]];
-#ifdef SPM_DATA_ENABLE
         case DATABASE_VERSION_12: // 12->13
-            res = UpgradeFromVersion12(rdbStore);
-            if (res != NativeRdb::E_OK) {
-                return res;
-            }
-            [[fallthrough]];
-#endif
         case DATABASE_VERSION_13: // 13->14
             res = UpgradeFromVersion13(rdbStore);
             if (res != NativeRdb::E_OK) {
                 return res;
             }
             [[fallthrough]];
+#ifdef SPM_DATA_ENABLE
+        case DATABASE_VERSION_14: // 14->15
+            res = UpgradeFromVersion14(rdbStore);
+            if (res != NativeRdb::E_OK) {
+                return res;
+            }
+            [[fallthrough]];
+#endif
         default:
             return NativeRdb::E_OK;
     }
