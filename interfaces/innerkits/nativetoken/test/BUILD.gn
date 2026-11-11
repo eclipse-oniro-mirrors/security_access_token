@@ -107,10 +107,16 @@ ohos_unittest("libnativetoken_mock_test") {
     "hilog:libhilog",
     "hisysevent:libhisysevent",
   ]
-  cflags = [ "-DCUSTOMIZATION_CONFIG_POLICY_ENABLE" ]
+  cflags = [
+    "-DHISYSEVENT_ENABLE"
+  ]
   if (build_selinux) {
     external_deps += [ "selinux_adapter:librestorecon" ]
     cflags += [ "-DWITH_SELINUX" ]
+  }
+  if (customization_config_policy_enable) {
+    cflags += [ "-DCUSTOMIZATION_CONFIG_POLICY_ENABLE" ]
+    external_deps += [ "config_policy:configpolicy_util" ]
   }
 }
 

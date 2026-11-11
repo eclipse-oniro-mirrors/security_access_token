@@ -18,7 +18,7 @@
       FilterKernelPermissions;
       GetPermissionFromKernel;
       GetPermissionsFromKernel;
-      IsNativePermissionAvailable;
+      IsPermissionEnabled;
       RemovePermissionFromKernel;
       SetPermissionEnabled;
       SetPermissionToKernel;

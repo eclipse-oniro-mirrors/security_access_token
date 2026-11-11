@@ -62,32 +62,17 @@ extern "C" bool SetPermissionEnabled(const char *permissionName, bool isEnable)
     return OHOS::Security::AccessToken::SetPermissionBriefEnabled(std::string(permissionName), isEnable);
 }
 
-extern "C" bool IsNativePermissionAvailable(const char *permissionName, int32_t apl,
-    const char *const *acls, int32_t aclsNum, uint32_t *opCode)
+extern "C" bool IsPermissionEnabled(const char *permissionName, int32_t *availableLevel, uint32_t *opCode)
 {
-    if ((permissionName == nullptr) || (opCode == nullptr)) {
+    if ((permissionName == nullptr) || (availableLevel == nullptr) || (opCode == nullptr)) {
         return false;
     }
-
-    uint32_t code = 0;
     OHOS::Security::AccessToken::PermissionBriefDef briefDef;
-    if (!OHOS::Security::AccessToken::GetPermissionBriefDef(std::string(permissionName), briefDef, code) ||
+    if (!OHOS::Security::AccessToken::GetPermissionBriefDef(std::string(permissionName), briefDef, *opCode) ||
         !briefDef.isEnable) {
         return false;
     }
-    if (apl < static_cast<int32_t>(briefDef.availableLevel)) {
-        bool isInAcls = false;
-        for (int32_t i = 0; i < aclsNum; ++i) {
-            if ((acls != nullptr) && (acls[i] != nullptr) && (strcmp(acls[i], permissionName) == 0)) {
-                isInAcls = true;
-                break;
-            }
-        }
-        if (!isInAcls) {
-            return false;
-        }
-    }
-    *opCode = code;
+    *availableLevel = static_cast<int32_t>(briefDef.availableLevel);
     return true;
 }
 
