@@ -610,15 +610,14 @@ static bool SetupPermissionSubscriber(
         return false;
     }
 
-    auto sortedTokenIDs = scopeInfo.tokenIDs;
-    auto sortedPermList = scopeInfo.permList;
-    std::sort(sortedTokenIDs.begin(), sortedTokenIDs.end());
-    std::sort(sortedPermList.begin(), sortedPermList.end());
+    PermStateChangeScope sortedScope = scopeInfo;
+    std::sort(sortedScope.tokenIDs.begin(), sortedScope.tokenIDs.end());
+    std::sort(sortedScope.permList.begin(), sortedScope.permList.end());
 
     context->callbackRef = callback;
-    context->scopeInfo.tokenIDs = sortedTokenIDs;
-    context->scopeInfo.permList = sortedPermList;
-    context->subscriber = std::make_shared<RegisterPermStateChangeScopePtr>(scopeInfo);
+    context->scopeInfo.tokenIDs = sortedScope.tokenIDs;
+    context->scopeInfo.permList = sortedScope.permList;
+    context->subscriber = std::make_shared<RegisterPermStateChangeScopePtr>(sortedScope);
     context->subscriber->SetVm(vm);
     context->subscriber->SetEnv(context->env);
     context->subscriber->SetCallbackRef(callback);
@@ -868,6 +867,14 @@ static void FinishUnregister(const std::shared_ptr<RegisterPermStateChangeInf>& 
     }
 }
 
+static void RestoreBatchRegisterState(
+    std::vector<std::shared_ptr<RegisterPermStateChangeInf>>& batchPermStateChangeRegisters, size_t fromIndex)
+{
+    for (size_t j = fromIndex; j < batchPermStateChangeRegisters.size(); ++j) {
+        FinishUnregister(batchPermStateChangeRegisters[j], false);
+    }
+}
+
 static void UnregisterPermStateChangeCallback([[maybe_unused]] ani_env* env, [[maybe_unused]] ani_object object,
     ani_string aniType, ani_array aniId, ani_array aniArray, ani_ref callback)
 {
@@ -904,7 +911,8 @@ static void UnregisterPermStateChangeCallback([[maybe_unused]] ani_env* env, [[m
         }
         return;
     }
-    for (const auto& item : batchPermStateChangeRegisters) {
+    for (size_t i = 0; i < batchPermStateChangeRegisters.size(); ++i) {
+        const auto& item = batchPermStateChangeRegisters[i];
         int32_t result;
         if (context->permStateChangeType == REGISTER_PERMISSION_STATE_CHANGE_TYPE) {
             result = AccessTokenKit::UnRegisterPermStateChangeCallback(item->subscriber);
@@ -912,7 +920,7 @@ static void UnregisterPermStateChangeCallback([[maybe_unused]] ani_env* env, [[m
             result = AccessTokenKit::UnRegisterSelfPermStateChangeCallback(item->subscriber);
         }
         if (result != RET_SUCCESS) {
-            FinishUnregister(item, false);
+            RestoreBatchRegisterState(batchPermStateChangeRegisters, i);
             LOGE(ATM_DOMAIN, ATM_TAG, "Failed to UnregisterPermStateChangeCallback.");
             int32_t stsCode = BusinessErrorAni::GetStsErrorCode(result);
             BusinessErrorAni::ThrowError(env, stsCode, GetErrorMessage(stsCode));
@@ -932,8 +940,10 @@ static void UpdatePermStatusCache(AtManagerSyncContext* syncContext)
         if (currPara != iter->second.paramValue) {
             syncContext->result = AccessTokenKit::GetSelfPermissionStatus(syncContext->permissionName,
                 syncContext->permissionsStatus);
-            iter->second.status = syncContext->permissionsStatus;
-            iter->second.paramValue = currPara;
+            if (syncContext->result == RET_SUCCESS) {
+                iter->second.status = syncContext->permissionsStatus;
+                iter->second.paramValue = currPara;
+            }
         } else {
             syncContext->result = RET_SUCCESS;
             syncContext->permissionsStatus = iter->second.status;
@@ -941,10 +951,12 @@ static void UpdatePermStatusCache(AtManagerSyncContext* syncContext)
     } else {
         syncContext->result = AccessTokenKit::GetSelfPermissionStatus(syncContext->permissionName,
             syncContext->permissionsStatus);
-        g_statusCache[syncContext->permissionName].status = syncContext->permissionsStatus;
-        g_statusCache[syncContext->permissionName].paramValue = GetPermParamValue(
-            g_paramFlagCache, PERMISSION_STATUS_FLAG_CHANGE_KEY);
+        if (syncContext->result == RET_SUCCESS) {
+            g_statusCache[syncContext->permissionName].status = syncContext->permissionsStatus;
+            g_statusCache[syncContext->permissionName].paramValue = GetPermParamValue(
+                g_paramFlagCache, PERMISSION_STATUS_FLAG_CHANGE_KEY);
         }
+    }
 }
 
 static ani_int GetSelfPermissionStatusExecute([[maybe_unused]] ani_env* env, [[maybe_unused]] ani_object object,
