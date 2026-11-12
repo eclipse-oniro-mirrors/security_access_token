@@ -35,6 +35,7 @@ namespace AccessToken {
 namespace {
 constexpr const char* FIELD_COUNT_NUMBER = "count";
 constexpr const char* INTEGER_STR = " integer not null,";
+constexpr const char* INTEGER_STR_DEFAULT_ZERO = " integer not null default 0,";
 constexpr const char* TEXT_NOT_NULL_DEFAULT_EMPTY_STR = " text not null default '',";
 constexpr const char* CREATE_TABLE_STR = "create table if not exists ";
 constexpr const char* WHERE_1_STR = " where 1 = 1";
@@ -126,6 +127,17 @@ int32_t PermissionUsedRecordDb::OnUpdate(int32_t version)
             }
             return ret;
         }
+        case 9: { // 9->10
+            if (IsColumnExists(std::string(PERMISSION_RECORD_TABLE),
+                PrivacyFiledConst::FIELD_TARGET_TOKEN_ID)) {
+                return SUCCESS;
+            }
+            int32_t ret = InsertTargetColumns();
+            if (ret == SUCCESS) {
+                ret = UpdatePermissionRecordTablePrimaryKey(true, true);
+            }
+            return ret;
+        }
         default:
             return SUCCESS;
     }
@@ -144,7 +156,9 @@ void PermissionUsedRecordDb::InitPermRecordTableInfo(SqliteTable& permissionReco
         PrivacyFiledConst::FIELD_REJECT_COUNT,
         PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS,
         PrivacyFiledConst::FIELD_USED_TYPE,
-        PrivacyFiledConst::FIELD_ENHANCED_IDENTITY
+        PrivacyFiledConst::FIELD_ENHANCED_IDENTITY,
+        PrivacyFiledConst::FIELD_TARGET_TOKEN_ID,
+        PrivacyFiledConst::FIELD_TARGET_BUNDLE_NAME
     };
 }
 
@@ -836,6 +850,18 @@ std::string PermissionUsedRecordDb::CreateDeleteHistoryRecordsPrepareSqlCmd(Data
         }
     }
     sql.append(" )");
+    if (type == DataType::PERMISSION_RECORD) {
+        sql.append(" or ");
+        sql.append(PrivacyFiledConst::FIELD_TARGET_TOKEN_ID);
+        sql.append(" in ( ");
+        for (auto token = tokenIDList.begin(); token != tokenIDList.end(); ++token) {
+            sql.append(std::to_string(*token));
+            if (std::next(token) != tokenIDList.end()) {
+                sql.append(", ");
+            }
+        }
+        sql.append(" )");
+    }
     return sql;
 }
 
@@ -886,6 +912,10 @@ int32_t PermissionUsedRecordDb::CreatePermissionRecordTable() const
         .append(INTEGER_STR)
         .append(PrivacyFiledConst::FIELD_ENHANCED_IDENTITY)
         .append(TEXT_NOT_NULL_DEFAULT_EMPTY_STR)
+        .append(PrivacyFiledConst::FIELD_TARGET_TOKEN_ID)
+        .append(INTEGER_STR_DEFAULT_ZERO)
+        .append(PrivacyFiledConst::FIELD_TARGET_BUNDLE_NAME)
+        .append(TEXT_NOT_NULL_DEFAULT_EMPTY_STR)
         .append("primary key(")
         .append(PrivacyFiledConst::FIELD_TOKEN_ID)
         .append(",")
@@ -898,6 +928,8 @@ int32_t PermissionUsedRecordDb::CreatePermissionRecordTable() const
         .append(PrivacyFiledConst::FIELD_USED_TYPE)
         .append(",")
         .append(PrivacyFiledConst::FIELD_ENHANCED_IDENTITY)
+        .append(",")
+        .append(PrivacyFiledConst::FIELD_TARGET_TOKEN_ID)
         .append("))");
     return ExecuteSql(sql);
 }
@@ -1133,8 +1165,27 @@ int32_t PermissionUsedRecordDb::InsertEnhancedIdentityColumn() const
     return insertResult;
 }
 
+int32_t PermissionUsedRecordDb::InsertTargetColumns() const
+{
+    std::string targetTokenIdSql = "alter table " + std::string(PERMISSION_RECORD_TABLE) +
+        " add column " + PrivacyFiledConst::FIELD_TARGET_TOKEN_ID + " integer not null default 0";
+    int32_t ret = ExecuteSql(targetTokenIdSql);
+    if (ret != SUCCESS) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Add target_token_id column failed, errCode is %{public}d.", ret);
+        return ret;
+    }
+
+    std::string targetBundleNameSql = "alter table " + std::string(PERMISSION_RECORD_TABLE) +
+        " add column " + PrivacyFiledConst::FIELD_TARGET_BUNDLE_NAME + " text not null default ''";
+    ret = ExecuteSql(targetBundleNameSql);
+    if (ret != SUCCESS) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Add target_bundle_name column failed, errCode is %{public}d.", ret);
+    }
+    return ret;
+}
+
 static void CreateNewPermissionRecordTable(std::string& newTableName, std::string& createNewSql,
-    bool withEnhancedIdentity)
+    bool withEnhancedIdentity, bool withTargetFields)
 {
     createNewSql = CREATE_TABLE_STR;
     createNewSql.append(newTableName + " (")
@@ -1160,6 +1211,10 @@ static void CreateNewPermissionRecordTable(std::string& newTableName, std::strin
         createNewSql.append(PrivacyFiledConst::FIELD_ENHANCED_IDENTITY)
             .append(TEXT_NOT_NULL_DEFAULT_EMPTY_STR);
     }
+    if (withTargetFields) {
+        createNewSql.append(PrivacyFiledConst::FIELD_TARGET_TOKEN_ID).append(INTEGER_STR_DEFAULT_ZERO)
+            .append(PrivacyFiledConst::FIELD_TARGET_BUNDLE_NAME).append(TEXT_NOT_NULL_DEFAULT_EMPTY_STR);
+    }
     createNewSql.append("primary key(")
         .append(PrivacyFiledConst::FIELD_TOKEN_ID)
         .append(",")
@@ -1174,10 +1229,14 @@ static void CreateNewPermissionRecordTable(std::string& newTableName, std::strin
         createNewSql.append(",")
             .append(PrivacyFiledConst::FIELD_ENHANCED_IDENTITY);
     }
+    if (withTargetFields) {
+        createNewSql.append(",").append(PrivacyFiledConst::FIELD_TARGET_TOKEN_ID);
+    }
     createNewSql.append("))");
 }
 
-int32_t PermissionUsedRecordDb::UpdatePermissionRecordTablePrimaryKey(bool withEnhancedIdentity) const
+int32_t PermissionUsedRecordDb::UpdatePermissionRecordTablePrimaryKey(
+    bool withEnhancedIdentity, bool withTargetFields) const
 {
     auto it = dataTypeToSqlTable_.find(DataType::PERMISSION_RECORD);
     if (it == dataTypeToSqlTable_.end()) {
@@ -1188,7 +1247,7 @@ int32_t PermissionUsedRecordDb::UpdatePermissionRecordTablePrimaryKey(bool withE
     std::string tableName = it->second.tableName_;
     std::string newTableName = it->second.tableName_ + "_new";
     std::string createNewSql;
-    CreateNewPermissionRecordTable(newTableName, createNewSql, withEnhancedIdentity);
+    CreateNewPermissionRecordTable(newTableName, createNewSql, withEnhancedIdentity, withTargetFields);
 
     int32_t createNewRes = ExecuteSql(createNewSql); // 1、create new table with new primary key
     if (createNewRes != 0) {

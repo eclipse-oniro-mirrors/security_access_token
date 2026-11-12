@@ -457,6 +457,22 @@ static void ConvertDetailUsedRecord(napi_env env, napi_value value, const UsedRe
     NAPI_CALL_RETURN_VOID(env, napi_set_named_property(env, value, "usedType", nUsedType));
 }
 
+static void ConvertRecordDetailArray(napi_env env, napi_value value, const char* propName,
+    const std::vector<UsedRecordDetail>& records)
+{
+    napi_value array;
+    NAPI_CALL_RETURN_VOID(env, napi_create_array(env, &array));
+    size_t index = 0;
+    for (const auto& record : records) {
+        napi_value obj;
+        NAPI_CALL_RETURN_VOID(env, napi_create_object(env, &obj));
+        ConvertDetailUsedRecord(env, obj, record);
+        NAPI_CALL_RETURN_VOID(env, napi_set_element(env, array, index, obj));
+        ++index;
+    }
+    NAPI_CALL_RETURN_VOID(env, napi_set_named_property(env, value, propName, array));
+}
+
 static void ConvertPermissionUsedRecord(napi_env env, napi_value value, const PermissionUsedRecord& permissionRecord)
 {
     napi_value nPermissionName;
@@ -489,29 +505,17 @@ static void ConvertPermissionUsedRecord(napi_env env, napi_value value, const Pe
         permissionRecord.enhancedIdentity.c_str(), NAPI_AUTO_LENGTH, &nEnhancedIdentity));
     NAPI_CALL_RETURN_VOID(env, napi_set_named_property(env, value, "enhancedIdentity", nEnhancedIdentity));
 
-    size_t index = 0;
-    napi_value objAccessRecords;
-    NAPI_CALL_RETURN_VOID(env, napi_create_array(env, &objAccessRecords));
-    for (const auto& accRecord : permissionRecord.accessRecords) {
-        napi_value objAccessRecord;
-        NAPI_CALL_RETURN_VOID(env, napi_create_object(env, &objAccessRecord));
-        ConvertDetailUsedRecord(env, objAccessRecord, accRecord);
-        NAPI_CALL_RETURN_VOID(env, napi_set_element(env, objAccessRecords, index, objAccessRecord));
-        index++;
-    }
-    NAPI_CALL_RETURN_VOID(env, napi_set_named_property(env, value, "accessRecords", objAccessRecords));
+    ConvertRecordDetailArray(env, value, "accessRecords", permissionRecord.accessRecords);
+    ConvertRecordDetailArray(env, value, "rejectRecords", permissionRecord.rejectRecords);
 
-    index = 0;
-    napi_value objRejectRecords;
-    NAPI_CALL_RETURN_VOID(env, napi_create_array(env, &objRejectRecords));
-    for (const auto& rejRecord : permissionRecord.rejectRecords) {
-        napi_value objRejectRecord;
-        NAPI_CALL_RETURN_VOID(env, napi_create_object(env, &objRejectRecord));
-        ConvertDetailUsedRecord(env, objRejectRecord, rejRecord);
-        NAPI_CALL_RETURN_VOID(env, napi_set_element(env, objRejectRecords, index, objRejectRecord));
-        index++;
-    }
-    NAPI_CALL_RETURN_VOID(env, napi_set_named_property(env, value, "rejectRecords", objRejectRecords));
+    napi_value nTargetTokenId;
+    NAPI_CALL_RETURN_VOID(env, napi_create_uint32(env, permissionRecord.targetTokenId, &nTargetTokenId));
+    NAPI_CALL_RETURN_VOID(env, napi_set_named_property(env, value, "targetTokenId", nTargetTokenId));
+
+    napi_value nTargetBundleName;
+    NAPI_CALL_RETURN_VOID(env, napi_create_string_utf8(env,
+        permissionRecord.targetBundleName.c_str(), NAPI_AUTO_LENGTH, &nTargetBundleName));
+    NAPI_CALL_RETURN_VOID(env, napi_set_named_property(env, value, "targetBundleName", nTargetBundleName));
 }
 
 static void ConvertBundleUsedRecord(napi_env env, napi_value value, const BundleUsedRecord& bundleRecord)

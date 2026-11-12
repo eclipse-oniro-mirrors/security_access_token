@@ -61,6 +61,7 @@ struct AddPermParamInfo {
     std::string extra = "";
     /** enhanced identity for host-subject differentiation, max length is MAX_ENHANCED_IDENTITY_LENGTH bytes */
     std::string enhancedIdentity = "";
+    AccessTokenID targetTokenId = 0;
 };
 } // namespace AccessToken
 } // namespace Security

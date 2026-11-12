@@ -39,6 +39,8 @@ const std::string PrivacyFiledConst::FIELD_USED_TYPE = "used_type";
 const std::string PrivacyFiledConst::FIELD_DISABLE_POLICY = "disable_policy";
 const std::string PrivacyFiledConst::FIELD_ENHANCED_IDENTITY = "enhanced_identity";
 const std::string PrivacyFiledConst::FIELD_SUB_PROFILE_ID = "sub_profile_id";
+const std::string PrivacyFiledConst::FIELD_TARGET_TOKEN_ID = "target_token_id";
+const std::string PrivacyFiledConst::FIELD_TARGET_BUNDLE_NAME = "target_bundle_name";
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

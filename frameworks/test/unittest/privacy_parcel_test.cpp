@@ -404,11 +404,11 @@ void BundleUsedRecordData(Parcel& out, uint32_t size)
 
     EXPECT_EQ(true, out.WriteUint32(size));
 
-    g_permissionRecord1.accessRecords.emplace_back(g_accessRecord1);
-
+    PermissionUsedRecord tempRecord;
+    tempRecord.accessRecords.emplace_back(g_accessRecord1);
     for (uint32_t i = 0; i < size; i++) {
         PermissionUsedRecordParcel permRecordParcel;
-        permRecordParcel.permissionRecord = g_permissionRecord1;
+        permRecordParcel.permissionRecord = tempRecord;
         out.WriteParcelable(&permRecordParcel);
     }
 }
@@ -457,6 +457,8 @@ void DataMarshalling(Parcel& out, uint32_t accessSize, uint32_t rejectSize)
         detailParcel.detail = detailIns;
         EXPECT_EQ(true, out.WriteParcelable(&detailParcel));
     }
+    EXPECT_EQ(true, out.WriteUint32(0)); // targetTokenId
+    EXPECT_EQ(true, out.WriteString("")); // targetBundleName
 }
 
 /**
@@ -592,6 +594,69 @@ HWTEST_F(PrivacyParcelTest, PermDisablePolicyParcel001, TestSize.Level1)
 
     EXPECT_EQ(permDisablePolicyParcel.info.permissionName, readedData->info.permissionName);
     EXPECT_EQ(permDisablePolicyParcel.info.isDisable, readedData->info.isDisable);
+}
+
+/**
+ * @tc.name: AddPermParamInfoParcel_WithTargetTokenId
+ * @tc.desc: Verify AddPermParamInfoParcel Marshalling/Unmarshalling with targetTokenId field.
+ * @tc.type: FUNC
+ * @tc.require: AC-1.1
+ */
+HWTEST_F(PrivacyParcelTest, AddPermParamInfoParcel_WithTargetTokenId, TestSize.Level1)
+{
+    AddPermParamInfoParcel infoParcel;
+    infoParcel.info = {
+        .tokenId = 100,
+        .permissionName = "ohos.permission.AUTOMATION_CONTROL",
+        .successCount = 1,
+        .failCount = 0,
+        .type = NORMAL_TYPE,
+        .extra = "perm_add_extra",
+        .enhancedIdentity = "",
+        .targetTokenId = 200,
+    };
+
+    Parcel parcel;
+    EXPECT_EQ(true, infoParcel.Marshalling(parcel));
+
+    std::shared_ptr<AddPermParamInfoParcel> readedData(AddPermParamInfoParcel::Unmarshalling(parcel));
+    EXPECT_EQ(true, readedData != nullptr);
+    EXPECT_EQ(infoParcel.info.tokenId, readedData->info.tokenId);
+    EXPECT_EQ(infoParcel.info.permissionName, readedData->info.permissionName);
+    EXPECT_EQ(infoParcel.info.successCount, readedData->info.successCount);
+    EXPECT_EQ(infoParcel.info.failCount, readedData->info.failCount);
+    EXPECT_EQ(infoParcel.info.type, readedData->info.type);
+    EXPECT_EQ(infoParcel.info.extra, readedData->info.extra);
+    EXPECT_EQ(infoParcel.info.enhancedIdentity, readedData->info.enhancedIdentity);
+    EXPECT_EQ(infoParcel.info.targetTokenId, readedData->info.targetTokenId);
+}
+
+/**
+ * @tc.name: PermissionUsedRecordParcel_WithTargetFields
+ * @tc.desc: Verify PermissionUsedRecordParcel Marshalling/Unmarshalling with targetTokenId and targetBundleName.
+ * @tc.type: FUNC
+ * @tc.require: AC-2.1
+ */
+HWTEST_F(PrivacyParcelTest, PermissionUsedRecordParcel_WithTargetFields, TestSize.Level1)
+{
+    PermissionUsedRecordParcel permissionUsedRecordParcel;
+    permissionUsedRecordParcel.permissionRecord.permissionName = "ohos.permission.AUTOMATION_CONTROL";
+    permissionUsedRecordParcel.permissionRecord.accessCount = 1;
+    permissionUsedRecordParcel.permissionRecord.rejectCount = 0;
+    permissionUsedRecordParcel.permissionRecord.targetTokenId = 200;
+    permissionUsedRecordParcel.permissionRecord.targetBundleName = "com.test.target";
+
+    Parcel parcel;
+    EXPECT_EQ(true, permissionUsedRecordParcel.Marshalling(parcel));
+
+    std::shared_ptr<PermissionUsedRecordParcel> readedData(PermissionUsedRecordParcel::Unmarshalling(parcel));
+    EXPECT_EQ(true, readedData != nullptr);
+    EXPECT_EQ(permissionUsedRecordParcel.permissionRecord.permissionName,
+        readedData->permissionRecord.permissionName);
+    EXPECT_EQ(permissionUsedRecordParcel.permissionRecord.targetTokenId,
+        readedData->permissionRecord.targetTokenId);
+    EXPECT_EQ(permissionUsedRecordParcel.permissionRecord.targetBundleName,
+        readedData->permissionRecord.targetBundleName);
 }
 } // namespace AccessToken
 } // namespace Security

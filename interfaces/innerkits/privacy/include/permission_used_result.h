@@ -94,6 +94,10 @@ struct PermissionUsedRecord {
     std::vector<UsedRecordDetail> accessRecords;
     /** UsedRecordDetail list */
     std::vector<UsedRecordDetail> rejectRecords;
+    /** target token id, 0 means no target identity */
+    AccessTokenID targetTokenId = 0;
+    /** target bundle name, empty means no target identity */
+    std::string targetBundleName = "";
 };
 
 /**

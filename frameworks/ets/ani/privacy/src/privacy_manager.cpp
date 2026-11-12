@@ -653,6 +653,14 @@ static ani_object ConvertSinglePermissionRecord(ani_env* env, const PermissionUs
     if (!SetRefProperty(env, arrayObj, "rejectRecords", ConvertUsedRecordDetails(env, record.rejectRecords))) {
         return nullptr;
     }
+
+    if (!SetOptionalIntProperty(env, arrayObj, "targetTokenId",
+        static_cast<int32_t>(record.targetTokenId))) {
+        return nullptr;
+    }
+    if (!SetStringProperty(env, arrayObj, "targetBundleName", record.targetBundleName)) {
+        return nullptr;
+    }
     return arrayObj;
 }
 

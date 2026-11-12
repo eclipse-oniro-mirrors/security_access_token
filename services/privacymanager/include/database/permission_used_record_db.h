@@ -92,11 +92,12 @@ private:
     int32_t UpdateToggleStatusTablePrimaryKey() const;
     int32_t InsertLockScreenStatusColumn() const;
     int32_t InsertPermissionUsedTypeColumn() const;
-    int32_t UpdatePermissionRecordTablePrimaryKey(bool withEnhancedIdentity) const;
+    int32_t UpdatePermissionRecordTablePrimaryKey(bool withEnhancedIdentity, bool withTargetFields = false) const;
     int32_t CreatePermissionDisablePolicyTable() const;
     int32_t UpdateDisablePolicyTablePrimaryKey() const;
     int32_t InsertUserIdColumnToDisablePolicyTable() const;
     int32_t InsertEnhancedIdentityColumn() const;
+    int32_t InsertTargetColumns() const;
     bool IsColumnExists(const std::string& tableName, const std::string& columnName) const;
 
     std::string CreateDeleteHistoryRecordsPrepareSqlCmd(DataType type,
@@ -124,7 +125,7 @@ private:
     inline static constexpr const char* PERMISSION_DISABLE_POLICY_TABLE = "permission_disable_policy_table";
     inline static constexpr const char* DATABASE_NAME = "permission_used_record.db";
     inline static constexpr const char* DATABASE_PATH = "/data/service/el1/public/access_token/";
-    inline static constexpr int32_t DATABASE_VERSION = 9;
+    inline static constexpr int32_t DATABASE_VERSION = 10;
 };
 } // namespace AccessToken
 } // namespace Security

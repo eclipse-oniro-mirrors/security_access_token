@@ -34,6 +34,8 @@ void PermissionRecord::TranslationIntoGenericValues(const PermissionRecord& reco
     values.Put(PrivacyFiledConst::FIELD_REJECT_COUNT, record.rejectCount);
     values.Put(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS, record.lockScreenStatus);
     values.Put(PrivacyFiledConst::FIELD_ENHANCED_IDENTITY, record.enhancedIdentity);
+    values.Put(PrivacyFiledConst::FIELD_TARGET_TOKEN_ID, static_cast<int32_t>(record.targetTokenId));
+    values.Put(PrivacyFiledConst::FIELD_TARGET_BUNDLE_NAME, record.targetBundleName);
 }
 
 void PermissionRecord::TranslationIntoPermissionRecord(const GenericValues& values, PermissionRecord& record)
@@ -51,6 +53,8 @@ void PermissionRecord::TranslationIntoPermissionRecord(const GenericValues& valu
     record.lockScreenStatus = lockScreenStatus == VariantValue::DEFAULT_VALUE ?
         LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED : lockScreenStatus;
     record.enhancedIdentity = values.GetString(PrivacyFiledConst::FIELD_ENHANCED_IDENTITY);
+    record.targetTokenId = static_cast<uint32_t>(values.GetInt(PrivacyFiledConst::FIELD_TARGET_TOKEN_ID));
+    record.targetBundleName = values.GetString(PrivacyFiledConst::FIELD_TARGET_BUNDLE_NAME);
 }
 
 bool ContinuousPermissionRecord::IsPidValid(int32_t pid)
