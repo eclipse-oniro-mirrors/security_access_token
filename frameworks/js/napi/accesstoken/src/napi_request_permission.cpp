@@ -443,7 +443,7 @@ static void RequestResultsHandler(const std::vector<std::string>& permissionList
 }
 
 void AuthorizationResult::GrantResultsCallback(const std::vector<std::string>& permissionList,
-    const std::vector<int>& grantResults)
+    const std::vector<int32_t>& grantResults)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "Called.");
     std::shared_ptr<RequestAsyncContext> asyncContext = data_;

@@ -15,6 +15,7 @@
 
 #include "ability_access_control.h"
 
+#include <cstring>
 #include <memory>
 #include <string>
 #include <thread>
@@ -45,19 +46,22 @@ bool OH_AT_CheckSelfPermission(const char* permission)
 
 namespace {
 constexpr int32_t MAX_PERMISSION_COUNT = 1024;
+constexpr size_t MAX_PERMISSION_NAME_LENGTH = 256;
 
-constexpr int GRANT_RESULT_GRANTED = 0;
-constexpr int GRANT_RESULT_USER_DENIED = -1;
-constexpr int GRANT_RESULT_NOT_SUPPORTED = 2;
-constexpr int GRANT_RESULT_COMMON_ERROR = 3;
-constexpr int GRANT_RESULT_COMMON_ERROR_LEGACY = 4;
-constexpr int GRANT_RESULT_NOT_DECLARED = 5;
+constexpr int32_t GRANT_RESULT_GRANTED = 0;
+constexpr int32_t GRANT_RESULT_USER_DENIED = -1;
+constexpr int32_t GRANT_RESULT_NOT_SUPPORTED = 2;
+constexpr int32_t GRANT_RESULT_COMMON_ERROR = 3;
+constexpr int32_t GRANT_RESULT_COMMON_ERROR_LEGACY = 4;
+constexpr int32_t GRANT_RESULT_NOT_DECLARED = 5;
 
 const std::string PERMISSION_KEY = "ohos.user.grant.permission";
 const std::string STATE_KEY = "ohos.user.grant.permission.state";
 const std::string CALLBACK_KEY = "ohos.ability.params.callback";
 
 struct CallbackContext {
+    CallbackContext(OH_AT_PermissionsRequestResultCallback cb, void* data) : callback(cb), userData(data) {}
+
     std::vector<std::string> permNames;
     std::vector<OH_AT_PermissionOperResult> preJudged;
     std::vector<bool> isDynamic;
@@ -65,7 +69,7 @@ struct CallbackContext {
     void* userData;
 };
 
-struct DeliveryResult {
+struct CallbackResultData {
     OH_AT_AbilityAccessControlErrorCode errorcode;
     std::vector<OH_AT_PermissionOperResult> operResults;
     std::unique_ptr<bool[]> dialogShown;
@@ -101,7 +105,7 @@ OH_AT_PermissionOperResult MapOperResult(PermissionOper state, PermissionErrorRe
     }
 }
 
-OH_AT_PermissionOperResult MapGrantResult(int grantResult)
+OH_AT_PermissionOperResult MapGrantResult(int32_t grantResult)
 {
     switch (grantResult) {
         case GRANT_RESULT_GRANTED:
@@ -117,7 +121,7 @@ OH_AT_PermissionOperResult MapGrantResult(int grantResult)
     }
 }
 
-OH_AT_AbilityAccessControlErrorCode DetectRequestLevelError(const std::vector<int>& grantResults)
+OH_AT_AbilityAccessControlErrorCode DetectRequestLevelError(const std::vector<int32_t>& grantResults)
 {
     for (size_t i = 0; i < grantResults.size(); ++i) {
         switch (grantResults[i]) {
@@ -139,7 +143,8 @@ bool IsValidRequest(const char* permissions[], int32_t permCount, OH_AT_Permissi
         return false;
     }
     for (int32_t i = 0; i < permCount; ++i) {
-        if ((permissions[i] == nullptr) || (permissions[i][0] == '\0')) {
+        if ((permissions[i] == nullptr) || (permissions[i][0] == '\0') ||
+            (strlen(permissions[i]) > MAX_PERMISSION_NAME_LENGTH)) {
             return false;
         }
     }
@@ -160,52 +165,54 @@ std::vector<PermissionListState> BuildPermissionList(const char* permissions[], 
     return permList;
 }
 
-void CollectPreJudgedResults(const std::vector<PermissionListState>& permList, CallbackContext& context)
+void CollectPreJudgedResults(const std::vector<PermissionListState>& permList, CallbackContext* context)
 {
     size_t count = permList.size();
-    context.permNames.reserve(count);
-    context.preJudged.reserve(count);
-    context.isDynamic.reserve(count);
+    context->permNames.reserve(count);
+    context->preJudged.reserve(count);
+    context->isDynamic.reserve(count);
     for (size_t i = 0; i < count; ++i) {
-        context.permNames.emplace_back(permList[i].permissionName);
+        context->permNames.emplace_back(permList[i].permissionName);
         bool isDynamic = permList[i].state == TypePermissionOper::DYNAMIC_OPER;
-        context.preJudged.push_back(isDynamic ? OH_AT_PERMISSION_OPER_POP_UP_RESTRICTED
+        context->preJudged.push_back(isDynamic ? OH_AT_PERMISSION_OPER_POP_UP_RESTRICTED
             : MapOperResult(permList[i].state, permList[i].errorReason));
-        context.isDynamic.push_back(isDynamic);
+        context->isDynamic.push_back(isDynamic);
     }
 }
 
-DeliveryResult AssembleDeliveryResult(const CallbackContext& context, const std::vector<int>& grantResults)
+std::unique_ptr<CallbackResultData> BuildCallbackResultData(const std::shared_ptr<CallbackContext>& context,
+    const std::vector<int32_t>& grantResults)
 {
-    DeliveryResult delivery;
-    delivery.errorcode = DetectRequestLevelError(grantResults);
-    size_t count = context.preJudged.size();
-    delivery.operResults.resize(count);
-    delivery.dialogShown = std::make_unique<bool[]>(count);
+    auto resultData = std::make_unique<CallbackResultData>();
+    resultData->errorcode = DetectRequestLevelError(grantResults);
+    size_t count = context->preJudged.size();
+    resultData->operResults.resize(count);
+    resultData->dialogShown = std::make_unique<bool[]>(count);
     for (size_t i = 0; i < count; ++i) {
-        bool isDynamic = context.isDynamic[i];
-        delivery.dialogShown[i] = isDynamic;
-        if (delivery.errorcode != OH_AT_ABILITY_ACCESS_CONTROL_SUCCESS) {
-            delivery.operResults[i] = OH_AT_PERMISSION_OPER_POP_UP_RESTRICTED;
+        bool isDynamic = context->isDynamic[i];
+        resultData->dialogShown[i] = isDynamic;
+        if (resultData->errorcode != OH_AT_ABILITY_ACCESS_CONTROL_SUCCESS) {
+            resultData->operResults[i] = OH_AT_PERMISSION_OPER_POP_UP_RESTRICTED;
         } else if (isDynamic && (i < grantResults.size())) {
-            delivery.operResults[i] = MapGrantResult(grantResults[i]);
+            resultData->operResults[i] = MapGrantResult(grantResults[i]);
         } else {
-            delivery.operResults[i] = context.preJudged[i];
+            resultData->operResults[i] = context->preJudged[i];
         }
     }
-    return delivery;
+    return resultData;
 }
 
-void DeliverResultAsync(const std::shared_ptr<CallbackContext>& context, DeliveryResult delivery)
+void DeliverResultAsync(const std::shared_ptr<CallbackContext>& context,
+    std::unique_ptr<CallbackResultData> resultData)
 {
-    std::thread([context, delivery = std::move(delivery)]() mutable {
+    std::thread([context, resultData = std::move(resultData)]() mutable {
         std::vector<const char*> permPtrs;
         permPtrs.reserve(context->permNames.size());
         for (const auto& name : context->permNames) {
             permPtrs.push_back(name.c_str());
         }
-        OH_AT_PermissionsRequestResult result = { delivery.errorcode, permPtrs.data(),
-            static_cast<int32_t>(permPtrs.size()), delivery.operResults.data(), delivery.dialogShown.get() };
+        OH_AT_PermissionsRequestResult result = { resultData->errorcode, permPtrs.data(),
+            static_cast<int32_t>(permPtrs.size()), resultData->operResults.data(), resultData->dialogShown.get() };
         context->callback(&result, context->userData);
     }).detach();
 }
@@ -216,10 +223,10 @@ public:
     ~BinDialogResultReceiver() override = default;
 
     void GrantResultsCallback(const std::vector<std::string>& permissions,
-        const std::vector<int>& grantResults) override
+        const std::vector<int32_t>& grantResults) override
     {
         (void)permissions;
-        DeliverResultAsync(context_, AssembleDeliveryResult(*context_, grantResults));
+        DeliverResultAsync(context_, BuildCallbackResultData(context_, grantResults));
     }
 
 private:
@@ -231,15 +238,12 @@ OH_AT_AbilityAccessControlErrorCode StartGrantDialog(const PermissionGrantInfo& 
 {
     AAFwk::Want want;
     want.SetElementName(grantInfo.grantBundleName, grantInfo.grantServiceAbilityName);
-    std::vector<std::string> permNames;
     std::vector<int32_t> states;
-    permNames.reserve(permList.size());
     states.reserve(permList.size());
     for (const auto& perm : permList) {
-        permNames.push_back(perm.permissionName);
         states.push_back(static_cast<int32_t>(perm.state));
     }
-    want.SetParam(PERMISSION_KEY, permNames);
+    want.SetParam(PERMISSION_KEY, context->permNames);
     want.SetParam(STATE_KEY, states);
     sptr<IRemoteObject> receiver = sptr<BinDialogResultReceiver>::MakeSptr(context);
     want.SetParam(CALLBACK_KEY, receiver);
@@ -256,7 +260,7 @@ OH_AT_AbilityAccessControlErrorCode OH_AT_RequestPermissionsFromUser(const char*
     int32_t permCount, OH_AT_PermissionsRequestResultCallback callback, void* userData)
 {
     if (!AccessTokenKit::IsBinPermissionDialogEnabled()) {
-        LOGI(ATM_DOMAIN, ATM_TAG, "called, permCount: %{public}d.", permCount);
+        LOGI(ATM_DOMAIN, ATM_TAG, "Bin permission dialog is not enabled, permCount: %{public}d.", permCount);
         return OH_AT_ABILITY_ACCESS_CONTROL_NOT_SUPPORTED_ERROR;
     }
     LOGI(ATM_DOMAIN, ATM_TAG, "called, permCount: %{public}d.", permCount);
@@ -273,7 +277,7 @@ OH_AT_AbilityAccessControlErrorCode OH_AT_RequestPermissionsFromUser(const char*
     PermissionGrantInfo grantInfo;
     PermissionOper oper = AccessTokenKit::GetSelfPermissionsState(permList, grantInfo);
     if (grantInfo.grantBundleName.empty()) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Communicate with access token service failed.");
+        LOGE(ATM_DOMAIN, ATM_TAG, "Failed to get grant info from access token service.");
         return OH_AT_ABILITY_ACCESS_CONTROL_SERVICE_EXCEPTION_ERROR;
     }
     if (oper == TypePermissionOper::INVALID_OPER) {
@@ -281,12 +285,10 @@ OH_AT_AbilityAccessControlErrorCode OH_AT_RequestPermissionsFromUser(const char*
         return OH_AT_ABILITY_ACCESS_CONTROL_SERVICE_EXCEPTION_ERROR;
     }
 
-    auto context = std::make_shared<CallbackContext>();
-    CollectPreJudgedResults(permList, *context);
-    context->callback = callback;
-    context->userData = userData;
+    auto context = std::make_shared<CallbackContext>(callback, userData);
+    CollectPreJudgedResults(permList, context.get());
     if (oper != TypePermissionOper::DYNAMIC_OPER) {
-        DeliverResultAsync(context, AssembleDeliveryResult(*context, {}));
+        DeliverResultAsync(context, BuildCallbackResultData(context, {}));
         return OH_AT_ABILITY_ACCESS_CONTROL_SUCCESS;
     }
     return StartGrantDialog(grantInfo, permList, context);

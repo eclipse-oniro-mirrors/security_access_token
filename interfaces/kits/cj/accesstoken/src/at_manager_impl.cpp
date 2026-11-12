@@ -462,7 +462,7 @@ static void UpdateGrantPermissionResultOnly(const std::vector<std::string>& perm
 }
 
 void AuthorizationResult::GrantResultsCallback(const std::vector<std::string>& permissions,
-    const std::vector<int>& grantResults)
+    const std::vector<int32_t>& grantResults)
 {
     LOGI("AuthorizationResult::GrantResultsCallback");
     RetDataCPermissionRequestResult ret{};
