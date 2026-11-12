@@ -334,11 +334,6 @@ export default namespace abilityAccessCtrl {
         isPermissionSupported(permissionName: Permissions): boolean;
         queryStatusByPermission(permissionList: Array<Permissions>): Promise<Array<PermissionStatusInfo>>;
         queryStatusByTokenID(tokenIDList: Array<int>): Promise<Array<PermissionStatusInfo>>;
-        getCliPermissionRequestInfo(agentID: string, cliList: Array<CliInfo>): Promise<PermissionDialogResult>;
-        getCliPermissions(hostTokenID: int, agentID: string, cliInfoList: Array<CliInfo>):
-            Promise<CliPermissionsResult>;
-        generateCliAuthResult(hostTokenID: int, agentID: string, authInfoList: Array<CliAuthInfo>):
-            Promise<ToolAuthResult>;
 
         setAutomationControlStatus(controllerTokenID: int,
             targetList: Array<AutomationControlTargetParam>): Promise<Array<AutomationControlSetResult>>;
@@ -794,58 +789,6 @@ export default namespace abilityAccessCtrl {
                     });
                     p1.then((e: Any): void => {
                         resolve(e as Array<PermissionStatusInfo>);
-                    }).catch((err: Error): void => {
-                        reject(err as BusinessError);
-                    });
-                });
-            return p;
-        }
-
-        getCliPermissionRequestInfo(agentID: string, cliList: Array<CliInfo>): Promise<PermissionDialogResult> {
-            let p = new Promise<PermissionDialogResult>(
-                (resolve: (v: PermissionDialogResult) => void,
-                    reject: (err: Error) => void): void => {
-                    let p1 = taskpool.execute((): PermissionDialogResult => {
-                        return new AtManagerInner().getCliPermissionRequestInfoExecute(agentID, cliList);
-                    });
-                    p1.then((e: Any): void => {
-                        resolve(e as PermissionDialogResult);
-                    }).catch((err: Error): void => {
-                        reject(err as BusinessError);
-                    });
-                });
-            return p;
-        }
-
-        getCliPermissions(hostTokenID: int, agentID: string, cliInfoList: Array<CliInfo>):
-            Promise<CliPermissionsResult> {
-            let p = new Promise<CliPermissionsResult>(
-                (resolve: (v: CliPermissionsResult) => void,
-                    reject: (err: Error) => void): void => {
-                    let p1 = taskpool.execute((): CliPermissionsResult => {
-                        return new AtManagerInner().getCliPermissionsExecute(
-                            hostTokenID, agentID, cliInfoList);
-                    });
-                    p1.then((e: Any): void => {
-                        resolve(e as CliPermissionsResult);
-                    }).catch((err: Error): void => {
-                        reject(err as BusinessError);
-                    });
-                });
-            return p;
-        }
-
-        generateCliAuthResult(hostTokenID: int, agentID: string, authInfoList: Array<CliAuthInfo>):
-            Promise<ToolAuthResult> {
-            let p = new Promise<ToolAuthResult>(
-                (resolve: (v: ToolAuthResult) => void,
-                    reject: (err: Error) => void): void => {
-                    let p1 = taskpool.execute((): ToolAuthResult => {
-                        return new AtManagerInner().generateCliAuthResultExecute(
-                            hostTokenID, agentID, authInfoList);
-                    });
-                    p1.then((e: Any): void => {
-                        resolve(e as ToolAuthResult);
                     }).catch((err: Error): void => {
                         reject(err as BusinessError);
                     });
