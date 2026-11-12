@@ -183,11 +183,13 @@ static bool IsPermissionRestrictedByRules(const std::string& permission)
 #ifdef SUPPORT_SANDBOX_APP
     // Specified dlp permissions are limited to specified dlp type hap.
     AccessTokenID callingTokenId = IPCSkeleton::GetCallingTokenID();
-    int32_t dlpType = AccessTokenInfoManager::GetInstance().GetHapTokenDlpType(callingTokenId);
+    AccessTokenID queryTokenId = callingTokenId;
+    (void)AccessTokenInfoManager::GetInstance().ResolveQueryTokenID(callingTokenId, queryTokenId);
+    int32_t dlpType = AccessTokenInfoManager::GetInstance().GetHapTokenDlpType(queryTokenId);
     if ((dlpType != DLP_COMMON) &&
         !DlpPermissionSetManager::GetInstance().IsPermissionAvailableToDlpHap(dlpType, permission)) {
         LOGW(ATM_DOMAIN, ATM_TAG,
-            "Id(%{public}u) is not allowed to grant dlp permission: %{public}s!", callingTokenId, permission.c_str());
+            "Id(%{public}u) is not allowed to grant dlp permission: %{public}s!", queryTokenId, permission.c_str());
         return true;
     }
 #endif

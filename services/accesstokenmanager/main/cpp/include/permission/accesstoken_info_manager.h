@@ -100,6 +100,7 @@ public:
     int32_t RestoreInstallPolicyFromKernel(const std::string& bundleName, MultipleMode mode,
         const BundlePolicy& bundlePolicy, BundleParam& param, HapPolicy& policy);
     int GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo& infoParcel);
+    int32_t ResolveQueryTokenID(AccessTokenID tokenID, AccessTokenID& queryTokenID);
     int GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfoBase& info);
     int AllocAccessTokenIDEx(const HapInfoParams& info, AccessTokenID tokenId, AccessTokenIDEx& tokenIdEx);
     int RemoveHapTokenInfo(AccessTokenID id, bool isTokenReserved = false);
@@ -237,7 +238,6 @@ private:
     int32_t RefreshUserPolicyFlagForUser(int32_t userId, const UserPolicyChange& policy,
         std::vector<UserPolicyRefreshSnapshot>& appliedSnapshots);
     int32_t CheckHapInfoParam(const HapInfoParams& info, const HapPolicy& policy);
-    int32_t ResolveQueryTokenID(AccessTokenID tokenID, AccessTokenID& queryTokenID);
     // Pure db snapshot: basic row restore only - no permission brief
     // registration, no reserved-id registration, no cache writes.
     std::shared_ptr<HapTokenInfoInner> LoadHapTokenInfoFromDbAndNoCache(AccessTokenID id);

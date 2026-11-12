@@ -93,6 +93,9 @@ if (is_standard_system) {
 
     cflags_cc = access_token_cflags_cc
     cflags_cc += [ "-DDEBUG_API_PERFORMANCE" ]
+    if (access_token_bin_permission_dialog_enable) {
+      cflags_cc += [ "-DACCESS_TOKEN_BIN_PERMISSION_DIALOG_ENABLE" ]
+    }
     if (build_variant == "user") {
       cflags_cc += [ "-DATM_BUILD_VARIANT_USER_ENABLE" ]
     }

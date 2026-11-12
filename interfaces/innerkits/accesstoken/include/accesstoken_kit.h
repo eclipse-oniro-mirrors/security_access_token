@@ -367,6 +367,11 @@ public:
     static PermissionOper GetSelfPermissionsState(std::vector<PermissionListState>& permList,
         PermissionGrantInfo& info);
     /**
+     * @brief Check whether the bin permission dialog capability is enabled
+     * @return true when the capability is enabled, false otherwise
+     */
+    static bool IsBinPermissionDialogEnabled();
+    /**
      * @brief Get requsted permissions status
      * @param permList PermissionListState list quote, as input and query result
      * @return error code, see access_token_error.h
