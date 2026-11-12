@@ -27,10 +27,9 @@
  *
  * @brief Declares the APIs for managing access token.
  *
- * @syscap SystemCapability.Security.AccessToken
- * @include <accesstoken/ability_access_control.h>
- * @library libability_access_control.so
+ * @library ability_access_control.so
  * @kit AbilityKit
+ * @syscap SystemCapability.Security.AccessToken
  * @since 12
  */
 
