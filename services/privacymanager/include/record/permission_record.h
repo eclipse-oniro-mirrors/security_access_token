@@ -35,6 +35,8 @@ struct PermissionRecord {
     int32_t rejectCount = 0;
     int32_t lockScreenStatus = LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED;
     std::string enhancedIdentity = "";
+    uint32_t targetTokenId = 0;
+    std::string targetBundleName = "";
 
     PermissionRecord() = default;
 

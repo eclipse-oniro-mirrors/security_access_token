@@ -420,6 +420,8 @@ export default namespace privacyManager {
         enhancedIdentity?: string;
         accessRecords: Array<UsedRecordDetail>;
         rejectRecords: Array<UsedRecordDetail>;
+        targetTokenId?: int;
+        targetBundleName?: string;
     }
 
     class PermissionUsedRecordInner implements PermissionUsedRecord {
@@ -432,6 +434,8 @@ export default namespace privacyManager {
         enhancedIdentity?: string;
         accessRecords: Array<UsedRecordDetail>;
         rejectRecords: Array<UsedRecordDetail>;
+        targetTokenId?: int;
+        targetBundleName?: string;
     }
 
     export interface BundleUsedRecord{

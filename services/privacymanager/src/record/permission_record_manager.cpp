@@ -106,9 +106,10 @@ static const uint32_t MAX_PERMISSION_USED_TYPE_SIZE = 20;
 constexpr const char* EDM_PROCESS_NAME = "edm";
 std::recursive_mutex g_instanceMutex;
 
-std::string BuildBundleMapKey(AccessTokenID tokenId, const std::string& enhancedIdentity)
+std::string BuildBundleMapKey(AccessTokenID tokenId, const std::string& enhancedIdentity,
+    AccessTokenID targetTokenId = 0)
 {
-    return std::to_string(tokenId) + "_" + enhancedIdentity;
+    return std::to_string(tokenId) + "_" + enhancedIdentity + "_" + std::to_string(targetTokenId);
 }
 
 std::string BuildToggleStatusKey(int32_t userID, int32_t subProfileId)
@@ -305,7 +306,8 @@ static bool RecordMergeCheck(const PermissionRecord& record1, const PermissionRe
         (record1.status != record2.status) ||
         (record1.lockScreenStatus != record2.lockScreenStatus) ||
         (record1.type != record2.type) ||
-        (record1.enhancedIdentity != record2.enhancedIdentity)) {
+        (record1.enhancedIdentity != record2.enhancedIdentity) ||
+        (record1.targetTokenId != record2.targetTokenId)) {
         return false;
     }
 
@@ -391,6 +393,7 @@ int32_t PermissionRecordManager::UpdatePermissionUsedRecordToDb(const Permission
     conditionValue.Put(PrivacyFiledConst::FIELD_TIMESTAMP, record.timestamp);
     conditionValue.Put(PrivacyFiledConst::FIELD_USED_TYPE, record.type);
     conditionValue.Put(PrivacyFiledConst::FIELD_ENHANCED_IDENTITY, record.enhancedIdentity);
+    conditionValue.Put(PrivacyFiledConst::FIELD_TARGET_TOKEN_ID, static_cast<int32_t>(record.targetTokenId));
 
     std::unique_lock<std::shared_mutex> lk(this->rwLock_);
     return PermissionUsedRecordDb::GetInstance().Update(
@@ -486,6 +489,15 @@ int32_t PermissionRecordManager::GetPermissionRecord(const AddPermParamInfo& inf
     record.accessDuration = 0;
     record.type = info.type;
     record.enhancedIdentity = info.enhancedIdentity;
+    if (Constant::IsAutomationControlPermission(opCode)) {
+        HapTokenInfo targetTokenInfo;
+        if (AccessTokenKit::GetHapTokenInfo(info.targetTokenId, targetTokenInfo) != Constant::SUCCESS) {
+            LOGE(PRI_DOMAIN, PRI_TAG, "Invalid targetTokenId(%{public}d).", info.targetTokenId);
+            return PrivacyError::ERR_PARAM_INVALID;
+        }
+        record.targetTokenId = info.targetTokenId;
+        record.targetBundleName = targetTokenInfo.bundleName;
+    }
     LOGD(PRI_DOMAIN, PRI_TAG, "Record status: %{public}d", record.status);
     return Constant::SUCCESS;
 }
@@ -616,6 +628,13 @@ int32_t PermissionRecordManager::AddPermissionUsedRecord(const AddPermParamInfo&
         info.successCount < 0 || info.failCount < 0) {
         return PrivacyError::ERR_PARAM_INVALID;
     }
+
+#ifndef ENABLE_AUTOMATION_CONTROL
+    if (info.permissionName == "ohos.permission.AUTOMATION_CONTROL") {
+        LOGW(PRI_DOMAIN, PRI_TAG, "Not support.");
+        return PrivacyError::ERR_CAPABILITY_NOT_SUPPORT;
+    }
+#endif
 
     AddPermParamInfo normalizedInfo = info;
     int32_t ret = NormalizeRecordTokenId(info.tokenId, normalizedInfo.tokenId);
@@ -1540,7 +1559,8 @@ void PermissionRecordManager::RemoveHistoryPermissionUsedRecords(std::unordered_
         std::lock_guard<std::mutex> lock(permUsedRecMutex_);
         permUsedRecList_.erase(std::remove_if(permUsedRecList_.begin(), permUsedRecList_.end(),
             [&tokenIDList](const PermissionRecordCache& recordCache) {
-                return tokenIDList.find(recordCache.record.tokenId) != tokenIDList.end();
+                return tokenIDList.find(recordCache.record.tokenId) != tokenIDList.end() ||
+                    tokenIDList.find(recordCache.record.targetTokenId) != tokenIDList.end();
             }), permUsedRecList_.end());
     }
 }
@@ -1557,8 +1577,11 @@ int32_t PermissionRecordManager::RemovePermissionUsedRecords(
         std::lock_guard<std::mutex> lock(permUsedRecMutex_);
         permUsedRecList_.erase(std::remove_if(permUsedRecList_.begin(), permUsedRecList_.end(),
             [tokenId, &enhancedIdentity](const PermissionRecordCache& recordCache) {
-                return recordCache.record.tokenId == tokenId &&
-                    (enhancedIdentity.empty() || recordCache.record.enhancedIdentity == enhancedIdentity);
+                bool tokenMatched = ((recordCache.record.tokenId == tokenId) ||
+                    (recordCache.record.targetTokenId == tokenId));
+                bool identityMatched = (enhancedIdentity.empty() ||
+                    (recordCache.record.enhancedIdentity == enhancedIdentity));
+                return tokenMatched && identityMatched;
             }), permUsedRecList_.end());
     }
 
@@ -1573,6 +1596,13 @@ int32_t PermissionRecordManager::RemovePermissionUsedRecords(
         PermissionUsedRecordDb::GetInstance().Remove(PermissionUsedRecordDb::DataType::PERMISSION_RECORD, conditions);
         PermissionUsedRecordDb::GetInstance().Remove(PermissionUsedRecordDb::DataType::PERMISSION_USED_TYPE,
             conditions);
+
+        if (enhancedIdentity.empty()) {
+            GenericValues targetConditions;
+            targetConditions.Put(PrivacyFiledConst::FIELD_TARGET_TOKEN_ID, static_cast<int32_t>(tokenId));
+            PermissionUsedRecordDb::GetInstance().Remove(PermissionUsedRecordDb::DataType::PERMISSION_RECORD,
+                targetConditions);
+        }
     }
 
     // remove from start list
@@ -1632,6 +1662,7 @@ void PermissionRecordManager::InsteadMergedRecIfNecessary(GenericValues& queryVa
     int64_t timestamp = queryValue.GetInt64(PrivacyFiledConst::FIELD_TIMESTAMP);
     PermissionUsedType type = static_cast<PermissionUsedType>(queryValue.GetInt(PrivacyFiledConst::FIELD_USED_TYPE));
     std::string enhancedIdentity = queryValue.GetString(PrivacyFiledConst::FIELD_ENHANCED_IDENTITY);
+    uint32_t targetTokenId = static_cast<uint32_t>(queryValue.GetInt(PrivacyFiledConst::FIELD_TARGET_TOKEN_ID));
 
     for (const auto& record : mergedRecords) {
         if ((tokenId == record.tokenId) &&
@@ -1639,7 +1670,8 @@ void PermissionRecordManager::InsteadMergedRecIfNecessary(GenericValues& queryVa
             (status == record.status) &&
             (timestamp == record.timestamp) &&
             (type == record.type) &&
-            (enhancedIdentity == record.enhancedIdentity)) {
+            (enhancedIdentity == record.enhancedIdentity) &&
+            (targetTokenId == record.targetTokenId)) {
             // find merged record, instead accessCount and rejectCount
             queryValue.Remove(PrivacyFiledConst::FIELD_ACCESS_COUNT);
             queryValue.Put(PrivacyFiledConst::FIELD_ACCESS_COUNT, record.accessCount);
@@ -1716,7 +1748,10 @@ bool PermissionRecordManager::FillBundleUsedRecord(const GenericValues& value, c
 
     int32_t tokenId = value.GetInt(PrivacyFiledConst::FIELD_TOKEN_ID);
     std::string enhancedIdentity = value.GetString(PrivacyFiledConst::FIELD_ENHANCED_IDENTITY);
-    std::string bundleKey = BuildBundleMapKey(tokenId, enhancedIdentity);
+    uint32_t targetTokenId = static_cast<uint32_t>(value.GetInt(PrivacyFiledConst::FIELD_TARGET_TOKEN_ID));
+    std::string bundleKey = BuildBundleMapKey(tokenId, enhancedIdentity, targetTokenId);
+    record.targetTokenId = targetTokenId;
+    record.targetBundleName = value.GetString(PrivacyFiledConst::FIELD_TARGET_BUNDLE_NAME);
     FillPermissionUsedRecords(record, flag, bundleKeyToBundleMap[bundleKey].permissionRecords);
     bundleKeyToCountMap[bundleKey] += 1;
 
@@ -1796,7 +1831,9 @@ int32_t PermissionRecordManager::GetRecordsFromLocalDB(const PermissionUsedReque
 
         int32_t tokenId = recordValue.GetInt(PrivacyFiledConst::FIELD_TOKEN_ID);
         std::string enhancedIdentity = recordValue.GetString(PrivacyFiledConst::FIELD_ENHANCED_IDENTITY);
-        std::string bundleKey = BuildBundleMapKey(tokenId, enhancedIdentity);
+        uint32_t targetTokenId = static_cast<uint32_t>(
+            recordValue.GetInt(PrivacyFiledConst::FIELD_TARGET_TOKEN_ID));
+        std::string bundleKey = BuildBundleMapKey(tokenId, enhancedIdentity, targetTokenId);
         if (!CreateBundleUsedRecordIfNeeded(tokenId, bundleKey, bundleKeySet, bundleKeyToBundleMap,
             bundleKeyToCountMap)) {
             continue;

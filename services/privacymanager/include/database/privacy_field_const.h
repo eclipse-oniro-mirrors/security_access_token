@@ -44,6 +44,8 @@ public:
     const static std::string FIELD_DISABLE_POLICY;
     const static std::string FIELD_ENHANCED_IDENTITY;
     const static std::string FIELD_SUB_PROFILE_ID;
+    const static std::string FIELD_TARGET_TOKEN_ID;
+    const static std::string FIELD_TARGET_BUNDLE_NAME;
 };
 } // namespace AccessToken
 } // namespace Security

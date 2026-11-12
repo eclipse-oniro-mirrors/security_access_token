@@ -46,6 +46,8 @@ bool PermissionUsedRecordParcel::Marshalling(Parcel& out) const
         detailParcel.detail = rejRecord;
         RETURN_IF_FALSE(out.WriteParcelable(&detailParcel));
     }
+    RETURN_IF_FALSE(out.WriteUint32(this->permissionRecord.targetTokenId));
+    RETURN_IF_FALSE(out.WriteString(this->permissionRecord.targetBundleName));
     return true;
 }
 
@@ -87,6 +89,8 @@ PermissionUsedRecordParcel* PermissionUsedRecordParcel::Unmarshalling(Parcel& in
         RELEASE_IF_FALSE(detailParcel != nullptr, permissionRecordParcel);
         permissionRecordParcel->permissionRecord.rejectRecords.emplace_back(detailParcel->detail);
     }
+    RELEASE_IF_FALSE(in.ReadUint32(permissionRecordParcel->permissionRecord.targetTokenId), permissionRecordParcel);
+    RELEASE_IF_FALSE(in.ReadString(permissionRecordParcel->permissionRecord.targetBundleName), permissionRecordParcel);
     return permissionRecordParcel;
 }
 } // namespace AccessToken

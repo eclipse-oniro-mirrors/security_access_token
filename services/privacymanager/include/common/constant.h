@@ -144,6 +144,10 @@ public:
         OP_READ_WRITE_EXTERNAL_DIRECTORY_MEDIA_WRITE = 138,
         OP_READ_WRITE_EXTERNAL_DIRECTORY_OTHER_READ = 139,
         OP_READ_WRITE_EXTERNAL_DIRECTORY_OTHER_WRITE = 140,
+
+        // virtual permission: no entity permission, not in permission_definitions.json,
+        // only used as carrier for automation control usage records
+        OP_AUTOMATION_CONTROL = 141,
     };
 
     enum ErrorCode {
@@ -159,6 +163,7 @@ public:
     static bool TransferOpcodeToPermission(int32_t opCode, std::string& permissionName);
     static bool IsPrivacyPermission(const std::string& permissionName);
     static bool IsCameraPermissionGroup(const std::string& permissionName);
+    static bool IsAutomationControlPermission(int32_t opCode);
 };
 } // namespace AccessToken
 } // namespace Security

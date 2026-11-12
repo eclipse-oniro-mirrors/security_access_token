@@ -694,6 +694,8 @@ void AddRecord(int32_t num, std::vector<GenericValues>& values)
         value.Put(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS, LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED);
         value.Put(PrivacyFiledConst::FIELD_USED_TYPE, static_cast<int>(PermissionUsedType::NORMAL_TYPE));
         value.Put(PrivacyFiledConst::FIELD_ENHANCED_IDENTITY, enhancedIdentity);
+        value.Put(PrivacyFiledConst::FIELD_TARGET_TOKEN_ID, 0);
+        value.Put(PrivacyFiledConst::FIELD_TARGET_BUNDLE_NAME, "");
         values.emplace_back(value);
     }
 
@@ -749,6 +751,8 @@ static void GeneratePermissionRecord(AccessTokenID tokenID)
     value.Put(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS, LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED);
     value.Put(PrivacyFiledConst::FIELD_USED_TYPE, static_cast<int>(PermissionUsedType::NORMAL_TYPE));
     value.Put(PrivacyFiledConst::FIELD_ENHANCED_IDENTITY, enhancedIdentity);
+    value.Put(PrivacyFiledConst::FIELD_TARGET_TOKEN_ID, 0);
+    value.Put(PrivacyFiledConst::FIELD_TARGET_BUNDLE_NAME, "");
     values.emplace_back(value); // background + unlock + normal
 
     value.Remove(PrivacyFiledConst::FIELD_TIMESTAMP);

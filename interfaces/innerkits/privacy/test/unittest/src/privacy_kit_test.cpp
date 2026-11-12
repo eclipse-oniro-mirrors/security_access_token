@@ -5560,3 +5560,224 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecordAdminPolicyCompare002, TestSize.
     AccessTokenKit::DeleteToken(targetToken);
 }
 #endif
+
+#ifdef ENABLE_AUTOMATION_CONTROL
+/**
+ * @tc.name: AddPermissionUsedRecord_AutomationControl
+ * @tc.desc: Add AUTOMATION_CONTROL permission record with targetTokenId, verify success and query.
+ * @tc.type: FUNC
+ * @tc.require: AC-1.1, AC-1.2, AC-1.4
+ */
+HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord_AutomationControl, TestSize.Level0)
+{
+    ASSERT_EQ(RET_SUCCESS, EnablePermissionUsedRecordToggleStatus());
+
+    AddPermParamInfo info;
+    info.tokenId = g_tokenIdA;
+    info.permissionName = "ohos.permission.AUTOMATION_CONTROL";
+    info.successCount = 1;
+    info.failCount = 0;
+    info.targetTokenId = 0;
+    EXPECT_EQ(PrivacyError::ERR_PARAM_INVALID, PrivacyKit::AddPermissionUsedRecord(info));
+
+    info.targetTokenId = g_tokenIdB;
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info));
+
+    info.permissionName = "ohos.permission.CAMERA";
+    info.targetTokenId = g_tokenIdB;
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info));
+
+    PermissionUsedRequest request;
+    PermissionUsedResult result;
+    std::vector<std::string> permissionList;
+    BuildQueryRequest(g_tokenIdA, g_infoParmsA.bundleName, permissionList, request);
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
+    EXPECT_GE(result.bundleRecords.size(), static_cast<uint32_t>(1));
+}
+
+/**
+ * @tc.name: GetPermissionUsedRecords_TargetFields
+ * @tc.desc: GetPermissionUsedRecords returns BundleUsedRecord with targetTokenId and targetBundleName.
+ * @tc.type: FUNC
+ * @tc.require: AC-2.1, AC-2.2, AC-2.5
+ */
+HWTEST_F(PrivacyKitTest, GetPermissionUsedRecords_TargetFields, TestSize.Level0)
+{
+    ASSERT_EQ(RET_SUCCESS, EnablePermissionUsedRecordToggleStatus());
+
+    AddPermParamInfo autoInfo;
+    autoInfo.tokenId = g_tokenIdA;
+    autoInfo.permissionName = "ohos.permission.AUTOMATION_CONTROL";
+    autoInfo.successCount = 1;
+    autoInfo.targetTokenId = g_tokenIdB;
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(autoInfo));
+
+    AddPermParamInfo camInfo;
+    camInfo.tokenId = g_tokenIdA;
+    camInfo.permissionName = "ohos.permission.CAMERA";
+    camInfo.successCount = 1;
+    camInfo.targetTokenId = g_tokenIdB;
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(camInfo));
+
+    PermissionUsedRequest request;
+    PermissionUsedResult result;
+    std::vector<std::string> permissionList;
+    BuildQueryRequest(g_tokenIdA, g_infoParmsA.bundleName, permissionList, request);
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
+
+    bool foundAuto = false;
+    bool foundCam = false;
+    for (const auto& bundleRecord : result.bundleRecords) {
+        for (const auto& permRecord : bundleRecord.permissionRecords) {
+            if (permRecord.permissionName == "ohos.permission.AUTOMATION_CONTROL") {
+                foundAuto = true;
+                EXPECT_EQ(g_tokenIdB, permRecord.targetTokenId);
+                EXPECT_FALSE(permRecord.targetBundleName.empty());
+            }
+            if (permRecord.permissionName == "ohos.permission.CAMERA") {
+                foundCam = true;
+                EXPECT_EQ(0, static_cast<int32_t>(permRecord.targetTokenId));
+                EXPECT_EQ("", permRecord.targetBundleName);
+            }
+        }
+    }
+    EXPECT_TRUE(foundAuto);
+    EXPECT_TRUE(foundCam);
+}
+
+/**
+ * @tc.name: AddPermissionUsedRecord_AutomationControl_Async
+ * @tc.desc: Add AUTOMATION_CONTROL record via async mode, verify target fields stored correctly.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord_AutomationControl_Async, TestSize.Level0)
+{
+    ASSERT_EQ(RET_SUCCESS, EnablePermissionUsedRecordToggleStatus());
+
+    AddPermParamInfo info;
+    info.tokenId = g_tokenIdA;
+    info.permissionName = "ohos.permission.AUTOMATION_CONTROL";
+    info.successCount = 1;
+    info.failCount = 0;
+    info.targetTokenId = g_tokenIdB;
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info, true));
+
+    sleep(1);
+
+    PermissionUsedRequest request;
+    PermissionUsedResult result;
+    std::vector<std::string> permissionList;
+    BuildQueryRequest(g_tokenIdA, g_infoParmsA.bundleName, permissionList, request);
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
+
+    bool foundAuto = false;
+    for (const auto& bundleRecord : result.bundleRecords) {
+        for (const auto& permRecord : bundleRecord.permissionRecords) {
+            if (permRecord.permissionName == "ohos.permission.AUTOMATION_CONTROL") {
+                foundAuto = true;
+                EXPECT_EQ(g_tokenIdB, permRecord.targetTokenId);
+                EXPECT_FALSE(permRecord.targetBundleName.empty());
+            }
+        }
+    }
+    EXPECT_TRUE(foundAuto);
+}
+
+/**
+ * @tc.name: GetPermissionUsedRecords_FilterByPermission
+ * @tc.desc: Get records filtered by permissionList containing only AUTOMATION_CONTROL.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, GetPermissionUsedRecords_FilterByPermission, TestSize.Level0)
+{
+    ASSERT_EQ(RET_SUCCESS, EnablePermissionUsedRecordToggleStatus());
+
+    AddPermParamInfo autoInfo;
+    autoInfo.tokenId = g_tokenIdA;
+    autoInfo.permissionName = "ohos.permission.AUTOMATION_CONTROL";
+    autoInfo.successCount = 1;
+    autoInfo.targetTokenId = g_tokenIdB;
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(autoInfo));
+
+    AddPermParamInfo camInfo;
+    camInfo.tokenId = g_tokenIdA;
+    camInfo.permissionName = "ohos.permission.CAMERA";
+    camInfo.successCount = 1;
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(camInfo));
+
+    PermissionUsedRequest request;
+    PermissionUsedResult result;
+    BuildQueryRequest(g_tokenIdA, g_infoParmsA.bundleName,
+        {"ohos.permission.AUTOMATION_CONTROL"}, request);
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
+
+    bool foundAuto = false;
+    bool foundCam = false;
+    for (const auto& bundleRecord : result.bundleRecords) {
+        for (const auto& permRecord : bundleRecord.permissionRecords) {
+            if (permRecord.permissionName == "ohos.permission.AUTOMATION_CONTROL") {
+                foundAuto = true;
+                EXPECT_EQ(g_tokenIdB, permRecord.targetTokenId);
+                EXPECT_FALSE(permRecord.targetBundleName.empty());
+            }
+            if (permRecord.permissionName == "ohos.permission.CAMERA") {
+                foundCam = true;
+            }
+        }
+    }
+    EXPECT_TRUE(foundAuto);
+    EXPECT_FALSE(foundCam);
+}
+
+/**
+ * @tc.name: RemovePermissionUsedRecords_TargetTokenIdCleanup
+ * @tc.desc: RemovePermissionUsedRecords also cleans records where target_tokenId matches.
+ * @tc.type: FUNC
+ * @tc.require: AC-3.1
+ */
+HWTEST_F(PrivacyKitTest, RemovePermissionUsedRecords_TargetTokenIdCleanup, TestSize.Level0)
+{
+    ASSERT_EQ(RET_SUCCESS, EnablePermissionUsedRecordToggleStatus());
+
+    AddPermParamInfo info;
+    info.tokenId = g_tokenIdA;
+    info.permissionName = "ohos.permission.AUTOMATION_CONTROL";
+    info.successCount = 1;
+    info.targetTokenId = g_tokenIdB;
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(info));
+
+    PermissionUsedRequest request;
+    PermissionUsedResult resultBefore;
+    std::vector<std::string> permissionList;
+    BuildQueryRequest(g_tokenIdA, g_infoParmsA.bundleName, permissionList, request);
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, resultBefore));
+    ASSERT_EQ(static_cast<uint32_t>(1), resultBefore.bundleRecords.size());
+
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::RemovePermissionUsedRecords(g_tokenIdB));
+
+    PermissionUsedResult resultAfter;
+    EXPECT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, resultAfter));
+    EXPECT_EQ(static_cast<uint32_t>(0), resultAfter.bundleRecords.size());
+}
+#else
+/**
+ * @tc.name: AddPermissionUsedRecord_AutomationControl_NotSupported
+ * @tc.desc: Add AUTOMATION_CONTROL record when feature is disabled, verify returns ERR_CAPABILITY_NOT_SUPPORT.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord_AutomationControl_NotSupported, TestSize.Level0)
+{
+    ASSERT_EQ(RET_SUCCESS, EnablePermissionUsedRecordToggleStatus());
+
+    AddPermParamInfo info;
+    info.tokenId = g_tokenIdA;
+    info.permissionName = "ohos.permission.AUTOMATION_CONTROL";
+    info.successCount = 1;
+    info.failCount = 0;
+    info.targetTokenId = g_tokenIdB;
+    EXPECT_EQ(PrivacyError::ERR_CAPABILITY_NOT_SUPPORT, PrivacyKit::AddPermissionUsedRecord(info));
+}
+#endif
