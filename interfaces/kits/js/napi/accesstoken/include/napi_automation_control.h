@@ -53,7 +53,6 @@ private:
         AutomationControlAsyncContext& asyncContext);
     static bool ParseInputGetAutomationControl(const napi_env env, const napi_callback_info info,
         AutomationControlAsyncContext& asyncContext, bool isByController);
-    static void ReturnPromiseResult(napi_env env, const AutomationControlAsyncContext& context, napi_value result);
 #endif
 };
 

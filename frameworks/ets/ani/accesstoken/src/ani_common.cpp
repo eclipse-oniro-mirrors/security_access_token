@@ -183,7 +183,7 @@ void CreateUIExtension(
             int32_t resultCode, const OHOS::AAFwk::Want& result) { uiExtCallback->OnResult(resultCode, result); },
         [uiExtCallback](const OHOS::AAFwk::WantParams& receive) { uiExtCallback->OnReceive(receive); },
         [uiExtCallback](int32_t code, const std::string& name, [[maybe_unused]] const std::string& message) {
-            uiExtCallback->OnError(code, name, name);
+            uiExtCallback->OnError(code, name, message);
         },
         [uiExtCallback](const std::shared_ptr<OHOS::Ace::ModalUIExtensionProxy>& uiProxy) {
             uiExtCallback->OnRemoteReady(uiProxy);

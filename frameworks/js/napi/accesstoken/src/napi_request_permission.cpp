@@ -88,6 +88,9 @@ static void ReturnPromiseResult(napi_env env, RequestAsyncContext& context, napi
         napi_value businessError = GenerateBusinessError(env, jsCode, GetErrorMessage(jsCode, context.result.errorMsg));
         NAPI_CALL_RETURN_VOID(env, napi_reject_deferred(env, context.deferred, businessError));
     } else {
+        if (result == nullptr) {
+            NAPI_CALL_RETURN_VOID(env, napi_get_undefined(env, &result));
+        }
         NAPI_CALL_RETURN_VOID(env, napi_resolve_deferred(env, context.deferred, result));
     }
     context.deferred = nullptr;
@@ -99,6 +102,9 @@ static void ReturnCallbackResult(napi_env env, const RequestAsyncContext& contex
     if (context.result.errorCode != RET_SUCCESS) {
         int32_t jsCode = GetJsErrorCode(context.result.errorCode);
         businessError = GenerateBusinessError(env, jsCode, GetErrorMessage(jsCode, context.result.errorMsg));
+    }
+    if (result == nullptr) {
+        NAPI_CALL_RETURN_VOID(env, napi_get_undefined(env, &result));
     }
     napi_value results[ASYNC_CALL_BACK_VALUES_NUM] = { businessError, result };
 
@@ -363,7 +369,7 @@ static napi_value WrapRequestResult(const napi_env& env, const std::vector<std::
 
     napi_value objErrorReason;
     NAPI_CALL(env, napi_create_array(env, &objErrorReason));
-    for (size_t i = 0; i < grantResults.size(); i++) {
+    for (size_t i = 0; i < errorReasons.size(); i++) {
         napi_value nErrorReason = nullptr;
         NAPI_CALL(env, napi_create_int32(env, errorReasons[i], &nErrorReason));
         NAPI_CALL(env, napi_set_element(env, objErrorReason, i, nErrorReason));
@@ -803,7 +809,7 @@ static void CreateUIExtension(std::shared_ptr<RequestAsyncContext> asyncContext)
             uiExtCallback->OnReceive(receive);
         },
         [uiExtCallback](int32_t code, const std::string &name, [[maybe_unused]] const std::string &message) {
-            uiExtCallback->OnError(code, name, name);
+            uiExtCallback->OnError(code, name, message);
         },
         [uiExtCallback](const std::shared_ptr<Ace::ModalUIExtensionProxy> &uiProxy) {
             uiExtCallback->OnRemoteReady(uiProxy);
@@ -1086,16 +1092,16 @@ napi_value NapiRequestPermission::GetPermissionsStatus(napi_env env, napi_callba
     }
 
     napi_value result = nullptr;
-    napi_create_promise(env, &(asyncContext->deferred), &result); // create delay promise object
+    NAPI_CALL(env, napi_create_promise(env, &(asyncContext->deferred), &result)); // create delay promise object
 
     napi_value resource = nullptr; // resource name
-    napi_create_string_utf8(env, "GetPermissionsStatus", NAPI_AUTO_LENGTH, &resource);
+    NAPI_CALL(env, napi_create_string_utf8(env, "GetPermissionsStatus", NAPI_AUTO_LENGTH, &resource));
 
-    napi_create_async_work(
+    NAPI_CALL(env, napi_create_async_work(
         env, nullptr, resource, GetPermissionsStatusExecute, GetPermissionsStatusComplete,
-        reinterpret_cast<void*>(asyncContext), &(asyncContext->work));
+        reinterpret_cast<void*>(asyncContext), &(asyncContext->work)));
     // add async work handle to the napi queue and wait for result
-    napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_default);
+    NAPI_CALL(env, napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_default));
 
     LOGD(ATM_DOMAIN, ATM_TAG, "GetPermissionsStatus end.");
     context.release();

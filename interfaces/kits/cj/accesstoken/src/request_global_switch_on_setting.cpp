@@ -178,7 +178,7 @@ static Ace::ModalUIExtensionCallbacks BindCallbacks(std::shared_ptr<SwitchOnSett
             uiExtCallback->OnReceive(request);
         },
         [uiExtCallback](int32_t code, const std::string& name, [[maybe_unused]]const std::string& message) {
-            uiExtCallback->OnError(code, name, name);
+            uiExtCallback->OnError(code, name, message);
         },
         [uiExtCallback](const std::shared_ptr<OHOS::Ace::ModalUIExtensionProxy>& uiProxy) {
             uiExtCallback->OnRemoteReady(uiProxy);

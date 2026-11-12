@@ -676,6 +676,77 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, MigrateInstalledBundles_HapBundleNa
 }
 
 /**
+ * @tc.name: MigrateInstalledBundles_UidUserMismatch
+ * @tc.desc: uid whose user part differs from hapBaseInfo.userID fails ValidateMigratedInfo
+ *           with ERR_PARAM_INVALID.
+ * @tc.type: FUNC
+ */
+HWTEST_F(MigrateInstalledBundlesServiceTest, MigrateInstalledBundles_UidUserMismatch, TestSize.Level1)
+{
+    MockNativeToken mock("foundation");
+
+    HapInfoParams info = TestCommon::GetInfoManagerTestSystemInfoParms();
+    info.bundleName = "com.example.uidusermismatch";
+    info.appIDDesc = info.bundleName;
+
+    HapBaseInfoIdl baseInfo;
+    baseInfo.bundleName = info.bundleName;
+    baseInfo.userID = info.userID;
+    baseInfo.instIndex = 0;
+
+    MigratedInfoIdl migratedInfo;
+    migratedInfo.bundleName = info.bundleName;
+    migratedInfo.pathList.hapPaths = { info.bundleName };
+    migratedInfo.hapBaseInfoList = { baseInfo };
+    migratedInfo.uidList = { UID_TRANSFORM_DIVISOR * 100 + 21201 };
+    migratedInfo.reservedTypeList = { ReservedTypeIdl::NONE };
+
+    auto service = DelayedSingleton<AccessTokenManagerService>::GetInstance();
+    ASSERT_NE(nullptr, service);
+    std::vector<BundleMigrateResultIdl> results;
+    EXPECT_EQ(RET_SUCCESS, service->MigrateInstalledBundles({ migratedInfo }, results));
+    ASSERT_EQ(1u, results.size());
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, results[0].errcode);
+}
+
+/**
+ * @tc.name: MigrateInstalledBundles_SingleBundleInvalidUid
+ * @tc.desc: MigrateSingleBundle with a format-invalid uid or a uid owned by another user
+ *           fails ValidateMigratedInfo with ERR_PARAM_INVALID.
+ * @tc.type: FUNC
+ */
+HWTEST_F(MigrateInstalledBundlesServiceTest, MigrateInstalledBundles_SingleBundleInvalidUid, TestSize.Level1)
+{
+    MockNativeToken mock("foundation");
+
+    HapInfoParams info = TestCommon::GetInfoManagerTestSystemInfoParms();
+    info.bundleName = "com.example.invaliduidformat";
+    info.appIDDesc = info.bundleName;
+
+    HapBaseInfoIdl baseInfo;
+    baseInfo.bundleName = info.bundleName;
+    baseInfo.userID = info.userID;
+    baseInfo.instIndex = 0;
+
+    MigratedInfoIdl migratedInfo;
+    migratedInfo.bundleName = info.bundleName;
+    migratedInfo.pathList.hapPaths = { info.bundleName };
+    migratedInfo.hapBaseInfoList = { baseInfo };
+    migratedInfo.uidList = { UID_TRANSFORM_DIVISOR * 1 + 201 };
+    migratedInfo.reservedTypeList = { ReservedTypeIdl::NONE };
+
+    BundleMigrateResultIdl result;
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
+        AccessTokenMigrationManager::GetInstance().MigrateSingleBundle(migratedInfo, result));
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, result.errcode);
+
+    migratedInfo.uidList = { UID_TRANSFORM_DIVISOR * 100 + 21201 };
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
+        AccessTokenMigrationManager::GetInstance().MigrateSingleBundle(migratedInfo, result));
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, result.errcode);
+}
+
+/**
  * @tc.name: MigrateInstalledBundles_DuplicateUidInBundle
  * @tc.desc: Duplicate UID within a single bundle request is caught by the migrated-set
  *           mechanism: first occurrence passes the check, second occurrence conflicts.
@@ -832,10 +903,10 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, MigrateInstalledBundles_CachedUidDi
 
     auto infoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenIdEx.tokenIdExStruct.tokenID);
     ASSERT_NE(nullptr, infoPtr);
-    infoPtr->SetUid(20021001); // set a valid UID different from migration UID
+    infoPtr->SetUid(221001); // set a valid UID different from migration UID
 
     MigratedInfoIdl migratedInfo;
-    BuildMigratedInfo(info, tokenIdEx.tokenIDEx, 20021002, migratedInfo);
+    BuildMigratedInfo(info, tokenIdEx.tokenIDEx, 221002, migratedInfo);
 
     auto service = DelayedSingleton<AccessTokenManagerService>::GetInstance();
     ASSERT_NE(nullptr, service);
@@ -844,7 +915,7 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, MigrateInstalledBundles_CachedUidDi
     ASSERT_EQ(1u, results.size());
     EXPECT_EQ(AccessTokenError::ERR_MIGRATION_UID_EXISTED, results[0].errcode);
     // Original UID must be preserved on failure
-    EXPECT_EQ(20021001u, infoPtr->GetUid());
+    EXPECT_EQ(221001u, infoPtr->GetUid());
 
     EXPECT_EQ(RET_SUCCESS,
         AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenIdEx.tokenIdExStruct.tokenID));
@@ -872,7 +943,7 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, MigrateInstalledBundles_BasicSucces
     ASSERT_EQ(RET_SUCCESS, AllocHapTokenLocally(info, policy, tokenIdEx));
 
     MigratedInfoIdl migratedInfo;
-    BuildMigratedInfo(info, tokenIdEx.tokenIDEx, 20021101, migratedInfo);
+    BuildMigratedInfo(info, tokenIdEx.tokenIDEx, 221101, migratedInfo);
 
     auto service = DelayedSingleton<AccessTokenManagerService>::GetInstance();
     ASSERT_NE(nullptr, service);
@@ -914,7 +985,7 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, MigrateInstalledBundles_InvalidMode
     ASSERT_EQ(RET_SUCCESS, AllocHapTokenLocally(info, policy, tokenIdEx));
 
     MigratedInfoIdl migratedInfo;
-    BuildMigratedInfo(info, tokenIdEx.tokenIDEx, 20021701, migratedInfo, 1);
+    BuildMigratedInfo(info, tokenIdEx.tokenIDEx, 221701, migratedInfo, 1);
 
     auto service = DelayedSingleton<AccessTokenManagerService>::GetInstance();
     ASSERT_NE(nullptr, service);
@@ -946,7 +1017,7 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, MigrateInstalledBundles_PreInstalle
     ASSERT_EQ(RET_SUCCESS, AllocHapTokenLocally(info, policy, tokenIdEx));
 
     MigratedInfoIdl migratedInfo;
-    BuildMigratedInfo(info, tokenIdEx.tokenIDEx, 20021201, migratedInfo);
+    BuildMigratedInfo(info, tokenIdEx.tokenIDEx, 221201, migratedInfo);
     migratedInfo.pathList.isPreInstalled = true;
     migratedInfo.reservedTypeList = { ReservedTypeIdl::RESERVED_IDENTITY };
 
@@ -990,7 +1061,7 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, MigrateInstalledBundles_NewToken, T
     migratedInfo.pathList.isPreInstalled = false;
     migratedInfo.mode = MultipleModeEnumIdl::DEFAULT_OR_MAIN_MODE;
     migratedInfo.hapBaseInfoList = { baseInfo };
-    migratedInfo.uidList = { 20021301 };
+    migratedInfo.uidList = { 221301 };
     migratedInfo.reservedTypeList = { ReservedTypeIdl::NONE };
 
     auto service = DelayedSingleton<AccessTokenManagerService>::GetInstance();
@@ -1051,7 +1122,7 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, MigrateInstalledBundles_ReservedDat
     ASSERT_NE(nullptr, AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId));
 
     MigratedInfoIdl migratedInfo;
-    BuildMigratedInfo(info, tokenIdEx.tokenIDEx, 20021310, migratedInfo);
+    BuildMigratedInfo(info, tokenIdEx.tokenIDEx, 221310, migratedInfo);
     migratedInfo.reservedTypeList = { ReservedTypeIdl::RESERVED_DATA };
 
     auto service = DelayedSingleton<AccessTokenManagerService>::GetInstance();
@@ -1108,7 +1179,7 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, MigrateInstalledBundles_NewTokenRes
     migratedInfo.pathList.isPreInstalled = false;
     migratedInfo.mode = MultipleModeEnumIdl::DEFAULT_OR_MAIN_MODE;
     migratedInfo.hapBaseInfoList = { baseInfo };
-    migratedInfo.uidList = { 20021311 };
+    migratedInfo.uidList = { 221311 };
     migratedInfo.reservedTypeList = { ReservedTypeIdl::NONE };
 
     auto service = DelayedSingleton<AccessTokenManagerService>::GetInstance();
@@ -1148,13 +1219,13 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, MigrateInstalledBundles_DualMode, T
     mainBaseInfo.instIndex = 0;
 
     MigratedInfoIdl mainMigrated;
-    BuildDualModeMigratedInfo(mainBaseInfo, MultipleModeEnumIdl::DEFAULT_OR_MAIN_MODE, 20021901, mainMigrated);
+    BuildDualModeMigratedInfo(mainBaseInfo, MultipleModeEnumIdl::DEFAULT_OR_MAIN_MODE, 221901, mainMigrated);
 
     HapBaseInfoIdl subBaseInfo = mainBaseInfo;
     subBaseInfo.instIndex = MAIN_CLONE_INDEX_BASE;
 
     MigratedInfoIdl subMigrated;
-    BuildDualModeMigratedInfo(subBaseInfo, MultipleModeEnumIdl::SUB_MODE, 20021902, subMigrated);
+    BuildDualModeMigratedInfo(subBaseInfo, MultipleModeEnumIdl::SUB_MODE, 221902, subMigrated);
 
     auto service = DelayedSingleton<AccessTokenManagerService>::GetInstance();
     ASSERT_NE(nullptr, service);
@@ -1201,7 +1272,7 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, MigrateInstalledBundles_BatchMixedV
     invalidInfo.bundleName = "bad bundle name";
 
     MigratedInfoIdl validInfo;
-    BuildMigratedInfo(info, tokenIdEx.tokenIDEx, 20021401, validInfo);
+    BuildMigratedInfo(info, tokenIdEx.tokenIDEx, 221401, validInfo);
 
     auto service = DelayedSingleton<AccessTokenManagerService>::GetInstance();
     ASSERT_NE(nullptr, service);
@@ -1248,7 +1319,7 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, MigrateInstalledBundles_UidConflict
     ASSERT_EQ(RET_SUCCESS, AllocHapTokenLocally(info, policy, tokenIdEx));
 
     MigratedInfoIdl migratedInfo;
-    BuildMigratedInfo(info, tokenIdEx.tokenIDEx, 20023101, migratedInfo);
+    BuildMigratedInfo(info, tokenIdEx.tokenIDEx, 223101, migratedInfo);
 
     auto service = DelayedSingleton<AccessTokenManagerService>::GetInstance();
     ASSERT_NE(nullptr, service);
@@ -1289,7 +1360,7 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, MigrateInstalledBundles_CrossBundle
     ASSERT_EQ(RET_SUCCESS, AllocHapTokenLocally(infoA, policyA, tokenIdExA));
 
     MigratedInfoIdl migratedInfoA;
-    BuildMigratedInfo(infoA, tokenIdExA.tokenIDEx, 20023111, migratedInfoA);
+    BuildMigratedInfo(infoA, tokenIdExA.tokenIDEx, 223111, migratedInfoA);
 
     auto service = DelayedSingleton<AccessTokenManagerService>::GetInstance();
     ASSERT_NE(nullptr, service);
@@ -1308,7 +1379,7 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, MigrateInstalledBundles_CrossBundle
     ASSERT_EQ(RET_SUCCESS, AllocHapTokenLocally(infoB, policyB, tokenIdExB));
 
     MigratedInfoIdl migratedInfoB;
-    BuildMigratedInfo(infoB, tokenIdExB.tokenIDEx, 20023111, migratedInfoB);
+    BuildMigratedInfo(infoB, tokenIdExB.tokenIDEx, 223111, migratedInfoB);
 
     std::vector<BundleMigrateResultIdl> resultsB;
     EXPECT_EQ(RET_SUCCESS, service->MigrateInstalledBundles({ migratedInfoB }, resultsB));
@@ -1349,7 +1420,7 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, MigrateInstalledBundles_RetryAfterF
     infoPtr->SetUid(203201);
 
     MigratedInfoIdl migratedInfo;
-    BuildMigratedInfo(info, tokenIdEx.tokenIDEx, 20023202, migratedInfo);
+    BuildMigratedInfo(info, tokenIdEx.tokenIDEx, 223202, migratedInfo);
 
     auto service = DelayedSingleton<AccessTokenManagerService>::GetInstance();
     ASSERT_NE(nullptr, service);
@@ -1495,7 +1566,7 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, VerifyMigratedBundle_WorkerHapSignV
     ASSERT_EQ(RET_SUCCESS, AllocHapTokenLocally(info, policy, tokenIdEx));
 
     MigratedInfoIdl migratedInfo;
-    BuildMigratedInfo(info, tokenIdEx.tokenIDEx, 20022001, migratedInfo);
+    BuildMigratedInfo(info, tokenIdEx.tokenIDEx, 222001, migratedInfo);
 
     // Inject verification failure before migration — worker will see this
     mockAdapter_.verifyRet_ = AccessTokenError::ERR_PARAM_INVALID;
@@ -1536,7 +1607,7 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, VerifyMigratedBundle_WorkerBundleNa
     ASSERT_EQ(RET_SUCCESS, AllocHapTokenLocally(info, policy, tokenIdEx));
 
     MigratedInfoIdl migratedInfo;
-    BuildMigratedInfo(info, tokenIdEx.tokenIDEx, 20022101, migratedInfo);
+    BuildMigratedInfo(info, tokenIdEx.tokenIDEx, 222101, migratedInfo);
     // Override hapPaths to a different name — mock sets verified bundleName to this value
     migratedInfo.pathList.hapPaths = { "com.example.mismatch" };
 
@@ -1574,7 +1645,7 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, VerifyMigratedBundle_WorkerSuccess,
     ASSERT_EQ(RET_SUCCESS, AllocHapTokenLocally(info, policy, tokenIdEx));
 
     MigratedInfoIdl migratedInfo;
-    BuildMigratedInfo(info, tokenIdEx.tokenIDEx, 20022201, migratedInfo);
+    BuildMigratedInfo(info, tokenIdEx.tokenIDEx, 222201, migratedInfo);
 
     // Configure mock adapter to return a verified bundle name matching migratedInfo.bundleName
     mockAdapter_.bundleName_ = info.bundleName;
@@ -1645,7 +1716,7 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, MigrateInstalledBundles_KitHapBaseI
     baseInfo.bundleName = info.bundleName;
     baseInfo.instIndex = 0;
     migratedInfo.hapBaseInfoList = { baseInfo };
-    migratedInfo.uidList = { 20021615 };
+    migratedInfo.uidList = { 221615 };
     migratedInfo.reservedTypeList = { ReservedType::NONE };
 
     auto service = DelayedSingleton<AccessTokenManagerService>::GetInstance();
@@ -1787,7 +1858,7 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, MigrateInstalledBundles_DuplicateBu
     ASSERT_EQ(RET_SUCCESS, AllocHapTokenLocally(infoA, policyA, tokenIdExA));
 
     MigratedInfoIdl migratedInfoA;
-    BuildMigratedInfo(infoA, tokenIdExA.tokenIDEx, 20021101, migratedInfoA);
+    BuildMigratedInfo(infoA, tokenIdExA.tokenIDEx, 221101, migratedInfoA);
 
     auto service = DelayedSingleton<AccessTokenManagerService>::GetInstance();
     ASSERT_NE(nullptr, service);
@@ -1890,7 +1961,7 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, MigrateInstalledBundles_SecondHapBu
     migratedInfo.pathList.hapPaths = { info.bundleName };
     migratedInfo.mode = MultipleModeEnumIdl::DEFAULT_OR_MAIN_MODE;
     migratedInfo.hapBaseInfoList = { baseInfoOk, baseInfoBad };
-    migratedInfo.uidList = { 20021101, 20021102 };
+    migratedInfo.uidList = { 221101, 221102 };
     migratedInfo.reservedTypeList = { ReservedTypeIdl::NONE, ReservedTypeIdl::NONE };
 
     auto service = DelayedSingleton<AccessTokenManagerService>::GetInstance();
@@ -1962,7 +2033,7 @@ HWTEST_F(MigrateInstalledBundlesServiceTest, AppendHapTokenDbInfo_TokenNotInDbCa
     ASSERT_EQ(RET_SUCCESS, AllocHapTokenLocally(info, policy, tokenIdEx));
 
     MigratedInfoIdl migratedInfo;
-    BuildMigratedInfo(info, tokenIdEx.tokenIDEx, 201201, migratedInfo);
+    BuildMigratedInfo(info, tokenIdEx.tokenIDEx, 221202, migratedInfo);
 
     auto& manager = AccessTokenMigrationManager::GetInstance();
     auto service = DelayedSingleton<AccessTokenManagerService>::GetInstance();

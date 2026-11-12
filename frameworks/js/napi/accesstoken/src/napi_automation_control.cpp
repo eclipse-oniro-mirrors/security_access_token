@@ -26,7 +26,7 @@ namespace Security {
 namespace AccessToken {
 
 #ifdef ENABLE_AUTOMATION_CONTROL
-void NapiAutomationControl::ReturnPromiseResult(napi_env env, const AutomationControlAsyncContext& context,
+static void ReturnPromiseResult(napi_env env, AutomationControlAsyncContext& context,
     napi_value result)
 {
     if (context.errorCode != RET_SUCCESS) {
@@ -36,6 +36,7 @@ void NapiAutomationControl::ReturnPromiseResult(napi_env env, const AutomationCo
     } else {
         NAPI_CALL_RETURN_VOID(env, napi_resolve_deferred(env, context.deferred, result));
     }
+    context.deferred = nullptr;
 }
 
 static bool ParseAutomationControlTargetElement(napi_env env, napi_value element,
