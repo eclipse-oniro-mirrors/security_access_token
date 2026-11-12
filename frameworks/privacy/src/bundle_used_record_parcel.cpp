@@ -33,7 +33,7 @@ bool BundleUsedRecordParcel::Marshalling(Parcel& out) const
     for (const auto& permRecord : this->bundleRecord.permissionRecords) {
         PermissionUsedRecordParcel permRecordParcel;
         permRecordParcel.permissionRecord = permRecord;
-        out.WriteParcelable(&permRecordParcel);
+        RETURN_IF_FALSE(out.WriteParcelable(&permRecordParcel));
     }
     return true;
 }

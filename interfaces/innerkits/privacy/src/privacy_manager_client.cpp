@@ -30,6 +30,7 @@ namespace {
 const static int32_t MAX_CALLBACK_SIZE = 200;
 const static int32_t MAX_DISABLE_CALLBACK_SIZE = 20;
 const static int32_t MAX_PERM_LIST_SIZE = 1024;
+const static int32_t MAX_SUBSCRIBE_RETRY_TIMES = 3;
 constexpr const char* CAMERA_PERMISSION_NAME = "ohos.permission.CAMERA";
 constexpr const char* DVR_CAMERA_PERMISSION_NAME = "ohos.permission.DVRCAMERA";
 static const int32_t SA_ID_PRIVACY_MANAGER_SERVICE = 3505;
@@ -136,25 +137,29 @@ std::function<void(int32_t, const std::string &)> PrivacySaAddCallback()
     };
 }
 
-void PrivacyManagerClient::SubscribeSystemAbility(const SubscribeSACallbackFunc& callbackFunc)
+bool PrivacyManagerClient::SubscribeSystemAbility(const SubscribeSACallbackFunc& callbackFunc)
 {
     sptr<ISystemAbilityStatusChange> statusChangeListener =
         new (std::nothrow) SystemAbilityStatusChangeListener(callbackFunc);
     if (statusChangeListener == nullptr) {
         LOGE(PRI_DOMAIN, PRI_TAG, "StatusChangeListener is nullptr.");
-        return;
+        return false;
     }
-    auto saProxy = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    if (saProxy == nullptr) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "SaProxy is NULL.");
-        return;
+    for (int32_t i = 0; i < MAX_SUBSCRIBE_RETRY_TIMES; i++) {
+        auto saProxy = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+        if (saProxy == nullptr) {
+            LOGE(PRI_DOMAIN, PRI_TAG, "SaProxy is NULL, retry times %{public}d.", i + 1);
+            continue;
+        }
+        int32_t ret = saProxy->SubscribeSystemAbility(SA_ID_PRIVACY_MANAGER_SERVICE, statusChangeListener);
+        if (ret == ERR_OK) {
+            LOGI(PRI_DOMAIN, PRI_TAG, "SubscribeSystemAbility success.");
+            return true;
+        }
+        LOGE(PRI_DOMAIN, PRI_TAG, "SubscribeSystemAbility failed, ret %{public}d, retry times %{public}d.",
+            ret, i + 1);
     }
-    int32_t ret = saProxy->SubscribeSystemAbility(SA_ID_PRIVACY_MANAGER_SERVICE, statusChangeListener);
-    if (ret != ERR_OK) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "SubscribeSystemAbility is failed.");
-        return;
-    }
-    return;
+    return false;
 }
 
 void PrivacyManagerClient::OnAddPrivacySa(void)
@@ -1000,20 +1005,28 @@ int32_t PrivacyManagerClient::UnRegisterPermDisablePolicyCallback(
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
 
-    std::lock_guard<std::mutex> lock(disableCbkMutex_);
-    auto it = disableCbkMap_.find(callback);
-    if (it == disableCbkMap_.end()) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Callback has not register.");
-        return PrivacyError::ERR_CALLBACK_NOT_EXIST;
-    }
-    if (it->second == nullptr) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Callback is null.");
-        return PrivacyError::ERR_CALLBACK_NOT_EXIST;
+    sptr<PermDisablePolicyChangeCallback> callbackWrap;
+    {
+        std::lock_guard<std::mutex> lock(disableCbkMutex_);
+        auto it = disableCbkMap_.find(callback);
+        if (it == disableCbkMap_.end()) {
+            LOGE(PRI_DOMAIN, PRI_TAG, "Callback has not register.");
+            return PrivacyError::ERR_CALLBACK_NOT_EXIST;
+        }
+        if (it->second == nullptr) {
+            LOGE(PRI_DOMAIN, PRI_TAG, "Callback is null.");
+            return PrivacyError::ERR_CALLBACK_NOT_EXIST;
+        }
+        callbackWrap = it->second;
     }
 
-    int32_t result = proxy->UnRegisterPermDisablePolicyCallback(it->second->AsObject());
+    int32_t result = proxy->UnRegisterPermDisablePolicyCallback(callbackWrap->AsObject());
     if (result == RET_SUCCESS) {
-        disableCbkMap_.erase(it);
+        std::lock_guard<std::mutex> lock(disableCbkMutex_);
+        auto it = disableCbkMap_.find(callback);
+        if (it != disableCbkMap_.end() && it->second == callbackWrap) {
+            disableCbkMap_.erase(it);
+        }
     } else {
         result = ConvertResult(result);
     }
@@ -1058,8 +1071,9 @@ void PrivacyManagerClient::OnRemoteDiedHandle()
     ReleaseProxy();
     InitProxy();
     if (!isSubscribeSA_) {
-        isSubscribeSA_ = true;
-        SubscribeSystemAbility(PrivacySaAddCallback());
+        if (SubscribeSystemAbility(PrivacySaAddCallback())) {
+            isSubscribeSA_ = true;
+        }
     }
 }
 
