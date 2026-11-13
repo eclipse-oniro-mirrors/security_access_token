@@ -113,7 +113,7 @@ OH_AT_PermissionOperResult MapGrantResult(int32_t grantResult)
         case GRANT_RESULT_USER_DENIED:
             return OH_AT_PERMISSION_OPER_SETTING;
         case GRANT_RESULT_NOT_SUPPORTED:
-            return OH_AT_PERMISSION_OPER_CONSTRAINTS_NOT_MET;
+            return OH_AT_PERMISSION_OPER_POP_UP_RESTRICTED;
         case GRANT_RESULT_NOT_DECLARED:
             return OH_AT_PERMISSION_OPER_NOT_DECLARED;
         default:
