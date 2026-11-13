@@ -250,6 +250,7 @@ public:
     static std::shared_ptr<NativeRdb::RdbStore> GetRdbStore(
         NativeRdb::RdbStoreConfig& config, int32_t a, RdbOpenCallback callback, int32_t& res);
     static void ClearCache();
+    static int DeleteRdbStore(const NativeRdb::RdbStoreConfig& config, bool shouldClose = true);
 };
 } // namespace NativeRdb
 } // namespace OHOS

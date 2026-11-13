@@ -15,6 +15,8 @@
 
 #include "accesstoken_info_utils.h"
 
+#include <algorithm>
+#include <cctype>
 #include <unordered_set>
 
 #include "accesstoken_common_log.h"
@@ -39,6 +41,17 @@ static constexpr int32_t BASE_USER_RANGE = 200000;
 bool AccessTokenInfoUtils::IsSystemResource(const std::string& bundleName)
 {
     return std::string(SYSTEM_RESOURCE_BUNDLE_NAME) == bundleName;
+}
+
+bool AccessTokenInfoUtils::IsPlaceholderModuleName(const std::string& moduleName)
+{
+    size_t moduleNameMinSize = 2; // placeholder module name should be at least 2 characters, e.g. "#0"
+    if (moduleName.size() < moduleNameMinSize || moduleName[0] != '#') {
+        return false;
+    }
+    return std::all_of(moduleName.begin() + 1, moduleName.end(), [](unsigned char ch) {
+        return std::isdigit(ch) != 0;
+    });
 }
 
 bool AccessTokenInfoUtils::CheckSpecifiedFlag(uint32_t tokenAttr, uint32_t flag)

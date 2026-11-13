@@ -570,7 +570,6 @@ void AccessTokenMigrationManager::Initialize()
 {
     if (IsMigrationCompleted()) {
         AccessTokenIDManager::GetInstance().SetMigrationDone();
-        // todo: install_session_manager SetMigrationDone
 #if defined(IS_SUPPORT_HAP_RUNNING) && defined(SPM_DATA_ENABLE)
         InstallSessionManager::GetInstance().SetMigrationDone();
 #endif

@@ -184,7 +184,7 @@ HWTEST_F(HapSignVerifyManagerTest, CheckHapsSignInfo005, TestSize.Level1)
 
 /**
  * @tc.name: CheckHapsSignInfo006
- * @tc.desc: Hap path not allowed.
+ * @tc.desc: Non-existent hap path returns ERR_VERIFY_FILE_NOT_EXIST.
  * @tc.type: FUNC
  */
 HWTEST_F(HapSignVerifyManagerTest, CheckHapsSignInfo006, TestSize.Level1)
@@ -193,8 +193,7 @@ HWTEST_F(HapSignVerifyManagerTest, CheckHapsSignInfo006, TestSize.Level1)
     HapSignVerifyManager manager(adapter);
     TrustedBundleInfoInner info;
     bool isChanged = true;
-    
-    // The check is bypassed in UT, so here is a success
+
     EXPECT_EQ(ERR_VERIFY_FILE_NOT_EXIST,
         manager.CheckHapsSignInfo(
             HapSignVerifyManager::MakeVerifyParams("bad_path.hap", Security::Verify::VerifyType::Fast, -1),
@@ -310,14 +309,16 @@ static std::pair<TrustedBundleInfoInner, TrustedBundleInfoInner> BuildCameraBund
     };
     info1.moduleData.requestPermission = {
         AppExecFwk::Spm::RequestPermission { .name = "ohos.permission.CAMERA", .requiredFeature = "", },
-        AppExecFwk::Spm::RequestPermission { .name = "ohos.permission.BAD", .requiredFeature = "", }
+        AppExecFwk::Spm::RequestPermission { .name = "ohos.permission.BAD", .requiredFeature = "", },
+        AppExecFwk::Spm::RequestPermission { .name = "ohos.permission.ACCESS_DDK_DRIVERS", .requiredFeature = "", }
     };
     info1.provisionInfo.bundleInfo.bundleName = "com.example.camera";
     info1.provisionInfo.bundleInfo.appIdentifier = "12345";
     info1.provisionInfo.bundleInfo.apl = "system_basic";
     info1.provisionInfo.bundleInfo.appFeature = "hos_system_app";
     info1.provisionInfo.acls.allowedAcls = { "ohos.permission.CAMERA" };
-    info1.provisionInfo.appServiceCapabilities = "{\"ohos.permission.ACCESS_CERT_MANAGER\":\"cert\"}";
+    info1.provisionInfo.appServiceCapabilities =
+        "{\"ohos.permission.ACCESS_DDK_DRIVERS\":\"driver\", \"ohos.permission.CAMERA\":\"camera\"}";
     info1.provisionInfo.appId = "app-id-desc";
     info1.provisionInfo.distributionType = Security::Verify::APP_GALLERY;
     info1.provisionInfo.type = Security::Verify::DEBUG;
@@ -358,7 +359,7 @@ HWTEST_F(HapSignVerifyManagerTest, BuildHapPolicy001, TestSize.Level1)
     EXPECT_EQ(RET_SUCCESS, manager.BuildHapPolicy({info1, info2}, policy, param));
     EXPECT_EQ(APL_SYSTEM_BASIC, policy.apl);
     EXPECT_EQ(3u, policy.permList.size());
-    EXPECT_EQ(3u, policy.permStateList.size());
+    EXPECT_EQ(4u, policy.permStateList.size());
     ASSERT_EQ(2u, policy.aclRequestedList.size());
     ASSERT_EQ(1u, policy.aclExtendedMap.size());
     EXPECT_TRUE(policy.preAuthorizationInfo.empty());
@@ -677,7 +678,7 @@ HWTEST_F(HapSignVerifyManagerTest, BuildOwnerId001, TestSize.Level1)
  */
 HWTEST_F(HapSignVerifyManagerTest, ParseAclExtendedMap001, TestSize.Level1)
 {
-    auto result = HapSignVerifyHelper::ParseAclExtendedMap("");
+    auto result = HapSignVerifyHelper::ParseAclExtendedMap("", {});
     EXPECT_TRUE(result.empty());
 }
 
@@ -688,10 +689,14 @@ HWTEST_F(HapSignVerifyManagerTest, ParseAclExtendedMap001, TestSize.Level1)
  */
 HWTEST_F(HapSignVerifyManagerTest, ParseAclExtendedMap002, TestSize.Level1)
 {
+    std::vector<PermissionStatus> permStateList;
+    PermissionStatus state;
+    state.permissionName = "ohos.permission.ACCESS_DDK_DRIVERS";
+    permStateList.emplace_back(state);
     auto result = HapSignVerifyHelper::ParseAclExtendedMap(
-        "{\"ohos.permission.ACCESS_CERT_MANAGER\":\"cert\"}");
+        "{\"ohos.permission.ACCESS_DDK_DRIVERS\":\"driver\"}", permStateList);
     ASSERT_EQ(1u, result.size());
-    EXPECT_EQ("cert", result["ohos.permission.ACCESS_CERT_MANAGER"]);
+    EXPECT_EQ("driver", result["ohos.permission.ACCESS_DDK_DRIVERS"]);
 }
 
 /**
@@ -701,7 +706,7 @@ HWTEST_F(HapSignVerifyManagerTest, ParseAclExtendedMap002, TestSize.Level1)
  */
 HWTEST_F(HapSignVerifyManagerTest, ParseAclExtendedMap003, TestSize.Level1)
 {
-    auto result = HapSignVerifyHelper::ParseAclExtendedMap("{invalid");
+    auto result = HapSignVerifyHelper::ParseAclExtendedMap("{invalid", {});
     EXPECT_TRUE(result.empty());
 }
 
@@ -712,7 +717,7 @@ HWTEST_F(HapSignVerifyManagerTest, ParseAclExtendedMap003, TestSize.Level1)
  */
 HWTEST_F(HapSignVerifyManagerTest, ParseAclExtendedMap004, TestSize.Level1)
 {
-    auto result = HapSignVerifyHelper::ParseAclExtendedMap("[\"value\"]");
+    auto result = HapSignVerifyHelper::ParseAclExtendedMap("[\"value\"]", {});
     EXPECT_TRUE(result.empty());
 }
 
@@ -724,11 +729,15 @@ HWTEST_F(HapSignVerifyManagerTest, ParseAclExtendedMap004, TestSize.Level1)
  */
 HWTEST_F(HapSignVerifyManagerTest, ParseAclExtendedMap005, TestSize.Level1)
 {
+    std::vector<PermissionStatus> permStateList;
+    PermissionStatus state;
+    state.permissionName = "ohos.permission.ACCESS_DDK_DRIVERS";
+    permStateList.emplace_back(state);
     auto result = HapSignVerifyHelper::ParseAclExtendedMap(
         "{\"ohos.permission.INVALID_FAKE\":\"bad\","
-        "\"ohos.permission.ACCESS_CERT_MANAGER\":\"cert\"}");
+        "\"ohos.permission.ACCESS_DDK_DRIVERS\":\"driver\"}", permStateList);
     ASSERT_EQ(1u, result.size());
-    EXPECT_EQ("cert", result["ohos.permission.ACCESS_CERT_MANAGER"]);
+    EXPECT_EQ("driver", result["ohos.permission.ACCESS_DDK_DRIVERS"]);
     EXPECT_EQ(result.end(), result.find("ohos.permission.INVALID_FAKE"));
 }
 
@@ -740,10 +749,14 @@ HWTEST_F(HapSignVerifyManagerTest, ParseAclExtendedMap005, TestSize.Level1)
  */
 HWTEST_F(HapSignVerifyManagerTest, ParseAclExtendedMap006, TestSize.Level1)
 {
+    std::vector<PermissionStatus> permStateList;
+    PermissionStatus state;
+    state.permissionName = "ohos.permission.ACCESS_DDK_DRIVERS";
+    permStateList.emplace_back(state);
     auto result = HapSignVerifyHelper::ParseAclExtendedMap(
-        "{\"ohos.permission.ACCESS_CERT_MANAGER\":42}");
+        "{\"ohos.permission.ACCESS_DDK_DRIVERS\":42}", permStateList);
     ASSERT_EQ(1u, result.size());
-    EXPECT_EQ("42", result["ohos.permission.ACCESS_CERT_MANAGER"]);
+    EXPECT_EQ("42", result["ohos.permission.ACCESS_DDK_DRIVERS"]);
 }
 
 /**
@@ -753,10 +766,14 @@ HWTEST_F(HapSignVerifyManagerTest, ParseAclExtendedMap006, TestSize.Level1)
  */
 HWTEST_F(HapSignVerifyManagerTest, ParseAclExtendedMap007, TestSize.Level1)
 {
+    std::vector<PermissionStatus> permStateList;
+    PermissionStatus state;
+    state.permissionName = "ohos.permission.ACCESS_DDK_DRIVERS";
+    permStateList.emplace_back(state);
     auto result = HapSignVerifyHelper::ParseAclExtendedMap(
-        "{\"ohos.permission.ACCESS_CERT_MANAGER\":true}");
+        "{\"ohos.permission.ACCESS_DDK_DRIVERS\":true}", permStateList);
     ASSERT_EQ(1u, result.size());
-    EXPECT_EQ("true", result["ohos.permission.ACCESS_CERT_MANAGER"]);
+    EXPECT_EQ("true", result["ohos.permission.ACCESS_DDK_DRIVERS"]);
 }
 
 /**
@@ -1019,32 +1036,6 @@ HWTEST_F(HapSignVerifyManagerTest, AppVerifyAdapter002, TestSize.Level1)
 }
 
 /**
- * @tc.name: CheckHapsSignInfo011
- * @tc.desc: A path sharing a prefix string but not a directory boundary (public_evil) is only
- *           warned, verification still proceeds and returns RET_SUCCESS.
- * @tc.type: FUNC
- */
-HWTEST_F(HapSignVerifyManagerTest, CheckHapsSignInfo011, TestSize.Level1)
-{
-    const std::string boundaryDir = "/data/app/el1/bundle/public_evil";
-    std::filesystem::create_directory(boundaryDir);
-    const std::string boundaryPath = boundaryDir + "/evil.hap";
-    std::ofstream file(boundaryPath);
-    file << "evil";
-    file.close();
-
-    MockAppVerifyAdapter adapter;
-    HapSignVerifyManager manager(adapter);
-    TrustedBundleInfoInner info;
-    bool isChanged = true;
-    EXPECT_EQ(RET_SUCCESS, manager.CheckHapsSignInfo(
-        HapSignVerifyManager::MakeVerifyParams(boundaryPath, Security::Verify::VerifyType::Fast, -1),
-        false, info, isChanged));
-
-    std::filesystem::remove_all(boundaryDir);
-}
-
-/**
  * @tc.name: CheckPermissionRequestValid002
  * @tc.desc: A high-APL system_grant permission with no provisionEnable fails InitPermissionList,
  *           returning ERR_PERM_REQUEST_CFG_FAILED.
@@ -1182,7 +1173,7 @@ HWTEST_F(HapSignVerifyManagerTest, FillAclExtendedMap001, TestSize.Level1)
 {
     std::map<std::string, std::string> aclExtendedMap;
     aclExtendedMap["x"] = "y";
-    HapSignVerifyHelper::FillAclExtendedMap({}, aclExtendedMap);
+    HapSignVerifyHelper::FillAclExtendedMap({}, {}, aclExtendedMap);
     EXPECT_TRUE(aclExtendedMap.empty());
 }
 
@@ -1233,8 +1224,12 @@ HWTEST_F(HapSignVerifyManagerTest, ParseAclExtendedMap008, TestSize.Level1)
 {
     EXPECT_TRUE(SetPermissionBriefEnabled("ohos.permission.CAMERA", false));
 
+    std::vector<PermissionStatus> permStateList;
+    PermissionStatus state;
+    state.permissionName = "ohos.permission.CAMERA";
+    permStateList.emplace_back(state);
     auto result = HapSignVerifyHelper::ParseAclExtendedMap(
-        "{\"ohos.permission.CAMERA\":\"cert\"}");
+        "{\"ohos.permission.CAMERA\":\"cert\"}", permStateList);
     EXPECT_TRUE(result.empty());
 
     EXPECT_TRUE(SetPermissionBriefEnabled("ohos.permission.CAMERA", true));
@@ -1289,32 +1284,6 @@ HWTEST_F(HapSignVerifyManagerTest, CheckHapsSignInfo008, TestSize.Level1)
     EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, failManager.CheckHapsSignInfo(
         HapSignVerifyManager::MakeVerifyParams(TEST_PATH, Security::Verify::VerifyType::Fast, -1),
         false, failInfo, failChanged));
-}
-
-/**
- * @tc.name: CheckHapsSignInfo009
- * @tc.desc: Existing hap path outside allowed directories is only warned, verification still
- *           proceeds and returns RET_SUCCESS.
- * @tc.type: FUNC
- */
-HWTEST_F(HapSignVerifyManagerTest, CheckHapsSignInfo009, TestSize.Level1)
-{
-    const std::string evilDir = "/data/local/tmp/hapverify_evil";
-    std::filesystem::create_directory(evilDir);
-    const std::string evilPath = evilDir + "/evil.hap";
-    std::ofstream file(evilPath);
-    file << "evil";
-    file.close();
-
-    MockAppVerifyAdapter adapter;
-    HapSignVerifyManager manager(adapter);
-    TrustedBundleInfoInner info;
-    bool isChanged = true;
-    EXPECT_EQ(RET_SUCCESS, manager.CheckHapsSignInfo(
-        HapSignVerifyManager::MakeVerifyParams(evilPath, Security::Verify::VerifyType::Fast, -1),
-        false, info, isChanged));
-
-    std::filesystem::remove_all(evilDir);
 }
 
 /**
@@ -1465,6 +1434,63 @@ HWTEST_F(HapSignVerifyManagerTest, SideloadDerivationMatrix_CheckPermRequestVali
         EXPECT_EQ(PermissionRulesEnum::PERMISSION_ACL_RULE, denyResult.permCheckResult.rule);
         EXPECT_EQ("ohos.permission.KERNEL_ATM_SELF_USE", denyResult.permCheckResult.permissionName);
     }
+}
+
+/**
+ * @tc.name: MatchAppSignature001
+ * @tc.desc: Verify TrustedBundleInfoInner::MatchAppSignature matches full appId, fingerprint,
+ *           appIdentifier, and rejects unmatched/empty signature lists.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HapSignVerifyManagerTest, MatchAppSignature001, TestSize.Level1)
+{
+    TrustedBundleInfoInner info;
+    info.provisionInfo.bundleInfo.bundleName = "com.example.camera";
+    info.provisionInfo.appId = "abcd1234";
+    info.provisionInfo.fingerprint = "fingerprint1234";
+    info.provisionInfo.bundleInfo.appIdentifier = "appid1234";
+
+    EXPECT_TRUE(info.MatchAppSignature({ "com.example.camera_abcd1234" }));
+    EXPECT_TRUE(info.MatchAppSignature({ "fingerprint1234" }));
+    EXPECT_TRUE(info.MatchAppSignature({ "appid1234" }));
+    EXPECT_FALSE(info.MatchAppSignature({ "com.example.camera_wrong" }));
+    EXPECT_FALSE(info.MatchAppSignature({}));
+}
+
+/**
+ * @tc.name: MatchAppSignature002
+ * @tc.desc: Verify MatchAppSignature skips empty signatures.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HapSignVerifyManagerTest, MatchAppSignature002, TestSize.Level1)
+{
+    TrustedBundleInfoInner info;
+    info.provisionInfo.bundleInfo.bundleName = "com.example.camera";
+    info.provisionInfo.appId = "abcd1234";
+
+    EXPECT_FALSE(info.MatchAppSignature({ "" }));
+    EXPECT_FALSE(info.MatchAppSignature({ "", "" }));
+    EXPECT_TRUE(info.MatchAppSignature({ "", "com.example.camera_abcd1234" }));
+}
+
+/**
+ * @tc.name: ParseProvision001
+ * @tc.desc: Verify HapSignVerifyManager::ParseProvision returns ERR_PARAM_INVALID for null bootstrap
+ *           and RET_SUCCESS when the adapter parses the provision.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HapSignVerifyManagerTest, ParseProvision001, TestSize.Level1)
+{
+    MockAppVerifyAdapter adapter;
+    HapSignVerifyManager manager(adapter);
+    TrustedBundleInfoInner info;
+
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, manager.ParseProvision(info));
+
+    info.bootstrapInfo = std::make_shared<Security::Verify::BootstrapInfo>();
+    info.bootstrapInfo->profileJsonRaw = "mock";
+    EXPECT_EQ(RET_SUCCESS, manager.ParseProvision(info));
+    EXPECT_EQ("mock.appid", info.provisionInfo.appId);
 }
 } // namespace AccessToken
 } // namespace Security

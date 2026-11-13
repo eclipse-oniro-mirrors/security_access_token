@@ -38,6 +38,7 @@
 #include "boot_verify_scheduler.h"
 #ifdef IS_SUPPORT_HAP_RUNNING
 #include "hap_sign_verify_manager.h"
+#include "pre_authorization_parser.h"
 #endif
 #undef private
 #include "permission_data_brief.h"
@@ -329,10 +330,9 @@ protected:
 HWTEST_F(BootVerifySchedulerTest, VerifyBundleSignInfoWhenStart001, TestSize.Level1)
 {
     uint32_t hapSize = 0;
-    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
     SetMockDbFindResult(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, ERR_PARAM_INVALID, {});
     EXPECT_EQ(ERR_PARAM_INVALID,
-        BootVerifyScheduler::GetInstance().VerifyBundleSignInfoWhenStart(hapSize, tokenIdAplMap));
+        BootVerifyScheduler::GetInstance().VerifyBundleSignInfoWhenStart(hapSize));
 }
 
 /**
@@ -343,12 +343,11 @@ HWTEST_F(BootVerifySchedulerTest, VerifyBundleSignInfoWhenStart001, TestSize.Lev
 HWTEST_F(BootVerifySchedulerTest, VerifyBundleSignInfoWhenStart002, TestSize.Level1)
 {
     uint32_t hapSize = 0;
-    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
     SetMockDbFindResult(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, RET_SUCCESS,
         {BuildHapInfoValue(TEST_TOKEN_ID, TEST_BUNDLE_NAME, TEST_UID)});
     SetMockDbFindResult(AtmDataType::ACCESSTOKEN_PERMISSION_STATE, ERR_PARAM_INVALID, {});
     EXPECT_EQ(ERR_PARAM_INVALID,
-        BootVerifyScheduler::GetInstance().VerifyBundleSignInfoWhenStart(hapSize, tokenIdAplMap));
+        BootVerifyScheduler::GetInstance().VerifyBundleSignInfoWhenStart(hapSize));
 }
 #ifdef SPM_DATA_ENABLE
 
@@ -361,12 +360,11 @@ HWTEST_F(BootVerifySchedulerTest, VerifyBundleSignInfoWhenStart002, TestSize.Lev
 HWTEST_F(BootVerifySchedulerTest, VerifyBundleSignInfoWhenStart003, TestSize.Level1)
 {
     uint32_t hapSize = 0;
-    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
     // PrepareVerifyDb seeds cached hap info from mock DB with default APL_NORMAL.
     PrepareVerifyDb(true);
     // Mock verify result upgrades the verified APL to system_core, forcing hap info persistence.
     adapter_->apl_ = "system_core";
-    EXPECT_EQ(RET_SUCCESS, BootVerifyScheduler::GetInstance().VerifyBundleSignInfoWhenStart(hapSize, tokenIdAplMap));
+    EXPECT_EQ(RET_SUCCESS, BootVerifyScheduler::GetInstance().VerifyBundleSignInfoWhenStart(hapSize));
     EXPECT_TRUE(BootVerifyScheduler::GetInstance().highPrivilegeBundleList_.size() == 1);
     EXPECT_TRUE(BootVerifyScheduler::GetInstance().normalBundleList_.empty());
     EXPECT_EQ(1U, GetMockDbState().deleteAndInsertCallCount);
@@ -381,7 +379,6 @@ HWTEST_F(BootVerifySchedulerTest, VerifyBundleSignInfoWhenStart003, TestSize.Lev
 HWTEST_F(BootVerifySchedulerTest, VerifyBundleSignInfoWhenStart004, TestSize.Level1)
 {
     uint32_t hapSize = 0;
-    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
     const std::string secondPath = TEST_PATH2;
     // Prepare two preinstalled high-privilege bundles in mock DB so startup verification handles them in sequence.
     SetMockDbFindResult(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, RET_SUCCESS, {
@@ -410,7 +407,7 @@ HWTEST_F(BootVerifySchedulerTest, VerifyBundleSignInfoWhenStart004, TestSize.Lev
     // Step 2: Make the second bundle produce a verified APL mismatch so successful verification triggers persistence.
     adapter_->apl_ = "system_core";
     // Step 3: Verify startup flow still completes and persists the later successful bundle.
-    EXPECT_EQ(RET_SUCCESS, BootVerifyScheduler::GetInstance().VerifyBundleSignInfoWhenStart(hapSize, tokenIdAplMap));
+    EXPECT_EQ(RET_SUCCESS, BootVerifyScheduler::GetInstance().VerifyBundleSignInfoWhenStart(hapSize));
     EXPECT_EQ(2U, BootVerifyScheduler::GetInstance().highPrivilegeBundleList_.size());
     EXPECT_EQ(1U, GetMockDbState().deleteAndInsertCallCount);
 }
@@ -423,9 +420,8 @@ HWTEST_F(BootVerifySchedulerTest, VerifyBundleSignInfoWhenStart004, TestSize.Lev
 HWTEST_F(BootVerifySchedulerTest, VerifyBundleSignInfoWhenStart005, TestSize.Level1)
 {
     uint32_t hapSize = 0;
-    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
     PrepareVerifyDb(false);
-    EXPECT_EQ(RET_SUCCESS, BootVerifyScheduler::GetInstance().VerifyBundleSignInfoWhenStart(hapSize, tokenIdAplMap));
+    EXPECT_EQ(RET_SUCCESS, BootVerifyScheduler::GetInstance().VerifyBundleSignInfoWhenStart(hapSize));
     EXPECT_TRUE(BootVerifyScheduler::GetInstance().highPrivilegeBundleList_.empty());
     EXPECT_TRUE(BootVerifyScheduler::GetInstance().normalBundleList_.size() == 1);
 }
@@ -438,11 +434,10 @@ HWTEST_F(BootVerifySchedulerTest, VerifyBundleSignInfoWhenStart005, TestSize.Lev
 HWTEST_F(BootVerifySchedulerTest, VerifyBundleSignInfoWhenStart006, TestSize.Level1)
 {
     uint32_t hapSize = 0;
-    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
     PrepareVerifyDb(true, static_cast<uint32_t>(INVALID_UID), false);
     auto& scheduler = BootVerifyScheduler::GetInstance();
     SetMockDbFindResult(AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO, RET_SUCCESS, {});
-    EXPECT_EQ(RET_SUCCESS, scheduler.VerifyBundleSignInfoWhenStart(hapSize, tokenIdAplMap));
+    EXPECT_EQ(RET_SUCCESS, scheduler.VerifyBundleSignInfoWhenStart(hapSize));
     EXPECT_EQ(0U, GetMockDbState().deleteAndInsertCallCount);
     EXPECT_TRUE(scheduler.isVerifiedMap_[GetBundleModeKey(TEST_BUNDLE_NAME, 0)]);
 }
@@ -455,11 +450,10 @@ HWTEST_F(BootVerifySchedulerTest, VerifyBundleSignInfoWhenStart006, TestSize.Lev
 HWTEST_F(BootVerifySchedulerTest, VerifyBundleSignInfoWhenStart007, TestSize.Level1)
 {
     uint32_t hapSize = 0;
-    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
     PrepareVerifyDb(true);
     adapter_->verifyIsChanged_ = true;
     adapter_->moduleName_ = "entry_changed";
-    EXPECT_EQ(RET_SUCCESS, BootVerifyScheduler::GetInstance().VerifyBundleSignInfoWhenStart(hapSize, tokenIdAplMap));
+    EXPECT_EQ(RET_SUCCESS, BootVerifyScheduler::GetInstance().VerifyBundleSignInfoWhenStart(hapSize));
     ASSERT_FALSE(GetMockDbState().lastAddInfos.empty());
     bool hasPackageInfo = false;
     for (const auto& addInfo : GetMockDbState().lastAddInfos) {
@@ -480,10 +474,9 @@ HWTEST_F(BootVerifySchedulerTest, VerifyBundleSignInfoWhenStart007, TestSize.Lev
 HWTEST_F(BootVerifySchedulerTest, VerifyBundleSignInfoWhenStart008, TestSize.Level1)
 {
     uint32_t hapSize = 0;
-    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
     PrepareVerifyDb(false);
     auto& scheduler = BootVerifyScheduler::GetInstance();
-    EXPECT_EQ(RET_SUCCESS, scheduler.VerifyBundleSignInfoWhenStart(hapSize, tokenIdAplMap));
+    EXPECT_EQ(RET_SUCCESS, scheduler.VerifyBundleSignInfoWhenStart(hapSize));
     EXPECT_TRUE(scheduler.highPrivilegeBundleList_.empty());
     ASSERT_EQ(1U, scheduler.normalBundleList_.size());
     EXPECT_EQ(GetBundleModeKey(TEST_BUNDLE_NAME, 0), scheduler.normalBundleList_[0]);
@@ -504,7 +497,6 @@ HWTEST_F(BootVerifySchedulerTest, VerifyBundleSignInfoWhenStart008, TestSize.Lev
 HWTEST_F(BootVerifySchedulerTest, VerifyBundleSignInfoWhenStart009, TestSize.Level1)
 {
     uint32_t hapSize = 0;
-    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
     // Seed one non-preinstalled third-party bundle and one preinstalled bundle.
     SetMockDbFindResult(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, RET_SUCCESS, {
         BuildHapInfoValue(TEST_TOKEN_ID, TEST_BUNDLE_NAME, TEST_UID),
@@ -527,7 +519,7 @@ HWTEST_F(BootVerifySchedulerTest, VerifyBundleSignInfoWhenStart009, TestSize.Lev
     SetMockDbFindResult(AtmDataType::ACCESSTOKEN_HAP_UNDEFINE_INFO, RET_SUCCESS, {});
 
     auto& scheduler = BootVerifyScheduler::GetInstance();
-    EXPECT_EQ(RET_SUCCESS, scheduler.VerifyBundleSignInfoWhenStart(hapSize, tokenIdAplMap));
+    EXPECT_EQ(RET_SUCCESS, scheduler.VerifyBundleSignInfoWhenStart(hapSize));
     EXPECT_FALSE(scheduler.migrationCompleted_.load());
     EXPECT_EQ(2U, scheduler.highPrivilegeBundleList_.size());
     EXPECT_EQ(2U, hapSize);
@@ -576,9 +568,8 @@ HWTEST_F(BootVerifySchedulerTest, BuildPriorityBundleList001, TestSize.Level1)
 HWTEST_F(BootVerifySchedulerTest, PreVerifyBundle001, TestSize.Level1)
 {
     uint32_t hapSize = 0;
-    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
     PrepareVerifyDb(false);
-    ASSERT_EQ(RET_SUCCESS, BootVerifyScheduler::GetInstance().VerifyBundleSignInfoWhenStart(hapSize, tokenIdAplMap));
+    ASSERT_EQ(RET_SUCCESS, BootVerifyScheduler::GetInstance().VerifyBundleSignInfoWhenStart(hapSize));
     EXPECT_EQ(RET_SUCCESS, BootVerifyScheduler::GetInstance().PreVerifyBundle(TEST_BUNDLE_NAME));
 }
 
@@ -590,9 +581,8 @@ HWTEST_F(BootVerifySchedulerTest, PreVerifyBundle001, TestSize.Level1)
 HWTEST_F(BootVerifySchedulerTest, PreVerifyBundle002, TestSize.Level1)
 {
     uint32_t hapSize = 0;
-    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
     PrepareVerifyDb(false);
-    ASSERT_EQ(RET_SUCCESS, BootVerifyScheduler::GetInstance().VerifyBundleSignInfoWhenStart(hapSize, tokenIdAplMap));
+    ASSERT_EQ(RET_SUCCESS, BootVerifyScheduler::GetInstance().VerifyBundleSignInfoWhenStart(hapSize));
     EXPECT_EQ(RET_SUCCESS, BootVerifyScheduler::GetInstance().PreVerifyBundle(TEST_TOKEN_ID));
 }
 
@@ -634,9 +624,8 @@ HWTEST_F(BootVerifySchedulerTest, PreVerifyBundle004, TestSize.Level1)
 HWTEST_F(BootVerifySchedulerTest, PreVerifyBundle005, TestSize.Level1)
 {
     uint32_t hapSize = 0;
-    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
     PrepareVerifyDb(false);
-    ASSERT_EQ(RET_SUCCESS, BootVerifyScheduler::GetInstance().VerifyBundleSignInfoWhenStart(hapSize, tokenIdAplMap));
+    ASSERT_EQ(RET_SUCCESS, BootVerifyScheduler::GetInstance().VerifyBundleSignInfoWhenStart(hapSize));
 
     adapter_->bundleName_ = TEST_BUNDLE_NAME_2;
 
@@ -742,8 +731,7 @@ HWTEST_F(BootVerifySchedulerTest, LoadVerifyDataFromDb001, TestSize.Level1)
 {
     PrepareVerifyDb(true);
     SetMockDbFindResult(AtmDataType::ACCESSTOKEN_PERMISSION_EXTEND_VALUE, ERR_PARAM_INVALID, {});
-    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
-    EXPECT_EQ(RET_SUCCESS, BootVerifyScheduler::GetInstance().LoadVerifyDataFromDb(tokenIdAplMap));
+    EXPECT_EQ(RET_SUCCESS, BootVerifyScheduler::GetInstance().LoadVerifyDataFromDb());
 }
 
 /**
@@ -768,8 +756,7 @@ HWTEST_F(BootVerifySchedulerTest, LoadVerifyDataFromDbPermDialogCap001, TestSize
 
     auto& scheduler = BootVerifyScheduler::GetInstance();
     uint32_t hapSize = 0;
-    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
-    ASSERT_EQ(RET_SUCCESS, scheduler.VerifyBundleSignInfoWhenStart(hapSize, tokenIdAplMap));
+    ASSERT_EQ(RET_SUCCESS, scheduler.VerifyBundleSignInfoWhenStart(hapSize));
     ASSERT_EQ(RET_SUCCESS, scheduler.PreVerifyBundle(TEST_TOKEN_ID));
     EXPECT_TRUE(AccessTokenInfoManager::GetInstance().GetPermDialogCap(TEST_TOKEN_ID));
 }
@@ -788,9 +775,8 @@ HWTEST_F(BootVerifySchedulerTest, LoadVerifyDataFromDb002, TestSize.Level1)
     SetMockDbFindResult(AtmDataType::ACCESSTOKEN_PERMISSION_EXTEND_VALUE, RET_SUCCESS, {});
     SetMockDbFindResult(AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO, RET_SUCCESS, {});
     auto& scheduler = BootVerifyScheduler::GetInstance();
-    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
 
-    EXPECT_EQ(RET_SUCCESS, scheduler.LoadVerifyDataFromDb(tokenIdAplMap));
+    EXPECT_EQ(RET_SUCCESS, scheduler.LoadVerifyDataFromDb());
     EXPECT_TRUE(scheduler.uidSet_.count(static_cast<int32_t>(TEST_UID)) > 0);
     EXPECT_TRUE(scheduler.uidSet_.count(INVALID_UID) == 0);
     EXPECT_TRUE(AccessTokenIDManager::GetInstance().IsReservedTokenId(TEST_TOKEN_ID));
@@ -816,69 +802,8 @@ HWTEST_F(BootVerifySchedulerTest, LoadVerifyDataFromDb003, TestSize.Level1)
     AccessTokenIDManager::GetInstance().bundleIdSet_.clear();
     AccessTokenIDManager::GetInstance().scanStartBundleId_ = -1;
     uint32_t hapSize = 0;
-    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
-    EXPECT_EQ(RET_SUCCESS, scheduler.VerifyBundleSignInfoWhenStart(hapSize, tokenIdAplMap));
+    EXPECT_EQ(RET_SUCCESS, scheduler.VerifyBundleSignInfoWhenStart(hapSize));
     EXPECT_EQ(10020, AccessTokenIDManager::GetInstance().scanStartBundleId_);
-}
-#endif
-
-/**
- * @tc.name: RefreshBundleSignInfoMap001
- * @tc.desc: Verify RefreshBundleSignInfoMap skips invalid bundle type entries.
- * @tc.type: FUNC
- */
-HWTEST_F(BootVerifySchedulerTest, RefreshBundleSignInfoMap001, TestSize.Level1)
-{
-    PrepareVerifyDb(true);
-    GenericValues invalidBundleType = BuildBundleSignValue(TEST_BUNDLE_NAME, "entry", TEST_PATH, true, 999,
-        BuildPersistData(TEST_BUNDLE_NAME, TEST_BUNDLE_NAME));
-    SetMockDbFindResult(AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO, RET_SUCCESS, {invalidBundleType});
-    EXPECT_EQ(RET_SUCCESS, BootVerifyScheduler::GetInstance().RefreshBundleSignInfoMap());
-    std::string bundleKey = GetBundleModeKey(TEST_BUNDLE_NAME, 0);
-    EXPECT_TRUE(BootVerifyScheduler::GetInstance().bundleSignInfoMap_[bundleKey].bundleType.empty());
-}
-
-#ifdef SPM_DATA_ENABLE
-/**
- * @tc.name: RefreshBundleSignInfoMap002
- * @tc.desc: Verify RefreshBundleSignInfoMap correctly loads valid bundle type entries.
- * @tc.type: FUNC
- */
-HWTEST_F(BootVerifySchedulerTest, RefreshBundleSignInfoMap002, TestSize.Level1)
-{
-    PrepareVerifyDb(true);
-    GenericValues atomicServiceValue = BuildBundleSignValue(TEST_BUNDLE_NAME, "entry", TEST_PATH, true,
-        static_cast<int32_t>(AppExecFwk::Spm::BundleType::ATOMIC_SERVICE),
-        BuildPersistData(TEST_BUNDLE_NAME, TEST_BUNDLE_NAME));
-    SetMockDbFindResult(AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO, RET_SUCCESS, {atomicServiceValue});
-    auto& scheduler = BootVerifyScheduler::GetInstance();
-    EXPECT_EQ(RET_SUCCESS, scheduler.RefreshBundleSignInfoMap());
-    ASSERT_TRUE(scheduler.bundleSignInfoMap_.find(GetBundleModeKey(TEST_BUNDLE_NAME, 0)) !=
-        scheduler.bundleSignInfoMap_.end());
-    ASSERT_EQ(1U, scheduler.bundleSignInfoMap_[GetBundleModeKey(TEST_BUNDLE_NAME, 0)].bundleType.size());
-    EXPECT_EQ(static_cast<uint32_t>(AppExecFwk::Spm::BundleType::ATOMIC_SERVICE),
-        scheduler.bundleSignInfoMap_[GetBundleModeKey(TEST_BUNDLE_NAME, 0)].bundleType[0]);
-}
-
-/**
- * @tc.name: RefreshBundleSignInfoMap003
- * @tc.desc: Verify RefreshBundleSignInfoMap correctly loads valid bundle type entries.
- * @tc.type: FUNC
- */
-HWTEST_F(BootVerifySchedulerTest, RefreshBundleSignInfoMap003, TestSize.Level1)
-{
-    PrepareVerifyDb(true);
-    GenericValues appServiceFwkValue = BuildBundleSignValue(TEST_BUNDLE_NAME, "entry", TEST_PATH, true,
-        static_cast<int32_t>(AppExecFwk::Spm::BundleType::APP_SERVICE_FWK),
-        BuildPersistData(TEST_BUNDLE_NAME, TEST_BUNDLE_NAME));
-    SetMockDbFindResult(AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO, RET_SUCCESS, {appServiceFwkValue});
-    auto& scheduler = BootVerifyScheduler::GetInstance();
-    EXPECT_EQ(RET_SUCCESS, scheduler.RefreshBundleSignInfoMap());
-    ASSERT_TRUE(scheduler.bundleSignInfoMap_.find(GetBundleModeKey(TEST_BUNDLE_NAME, 0)) !=
-        scheduler.bundleSignInfoMap_.end());
-    ASSERT_EQ(1U, scheduler.bundleSignInfoMap_[GetBundleModeKey(TEST_BUNDLE_NAME, 0)].bundleType.size());
-    EXPECT_EQ(static_cast<uint32_t>(AppExecFwk::Spm::BundleType::APP_SERVICE_FWK),
-        scheduler.bundleSignInfoMap_[GetBundleModeKey(TEST_BUNDLE_NAME, 0)].bundleType[0]);
 }
 #endif
 
@@ -1146,10 +1071,12 @@ HWTEST_F(BootVerifySchedulerTest, ReconcileVerifiedBundleCache001, TestSize.Leve
         HapSignVerifyManager::MakeVerifyParams(updatedInfo.pathList[0], Verify::VerifyType::Fast, -1),
         true, trustedInfo, isChanged));
     ASSERT_EQ(RET_SUCCESS, HapSignVerifyManager::GetInstance().BuildHapPolicy({ trustedInfo }, policy, param));
+    std::vector<TrustedBundleInfoInner> trustedInfos = { trustedInfo };
 
     VerifiedBundleState state;
     EXPECT_EQ(RET_SUCCESS,
-        scheduler.ReconcileVerifiedBundleCache(GetBundleModeKey(TEST_BUNDLE_NAME, 0), policy, param, state));
+        scheduler.ReconcileVerifiedBundleCache(
+            GetBundleModeKey(TEST_BUNDLE_NAME, 0), policy, param, trustedInfos, state));
     EXPECT_TRUE(scheduler.bundleNoCachedInfoMap_.find(GetBundleModeKey(TEST_BUNDLE_NAME, 0)) !=
         scheduler.bundleNoCachedInfoMap_.end());
     EXPECT_TRUE(scheduler.bundleInfoMap_[GetBundleModeKey(TEST_BUNDLE_NAME, 0)] != nullptr);
@@ -1168,14 +1095,17 @@ HWTEST_F(BootVerifySchedulerTest, ReconcileVerifiedBundleCache002, TestSize.Leve
     HapPolicy policy;
     BundleParam param;
     VerifiedBundleState state;
+    std::vector<TrustedBundleInfoInner> trustedInfos;
 
     scheduler.bundleInfoMap_.erase(TEST_BUNDLE_NAME);
     EXPECT_EQ(ERR_BUNDLE_NOT_EXIST,
-        scheduler.ReconcileVerifiedBundleCache(GetBundleModeKey(TEST_BUNDLE_NAME, 0), policy, param, state));
+        scheduler.ReconcileVerifiedBundleCache(
+            GetBundleModeKey(TEST_BUNDLE_NAME, 0), policy, param, trustedInfos, state));
 
     scheduler.bundleInfoMap_[GetBundleModeKey(TEST_BUNDLE_NAME, 0)] = nullptr;
     EXPECT_EQ(ERR_BUNDLE_NOT_EXIST,
-        scheduler.ReconcileVerifiedBundleCache(GetBundleModeKey(TEST_BUNDLE_NAME, 0), policy, param, state));
+        scheduler.ReconcileVerifiedBundleCache(
+            GetBundleModeKey(TEST_BUNDLE_NAME, 0), policy, param, trustedInfos, state));
 }
 
 /**
@@ -1192,8 +1122,10 @@ HWTEST_F(BootVerifySchedulerTest, ReconcileVerifiedBundleCache003, TestSize.Leve
     HapPolicy policy;
     BundleParam param;
     VerifiedBundleState state;
+    std::vector<TrustedBundleInfoInner> trustedInfos;
     EXPECT_EQ(ERR_TOKENID_NOT_EXIST,
-        scheduler.ReconcileVerifiedBundleCache(GetBundleModeKey(TEST_BUNDLE_NAME, 0), policy, param, state));
+        scheduler.ReconcileVerifiedBundleCache(
+            GetBundleModeKey(TEST_BUNDLE_NAME, 0), policy, param, trustedInfos, state));
 }
 
 /**
@@ -1545,19 +1477,6 @@ HWTEST_F(BootVerifySchedulerTest, ShouldSkipVerifyLocked002, TestSize.Level1)
 
     EXPECT_FALSE(scheduler.ShouldSkipVerifyLocked(GetBundleModeKey(TEST_BUNDLE_NAME, 0)));
 }
-
-#ifdef SPM_DATA_ENABLE
-/**
- * @tc.name: RefreshBundleSignInfoMap004
- * @tc.desc: Verify RefreshBundleSignInfoMap returns find error when package info query fails.
- * @tc.type: FUNC
- */
-HWTEST_F(BootVerifySchedulerTest, RefreshBundleSignInfoMap004, TestSize.Level1)
-{
-    SetMockDbFindResult(AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO, ERR_PARAM_INVALID, {});
-    EXPECT_EQ(ERR_PARAM_INVALID, BootVerifyScheduler::GetInstance().RefreshBundleSignInfoMap());
-}
-#endif
 
 /**
  * @tc.name: BuildBriefPermDataFromDb001
@@ -1921,9 +1840,11 @@ HWTEST_F(BootVerifySchedulerTest, ReconcileVerifiedBundleCacheExtendedPerm001, T
     BundleParam param;
     param.bundleName = TEST_BUNDLE_NAME;
     VerifiedBundleState state;
+    std::vector<TrustedBundleInfoInner> trustedInfos;
 
     EXPECT_EQ(RET_SUCCESS,
-        scheduler.ReconcileVerifiedBundleCache(GetBundleModeKey(TEST_BUNDLE_NAME, 0), policy, param, state));
+        scheduler.ReconcileVerifiedBundleCache(
+            GetBundleModeKey(TEST_BUNDLE_NAME, 0), policy, param, trustedInfos, state));
     EXPECT_FALSE(scheduler.extendedPermMap_[TEST_TOKEN_ID].empty());
 }
 
@@ -2043,27 +1964,6 @@ HWTEST_F(BootVerifySchedulerTest, PrepareBundleForBatchVerifyLocked001, TestSize
     EXPECT_TRUE(scheduler.isVerifyingMap_[key]);
 }
 
-#ifdef SPM_DATA_ENABLE
-/**
- * @tc.name: RefreshBundleSignInfoMapNegativeMode001
- * @tc.desc: RefreshBundleSignInfoMap resets a negative mode to zero when loading package info.
- * @tc.type: FUNC
- */
-HWTEST_F(BootVerifySchedulerTest, RefreshBundleSignInfoMapNegativeMode001, TestSize.Level1)
-{
-    GenericValues signValue = BuildBundleSignValue(TEST_BUNDLE_NAME, "entry", TEST_PATH, true,
-        static_cast<int32_t>(AppExecFwk::Spm::BundleType::APP),
-        BuildPersistData(TEST_BUNDLE_NAME, TEST_BUNDLE_NAME));
-    signValue.Put(TokenFiledConst::FIELD_MODE, -1);
-    SetMockDbFindResult(AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO, RET_SUCCESS, { signValue });
-
-    auto& scheduler = BootVerifyScheduler::GetInstance();
-    EXPECT_EQ(RET_SUCCESS, scheduler.RefreshBundleSignInfoMap());
-    EXPECT_TRUE(scheduler.bundleSignInfoMap_.find(GetBundleModeKey(TEST_BUNDLE_NAME, 0)) !=
-        scheduler.bundleSignInfoMap_.end());
-}
-#endif
-
 /**
  * @tc.name: InitExtendedPermContextTranslationFail001
  * @tc.desc: InitExtendedPermContext skips extended permissions that fail translation (empty permission name).
@@ -2111,15 +2011,52 @@ HWTEST_F(BootVerifySchedulerTest, ReconcileVerifiedBundleCacheExtendedPermCompar
     BundleParam param;
     param.bundleName = TEST_BUNDLE_NAME;
     VerifiedBundleState state;
+    std::vector<TrustedBundleInfoInner> trustedInfos;
 
     EXPECT_EQ(RET_SUCCESS,
-        scheduler.ReconcileVerifiedBundleCache(GetBundleModeKey(TEST_BUNDLE_NAME, 0), policy, param, state));
+        scheduler.ReconcileVerifiedBundleCache(GetBundleModeKey(
+            TEST_BUNDLE_NAME, 0), policy, param, trustedInfos, state));
     EXPECT_TRUE(state.needUpdateExtendPerm);
     ASSERT_EQ(1U, scheduler.extendedPermMap_[TEST_TOKEN_ID].size());
     EXPECT_EQ("ohos.permission.kernel.SUPPORT_PLUGIN", scheduler.extendedPermMap_[TEST_TOKEN_ID][0].permissionName);
     EXPECT_EQ("new", scheduler.extendedPermMap_[TEST_TOKEN_ID][0].value);
 
     SetPermissionBriefEnabled("ohos.permission.MICROPHONE", true);
+}
+
+/**
+ * @tc.name: ReconcileVerifiedBundleCacheUndefPerm001
+ * @tc.desc: ReconcileVerifiedBundleCache stores undefined (declared but not defined) permissions
+ *           into undefinedPermMap_ and sets needUpdateUndefineInfo.
+ * @tc.type: FUNC
+ */
+HWTEST_F(BootVerifySchedulerTest, ReconcileVerifiedBundleCacheUndefPerm001, TestSize.Level1)
+{
+    auto& scheduler = BootVerifyScheduler::GetInstance();
+    scheduler.bundleInfoMap_[GetBundleModeKey(TEST_BUNDLE_NAME, 0)] = BuildBundleInfo({ TEST_TOKEN_ID });
+    scheduler.hapTokenInfoMap_[TEST_TOKEN_ID] = BuildHapTokenInfoItem(TEST_TOKEN_ID);
+    scheduler.requestedPermData_[TEST_TOKEN_ID] = {};
+    scheduler.extendedPermMap_[TEST_TOKEN_ID] = {};
+    scheduler.undefinedPermMap_.clear();
+
+    HapPolicy policy;
+    policy.apl = APL_NORMAL;
+    PermissionStatus undefStatus;
+    undefStatus.permissionName = "ohos.permission.INVALID_UNDEFINED_PERM";
+    policy.permStateList = { undefStatus };
+    BundleParam param;
+    param.bundleName = TEST_BUNDLE_NAME;
+    std::vector<TrustedBundleInfoInner> trustedInfos;
+    VerifiedBundleState state;
+
+    EXPECT_EQ(RET_SUCCESS,
+        scheduler.ReconcileVerifiedBundleCache(
+            GetBundleModeKey(TEST_BUNDLE_NAME, 0), policy, param, trustedInfos, state));
+    EXPECT_TRUE(state.needUpdateUndefineInfo);
+    ASSERT_FALSE(scheduler.undefinedPermMap_.find(TEST_TOKEN_ID) == scheduler.undefinedPermMap_.end());
+    EXPECT_FALSE(scheduler.undefinedPermMap_[TEST_TOKEN_ID].empty());
+    EXPECT_EQ("ohos.permission.INVALID_UNDEFINED_PERM",
+        scheduler.undefinedPermMap_[TEST_TOKEN_ID][0].GetString(TokenFiledConst::FIELD_PERMISSION_NAME));
 }
 
 /**
@@ -2180,6 +2117,153 @@ HWTEST_F(BootVerifySchedulerTest, HandleHighPrivilegeBundleSpmDataPersistFail001
 
     EXPECT_TRUE(scheduler.isVerifiedMap_[key]);
     EXPECT_FALSE(scheduler.isVerifyingMap_[key]);
+}
+
+#ifdef SPM_DATA_ENABLE
+/**
+ * @tc.name: InitBundleSignInfoMapFromResults001
+ * @tc.desc: Verify InitBundleSignInfoMapFromResults skips invalid bundle type entries.
+ * @tc.type: FUNC
+ */
+HWTEST_F(BootVerifySchedulerTest, InitBundleSignInfoMapFromResults001, TestSize.Level1)
+{
+    auto& scheduler = BootVerifyScheduler::GetInstance();
+    scheduler.bundleSignInfoMap_.clear();
+    GenericValues invalidBundleType = BuildBundleSignValue(TEST_BUNDLE_NAME, "entry", TEST_PATH, true, 999,
+        BuildPersistData(TEST_BUNDLE_NAME, TEST_BUNDLE_NAME));
+    EXPECT_EQ(RET_SUCCESS, scheduler.InitBundleSignInfoMapFromResults({ invalidBundleType }));
+    std::string bundleKey = GetBundleModeKey(TEST_BUNDLE_NAME, 0);
+    EXPECT_TRUE(scheduler.bundleSignInfoMap_[bundleKey].bundleType.empty());
+}
+
+/**
+ * @tc.name: InitBundleSignInfoMapFromResults002
+ * @tc.desc: Verify InitBundleSignInfoMapFromResults loads valid bundle type entries.
+ * @tc.type: FUNC
+ */
+HWTEST_F(BootVerifySchedulerTest, InitBundleSignInfoMapFromResults002, TestSize.Level1)
+{
+    auto& scheduler = BootVerifyScheduler::GetInstance();
+    scheduler.bundleSignInfoMap_.clear();
+    GenericValues atomicServiceValue = BuildBundleSignValue(TEST_BUNDLE_NAME, "entry", TEST_PATH, true,
+        static_cast<int32_t>(AppExecFwk::Spm::BundleType::ATOMIC_SERVICE),
+        BuildPersistData(TEST_BUNDLE_NAME, TEST_BUNDLE_NAME));
+    EXPECT_EQ(RET_SUCCESS, scheduler.InitBundleSignInfoMapFromResults({ atomicServiceValue }));
+    auto iter = scheduler.bundleSignInfoMap_.find(GetBundleModeKey(TEST_BUNDLE_NAME, 0));
+    ASSERT_NE(iter, scheduler.bundleSignInfoMap_.end());
+    ASSERT_EQ(1U, iter->second.bundleType.size());
+    EXPECT_EQ(static_cast<uint32_t>(AppExecFwk::Spm::BundleType::ATOMIC_SERVICE), iter->second.bundleType[0]);
+}
+
+/**
+ * @tc.name: InitBundleSignInfoMapFromResults003
+ * @tc.desc: Verify InitBundleSignInfoMapFromResults resets negative mode to zero.
+ * @tc.type: FUNC
+ */
+HWTEST_F(BootVerifySchedulerTest, InitBundleSignInfoMapFromResults003, TestSize.Level1)
+{
+    auto& scheduler = BootVerifyScheduler::GetInstance();
+    scheduler.bundleSignInfoMap_.clear();
+    GenericValues signValue = BuildBundleSignValue(TEST_BUNDLE_NAME, "entry", TEST_PATH, true,
+        static_cast<int32_t>(AppExecFwk::Spm::BundleType::APP),
+        BuildPersistData(TEST_BUNDLE_NAME, TEST_BUNDLE_NAME));
+    signValue.Put(TokenFiledConst::FIELD_MODE, -1);
+    EXPECT_EQ(RET_SUCCESS, scheduler.InitBundleSignInfoMapFromResults({ signValue }));
+    auto iter = scheduler.bundleSignInfoMap_.find(GetBundleModeKey(TEST_BUNDLE_NAME, 0));
+    ASSERT_NE(iter, scheduler.bundleSignInfoMap_.end());
+    EXPECT_EQ(static_cast<MultipleMode>(0), iter->second.mode);
+}
+#endif
+
+/**
+ * @tc.name: IsPlaceholderModuleName001
+ * @tc.desc: Verify AccessTokenInfoUtils::IsPlaceholderModuleName recognizes "#" + digits placeholder.
+ * @tc.type: FUNC
+ */
+HWTEST_F(BootVerifySchedulerTest, IsPlaceholderModuleName001, TestSize.Level1)
+{
+    EXPECT_TRUE(AccessTokenInfoUtils::IsPlaceholderModuleName("#1"));
+    EXPECT_TRUE(AccessTokenInfoUtils::IsPlaceholderModuleName("#123"));
+    EXPECT_FALSE(AccessTokenInfoUtils::IsPlaceholderModuleName("entry"));
+    EXPECT_FALSE(AccessTokenInfoUtils::IsPlaceholderModuleName("#"));
+    EXPECT_FALSE(AccessTokenInfoUtils::IsPlaceholderModuleName(""));
+    EXPECT_FALSE(AccessTokenInfoUtils::IsPlaceholderModuleName("#1a"));
+}
+
+#ifdef SPM_DATA_ENABLE
+/**
+ * @tc.name: BuildHapTokenInfoItemFromDbUidMismatch001
+ * @tc.desc: BuildHapTokenInfoItemFromDb returns false when uid's userId mismatches token's userId.
+ * @tc.type: FUNC
+ */
+HWTEST_F(BootVerifySchedulerTest, BuildHapTokenInfoItemFromDbUidMismatch001, TestSize.Level1)
+{
+    GenericValues tokenValue = BuildHapInfoValue(TEST_TOKEN_ID, TEST_BUNDLE_NAME, 20200001);
+    HapTokenInfoItem item;
+    EXPECT_FALSE(BootVerifyScheduler::GetInstance().BuildHapTokenInfoItemFromDb(TEST_TOKEN_ID, tokenValue, item));
+}
+#endif
+
+/**
+ * @tc.name: BuildBundlePersistInfosEmptyUndef001
+ * @tc.desc: BuildBundlePersistInfos adds undef del info but no add info when undefined values are empty.
+ * @tc.type: FUNC
+ */
+HWTEST_F(BootVerifySchedulerTest, BuildBundlePersistInfosEmptyUndef001, TestSize.Level1)
+{
+    auto& scheduler = BootVerifyScheduler::GetInstance();
+    scheduler.undefinedPermMap_.clear();
+
+    VerifiedBundleState state;
+    state.needUpdateUndefineInfo = true;
+    std::vector<DelInfo> delInfoVec;
+    std::vector<AddInfo> addInfoVec;
+
+    scheduler.BuildBundlePersistInfos(TEST_TOKEN_ID, state, delInfoVec, addInfoVec);
+
+    bool hasUndefDel = false;
+    for (const auto& delInfo : delInfoVec) {
+        if (delInfo.delType == AtmDataType::ACCESSTOKEN_HAP_UNDEFINE_INFO) {
+            hasUndefDel = true;
+        }
+    }
+    EXPECT_TRUE(hasUndefDel);
+    EXPECT_TRUE(addInfoVec.empty());
+}
+
+/**
+ * @tc.name: ReconcileVerifiedBundleCacheUndefPermWithExtend001
+ * @tc.desc: FillUndefPerms fills FIELD_VALUE from aclExtendedMap when the undefined permission has an extend value.
+ * @tc.type: FUNC
+ */
+HWTEST_F(BootVerifySchedulerTest, ReconcileVerifiedBundleCacheUndefPermWithExtend001, TestSize.Level1)
+{
+    auto& scheduler = BootVerifyScheduler::GetInstance();
+    scheduler.bundleInfoMap_[GetBundleModeKey(TEST_BUNDLE_NAME, 0)] = BuildBundleInfo({ TEST_TOKEN_ID });
+    scheduler.hapTokenInfoMap_[TEST_TOKEN_ID] = BuildHapTokenInfoItem(TEST_TOKEN_ID);
+    scheduler.requestedPermData_[TEST_TOKEN_ID] = {};
+    scheduler.extendedPermMap_[TEST_TOKEN_ID] = {};
+    scheduler.undefinedPermMap_.clear();
+
+    HapPolicy policy;
+    policy.apl = APL_NORMAL;
+    PermissionStatus undefStatus;
+    undefStatus.permissionName = "ohos.permission.INVALID_UNDEFINED_PERM";
+    policy.permStateList = { undefStatus };
+    policy.aclExtendedMap["ohos.permission.INVALID_UNDEFINED_PERM"] = "extend_value";
+    BundleParam param;
+    param.bundleName = TEST_BUNDLE_NAME;
+    std::vector<TrustedBundleInfoInner> trustedInfos;
+    VerifiedBundleState state;
+
+    EXPECT_EQ(RET_SUCCESS,
+        scheduler.ReconcileVerifiedBundleCache(
+            GetBundleModeKey(TEST_BUNDLE_NAME, 0), policy, param, trustedInfos, state));
+    EXPECT_TRUE(state.needUpdateUndefineInfo);
+    ASSERT_NE(scheduler.undefinedPermMap_.find(TEST_TOKEN_ID), scheduler.undefinedPermMap_.end());
+    ASSERT_FALSE(scheduler.undefinedPermMap_[TEST_TOKEN_ID].empty());
+    EXPECT_EQ("extend_value",
+        scheduler.undefinedPermMap_[TEST_TOKEN_ID][0].GetString(TokenFiledConst::FIELD_VALUE));
 }
 
 } // namespace AccessToken

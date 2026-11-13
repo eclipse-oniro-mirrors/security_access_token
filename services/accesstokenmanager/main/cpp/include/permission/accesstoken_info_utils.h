@@ -52,6 +52,7 @@ public:
     static bool IsSystemAppVerified();
     static bool IsSystemSpmEnforcing();
     static ReservedType GetReservedTokenTypeDBValue(const GenericValues& values);
+    static bool IsPlaceholderModuleName(const std::string& moduleName);
 
 private:
     AccessTokenInfoUtils() = delete;

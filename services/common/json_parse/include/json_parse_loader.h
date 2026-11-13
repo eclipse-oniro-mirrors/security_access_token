@@ -16,6 +16,7 @@
 #ifndef ACCESSTOKEN_CONFIG_POLICY_LOADER_H
 #define ACCESSTOKEN_CONFIG_POLICY_LOADER_H
 
+#include <map>
 #include <set>
 #include <string>
 #include <unordered_set>
@@ -85,6 +86,12 @@ struct PermissionDefParseRet {
     bool isSuccessful = false;
 };
 
+struct PreAuthBundleInfo final {
+    std::string bundleName;
+    std::vector<std::string> appSignature;
+    std::map<std::string, bool> permissions;
+};
+
 class ConfigPolicyLoaderInterface {
 public:
     ConfigPolicyLoaderInterface() {}
@@ -98,6 +105,8 @@ public:
         const std::vector<PermissionStatus>& permStateList);
     virtual int32_t GetReservedBundleIdList(const std::string& value, std::set<int32_t>& bundleList);
     virtual std::string BuildReservedBundleIdList(const std::set<int32_t>& bundleList);
+    virtual bool ParseInstallListPermissions(const std::string& fileContent,
+        std::vector<PreAuthBundleInfo>& bundleInfos);
 };
 
 class ConfigPolicLoader final: public ConfigPolicyLoaderInterface {
@@ -111,6 +120,7 @@ public:
         const std::vector<PermissionStatus>& permStateList);
     int32_t GetReservedBundleIdList(const std::string& value, std::set<int32_t>& bundleList);
     std::string BuildReservedBundleIdList(const std::set<int32_t>& bundleList);
+    bool ParseInstallListPermissions(const std::string& fileContent, std::vector<PreAuthBundleInfo>& bundleInfos);
 private:
 #ifdef CUSTOMIZATION_CONFIG_POLICY_ENABLE
     void GetConfigFilePathList(std::vector<std::string>& pathList);

@@ -31,13 +31,17 @@
 #endif
 #include "add_spm_data_task.h"
 #include "data_translator.h"
+#include "data_validator.h"
 #include "hisysevent_adapter.h"
 #if defined(IS_SUPPORT_HAP_RUNNING)
+#include "rebuild_database_scheduler.h"
 #include "hap_sign_verify_helper.h"
 #include "multiple_mode_utils.h"
 #include "permission_map.h"
 #include "permission_constraint_check.h"
+#include "permission_data_brief.h"
 #include "permission_manager.h"
+#include "pre_authorization_parser.h"
 #endif
 #include "parameter.h"
 #include "time_util.h"
@@ -56,11 +60,9 @@ BootVerifyScheduler& BootVerifyScheduler::GetInstance()
     return instance;
 }
 
-int32_t BootVerifyScheduler::VerifyBundleSignInfoWhenStart(
-    uint32_t& hapSize, std::map<int32_t, TokenIdInfo>& tokenIdAplMap)
+int32_t BootVerifyScheduler::VerifyBundleSignInfoWhenStart(uint32_t& hapSize)
 {
     (void)hapSize;
-    (void)tokenIdAplMap;
     return RET_SUCCESS;
 }
 
@@ -100,7 +102,6 @@ constexpr uint32_t HAS_VALUE = (0x1 << 1);
 constexpr uint32_t API_VERSION_SUFFIX_LEN = 3;
 constexpr int32_t INVALID_UID = -1;
 constexpr int32_t VERIFY_WAIT_TIMEOUT_SECONDS = 3;
-constexpr uint32_t SYSTEM_APP_FLAG = 0x0001;
 const std::string APP_DISTRIBUTION_TYPE_ENTERPRISE_MDM = "enterprise_mdm";
 const std::string APP_DISTRIBUTION_TYPE_ENTERPRISE_NORMAL = "enterprise_normal";
 const std::string APP_DISTRIBUTION_TYPE_NONE = "none";
@@ -119,6 +120,80 @@ bool IsBmsDbExisted()
         }
     }
     return false;
+}
+#endif
+
+#if defined(IS_SUPPORT_HAP_RUNNING)
+// Rebuild database phase: merge the pre-authorized permissions from install_list_permissions.json into brief perm data,
+// so that permission_state_table is persisted as the default permission state (granted + system_fixed).
+void MergePreAuthPermissions(const PreAuthBundleInfo* preAuthInfo, std::vector<BriefPermData>& briefData, bool& isFixed)
+{
+    if (preAuthInfo == nullptr || preAuthInfo->permissions.empty()) {
+        return;
+    }
+    for (auto& brief : briefData) {
+        std::string permissionName = TransferOpcodeToPermission(brief.permCode);
+        if (permissionName.empty()) {
+            continue;
+        }
+        auto iter = preAuthInfo->permissions.find(permissionName);
+        // Pre-authorization applies only to permissions already declared by the app (in its brief perm data);
+        // skip undeclared ones.
+        if (iter == preAuthInfo->permissions.end()) {
+            continue;
+        }
+        // Following PermissionDataBrief::UpdatePermStatus (update app): the pre-authorization initialized state
+        // is applied only when the old state is still un-operated; otherwise keep the user-operated state.
+        BriefPermData newPerm = brief;
+        newPerm.status = static_cast<int8_t>(PERMISSION_GRANTED);
+        newPerm.flag = iter->second ? PERMISSION_PRE_AUTHORIZED_CANCELABLE : PERMISSION_SYSTEM_FIXED;
+        PermissionDataBrief::GetInstance().UpdatePermStatus(brief, newPerm);
+        if (brief.status != newPerm.status || brief.flag != newPerm.flag) {
+            brief = newPerm;
+            isFixed = true;
+        }
+    }
+}
+
+// Verify the app signature against install_list_permissions.json app_signature before using
+// pre-authorization data.
+bool VerifyPreAuthSignature(const PreAuthBundleInfo* preAuthInfo, std::vector<TrustedBundleInfoInner>& trustedInfos)
+{
+    if (preAuthInfo == nullptr || preAuthInfo->appSignature.empty()) {
+        return false;
+    }
+    // Parse the complete provision data (fingerprint/appId/appIdentifier) before matching.
+    HapSignVerifyManager& verifyManager = HapSignVerifyManager::GetInstance();
+    for (auto& trustedInfo : trustedInfos) {
+        if (verifyManager.ParseProvision(trustedInfo) == RET_SUCCESS &&
+            trustedInfo.MatchAppSignature(preAuthInfo->appSignature)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// Fill permissions declared by the hap but not defined (or disabled) in the current permission definition,
+// following PermissionManager::FillUndefinedPermVector.
+void FillUndefPerms(const BundleParam& param, const HapPolicy& policy, std::vector<GenericValues>& undefValues)
+{
+    for (const auto& status : policy.permStateList) {
+        PermissionBriefDef briefDef;
+        if (GetPermissionBriefDef(status.permissionName, briefDef) && briefDef.isEnable) {
+            continue;
+        }
+        GenericValues value;
+        value.Put(TokenFiledConst::FIELD_PERMISSION_NAME, status.permissionName);
+        value.Put(TokenFiledConst::FIELD_APP_DISTRIBUTION_TYPE,
+            Verify::AppDistTypeToString(static_cast<Verify::AppDistType>(param.distributionType)));
+        auto aclIter = std::find(policy.aclRequestedList.begin(), policy.aclRequestedList.end(), status.permissionName);
+        value.Put(TokenFiledConst::FIELD_ACL, aclIter != policy.aclRequestedList.end() ? 1 : 0);
+        auto extendIter = policy.aclExtendedMap.find(status.permissionName);
+        if (extendIter != policy.aclExtendedMap.end()) {
+            value.Put(TokenFiledConst::FIELD_VALUE, extendIter->second);
+        }
+        undefValues.emplace_back(value);
+    }
 }
 #endif
 
@@ -270,7 +345,7 @@ BootVerifyScheduler& BootVerifyScheduler::GetInstance()
     return instance;
 }
 
-int32_t BootVerifyScheduler::LoadVerifyDataFromDb(std::map<int32_t, TokenIdInfo>& tokenIdAplMap)
+int32_t BootVerifyScheduler::LoadVerifyDataFromDb()
 {
     GenericValues conditionValue;
     std::vector<GenericValues> hapTokenRes;
@@ -307,17 +382,23 @@ int32_t BootVerifyScheduler::LoadVerifyDataFromDb(std::map<int32_t, TokenIdInfo>
         LOGW(ATM_DOMAIN, ATM_TAG, "Load extended permission failed, ret=%{public}d.", ret);
         extendedPermRes.clear();
     }
-    tokenIdAplMap.clear();
-    for (const auto& tokenValue : hapTokenRes) {
-        int32_t tokenId = tokenValue.GetInt(TokenFiledConst::FIELD_TOKEN_ID);
-        TokenIdInfo tokenIdInfo;
-        tokenIdInfo.apl = tokenValue.GetInt(TokenFiledConst::FIELD_APL);
-        tokenIdInfo.isSystemApp = AccessTokenInfoUtils::CheckSpecifiedFlag(
-            tokenValue.GetInt(TokenFiledConst::FIELD_TOKEN_ATTR), SYSTEM_APP_FLAG);
-        tokenIdAplMap[tokenId] = tokenIdInfo;
+    std::vector<GenericValues> hapInfoRes;
+#ifdef SPM_DATA_ENABLE
+    ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO, conditionValue, hapInfoRes);
+    if (ret != RET_SUCCESS) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Get bundle sign info failed, ret=%{public}d.", ret);
+        return ret;
     }
+#endif
+    return InitVerifyDataFromDbResults(hapTokenRes, permStateRes, extendedPermRes, hapInfoRes);
+}
+
+int32_t BootVerifyScheduler::InitVerifyDataFromDbResults(const std::vector<GenericValues>& hapTokenRes,
+    const std::vector<GenericValues>& permStateRes, const std::vector<GenericValues>& extendedPermRes,
+    const std::vector<GenericValues>& hapInfoRes)
+{
     InitBundleVerifyContext(hapTokenRes, permStateRes, extendedPermRes);
-    return RefreshBundleSignInfoMap();
+    return InitBundleSignInfoMapFromResults(hapInfoRes);
 }
 
 std::vector<DelInfo> BootVerifyScheduler::BuildDeleteInfos(const std::vector<BundleSignInfo>& infos)
@@ -350,6 +431,7 @@ void BootVerifyScheduler::ClearBundleVerifyContext()
     hapTokenInfoMap_.clear();
     requestedPermData_.clear();
     extendedPermMap_.clear();
+    undefinedPermMap_.clear();
     isVerifiedMap_.clear();
     isVerifyingMap_.clear();
     highPrivilegeBundleList_.clear();
@@ -472,7 +554,7 @@ bool BootVerifyScheduler::BuildHapTokenInfoItemFromDb(AccessTokenID tokenId, con
     hapTokenInfoItem.tokenId = tokenId;
     hapTokenInfoItem.userId = static_cast<uint32_t>(tokenValue.GetInt(TokenFiledConst::FIELD_USER_ID));
     hapTokenInfoItem.bundleName = tokenValue.GetString(TokenFiledConst::FIELD_BUNDLE_NAME);
-    if (hapTokenInfoItem.bundleName.empty()) {
+    if (!DataValidator::IsBundleNameValid(hapTokenInfoItem.bundleName)) {
         return false;
     }
     hapTokenInfoItem.apiVersion = tokenValue.GetInt(TokenFiledConst::FIELD_API_VERSION);
@@ -489,6 +571,13 @@ bool BootVerifyScheduler::BuildHapTokenInfoItemFromDb(AccessTokenID tokenId, con
     hapTokenInfoItem.reserved = static_cast<ReservedType>(tokenValue.GetInt(TokenFiledConst::FIELD_RESERVED));
     hapTokenInfoItem.migrated = tokenValue.GetInt(TokenFiledConst::FIELD_MIGRATED) != 0;
     hapTokenInfoItem.uid = tokenValue.GetInt(TokenFiledConst::FIELD_UID);
+    if (hapTokenInfoItem.uid != INVALID_UID &&
+        AccessTokenIDManager::ExtractUserId(hapTokenInfoItem.uid) != static_cast<int32_t>(hapTokenInfoItem.userId)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Token uid %{public}d inconsistent with userId %{public}u, tokenId=%{public}u.",
+            hapTokenInfoItem.uid, hapTokenInfoItem.userId, tokenId);
+        AccessTokenIDManager::GetInstance().ChangeTokenIdStatus(tokenId, TokenIdStatus::UNTRUSTED);
+        return false;
+    }
 #endif
 
     return true;
@@ -622,17 +711,9 @@ void BootVerifyScheduler::SortPriorityBundleList()
     std::sort(normalBundleList_.begin(), normalBundleList_.end(), bundleComparator);
 }
 
-int32_t BootVerifyScheduler::RefreshBundleSignInfoMap()
+int32_t BootVerifyScheduler::InitBundleSignInfoMapFromResults(const std::vector<GenericValues>& results)
 {
 #ifdef SPM_DATA_ENABLE
-    std::vector<GenericValues> results;
-    GenericValues conditionValue;
-    int32_t ret = AccessTokenDbOperator::Find(AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO, conditionValue, results);
-    if (ret != RET_SUCCESS) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Get bundle sign info failed, ret=%{public}d.", ret);
-        return ret;
-    }
-
     for (const auto& result : results) {
         std::string bundleName = result.GetString(TokenFiledConst::FIELD_BUNDLE_NAME);
         int32_t mode = result.GetInt(TokenFiledConst::FIELD_MODE);
@@ -654,7 +735,8 @@ int32_t BootVerifyScheduler::RefreshBundleSignInfoMap()
         info.bundleName = bundleName;
         info.mode = static_cast<MultipleMode>(mode);
         info.isPreInstalled = (result.GetInt(TokenFiledConst::FIELD_IS_PREINSTALLED) != 0);
-        info.moduleNameList.emplace_back(result.GetString(TokenFiledConst::FIELD_MODULE_NAME));
+        std::string moduleName = result.GetString(TokenFiledConst::FIELD_MODULE_NAME);
+        info.moduleNameList.emplace_back(moduleName);
         info.pathList.emplace_back(result.GetString(TokenFiledConst::FIELD_PATH));
         info.persistDataList.emplace_back(result.GetBlob(TokenFiledConst::FIELD_PERSIST_DATA));
     }
@@ -720,22 +802,19 @@ void BootVerifyScheduler::UpdateBundleSignInfoByTrustedInfos(BundleSignInfo& sig
     }
 }
 
-int32_t BootVerifyScheduler::VerifySingleBundle(const std::string& key, BundleSignInfo& updatedInfo,
-    VerifiedBundleState& state)
+int32_t BootVerifyScheduler::VerifyHapsSignInfo(const std::string& key, const BundleSignInfo& updatedInfo,
+    std::vector<TrustedBundleInfoInner>& trustedInfos,
+    std::vector<uint32_t>& changedIndexList)
 {
-    state.bundleName = updatedInfo.bundleName;
     HapSignVerifyManager& verifyManager = HapSignVerifyManager::GetInstance();
-    std::vector<TrustedBundleInfoInner> trustedInfos;
-    std::vector<uint32_t> changedIndexList;
     trustedInfos.reserve(updatedInfo.pathList.size());
-    int32_t ret = RET_SUCCESS;
     for (uint32_t i = 0; i < updatedInfo.pathList.size(); ++i) {
         TrustedBundleInfoInner trustedInfo;
         bool isChanged = false;
         trustedInfo.bootstrapInfo = std::make_shared<Security::Verify::BootstrapInfo>();
         trustedInfo.bootstrapInfo->Load(
-            updatedInfo.persistDataList[i].data(), updatedInfo.persistDataList[i].size());
-        ret = verifyManager.CheckHapsSignInfo(
+            const_cast<uint8_t *>(updatedInfo.persistDataList[i].data()), updatedInfo.persistDataList[i].size());
+        int32_t ret = verifyManager.CheckHapsSignInfo(
             HapSignVerifyManager::MakeVerifyParams(updatedInfo.pathList[i], Verify::VerifyType::Fast, -1),
             true, trustedInfo, isChanged);
         if (ret != RET_SUCCESS) {
@@ -748,6 +827,20 @@ int32_t BootVerifyScheduler::VerifySingleBundle(const std::string& key, BundleSi
         if (isChanged) {
             changedIndexList.emplace_back(i);
         }
+    }
+    return RET_SUCCESS;
+}
+
+int32_t BootVerifyScheduler::VerifySingleBundle(const std::string& key, BundleSignInfo& updatedInfo,
+    VerifiedBundleState& state)
+{
+    state.bundleName = updatedInfo.bundleName;
+    HapSignVerifyManager& verifyManager = HapSignVerifyManager::GetInstance();
+    std::vector<TrustedBundleInfoInner> trustedInfos;
+    std::vector<uint32_t> changedIndexList;
+    int32_t ret = VerifyHapsSignInfo(key, updatedInfo, trustedInfos, changedIndexList);
+    if (ret != RET_SUCCESS) {
+        return ret;
     }
 
     ret = verifyManager.CheckMultipleHaps(trustedInfos);
@@ -773,7 +866,7 @@ int32_t BootVerifyScheduler::VerifySingleBundle(const std::string& key, BundleSi
         return ret;
     }
 
-    return ReconcileVerifiedBundleCache(key, policy, param, state);
+    return ReconcileVerifiedBundleCache(key, policy, param, trustedInfos, state);
 }
 
 void BootVerifyScheduler::UpdateVerifiedSignInfo(const std::string& key, BundleSignInfo& updatedInfo,
@@ -790,13 +883,16 @@ void BootVerifyScheduler::UpdateVerifiedSignInfo(const std::string& key, BundleS
 }
 
 int32_t BootVerifyScheduler::ReconcileVerifiedBundleCache(
-    const std::string& key, const HapPolicy& policy, const BundleParam& param, VerifiedBundleState& state)
+    const std::string& key, const HapPolicy& policy, const BundleParam& param,
+    std::vector<TrustedBundleInfoInner>& trustedInfos, VerifiedBundleState& state)
 {
     std::shared_ptr<BundleInfoInner> bundleInfo = nullptr;
     BundleNoCachedInfo noCachedInfo;
     AccessTokenInfoUtils::BuildBundleFullInfo(param, policy, bundleInfo, noCachedInfo);
     std::vector<PermissionWithValue> fixedExtendPerms;
     BuildExtendedPermListFromPolicy(policy, fixedExtendPerms);
+    std::vector<GenericValues> undefValues;
+    FillUndefPerms(param, policy, undefValues);
 
     std::lock_guard<std::mutex> lock(verifyMutex_);
     auto bundleIter = bundleInfoMap_.find(key);
@@ -805,42 +901,81 @@ int32_t BootVerifyScheduler::ReconcileVerifiedBundleCache(
         return ERR_BUNDLE_NOT_EXIST;
     }
     const auto tokenIds = bundleIter->second->tokenIds;
+
     for (const auto tokenId : tokenIds) {
-        auto hapIter = hapTokenInfoMap_.find(tokenId);
-        if (hapIter == hapTokenInfoMap_.end()) {
+        if (hapTokenInfoMap_.find(tokenId) == hapTokenInfoMap_.end()) {
             LOGC(ATM_DOMAIN, ATM_TAG, "Hap token info not exist, tokenId=%{public}u.", tokenId);
             return ERR_TOKENID_NOT_EXIST;
         }
-        HapTokenInfoItem fixedItem = hapIter->second;
-        bool hapInfoFixed = false;
-        PermissionConstraintCheck::FixPersistentHapInfo(param, policy, fixedItem, hapInfoFixed);
-        if (hapInfoFixed) {
-            state.needPersistHapInfo = true;
-            hapTokenInfoMap_[tokenId] = fixedItem;
-        }
-        std::vector<BriefPermData> fixedPermBriefData = requestedPermData_[tokenId];
-        bool briefDataFixed = false;
-        PermissionConstraintCheck::FixBriefPermData(*bundleInfo, fixedItem.dlpType, fixedPermBriefData, briefDataFixed);
-        if (briefDataFixed) {
-            state.needPersistPermState = true;
-            requestedPermData_[tokenId] = fixedPermBriefData;
-        }
-        bool needUpdateExtendPerm = false;
-        auto extendIter = extendedPermMap_.find(tokenId);
-        if (extendIter == extendedPermMap_.end()) {
-            needUpdateExtendPerm = !fixedExtendPerms.empty();
-        } else {
-            needUpdateExtendPerm = !IsExtendedPermListEqual(extendIter->second, fixedExtendPerms);
-        }
-        if (needUpdateExtendPerm) {
-            extendedPermMap_[tokenId] = fixedExtendPerms;
-            state.needUpdateExtendPerm = true;
-        }
+        ReconcileHapTokenInfo(tokenId, param, policy, state);
+        ReconcilePermData(tokenId, bundleInfo, param.bundleName, trustedInfos, state);
+        ReconcileExtendPerm(tokenId, fixedExtendPerms, state);
+        ReconcileUndefPerm(tokenId, undefValues, state);
     }
     bundleNoCachedInfoMap_[key] = noCachedInfo;
     bundleInfo->tokenIds = tokenIds;
     bundleInfoMap_[key] = bundleInfo;
     return RET_SUCCESS;
+}
+
+void BootVerifyScheduler::ReconcileHapTokenInfo(AccessTokenID tokenId, const BundleParam& param,
+    const HapPolicy& policy, VerifiedBundleState& state)
+{
+    HapTokenInfoItem fixedItem = hapTokenInfoMap_[tokenId];
+    bool hapInfoFixed = false;
+    // FixPersistentHapInfo fills apiVersion/apl/tokenAttr/isSideload from hap parsed values.
+    PermissionConstraintCheck::FixPersistentHapInfo(param, policy, fixedItem, hapInfoFixed);
+    if (hapInfoFixed) {
+        hapTokenInfoMap_[tokenId] = fixedItem;
+        state.needPersistHapInfo = true;
+    }
+}
+
+void BootVerifyScheduler::ReconcilePermData(AccessTokenID tokenId, const std::shared_ptr<BundleInfoInner>& bundleInfo,
+    const std::string& bundleName, std::vector<TrustedBundleInfoInner>& trustedInfos, VerifiedBundleState& state)
+{
+    std::vector<BriefPermData> fixedPermBriefData = requestedPermData_[tokenId];
+    bool briefDataFixed = false;
+    PermissionConstraintCheck::FixBriefPermData(
+        *bundleInfo, hapTokenInfoMap_[tokenId].dlpType, fixedPermBriefData, briefDataFixed);
+    // Use pre-authorization data to set the flag for permissions missing from the database
+    // (hap has them, db does not); verify app_signature (parse complete provision data) before merging.
+    const PreAuthBundleInfo* preAuthInfo = PreAuthorizationParser::GetInstance().GetPreAuthBundleInfo(bundleName);
+    if (VerifyPreAuthSignature(preAuthInfo, trustedInfos)) {
+        MergePreAuthPermissions(preAuthInfo, fixedPermBriefData, briefDataFixed);
+    }
+    if (briefDataFixed) {
+        requestedPermData_[tokenId] = fixedPermBriefData;
+        state.needPersistPermState = true;
+    }
+}
+
+void BootVerifyScheduler::ReconcileExtendPerm(AccessTokenID tokenId,
+    const std::vector<PermissionWithValue>& fixedExtendPerms, VerifiedBundleState& state)
+{
+    bool needUpdateExtendPerm = false;
+    auto extendIter = extendedPermMap_.find(tokenId);
+    if (extendIter == extendedPermMap_.end()) {
+        needUpdateExtendPerm = !fixedExtendPerms.empty();
+    } else {
+        needUpdateExtendPerm = !IsExtendedPermListEqual(extendIter->second, fixedExtendPerms);
+    }
+    if (needUpdateExtendPerm) {
+        extendedPermMap_[tokenId] = fixedExtendPerms;
+        state.needUpdateExtendPerm = true;
+    }
+}
+
+void BootVerifyScheduler::ReconcileUndefPerm(AccessTokenID tokenId, const std::vector<GenericValues>& undefValues,
+    VerifiedBundleState& state)
+{
+    if (undefValues.empty()) {
+        return;
+    }
+    std::vector<GenericValues> tokenUndefValues = undefValues;
+    AccessTokenInfoUtils::AddTokenIdToUndefValues(tokenId, tokenUndefValues);
+    undefinedPermMap_[tokenId] = tokenUndefValues;
+    state.needUpdateUndefineInfo = true;
 }
 
 int32_t BootVerifyScheduler::BuildVerifyBundleData(const std::string& key, BundleSignInfo& signInfo, bool isPreVerify)
@@ -958,6 +1093,7 @@ void BootVerifyScheduler::StartVerifyNormalBundleListAsync()
     if (normalBundleList_.empty()) {
         isAllHapBundlesVerified_.store(true);
         ClearBundleVerifyContext();
+        PreAuthorizationParser::GetInstance().Clear();
         AccessTokenInfoUtils::AccessTokenServiceAppVerifyParamSet();
         ReportNormalBundleVerifyFinish(hapSize);
         return;
@@ -991,20 +1127,49 @@ void BootVerifyScheduler::VerifyNormalBundleListAsync()
     }
     isAllHapBundlesVerified_.store(true);
     ClearBundleVerifyContext();
+    PreAuthorizationParser::GetInstance().Clear();
     verifyCondition_.notify_all();
     AccessTokenInfoUtils::AccessTokenServiceAppVerifyParamSet();
 }
 
-int32_t BootVerifyScheduler::VerifyBundleSignInfoWhenStart(
-    uint32_t& hapSize, std::map<int32_t, TokenIdInfo>& tokenIdAplMap)
+int32_t BootVerifyScheduler::VerifyBundleSignInfoWhenStart(uint32_t& hapSize)
 {
     ClearBundleVerifyContext();
     isAllHapBundlesVerified_.store(false);
-    int32_t ret = LoadVerifyDataFromDb(tokenIdAplMap);
+    int32_t ret = LoadVerifyDataFromDb();
     if (ret != RET_SUCCESS) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Load verify data failed, ret=%{public}d.", ret);
         return ret;
     }
+#if defined(IS_SUPPORT_HAP_RUNNING)
+    {
+        std::lock_guard<std::mutex> lock(verifyMutex_);
+        // access_token.db master and replica are both corrupted and rebuilt as empty tables (hap data empty):
+        // enter the rebuild database flow.
+        // The rebuild flow sets a flag so that ReconcileVerifiedBundleCache skips the hap-vs-db comparison
+        // and fills from hap parsed values.
+        if (hapTokenInfoMap_.empty() && IsBmsDbExisted()) {
+            ReportSysEventDbException(
+                AccessTokenDbSceneCode::AT_DB_HAP_DATA_EMPTY, EIO, "hap_token_info_table: empty");
+            RebuildDatabaseData rebuildDatabaseData;
+            int32_t rebuildDatabaseRet =
+            RebuildDatabaseScheduler::GetInstance().StartRebuildDatabase(rebuildDatabaseData);
+            if (rebuildDatabaseRet != RET_SUCCESS) {
+                LOGE(ATM_DOMAIN, ATM_TAG, "Rebuild database failed, ret=%{public}d.", rebuildDatabaseRet);
+            }
+            // Mark migration completed after rebuild lands in db; otherwise ShouldSkipVerifyLocked would skip sign
+            // verification because migration is incomplete, leaving the parsed permission list
+            // (permission_state_table) unpersisted.
+            (void)AccessTokenMigrationManager::MarkMigrationCompleted();
+            migrationCompleted_.store(true);
+            // Rebuild records are produced by StartRebuildDatabase; load verification context from results directly
+            // to avoid re-reading the db.
+            (void)InitVerifyDataFromDbResults(rebuildDatabaseData.hapTokenInfoRes, rebuildDatabaseData.permStateRes,
+                rebuildDatabaseData.extendedPermRes, rebuildDatabaseData.hapSignInfoRes);
+        }
+    }
+    PreAuthorizationParser::GetInstance().Init();
+#endif
 
     (void)AccessTokenIDManager::GetInstance().InitBundleIdConfig();
 
@@ -1248,6 +1413,17 @@ void BootVerifyScheduler::BuildBundlePersistInfos(AccessTokenID tokenId, const V
             addInfoVec.emplace_back(AddInfo { AtmDataType::ACCESSTOKEN_PERMISSION_EXTEND_VALUE, extendPermValues });
         }
     }
+    if (state.needUpdateUndefineInfo) {
+        delInfoVec.emplace_back(DelInfo { AtmDataType::ACCESSTOKEN_HAP_UNDEFINE_INFO, condition });
+        std::vector<GenericValues> undefValues;
+        {
+            std::lock_guard<std::mutex> lock(verifyMutex_);
+            undefValues = undefinedPermMap_[tokenId];
+        }
+        if (!undefValues.empty()) {
+            addInfoVec.emplace_back(AddInfo { AtmDataType::ACCESSTOKEN_HAP_UNDEFINE_INFO, undefValues });
+        }
+    }
 }
 
 void BootVerifyScheduler::BuildSignInfoPersistInfo(
@@ -1271,7 +1447,7 @@ int32_t BootVerifyScheduler::PersistVerifiedBundleState(
     const std::string& key, const VerifiedBundleState& state)
 {
     if (!state.needUpdateSignInfo && !state.needPersistHapInfo &&
-        !state.needPersistPermState && !state.needUpdateExtendPerm) {
+        !state.needPersistPermState && !state.needUpdateExtendPerm && !state.needUpdateUndefineInfo) {
         return RET_SUCCESS;
     }
     std::vector<DelInfo> delInfoVec;

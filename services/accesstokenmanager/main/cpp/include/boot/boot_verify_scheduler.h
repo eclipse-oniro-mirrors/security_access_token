@@ -52,6 +52,7 @@ struct VerifiedBundleState final {
     bool needPersistHapInfo = false;
     bool needPersistPermState = false;
     bool needUpdateExtendPerm = false;
+    bool needUpdateUndefineInfo = false;
 };
 
 class AddSpmDataTask;
@@ -66,7 +67,7 @@ class BootVerifyScheduler final {
 public:
     static BootVerifyScheduler& GetInstance();
 
-    int32_t VerifyBundleSignInfoWhenStart(uint32_t& hapSize, std::map<int32_t, TokenIdInfo>& tokenIdAplMap);
+    int32_t VerifyBundleSignInfoWhenStart(uint32_t& hapSize);
     void StartVerifyNormalBundleListAsync();
     int32_t PreVerifyBundle(const std::string& bundleName);
     int32_t PreVerifyBundle(const std::string& bundleName, int32_t instIndex);
@@ -76,7 +77,7 @@ public:
 #ifdef IS_SUPPORT_HAP_RUNNING
 private:
     static std::vector<DelInfo> BuildDeleteInfos(const std::vector<BundleSignInfo>& infos);
-    int32_t LoadVerifyDataFromDb(std::map<int32_t, TokenIdInfo>& tokenIdAplMap);
+    int32_t LoadVerifyDataFromDb();
     void InitBundleVerifyContext(const std::vector<GenericValues>& hapTokenRes,
         const std::vector<GenericValues>& permStateRes, const std::vector<GenericValues>& extendedPermRes);
     void ClearBundleVerifyContext();
@@ -101,7 +102,10 @@ private:
     void CollectBundleKeySet(std::set<std::string>& bundleKeySet);
     void ClassifyBundle(const std::string& key);
     void SortPriorityBundleList();
-    int32_t RefreshBundleSignInfoMap();
+    int32_t InitVerifyDataFromDbResults(const std::vector<GenericValues>& hapTokenRes,
+        const std::vector<GenericValues>& permStateRes, const std::vector<GenericValues>& extendedPermRes,
+        const std::vector<GenericValues>& hapInfoRes);
+    int32_t InitBundleSignInfoMapFromResults(const std::vector<GenericValues>& results);
     void VerifyNormalBundleListAsync();
     bool IsAllBundlesVerified() const;
     int32_t BuildVerifyBundleData(const std::string& key, BundleSignInfo& signInfo, bool isPreVerify = false);
@@ -110,11 +114,23 @@ private:
         std::map<std::string, VerifiedBundleState>& stateMap);
     int32_t VerifySingleBundle(const std::string& key, BundleSignInfo& updatedInfo,
         VerifiedBundleState& state);
+    int32_t VerifyHapsSignInfo(const std::string& key, const BundleSignInfo& updatedInfo,
+        std::vector<TrustedBundleInfoInner>& trustedInfos, std::vector<uint32_t>& changedIndexList);
     void UpdateVerifiedSignInfo(const std::string& key, BundleSignInfo& updatedInfo,
         const std::vector<uint32_t>& changedIndexList, const std::vector<TrustedBundleInfoInner>& trustedInfos,
         VerifiedBundleState& state);
     int32_t ReconcileVerifiedBundleCache(const std::string& key, const HapPolicy& policy,
-        const BundleParam& param, VerifiedBundleState& state);
+        const BundleParam& param, std::vector<TrustedBundleInfoInner>& trustedInfos,
+        VerifiedBundleState& state);
+    void ReconcileHapTokenInfo(AccessTokenID tokenId, const BundleParam& param, const HapPolicy& policy,
+        VerifiedBundleState& state);
+    void ReconcilePermData(AccessTokenID tokenId, const std::shared_ptr<BundleInfoInner>& bundleInfo,
+        const std::string& bundleName, std::vector<TrustedBundleInfoInner>& trustedInfos,
+        VerifiedBundleState& state);
+    void ReconcileExtendPerm(AccessTokenID tokenId, const std::vector<PermissionWithValue>& fixedExtendPerms,
+        VerifiedBundleState& state);
+    void ReconcileUndefPerm(AccessTokenID tokenId, const std::vector<GenericValues>& undefValues,
+        VerifiedBundleState& state);
     int32_t BuildSpmParams(const std::string& key, BundleNoCachedInfo& noCachedInfo,
         std::vector<HapTokenInfo>& hapInfoCache, std::vector<std::vector<BriefPermData>>& permBriefDataListCache,
         std::vector<std::vector<PermissionWithValue>>& extendPermListCache, std::vector<SpmDataParam>& params);
@@ -159,6 +175,7 @@ private:
     std::map<std::string, BundleNoCachedInfo> bundleNoCachedInfoMap_;
     std::map<uint32_t, std::vector<BriefPermData>> requestedPermData_;
     std::map<AccessTokenID, std::vector<PermissionWithValue>> extendedPermMap_;
+    std::map<AccessTokenID, std::vector<GenericValues>> undefinedPermMap_;
     std::map<std::string, BundleSignInfo> bundleSignInfoMap_;
     std::map<std::string, bool> isVerifiedMap_;
     std::map<std::string, bool> isVerifyingMap_;

@@ -48,11 +48,16 @@ static constexpr uint8_t HAS_VALUE = (1U << 1);
 }
 
 std::map<std::string, std::string> HapSignVerifyHelper::ParseAclExtendedMap(
-    const std::string& appServiceCapabilities)
+    const std::string& appServiceCapabilities, const std::vector<PermissionStatus>& permStateList)
 {
     std::map<std::string, std::string> aclExtendedMap;
     if (appServiceCapabilities.empty()) {
         return aclExtendedMap;
+    }
+
+    std::unordered_set<std::string> requestedPermissions;
+    for (const auto& state : permStateList) {
+        requestedPermissions.insert(state.permissionName);
     }
 
     CJsonUnique jsonBuf = CreateJsonFromString(appServiceCapabilities);
@@ -72,8 +77,12 @@ std::map<std::string, std::string> HapSignVerifyHelper::ParseAclExtendedMap(
             LOGD(ATM_DOMAIN, ATM_TAG, "Permission %{public}s is invalid, skip.", child->string);
             continue;
         }
-        if (!briefDef.isEnable) {
+        if (!briefDef.isEnable || !briefDef.hasValue) {
             LOGD(ATM_DOMAIN, ATM_TAG, "Permission %{public}s is not enabled, skip.", child->string);
+            continue;
+        }
+        if (requestedPermissions.find(child->string) == requestedPermissions.end()) {
+            LOGD(ATM_DOMAIN, ATM_TAG, "Permission %{public}s is not requested, skip.", child->string);
             continue;
         }
 
@@ -207,13 +216,13 @@ void HapSignVerifyHelper::FillAclRequestedList(const std::vector<TrustedBundleIn
 }
 
 void HapSignVerifyHelper::FillAclExtendedMap(const std::vector<TrustedBundleInfoInner>& sortedInfos,
-    std::map<std::string, std::string>& aclExtendedMap)
+    const std::vector<PermissionStatus>& permStateList, std::map<std::string, std::string>& aclExtendedMap)
 {
     aclExtendedMap.clear();
     if (sortedInfos.empty()) {
         return;
     }
-    aclExtendedMap = ParseAclExtendedMap(sortedInfos.front().provisionInfo.appServiceCapabilities);
+    aclExtendedMap = ParseAclExtendedMap(sortedInfos.front().provisionInfo.appServiceCapabilities, permStateList);
 }
 
 void HapSignVerifyHelper::FillPermissionStateList(const std::vector<TrustedBundleInfoInner>& sortedInfos,

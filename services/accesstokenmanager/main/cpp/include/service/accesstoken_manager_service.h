@@ -239,16 +239,7 @@ private:
         AccessTokenID tokenID, const std::vector<std::string>& permissionList);
     bool IsPermissionValid(bool isSideloadApp, int32_t hapApl, const PermissionBriefDef& data,
         const std::string& value, bool isAcl);
-    void RecheckUndefinedPerms(const std::vector<GenericValues>& results,
-        const std::map<int32_t, TokenIdInfo>& tokenIdAplMap, std::vector<GenericValues>& validValueList);
-    void UpdateUndefinedInfoCache(const std::vector<GenericValues>& validValueList,
-        std::vector<GenericValues>& stateValues, std::vector<GenericValues>& extendValues);
-    void HandleHapUndefinedInfo(const std::map<int32_t, TokenIdInfo>& tokenIdAplMap, std::vector<DelInfo>& delInfoVec,
-        std::vector<AddInfo>& addInfoVec);
-    void HandlePermDefUpdate(const std::map<int32_t, TokenIdInfo>& tokenIdAplMap,
-        std::vector<DelInfo>& delInfoVec, std::vector<AddInfo>& addInfoVec, bool& needUpdateDb);
-    void DoAsyncInitializingTasks(const std::vector<DelInfo>& delInfoVec,
-        const std::vector<AddInfo>& addInfoVec, bool needUpdateDb, const InitDfxInfo& dfxInfo);
+    void DoAsyncInitializingTasks(const InitDfxInfo& dfxInfo);
 #ifdef SUPPORT_MANAGE_USER_POLICY
     void RollbackPolicyWhiteList(const PolicyWhiteListUpdateInfo& context);
     int32_t HandlePolicyWhiteListUpdate(const PolicyWhiteListUpdateInfo& policyContext);
