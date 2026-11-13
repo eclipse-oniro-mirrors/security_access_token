@@ -168,6 +168,7 @@ public:
     };
     enum TransactionType {
         DEFERRED,
+        IMMEDIATE,
     };
     int32_t Rollback();
     int32_t Commit();

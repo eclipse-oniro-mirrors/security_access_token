@@ -2243,6 +2243,371 @@ HWTEST_F(PermissionRecordDBTest, TranslationIntoGenericValues_WithTargetFields, 
     ASSERT_EQ("com.test.translate", restored.targetBundleName);
 }
 
+static bool ContainsColumnName(const std::vector<std::string>& columns, const std::string& name)
+{
+    for (const auto& column : columns) {
+        if (column == name) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/*
+ * @tc.name: SqliteHelperIdempotentColumnApis001
+ * @tc.desc: Verify SqliteHelper column apis: GetTableColumns/IsColumnExists/AddColumn
+ *           add column when missing, skip when exists, and fail safely when db is not open.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordDBTest, SqliteHelperIdempotentColumnApis001, TestSize.Level0)
+{
+    auto& db = PermissionUsedRecordDb::GetInstance();
+    const std::string testTable = "idempotent_column_api_test_table";
+    ASSERT_EQ(0, db.ExecuteSql("drop table if exists " + testTable));
+    ASSERT_EQ(0, db.ExecuteSql("create table " + testTable + " (a integer primary key, b integer)"));
+
+    auto columns = db.GetTableColumns(testTable);
+    ASSERT_EQ(2, static_cast<int32_t>(columns.size()));
+    EXPECT_TRUE(ContainsColumnName(columns, "a"));
+    EXPECT_TRUE(ContainsColumnName(columns, "b"));
+    EXPECT_FALSE(ContainsColumnName(columns, "c"));
+
+    EXPECT_TRUE(db.IsColumnExists(testTable, "a"));
+    EXPECT_FALSE(db.IsColumnExists(testTable, "c"));
+
+    // column missing: add succeeds and takes effect with the given default value
+    EXPECT_EQ(0, db.AddColumn(testTable, "c", "integer default 5"));
+    columns = db.GetTableColumns(testTable);
+    ASSERT_EQ(3, static_cast<int32_t>(columns.size()));
+    EXPECT_TRUE(ContainsColumnName(columns, "c"));
+    bool foundDefault = false;
+    {
+        // Keep the statement in a local scope: it must be finalized before Close(),
+        // otherwise sqlite3_close returns SQLITE_BUSY and the db handle stays open.
+        auto stmt = db.Prepare("pragma table_info(" + testTable + ")");
+        while (stmt.Step() == Statement::State::ROW) {
+            if (stmt.GetColumnString(1) == "c") {
+                foundDefault = true;
+                EXPECT_EQ("5", stmt.GetColumnString(4)); // 4: dflt_value index in PRAGMA table_info
+            }
+        }
+    }
+    EXPECT_TRUE(foundDefault);
+
+    // column exists: skip add, no duplicated column
+    EXPECT_EQ(0, db.AddColumn(testTable, "c", "integer default 5"));
+    EXPECT_EQ(3, static_cast<int32_t>(db.GetTableColumns(testTable).size()));
+
+    // nonexistent table: add fails
+    EXPECT_NE(0, db.AddColumn("no_such_table_for_ut", "c", "integer default 5"));
+
+    // db not open: apis fail safely, then reopen for following cases
+    db.ExecuteSql("PRAGMA wal_checkpoint(TRUNCATE)");
+    db.Close();
+    EXPECT_TRUE(db.GetTableColumns(testTable).empty());
+    EXPECT_FALSE(db.IsColumnExists(testTable, "a"));
+    EXPECT_NE(0, db.AddColumn(testTable, "d", "integer"));
+    db.Open(true);
+
+    ASSERT_EQ(0, db.ExecuteSql("drop table " + testTable));
+}
+
+/*
+ * @tc.name: IsPrimarykeyContainsColumn001
+ * @tc.desc: Verify IsPrimarykeyContainsColumn returns true only for primary key columns,
+ *           including composite key members whose pk order is greater than 1.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordDBTest, IsPrimarykeyContainsColumn001, TestSize.Level0)
+{
+    auto& db = PermissionUsedRecordDb::GetInstance();
+    // ensure the toggle status table with primary key(user_id, sub_profile_id) exists
+    ASSERT_EQ(0, db.CreatePermissionUsedRecordToggleStatusTable());
+    const std::string tableName = "permission_used_record_toggle_status_table";
+    EXPECT_TRUE(db.IsPrimarykeyContainsColumn(tableName, PrivacyFiledConst::FIELD_USER_ID)); // pk order 1
+    // pk order 2: must be detected by pk > 0 rather than pk == 1
+    EXPECT_TRUE(db.IsPrimarykeyContainsColumn(tableName, PrivacyFiledConst::FIELD_SUB_PROFILE_ID));
+    EXPECT_FALSE(db.IsPrimarykeyContainsColumn(tableName, PrivacyFiledConst::FIELD_STATUS)); // pk order 0
+    EXPECT_FALSE(db.IsPrimarykeyContainsColumn(tableName, "non_exist_pk_col"));
+}
+
+/*
+ * @tc.name: OnUpdate014
+ * @tc.desc: Verify 3->4 replay on a version-rolled-back db skips the non-idempotent rebuild
+ *           when used_type is already in primary key, so the future-version extra column
+ *           and records survive (insert ... select * would fail on column mismatch).
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordDBTest, OnUpdate014, TestSize.Level0)
+{
+    auto& db = PermissionUsedRecordDb::GetInstance();
+    ASSERT_EQ(0, db.ExecuteSql("drop table if exists permission_record_table"));
+    ASSERT_EQ(0, db.ExecuteSql("drop table if exists permission_record_table_new"));
+    // simulate a rolled-back v9 table: used_type/enhanced_identity already in primary key,
+    // plus a future-version extra column that the fixed rebuild schema does not contain
+    ASSERT_EQ(0, db.ExecuteSql("create table permission_record_table ("
+        "token_id integer,"
+        "op_code integer,"
+        "status integer,"
+        "timestamp integer,"
+        "access_duration integer,"
+        "access_count integer,"
+        "reject_count integer,"
+        "lockscreen_status integer,"
+        "used_type integer,"
+        "enhanced_identity text not null default '',"
+        "future_extra_col integer default 7,"
+        "primary key(token_id,op_code,status,timestamp,used_type,enhanced_identity))"));
+    ASSERT_EQ(0, db.ExecuteSql("insert into permission_record_table values("
+        "1500, 1, 1, 1503, 123, 1, 0, 0, 1, 'agentA', 7)"));
+
+    // replay 3->4: rebuild purpose (used_type in primary key) already achieved, skip rebuild
+    ASSERT_EQ(0, db.OnUpdate(3));
+
+    // the extra column and record survive: table was not rebuilt
+    auto columns = db.GetTableColumns("permission_record_table");
+    EXPECT_TRUE(ContainsColumnName(columns, "future_extra_col"));
+    {
+        // Keep the statement scope-local: a statement stepped only to ROW keeps an open
+        // read cursor on the table, which makes the following DROP TABLE fail with SQLITE_LOCKED.
+        auto countStmt = db.Prepare("select count(*) from permission_record_table");
+        ASSERT_EQ(Statement::State::ROW, countStmt.Step());
+        EXPECT_EQ(1, countStmt.GetColumnInt(0));
+    }
+
+    // restore environment for following cases
+    ASSERT_EQ(0, db.ExecuteSql("drop table permission_record_table"));
+    ASSERT_EQ(0, db.CreatePermissionRecordTable());
+}
+
+/*
+ * @tc.name: OnUpdate015
+ * @tc.desc: Verify 6->7 replay on a version-rolled-back db is fully idempotent:
+ *           InsertEnhancedIdentityColumn skips the existing column and the rebuild is
+ *           skipped because enhanced_identity is already in primary key.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordDBTest, OnUpdate015, TestSize.Level0)
+{
+    auto& db = PermissionUsedRecordDb::GetInstance();
+    ASSERT_EQ(0, db.ExecuteSql("drop table if exists permission_record_table"));
+    ASSERT_EQ(0, db.ExecuteSql("drop table if exists permission_record_table_new"));
+    ASSERT_EQ(0, db.ExecuteSql("create table permission_record_table ("
+        "token_id integer,"
+        "op_code integer,"
+        "status integer,"
+        "timestamp integer,"
+        "access_duration integer,"
+        "access_count integer,"
+        "reject_count integer,"
+        "lockscreen_status integer,"
+        "used_type integer,"
+        "enhanced_identity text not null default '',"
+        "future_extra_col integer default 7,"
+        "primary key(token_id,op_code,status,timestamp,used_type,enhanced_identity))"));
+    ASSERT_EQ(0, db.ExecuteSql("insert into permission_record_table values("
+        "1600, 1, 1, 1603, 123, 1, 0, 0, 1, 'agentA', 7)"));
+
+    // replay 6->7: column add and rebuild are both skipped
+    ASSERT_EQ(0, db.OnUpdate(6));
+
+    auto columns = db.GetTableColumns("permission_record_table");
+    EXPECT_TRUE(ContainsColumnName(columns, "future_extra_col"));
+    EXPECT_EQ(11, static_cast<int32_t>(columns.size()));
+    {
+        // Keep the statement scope-local: a statement stepped only to ROW keeps an open
+        // read cursor on the table, which makes the following DROP TABLE fail with SQLITE_LOCKED.
+        auto countStmt = db.Prepare("select count(*) from permission_record_table");
+        ASSERT_EQ(Statement::State::ROW, countStmt.Step());
+        EXPECT_EQ(1, countStmt.GetColumnInt(0));
+    }
+
+    // restore environment for following cases
+    ASSERT_EQ(0, db.ExecuteSql("drop table permission_record_table"));
+    ASSERT_EQ(0, db.CreatePermissionRecordTable());
+}
+
+/*
+ * @tc.name: OnUpdate016
+ * @tc.desc: Verify real 3->4 upgrade still executes the rebuild: legacy table without
+ *           used_type in primary key is rebuilt and records are kept.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordDBTest, OnUpdate016, TestSize.Level0)
+{
+    auto& db = PermissionUsedRecordDb::GetInstance();
+    ASSERT_EQ(0, db.ExecuteSql("drop table if exists permission_record_table"));
+    ASSERT_EQ(0, db.ExecuteSql("drop table if exists permission_record_table_new"));
+    // legacy v3 table: used_type exists as a normal column, not in primary key
+    ASSERT_EQ(0, db.ExecuteSql("create table permission_record_table ("
+        "token_id integer,"
+        "op_code integer,"
+        "status integer,"
+        "timestamp integer,"
+        "access_duration integer,"
+        "access_count integer,"
+        "reject_count integer,"
+        "lockscreen_status integer,"
+        "used_type integer,"
+        "primary key(token_id,op_code,status,timestamp))"));
+    ASSERT_EQ(0, db.ExecuteSql("insert into permission_record_table values("
+        "1700, 1, 1, 1703, 123, 1, 0, 0, 1)"));
+
+    ASSERT_EQ(0, db.OnUpdate(3));
+
+    // rebuild executed: used_type becomes a primary key member and record is kept
+    auto stmt = db.Prepare("pragma table_info(permission_record_table)");
+    int32_t usedTypePkOrder = 0;
+    while (stmt.Step() == Statement::State::ROW) {
+        if (stmt.GetColumnString(1) == PrivacyFiledConst::FIELD_USED_TYPE) {
+            usedTypePkOrder = stmt.GetColumnInt(5); // 5: pk index in PRAGMA table_info
+        }
+    }
+    EXPECT_GT(usedTypePkOrder, 0);
+    {
+        // Keep the statement scope-local: a statement stepped only to ROW keeps an open
+        // read cursor on the table, which makes the following DROP TABLE fail with SQLITE_LOCKED.
+        auto countStmt = db.Prepare("select count(*) from permission_record_table");
+        ASSERT_EQ(Statement::State::ROW, countStmt.Step());
+        EXPECT_EQ(1, countStmt.GetColumnInt(0));
+    }
+    // no leftover temp table after rebuild
+    auto newTableStmt = db.Prepare("pragma table_info(permission_record_table_new)");
+    EXPECT_NE(Statement::State::ROW, newTableStmt.Step());
+
+    // restore environment for following cases
+    ASSERT_EQ(0, db.ExecuteSql("drop table permission_record_table"));
+    ASSERT_EQ(0, db.CreatePermissionRecordTable());
+}
+
+/*
+ * @tc.name: OnUpdate017
+ * @tc.desc: Verify real 1->2 upgrade adds lockscreen_status column with correct default,
+ *           and replaying 1->2 skips the add without duplicating the column.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordDBTest, OnUpdate017, TestSize.Level0)
+{
+    auto& db = PermissionUsedRecordDb::GetInstance();
+    ASSERT_EQ(0, db.ExecuteSql("drop table if exists permission_record_table"));
+    // legacy v1 table without lockscreen_status column
+    ASSERT_EQ(0, db.ExecuteSql("create table permission_record_table ("
+        "token_id integer,"
+        "op_code integer,"
+        "status integer,"
+        "timestamp integer,"
+        "access_duration integer,"
+        "access_count integer,"
+        "reject_count integer,"
+        "primary key(token_id,op_code,status,timestamp))"));
+
+    ASSERT_EQ(0, db.OnUpdate(1));
+
+    auto stmt = db.Prepare("pragma table_info(permission_record_table)");
+    bool foundLockScreen = false;
+    while (stmt.Step() == Statement::State::ROW) {
+        if (stmt.GetColumnString(1) == PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS) {
+            foundLockScreen = true;
+            EXPECT_EQ(std::to_string(static_cast<int32_t>(LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED)),
+                stmt.GetColumnString(4)); // 4: dflt_value index in PRAGMA table_info
+        }
+    }
+    EXPECT_TRUE(foundLockScreen);
+    EXPECT_EQ(8, static_cast<int32_t>(db.GetTableColumns("permission_record_table").size()));
+
+    // replay 1->2: column already exists, skip add without duplicating
+    ASSERT_EQ(0, db.OnUpdate(1));
+    EXPECT_EQ(8, static_cast<int32_t>(db.GetTableColumns("permission_record_table").size()));
+
+    // restore environment for following cases
+    ASSERT_EQ(0, db.ExecuteSql("drop table permission_record_table"));
+    ASSERT_EQ(0, db.CreatePermissionRecordTable());
+}
+
+/*
+ * @tc.name: OnUpdate018
+ * @tc.desc: Verify real 2->3 upgrade adds used_type column with correct default,
+ *           and replaying 2->3 skips the add without duplicating the column.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordDBTest, OnUpdate018, TestSize.Level0)
+{
+    auto& db = PermissionUsedRecordDb::GetInstance();
+    ASSERT_EQ(0, db.ExecuteSql("drop table if exists permission_record_table"));
+    // legacy v2 table with lockscreen_status but without used_type column
+    ASSERT_EQ(0, db.ExecuteSql("create table permission_record_table ("
+        "token_id integer,"
+        "op_code integer,"
+        "status integer,"
+        "timestamp integer,"
+        "access_duration integer,"
+        "access_count integer,"
+        "reject_count integer,"
+        "lockscreen_status integer,"
+        "primary key(token_id,op_code,status,timestamp))"));
+
+    ASSERT_EQ(0, db.OnUpdate(2));
+
+    auto stmt = db.Prepare("pragma table_info(permission_record_table)");
+    bool foundUsedType = false;
+    while (stmt.Step() == Statement::State::ROW) {
+        if (stmt.GetColumnString(1) == PrivacyFiledConst::FIELD_USED_TYPE) {
+            foundUsedType = true;
+            EXPECT_EQ(std::to_string(static_cast<int32_t>(PermissionUsedType::NORMAL_TYPE)),
+                stmt.GetColumnString(4)); // 4: dflt_value index in PRAGMA table_info
+        }
+    }
+    EXPECT_TRUE(foundUsedType);
+    EXPECT_EQ(9, static_cast<int32_t>(db.GetTableColumns("permission_record_table").size()));
+
+    // replay 2->3: column already exists, skip add without duplicating
+    ASSERT_EQ(0, db.OnUpdate(2));
+    EXPECT_EQ(9, static_cast<int32_t>(db.GetTableColumns("permission_record_table").size()));
+
+    // restore environment for following cases
+    ASSERT_EQ(0, db.ExecuteSql("drop table permission_record_table"));
+    ASSERT_EQ(0, db.CreatePermissionRecordTable());
+}
+
+#ifdef REMOTE_PRIVACY_ENABLE
+/*
+ * @tc.name: RemotePermUsedRecordDbOnUpdate003
+ * @tc.desc: Verify remote permission db 1->2 migration is idempotent: replaying OnUpdate(1)
+ *           does not add sub_profile_id twice.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordDBTest, RemotePermUsedRecordDbOnUpdate003, TestSize.Level0)
+{
+    RemotePermissionUsedRecordDb db(DB_PATH, DB_NAME);
+    ASSERT_EQ(0, db.ExecuteSql("drop table if exists remote_permission_record"));
+    ASSERT_EQ(0, db.ExecuteSql("create table remote_permission_record ("
+        "device_id text not null,"
+        "device_name text not null,"
+        "op_code integer not null,"
+        "timestamp integer not null,"
+        "access_count integer not null,"
+        "reject_count integer not null,"
+        "primary key(device_id, device_name, op_code, timestamp))"));
+
+    ASSERT_EQ(0, db.OnUpdate(1));
+    EXPECT_TRUE(db.IsColumnExists("remote_permission_record", PrivacyFiledConst::FIELD_SUB_PROFILE_ID));
+    EXPECT_EQ(7, static_cast<int32_t>(db.GetTableColumns("remote_permission_record").size()));
+
+    // replay 1->2: column already exists, skip add without duplicating
+    ASSERT_EQ(0, db.OnUpdate(1));
+    EXPECT_TRUE(db.IsColumnExists("remote_permission_record", PrivacyFiledConst::FIELD_SUB_PROFILE_ID));
+    EXPECT_EQ(7, static_cast<int32_t>(db.GetTableColumns("remote_permission_record").size()));
+}
+#endif
+
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

@@ -15,6 +15,7 @@
 
 #include "sqlite_helper.h"
 
+#include <algorithm>
 #include <chrono>
 #include <cstdio>
 #include <sys/types.h>
@@ -228,6 +229,51 @@ int32_t SqliteHelper::ExecuteSql(const std::string& sql) const
     }
     sqlite3_free(errorMessage);
     return result;
+}
+
+std::vector<std::string> SqliteHelper::GetTableColumns(const std::string& tableName) const
+{
+    std::vector<std::string> columnNames;
+    if (db_ == nullptr) {
+        LOGW(ATM_DOMAIN, ATM_TAG, "Do open data base first!");
+        return columnNames;
+    }
+    auto statement = Prepare("PRAGMA table_info(" + tableName + ")");
+    while (statement.Step() == Statement::State::ROW) {
+        columnNames.push_back(statement.GetColumnString(1));
+    }
+    return columnNames;
+}
+
+bool SqliteHelper::IsColumnExists(const std::string& tableName, const std::string& columnName) const
+{
+    if (db_ == nullptr) {
+        LOGW(ATM_DOMAIN, ATM_TAG, "Do open data base first!");
+        return false;
+    }
+    auto statement = Prepare("PRAGMA table_info(" + tableName + ")");
+    while (statement.Step() == Statement::State::ROW) {
+        if (statement.GetColumnString(1) == columnName) {
+            return true;
+        }
+    }
+    return false;
+}
+
+int32_t SqliteHelper::AddColumn(const std::string& tableName, const std::string& columnName,
+    const std::string& columnDef) const
+{
+    if (db_ == nullptr) {
+        LOGW(ATM_DOMAIN, ATM_TAG, "Do open data base first!");
+        return GENERAL_ERROR;
+    }
+    if (IsColumnExists(tableName, columnName)) {
+        LOGI(ATM_DOMAIN, ATM_TAG, "Column %{public}s already exists in table %{public}s, skip add.",
+            columnName.c_str(), tableName.c_str());
+        return RET_SUCCESS;
+    }
+    std::string sql = "alter table " + tableName + " add column " + columnName + " " + columnDef;
+    return ExecuteSql(sql);
 }
 
 void SqliteHelper::SetWal() const

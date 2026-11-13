@@ -18,6 +18,7 @@
 
 #include <functional>
 #include <string>
+#include <vector>
 
 #include "statement.h"
 
@@ -50,6 +51,14 @@ public:
     Statement Prepare(const std::string& sql) const;
     int32_t ExecuteSql(const std::string& sql) const;
     std::string SpitError() const;
+
+    // Query the column name list of the specified table
+    std::vector<std::string> GetTableColumns(const std::string& tableName) const;
+    // Check whether the specified column exists in the specified table
+    bool IsColumnExists(const std::string& tableName, const std::string& columnName) const;
+    // Idempotent column add: skip if the column already exists, return 0 on success / GENERAL_ERROR(-1) on failure
+    int32_t AddColumn(const std::string& tableName, const std::string& columnName,
+        const std::string& columnDef) const;
 
     bool NeedRebuild(bool fullCheck = false) const;
     int32_t Rebuild();
