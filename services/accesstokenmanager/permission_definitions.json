@@ -10434,7 +10434,7 @@
             "name": "ohos.permission.kernel.FILEGUARD_RWDEV",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
-            "availableType": "SYSTEM",
+            "availableType": "SERVICE",
             "since": "26.1.0",
             "deprecated": "",
             "provisionEnable": true,
