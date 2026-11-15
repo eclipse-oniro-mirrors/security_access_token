@@ -75,6 +75,7 @@ typedef enum AccessTokenServiceStartSceneCode {
     VERIFY_HAP = 0x2002,
     PERSIST_BUNDLE_DATA = 0x2003,
     LOAD_SPM_DATA_TO_KERNEL = 0x2004,
+    REBUILD_DATABASE = 0x2005,
 } AccessTokenServiceStartSceneCode;
 
 typedef enum AccessTokenServiceStartErrorCode {

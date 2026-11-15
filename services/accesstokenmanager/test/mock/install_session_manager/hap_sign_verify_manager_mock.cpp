@@ -104,6 +104,14 @@ int32_t HapSignVerifyManager::CheckHapsSignInfo(Security::Verify::VerifyParams p
     return RET_SUCCESS;
 }
 
+int32_t HapSignVerifyManager::ParseProvision(TrustedBundleInfoInner& info) const
+{
+    if (info.bootstrapInfo == nullptr) {
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    return adapter_->ParseProvision(info.bootstrapInfo->profileJsonRaw, info.provisionInfo);
+}
+
 int32_t HapSignVerifyManager::CheckMultipleHaps(const std::vector<TrustedBundleInfoInner>& infos) const
 {
     if (infos.empty()) {
@@ -359,6 +367,21 @@ std::string TrustedBundleInfoInner::GetAppIdentifier() const
 std::string TrustedBundleInfoInner::GetAppId() const
 {
     return provisionInfo.appId;
+}
+
+bool TrustedBundleInfoInner::MatchAppSignature(const std::vector<std::string>& appSignatures) const
+{
+    std::string fullAppId = provisionInfo.bundleInfo.bundleName + "_" + provisionInfo.appId;
+    for (const auto& signature : appSignatures) {
+        if (signature.empty()) {
+            continue;
+        }
+        if (fullAppId == signature || provisionInfo.fingerprint == signature ||
+            provisionInfo.bundleInfo.appIdentifier == signature) {
+            return true;
+        }
+    }
+    return false;
 }
 
 std::string TrustedBundleInfoInner::GetApl() const

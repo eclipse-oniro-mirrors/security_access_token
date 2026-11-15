@@ -59,8 +59,10 @@ namespace {
 constexpr const char* ACCESSTOKEN_SERVICE_PROCESS_NAME = "accesstoken_service";
 constexpr const char* PERM_DEFINITION_EXT_FILE = "/system/etc/access_token/accesstoken_permission_definition_ext.txt";
 constexpr const char* ACCESS_TOKEN_CONFIG_DIR = "/system/etc/access_token";
-constexpr const char* RESET_PERM_DEF_VERSION = "0";
-constexpr const char* TEST_BUNDLE_NAME = "perm_definition_ext_test_bundle";
+constexpr const char* EXTERN_MAP_BUNDLE_NAME = "com.example.accesstoken.extern_map";
+constexpr const char* MANAGE_FILE_ENCRYPTION_PERMISSION = "ohos.permission.MANAGE_FILE_ENCRYPTION";
+constexpr int32_t EXTERN_MAP_USER_ID = 100;
+constexpr int32_t EXTERN_MAP_INST_INDEX = 0;
 constexpr int32_t LOAD_SA_TIMEOUT_MS = 10000;
 constexpr uint32_t WAIT_SLEEP_MS = 200;
 constexpr uint32_t MAX_WAIT_MS = 20 * 1000;
@@ -78,27 +80,6 @@ constexpr const char* STAGING_EXT_FILE =
 }
 
 static uint64_t g_selfTokenId = 0;
-static AccessTokenID g_installedTokenId = INVALID_TOKENID;
-
-static bool FindDisabledSystemGrantPermission(std::string& permissionName)
-{
-    size_t totalPermissions = GetDefPermissionsSize();
-    for (uint32_t code = 0; code < totalPermissions; ++code) {
-        std::string permission = TransferOpcodeToPermission(code);
-        if (permission.empty()) {
-            continue;
-        }
-        PermissionBriefDef briefDef;
-        if (!GetPermissionBriefDef(permission, briefDef)) {
-            continue;
-        }
-        if (briefDef.grantMode == GrantMode::SYSTEM_GRANT && !briefDef.isEnable) {
-            permissionName = permission;
-            return true;
-        }
-    }
-    return false;
-}
 
 static bool IsFileExist(const std::string& path)
 {
@@ -351,22 +332,6 @@ private:
     bool restored_ = false;
 };
 
-static bool SetPermissionDefinitionVersion(const std::string& version)
-{
-    GenericValues delValue;
-    delValue.Put(TokenFiledConst::FIELD_NAME, PERM_DEF_VERSION);
-    GenericValues addValue;
-    addValue.Put(TokenFiledConst::FIELD_NAME, PERM_DEF_VERSION);
-    addValue.Put(TokenFiledConst::FIELD_VALUE, version);
-    DelInfo delInfo;
-    delInfo.delType = AtmDataType::ACCESSTOKEN_SYSTEM_CONFIG;
-    delInfo.delValue = delValue;
-    AddInfo addInfo;
-    addInfo.addType = AtmDataType::ACCESSTOKEN_SYSTEM_CONFIG;
-    addInfo.addValues.emplace_back(addValue);
-    return AccessTokenDbOperator::DeleteAndInsertValues({ delInfo }, { addInfo }) == RET_SUCCESS;
-}
-
 static bool RestartAccesstokenService()
 {
     MockNativeToken mock(ACCESSTOKEN_SERVICE_PROCESS_NAME);
@@ -401,43 +366,6 @@ static bool WaitForAccessTokenServiceReady()
     return false;
 }
 
-static AccessTokenID InstallSystemCoreHap(const std::string& permission)
-{
-    HapInfoParams infoParams = {
-        .userID = 0,
-        .bundleName = TEST_BUNDLE_NAME,
-        .instIndex = 0,
-        .appIDDesc = "perm_definition_ext_test_appid",
-        .apiVersion = TestCommon::DEFAULT_API_VERSION,
-        .isSystemApp = true,
-        .appDistributionType = "debug",
-    };
-
-    PermissionStateFull permState = {
-        .permissionName = permission,
-        .isGeneral = true,
-        .resDeviceID = {"local"},
-        .grantStatus = {PERMISSION_GRANTED},
-        .grantFlags = {PERMISSION_SYSTEM_FIXED},
-    };
-
-    HapPolicyParams policyParams = {
-        .apl = APL_SYSTEM_CORE,
-        .domain = "accesstoken_test_domain",
-        .permList = {},
-        .permStateList = { permState },
-        .aclRequestedList = {},
-        .preAuthorizationInfo = {},
-    };
-
-    AccessTokenIDEx tokenIdEx = {0};
-    int32_t ret = TestCommon::AllocTestHapToken(infoParams, policyParams, tokenIdEx);
-    if (ret != RET_SUCCESS) {
-        return INVALID_TOKENID;
-    }
-    return tokenIdEx.tokenIdExStruct.tokenID;
-}
-
 void UndefinedPermissionUpdateTest::SetUpTestCase()
 {
     g_selfTokenId = GetSelfTokenID();
@@ -446,10 +374,6 @@ void UndefinedPermissionUpdateTest::SetUpTestCase()
 
 void UndefinedPermissionUpdateTest::TearDownTestCase()
 {
-    if (g_installedTokenId != INVALID_TOKENID) {
-        TestCommon::DeleteTestHapToken(g_installedTokenId);
-        g_installedTokenId = INVALID_TOKENID;
-    }
     SetSelfTokenID(g_selfTokenId);
     TestCommon::ResetTestEvironment();
 }
@@ -462,8 +386,7 @@ void UndefinedPermissionUpdateTest::TearDown()
 
 /**
  * @tc.name: UndefinedPermissionUpdateTest001
- * @tc.desc: a disabled system_grant permission becomes an undefined permission after
- *           hap installation and stays denied; after it is enabled by
+ * @tc.desc: a disabled system_grant permission stays denied; after it is enabled by
  *           permission_definition_ext, the permission_definition_version in
  *           system_config_table is reset to 0 and the service is restarted, the
  *           undefined permission is refreshed to granted.
@@ -472,15 +395,14 @@ void UndefinedPermissionUpdateTest::TearDown()
  */
 HWTEST_F(UndefinedPermissionUpdateTest, UndefinedPermissionUpdateTest001, TestSize.Level1)
 {
-    std::string permissionA;
-    ASSERT_TRUE(FindDisabledSystemGrantPermission(permissionA));
-    ASSERT_FALSE(permissionA.empty());
-    LOGI(ATM_DOMAIN, ATM_TAG, "found disabled system_grant permission: %{public}s.", permissionA.c_str());
+    AccessTokenIDEx tokenIdEx =
+        TestCommon::GetHapTokenIdFromBundle(EXTERN_MAP_USER_ID, EXTERN_MAP_BUNDLE_NAME, EXTERN_MAP_INST_INDEX);
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(tokenId, 0);
+    LOGI(ATM_DOMAIN, ATM_TAG, "extern_map tokenId: %{public}u.", tokenId);
 
-    g_installedTokenId = InstallSystemCoreHap(permissionA);
-    ASSERT_NE(g_installedTokenId, INVALID_TOKENID);
-
-    EXPECT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(g_installedTokenId, permissionA));
+    EXPECT_EQ(PERMISSION_DENIED,
+        AccessTokenKit::VerifyAccessToken(tokenId, MANAGE_FILE_ENCRYPTION_PERMISSION));
 
     PermDefinitionExtFileGuard fileGuard(PERM_DEFINITION_EXT_FILE);
     ASSERT_TRUE(fileGuard.IsMounted()) << "bind mount failed, service cannot see staging file edits";
@@ -489,17 +411,16 @@ HWTEST_F(UndefinedPermissionUpdateTest, UndefinedPermissionUpdateTest001, TestSi
     if (!newContent.empty() && newContent.back() != '\n') {
         newContent.push_back('\n');
     }
-    newContent.append(permissionA);
+    newContent.append(MANAGE_FILE_ENCRYPTION_PERMISSION);
     newContent.push_back('\n');
     ASSERT_TRUE(fileGuard.Write(newContent));
-
-    ASSERT_TRUE(SetPermissionDefinitionVersion(RESET_PERM_DEF_VERSION));
 
     ASSERT_TRUE(RestartAccesstokenService());
     ASSERT_TRUE(WaitForAccessTokenServiceReady());
 
     std::this_thread::sleep_for(std::chrono::milliseconds(WAIT_SERVICE_START_MS));
-    EXPECT_EQ(PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(g_installedTokenId, permissionA));
+    EXPECT_EQ(PERMISSION_GRANTED,
+        AccessTokenKit::VerifyAccessToken(tokenId, MANAGE_FILE_ENCRYPTION_PERMISSION));
 
     ASSERT_TRUE(fileGuard.Restore());
 

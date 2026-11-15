@@ -17,8 +17,12 @@
     <target name="libundefined_permission_update_test">
         <preparer>
             <option name="target" value="mount"/>
+            <option name="push" value="test_undefined_permission.hap -> /data/local/tmp" src="res"/>
+            <option name="shell" value="bm install -p /data/local/tmp/test_undefined_permission.hap"/>
         </preparer>
         <cleaner>
+            <option name="shell" value="bm uninstall -n com.example.accesstoken.extern_map"/>
+            <option name="shell" value="rm -rf /data/local/tmp/test_undefined_permission.hap"/>
         </cleaner>
     </target>
 </configuration>

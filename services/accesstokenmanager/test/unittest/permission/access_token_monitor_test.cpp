@@ -119,9 +119,8 @@ void AccessTokenMonitorTest::SetUpTestCase()
     uint32_t nativeSize = 0;
     uint32_t pefDefSize = 0;
     uint32_t dlpSize = 0;
-    std::map<int32_t, TokenIdInfo> tokenIdAplMap;
     AccessTokenInfoManager::GetInstance().Init(nativeSize, pefDefSize, dlpSize);
-    (void)BootVerifyScheduler::GetInstance().VerifyBundleSignInfoWhenStart(hapSize, tokenIdAplMap);
+    (void)BootVerifyScheduler::GetInstance().VerifyBundleSignInfoWhenStart(hapSize);
     BootVerifyScheduler::GetInstance().StartVerifyNormalBundleListAsync();
 }
 

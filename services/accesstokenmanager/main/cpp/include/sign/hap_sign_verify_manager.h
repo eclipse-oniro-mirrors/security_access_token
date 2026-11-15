@@ -70,6 +70,7 @@ public:
     std::string GetAppProvisionType() const;
     bool IsSystemApp() const;
     bool IsAtomicService() const;
+    bool MatchAppSignature(const std::vector<std::string>& appSignatures) const;
 
 private:
     AppExecFwk::Spm::InnerModuleInfoForSpm moduleData;
@@ -83,6 +84,8 @@ public:
 
     int32_t CheckHapsSignInfo(Security::Verify::VerifyParams params, bool booting,
         TrustedBundleInfoInner& info, bool& isChanged) const;
+
+    int32_t ParseProvision(TrustedBundleInfoInner& info) const;
 
     static Security::Verify::VerifyParams MakeVerifyParams(
         const std::string& path, Security::Verify::VerifyType type, int32_t userId);

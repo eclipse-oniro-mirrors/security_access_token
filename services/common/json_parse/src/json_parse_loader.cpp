@@ -97,12 +97,26 @@ static void TrimString(std::string& value)
     auto end = value.find_last_not_of(" \t\r\n");
     value = value.substr(begin, end - begin + 1);
 }
+
+// install_list_permissions.json
+constexpr const char* KEY_BUNDLE_NAME = "bundleName";
+constexpr const char* KEY_APP_SIGNATURE = "app_signature";
+constexpr const char* KEY_PERMISSIONS = "permissions";
+constexpr const char* KEY_NAME = "name";
+constexpr const char* KEY_USER_CANCELLABLE = "userCancellable";
 }
 
 int32_t ConfigPolicyLoaderInterface::GetPermissionDefinitionExt(std::vector<std::string>& permissions)
 {
     permissions.clear();
     return RET_SUCCESS;
+}
+
+bool ConfigPolicyLoaderInterface::ParseInstallListPermissions(const std::string& fileContent,
+    std::vector<PreAuthBundleInfo>& bundleInfos)
+{
+    bundleInfos.clear();
+    return false;
 }
 
 int32_t ConfigPolicyLoaderInterface::GetReservedBundleIdList(
@@ -738,6 +752,53 @@ std::string ConfigPolicLoader::BuildReservedBundleIdList(const std::set<int32_t>
         return std::string();
     }
     return PackJsonToString(json);
+}
+
+static void ParseInstallListPermItem(CJson* permsJson, std::map<std::string, bool>& permissions)
+{
+    int32_t permLen = cJSON_GetArraySize(permsJson);
+    for (int32_t j = 0; j < permLen; j++) {
+        CJson* permItem = cJSON_GetArrayItem(permsJson, j);
+        if (permItem == nullptr || !cJSON_IsObject(permItem)) {
+            continue;
+        }
+        std::string name;
+        if (!GetStringFromJson(permItem, KEY_NAME, name) || name.empty()) {
+            continue;
+        }
+        bool userCancellable = false;
+        (void)GetBoolFromJson(permItem, KEY_USER_CANCELLABLE, userCancellable);
+        permissions[name] = userCancellable;
+    }
+}
+
+bool ConfigPolicLoader::ParseInstallListPermissions(const std::string& fileContent,
+    std::vector<PreAuthBundleInfo>& bundleInfos)
+{
+    bundleInfos.clear();
+    CJsonUnique json = CreateJsonFromString(fileContent);
+    if (json == nullptr || !cJSON_IsArray(json.get())) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Parse install list permissions failed, not a json array.");
+        return false;
+    }
+    int32_t len = cJSON_GetArraySize(json.get());
+    for (int32_t i = 0; i < len; i++) {
+        CJson* item = cJSON_GetArrayItem(json.get(), i);
+        if (item == nullptr || !cJSON_IsObject(item)) {
+            continue;
+        }
+        PreAuthBundleInfo bundleInfo;
+        if (!GetStringFromJson(item, KEY_BUNDLE_NAME, bundleInfo.bundleName) || bundleInfo.bundleName.empty()) {
+            continue;
+        }
+        (void)GetArrayFromJson(item, KEY_APP_SIGNATURE, bundleInfo.appSignature);
+        CJson* permsJson = GetArrayFromJson(item, KEY_PERMISSIONS);
+        if (permsJson != nullptr) {
+            ParseInstallListPermItem(permsJson, bundleInfo.permissions);
+        }
+        bundleInfos.emplace_back(bundleInfo);
+    }
+    return true;
 }
 
 extern "C" {

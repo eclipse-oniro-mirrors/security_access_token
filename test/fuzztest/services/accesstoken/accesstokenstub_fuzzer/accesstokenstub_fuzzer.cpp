@@ -57,16 +57,10 @@ static const vector<PermissionFlag> FLAG_LIST = {
 static const uint32_t FLAG_LIST_SIZE = 8;
 static const std::string VALID_USER_POLICY_PERMISSION = "ohos.permission.INTERNET";
 static constexpr int32_t VALID_USER_POLICY_USER_ID = 0;
-static constexpr int32_t UNDEFINED_INFO_TOKEN_ID = 123; // 123: invalid token id, same as unit test
-static constexpr int32_t ASYNC_DB_WAIT_SECONDS = 2; // 2: seconds to wait for UpdateDatabaseAsync
 #ifdef SPM_DATA_ENABLE
 static constexpr int32_t MAX_MIGRATED_BUNDLE_LIST_SIZE = 5; // 5: max bundle list / uid set size for fuzzing
 static constexpr int32_t MAX_MIGRATED_SUB_LIST_SIZE = 2; // 2: max path/baseInfo/uid/reserved count for fuzzing
 #endif
-static const std::string MISMATCHED_PERM_DEF_VERSION = "fuzz_mismatched_perm_def_version";
-static const std::string UNDEFINED_USER_GRANT_PERM = "ohos.permission.ACTIVITY_MOTION";
-static const std::string UNDEFINED_SYSTEM_GRANT_PERM = "ohos.permission.REFRESH_USER_ACTION";
-static bool g_isPermDefUpdateTriggered = false;
 
 namespace OHOS {
 class TokenSyncCallbackImpl : public TokenSyncCallbackStub {
@@ -465,9 +459,8 @@ bool DeleteRemoteDeviceTokensStubFuzzTest(FuzzedDataProvider &provider)
         uint32_t nativeSize = 0;
         uint32_t pefDefSize = 0;
         uint32_t dlpSize = 0;
-        std::map<int32_t, TokenIdInfo> tokenIdAplMap;
         AccessTokenInfoManager::GetInstance().Init(nativeSize, pefDefSize, dlpSize);
-        (void)BootVerifyScheduler::GetInstance().VerifyBundleSignInfoWhenStart(hapSize, tokenIdAplMap);
+        (void)BootVerifyScheduler::GetInstance().VerifyBundleSignInfoWhenStart(hapSize);
         BootVerifyScheduler::GetInstance().StartVerifyNormalBundleListAsync();
         sleep(3);
     }
@@ -701,128 +694,6 @@ void TokenSyncStubFuzzTest()
     }
 }
 
-static GenericValues BuildUndefinedInfoRow(int32_t tokenId, const string& permissionName, int32_t acl,
-    const string& appDistributionType, const string& value)
-{
-    GenericValues row;
-    row.Put(TokenFiledConst::FIELD_TOKEN_ID, tokenId);
-    row.Put(TokenFiledConst::FIELD_PERMISSION_NAME, permissionName);
-    row.Put(TokenFiledConst::FIELD_ACL, acl);
-    row.Put(TokenFiledConst::FIELD_APP_DISTRIBUTION_TYPE, appDistributionType);
-    row.Put(TokenFiledConst::FIELD_VALUE, value);
-    return row;
-}
-
-static void ReplaceUndefinedInfo(const vector<GenericValues>& rows)
-{
-    DelInfo delInfo;
-    delInfo.delType = AtmDataType::ACCESSTOKEN_HAP_UNDEFINE_INFO;
-    AddInfo addInfo;
-    addInfo.addType = AtmDataType::ACCESSTOKEN_HAP_UNDEFINE_INFO;
-    addInfo.addValues = rows;
-    vector<DelInfo> delInfoVec;
-    delInfoVec.emplace_back(delInfo);
-    vector<AddInfo> addInfoVec;
-    addInfoVec.emplace_back(addInfo);
-    (void)AccessTokenDbOperator::DeleteAndInsertValues(delInfoVec, addInfoVec);
-}
-
-static void SeedMismatchedPermDefVersion()
-{
-    DelInfo delInfo;
-    delInfo.delType = AtmDataType::ACCESSTOKEN_SYSTEM_CONFIG;
-    delInfo.delValue.Put(TokenFiledConst::FIELD_NAME, PERM_DEF_VERSION);
-    AddInfo addInfo;
-    addInfo.addType = AtmDataType::ACCESSTOKEN_SYSTEM_CONFIG;
-    GenericValues addValue;
-    addValue.Put(TokenFiledConst::FIELD_NAME, PERM_DEF_VERSION);
-    addValue.Put(TokenFiledConst::FIELD_VALUE, MISMATCHED_PERM_DEF_VERSION);
-    addInfo.addValues.emplace_back(addValue);
-    vector<DelInfo> delInfoVec;
-    delInfoVec.emplace_back(delInfo);
-    vector<AddInfo> addInfoVec;
-    addInfoVec.emplace_back(addInfo);
-    (void)AccessTokenDbOperator::DeleteAndInsertValues(delInfoVec, addInfoVec);
-}
-
-static void ClearUndefinedInfoLeftovers(int32_t tokenId)
-{
-    ReplaceUndefinedInfo({});
-    DelInfo delInfo;
-    delInfo.delType = AtmDataType::ACCESSTOKEN_PERMISSION_STATE;
-    delInfo.delValue.Put(TokenFiledConst::FIELD_TOKEN_ID, tokenId);
-    vector<DelInfo> delInfoVec;
-    delInfoVec.emplace_back(delInfo);
-    vector<AddInfo> addInfoVec;
-    (void)AccessTokenDbOperator::DeleteAndInsertValues(delInfoVec, addInfoVec);
-    (void)PermissionDataBrief::GetInstance().DeleteBriefPermDataByTokenId(static_cast<AccessTokenID>(tokenId));
-}
-
-// Trigger the service init path once: seed a mismatched non-empty permission definition version and
-// undefined permission rows, so both the isUpdate and the !dbPermDefVersion.empty() branches in
-// HandlePermDefUpdate are taken and HandleHapUndefinedInfo is reached through the natural path.
-static void TriggerPermDefUpdateForFuzz()
-{
-    vector<GenericValues> rows;
-    rows.emplace_back(
-        BuildUndefinedInfoRow(UNDEFINED_INFO_TOKEN_ID, UNDEFINED_USER_GRANT_PERM, 1, "os_integration", ""));
-    rows.emplace_back(
-        BuildUndefinedInfoRow(UNDEFINED_INFO_TOKEN_ID, UNDEFINED_SYSTEM_GRANT_PERM, 1, "os_integration", ""));
-    ReplaceUndefinedInfo(rows);
-    SeedMismatchedPermDefVersion();
-
-    map<int32_t, TokenIdInfo> tokenIdAplMap;
-    TokenIdInfo tokenInfo = { APL_SYSTEM_BASIC, true };
-    tokenIdAplMap[UNDEFINED_INFO_TOKEN_ID] = tokenInfo;
-    std::vector<DelInfo> delInfoVec;
-    std::vector<AddInfo> addInfoVec;
-    bool needUpdateDb = false;
-    DelayedSingleton<AccessTokenManagerService>::GetInstance()->HandlePermDefUpdate(
-        tokenIdAplMap, delInfoVec, addInfoVec, needUpdateDb);
-
-    sleep(ASYNC_DB_WAIT_SECONDS); // wait for UpdateDatabaseAsync to write the current version back
-    ClearUndefinedInfoLeftovers(UNDEFINED_INFO_TOKEN_ID);
-}
-
-// Cover HandlePermDefUpdate and HandleHapUndefinedInfo which are only reachable from service init.
-void AccessTokenServiceInitFuzz(FuzzedDataProvider &provider)
-{
-    if (!g_isPermDefUpdateTriggered) {
-        g_isPermDefUpdateTriggered = true;
-        TriggerPermDefUpdateForFuzz();
-    }
-
-    int32_t tokenId = provider.ConsumeIntegral<int32_t>();
-    string permissionName = ConsumePermissionName(provider);
-    int32_t acl = provider.ConsumeIntegral<int32_t>();
-    string appDistributionType = provider.ConsumeRandomLengthString();
-    string permValue = provider.ConsumeRandomLengthString();
-    TokenIdInfo fuzzTokenInfo = { provider.ConsumeIntegral<int32_t>(), provider.ConsumeBool() };
-    map<int32_t, TokenIdInfo> tokenIdAplMap;
-    tokenIdAplMap[tokenId] = fuzzTokenInfo;
-    TokenIdInfo fixedTokenInfo = { APL_SYSTEM_BASIC, true };
-    tokenIdAplMap[UNDEFINED_INFO_TOKEN_ID] = fixedTokenInfo; // keep the fixed valid rows alive
-
-    vector<GenericValues> rows;
-    rows.emplace_back(
-        BuildUndefinedInfoRow(UNDEFINED_INFO_TOKEN_ID, UNDEFINED_USER_GRANT_PERM, 1, "os_integration", ""));
-    rows.emplace_back(
-        BuildUndefinedInfoRow(UNDEFINED_INFO_TOKEN_ID, UNDEFINED_SYSTEM_GRANT_PERM, 1, "os_integration", ""));
-    if ((tokenId != UNDEFINED_INFO_TOKEN_ID) || ((permissionName != UNDEFINED_USER_GRANT_PERM) &&
-        (permissionName != UNDEFINED_SYSTEM_GRANT_PERM))) { // avoid primary key conflict with fixed rows
-        rows.emplace_back(BuildUndefinedInfoRow(tokenId, permissionName, acl, appDistributionType, permValue));
-    }
-    ReplaceUndefinedInfo(rows);
-
-    vector<DelInfo> delInfoVec;
-    vector<AddInfo> addInfoVec;
-    DelayedSingleton<AccessTokenManagerService>::GetInstance()->HandleHapUndefinedInfo(
-        tokenIdAplMap, delInfoVec, addInfoVec);
-
-    (void)PermissionDataBrief::GetInstance().DeleteBriefPermDataByTokenId(
-        static_cast<AccessTokenID>(UNDEFINED_INFO_TOKEN_ID));
-    (void)PermissionDataBrief::GetInstance().DeleteBriefPermDataByTokenId(static_cast<AccessTokenID>(tokenId));
-}
 
 #ifdef SPM_DATA_ENABLE
 bool GetHapIdentityStubFuzzTest(FuzzedDataProvider &provider)
@@ -1219,7 +1090,6 @@ void AccessTokenStubFuzzTest(FuzzedDataProvider &provider)
 bool FuzzTest(FuzzedDataProvider &provider)
 {
     TokenSyncStubFuzzTest();
-    AccessTokenServiceInitFuzz(provider);
     AccessTokenStubFuzzTest(provider);
     return true;
 }

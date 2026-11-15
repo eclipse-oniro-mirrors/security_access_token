@@ -364,5 +364,10 @@ std::shared_ptr<NativeRdb::RdbStore> RdbHelper::GetRdbStore(
 
 void RdbHelper::ClearCache()
 {}
+
+int RdbHelper::DeleteRdbStore(const NativeRdb::RdbStoreConfig& config, bool shouldClose)
+{
+    return NativeRdb::E_OK;
+}
 } // namespace NativeRdb
 } // namespace OHOS

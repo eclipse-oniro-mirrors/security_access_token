@@ -48,17 +48,6 @@ namespace Security {
 namespace AccessToken {
 namespace {
 constexpr int INVALID_USERID = -1;
-
-bool IsPlaceholderModuleName(const std::string& moduleName)
-{
-    size_t moduleNameMinSize = 2; // placeholder module name should be at least 2 characters, e.g. "#0"
-    if (moduleName.size() < moduleNameMinSize || moduleName[0] != '#') {
-        return false;
-    }
-    return std::all_of(moduleName.begin() + 1, moduleName.end(), [](unsigned char ch) {
-        return std::isdigit(ch) != 0;
-    });
-}
 }
 
 const TrustedBundleInfoInner& GetBaselineVerifiedInfo(const VerifiedMigrationBundle& verifiedBundle)
@@ -266,7 +255,7 @@ bool MigrationVerifyHelper::NeedPostVerify(const BundleInfoItems& bundleInfo) co
         return false;
     }
     for (const auto& moduleInfo : bundleInfo.moduleInfoItems) {
-        if (!IsPlaceholderModuleName(moduleInfo.moduleName)) {
+        if (!AccessTokenInfoUtils::IsPlaceholderModuleName(moduleInfo.moduleName)) {
             LOGI(ATM_DOMAIN, ATM_TAG, "Bundle %{public}s has non-placeholder module %{public}s, skip post verify.",
                 bundleInfo.bundleName.c_str(), moduleInfo.moduleName.c_str());
             return false;

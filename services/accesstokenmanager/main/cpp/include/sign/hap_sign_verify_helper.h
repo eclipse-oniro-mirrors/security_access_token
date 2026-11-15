@@ -34,9 +34,11 @@ public:
     /**
      * @brief Parse the ACL extended map from the app service capabilities JSON string.
      * @param appServiceCapabilities JSON string containing the service capabilities.
+     * @param permStateList Requested permission state list; only requested permissions are kept.
      * @return Map of permission name to its extended value.
      */
-    static std::map<std::string, std::string> ParseAclExtendedMap(const std::string& appServiceCapabilities);
+    static std::map<std::string, std::string> ParseAclExtendedMap(const std::string& appServiceCapabilities,
+        const std::vector<PermissionStatus>& permStateList);
 
     /**
      * @brief Build the owner ID by parsing the app identifier as a decimal number.
@@ -95,9 +97,11 @@ public:
     /**
      * @brief Fill the ACL extended map from the trusted bundle infos.
      * @param sortedInfos Sorted trusted bundle info list.
+     * @param permStateList Requested permission state list.
      * @param aclExtendedMap Output ACL extended map.
      */
     static void FillAclExtendedMap(const std::vector<TrustedBundleInfoInner>& sortedInfos,
+        const std::vector<PermissionStatus>& permStateList,
         std::map<std::string, std::string>& aclExtendedMap);
 
     /**

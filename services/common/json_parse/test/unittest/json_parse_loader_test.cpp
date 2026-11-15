@@ -903,6 +903,41 @@ HWTEST_F(JsonParseLoaderTest, GetAllNativeTokenInfoTest005, TestSize.Level4)
     EXPECT_EQ(ret, RET_SUCCESS);
     EXPECT_FALSE(tokenInfos.empty());
 }
+
+/*
+ * @tc.name: ParseInstallListPermissionsTest001
+ * @tc.desc: ParseInstallListPermissions skips non-object array items.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(JsonParseLoaderTest, ParseInstallListPermissionsTest001, TestSize.Level4)
+{
+    ConfigPolicLoader loader;
+    std::vector<PreAuthBundleInfo> bundleInfos;
+    std::string testJson = "[123, {\"bundleName\":\"com.example.a\",\"permissions\":"
+        "[{\"name\":\"ohos.permission.A\",\"userCancellable\":true}]}]";
+    EXPECT_TRUE(loader.ParseInstallListPermissions(testJson, bundleInfos));
+    ASSERT_EQ(1U, bundleInfos.size());
+    EXPECT_EQ("com.example.a", bundleInfos[0].bundleName);
+}
+
+/*
+ * @tc.name: ParseInstallListPermissionsTest002
+ * @tc.desc: ParseInstallListPermissions skips non-object permission items.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(JsonParseLoaderTest, ParseInstallListPermissionsTest002, TestSize.Level4)
+{
+    ConfigPolicLoader loader;
+    std::vector<PreAuthBundleInfo> bundleInfos;
+    std::string testJson = "[{\"bundleName\":\"com.example.a\",\"permissions\":"
+        "[123, {\"name\":\"ohos.permission.A\",\"userCancellable\":true}]}]";
+    EXPECT_TRUE(loader.ParseInstallListPermissions(testJson, bundleInfos));
+    ASSERT_EQ(1U, bundleInfos.size());
+    ASSERT_EQ(1U, bundleInfos[0].permissions.size());
+    EXPECT_NE(bundleInfos[0].permissions.end(), bundleInfos[0].permissions.find("ohos.permission.A"));
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
