@@ -112,7 +112,7 @@ static void ParamResolveErrorThrow(const napi_env& env, const std::string& param
     NAPI_CALL_RETURN_VOID(env, napi_throw(env, GenerateBusinessError(env, JS_ERROR_PARAM_ILLEGAL, errMsg)));
 }
 
-static void ReturnPromiseResult(napi_env env, const RecordManagerAsyncContext& context, napi_value result)
+static void ReturnPromiseResult(napi_env env, RecordManagerAsyncContext& context, napi_value result)
 {
     if (context.retCode != RET_SUCCESS) {
         int32_t jsCode = GetJsErrorCode(context.retCode);
@@ -121,6 +121,7 @@ static void ReturnPromiseResult(napi_env env, const RecordManagerAsyncContext& c
     } else {
         NAPI_CALL_RETURN_VOID(env, napi_resolve_deferred(env, context.deferred, result));
     }
+    context.deferred = nullptr;
 }
 
 static void ReturnCallbackResult(napi_env env, const RecordManagerAsyncContext& context, napi_value result)
@@ -1433,6 +1434,7 @@ static void GetPermissionUsedTypeInfosComplete(napi_env env, napi_status status,
     } else {
         NAPI_CALL_RETURN_VOID(env, napi_resolve_deferred(env, asyncContext->deferred, result));
     }
+    asyncContext->deferred = nullptr;
 }
 
 napi_value GetPermissionUsedTypeInfos(napi_env env, napi_callback_info cbinfo)

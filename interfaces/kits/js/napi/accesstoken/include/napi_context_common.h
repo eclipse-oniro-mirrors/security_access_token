@@ -44,6 +44,7 @@ struct AtManagerAsyncWorkData {
 struct AtManagerAsyncWorkDataRel {
     napi_env        env = nullptr;
     napi_async_work work = nullptr;
+    napi_deferred   deferred = nullptr;
     napi_ref        callbackRef = nullptr;
 };
 } // namespace AccessToken

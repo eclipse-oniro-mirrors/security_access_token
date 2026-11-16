@@ -25,6 +25,13 @@ PrivacyAsyncWorkData::PrivacyAsyncWorkData(napi_env envValue)
 
 PrivacyAsyncWorkData::~PrivacyAsyncWorkData()
 {
+    if (deferred != nullptr) {
+        napi_value error = nullptr;
+        napi_get_undefined(env, &error);
+        napi_reject_deferred(env, deferred, error);
+        deferred = nullptr;
+    }
+
     if (callbackRef != nullptr) {
         napi_delete_reference(env, callbackRef);
         callbackRef = nullptr;

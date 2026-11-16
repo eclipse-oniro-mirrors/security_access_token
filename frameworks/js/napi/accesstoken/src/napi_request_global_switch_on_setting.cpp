@@ -101,6 +101,9 @@ static void ReturnPromiseResult(napi_env env, RequestGlobalSwitchAsyncContext& c
         napi_value businessError = GenerateBusinessError(env, jsCode, GetErrorMessage(jsCode, context.result.errorMsg));
         NAPI_CALL_RETURN_VOID(env, napi_reject_deferred(env, context.deferred, businessError));
     } else {
+        if (result == nullptr) {
+            NAPI_CALL_RETURN_VOID(env, napi_get_undefined(env, &result));
+        }
         NAPI_CALL_RETURN_VOID(env, napi_resolve_deferred(env, context.deferred, result));
     }
     context.deferred = nullptr;
@@ -407,7 +410,7 @@ static int32_t CreateUIExtension(const Want &want, std::shared_ptr<RequestGlobal
             uiExtCallback->OnReceive(receive);
         },
         [uiExtCallback](int32_t code, const std::string &name, [[maybe_unused]] const std::string &message) {
-            uiExtCallback->OnError(code, name, name);
+            uiExtCallback->OnError(code, name, message);
         },
         [uiExtCallback](const std::shared_ptr<Ace::ModalUIExtensionProxy> &uiProxy) {
             uiExtCallback->OnRemoteReady(uiProxy);

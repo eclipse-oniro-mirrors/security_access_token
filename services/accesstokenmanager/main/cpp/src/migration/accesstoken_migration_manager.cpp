@@ -99,18 +99,19 @@ int32_t AccessTokenMigrationManager::ValidateMigratedInfo(const MigratedInfoIdl&
 
     for (size_t i = 0; i < hapCount; ++i) {
         const auto& hap = migratedInfo.hapBaseInfoList[i];
-        if (hap.userID < 0 || hap.instIndex < 0 ||
-            !DataValidator::IsBundleNameValid(hap.bundleName)) {
+        if (hap.userID < 0 || hap.instIndex < 0 || hap.bundleName != migratedInfo.bundleName) {
             LOGE(ATM_DOMAIN, ATM_TAG, "Migrate installed bundles failed, hapBaseInfo is invalid.");
             return AccessTokenError::ERR_PARAM_INVALID;
         }
-        if (hap.bundleName != migratedInfo.bundleName) {
-            LOGE(ATM_DOMAIN, ATM_TAG,
-                "Migrate installed bundles failed, bundleName mismatch in hap base info.");
+        int32_t uid = migratedInfo.uidList[i];
+        int32_t bundleId = 0;
+        if (!AccessTokenIDManager::GetInstance().ExtractBundleId(uid, bundleId) ||
+            AccessTokenIDManager::ExtractUserId(uid) != hap.userID) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Migrate installed bundles failed, uid %{public}d is invalid for userId "
+                "%{public}d.", uid, hap.userID);
             return AccessTokenError::ERR_PARAM_INVALID;
         }
-        if (!MultipleModeUtils::IsModeInstIndexMatch(
-            static_cast<int32_t>(migratedInfo.mode), hap.instIndex)) {
+        if (!MultipleModeUtils::IsModeInstIndexMatch(static_cast<int32_t>(migratedInfo.mode), hap.instIndex)) {
             LOGE(ATM_DOMAIN, ATM_TAG,
                 "Migrate installed bundles failed, mode %{public}d with instIndex %{public}d is invalid.",
                 static_cast<int32_t>(migratedInfo.mode), hap.instIndex);

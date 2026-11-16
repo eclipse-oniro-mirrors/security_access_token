@@ -35,6 +35,9 @@ static void ReturnPromiseResult(napi_env env, QueryPermissionStatusAsyncContext&
             GetErrorMessage(jsCode, context.result.errorMsg));
         NAPI_CALL_RETURN_VOID(env, napi_reject_deferred(env, context.deferred, businessError));
     } else {
+        if (result == nullptr) {
+            NAPI_CALL_RETURN_VOID(env, napi_get_undefined(env, &result));
+        }
         NAPI_CALL_RETURN_VOID(env, napi_resolve_deferred(env, context.deferred, result));
     }
     context.deferred = nullptr;

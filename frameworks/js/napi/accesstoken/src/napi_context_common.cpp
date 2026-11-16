@@ -99,8 +99,14 @@ AtManagerAsyncWorkData::~AtManagerAsyncWorkData()
     std::unique_ptr<AtManagerAsyncWorkDataRel> workDataRelPtr {workDataRel};
     workDataRel->env = env;
     workDataRel->work = work;
+    workDataRel->deferred = deferred;
     workDataRel->callbackRef = callbackRef;
     auto task = [workDataRel]() {
+        if (workDataRel->deferred != nullptr) {
+            napi_value error = nullptr;
+            napi_get_undefined(workDataRel->env, &error);
+            napi_reject_deferred(workDataRel->env, workDataRel->deferred, error);
+        }
         if (workDataRel->work != nullptr) {
             napi_delete_async_work(workDataRel->env, workDataRel->work);
         }

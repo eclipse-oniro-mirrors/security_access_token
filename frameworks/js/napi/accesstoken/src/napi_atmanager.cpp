@@ -53,15 +53,19 @@ static const char* REGISTER_SELF_PERMISSION_STATE_CHANGE_TYPE = "selfPermissionS
 constexpr uint32_t THIRD_PARAM = 2;
 constexpr uint32_t FORTH_PARAM = 3;
 
-static void ReturnPromiseResult(napi_env env, const AtManagerAsyncContext& context, napi_value result)
+static void ReturnPromiseResult(napi_env env, AtManagerAsyncContext& context, napi_value result)
 {
     if (context.errorCode != RET_SUCCESS) {
         int32_t jsCode = GetJsErrorCode(context.errorCode);
         napi_value businessError = GenerateBusinessError(env, jsCode, GetErrorMessage(jsCode, context.extErrorMsg));
         NAPI_CALL_RETURN_VOID(env, napi_reject_deferred(env, context.deferred, businessError));
     } else {
+        if (result == nullptr) {
+            NAPI_CALL_RETURN_VOID(env, napi_get_undefined(env, &result));
+        }
         NAPI_CALL_RETURN_VOID(env, napi_resolve_deferred(env, context.deferred, result));
     }
+    context.deferred = nullptr;
 }
 
 static void ReturnCallbackResult(napi_env env, const AtManagerAsyncContext& context, napi_value result)
@@ -70,6 +74,9 @@ static void ReturnCallbackResult(napi_env env, const AtManagerAsyncContext& cont
     if (context.errorCode != RET_SUCCESS) {
         int32_t jsCode = GetJsErrorCode(context.errorCode);
         businessError = GenerateBusinessError(env, jsCode, GetErrorMessage(jsCode, context.extErrorMsg));
+    }
+    if (result == nullptr) {
+        NAPI_CALL_RETURN_VOID(env, napi_get_undefined(env, &result));
     }
     napi_value results[ASYNC_CALL_BACK_VALUES_NUM] = { businessError, result };
 
@@ -502,6 +509,7 @@ void NapiAtManager::VerifyAccessTokenComplete(napi_env env, napi_status status, 
 
     NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, asyncContext->result, &result)); // verify result
     NAPI_CALL_RETURN_VOID(env, napi_resolve_deferred(env, asyncContext->deferred, result));
+    asyncContext->deferred = nullptr;
 }
 
 napi_value NapiAtManager::VerifyAccessToken(napi_env env, napi_callback_info info)
