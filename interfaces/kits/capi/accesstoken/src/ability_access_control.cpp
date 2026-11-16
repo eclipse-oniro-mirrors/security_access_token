@@ -20,7 +20,22 @@
 #include "accesstoken_kit.h"
 #include "token_setproc.h"
 
+#ifdef IS_SUPPORT_HAP_RUNNING
+#include <cstring>
+#include <memory>
+#include <thread>
+#include <utility>
+#include <vector>
+
+#include "ability_manager_client.h"
+#include "accesstoken_common_log.h"
+#include "token_callback_stub.h"
+#include "tokenid_attributes.h"
+#include "want.h"
+#endif
+
 using namespace OHOS::Security::AccessToken;
+using namespace OHOS;
 
 bool OH_AT_CheckSelfPermission(const char* permission)
 {
@@ -34,20 +49,6 @@ bool OH_AT_CheckSelfPermission(const char* permission)
 }
 
 #ifdef IS_SUPPORT_HAP_RUNNING
-#include <cstring>
-#include <memory>
-#include <thread>
-#include <utility>
-#include <vector>
-
-#include "ability_manager_client.h"
-#include "accesstoken_common_log.h"
-#include "token_callback_stub.h"
-#include "tokenid_attributes.h"
-#include "want.h"
-
-using namespace OHOS;
-
 namespace {
 constexpr int32_t MAX_PERMISSION_COUNT = 1024;
 constexpr size_t MAX_PERMISSION_NAME_LENGTH = 256;
