@@ -12037,6 +12037,28 @@
             "distributedSceneEnable": false,
             "deviceTypes": ["car"]
         },
+		{
+			"name": "ohos.permission.vehicle.MMA_OCCUPANT",
+			"grantMode": "system_grant",
+			"availableLevel": "system_basic",
+			"availableType": "SYSTEM",
+			"since": "26.0.1",
+			"deprecated": "",
+			"provisionEnable": true,
+			"distributedSceneEnable": false,
+			"deviceTypes": ["car"]
+		},
+		{
+			"name": "ohos.permission.vehicle.MMA_CARSTATUS",
+			"grantMode": "system_grant",
+			"availableLevel": "system_basic",
+			"availableType": "SYSTEM",
+			"since": "26.0.1",
+			"deprecated": "",
+			"provisionEnable": true,
+			"distributedSceneEnable": false,
+			"deviceTypes": ["car"]
+		},
         {
             "name": "ohos.permission.MUTE_VOIP_CAPTURE",
             "grantMode": "system_grant",
