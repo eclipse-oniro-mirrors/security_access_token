@@ -10674,6 +10674,17 @@
             "deviceTypes": ["2in1", "car", "phone", "tablet", "tv", "wearable"]
         },
         {
+            "name": "ohos.permission.ACCESS_PUBLIC_FUNCTION",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "NORMAL",
+            "since": "26.1.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["2in1"]
+        },
+        {
             "name": "ohos.permission.START_ABILITY_TO_PAGE",
             "grantMode": "system_grant",
             "availableLevel": "system_core",
