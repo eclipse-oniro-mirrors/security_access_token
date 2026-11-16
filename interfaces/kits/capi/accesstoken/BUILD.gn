@@ -54,11 +54,13 @@ ohos_shared_library("libability_access_control") {
   ]
 
   external_deps = access_token_external_deps + [
-    "ability_runtime:ability_manager",
     "c_utils:utils",
     "hilog:libhilog",
     "ipc:ipc_single",
   ]
+  if (access_token_manager_hapverify_enable) {
+    external_deps += [ "ability_runtime:ability_manager" ]
+  }
 
   part_name = "access_token"
   subsystem_name = "security"
