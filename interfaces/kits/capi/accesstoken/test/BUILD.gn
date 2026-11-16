@@ -1,0 +1,71 @@
+# Copyright (c) 2026 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//base/security/access_token/access_token.gni")
+import("//build/test.gni")
+
+if (access_token_bin_permission_dialog_enable) {
+ohos_unittest("libability_access_control_test") {
+  subsystem_name = "accesscontrol"
+  part_name = "access_token"
+  module_out_path = module_output_path_unittest_accesstoken
+  sanitize = {
+    integer_overflow = true
+    cfi = true
+    debug = false
+    cfi_cross_dso = true
+    boundary_sanitize = true
+    ubsan = true
+  }
+  branch_protector_ret = "pac_ret"
+
+  include_dirs = [
+    "../include",
+    "unittest",
+    "${access_token_path}/frameworks/common/include",
+    "${access_token_innerkit_path}/include",
+    "${access_token_path}/interfaces/innerkits/token_setproc/include",
+    "${access_token_path}/interfaces/innerkits/token_callback/include",
+  ]
+
+  sources = [
+    "../src/ability_access_control.cpp",
+    "unittest/ability_access_control_mock.cpp",
+    "unittest/ability_access_control_test.cpp",
+  ]
+
+  cflags_cc = access_token_cflags_cc + [ "-DACCESS_TOKEN_BIN_PERMISSION_DIALOG_ENABLE" ]
+  cflags_cc += [
+    "-Wall",
+    "-Werror",
+  ]
+
+  deps = [
+    "${access_token_path}/interfaces/innerkits/token_callback:libtoken_callback_sdk",
+  ]
+
+  external_deps = access_token_external_deps + [
+    "c_utils:utils",
+    "hilog:libhilog",
+    "ipc:ipc_single",
+  ]
+}
+}
+
+group("unittest") {
+  testonly = true
+  deps = []
+  if (access_token_bin_permission_dialog_enable) {
+    deps += [ ":libability_access_control_test" ]
+  }
+}
