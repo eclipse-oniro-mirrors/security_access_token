@@ -1027,8 +1027,10 @@ int32_t AccessTokenManagerService::GetSelfPermissionsState(std::vector<Permissio
         infoParcel.info.grantServiceAbilityName = grantServiceAbilityName_;
     }
     AccessTokenID callingTokenID = IPCSkeleton::GetCallingTokenID();
-    (void)PreVerifyHapTokenIfNeeded(callingTokenID);
-    permOper = GetPermissionsState(callingTokenID, reqPermList);
+    AccessTokenID queryTokenID = callingTokenID;
+    (void)AccessTokenInfoManager::GetInstance().ResolveQueryTokenID(callingTokenID, queryTokenID);
+    (void)PreVerifyHapTokenIfNeeded(queryTokenID);
+    permOper = GetPermissionsState(queryTokenID, reqPermList);
     return ERR_OK;
 }
 

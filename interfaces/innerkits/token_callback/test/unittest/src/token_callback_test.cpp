@@ -45,7 +45,7 @@ public:
     virtual ~TestCallBack() = default;
 
     void GrantResultsCallback(
-        const std::vector<std::string> &permissions, const std::vector<int> &grantResults)
+        const std::vector<std::string> &permissions, const std::vector<int32_t> &grantResults)
     {
         GTEST_LOG_(INFO) << "GrantResultsCallback,  permissions.size:" << permissions.size() <<
             ", grantResults.size :" << grantResults.size();
