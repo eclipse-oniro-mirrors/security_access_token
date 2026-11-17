@@ -287,9 +287,6 @@ napi_value NapiAtManager::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("openPermissionOnSetting", NapiOpenPermissionOnSetting::OpenPermissionOnSetting),
         DECLARE_NAPI_FUNCTION("queryStatusByPermission", NapiQueryPermissionStatus::QueryStatusByPermission),
         DECLARE_NAPI_FUNCTION("queryStatusByTokenID", NapiQueryPermissionStatus::QueryStatusByTokenID),
-        DECLARE_NAPI_FUNCTION("getCliPermissionRequestInfo", NapiClawPermission::GetCliPermissionRequestInfo),
-        DECLARE_NAPI_FUNCTION("getCliPermissions", NapiClawPermission::GetCliPermissions),
-        DECLARE_NAPI_FUNCTION("generateCliAuthResult", NapiClawPermission::GenerateCliAuthResult),
         DECLARE_NAPI_FUNCTION("setAutomationControlStatus", NapiAutomationControl::SetAutomationControlStatus),
         DECLARE_NAPI_FUNCTION("getAutomationControlTargets", NapiAutomationControl::GetAutomationControlTargets),
         DECLARE_NAPI_FUNCTION("getAutomationControlControllers",
@@ -368,7 +365,6 @@ void NapiAtManager::CreateObjects(napi_env env, napi_value exports)
         DECLARE_NAPI_PROPERTY("PermissionRequestToggleStatus", permissionRequestToggleStatus),
         DECLARE_NAPI_PROPERTY("SwitchType", globalSwitchType),
         DECLARE_NAPI_PROPERTY("SelectedResult", selectedResult),
-        DECLARE_NAPI_PROPERTY("PermissionDecisionStatus", CreatePermissionDecisionStatus(env)),
         DECLARE_NAPI_PROPERTY("AutomationControlStatus", automationControlStatus),
         DECLARE_NAPI_PROPERTY("AutomationControlSetResult", automationControlSetResult),
     };
