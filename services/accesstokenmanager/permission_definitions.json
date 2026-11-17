@@ -13113,7 +13113,7 @@
             "availableType": "SERVICE",
             "since": "26.1.0",
             "deprecated": "",
-            "provisionEnable": true,
+            "provisionEnable": false,
             "distributedSceneEnable": false,
             "isKernelEffect": true,
             "deviceTypes": ["general", "2in1", "car", "phone", "tablet", "tv", "wearable"]
