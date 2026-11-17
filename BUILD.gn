@@ -29,6 +29,7 @@ group("accesstoken_build_module_test") {
       "interfaces/innerkits/privacy/test:unittest",
       "interfaces/innerkits/token_callback/test:unittest",
       "interfaces/innerkits/token_setproc/test:unittest",
+      "interfaces/kits/capi/accesstoken/test:unittest",
       "services/accesstokenmanager/test:unittest",
       "services/common/database/test:unittest",
       "services/common/dfx/test:unittest",

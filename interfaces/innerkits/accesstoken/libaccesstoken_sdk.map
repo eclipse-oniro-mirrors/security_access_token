@@ -80,6 +80,7 @@
         "OHOS::Security::AccessToken::AccessTokenKit::UpdatePolicyWhiteList(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, OHOS::Security::AccessToken::UpdateWhiteListType)";
         "OHOS::Security::AccessToken::AccessTokenKit::GetPolicyWhiteList(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, std::__h::vector<unsigned int, std::__h::allocator<unsigned int>>&)";
         "OHOS::Security::AccessToken::AccessTokenKit::GetSelfPermissionsState(std::__h::vector<OHOS::Security::AccessToken::PermissionListState, std::__h::allocator<OHOS::Security::AccessToken::PermissionListState>>&, OHOS::Security::AccessToken::PermissionGrantInfo&)";
+        "OHOS::Security::AccessToken::AccessTokenKit::IsBinPermissionDialogEnabled()";
         "OHOS::Security::AccessToken::AccessTokenKit::GetPermissionsStatus(unsigned int, std::__h::vector<OHOS::Security::AccessToken::PermissionListState, std::__h::allocator<OHOS::Security::AccessToken::PermissionListState>>&)";
         "OHOS::Security::AccessToken::AccessTokenKit::GetVersion(unsigned int&)";
         "OHOS::Security::AccessToken::AccessTokenKit::GetPermissionManagerInfo(OHOS::Security::AccessToken::PermissionGrantInfo&)";

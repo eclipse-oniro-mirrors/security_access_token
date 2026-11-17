@@ -1404,6 +1404,21 @@ HWTEST_F(AccessTokenMockTest, GetSelfPermissionsState001, TestSize.Level4)
 }
 
 /**
+ * @tc.name: IsBinPermissionDialogEnabled001
+ * @tc.desc: IsBinPermissionDialogEnabled follows the build configuration
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenMockTest, IsBinPermissionDialogEnabled001, TestSize.Level4)
+{
+#ifdef ACCESS_TOKEN_BIN_PERMISSION_DIALOG_ENABLE
+    EXPECT_TRUE(AccessTokenKit::IsBinPermissionDialogEnabled());
+#else
+    EXPECT_FALSE(AccessTokenKit::IsBinPermissionDialogEnabled());
+#endif
+}
+
+/**
  * @tc.name: GetPermissionsStatus001
  * @tc.desc: GetPermissionsStatus with proxy is null
  * @tc.type: FUNC
