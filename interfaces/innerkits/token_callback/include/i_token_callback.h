@@ -58,7 +58,7 @@ public:
      * @param grantResults permission grant result
      */
     virtual void GrantResultsCallback(
-        const std::vector<std::string> &permissions, const std::vector<int> &grantResults) = 0;
+        const std::vector<std::string> &permissions, const std::vector<int32_t> &grantResults) = 0;
 
     /**
      * @brief pure virtual fuction.

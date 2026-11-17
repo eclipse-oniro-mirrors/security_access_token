@@ -15,6 +15,7 @@
   global:
     extern "C" {
       OH_AT_CheckSelfPermission;
+      OH_AT_RequestPermissionsFromUser;
     };
   local:
     *;

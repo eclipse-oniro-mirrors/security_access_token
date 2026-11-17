@@ -244,6 +244,7 @@ ohos_unittest("accesstoken_mock_test") {
 
   cflags_cc = access_token_cflags_cc
   cflags_cc += [ "-DACCESSTOKEN_MANAGER_CLIENT_TEST_ENABLE" ]
+  cflags_cc += [ "-DACCESS_TOKEN_BIN_PERMISSION_DIALOG_ENABLE" ]
   if (build_variant == "user") {
     cflags_cc += [ "-DATM_BUILD_VARIANT_USER_ENABLE" ]
   }

@@ -442,6 +442,15 @@ PermissionOper AccessTokenKit::GetSelfPermissionsState(std::vector<PermissionLis
     return AccessTokenManagerClient::GetInstance().GetSelfPermissionsState(permList, info);
 }
 
+bool AccessTokenKit::IsBinPermissionDialogEnabled()
+{
+#ifdef ACCESS_TOKEN_BIN_PERMISSION_DIALOG_ENABLE
+    return true;
+#else
+    return false;
+#endif
+}
+
 int32_t AccessTokenKit::GetPermissionsStatus(AccessTokenID tokenID, std::vector<PermissionListState>& permList)
 {
     LOGD(ATM_DOMAIN, ATM_TAG, "TokenID=%{public}d, permList.size=%{public}zu.", tokenID, permList.size());

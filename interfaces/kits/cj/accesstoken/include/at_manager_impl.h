@@ -115,7 +115,7 @@ public:
     explicit AuthorizationResult(const std::shared_ptr<RequestAsyncContext>& data) : data_(data) {}
     ~AuthorizationResult() override = default;
     void GrantResultsCallback(const std::vector<std::string>& permissions,
-        const std::vector<int>& grantResults) override;
+        const std::vector<int32_t>& grantResults) override;
 
 private:
     std::shared_ptr<RequestAsyncContext> data_ = nullptr;

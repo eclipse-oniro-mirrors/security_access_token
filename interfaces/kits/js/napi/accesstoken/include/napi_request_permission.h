@@ -124,7 +124,7 @@ public:
     ~AuthorizationResult() override = default;
 
     void GrantResultsCallback(const std::vector<std::string>& permissionList,
-        const std::vector<int>& grantResults) override;
+        const std::vector<int32_t>& grantResults) override;
     void WindowShownCallback() override;
 
 private:
