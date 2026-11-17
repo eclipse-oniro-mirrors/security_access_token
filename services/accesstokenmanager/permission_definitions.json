@@ -8806,6 +8806,17 @@
             "deviceTypes": ["2in1"]
         },
         {
+            "name": "ohos.permission.SUPPORT_APP_SERVICE_EXTENSION_ADVANCED",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "MDM",
+            "since": "26.1.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "2in1", "tablet"]
+        },
+        {
             "name": "ohos.permission.GET_ENTERPRISE_CONFIG",
             "grantMode": "system_grant",
             "availableLevel": "normal",
