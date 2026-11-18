@@ -1935,7 +1935,7 @@ HWTEST_F(PrivacyKitTest, RemovePermissionUsedRecords001, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require: issueI5P4IU
  */
-HWTEST_F(PrivacyKitTest, RemovePermissionUsedRecords002, TestSize.Level0)
+HWTEST_F(PrivacyKitTest, RemovePermissionUsedRecords002, TestSize.Level1)
 {
     AddPermParamInfo info;
     info.tokenId = g_tokenIdA;
@@ -1949,6 +1949,7 @@ HWTEST_F(PrivacyKitTest, RemovePermissionUsedRecords002, TestSize.Level0)
     BuildQueryRequest(g_tokenIdA, g_infoParmsA.bundleName, permissionList, request);
 
     EXPECT_EQ(RET_NO_ERROR, PrivacyKit::RemovePermissionUsedRecords(g_tokenIdA));
+    sleep(1);
     EXPECT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
     EXPECT_TRUE(result.bundleRecords.empty());
 }
@@ -1998,7 +1999,7 @@ HWTEST_F(PrivacyKitTest, RemovePermissionUsedRecords005, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PrivacyKitTest, RemovePermissionUsedRecords006, TestSize.Level0)
+HWTEST_F(PrivacyKitTest, RemovePermissionUsedRecords006, TestSize.Level1)
 {
     AddPermParamInfo info;
     info.tokenId = g_tokenIdA;
@@ -2019,6 +2020,7 @@ HWTEST_F(PrivacyKitTest, RemovePermissionUsedRecords006, TestSize.Level0)
     request.flag = FLAG_PERMISSION_USAGE_DETAIL;
 
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::RemovePermissionUsedRecords(g_tokenIdA, "agent_remove"));
+    sleep(1);
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
     ASSERT_EQ(1, static_cast<int32_t>(result.bundleRecords.size()));
     ASSERT_EQ(1, static_cast<int32_t>(result.bundleRecords[FIRST_INDEX].permissionRecords.size()));
@@ -5737,7 +5739,7 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedRecords_FilterByPermission, TestSize.L
  * @tc.type: FUNC
  * @tc.require: AC-3.1
  */
-HWTEST_F(PrivacyKitTest, RemovePermissionUsedRecords_TargetTokenIdCleanup, TestSize.Level0)
+HWTEST_F(PrivacyKitTest, RemovePermissionUsedRecords_TargetTokenIdCleanup, TestSize.Level1)
 {
     ASSERT_EQ(RET_SUCCESS, EnablePermissionUsedRecordToggleStatus());
 
@@ -5756,6 +5758,7 @@ HWTEST_F(PrivacyKitTest, RemovePermissionUsedRecords_TargetTokenIdCleanup, TestS
     ASSERT_EQ(static_cast<uint32_t>(1), resultBefore.bundleRecords.size());
 
     EXPECT_EQ(RET_NO_ERROR, PrivacyKit::RemovePermissionUsedRecords(g_tokenIdB));
+    sleep(1);
 
     PermissionUsedResult resultAfter;
     EXPECT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, resultAfter));

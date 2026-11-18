@@ -26,6 +26,7 @@
 #include "fuzzer/FuzzedDataProvider.h"
 #include "iprivacy_manager.h"
 #include "mock_permission.h"
+#include "permission_record_manager.h"
 #include "privacy_manager_service.h"
 
 using namespace std;
@@ -73,6 +74,7 @@ namespace OHOS {
 
 void BeforeExit()
 {
+    PermissionRecordManager::GetInstance().FlushPendingTasks();
     std::this_thread::sleep_for(std::chrono::seconds(SLEEP_TIME));
 }
 

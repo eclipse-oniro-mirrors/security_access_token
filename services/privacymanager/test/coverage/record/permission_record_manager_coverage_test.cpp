@@ -66,6 +66,7 @@ static constexpr int32_t NOT_SAME_TIME = 10000000;
 static constexpr int32_t CAMERA_OP_CODE = 18;
 #endif
 static constexpr int32_t INVALID_CODE = 9999;
+static constexpr int32_t LEGACY_SUBPROFILE_ID = -1;
 static PermissionStateFull g_testState1 = {
     .permissionName = "ohos.permission.CAMERA",
     .isGeneral = true,
@@ -150,6 +151,7 @@ void PermissionRecordManagerTest::TearDown()
     tokenIdEx = PrivacyTestCommon::GetHapTokenIdFromBundle(
         g_InfoParms2.userID, g_InfoParms2.bundleName, g_InfoParms2.instIndex);
     PrivacyTestCommon::DeleteTestHapToken(tokenIdEx.tokenIdExStruct.tokenID);
+    PermissionRecordManager::GetInstance().FlushPendingTasks();
 }
 
 class PermissionRecordManagerCoverTestCb1 : public StateCustomizedCbk {
@@ -1011,7 +1013,7 @@ HWTEST_F(PermissionRecordManagerTest, AddRemotePermissionUsedRecordTest003, Test
     ASSERT_EQ(PermissionRecordManager::GetInstance().remotePermUsedRecList_.size(), 1);
 
     PermissionRecordManager::GetInstance().remotePermUsedRecList_[0].record.accessCount = 2;
-    PermissionRecordManager::GetInstance().remotePermUsedRecList_[0].needUpdateToDb = true;
+    PermissionRecordManager::GetInstance().remotePermUsedRecList_[0].needWriteToDb = true;
 
     record.deviceId = "ididid222";
     record.deviceName = "namename222";
@@ -1019,7 +1021,7 @@ HWTEST_F(PermissionRecordManagerTest, AddRemotePermissionUsedRecordTest003, Test
 
     PermissionRecordCache cache;
     PermissionRecordManager::GetInstance().permUsedRecList_.push_back(cache);
-    cache.needUpdateToDb = true;
+    cache.needWriteToDb = true;
     PermissionRecordManager::GetInstance().permUsedRecList_.push_back(cache);
     PermissionRecordManager::GetInstance().UpdatePermRecImmediately();
 
@@ -1082,7 +1084,7 @@ HWTEST_F(PermissionRecordManagerTest, GetRemotePermissionUsedRecordsTest001, Tes
 
     EXPECT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().AddRemoteRecord(record));
 
-    PermissionRecordManager::GetInstance().remotePermUsedRecList_.begin()->needUpdateToDb = true;
+    PermissionRecordManager::GetInstance().remotePermUsedRecList_.begin()->needWriteToDb = true;
     record.deviceId = "ididid2222";
     record.deviceName = "namename2222";
     PermissionRecordManager::GetInstance().AddRemoteRecord(record);
@@ -1104,34 +1106,27 @@ HWTEST_F(PermissionRecordManagerTest, GetRemotePermissionUsedRecordsTest001, Tes
 }
 
 /*
- * @tc.name: InsteadMergedRemoteRecIfNecessaryTest001
- * @tc.desc: InsteadMergedRemoteRecIfNecessary function test
+ * @tc.name: MergeDbRemoteRecordsTest001
+ * @tc.desc: MergeDbRemoteRecords function test
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, InsteadMergedRemoteRecIfNecessaryTest001, TestSize.Level4)
+HWTEST_F(PermissionRecordManagerTest, MergeDbRemoteRecordsTest001, TestSize.Level4)
 {
+    std::vector<GenericValues> dbValues;
     GenericValues queryValue;
     queryValue.Put(PrivacyFiledConst::FIELD_DEVICE_ID, "id666");
     queryValue.Put(PrivacyFiledConst::FIELD_DEVICE_NAME, "name666");
     queryValue.Put(PrivacyFiledConst::FIELD_OP_CODE, 1);
     queryValue.Put(PrivacyFiledConst::FIELD_TIMESTAMP, 1);
+    queryValue.Put(PrivacyFiledConst::FIELD_ACCESS_COUNT, 1);
+    queryValue.Put(PrivacyFiledConst::FIELD_REJECT_COUNT, 0);
+    queryValue.Put(PrivacyFiledConst::FIELD_SUB_PROFILE_ID, LEGACY_SUBPROFILE_ID);
+    dbValues.push_back(queryValue);
 
-    std::vector<RemotePermissionRecord> mergedRecords;
-    RemotePermissionRecord record;
-    mergedRecords.push_back(record);
-
-    mergedRecords[0].deviceId = "id666";
-    PermissionRecordManager::GetInstance().InsteadMergedRemoteRecIfNecessary(queryValue, USER_ID_100, mergedRecords);
-
-    mergedRecords[0].deviceName = "name666";
-    PermissionRecordManager::GetInstance().InsteadMergedRemoteRecIfNecessary(queryValue, USER_ID_100, mergedRecords);
-
-    mergedRecords[0].opCode = 1;
-    PermissionRecordManager::GetInstance().InsteadMergedRemoteRecIfNecessary(queryValue, USER_ID_100, mergedRecords);
-
-    mergedRecords[0].timestamp = 1;
-    PermissionRecordManager::GetInstance().InsteadMergedRemoteRecIfNecessary(queryValue, USER_ID_100, mergedRecords);
+    std::vector<RemotePermissionRecord> records;
+    PermissionRecordManager::GetInstance().MergeDbRemoteRecords(dbValues, USER_ID_100, records);
+    ASSERT_EQ(1, static_cast<int32_t>(records.size()));
 
     PermissionRecordManager::GetInstance().remotePermUsedRecList_.clear();
     GenericValues conditions;
@@ -1146,30 +1141,31 @@ HWTEST_F(PermissionRecordManagerTest, InsteadMergedRemoteRecIfNecessaryTest001, 
  */
 HWTEST_F(PermissionRecordManagerTest, BuildBundleUsedRecordsFromRemoteResultsTest001, TestSize.Level4)
 {
-    std::vector<GenericValues> findRecordsValues;
+    std::vector<RemotePermissionRecord> records;
+    RemotePermissionRecord record1;
+    record1.deviceId = "id666";
+    record1.deviceName = "name666";
+    record1.opCode = 1;
+    record1.timestamp = 0;
+    record1.accessCount = 1;
+    record1.rejectCount = 0;
+    records.push_back(record1);
 
-    GenericValues queryValue;
-    queryValue.Put(PrivacyFiledConst::FIELD_DEVICE_ID, "id666");
-    queryValue.Put(PrivacyFiledConst::FIELD_DEVICE_NAME, "name666");
-    queryValue.Put(PrivacyFiledConst::FIELD_OP_CODE, 1);
-    queryValue.Put(PrivacyFiledConst::FIELD_TIMESTAMP, 0);
+    RemotePermissionRecord record2;
+    record2.deviceId = "id666";
+    record2.deviceName = "name666";
+    record2.opCode = MAX_DETAIL_NUM;
+    record2.timestamp = 1;
+    record2.accessCount = 1;
+    record2.rejectCount = 0;
+    records.push_back(record2);
 
-    GenericValues queryValue2;
-    queryValue2.Put(PrivacyFiledConst::FIELD_DEVICE_ID, "id666");
-    queryValue2.Put(PrivacyFiledConst::FIELD_DEVICE_NAME, "name666");
-    queryValue2.Put(PrivacyFiledConst::FIELD_OP_CODE, MAX_DETAIL_NUM);
-    queryValue2.Put(PrivacyFiledConst::FIELD_TIMESTAMP, 1);
-
-    findRecordsValues.push_back(queryValue);
-    findRecordsValues.push_back(queryValue2);
-
-    std::vector<RemotePermissionRecord> mergedRecords;
     std::map<std::string, BundleUsedRecord> deviceIdToBundleMap;
     PermissionUsedResult result;
     PermissionUsageFlag flag = FLAG_PERMISSION_USAGE_SUMMARY;
 
     PermissionRecordManager::GetInstance().BuildBundleUsedRecordsFromRemoteResults(
-        findRecordsValues, USER_ID_100, mergedRecords, deviceIdToBundleMap, result, flag);
+        records, USER_ID_100, flag, deviceIdToBundleMap, result);
 
     PermissionRecordManager::GetInstance().remotePermUsedRecList_.clear();
     GenericValues conditions;

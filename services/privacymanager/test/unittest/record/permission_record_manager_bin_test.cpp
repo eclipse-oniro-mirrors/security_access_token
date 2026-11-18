@@ -117,6 +117,7 @@ void PermissionRecordManagerBinTest::TearDown()
         tokenIdEx.tokenIdExStruct.tokenID);
     PrivacyTestCommon::DeleteTestHapToken(tokenIdEx.tokenIdExStruct.tokenID);
     PermissionRecordManager::GetInstance().RemovePermissionUsedRecords(tokenIdEx.tokenIdExStruct.tokenID);
+    PermissionRecordManager::GetInstance().FlushPendingTasks();
     ResetFakeParentHapTokenIdState();
 }
 

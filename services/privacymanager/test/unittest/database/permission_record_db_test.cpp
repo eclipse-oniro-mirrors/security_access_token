@@ -528,35 +528,6 @@ HWTEST_F(PermissionRecordDBTest, TranslationIntoGenericValues002, TestSize.Level
     ASSERT_EQ(usedType, static_cast<int32_t>(PermissionUsedType::NORMAL_TYPE));
 }
 
-/*
- * @tc.name: TranslationGenericValuesIntoPermissionUsedRecord001
- * @tc.desc: DataTranslator::TranslationGenericValuesIntoPermissionUsedRecord function test
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(PermissionRecordDBTest, TranslationGenericValuesIntoPermissionUsedRecord001, TestSize.Level0)
-{
-    GenericValues inGenericValues;
-    PermissionUsedRecord permissionRecord;
-
-    int32_t opCode = static_cast<int32_t>(Constant::OpCode::OP_INVALID);
-    inGenericValues.Put(PrivacyFiledConst::FIELD_OP_CODE, opCode);
-    // TransferOpcodeToPermission fail
-    ASSERT_EQ(Constant::FAILURE,
-        DataTranslator::TranslationGenericValuesIntoPermissionUsedRecord(
-        FLAG_PERMISSION_USAGE_SUMMARY, inGenericValues, permissionRecord));
-    inGenericValues.Remove(PrivacyFiledConst::FIELD_OP_CODE);
-
-    opCode = static_cast<int32_t>(Constant::OpCode::OP_CAMERA);
-    inGenericValues.Put(PrivacyFiledConst::FIELD_OP_CODE, opCode);
-    inGenericValues.Put(PrivacyFiledConst::FIELD_TIMESTAMP, 10);
-    inGenericValues.Put(PrivacyFiledConst::FIELD_REJECT_COUNT, 1);
-    inGenericValues.Put(PrivacyFiledConst::FIELD_FLAG, 1);
-    // lastRejectTime > 0
-    ASSERT_EQ(Constant::SUCCESS, DataTranslator::TranslationGenericValuesIntoPermissionUsedRecord(
-        FLAG_PERMISSION_USAGE_DETAIL, inGenericValues, permissionRecord));
-}
-
 #ifdef REMOTE_PRIVACY_ENABLE
 /*
  * @tc.name: TranslationRemoteRequestIntoGenericValues001
@@ -593,40 +564,6 @@ HWTEST_F(PermissionRecordDBTest, TranslationRemoteRequestIntoGenericValues001, T
     request.beginTimeMillis = 10;
     ASSERT_EQ(Constant::SUCCESS,
         DataTranslator::TranslationRemoteRequestIntoGenericValues(request, andGenericValues));
-}
-
-/*
- * @tc.name: TranslationGenericValuesIntoRemotePermissionRecord001
- * @tc.desc: DataTranslator::TranslationGenericValuesIntoRemotePermissionRecord function test
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(PermissionRecordDBTest, TranslationGenericValuesIntoRemotePermissionRecord001, TestSize.Level0)
-{
-    GenericValues inGenericValues;
-    PermissionUsedRecord permissionRecord;
-
-    int32_t opCode = static_cast<int32_t>(Constant::OpCode::OP_INVALID);
-    inGenericValues.Put(PrivacyFiledConst::FIELD_OP_CODE, opCode);
-    // TransferOpcodeToPermission fail
-    ASSERT_EQ(Constant::FAILURE,
-        DataTranslator::TranslationGenericValuesIntoRemotePermissionRecord(
-        FLAG_PERMISSION_USAGE_SUMMARY, inGenericValues, permissionRecord));
-    inGenericValues.Remove(PrivacyFiledConst::FIELD_OP_CODE);
-
-    opCode = static_cast<int32_t>(Constant::OpCode::OP_CAMERA);
-    inGenericValues.Put(PrivacyFiledConst::FIELD_OP_CODE, opCode);
-    inGenericValues.Put(PrivacyFiledConst::FIELD_TIMESTAMP, 10);
-    inGenericValues.Put(PrivacyFiledConst::FIELD_ACCESS_COUNT, 0);
-    inGenericValues.Put(PrivacyFiledConst::FIELD_REJECT_COUNT, 0);
-    inGenericValues.Put(PrivacyFiledConst::FIELD_FLAG, 1);
-    ASSERT_EQ(Constant::SUCCESS, DataTranslator::TranslationGenericValuesIntoRemotePermissionRecord(
-        FLAG_PERMISSION_USAGE_DETAIL, inGenericValues, permissionRecord));
-
-    inGenericValues.Remove(PrivacyFiledConst::FIELD_REJECT_COUNT);
-    inGenericValues.Put(PrivacyFiledConst::FIELD_REJECT_COUNT, 1);
-    ASSERT_EQ(Constant::SUCCESS, DataTranslator::TranslationGenericValuesIntoRemotePermissionRecord(
-        FLAG_PERMISSION_USAGE_DETAIL, inGenericValues, permissionRecord));
 }
 
 /*

@@ -264,6 +264,7 @@ void PermissionRecordManagerTest::TearDown()
         g_InfoParms2.instIndex);
     PrivacyTestCommon::DeleteTestHapToken(tokenIdEx.tokenIdExStruct.tokenID);
     PermissionRecordManager::GetInstance().RemovePermissionUsedRecords(tokenIdEx.tokenIdExStruct.tokenID);
+    PermissionRecordManager::GetInstance().FlushPendingTasks();
     appStateObserver_ = nullptr;
 }
 
@@ -1549,55 +1550,201 @@ HWTEST_F(PermissionRecordManagerTest, GetPermissionUsedType002, TestSize.Level0)
 }
 
 /*
- * @tc.name: AddDataValueToResults001
- * @tc.desc: PermissionRecordManager::AddDataValueToResults function test
+ * @tc.name: AddTypeInfoToResults001
+ * @tc.desc: PermissionRecordManager::AddTypeInfoToResults function test
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, AddDataValueToResults001, TestSize.Level0)
+HWTEST_F(PermissionRecordManagerTest, AddTypeInfoToResults001, TestSize.Level0)
 {
-    GenericValues value;
-    value.Put(PrivacyFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(RANDOM_TOKENID));
-    value.Put(PrivacyFiledConst::FIELD_USED_TYPE, NORMAL_TYPE_ADD_VALUE);
     std::vector<PermissionUsedTypeInfo> results;
-
-    PermissionRecordManager::GetInstance().AddDataValueToResults(value, results);
+    PermissionRecordManager::GetInstance().AddTypeInfoToResults(
+        RANDOM_TOKENID, 0, NORMAL_TYPE_ADD_VALUE, results);
     ASSERT_EQ(PermissionUsedType::NORMAL_TYPE, results[FIRST_INDEX].type);
 }
 
 /*
- * @tc.name: AddDataValueToResults002
- * @tc.desc: PermissionRecordManager::AddDataValueToResults function test
+ * @tc.name: AddTypeInfoToResults002
+ * @tc.desc: PermissionRecordManager::AddTypeInfoToResults function test
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, AddDataValueToResults002, TestSize.Level0)
+HWTEST_F(PermissionRecordManagerTest, AddTypeInfoToResults002, TestSize.Level0)
 {
-    GenericValues value;
-    value.Put(PrivacyFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(RANDOM_TOKENID));
-    value.Put(PrivacyFiledConst::FIELD_USED_TYPE, PICKER_TYPE_ADD_VALUE);
     std::vector<PermissionUsedTypeInfo> results;
-
-    PermissionRecordManager::GetInstance().AddDataValueToResults(value, results);
+    PermissionRecordManager::GetInstance().AddTypeInfoToResults(
+        RANDOM_TOKENID, 0, PICKER_TYPE_ADD_VALUE, results);
     ASSERT_EQ(PermissionUsedType::PICKER_TYPE, results[FIRST_INDEX].type);
 }
 
 /*
- * @tc.name: AddDataValueToResults003
- * @tc.desc: PermissionRecordManager::AddDataValueToResults function test
+ * @tc.name: AddTypeInfoToResults003
+ * @tc.desc: PermissionRecordManager::AddTypeInfoToResults function test
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, AddDataValueToResults003, TestSize.Level0)
+HWTEST_F(PermissionRecordManagerTest, AddTypeInfoToResults003, TestSize.Level0)
 {
-    GenericValues value;
-    value.Put(PrivacyFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(RANDOM_TOKENID));
-    value.Put(PrivacyFiledConst::FIELD_USED_TYPE, SEC_COMPONENT_TYPE_ADD_VALUE);
     std::vector<PermissionUsedTypeInfo> results;
-
-    PermissionRecordManager::GetInstance().AddDataValueToResults(value, results);
+    PermissionRecordManager::GetInstance().AddTypeInfoToResults(
+        RANDOM_TOKENID, 0, SEC_COMPONENT_TYPE_ADD_VALUE, results);
     ASSERT_EQ(PermissionUsedType::SECURITY_COMPONENT_TYPE, results[FIRST_INDEX].type);
     ASSERT_EQ(0, GetFirstCallerTokenID());
+}
+
+/*
+ * @tc.name: ConvertRecordToUsedRecord001
+ * @tc.desc: PermissionRecordManager::ConvertRecordToUsedRecord function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, ConvertRecordToUsedRecord001, TestSize.Level0)
+{
+    PermissionRecord permRecord;
+    permRecord.opCode = static_cast<int32_t>(Constant::OpCode::OP_INVALID);
+    PermissionUsedRecord usedRecord;
+    EXPECT_FALSE(PermissionRecordManager::GetInstance().ConvertRecordToUsedRecord(
+        permRecord, FLAG_PERMISSION_USAGE_SUMMARY, usedRecord));
+
+    permRecord.opCode = Constant::OP_CAMERA;
+    permRecord.timestamp = 10;
+    permRecord.accessCount = 1;
+    permRecord.rejectCount = 1;
+    permRecord.type = PermissionUsedType::NORMAL_TYPE;
+    EXPECT_TRUE(PermissionRecordManager::GetInstance().ConvertRecordToUsedRecord(
+        permRecord, FLAG_PERMISSION_USAGE_DETAIL, usedRecord));
+    EXPECT_EQ(usedRecord.lastAccessTime, 10);
+    EXPECT_EQ(usedRecord.lastRejectTime, 10);
+    EXPECT_FALSE(usedRecord.accessRecords.empty());
+    EXPECT_FALSE(usedRecord.rejectRecords.empty());
+}
+
+#ifdef REMOTE_PRIVACY_ENABLE
+/*
+ * @tc.name: ConvertRemoteRecordToUsedRecord001
+ * @tc.desc: PermissionRecordManager::ConvertRemoteRecordToUsedRecord function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, ConvertRemoteRecordToUsedRecord001, TestSize.Level0)
+{
+    RemotePermissionRecord remoteRecord;
+    remoteRecord.opCode = static_cast<int32_t>(Constant::OpCode::OP_INVALID);
+    PermissionUsedRecord usedRecord;
+    EXPECT_FALSE(PermissionRecordManager::GetInstance().ConvertRemoteRecordToUsedRecord(
+        remoteRecord, FLAG_PERMISSION_USAGE_SUMMARY, usedRecord));
+
+    remoteRecord.opCode = Constant::OP_CAMERA;
+    remoteRecord.timestamp = 10;
+    remoteRecord.accessCount = 0;
+    remoteRecord.rejectCount = 0;
+    EXPECT_TRUE(PermissionRecordManager::GetInstance().ConvertRemoteRecordToUsedRecord(
+        remoteRecord, FLAG_PERMISSION_USAGE_DETAIL, usedRecord));
+
+    remoteRecord.rejectCount = 1;
+    EXPECT_TRUE(PermissionRecordManager::GetInstance().ConvertRemoteRecordToUsedRecord(
+        remoteRecord, FLAG_PERMISSION_USAGE_DETAIL, usedRecord));
+    EXPECT_EQ(usedRecord.lastRejectTime, 10);
+}
+#endif
+
+/*
+ * @tc.name: IsMatchRequestFlagAndRecordFilter001
+ * @tc.desc: Test IsMatchRequestFlag case branches and IsMatchedRecordWithRequest filter logic
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, IsMatchRequestFlagAndRecordFilter001, TestSize.Level0)
+{
+    int64_t now = AccessToken::TimeUtil::GetCurrentTimestamp();
+    std::vector<PermissionRecordCache>& cache = PermissionRecordManager::GetInstance().permUsedRecList_;
+    cache.clear();
+
+    PermissionRecordCache entryLocked;
+    entryLocked.record.tokenId = RANDOM_TOKENID;
+    entryLocked.record.opCode = Constant::OP_CAMERA;
+    entryLocked.record.status = PERM_ACTIVE_IN_FOREGROUND;
+    entryLocked.record.timestamp = now;
+    entryLocked.record.type = PermissionUsedType::NORMAL_TYPE;
+    entryLocked.record.lockScreenStatus = PERM_ACTIVE_IN_LOCKED;
+    entryLocked.needWriteToDb = true;
+    entryLocked.taskPosted = true;
+
+    PermissionRecordCache entryUnlocked;
+    entryUnlocked.record = entryLocked.record;
+    entryUnlocked.record.status = PERM_ACTIVE_IN_BACKGROUND;
+    entryUnlocked.record.lockScreenStatus = PERM_ACTIVE_IN_UNLOCKED;
+    entryUnlocked.record.type = PermissionUsedType::PICKER_TYPE;
+    entryUnlocked.needWriteToDb = true;
+    entryUnlocked.taskPosted = true;
+
+    PermissionRecordCache entryDiffOpCode;
+    entryDiffOpCode.record = entryLocked.record;
+    entryDiffOpCode.record.opCode = Constant::OP_MICROPHONE;
+    entryDiffOpCode.needWriteToDb = true;
+    entryDiffOpCode.taskPosted = true;
+
+    PermissionRecordCache entryOldTimestamp;
+    entryOldTimestamp.record = entryLocked.record;
+    entryOldTimestamp.record.timestamp = 1;
+    entryOldTimestamp.needWriteToDb = true;
+    entryOldTimestamp.taskPosted = true;
+
+    cache.push_back(entryLocked);
+    cache.push_back(entryUnlocked);
+    cache.push_back(entryDiffOpCode);
+    cache.push_back(entryOldTimestamp);
+
+    std::set<int32_t> allOpCodes;
+    std::set<int32_t> cameraOnly = {Constant::OP_CAMERA};
+    PermissionUsedRequest request;
+    request.tokenId = 0;
+    request.beginTimeMillis = 0;
+    request.endTimeMillis = 0;
+
+    request.flag = FLAG_PERMISSION_USAGE_SUMMARY_IN_SCREEN_LOCKED;
+    std::vector<PermissionRecord> result;
+    PermissionRecordManager::GetInstance().GetMergedRecordsFromCache(request, allOpCodes, result);
+    EXPECT_EQ(2, static_cast<int32_t>(result.size()));
+
+    request.flag = FLAG_PERMISSION_USAGE_SUMMARY_IN_SCREEN_UNLOCKED;
+    result.clear();
+    PermissionRecordManager::GetInstance().GetMergedRecordsFromCache(request, allOpCodes, result);
+    EXPECT_EQ(1, static_cast<int32_t>(result.size()));
+
+    request.flag = FLAG_PERMISSION_USAGE_SUMMARY_IN_APP_BACKGROUND;
+    result.clear();
+    PermissionRecordManager::GetInstance().GetMergedRecordsFromCache(request, allOpCodes, result);
+    EXPECT_EQ(1, static_cast<int32_t>(result.size()));
+
+    request.flag = FLAG_PERMISSION_USAGE_SUMMARY_IN_APP_FOREGROUND;
+    result.clear();
+    PermissionRecordManager::GetInstance().GetMergedRecordsFromCache(request, allOpCodes, result);
+    EXPECT_EQ(2, static_cast<int32_t>(result.size()));
+
+    request.flag = FLAG_PERMISSION_SECURITY_ACCESS_DETAIL;
+    result.clear();
+    PermissionRecordManager::GetInstance().GetMergedRecordsFromCache(request, allOpCodes, result);
+    EXPECT_EQ(1, static_cast<int32_t>(result.size()));
+
+    request.flag = FLAG_PERMISSION_USAGE_SUMMARY;
+    result.clear();
+    PermissionRecordManager::GetInstance().GetMergedRecordsFromCache(request, allOpCodes, result);
+    EXPECT_EQ(3, static_cast<int32_t>(result.size()));
+
+    request.flag = FLAG_PERMISSION_USAGE_SUMMARY;
+    result.clear();
+    PermissionRecordManager::GetInstance().GetMergedRecordsFromCache(request, cameraOnly, result);
+    EXPECT_EQ(2, static_cast<int32_t>(result.size()));
+
+    request.flag = FLAG_PERMISSION_USAGE_SUMMARY;
+    request.beginTimeMillis = now - 1000;
+    request.endTimeMillis = now + 1000;
+    result.clear();
+    PermissionRecordManager::GetInstance().GetMergedRecordsFromCache(request, allOpCodes, result);
+    EXPECT_EQ(3, static_cast<int32_t>(result.size()));
+
+    cache.clear();
 }
 
 /*
@@ -2198,7 +2345,8 @@ HWTEST_F(PermissionRecordManagerTest, AddPermissionUsedRecordTest001, TestSize.L
 
 /*
  * @tc.name: AddPermissionUsedRecordTest002
- * @tc.desc: AddPermissionUsedRecord function test
+ * @tc.desc: AddPermissionUsedRecord then query; async write uses snapshot-first
+ *           (cache snapshot merged with DB), so record is always visible
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -2230,7 +2378,9 @@ HWTEST_F(PermissionRecordManagerTest, AddPermissionUsedRecordTest002, TestSize.L
 
     PermissionUsedResult result;
     EXPECT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().GetPermissionUsedRecords(request, result));
-    EXPECT_EQ(0, result.bundleRecords.size());
+    // async write: record in cache (needWriteToDb=true), snapshot-first query
+    // merges cache + DB, so record is always visible even before DB flush
+    EXPECT_EQ(1, result.bundleRecords.size());
 
     EXPECT_EQ(RET_SUCCESS, PrivacyTestCommon::DeleteTestHapToken(tokenId));
 }
@@ -2453,6 +2603,7 @@ HWTEST_F(PermissionRecordManagerTest, EnhancedIdentityHistoryRecord002, TestSize
         MakeInfo(tokenId, PID, "ohos.permission.CAMERA", PermissionUsedType::NORMAL_TYPE, "agentA"), CALLER_PID));
 
     ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().RemovePermissionUsedRecords(tokenId, "agentA"));
+    PermissionRecordManager::GetInstance().FlushPendingTasks();
 
     PermissionUsedResult result = QueryUsedRecords(tokenId);
     ASSERT_EQ(1, static_cast<int32_t>(result.bundleRecords.size()));
@@ -2763,19 +2914,19 @@ HWTEST_F(PermissionRecordManagerTest, EnhancedIdentityHistoryRecord008, TestSize
     AccessTokenID tokenId = GetBundleATokenId();
     ASSERT_NE(INVALID_TOKENID, tokenId);
 
-    GenericValues value;
-    value.Put(PrivacyFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
-    value.Put(PrivacyFiledConst::FIELD_OP_CODE, -1);
-    value.Put(PrivacyFiledConst::FIELD_STATUS, PERM_ACTIVE_IN_FOREGROUND);
-    value.Put(PrivacyFiledConst::FIELD_TIMESTAMP, 1001);
-    value.Put(PrivacyFiledConst::FIELD_ACCESS_DURATION, 1);
-    value.Put(PrivacyFiledConst::FIELD_ACCESS_COUNT, 1);
-    value.Put(PrivacyFiledConst::FIELD_REJECT_COUNT, 0);
-    value.Put(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS, PERM_ACTIVE_IN_UNLOCKED);
-    value.Put(PrivacyFiledConst::FIELD_USED_TYPE, static_cast<int32_t>(PermissionUsedType::NORMAL_TYPE));
-    value.Put(PrivacyFiledConst::FIELD_ENHANCED_IDENTITY, "agentA");
-    value.Put(PrivacyFiledConst::FIELD_TARGET_TOKEN_ID, 0);
-    value.Put(PrivacyFiledConst::FIELD_TARGET_BUNDLE_NAME, "");
+    PermissionRecord record;
+    record.tokenId = tokenId;
+    record.opCode = -1;
+    record.status = PERM_ACTIVE_IN_FOREGROUND;
+    record.timestamp = 1001;
+    record.accessDuration = 1;
+    record.accessCount = 1;
+    record.rejectCount = 0;
+    record.lockScreenStatus = PERM_ACTIVE_IN_UNLOCKED;
+    record.type = PermissionUsedType::NORMAL_TYPE;
+    record.enhancedIdentity = "agentA";
+    record.targetTokenId = 0;
+    record.targetBundleName = "";
     PermissionUsedRequest request = {.flag = FLAG_PERMISSION_USAGE_DETAIL};
     PermissionUsedResult result;
     std::map<std::string, BundleUsedRecord> tokenIdToBundleMap;
@@ -2787,8 +2938,8 @@ HWTEST_F(PermissionRecordManagerTest, EnhancedIdentityHistoryRecord008, TestSize
     tokenIdToBundleMap[bundleKey] = bundleRecord;
     tokenIdToCountMap[bundleKey] = 0;
 
-    EXPECT_FALSE(PermissionRecordManager::GetInstance().FillBundleUsedRecord(
-        value, request.flag, tokenIdToBundleMap, tokenIdToCountMap, result));
+    PermissionRecordManager::GetInstance().FillBundleUsedRecord(
+        record, request.flag, tokenIdToBundleMap, tokenIdToCountMap, result);
     ASSERT_EQ(1, static_cast<int32_t>(tokenIdToBundleMap.size()));
     EXPECT_TRUE(tokenIdToBundleMap[bundleKey].permissionRecords.empty());
 }
@@ -2804,23 +2955,23 @@ HWTEST_F(PermissionRecordManagerTest, EnhancedIdentityHistoryRecord009, TestSize
     AccessTokenID tokenId = GetBundleATokenId();
     ASSERT_NE(INVALID_TOKENID, tokenId);
 
-    GenericValues value1;
-    value1.Put(PrivacyFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
-    value1.Put(PrivacyFiledConst::FIELD_OP_CODE, Constant::OP_CAMERA);
-    value1.Put(PrivacyFiledConst::FIELD_STATUS, PERM_ACTIVE_IN_FOREGROUND);
-    value1.Put(PrivacyFiledConst::FIELD_TIMESTAMP, 1002);
-    value1.Put(PrivacyFiledConst::FIELD_ACCESS_DURATION, 1);
-    value1.Put(PrivacyFiledConst::FIELD_ACCESS_COUNT, 1);
-    value1.Put(PrivacyFiledConst::FIELD_REJECT_COUNT, 0);
-    value1.Put(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS, PERM_ACTIVE_IN_UNLOCKED);
-    value1.Put(PrivacyFiledConst::FIELD_USED_TYPE, static_cast<int32_t>(PermissionUsedType::NORMAL_TYPE));
-    value1.Put(PrivacyFiledConst::FIELD_ENHANCED_IDENTITY, "agentA");
-    value1.Put(PrivacyFiledConst::FIELD_TARGET_TOKEN_ID, 0);
-    value1.Put(PrivacyFiledConst::FIELD_TARGET_BUNDLE_NAME, "");
+    PermissionRecord record1;
+    record1.tokenId = tokenId;
+    record1.opCode = Constant::OP_CAMERA;
+    record1.status = PERM_ACTIVE_IN_FOREGROUND;
+    record1.timestamp = 1002;
+    record1.accessDuration = 1;
+    record1.accessCount = 1;
+    record1.rejectCount = 0;
+    record1.lockScreenStatus = PERM_ACTIVE_IN_UNLOCKED;
+    record1.type = PermissionUsedType::NORMAL_TYPE;
+    record1.enhancedIdentity = "agentA";
+    record1.targetTokenId = 0;
+    record1.targetBundleName = "";
 
-    GenericValues value2 = value1;
-    value2.Put(PrivacyFiledConst::FIELD_OP_CODE, Constant::OP_MICROPHONE);
-    value2.Put(PrivacyFiledConst::FIELD_TIMESTAMP, 1003);
+    PermissionRecord record2 = record1;
+    record2.opCode = Constant::OP_MICROPHONE;
+    record2.timestamp = 1003;
 
     PermissionUsedRequest request = {.flag = FLAG_PERMISSION_USAGE_DETAIL};
     PermissionUsedResult result;
@@ -2833,10 +2984,10 @@ HWTEST_F(PermissionRecordManagerTest, EnhancedIdentityHistoryRecord009, TestSize
     tokenIdToBundleMap[bundleKey] = bundleRecord;
     tokenIdToCountMap[bundleKey] = 0;
 
-    ASSERT_TRUE(PermissionRecordManager::GetInstance().FillBundleUsedRecord(
-        value1, request.flag, tokenIdToBundleMap, tokenIdToCountMap, result));
-    ASSERT_TRUE(PermissionRecordManager::GetInstance().FillBundleUsedRecord(
-        value2, request.flag, tokenIdToBundleMap, tokenIdToCountMap, result));
+    PermissionRecordManager::GetInstance().FillBundleUsedRecord(
+        record1, request.flag, tokenIdToBundleMap, tokenIdToCountMap, result);
+    PermissionRecordManager::GetInstance().FillBundleUsedRecord(
+        record2, request.flag, tokenIdToBundleMap, tokenIdToCountMap, result);
 
     ASSERT_EQ(1, static_cast<int32_t>(tokenIdToBundleMap.size()));
     EXPECT_EQ(2, tokenIdToCountMap[bundleKey]);
@@ -4180,6 +4331,7 @@ HWTEST_F(PermissionRecordManagerTest, DvrUsedType001, TestSize.Level0)
         .type = PermissionUsedType::SECURITY_COMPONENT_TYPE,
     };
     ASSERT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().AddPermissionUsedRecord(info));
+    sleep(1); // wait for async DB write to complete
 
     GenericValues conditionValue;
     conditionValue.Put(PrivacyFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
@@ -4659,6 +4811,7 @@ HWTEST_F(PermissionRecordManagerTest, RemovePermissionUsedRecords_AlsoCleanTarge
     ASSERT_EQ(1, static_cast<int32_t>(resultBefore.bundleRecords.size()));
 
     EXPECT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().RemovePermissionUsedRecords(targetTokenId));
+    PermissionRecordManager::GetInstance().FlushPendingTasks();
 
     PermissionUsedResult resultAfter = QueryUsedRecords(tokenId);
     EXPECT_EQ(0, static_cast<int32_t>(resultAfter.bundleRecords.size()));
@@ -4697,6 +4850,7 @@ HWTEST_F(PermissionRecordManagerTest, RemovePermissionUsedRecords_WithEnhancedId
 
     EXPECT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().RemovePermissionUsedRecords(targetTokenId,
         "identityA"));
+    PermissionRecordManager::GetInstance().FlushPendingTasks();
 
     PermissionUsedResult result = QueryUsedRecords(tokenId);
     bool hasIdentityB = false;

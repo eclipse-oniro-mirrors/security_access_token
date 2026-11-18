@@ -594,11 +594,17 @@ int32_t PermissionUsedRecordDb::UpdateLocked(DataType type, const GenericValues&
 int32_t PermissionUsedRecordDb::Query(DataType type, const GenericValues& conditionValue,
     std::vector<GenericValues>& results)
 {
+    std::shared_lock<std::shared_mutex> lock(this->rwLock_);
+    return QueryLocked(type, conditionValue, results);
+}
+
+int32_t PermissionUsedRecordDb::QueryLocked(DataType type, const GenericValues& conditionValue,
+    std::vector<GenericValues>& results)
+{
     int64_t beginTime = TimeUtil::GetCurrentTimestamp();
 
     std::vector<std::string> conditionColumns = conditionValue.GetAllKeys();
 
-    std::shared_lock<std::shared_mutex> lock(this->rwLock_);
     std::string prepareSql = CreateQueryPrepareSqlCmd(type, conditionColumns);
     if (prepareSql.empty()) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Type %{public}u invalid.", type);
@@ -630,6 +636,50 @@ int32_t PermissionUsedRecordDb::Query(DataType type, const GenericValues& condit
     int64_t endTime = TimeUtil::GetCurrentTimestamp();
     LogCost("Query", endTime - beginTime);
 
+    return SUCCESS;
+}
+
+int32_t PermissionUsedRecordDb::AddOrReplaceRecordAndType(
+    const std::vector<GenericValues>& recordValues,
+    AccessTokenID tokenId, int32_t opCode, uint32_t typeBits)
+{
+    return RetryOnCorrupt([this, &recordValues, tokenId, opCode, typeBits]() -> int32_t {
+        int64_t beginTime = TimeUtil::GetCurrentTimestamp();
+        int32_t ret = AddOrReplaceLocked(PERMISSION_RECORD, recordValues);
+        if (ret != SUCCESS) {
+            return ret;
+        }
+        ret = UpsertUsedTypeLocked(tokenId, opCode, typeBits);
+        if (ret != SUCCESS) {
+            return ret;
+        }
+        int64_t endTime = TimeUtil::GetCurrentTimestamp();
+        LogCost("AddOrReplaceRecordAndType", endTime - beginTime);
+        return SUCCESS;
+    });
+}
+
+int32_t PermissionUsedRecordDb::UpsertUsedTypeLocked(
+    AccessTokenID tokenId, int32_t opCode, uint32_t typeBits)
+{
+    std::string sql = "insert into " + std::string(PERMISSION_USED_TYPE_TABLE) +
+        " (" + PrivacyFiledConst::FIELD_TOKEN_ID + "," + PrivacyFiledConst::FIELD_PERMISSION_CODE +
+        "," + PrivacyFiledConst::FIELD_USED_TYPE + ") values (:" + PrivacyFiledConst::FIELD_TOKEN_ID +
+        ",:" + PrivacyFiledConst::FIELD_PERMISSION_CODE + ",:" + PrivacyFiledConst::FIELD_USED_TYPE + ")" +
+        " on conflict(" + PrivacyFiledConst::FIELD_TOKEN_ID + "," + PrivacyFiledConst::FIELD_PERMISSION_CODE +
+        ") do update set " + PrivacyFiledConst::FIELD_USED_TYPE + "=" + PrivacyFiledConst::FIELD_USED_TYPE +
+        "|excluded." + PrivacyFiledConst::FIELD_USED_TYPE +
+        " where " + PrivacyFiledConst::FIELD_USED_TYPE + "&excluded." + PrivacyFiledConst::FIELD_USED_TYPE +
+        "!=excluded." + PrivacyFiledConst::FIELD_USED_TYPE;
+
+    auto statement = Prepare(sql);
+    statement.Bind(PrivacyFiledConst::FIELD_TOKEN_ID, VariantValue(static_cast<int32_t>(tokenId)));
+    statement.Bind(PrivacyFiledConst::FIELD_PERMISSION_CODE, VariantValue(opCode));
+    statement.Bind(PrivacyFiledConst::FIELD_USED_TYPE, VariantValue(static_cast<int32_t>(typeBits)));
+    if (statement.Step() != Statement::State::DONE) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Upsert used type failed, errorMsg: %{public}s", SpitError().c_str());
+        return PrivacyError::ERR_DATABASE_OPERATE_FAILED;
+    }
     return SUCCESS;
 }
 

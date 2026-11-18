@@ -70,7 +70,8 @@ struct ContinuousPermissionRecord {
 
 struct PermissionRecordCache {
     PermissionRecord record;
-    bool needUpdateToDb = false;
+    bool needWriteToDb = false;
+    bool taskPosted = false;
 };
 
 #ifdef REMOTE_PRIVACY_ENABLE
@@ -103,7 +104,8 @@ struct RemotePermissionRecord {
 
 struct RemotePermissionRecordCache {
     RemotePermissionRecord record;
-    bool needUpdateToDb = false;
+    bool needWriteToDb = false;
+    bool taskPosted = false;
 };
 #endif
 } // namespace AccessToken

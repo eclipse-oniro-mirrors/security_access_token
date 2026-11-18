@@ -38,6 +38,7 @@ public:
     ~RemotePermissionUsedRecordDb() override;
 
     int32_t Add(const std::vector<GenericValues>& values);
+    int32_t AddOrReplace(const std::vector<GenericValues>& values);
     int32_t Remove(const GenericValues& conditions);
     int32_t FindByConditions(const std::set<int32_t>& opCodeList, const GenericValues& andConditions,
         std::vector<GenericValues>& results, int32_t databaseQueryCount);
@@ -53,6 +54,7 @@ private:
     std::shared_mutex rwLock_;
 
     int32_t AddLocked(const std::vector<GenericValues>& values);
+    int32_t AddOrReplaceLocked(const std::vector<GenericValues>& values);
     int32_t RemoveLocked(const GenericValues& conditions);
     int32_t UpdateLocked(const GenericValues& modifyValue, const GenericValues& conditionValue);
     int32_t DeleteExpireRecordsLocked(const GenericValues& andConditions);
@@ -63,6 +65,7 @@ private:
     int32_t AddSubProfileIdColumn();
 
     std::string CreateInsertPrepareSqlCmd() const;
+    std::string CreateInsertOrReplacePrepareSqlCmd() const;
     std::string CreateDeletePrepareSqlCmd(const std::vector<std::string>& columnNames) const;
     std::string CreateSelectByConditionPrepareSqlCmd(const std::set<int32_t>& opCodeList,
         const std::vector<std::string>& andColumns, int32_t databaseQueryCount) const;
@@ -80,6 +83,7 @@ public:
     static RemotePermUsedRecordDbManager& GetInstance();
 
     int32_t Add(const int32_t userId, const std::vector<GenericValues>& values);
+    int32_t AddOrReplace(const int32_t userId, const std::vector<GenericValues>& values);
     int32_t Remove(const int32_t userId, const GenericValues& conditions);
     int32_t FindByConditions(const int32_t userId, const std::set<int32_t>& opCodeList,
         const GenericValues& andConditions, std::vector<GenericValues>& results, int32_t databaseQueryCount);
