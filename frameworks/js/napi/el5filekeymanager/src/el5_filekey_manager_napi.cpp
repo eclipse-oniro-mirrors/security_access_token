@@ -40,40 +40,42 @@ const std::unordered_map<uint32_t, std::string> ErrMsgMap {
 };
 }
 
+napi_value GenerateBusinessError(napi_env env, int32_t errCode, const std::string &errMsg)
+{
+    napi_value code = nullptr;
+    NAPI_CALL(env, napi_create_int32(env, errCode, &code));
+
+    napi_value msg = nullptr;
+    NAPI_CALL(env, napi_create_string_utf8(env, errMsg.c_str(), NAPI_AUTO_LENGTH, &msg));
+
+    napi_value businessError = nullptr;
+    NAPI_CALL(env, napi_create_error(env, nullptr, msg, &businessError));
+    NAPI_CALL(env, napi_set_named_property(env, businessError, "code", code));
+    NAPI_CALL(env, napi_set_named_property(env, businessError, "message", msg));
+    return businessError;
+}
+
 void ThrowError(napi_env env, int32_t errCode)
 {
-    napi_value businessError = nullptr;
-
-    napi_value code = nullptr;
-    napi_create_int32(env, errCode, &code);
-
     std::string errMsg = "Unknown error, errCode + " + std::to_string(errCode) + ".";
     auto iter = ErrMsgMap.find(errCode);
     if (iter != ErrMsgMap.end()) {
         errMsg = iter->second;
     }
-
-    napi_value msg = nullptr;
-    napi_create_string_utf8(env, errMsg.c_str(), NAPI_AUTO_LENGTH, &msg);
-
-    napi_create_error(env, nullptr, msg, &businessError);
-    napi_set_named_property(env, businessError, "code", code);
-    napi_set_named_property(env, businessError, "message", msg);
-
-    napi_throw(env, businessError);
+    napi_throw(env, GenerateBusinessError(env, errCode, errMsg));
 }
 
 bool ParseDataType(const napi_env &env, napi_value args, int32_t &dataLockType)
 {
     // data-lock-type
     napi_valuetype valuetype = napi_undefined;
-    napi_typeof(env, args, &valuetype);
+    NAPI_CALL_BASE(env, napi_typeof(env, args, &valuetype), false);
     if (valuetype != napi_number) {
         LOG_ERROR("Parameter type %{public}d error. Number expected.", valuetype);
         ThrowError(env, EFM_ERR_INVALID_PARAMETER);
         return false;
     }
-    napi_get_value_int32(env, args, &dataLockType);
+    NAPI_CALL_BASE(env, napi_get_value_int32(env, args, &dataLockType), false);
     return true;
 }
 
