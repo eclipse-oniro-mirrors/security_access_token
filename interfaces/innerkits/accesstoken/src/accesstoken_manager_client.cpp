@@ -267,6 +267,7 @@ int32_t AccessTokenManagerClient::ConvertResult(int32_t ret)
         case ERR_DEAD_OBJECT:
         case ERR_SERVICE_DIED:
             OnRemoteDiedHandle();
+            [[fallthrough]];
         case ERR_TRANSACTION_FAILED:
             ret = ERR_SERVICE_ABNORMAL;
             break;
