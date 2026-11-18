@@ -201,7 +201,8 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, AddTimestampColumn002, TestSize.Level4
     std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance()->GetRdb();
     AccessTokenOpenCallback callback;
 
-    db->executeSqlResults_ = {NativeRdb::E_SQLITE_CORRUPT, NativeRdb::E_OK, NativeRdb::E_OK};
+    // Column probe misses (PRAGMA via QuerySql), then ALTER and UPDATE both succeed
+    db->executeSqlResults_ = {NativeRdb::E_OK, NativeRdb::E_OK};
     db->executeSqlIndex_ = 0;
     ASSERT_EQ(NativeRdb::E_OK, callback.AddTimestampColumn(*(db.get())));
 }
@@ -217,7 +218,8 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, AddTimestampColumn003, TestSize.Level4
     std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance()->GetRdb();
     AccessTokenOpenCallback callback;
 
-    db->executeSqlResults_ = {NativeRdb::E_SQLITE_CORRUPT, NativeRdb::E_SQLITE_CORRUPT};
+    // ALTER timestamp fails
+    db->executeSqlResults_ = {NativeRdb::E_SQLITE_CORRUPT};
     db->executeSqlIndex_ = 0;
     ASSERT_EQ(NativeRdb::E_SQLITE_CORRUPT, callback.AddTimestampColumn(*(db.get())));
 }
@@ -233,7 +235,8 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, AddTimestampColumn004, TestSize.Level4
     std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance()->GetRdb();
     AccessTokenOpenCallback callback;
 
-    db->executeSqlResults_ = {NativeRdb::E_SQLITE_CORRUPT, NativeRdb::E_OK, NativeRdb::E_SQLITE_CORRUPT};
+    // ALTER timestamp succeeds, UPDATE timestamp fails
+    db->executeSqlResults_ = {NativeRdb::E_OK, NativeRdb::E_SQLITE_CORRUPT};
     db->executeSqlIndex_ = 0;
     ASSERT_EQ(NativeRdb::E_SQLITE_CORRUPT, callback.AddTimestampColumn(*(db.get())));
 }
@@ -436,13 +439,15 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, AddUidMigratedReservedColumns001, Test
     std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance()->GetRdb();
     AccessTokenOpenCallback callback;
 
-    // PRAGMA table_info returns all columns already exist
-    db->querySqlResults_ = {{{
+    // PRAGMA table_info returns all columns already exist.
+    // Each column add probes PRAGMA table_info separately: one result per probe.
+    const std::vector<std::vector<std::string>> allColumnsExist = {
         {"0", "token_id", "INTEGER", "1", "", "1"},
         {"1", "uid", "INTEGER", "1", "-1", "0"},
         {"2", "migrated", "INTEGER", "1", "0", "0"},
         {"3", "reserved", "INTEGER", "1", "0", "0"}
-    }}};
+    };
+    db->querySqlResults_ = {allColumnsExist, allColumnsExist, allColumnsExist};
     db->querySqlIndex_ = 0;
     ASSERT_EQ(NativeRdb::E_OK, callback.AddUidMigratedReservedColumns(*(db.get())));
 }
@@ -458,13 +463,15 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, AddUidMigratedReservedColumns002, Test
     std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance()->GetRdb();
     AccessTokenOpenCallback callback;
 
-    // All columns exist, no ALTER needed
-    db->querySqlResults_ = {{{
+    // All columns exist, no ALTER needed.
+    // Each column add probes PRAGMA table_info separately: one result per probe.
+    const std::vector<std::vector<std::string>> allColumnsExist = {
         {"0", "token_id", "INTEGER", "1", "", "1"},
         {"1", "uid", "INTEGER", "1", "-1", "0"},
         {"2", "migrated", "INTEGER", "1", "0", "0"},
         {"3", "reserved", "INTEGER", "1", "0", "0"}
-    }}};
+    };
+    db->querySqlResults_ = {allColumnsExist, allColumnsExist, allColumnsExist};
     db->querySqlIndex_ = 0;
     ASSERT_EQ(NativeRdb::E_OK, callback.AddUidMigratedReservedColumns(*(db.get())));
 }
@@ -480,8 +487,12 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, AddUidMigratedReservedColumns003, Test
     std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance()->GetRdb();
     AccessTokenOpenCallback callback;
 
-    // No columns exist, QuerySql succeeds but ALTER uid fails
-    db->querySqlResults_ = {{{{"0", "token_id", "INTEGER", "1", "", "1"}}}};
+    // No columns exist, QuerySql succeeds but ALTER uid fails.
+    // Each column add probes PRAGMA table_info separately: one result per probe.
+    const std::vector<std::vector<std::string>> onlyTokenIdExists = {
+        {"0", "token_id", "INTEGER", "1", "", "1"}
+    };
+    db->querySqlResults_ = {onlyTokenIdExists, onlyTokenIdExists, onlyTokenIdExists};
     db->querySqlIndex_ = 0;
     db->executeSqlResults_ = {NativeRdb::E_SQLITE_CORRUPT};
     db->executeSqlIndex_ = 0;
@@ -659,7 +670,7 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, UpgradeFromVersion8003, TestSize.Level
     std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance()->GetRdb();
     AccessTokenOpenCallback callback;
 
-    // CreateHapInfoTable succeeds, then uid column check fails and ALTER uid also fails
+    // CreateHapInfoTable succeeds, then ALTER uid fails
     db->executeSqlResults_ = {NativeRdb::E_OK, NativeRdb::E_SQLITE_CORRUPT, NativeRdb::E_SQLITE_CORRUPT};
     db->executeSqlIndex_ = 0;
     ASSERT_EQ(NativeRdb::E_SQLITE_CORRUPT, callback.UpgradeFromVersion8(*(db.get())));
@@ -677,8 +688,13 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, AddUidMigratedReservedColumns004, Test
     std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance()->GetRdb();
     AccessTokenOpenCallback callback;
 
-    // Only uid column exists in PRAGMA result; migrated and reserved need to be added
-    db->querySqlResults_ = {{{{"0", "token_id", "INTEGER", "1", "", "1"}, {"1", "uid", "INTEGER", "1", "-1", "0"}}}};
+    // Only uid column exists in PRAGMA result; migrated and reserved need to be added.
+    // Each column add probes PRAGMA table_info separately: one result per probe.
+    const std::vector<std::vector<std::string>> onlyUidExists = {
+        {"0", "token_id", "INTEGER", "1", "", "1"},
+        {"1", "uid", "INTEGER", "1", "-1", "0"}
+    };
+    db->querySqlResults_ = {onlyUidExists, onlyUidExists, onlyUidExists};
     db->querySqlIndex_ = 0;
     // ALTER migrated: E_OK; ALTER reserved: E_OK; UPDATE reserved: E_OK
     db->executeSqlResults_ = {NativeRdb::E_OK, NativeRdb::E_OK, NativeRdb::E_OK};
@@ -697,8 +713,13 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, AddUidMigratedReservedColumns005, Test
     std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance()->GetRdb();
     AccessTokenOpenCallback callback;
 
-    // Only uid exists; migrated and reserved are missing
-    db->querySqlResults_ = {{{{"0", "token_id", "INTEGER", "1", "", "1"}, {"1", "uid", "INTEGER", "1", "-1", "0"}}}};
+    // Only uid exists; migrated and reserved are missing.
+    // Each column add probes PRAGMA table_info separately: one result per probe.
+    const std::vector<std::vector<std::string>> onlyUidExists = {
+        {"0", "token_id", "INTEGER", "1", "", "1"},
+        {"1", "uid", "INTEGER", "1", "-1", "0"}
+    };
+    db->querySqlResults_ = {onlyUidExists, onlyUidExists, onlyUidExists};
     db->querySqlIndex_ = 0;
     // ALTER migrated fails
     db->executeSqlResults_ = {NativeRdb::E_SQLITE_CORRUPT};
@@ -717,9 +738,14 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, AddUidMigratedReservedColumns006, Test
     std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance()->GetRdb();
     AccessTokenOpenCallback callback;
 
-    // uid and migrated exist; reserved is missing
-    db->querySqlResults_ = {{{{"0", "token_id", "INTEGER", "1", "", "1"},
-        {"1", "uid", "INTEGER", "1", "-1", "0"}, {"2", "migrated", "INTEGER", "1", "0", "0"}}}};
+    // uid and migrated exist; reserved is missing.
+    // Each column add probes PRAGMA table_info separately: one result per probe.
+    const std::vector<std::vector<std::string>> uidAndMigratedExist = {
+        {"0", "token_id", "INTEGER", "1", "", "1"},
+        {"1", "uid", "INTEGER", "1", "-1", "0"},
+        {"2", "migrated", "INTEGER", "1", "0", "0"}
+    };
+    db->querySqlResults_ = {uidAndMigratedExist, uidAndMigratedExist, uidAndMigratedExist};
     db->querySqlIndex_ = 0;
     // ALTER reserved fails
     db->executeSqlResults_ = {NativeRdb::E_SQLITE_CORRUPT};
@@ -738,9 +764,14 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, AddUidMigratedReservedColumns007, Test
     std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance()->GetRdb();
     AccessTokenOpenCallback callback;
 
-    // uid and migrated exist; reserved is missing
-    db->querySqlResults_ = {{{{"0", "token_id", "INTEGER", "1", "", "1"},
-        {"1", "uid", "INTEGER", "1", "-1", "0"}, {"2", "migrated", "INTEGER", "1", "0", "0"}}}};
+    // uid and migrated exist; reserved is missing.
+    // Each column add probes PRAGMA table_info separately: one result per probe.
+    const std::vector<std::vector<std::string>> uidAndMigratedExist = {
+        {"0", "token_id", "INTEGER", "1", "", "1"},
+        {"1", "uid", "INTEGER", "1", "-1", "0"},
+        {"2", "migrated", "INTEGER", "1", "0", "0"}
+    };
+    db->querySqlResults_ = {uidAndMigratedExist, uidAndMigratedExist, uidAndMigratedExist};
     db->querySqlIndex_ = 0;
     // ALTER reserved: E_OK; UPDATE reserved: CORRUPT (fail)
     db->executeSqlResults_ = {NativeRdb::E_OK, NativeRdb::E_SQLITE_CORRUPT};

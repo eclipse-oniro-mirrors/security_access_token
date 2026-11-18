@@ -1043,21 +1043,8 @@ int32_t PermissionUsedRecordDb::CreatePermissionDisablePolicyTable() const
 
 int32_t PermissionUsedRecordDb::InsertUserIdColumnToDisablePolicyTable() const
 {
-    std::string sql = "alter table " + std::string(PERMISSION_DISABLE_POLICY_TABLE) + " add column " +
-        PrivacyFiledConst::FIELD_USER_ID + " integer not null default " +
-        std::to_string(DEFAULT_USER_ID_FOR_DEVICE_POLICY);
-    return ExecuteSql(sql);
-}
-
-bool PermissionUsedRecordDb::IsColumnExists(const std::string& tableName, const std::string& columnName) const
-{
-    auto stmt = Prepare("pragma table_info(" + tableName + ")");
-    while (stmt.Step() == Statement::State::ROW) {
-        if (stmt.GetColumnString(1) == columnName) {
-            return true;
-        }
-    }
-    return false;
+    return AddColumn(PERMISSION_DISABLE_POLICY_TABLE, PrivacyFiledConst::FIELD_USER_ID,
+        "integer not null default " + std::to_string(DEFAULT_USER_ID_FOR_DEVICE_POLICY));
 }
 
 int32_t PermissionUsedRecordDb::UpdateDisablePolicyTablePrimaryKey() const
@@ -1098,23 +1085,8 @@ int32_t PermissionUsedRecordDb::InsertLockScreenStatusColumn() const
         LOGE(PRI_DOMAIN, PRI_TAG, "Table type not found.");
         return PrivacyError::ERR_DATABASE_OPERATE_FAILED;
     }
-    std::string checkSql = "SELECT 1 FROM " + it->second.tableName_ + " WHERE " +
-        PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS + "=" +
-        std::to_string(LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED);
-    int32_t checkResult = ExecuteSql(checkSql);
-    LOGI(PRI_DOMAIN, PRI_TAG, "Check result:%{public}d", checkResult);
-    if (checkResult != -1) {
-        return SUCCESS;
-    }
-
-    std::string sql = "alter table ";
-    sql.append(it->second.tableName_ + " add column ")
-        .append(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS)
-        .append(" integer default ")
-        .append(std::to_string(LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED));
-    int32_t insertResult = ExecuteSql(sql);
-    LOGI(PRI_DOMAIN, PRI_TAG, "Insert column result:%{public}d", insertResult);
-    return insertResult;
+    return AddColumn(it->second.tableName_, PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS,
+        "integer default " + std::to_string(LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED));
 }
 
 int32_t PermissionUsedRecordDb::InsertPermissionUsedTypeColumn() const
@@ -1124,23 +1096,8 @@ int32_t PermissionUsedRecordDb::InsertPermissionUsedTypeColumn() const
         LOGE(PRI_DOMAIN, PRI_TAG, "Table type not found.");
         return PrivacyError::ERR_DATABASE_OPERATE_FAILED;
     }
-    std::string checkSql = "SELECT 1 FROM " + it->second.tableName_ + " WHERE " +
-        PrivacyFiledConst::FIELD_USED_TYPE + "=" +
-        std::to_string(PermissionUsedType::NORMAL_TYPE);
-    int32_t checkResult = ExecuteSql(checkSql);
-    LOGI(PRI_DOMAIN, PRI_TAG, "Check result:%{public}d", checkResult);
-    if (checkResult != -1) {
-        return SUCCESS;
-    }
-
-    std::string sql = "alter table ";
-    sql.append(it->second.tableName_ + " add column ")
-        .append(PrivacyFiledConst::FIELD_USED_TYPE)
-        .append(" integer default ")
-        .append(std::to_string(PermissionUsedType::NORMAL_TYPE));
-    int32_t insertResult = ExecuteSql(sql);
-    LOGI(PRI_DOMAIN, PRI_TAG, "Insert column result:%{public}d", insertResult);
-    return insertResult;
+    return AddColumn(it->second.tableName_, PrivacyFiledConst::FIELD_USED_TYPE,
+        "integer default " + std::to_string(PermissionUsedType::NORMAL_TYPE));
 }
 
 int32_t PermissionUsedRecordDb::InsertEnhancedIdentityColumn() const
@@ -1150,36 +1107,21 @@ int32_t PermissionUsedRecordDb::InsertEnhancedIdentityColumn() const
         LOGE(PRI_DOMAIN, PRI_TAG, "Table type not found.");
         return PrivacyError::ERR_DATABASE_OPERATE_FAILED;
     }
-    std::string checkSql = "SELECT 1 FROM " + it->second.tableName_ + " WHERE " +
-        PrivacyFiledConst::FIELD_ENHANCED_IDENTITY + "=''";
-    int32_t checkResult = ExecuteSql(checkSql);
-    LOGI(PRI_DOMAIN, PRI_TAG, "Check result:%{public}d", checkResult);
-    if (checkResult != -1) {
-        return SUCCESS;
-    }
-
-    std::string sql = "alter table ";
-    sql.append(it->second.tableName_ + " add column ")
-        .append(PrivacyFiledConst::FIELD_ENHANCED_IDENTITY)
-        .append(" text default ''");
-    int32_t insertResult = ExecuteSql(sql);
-    LOGI(PRI_DOMAIN, PRI_TAG, "Insert column result:%{public}d", insertResult);
-    return insertResult;
+    return AddColumn(it->second.tableName_, PrivacyFiledConst::FIELD_ENHANCED_IDENTITY,
+        "text default ''");
 }
 
 int32_t PermissionUsedRecordDb::InsertTargetColumns() const
 {
-    std::string targetTokenIdSql = "alter table " + std::string(PERMISSION_RECORD_TABLE) +
-        " add column " + PrivacyFiledConst::FIELD_TARGET_TOKEN_ID + " integer not null default 0";
-    int32_t ret = ExecuteSql(targetTokenIdSql);
+    int32_t ret = AddColumn(std::string(PERMISSION_RECORD_TABLE),
+        PrivacyFiledConst::FIELD_TARGET_TOKEN_ID, "integer not null default 0");
     if (ret != SUCCESS) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Add target_token_id column failed, errCode is %{public}d.", ret);
         return ret;
     }
 
-    std::string targetBundleNameSql = "alter table " + std::string(PERMISSION_RECORD_TABLE) +
-        " add column " + PrivacyFiledConst::FIELD_TARGET_BUNDLE_NAME + " text not null default ''";
-    ret = ExecuteSql(targetBundleNameSql);
+    ret = AddColumn(std::string(PERMISSION_RECORD_TABLE),
+        PrivacyFiledConst::FIELD_TARGET_BUNDLE_NAME, "text not null default ''");
     if (ret != SUCCESS) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Add target_bundle_name column failed, errCode is %{public}d.", ret);
     }
@@ -1237,6 +1179,41 @@ static void CreateNewPermissionRecordTable(std::string& newTableName, std::strin
     createNewSql.append("))");
 }
 
+// Check whether the specified column is part of the table primary key
+bool PermissionUsedRecordDb::IsPrimarykeyContainsColumn(const std::string& tableName,
+    const std::string& columnName) const
+{
+    // Column layout of the PRAGMA table_info result rows:
+    // 0: cid, 1: name, 2: type, 3: notnull, 4: dflt_value, 5: pk.
+    // pk is 0 when the column is not a primary key member, otherwise it is the key order.
+    constexpr int32_t pragmaTableInfoNameIndex = 1;
+    constexpr int32_t pragmaTableInfoPkIndex = 5;
+    auto stmt = Prepare("pragma table_info(" + tableName + ")");
+    while (stmt.Step() == Statement::State::ROW) {
+        if (stmt.GetColumnString(pragmaTableInfoNameIndex) != columnName) {
+            continue;
+        }
+        // Each column appears in table_info exactly once: the answer is decided by this row.
+        return stmt.GetColumnInt(pragmaTableInfoPkIndex) > 0;
+    }
+    return false;
+}
+
+// The rebuild purpose of each upgrade scenario is achieved once its marking column participates in
+// the primary key: scenario 3->4 (false, false) marks it with used_type, scenario 6->7 (true, false)
+// with enhanced_identity, and scenario 9->10 (true, true) with target_token_id, because used_type and
+// enhanced_identity are already in the primary key, guaranteed by the previous scenarios.
+static const std::string& GetRebuildPurposeColumn(bool withEnhancedIdentity, bool withTargetFields)
+{
+    if (withTargetFields) {
+        return PrivacyFiledConst::FIELD_TARGET_TOKEN_ID;
+    }
+    if (withEnhancedIdentity) {
+        return PrivacyFiledConst::FIELD_ENHANCED_IDENTITY;
+    }
+    return PrivacyFiledConst::FIELD_USED_TYPE;
+}
+
 int32_t PermissionUsedRecordDb::UpdatePermissionRecordTablePrimaryKey(
     bool withEnhancedIdentity, bool withTargetFields) const
 {
@@ -1244,6 +1221,15 @@ int32_t PermissionUsedRecordDb::UpdatePermissionRecordTablePrimaryKey(
     if (it == dataTypeToSqlTable_.end()) {
         LOGE(PRI_DOMAIN, PRI_TAG, "Table type not found.");
         return PrivacyError::ERR_DATABASE_OPERATE_FAILED;
+    }
+    // Scenario-level idempotent check: when the purpose is already achieved, skip the non-idempotent
+    // table rebuild to avoid the version-rollback replay failure where insert ... select * breaks
+    // because the old table contains columns added by later versions.
+    const std::string& purposeColumn = GetRebuildPurposeColumn(withEnhancedIdentity, withTargetFields);
+    if (IsPrimarykeyContainsColumn(it->second.tableName_, purposeColumn)) {
+        LOGI(PRI_DOMAIN, PRI_TAG, "Primary key already contains %{public}s, skip rebuild.",
+            purposeColumn.c_str());
+        return SUCCESS;
     }
 
     std::string tableName = it->second.tableName_;

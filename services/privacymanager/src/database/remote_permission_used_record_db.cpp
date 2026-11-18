@@ -325,19 +325,8 @@ int32_t RemotePermissionUsedRecordDb::AddLocked(const std::vector<GenericValues>
 
 int32_t RemotePermissionUsedRecordDb::AddSubProfileIdColumn()
 {
-    auto statement = Prepare("pragma table_info(" + REMOTE_PERMISSION_RECORD_TABLE + ")");
-    while (statement.Step() == Statement::State::ROW) {
-        if (statement.GetColumnString(1) == PrivacyFiledConst::FIELD_SUB_PROFILE_ID) {
-            return Constant::SUCCESS;
-        }
-    }
-    std::string sql = "alter table " + REMOTE_PERMISSION_RECORD_TABLE + " add column " +
-        PrivacyFiledConst::FIELD_SUB_PROFILE_ID + " integer default " + std::to_string(LEGACY_SUBPROFILE_ID);
-    int32_t ret = ExecuteSql(sql);
-    if (ret != Constant::SUCCESS) {
-        LOGE(PRI_DOMAIN, PRI_TAG, "Add sub profile column failed, ret=%{public}d.", ret);
-    }
-    return ret;
+    return AddColumn(REMOTE_PERMISSION_RECORD_TABLE, PrivacyFiledConst::FIELD_SUB_PROFILE_ID,
+        "integer default " + std::to_string(LEGACY_SUBPROFILE_ID));
 }
 
 int32_t RemotePermissionUsedRecordDb::Remove(const GenericValues& conditions)

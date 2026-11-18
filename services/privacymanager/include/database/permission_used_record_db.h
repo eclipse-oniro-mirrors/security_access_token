@@ -93,12 +93,12 @@ private:
     int32_t InsertLockScreenStatusColumn() const;
     int32_t InsertPermissionUsedTypeColumn() const;
     int32_t UpdatePermissionRecordTablePrimaryKey(bool withEnhancedIdentity, bool withTargetFields = false) const;
+    bool IsPrimarykeyContainsColumn(const std::string& tableName, const std::string& columnName) const;
     int32_t CreatePermissionDisablePolicyTable() const;
     int32_t UpdateDisablePolicyTablePrimaryKey() const;
     int32_t InsertUserIdColumnToDisablePolicyTable() const;
     int32_t InsertEnhancedIdentityColumn() const;
     int32_t InsertTargetColumns() const;
-    bool IsColumnExists(const std::string& tableName, const std::string& columnName) const;
 
     std::string CreateDeleteHistoryRecordsPrepareSqlCmd(DataType type,
         const std::unordered_set<AccessTokenID>& tokenIDList) const;

@@ -266,6 +266,94 @@ HWTEST_F(AccessTokenOpenCallbackTest, UpgradeFromVersion14Idempotent001, TestSiz
     EXPECT_TRUE(columns.find(TokenFiledConst::FIELD_RESERVED) != columns.end());
 }
 #endif // SPM_DATA_ENABLE
+
+/**
+ * @tc.name: AddColumnIdempotentOnUpgradedDb001
+ * @tc.desc: Verify all Add*Column upgrade helpers are idempotent on the already-upgraded
+ *           database: the PRAGMA table_info based column check skips the redundant
+ *           ALTER TABLE, so replay returns E_OK and no column is added twice.
+ * @tc.type: FUNC
+ * @tc.require: TDD
+ */
+HWTEST_F(AccessTokenOpenCallbackTest, AddColumnIdempotentOnUpgradedDb001, TestSize.Level1)
+{
+    auto rdbStore = AccessTokenDb::GetInstance()->GetRdb();
+    ASSERT_NE(nullptr, rdbStore);
+
+    std::string permDefTable;
+    AccessTokenDbUtil::GetTableNameByType(AtmDataType::ACCESSTOKEN_PERMISSION_DEF, permDefTable);
+    std::string toggleTable;
+    AccessTokenDbUtil::GetTableNameByType(AtmDataType::ACCESSTOKEN_PERMISSION_REQUEST_TOGGLE_STATUS, toggleTable);
+    std::string hapTokenTable;
+    AccessTokenDbUtil::GetTableNameByType(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, hapTokenTable);
+
+    const size_t permDefCountBefore = GetTableColumnNames(*rdbStore, permDefTable).size();
+    const size_t toggleCountBefore = GetTableColumnNames(*rdbStore, toggleTable).size();
+    const size_t hapTokenCountBefore = GetTableColumnNames(*rdbStore, hapTokenTable).size();
+
+    AccessTokenOpenCallback callback;
+    EXPECT_EQ(NativeRdb::E_OK, callback.AddAvailableTypeColumn(*rdbStore));
+    EXPECT_EQ(NativeRdb::E_OK, callback.AddRequestToggleStatusColumn(*rdbStore));
+    EXPECT_EQ(NativeRdb::E_OK, callback.AddPermDialogCapColumn(*rdbStore));
+    EXPECT_EQ(NativeRdb::E_OK, callback.AddKernelEffectAndHasValueColumn(*rdbStore));
+    EXPECT_EQ(NativeRdb::E_OK, callback.AddUidMigratedReservedColumns(*rdbStore));
+    EXPECT_EQ(NativeRdb::E_OK, callback.UpgradeFromVersion11(*rdbStore));
+
+    // replay did not add any column twice: column counts keep unchanged
+    EXPECT_EQ(permDefCountBefore, GetTableColumnNames(*rdbStore, permDefTable).size());
+    EXPECT_EQ(toggleCountBefore, GetTableColumnNames(*rdbStore, toggleTable).size());
+    EXPECT_EQ(hapTokenCountBefore, GetTableColumnNames(*rdbStore, hapTokenTable).size());
+
+    auto columns = GetTableColumnNames(*rdbStore, permDefTable);
+    EXPECT_TRUE(columns.find(TokenFiledConst::FIELD_AVAILABLE_TYPE) != columns.end());
+    EXPECT_TRUE(columns.find(TokenFiledConst::FIELD_KERNEL_EFFECT) != columns.end());
+    EXPECT_TRUE(columns.find(TokenFiledConst::FIELD_HAS_VALUE) != columns.end());
+    columns = GetTableColumnNames(*rdbStore, toggleTable);
+    EXPECT_TRUE(columns.find(TokenFiledConst::FIELD_REQUEST_TOGGLE_STATUS) != columns.end());
+    columns = GetTableColumnNames(*rdbStore, hapTokenTable);
+    EXPECT_TRUE(columns.find(TokenFiledConst::FIELD_FORBID_PERM_DIALOG) != columns.end());
+    EXPECT_TRUE(columns.find(TokenFiledConst::FIELD_IS_SIDELOAD) != columns.end());
+}
+
+/**
+ * @tc.name: AddTimestampColumnKeepHistoryTimestamp001
+ * @tc.desc: Verify AddTimestampColumn replay on an already-upgraded database does not
+ *           refresh historical timestamps: when the column exists, both the add and the
+ *           UPDATE backfill are skipped, otherwise old records would be overwritten
+ *           with the current time.
+ * @tc.type: FUNC
+ * @tc.require: TDD
+ */
+HWTEST_F(AccessTokenOpenCallbackTest, AddTimestampColumnKeepHistoryTimestamp001, TestSize.Level1)
+{
+    auto rdbStore = AccessTokenDb::GetInstance()->GetRdb();
+    ASSERT_NE(nullptr, rdbStore);
+
+    std::string tableName;
+    AccessTokenDbUtil::GetTableNameByType(AtmDataType::ACCESSTOKEN_PERMISSION_STATE, tableName);
+    constexpr int32_t HISTORICAL_TOKEN_ID = 88888801; // random test-only token id
+    constexpr int32_t HISTORICAL_TIMESTAMP = 12345; // fixed old timestamp, far from now
+    const std::string cleanupSql = "delete from " + tableName + " where token_id=" +
+        std::to_string(HISTORICAL_TOKEN_ID);
+    ASSERT_EQ(NativeRdb::E_OK, rdbStore->ExecuteSql(cleanupSql));
+    ASSERT_EQ(NativeRdb::E_OK, rdbStore->ExecuteSql("insert into " + tableName + " (token_id, permission_name," +
+        " device_id, grant_state, grant_flag, timestamp) values (" + std::to_string(HISTORICAL_TOKEN_ID) +
+        ", 'ut.add.timestamp', 'ut_device', 0, 0, " + std::to_string(HISTORICAL_TIMESTAMP) + ")"));
+
+    AccessTokenOpenCallback callback;
+    EXPECT_EQ(NativeRdb::E_OK, callback.AddTimestampColumn(*rdbStore));
+
+    // the historical timestamp must survive the replay
+    auto resultSet = rdbStore->QuerySql("select " + TokenFiledConst::FIELD_TIMESTAMP + " from " + tableName +
+        " where token_id=" + std::to_string(HISTORICAL_TOKEN_ID));
+    ASSERT_NE(nullptr, resultSet);
+    ASSERT_EQ(NativeRdb::E_OK, resultSet->GoToNextRow());
+    int32_t timestamp = 0;
+    EXPECT_EQ(NativeRdb::E_OK, resultSet->GetInt(0, timestamp));
+    EXPECT_EQ(HISTORICAL_TIMESTAMP, timestamp);
+
+    ASSERT_EQ(NativeRdb::E_OK, rdbStore->ExecuteSql(cleanupSql));
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
