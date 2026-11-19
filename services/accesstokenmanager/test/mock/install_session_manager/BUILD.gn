@@ -47,6 +47,7 @@ ohos_unittest("libinstall_session_manager_mock_test") {
 
   cflags_cc = accesstoken_manager_base_config.cflags_cc
   cflags_cc += [ "-DHILOG_ENABLE" ]
+  cflags_cc += [ "-DATM_TEST_ENABLE" ]
 
   configs = accesstoken_manager_base_config.configs
 

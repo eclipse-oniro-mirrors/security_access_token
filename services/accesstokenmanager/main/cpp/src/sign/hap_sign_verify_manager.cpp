@@ -27,6 +27,7 @@
 
 #include "access_token_error.h"
 #include "accesstoken_common_log.h"
+#include "accesstoken_info_utils.h"
 #include "hap_sign_verify_helper.h"
 #include "hap_token_info_inner.h"
 #include "permission_manager.h"
@@ -374,18 +375,12 @@ int32_t HapSignVerifyManager::FastVerify(std::vector<std::string>& paths,
 int32_t HapSignVerifyManager::CheckHapsSignInfo(Security::Verify::VerifyParams params, bool booting,
     TrustedBundleInfoInner& info, bool& isChanged) const
 {
-    char resolvedPath[PATH_MAX] = {0};
     std::string path = params.filePath;
-    if (realpath(path.c_str(), resolvedPath) == nullptr) {
-        if (errno != ENOENT) {
-            LOGC(ATM_DOMAIN, ATM_TAG, "Failed to resolve path %{private}s: %{public}s", path.c_str(), strerror(errno));
-            return ERR_VERIFY_CANT_OPEN;
-        } else {
-            LOGW(ATM_DOMAIN, ATM_TAG, "Failed to resolve path %{private}s: %{public}s", path.c_str(), strerror(errno));
-            return ERR_VERIFY_FILE_NOT_EXIST;
-        }
+    std::string resolvedPath;
+    int32_t pathRet = AccessTokenInfoUtils::CheckAndResolveHapPath(path, resolvedPath);
+    if (pathRet != RET_SUCCESS) {
+        return pathRet;
     }
-    // Use the canonical path for verification to avoid symlink/directory traversal.
     params.filePath = resolvedPath;
 
     if (info.bootstrapInfo == nullptr) {

@@ -8887,6 +8887,27 @@ HWTEST_F(InstallSessionManagerMockTest, CloneNoValidSiblingUidTest001, TestSize.
     int32_t sceneCode = 0;
     EXPECT_EQ(ERR_OK, DeleteIdentityCore(INVALID_TOKENID, bundleName, ReservedType::NONE, sceneCode));
 }
+
+/**
+ * @tc.name: ResolveModulePathsInvalidPath001
+ * @tc.desc: ResolveModulePaths rejects a module path containing path traversal components.
+ * @tc.type: FUNC
+ */
+HWTEST_F(InstallSessionManagerMockTest, ResolveModulePathsInvalidPath001, TestSize.Level1)
+{
+    InstallCache cache;
+    cache.list.hapPaths = { "/data/test_temp/input.hap" };
+    TrustedBundleInfoInner info;
+    info.moduleData.moduleName = "module";
+    cache.bundleInfos = { info };
+
+    std::map<std::string, std::string> modulePathMap;
+    modulePathMap["/data/test_temp/input.hap"] = "/data/../camera.hap";
+
+    std::vector<std::string> modulePaths;
+    EXPECT_EQ(ERR_VERIFY_CANT_OPEN, InstallDbRepository::ResolveModulePaths(cache, modulePathMap, modulePaths));
+    EXPECT_TRUE(modulePaths.empty());
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

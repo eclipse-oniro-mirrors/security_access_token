@@ -53,6 +53,7 @@ public:
     static bool IsSystemSpmEnforcing();
     static ReservedType GetReservedTokenTypeDBValue(const GenericValues& values);
     static bool IsPlaceholderModuleName(const std::string& moduleName);
+    static int32_t CheckAndResolveHapPath(const std::string& filePath, std::string& resolvedPath);
 
 private:
     AccessTokenInfoUtils() = delete;

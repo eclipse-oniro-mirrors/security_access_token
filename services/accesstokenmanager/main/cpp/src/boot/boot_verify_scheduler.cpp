@@ -1095,6 +1095,7 @@ void BootVerifyScheduler::StartVerifyNormalBundleListAsync()
         ClearBundleVerifyContext();
         PreAuthorizationParser::GetInstance().Clear();
         AccessTokenInfoUtils::AccessTokenServiceAppVerifyParamSet();
+        AccessTokenDbOperator::ClearCache();
         ReportNormalBundleVerifyFinish(hapSize);
         return;
     }

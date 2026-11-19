@@ -306,16 +306,24 @@ int32_t InstallDbRepository::ResolveModulePaths(const InstallCache& cache,
     modulePaths.reserve(cache.bundleInfos.size());
     size_t newCount = cache.list.hapPaths.size();
     for (size_t i = 0; i < cache.bundleInfos.size(); ++i) {
+        std::string rawPath;
         if (i < newCount) {
             auto it = modulePathMap.find(cache.list.hapPaths[i]);
             if (it == modulePathMap.end()) {
                 LOGC(ATM_DOMAIN, ATM_TAG, "HAP path not found in map, index=%{public}zu.", i);
                 return AccessTokenError::ERR_PARAM_INVALID;
             }
-            modulePaths.emplace_back(it->second);
+            rawPath = it->second;
         } else {
-            modulePaths.emplace_back(cache.oldModulePaths[i - newCount]);
+            rawPath = cache.oldModulePaths[i - newCount];
         }
+        std::string resolvedPath;
+        int32_t ret = AccessTokenInfoUtils::CheckAndResolveHapPath(rawPath, resolvedPath);
+        if (ret != RET_SUCCESS) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Resolve module path failed, index=%{public}zu, ret=%{public}d.", i, ret);
+            return ret;
+        }
+        modulePaths.emplace_back(resolvedPath);
     }
     return RET_SUCCESS;
 }

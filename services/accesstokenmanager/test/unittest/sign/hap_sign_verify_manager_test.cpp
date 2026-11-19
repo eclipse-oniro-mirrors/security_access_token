@@ -194,10 +194,69 @@ HWTEST_F(HapSignVerifyManagerTest, CheckHapsSignInfo006, TestSize.Level1)
     TrustedBundleInfoInner info;
     bool isChanged = true;
 
-    EXPECT_EQ(ERR_VERIFY_FILE_NOT_EXIST,
+    EXPECT_EQ(ERR_VERIFY_CANT_OPEN,
         manager.CheckHapsSignInfo(
-            HapSignVerifyManager::MakeVerifyParams("bad_path.hap", Security::Verify::VerifyType::Fast, -1),
+            HapSignVerifyManager::MakeVerifyParams("../bad_path.hap", Security::Verify::VerifyType::Fast, -1),
             false, info, isChanged));
+}
+
+/**
+ * @tc.name: CheckHapsSignInfoInvalidPath001
+ * @tc.desc: CheckHapsSignInfo rejects path traversal components via IsHapPathValid.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HapSignVerifyManagerTest, CheckHapsSignInfoInvalidPath001, TestSize.Level1)
+{
+    MockAppVerifyAdapter adapter;
+    HapSignVerifyManager manager(adapter);
+    TrustedBundleInfoInner info;
+    bool isChanged = true;
+
+    // empty path
+    EXPECT_EQ(ERR_VERIFY_CANT_OPEN, manager.CheckHapsSignInfo(
+        HapSignVerifyManager::MakeVerifyParams("", Security::Verify::VerifyType::Fast, -1), false, info, isChanged));
+    // path equal to ".."
+    EXPECT_EQ(ERR_VERIFY_CANT_OPEN, manager.CheckHapsSignInfo(
+        HapSignVerifyManager::MakeVerifyParams("..", Security::Verify::VerifyType::Fast, -1), false, info, isChanged));
+    // path containing "../"
+    EXPECT_EQ(ERR_VERIFY_CANT_OPEN, manager.CheckHapsSignInfo(
+        HapSignVerifyManager::MakeVerifyParams("/data/../camera.hap", Security::Verify::VerifyType::Fast, -1),
+        false, info, isChanged));
+    // path containing "/.." but not "../"
+    EXPECT_EQ(ERR_VERIFY_CANT_OPEN, manager.CheckHapsSignInfo(
+        HapSignVerifyManager::MakeVerifyParams("/..camera.hap", Security::Verify::VerifyType::Fast, -1),
+        false, info, isChanged));
+    // path containing backslash
+    EXPECT_EQ(ERR_VERIFY_CANT_OPEN, manager.CheckHapsSignInfo(
+        HapSignVerifyManager::MakeVerifyParams("camera\\music.hap", Security::Verify::VerifyType::Fast, -1),
+        false, info, isChanged));
+    // path containing embedded NUL
+    std::string nulPath = std::string("camera") + '\0' + ".hap";
+    EXPECT_EQ(ERR_VERIFY_CANT_OPEN, manager.CheckHapsSignInfo(
+        HapSignVerifyManager::MakeVerifyParams(nulPath, Security::Verify::VerifyType::Fast, -1),
+        false, info, isChanged));
+    // path containing control character
+    std::string ctrlPath = std::string("camera") + '\x01' + ".hap";
+    EXPECT_EQ(ERR_VERIFY_CANT_OPEN, manager.CheckHapsSignInfo(
+        HapSignVerifyManager::MakeVerifyParams(ctrlPath, Security::Verify::VerifyType::Fast, -1),
+        false, info, isChanged));
+}
+
+/**
+ * @tc.name: CheckHapsSignInfoValidPath001
+ * @tc.desc: CheckHapsSignInfo accepts a valid path (passes IsHapPathValid) and proceeds to realpath.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HapSignVerifyManagerTest, CheckHapsSignInfoValidPath001, TestSize.Level1)
+{
+    MockAppVerifyAdapter adapter;
+    HapSignVerifyManager manager(adapter);
+    TrustedBundleInfoInner info;
+    bool isChanged = true;
+
+    EXPECT_EQ(ERR_VERIFY_CANT_OPEN, manager.CheckHapsSignInfo(
+        HapSignVerifyManager::MakeVerifyParams("../valid_path.hap", Security::Verify::VerifyType::Fast, -1),
+        false, info, isChanged));
 }
 
 /**
@@ -1293,7 +1352,7 @@ HWTEST_F(HapSignVerifyManagerTest, CheckHapsSignInfo008, TestSize.Level1)
  */
 HWTEST_F(HapSignVerifyManagerTest, CheckHapsSignInfo010, TestSize.Level1)
 {
-    const std::string notADir = TEST_DIR + "/not_a_dir";
+    const std::string notADir = TEST_DIR + "../not_a_dir";
     std::ofstream file(notADir);
     file << "regular file";
     file.close();
