@@ -17,8 +17,13 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cerrno>
+#include <climits>
+#include <cstdlib>
+#include <cstring>
 #include <unordered_set>
 
+#include "access_token_error.h"
 #include "accesstoken_common_log.h"
 #include "accesstoken_id_manager.h"
 #include "parameter.h"
@@ -36,6 +41,34 @@ static const unsigned int SYSTEM_APP_FLAG = 0x0001;
 static const unsigned int ATOMIC_SERVICE_FLAG = 0x0002;
 static const unsigned int DEBUG_APP_FLAG = 0x0008;
 static constexpr int32_t BASE_USER_RANGE = 200000;
+
+// Reject path traversal components in the hap path: blocks ".." and "../" / "/.."
+// patterns, backslashes, embedded NUL and control characters.
+static bool IsHapPathValid(const std::string& filePath)
+{
+    if (filePath.empty()) {
+        return false;
+    }
+    if (filePath == "..") {
+        return false;
+    }
+    if (filePath.find("../") != std::string::npos ||
+        filePath.find("/..") != std::string::npos) {
+        return false;
+    }
+    if (filePath.find('\\') != std::string::npos) {
+        return false;
+    }
+    if (filePath.find('\0') != std::string::npos) {
+        return false;
+    }
+    for (char c : filePath) {
+        if (static_cast<unsigned char>(c) < 0x20) {
+            return false;
+        }
+    }
+    return true;
+}
 }
 
 bool AccessTokenInfoUtils::IsSystemResource(const std::string& bundleName)
@@ -52,6 +85,34 @@ bool AccessTokenInfoUtils::IsPlaceholderModuleName(const std::string& moduleName
     return std::all_of(moduleName.begin() + 1, moduleName.end(), [](unsigned char ch) {
         return std::isdigit(ch) != 0;
     });
+}
+
+int32_t AccessTokenInfoUtils::CheckAndResolveHapPath(const std::string& filePath, std::string& resolvedPath)
+{
+    if (!IsHapPathValid(filePath)) {
+        LOGW(ATM_DOMAIN, ATM_TAG, "Invalid hap path %{private}s.", filePath.c_str());
+        return ERR_VERIFY_CANT_OPEN;
+    }
+#ifdef ATM_TEST_ENABLE
+    // Install tests use virtual mock hap paths (e.g. "/SYSTEM/...") that do not
+    // exist on the real filesystem; keep the original path instead of failing realpath.
+    resolvedPath = filePath;
+    return RET_SUCCESS;
+#else
+    char resolved[PATH_MAX] = {0};
+    if (realpath(filePath.c_str(), resolved) == nullptr) {
+        if (errno != ENOENT) {
+            LOGC(ATM_DOMAIN, ATM_TAG, "Failed to resolve path %{private}s: %{public}s.",
+                filePath.c_str(), strerror(errno));
+            return ERR_VERIFY_CANT_OPEN;
+        }
+        LOGW(ATM_DOMAIN, ATM_TAG, "Failed to resolve path %{private}s: %{public}s.",
+            filePath.c_str(), strerror(errno));
+        return ERR_VERIFY_FILE_NOT_EXIST;
+    }
+    resolvedPath = resolved;
+    return RET_SUCCESS;
+#endif
 }
 
 bool AccessTokenInfoUtils::CheckSpecifiedFlag(uint32_t tokenAttr, uint32_t flag)
