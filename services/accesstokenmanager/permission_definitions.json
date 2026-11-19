@@ -13196,6 +13196,18 @@
             "distributedSceneEnable": false,
             "isKernelEffect": true,
             "deviceTypes": ["general", "2in1", "car", "phone", "tablet", "tv", "wearable"]
+        },
+        {
+            "name": "ohos.permission.OPERATE_TEXT_ACROSS_APPLICATION",
+            "grantMode": "manual_settings",
+            "availableLevel": "system_basic",
+            "availableType": "NORMAL",
+            "since": "26.1.0",
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "provisionBypassForSideload": true,
+            "deviceTypes": ["2in1"]
         }
     ]
 }
