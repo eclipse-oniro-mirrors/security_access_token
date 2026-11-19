@@ -125,6 +125,13 @@ const std::string MANAGE_HAP_TOKENID_PERMISSION = "ohos.permission.MANAGE_HAP_TO
 const std::string GET_TRUSTED_BUNDLE_INFO = "ohos.permission.GET_TRUSTED_BUNDLE_INFO";
 static constexpr int MAX_PERMISSION_SIZE = 1024;
 static constexpr int32_t BASE_USER_RANGE = 200000;
+#ifdef IS_SUPPORT_HAP_RUNNING
+#ifdef ATM_TEST_ENABLE
+static constexpr size_t MAX_MIGRATED_UID_SET_SIZE = 99;
+#else
+static constexpr size_t MAX_MIGRATED_UID_SET_SIZE = 65536 * 999;
+#endif
+#endif
 #ifdef SUPPORT_MANAGE_USER_POLICY
 static constexpr int MAX_SET_USER_POLICY_SIZE = 200;
 #endif
@@ -3749,6 +3756,10 @@ int32_t AccessTokenManagerService::CheckMigratedUidSet(
     int32_t ret = CheckHapManagerPermission();
     if (ret != RET_SUCCESS) {
         return ret;
+    }
+    if (totalUids.size() > MAX_MIGRATED_UID_SET_SIZE) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "totalUids size %{public}zu is invalid.", totalUids.size());
+        return AccessTokenError::ERR_PARAM_INVALID;
     }
 
     ret = AccessTokenMigrationManager::GetInstance().CheckMigratedUidSet(totalUids, unreceivedUids);

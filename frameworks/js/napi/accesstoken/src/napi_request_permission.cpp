@@ -180,11 +180,12 @@ static void GetInstanceId(std::shared_ptr<RequestAsyncContext>& asyncContext)
         asyncContext->instanceId, asyncContext->uiContentFlag);
 }
 
-static void CreateUIExtensionMainThread(std::shared_ptr<RequestAsyncContext>& asyncContext, const AAFwk::Want& want,
+static bool CreateUIExtensionMainThread(std::shared_ptr<RequestAsyncContext>& asyncContext, const AAFwk::Want& want,
     const Ace::ModalUIExtensionCallbacks& uiExtensionCallbacks,
     const std::shared_ptr<UIExtensionCallback>& uiExtCallback)
 {
-    auto task = [asyncContext, want, uiExtensionCallbacks, uiExtCallback]() {
+    bool createSuccess = true;
+    auto task = [asyncContext, want, uiExtensionCallbacks, uiExtCallback, &createSuccess]() {
         bool isNoWindow = false;
         Ace::UIContent* uiContent = GetUIContent(asyncContext, isNoWindow);
         if (uiContent == nullptr) {
@@ -196,6 +197,7 @@ static void CreateUIExtensionMainThread(std::shared_ptr<RequestAsyncContext>& as
                 asyncContext->result.errorCode = RET_FAILED;
             }
             asyncContext->uiExtensionFlag = false;
+            createSuccess = false;
             return;
         }
 
@@ -210,6 +212,7 @@ static void CreateUIExtensionMainThread(std::shared_ptr<RequestAsyncContext>& as
             LOGE(ATM_DOMAIN, ATM_TAG, "Create component failed, sessionId is 0");
             asyncContext->result.errorCode = RET_FAILED;
             asyncContext->uiExtensionFlag = false;
+            createSuccess = false;
             ReportHisysEventError(*asyncContext, CREATE_MODAL_UI_FAILED, asyncContext->tokenId, 0);
             return;
         }
@@ -225,6 +228,7 @@ static void CreateUIExtensionMainThread(std::shared_ptr<RequestAsyncContext>& as
     task();
 #endif
     LOGI(ATM_DOMAIN, ATM_TAG, "Instance id: %{public}d", asyncContext->instanceId);
+    return createSuccess;
 }
 
 static void CloseModalUIExtensionMainThread(std::shared_ptr<RequestAsyncContext>& asyncContext, int32_t sessionId)
@@ -376,6 +380,12 @@ static napi_value WrapRequestResult(const napi_env& env, const std::vector<std::
 static void UpdateGrantPermissionResultOnly(const std::vector<std::string>& permissions,
     const std::vector<int>& grantResults, std::shared_ptr<RequestAsyncContext>& data, std::vector<int>& newGrantResults)
 {
+    if ((permissions.size() != grantResults.size()) || (permissions.size() != data->permissionsState.size())) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "UpdateGrantPermissionResultOnly: size mismatch, permissions=%{public}zu, "
+            "grantResults=%{public}zu, permissionsState=%{public}zu",
+            permissions.size(), grantResults.size(), data->permissionsState.size());
+        return;
+    }
     uint32_t size = permissions.size();
 
     for (uint32_t i = 0; i < size; i++) {
@@ -481,7 +491,7 @@ static void InjectIMEContextType(std::shared_ptr<RequestAsyncContext> asyncConte
 #endif
 }
 
-static void CreateServiceExtensionWithWindowId(std::shared_ptr<RequestAsyncContext>& asyncContext)
+static bool CreateServiceExtensionWithWindowId(std::shared_ptr<RequestAsyncContext>& asyncContext)
 {
     sptr<Rosen::Window> window = OHOS::Rosen::Window::GetWindowWithId(asyncContext->windowId);
     if (window == nullptr) {
@@ -490,14 +500,14 @@ static void CreateServiceExtensionWithWindowId(std::shared_ptr<RequestAsyncConte
         asyncContext->result.errorCode = ERR_PARAM_INVALID;
         asyncContext->result.errorMsg = "Cannot find window by windowId.";
         ReportHisysEventError(*asyncContext, GET_UI_CONTENT_FAILED, asyncContext->tokenId, 0);
-        return;
+        return false;
     }
     sptr<IRemoteObject> remoteObject = new (std::nothrow) AccessToken::AuthorizationResult(asyncContext);
     if (remoteObject == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Create window failed!");
         asyncContext->needDynamicRequest = false;
         asyncContext->result.errorCode = RET_FAILED;
-        return;
+        return false;
     }
 
     AAFwk::Want want;
@@ -510,7 +520,7 @@ static void CreateServiceExtensionWithWindowId(std::shared_ptr<RequestAsyncConte
         LOGE(ATM_DOMAIN, ATM_TAG, "GetContext failed!");
         asyncContext->needDynamicRequest = false;
         asyncContext->result.errorCode = RET_FAILED;
-        return;
+        return false;
     }
     want.SetParam(TOKEN_KEY, window->GetContext()->GetToken());
     InjectIMEContextType(asyncContext, want);
@@ -531,20 +541,33 @@ static void CreateServiceExtensionWithWindowId(std::shared_ptr<RequestAsyncConte
         want, window->GetContext()->GetToken());
     LOGI(ATM_DOMAIN, ATM_TAG, "Request end, ret: %{public}d, tokenId: %{public}d, permNum: %{public}zu",
         ret, asyncContext->tokenId, asyncContext->permissionList.size());
+    if (ret != ERR_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "RequestDialogService failed!");
+        asyncContext->needDynamicRequest = false;
+        asyncContext->result.errorCode = RET_FAILED;
+        return false;
+    }
+    return true;
+}
+
+static bool IsImeExtensionContext(const std::shared_ptr<RequestAsyncContext>& asyncContext)
+{
+#ifdef SUPPORT_IME_EXTENSION_CONTEXT
+    return asyncContext->inputMethodExtensionContext != nullptr;
+#else
+    return false;
+#endif
 }
 
 static bool CreateServiceExtensionForIME(std::shared_ptr<RequestAsyncContext> asyncContext)
 {
 #ifdef SUPPORT_IME_EXTENSION_CONTEXT
-    if (asyncContext->inputMethodExtensionContext == nullptr) {
-        return false;
-    }
     sptr<IRemoteObject> remoteObject = new (std::nothrow) AccessToken::AuthorizationResult(asyncContext);
     if (remoteObject == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Create window failed!");
         asyncContext->needDynamicRequest = false;
         asyncContext->result.errorCode = RET_FAILED;
-        return true;
+        return false;
     }
     AAFwk::Want want;
     want.SetElementName(asyncContext->info.grantBundleName, asyncContext->info.grantServiceAbilityName);
@@ -566,6 +589,7 @@ static bool CreateServiceExtensionForIME(std::shared_ptr<RequestAsyncContext> as
         LOGE(ATM_DOMAIN, ATM_TAG, "RequestDialogService failed!");
         asyncContext->needDynamicRequest = false;
         asyncContext->result.errorCode = RET_FAILED;
+        return false;
     }
     return true;
 #else
@@ -573,36 +597,38 @@ static bool CreateServiceExtensionForIME(std::shared_ptr<RequestAsyncContext> as
 #endif
 }
 
-static void CreateServiceExtension(std::shared_ptr<RequestAsyncContext> asyncContext)
+static bool CreateServiceExtension(std::shared_ptr<RequestAsyncContext> asyncContext)
 {
     if (asyncContext == nullptr) {
-        return;
+        return false;
     }
     if (asyncContext->isWithWindowId) {
-        CreateServiceExtensionWithWindowId(asyncContext);
-        return;
+        return CreateServiceExtensionWithWindowId(asyncContext);
     }
 
-    if (CreateServiceExtensionForIME(asyncContext)) {
-        return;
+    if (IsImeExtensionContext(asyncContext)) {
+        return CreateServiceExtensionForIME(asyncContext);
     }
 
     if (asyncContext->abilityContext == nullptr) {
-        return;
+        LOGE(ATM_DOMAIN, ATM_TAG, "AbilityContext is null.");
+        asyncContext->needDynamicRequest = false;
+        asyncContext->result.errorCode = RET_FAILED;
+        return false;
     }
     if (!asyncContext->uiAbilityFlag) {
         LOGE(ATM_DOMAIN, ATM_TAG, "UIExtension ability can not pop service ablility window!");
         asyncContext->needDynamicRequest = false;
         asyncContext->result.errorCode = RET_FAILED;
         ReportHisysEventError(*asyncContext, ABILITY_FLAG_ERROR, asyncContext->tokenId, 0);
-        return;
+        return false;
     }
     sptr<IRemoteObject> remoteObject = new (std::nothrow) AccessToken::AuthorizationResult(asyncContext);
     if (remoteObject == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Create window failed!");
         asyncContext->needDynamicRequest = false;
         asyncContext->result.errorCode = RET_FAILED;
-        return;
+        return false;
     }
     AAFwk::Want want;
     want.SetElementName(asyncContext->info.grantBundleName, asyncContext->info.grantServiceAbilityName);
@@ -611,10 +637,10 @@ static void CreateServiceExtension(std::shared_ptr<RequestAsyncContext> asyncCon
     want.SetParam(TOKEN_KEY, asyncContext->abilityContext->GetToken());
     want.SetParam(CALLBACK_KEY, remoteObject);
 
-    int32_t left;
-    int32_t top;
-    int32_t width;
-    int32_t height;
+    int32_t left = 0;
+    int32_t top = 0;
+    int32_t width = 0;
+    int32_t height = 0;
     asyncContext->abilityContext->GetWindowRect(left, top, width, height);
     want.SetParam(WINDOW_RECTANGLE_LEFT_KEY, left);
     want.SetParam(WINDOW_RECTANGLE_TOP_KEY, top);
@@ -625,6 +651,13 @@ static void CreateServiceExtension(std::shared_ptr<RequestAsyncContext> asyncCon
         want, asyncContext->abilityContext->GetToken());
     LOGI(ATM_DOMAIN, ATM_TAG, "Request end, ret: %{public}d, tokenId: %{public}d, permNum: %{public}zu",
         ret, asyncContext->tokenId, asyncContext->permissionList.size());
+    if (ret != ERR_OK) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "RequestDialogService failed!");
+        asyncContext->needDynamicRequest = false;
+        asyncContext->result.errorCode = RET_FAILED;
+        return false;
+    }
+    return true;
 }
 
 bool NapiRequestPermission::IsDynamicRequest(std::shared_ptr<RequestAsyncContext>& asyncContext)
@@ -722,6 +755,10 @@ void UIExtensionCallback::OnReceive(const AAFwk::WantParams& receive)
 void UIExtensionCallback::OnRelease(int32_t releaseCode)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "ReleaseCode is %{public}d", releaseCode);
+    if (isOnResult_.load()) {
+        LOGI(ATM_DOMAIN, ATM_TAG, "OnResult has been called, skip OnRelease.");
+        return;
+    }
     if (this->reqContext_ == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Request context is null.");
         return;
@@ -770,7 +807,7 @@ void UIExtensionCallback::OnDestroy()
     ReleaseHandler(-1);
 }
 
-static void CreateUIExtension(std::shared_ptr<RequestAsyncContext> asyncContext)
+static bool CreateUIExtension(std::shared_ptr<RequestAsyncContext> asyncContext)
 {
     if (asyncContext->isWithWindowId) {
         sptr<Rosen::Window> window = OHOS::Rosen::Window::GetWindowWithId(asyncContext->windowId);
@@ -780,7 +817,7 @@ static void CreateUIExtension(std::shared_ptr<RequestAsyncContext> asyncContext)
             asyncContext->result.errorCode = ERR_PARAM_INVALID;
             asyncContext->result.errorMsg = "Cannot find window by windowId.";
             ReportHisysEventError(*asyncContext, GET_UI_CONTENT_FAILED, asyncContext->tokenId, 0);
-            return;
+            return false;
         }
     }
 
@@ -812,7 +849,7 @@ static void CreateUIExtension(std::shared_ptr<RequestAsyncContext> asyncContext)
             uiExtCallback->OnDestroy();
         },
     };
-    CreateUIExtensionMainThread(asyncContext, want, uiExtensionCallbacks, uiExtCallback);
+    return CreateUIExtensionMainThread(asyncContext, want, uiExtensionCallbacks, uiExtCallback);
 }
 
 
@@ -1095,7 +1132,7 @@ napi_value NapiRequestPermission::GetPermissionsStatus(napi_env env, napi_callba
         env, nullptr, resource, GetPermissionsStatusExecute, GetPermissionsStatusComplete,
         reinterpret_cast<void*>(asyncContext), &(asyncContext->work));
     // add async work handle to the napi queue and wait for result
-    napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_default);
+    NAPI_CALL(env, napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_default));
 
     LOGD(ATM_DOMAIN, ATM_TAG, "GetPermissionsStatus end.");
     context.release();
@@ -1224,10 +1261,13 @@ void RequestAsyncInstanceControl::AddCallbackByInstanceId(std::shared_ptr<Reques
     }
 
     if (asyncContext->uiExtensionFlag) {
-        CreateUIExtension(asyncContext);
-    } else {
-        CreateServiceExtension(asyncContext);
+        if (CreateUIExtension(asyncContext)) {
+            return;
+        }
+    } else if (CreateServiceExtension(asyncContext)) {
+        return;
     }
+    ExecCallback(asyncContext->instanceId);
 }
 
 void RequestAsyncInstanceControl::ExecCallback(int32_t id)
@@ -1261,10 +1301,16 @@ void RequestAsyncInstanceControl::ExecCallback(int32_t id)
         }
     }
     if (isDynamic) {
+        bool createSuccess = false;
         if (asyncContext->uiExtensionFlag) {
-            CreateUIExtension(asyncContext);
-        } else {
-            CreateServiceExtension(asyncContext);
+            createSuccess = CreateUIExtension(asyncContext);
+        }
+        if (!createSuccess) {
+            createSuccess = CreateServiceExtension(asyncContext);
+        }
+        if (!createSuccess) {
+            RequestResultsHandler(asyncContext->permissionList, asyncContext->permissionsState, asyncContext);
+            ExecCallback(asyncContext->instanceId);
         }
     }
 }

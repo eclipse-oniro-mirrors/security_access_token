@@ -4897,6 +4897,27 @@ HWTEST_F(AccessTokenManagerServiceTest, CheckMigratedUidSetServiceTest001, TestS
 }
 
 /**
+ * @tc.name: CheckMigratedUidSetServiceTest002
+ * @tc.desc: CheckMigratedUidSet returns ERR_PARAM_INVALID when totalUids exceeds the size limit.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, CheckMigratedUidSetServiceTest002, TestSize.Level1)
+{
+    std::set<int32_t> totalUids;
+    for (int32_t i = 0; i < 100; i++) {
+        totalUids.insert(i);
+    }
+    std::set<int32_t> unreceivedUids;
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
+        atManagerService_->CheckMigratedUidSet(totalUids, unreceivedUids));
+
+    totalUids.erase(0);
+    std::set<int32_t> localUnreceivedUids;
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->CheckMigratedUidSet(totalUids, localUnreceivedUids));
+}
+
+/**
  * @tc.name: OnAddSystemAbilityPostVerify001
  * @tc.desc: OnAddSystemAbility triggers post verify when BMS SA arrives and post verify is needed.
  * @tc.type: FUNC

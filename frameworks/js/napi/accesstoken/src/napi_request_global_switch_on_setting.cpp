@@ -308,6 +308,10 @@ void SwitchOnSettingUICallback::OnReceive(const AAFwk::WantParams& receive)
 void SwitchOnSettingUICallback::OnRelease(int32_t releaseCode)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "ReleaseCode is %{public}d", releaseCode);
+    if (isOnResult_.load()) {
+        LOGI(ATM_DOMAIN, ATM_TAG, "OnResult has been called, skip OnRelease.");
+        return;
+    }
     if (this->reqContext_ == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Request context is null.");
         return;
@@ -482,8 +486,7 @@ void RequestGlobalSwitchAsyncInstanceControl::AddCallbackByInstanceId(
         instanceIdMap_[asyncContext->instanceId] = {};
     }
     if (StartUIExtension(asyncContext) != RET_SUCCESS) {
-        std::lock_guard<std::mutex> lock(instanceIdMutex_);
-        instanceIdMap_.erase(asyncContext->instanceId);
+        ExecCallback(asyncContext->instanceId);
     }
 }
 
@@ -550,7 +553,10 @@ void RequestGlobalSwitchAsyncInstanceControl::ExecCallback(int32_t id)
         }
     }
     if (isDynamic) {
-        (void)StartUIExtension(asyncContext);
+        if (StartUIExtension(asyncContext) != RET_SUCCESS) {
+            GlobalSwitchResultsCallbackUI(RET_FAILED, asyncContext->switchStatus, asyncContext);
+            ExecCallback(asyncContext->instanceId);
+        }
     }
 }
 

@@ -337,6 +337,10 @@ void PermissonOnSettingUICallback::OnReceive(const AAFwk::WantParams& receive)
 void PermissonOnSettingUICallback::OnRelease(int32_t releaseCode)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "ReleaseCode is %{public}d", releaseCode);
+    if (isOnResult_.load()) {
+        LOGI(ATM_DOMAIN, ATM_TAG, "OnResult has been called, skip OnRelease.");
+        return;
+    }
     if (this->reqContext_ == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Request context is null.");
         return;
@@ -524,7 +528,9 @@ void RequestOnSettingAsyncInstanceControl::AddCallbackByInstanceId(
         // make sure id is in map to indicate a pop-up window is showing
         instanceIdMap_[asyncContext->instanceId] = {};
     }
-    (void)StartUIExtension(asyncContext);
+    if (StartUIExtension(asyncContext) != RET_SUCCESS) {
+        ExecCallback(asyncContext->instanceId);
+    }
 }
 
 static bool CheckPermList(std::vector<std::string> permList, std::vector<std::string> tmpPermList)
@@ -617,7 +623,10 @@ void RequestOnSettingAsyncInstanceControl::ExecCallback(int32_t id)
         }
     }
     if (isDynamic) {
-        (void)StartUIExtension(asyncContext);
+        if (StartUIExtension(asyncContext) != RET_SUCCESS) {
+            PermissionResultsCallbackUI(RET_FAILED, asyncContext->stateList, asyncContext);
+            ExecCallback(asyncContext->instanceId);
+        }
     }
 }
 

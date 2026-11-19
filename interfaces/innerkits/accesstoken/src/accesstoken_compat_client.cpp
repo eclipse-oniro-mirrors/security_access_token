@@ -91,8 +91,13 @@ int32_t AccessTokenCompatClient::GetHapTokenInfo(AccessTokenID tokenID, HapToken
         LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
         return ERR_SERVICE_ABNORMAL;
     }
-    int32_t errCode = proxy->GetHapTokenInfo(tokenID, hapTokenInfoIdl);
+    HapTokenInfoCompatParcel hapTokenInfoParcel;
+    int32_t errCode = proxy->GetHapTokenInfo(tokenID, hapTokenInfoParcel);
     LOGI(ATM_DOMAIN, ATM_TAG, "Result from server (error=%{public}d, Id=%{public}u).", errCode, tokenID);
+    if (errCode != RET_SUCCESS) {
+        return errCode;
+    }
+    hapTokenInfoIdl = hapTokenInfoParcel;
     return errCode;
 }
 

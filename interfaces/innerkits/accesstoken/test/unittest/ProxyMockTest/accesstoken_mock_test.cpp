@@ -2815,6 +2815,26 @@ HWTEST_F(AccessTokenMockTest, CheckMigratedUidSetProxyNull001, TestSize.Level4)
 }
 
 /**
+ * @tc.name: CheckMigratedUidSetSizeTest001
+ * @tc.desc: CheckMigratedUidSet returns ERR_PARAM_INVALID when totalUids exceeds the size limit.
+ * @tc.type: FUNC
+ */
+HWTEST_F(AccessTokenMockTest, CheckMigratedUidSetSizeTest001, TestSize.Level4)
+{
+    std::set<int32_t> totalUids;
+    for (int32_t i = 0; i < 100; i++) {
+        totalUids.insert(i);
+    }
+    std::set<int32_t> unreceivedUids;
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID,
+        AccessTokenKit::CheckMigratedUidSet(totalUids, unreceivedUids));
+
+    totalUids.erase(0);
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL,
+        AccessTokenKit::CheckMigratedUidSet(totalUids, unreceivedUids));
+}
+
+/**
  * @tc.name: IsMigrationDoneProxyNull001
  * @tc.desc: IsMigrationDone returns service abnormal when proxy is null.
  * @tc.type: FUNC
