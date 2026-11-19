@@ -615,20 +615,6 @@ HWTEST_F(AccessTokenDatabaseCoverageTest, ResetUidAndMigrateCompleted004, TestSi
 #endif
 
 /*
- * @tc.name: CreateHapInfoTable001
- * @tc.desc: AccessTokenOpenCallback::CreateHapInfoTable success
- * @tc.type: FUNC
- * @tc.require: TDD
- */
-HWTEST_F(AccessTokenDatabaseCoverageTest, CreateHapInfoTable001, TestSize.Level4)
-{
-    std::shared_ptr<NativeRdb::RdbStore> db = AccessTokenDb::GetInstance()->GetRdb();
-    AccessTokenOpenCallback callback;
-
-    ASSERT_EQ(NativeRdb::E_OK, callback.CreateHapInfoTable(*(db.get())));
-}
-
-/*
  * @tc.name: UpgradeFromVersion8001
  * @tc.desc: AccessTokenOpenCallback::UpgradeFromVersion8 success
  * @tc.type: FUNC

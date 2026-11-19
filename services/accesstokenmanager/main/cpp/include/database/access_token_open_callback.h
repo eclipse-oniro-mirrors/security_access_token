@@ -71,7 +71,6 @@ private:
     int32_t CreatePermissionDefinitionTable(NativeRdb::RdbStore& rdbStore);
     int32_t CreatePermissionStateTable(NativeRdb::RdbStore& rdbStore);
     int32_t CreateVersionOneTable(NativeRdb::RdbStore& rdbStore);
-    int32_t CreatePermissionRequestToggleStatusTable(NativeRdb::RdbStore& rdbStore);
     int32_t CreateVersionThreeTable(NativeRdb::RdbStore& rdbStore);
     int32_t CreatePermissionExtendValueTable(NativeRdb::RdbStore& rdbStore);
     int32_t CreateVersionFiveTable(NativeRdb::RdbStore& rdbStore);
@@ -80,7 +79,6 @@ private:
     int32_t CreateVersionSixTable(NativeRdb::RdbStore& rdbStore);
     int32_t CreateUserPolicyTable(NativeRdb::RdbStore& rdbStore);
     int32_t CreateVersionEightTable(NativeRdb::RdbStore& rdbStore);
-    int32_t CreateHapInfoTable(NativeRdb::RdbStore& rdbStore);
     int32_t CreateVersionTwelveTable(NativeRdb::RdbStore& rdbStore);
     int32_t CreateAutomationControlSwitchTable(NativeRdb::RdbStore& rdbStore);
     int32_t CreateVersionFourteenTable(NativeRdb::RdbStore& rdbStore);
