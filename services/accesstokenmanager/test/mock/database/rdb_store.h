@@ -161,6 +161,8 @@ public:
     void EndWrap();
 };
 
+class RdbStore;
+
 class Transaction {
 public:
     enum TransactionOperationResult {
@@ -172,9 +174,12 @@ public:
     };
     int32_t Rollback();
     int32_t Commit();
+    // Delegate to the owning store's ExecuteSql mock so both paths share the same queues.
+    std::pair<int32_t, ValueObject> Execute(const std::string& sql);
     std::pair<int32_t, int64_t> BatchInsert(const std::string& a, const std::vector<NativeRdb::ValuesBucket>& b);
     std::pair<int32_t, int32_t> Delete(const NativeRdb::RdbPredicates& a);
     std::pair<int32_t, int32_t> Update(const NativeRdb::ValuesBucket& values, const NativeRdb::RdbPredicates& predicates);
+    RdbStore* store_ = nullptr;
     int32_t commitFlag_ = 0;
     int32_t insertFlag_ = 0;
     int32_t deleteFlag_ = 0;

@@ -174,6 +174,14 @@ int32_t Transaction::Commit()
     return NativeRdb::E_OK;
 }
 
+std::pair<int32_t, ValueObject> Transaction::Execute(const std::string& sql)
+{
+    if (store_ == nullptr) {
+        return std::make_pair(NativeRdb::E_OK, ValueObject());
+    }
+    return std::make_pair(store_->ExecuteSql(sql), ValueObject());
+}
+
 std::pair<int32_t, int64_t> Transaction::BatchInsert(
     const std::string& a, const std::vector<NativeRdb::ValuesBucket>& b)
 {
@@ -305,6 +313,7 @@ std::pair<int32_t, std::shared_ptr<OHOS::NativeRdb::Transaction>> RdbStore::Crea
     if (transaction_ == nullptr) {
         transaction_ = std::make_shared<OHOS::NativeRdb::Transaction>();
     }
+    transaction_->store_ = this;
     return std::make_pair(NativeRdb::E_OK, transaction_);
 }
 

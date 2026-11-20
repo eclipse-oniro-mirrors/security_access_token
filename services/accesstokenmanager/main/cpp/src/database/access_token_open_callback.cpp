@@ -78,18 +78,34 @@ static int32_t IsColumnExist(NativeRdb::RdbStore& rdbStore, const std::string& t
     return NativeRdb::E_OK;
 }
 
-// Add the column to the table. When checkExist is true, an existence check based on
-// PRAGMA table_info is performed first and the add is skipped if the column already exists;
-// when checkExist is false, the caller must have verified via IsColumnExist that the column
-// does not exist, saving one PRAGMA table_info round trip.
-static int32_t AddColumn(NativeRdb::RdbStore& rdbStore, AtmDataType type,
+// Execute a write statement on the transaction's dedicated connection.
+// RdbStore::ExecuteSql runs on another connection and fails with E_SQLITE_BUSY
+// while the transaction holds the write lock.
+static int32_t ExecuteSqlInTransaction(NativeRdb::Transaction* transaction, const std::string& sql)
+{
+    std::pair<int32_t, NativeRdb::ValueObject> result = transaction->Execute(sql);
+    return result.first;
+}
+
+// Bundles the store with an optional open transaction for write execution.
+struct SqlExecutor {
+    explicit SqlExecutor(NativeRdb::RdbStore& rdbStore, NativeRdb::Transaction* transaction = nullptr)
+        : rdbStore_(rdbStore), transaction_(transaction) {}
+
+    NativeRdb::RdbStore& rdbStore_;
+    NativeRdb::Transaction* transaction_;
+};
+
+// Add the column to the table, skipping the add when the column already exists.
+// When checkExist is false the caller has verified non-existence via IsColumnExist.
+static int32_t AddColumn(const SqlExecutor& executor, AtmDataType type,
     const std::string& columnName, const std::string& columnDef, bool checkExist = true)
 {
     std::string tableName;
     AccessTokenDbUtil::GetTableNameByType(type, tableName);
     if (checkExist) {
         bool exist = false;
-        int32_t res = IsColumnExist(rdbStore, tableName, columnName, exist);
+        int32_t res = IsColumnExist(executor.rdbStore_, tableName, columnName, exist);
         if (res != NativeRdb::E_OK) {
             return res;
         }
@@ -100,7 +116,8 @@ static int32_t AddColumn(NativeRdb::RdbStore& rdbStore, AtmDataType type,
         }
     }
     std::string sql = "alter table " + tableName + " add column " + columnName + " " + columnDef;
-    int32_t ret = rdbStore.ExecuteSql(sql);
+    int32_t ret = (executor.transaction_ != nullptr) ? ExecuteSqlInTransaction(executor.transaction_, sql)
+        : executor.rdbStore_.ExecuteSql(sql);
     if (ret != NativeRdb::E_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to add column %{public}s to table %{public}s, errCode is %{public}d.",
             columnName.c_str(), tableName.c_str(), ret);
@@ -301,7 +318,8 @@ int32_t AccessTokenOpenCallback::CreateVersionOneTable(NativeRdb::RdbStore& rdbS
     return 0;
 }
 
-int32_t AccessTokenOpenCallback::CreatePermissionRequestToggleStatusTable(NativeRdb::RdbStore& rdbStore)
+// Build the create-table SQL shared by the standalone and transactional execution paths.
+static std::string BuildCreatePermissionRequestToggleStatusTableSql()
 {
     std::string tableName;
     AccessTokenDbUtil::GetTableNameByType(AtmDataType::ACCESSTOKEN_PERMISSION_REQUEST_TOGGLE_STATUS, tableName);
@@ -325,13 +343,12 @@ int32_t AccessTokenOpenCallback::CreatePermissionRequestToggleStatusTable(Native
         .append(",")
         .append(TokenFiledConst::FIELD_SUB_PROFILE_ID)
         .append("))");
-
-    return rdbStore.ExecuteSql(sql);
+    return sql;
 }
 
 int32_t AccessTokenOpenCallback::CreateVersionThreeTable(NativeRdb::RdbStore& rdbStore)
 {
-    int32_t res = CreatePermissionRequestToggleStatusTable(rdbStore);
+    int32_t res = rdbStore.ExecuteSql(BuildCreatePermissionRequestToggleStatusTableSql());
     if (res != NativeRdb::E_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to create table permission_request_toggle_status_table.");
         return res;
@@ -468,7 +485,8 @@ int32_t AccessTokenOpenCallback::CreateVersionEightTable(NativeRdb::RdbStore& rd
     return 0;
 }
 
-int32_t AccessTokenOpenCallback::CreateHapInfoTable(NativeRdb::RdbStore& rdbStore)
+// Build the create-table SQL shared by the standalone and transactional execution paths.
+static std::string BuildCreateHapInfoTableSql()
 {
     std::string tableName;
     AccessTokenDbUtil::GetTableNameByType(AtmDataType::ACCESSTOKEN_HAP_PACKAGE_INFO, tableName);
@@ -501,13 +519,12 @@ int32_t AccessTokenOpenCallback::CreateHapInfoTable(NativeRdb::RdbStore& rdbStor
         .append(TokenFiledConst::FIELD_MODE)
 #endif
         .append("))");
-
-    return rdbStore.ExecuteSql(sql);
+    return sql;
 }
 
 int32_t AccessTokenOpenCallback::CreateVersionTwelveTable(NativeRdb::RdbStore& rdbStore)
 {
-    int32_t res = CreateHapInfoTable(rdbStore);
+    int32_t res = rdbStore.ExecuteSql(BuildCreateHapInfoTableSql());
     if (res != NativeRdb::E_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to create table hap_info_table.");
         return res;
@@ -569,20 +586,20 @@ int32_t AccessTokenOpenCallback::OnCreate(NativeRdb::RdbStore& rdbStore)
 
 int32_t AccessTokenOpenCallback::AddAvailableTypeColumn(NativeRdb::RdbStore& rdbStore)
 {
-    return AddColumn(rdbStore, AtmDataType::ACCESSTOKEN_PERMISSION_DEF,
+    return AddColumn(SqlExecutor(rdbStore), AtmDataType::ACCESSTOKEN_PERMISSION_DEF,
         TokenFiledConst::FIELD_AVAILABLE_TYPE,
         "integer default " + std::to_string(ATokenAvailableTypeEnum::NORMAL));
 }
 
 int32_t AccessTokenOpenCallback::AddRequestToggleStatusColumn(NativeRdb::RdbStore& rdbStore)
 {
-    return AddColumn(rdbStore, AtmDataType::ACCESSTOKEN_PERMISSION_REQUEST_TOGGLE_STATUS,
+    return AddColumn(SqlExecutor(rdbStore), AtmDataType::ACCESSTOKEN_PERMISSION_REQUEST_TOGGLE_STATUS,
         TokenFiledConst::FIELD_REQUEST_TOGGLE_STATUS, "integer default 0"); // 0: close
 }
 
 int32_t AccessTokenOpenCallback::AddPermDialogCapColumn(NativeRdb::RdbStore& rdbStore)
 {
-    return AddColumn(rdbStore, AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO,
+    return AddColumn(SqlExecutor(rdbStore), AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO,
         TokenFiledConst::FIELD_FORBID_PERM_DIALOG, "integer default 0");
 }
 
@@ -590,12 +607,13 @@ int32_t AccessTokenOpenCallback::AddKernelEffectAndHasValueColumn(NativeRdb::Rdb
 {
     // Add the two columns independently: a combined short-circuit check would skip
     // has_value when kernel_effect already exists, leaving has_value missing.
-    int32_t res = AddColumn(rdbStore, AtmDataType::ACCESSTOKEN_PERMISSION_DEF,
+    SqlExecutor executor(rdbStore);
+    int32_t res = AddColumn(executor, AtmDataType::ACCESSTOKEN_PERMISSION_DEF,
         TokenFiledConst::FIELD_KERNEL_EFFECT, "integer default " + std::to_string(false));
     if (res != NativeRdb::E_OK) {
         return res;
     }
-    return AddColumn(rdbStore, AtmDataType::ACCESSTOKEN_PERMISSION_DEF,
+    return AddColumn(executor, AtmDataType::ACCESSTOKEN_PERMISSION_DEF,
         TokenFiledConst::FIELD_HAS_VALUE, "integer default " + std::to_string(0));
 }
 
@@ -614,8 +632,7 @@ int32_t AccessTokenOpenCallback::AddTimestampColumn(NativeRdb::RdbStore& rdbStor
         return NativeRdb::E_OK;
     }
 
-    // The column does not exist (verified by IsColumnExist above): add it without the
-    // internal existence check to save one PRAGMA table_info round trip.
+    // The column does not exist: add it without the internal existence check.
     // Wrap the column add and the timestamp refresh in one transaction: if the refresh fails,
     // the column add rolls back too, so a resumed upgrade retries both steps instead of
     // leaving the historical timestamps stuck at the default value 0 forever.
@@ -624,7 +641,7 @@ int32_t AccessTokenOpenCallback::AddTimestampColumn(NativeRdb::RdbStore& rdbStor
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to create transaction, errCode is %{public}d.", errCode);
         return errCode == NativeRdb::E_OK ? ERR_DATABASE_OPERATE_FAILED : errCode;
     }
-    int32_t ret = AddColumn(rdbStore, AtmDataType::ACCESSTOKEN_PERMISSION_STATE,
+    int32_t ret = AddColumn(SqlExecutor(rdbStore, transaction.get()), AtmDataType::ACCESSTOKEN_PERMISSION_STATE,
         TokenFiledConst::FIELD_TIMESTAMP, "integer default " + std::to_string(0), false);
     if (ret != NativeRdb::E_OK) {
         (void)transaction->Rollback();
@@ -633,7 +650,7 @@ int32_t AccessTokenOpenCallback::AddTimestampColumn(NativeRdb::RdbStore& rdbStor
 
     std::string updateSql = "update " + tableName + " set " + TokenFiledConst::FIELD_TIMESTAMP + "=" +
         std::to_string(TimeUtil::GetCurrentTimestamp());
-    ret = rdbStore.ExecuteSql(updateSql);
+    ret = ExecuteSqlInTransaction(transaction.get(), updateSql);
     if (ret != NativeRdb::E_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to refresh timestamp column in table %{public}s, errCode is %{public}d.",
             tableName.c_str(), ret);
@@ -682,19 +699,20 @@ int32_t AccessTokenOpenCallback::AddUidMigratedReservedColumns(NativeRdb::RdbSto
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to create transaction, errCode is %{public}d.", errCode);
         return errCode == NativeRdb::E_OK ? ERR_DATABASE_OPERATE_FAILED : errCode;
     }
-    int32_t ret = AddColumn(rdbStore, AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO,
+    SqlExecutor executor(rdbStore, transaction.get());
+    int32_t ret = AddColumn(executor, AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO,
         TokenFiledConst::FIELD_UID, "integer not null default " + std::to_string(-1));
     if (ret != NativeRdb::E_OK) {
         (void)transaction->Rollback();
         return ret;
     }
-    ret = AddColumn(rdbStore, AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO,
+    ret = AddColumn(executor, AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO,
         TokenFiledConst::FIELD_MIGRATED, "integer not null default " + std::to_string(0));
     if (ret != NativeRdb::E_OK) {
         (void)transaction->Rollback();
         return ret;
     }
-    ret = AddColumn(rdbStore, AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO,
+    ret = AddColumn(executor, AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO,
         TokenFiledConst::FIELD_RESERVED, "integer not null default " + std::to_string(0));
     if (ret != NativeRdb::E_OK) {
         (void)transaction->Rollback();
@@ -704,8 +722,8 @@ int32_t AccessTokenOpenCallback::AddUidMigratedReservedColumns(NativeRdb::RdbSto
     // safe to re-run when the columns already exist (e.g. upgrade resumed mid-way).
     std::string tableName;
     AccessTokenDbUtil::GetTableNameByType(AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO, tableName);
-    ret = rdbStore.ExecuteSql("update " + tableName + " set " + TokenFiledConst::FIELD_RESERVED +
-        "= 1 where " + TokenFiledConst::FIELD_TOKEN_ATTR + " & 0x0004 != 0");
+    ret = ExecuteSqlInTransaction(transaction.get(), "update " + tableName + " set " +
+        TokenFiledConst::FIELD_RESERVED + "= 1 where " + TokenFiledConst::FIELD_TOKEN_ATTR + " & 0x0004 != 0");
     if (ret != NativeRdb::E_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to refresh reserved column errCode is %{public}d.", ret);
         (void)transaction->Rollback();
@@ -734,14 +752,14 @@ int32_t AccessTokenOpenCallback::AddModeColumn(NativeRdb::RdbStore& rdbStore, At
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to create transaction, errCode is %{public}d.", errCode);
         return errCode == NativeRdb::E_OK ? ERR_DATABASE_OPERATE_FAILED : errCode;
     }
-    int32_t ret = rdbStore.ExecuteSql("drop table if exists " + tableName);
+    int32_t ret = ExecuteSqlInTransaction(transaction.get(), "drop table if exists " + tableName);
     if (ret != NativeRdb::E_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to drop table %{public}s, errCode is %{public}d.",
             tableName.c_str(), ret);
         (void)transaction->Rollback();
         return ret;
     }
-    ret = CreateHapInfoTable(rdbStore);
+    ret = ExecuteSqlInTransaction(transaction.get(), BuildCreateHapInfoTableSql());
     if (ret != NativeRdb::E_OK) {
         (void)transaction->Rollback();
         return ret;
@@ -824,7 +842,7 @@ int32_t AccessTokenOpenCallback::UpgradeFromVersion7(NativeRdb::RdbStore& rdbSto
 
 int32_t AccessTokenOpenCallback::UpgradeFromVersion8(NativeRdb::RdbStore& rdbStore)
 {
-    int32_t res = CreateHapInfoTable(rdbStore);
+    int32_t res = rdbStore.ExecuteSql(BuildCreateHapInfoTableSql());
     if (res != NativeRdb::E_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to create hap_info_table during upgrade from version 8.");
         ReportUpgradeError(res, DATABASE_VERSION_8, "CreateHapInfoTable");
@@ -859,12 +877,17 @@ int32_t AccessTokenOpenCallback::UpgradeFromVersion9(NativeRdb::RdbStore& rdbSto
         TokenFiledConst::FIELD_REQUEST_TOGGLE_STATUS + ") select " + TokenFiledConst::FIELD_USER_ID + "," +
         TokenFiledConst::FIELD_PERMISSION_NAME + "," + std::to_string(LEGACY_SUBPROFILE_ID) + "," +
         TokenFiledConst::FIELD_REQUEST_TOGGLE_STATUS + " from " + backupTableName;
+    // Lambdas cannot capture structured bindings in C++17, so copy the transaction first.
+    std::shared_ptr<OHOS::NativeRdb::Transaction> trans = transaction;
     int32_t res = NativeRdb::E_OK;
     const std::vector<std::function<int32_t()>> migrationSteps = {
-        [&]() { return rdbStore.ExecuteSql("alter table " + tableName + " rename to " + backupTableName); },
-        [&]() { return CreatePermissionRequestToggleStatusTable(rdbStore); },
-        [&]() { return rdbStore.ExecuteSql(copySql); },
-        [&]() { return rdbStore.ExecuteSql("drop table " + backupTableName); },
+        [&trans, &tableName, &backupTableName]() {
+            return ExecuteSqlInTransaction(trans.get(),
+                "alter table " + tableName + " rename to " + backupTableName);
+        },
+        [trans]() { return ExecuteSqlInTransaction(trans.get(), BuildCreatePermissionRequestToggleStatusTableSql()); },
+        [&trans, &copySql]() { return ExecuteSqlInTransaction(trans.get(), copySql); },
+        [&trans, &backupTableName]() { return ExecuteSqlInTransaction(trans.get(), "drop table " + backupTableName); },
     };
     for (const auto& step : migrationSteps) {
         res = step();
@@ -899,7 +922,7 @@ int32_t AccessTokenOpenCallback::UpgradeFromVersion10(NativeRdb::RdbStore& rdbSt
 
 int32_t AccessTokenOpenCallback::UpgradeFromVersion11(NativeRdb::RdbStore& rdbStore)
 {
-    int32_t res = AddColumn(rdbStore, AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO,
+    int32_t res = AddColumn(SqlExecutor(rdbStore), AtmDataType::ACCESSTOKEN_HAP_TOKEN_INFO,
         TokenFiledConst::FIELD_IS_SIDELOAD, "integer not null default " + std::to_string(0));
     if (res != NativeRdb::E_OK) {
         ReportUpgradeError(res, DATABASE_VERSION_11, "AddIsSideloadColumn");
@@ -912,7 +935,7 @@ int32_t AccessTokenOpenCallback::UpgradeFromVersion11(NativeRdb::RdbStore& rdbSt
 #ifdef SPM_DATA_ENABLE
 int32_t AccessTokenOpenCallback::UpgradeFromVersion14(NativeRdb::RdbStore& rdbStore)
 {
-    int32_t res = CreateHapInfoTable(rdbStore);
+    int32_t res = rdbStore.ExecuteSql(BuildCreateHapInfoTableSql());
     if (res != NativeRdb::E_OK) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed to create hap_info_table during upgrade from version 14.");
         ReportUpgradeError(res, DATABASE_VERSION_14, "CreateHapInfoTable");
