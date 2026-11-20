@@ -27,11 +27,6 @@ static const int32_t LIST_SIZE_MAX = 200;
 static const int32_t FAILED = -1;
 }
 
-static std::string to_utf8(std::u16string str16)
-{
-    return std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> {}.to_bytes(str16);
-}
-
 int32_t TokenCallbackStub::OnRemoteRequest(
     uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option)
 {
@@ -60,7 +55,7 @@ int32_t TokenCallbackStub::OnRemoteRequest(
                 LOGE(ATM_DOMAIN, ATM_TAG, "Failed to read permission at index %{public}u.", i);
                 return FAILED;
             }
-            std::string perm = to_utf8(u16Perm);
+            std::string perm = Str16ToStr8(u16Perm);
             permList.emplace_back(perm);
         }
 

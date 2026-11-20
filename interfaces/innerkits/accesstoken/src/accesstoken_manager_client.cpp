@@ -1683,13 +1683,15 @@ void AccessTokenManagerClient::ReregisterTokenSyncCallback()
         LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
         return;
     }
-    std::lock_guard<std::mutex> lock(tokenSyncCallbackMutex_);
-    if (tokenSyncCallback_ == nullptr || syncCallbackImpl_ == nullptr) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Input callback is null.");
-        return;
+    int32_t res;
+    {
+        std::lock_guard<std::mutex> lock(tokenSyncCallbackMutex_);
+        if (tokenSyncCallback_ == nullptr || syncCallbackImpl_ == nullptr) {
+            LOGE(ATM_DOMAIN, ATM_TAG, "Input callback is null.");
+            return;
+        }
+        res = proxy->RegisterTokenSyncCallback(tokenSyncCallback_->AsObject());
     }
-
-    int32_t res = proxy->RegisterTokenSyncCallback(tokenSyncCallback_->AsObject());
     if (res != RET_SUCCESS) {
         res = ConvertResult(res);
     }
@@ -1704,11 +1706,14 @@ int32_t AccessTokenManagerClient::UnRegisterTokenSyncCallback()
         LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
-    std::lock_guard<std::mutex> lock(tokenSyncCallbackMutex_);
-    int32_t res = proxy->UnRegisterTokenSyncCallback();
-    if (res == RET_SUCCESS) {
-        tokenSyncCallback_ = nullptr;
-        syncCallbackImpl_ = nullptr;
+    int32_t res;
+    {
+        std::lock_guard<std::mutex> lock(tokenSyncCallbackMutex_);
+        res = proxy->UnRegisterTokenSyncCallback();
+        if (res == RET_SUCCESS) {
+            tokenSyncCallback_ = nullptr;
+            syncCallbackImpl_ = nullptr;
+        }
     }
     if (res != RET_SUCCESS) {
         res = ConvertResult(res);
