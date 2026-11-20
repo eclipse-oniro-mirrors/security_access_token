@@ -146,6 +146,7 @@ void PrivacyManagerServiceTest::TearDown()
         g_InfoParms1.instIndex);
     PrivacyTestCommon::DeleteTestHapToken(tokenIdEx.tokenIdExStruct.tokenID);
     privacyManagerService_->RemovePermissionUsedRecords(tokenIdEx.tokenIdExStruct.tokenID);
+    PermissionRecordManager::GetInstance().FlushPendingTasks();
 
     privacyManagerService_ = nullptr;
 }

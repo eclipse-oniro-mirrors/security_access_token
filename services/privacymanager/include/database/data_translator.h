@@ -27,15 +27,12 @@ namespace Security {
 namespace AccessToken {
 class DataTranslator final {
 public:
+    static void GetDefaultTimeRange(int64_t& begin, int64_t& end);
     static int32_t TranslationIntoGenericValues(const PermissionUsedRequest& request,
         GenericValues& andGenericValues);
-    static int32_t TranslationGenericValuesIntoPermissionUsedRecord(const PermissionUsageFlag& flag,
-        const GenericValues& inGenericValues, PermissionUsedRecord& permissionRecord);
 #ifdef REMOTE_PRIVACY_ENABLE
     static int32_t TranslationRemoteRequestIntoGenericValues(const PermissionUsedRequest& request,
         GenericValues& andGenericValues);
-    static int32_t TranslationGenericValuesIntoRemotePermissionRecord(const PermissionUsageFlag& flag,
-        const GenericValues& inGenericValues, PermissionUsedRecord& permissionRecord);
 #endif
 };
 } // namespace AccessToken

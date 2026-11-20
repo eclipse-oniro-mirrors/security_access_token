@@ -154,6 +154,17 @@ int32_t RemotePermUsedRecordDbManager::Add(const int32_t userId, const std::vect
     return res;
 }
 
+int32_t RemotePermUsedRecordDbManager::AddOrReplace(const int32_t userId, const std::vector<GenericValues>& values)
+{
+    std::lock_guard<std::mutex> lock(dbMutex_);
+    auto db = GetDatabase(userId, true);
+    if (db == nullptr) {
+        LOGE(PRI_DOMAIN, PRI_TAG, "Get db failed, userId=%{public}d", userId);
+        return PrivacyError::ERR_FILE_OPERATE_FAILED;
+    }
+    return db->AddOrReplace(values);
+}
+
 int32_t RemotePermUsedRecordDbManager::Remove(const int32_t userId, const GenericValues& conditions)
 {
     std::lock_guard<std::mutex> lock(dbMutex_);
@@ -289,6 +300,42 @@ int32_t RemotePermissionUsedRecordDb::RetryOnCorrupt(std::function<int32_t()> lo
 int32_t RemotePermissionUsedRecordDb::Add(const std::vector<GenericValues>& values)
 {
     return RetryOnCorrupt([this, &values] { return AddLocked(values); });
+}
+
+int32_t RemotePermissionUsedRecordDb::AddOrReplace(const std::vector<GenericValues>& values)
+{
+    return RetryOnCorrupt([this, &values] { return AddOrReplaceLocked(values); });
+}
+
+int32_t RemotePermissionUsedRecordDb::AddOrReplaceLocked(const std::vector<GenericValues>& values)
+{
+    int64_t beginTime = TimeUtil::GetCurrentTimestamp();
+
+    std::string prepareSql = CreateInsertOrReplacePrepareSqlCmd();
+    LOGD(PRI_DOMAIN, PRI_TAG, "AddOrReplace sql is %{public}s.", prepareSql.c_str());
+
+    auto statement = Prepare(prepareSql);
+    bool isSuccess = true;
+    for (const auto& value : values) {
+        std::vector<std::string> columnNames = value.GetAllKeys();
+        for (const auto& name : columnNames) {
+            statement.Bind(name, value.Get(name));
+        }
+        int32_t ret = statement.Step();
+        if (ret != Statement::State::DONE) {
+            LOGE(PRI_DOMAIN, PRI_TAG, "Failed, errorMsg: %{public}s", SpitError().c_str());
+            isSuccess = false;
+        }
+        statement.Reset();
+    }
+    if (!isSuccess) {
+        return PrivacyError::ERR_DATABASE_OPERATE_FAILED;
+    }
+
+    int64_t endTime = TimeUtil::GetCurrentTimestamp();
+    LOGI(PRI_DOMAIN, PRI_TAG, "AddOrReplace cost %{public}" PRId64 ".", endTime - beginTime);
+
+    return SUCCESS;
 }
 
 int32_t RemotePermissionUsedRecordDb::AddLocked(const std::vector<GenericValues>& values)
@@ -522,6 +569,21 @@ int32_t RemotePermissionUsedRecordDb::UpdateLocked(const GenericValues& modifyVa
 std::string RemotePermissionUsedRecordDb::CreateInsertPrepareSqlCmd() const
 {
     std::string sql = "insert into " + REMOTE_PERMISSION_RECORD_TABLE + " values(";
+    int32_t i = 1;
+    for (const auto& name : g_tableColumnNames) {
+        sql.append(":" + name);
+        if (i < static_cast<int32_t>(g_tableColumnNames.size())) {
+            sql.append(",");
+        }
+        i += 1;
+    }
+    sql.append(")");
+    return sql;
+}
+
+std::string RemotePermissionUsedRecordDb::CreateInsertOrReplacePrepareSqlCmd() const
+{
+    std::string sql = "insert or replace into " + REMOTE_PERMISSION_RECORD_TABLE + " values(";
     int32_t i = 1;
     for (const auto& name : g_tableColumnNames) {
         sql.append(":" + name);

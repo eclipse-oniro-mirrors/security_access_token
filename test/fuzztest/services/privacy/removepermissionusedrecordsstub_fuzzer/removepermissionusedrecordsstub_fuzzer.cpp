@@ -15,6 +15,8 @@
 
 #include "removepermissionusedrecordsstub_fuzzer.h"
 
+#include <chrono>
+#include <cstdlib>
 #include <string>
 #include <thread>
 #include <vector>
@@ -24,10 +26,19 @@
 #include "fuzzer/FuzzedDataProvider.h"
 #include "iprivacy_manager.h"
 #include "mock_permission.h"
+#include "permission_record_manager.h"
 #include "privacy_manager_service.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
+
+static constexpr int32_t SLEEP_TIME = 5;
+
+void BeforeExit()
+{
+    PermissionRecordManager::GetInstance().FlushPendingTasks();
+    std::this_thread::sleep_for(std::chrono::seconds(SLEEP_TIME));
+}
 
 namespace OHOS {
     bool RemovePermissionUsedRecordsStubFuzzTest(const uint8_t* data, size_t size)
@@ -62,6 +73,12 @@ namespace OHOS {
 } // namespace OHOS
 
 /* Fuzzer entry point */
+extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv)
+{
+    (void)atexit(BeforeExit);
+    return 0;
+}
+
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
     /* Run your code on data */

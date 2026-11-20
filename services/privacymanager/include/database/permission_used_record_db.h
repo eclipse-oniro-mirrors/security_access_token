@@ -61,6 +61,9 @@ public:
     int32_t Update(DataType type, const GenericValues& modifyValue, const GenericValues& conditionValue);
     int32_t Query(DataType type, const GenericValues& conditionValue, std::vector<GenericValues>& results);
 
+    int32_t AddOrReplaceRecordAndType(const std::vector<GenericValues>& recordValues,
+        AccessTokenID tokenId, int32_t opCode, uint32_t typeBits);
+
     int32_t OnCreate() override;
     int32_t OnUpdate(int32_t version) override;
 
@@ -80,11 +83,14 @@ private:
     int32_t AddOrReplaceLocked(DataType type, const std::vector<GenericValues>& values);
     int32_t RemoveLocked(DataType type, const GenericValues& conditions);
     int32_t UpdateLocked(DataType type, const GenericValues& modifyValue, const GenericValues& conditionValue);
+    int32_t QueryLocked(DataType type, const GenericValues& conditionValue, std::vector<GenericValues>& results);
     int32_t DeleteExpireRecordsLocked(DataType type, const GenericValues& andConditions);
     int32_t DeleteHistoryRecordsInTablesLocked(std::vector<DataType> dateTypes,
         const std::unordered_set<AccessTokenID>& tokenIDList);
     int32_t DeleteExcessiveRecordsLocked(DataType type, uint32_t excessiveSize);
     int32_t RetryOnCorrupt(std::function<int32_t()> lockedAction);
+
+    int32_t UpsertUsedTypeLocked(AccessTokenID tokenId, int32_t opCode, uint32_t typeBits);
 
     int32_t CreatePermissionRecordTable() const;
     int32_t CreatePermissionUsedTypeTable() const;

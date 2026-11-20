@@ -16,6 +16,7 @@
 #ifndef PERMISSION_RECORD_MANAGER_H
 #define PERMISSION_RECORD_MANAGER_H
 
+#include <future>
 #include <map>
 #include <set>
 #include <shared_mutex>
@@ -79,6 +80,7 @@ public:
     virtual ~PermissionRecordManager();
 
     void Init();
+    void FlushPendingTasks();
     int32_t AddPermissionUsedRecord(const AddPermParamInfo& info);
     int32_t RemovePermissionUsedRecords(AccessTokenID tokenId, const std::string& enhancedIdentity = "");
     bool IsUserIdValid(int32_t userID) const;
@@ -168,7 +170,6 @@ private:
     int32_t AddPermissionUsedRecordInner(
         const AddPermParamInfo& info, AccessTokenID callingTokenID, int32_t callingPid);
     int32_t AddOrUpdateUsedStatusIfNeeded(int32_t userID, int32_t subProfileId, bool status);
-    void AddRecToCacheAndValueVec(const PermissionRecord& record, std::vector<GenericValues>& values);
     int32_t MergeOrInsertRecord(const PermissionRecord& record);
     int32_t UpdatePermissionUsedRecordToDb(const PermissionRecord& record);
     int32_t AddRecord(const PermissionRecord& record);
@@ -179,8 +180,10 @@ private:
     void ReduceDeleteTaskNum();
     int32_t DeletePermissionRecord(int32_t days);
 
-    void GetMergedRecordsFromCache(std::vector<PermissionRecord>& mergedRecords);
-    void InsteadMergedRecIfNecessary(GenericValues& mergedRecord, std::vector<PermissionRecord>& mergedRecords);
+    void GetMergedRecordsFromCache(const PermissionUsedRequest& request,
+        const std::set<int32_t>& opCodeList, std::vector<PermissionRecord>& mergedRecords);
+    void MergeDbRecords(const std::vector<GenericValues>& dbValues,
+        std::vector<PermissionRecord>& records);
     void MergeSamePermission(const PermissionUsageFlag& flag, const PermissionUsedRecord& inRecord,
         PermissionUsedRecord& outRecord);
     void FillPermissionUsedRecords(const PermissionUsedRecord& record, const PermissionUsageFlag& flag,
@@ -188,10 +191,14 @@ private:
     bool CreateBundleUsedRecordIfNeeded(const AccessTokenID tokenId, const std::string& bundleKey,
         std::set<std::string>& bundleKeySet, std::map<std::string, BundleUsedRecord>& bundleKeyToBundleMap,
         std::map<std::string, int32_t>& bundleKeyToCountMap);
-    bool FillBundleUsedRecord(const GenericValues& value, const PermissionUsageFlag& flag,
+    void FillBundleUsedRecord(const PermissionRecord& record, const PermissionUsageFlag& flag,
         std::map<std::string, BundleUsedRecord>& bundleKeyToBundleMap,
         std::map<std::string, int32_t>& bundleKeyToCountMap,
         PermissionUsedResult& result);
+    void FillBundleResultsFromRecords(const std::vector<PermissionRecord>& records,
+        const PermissionUsedRequest& request, PermissionUsedResult& result);
+    bool ConvertRecordToUsedRecord(const PermissionRecord& permRecord,
+        const PermissionUsageFlag& flag, PermissionUsedRecord& record);
     int32_t GetRecordsFromLocalDB(const PermissionUsedRequest& request, PermissionUsedResult& result);
 
     void ExecuteAndUpdateRecord(uint32_t tokenId, int32_t pid, ActiveChangeType status);
@@ -218,9 +225,15 @@ private:
     void TransformEnumToBitValue(const PermissionUsedType type, uint32_t& value);
     int32_t AddOrUpdateUsedTypeIfNeeded(const AccessTokenID tokenId, const int32_t opCode,
         const PermissionUsedType type);
+    // record is passed by value: the async lambda captures it independently
+    // from the cache entry to avoid race conditions during async execution
+    void PostWriteTask(PermissionRecord record, bool isFromCleanup);
+    std::map<std::pair<AccessTokenID, int32_t>, uint32_t> ExtractPendingTypeBits(
+        AccessTokenID tokenId, int32_t opCode);
     void ExecutePermAddCallbackAsync(
         const AddPermParamInfo& info, AccessTokenID callingTokenID, int32_t callingPid);
-    void AddDataValueToResults(const GenericValues value, std::vector<PermissionUsedTypeInfo>& results);
+    void AddTypeInfoToResults(AccessTokenID tokenId, int32_t opCode, uint32_t typeBits,
+        std::vector<PermissionUsedTypeInfo>& results);
 
     bool IsCameraWindowShow(AccessTokenID tokenId);
     uint64_t GetUniqueId(uint32_t tokenId, int32_t pid) const;
@@ -258,20 +271,26 @@ private:
         const int32_t userId, int32_t subProfileId);
     int32_t AddRemoteRecord(const RemotePermissionRecord& record);
     int32_t MergeOrInsertRemoteRecord(const RemotePermissionRecord& record);
-    void AddRemoteRecToCacheAndValueVec(const RemotePermissionRecord& record, std::vector<GenericValues>& values);
-    void InsteadMergedRemoteRecIfNecessary(
-        GenericValues& queryValue, int32_t userId, std::vector<RemotePermissionRecord>& mergedRecords);
-    void BuildBundleUsedRecordsFromRemoteResults(std::vector<GenericValues>& findRecordsValues,
-        int32_t userId, std::vector<RemotePermissionRecord>& mergedRecords,
-        std::map<std::string, BundleUsedRecord>& deviceIdToBundleMap, PermissionUsedResult& result,
-        const PermissionUsageFlag& flag);
+    void MergeDbRemoteRecords(const std::vector<GenericValues>& dbValues,
+        int32_t userId, std::vector<RemotePermissionRecord>& records);
+    void BuildBundleUsedRecordsFromRemoteResults(
+        const std::vector<RemotePermissionRecord>& records, int32_t userId,
+        const PermissionUsageFlag& flag,
+        std::map<std::string, BundleUsedRecord>& deviceIdToBundleMap,
+        PermissionUsedResult& result);
+    bool ConvertRemoteRecordToUsedRecord(const RemotePermissionRecord& remoteRecord,
+        const PermissionUsageFlag& flag, PermissionUsedRecord& record);
     void CollectMergedRemoteRecordsFromCache(
-        int32_t userId, int32_t subProfileId, std::vector<RemotePermissionRecord>& mergedRecords);
+        int32_t userId, int32_t subProfileId, std::vector<RemotePermissionRecord>& mergedRecords,
+        const PermissionUsedRequest& request, const std::set<int32_t>& opCodeList);
     void AppendRemoteBundleRecords(std::map<std::string, BundleUsedRecord>& deviceIdToBundleMap,
         PermissionUsedResult& result, const PermissionUsageFlag& flag);
     int32_t UpdateRemotePermissionUsedRecordToDb(const RemotePermissionRecord& record);
     int32_t DeleteRemotePermissionRecord(int32_t days);
     void RemoveRemotePermissionRecordsOnToggle(int32_t userID, int32_t subProfileId);
+    // record is passed by value: the async lambda captures it independently
+    // from the cache entry to avoid race conditions during async execution
+    void PostRemoteWriteTask(RemotePermissionRecord record, bool isFromCleanup);
 #endif
 
 private:
@@ -348,6 +367,14 @@ private:
     std::mutex bundleStartRecordListMutex_;
     std::unordered_map<std::string, std::vector<std::pair<int32_t, int32_t>>> bundleStartRecordMap_;
 #endif
+
+#ifdef EVENTHANDLER_ENABLE
+    std::mutex eventHandlerLock_;
+    std::shared_ptr<AccessEventHandler> eventHandler_;
+    std::shared_ptr<AccessEventHandler> GetEventHandler();
+    void InitEventHandler();
+#endif
+    void PostAsyncTask(std::function<void()> callback, const std::string& taskName);
 };
 } // namespace AccessToken
 } // namespace Security

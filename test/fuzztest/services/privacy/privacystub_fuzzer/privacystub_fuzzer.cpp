@@ -15,6 +15,8 @@
 
 #include "privacystub_fuzzer.h"
 
+#include <chrono>
+#include <cstdlib>
 #include <string>
 #include <thread>
 #include <vector>
@@ -27,12 +29,14 @@
 #include "iprivacy_manager.h"
 #include "perm_active_status_change_callback.h"
 #include "perm_active_status_customized_cbk.h"
+#include "permission_record_manager.h"
 #include "privacy_manager_service.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
 static const uint32_t ACTIVE_CHANGE_CHANGE_TYPE_MAX = 4;
 static const uint32_t CALLER_TYPE_MAX = 2;
+static constexpr int32_t SLEEP_TIME = 5;
 
 class RegisterActiveFuzzTest : public PermActiveStatusCustomizedCbk {
 public:
@@ -352,9 +356,16 @@ void Initialize()
 }
 } // namespace OHOS
 
+void BeforeExit()
+{
+    PermissionRecordManager::GetInstance().FlushPendingTasks();
+    std::this_thread::sleep_for(std::chrono::seconds(SLEEP_TIME));
+}
+
 extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv)
 {
     OHOS::Initialize();
+    (void)atexit(BeforeExit);
     return 0;
 }
 
