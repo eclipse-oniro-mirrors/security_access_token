@@ -66,6 +66,11 @@ static constexpr int32_t ERR_DEAD_OBJECT = 32;
 static constexpr uint32_t MAX_PERMISSION_BITMAP_WORDS = 64;
 static constexpr uint32_t DEFAULT_NATIVE_EXTENDED_PERMS = 8;
 static constexpr uint32_t SPM_NAME_BUF_SIZE = 256;
+#ifdef ACCESSTOKEN_MANAGER_CLIENT_TEST_ENABLE
+static constexpr size_t MAX_MIGRATED_UID_SET_SIZE = 99;
+#else
+static constexpr size_t MAX_MIGRATED_UID_SET_SIZE = 65536 * 999;
+#endif
 
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
 bool IsEnhanceKeySizeValid(size_t size)
@@ -290,6 +295,11 @@ PermUsedTypeEnum AccessTokenManagerClient::GetPermissionUsedType(
     if (errCode != RET_SUCCESS) {
         errCode = ConvertResult(errCode);
         LOGE(ATM_DOMAIN, ATM_TAG, "Request fail, result: %{public}d", errCode);
+        return PermUsedTypeEnum::INVALID_USED_TYPE;
+    }
+    if ((permUsedType < static_cast<int32_t>(PermUsedTypeEnum::INVALID_USED_TYPE)) ||
+        (permUsedType >= static_cast<int32_t>(PermUsedTypeEnum::PERM_USED_TYPE_BUTT))) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Invalid permUsedType %{public}d.", permUsedType);
         return PermUsedTypeEnum::INVALID_USED_TYPE;
     }
     PermUsedTypeEnum result = static_cast<PermUsedTypeEnum>(permUsedType);
@@ -1260,6 +1270,10 @@ int32_t AccessTokenManagerClient::FinishMigration()
 int32_t AccessTokenManagerClient::CheckMigratedUidSet(
     const std::set<int32_t>& totalUids, std::set<int32_t>& unreceivedUids)
 {
+    if (totalUids.size() > MAX_MIGRATED_UID_SET_SIZE) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "totalUids size %{public}zu is invalid.", totalUids.size());
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
     unreceivedUids.clear();
     auto proxy = GetProxy();
     if (proxy == nullptr) {
@@ -1646,11 +1660,14 @@ int32_t AccessTokenManagerClient::RegisterTokenSyncCallback(
         return AccessTokenError::ERR_MALLOC_FAILED;
     }
 
-    std::lock_guard<std::mutex> lock(tokenSyncCallbackMutex_);
-    int32_t res = proxy->RegisterTokenSyncCallback(callback->AsObject());
-    if (res == RET_SUCCESS) {
-        tokenSyncCallback_ = callback;
-        syncCallbackImpl_ = syncCallback;
+    int32_t res = RET_SUCCESS;
+    {
+        std::lock_guard<std::mutex> lock(tokenSyncCallbackMutex_);
+        res = proxy->RegisterTokenSyncCallback(callback->AsObject());
+        if (res == RET_SUCCESS) {
+            tokenSyncCallback_ = callback;
+            syncCallbackImpl_ = syncCallback;
+        }
     }
     if (res != RET_SUCCESS) {
         res = ConvertResult(res);

@@ -244,7 +244,12 @@ bool GetUnsignedIntFromJson(const CJson* jsonObj, const std::string& key, uint32
 
     CJson* jsonObjTmp = cJSON_GetObjectItemCaseSensitive(jsonObj, key.c_str());
     if (jsonObjTmp != nullptr && cJSON_IsNumber(jsonObjTmp)) {
-        value = static_cast<uint32_t>(cJSON_GetNumberValue(jsonObjTmp));
+        double numberValue = cJSON_GetNumberValue(jsonObjTmp);
+        if ((numberValue < 0) || (numberValue > UINT32_MAX)) {
+            value = 0;
+            return false;
+        }
+        value = static_cast<uint32_t>(numberValue);
         return true;
     }
     return false;
@@ -319,7 +324,11 @@ bool AddObjToArray(CJson* jsonArr, CJson* item)
     if (tmpObj == nullptr) {
         return false;
     }
-    return cJSON_AddItemToArray(jsonArr, tmpObj);
+    if (!cJSON_AddItemToArray(jsonArr, tmpObj)) {
+        cJSON_Delete(tmpObj);
+        return false;
+    }
+    return true;
 }
 
 bool AddObjToArray(CJsonUnique& jsonArr, CJsonUnique& item)

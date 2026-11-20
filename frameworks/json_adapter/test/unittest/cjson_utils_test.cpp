@@ -246,6 +246,56 @@ HWTEST_F(CJsonUtilsTest, GetUnsignedIntFromJsonTest001, TestSize.Level3)
 }
 
 /*
+ * @tc.name: GetUnsignedIntFromJson
+ * @tc.desc: GetUnsignedIntFromJson with valid and boundary values
+ * @tc.type: FUNC
+ * @tc.require: TDD coverage
+ */
+HWTEST_F(CJsonUtilsTest, GetUnsignedIntFromJsonTest002, TestSize.Level3)
+{
+    CJsonUnique jsonInner = CreateJson();
+    ASSERT_NE(nullptr, jsonInner);
+    ASSERT_EQ(true, AddUnsignedIntToJson(jsonInner, "test0", 0));
+    ASSERT_EQ(true, AddUnsignedIntToJson(jsonInner, "test1", 100));
+    ASSERT_EQ(true, AddUnsignedIntToJson(jsonInner, "test2", 4294967295u));
+
+    uint32_t res = 1;
+    EXPECT_EQ(true, GetUnsignedIntFromJson(jsonInner, "test0", res));
+    EXPECT_EQ(0u, res);
+    EXPECT_EQ(true, GetUnsignedIntFromJson(jsonInner, "test1", res));
+    EXPECT_EQ(100u, res);
+    EXPECT_EQ(true, GetUnsignedIntFromJson(jsonInner, "test2", res));
+    EXPECT_EQ(4294967295u, res);
+}
+
+/*
+ * @tc.name: GetUnsignedIntFromJson
+ * @tc.desc: GetUnsignedIntFromJson with out-of-range values
+ * @tc.type: FUNC
+ * @tc.require: TDD coverage
+ */
+HWTEST_F(CJsonUtilsTest, GetUnsignedIntFromJsonTest003, TestSize.Level3)
+{
+    CJsonUnique jsonOverMax = CreateJsonFromString("{\"test0\": 4294967296}");
+    ASSERT_NE(nullptr, jsonOverMax);
+    uint32_t res = 1;
+    EXPECT_EQ(false, GetUnsignedIntFromJson(jsonOverMax, "test0", res));
+    EXPECT_EQ(0u, res);
+
+    CJsonUnique jsonNegative = CreateJsonFromString("{\"test1\": -1}");
+    ASSERT_NE(nullptr, jsonNegative);
+    res = 1;
+    EXPECT_EQ(false, GetUnsignedIntFromJson(jsonNegative, "test1", res));
+    EXPECT_EQ(0u, res);
+
+    CJsonUnique jsonOverflow = CreateJsonFromString("{\"test2\": 1e999}");
+    ASSERT_NE(nullptr, jsonOverflow);
+    res = 1;
+    EXPECT_EQ(false, GetUnsignedIntFromJson(jsonOverflow, "test2", res));
+    EXPECT_EQ(0u, res);
+}
+
+/*
  * @tc.name: GetBoolFromJson
  * @tc.desc: GetBoolFromJson
  * @tc.type: FUNC

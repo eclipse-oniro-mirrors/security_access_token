@@ -242,6 +242,10 @@ void UIExtensionCallback::OnReceive(const AAFwk::WantParams& receive)
 void UIExtensionCallback::OnRelease(int32_t releaseCode)
 {
     LOGI(ATM_DOMAIN, ATM_TAG, "ReleaseCode is %{public}d", releaseCode);
+    if (isOnResult_.load()) {
+        LOGI(ATM_DOMAIN, ATM_TAG, "OnResult has been called, skip OnRelease.");
+        return;
+    }
     if (this->reqContext_ == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Request context is null.");
         return;

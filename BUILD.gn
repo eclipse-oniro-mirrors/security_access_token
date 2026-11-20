@@ -20,6 +20,7 @@ group("accesstoken_build_module_test") {
   if (is_standard_system) {
     deps += [
       "frameworks/json_adapter/test:unittest",
+      "frameworks/js/napi/accesstoken/test/unittest:unittest",
       "frameworks/test/unittest:unittest",
       "interfaces/inner_api/el5filekeymanager/test:unittest",
       "interfaces/innerkits/accesstoken/test:unittest",
