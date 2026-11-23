@@ -30,6 +30,7 @@
 #include "hisysevent_adapter.h"
 #include "ipc_skeleton.h"
 #include "json_parse_loader.h"
+#include "permission_manager.h"
 
 namespace OHOS {
 namespace Security {

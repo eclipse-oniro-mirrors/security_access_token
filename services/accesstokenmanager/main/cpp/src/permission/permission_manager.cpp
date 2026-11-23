@@ -46,6 +46,7 @@
 #include "short_grant_manager.h"
 #include "permission_map.h"
 #include "permission_validator.h"
+#include "temp_permission_observer.h"
 #include "tokenid_attributes.h"
 #include "token_field_const.h"
 #include "user_policy_manager.h"

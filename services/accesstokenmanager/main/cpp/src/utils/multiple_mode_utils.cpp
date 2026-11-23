@@ -15,7 +15,6 @@
 
 #include "multiple_mode_utils.h"
 
-#include "accesstoken_info_utils.h"
 #include "parameters.h"
 
 namespace OHOS {

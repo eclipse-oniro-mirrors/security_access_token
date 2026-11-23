@@ -36,7 +36,6 @@
 #include "permission_map.h"
 #include "permission_state_change_info.h"
 #include "permission_status.h"
-#include "temp_permission_observer.h"
 
 namespace OHOS {
 namespace Security {

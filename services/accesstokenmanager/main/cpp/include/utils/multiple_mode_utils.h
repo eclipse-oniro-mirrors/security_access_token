@@ -16,6 +16,7 @@
 #ifndef MULTIPLE_MODE_UTILS_H
 #define MULTIPLE_MODE_UTILS_H
 
+#include <cstdint>
 #include <string>
 
 #include "hap_token_info.h"
@@ -23,6 +24,10 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+// instIndex base for the sub mode (dual mode / same bundleName different package).
+// [0, MAIN_CLONE_INDEX_BASE) is main mode, [MAIN_CLONE_INDEX_BASE, 2 * MAIN_CLONE_INDEX_BASE) is sub mode.
+constexpr int32_t MAIN_CLONE_INDEX_BASE = 10000;
+
 namespace MultipleModeUtils {
 MultipleMode GetTokenMode(int32_t instIndex);
 bool IsMainAppIndex(int32_t instIndex);
