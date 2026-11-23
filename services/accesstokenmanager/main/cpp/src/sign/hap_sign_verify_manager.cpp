@@ -505,6 +505,7 @@ int32_t HapSignVerifyManager::BuildHapPolicy(
     param.isAtomicService = baseline.IsAtomicService();
     param.isDebug = (baseline.GetAppProvisionType() == "debug");
     param.isSideloadApp = IsSideloadFromSignature(baseline);
+    HapSignVerifyHelper::ResolveSharedUidFlag(sortedInfos, policy, param);
     param.appIdentifier = HapSignVerifyHelper::BuildOwnerId(
         baseline.GetAppIdentifier());
 

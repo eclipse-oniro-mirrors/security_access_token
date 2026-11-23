@@ -45,7 +45,7 @@ const uint64_t SET_SPM_FD_TAG = 0xD005A01;
 
 #define SPM_REFCNT_OP_INC 1
 #define SPM_REFCNT_OP_DEC 2
-#define SPM_DATA_VERSION 1
+#define SPM_DATA_VERSION 2
 
 static const int32_t SPM_GET_UID_REFCNT_MAX_RETRY = 3;
 
@@ -66,7 +66,8 @@ struct IoctlSpmData {
     uint64_t permsOffset;
     uint64_t extendPermsOffset;
     uint64_t contentPtr;
-    uint32_t reserved[32]; // reserved for future use, should be set to 0
+    uint32_t appUid; // takes over the former reserved[0] slot, parsed by kernel when entry.version >= 2
+    uint32_t reserved[31]; // reserved[0] has been given way to appUid, remaining slots should be set to 0
 };
 
 struct IoctlSpmDataUpdate {
@@ -121,6 +122,7 @@ static void ConstructStaticKernelData(const SpmData* src, struct IoctlSpmData* d
     dst->permsOffset = src->name.bufSize;
     dst->extendPermsOffset = src->name.bufSize + src->perms.bufSize;
     dst->contentPtr = (uint64_t)(uintptr_t)buf;
+    dst->appUid = src->appUid;
     (void)memset_s(dst->reserved, sizeof(dst->reserved), 0, sizeof(dst->reserved));
 }
 
@@ -294,6 +296,7 @@ static int SpmCopyGetResult(SpmData* entry, const struct IoctlSpmDataQuery* quer
     entry->extendPerms.bufSize = size;
 
     entry->uid = query->entry.uid;
+    entry->appUid = query->entry.appUid;
     entry->tokenid = query->entry.tokenid;
     entry->tokenidAttr = query->entry.tokenidAttr;
     entry->index = query->entry.index;
@@ -372,17 +375,17 @@ static int SpmSetUidRefCnt(uint32_t uid, uint32_t spawnid, int32_t opt)
     return ACCESS_TOKEN_OK;
 }
 
-int SpmIncUidRefCnt(uint32_t uid, uint32_t spawnid)
+int SpmIncUidRefCnt(uint32_t appUid, uint32_t spawnid)
 {
-    return SpmSetUidRefCnt(uid, spawnid, SPM_REFCNT_OP_INC);
+    return SpmSetUidRefCnt(appUid, spawnid, SPM_REFCNT_OP_INC);
 }
 
-int SpmDecUidRefCnt(uint32_t uid, uint32_t spawnid)
+int SpmDecUidRefCnt(uint32_t appUid, uint32_t spawnid)
 {
-    return SpmSetUidRefCnt(uid, spawnid, SPM_REFCNT_OP_DEC);
+    return SpmSetUidRefCnt(appUid, spawnid, SPM_REFCNT_OP_DEC);
 }
 
-int SpmGetUidRefCnt(uint32_t uid, uint64_t* refcnt)
+int SpmGetUidRefCnt(uint32_t appUid, uint64_t* refcnt)
 {
     if (refcnt == NULL) {
         return EINVAL;
@@ -395,7 +398,7 @@ int SpmGetUidRefCnt(uint32_t uid, uint64_t* refcnt)
     fdsan_exchange_owner_tag(fd, 0, SET_SPM_FD_TAG);
 
     struct IoctlSpmUidRef query;
-    query.uid = uid;
+    query.uid = appUid;
     query.refcnt = 0;
 
     int ret = ioctl(fd, ACCESS_TOKENID_GET_REFCNT_UID, &query);
@@ -424,7 +427,7 @@ static bool IsKernelSupportSpm()
     return isSupportSpm;
 }
 
-int SpmGetUidRefCntWithRetry(uint32_t uid, uint64_t* refcnt)
+int SpmGetUidRefCntWithRetry(uint32_t appUid, uint64_t* refcnt)
 {
     if (refcnt == NULL) {
         return EINVAL;
@@ -435,7 +438,7 @@ int SpmGetUidRefCntWithRetry(uint32_t uid, uint64_t* refcnt)
     }
     int ret = 0;
     for (int32_t i = 0; i < SPM_GET_UID_REFCNT_MAX_RETRY; i++) {
-        ret = SpmGetUidRefCnt(uid, refcnt);
+        ret = SpmGetUidRefCnt(appUid, refcnt);
         if (ret == ACCESS_TOKEN_OK) {
             return ACCESS_TOKEN_OK;
         }

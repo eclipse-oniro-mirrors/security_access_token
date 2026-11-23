@@ -40,6 +40,9 @@ struct BundleParam final {
     bool isAtomicService = false;
     bool isDebug = false;
     bool isSideloadApp = false;
+    // Decision whether the runtime uid switches to userId form, computed once at
+    // policy build (see HapSignVerifyManager::BuildHapPolicy).
+    bool isSharedUid = false;
 };
 
 class BundleNoCachedInfo final {
@@ -48,6 +51,11 @@ public:
     int32_t distributionType = 0;
     uint32_t idType = 0;
     uint64_t ownerid = 0;
+    // Bundle-level sharedUid decision: filled from BundleParam at policy build, or
+    // recovered from the kernel entry on query paths (LoadBundleNoCachedInfoFromKernel).
+    // Consumers derive the runtime uid as ResolveHapUid(appUid, isSharedUid); the uid
+    // itself is never stored on token structures.
+    bool isSharedUid = false;
 };
 
 class BundleInfoInner final {

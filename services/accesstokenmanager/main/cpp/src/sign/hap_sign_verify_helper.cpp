@@ -15,12 +15,14 @@
 
 #include "hap_sign_verify_helper.h"
 
+#include <algorithm>
 #include <cerrno>
 #include <cstdint>
 #include <cstdlib>
 #include <unordered_set>
 
 #include "accesstoken_common_log.h"
+#include "accesstoken_info_utils.h"
 #include "cjson_utils.h"
 #include "interfaces/hap_verify.h"
 #include "permission_data_brief.h"
@@ -243,6 +245,27 @@ void HapSignVerifyHelper::FillPermissionStateList(const std::vector<TrustedBundl
             permStateList.emplace_back(state);
         }
     }
+}
+
+void HapSignVerifyHelper::ResolveSharedUidFlag(const std::vector<TrustedBundleInfoInner>& sortedInfos,
+    const HapPolicy& policy, BundleParam& param)
+{
+    // The uid-switch decision is captured once so downstream install, migration and boot
+    // paths consume a single boolean. Like the requested-permission merge, any module
+    // declaring sharedUID with 2in1-only device types switches the whole bundle.
+    // RestoreInstallPolicyFromKernel cannot recover the decision inputs, so a
+    // kernel-restored policy keeps isSharedUid false, and the per-boot uid fix flow
+    // in BootVerifyScheduler re-resolves uid at next boot, removing the former flip-back
+    // hazard. SPM_MIN_VERSION_SUPPORT_APPUID still gates kernel capability only.
+    bool hasCustomSandbox = AccessTokenInfoUtils::HasCustomSandboxPermission(policy.permStateList);
+    param.isSharedUid = std::any_of(sortedInfos.begin(), sortedInfos.end(),
+        [&hasCustomSandbox](const TrustedBundleInfoInner& info) {
+            return AccessTokenInfoUtils::IsSharedUid(info.moduleData.sharedUID,
+                info.moduleData.deviceTypes, hasCustomSandbox);
+        });
+    LOGI(ATM_DOMAIN, ATM_TAG, "Uid switch decision for bundle %{public}s: moduleCount=%{public}zu, "
+        "hasCustomSandbox=%{public}d, shouldSwitch=%{public}d.",
+        param.bundleName.c_str(), sortedInfos.size(), hasCustomSandbox, param.isSharedUid);
 }
 
 void HapSignVerifyHelper::BuildPermBriefDataListFromPolicy(const HapPolicy& policy,

@@ -949,6 +949,7 @@ bool UpdateHapPolicyStubFuzzTest(FuzzedDataProvider &provider)
     uint32_t tokenId = provider.ConsumeIntegral<uint32_t>();
     BundlePolicyIdl policy;
     InitBundlePolicyIdl(provider, policy);
+    int32_t appUid = provider.ConsumeIntegral<int32_t>();
     int32_t uid = provider.ConsumeIntegral<int32_t>();
 
     MessageParcel datas;
@@ -960,6 +961,9 @@ bool UpdateHapPolicyStubFuzzTest(FuzzedDataProvider &provider)
         return false;
     }
     if (BundlePolicyIdlBlockMarshalling(datas, policy) != ERR_NONE) {
+        return false;
+    }
+    if (!datas.WriteInt32(appUid)) {
         return false;
     }
     if (!datas.WriteInt32(uid)) {

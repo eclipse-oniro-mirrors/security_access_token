@@ -203,7 +203,7 @@ HWTEST_F(SpmKitTest, UpdateHapPolicy001, TestSize.Level1)
     int32_t uid = TEST_UID;
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx.tokenIdExStruct.tokenID = TEST_TOKEN_ID;
-    EXPECT_EQ(0, AccessTokenKit::UpdateHapPolicy(TEST_SESSION_ID, tokenIdEx, BuildBundlePolicy(), uid));
+    EXPECT_EQ(0, AccessTokenKit::UpdateHapPolicy(TEST_SESSION_ID, tokenIdEx, BuildBundlePolicy(), uid, uid));
 }
 
 /**

@@ -37,6 +37,11 @@ declare_args() {
   access_token_privacy_bundle_start_stop_enable = false
   access_token_enable_spm = true
   access_token_automation_control_enable = false
+  # access_token_support_shareduid enables the uid=userId spec itself; the temporary
+  # access_token_enable_shareduid isolates the db and related functionality from other
+  # modules — uid switching applies only when both are on.
+  access_token_enable_shareduid = false
+  access_token_support_shareduid = false
 }
 
 # External dependencies for each feature flag
@@ -75,6 +80,14 @@ if (access_token_camera_float_window_enable == true) {
 
 if (access_token_support_subprofile) {
   access_token_cflags_cc += [ "-DACCESS_TOKEN_SUPPORT_SUBPROFILE" ]
+}
+
+if (access_token_support_shareduid && access_token_enable_spm) {
+  access_token_cflags_cc += [ "-DACCESS_TOKEN_SUPPORT_SHAREDUID" ]
+}
+
+if (access_token_enable_shareduid && access_token_enable_spm) {
+  access_token_cflags_cc += [ "-DACCESS_TOKEN_ENABLE_SHAREDUID" ]
 }
 
 if (access_token_enable_spm == true) {

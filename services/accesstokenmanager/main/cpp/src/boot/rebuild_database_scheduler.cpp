@@ -218,7 +218,10 @@ void RebuildDatabaseScheduler::BuildHapTokenRecord(const RebuildDatabaseItem& it
     tokenItem.tokenAttr = item.info.isUninstalled ? (tokenAttr | TOKEN_RESERVED_FLAG) : tokenAttr;
     tokenItem.apiVersion = 0; // default 0, updated after sign verification
     tokenItem.permDialogCapState = false;
-    tokenItem.uid = realUid;
+    // The sandbox dir owner is the install-allocated uid (appUid form). Seed both uid and
+    // appUid with it: the row follows the migration stage-1 form (uid == appUid) and the
+    // per-boot uid fix re-derives the runtime uid for switched bundles.
+    tokenItem.appUid = realUid;
     tokenItem.migrated = true;
     // App uninstalled with data kept: set reserved to RESERVED_DATA(=2).
     tokenItem.reserved = item.info.isUninstalled ? ReservedType::RESERVED_DATA : ReservedType::NONE;

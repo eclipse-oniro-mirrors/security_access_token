@@ -32,6 +32,7 @@ constexpr AccessTokenID TEST_TOKEN_ID = 0x20260428;
 constexpr AccessTokenID TEST_TOKEN_ID_2 =  0x20260429;
 constexpr int32_t TEST_USER_ID = 100;
 constexpr int32_t TEST_INST_INDEX = 0;
+constexpr int32_t TEST_APP_UID = 20100000;
 
 HapTokenInfoItem BuildTestHapInfoItem(AccessTokenID tokenId, const std::string& bundleName, int32_t apiVersion)
 {
@@ -42,7 +43,7 @@ HapTokenInfoItem BuildTestHapInfoItem(AccessTokenID tokenId, const std::string& 
     item.apiVersion = apiVersion;
     item.instIndex = static_cast<uint32_t>(TEST_INST_INDEX);
     item.dlpType = DLP_COMMON;
-    item.uid = 20100000; //20100000: test uid
+    item.appUid = TEST_APP_UID;
     return item;
 }
 
@@ -76,7 +77,7 @@ AccessTokenInfoManager::HapTokenRestoreData BuildRestoreData(AccessTokenID token
     restoreData.hapTokenInfoItem.instIndex = TEST_INST_INDEX;
     restoreData.hapTokenInfoItem.dlpType = DLP_COMMON;
     restoreData.hapTokenInfoItem.tokenAttr = 0;
-    restoreData.hapTokenInfoItem.uid = 20100000; //20100000: test uid
+    restoreData.hapTokenInfoItem.appUid = TEST_APP_UID;
     restoreData.hapTokenInfoItem.apl = APL_NORMAL;
     restoreData.requestedPermData = { permData1, permData2 };
     restoreData.extendedPermList = { extendedPerm };
@@ -438,7 +439,7 @@ HWTEST_F(HapCacheCommitTest, RestoreHapCache002, TestSize.Level0)
     restoreData1.hapTokenInfoItem.instIndex = 0;
     restoreData1.hapTokenInfoItem.dlpType = DLP_COMMON;
     restoreData1.hapTokenInfoItem.tokenAttr = 0;
-    restoreData1.hapTokenInfoItem.uid = 20100000;
+    restoreData1.hapTokenInfoItem.appUid = TEST_APP_UID;
     restoreData1.hapTokenInfoItem.apl = APL_NORMAL;
     restoreData1.requestedPermData = BuildBriefData(1, PERMISSION_GRANTED, 0);
 
@@ -451,7 +452,7 @@ HWTEST_F(HapCacheCommitTest, RestoreHapCache002, TestSize.Level0)
     restoreData2.hapTokenInfoItem.instIndex = 1;
     restoreData2.hapTokenInfoItem.dlpType = DLP_COMMON;
     restoreData2.hapTokenInfoItem.tokenAttr = 0;
-    restoreData2.hapTokenInfoItem.uid = 20100001;
+    restoreData2.hapTokenInfoItem.appUid = 20100001;
     restoreData2.hapTokenInfoItem.apl = APL_NORMAL;
     restoreData2.requestedPermData = BuildBriefData(2, PERMISSION_DENIED, 0);
 

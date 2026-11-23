@@ -73,8 +73,8 @@ public:
     uint32_t GetReqPermissionSize();
     HapTokenInfo GetHapInfoBasic() const;
     int GetUserID() const;
-    int32_t GetUid() const;
-    void SetUid(int32_t uid);
+    int32_t GetAppUid() const;
+    void SetAppUid(int32_t appUid);
     int GetDlpType() const;
     AccessTokenAttr GetAttr() const;
     std::string GetBundleName() const;

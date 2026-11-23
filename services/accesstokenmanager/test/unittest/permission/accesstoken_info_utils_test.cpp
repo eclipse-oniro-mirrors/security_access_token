@@ -19,6 +19,7 @@
 #include "access_token.h"
 #include "accesstoken_info_utils.h"
 #include "parameter.h"
+#include "permission_data_brief.h"
 #include "permission_feature_manager.h"
 #include "permission_map.h"
 #include "provision/provision_info.h"
@@ -137,6 +138,7 @@ HWTEST_F(AccessTokenInfoUtilsTest, BuildHapTokenInfo001, TestSize.Level0)
 {
     Identity id = {};
     id.uid = 20100042;
+    id.appUid = 20100042;
     id.tokenId = 0x12345678;
 
     BundleParam param;
@@ -151,7 +153,6 @@ HWTEST_F(AccessTokenInfoUtilsTest, BuildHapTokenInfo001, TestSize.Level0)
 
     EXPECT_EQ(static_cast<AccessTokenID>(id.tokenId & 0xffffffff), info.tokenID);
     EXPECT_EQ(id.uid / BASE_USER_RANGE, info.userID);
-    EXPECT_EQ(id.uid, info.uid);
     EXPECT_EQ(param.bundleName, info.bundleName);
     EXPECT_EQ(205, info.apiVersion);
     EXPECT_EQ(DEFAULT_TOKEN_VERSION, info.ver);
@@ -170,6 +171,7 @@ HWTEST_F(AccessTokenInfoUtilsTest, BuildHapTokenInfo002, TestSize.Level0)
 {
     Identity id = {};
     id.uid = 400000;
+    id.appUid = 400000;
     id.tokenId = 0x87654321;
 
     BundleParam param;
@@ -183,6 +185,31 @@ HWTEST_F(AccessTokenInfoUtilsTest, BuildHapTokenInfo002, TestSize.Level0)
     EXPECT_EQ(0u, info.tokenAttr & SYSTEM_APP_FLAG);
     EXPECT_EQ(0u, info.tokenAttr & ATOMIC_SERVICE_FLAG);
     EXPECT_EQ(0u, info.tokenAttr & DEBUG_APP_FLAG);
+}
+
+/**
+ * @tc.name: BuildHapTokenInfo003
+ * @tc.desc: Verify userID is derived from appUid (not uid) when uid differs from appUid after uid switch.
+ * @tc.type: FUNC
+ */
+HWTEST_F(AccessTokenInfoUtilsTest, BuildHapTokenInfo003, TestSize.Level0)
+{
+    Identity id = {};
+    id.uid = 100; // 100: switched uid (user id), differs from appUid
+    id.appUid = 20010001;
+    id.tokenId = 0x12345678;
+
+    BundleParam param;
+    param.bundleName = "com.ohos.helper.splituid";
+    param.apiVersion = 12;
+
+    HapTokenInfo info;
+    AccessTokenInfoUtils::BuildHapTokenInfo(id, param, info);
+
+    EXPECT_EQ(id.appUid / BASE_USER_RANGE, info.userID);
+    EXPECT_EQ(100, info.userID);
+    EXPECT_EQ(id.appUid, info.uid);
+    EXPECT_EQ(20010001, info.uid);
 }
 
 /**
@@ -384,6 +411,165 @@ HWTEST_F(AccessTokenInfoUtilsTest, IsSystemSpmEnforcing001, TestSize.Level0)
 
     SetParameter(ACCESS_TOKEN_SERVICE_SPM_ENFORCING_KEY, "0");
     EXPECT_FALSE(AccessTokenInfoUtils::IsSystemSpmEnforcing());
+}
+
+/**
+ * @tc.name: IsSharedUid_001
+ * @tc.desc: Verify the sharedUID dimension: with ACCESS_TOKEN_SUPPORT_SHAREDUID enabled sharedUID
+ *           switches only when deviceTypes is exactly ["2in1"]; with the feature disabled it
+ *           never switches.
+ * @tc.type: FUNC
+ */
+HWTEST_F(AccessTokenInfoUtilsTest, IsSharedUid_001, TestSize.Level0)
+{
+#ifdef ACCESS_TOKEN_SUPPORT_SHAREDUID
+    EXPECT_TRUE(AccessTokenInfoUtils::IsSharedUid(true, {"2in1"}, false));
+    EXPECT_FALSE(AccessTokenInfoUtils::IsSharedUid(true, {"phone"}, false));
+    EXPECT_FALSE(AccessTokenInfoUtils::IsSharedUid(true, {}, false));
+#else
+    // Feature off: the sharedUID dimension never switches, whatever deviceTypes is.
+    EXPECT_FALSE(AccessTokenInfoUtils::IsSharedUid(true, {"2in1"}, false));
+    EXPECT_FALSE(AccessTokenInfoUtils::IsSharedUid(true, {"phone"}, false));
+    EXPECT_FALSE(AccessTokenInfoUtils::IsSharedUid(true, {}, false));
+#endif
+}
+
+/**
+ * @tc.name: IsSharedUidDeviceTypesArray001
+ * @tc.desc: Full deviceTypes-dimension truth table: with ACCESS_TOKEN_SUPPORT_SHAREDUID enabled
+ *           the criterion is hasCustomSandboxPerm || (sharedUID && deviceTypes.size() == 1 &&
+ *           deviceTypes[0] == "2in1"); with the feature disabled every combination returns false.
+ * @tc.type: FUNC
+ */
+HWTEST_F(AccessTokenInfoUtilsTest, IsSharedUidDeviceTypesArray001, TestSize.Level0)
+{
+#ifdef ACCESS_TOKEN_SUPPORT_SHAREDUID
+    // sharedUID dimension: only deviceTypes exactly ["2in1"] switches.
+    EXPECT_TRUE(AccessTokenInfoUtils::IsSharedUid(true, {"2in1"}, false));
+    EXPECT_FALSE(AccessTokenInfoUtils::IsSharedUid(true, {"phone"}, false));
+    EXPECT_FALSE(AccessTokenInfoUtils::IsSharedUid(true, {"default"}, false));
+    EXPECT_FALSE(AccessTokenInfoUtils::IsSharedUid(true, {}, false));
+    EXPECT_FALSE(AccessTokenInfoUtils::IsSharedUid(true, {"2IN1"}, false));
+    // Array-length semantics: any size other than 1 never switches, even when "2in1" is present.
+    EXPECT_FALSE(AccessTokenInfoUtils::IsSharedUid(true, {"2in1", "phone"}, false));
+    EXPECT_FALSE(AccessTokenInfoUtils::IsSharedUid(true, {"phone", "2in1"}, false));
+    // CUSTOM_SANDBOX dimension: switches independently of sharedUID and deviceTypes.
+    EXPECT_TRUE(AccessTokenInfoUtils::IsSharedUid(false, {}, true));
+    EXPECT_TRUE(AccessTokenInfoUtils::IsSharedUid(false, {"2in1"}, true));
+    EXPECT_TRUE(AccessTokenInfoUtils::IsSharedUid(false, {"phone"}, true));
+    EXPECT_TRUE(AccessTokenInfoUtils::IsSharedUid(true, {"phone"}, true));
+    EXPECT_TRUE(AccessTokenInfoUtils::IsSharedUid(true, {"2in1"}, true));
+    EXPECT_TRUE(AccessTokenInfoUtils::IsSharedUid(false, {"2in1", "phone"}, true));
+    // Neither dimension: never switches.
+    EXPECT_FALSE(AccessTokenInfoUtils::IsSharedUid(false, {"2in1"}, false));
+    EXPECT_FALSE(AccessTokenInfoUtils::IsSharedUid(false, {"phone"}, false));
+    EXPECT_FALSE(AccessTokenInfoUtils::IsSharedUid(false, {}, false));
+    EXPECT_FALSE(AccessTokenInfoUtils::IsSharedUid(false, {"2in1", "phone"}, false));
+#else
+    // Feature off: the criterion is compiled out, every combination returns false.
+    EXPECT_FALSE(AccessTokenInfoUtils::IsSharedUid(true, {"2in1"}, false));
+    EXPECT_FALSE(AccessTokenInfoUtils::IsSharedUid(true, {"2in1", "phone"}, false));
+    EXPECT_FALSE(AccessTokenInfoUtils::IsSharedUid(true, {"2in1"}, true));
+    EXPECT_FALSE(AccessTokenInfoUtils::IsSharedUid(true, {"phone"}, true));
+    EXPECT_FALSE(AccessTokenInfoUtils::IsSharedUid(false, {"2in1"}, true));
+    EXPECT_FALSE(AccessTokenInfoUtils::IsSharedUid(false, {}, true));
+    EXPECT_FALSE(AccessTokenInfoUtils::IsSharedUid(true, {}, false));
+    EXPECT_FALSE(AccessTokenInfoUtils::IsSharedUid(false, {"2in1"}, false));
+    EXPECT_FALSE(AccessTokenInfoUtils::IsSharedUid(false, {}, false));
+#endif
+}
+
+/**
+ * @tc.name: HasCustomSandboxPermission001
+ * @tc.desc: Verify HasCustomSandboxPermission reports true when CUSTOM_SANDBOX appears in the
+ *           permission state list, alone or among other permissions.
+ * @tc.type: FUNC
+ */
+HWTEST_F(AccessTokenInfoUtilsTest, HasCustomSandboxPermission001, TestSize.Level0)
+{
+    // Precondition: CUSTOM_SANDBOX is defined and enabled in the device permission table.
+    ASSERT_TRUE(IsDefinedPermissionInner("ohos.permission.CUSTOM_SANDBOX"));
+
+    std::vector<PermissionStatus> onlySandbox = {BuildStatus("ohos.permission.CUSTOM_SANDBOX")};
+    EXPECT_TRUE(AccessTokenInfoUtils::HasCustomSandboxPermission(onlySandbox));
+
+    std::vector<PermissionStatus> withOthers = {
+        BuildStatus("ohos.permission.CAMERA"),
+        BuildStatus("ohos.permission.CUSTOM_SANDBOX"),
+        BuildStatus("ohos.permission.MICROPHONE"),
+    };
+    EXPECT_TRUE(AccessTokenInfoUtils::HasCustomSandboxPermission(withOthers));
+}
+
+/**
+ * @tc.name: HasCustomSandboxPermission002
+ * @tc.desc: Verify HasCustomSandboxPermission reports false for an empty list and for lists
+ *           holding only other permissions.
+ * @tc.type: FUNC
+ */
+HWTEST_F(AccessTokenInfoUtilsTest, HasCustomSandboxPermission002, TestSize.Level0)
+{
+    std::vector<PermissionStatus> emptyList;
+    EXPECT_FALSE(AccessTokenInfoUtils::HasCustomSandboxPermission(emptyList));
+
+    std::vector<PermissionStatus> otherPerms = {
+        BuildStatus("ohos.permission.CAMERA"),
+        BuildStatus("ohos.permission.MICROPHONE"),
+    };
+    EXPECT_FALSE(AccessTokenInfoUtils::HasCustomSandboxPermission(otherPerms));
+}
+
+/**
+ * @tc.name: HasCustomSandboxPermission003
+ * @tc.desc: Verify HasCustomSandboxPermission consults the device definition table: with the
+ *           CUSTOM_SANDBOX definition disabled it reports false even when the permission is in
+ *           the list, and restoring the definition brings the true result back.
+ * @tc.type: FUNC
+ */
+HWTEST_F(AccessTokenInfoUtilsTest, HasCustomSandboxPermission003, TestSize.Level0)
+{
+    const std::string customSandbox = "ohos.permission.CUSTOM_SANDBOX";
+    std::vector<PermissionStatus> permStateList = {BuildStatus(customSandbox)};
+    ASSERT_TRUE(AccessTokenInfoUtils::HasCustomSandboxPermission(permStateList));
+
+    // Between the disable and the restore only EXPECTs run, so no early return can leak the
+    // disabled definition into the rest of the single-process suite.
+    ASSERT_TRUE(SetPermissionBriefEnabled(customSandbox, false));
+    EXPECT_FALSE(IsDefinedPermissionInner(customSandbox));
+    EXPECT_FALSE(AccessTokenInfoUtils::HasCustomSandboxPermission(permStateList));
+    EXPECT_TRUE(SetPermissionBriefEnabled(customSandbox, true));
+    EXPECT_TRUE(IsDefinedPermissionInner(customSandbox));
+    EXPECT_TRUE(AccessTokenInfoUtils::HasCustomSandboxPermission(permStateList));
+}
+
+/**
+ * @tc.name: ResolveHapUidInvalidUid001
+ * @tc.desc: ResolveHapUid returns INVALID_UID for an invalid appUid without querying the kernel,
+ *           whatever isSharedUid is.
+ * @tc.type: FUNC
+ */
+HWTEST_F(AccessTokenInfoUtilsTest, ResolveHapUidInvalidUid001, TestSize.Level0)
+{
+    // The isSharedUid flag is irrelevant here: INVALID_UID short-circuits before the kernel
+    // version query, so the expectation holds in every build config and on every kernel version.
+    EXPECT_EQ(-1, AccessTokenInfoUtils::ResolveHapUid(-1, true));
+    EXPECT_EQ(-1, AccessTokenInfoUtils::ResolveHapUid(-1, false));
+}
+
+/**
+ * @tc.name: ResolveHapUidNoSwitchCondition001
+ * @tc.desc: ResolveHapUid keeps appUid when isSharedUid is false, on any kernel version and
+ *           in every build config.
+ * @tc.type: FUNC
+ */
+HWTEST_F(AccessTokenInfoUtilsTest, ResolveHapUidNoSwitchCondition001, TestSize.Level0)
+{
+    constexpr int32_t testAppUid = 20010001;
+    // Version-agnostic by design: this target links the real libtokensetproc_shared, so on a
+    // non-SPM kernel the version query fails and ResolveHapUid falls back to appUid, while on
+    // an SPM kernel the false flag still keeps appUid. Switch-path ON coverage lives in the
+    // boot and spm suites, which link the fake setproc instead.
+    EXPECT_EQ(testAppUid, AccessTokenInfoUtils::ResolveHapUid(testAppUid, false));
 }
 } // namespace AccessToken
 } // namespace Security

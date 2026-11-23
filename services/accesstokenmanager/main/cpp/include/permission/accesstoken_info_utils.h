@@ -25,6 +25,7 @@
 #include "hap_data_structure.h"
 #include "hap_token_info.h"
 #include "hap_token_info_inner.h"
+#include "permission_status.h"
 
 namespace OHOS {
 namespace Security {
@@ -34,6 +35,8 @@ static const char* ACCESS_TOKEN_SERVICE_SPM_ENFORCING_KEY = "accesstoken.permiss
 // instIndex base for the sub mode (dual mode / same bundleName different package).
 // [0, MAIN_CLONE_INDEX_BASE) is main mode, [MAIN_CLONE_INDEX_BASE, 2 * MAIN_CLONE_INDEX_BASE) is sub mode.
 constexpr int32_t MAIN_CLONE_INDEX_BASE = 10000;
+// spm kernel data struct version that introduces the appUid/uid separation switch.
+constexpr uint32_t SPM_MIN_VERSION_SUPPORT_APPUID = 2;
 
 class AccessTokenInfoUtils final {
 public:
@@ -54,6 +57,22 @@ public:
     static ReservedType GetReservedTokenTypeDBValue(const GenericValues& values);
     static bool IsPlaceholderModuleName(const std::string& moduleName);
     static int32_t CheckAndResolveHapPath(const std::string& filePath, std::string& resolvedPath);
+    // Decides whether the runtime uid switches from appUid to userId. Two build features
+    // gate it: access_token_support_shareduid enables the uid=userId spec, while the
+    // temporary access_token_enable_shareduid isolates the db and related functionality
+    // from other modules. Switching applies only when both are on; otherwise it always
+    // returns false so uid stays appUid. With both on, the criterion is hasCustomSandboxPerm,
+    // or sharedUID with deviceTypes holding exactly one entry "2in1".
+    static bool IsSharedUid(bool sharedUID, const std::vector<std::string>& deviceTypes,
+        bool hasCustomSandboxPerm);
+    // Resolves the runtime uid from appUid: INVALID_UID short-circuits; a failing kernel SPM
+    // version query or a version below SPM_MIN_VERSION_SUPPORT_APPUID falls back to appUid; otherwise
+    // ExtractUserId(appUid) is returned only when isSharedUid is true.
+    static int32_t ResolveHapUid(int32_t appUid, bool isSharedUid);
+    // Reports whether CUSTOM_SANDBOX is present in permStateList. Returns false when
+    // CUSTOM_SANDBOX is not defined-and-enabled on this device (IsDefinedPermissionInner),
+    // otherwise true when the permission appears in the list.
+    static bool HasCustomSandboxPermission(const std::vector<PermissionStatus>& permStateList);
 
 private:
     AccessTokenInfoUtils() = delete;

@@ -131,15 +131,15 @@ HWTEST_F(AccessTokenIdManagerCoverageTest, InitSingleBundleIdCache003, TestSize.
 }
 
 /*
- * @tc.name: ImportInitialUids001
+ * @tc.name: ImportInitialAppUids001
  * @tc.desc: Import valid uids into empty cache succeeds and populates bundleIdSet_
  * @tc.type: FUNC
  * @tc.require: TDD
  */
-HWTEST_F(AccessTokenIdManagerCoverageTest, ImportInitialUids001, TestSize.Level4)
+HWTEST_F(AccessTokenIdManagerCoverageTest, ImportInitialAppUids001, TestSize.Level4)
 {
     std::vector<int32_t> uids = {TEST_BUNDLE_ID_BASE, TEST_BUNDLE_ID_1, TEST_BUNDLE_ID_2};
-    ASSERT_EQ(RET_SUCCESS, AccessTokenIDManager::GetInstance().ImportInitialUids(uids));
+    ASSERT_EQ(RET_SUCCESS, AccessTokenIDManager::GetInstance().ImportInitialAppUids(uids));
     ASSERT_EQ(3U, AccessTokenIDManager::GetInstance().bundleIdSet_.size());
     ASSERT_EQ(1U, AccessTokenIDManager::GetInstance().bundleIdSet_.count(TEST_BUNDLE_ID_BASE));
     ASSERT_EQ(1U, AccessTokenIDManager::GetInstance().bundleIdSet_.count(TEST_BUNDLE_ID_1));
@@ -147,17 +147,17 @@ HWTEST_F(AccessTokenIdManagerCoverageTest, ImportInitialUids001, TestSize.Level4
 }
 
 /*
- * @tc.name: ImportInitialUids002
+ * @tc.name: ImportInitialAppUids002
  * @tc.desc: Mixed valid/invalid uids: invalid ones are silently skipped
  * @tc.type: FUNC
  * @tc.require: TDD
  */
-HWTEST_F(AccessTokenIdManagerCoverageTest, ImportInitialUids002, TestSize.Level4)
+HWTEST_F(AccessTokenIdManagerCoverageTest, ImportInitialAppUids002, TestSize.Level4)
 {
     // -1: negative; 5000: bundleId < 10000; 10000, 10001: valid
     std::vector<int32_t> uids =
         {SCAN_START_INIT_VALUE, INVALID_BUNDLE_ID_BELOW_MIN, TEST_BUNDLE_ID_BASE, TEST_BUNDLE_ID_1};
-    ASSERT_EQ(RET_SUCCESS, AccessTokenIDManager::GetInstance().ImportInitialUids(uids));
+    ASSERT_EQ(RET_SUCCESS, AccessTokenIDManager::GetInstance().ImportInitialAppUids(uids));
     ASSERT_EQ(2U, AccessTokenIDManager::GetInstance().bundleIdSet_.size());
     ASSERT_EQ(1U, AccessTokenIDManager::GetInstance().bundleIdSet_.count(TEST_BUNDLE_ID_BASE));
     ASSERT_EQ(1U, AccessTokenIDManager::GetInstance().bundleIdSet_.count(TEST_BUNDLE_ID_1));
@@ -199,66 +199,67 @@ HWTEST_F(AccessTokenIdManagerCoverageTest, RemoveBundleId003, TestSize.Level4)
 }
 
 /*
- * @tc.name: TranslateUid001
+ * @tc.name: TranslateAppUid001
  * @tc.desc: Valid srcUid is translated to correct outUid for dstLocalId
  * @tc.type: FUNC
  * @tc.require: TDD
  */
-HWTEST_F(AccessTokenIdManagerCoverageTest, TranslateUid001, TestSize.Level4)
+HWTEST_F(AccessTokenIdManagerCoverageTest, TranslateAppUid001, TestSize.Level4)
 {
     // Extract bundleId(10000) from srcUid(20010000),
     // then compute new uid using dstLocalId(101): 101*200000+10000=20210000
     int32_t outUid = 0;
     ASSERT_EQ(RET_SUCCESS,
-        AccessTokenIDManager::GetInstance().TranslateUid(TEST_UID_BASE, TEST_TRANSLATE_LOCAL_ID, outUid));
+        AccessTokenIDManager::GetInstance().TranslateAppUid(TEST_UID_BASE, TEST_TRANSLATE_LOCAL_ID, outUid));
     ASSERT_EQ(TEST_TRANSLATED_UID, outUid);
 }
 
 /*
- * @tc.name: TranslateUid002
+ * @tc.name: TranslateAppUid002
  * @tc.desc: Invalid srcUid (negative) returns ERR_PARAM_INVALID
  * @tc.type: FUNC
  * @tc.require: TDD
  */
-HWTEST_F(AccessTokenIdManagerCoverageTest, TranslateUid002, TestSize.Level4)
+HWTEST_F(AccessTokenIdManagerCoverageTest, TranslateAppUid002, TestSize.Level4)
 {
     int32_t outUid = 0;
-    ASSERT_EQ(ERR_PARAM_INVALID, AccessTokenIDManager::GetInstance().TranslateUid(SCAN_START_INIT_VALUE, 101, outUid));
+    ASSERT_EQ(ERR_PARAM_INVALID,
+        AccessTokenIDManager::GetInstance().TranslateAppUid(SCAN_START_INIT_VALUE, 101, outUid));
 }
 
 /*
- * @tc.name: AllocUid001
+ * @tc.name: AllocAppUid001
  * @tc.desc: All bundleIds exhausted returns ERR_OVERSIZE without kernel call
  * @tc.type: FUNC
  * @tc.require: TDD
  */
-HWTEST_F(AccessTokenIdManagerCoverageTest, AllocUid001, TestSize.Level4)
+HWTEST_F(AccessTokenIdManagerCoverageTest, AllocAppUid001, TestSize.Level4)
 {
 #ifdef SPM_DATA_ENABLE
-    // AllocUid checks migrationDone_ first; must be true to reach bundleId exhaustion path
+    // AllocAppUid checks migrationDone_ first; must be true to reach bundleId exhaustion path
     AccessTokenIDManager::GetInstance().migrationDone_ = true;
 #endif
-    // Fill the entire bundleId range [10000, 65535]; AllocUid skips kernel call for occupied entries
+    // Fill the entire bundleId range [10000, 65535]; AllocAppUid skips kernel call for occupied entries
     for (int32_t bundleId = TEST_BUNDLE_ID_BASE; bundleId <= BUNDLE_ID_MAX_FOR_TEST; ++bundleId) {
         AccessTokenIDManager::GetInstance().bundleIdSet_.insert(bundleId);
     }
     int32_t outUid = 0;
-    ASSERT_EQ(ERR_OVERSIZE, AccessTokenIDManager::GetInstance().AllocUid(TEST_LOCAL_ID, outUid));
+    ASSERT_EQ(ERR_OVERSIZE, AccessTokenIDManager::GetInstance().AllocAppUid(TEST_LOCAL_ID, outUid));
 }
 
 #ifdef SPM_DATA_ENABLE
 /*
- * @tc.name: AllocUid002
+ * @tc.name: AllocAppUid002
  * @tc.desc: Alloc without migration done return ERR_PARAM_INVALID
  * @tc.type: FUNC
  * @tc.require: TDD
  */
-HWTEST_F(AccessTokenIdManagerCoverageTest, AllocUid002, TestSize.Level4)
+HWTEST_F(AccessTokenIdManagerCoverageTest, AllocAppUid002, TestSize.Level4)
 {
-    // Fill the entire bundleId range [10000, 65535]; AllocUid skips kernel call for occupied entries
+    // Fill the entire bundleId range [10000, 65535]; AllocAppUid skips kernel call for occupied entries
     AccessTokenIDManager::GetInstance().migrationDone_ = false;
     int32_t outUid = 0;
-    ASSERT_EQ(ERR_PARAM_INVALID, AccessTokenIDManager::GetInstance().AllocUid(TEST_LOCAL_ID, outUid));
+    ASSERT_EQ(ERR_PARAM_INVALID, AccessTokenIDManager::GetInstance().AllocAppUid(TEST_LOCAL_ID, outUid));
 }
 #endif
 
@@ -515,45 +516,45 @@ HWTEST_F(AccessTokenIdManagerCoverageTest, IsReservedBundleId003, TestSize.Level
 }
 
 /*
- * @tc.name: IsUidReusable001
+ * @tc.name: IsAppUidReusable001
  * @tc.desc: uid whose bundleId is in use returns false (not reusable)
  * @tc.type: FUNC
  * @tc.require: TDD
  */
-HWTEST_F(AccessTokenIdManagerCoverageTest, IsUidReusable001, TestSize.Level4)
+HWTEST_F(AccessTokenIdManagerCoverageTest, IsAppUidReusable001, TestSize.Level4)
 {
     auto& manager = AccessTokenIDManager::GetInstance();
     // uid=10000 → bundleId=10000, insert into set → not reusable
     manager.bundleIdSet_.insert(TEST_BUNDLE_ID_BASE);
     bool reusable = false;
-    ASSERT_EQ(RET_SUCCESS, manager.IsUidReusable(10000, reusable));
+    ASSERT_EQ(RET_SUCCESS, manager.IsAppUidReusable(10000, reusable));
     ASSERT_FALSE(reusable);
 }
 
 /*
- * @tc.name: IsUidReusable002
+ * @tc.name: IsAppUidReusable002
  * @tc.desc: uid whose bundleId is not in use returns true (reusable)
  * @tc.type: FUNC
  * @tc.require: TDD
  */
-HWTEST_F(AccessTokenIdManagerCoverageTest, IsUidReusable002, TestSize.Level4)
+HWTEST_F(AccessTokenIdManagerCoverageTest, IsAppUidReusable002, TestSize.Level4)
 {
     // uid=10000 → bundleId=10000, not in set → reusable
     bool reusable = false;
-    ASSERT_EQ(RET_SUCCESS, AccessTokenIDManager::GetInstance().IsUidReusable(10000, reusable));
+    ASSERT_EQ(RET_SUCCESS, AccessTokenIDManager::GetInstance().IsAppUidReusable(10000, reusable));
     ASSERT_TRUE(reusable);
 }
 
 /*
- * @tc.name: IsUidReusable003
+ * @tc.name: IsAppUidReusable003
  * @tc.desc: Invalid uid returns false (not reusable)
  * @tc.type: FUNC
  * @tc.require: TDD
  */
-HWTEST_F(AccessTokenIdManagerCoverageTest, IsUidReusable003, TestSize.Level4)
+HWTEST_F(AccessTokenIdManagerCoverageTest, IsAppUidReusable003, TestSize.Level4)
 {
     bool reusable = false;
-    ASSERT_NE(RET_SUCCESS, AccessTokenIDManager::GetInstance().IsUidReusable(SCAN_START_INIT_VALUE, reusable));
+    ASSERT_NE(RET_SUCCESS, AccessTokenIDManager::GetInstance().IsAppUidReusable(SCAN_START_INIT_VALUE, reusable));
     ASSERT_FALSE(reusable);
 }
 
@@ -829,18 +830,18 @@ HWTEST_F(AccessTokenIdManagerCoverageTest, GetReservedBundleIdsPersistInfo006, T
 }
 
 /*
- * @tc.name: IsUidReusable004
+ * @tc.name: IsAppUidReusable004
  * @tc.desc: bundleId in reservedBundleIdSet_ is reusable
  * @tc.type: FUNC
  * @tc.require: TDD
  */
-HWTEST_F(AccessTokenIdManagerCoverageTest, IsUidReusable004, TestSize.Level4)
+HWTEST_F(AccessTokenIdManagerCoverageTest, IsAppUidReusable004, TestSize.Level4)
 {
     auto& manager = AccessTokenIDManager::GetInstance();
     // uid=20010000 → bundleId=10000, in reservedBundleIdSet_ → reusable
     manager.reservedBundleIdSet_.insert(TEST_BUNDLE_ID_BASE);
     bool reusable = false;
-    ASSERT_EQ(RET_SUCCESS, manager.IsUidReusable(TEST_UID_BASE, reusable));
+    ASSERT_EQ(RET_SUCCESS, manager.IsAppUidReusable(TEST_UID_BASE, reusable));
     ASSERT_TRUE(reusable);
 }
 
@@ -858,7 +859,7 @@ HWTEST_F(AccessTokenIdManagerCoverageTest, AllocUidScanStart001, TestSize.Level4
     auto& manager = AccessTokenIDManager::GetInstance();
     manager.scanStartBundleId_ = SCAN_START_INIT_VALUE;
     int32_t outUid = 0;
-    ASSERT_EQ(RET_SUCCESS, manager.AllocUid(TEST_LOCAL_ID, outUid));
+    ASSERT_EQ(RET_SUCCESS, manager.AllocAppUid(TEST_LOCAL_ID, outUid));
     ASSERT_EQ(manager.GetBundleIdMin() + 1, manager.scanStartBundleId_);
 }
 
@@ -876,7 +877,7 @@ HWTEST_F(AccessTokenIdManagerCoverageTest, AllocUidScanStart002, TestSize.Level4
     auto& manager = AccessTokenIDManager::GetInstance();
     manager.scanStartBundleId_ = TEST_BUNDLE_ID_BASE;
     int32_t outUid = 0;
-    ASSERT_EQ(RET_SUCCESS, manager.AllocUid(TEST_LOCAL_ID, outUid));
+    ASSERT_EQ(RET_SUCCESS, manager.AllocAppUid(TEST_LOCAL_ID, outUid));
     ASSERT_EQ(TEST_BUNDLE_ID_1, manager.scanStartBundleId_);
 }
 
@@ -894,7 +895,7 @@ HWTEST_F(AccessTokenIdManagerCoverageTest, AllocUidScanStart003, TestSize.Level4
     auto& manager = AccessTokenIDManager::GetInstance();
     manager.scanStartBundleId_ = BUNDLE_ID_MAX_FOR_TEST + 1;
     int32_t outUid = 0;
-    ASSERT_EQ(RET_SUCCESS, manager.AllocUid(TEST_LOCAL_ID, outUid));
+    ASSERT_EQ(RET_SUCCESS, manager.AllocAppUid(TEST_LOCAL_ID, outUid));
     ASSERT_EQ(manager.GetBundleIdMin() + 1, manager.scanStartBundleId_);
 }
 
@@ -912,7 +913,7 @@ HWTEST_F(AccessTokenIdManagerCoverageTest, AllocUidScanStart004, TestSize.Level4
     auto& manager = AccessTokenIDManager::GetInstance();
     manager.scanStartBundleId_ = 0;
     int32_t outUid = 0;
-    ASSERT_EQ(RET_SUCCESS, manager.AllocUid(TEST_LOCAL_ID, outUid));
+    ASSERT_EQ(RET_SUCCESS, manager.AllocAppUid(TEST_LOCAL_ID, outUid));
     ASSERT_EQ(manager.GetBundleIdMin() + 1, manager.scanStartBundleId_);
 }
 
@@ -932,7 +933,7 @@ HWTEST_F(AccessTokenIdManagerCoverageTest, AllocUidScanStart005, TestSize.Level4
     manager.bundleIdSet_.insert(BUNDLE_ID_MAX_FOR_TEST);
     manager.scanStartBundleId_ = BUNDLE_ID_MAX_FOR_TEST;
     int32_t outUid = 0;
-    ASSERT_EQ(RET_SUCCESS, manager.AllocUid(TEST_LOCAL_ID, outUid));
+    ASSERT_EQ(RET_SUCCESS, manager.AllocAppUid(TEST_LOCAL_ID, outUid));
     // Should wrap and find 10000
     ASSERT_EQ(1U, manager.bundleIdSet_.count(TEST_BUNDLE_ID_BASE));
     ASSERT_EQ(TEST_BUNDLE_ID_1, manager.scanStartBundleId_);
@@ -953,7 +954,7 @@ HWTEST_F(AccessTokenIdManagerCoverageTest, AllocUidKernelError001, TestSize.Leve
     auto& manager = AccessTokenIDManager::GetInstance();
     manager.scanStartBundleId_ = TEST_BUNDLE_ID_BASE;
     int32_t outUid = 0;
-    ASSERT_EQ(RET_SUCCESS, manager.AllocUid(TEST_LOCAL_ID, outUid));
+    ASSERT_EQ(RET_SUCCESS, manager.AllocAppUid(TEST_LOCAL_ID, outUid));
     ASSERT_EQ(1U, manager.bundleIdSet_.count(TEST_BUNDLE_ID_BASE));
     ASSERT_EQ(TEST_BUNDLE_ID_1, manager.scanStartBundleId_);
 }
@@ -973,7 +974,7 @@ HWTEST_F(AccessTokenIdManagerCoverageTest, AllocUidKernelError002, TestSize.Leve
     auto& manager = AccessTokenIDManager::GetInstance();
     manager.scanStartBundleId_ = TEST_BUNDLE_ID_BASE;
     int32_t outUid = 0;
-    ASSERT_EQ(ERR_KERNEL_COMMON_FAILED, manager.AllocUid(TEST_LOCAL_ID, outUid));
+    ASSERT_EQ(ERR_KERNEL_COMMON_FAILED, manager.AllocAppUid(TEST_LOCAL_ID, outUid));
 }
 
 /*
@@ -991,51 +992,51 @@ HWTEST_F(AccessTokenIdManagerCoverageTest, AllocUidKernelError003, TestSize.Leve
     auto& manager = AccessTokenIDManager::GetInstance();
     manager.scanStartBundleId_ = TEST_BUNDLE_ID_BASE;
     int32_t outUid = 0;
-    ASSERT_EQ(ERR_KERNEL_COMMON_FAILED, manager.AllocUid(TEST_LOCAL_ID, outUid));
+    ASSERT_EQ(ERR_KERNEL_COMMON_FAILED, manager.AllocAppUid(TEST_LOCAL_ID, outUid));
 }
 
 /*
- * @tc.name: IsUidReusable005
+ * @tc.name: IsAppUidReusable005
  * @tc.desc: kernel refcnt > 0 makes uid not reusable
  * @tc.type: FUNC
  * @tc.require: TDD
  */
-HWTEST_F(AccessTokenIdManagerCoverageTest, IsUidReusable005, TestSize.Level4)
+HWTEST_F(AccessTokenIdManagerCoverageTest, IsAppUidReusable005, TestSize.Level4)
 {
     auto& manager = AccessTokenIDManager::GetInstance();
     g_spmRefCntForceValue = 1;
     bool reusable = true;
-    ASSERT_EQ(RET_SUCCESS, manager.IsUidReusable(TEST_UID_BASE, reusable));
+    ASSERT_EQ(RET_SUCCESS, manager.IsAppUidReusable(TEST_UID_BASE, reusable));
     ASSERT_FALSE(reusable);
 }
 
 /*
- * @tc.name: IsUidReusable006
+ * @tc.name: IsAppUidReusable006
  * @tc.desc: SpmGetUidRefCntWithRetry succeeds after retries, uid is reusable
  * @tc.type: FUNC
  * @tc.require: TDD
  */
-HWTEST_F(AccessTokenIdManagerCoverageTest, IsUidReusable006, TestSize.Level4)
+HWTEST_F(AccessTokenIdManagerCoverageTest, IsAppUidReusable006, TestSize.Level4)
 {
     auto& manager = AccessTokenIDManager::GetInstance();
     g_spmRefCntFailRemaining = 2;
     bool reusable = false;
-    ASSERT_EQ(RET_SUCCESS, manager.IsUidReusable(TEST_UID_BASE, reusable));
+    ASSERT_EQ(RET_SUCCESS, manager.IsAppUidReusable(TEST_UID_BASE, reusable));
     ASSERT_TRUE(reusable);
 }
 
 /*
- * @tc.name: IsUidReusable007
+ * @tc.name: IsAppUidReusable007
  * @tc.desc: kernel error returns ERR_KERNEL_COMMON_FAILED with reusable=false (fail-closed)
  * @tc.type: FUNC
  * @tc.require: TDD
  */
-HWTEST_F(AccessTokenIdManagerCoverageTest, IsUidReusable007, TestSize.Level4)
+HWTEST_F(AccessTokenIdManagerCoverageTest, IsAppUidReusable007, TestSize.Level4)
 {
     auto& manager = AccessTokenIDManager::GetInstance();
     g_spmRefCntFailRemaining = 4;
     bool reusable = true;
-    ASSERT_EQ(ERR_KERNEL_COMMON_FAILED, manager.IsUidReusable(TEST_UID_BASE, reusable));
+    ASSERT_EQ(ERR_KERNEL_COMMON_FAILED, manager.IsAppUidReusable(TEST_UID_BASE, reusable));
     ASSERT_FALSE(reusable);
 }
 
@@ -1308,19 +1309,19 @@ HWTEST_F(AccessTokenIdManagerCoverageTest, SetScanStartBundleId004, TestSize.Lev
 }
 
 /*
- * @tc.name: IsUidReusable008
+ * @tc.name: IsAppUidReusable008
  * @tc.desc: bundleId in both bundleIdSet_ and reservedBundleIdSet_ falls through to SPM check (line 300 branch)
  * @tc.type: FUNC
  * @tc.require: TDD
  */
-HWTEST_F(AccessTokenIdManagerCoverageTest, IsUidReusable008, TestSize.Level4)
+HWTEST_F(AccessTokenIdManagerCoverageTest, IsAppUidReusable008, TestSize.Level4)
 {
     auto& manager = AccessTokenIDManager::GetInstance();
     // bundleId=10000 present in BOTH sets: count(bundleIdSet_)>0 && count(reserved)==0 is false
     manager.bundleIdSet_.insert(TEST_BUNDLE_ID_BASE);
     manager.reservedBundleIdSet_.insert(TEST_BUNDLE_ID_BASE);
     bool reusable = false;
-    ASSERT_EQ(RET_SUCCESS, manager.IsUidReusable(TEST_UID_BASE, reusable));
+    ASSERT_EQ(RET_SUCCESS, manager.IsAppUidReusable(TEST_UID_BASE, reusable));
     ASSERT_TRUE(reusable);
 }
 

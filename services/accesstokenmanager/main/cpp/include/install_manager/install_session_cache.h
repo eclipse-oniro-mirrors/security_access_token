@@ -32,10 +32,13 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 
+// Records the appUid allocation outcome per token for the current update round;
+// the runtime uid is derived later from appUid plus the bundle-level switch
+// decision, never stored here.
 struct ResolvedUid {
-    int32_t uid = 0;
+    int32_t appUid = 0;
     bool isNewBundleId = false;
-    // true means the uid was adopted from the caller's input (UpdateHapPolicy uid param)
+    // true means the appUid was adopted from the caller's input (UpdateHapPolicy appUid param)
     bool fromCaller = false;
 };
 
@@ -98,17 +101,18 @@ struct InstallCache {
     Identity identity;
     // Repair mode: desired identity from the BMS input (PrepareHapIdentity
     // identity in-out param) to re-create a drifted token; adopted only when
-    // the caller passes a complete expectation (tokenId != 0 && uid != -1),
-    // otherwise stays {0, -1} meaning no repair and no desired uid
-    Identity repairedIdentity = {0, -1};
+    // the caller passes a usable expectation (tokenId != 0 && appUid != -1);
+    // a missing uid (-1) is tolerated and re-derived later, otherwise it
+    // stays {0, -1, -1} meaning no repair and no desired appUid
+    Identity repairedIdentity = {.tokenId = 0, .uid = -1, .appUid = -1};
     // Bundle policy for newly allocated tokenID including pre-authorization and debug grant
     BundlePolicy bundlePolicy;
     // Whether bundleId in uid is newly allocated
     bool isNewBundleId = true;
     // True means the new identity uid was adopted from the caller's input
-    // (PrepareHapIdentity identity.uid param); such tokens are marked migrated
+    // (PrepareHapIdentity identity.appUid/uid param); such tokens are marked migrated
     // to indicate the uid was designated by the caller
-    bool isUidFromCaller = false;
+    bool isAppUidFromCaller = false;
     // Reserved token flag: see ReservedType definition
     ReservedType reserved = ReservedType::NONE;
     // Old token ID for reserved != 0 scenario
@@ -119,7 +123,7 @@ struct InstallCache {
     // Update info:
     // Policies of the tokens covered by this session's update plan, keyed by tokenId
     std::unordered_map<AccessTokenID, BundlePolicy> updatedBundlePolicyMap;
-    // Resolved uid (and allocation state) per updated tokenId
+    // appUid allocation state per updated tokenId
     std::unordered_map<AccessTokenID, ResolvedUid> updatedUidStateMap;
     // 会话级非活跃 token 快照（以 tokenId 为键）：
     // 更新链路经 GetHapTokenInfoForInstall 加载的 UNTRUSTED token DB 快照，

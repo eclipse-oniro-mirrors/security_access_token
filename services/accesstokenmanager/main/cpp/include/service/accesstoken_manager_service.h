@@ -95,11 +95,11 @@ public:
 #ifdef SPM_DATA_ENABLE
     int32_t DeleteIdentity(AccessTokenID tokenID, const std::string& bundleName, ReservedTypeIdl type) override;
     int32_t GetHapIdentity(const HapBaseInfoParcel& hapBaseInfoParcel, IdentityIdl& identityIdl) override;
-    int32_t GetHapBaseInfoByUid(int32_t uid, HapBaseInfoParcel& hapBaseInfoParcel) override;
+    int32_t GetHapBaseInfoByUid(int32_t appUid, HapBaseInfoParcel& hapBaseInfoParcel) override;
     int32_t MigrateInstalledBundles(const std::vector<MigratedInfoIdl>& migratedInfoList,
         std::vector<BundleMigrateResultIdl>& results) override;
     int32_t FinishMigration() override;
-    int32_t CheckMigratedUidSet(const std::set<int32_t>& totalUids, std::set<int32_t>& unreceivedUids) override;
+    int32_t CheckMigratedUidSet(const std::set<int32_t>& totalAppUids, std::set<int32_t>& unreceivedAppUids) override;
     int32_t IsMigrationDone(bool& isDone) override;
 #endif
     int GetTokenType(AccessTokenID tokenID);
@@ -163,7 +163,8 @@ public:
     int32_t PrepareHapIdentity(int32_t& sessionId, const HapBaseInfoIdl& info, const BundlePolicyIdl& policy,
         const sptr<IRemoteObject>& cb, IdentityIdl& identity) override;
     int32_t UpdateHapPolicy(
-        int32_t sessionId, uint64_t& tokenIdEx, const BundlePolicyIdl& policy, int32_t& uid) override;
+        int32_t sessionId, uint64_t& tokenIdEx, const BundlePolicyIdl& policy,
+        int32_t& appUid, int32_t& uid) override;
     int32_t FinishInstall(int32_t sessionId, bool isPersistent,
         const std::map<std::string, std::string>& modulePathMap) override;
     int32_t GetCacheSignInfoBySessionId(int32_t sessionId, uint32_t flag,
@@ -232,7 +233,7 @@ private:
     void ReportUpdateHap(AccessTokenIDEx fullTokenId, const HapTokenInfo& info,
         const HapPolicy& policy, int64_t beginTime, int32_t errorCode);
     int32_t PreVerifyHapTokenIfNeeded(AccessTokenID tokenID);
-    int32_t PreVerifyHapTokenByUidIfNeeded(int32_t uid);
+    int32_t PreVerifyHapTokenByAppUidIfNeeded(int32_t appUid);
     int32_t PreVerifyBundleIfNeeded(const std::string& bundleName);
     int32_t PreVerifyBundleIfNeeded(const std::string& bundleName, int32_t instIndex);
     int32_t PreCheckPermissionStatusDetails(

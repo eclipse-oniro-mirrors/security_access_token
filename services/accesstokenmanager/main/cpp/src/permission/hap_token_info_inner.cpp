@@ -17,6 +17,7 @@
 
 #include "accesstoken_dfx_define.h"
 #include "accesstoken_id_manager.h"
+#include "accesstoken_info_utils.h"
 #include "accesstoken_common_log.h"
 #include "access_token_db_operator.h"
 #include "access_token_error.h"
@@ -115,7 +116,7 @@ HapTokenInfoInner::HapTokenInfoInner(const HapTokenInfoItem& item) : permUpdateT
     tokenInfoBasic_.apiVersion = item.apiVersion;
     tokenInfoBasic_.instIndex = static_cast<int>(item.instIndex);
     tokenInfoBasic_.dlpType = item.dlpType;
-    tokenInfoBasic_.uid = item.uid;
+    tokenInfoBasic_.uid = item.appUid;
     tokenInfoBasic_.bundleName = item.bundleName;
     isPermDialogForbidden_ = item.permDialogCapState;
     isMigrated_ = item.migrated;
@@ -187,6 +188,8 @@ void HapTokenInfoInner::TranslationIntoGenericValues(GenericValues& outGenericVa
     outGenericValues.Put(TokenFiledConst::FIELD_FORBID_PERM_DIALOG, isPermDialogForbidden_);
     outGenericValues.Put(TokenFiledConst::FIELD_IS_SIDELOAD, isSideloadApp_ ? 1 : 0);
 #ifdef SPM_DATA_ENABLE
+    // The uid column persists the app-level identity; the runtime uid is derived
+    // in memory (ResolveHapUid) and never stored.
     outGenericValues.Put(TokenFiledConst::FIELD_UID, tokenInfoBasic_.uid);
     outGenericValues.Put(TokenFiledConst::FIELD_RESERVED,
         static_cast<int32_t>((tokenInfoBasic_.tokenAttr & TOKEN_RESERVED_FLAG) != 0));
@@ -219,6 +222,8 @@ int HapTokenInfoInner::RestoreHapTokenBasicInfo(const GenericValues& inGenericVa
     isPermDialogForbidden_ = inGenericValues.GetInt(TokenFiledConst::FIELD_FORBID_PERM_DIALOG);
     isSideloadApp_ = inGenericValues.GetInt(TokenFiledConst::FIELD_IS_SIDELOAD) != 0;
 #ifdef SPM_DATA_ENABLE
+    // The uid column persists the app-level identity: appUid loads it, while the runtime
+    // uid stays INVALID until a resolution flow (boot/install/verify) derives it.
     tokenInfoBasic_.uid = inGenericValues.GetInt(TokenFiledConst::FIELD_UID);
     isMigrated_ = inGenericValues.GetInt(TokenFiledConst::FIELD_MIGRATED) != 0;
 #endif
@@ -289,16 +294,16 @@ int HapTokenInfoInner::GetUserID() const
     return tokenInfoBasic_.userID;
 }
 
-int32_t HapTokenInfoInner::GetUid() const
+int32_t HapTokenInfoInner::GetAppUid() const
 {
     std::shared_lock<std::shared_mutex> infoGuard(this->policySetLock_);
     return tokenInfoBasic_.uid;
 }
 
-void HapTokenInfoInner::SetUid(int32_t uid)
+void HapTokenInfoInner::SetAppUid(int32_t appUid)
 {
     std::unique_lock<std::shared_mutex> infoGuard(this->policySetLock_);
-    tokenInfoBasic_.uid = uid;
+    tokenInfoBasic_.uid = appUid;
 }
 
 int HapTokenInfoInner::GetDlpType() const
@@ -353,7 +358,7 @@ void HapTokenInfoInner::UpdateHapInfo(const HapTokenInfoItem& item)
     tokenInfoBasic_.apiVersion = item.apiVersion;
     tokenInfoBasic_.instIndex = static_cast<int>(item.instIndex);
     tokenInfoBasic_.dlpType = item.dlpType;
-    tokenInfoBasic_.uid = item.uid;
+    tokenInfoBasic_.uid = item.appUid;
     tokenInfoBasic_.bundleName = item.bundleName;
     isPermDialogForbidden_ = item.permDialogCapState;
     isMigrated_ = item.migrated;

@@ -51,7 +51,7 @@ public:
     int32_t MigrateInstalledBundles(const std::vector<MigratedInfoIdl>& migratedInfoList,
         std::vector<BundleMigrateResultIdl>& results);
     int32_t FinishMigration();
-    int32_t CheckMigratedUidSet(const std::set<int32_t>& totalUids, std::set<int32_t>& unreceivedUids);
+    int32_t CheckMigratedUidSet(const std::set<int32_t>& totalAppUids, std::set<int32_t>& unreceivedAppUids);
     bool IsMigrationCompleted() const;
     void Initialize();
     void SetNeedPostVerify(bool need);
@@ -98,7 +98,7 @@ private:
     void ReportInvalidUidsIfNeeded();
 
     std::unordered_map<int32_t, GenericValues> dbRowCache_;
-    std::unordered_map<int32_t, std::string> uidOwnerBundles_;
+    std::unordered_map<int32_t, std::string> appUidOwnerBundles_;
     std::unordered_map<int32_t, std::string> bundleIdOwnerBundles_;
     std::map<std::string, Identity> hapIdentityMap_;
     bool cacheLoaded_ = false;

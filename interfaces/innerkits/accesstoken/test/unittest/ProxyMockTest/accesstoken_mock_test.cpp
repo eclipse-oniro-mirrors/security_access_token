@@ -669,6 +669,7 @@ public:
             if (result_ == RET_SUCCESS) {
                 IdentityIdl identityIdl;
                 identityIdl.uid = uid_;
+                identityIdl.appUid = appUid_;
                 identityIdl.tokenId = tokenId_;
                 if (IdentityIdlBlockMarshalling(reply, identityIdl) != ERR_NONE) {
                     return ERR_INVALID_DATA;
@@ -698,6 +699,7 @@ public:
 
     int32_t result_ = RET_SUCCESS;
     int32_t uid_ = 10001;
+    int32_t appUid_ = 20010001;
     uint64_t tokenId_ = 0x12345678;
     int32_t userID_ = 100;
     std::string bundleName_ = "com.example.mock";
@@ -2943,6 +2945,7 @@ HWTEST_F(AccessTokenMockTest, GetHapIdentitySuccess001, TestSize.Level4)
     Identity identity;
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetHapIdentity(info, identity));
     EXPECT_EQ(remote->uid_, identity.uid);
+    EXPECT_EQ(remote->appUid_, identity.appUid);
     EXPECT_EQ(remote->tokenId_, identity.tokenId);
     EXPECT_EQ(1U, remote->identityCallCount_);
 }

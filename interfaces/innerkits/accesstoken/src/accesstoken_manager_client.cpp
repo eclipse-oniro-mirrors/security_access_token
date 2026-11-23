@@ -1013,6 +1013,11 @@ int32_t AccessTokenManagerClient::PrepareHapIdentity(int32_t& sessionId, const H
 
     IdentityIdl identityIdl;
     identityIdl.uid = identity.uid;
+#ifndef ACCESS_TOKEN_ENABLE_SHAREDUID
+    identityIdl.appUid = identity.uid;
+#else
+    identityIdl.appUid = identity.appUid;
+#endif
     identityIdl.tokenId = identity.tokenId;
     int32_t res = proxy->PrepareHapIdentity(sessionId, infoIdl, policyIdl, anonyStub->AsObject(), identityIdl);
     if (res != RET_SUCCESS) {
@@ -1021,16 +1026,25 @@ int32_t AccessTokenManagerClient::PrepareHapIdentity(int32_t& sessionId, const H
         return res;
     }
     identity.uid = identityIdl.uid;
+    identity.appUid = identityIdl.appUid;
     identity.tokenId = identityIdl.tokenId;
 
-    LOGI(ATM_DOMAIN, ATM_TAG, "Result=%{public}d, sessionId=%{public}d, uid=%{public}d, "
+    LOGI(ATM_DOMAIN, ATM_TAG, "Result=%{public}d, sessionId=%{public}d, appUid=%{public}d, "
         "fulltokenId=%{public}" PRIu64 ", tokenId=%{public}u",
-        res, sessionId, identity.uid, identity.tokenId, static_cast<uint32_t>(identity.tokenId));
+        res, sessionId, identity.appUid, identity.tokenId, static_cast<uint32_t>(identity.tokenId));
     return res;
 }
 
 int32_t AccessTokenManagerClient::UpdateHapPolicy(
     int32_t sessionId, AccessTokenIDEx& tokenIdEx, const BundlePolicy& policy, int32_t& uid)
+{
+    int32_t dummyUid = uid;
+    return UpdateHapPolicy(sessionId, tokenIdEx, policy, uid, dummyUid);
+}
+
+int32_t AccessTokenManagerClient::UpdateHapPolicy(
+    int32_t sessionId, AccessTokenIDEx& tokenIdEx, const BundlePolicy& policy,
+    int32_t& appUid, int32_t& uid)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
@@ -1042,7 +1056,7 @@ int32_t AccessTokenManagerClient::UpdateHapPolicy(
     TransferBundlePolicyToIdl(policy, policyIdl);
 
     uint64_t tokenIdExVal = tokenIdEx.tokenIDEx;
-    int32_t res = proxy->UpdateHapPolicy(sessionId, tokenIdExVal, policyIdl, uid);
+    int32_t res = proxy->UpdateHapPolicy(sessionId, tokenIdExVal, policyIdl, appUid, uid);
     if (res != RET_SUCCESS) {
         res = ConvertResult(res);
         LOGE(ATM_DOMAIN, ATM_TAG, "Failed, err=%{public}d.", res);
@@ -1174,11 +1188,12 @@ int32_t AccessTokenManagerClient::GetHapIdentity(const HapBaseInfo& info, Identi
         return errCode;
     }
     identity.uid = identityIdl.uid;
+    identity.appUid = identityIdl.appUid;
     identity.tokenId = identityIdl.tokenId;
     return RET_SUCCESS;
 }
 
-int32_t AccessTokenManagerClient::GetHapBaseInfoByUid(int32_t uid, HapBaseInfo& info)
+int32_t AccessTokenManagerClient::GetHapBaseInfoByUid(int32_t appUid, HapBaseInfo& info)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
@@ -1186,7 +1201,7 @@ int32_t AccessTokenManagerClient::GetHapBaseInfoByUid(int32_t uid, HapBaseInfo& 
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
     HapBaseInfoParcel infoParcel;
-    int32_t errCode = proxy->GetHapBaseInfoByUid(uid, infoParcel);
+    int32_t errCode = proxy->GetHapBaseInfoByUid(appUid, infoParcel);
     if (errCode != RET_SUCCESS) {
         errCode = ConvertResult(errCode);
         LOGE(ATM_DOMAIN, ATM_TAG, "Request fail, result: %{public}d", errCode);
@@ -1268,20 +1283,20 @@ int32_t AccessTokenManagerClient::FinishMigration()
 }
 
 int32_t AccessTokenManagerClient::CheckMigratedUidSet(
-    const std::set<int32_t>& totalUids, std::set<int32_t>& unreceivedUids)
+    const std::set<int32_t>& totalAppUids, std::set<int32_t>& unreceivedAppUids)
 {
-    if (totalUids.size() > MAX_MIGRATED_UID_SET_SIZE) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "totalUids size %{public}zu is invalid.", totalUids.size());
+    if (totalAppUids.size() > MAX_MIGRATED_UID_SET_SIZE) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "totalAppUids size %{public}zu is invalid.", totalAppUids.size());
         return AccessTokenError::ERR_PARAM_INVALID;
     }
-    unreceivedUids.clear();
+    unreceivedAppUids.clear();
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Proxy is null.");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
 
-    int32_t result = proxy->CheckMigratedUidSet(totalUids, unreceivedUids);
+    int32_t result = proxy->CheckMigratedUidSet(totalAppUids, unreceivedAppUids);
     if (result != RET_SUCCESS) {
         return ConvertResult(result);
     }

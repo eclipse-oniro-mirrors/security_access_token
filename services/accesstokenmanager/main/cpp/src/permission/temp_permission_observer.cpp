@@ -531,7 +531,7 @@ bool TempPermissionObserver::ReportTempPermissionDeny(AccessTokenID tokenID, con
 bool TempPermissionObserver::IsPrivilegedCalling() const
 {
 #ifndef ATM_BUILD_VARIANT_USER_ENABLE
-    return IPCSkeleton::GetCallingUid() == ROOT_UID;
+    return IPCSkeleton::GetCallingAppUid() == ROOT_UID;
 #else
     return false;
 #endif

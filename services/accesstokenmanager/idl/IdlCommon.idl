@@ -165,8 +165,9 @@ struct HapBaseInfoIdl {
 };
 
 struct IdentityIdl {
-    int uid;
     unsigned long tokenId;
+    int uid;
+    int appUid;
 };
 
 enum MultipleModeEnumIdl {

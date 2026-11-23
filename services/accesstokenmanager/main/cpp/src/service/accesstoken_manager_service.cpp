@@ -154,7 +154,7 @@ static const int32_t ASYNC_RETRY_COUNT = 300; // 5min / 1s
 
 int32_t ResolveRequestToggleUserId(int32_t userID)
 {
-    int32_t callingUid = IPCSkeleton::GetCallingUid();
+    int32_t callingUid = IPCSkeleton::GetCallingAppUid();
     int32_t callingUserId = callingUid / BASE_USER_RANGE;
     return (callingUserId == 0) ? userID : callingUserId;
 }
@@ -860,8 +860,8 @@ int32_t AccessTokenManagerService::InitCliToken(const CliInitInfoIdl& initInfoId
 {
     std::lock_guard<std::mutex> userPolicyUpdateGuard(g_userPolicyUpdateMutex);
     kernelPermIdlList.clear();
-    if (IPCSkeleton::GetCallingUid() != ROOT_UID) {
-        LOGD(ATM_DOMAIN, ATM_TAG, "CallingUid() %{public}d.", IPCSkeleton::GetCallingUid());
+    if (IPCSkeleton::GetCallingAppUid() != ROOT_UID) {
+        LOGD(ATM_DOMAIN, ATM_TAG, "CallingAppUid() %{public}d.", IPCSkeleton::GetCallingAppUid());
         return AccessTokenError::ERR_PERMISSION_DENIED;
     }
     AccessTokenIDEx tokenIdEx = {0};
@@ -1800,9 +1800,9 @@ int32_t AccessTokenManagerService::PreVerifyHapTokenIfNeeded(AccessTokenID token
     return BootVerifyScheduler::GetInstance().PreVerifyBundle(tokenID);
 }
 
-int32_t AccessTokenManagerService::PreVerifyHapTokenByUidIfNeeded(int32_t uid)
+int32_t AccessTokenManagerService::PreVerifyHapTokenByAppUidIfNeeded(int32_t appUid)
 {
-    return BootVerifyScheduler::GetInstance().PreVerifyBundle(uid);
+    return BootVerifyScheduler::GetInstance().PreVerifyBundle(appUid);
 }
 
 int32_t AccessTokenManagerService::PreVerifyBundleIfNeeded(const std::string& bundleName)
@@ -1857,19 +1857,20 @@ int32_t AccessTokenManagerService::GetHapIdentity(const HapBaseInfoParcel& hapBa
         return ret;
     }
     identityIdl.uid = identity.uid;
+    identityIdl.appUid = identity.appUid;
     identityIdl.tokenId = identity.tokenId;
     return RET_SUCCESS;
 }
 
-int32_t AccessTokenManagerService::GetHapBaseInfoByUid(int32_t uid, HapBaseInfoParcel& hapBaseInfoParcel)
+int32_t AccessTokenManagerService::GetHapBaseInfoByUid(int32_t appUid, HapBaseInfoParcel& hapBaseInfoParcel)
 {
-    LOGD(ATM_DOMAIN, ATM_TAG, "Uid %{public}d.", uid);
+    LOGD(ATM_DOMAIN, ATM_TAG, "AppUid %{public}d.", appUid);
     if (!IsNativeProcessCalling() && !IsPrivilegedCalling()) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", IPCSkeleton::GetCallingTokenID());
         return AccessTokenError::ERR_PERMISSION_DENIED;
     }
-    (void)PreVerifyHapTokenByUidIfNeeded(uid);
-    return AccessTokenInfoManager::GetInstance().GetHapBaseInfoByUid(uid, hapBaseInfoParcel.hapBaseInfo);
+    (void)PreVerifyHapTokenByAppUidIfNeeded(appUid);
+    return AccessTokenInfoManager::GetInstance().GetHapBaseInfoByUid(appUid, hapBaseInfoParcel.hapBaseInfo);
 }
 #endif
 
@@ -2706,7 +2707,7 @@ bool AccessTokenManagerService::Initialize()
 
     isInitialize_ = true;
 #if defined(SPM_DATA_ENABLE) && defined(IS_SUPPORT_HAP_RUNNING)
-    // force the migration done flag so AllocUid and migration paths work until the real signal is available.
+    // force the migration done flag so AllocAppUid and migration paths work until the real signal is available.
     AccessTokenMigrationManager::GetInstance().Initialize();
 #endif
     DoAsyncInitializingTasks(dfxInfo);
@@ -2739,7 +2740,7 @@ bool AccessTokenManagerService::IsPrivilegedCalling() const
 {
     // shell process is root in debug mode.
 #ifndef ATM_BUILD_VARIANT_USER_ENABLE
-    int32_t callingUid = IPCSkeleton::GetCallingUid();
+    int32_t callingUid = IPCSkeleton::GetCallingAppUid();
     return callingUid == ROOT_UID;
 #else
     return false;
@@ -3126,6 +3127,7 @@ void TransferHapBaseInfoFromIdl(const HapBaseInfoIdl& infoIdl, HapBaseInfo& info
 void TransferIdentityToIdl(const Identity& identity, IdentityIdl& identityIdl)
 {
     identityIdl.uid = identity.uid;
+    identityIdl.appUid = identity.appUid;
     identityIdl.tokenId = identity.tokenId;
 }
 
@@ -3216,6 +3218,7 @@ int32_t AccessTokenManagerService::PrepareHapIdentity(int32_t& sessionId, const 
     Identity ident;
     ident.tokenId = identity.tokenId;
     ident.uid = identity.uid;
+    ident.appUid = identity.appUid;
     int32_t ret = InstallSessionManager::GetInstance().PrepareHapIdentity(
         sessionId, hapBaseInfo, bundlePolicy, cb, ident);
     TransferIdentityToIdl(ident, identity);
@@ -3223,7 +3226,7 @@ int32_t AccessTokenManagerService::PrepareHapIdentity(int32_t& sessionId, const 
 }
 
 int32_t AccessTokenManagerService::UpdateHapPolicy(int32_t sessionId, uint64_t& tokenIdEx,
-    const BundlePolicyIdl& policy, int32_t& uid)
+    const BundlePolicyIdl& policy, int32_t& appUid, int32_t& uid)
 {
     AccessTokenID tokenID = IPCSkeleton::GetCallingTokenID();
     if (!IsPrivilegedCalling() &&
@@ -3240,7 +3243,8 @@ int32_t AccessTokenManagerService::UpdateHapPolicy(int32_t sessionId, uint64_t& 
     // are refreshed by the upgrade and echoed back to the caller
     AccessTokenIDEx idEx;
     idEx.tokenIDEx = tokenIdEx;
-    int32_t ret = InstallSessionManager::GetInstance().UpdateHapPolicy(sessionId, idEx, bundlePolicy, uid);
+    int32_t ret = InstallSessionManager::GetInstance().UpdateHapPolicy(
+        sessionId, idEx, bundlePolicy, appUid, uid);
     tokenIdEx = idEx.tokenIDEx;
     return ret;
 }
@@ -3342,7 +3346,7 @@ int32_t AccessTokenManagerService::PrepareHapIdentity(int32_t& sessionId, const 
 }
 
 int32_t AccessTokenManagerService::UpdateHapPolicy(int32_t sessionId, uint64_t& tokenIdEx,
-    const BundlePolicyIdl& policy, int32_t& uid)
+    const BundlePolicyIdl& policy, int32_t& appUid, int32_t& uid)
 {
     LOGW(ATM_DOMAIN, ATM_TAG, "Not supported on this device.");
     return AccessTokenError::ERR_CAPABILITY_NOT_SUPPORT;
@@ -3541,20 +3545,20 @@ int32_t AccessTokenManagerService::FinishMigration()
 }
 
 int32_t AccessTokenManagerService::CheckMigratedUidSet(
-    const std::set<int32_t>& totalUids, std::set<int32_t>& unreceivedUids)
+    const std::set<int32_t>& totalAppUids, std::set<int32_t>& unreceivedAppUids)
 {
 #ifdef IS_SUPPORT_HAP_RUNNING
-    unreceivedUids.clear();
+    unreceivedAppUids.clear();
     int32_t ret = CheckHapManagerPermission();
     if (ret != RET_SUCCESS) {
         return ret;
     }
-    if (totalUids.size() > MAX_MIGRATED_UID_SET_SIZE) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "totalUids size %{public}zu is invalid.", totalUids.size());
+    if (totalAppUids.size() > MAX_MIGRATED_UID_SET_SIZE) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "totalAppUids size %{public}zu is invalid.", totalAppUids.size());
         return AccessTokenError::ERR_PARAM_INVALID;
     }
 
-    ret = AccessTokenMigrationManager::GetInstance().CheckMigratedUidSet(totalUids, unreceivedUids);
+    ret = AccessTokenMigrationManager::GetInstance().CheckMigratedUidSet(totalAppUids, unreceivedAppUids);
     if (ret != RET_SUCCESS) {
         return ret;
     }

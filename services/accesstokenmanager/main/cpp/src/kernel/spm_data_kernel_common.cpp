@@ -21,6 +21,7 @@
 
 #include "access_token_error.h"
 #include "accesstoken_common_log.h"
+#include "accesstoken_info_utils.h"
 #include "hisysevent_adapter.h"
 #include "permission_map.h"
 #include "securec.h"
@@ -139,6 +140,23 @@ int32_t ParseExtendedPermissionBuffer(const SpmBlob& extendPermBlob, std::vector
     return RET_SUCCESS;
 }
 
+static void FillSpmTokenFields(SpmData* spmData, const HapTokenInfo& hapInfo,
+    const BundleNoCachedInfo& noCachedInfo)
+{
+    // The runtime uid is derived from the app-level identity plus the bundle-level
+    // switch decision; it is never stored on token structures.
+    spmData->uid = static_cast<uint32_t>(
+        AccessTokenInfoUtils::ResolveHapUid(hapInfo.uid, noCachedInfo.isSharedUid));
+    spmData->appUid = (hapInfo.uid > 0) ? static_cast<uint32_t>(hapInfo.uid) : 0;
+    spmData->tokenid = static_cast<uint32_t>(hapInfo.tokenID);
+    spmData->tokenidAttr = static_cast<uint32_t>(hapInfo.tokenAttr);
+    spmData->index = static_cast<uint32_t>(hapInfo.instIndex);
+    spmData->apl = static_cast<uint16_t>(noCachedInfo.apl);
+    spmData->distributionType = static_cast<uint16_t>(noCachedInfo.distributionType);
+    spmData->idType = noCachedInfo.idType;
+    spmData->ownerid = noCachedInfo.ownerid;
+}
+
 int32_t BuildSpmData(const HapTokenInfo& hapInfo, const BundleNoCachedInfo& noCachedInfo,
     const std::vector<BriefPermData>& permBriefDataList, const std::vector<PermissionWithValue>& extendPermList,
     SpmDataPtr& spmData)
@@ -162,15 +180,7 @@ int32_t BuildSpmData(const HapTokenInfo& hapInfo, const BundleNoCachedInfo& noCa
         LOGE(ATM_DOMAIN, ATM_TAG, "SpmDataNew failed when building token=%{public}u.", hapInfo.tokenID);
         return ERR_MALLOC_FAILED;
     }
-
-    spmData->uid = hapInfo.uid;
-    spmData->tokenid = static_cast<uint32_t>(hapInfo.tokenID);
-    spmData->tokenidAttr = static_cast<uint32_t>(hapInfo.tokenAttr);
-    spmData->index = static_cast<uint32_t>(hapInfo.instIndex);
-    spmData->apl = static_cast<uint16_t>(noCachedInfo.apl);
-    spmData->distributionType = static_cast<uint16_t>(noCachedInfo.distributionType);
-    spmData->idType = noCachedInfo.idType;
-    spmData->ownerid = noCachedInfo.ownerid;
+    FillSpmTokenFields(spmData.get(), hapInfo, noCachedInfo);
 
     int32_t ret = memcpy_s(spmData->name.buf, spmData->name.bufSize, nameBuffer.c_str(), nameBuffer.size());
     if (ret != EOK) {

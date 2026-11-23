@@ -145,8 +145,10 @@ public:
     AccessTokenID tokenID;
     /** token attribute */
     AccessTokenAttr tokenAttr;
-    /** uid of hap**/
-    int32_t uid;
+    /** uid of hap, carries the app-level identity (stable across reinstalls);
+        the runtime uid is derived via ResolveHapUid(uid, isSharedUid) at the
+        consumption points and is never stored. **/
+    int32_t uid = -1;
 };
 
 /**
@@ -185,6 +187,7 @@ public:
 struct Identity final {
     FullTokenID tokenId = 0;
     int32_t uid = 0;
+    int32_t appUid = 0;
 };
 
 /**

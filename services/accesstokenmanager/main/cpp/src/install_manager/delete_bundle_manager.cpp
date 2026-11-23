@@ -131,9 +131,9 @@ void DeleteBundleManager::JudgeBundleCleanFromRows(const std::vector<GenericValu
     // at reserve time).
     bool needCleanBundleInfo = true;
     bool needCleanBundleId =
-        (param.delType != ReservedType::RESERVED_DATA) && (param.uid != UNAVAILABLE_UID);
+        (param.delType != ReservedType::RESERVED_DATA) && (param.appUid != UNAVAILABLE_UID);
     int32_t bundleId = UNAVAILABLE_UID;
-    (void)AccessTokenIDManager::GetInstance().ExtractBundleId(param.uid, bundleId);
+    (void)AccessTokenIDManager::GetInstance().ExtractBundleId(param.appUid, bundleId);
 
     for (const auto& result : tokenResults) {
         if (static_cast<AccessTokenID>(result.GetInt(TokenFiledConst::FIELD_TOKEN_ID)) == param.tokenId) {
@@ -179,7 +179,7 @@ int32_t DeleteBundleManager::BuildBundleCleanDbOps(const std::shared_ptr<HapToke
 {
     BundleCleanParam param = {
         info->GetTokenID(),
-        info->GetUid(),
+        info->GetAppUid(),
         MultipleModeUtils::GetTokenMode(info->GetInstIndex()),
         delType,
     };
@@ -200,7 +200,7 @@ int32_t DeleteBundleManager::BuildBundleCleanDbOps(const std::shared_ptr<HapToke
 
 int32_t DeleteBundleManager::BuildBundleDelDbOps(const std::string& bundleName,
     std::vector<AccessTokenID>& activeTokens, std::vector<AccessTokenID>& reservedTokens,
-    std::vector<int32_t>& uids, std::vector<DelInfo>& delInfoVec)
+    std::vector<int32_t>& appUids, std::vector<DelInfo>& delInfoVec)
 {
     GenericValues condition;
     condition.Put(TokenFiledConst::FIELD_BUNDLE_NAME, bundleName);
@@ -214,7 +214,7 @@ int32_t DeleteBundleManager::BuildBundleDelDbOps(const std::string& bundleName,
 
     activeTokens.clear();
     reservedTokens.clear();
-    std::set<int32_t> uidSet;
+    std::set<int32_t> appUidSet;
     for (const auto& result : tokenResults) {
         AccessTokenID tokenID = static_cast<AccessTokenID>(result.GetInt(TokenFiledConst::FIELD_TOKEN_ID));
         if (AccessTokenInfoUtils::GetReservedTokenTypeDBValue(result) == ReservedType::NONE) {
@@ -222,16 +222,16 @@ int32_t DeleteBundleManager::BuildBundleDelDbOps(const std::string& bundleName,
         } else {
             reservedTokens.emplace_back(tokenID);
         }
-        // Distinct valid uids (one per user) for the bundleId release.
-        int32_t uid = result.GetInt(TokenFiledConst::FIELD_UID);
-        if (uid >= 0) {
-            uidSet.insert(uid);
+        // Distinct valid appUids (one per user) for the bundleId release.
+        int32_t appUid = result.GetInt(TokenFiledConst::FIELD_UID);
+        if (appUid >= 0) {
+            appUidSet.insert(appUid);
         }
         // Complete (NONE-mode) deletion: includePermissionState follows the
         // deletion mode, never the stored type (see header spec).
         GenerateHapTokenDelInfoVec(tokenID, bundleName, delInfoVec, true);
     }
-    uids.assign(uidSet.begin(), uidSet.end());
+    appUids.assign(appUidSet.begin(), appUidSet.end());
     LOGI(ATM_DOMAIN, ATM_TAG, "Bundle %{public}s, active size=%{public}zu, reserved size=%{public}zu.",
         bundleName.c_str(), activeTokens.size(), reservedTokens.size());
 
@@ -385,7 +385,7 @@ void DeleteBundleManager::PublishActiveTokenDeletion(const std::shared_ptr<HapTo
     AccessTokenID id = info->GetTokenID();
     if (cleanPlan.cleanBundleId) {
         // Memory-only bundleId release
-        (void)AccessTokenIDManager::GetInstance().RemoveBundleId(info->GetUid());
+        (void)AccessTokenIDManager::GetInstance().RemoveBundleId(info->GetAppUid());
     }
     AccessTokenInfoManager::GetInstance().CommitDeleteHapCache(id);
     if (delType != ReservedType::NONE) {
@@ -441,7 +441,7 @@ void BuildWholeBundleRemoveParams(const std::vector<AccessTokenID>& activeTokens
  * the bundle occupied return to the pool; the policy whitelist entries go.
  */
 void ReleaseBundleResources(const std::string& bundleName,
-    const std::vector<AccessTokenID>& allTokens, const std::vector<int32_t>& uids)
+    const std::vector<AccessTokenID>& allTokens, const std::vector<int32_t>& appUids)
 {
     for (const auto& tokenId : allTokens) {
         // Route through the cache commit (active caches no-op for reserved).
@@ -451,8 +451,8 @@ void ReleaseBundleResources(const std::string& bundleName,
         AccessTokenIDManager::GetInstance().ReleaseTokenIdForce(tokenId);
     }
     // Every bundleId (one per user) returns to the pool; idempotent.
-    for (const auto& uid : uids) {
-        (void)AccessTokenIDManager::GetInstance().RemoveBundleId(uid);
+    for (const auto& appUid : appUids) {
+        (void)AccessTokenIDManager::GetInstance().RemoveBundleId(appUid);
     }
     UserPolicyManager::GetInstance().CommitPolicyWhiteListRemoval(allTokens);
 }
@@ -466,13 +466,13 @@ int32_t DeleteBundleManager::DeleteWholeBundle(const std::string& bundleName)
     std::vector<std::vector<std::string>> grantedPermLists;
     std::vector<AccessTokenID> activeTokens;
     std::vector<AccessTokenID> reservedTokens;
-    std::vector<int32_t> uids;
+    std::vector<int32_t> appUids;
     std::vector<DelInfo> delInfoVec;
     std::vector<AddInfo> addInfoVec;
     std::vector<AccessTokenID> allBundleTokens;
     {
         KernelAndDBWriteTransaction txn;
-        int32_t ret = BuildBundleDelDbOps(bundleName, activeTokens, reservedTokens, uids, delInfoVec);
+        int32_t ret = BuildBundleDelDbOps(bundleName, activeTokens, reservedTokens, appUids, delInfoVec);
         if (ret != RET_SUCCESS) {
             return ret;
         }
@@ -502,7 +502,7 @@ int32_t DeleteBundleManager::DeleteWholeBundle(const std::string& bundleName)
         for (size_t i = 0; i < activeTokens.size(); ++i) {
             (void)HapTokenInfoInner::GetGrantedPermList(activeTokens[i], grantedPermLists[i]);
         }
-        ReleaseBundleResources(bundleName, allBundleTokens, uids);
+        ReleaseBundleResources(bundleName, allBundleTokens, appUids);
 #ifdef ENABLE_AUTOMATION_CONTROL
         for (AccessTokenID tid : allBundleTokens) {
             AutomationControlSwitchManager::GetInstance().ClearByTokenId(tid);
@@ -570,7 +570,7 @@ int32_t DeleteBundleManager::HandleReservedRowNotFound(AccessTokenID tokenID, co
 int32_t DeleteBundleManager::PrepareReservedTokenDelete(AccessTokenID tokenID, const std::string& bundleName,
     DeleteDfxInfo& dfxInfo, BundleCleanParam& cleanParam, BundleCleanPlan& cleanPlan)
 {
-    cleanParam.uid = UNAVAILABLE_UID;
+    cleanParam.appUid = UNAVAILABLE_UID;
     // One bundle-name query feeds both the row lookup and the clean judgment.
     GenericValues bundleCondition;
     bundleCondition.Put(TokenFiledConst::FIELD_BUNDLE_NAME, bundleName);
@@ -602,7 +602,7 @@ int32_t DeleteBundleManager::PrepareReservedTokenDelete(AccessTokenID tokenID, c
         dfxInfo.instIndex = row.GetInt(TokenFiledConst::FIELD_INST_INDEX);
         // Complete delete (NONE mode).
         cleanParam.tokenId = tokenID;
-        cleanParam.uid = row.GetInt(TokenFiledConst::FIELD_UID);
+        cleanParam.appUid = row.GetInt(TokenFiledConst::FIELD_UID);
         cleanParam.mode = MultipleModeUtils::GetTokenMode(dfxInfo.instIndex);
         cleanParam.delType = ReservedType::NONE;
         JudgeBundleCleanFromRows(bundleRows, cleanParam, cleanPlan);
@@ -644,7 +644,7 @@ int32_t DeleteBundleManager::DeleteReservedToken(AccessTokenID tokenID, const st
     // Route through the cache commit (active caches no-op for reserved).
     AccessTokenInfoManager::GetInstance().CommitDeleteHapCache(tokenID);
     if (cleanPlan.cleanBundleId) {
-        (void)AccessTokenIDManager::GetInstance().RemoveBundleId(cleanParam.uid);
+        (void)AccessTokenIDManager::GetInstance().RemoveBundleId(cleanParam.appUid);
     }
     AccessTokenIDManager::GetInstance().RemoveReservedTokenId(tokenID);
 #ifdef ENABLE_AUTOMATION_CONTROL

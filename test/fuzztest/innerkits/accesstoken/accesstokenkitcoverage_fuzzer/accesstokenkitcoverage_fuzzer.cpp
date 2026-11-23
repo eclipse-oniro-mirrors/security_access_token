@@ -171,9 +171,12 @@ static void DispatchSpmInterface(FuzzedDataProvider& provider, uint32_t spmSelec
             break;
         }
         case SPM_API_UPDATE_HAP_POLICY: {
+            int32_t appUid = provider.ConsumeIntegral<int32_t>();
             int32_t uid = provider.ConsumeIntegral<int32_t>();
             AccessTokenIDEx tokenIdEx = {0};
             tokenIdEx.tokenIDEx = provider.ConsumeIntegral<uint64_t>();
+            AccessTokenKit::UpdateHapPolicy(provider.ConsumeIntegral<int32_t>(),
+                tokenIdEx, ConsumeBundlePolicy(provider), appUid, uid);
             AccessTokenKit::UpdateHapPolicy(provider.ConsumeIntegral<int32_t>(),
                 tokenIdEx, ConsumeBundlePolicy(provider), uid);
             break;

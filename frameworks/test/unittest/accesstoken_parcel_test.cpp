@@ -354,6 +354,58 @@ HWTEST_F(AccessTokenParcelTest, HapTokenInfoForSyncParcel002, TestSize.Level1)
 }
 
 /**
+ * @tc.name: HapTokenInfoParcel001
+ * @tc.desc: HapTokenInfo roundtrip keeps the legacy wire format: uid is a device-local
+ *           identities and must NOT be serialized, so they stay at default -1 after reading.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenParcelTest, HapTokenInfoParcel001, TestSize.Level1)
+{
+    HapTokenInfoParcel hapTokenInfoParcel;
+    hapTokenInfoParcel.hapTokenInfoParams.ver = 0;
+    hapTokenInfoParcel.hapTokenInfoParams.userID = 100; // 100: user id
+    hapTokenInfoParcel.hapTokenInfoParams.bundleName = "accesstoken_test";
+    hapTokenInfoParcel.hapTokenInfoParams.apiVersion = DEFAULT_API_VERSION;
+    hapTokenInfoParcel.hapTokenInfoParams.instIndex = 0;
+    hapTokenInfoParcel.hapTokenInfoParams.dlpType = 0;
+    hapTokenInfoParcel.hapTokenInfoParams.tokenID = TEST_TOKEN_ID;
+    hapTokenInfoParcel.hapTokenInfoParams.tokenAttr = 0;
+    hapTokenInfoParcel.hapTokenInfoParams.uid = 20010001; // 20010001: app-level uid
+
+    Parcel parcel;
+    EXPECT_EQ(true, hapTokenInfoParcel.Marshalling(parcel));
+
+    // Writer-side lock for the uid omission: hand-write the exact legacy 8-field
+    // sequence of HapTokenInfoParcel::Marshalling and compare the wire size. Any field
+    // appended by the writer (e.g. uid) changes the wire size and fails here.
+    Parcel manualParcel;
+    const HapTokenInfo& params = hapTokenInfoParcel.hapTokenInfoParams;
+    EXPECT_TRUE(manualParcel.WriteUint8(params.ver));
+    EXPECT_TRUE(manualParcel.WriteInt32(params.userID));
+    EXPECT_TRUE(manualParcel.WriteString(params.bundleName));
+    EXPECT_TRUE(manualParcel.WriteInt32(params.apiVersion));
+    EXPECT_TRUE(manualParcel.WriteInt32(params.instIndex));
+    EXPECT_TRUE(manualParcel.WriteInt32(params.dlpType));
+    EXPECT_TRUE(manualParcel.WriteUint32(params.tokenID));
+    EXPECT_TRUE(manualParcel.WriteUint32(params.tokenAttr));
+    EXPECT_EQ(manualParcel.GetDataSize(), parcel.GetDataSize());
+
+    std::shared_ptr<HapTokenInfoParcel> readedData(HapTokenInfoParcel::Unmarshalling(parcel));
+    ASSERT_NE(nullptr, readedData);
+    EXPECT_EQ(hapTokenInfoParcel.hapTokenInfoParams.ver, readedData->hapTokenInfoParams.ver);
+    EXPECT_EQ(hapTokenInfoParcel.hapTokenInfoParams.userID, readedData->hapTokenInfoParams.userID);
+    EXPECT_EQ(true, hapTokenInfoParcel.hapTokenInfoParams.bundleName == readedData->hapTokenInfoParams.bundleName);
+    EXPECT_EQ(hapTokenInfoParcel.hapTokenInfoParams.apiVersion, readedData->hapTokenInfoParams.apiVersion);
+    EXPECT_EQ(hapTokenInfoParcel.hapTokenInfoParams.instIndex, readedData->hapTokenInfoParams.instIndex);
+    EXPECT_EQ(hapTokenInfoParcel.hapTokenInfoParams.dlpType, readedData->hapTokenInfoParams.dlpType);
+    EXPECT_EQ(hapTokenInfoParcel.hapTokenInfoParams.tokenID, readedData->hapTokenInfoParams.tokenID);
+    EXPECT_EQ(hapTokenInfoParcel.hapTokenInfoParams.tokenAttr, readedData->hapTokenInfoParams.tokenAttr);
+    const int32_t invalidUid = -1;
+    EXPECT_EQ(invalidUid, readedData->hapTokenInfoParams.uid);
+}
+
+/**
  * @tc.name: PermissionStateFullParcel002
  * @tc.desc: Test permissionStateParcel Marshalling/Unmarshalling.
  * @tc.type: FUNC

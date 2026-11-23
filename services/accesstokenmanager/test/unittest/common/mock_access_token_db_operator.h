@@ -37,6 +37,10 @@ struct MockDbState final {
     int32_t deleteAndInsertRet = RET_SUCCESS;
     std::vector<DelInfo> lastDeleteInfos;
     std::vector<AddInfo> lastAddInfos;
+    GenericValues lastModifyValues;
+    GenericValues lastModifyCondition;
+    std::vector<GenericValues> modifyValuesList;
+    std::vector<GenericValues> modifyConditionList;
     uint32_t findCallCount = 0;
     uint32_t modifyCallCount = 0;
     uint32_t deleteAndInsertCallCount = 0;

@@ -111,7 +111,7 @@ public:
     // Query appId of the token directly from the hap token db table.
     int32_t GetHapAppIdByTokenId(AccessTokenID tokenID, std::string& appId);
     int32_t GetHapIdentity(const HapBaseInfo& info, Identity& identity);
-    int32_t GetHapBaseInfoByUid(int32_t uid, HapBaseInfo& info);
+    int32_t GetHapBaseInfoByUid(int32_t appUid, HapBaseInfo& info);
     FullTokenID AllocLocalTokenID(const std::string& remoteDeviceID, AccessTokenID remoteTokenID);
     int32_t UpdateHapToken(AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info,
         const std::vector<PermissionStatus>& permStateList, const HapPolicy& hapPolicy,

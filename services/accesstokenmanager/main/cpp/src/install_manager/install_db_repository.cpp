@@ -197,7 +197,7 @@ void InstallDbRepository::GenerateHapTokenInfoItem(const InstallCache& cache, co
     item.instIndex = static_cast<uint32_t>(installInfo.baseInfo.instIndex);
     item.dlpType = static_cast<HapDlpType>(installInfo.baseInfo.dlpType);
     item.apiVersion = installInfo.baseInfo.apiVersion;
-    item.uid = installInfo.baseInfo.uid;
+    item.appUid = installInfo.baseInfo.uid;
     item.tokenAttr = static_cast<uint32_t>(installInfo.baseInfo.tokenAttr);
 
     item.appId = cache.bundleParam.appId;
@@ -421,15 +421,15 @@ int32_t InstallDbRepository::BuildDbOpsVec(const InstallCache& cache,
     const FinishContext& context, const std::map<std::string, std::string>& modulePathMap,
     std::vector<AddInfo>& addInfoVec, std::vector<DelInfo>& delInfoVec)
 {
-    // collect session uids for reserved bundleId cleanup below
-    std::vector<int32_t> sessionUids;
+    // collect session appUids for reserved bundleId cleanup below
+    std::vector<int32_t> sessionAppUids;
     for (size_t i = 0; i < context.hapInfos.size(); ++i) {
         int32_t ret = GenerateTokenDbOpsVec(cache, context, i, addInfoVec, delInfoVec);
         if (ret != RET_SUCCESS) {
             return ret;
         }
         if (context.hapInfos[i].baseInfo.uid != INVALID_UID) {
-            sessionUids.emplace_back(context.hapInfos[i].baseInfo.uid);
+            sessionAppUids.emplace_back(context.hapInfos[i].baseInfo.uid);
         }
     }
 
@@ -455,7 +455,7 @@ int32_t InstallDbRepository::BuildDbOpsVec(const InstallCache& cache,
     }
     // Clean up reserved bundleId persist records for all tokens in this session.
     // Batch call: one lock acquisition, one set copy, one DEL + one ADD pair
-    AccessTokenIDManager::GetInstance().GetReservedBundleIdsPersistInfo(sessionUids, delInfoVec, addInfoVec);
+    AccessTokenIDManager::GetInstance().GetReservedBundleIdsPersistInfo(sessionAppUids, delInfoVec, addInfoVec);
     return RET_SUCCESS;
 }
 

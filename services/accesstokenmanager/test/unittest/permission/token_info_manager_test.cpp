@@ -446,6 +446,26 @@ HWTEST_F(TokenInfoManagerTest, HapTokenInfoInner001, TestSize.Level0)
     ASSERT_EQ(static_cast<int32_t>(608), version);
 }
 
+/**
+ * @tc.name: HapTokenInfoInner002
+ * @tc.desc: Default-constructed and HapInfoParams-constructed HapTokenInfoInner both initialize
+ *           uid and appUid to INVALID_UID(-1); a stale 0 appUid breaks the migration
+ *           CheckCachedUid pass-through and the boot kernel-load gating for fresh tokens.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenInfoManagerTest, HapTokenInfoInner002, TestSize.Level0)
+{
+    constexpr int32_t invalidUid = -1;
+    HapTokenInfoInner defaultInner;
+    EXPECT_EQ(invalidUid, defaultInner.GetAppUid());
+
+    AccessTokenID id = 0x20260101;
+    HapPolicy policy;
+    HapTokenInfoInner paramsInner(id, g_infoManagerTestInfoParms, policy);
+    EXPECT_EQ(invalidUid, paramsInner.GetAppUid());
+}
+
 #ifdef SUPPORT_SANDBOX_APP
 /**
  * @tc.name: IsPermissionAvailableToDlpHap001
@@ -1276,7 +1296,7 @@ HWTEST_F(TokenInfoManagerTest, GetHapIdentity001, TestSize.Level0)
 
 /**
  * @tc.name: GetHapIdentity002
- * @tc.desc: Verify GetHapIdentity returns the token id and uid for an existing hap.
+ * @tc.desc: Verify GetHapIdentity returns the token id, uid and appUid for an existing hap.
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -1298,13 +1318,17 @@ HWTEST_F(TokenInfoManagerTest, GetHapIdentity002, TestSize.Level0)
     ASSERT_EQ(RET_SUCCESS, manager.GetHapIdentity(baseInfo, identity));
     EXPECT_EQ(tokenIdEx.tokenIDEx, identity.tokenId);
     EXPECT_NE(0, identity.uid);
+    // A freshly created token carries no allocated uid yet: GetHapIdentity passes through the
+    // cached INVALID_UID(-1) appUid, a stale 0 would mean the constructor initialization regressed
+    constexpr int32_t invalidUid = -1;
+    EXPECT_EQ(invalidUid, identity.appUid);
 
     ASSERT_EQ(RET_SUCCESS, manager.RemoveHapTokenInfo(tokenIdEx.tokenIdExStruct.tokenID));
 }
 
 /**
  * @tc.name: GetHapBaseInfoByUid001
- * @tc.desc: Verify GetHapBaseInfoByUid handles invalid uid and non-existent uid.
+ * @tc.desc: Verify GetHapBaseInfoByUid handles invalid appUid and non-existent appUid.
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -1319,7 +1343,7 @@ HWTEST_F(TokenInfoManagerTest, GetHapBaseInfoByUid001, TestSize.Level0)
 
 /**
  * @tc.name: GetHapBaseInfoByUid002
- * @tc.desc: Verify GetHapBaseInfoByUid returns the base info for an existing uid.
+ * @tc.desc: Verify GetHapBaseInfoByUid returns the base info for an existing appUid.
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -1333,13 +1357,13 @@ HWTEST_F(TokenInfoManagerTest, GetHapBaseInfoByUid002, TestSize.Level0)
     std::vector<GenericValues> undefValues;
     ASSERT_EQ(RET_SUCCESS, manager.CreateHapTokenInfo(info, g_infoManagerTestPolicyPrams1, tokenIdEx, undefValues));
 
-    const int32_t testUid = 20010001;
+    const int32_t testAppUid = 20010001;
     std::shared_ptr<HapTokenInfoInner> infoPtr = manager.GetHapTokenInfoInner(tokenIdEx.tokenIdExStruct.tokenID);
     ASSERT_NE(nullptr, infoPtr);
-    infoPtr->SetUid(testUid);
+    infoPtr->SetAppUid(testAppUid);
 
     HapBaseInfo baseInfo;
-    ASSERT_EQ(RET_SUCCESS, manager.GetHapBaseInfoByUid(testUid, baseInfo));
+    ASSERT_EQ(RET_SUCCESS, manager.GetHapBaseInfoByUid(testAppUid, baseInfo));
     EXPECT_EQ(info.userID, baseInfo.userID);
     EXPECT_EQ(info.bundleName, baseInfo.bundleName);
     EXPECT_EQ(info.instIndex, baseInfo.instIndex);

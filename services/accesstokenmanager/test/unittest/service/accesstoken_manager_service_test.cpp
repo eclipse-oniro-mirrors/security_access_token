@@ -36,6 +36,11 @@
 #include "hap_policy_parcel.h"
 #include "bundle_infos_rawdata.h"
 #include "hap_token_info.h"
+// Only used by the SPM service tests below; install_session_manager.h pulls in the
+// hapverify headers which are unavailable when IS_SUPPORT_HAP_RUNNING is not defined.
+#if defined(SPM_DATA_ENABLE) && defined(IS_SUPPORT_HAP_RUNNING)
+#include "install_session_manager.h"
+#endif
 #include "mock_permission.h"
 #include "parameters.h"
 #include "os_account_manager_lite.h"
@@ -94,6 +99,7 @@ static constexpr int32_t MAX_PERMISSION_SIZE = 1024;
 static constexpr int32_t API_VERSION_9 = 9;
 static constexpr int32_t RANDOM_TOKENID = 123;
 static constexpr uid_t NON_ROOT_UID = 2000;
+static constexpr uid_t CALLER_APP_UID_WITH_USER_SEGMENT = 20010001;
 static constexpr const char* INVALID_DB_PATH = "/data/123456/invalid_db";
 static const std::string DEFAULT_AGENT_ID = "1001";
 static const std::string MANAGE_USER_POLICY = "ohos.permission.MANAGE_USER_POLICY";
@@ -4161,6 +4167,30 @@ HWTEST_F(AccessTokenManagerServiceTest, ToggleRequestService002, TestSize.Level0
     EXPECT_EQ(PermissionRequestToggleStatus::OPEN, status);
 }
 
+/**
+ * @tc.name: ToggleRequestService003
+ * @tc.desc: Verify request toggle resolves the caller user segment from an appUid-form calling uid.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, ToggleRequestService003, TestSize.Level0)
+{
+    PermissionRequestToggleStatusGuard toggleGuard(USER_ID, "ohos.permission.CAMERA");
+    OsAccountMockGuard mockGuard;
+    SetMockOsAccountLocalIdForSubProfile(USER_ID, ERR_OK);
+    MockToken mock(g_selfShellTokenId, "accesstoken_service", false);
+    mock.Grant(DISABLE_PERMISSION_DIALOG);
+    mock.Grant(GET_SENSITIVE_PERMISSIONS);
+    UidGuard uidGuard(CALLER_APP_UID_WITH_USER_SEGMENT);
+    uint32_t status = PermissionRequestToggleStatus::OPEN;
+    ASSERT_EQ(RET_SUCCESS, atManagerService_->SetPermissionRequestToggleStatus(
+        "ohos.permission.CAMERA", status, 0, 0));
+    status = PermissionRequestToggleStatus::CLOSED;
+    ASSERT_EQ(RET_SUCCESS, atManagerService_->GetPermissionRequestToggleStatus(
+        "ohos.permission.CAMERA", status, 0, 0));
+    EXPECT_EQ(PermissionRequestToggleStatus::OPEN, status);
+}
+
 #ifdef SPM_DATA_ENABLE
 /**
  * @tc.name: IsMigrationDoneServiceTest001
@@ -4329,6 +4359,10 @@ HWTEST_F(AccessTokenManagerServiceTest, GetHapIdentityServiceTest003, TestSize.L
     EXPECT_EQ(RET_SUCCESS, atManagerService_->GetHapIdentity(infoParcel, identity));
     EXPECT_EQ(fullTokenId, static_cast<uint64_t>(identity.tokenId));
     EXPECT_NE(0, identity.uid);
+    // a freshly created token carries INVALID_UID(-1) in both identity fields;
+    // a stale 0 appUid would mean the constructor initialization regressed
+    EXPECT_NE(0, identity.appUid);
+    EXPECT_EQ(identity.uid, identity.appUid);
 
     ASSERT_EQ(RET_SUCCESS, atManagerService_->DeleteToken(tokenId, false));
 }
@@ -4350,7 +4384,7 @@ HWTEST_F(AccessTokenManagerServiceTest, GetHapBaseInfoByUidServiceTest001, TestS
 
 /**
  * @tc.name: GetHapBaseInfoByUidServiceTest002
- * @tc.desc: GetHapBaseInfoByUid returns the hap base info for an existing uid.
+ * @tc.desc: GetHapBaseInfoByUid returns the hap base info for an existing appUid.
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -4360,14 +4394,68 @@ HWTEST_F(AccessTokenManagerServiceTest, GetHapBaseInfoByUidServiceTest002, TestS
     AccessTokenID tokenId = INVALID_TOKENID;
     ASSERT_NE(0U, CreateServiceTestHapToken("com.ohos.gethapbaseinfo.ok", false, {}, tokenId));
 
-    const int32_t testUid = 20010002;
+    const int32_t testAppUid = 20010002;
     std::shared_ptr<HapTokenInfoInner> infoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId);
     ASSERT_NE(nullptr, infoPtr);
-    infoPtr->SetUid(testUid);
+    infoPtr->SetAppUid(testAppUid);
 
     HapBaseInfoParcel infoParcel;
-    EXPECT_EQ(RET_SUCCESS, atManagerService_->GetHapBaseInfoByUid(testUid, infoParcel));
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->GetHapBaseInfoByUid(testAppUid, infoParcel));
     EXPECT_EQ("com.ohos.gethapbaseinfo.ok", infoParcel.hapBaseInfo.bundleName);
+    EXPECT_EQ(USER_ID, infoParcel.hapBaseInfo.userID);
+    EXPECT_EQ(INST_INDEX, infoParcel.hapBaseInfo.instIndex);
+
+    ASSERT_EQ(RET_SUCCESS, atManagerService_->DeleteToken(tokenId, false));
+}
+
+/**
+ * @tc.name: GetHapBaseInfoByUidServiceTest003
+ * @tc.desc: GetHapBaseInfoByUid rejects non-positive appUid with ERR_PARAM_INVALID and
+ *           reports ERR_UID_NOT_EXIST for a plausible but unallocated appUid.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, GetHapBaseInfoByUidServiceTest003, TestSize.Level1)
+{
+    MockNativeToken mock("foundation");
+    HapBaseInfoParcel infoParcel;
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, atManagerService_->GetHapBaseInfoByUid(0, infoParcel));
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, atManagerService_->GetHapBaseInfoByUid(-1, infoParcel));
+    // bundleId 99901 exceeds BUNDLE_ID_MAX(65535), so this appUid can never be allocated
+    const int32_t nonExistentAppUid = 20099901;
+    EXPECT_EQ(AccessTokenError::ERR_UID_NOT_EXIST,
+        atManagerService_->GetHapBaseInfoByUid(nonExistentAppUid, infoParcel));
+}
+
+/**
+ * @tc.name: GetHapBaseInfoByUidServiceTest004
+ * @tc.desc: Cross-API roundtrip: the appUid reported by GetHapIdentity for a token resolves
+ *           back to the same bundle base info through GetHapBaseInfoByUid.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, GetHapBaseInfoByUidServiceTest004, TestSize.Level1)
+{
+    MockNativeToken mock("foundation");
+    AccessTokenID tokenId = INVALID_TOKENID;
+    ASSERT_NE(0U, CreateServiceTestHapToken("com.ohos.gethapbaseinfo.roundtrip", false, {}, tokenId));
+
+    const int32_t testAppUid = 20010004;
+    std::shared_ptr<HapTokenInfoInner> infoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId);
+    ASSERT_NE(nullptr, infoPtr);
+    infoPtr->SetAppUid(testAppUid);
+
+    HapBaseInfoParcel identityParcel;
+    identityParcel.hapBaseInfo.bundleName = "com.ohos.gethapbaseinfo.roundtrip";
+    identityParcel.hapBaseInfo.userID = USER_ID;
+    identityParcel.hapBaseInfo.instIndex = INST_INDEX;
+    IdentityIdl identity;
+    ASSERT_EQ(RET_SUCCESS, atManagerService_->GetHapIdentity(identityParcel, identity));
+    ASSERT_EQ(testAppUid, identity.appUid);
+
+    HapBaseInfoParcel infoParcel;
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->GetHapBaseInfoByUid(identity.appUid, infoParcel));
+    EXPECT_EQ("com.ohos.gethapbaseinfo.roundtrip", infoParcel.hapBaseInfo.bundleName);
     EXPECT_EQ(USER_ID, infoParcel.hapBaseInfo.userID);
     EXPECT_EQ(INST_INDEX, infoParcel.hapBaseInfo.instIndex);
 
@@ -4417,6 +4505,124 @@ HWTEST_F(AccessTokenManagerServiceTest, CheckMigratedUidSetServiceTest002, TestS
     totalUids.erase(0);
     std::set<int32_t> localUnreceivedUids;
     EXPECT_EQ(RET_SUCCESS, atManagerService_->CheckMigratedUidSet(totalUids, localUnreceivedUids));
+}
+
+/**
+ * @tc.name: UpdateHapPolicyServiceTest001
+ * @tc.desc: UpdateHapPolicy denies a non-privileged caller without MANAGE_HAP_TOKENID, rejects an
+ *           unknown session for a privileged caller, and on the normal update path echoes the
+ *           token id and resolves the appUid/uid out params from the cached token identity.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, UpdateHapPolicyServiceTest001, TestSize.Level1)
+{
+    constexpr int32_t MISSING_SESSION_ID = 987654321;
+    constexpr int32_t UPDATE_SESSION_ID = 990002;
+    constexpr int32_t UPDATE_APP_UID = 20010003; // userId 100, bundleId 10003
+    BundlePolicyIdl policyIdl;
+    policyIdl.dlpType = static_cast<DlpTypeIdl>(HapDlpType::DLP_COMMON);
+    policyIdl.isDebugGrant = false;
+
+    {
+        MockHapToken mock("com.ohos.updatehappolicy.noperm", {}, false);
+        UidGuard guard(NON_ROOT_UID);
+        uint64_t deniedTokenIdEx = 0;
+        int32_t deniedAppUid = -1;
+        int32_t deniedUid = -1;
+        EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, atManagerService_->UpdateHapPolicy(
+            0, deniedTokenIdEx, policyIdl, deniedAppUid, deniedUid));
+    }
+
+    auto& sessionManager = InstallSessionManager::GetInstance();
+    sessionManager.SetMigrationDone();
+    {
+        uint64_t missingTokenIdEx = 0;
+        int32_t missingAppUid = -1;
+        int32_t missingUid = -1;
+        EXPECT_EQ(AccessTokenError::ERR_SESSION_NOT_EXIST, atManagerService_->UpdateHapPolicy(
+            MISSING_SESSION_ID, missingTokenIdEx, policyIdl, missingAppUid, missingUid));
+    }
+
+    const std::string bundleName = "com.ohos.updatehappolicy.ok";
+    AccessTokenID tokenId = INVALID_TOKENID;
+    uint64_t fullTokenId = CreateServiceTestHapToken(bundleName, false, {}, tokenId);
+    ASSERT_NE(0U, fullTokenId);
+    std::shared_ptr<HapTokenInfoInner> infoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId);
+    ASSERT_NE(nullptr, infoPtr);
+    infoPtr->SetAppUid(UPDATE_APP_UID);
+
+    InstallCache sessionCache;
+    sessionCache.baseInfo = HapBaseInfo {USER_ID, bundleName, INST_INDEX};
+    sessionCache.bundleParam.bundleName = bundleName;
+    sessionCache.hasPermChecked = true;
+    sessionManager.sessionToInstallCache[UPDATE_SESSION_ID] = sessionCache;
+
+    uint64_t tokenIdEx = fullTokenId;
+    int32_t appUid = UPDATE_APP_UID;
+    int32_t uid = UPDATE_APP_UID; // caller expectation uid == appUid passes the target match
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->UpdateHapPolicy(
+        UPDATE_SESSION_ID, tokenIdEx, policyIdl, appUid, uid));
+    EXPECT_EQ(UPDATE_APP_UID, appUid);
+    EXPECT_EQ(UPDATE_APP_UID, uid); // no uid-switch condition: the resolved uid stays the appUid
+    AccessTokenIDEx outTokenIdEx;
+    outTokenIdEx.tokenIDEx = tokenIdEx;
+    EXPECT_EQ(tokenId, outTokenIdEx.tokenIdExStruct.tokenID);
+
+    sessionManager.sessionToInstallCache.erase(UPDATE_SESSION_ID);
+    ASSERT_EQ(RET_SUCCESS, atManagerService_->DeleteToken(tokenId, false));
+}
+
+/**
+ * @tc.name: PrepareHapIdentityServiceTest001
+ * @tc.desc: PrepareHapIdentity denies a non-privileged caller without MANAGE_HAP_TOKENID, and for
+ *           a privileged caller adopts the session repair appUid into the IdentityIdl out param
+ *           with the runtime uid resolved from it.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenManagerServiceTest, PrepareHapIdentityServiceTest001, TestSize.Level1)
+{
+    constexpr int32_t PREPARE_SESSION_ID = 990003;
+    constexpr int32_t PREPARE_APP_UID = 20060001; // userId 100, bundleId 60001 (far from the alloc scan range)
+    HapBaseInfoIdl infoIdl;
+    infoIdl.userID = USER_ID;
+    infoIdl.bundleName = "com.ohos.preparehapidentity";
+    infoIdl.instIndex = INST_INDEX;
+    BundlePolicyIdl policyIdl;
+    policyIdl.dlpType = static_cast<DlpTypeIdl>(HapDlpType::DLP_COMMON);
+    policyIdl.isDebugGrant = false;
+
+    {
+        MockHapToken mock("com.ohos.preparehapidentity.noperm", {}, false);
+        UidGuard guard(NON_ROOT_UID);
+        int32_t deniedSessionId = 0;
+        IdentityIdl deniedIdentity;
+        EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, atManagerService_->PrepareHapIdentity(
+            deniedSessionId, infoIdl, policyIdl, nullptr, deniedIdentity));
+    }
+
+    // privileged caller: the seeded session carries a caller-designated repair appUid
+    // which identity preparation adopts (fake-free path: kernel refcnt reports it unused)
+    auto& sessionManager = InstallSessionManager::GetInstance();
+    InstallCache sessionCache;
+    sessionCache.baseInfo = HapBaseInfo {USER_ID, infoIdl.bundleName, INST_INDEX};
+    sessionCache.hasPermChecked = true;
+    sessionCache.repairedIdentity.appUid = PREPARE_APP_UID;
+    sessionManager.sessionToInstallCache[PREPARE_SESSION_ID] = sessionCache;
+
+    int32_t sessionId = PREPARE_SESSION_ID;
+    IdentityIdl identity;
+    int32_t ret = atManagerService_->PrepareHapIdentity(sessionId, infoIdl, policyIdl, nullptr, identity);
+    EXPECT_EQ(RET_SUCCESS, ret);
+    EXPECT_NE(0U, identity.tokenId);
+    EXPECT_EQ(PREPARE_APP_UID, identity.appUid);
+    EXPECT_EQ(PREPARE_APP_UID, identity.uid); // no uid-switch condition: uid stays the appUid
+    EXPECT_EQ(USER_ID, AccessTokenIDManager::ExtractUserId(identity.appUid));
+
+    sessionManager.sessionToInstallCache.erase(PREPARE_SESSION_ID);
+    AccessTokenIDManager::GetInstance().ReleaseTokenId(static_cast<AccessTokenID>(identity.tokenId));
+    AccessTokenIDManager::GetInstance().RemoveBundleId(PREPARE_APP_UID);
 }
 
 /**

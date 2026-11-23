@@ -75,7 +75,9 @@ struct HapTokenInfoItem final : public TableItem {
     uint32_t tokenAttr = 0;
     int32_t apiVersion = 0;
     bool permDialogCapState = false;
-    int32_t uid = -1;
+    // The uid column persists the app-level identity (appUid); the runtime uid is
+    // derived in memory (ResolveHapUid with the bundle-level isSharedUid decision).
+    int32_t appUid = -1;
     bool migrated = false;
     ReservedType reserved = ReservedType::NONE;
     bool isSideload = false;

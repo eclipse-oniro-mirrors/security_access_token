@@ -25,6 +25,7 @@
 
 #include "access_token_error.h"
 #include "accesstoken_common_log.h"
+#include "accesstoken_id_manager.h"
 #include "accesstoken_info_manager.h"
 #ifdef SPM_DATA_ENABLE
 #include "accesstoken_migration_manager.h"
@@ -43,12 +44,11 @@
 #include "permission_manager.h"
 #include "pre_authorization_parser.h"
 #endif
+#include "accesstoken_info_utils.h"
+#include "kernel_and_db_transaction.h"
 #include "parameter.h"
 #include "time_util.h"
 #include "user_policy_manager.h"
-#include "accesstoken_info_utils.h"
-#include "add_spm_data_task.h"
-#include "kernel_and_db_transaction.h"
 
 namespace OHOS {
 namespace Security {
@@ -88,9 +88,9 @@ int32_t BootVerifyScheduler::PreVerifyBundle(uint32_t tokenID)
     return RET_SUCCESS;
 }
 
-int32_t BootVerifyScheduler::PreVerifyBundle(int32_t uid)
+int32_t BootVerifyScheduler::PreVerifyBundle(int32_t appUid)
 {
-    (void)uid;
+    (void)appUid;
     return RET_SUCCESS;
 }
 #else
@@ -236,7 +236,8 @@ void ReportPreVerifyAddHapEvent(const std::string& key,
     dfxInfo.oriTokenId = tokenId;
     dfxInfo.tokenIdEx.tokenIdExStruct.tokenID = tokenId;
     if (hapInfo != nullptr) {
-        dfxInfo.userID = static_cast<int32_t>(hapInfo->uid);
+        // HapDfxInfo.userID keeps its historical field name but carries the app-level uid (identity)
+        dfxInfo.userID = hapInfo->appUid;
         dfxInfo.instIndex = hapInfo->instIndex;
         dfxInfo.dlpType = static_cast<HapDlpType>(hapInfo->dlpType);
         dfxInfo.tokenIdEx.tokenIdExStruct.tokenAttr = hapInfo->tokenAttr;
@@ -332,7 +333,7 @@ HapTokenInfo ConvertToHapTokenInfo(const HapTokenInfoItem& item)
     hapInfo.instIndex = static_cast<int32_t>(item.instIndex);
     hapInfo.dlpType = item.dlpType;
     hapInfo.apiVersion = GetStoredApiVersion(item.apiVersion);
-    hapInfo.uid = static_cast<int32_t>(item.uid);
+    hapInfo.uid = item.appUid;
     hapInfo.ver = static_cast<char>(item.version);
     hapInfo.tokenAttr = item.tokenAttr;
     return hapInfo;
@@ -437,7 +438,7 @@ void BootVerifyScheduler::ClearBundleVerifyContext()
     highPrivilegeBundleList_.clear();
     normalBundleList_.clear();
     bundleSignInfoMap_.clear();
-    uidSet_.clear();
+    appUidSet_.clear();
 }
 
 void BootVerifyScheduler::InitPermStateContext(const std::vector<GenericValues>& permStateRes,
@@ -480,18 +481,18 @@ void BootVerifyScheduler::InitHapTokenContext(const std::vector<GenericValues>& 
     }
 }
 
-bool BootVerifyScheduler::InitHapInfoUid(const std::string& bundleName, AccessTokenID tokenId, int32_t uid)
+bool BootVerifyScheduler::InitHapInfoAppUid(const std::string& bundleName, AccessTokenID tokenId, int32_t appUid)
 {
-    if (uid <= 0) {
+    if (appUid <= 0) {
         return true;
     }
 
-    if (uidSet_.count(uid) == 0) {
-        uidSet_.insert(uid);
-        AccessTokenIDManager::GetInstance().InitSingleBundleIdCache(uid);
+    if (appUidSet_.count(appUid) == 0) {
+        appUidSet_.insert(appUid);
+        AccessTokenIDManager::GetInstance().InitSingleBundleIdCache(appUid);
         return true;
     }
-    LOGC(ATM_DOMAIN, ATM_TAG, "Duplicate uid found for tokenId=%{public}u, uid=%{public}d.", tokenId, uid);
+    LOGC(ATM_DOMAIN, ATM_TAG, "Duplicate appUid found for tokenId=%{public}u, appUid=%{public}d.", tokenId, appUid);
     ReportSysCommonEventError(AccessTokenServiceStartSceneCode::REGISTER_UID,
         AccessTokenServiceStartErrorCode::UID_CONFLICT);
     return false;
@@ -512,8 +513,8 @@ bool BootVerifyScheduler::InitSingleHapTokenContext(const GenericValues& tokenVa
     AccessTokenInfoManager::GetInstance().AddReservedHapInfoFromDbValues(tokenValue, isReservedToken);
     if (isReservedToken) {
 #ifdef SPM_DATA_ENABLE
-        int32_t uid = tokenValue.GetInt(TokenFiledConst::FIELD_UID);
-        (void)InitHapInfoUid(bundleName, tokenId, uid);
+        int32_t appUid = tokenValue.GetInt(TokenFiledConst::FIELD_UID);
+        (void)InitHapInfoAppUid(bundleName, tokenId, appUid);
 #endif
         return false;
     }
@@ -537,7 +538,7 @@ bool BootVerifyScheduler::InitSingleHapTokenContext(const GenericValues& tokenVa
         return false;
     }
 #if SPM_DATA_ENABLE
-    if (!InitHapInfoUid(bundleName, tokenId, static_cast<int32_t>(hapTokenInfoItem.uid))) {
+    if (!InitHapInfoAppUid(bundleName, tokenId, hapTokenInfoItem.appUid)) {
         return false;
     }
 #endif
@@ -570,11 +571,15 @@ bool BootVerifyScheduler::BuildHapTokenInfoItemFromDb(AccessTokenID tokenId, con
 #ifdef SPM_DATA_ENABLE
     hapTokenInfoItem.reserved = static_cast<ReservedType>(tokenValue.GetInt(TokenFiledConst::FIELD_RESERVED));
     hapTokenInfoItem.migrated = tokenValue.GetInt(TokenFiledConst::FIELD_MIGRATED) != 0;
-    hapTokenInfoItem.uid = tokenValue.GetInt(TokenFiledConst::FIELD_UID);
-    if (hapTokenInfoItem.uid != INVALID_UID &&
-        AccessTokenIDManager::ExtractUserId(hapTokenInfoItem.uid) != static_cast<int32_t>(hapTokenInfoItem.userId)) {
-        LOGE(ATM_DOMAIN, ATM_TAG, "Token uid %{public}d inconsistent with userId %{public}u, tokenId=%{public}u.",
-            hapTokenInfoItem.uid, hapTokenInfoItem.userId, tokenId);
+    // The uid column persists the app-level identity: appUid loads it, while the runtime
+    // uid stays INVALID until the reconcile flow derives it.
+    hapTokenInfoItem.appUid = tokenValue.GetInt(TokenFiledConst::FIELD_UID);
+    // Only the appUid form carries the user segment: the runtime uid legitimately equals
+    // userId for switched bundles, so the cross-user consistency gate applies to appUid.
+    if (hapTokenInfoItem.appUid != INVALID_UID &&
+        AccessTokenIDManager::ExtractUserId(hapTokenInfoItem.appUid) != static_cast<int32_t>(hapTokenInfoItem.userId)) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "Token appUid %{public}d inconsistent with userId %{public}u, tokenId=%{public}u.",
+            hapTokenInfoItem.appUid, hapTokenInfoItem.userId, tokenId);
         AccessTokenIDManager::GetInstance().ChangeTokenIdStatus(tokenId, TokenIdStatus::UNTRUSTED);
         return false;
     }
@@ -1264,7 +1269,8 @@ void BootVerifyScheduler::HandleHighPrivilegeBundleSpmData(const std::map<std::s
 
     // Boot-time database correction: a failed DB write is not rolled back.
     // The kernel SPM data and in-memory cache are already committed; on failure
-    // only the event is reported and the affected bundles are marked as failed.
+    // only the event is reported, the bundles are still marked verified and the
+    // DB row is re-corrected by the next boot uid refresh.
     int32_t ret = PersistVerifiedBundleStates(bundleStatesToPersist);
     if (ret != RET_SUCCESS) {
         LOGC(ATM_DOMAIN, ATM_TAG, "Persist verified bundle states failed, ret=%{public}d.", ret);
@@ -1294,14 +1300,15 @@ bool BootVerifyScheduler::ShouldSkipVerifyLocked(const std::string& key) const
         return true;
     }
     // Skip verification only when all tokens in the bundle are present in the cache and
-    // carry the unassigned uid (-1); otherwise the bundle still requires normal verification.
+    // carry an unassigned appUid; a half-assigned token still enters verification so
+    // BuildSpmParams reports it through the UID_INVALID path.
     bool allUidInvalid = true;
     for (const auto tokenId : bundleIter->second->tokenIds) {
         auto hapIter = hapTokenInfoMap_.find(tokenId);
         if (hapIter == hapTokenInfoMap_.end()) {
             continue;
         }
-        if (hapIter->second.uid != INVALID_UID) {
+        if (hapIter->second.appUid != INVALID_UID) {
             allUidInvalid = false;
             break;
         }
@@ -1347,7 +1354,7 @@ int32_t BootVerifyScheduler::BuildSpmParams(const std::string& key, BundleNoCach
             LOGE(ATM_DOMAIN, ATM_TAG, "Build spm params failed, tokenId=%{public}u.", tokenId);
             return ERR_TOKENID_NOT_EXIST;
         }
-        if (hapIter->second.uid == INVALID_UID) {
+        if (hapIter->second.appUid == INVALID_UID) {
             LOGC(ATM_DOMAIN, ATM_TAG,
                 "bundleName=%{public}s, tokenId=%{public}u skip load to kernel.", key.c_str(), tokenId);
             ReportSysCommonEventError(AccessTokenServiceStartSceneCode::LOAD_SPM_DATA_TO_KERNEL,
@@ -1702,9 +1709,9 @@ int32_t BootVerifyScheduler::PreVerifyBundle(uint32_t tokenID)
     return PreVerifyBundleInner(MultipleModeUtils::GetBundleModeKey(bundleName, mode));
 }
 
-int32_t BootVerifyScheduler::PreVerifyBundle(int32_t uid)
+int32_t BootVerifyScheduler::PreVerifyBundle(int32_t appUid)
 {
-    if (uid <= 0 || IsAllBundlesVerified() || hapTokenInfoMap_.empty()) {
+    if (appUid <= 0 || IsAllBundlesVerified() || hapTokenInfoMap_.empty()) {
         return RET_SUCCESS;
     }
 
@@ -1713,7 +1720,7 @@ int32_t BootVerifyScheduler::PreVerifyBundle(int32_t uid)
     {
         std::lock_guard<std::mutex> lock(verifyMutex_);
         for (const auto& entry : hapTokenInfoMap_) {
-            if (entry.second.uid != uid) {
+            if (entry.second.appUid != appUid) {
                 continue;
             }
             bundleName = entry.second.bundleName;
@@ -1722,7 +1729,7 @@ int32_t BootVerifyScheduler::PreVerifyBundle(int32_t uid)
         }
     }
     if (bundleName.empty()) {
-        LOGW(ATM_DOMAIN, ATM_TAG, "Pre verify skipped, uid not exist, uid=%{public}d.", uid);
+        LOGW(ATM_DOMAIN, ATM_TAG, "Pre verify skipped, appUid not exist, appUid=%{public}d.", appUid);
         return RET_SUCCESS;
     }
     return PreVerifyBundleInner(MultipleModeUtils::GetBundleModeKey(bundleName, mode));

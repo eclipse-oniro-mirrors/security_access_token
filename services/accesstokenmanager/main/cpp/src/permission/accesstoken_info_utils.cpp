@@ -16,11 +16,13 @@
 #include "accesstoken_info_utils.h"
 
 #include <algorithm>
+#include <atomic>
 #include <cctype>
 #include <cerrno>
 #include <climits>
 #include <cstdlib>
 #include <cstring>
+#include <mutex>
 #include <unordered_set>
 
 #include "access_token_error.h"
@@ -30,6 +32,7 @@
 #include "permission_constraint_check.h"
 #include "permission_feature_manager.h"
 #include "permission_map.h"
+#include "spm_setproc.h"
 #include "token_field_const.h"
 
 namespace OHOS {
@@ -68,6 +71,54 @@ static bool IsHapPathValid(const std::string& filePath)
         }
     }
     return true;
+}
+
+constexpr int32_t INVALID_UID = -1;
+constexpr const char* PERMISSION_CUSTOM_SANDBOX = "ohos.permission.CUSTOM_SANDBOX";
+#if defined(ACCESS_TOKEN_SUPPORT_SHAREDUID) && defined(ACCESS_TOKEN_ENABLE_SHAREDUID)
+constexpr char DEVICE_TYPE_2IN1[] = "2in1";
+#endif
+
+// Query the SPM kernel version for the appUid/uid switch decision. The kernel SPM version
+// is immutable at runtime, so the result is cached at this caller layer per review;
+// failures are still logged on each uncached probe. Returns RET_SUCCESS with spmVersion
+// filled on success.
+int32_t QuerySpmVersionForSharedUid(uint32_t& spmVersion)
+{
+#ifndef ATM_TEST_ENABLE
+    static std::atomic<bool> hasCached{false};
+    static std::atomic<int32_t> cachedRet{0};
+    static std::atomic<uint32_t> cachedVersion{0};
+    static std::mutex cacheMutex;
+
+    if (hasCached.load(std::memory_order_acquire)) {
+        spmVersion = cachedVersion.load(std::memory_order_acquire);
+        return cachedRet.load(std::memory_order_acquire);
+    }
+
+    std::lock_guard<std::mutex> lock(cacheMutex);
+    if (hasCached.load(std::memory_order_relaxed)) {
+        spmVersion = cachedVersion.load(std::memory_order_relaxed);
+        return cachedRet.load(std::memory_order_relaxed);
+    }
+#endif
+
+    uint32_t version = 0;
+    int32_t ret = SpmGetVersion(&version);
+    if (ret != RET_SUCCESS) {
+        LOGE(ATM_DOMAIN, ATM_TAG, "SpmGetVersion failed, ret=%{public}d, fallback to appUid.", ret);
+    }
+#ifndef ATM_TEST_ENABLE
+    if (ret != RET_SUCCESS && ret != ENOTSUP && ret != EOPNOTSUPP) {
+        // Transient failure: never cache it, retry the probe on the next call.
+        return ret;
+    }
+    cachedVersion.store(version, std::memory_order_release);
+    cachedRet.store(ret, std::memory_order_release);
+    hasCached.store(true, std::memory_order_release);
+#endif
+    spmVersion = version;
+    return ret;
 }
 }
 
@@ -167,7 +218,7 @@ void AccessTokenInfoUtils::BuildHapTokenInfo(const Identity& id, const BundlePar
 
     info = {};
     info.tokenID = AccessTokenIDManager::ExtractTokenIdFromFull(id.tokenId);
-    info.userID = id.uid / BASE_USER_RANGE;
+    info.userID = id.appUid / BASE_USER_RANGE;
     info.ver = DEFAULT_TOKEN_VERSION;
     info.tokenAttr = 0;
     if (param.isSystem) {
@@ -183,7 +234,7 @@ void AccessTokenInfoUtils::BuildHapTokenInfo(const Identity& id, const BundlePar
     info.apiVersion = (inputSize <= apiSize) ? param.apiVersion : std::atoi(apiStr.substr(inputSize - apiSize).c_str());
     info.instIndex = 0;
     info.dlpType = DLP_COMMON;
-    info.uid = id.uid;
+    info.uid = id.appUid;
 }
 
 void AccessTokenInfoUtils::BuildBundleFullInfo(const BundleParam& param, const HapPolicy& policy,
@@ -197,6 +248,7 @@ void AccessTokenInfoUtils::BuildBundleFullInfo(const BundleParam& param, const H
     noCached.distributionType = param.distributionType;
     noCached.idType = param.idType;
     noCached.ownerid = param.appIdentifier;
+    noCached.isSharedUid = param.isSharedUid;
 
     std::unordered_set<uint32_t> permCodeSet;
     for (const auto& status : policy.permStateList) {
@@ -238,6 +290,52 @@ ReservedType AccessTokenInfoUtils::GetReservedTokenTypeDBValue(const GenericValu
     }
     return ReservedType::NONE;
 #endif
+}
+
+bool AccessTokenInfoUtils::IsSharedUid(bool sharedUID, const std::vector<std::string>& deviceTypes,
+    bool hasCustomSandboxPerm)
+{
+#if defined(ACCESS_TOKEN_SUPPORT_SHAREDUID) && defined(ACCESS_TOKEN_ENABLE_SHAREDUID)
+    return hasCustomSandboxPerm || (sharedUID && deviceTypes.size() == 1 && deviceTypes[0] == DEVICE_TYPE_2IN1);
+#else
+    (void)sharedUID;
+    (void)deviceTypes;
+    (void)hasCustomSandboxPerm;
+    return false;
+#endif
+}
+
+int32_t AccessTokenInfoUtils::ResolveHapUid(int32_t appUid, bool isSharedUid)
+{
+    if (appUid == INVALID_UID) {
+        return INVALID_UID;
+    }
+    uint32_t spmVersion = 0;
+    if (QuerySpmVersionForSharedUid(spmVersion) != RET_SUCCESS) {
+        return appUid;
+    }
+    if (spmVersion < SPM_MIN_VERSION_SUPPORT_APPUID) {
+        LOGD(ATM_DOMAIN, ATM_TAG, "Spm version %{public}u below switch version %{public}u, keep appUid form, "
+            "appUid=%{public}d.", spmVersion, SPM_MIN_VERSION_SUPPORT_APPUID, appUid);
+        return appUid;
+    }
+    int32_t uid = isSharedUid ? AccessTokenIDManager::ExtractUserId(appUid) : appUid;
+    LOGD(ATM_DOMAIN, ATM_TAG, "Resolved uid %{public}d from appUid %{public}d, switch flag %{public}d.",
+        uid, appUid, isSharedUid);
+    return uid;
+}
+
+bool AccessTokenInfoUtils::HasCustomSandboxPermission(const std::vector<PermissionStatus>& permStateList)
+{
+    if (!IsDefinedPermissionInner(PERMISSION_CUSTOM_SANDBOX)) {
+        return false;
+    }
+    for (const auto& perm : permStateList) {
+        if (perm.permissionName == PERMISSION_CUSTOM_SANDBOX) {
+            return true;
+        }
+    }
+    return false;
 }
 
 void AccessTokenInfoUtils::AccessTokenServiceAppVerifyParamSet()

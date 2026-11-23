@@ -204,6 +204,12 @@ void MigrationVerifyHelper::PrepareHapInfoOperations(const BundleParam& param, c
             HapTokenInfoItem& item = items[it->second];
             bool isFixed = false;
             PermissionConstraintCheck::FixPersistentHapInfo(param, policy, item, isFixed);
+            // Sync the app-level identity from cache: only the appUid is persisted (the uid
+            // column carries it); the runtime uid is derived in memory and never stored.
+            if (item.appUid != hapInfo.uid) {
+                item.appUid = hapInfo.uid;
+                isFixed = true;
+            }
             if (!isFixed) {
                 continue;
             }
@@ -441,11 +447,13 @@ int32_t MigrationVerifyHelper::VerifyMigratedBundle(const BundleInfoItems& bundl
         if (ret == ERR_DATA_CONFLICT_WITH_KERNEL) {
             LOGI(ATM_DOMAIN, ATM_TAG, "Data has loaded in kernel for %{public}s, ret=%{public}d.",
                 bundleInfo.bundleName.c_str(), ret);
+            // Kernel already holds the data; the refreshed cached uids stay and are
+            // reconciled by the per-boot fix flow. The return code semantics is unchanged.
             return RET_SUCCESS;
         } else {
             LOGC(ATM_DOMAIN, ATM_TAG, "AddKernelData failed for %{public}s, ret=%{public}d.",
                 bundleInfo.bundleName.c_str(), ret);
-                return ret;
+            return ret;
         }
     }
 

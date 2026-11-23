@@ -135,7 +135,7 @@ void TokenSyncCallbackStub::UpdateRemoteHapTokenInfoInner(MessageParcel& data, M
 
 bool TokenSyncCallbackStub::IsAccessTokenCalling() const
 {
-    int callingUid = IPCSkeleton::GetCallingUid();
+    int callingUid = IPCSkeleton::GetCallingAppUid();
     return callingUid == ACCESSTOKEN_UID;
 }
 #endif // TOKEN_SYNC_ENABLE

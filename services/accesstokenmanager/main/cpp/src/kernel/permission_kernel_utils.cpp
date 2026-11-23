@@ -15,6 +15,8 @@
 
 #include "permission_kernel_utils.h"
 
+#include "accesstoken_id_manager.h"
+
 #include <atomic>
 #include <mutex>
 #include "access_token_error.h"
@@ -94,6 +96,11 @@ int32_t PermissionKernelUtils::GetBundleInfoFromKernel(AccessTokenID tokenId, Bu
     noCachedInfo.distributionType = spmData->distributionType;
     noCachedInfo.idType = spmData->idType;
     noCachedInfo.ownerid = spmData->ownerid;
+    // Recover the bundle-level switch decision: a switched entry carries the runtime
+    // uid in userId form while appUid keeps the user segment.
+    noCachedInfo.isSharedUid = (spmData->appUid != 0) &&
+        (static_cast<int32_t>(spmData->uid) ==
+            AccessTokenIDManager::ExtractUserId(static_cast<int32_t>(spmData->appUid)));
     // the kernel bitmap is the authoritative perm code set of the token
     ret = KernelDetail::ParsePermissionBitmap(spmData->perms, permCodeList);
     if (ret != RET_SUCCESS) {
