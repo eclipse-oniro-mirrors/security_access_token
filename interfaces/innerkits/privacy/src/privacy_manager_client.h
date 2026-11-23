@@ -129,7 +129,7 @@ private:
     int32_t CreatePermDisablePolicyCbk(
         const std::shared_ptr<DisablePolicyChangeCallback>& callback,
         sptr<PermDisablePolicyChangeCallback>& callbackWrap);
-    void SubscribeSystemAbility(const SubscribeSACallbackFunc& callbackFunc);
+    bool SubscribeSystemAbility(const SubscribeSACallbackFunc& callbackFunc);
     void SetInputCache(const PermissionUsedTypeInfo& info, bool hasCbk);
     void DeleteInputCache(AccessTokenID tokenID, int32_t pid, const std::string& permissionName,
         const std::string& enhancedIdentity);

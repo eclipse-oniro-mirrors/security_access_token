@@ -526,7 +526,7 @@ static void ConvertBundleUsedRecord(napi_env env, napi_value value, const Bundle
     NAPI_CALL_RETURN_VOID(env, napi_set_named_property(env, value, "tokenId", nTokenId));
 
     napi_value nIsRemote;
-    NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, bundleRecord.isRemote, &nIsRemote));
+    NAPI_CALL_RETURN_VOID(env, napi_get_boolean(env, bundleRecord.isRemote, &nIsRemote));
     NAPI_CALL_RETURN_VOID(env, napi_set_named_property(env, value, "isRemote", nIsRemote));
 
     napi_value nDeviceId;
