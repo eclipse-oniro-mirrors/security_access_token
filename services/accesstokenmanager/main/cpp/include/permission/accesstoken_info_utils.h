@@ -25,6 +25,7 @@
 #include "hap_data_structure.h"
 #include "hap_token_info.h"
 #include "hap_token_info_inner.h"
+#include "multiple_mode_utils.h"
 #include "permission_status.h"
 
 namespace OHOS {
@@ -32,9 +33,6 @@ namespace Security {
 namespace AccessToken {
 static const char* ACCESS_TOKEN_SERVICE_APP_VERIFY_KEY = "accesstoken.permission.appverified";
 static const char* ACCESS_TOKEN_SERVICE_SPM_ENFORCING_KEY = "accesstoken.permission.spm.enforcing";
-// instIndex base for the sub mode (dual mode / same bundleName different package).
-// [0, MAIN_CLONE_INDEX_BASE) is main mode, [MAIN_CLONE_INDEX_BASE, 2 * MAIN_CLONE_INDEX_BASE) is sub mode.
-constexpr int32_t MAIN_CLONE_INDEX_BASE = 10000;
 // spm kernel data struct version that introduces the appUid/uid separation switch.
 constexpr uint32_t SPM_MIN_VERSION_SUPPORT_APPUID = 2;
 

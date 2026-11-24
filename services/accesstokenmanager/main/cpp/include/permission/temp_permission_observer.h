@@ -32,7 +32,8 @@
 #include "continuous_task_change_callback.h"
 #endif
 #include "form_status_change_callback.h"
-#include "permission_manager.h"
+#include "nocopyable.h"
+#include "permission_status.h"
 
 namespace OHOS {
 namespace Security {

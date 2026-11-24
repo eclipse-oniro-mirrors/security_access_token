@@ -96,6 +96,7 @@
 #include "time_util.h"
 #include "tokenid_attributes.h"
 #include "token_field_const.h"
+#include "temp_permission_observer.h"
 #include "user_policy_manager.h"
 #ifdef TOKEN_SYNC_ENABLE
 #include "token_modify_notifier.h"
