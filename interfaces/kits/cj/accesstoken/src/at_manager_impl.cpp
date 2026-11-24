@@ -134,7 +134,7 @@ static std::vector<std::string> CArrStringToVector(const CArrString& cArr)
     return ret;
 }
 
-char* MallocCString(const std::string& stdString)
+static char* MallocCString(const std::string& stdString)
 {
     if (stdString.empty()) {
         return nullptr;
