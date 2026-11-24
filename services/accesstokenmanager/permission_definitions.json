@@ -4956,11 +4956,12 @@
             "name": "ohos.permission.GET_SUSPEND_STATE",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
-            "availableType": "SERVICE",
-            "since": 11,
+            "availableType": "SYSTEM",
+            "since": "26.1.0",
             "deprecated": "",
             "provisionEnable": false,
-            "distributedSceneEnable": false
+            "distributedSceneEnable": false,
+            "deviceTypes": ["phone", "tv", "2in1", "tablet", "car", "wearable"]
         },
         {
             "name": "ohos.permission.MANAGE_APP_BOOT_INTERNAL",
