@@ -13210,17 +13210,6 @@
             "deviceTypes": ["2in1"]
         },
         {
-            "name": "ohos.permission.ACCESS_SECURE_AIGATEWAY",
-            "grantMode": "system_grant",
-            "availableLevel": "system_basic",
-            "availableType": "SYSTEM",
-            "since": "26.1.0",
-            "deprecated": "",
-            "provisionEnable": true,
-            "distributedSceneEnable": false,
-            "deviceTypes": ["2in1", "tablet"]
-        },
-        {
             "name": "ohos.permission.ANCO_VIRUS_PROTECTION",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
