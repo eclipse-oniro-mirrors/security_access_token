@@ -50,6 +50,7 @@ static constexpr int32_t RANDOM_TOKENID = 123;
 static constexpr int INVALID_IPC_CODE = 0;
 static constexpr int32_t DELAY_TIME = 10;
 static constexpr int32_t TEST_NON_ENTERPRISE_DISTRIBUTION_TYPE = 0;
+static constexpr int32_t SLEEP_TIME_SECONDS = 5;
 
 static PermissionStatus g_permState = {
     .permissionName = "ohos.permission.CAMERA",
@@ -89,7 +90,10 @@ void PermissionManagerCoverageTest::SetUpTestCase()
     BootVerifyScheduler::GetInstance().StartVerifyNormalBundleListAsync();
 }
 
-void PermissionManagerCoverageTest::TearDownTestCase() {}
+void PermissionManagerCoverageTest::TearDownTestCase()
+{
+    sleep(SLEEP_TIME_SECONDS);
+}
 
 void PermissionManagerCoverageTest::SetUp() {}
 
