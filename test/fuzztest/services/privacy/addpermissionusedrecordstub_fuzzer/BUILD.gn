@@ -31,5 +31,8 @@ ohos_fuzztest("AddPermissionUsedRecordStubFuzzTest") {
   external_deps = privacy_stub_fuzz_external_deps
 
   cflags_cc = privacy_stub_fuzz_cflags_cc
+  if (eventhandler_enable) {
+    cflags_cc -= [ "-DEVENTHANDLER_ENABLE" ]
+  }
   cflags = privacy_stub_fuzz_cflags
 }

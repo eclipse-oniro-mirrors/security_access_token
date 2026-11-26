@@ -73,7 +73,6 @@ namespace OHOS {
 
 void BeforeExit()
 {
-    PermissionRecordManager::GetInstance().FlushPendingTasks();
     std::this_thread::sleep_for(std::chrono::seconds(SLEEP_TIME));
 }
 
