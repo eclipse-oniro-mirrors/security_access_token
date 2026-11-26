@@ -1543,11 +1543,11 @@ int32_t BootVerifyScheduler::AddSpmDataAndCommitCache(
         return ret;
     }
 
-    int32_t result = PersistVerifiedBundleState(key, state);
-    if (result != RET_SUCCESS) {
+    ret = PersistVerifiedBundleState(key, state);
+    if (ret != RET_SUCCESS) {
         LOGC(ATM_DOMAIN, ATM_TAG, "Failed to modify database, bundleName=%{public}s.", key.c_str());
         ReportSysCommonEventError(AccessTokenServiceStartSceneCode::PERSIST_BUNDLE_DATA, ret);
-        return result;
+        return ret;
     }
 
     {

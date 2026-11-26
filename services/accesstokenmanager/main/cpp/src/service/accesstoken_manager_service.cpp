@@ -2261,14 +2261,13 @@ int32_t AccessTokenManagerService::GetVersion(uint32_t& version)
 
 int32_t AccessTokenManagerService::SetPermDialogCap(const HapBaseInfoParcel& hapBaseInfoParcel, bool enable)
 {
-    LOGI(ATM_DOMAIN, ATM_TAG, "CallerPid %{public}d, bundle %{public}s.", IPCSkeleton::GetCallingPid(),
-        hapBaseInfoParcel.hapBaseInfo.bundleName.c_str());
     uint32_t callingToken = IPCSkeleton::GetCallingTokenID();
     if (VerifyAccessToken(callingToken, DISABLE_PERMISSION_DIALOG) == PERMISSION_DENIED) {
         LOGE(ATM_DOMAIN, ATM_TAG, "Perm denied(tokenID %{public}d).", callingToken);
         return AccessTokenError::ERR_PERMISSION_DENIED;
     }
-
+    LOGI(ATM_DOMAIN, ATM_TAG, "CallerPid %{public}d, bundle %{public}s.", IPCSkeleton::GetCallingPid(),
+        hapBaseInfoParcel.hapBaseInfo.bundleName.c_str());
     AccessTokenIDEx tokenIdEx = AccessTokenInfoManager::GetInstance().GetHapTokenID(
         hapBaseInfoParcel.hapBaseInfo.userID,
         hapBaseInfoParcel.hapBaseInfo.bundleName,
