@@ -51,6 +51,7 @@ static constexpr const char* GLOBAL_SWITCH_SHEET_ABILITY_NAME_KEY = "global_swit
 static constexpr const char* TEMP_PERM_CANCLE_TIME_KEY = "temp_perm_cencle_time";
 static constexpr const char* APPLICATION_SETTING_ABILITY_NAME_KEY = "application_setting_ability_name";
 static constexpr const char* OPEN_SETTING_ABILITY_NAME_KEY = "open_setting_ability_name";
+static constexpr const char* AUTOMATION_CONTROL_ABILITY_NAME_KEY = "automation_control_ability_name";
 
 static constexpr const char* RECORD_SIZE_MAXIMUM_KEY = "permission_used_record_size_maximum";
 static constexpr const char* RECORD_AGING_TIME_KEY = "permission_used_record_aging_time";
@@ -245,6 +246,7 @@ bool GetAtCfgFromJson(const CJson* j, AccessTokenServiceConfig& a)
 
     GetStringFromJson(j, APPLICATION_SETTING_ABILITY_NAME_KEY, a.applicationSettingAbilityName);
     GetStringFromJson(j, OPEN_SETTING_ABILITY_NAME_KEY, a.openSettingAbilityName);
+    GetStringFromJson(j, AUTOMATION_CONTROL_ABILITY_NAME_KEY, a.automationControlAbilityName);
     return true;
 }
 

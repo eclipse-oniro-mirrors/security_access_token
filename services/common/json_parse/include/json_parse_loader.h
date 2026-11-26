@@ -41,6 +41,7 @@ struct AccessTokenServiceConfig final {
     int32_t cancelTime = 0;
     std::string applicationSettingAbilityName;
     std::string openSettingAbilityName;
+    std::string automationControlAbilityName;
     std::vector<std::string> enterpriseNormalPermissiveBundles;
 };
 

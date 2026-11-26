@@ -74,6 +74,10 @@ public:
      * open setting ability name
      */
     std::string openSettingAbilityName;
+    /**
+     * automation control ability name
+     */
+    std::string automationControlAbilityName;
 };
 } // namespace AccessToken
 } // namespace Security

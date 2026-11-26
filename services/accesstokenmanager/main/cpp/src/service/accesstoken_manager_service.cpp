@@ -120,6 +120,7 @@ const char* PERMISSION_STATE_SHEET_ABILITY_NAME = "com.ohos.permissionmanager.Pe
 const char* GLOBAL_SWITCH_SHEET_ABILITY_NAME = "com.ohos.permissionmanager.GlobalSwitchSheetAbility";
 const char* APPLICATION_SETTING_ABILITY_NAME = "com.ohos.permissionmanager.MainAbility";
 const char* OPEN_SETTING_ABILITY_NAME = "com.ohos.permissionmanager.OpenSettingAbility";
+const char* AUTOMATION_CONTROL_ABILITY_NAME = "com.ohos.permissionmanager.AutomationControlAbility";
 const char* DEVELOPER_MODE_STATE = "const.security.developermode.state";
 
 const std::string MANAGE_HAP_TOKENID_PERMISSION = "ohos.permission.MANAGE_HAP_TOKENID";
@@ -209,6 +210,7 @@ constexpr uint32_t BITMAP_INDEX_4 = 4;
 constexpr uint32_t BITMAP_INDEX_5 = 5;
 constexpr uint32_t BITMAP_INDEX_6 = 6;
 constexpr uint32_t BITMAP_INDEX_7 = 7;
+constexpr uint32_t BITMAP_INDEX_8 = 8;
 
 bool HasDetailWithoutDialog(const std::vector<PermissionDialogDetail>& detailList)
 {
@@ -2294,6 +2296,7 @@ int32_t AccessTokenManagerService::GetPermissionManagerInfo(PermissionGrantInfoP
     infoParcel.info.permStateAbilityName = permStateAbilityName_;
     infoParcel.info.globalSwitchAbilityName = globalSwitchAbilityName_;
     infoParcel.info.openSettingAbilityName = openSettingAbilityName_;
+    infoParcel.info.automationControlAbilityName = automationControlAbilityName_;
     return ERR_OK;
 }
 
@@ -2540,6 +2543,12 @@ void AccessTokenManagerService::SetFlagIfNeed(const AccessTokenServiceConfig& at
         openSettingAbilityName_ = atConfig.openSettingAbilityName;
         parseConfigFlag |= 0x1 << BITMAP_INDEX_7;
     }
+    // Unconditional: config file exists but field absent must yield empty, not the
+    // default. Default is only kept when no config file is present.
+    automationControlAbilityName_ = atConfig.automationControlAbilityName;
+    if (!atConfig.automationControlAbilityName.empty()) {
+        parseConfigFlag |= 0x1 << BITMAP_INDEX_8;
+    }
 }
 
 void AccessTokenManagerService::GetConfigValue(uint32_t& parseConfigFlag)
@@ -2553,6 +2562,7 @@ void AccessTokenManagerService::GetConfigValue(uint32_t& parseConfigFlag)
         globalSwitchAbilityName_ = GLOBAL_SWITCH_SHEET_ABILITY_NAME;
         applicationSettingAbilityName_ = APPLICATION_SETTING_ABILITY_NAME;
         openSettingAbilityName_ = OPEN_SETTING_ABILITY_NAME;
+        automationControlAbilityName_ = AUTOMATION_CONTROL_ABILITY_NAME;
     }
     int32_t cancelTime = 0;
     LibraryLoader loader(CONFIG_PARSE_LIBPATH, CONFIG_PARSE_CREATE_SYMBOL, CONFIG_PARSE_DESTROY_SYMBOL);
@@ -2571,10 +2581,10 @@ void AccessTokenManagerService::GetConfigValue(uint32_t& parseConfigFlag)
         LOGI(ATM_DOMAIN, ATM_TAG, "GrantBundleName_ is %{public}s, grantAbilityName_ is %{public}s, "
             "grantServiceAbilityName_ is %{public}s, permStateAbilityName_ is %{public}s, "
             "globalSwitchAbilityName_ is %{public}s, applicationSettingAbilityName_ is %{public}s, "
-            "openSettingAbilityName_ is %{public}s.",
+            "openSettingAbilityName_ is %{public}s, automationControlAbilityName_ is %{public}s.",
             grantBundleName_.c_str(), grantAbilityName_.c_str(), grantServiceAbilityName_.c_str(),
             permStateAbilityName_.c_str(), globalSwitchAbilityName_.c_str(), applicationSettingAbilityName_.c_str(),
-            openSettingAbilityName_.c_str());
+            openSettingAbilityName_.c_str(), automationControlAbilityName_.c_str());
     }
 }
 

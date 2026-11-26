@@ -260,6 +260,7 @@ private:
     std::string globalSwitchAbilityName_;
     std::string applicationSettingAbilityName_;
     std::string openSettingAbilityName_;
+    std::string automationControlAbilityName_;
 
     bool IsPrivilegedCalling() const;
     bool IsAccessTokenCalling();

@@ -456,6 +456,46 @@ HWTEST_F(JsonParseLoaderTest, GetTokenSyncCfgFromJsonTest001, TestSize.Level4)
         "\"test_ability_name\"},\"tokensync\":{}}";
     EXPECT_FALSE(loader.GetConfigValueFromFile(ConfigType::TOKENSYNC_SERVICE, testJson, config));
 }
+
+/*
+ * @tc.name: GetAtCfgFromJson
+ * @tc.desc: GetAtCfgFromJson with automation_control_ability_name present
+ * @tc.type: FUNC
+ * @tc.require: TDD coverage
+ */
+HWTEST_F(JsonParseLoaderTest, GetAtCfgFromJsonTest009, TestSize.Level4)
+{
+    ConfigPolicLoader loader;
+    AccessTokenConfigValue config;
+    std::string testJson = "{\"accesstoken\":{\"permission_manager_bundle_name\":"
+        "\"test_bundle_name\",\"grant_ability_name\":\"test_ability_name\",\"grant_service_ability_name\":"
+        "\"test_ability_name\",\"permission_state_sheet_ability_name\":\"test_ability_name\","
+        "\"global_switch_sheet_ability_name\":\"test_ability_name\",\"temp_perm_cencle_time\":12345,"
+        "\"application_setting_ability_name\":\"test_ability_name\",\"open_setting_ability_name\":"
+        "\"test_ability_name\",\"automation_control_ability_name\":\"test_ability_name\"}}";
+    EXPECT_TRUE(loader.GetConfigValueFromFile(ConfigType::ACCESSTOKEN_SERVICE, testJson, config));
+    EXPECT_EQ("test_ability_name", config.atConfig.automationControlAbilityName);
+}
+
+/*
+ * @tc.name: GetAtCfgFromJson
+ * @tc.desc: GetAtCfgFromJson without automation_control_ability_name, field stays empty
+ * @tc.type: FUNC
+ * @tc.require: TDD coverage
+ */
+HWTEST_F(JsonParseLoaderTest, GetAtCfgFromJsonTest010, TestSize.Level4)
+{
+    ConfigPolicLoader loader;
+    AccessTokenConfigValue config;
+    std::string testJson = "{\"accesstoken\":{\"permission_manager_bundle_name\":"
+        "\"test_bundle_name\",\"grant_ability_name\":\"test_ability_name\",\"grant_service_ability_name\":"
+        "\"test_ability_name\",\"permission_state_sheet_ability_name\":\"test_ability_name\","
+        "\"global_switch_sheet_ability_name\":\"test_ability_name\",\"temp_perm_cencle_time\":12345,"
+        "\"application_setting_ability_name\":\"test_ability_name\",\"open_setting_ability_name\":"
+        "\"test_ability_name\"}}";
+    EXPECT_TRUE(loader.GetConfigValueFromFile(ConfigType::ACCESSTOKEN_SERVICE, testJson, config));
+    EXPECT_TRUE(config.atConfig.automationControlAbilityName.empty());
+}
 #endif // CUSTOMIZATION_CONFIG_POLICY_ENABLE
 /*
  * @tc.name: ParserDlpPermsRawData
