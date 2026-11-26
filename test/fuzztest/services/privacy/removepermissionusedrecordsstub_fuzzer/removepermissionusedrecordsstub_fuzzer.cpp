@@ -36,7 +36,6 @@ static constexpr int32_t SLEEP_TIME = 5;
 
 void BeforeExit()
 {
-    PermissionRecordManager::GetInstance().FlushPendingTasks();
     std::this_thread::sleep_for(std::chrono::seconds(SLEEP_TIME));
 }
 
