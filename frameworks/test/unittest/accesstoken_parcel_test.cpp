@@ -440,6 +440,7 @@ HWTEST_F(AccessTokenParcelTest, PermissionGrantInfoParcel001, TestSize.Level1)
     PermissionGrantInfoParcel permissionGrantInfoParcel;
     permissionGrantInfoParcel.info.grantBundleName = "com.ohos.permissionmanager";
     permissionGrantInfoParcel.info.grantAbilityName = "com.ohos.permissionmanager.GrantAbility";
+    permissionGrantInfoParcel.info.automationControlAbilityName = "com.ohos.permissionmanager.AutomationControlAbility";
 
     Parcel parcel;
     EXPECT_EQ(true, permissionGrantInfoParcel.Marshalling(parcel));

@@ -508,11 +508,40 @@ HWTEST_F(PermissionManagerCoverageTest, SetFlagIfNeedTest001, TestSize.Level4)
     config.cancelTime = DELAY_TIME;
     config.applicationSettingAbilityName = "ability";
     config.openSettingAbilityName = "ability";
+    config.automationControlAbilityName = "ability";
 
     int32_t cancelTime2 = 10;
     uint32_t parseConfigFlag2 = 0;
     atManagerService->SetFlagIfNeed(config, cancelTime2, parseConfigFlag2);
     EXPECT_NE(parseConfigFlag2, 0);
+
+    atManagerService = nullptr;
+}
+
+/**
+ * @tc.name: SetFlagIfNeedTest002
+ * @tc.desc: automationControlAbilityName returns empty (not default) when config file lacks the field
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionManagerCoverageTest, SetFlagIfNeedTest002, TestSize.Level4)
+{
+    std::shared_ptr<AccessTokenManagerService> atManagerService =
+        DelayedSingleton<AccessTokenManagerService>::GetInstance();
+    EXPECT_NE(nullptr, atManagerService);
+
+    atManagerService->automationControlAbilityName_ = "default_ability";
+
+    AccessTokenServiceConfig config;
+    config.grantBundleName = "ability";
+    int32_t cancelTime = 0;
+    uint32_t parseConfigFlag = 0;
+    atManagerService->SetFlagIfNeed(config, cancelTime, parseConfigFlag);
+    EXPECT_TRUE(atManagerService->automationControlAbilityName_.empty());
+
+    config.automationControlAbilityName = "cfg_ability";
+    atManagerService->SetFlagIfNeed(config, cancelTime, parseConfigFlag);
+    EXPECT_EQ("cfg_ability", atManagerService->automationControlAbilityName_);
 
     atManagerService = nullptr;
 }
